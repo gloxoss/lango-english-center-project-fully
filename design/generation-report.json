@@ -1,0 +1,266 @@
+{
+  "total": 27,
+  "success": 25,
+  "skipped": 0,
+  "failed": 2,
+  "screens": [
+    {
+      "id": "auth-login",
+      "status": "success",
+      "folder": "auth",
+      "screenId": "46c056532d7c4ce9935703b29d17ae34",
+      "screenName": "projects/14555436995814094423/screens/46c056532d7c4ce9935703b29d17ae34",
+      "generatedAt": "2026-04-03T15:19:56.402Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/auth/auth-login.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/auth/auth-login.png"
+    },
+    {
+      "id": "saas-dashboard",
+      "status": "success",
+      "folder": "super-admin",
+      "screenId": "bce4bcd9138b4bde8b202648ee401494",
+      "screenName": "projects/14555436995814094423/screens/bce4bcd9138b4bde8b202648ee401494",
+      "generatedAt": "2026-04-03T15:22:27.903Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/super-admin/saas-dashboard.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/super-admin/saas-dashboard.png"
+    },
+    {
+      "id": "saas-tenants",
+      "status": "success",
+      "folder": "super-admin",
+      "screenId": "a54f51a2fabe497e98bc6f52f5465ef5",
+      "screenName": "projects/14555436995814094423/screens/a54f51a2fabe497e98bc6f52f5465ef5",
+      "generatedAt": "2026-04-03T15:24:00.814Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/super-admin/saas-tenants.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/super-admin/saas-tenants.png"
+    },
+    {
+      "id": "admin-dashboard",
+      "status": "success",
+      "folder": "admin",
+      "screenId": "878e1b1d20154a7da1095b1efa328fbd",
+      "screenName": "projects/14555436995814094423/screens/878e1b1d20154a7da1095b1efa328fbd",
+      "generatedAt": "2026-04-03T15:26:09.217Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/admin/admin-dashboard.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/admin/admin-dashboard.png"
+    },
+    {
+      "id": "student-directory",
+      "status": "success",
+      "folder": "admin",
+      "screenId": "833c2e3eb5bc4ca68c347a6642e022d8",
+      "screenName": "projects/14555436995814094423/screens/833c2e3eb5bc4ca68c347a6642e022d8",
+      "generatedAt": "2026-04-03T15:28:30.740Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/admin/student-directory.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/admin/student-directory.png"
+    },
+    {
+      "id": "student-profile",
+      "status": "success",
+      "folder": "admin",
+      "screenId": "aae0ef74b62b4e2eafc96af7059780a5",
+      "screenName": "projects/14555436995814094423/screens/aae0ef74b62b4e2eafc96af7059780a5",
+      "generatedAt": "2026-04-03T15:30:25.334Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/admin/student-profile.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/admin/student-profile.png"
+    },
+    {
+      "id": "student-enrollment-wizard",
+      "status": "success",
+      "folder": "admin",
+      "screenId": "1a2bf47b20b94fc4ab9dfeab09d5aad5",
+      "screenName": "projects/14555436995814094423/screens/1a2bf47b20b94fc4ab9dfeab09d5aad5",
+      "generatedAt": "2026-04-03T15:32:24.170Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/admin/student-enrollment-wizard.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/admin/student-enrollment-wizard.png"
+    },
+    {
+      "id": "class-timetable",
+      "status": "failed"
+    },
+    {
+      "id": "daily-attendance",
+      "status": "success",
+      "folder": "admin",
+      "screenId": "6e91d2ece0234396a78932ce6fdecba8",
+      "screenName": "projects/14555436995814094423/screens/6e91d2ece0234396a78932ce6fdecba8",
+      "generatedAt": "2026-04-03T15:38:30.646Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/admin/daily-attendance.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/admin/daily-attendance.png"
+    },
+    {
+      "id": "marks-entry",
+      "status": "success",
+      "folder": "admin",
+      "screenId": "5c29cafd40b240179f32cf80846e0b91",
+      "screenName": "projects/14555436995814094423/screens/5c29cafd40b240179f32cf80846e0b91",
+      "generatedAt": "2026-04-03T15:40:36.648Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/admin/marks-entry.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/admin/marks-entry.png"
+    },
+    {
+      "id": "fee-collection",
+      "status": "success",
+      "folder": "finance",
+      "screenId": "4c0a70d12dbf43bf95f63227922a0272",
+      "screenName": "projects/14555436995814094423/screens/4c0a70d12dbf43bf95f63227922a0272",
+      "generatedAt": "2026-04-03T15:42:25.889Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/finance/fee-collection.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/finance/fee-collection.png"
+    },
+    {
+      "id": "finance-overview",
+      "status": "success",
+      "folder": "finance",
+      "screenId": "90d677a243324f2c8dd701ebd8247093",
+      "screenName": "projects/14555436995814094423/screens/90d677a243324f2c8dd701ebd8247093",
+      "generatedAt": "2026-04-03T15:44:39.224Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/finance/finance-overview.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/finance/finance-overview.png"
+    },
+    {
+      "id": "crm-kanban",
+      "status": "success",
+      "folder": "crm",
+      "screenId": "8f6a7671af044825a07ac65a6c45bf97",
+      "screenName": "projects/14555436995814094423/screens/8f6a7671af044825a07ac65a6c45bf97",
+      "generatedAt": "2026-04-03T15:46:58.534Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/crm/crm-kanban.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/crm/crm-kanban.png"
+    },
+    {
+      "id": "lead-profile",
+      "status": "success",
+      "folder": "crm",
+      "screenId": "032c5dc11a074f0b90664d7aab3ec6fe",
+      "screenName": "projects/14555436995814094423/screens/032c5dc11a074f0b90664d7aab3ec6fe",
+      "generatedAt": "2026-04-03T15:49:09.959Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/crm/lead-profile.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/crm/lead-profile.png"
+    },
+    {
+      "id": "course-builder",
+      "status": "success",
+      "folder": "lms",
+      "screenId": "60e940776602424ba8e6492511ad6be4",
+      "screenName": "projects/14555436995814094423/screens/60e940776602424ba8e6492511ad6be4",
+      "generatedAt": "2026-04-03T15:51:04.699Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/lms/course-builder.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/lms/course-builder.png"
+    },
+    {
+      "id": "video-player",
+      "status": "success",
+      "folder": "lms",
+      "screenId": "2d0b9e49851b4e138fe4a3424e09a64a",
+      "screenName": "projects/14555436995814094423/screens/2d0b9e49851b4e138fe4a3424e09a64a",
+      "generatedAt": "2026-04-03T15:53:22.541Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/lms/video-player.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/lms/video-player.png"
+    },
+    {
+      "id": "lms-storefront",
+      "status": "success",
+      "folder": "lms",
+      "screenId": "7225ab315db54a178565c1768441cbc3",
+      "screenName": "projects/14555436995814094423/screens/7225ab315db54a178565c1768441cbc3",
+      "generatedAt": "2026-04-03T15:56:03.289Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/lms/lms-storefront.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/lms/lms-storefront.png"
+    },
+    {
+      "id": "wa-inbox",
+      "status": "success",
+      "folder": "whatsapp",
+      "screenId": "b9e38d94d1be42c6955fb30c9bca1fc4",
+      "screenName": "projects/14555436995814094423/screens/b9e38d94d1be42c6955fb30c9bca1fc4",
+      "generatedAt": "2026-04-03T15:58:44.540Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/whatsapp/wa-inbox.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/whatsapp/wa-inbox.png"
+    },
+    {
+      "id": "wa-campaigns",
+      "status": "success",
+      "folder": "whatsapp",
+      "screenId": "250b0219e57b4fd79f09bad40598e36e",
+      "screenName": "projects/14555436995814094423/screens/250b0219e57b4fd79f09bad40598e36e",
+      "generatedAt": "2026-04-03T16:00:56.777Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/whatsapp/wa-campaigns.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/whatsapp/wa-campaigns.png"
+    },
+    {
+      "id": "teacher-dashboard",
+      "status": "success",
+      "folder": "teacher",
+      "screenId": "0794015aea30403f92e33e915ec9b724",
+      "screenName": "projects/14555436995814094423/screens/0794015aea30403f92e33e915ec9b724",
+      "generatedAt": "2026-04-03T16:02:54.025Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/teacher/teacher-dashboard.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/teacher/teacher-dashboard.png"
+    },
+    {
+      "id": "class-session",
+      "status": "success",
+      "folder": "teacher",
+      "screenId": "30be9110e38e4e46ae2bbce8cd8e6ee8",
+      "screenName": "projects/14555436995814094423/screens/30be9110e38e4e46ae2bbce8cd8e6ee8",
+      "generatedAt": "2026-04-03T16:05:34.113Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/teacher/class-session.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/teacher/class-session.png"
+    },
+    {
+      "id": "student-dashboard",
+      "status": "success",
+      "folder": "student",
+      "screenId": "7cc6e5bebd584d61b78638e8bc3e64d8",
+      "screenName": "projects/14555436995814094423/screens/7cc6e5bebd584d61b78638e8bc3e64d8",
+      "generatedAt": "2026-04-03T16:07:34.884Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/student/student-dashboard.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/student/student-dashboard.png"
+    },
+    {
+      "id": "student-invoices",
+      "status": "success",
+      "folder": "student",
+      "screenId": "904fff85ab0e419c9f0142907599453d",
+      "screenName": "projects/14555436995814094423/screens/904fff85ab0e419c9f0142907599453d",
+      "generatedAt": "2026-04-03T16:09:40.560Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/student/student-invoices.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/student/student-invoices.png"
+    },
+    {
+      "id": "public-landing",
+      "status": "failed"
+    },
+    {
+      "id": "public-courses",
+      "status": "success",
+      "folder": "public",
+      "screenId": "c251d170d6d543dea14f133cb9b43d0a",
+      "screenName": "projects/14555436995814094423/screens/c251d170d6d543dea14f133cb9b43d0a",
+      "generatedAt": "2026-04-03T16:13:06.859Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/public/public-courses.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/public/public-courses.png"
+    },
+    {
+      "id": "admin-settings",
+      "status": "success",
+      "folder": "settings",
+      "screenId": "f973e0ee1f9a448eb3dab06d67747d46",
+      "screenName": "projects/14555436995814094423/screens/f973e0ee1f9a448eb3dab06d67747d46",
+      "generatedAt": "2026-04-03T16:15:24.543Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/settings/admin-settings.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/settings/admin-settings.png"
+    },
+    {
+      "id": "rbac-permissions",
+      "status": "success",
+      "folder": "settings",
+      "screenId": "ec2b670931e247eeba1a304da37b1cc8",
+      "screenName": "projects/14555436995814094423/screens/ec2b670931e247eeba1a304da37b1cc8",
+      "generatedAt": "2026-04-03T16:17:35.916Z",
+      "htmlPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/settings/rbac-permissions.html",
+      "pngPath": "C:/Users/zakio/Desktop/Lango english center project fully/design/settings/rbac-permissions.png"
+    }
+  ]
+}

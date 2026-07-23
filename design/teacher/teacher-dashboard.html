@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lango Teacher Portal - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "on-primary-container": "#eeefff",
+                        "on-primary-fixed": "#00174b",
+                        "background": "#f8f9fa",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f3f4f5",
+                        "on-secondary-fixed": "#00174b",
+                        "outline-variant": "#c3c6d7",
+                        "on-surface-variant": "#434655",
+                        "surface-container": "#edeeef",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-container": "#ffede6",
+                        "surface": "#f8f9fa",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "inverse-surface": "#2e3132",
+                        "on-error-container": "#93000a",
+                        "on-surface": "#191c1d",
+                        "on-error": "#ffffff",
+                        "inverse-primary": "#b4c5ff",
+                        "secondary-fixed": "#dbe1ff",
+                        "tertiary-container": "#bc4800",
+                        "error-container": "#ffdad6",
+                        "primary-container": "#2563eb",
+                        "on-secondary-container": "#394c84",
+                        "secondary-container": "#acbfff",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "on-secondary": "#ffffff",
+                        "primary": "#004ac6",
+                        "surface-tint": "#0053db",
+                        "inverse-on-surface": "#f0f1f2",
+                        "tertiary": "#943700",
+                        "surface-dim": "#d9dadb",
+                        "on-tertiary": "#ffffff",
+                        "outline": "#737686",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-background": "#191c1d",
+                        "surface-container-highest": "#e1e3e4",
+                        "surface-variant": "#e1e3e4",
+                        "on-secondary-fixed-variant": "#31447b",
+                        "surface-bright": "#f8f9fa",
+                        "secondary": "#495c95",
+                        "tertiary-fixed": "#ffdbcd",
+                        "surface-container-high": "#e7e8e9",
+                        "on-tertiary-fixed": "#360f00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .sidebar-active { color: #004ac6; font-weight: 600; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e1e3e4; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-background flex h-screen overflow-hidden">
+<!-- SideNavBar (Shared Component) -->
+<aside class="h-screen w-64 fixed left-0 top-0 flex flex-col p-4 space-y-2 border-r border-slate-200/15 bg-slate-50 dark:bg-slate-950 font-inter text-sm font-medium tracking-normal">
+<div class="px-4 py-6 mb-4">
+<h1 class="text-xl font-bold text-slate-900 dark:text-slate-50">Lango Teacher</h1>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-600 dark:text-blue-400 font-semibold hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+                My Classes
+            </a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="how_to_reg">how_to_reg</span>
+                Attendance
+            </a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="grading">grading</span>
+                Grades
+            </a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+                Lesson Plans
+            </a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+                Calendar
+            </a>
+</nav>
+<div class="mt-auto pt-4 border-t border-slate-200/10 space-y-1">
+<div class="flex items-center gap-3 px-4 py-4 mb-2">
+<img alt="Sara El Fassi" class="w-10 h-10 rounded-full object-cover" data-alt="portrait of a professional female teacher with a warm smile, wearing modern business casual attire against a clean studio background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPim5pDBJY3h82yI0D-t7fh4STlvfK9XvcZw96T76RxS8gD3zmycPb-dxrAkieCWQZ5maaklS1JVhFZjuR6xcjvToQ2y-rpudFNdYbrNtN3D8LOOwmeord6vej2LugKXaWkoodZ8a7gLqxDd66mue9C6S0EAhNsUWFzVjQbgS0NGpchLsClMX9H2PO91XDLtWHOp62SlO1vfA9ywl8RpcbkCzfSWXfrLfCZneKqYAti3Dce-E9wtW9YJztn6CjIORNxCdqsrgvT7_z"/>
+<div class="flex flex-col">
+<span class="text-on-surface font-semibold truncate">Sara El Fassi</span>
+<span class="text-xs text-slate-500">Teacher</span>
+</div>
+</div>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                Settings
+            </a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+                Help
+            </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 flex-1 flex flex-col h-screen overflow-y-auto">
+<!-- TopNavBar (Shared Component) -->
+<header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl flex justify-between items-center px-8 py-3 w-full border-b border-slate-200/15 sticky top-0 z-50">
+<div class="flex items-center flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" data-icon="search">search</span>
+<input class="w-full bg-slate-100 border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary focus:bg-white transition-all" placeholder="Search students, classes, materials..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-all">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="h-6 w-[1px] bg-slate-200"></div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-semibold px-2 py-1 bg-blue-50 text-blue-600 rounded">Teacher</span>
+</div>
+</div>
+</header>
+<!-- Dashboard Body -->
+<div class="p-8 max-w-7xl mx-auto w-full">
+<!-- Greeting -->
+<section class="mb-10">
+<h2 class="text-[2.25rem] font-extrabold tracking-tight text-on-surface leading-tight">Good morning, Sara</h2>
+<p class="text-secondary font-medium tracking-wide mt-1">Monday, October 23, 2023</p>
+</section>
+<!-- Quick Actions Bento -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+<button class="flex flex-col items-start p-6 bg-primary text-white rounded-xl transition-all hover:opacity-90 active:scale-95 group relative overflow-hidden">
+<span class="material-symbols-outlined text-4xl mb-4" data-icon="how_to_reg">how_to_reg</span>
+<span class="text-lg font-semibold">Take Attendance</span>
+<span class="text-white/70 text-sm mt-1">Log presence for today's classes</span>
+</button>
+<button class="flex flex-col items-start p-6 bg-surface-container-lowest border border-slate-200/50 rounded-xl transition-all hover:bg-slate-50 active:scale-95 group">
+<span class="material-symbols-outlined text-4xl mb-4 text-primary" data-icon="add_circle">add_circle</span>
+<span class="text-lg font-semibold">Add Grade</span>
+<span class="text-slate-500 text-sm mt-1">Record scores for recent assignments</span>
+</button>
+<button class="flex flex-col items-start p-6 bg-surface-container-lowest border border-slate-200/50 rounded-xl transition-all hover:bg-slate-50 active:scale-95 group">
+<span class="material-symbols-outlined text-4xl mb-4 text-primary" data-icon="edit_note">edit_note</span>
+<span class="text-lg font-semibold">Create Lesson Plan</span>
+<span class="text-slate-500 text-sm mt-1">Draft new curriculum for week 16</span>
+</button>
+</section>
+<!-- Main Workspace Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Left: Today's Schedule -->
+<div class="lg:col-span-2 space-y-6">
+<div class="flex items-center justify-between">
+<h3 class="text-xl font-semibold text-on-surface">Today's Schedule</h3>
+<a class="text-sm font-medium text-primary hover:underline" href="#">View Calendar</a>
+</div>
+<div class="space-y-4">
+<!-- Class Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl border border-slate-200/40 p-6 flex items-center gap-6">
+<div class="flex flex-col items-center justify-center w-20 h-20 bg-slate-50 rounded-lg text-primary shrink-0">
+<span class="text-xs font-bold uppercase tracking-widest">Starts</span>
+<span class="text-xl font-extrabold">09:00</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider rounded">A1-Elementary</span>
+<span class="text-slate-400 text-xs">•</span>
+<span class="text-xs text-slate-500">Room 1</span>
+</div>
+<h4 class="text-lg font-bold text-on-surface">A1-Monday-Morning</h4>
+<div class="flex items-center gap-4 mt-2">
+<div class="flex items-center gap-1.5 text-slate-600 text-sm">
+<span class="material-symbols-outlined text-lg" data-icon="group">group</span>
+                                        22 students
+                                    </div>
+</div>
+</div>
+<button class="bg-primary text-white px-6 py-2.5 rounded-lg font-semibold text-sm hover:bg-surface-tint transition-colors active:scale-95">
+                                Start Session
+                            </button>
+</div>
+<!-- Class Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl border border-slate-200/40 p-6 flex items-center gap-6">
+<div class="flex flex-col items-center justify-center w-20 h-20 bg-slate-50 rounded-lg text-slate-400 shrink-0">
+<span class="text-xs font-bold uppercase tracking-widest">Next</span>
+<span class="text-xl font-extrabold text-slate-600">14:00</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-bold uppercase tracking-wider rounded">A2-Intermediate</span>
+<span class="text-slate-400 text-xs">•</span>
+<span class="text-xs text-slate-500">Room 2</span>
+</div>
+<h4 class="text-lg font-bold text-on-surface">A2-Wednesday-Afternoon</h4>
+<div class="flex items-center gap-4 mt-2">
+<div class="flex items-center gap-1.5 text-slate-600 text-sm">
+<span class="material-symbols-outlined text-lg" data-icon="group">group</span>
+                                        18 students
+                                    </div>
+</div>
+</div>
+<button class="text-slate-500 border border-slate-200 px-6 py-2.5 rounded-lg font-semibold text-sm hover:bg-slate-50 transition-colors">
+                                Details
+                            </button>
+</div>
+<!-- Class Card 3 -->
+<div class="bg-surface-container-lowest rounded-xl border border-slate-200/40 p-6 flex items-center gap-6">
+<div class="flex flex-col items-center justify-center w-20 h-20 bg-slate-50 rounded-lg text-slate-400 shrink-0">
+<span class="text-xs font-bold uppercase tracking-widest text-slate-400">Later</span>
+<span class="text-xl font-extrabold text-slate-600">18:00</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] font-bold uppercase tracking-wider rounded">B1-Upper</span>
+<span class="text-slate-400 text-xs">•</span>
+<span class="text-xs text-slate-500">Online</span>
+</div>
+<h4 class="text-lg font-bold text-on-surface">B1-Evening</h4>
+<div class="flex items-center gap-4 mt-2">
+<div class="flex items-center gap-1.5 text-slate-600 text-sm">
+<span class="material-symbols-outlined text-lg" data-icon="group">group</span>
+                                        20 students
+                                    </div>
+</div>
+</div>
+<button class="text-slate-500 border border-slate-200 px-6 py-2.5 rounded-lg font-semibold text-sm hover:bg-slate-50 transition-colors">
+                                Link
+                            </button>
+</div>
+</div>
+</div>
+<!-- Right: Tasks & Announcements -->
+<div class="space-y-8">
+<!-- Pending Tasks -->
+<div class="bg-surface-container-lowest rounded-xl border border-slate-200/40 p-6">
+<h3 class="text-lg font-bold mb-6 text-on-surface">Pending Tasks</h3>
+<div class="space-y-5">
+<div class="flex gap-4">
+<div class="mt-1 flex items-center justify-center w-5 h-5 border-2 border-primary rounded-md shrink-0"></div>
+<div>
+<p class="font-semibold text-on-surface text-sm">Grade homework B1 group</p>
+<p class="text-xs text-slate-500 mt-0.5">Due tomorrow</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="mt-1 flex items-center justify-center w-5 h-5 border-2 border-slate-300 rounded-md shrink-0"></div>
+<div>
+<p class="font-semibold text-on-surface text-sm">Submit lesson plan week 15</p>
+<p class="text-xs text-slate-500 mt-0.5">Due Friday</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="mt-1 flex items-center justify-center w-5 h-5 border-2 border-error rounded-md shrink-0 bg-error/10">
+<span class="material-symbols-outlined text-[12px] text-error font-bold" data-icon="close">close</span>
+</div>
+<div>
+<p class="font-semibold text-error text-sm">Attendance A2 missing</p>
+<p class="text-xs text-error font-medium mt-0.5">Overdue</p>
+</div>
+</div>
+</div>
+<button class="w-full mt-6 py-2.5 text-sm font-semibold text-primary border border-primary/20 rounded-lg hover:bg-blue-50 transition-colors">
+                            All Tasks
+                        </button>
+</div>
+<!-- Announcements -->
+<div class="bg-slate-900 text-white rounded-xl p-6 relative overflow-hidden">
+<div class="relative z-10">
+<div class="flex items-center gap-2 mb-4 text-primary-fixed">
+<span class="material-symbols-outlined" data-icon="campaign">campaign</span>
+<span class="text-xs font-bold uppercase tracking-widest">Announcements</span>
+</div>
+<div class="space-y-4">
+<div class="border-l-2 border-primary pl-4">
+<p class="text-sm font-bold leading-tight">New Digital Material Library is Live</p>
+<p class="text-xs text-slate-400 mt-1">From: Director of Studies</p>
+</div>
+<div class="border-l-2 border-slate-600 pl-4">
+<p class="text-sm font-bold leading-tight">Quarterly Staff Meeting - Nov 5th</p>
+<p class="text-xs text-slate-400 mt-1">From: Academic Office</p>
+</div>
+</div>
+</div>
+<!-- Abstract decorative background -->
+<div class="absolute -right-4 -bottom-4 opacity-10">
+<span class="material-symbols-outlined text-[120px]" data-icon="school">school</span>
+</div>
+</div>
+<!-- Helpful Graphic/Card -->
+<div class="rounded-xl overflow-hidden relative aspect-video group cursor-pointer">
+<img alt="Student resources" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Modern workspace with laptop, colorful stationery, and warm desk lighting, creating a productive learning atmosphere" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzYxhGt1k8XRl-anrNUffOkQ0m3yjkqVxYd7iAQ671SVcKlDK8RGiONop9Z5OVP4IP4uuoMcytCMTOmqjRAdmfi7JYK-_6yDajaK2s1WG4MQwwjCT_RrA2FESQyrynPcd07-ZX7w2eJpLPYiN-sTYRSkNFV71OAKmd2Bt31CNPqOVd0nYRrr_MSqsa3Sm8dPOydnfPUQ9oamWt8dDIA7yAyX-ktKf7ktwWThd-eMuJARKRPPiph2UrJ9inanwJHy19H6govAeqOShC"/>
+<div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent flex flex-col justify-end p-6">
+<span class="text-white font-bold text-lg">Teacher Resource Center</span>
+<span class="text-white/70 text-sm">Explore new teaching methodologies</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

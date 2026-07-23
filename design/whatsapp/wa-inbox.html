@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>WhatsApp Reception | Lango Language Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed-variant": "#3a485b",
+                    "tertiary-container": "#007e37",
+                    "surface-container-highest": "#e1e3e4",
+                    "tertiary-fixed": "#6bff8f",
+                    "surface-bright": "#f8f9fa",
+                    "on-primary-container": "#eeefff",
+                    "on-tertiary-fixed-variant": "#005321",
+                    "surface": "#f8f9fa",
+                    "surface-container-low": "#f3f4f5",
+                    "secondary-fixed": "#d5e3fc",
+                    "secondary": "#515f74",
+                    "surface-dim": "#d9dadb",
+                    "secondary-fixed-dim": "#b9c7df",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "on-surface": "#191c1d",
+                    "on-secondary-container": "#57657a",
+                    "primary-container": "#2563eb",
+                    "inverse-primary": "#b4c5ff",
+                    "background": "#f8f9fa",
+                    "on-tertiary-container": "#c1ffc5",
+                    "on-primary": "#ffffff",
+                    "on-tertiary-fixed": "#002109",
+                    "on-surface-variant": "#434655",
+                    "secondary-container": "#d5e3fc",
+                    "surface-container": "#edeeef",
+                    "tertiary-fixed-dim": "#4ae176",
+                    "surface-variant": "#e1e3e4",
+                    "outline": "#737686",
+                    "inverse-surface": "#2e3132",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed": "#0d1c2e",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-on-surface": "#f0f1f2",
+                    "tertiary": "#006229",
+                    "on-primary-fixed": "#00174b",
+                    "surface-tint": "#0053db",
+                    "primary-fixed": "#dbe1ff",
+                    "outline-variant": "#c3c6d7",
+                    "surface-container-high": "#e7e8e9",
+                    "error-container": "#ffdad6",
+                    "on-error-container": "#93000a",
+                    "on-background": "#191c1d",
+                    "on-error": "#ffffff",
+                    "primary": "#004ac6",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "on-secondary": "#ffffff",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.5rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .chat-gradient {
+            background: linear-gradient(135deg, #004ac6 0%, #2563eb 100%);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary-fixed">
+<!-- SideNavBar (Rail) -->
+<aside class="fixed left-0 top-0 bottom-0 z-50 h-screen w-20 flex flex-col items-center py-4 border-r border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950 font-sans antialiased text-sm font-medium">
+<div class="mb-8">
+<span class="text-blue-600 font-bold text-lg">L.</span>
+</div>
+<nav class="flex flex-col gap-4 flex-1">
+<button class="w-12 h-12 flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors Active: scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+</button>
+<button class="w-12 h-12 flex flex-col items-center justify-center text-blue-600 dark:text-blue-400 bg-white dark:bg-zinc-900 rounded-lg shadow-sm Active: scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="contacts" style="font-variation-settings: 'FILL' 1;">contacts</span>
+</button>
+<button class="w-12 h-12 flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors Active: scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+</button>
+<button class="w-12 h-12 flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors Active: scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+</button>
+<button class="w-12 h-12 flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors Active: scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+</button>
+</nav>
+<button class="w-12 h-12 flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors Active: scale-95 duration-150 mt-auto">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-20 flex h-screen overflow-hidden">
+<!-- TopNavBar Wrapper -->
+<div class="flex flex-col flex-1">
+<header class="w-full h-16 sticky top-0 z-40 flex items-center justify-between px-6 border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl font-sans text-base font-semibold tracking-tight">
+<div class="flex items-center gap-4">
+<h1 class="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">WhatsApp Reception</h1>
+<div class="h-6 w-[1px] bg-outline-variant opacity-20"></div>
+<nav class="flex gap-6">
+<a class="text-blue-600 border-b-2 border-blue-600 transition-all duration-200 ease-in-out" href="#">Assign</a>
+<a class="text-zinc-500 dark:text-zinc-400 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-200 ease-in-out" href="#">Resolve</a>
+<a class="text-zinc-500 dark:text-zinc-400 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-200 ease-in-out" href="#">Archive</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-zinc-500 hover:text-blue-600"><span class="material-symbols-outlined" data-icon="search">search</span></button>
+<button class="text-zinc-500 hover:text-blue-600"><span class="material-symbols-outlined" data-icon="more_vert">more_vert</span></button>
+<button class="text-zinc-500 hover:text-blue-600"><span class="material-symbols-outlined" data-icon="info">info</span></button>
+<img alt="Active User Avatar" class="w-8 h-8 rounded-full border border-zinc-200" data-alt="professional portrait of a school receptionist in business casual attire with a warm friendly expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOAhsozNSJWYOccurFmpryjmRF5zrYSKFzfplITRCCb0QrCVL96JFQRJkN-GsBZYFa_ExXegldtsmBHk9ah-ICB4zCPwXfr8LAryUO1id5d648F4YizmG9_jxLykS0GlggzhsPrAziXhTIlR86NLj2oA28TUJrif_rKEvdz0z8qtbgDgywV5prG46FQzsXqpfO1mh-e9OcjqUGaVI8rahlXkwybHJWgbb52QyPZzaIksaXwEhV9mhB_nD3pEMenq61hdNeSK_opI4o"/>
+</div>
+</header>
+<!-- Three-Pane Layout Container -->
+<div class="flex flex-1 overflow-hidden">
+<!-- Left Pane: Thread List (320px) -->
+<section class="w-80 flex flex-col bg-surface-container-low border-r border-outline-variant/20">
+<div class="p-4 space-y-4">
+<div class="relative group">
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant/40 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="Search conversations..." type="text"/>
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-zinc-400 text-sm" data-icon="search">search</span>
+</div>
+<div class="flex gap-2 overflow-x-auto hide-scrollbar">
+<button class="px-3 py-1 bg-primary text-on-primary text-xs font-semibold rounded-full">All</button>
+<button class="px-3 py-1 bg-surface-container-highest text-on-surface-variant text-xs font-semibold rounded-full hover:bg-zinc-200">My Chats</button>
+<button class="px-3 py-1 bg-surface-container-highest text-on-surface-variant text-xs font-semibold rounded-full hover:bg-zinc-200">Unassigned</button>
+<button class="px-3 py-1 bg-surface-container-highest text-on-surface-variant text-xs font-semibold rounded-full hover:bg-zinc-200">Resolved</button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto divide-y divide-outline-variant/10">
+<!-- Active Thread -->
+<div class="p-4 flex gap-3 bg-surface-container-lowest cursor-pointer border-l-4 border-primary">
+<div class="relative flex-shrink-0">
+<img alt="Mohammed Alaoui" class="w-12 h-12 rounded-full object-cover" data-alt="portrait of a young Moroccan man with a modern haircut and friendly demeanor" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9U8GsvG7zdijcbHdRWKCcCVFI3klCMDO1Ocfh_VdnttC7TrUicXpELGtBR17iAVv5LKqWyR2ydONVKoGziiRHW4PMdkYbQBgZSFCjZETS_4wYmuxnktW2HX3iLnvWfhtZ8gACf3RWaScFu0v2Nv4ObYNnT_uBufZoR6nbGs0BLMxCAJZdIu-MSrfFSC5XLS79z7f4oisFYJPwq-j_KyjJK1Qr1NrFwRQxFqowlyIGs_qLsZ1hppf2RO4Ta6ZaSgXbB51CIZ27GKf6"/>
+<div class="absolute bottom-0 right-0 w-3 h-3 bg-tertiary-container rounded-full border-2 border-white"></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-on-surface truncate">Mohammed Alaoui</h3>
+<span class="text-[10px] font-medium text-slate-400">2h</span>
+</div>
+<p class="text-xs text-on-secondary-container truncate mt-0.5 italic">Thinking about enrolling in B1...</p>
+<div class="flex justify-between items-center mt-2">
+<div class="flex -space-x-2">
+<img alt="Agent" class="w-5 h-5 rounded-full border border-white" data-alt="close up of a professional support staff member avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2N2qApCksykYTlQPZvGP_wX7bjaWHF_I9Due6ZVPzvaDzc8QZPbFEi8JN2ywux-rCugS3Q2MBzk73JKwoksiecPUyG1FA5IK3acT5EQoqbNGVe0rF2FZHlTroHzyiIeQDNfWvmS1Rc40uWKZCTtSp_lNIn86X2RGxuMZ6ClZNXAZupcIERXvil0ADGbFbnV_97SfWUMvEtbWUEgTgpyUxUGPQiIwtqHl3jvb72Hy73KadiOpM-J5r9OU0Cflw_Rv8G99c24KfE3uP"/>
+</div>
+<span class="bg-primary text-on-primary text-[10px] px-1.5 py-0.5 rounded-full font-bold">3</span>
+</div>
+</div>
+</div>
+<!-- Other Threads -->
+<div class="p-4 flex gap-3 hover:bg-surface-container cursor-pointer transition-colors">
+<img alt="Salma Berrada" class="w-12 h-12 rounded-full object-cover" data-alt="portrait of a young Moroccan woman with glasses and professional attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAk1SmPhu4vp747xOe-iMhEpvCTf7sGT0bs_eywmy0DmXCgho06Br8TDORkLM0psGQKvic4-vQ9IZF7O65tMHV-07pE-Had3aqplIyjDG1NYt2mVT2ehHXNPnSZZFKJMj82J5qdlL9ukvpbZsx47-zuFvoK9CG5rx9qW8tZ-JjtIxWaEsjpvWR4ZVOxv8vUx_06l8EANmbB5kHTgqlWS0Bi8zA38s2Zmhy8C8lLZnucdiaUPCrr0xwRof9Xt1PGKXktzMpztqkwuR2"/>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-semibold text-on-surface truncate">Salma Berrada</h3>
+<span class="text-[10px] font-medium text-slate-400">1d</span>
+</div>
+<p class="text-xs text-on-secondary-container truncate mt-0.5">When is the next placement test?</p>
+</div>
+</div>
+<div class="p-4 flex gap-3 hover:bg-surface-container cursor-pointer transition-colors">
+<img alt="Sara Parent" class="w-12 h-12 rounded-full object-cover" data-alt="portrait of an international student with a neutral expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3xScTxuQPlC8k1ka4EoXBUhbBkhkbt2d4w1-GPnUC1hOGAPup7ObSWkMsaCKowpZMEPplDVIxiPKUwVBPIi6EJZRirDwCbhldtA5XjoQVNqmX1zMKjccfAOFLDNJ-at1TVL05fNWEu6YWykq78Ml7mYIRdxm9O3FMk2pehv4GvwpCkKV686IxdFj1ycA5xffm8Oca433Z2Bx_yX3PRkf1dIElKW8bFzQh1U3TANcysNvXKLKS9Qjdn1suycqPtBzse8HIBIafBF5L"/>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-semibold text-on-surface truncate">Sara Parent</h3>
+<span class="text-[10px] font-medium text-slate-400">2d</span>
+</div>
+<p class="text-xs text-on-secondary-container truncate mt-0.5">Attached payment confirmation.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Middle Pane: Active Chat -->
+<section class="flex-1 flex flex-col bg-surface-container-lowest">
+<!-- Chat Header -->
+<div class="h-16 px-6 flex items-center justify-between border-b border-outline-variant/20">
+<div class="flex items-center gap-3">
+<img alt="Mohammed Alaoui" class="w-10 h-10 rounded-full" data-alt="portrait of a young Moroccan man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzFJ4Mx8zAPZT-xq3fZedpFxO_vsfF49f_x8fRsIHwhphKal53hUWA7ZQdQlzXsx3UHBYYprE-FxholBU_20U5peyRknSyU1e5DRmB3bCw8_Gn8U8VIbn7FCKmtVOLtkzx3h7lHwBn0rGJmDnegxOXCsXVQcF1NjDzbi0Lu48o9q6ITEdks5MNgLKViWGMPf86et8TcSm1accJnbX0_dddXu2ZqJBCiZI_3FCTCoN6xYUXXOCKymkpxQuMK-mc0EEYEdUj7yjS8N5c"/>
+<div>
+<div class="flex items-center gap-2">
+<h2 class="font-bold text-on-surface leading-none">Mohammed Alaoui</h2>
+<div class="w-2 h-2 bg-tertiary-container rounded-full" title="Online"></div>
+</div>
+<span class="text-xs text-slate-500 font-medium">+212 661-000000</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative">
+<button class="flex items-center gap-2 px-4 py-1.5 bg-surface-container-high rounded-lg text-sm font-semibold hover:bg-zinc-200 transition-colors">
+<span>Assign to</span>
+<span class="material-symbols-outlined text-sm" data-icon="expand_more">expand_more</span>
+</button>
+</div>
+<button class="px-4 py-1.5 bg-primary text-white text-sm font-bold rounded-lg chat-gradient hover:opacity-90 shadow-sm transition-all">Resolve</button>
+</div>
+</div>
+<!-- Message Area -->
+<div class="flex-1 overflow-y-auto p-8 space-y-6 flex flex-col bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-opacity-5">
+<div class="flex justify-center">
+<span class="px-3 py-1 bg-surface-container text-[10px] font-bold text-slate-500 rounded-full uppercase tracking-widest">Today</span>
+</div>
+<!-- Received -->
+<div class="flex items-end gap-2 max-w-[80%]">
+<div class="bg-zinc-100 p-4 rounded-2xl rounded-bl-none text-on-surface shadow-sm text-sm leading-relaxed">
+                                Hello! I'm thinking about enrolling in the B1 French course starting next month. Do you have any slots left?
+                                <div class="text-[10px] text-slate-400 text-right mt-1 font-medium">10:15 AM</div>
+</div>
+</div>
+<!-- Sent -->
+<div class="flex items-end gap-2 max-w-[80%] ml-auto flex-row-reverse">
+<div class="bg-blue-100 p-4 rounded-2xl rounded-br-none text-on-surface shadow-sm text-sm leading-relaxed">
+                                Hi Mohammed! We'd love to have you. Let me check the availability for the evening B1 session.
+                                <div class="text-[10px] text-blue-400 text-right mt-1 font-medium">10:17 AM</div>
+</div>
+</div>
+<!-- Received -->
+<div class="flex items-end gap-2 max-w-[80%]">
+<div class="bg-zinc-100 p-4 rounded-2xl rounded-bl-none text-on-surface shadow-sm text-sm leading-relaxed">
+                                Perfect. Also, are there any discounts for early registration?
+                                <div class="text-[10px] text-slate-400 text-right mt-1 font-medium">10:18 AM</div>
+</div>
+</div>
+<!-- Sent -->
+<div class="flex items-end gap-2 max-w-[80%] ml-auto flex-row-reverse">
+<div class="bg-blue-100 p-4 rounded-2xl rounded-br-none text-on-surface shadow-sm text-sm leading-relaxed">
+                                Yes, we have a 10% early bird discount if you register before the 25th! 
+                                <div class="text-[10px] text-blue-400 text-right mt-1 font-medium">10:20 AM</div>
+</div>
+</div>
+</div>
+<!-- Input Area -->
+<div class="p-6 border-t border-outline-variant/20 bg-white">
+<div class="flex items-center gap-3 mb-4">
+<button class="text-slate-400 hover:text-primary transition-colors"><span class="material-symbols-outlined" data-icon="mood">mood</span></button>
+<button class="text-slate-400 hover:text-primary transition-colors"><span class="material-symbols-outlined" data-icon="attach_file">attach_file</span></button>
+<button class="ml-auto text-xs font-bold text-primary flex items-center gap-1 px-3 py-1 rounded-full border border-primary/20 hover:bg-primary/5">
+<span class="material-symbols-outlined text-sm" data-icon="article">article</span>
+<span>Use Template</span>
+</button>
+</div>
+<div class="flex gap-4">
+<textarea class="flex-1 border-none focus:ring-0 text-sm resize-none h-10 py-2 hide-scrollbar font-body" placeholder="Type your message..." rows="1"></textarea>
+<button class="w-10 h-10 rounded-lg chat-gradient text-white flex items-center justify-center shadow-md hover:scale-105 transition-transform">
+<span class="material-symbols-outlined" data-icon="send" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Right Pane: CRM Panel (300px) -->
+<section class="w-[300px] flex flex-col bg-surface-container-low border-l border-outline-variant/20 overflow-y-auto">
+<div class="p-8 flex flex-col items-center text-center">
+<img alt="Mohammed Alaoui" class="w-24 h-24 rounded-2xl object-cover mb-4 ring-4 ring-white shadow-sm" data-alt="high quality studio portrait of a young professional Moroccan man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDAKwxhLvagtq3XB6SozxYEV-6H07vnlmkgK1P0H4HmUTgAXbW2NBh4qLSqzLSXUJe5S-G0RnZp_9qdesONm6WKKjngaekkOULB5BiyQcntM4HGzYNkguaraBJ22ZsRaVUaQ8R53CfJzh9QzXT7oHtOcmuan0J3othNqZnVLXZMx4-9WUcrgs1gd3YbmYe7MDKoe0iwJOkGKwtoGk5gLwD3wh4b8qcbplldfSkVjoq_aEBJeRDX3f5g_jl3Fu_Q9_yxQZ-PWzkFMTkk"/>
+<h2 class="text-lg font-bold text-on-surface tracking-tight">Mohammed Alaoui</h2>
+<span class="mt-2 px-3 py-1 bg-blue-50 text-primary border border-primary/10 text-[10px] font-extrabold uppercase tracking-widest rounded-full">Lead - Contacted</span>
+</div>
+<div class="px-6 py-4 space-y-6">
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-400 text-sm" data-icon="call">call</span>
+<span class="text-sm font-medium text-on-surface">+212 661-000000</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-400 text-sm" data-icon="mail">mail</span>
+<span class="text-sm font-medium text-on-surface truncate">m.alaoui@email.com</span>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Tags</label>
+<div class="flex flex-wrap gap-2">
+<span class="px-2 py-1 bg-surface-container-highest text-[10px] font-bold text-on-surface-variant rounded">Price Sensitive</span>
+<span class="px-2 py-1 bg-surface-container-highest text-[10px] font-bold text-on-surface-variant rounded">B1 Interest</span>
+<button class="px-2 py-1 border border-dashed border-outline-variant text-[10px] font-bold text-slate-400 rounded hover:text-primary hover:border-primary transition-colors">+ Add</button>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Internal Notes</label>
+<textarea class="w-full bg-surface-container-lowest border-outline-variant/20 rounded-lg text-xs p-3 h-24 focus:ring-primary focus:border-primary" placeholder="Add a private note for the team..."></textarea>
+</div>
+<button class="w-full py-3 bg-surface-container-lowest text-on-surface border border-outline-variant/40 rounded-lg text-sm font-bold hover:bg-white hover:shadow-sm transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-lg" data-icon="open_in_new">open_in_new</span>
+<span>Open Lead Profile</span>
+</button>
+</div>
+<div class="mt-auto p-6 border-t border-outline-variant/10">
+<div class="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+<span>Last Activity</span>
+<span>2h ago</span>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+</body></html>

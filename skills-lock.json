@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "authentication-setup": {
+      "source": "akillness/oh-my-skills",
+      "sourceType": "github",
+      "skillPath": ".agent-skills/authentication-setup/SKILL.md",
+      "computedHash": "fe10eff0bf017388aa21f117155eb20169fc36d058d2854272cbf8e29086eafa"
+    }
+  }
+}

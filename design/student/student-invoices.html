@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Invoices &amp; Billing | Lango</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f3f4f5",
+                        "on-primary-container": "#eeefff",
+                        "primary-container": "#2563eb",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "tertiary": "#4d556b",
+                        "surface-container-highest": "#e1e3e4",
+                        "inverse-surface": "#2e3132",
+                        "background": "#f8f9fa",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#dae2fd",
+                        "tertiary-fixed-dim": "#bec6e0",
+                        "surface-container": "#edeeef",
+                        "secondary-container": "#d5e3fc",
+                        "on-primary-fixed": "#00174b",
+                        "on-tertiary-fixed-variant": "#3f465c",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-container": "#eef0ff",
+                        "surface-bright": "#f8f9fa",
+                        "tertiary-container": "#656d84",
+                        "surface-tint": "#0053db",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#191c1d",
+                        "outline-variant": "#c3c6d7",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-secondary-fixed-variant": "#3a485b",
+                        "on-secondary-container": "#57657a",
+                        "secondary": "#515f74",
+                        "on-surface-variant": "#434655",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#b4c5ff",
+                        "surface-dim": "#d9dadb",
+                        "primary-fixed": "#dbe1ff",
+                        "secondary-fixed-dim": "#b9c7df",
+                        "surface-container-high": "#e7e8e9",
+                        "error-container": "#ffdad6",
+                        "outline": "#737686",
+                        "primary": "#004ac6",
+                        "on-tertiary-fixed": "#131b2e",
+                        "surface-variant": "#e1e3e4",
+                        "surface": "#f8f9fa",
+                        "on-error": "#ffffff",
+                        "on-surface": "#191c1d",
+                        "secondary-fixed": "#d5e3fc"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .editorial-shadow { box-shadow: 0px 20px 40px rgba(15, 23, 42, 0.06); }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body antialiased">
+<!-- Top Navigation Bar -->
+<nav class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 flex justify-between items-center h-16 px-6 max-w-full font-['Inter'] antialiased">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Lango</span>
+<div class="hidden md:flex gap-6">
+<a class="text-blue-600 dark:text-blue-400 font-semibold border-b-2 border-blue-600 cursor-pointer active:opacity-70 transition-colors duration-200" href="#">Billing</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-500 cursor-pointer hover:text-blue-600 transition-colors">notifications</span>
+<span class="material-symbols-outlined text-slate-500 cursor-pointer hover:text-blue-600 transition-colors">logout</span>
+</div>
+<img alt="Fatima Zahra Benmoussa" class="w-8 h-8 rounded-full object-cover border border-slate-200" data-alt="Professional portrait of a young North African woman with a confident expression, soft natural lighting, office background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAB4n3Tvy8SUKvsbshwxMUQ4f3H_eSsLpWjYFj4ccvoQ4jjns-_KKTKquH6CU_HG1Slur1INgW2xJ-YW3soA3TeOGsbycCY9v6Wyksh0kIuy0gc_A-hKo6dmbTmOpWiyqmy01RqfKZ3mIFeW148dmBMRNkkJ1qlDZbE0V1mcw59JoseENNAN8ai4DYFFaVpNd_MrOG-8tZdGbH1WYHwW61dr1Cyye6E6QCJCJG_fLdnoy172kS6yT7ljQP17lhoLJoCWEJlD-zTIMVd"/>
+</div>
+</nav>
+<div class="flex pt-16">
+<!-- Sidebar Navigation -->
+<aside class="h-screen w-64 fixed left-0 top-0 pt-20 bg-slate-50 dark:bg-slate-950 flex flex-col gap-2 p-4 font-['Inter'] text-sm font-medium">
+<div class="flex items-center gap-3 px-4 py-4 mb-4">
+<img alt="Fatima Zahra Benmoussa" class="w-10 h-10 rounded-full object-cover" data-alt="Portrait of Fatima Zahra, clear features, soft studio lighting, high-end professional look" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_3SaPokqWhozhuRpFNkw1HmbTeboq6SVeiG1p5imcVFgxFJXfk-boW6mn_wRI8fnJ16wLcFl6UTtdVWLhEmo9Ect7cChgf8uf-Kwj8Wlx0HcfscYUKiqbQQqljmqHToqzZaORSotFpc0NMXSAixluf8u1PCENXlk-nqezMsziRa-iVuNofvtZFpQNfb0BTgp-0TVnjipE7ECon6JSdwRpLbkcxp1S2HSVelmf-82LWQ7SGk1I3Ff2Uh2XQDwFUpdhp8tTdOayMDuy"/>
+<div class="flex flex-col">
+<span class="text-slate-900 dark:text-white font-bold">Fatima Zahra</span>
+<span class="text-slate-500 text-xs">ID: 294810</span>
+</div>
+</div>
+<nav class="flex flex-col gap-1">
+<div class="flex items-center gap-3 px-4 py-3 cursor-pointer text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 cursor-pointer text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all">
+<span class="material-symbols-outlined">school</span>
+<span>My Courses</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 cursor-pointer text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all">
+<span class="material-symbols-outlined">calendar_today</span>
+<span>Calendar</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 cursor-pointer bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-lg">
+<span class="material-symbols-outlined">receipt_long</span>
+<span>Invoices</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 cursor-pointer text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all">
+<span class="material-symbols-outlined">person</span>
+<span>Profile</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 cursor-pointer text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all">
+<span class="material-symbols-outlined">help</span>
+<span>Help</span>
+</div>
+</nav>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 w-full min-h-screen p-10 max-w-[1184px] mx-auto">
+<!-- Page Header -->
+<header class="mb-10">
+<h1 class="text-[2.5rem] font-extrabold tracking-tight text-slate-900 mb-2">Invoices &amp; Billing</h1>
+<p class="text-slate-500 font-medium">Manage your academic financial records and payments.</p>
+</header>
+<!-- Outstanding Balance Banner -->
+<div class="mb-8 w-full bg-[#22C55E] text-white p-5 rounded-xl flex items-center gap-4">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-lg font-semibold tracking-wide">All Paid! No outstanding invoices</span>
+</div>
+<div class="grid grid-cols-12 gap-8 mb-12">
+<!-- Stats Bar (Bento style) -->
+<div class="col-span-8 grid grid-cols-2 gap-6">
+<div class="bg-surface-container-lowest p-8 rounded-xl border border-slate-100 flex flex-col justify-between h-44">
+<span class="text-xs uppercase tracking-[0.05em] font-medium text-slate-400">Total Paid This Year</span>
+<div class="flex flex-col">
+<span class="text-4xl font-bold text-slate-900">1,400 MAD</span>
+<span class="text-sm text-green-600 font-medium mt-1">Settled for Term 1 &amp; Registration</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-8 rounded-xl border border-slate-100 flex flex-col justify-between h-44">
+<span class="text-xs uppercase tracking-[0.05em] font-medium text-slate-400">Next Payment Due</span>
+<div class="flex flex-col">
+<span class="text-4xl font-bold text-error">1,200 MAD</span>
+<span class="text-sm text-slate-500 font-medium mt-1">Term 2 2026 Fee</span>
+</div>
+</div>
+</div>
+<!-- Payment History Mini Chart -->
+<div class="col-span-4 bg-surface-container-lowest p-8 rounded-xl border border-slate-100 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="text-xs uppercase tracking-[0.05em] font-medium text-slate-400">Payment Pulse</span>
+<span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">Last 6 Months</span>
+</div>
+<div class="flex items-end gap-2 h-20 pt-4">
+<div class="bg-slate-100 w-full h-[20%] rounded-sm"></div>
+<div class="bg-slate-100 w-full h-[15%] rounded-sm"></div>
+<div class="bg-primary-container w-full h-[60%] rounded-sm"></div>
+<div class="bg-slate-100 w-full h-[10%] rounded-sm"></div>
+<div class="bg-slate-100 w-full h-[5%] rounded-sm"></div>
+<div class="bg-primary w-full h-[85%] rounded-sm"></div>
+</div>
+</div>
+</div>
+<!-- Invoices Section -->
+<section class="bg-surface-container-lowest rounded-xl border border-slate-100 overflow-hidden">
+<div class="p-6 border-b border-slate-50 flex justify-between items-center">
+<h2 class="text-lg font-bold text-slate-900">Invoice History</h2>
+<div class="flex gap-2">
+<button class="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">Export CSV</button>
+</div>
+</div>
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50/50">
+<th class="px-6 py-4 text-[0.6875rem] uppercase tracking-wider font-semibold text-slate-400">Invoice #</th>
+<th class="px-6 py-4 text-[0.6875rem] uppercase tracking-wider font-semibold text-slate-400">Description</th>
+<th class="px-6 py-4 text-[0.6875rem] uppercase tracking-wider font-semibold text-slate-400">Date Issued</th>
+<th class="px-6 py-4 text-[0.6875rem] uppercase tracking-wider font-semibold text-slate-400">Amount</th>
+<th class="px-6 py-4 text-[0.6875rem] uppercase tracking-wider font-semibold text-slate-400">Paid</th>
+<th class="px-6 py-4 text-[0.6875rem] uppercase tracking-wider font-semibold text-slate-400">Status</th>
+<th class="px-6 py-4 text-[0.6875rem] uppercase tracking-wider font-semibold text-slate-400 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50">
+<!-- Row 1 -->
+<tr class="hover:bg-slate-50/30 transition-colors group">
+<td class="px-6 py-5 text-sm font-medium text-slate-900">#1024</td>
+<td class="px-6 py-5 text-sm text-slate-600">Term 1 2026 Fee</td>
+<td class="px-6 py-5 text-sm text-slate-500">Jan 1, 2026</td>
+<td class="px-6 py-5 text-sm font-bold text-slate-900">1,200 MAD</td>
+<td class="px-6 py-5 text-sm text-slate-500">1,200 MAD</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                    Paid
+                                </span>
+</td>
+<td class="px-6 py-5 text-right">
+<span class="material-symbols-outlined text-slate-400 hover:text-blue-600 cursor-pointer transition-colors" title="Download Receipt">download</span>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="bg-surface-container-low/30 hover:bg-slate-50/50 transition-colors group">
+<td class="px-6 py-5 text-sm font-medium text-slate-900">#1025</td>
+<td class="px-6 py-5 text-sm text-slate-600">Registration Fee</td>
+<td class="px-6 py-5 text-sm text-slate-500">Jan 1, 2026</td>
+<td class="px-6 py-5 text-sm font-bold text-slate-900">200 MAD</td>
+<td class="px-6 py-5 text-sm text-slate-500">200 MAD</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                    Paid
+                                </span>
+</td>
+<td class="px-6 py-5 text-right">
+<span class="material-symbols-outlined text-slate-400 hover:text-blue-600 cursor-pointer transition-colors" title="Download Receipt">download</span>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-slate-50/30 transition-colors group">
+<td class="px-6 py-5 text-sm font-medium text-slate-900">#1026</td>
+<td class="px-6 py-5 text-sm text-slate-600">Term 2 2026 Fee</td>
+<td class="px-6 py-5 text-sm text-slate-500">Apr 1, 2026</td>
+<td class="px-6 py-5 text-sm font-bold text-slate-900">1,200 MAD</td>
+<td class="px-6 py-5 text-sm text-slate-500">0 MAD</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-error">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                                    Overdue
+                                </span>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="px-4 py-1.5 bg-primary-container text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-all shadow-sm">Pay Now</button>
+</td>
+</tr>
+</tbody>
+</table>
+</section>
+<!-- Footer Help/Info Section -->
+<footer class="mt-12 grid grid-cols-3 gap-8">
+<div class="flex flex-col gap-2">
+<span class="text-sm font-bold text-slate-900">Need Assistance?</span>
+<p class="text-xs text-slate-500 leading-relaxed">For questions regarding your billing schedule or payment methods, please contact the financial office.</p>
+<a class="text-xs text-blue-600 font-bold hover:underline" href="#">Contact Support</a>
+</div>
+<div class="flex flex-col gap-2">
+<span class="text-sm font-bold text-slate-900">Payment Methods</span>
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-slate-400 text-xl">credit_card</span>
+<span class="material-symbols-outlined text-slate-400 text-xl">account_balance</span>
+<span class="material-symbols-outlined text-slate-400 text-xl">payments</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 items-end justify-center">
+<p class="text-[0.6875rem] text-slate-400 text-right">Last updated: Oct 24, 2023 14:20 PM<br/>© 2026 Lango Academic Services</p>
+</div>
+</footer>
+</main>
+</div>
+</body></html>

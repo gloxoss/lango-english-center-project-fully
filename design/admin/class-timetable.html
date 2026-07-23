@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Class &amp; Timetable Management - Lango Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#b5c5fc",
+                        "inverse-surface": "#2f3131",
+                        "on-tertiary-fixed-variant": "#842500",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "surface-dim": "#dadada",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "surface-container-high": "#e8e8e8",
+                        "inverse-primary": "#b4c5ff",
+                        "on-tertiary-fixed": "#3a0b00",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed": "#dbe1ff",
+                        "primary": "#003594",
+                        "on-primary-container": "#b8c8ff",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#00174b",
+                        "on-surface-variant": "#434654",
+                        "surface": "#f9f9f9",
+                        "on-error-container": "#93000a",
+                        "tertiary-container": "#9c2e02",
+                        "surface-tint": "#1b55d0",
+                        "inverse-on-surface": "#f0f1f1",
+                        "on-secondary-fixed-variant": "#354574",
+                        "outline-variant": "#c3c6d6",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-background": "#1a1c1c",
+                        "on-surface": "#1a1c1c",
+                        "surface-bright": "#f9f9f9",
+                        "primary-fixed": "#dbe1ff",
+                        "secondary": "#4d5d8d",
+                        "on-secondary-container": "#435282",
+                        "error": "#ba1a1a",
+                        "secondary-container": "#b8c8ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-container": "#ffb9a4",
+                        "tertiary-fixed-dim": "#ffb59e",
+                        "surface-container": "#eeeeee",
+                        "outline": "#737685",
+                        "on-tertiary": "#ffffff",
+                        "surface-variant": "#e2e2e2",
+                        "surface-container-low": "#f3f3f3",
+                        "tertiary-fixed": "#ffdbd0",
+                        "on-error": "#ffffff",
+                        "background": "#f9f9f9",
+                        "on-secondary-fixed": "#051846",
+                        "primary-container": "#004ac6",
+                        "on-primary": "#ffffff",
+                        "tertiary": "#751f00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body text-on-surface antialiased">
+<!-- TopAppBar -->
+<header class="bg-[#ffffff] dark:bg-slate-950 flex justify-between items-center px-6 h-16 w-full fixed top-0 z-40">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#004ac6] dark:text-blue-400">menu</span>
+<h1 class="text-lg font-black text-[#003594] dark:text-blue-200 tracking-tighter">Lango Admin</h1>
+</div>
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-[10px] text-white font-bold">
+            AU
+        </div>
+</header>
+<!-- Main Content -->
+<main class="pt-20 pb-24 px-4 max-w-md mx-auto space-y-8">
+<!-- Weekly Navigator Header -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<div class="space-y-1">
+<span class="label-md uppercase tracking-[0.05em] text-on-surface-variant font-medium text-[10px]">Academic Calendar</span>
+<h2 class="text-2xl font-bold tracking-[-0.02em] text-on-surface">April 1 - April 7</h2>
+</div>
+<div class="flex gap-2">
+<button class="w-10 h-10 flex items-center justify-center bg-surface-container-low rounded-lg">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center bg-surface-container-low rounded-lg">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Horizontal Day Scroller -->
+<div class="flex gap-3 overflow-x-auto hide-scrollbar py-2">
+<div class="flex-shrink-0 w-14 h-20 bg-primary-container text-white rounded-xl flex flex-col items-center justify-center space-y-1 shadow-lg shadow-primary/20">
+<span class="text-[10px] uppercase font-bold tracking-widest">Mon</span>
+<span class="text-xl font-black">01</span>
+</div>
+<div class="flex-shrink-0 w-14 h-20 bg-surface-container-lowest border border-outline-variant/10 rounded-xl flex flex-col items-center justify-center space-y-1">
+<span class="text-[10px] uppercase font-medium tracking-widest text-on-surface-variant">Tue</span>
+<span class="text-xl font-bold text-on-surface">02</span>
+</div>
+<div class="flex-shrink-0 w-14 h-20 bg-surface-container-lowest border border-outline-variant/10 rounded-xl flex flex-col items-center justify-center space-y-1">
+<span class="text-[10px] uppercase font-medium tracking-widest text-on-surface-variant">Wed</span>
+<span class="text-xl font-bold text-on-surface">03</span>
+</div>
+<div class="flex-shrink-0 w-14 h-20 bg-surface-container-lowest border border-outline-variant/10 rounded-xl flex flex-col items-center justify-center space-y-1">
+<span class="text-[10px] uppercase font-medium tracking-widest text-on-surface-variant">Thu</span>
+<span class="text-xl font-bold text-on-surface">04</span>
+</div>
+<div class="flex-shrink-0 w-14 h-20 bg-surface-container-lowest border border-outline-variant/10 rounded-xl flex flex-col items-center justify-center space-y-1">
+<span class="text-[10px] uppercase font-medium tracking-widest text-on-surface-variant">Fri</span>
+<span class="text-xl font-bold text-on-surface">05</span>
+</div>
+</div>
+</section>
+<!-- Timetable Grid Section (Focused on Active Day: Monday) -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="text-sm font-extrabold uppercase tracking-widest text-on-surface-variant/70">Monday Schedule</h3>
+<span class="text-[10px] font-bold text-primary px-2 py-1 bg-primary/10 rounded">3 CLASSES TODAY</span>
+</div>
+<div class="relative grid grid-cols-[3rem_1fr] gap-x-4">
+<!-- Timeline Rulers -->
+<div class="space-y-[4.5rem] pt-2">
+<div class="text-[10px] font-bold text-on-surface-variant text-right">08:00</div>
+<div class="text-[10px] font-bold text-on-surface-variant text-right">09:00</div>
+<div class="text-[10px] font-bold text-on-surface-variant text-right">10:00</div>
+<div class="text-[10px] font-bold text-on-surface-variant text-right">11:00</div>
+<div class="text-[10px] font-bold text-on-surface-variant text-right">12:00</div>
+</div>
+<!-- Grid Background -->
+<div class="space-y-[5.25rem] pt-[1.125rem]">
+<div class="h-[1px] w-full bg-outline-variant/15"></div>
+<div class="h-[1px] w-full bg-outline-variant/15"></div>
+<div class="h-[1px] w-full bg-outline-variant/15"></div>
+<div class="h-[1px] w-full bg-outline-variant/15"></div>
+<div class="h-[1px] w-full bg-outline-variant/15"></div>
+</div>
+<!-- Class Blocks -->
+<div class="absolute left-16 right-0 top-0 h-full">
+<!-- A1 Block -->
+<div class="absolute top-[0.5rem] w-full h-[9rem] bg-primary-container/10 border-l-4 border-primary-container p-3 rounded-r-lg">
+<div class="flex justify-between items-start">
+<span class="text-[9px] font-black uppercase text-primary-container tracking-wider">08:00 - 10:00</span>
+<span class="material-symbols-outlined text-sm text-primary-container">meeting_room</span>
+</div>
+<h4 class="font-bold text-sm text-on-surface mt-1">A1-Monday-Morning</h4>
+<div class="mt-2 flex items-center gap-2">
+<div class="w-5 h-5 rounded-full bg-primary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-[10px] text-primary-container" style="font-variation-settings: 'FILL' 1;">person</span>
+</div>
+<span class="text-xs font-medium text-on-surface-variant">Teacher: Sara</span>
+</div>
+<div class="mt-2 text-[10px] font-bold text-primary-container">Room 102</div>
+</div>
+<!-- B1 Block -->
+<div class="absolute top-[11rem] w-full h-[4.5rem] bg-[#2e7d32]/10 border-l-4 border-[#2e7d32] p-3 rounded-r-lg">
+<div class="flex justify-between items-start">
+<span class="text-[9px] font-black uppercase text-[#2e7d32] tracking-wider">10:30 - 11:30</span>
+<span class="material-symbols-outlined text-sm text-[#2e7d32]">meeting_room</span>
+</div>
+<h4 class="font-bold text-sm text-on-surface mt-1">Staff Sync</h4>
+<div class="text-[10px] font-bold text-[#2e7d32]">Conference Hall</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Class Batch List Section -->
+<section class="space-y-6 pt-4">
+<div class="flex items-center justify-between">
+<h3 class="text-sm font-extrabold uppercase tracking-widest text-on-surface-variant/70">Class Batches</h3>
+<button class="text-xs font-bold text-primary flex items-center gap-1">
+                    VIEW ALL <span class="material-symbols-outlined text-xs">arrow_forward</span>
+</button>
+</div>
+<div class="space-y-4">
+<!-- A1-Monday-Morning -->
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-sm space-y-4">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 rounded-full bg-primary-container"></div>
+<h4 class="font-bold text-on-surface">A1-Monday-Morning</h4>
+</div>
+<span class="text-[10px] font-black px-2 py-1 bg-primary-container/10 text-primary-container rounded uppercase tracking-tighter">Level A1</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">groups</span>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest">Enrolled</p>
+<p class="text-xs font-bold">18/20 Students</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">school</span>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest">Instructor</p>
+<p class="text-xs font-bold">Sara</p>
+</div>
+</div>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 90%"></div>
+</div>
+</div>
+<!-- A2-Wednesday-Evening -->
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-sm space-y-4">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 rounded-full bg-secondary"></div>
+<h4 class="font-bold text-on-surface">A2-Wednesday-Evening</h4>
+</div>
+<span class="text-[10px] font-black px-2 py-1 bg-secondary/10 text-secondary rounded uppercase tracking-tighter">Level A2</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">groups</span>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest">Enrolled</p>
+<p class="text-xs font-bold">15/20 Students</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">school</span>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest">Instructor</p>
+<p class="text-xs font-bold">Karim</p>
+</div>
+</div>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full" style="width: 75%"></div>
+</div>
+</div>
+<!-- B1-Friday-Morning -->
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-sm border-2 border-[#2e7d32]/20 space-y-4 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-2">
+<span class="text-[8px] font-bold bg-[#2e7d32] text-white px-2 py-0.5 rounded-full">FULL</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 rounded-full bg-[#2e7d32]"></div>
+<h4 class="font-bold text-on-surface">B1-Friday-Morning</h4>
+</div>
+<span class="text-[10px] font-black px-2 py-1 bg-[#2e7d32]/10 text-[#2e7d32] rounded uppercase tracking-tighter">Level B1</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">groups</span>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest">Enrolled</p>
+<p class="text-xs font-bold">20/20 Students</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">school</span>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest">Instructor</p>
+<p class="text-xs font-bold">Nadia</p>
+</div>
+</div>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-[#2e7d32] rounded-full" style="width: 100%"></div>
+</div>
+</div>
+<!-- B2-Thursday-Evening -->
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-sm space-y-4">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 rounded-full bg-[#f59e0b]"></div>
+<h4 class="font-bold text-on-surface">B2-Thursday-Evening</h4>
+</div>
+<span class="text-[10px] font-black px-2 py-1 bg-[#f59e0b]/10 text-[#f59e0b] rounded uppercase tracking-tighter">Level B2</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">groups</span>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest">Enrolled</p>
+<p class="text-xs font-bold">12/20 Students</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">school</span>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest">Instructor</p>
+<p class="text-xs font-bold">Omar</p>
+</div>
+</div>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-[#f59e0b] rounded-full" style="width: 60%"></div>
+</div>
+</div>
+<!-- C1-Advanced-Weekend -->
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-sm space-y-4">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 rounded-full bg-[#7b1fa2]"></div>
+<h4 class="font-bold text-on-surface">C1-Advanced-Weekend</h4>
+</div>
+<span class="text-[10px] font-black px-2 py-1 bg-[#7b1fa2]/10 text-[#7b1fa2] rounded uppercase tracking-tighter">Level C1</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">groups</span>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest">Enrolled</p>
+<p class="text-xs font-bold">8/15 Students</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">school</span>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest">Instructor</p>
+<p class="text-xs font-bold">Ahmed</p>
+</div>
+</div>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-[#7b1fa2] rounded-full" style="width: 53%"></div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- FAB -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-br from-primary to-primary-container rounded-full shadow-2xl shadow-primary/40 flex items-center justify-center text-white z-50 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center py-3 px-4 bg-[#ffffff] dark:bg-slate-900 shadow-[0_-4px_24px_rgba(0,23,75,0.05)] border-t border-[#c3c6d6]/15 z-50">
+<a class="flex flex-col items-center justify-center text-[#434654] dark:text-slate-400" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.05em] font-medium mt-1">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#004ac6]/10 text-[#004ac6] rounded-[4px] px-3 py-1" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">school</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.05em] font-bold mt-1">Classes</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#434654] dark:text-slate-400" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.05em] font-medium mt-1">Schedule</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#434654] dark:text-slate-400" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-[0.05em] font-medium mt-1">Staff</span>
+</a>
+</nav>
+</body></html>

@@ -1,0 +1,44 @@
+﻿node_modules/
+.env
+*.log
+
+# IDE & System
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+*.swp
+
+# Python Virtual Envs & Caches
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+env/
+
+# PHP Composer & Cache
+vendor/
+**/vendor/
+composer.lock
+
+# Large Binary Exclusions (Detected during onboarding)
+lango-app/.next/dev/cache/turbopack/ee6e79b1/00000752.sst
+lango-app/.next/dev/cache/turbopack/ee6e79b1/00000762.sst
+lango-app/.next/dev/cache/turbopack/ee6e79b1/00001824.sst
+lango-app/.next/dev/cache/turbopack/ee6e79b1/00001828.sst
+lango-app/.next/dev/cache/turbopack/ee6e79b1/00001849.sst
+lango-app/.next/dev/cache/turbopack/ee6e79b1/00001917.sst
+lango-app/.next/dev/cache/turbopack/ee6e79b1/00002272.sst
+lango-app/.next/dev/cache/turbopack/ee6e79b1/00002291.sst
+lango-app/.next/dev/cache/turbopack/ee6e79b1/00002300.sst
+lango-app/.next/dev/cache/turbopack/ee6e79b1/00002301.sst
+lango-app/node_modules/@next/.swc-win32-x64-msvc-gQA6Odv0/next-swc.win32-x64-msvc.node
+lango-app/node_modules/@next/swc-win32-x64-msvc/next-swc.win32-x64-msvc.node
+
+# Large Binary Exclusions (Detected during onboarding)
+
+# Large Binary Exclusions (Detected during onboarding)
+
+# Large Binary Exclusions (Detected during onboarding)

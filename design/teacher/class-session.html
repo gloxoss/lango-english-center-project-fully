@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lango - Attendance Session</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary": "#006229",
+                      "surface-tint": "#0053db",
+                      "inverse-surface": "#2e3132",
+                      "on-tertiary-container": "#c1ffc5",
+                      "surface-container-highest": "#e1e3e4",
+                      "surface-container-low": "#f3f4f5",
+                      "on-surface-variant": "#434655",
+                      "on-surface": "#191c1d",
+                      "on-error-container": "#93000a",
+                      "secondary-fixed-dim": "#b9c7df",
+                      "on-background": "#191c1d",
+                      "on-tertiary-fixed": "#002109",
+                      "on-secondary": "#ffffff",
+                      "outline-variant": "#c3c6d7",
+                      "inverse-primary": "#b4c5ff",
+                      "secondary-fixed": "#d5e3fc",
+                      "primary-fixed-dim": "#b4c5ff",
+                      "error-container": "#ffdad6",
+                      "background": "#f8f9fa",
+                      "primary-fixed": "#dbe1ff",
+                      "inverse-on-surface": "#f0f1f2",
+                      "outline": "#737686",
+                      "secondary-container": "#d5e3fc",
+                      "surface-dim": "#d9dadb",
+                      "surface-container-high": "#e7e8e9",
+                      "secondary": "#515f74",
+                      "primary-container": "#2563eb",
+                      "tertiary-container": "#007e37",
+                      "error": "#ba1a1a",
+                      "on-primary": "#ffffff",
+                      "surface-variant": "#e1e3e4",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-fixed-variant": "#003ea8",
+                      "primary": "#004ac6",
+                      "on-secondary-container": "#57657a",
+                      "surface": "#f8f9fa",
+                      "tertiary-fixed": "#6bff8f",
+                      "on-secondary-fixed": "#0d1c2e",
+                      "on-tertiary": "#ffffff",
+                      "tertiary-fixed-dim": "#4ae176",
+                      "on-primary-container": "#eeefff",
+                      "on-primary-fixed": "#00174b",
+                      "surface-bright": "#f8f9fa",
+                      "surface-container": "#edeeef",
+                      "on-secondary-fixed-variant": "#3a485b",
+                      "on-error": "#ffffff",
+                      "on-tertiary-fixed-variant": "#005321"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": ["Inter"],
+                      "body": ["Inter"],
+                      "label": ["Inter"]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="bg-white dark:bg-slate-950 flex items-center justify-between px-6 py-4 w-full sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<button class="text-blue-700 dark:text-blue-400 active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<div>
+<h1 class="font-['Inter'] headline-md text-slate-900 dark:text-slate-50 tracking-tight text-lg font-bold">A1-Monday-Morning</h1>
+<p class="text-xs text-slate-500 font-medium">April 3, 2026 • 09:00-10:30</p>
+</div>
+</div>
+<button class="text-blue-700 dark:text-blue-400 active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</header>
+<!-- Progress Indicator -->
+<div class="w-full h-1 bg-surface-container-high overflow-hidden">
+<div class="h-full bg-primary" style="width: 82%;"></div>
+</div>
+<main class="max-w-md mx-auto">
+<!-- Session Actions -->
+<section class="px-6 py-6 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-['Inter'] label-sm uppercase tracking-widest font-bold text-slate-500">Attendance Progress</span>
+<span class="text-2xl font-bold tracking-tight text-slate-900">18 of 22 marked</span>
+</div>
+<div class="flex flex-col items-end gap-2">
+<button class="text-primary font-semibold text-sm hover:underline">All Present</button>
+<button class="text-error font-semibold text-sm hover:underline">End Session</button>
+</div>
+</section>
+<!-- Attendance List -->
+<section class="space-y-4 px-4">
+<!-- Fatima Zahra: Present -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-tertiary/10 border-l-4 border-tertiary">
+<div class="flex items-center gap-3">
+<img alt="Fatima Zahra" class="w-8 h-8 rounded-full object-cover" data-alt="Close-up portrait of a professional young woman with a warm smile, natural studio lighting, soft neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDG1_qkzKjJVHEl_A7AFPoV8Luok_DxKKLFWIYEhxGjypGq4tfmU-vUvD98skZ8Xy1g1xh_stFfA9lrWZ9sFUQwB3e0Mi79hWMhwNeLHil_EVnAYMu6LCmLeyzmRAA8wC4_6g1H1T4HhcE4PKftqoqKnD4IYLmZRmG96AT7nXqFRooKX0WaMIbLJEYgaXiLDyGQ2kLFwXF-MkItrW1Aq1JyIZ_8sbcG7bBB0G4JMXk5WhShuvmVzf8OfUPfnoTPjfXJ1c1pScp8uu68"/>
+<span class="font-semibold text-slate-900 text-sm">Fatima Zahra</span>
+</div>
+<div class="flex bg-white/50 rounded-lg p-1 gap-1">
+<button class="bg-tertiary text-white px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span> P
+                    </button>
+<button class="text-slate-400 px-3 py-1 rounded-md text-xs font-bold">A</button>
+<button class="text-slate-400 px-3 py-1 rounded-md text-xs font-bold">L</button>
+</div>
+</div>
+<!-- Youssef El Idrissi: Absent -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-error/10 border-l-4 border-error">
+<div class="flex items-center gap-3">
+<img alt="Youssef El Idrissi" class="w-8 h-8 rounded-full object-cover" data-alt="Portrait of a young man with glasses and a friendly expression, soft daylight, outdoor urban setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuByzF6ZO_8MOzckT1x6F3mXDUVkrKrR5GMaWHXDI3kzGCveJxd3YdpaFihieWoB5c-P2RPgrfecVZ8VsJTAIlqvLcMKXCK0ldt2Ldjd1UmQXiQ5Yqbwt2jJqwz7ggM-HSye3IhDcKoEI_Fg3HlrayhuUu9t8IvMY5ktKEpN9V0iJMLdGTUWhVbJOZHaspEkDdt3s4K_jGkXb7zbwBDg9MNRLCtem95PWClDyFqnbeRu5UKRzN8qqo92DjzaRXAceWwqTQuJv_6vYOGU"/>
+<span class="font-semibold text-slate-900 text-sm">Youssef El Idrissi</span>
+</div>
+<div class="flex bg-white/50 rounded-lg p-1 gap-1">
+<button class="text-slate-400 px-3 py-1 rounded-md text-xs font-bold">P</button>
+<button class="bg-error text-white px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="cancel" style="font-variation-settings: 'FILL' 1;">cancel</span> A
+                    </button>
+<button class="text-slate-400 px-3 py-1 rounded-md text-xs font-bold">L</button>
+</div>
+</div>
+<!-- Aya Benali: Present -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-tertiary/10 border-l-4 border-tertiary">
+<div class="flex items-center gap-3">
+<img alt="Aya Benali" class="w-8 h-8 rounded-full object-cover" data-alt="Modern professional headshot of a woman, soft studio light, minimalist background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAjnKq4VoFGBQ2ljJrvifXJgg7Xo6yi6DltmneyGXqglyxttQkGSynQYkMPJFaZV4yXe45TidWIKu0tlWnI7f2tjmjijoPcqPtAjVMFafSvoDvr1npWd4f0pC6Wk7YOpdjugfSHvYizxVZqL9KNLdrEVUHm6GPLRKbT_Iwn6Kb2d1K741lxBS178M-mOZ8ytrob5Jtjd7QzgcKYFbRx93k4EPH_zLEBDgobeADtFybbD53oJ96ZA3MwJIjkZsF2tm-K4OkZCB2z2c4"/>
+<span class="font-semibold text-slate-900 text-sm">Aya Benali</span>
+</div>
+<div class="flex bg-white/50 rounded-lg p-1 gap-1">
+<button class="bg-tertiary text-white px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span> P
+                    </button>
+<button class="text-slate-400 px-3 py-1 rounded-md text-xs font-bold">A</button>
+<button class="text-slate-400 px-3 py-1 rounded-md text-xs font-bold">L</button>
+</div>
+</div>
+<!-- Omar Chraibi: Late -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-amber-50 border-l-4 border-amber-500">
+<div class="flex items-center gap-3">
+<img alt="Omar Chraibi" class="w-8 h-8 rounded-full object-cover" data-alt="Close-up of a smiling young man, natural outdoor lighting with soft sun flare" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAoAMwqgbtWffg6f1ooogUE22rH_41NRGQbpauCUMgL5YwH7173CR6SI1HK9n2N9iq2IINpctTtmIQZI_rSJsqhwqjEIL5u0r2Dk3l7Z2ypG-u17L3arvG91VA7CvjKj8-sueoo-JH7o5-ndjGJS_-xWdZU5qV7UGFIWXn9kXrWDxvKuagQq7J18LM2JZIGdXJ6EdBlJA4hRMfamgpQ_9UXnofXg9yUBnmg4ORlF0PyfoHlMKiGCxVA-bzKX0KEzAJUnb8xaTruhBw3"/>
+<span class="font-semibold text-slate-900 text-sm">Omar Chraibi</span>
+</div>
+<div class="flex bg-white/50 rounded-lg p-1 gap-1">
+<button class="text-slate-400 px-3 py-1 rounded-md text-xs font-bold">P</button>
+<button class="text-slate-400 px-3 py-1 rounded-md text-xs font-bold">A</button>
+<button class="bg-amber-500 text-white px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="schedule" style="font-variation-settings: 'FILL' 1;">schedule</span> L
+                    </button>
+</div>
+</div>
+<!-- Sara Filali: Present -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-tertiary/10 border-l-4 border-tertiary">
+<div class="flex items-center gap-3">
+<img alt="Sara Filali" class="w-8 h-8 rounded-full object-cover" data-alt="Professional woman in business casual attire, bright airy office background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBx6QOdJR35ztLqVEBmxi9mgYrDniZIBGYjjrEwitoUSFAjAubsTcTLa31BCwMBKES0XPr6l-Vo5PYzZlGIBQ2HaMLqrX3YhzGDboCJmWzRMu7lbm-KX6Dn78tvnonlAJXMHbSFcTEIaMS7Si_fwrj5Eh87MFsWspYY-sS2dz24rfGpVgXtN_F0JZsGEX720FdGYNxZtUnPbWbTr-G0dEUxNvs5xdaMVR9srNBn4VNjYNlOkEKnHSGHJpXe8SMZNU4lTNJq3MFEKD3p"/>
+<span class="font-semibold text-slate-900 text-sm">Sara Filali</span>
+</div>
+<div class="flex bg-white/50 rounded-lg p-1 gap-1">
+<button class="bg-tertiary text-white px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span> P
+                    </button>
+<button class="text-slate-400 px-3 py-1 rounded-md text-xs font-bold">A</button>
+<button class="text-slate-400 px-3 py-1 rounded-md text-xs font-bold">L</button>
+</div>
+</div>
+<!-- Hassan Moukrim: Present -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-tertiary/10 border-l-4 border-tertiary">
+<div class="flex items-center gap-3">
+<img alt="Hassan Moukrim" class="w-8 h-8 rounded-full object-cover" data-alt="Headshot of a confident man, soft focus background, professional lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1Gbk8hT8cWA76O9Vi-upAMmMjTcJVGD4COxVqQYx-hac7CbGww_UxCxmUjGNoM1SxrMhkNq1lQnKYUwSlLlZxDr_H-8RAmi4U9Ni1o1Cp-vP6fPnoszwB3az6wuiKIxo97tGEIP8ZxsuC6TNtHvgKgughOwukcG8V1UjR_hmEjxFUfBo9FltQjaUD8Ffn11MlL0jm6eHohohDLMsXo4zhlvRfnioObTmmCKycIrH51fRp6mDSIU5BwOnX_Uw4jLR65HTvsjNfwplH"/>
+<span class="font-semibold text-slate-900 text-sm">Hassan Moukrim</span>
+</div>
+<div class="flex bg-white/50 rounded-lg p-1 gap-1">
+<button class="bg-tertiary text-white px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span> P
+                    </button>
+<button class="text-slate-400 px-3 py-1 rounded-md text-xs font-bold">A</button>
+<button class="text-slate-400 px-3 py-1 rounded-md text-xs font-bold">L</button>
+</div>
+</div>
+<!-- Zineb Alami: Late -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-amber-50 border-l-4 border-amber-500">
+<div class="flex items-center gap-3">
+<img alt="Zineb Alami" class="w-8 h-8 rounded-full object-cover" data-alt="Candid portrait of a young woman laughing, soft natural evening light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBH_vD6hCWYr8AKaQ0uOqgxjjqEJZ25qt3z3xyoZG3JzLIXtoyFuqviV_xVasfzqMLQsHBbAdIotv-mksJ7m25JF0--e9fZo6SLoOxt9GZHpjos1dRSDjNowTCy-OhDhBCy84dMZIv-0D3gil8a9mHml69MuHmvn3Lrn00h_-Sj0vMQ3Hzefh4d_aXZ4CnhoE33YL8QU6kbqIi7nxEi13yOwkHbHQ6rg5Q6nm49RicKRTQmWZeItlzC2LdTE-xkUi3VZi8xU29aZZhH"/>
+<span class="font-semibold text-slate-900 text-sm">Zineb Alami</span>
+</div>
+<div class="flex bg-white/50 rounded-lg p-1 gap-1">
+<button class="text-slate-400 px-3 py-1 rounded-md text-xs font-bold">P</button>
+<button class="text-slate-400 px-3 py-1 rounded-md text-xs font-bold">A</button>
+<button class="bg-amber-500 text-white px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="schedule" style="font-variation-settings: 'FILL' 1;">schedule</span> L
+                    </button>
+</div>
+</div>
+<!-- Unmarked Students Placeholder -->
+<div class="space-y-3 opacity-60">
+<div class="flex items-center justify-between p-3 rounded-xl bg-surface-container-low border-l-4 border-transparent">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500">ML</div>
+<span class="font-semibold text-slate-900 text-sm">Mehdi Lahlou</span>
+</div>
+<div class="flex bg-slate-100 rounded-lg p-1 gap-1">
+<button class="text-slate-400 px-3 py-1 rounded-md text-xs font-bold">P</button>
+<button class="text-slate-400 px-3 py-1 rounded-md text-xs font-bold">A</button>
+<button class="text-slate-400 px-3 py-1 rounded-md text-xs font-bold">L</button>
+</div>
+</div>
+<p class="text-center text-xs font-medium text-slate-400 py-2">+ 3 more unmarked students</p>
+</div>
+</section>
+<!-- Session Notes Section -->
+<section class="px-6 py-8">
+<label class="font-['Inter'] label-sm uppercase tracking-widest font-bold text-slate-500 block mb-3">Class session notes...</label>
+<textarea class="w-full bg-white rounded-xl border-none shadow-sm focus:ring-2 focus:ring-primary text-sm p-4 placeholder:text-slate-300" placeholder="Add internal notes for this session..." rows="4"></textarea>
+</section>
+</main>
+<!-- Sticky Bottom Action -->
+<div class="fixed bottom-0 left-0 w-full p-4 bg-white/80 backdrop-blur-xl border-t border-slate-100 z-50">
+<button class="w-full bg-primary-container text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            Save &amp; Submit Attendance
+        </button>
+</div>
+<!-- BottomNavBar (Hidden but logic included for shell requirements) -->
+<nav class="fixed bottom-0 left-0 w-full z-40 flex justify-around items-center px-4 pb-6 pt-3 bg-white/80 backdrop-blur-xl hidden">
+<div class="flex flex-col items-center justify-center text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/20 rounded-xl px-3 py-1">
+<span class="material-symbols-outlined" data-icon="timer" style="font-variation-settings: 'FILL' 1;">timer</span>
+<span class="font-['Inter'] label-sm uppercase tracking-widest font-bold">Session</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-['Inter'] label-sm uppercase tracking-widest font-bold">Students</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-['Inter'] label-sm uppercase tracking-widest font-bold">Analytics</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
+<span class="material-symbols-outlined" data-icon="check_circle">check_circle</span>
+<span class="font-['Inter'] label-sm uppercase tracking-widest font-bold">Submit</span>
+</div>
+</nav>
+</body></html>

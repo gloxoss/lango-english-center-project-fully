@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,700;1,6..72,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-fixed-variant": "#003ea8",
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed-variant": "#15409e",
+                      "surface-bright": "#faf8ff",
+                      "primary-fixed": "#dbe1ff",
+                      "inverse-surface": "#2e3038",
+                      "on-primary-fixed": "#00174b",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "on-tertiary-container": "#b7c7ff",
+                      "tertiary-fixed-dim": "#b4c5ff",
+                      "surface-tint": "#1b55d0",
+                      "surface-dim": "#d9d9e4",
+                      "on-primary-container": "#b8c8ff",
+                      "on-secondary-container": "#626567",
+                      "secondary-fixed-dim": "#c4c7c9",
+                      "tertiary": "#003594",
+                      "surface-container-low": "#f3f3fd",
+                      "on-secondary-fixed-variant": "#444749",
+                      "surface-container-high": "#e7e7f2",
+                      "on-surface-variant": "#434654",
+                      "on-surface": "#191b23",
+                      "primary-fixed-dim": "#b4c5ff",
+                      "on-secondary": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "outline-variant": "#c3c6d6",
+                      "surface": "#faf8ff",
+                      "primary-container": "#004ac6",
+                      "on-error": "#ffffff",
+                      "background": "#faf8ff",
+                      "on-background": "#191b23",
+                      "surface-container": "#ededf8",
+                      "on-secondary-fixed": "#191c1e",
+                      "on-error-container": "#93000a",
+                      "secondary-container": "#e0e3e5",
+                      "inverse-primary": "#b4c5ff",
+                      "secondary-fixed": "#e0e3e5",
+                      "secondary": "#5c5f61",
+                      "inverse-on-surface": "#f0f0fb",
+                      "primary": "#003594",
+                      "tertiary-fixed": "#dbe1ff",
+                      "tertiary-container": "#294eac",
+                      "surface-container-highest": "#e2e2ec",
+                      "on-tertiary-fixed": "#00174b",
+                      "surface-variant": "#e2e2ec",
+                      "outline": "#737685"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": [
+                              "Newsreader"
+                      ],
+                      "body": [
+                              "Inter"
+                      ],
+                      "label": [
+                              "Inter"
+                      ]
+              }
+            },
+          }
+        }
+      </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-white">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-blue-900/5 dark:shadow-none">
+<div class="flex justify-between items-center max-w-7xl mx-auto px-8 py-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-blue-700 dark:text-blue-400" data-icon="school">school</span>
+<span class="text-2xl font-serif font-bold text-blue-700 dark:text-blue-400 tracking-tight">Lango</span>
+</div>
+<nav class="hidden md:flex items-center space-x-8">
+<a class="text-blue-700 dark:text-blue-400 font-bold border-b-2 border-blue-700 transition-colors duration-300" href="#">Home</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors duration-300" href="#">Courses</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors duration-300" href="#">About</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors duration-300" href="#">Contact</a>
+</nav>
+<button class="bg-primary-container text-white px-6 py-2.5 rounded-lg font-medium hover:bg-primary transition-all duration-300 active:scale-95">
+                Book a Free Trial
+            </button>
+</div>
+</header>
+<main class="pt-24">
+<!-- Hero Section -->
+<section class="relative overflow-hidden bg-surface py-20 lg:py-32">
+<div class="max-w-7xl mx-auto px-8 grid lg:grid-cols-2 gap-16 items-center">
+<div class="z-10">
+<span class="inline-block px-4 py-1.5 mb-6 text-xs font-bold tracking-widest uppercase text-primary bg-primary-fixed rounded-full">Casablanca's Top Rated</span>
+<h1 class="text-5xl lg:text-7xl font-serif font-bold text-on-surface leading-[1.1] mb-8">
+                        Learn English with Confidence
+                    </h1>
+<p class="text-xl text-secondary mb-10 max-w-lg leading-relaxed">
+                        Join 500+ students at Casablanca's premier English center. Master the world's language with modern editorial methods.
+                    </p>
+<div class="flex flex-col sm:flex-row gap-4">
+<button class="px-8 py-4 bg-primary-container text-white rounded-lg font-semibold text-lg hover:bg-primary shadow-lg shadow-primary/20 transition-all">
+                            View Our Courses
+                        </button>
+<button class="px-8 py-4 border-2 border-primary text-primary rounded-lg font-semibold text-lg hover:bg-primary-fixed transition-all">
+                            Contact Us
+                        </button>
+</div>
+</div>
+<div class="relative group">
+<div class="absolute -inset-4 bg-primary-container/5 rounded-[2rem] -rotate-2"></div>
+<img alt="Students studying" class="relative rounded-2xl shadow-2xl z-10 w-full h-[500px] object-cover" data-alt="Modern bright classroom with diverse group of students smiling and collaborating around a wooden table in a high-end educational facility" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBu203oUz3EjZ6t6gDFtnktygkTO6c4Im1BCS6rPBifZ_VGTVzU7shmRfUEx9mCaqam-B3k3TqGEo_7wxLJwIwVJj05MyxYUWZGXaPRhum6eI9xux44naTJ0IVeWHXr_hQpzRIl_8efxktqEmmQ3oM45mlxfbhUtpBYMP1C-dAUXq5btAWDugzwzSpZx0yI9K19MIvI4H3UlI0cX5cKdUNbrzo4jMwM2i9EhtyyLWSuA3dtvpg_8D9eX-5waqAsxPEIE2aZDMvx89_1"/>
+<div class="absolute -bottom-6 -left-6 bg-white p-6 rounded-xl shadow-xl z-20 flex items-center gap-4">
+<div class="p-3 bg-primary/10 rounded-full">
+<span class="material-symbols-outlined text-primary" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<div>
+<p class="font-bold text-lg text-on-surface">4.9/5 Rating</p>
+<p class="text-sm text-secondary">From 200+ Google Reviews</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Stats Row -->
+<section class="bg-surface-container-low py-16">
+<div class="max-w-7xl mx-auto px-8">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+<div class="text-center p-6 bg-surface-container-lowest rounded-2xl shadow-sm">
+<span class="material-symbols-outlined text-primary mb-4 text-4xl" data-icon="groups">groups</span>
+<p class="text-3xl font-bold text-primary mb-1">500+</p>
+<p class="text-sm font-medium text-secondary uppercase tracking-wider">Students</p>
+</div>
+<div class="text-center p-6 bg-surface-container-lowest rounded-2xl shadow-sm">
+<span class="material-symbols-outlined text-primary mb-4 text-4xl" data-icon="person_celebrate">person_celebrate</span>
+<p class="text-3xl font-bold text-primary mb-1">10</p>
+<p class="text-sm font-medium text-secondary uppercase tracking-wider">Expert Teachers</p>
+</div>
+<div class="text-center p-6 bg-surface-container-lowest rounded-2xl shadow-sm">
+<span class="material-symbols-outlined text-primary mb-4 text-4xl" data-icon="clinical_notes">clinical_notes</span>
+<p class="text-3xl font-bold text-primary mb-1">5</p>
+<p class="text-sm font-medium text-secondary uppercase tracking-wider">Levels A1-C1</p>
+</div>
+<div class="text-center p-6 bg-surface-container-lowest rounded-2xl shadow-sm">
+<span class="material-symbols-outlined text-primary mb-4 text-4xl" data-icon="verified">verified</span>
+<p class="text-3xl font-bold text-primary mb-1">98%</p>
+<p class="text-sm font-medium text-secondary uppercase tracking-wider">Success Rate</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Why Choose Lango? -->
+<section class="py-24 bg-white">
+<div class="max-w-7xl mx-auto px-8">
+<div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
+<div class="max-w-2xl">
+<h2 class="text-4xl lg:text-5xl font-serif font-bold text-on-surface mb-6 italic">Why Choose Lango?</h2>
+<p class="text-lg text-secondary">We combine academic rigour with an editorial perspective on learning, ensuring you don't just speak English—you master it.</p>
+</div>
+<div class="h-[1px] flex-grow bg-outline-variant/20 mx-8 hidden md:block"></div>
+</div>
+<div class="grid md:grid-cols-3 gap-12">
+<div class="relative group">
+<div class="mb-6 w-16 h-16 bg-surface-container rounded-2xl flex items-center justify-center group-hover:bg-primary-container transition-colors duration-500">
+<span class="material-symbols-outlined text-primary group-hover:text-white text-3xl" data-icon="psychology">psychology</span>
+</div>
+<h3 class="text-2xl font-bold mb-4 font-serif">Expert Native Teachers</h3>
+<p class="text-secondary leading-relaxed">Learn from educators whose first language is English and who bring real-world cultural context to every lesson.</p>
+</div>
+<div class="relative group">
+<div class="mb-6 w-16 h-16 bg-surface-container rounded-2xl flex items-center justify-center group-hover:bg-primary-container transition-colors duration-500">
+<span class="material-symbols-outlined text-primary group-hover:text-white text-3xl" data-icon="event_available">event_available</span>
+</div>
+<h3 class="text-2xl font-bold mb-4 font-serif">Flexible Schedules</h3>
+<p class="text-secondary leading-relaxed">Choose from morning, afternoon, or evening sessions designed to fit the busy lifestyle of Casablanca's professionals.</p>
+</div>
+<div class="relative group">
+<div class="mb-6 w-16 h-16 bg-surface-container rounded-2xl flex items-center justify-center group-hover:bg-primary-container transition-colors duration-500">
+<span class="material-symbols-outlined text-primary group-hover:text-white text-3xl" data-icon="workspace_premium">workspace_premium</span>
+</div>
+<h3 class="text-2xl font-bold mb-4 font-serif">Internationally Certified</h3>
+<p class="text-secondary leading-relaxed">Our curriculum follows the CEFR standards, ensuring your progress is recognized globally by universities and employers.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Mastery Levels (Bento/Card layout) -->
+<section class="py-24 bg-surface-container-low">
+<div class="max-w-7xl mx-auto px-8">
+<div class="text-center mb-16">
+<h2 class="text-4xl lg:text-5xl font-serif font-bold text-on-surface mb-6">Mastery from A1 to C1</h2>
+<p class="text-secondary max-w-xl mx-auto">A structured journey tailored to your individual pace and proficiency goals.</p>
+</div>
+<div class="space-y-4">
+<!-- Level A1 -->
+<div class="bg-surface-container-lowest p-8 rounded-2xl flex flex-col md:flex-row items-center gap-8 hover:shadow-xl transition-shadow border-l-4 border-primary">
+<div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+<span class="text-2xl font-bold text-primary">A1</span>
+</div>
+<div class="flex-grow">
+<h4 class="text-xl font-bold mb-2">Beginner Foundation</h4>
+<p class="text-secondary">Start from scratch. Learn essential vocabulary and basic grammar for everyday interactions.</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant" data-icon="record_voice_over">record_voice_over</span>
+</div>
+<!-- Level A2 -->
+<div class="bg-surface-container-lowest p-8 rounded-2xl flex flex-col md:flex-row items-center gap-8 hover:shadow-xl transition-shadow border-l-4 border-primary/60">
+<div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+<span class="text-2xl font-bold text-primary">A2</span>
+</div>
+<div class="flex-grow">
+<h4 class="text-xl font-bold mb-2">Elementary Communication</h4>
+<p class="text-secondary">Express simple needs and talk about your background, family, and surroundings with ease.</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant" data-icon="forum">forum</span>
+</div>
+<!-- Level B1 -->
+<div class="bg-surface-container-lowest p-8 rounded-2xl flex flex-col md:flex-row items-center gap-8 hover:shadow-xl transition-shadow border-l-4 border-primary/40">
+<div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+<span class="text-2xl font-bold text-primary">B1</span>
+</div>
+<div class="flex-grow">
+<h4 class="text-xl font-bold mb-2">Intermediate Independence</h4>
+<p class="text-secondary">Handle most situations while traveling. Discuss experiences, events, dreams, and ambitions.</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant" data-icon="travel_explore">travel_explore</span>
+</div>
+<!-- Level B2 -->
+<div class="bg-surface-container-lowest p-8 rounded-2xl flex flex-col md:flex-row items-center gap-8 hover:shadow-xl transition-shadow border-l-4 border-primary/20">
+<div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+<span class="text-2xl font-bold text-primary">B2</span>
+</div>
+<div class="flex-grow">
+<h4 class="text-xl font-bold mb-2">Upper Intermediate Fluency</h4>
+<p class="text-secondary">Interact with native speakers with spontaneity. Understand complex texts and technical discussions.</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant" data-icon="speed">speed</span>
+</div>
+<!-- Level C1 -->
+<div class="bg-surface-container-lowest p-8 rounded-2xl flex flex-col md:flex-row items-center gap-8 hover:shadow-xl transition-shadow border-l-4 border-primary/10">
+<div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+<span class="text-2xl font-bold text-primary">C1</span>
+</div>
+<div class="flex-grow">
+<h4 class="text-xl font-bold mb-2">Advanced Proficiency</h4>
+<p class="text-secondary">Express yourself fluently and spontaneously for social, academic, and professional purposes.</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant" data-icon="auto_awesome">auto_awesome</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Voices of Success -->
+<section class="py-24 bg-white overflow-hidden">
+<div class="max-w-7xl mx-auto px-8">
+<div class="mb-20">
+<h2 class="text-4xl lg:text-6xl font-serif font-bold text-primary italic mb-4">Voices of Success</h2>
+<p class="text-secondary tracking-widest uppercase text-xs font-bold">What our alumni say</p>
+</div>
+<div class="grid lg:grid-cols-3 gap-8">
+<!-- Testimonial 1 -->
+<div class="bg-surface-container-low p-10 rounded-3xl relative">
+<div class="flex gap-1 mb-6 text-primary">
+<span class="material-symbols-outlined text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<blockquote class="text-xl font-serif italic text-on-surface mb-8 leading-relaxed">
+                            "The interactive method at Lango helped me land my dream job at a multinational in Casablanca."
+                        </blockquote>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-primary-fixed rounded-full overflow-hidden">
+<img alt="Youssef B." class="w-full h-full object-cover" data-alt="Professional portrait of a young Moroccan man in a blue shirt with a friendly smile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWH9Ul-UMHYC06eLF8FR5uuwykh7k1k29wrCPdCCSe6m3Gl3ul4kgoh4N3OQdbQkKjs06DEzsVjXY2m9e1tPbNbZXoxWweb-imSeKrNoacorDLsagTNK49yCxsa5pHG99BH8AEAm9fzoPMtSX7DBGCojT6LPRvB2nIZgca7YKYs-zIHDABOQ5VxXDQVZj0bw4Q5CNGhmFaqNbmBT4e75EzIqFKdmzfArJUp63gY6kB4nHJMt3aBQXGpwczIOij0NWEeZ2WG3QL_9tY"/>
+</div>
+<div>
+<p class="font-bold text-on-surface">Youssef B.</p>
+<p class="text-xs text-secondary">Business English Student</p>
+</div>
+</div>
+</div>
+<!-- Testimonial 2 -->
+<div class="bg-surface-container-low p-10 rounded-3xl lg:translate-y-8">
+<div class="flex gap-1 mb-6 text-primary">
+<span class="material-symbols-outlined text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<blockquote class="text-xl font-serif italic text-on-surface mb-8 leading-relaxed">
+                            "Flexible evening classes allowed me to study after work. I went from A2 to B2 in less than a year. Highly recommend!"
+                        </blockquote>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-primary-fixed rounded-full overflow-hidden">
+<img alt="Amina R." class="w-full h-full object-cover" data-alt="Professional woman with a warm expression wearing a stylish hijab in an office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiyez0XGtdtWGPXiXa_a6xXzwdAiSJCrLam9YpmPrpzJ7RGObhhamKo_twNRPY2sCSftq2EsKd_aw0zG1h59CAwJammqWU5pq_sOaWv9gRsvqNBNb4-PI3_mBfAL8L8VhwzAkb0jtRNTw13Lna2JeuT9830Vm2Xm0Eq6hXOM_bFs86FyqtTwkWZJJwH2Nf39vmxYDFWKViMMFqVA8rb9YFiUdx4gi93dZqMjoRhfPv2WVb4IiXPJvcYxsMU-b-Yp7-yl21uVLnYDSI"/>
+</div>
+<div>
+<p class="font-bold text-on-surface">Amina R.</p>
+<p class="text-xs text-secondary">IELTS Preparation</p>
+</div>
+</div>
+</div>
+<!-- Testimonial 3 -->
+<div class="bg-surface-container-low p-10 rounded-3xl">
+<div class="flex gap-1 mb-6 text-primary">
+<span class="material-symbols-outlined text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<blockquote class="text-xl font-serif italic text-on-surface mb-8 leading-relaxed">
+                            "The best language center in Morocco. The small group sizes mean you actually get to speak and practice every single session."
+                        </blockquote>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-primary-fixed rounded-full overflow-hidden">
+<img alt="Khalid M." class="w-full h-full object-cover" data-alt="Modern Moroccan man in his late 30s with short hair and glasses looking confident" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwPFuiq0UbLiKvbegToV0kbm0MNESnF7ddXpj2pDU1Wr6j1QoQb3vUM_jb17NymBut99lXETZVC3q-ZBdOPJFK20xilbS6bj1eL3dE-v1aKgRb1CKqGv5-CHONKAJ-LWY8JsETEyyPNRqOB1Xh0RBc47hH7Vtu9TS-HI7FRYPY3Lnv6MIYAO8KX3whl1P_pBlZOYxEKWABoTt7PlERoUzybXc6IFNVLK_XKuzwZNXL_y-TRHNhwMpiADYdKNhqyTP1EdYtBnNKaGb5"/>
+</div>
+<div>
+<p class="font-bold text-on-surface">Khalid M.</p>
+<p class="text-xs text-secondary">General English</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Final CTA Banner -->
+<section class="py-24 px-8">
+<div class="max-w-7xl mx-auto bg-primary-container rounded-[2.5rem] p-12 lg:p-24 relative overflow-hidden text-center text-white">
+<div class="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+<div class="absolute bottom-0 left-0 w-64 h-64 bg-primary/20 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl"></div>
+<div class="relative z-10">
+<h2 class="text-4xl lg:text-6xl font-serif font-bold mb-8">Start your English journey today.</h2>
+<p class="text-xl lg:text-2xl text-on-primary-container max-w-3xl mx-auto mb-12">
+                        Unlock new opportunities and connect with the world. Your first trial lesson is completely on us.
+                    </p>
+<button class="px-12 py-5 bg-white text-primary rounded-xl font-bold text-xl hover:bg-surface-bright transition-all active:scale-95 shadow-2xl">
+                        Book Trial
+                    </button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-12 max-w-7xl mx-auto px-8 py-16">
+<div>
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-blue-700 dark:text-blue-400" data-icon="school">school</span>
+<span class="text-xl font-serif font-bold text-blue-700 dark:text-blue-400">Lango</span>
+</div>
+<p class="text-sm text-slate-500 leading-relaxed">
+                    Elevating English education in Casablanca through academic excellence and modern editorial instruction.
+                </p>
+</div>
+<div>
+<h5 class="text-xs tracking-widest uppercase font-bold mb-6 text-on-surface">Experience</h5>
+<ul class="space-y-4">
+<li><a class="text-sm text-slate-500 hover:text-blue-600 underline underline-offset-4 transition-all" href="#">Courses</a></li>
+<li><a class="text-sm text-slate-500 hover:text-blue-600 underline underline-offset-4 transition-all" href="#">Placement Test</a></li>
+<li><a class="text-sm text-slate-500 hover:text-blue-600 underline underline-offset-4 transition-all" href="#">Schedule</a></li>
+</ul>
+</div>
+<div>
+<h5 class="text-xs tracking-widest uppercase font-bold mb-6 text-on-surface">Community</h5>
+<ul class="space-y-4">
+<li><a class="text-sm text-slate-500 hover:text-blue-600 underline underline-offset-4 transition-all" href="#">About</a></li>
+<li><a class="text-sm text-slate-500 hover:text-blue-600 underline underline-offset-4 transition-all" href="#">Contact</a></li>
+<li><a class="text-sm text-slate-500 hover:text-blue-600 underline underline-offset-4 transition-all" href="#">Student Login</a></li>
+</ul>
+</div>
+<div>
+<h5 class="text-xs tracking-widest uppercase font-bold mb-6 text-on-surface">Connect</h5>
+<p class="text-sm text-slate-500 mb-4">123 Boulevard Anfa, Casablanca, Morocco</p>
+<div class="flex space-x-4">
+<a class="text-blue-700" href="#"><span class="material-symbols-outlined" data-icon="alternate_email">alternate_email</span></a>
+<a class="text-blue-700" href="#"><span class="material-symbols-outlined" data-icon="call">call</span></a>
+</div>
+</div>
+</div>
+<div class="max-w-7xl mx-auto px-8 py-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="text-sm text-slate-500">© 2024 Lango English Center Casablanca. All rights reserved.</p>
+<div class="flex gap-8">
+<a class="text-xs text-slate-400 hover:text-blue-600" href="#">Privacy Policy</a>
+<a class="text-xs text-slate-400 hover:text-blue-600" href="#">Terms of Service</a>
+</div>
+</div>
+</footer>
+</body></html>

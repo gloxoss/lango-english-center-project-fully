@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lango Enrollment Wizard - Step 1</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#f8f9fa",
+                        "on-primary": "#ffffff",
+                        "on-secondary-container": "#57657a",
+                        "surface-dim": "#d9dadb",
+                        "error-container": "#ffdad6",
+                        "outline-variant": "#c3c6d7",
+                        "surface-variant": "#e1e3e4",
+                        "on-tertiary-fixed": "#002109",
+                        "secondary-fixed": "#d5e3fc",
+                        "on-tertiary-fixed-variant": "#005321",
+                        "primary": "#004ac6",
+                        "surface-container-highest": "#e1e3e4",
+                        "surface-container-high": "#e7e8e9",
+                        "on-primary-container": "#eeefff",
+                        "secondary-fixed-dim": "#b9c7df",
+                        "inverse-surface": "#2e3132",
+                        "surface-bright": "#f8f9fa",
+                        "error": "#ba1a1a",
+                        "outline": "#737686",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#f0f1f2",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#2563eb",
+                        "on-surface-variant": "#434655",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "tertiary-container": "#007e37",
+                        "on-tertiary-container": "#c1ffc5",
+                        "inverse-primary": "#b4c5ff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "tertiary-fixed": "#6bff8f",
+                        "on-primary-fixed": "#00174b",
+                        "secondary": "#515f74",
+                        "primary-fixed": "#dbe1ff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-secondary-fixed-variant": "#3a485b",
+                        "background": "#f8f9fa",
+                        "surface-tint": "#0053db",
+                        "on-surface": "#191c1d",
+                        "surface-container-low": "#f3f4f5",
+                        "tertiary": "#006229",
+                        "secondary-container": "#d5e3fc",
+                        "surface-container": "#edeeef",
+                        "on-background": "#191c1d",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#4ae176",
+                        "on-tertiary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- TopNavBar - Rendered based on Shared Components JSON -->
+<nav class="bg-slate-50 dark:bg-slate-950 sticky top-0 z-50">
+<div class="flex justify-between items-center w-full px-6 py-4 max-w-5xl mx-auto">
+<div class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Lango</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex items-center gap-8">
+<span class="text-blue-600 dark:text-blue-400 font-semibold cursor-pointer">Enrollment</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" data-icon="account_circle">account_circle</span>
+</div>
+</div>
+</div>
+</nav>
+<!-- SideNavBar - Contextual Sidebar (Active Step 1: Personal Info) -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] p-8 flex flex-col gap-y-6 bg-slate-50 dark:bg-slate-950 w-72 border-r-0 hidden lg:flex">
+<div class="mb-4">
+<h2 class="text-slate-900 dark:text-white font-bold text-lg">Enrollment</h2>
+<p class="text-slate-500 text-sm">Step 1 of 4</p>
+</div>
+<nav class="flex flex-col gap-y-4">
+<div class="flex items-center gap-3 text-blue-600 dark:text-blue-400 font-bold border-r-2 border-blue-600 py-1">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span>Personal Info</span>
+</div>
+<div class="flex items-center gap-3 text-slate-400 dark:text-slate-500 font-medium hover:text-slate-900 transition-all cursor-not-allowed">
+<span class="material-symbols-outlined" data-icon="family_restroom">family_restroom</span>
+<span>Guardian Details</span>
+</div>
+<div class="flex items-center gap-3 text-slate-400 dark:text-slate-500 font-medium hover:text-slate-900 transition-all cursor-not-allowed">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+<span>Class Enrollment</span>
+</div>
+<div class="flex items-center gap-3 text-slate-400 dark:text-slate-500 font-medium hover:text-slate-900 transition-all cursor-not-allowed">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span>Review &amp; Confirm</span>
+</div>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:ml-72 flex justify-center items-start pt-12 pb-24 px-4 min-h-[calc(100vh-64px)]">
+<div class="w-full max-w-2xl flex flex-col gap-8">
+<!-- Progress Stepper (Mobile & Narrow Tablet View) -->
+<div class="flex items-center justify-between w-full lg:hidden px-2 mb-4">
+<div class="h-1 flex-1 bg-primary rounded-full"></div>
+<div class="h-1 flex-1 bg-surface-container-high mx-2 rounded-full"></div>
+<div class="h-1 flex-1 bg-surface-container-high mx-2 rounded-full"></div>
+<div class="h-1 flex-1 bg-surface-container-high rounded-full"></div>
+</div>
+<!-- Enrollment Card -->
+<section class="bg-surface-container-lowest border border-outline-variant/50 rounded-lg p-8 shadow-none">
+<header class="mb-8">
+<h1 class="text-3xl font-bold text-on-surface tracking-tight mb-2">Personal Information</h1>
+<p class="text-secondary leading-relaxed">Please provide the student's legal identification details to begin the enrollment process.</p>
+</header>
+<form class="space-y-6">
+<!-- Photo Upload Section -->
+<div class="group relative flex flex-col items-center justify-center border-2 border-dashed border-outline-variant/50 rounded-lg p-8 bg-surface-container-low/30 hover:bg-surface-container-low transition-colors cursor-pointer">
+<input aria-label="Upload student photo" class="absolute inset-0 opacity-0 cursor-pointer" type="file"/>
+<div class="bg-surface-container-lowest p-3 rounded-full shadow-sm mb-4">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="camera_alt">camera_alt</span>
+</div>
+<p class="text-on-surface font-medium">Click or drag photo here</p>
+<p class="text-secondary text-xs mt-1">SVG, PNG, JPG or GIF (max. 800x400px)</p>
+</div>
+<!-- Name Row -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface">First Name</label>
+<input class="w-full bg-surface-container-lowest border-outline-variant/50 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-outline" placeholder="e.g. Adam" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface">Last Name</label>
+<input class="w-full bg-surface-container-lowest border-outline-variant/50 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-outline" placeholder="e.g. Bennani" type="text"/>
+</div>
+</div>
+<!-- DOB and Gender -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface">Date of Birth</label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border-outline-variant/50 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all" type="date"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface">Gender</label>
+<div class="flex gap-4 p-2 bg-surface-container-low rounded-lg h-[42px] items-center">
+<label class="flex-1 flex items-center justify-center gap-2 cursor-pointer py-1 px-3 rounded-md transition-colors hover:bg-surface-container-lowest">
+<input class="text-primary border-outline-variant focus:ring-primary" name="gender" type="radio" value="male"/>
+<span class="text-sm font-medium text-secondary">Male</span>
+</label>
+<label class="flex-1 flex items-center justify-center gap-2 cursor-pointer py-1 px-3 rounded-md transition-colors hover:bg-surface-container-lowest">
+<input class="text-primary border-outline-variant focus:ring-primary" name="gender" type="radio" value="female"/>
+<span class="text-sm font-medium text-secondary">Female</span>
+</label>
+</div>
+</div>
+</div>
+<!-- Contact Info -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface">Phone Number</label>
+<div class="flex">
+<span class="inline-flex items-center px-4 rounded-l-lg border border-r-0 border-outline-variant/50 bg-surface-container-low text-secondary text-sm font-medium">
+                                    +212
+                                </span>
+<input class="flex-1 w-full bg-surface-container-lowest border-outline-variant/50 rounded-r-lg focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-outline" placeholder="600 000 000" type="tel"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface">Email Address</label>
+<input class="w-full bg-surface-container-lowest border-outline-variant/50 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-outline" placeholder="adam.b@example.com" type="email"/>
+</div>
+</div>
+<!-- Nationality -->
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface">Nationality</label>
+<select class="w-full bg-surface-container-lowest border-outline-variant/50 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all">
+<option selected="" value="MA">Moroccan</option>
+<option value="FR">French</option>
+<option value="ES">Spanish</option>
+<option value="US">American</option>
+</select>
+</div>
+</form>
+<!-- Footer Navigation -->
+<div class="mt-12 flex items-center justify-between">
+<div class="text-sm font-medium text-secondary">
+                        Step <span class="text-on-surface">1</span> of 4
+                    </div>
+<div class="flex gap-4">
+<button class="hidden px-6 py-2.5 text-sm font-semibold text-secondary hover:text-on-surface transition-colors">
+                            Back
+                        </button>
+<button class="bg-gradient-to-br from-primary to-primary-container text-white px-8 py-2.5 rounded-lg font-semibold shadow-sm hover:shadow-md active:scale-95 transition-all flex items-center gap-2">
+<span>Next Step</span>
+<span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Success Indicators / Tonal Feedback -->
+<div class="p-6 bg-tertiary-container/10 border border-tertiary/10 rounded-lg flex items-start gap-4">
+<span class="material-symbols-outlined text-tertiary mt-1" data-icon="verified_user" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<div>
+<h4 class="text-on-tertiary-fixed font-semibold text-sm">Secure Data Handling</h4>
+<p class="text-on-tertiary-fixed-variant text-xs mt-0.5 leading-relaxed">Your personal information is encrypted and stored according to national privacy regulations. Lango ensures your data is never shared with third parties.</p>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 right-0 bg-surface-container-lowest border-t-0 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] md:hidden">
+<div class="flex justify-around items-center h-16">
+<div class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="text-[10px] font-bold">Personal</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-outline">
+<span class="material-symbols-outlined" data-icon="family_restroom">family_restroom</span>
+<span class="text-[10px] font-medium">Guardian</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-outline">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+<span class="text-[10px] font-medium">Class</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-outline">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="text-[10px] font-medium">Review</span>
+</div>
+</div>
+</nav>
+</body></html>

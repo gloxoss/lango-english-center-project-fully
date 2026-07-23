@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Academic Curator - Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;700;800;900&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container": "#eceef0",
+                    "surface-container-lowest": "#ffffff",
+                    "on-background": "#191c1e",
+                    "surface-container-highest": "#e0e3e5",
+                    "outline": "#737780",
+                    "secondary-fixed-dim": "#b9c7df",
+                    "secondary": "#515f74",
+                    "on-secondary-container": "#57657a",
+                    "inverse-surface": "#2d3133",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-fixed": "#d8e2ff",
+                    "surface-variant": "#e0e3e5",
+                    "on-secondary-fixed-variant": "#3a485b",
+                    "error-container": "#ffdad6",
+                    "on-secondary": "#ffffff",
+                    "primary-fixed-dim": "#a7c8ff",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-secondary-fixed": "#0d1c2e",
+                    "surface-bright": "#f7f9fb",
+                    "on-primary-fixed-variant": "#1f477b",
+                    "surface-container-high": "#e6e8ea",
+                    "tertiary-fixed-dim": "#adc7ff",
+                    "on-primary-container": "#799dd6",
+                    "on-tertiary-container": "#629aff",
+                    "primary-fixed": "#d5e3ff",
+                    "inverse-primary": "#a7c8ff",
+                    "surface-tint": "#3a5f94",
+                    "on-primary-fixed": "#001b3c",
+                    "on-surface": "#191c1e",
+                    "primary": "#001e40",
+                    "surface-dim": "#d8dadc",
+                    "surface-container-low": "#f2f4f6",
+                    "on-surface-variant": "#43474f",
+                    "outline-variant": "#c3c6d1",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed": "#001a41",
+                    "on-primary": "#ffffff",
+                    "background": "#f7f9fb",
+                    "primary-container": "#003366",
+                    "on-error": "#ffffff",
+                    "secondary-container": "#d5e3fc",
+                    "on-error-container": "#93000a",
+                    "secondary-fixed": "#d5e3fc",
+                    "on-tertiary-fixed-variant": "#004493",
+                    "tertiary-container": "#00316e",
+                    "surface": "#f7f9fb",
+                    "tertiary": "#001d46"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Public Sans"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+            color: #191c1e;
+        }
+        .editorial-shadow {
+            box-shadow: 0 16px 32px -12px rgba(25, 28, 30, 0.04);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#f7f9fb]/90 backdrop-blur-md editorial-shadow">
+<div class="flex justify-between items-center px-6 h-16 w-full max-w-screen-xl mx-auto">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden">
+<img alt="Administrator Profile" class="w-full h-full object-cover" data-alt="close-up portrait of a professional school administrator in a bright modern office setting, soft professional lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAaycICoGurVA2H1YQmi2ZYvNY2WSq70aVPx86AYPnPeTuakRswzUyFgi2XXPqYEjg8jdeeDHfaYjfHpp9qWa9wV1apJOBFt6KubYel2aZmduAclgwaLgEYJ5qCRV_MyEVGbQJqXhA47z6Rep6d3V-DJ01Y4gphH5atRvXWCMCUh-m38GroM-MeOG6auFsEL7kc2ZYfowr0K2Ci0nt9ZFf_V3akvHi8CpTqi3fT-e2zIJylS81Tllbgm8cbUvrj5eb41lKvx4EjrT_b"/>
+</div>
+<h1 class="font-headline font-bold text-lg tracking-tight text-[#001e40]">The Academic Curator</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100/50 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-[#001e40]">search</span>
+</button>
+</div>
+</div>
+</header>
+<main class="pt-20 pb-24 px-6 max-w-screen-xl mx-auto space-y-8">
+<!-- KPI Cards Section: Intentional Asymmetry -->
+<section class="grid grid-cols-2 gap-4">
+<div class="col-span-2 bg-primary-container rounded-xl p-6 text-white overflow-hidden relative shadow-lg">
+<div class="relative z-10">
+<p class="text-on-primary-container font-label text-[10px] uppercase tracking-widest mb-1">Total Students</p>
+<h2 class="font-headline text-4xl font-black tracking-tighter">1,240</h2>
+<div class="mt-4 flex items-center gap-2">
+<span class="px-2 py-1 bg-white/10 rounded-full text-[10px] font-bold">+2.4% this month</span>
+</div>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-10">
+<span class="material-symbols-outlined text-[120px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">school</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl editorial-shadow border border-outline-variant/10">
+<p class="text-slate-500 font-label text-[10px] uppercase tracking-widest mb-1">Attendance</p>
+<div class="flex items-end justify-between">
+<h3 class="font-headline text-2xl font-bold text-primary">94%</h3>
+<div class="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center">
+<span class="material-symbols-outlined text-green-600 text-sm">trending_up</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl editorial-shadow border border-outline-variant/10">
+<p class="text-slate-500 font-label text-[10px] uppercase tracking-widest mb-1">Faculty</p>
+<div class="flex items-end justify-between">
+<h3 class="font-headline text-2xl font-bold text-primary">82</h3>
+<div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
+<span class="material-symbols-outlined text-blue-600 text-sm">group</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Recent Activity: Editorial List Style -->
+<section class="space-y-4">
+<div class="flex justify-between items-end">
+<h2 class="font-headline text-xl font-extrabold text-primary tracking-tight">Recent Activity</h2>
+<button class="text-primary font-label text-xs font-bold uppercase tracking-wider">View All</button>
+</div>
+<div class="bg-surface-container-low rounded-xl p-2 space-y-1">
+<!-- Activity Item 1 -->
+<div class="bg-surface-container-lowest p-4 rounded-lg flex gap-4 items-start">
+<div class="mt-1 w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-primary-fixed text-lg">person_add</span>
+</div>
+<div>
+<p class="text-sm font-medium text-on-surface">New student registration</p>
+<p class="text-xs text-slate-500 mt-0.5">Julianna V. (Grade 9) completed enrollment</p>
+<span class="text-[10px] text-slate-400 mt-2 block uppercase font-bold tracking-tight">14 mins ago</span>
+</div>
+</div>
+<!-- Activity Item 2 -->
+<div class="bg-surface-container-lowest p-4 rounded-lg flex gap-4 items-start">
+<div class="mt-1 w-10 h-10 rounded-full bg-error-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-error-container text-lg">event_busy</span>
+</div>
+<div>
+<p class="text-sm font-medium text-on-surface">Teacher leave request</p>
+<p class="text-xs text-slate-500 mt-0.5">Mr. Henderson (Math) requested 2 days</p>
+<span class="text-[10px] text-slate-400 mt-2 block uppercase font-bold tracking-tight">2 hours ago</span>
+</div>
+</div>
+<!-- Activity Item 3 -->
+<div class="bg-surface-container-lowest p-4 rounded-lg flex gap-4 items-start">
+<div class="mt-1 w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-secondary-fixed text-lg">verified</span>
+</div>
+<div>
+<p class="text-sm font-medium text-on-surface">Monthly report ready</p>
+<p class="text-xs text-slate-500 mt-0.5">Academic performance audit finalized</p>
+<span class="text-[10px] text-slate-400 mt-2 block uppercase font-bold tracking-tight">Today, 09:15 AM</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Quick Actions Grid -->
+<section class="space-y-4">
+<h2 class="font-headline text-xl font-extrabold text-primary tracking-tight">Quick Actions</h2>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex flex-col items-start p-5 bg-white rounded-xl editorial-shadow group hover:bg-primary transition-all active:scale-95">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center mb-4 group-hover:bg-white/20 transition-colors">
+<span class="material-symbols-outlined text-primary group-hover:text-white transition-colors">analytics</span>
+</div>
+<p class="text-sm font-bold text-primary group-hover:text-white transition-colors">Generate Report</p>
+<p class="text-[10px] text-slate-500 group-hover:text-white/70 transition-colors">Audit &amp; Stats</p>
+</button>
+<button class="flex flex-col items-start p-5 bg-white rounded-xl editorial-shadow group hover:bg-primary transition-all active:scale-95">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center mb-4 group-hover:bg-white/20 transition-colors">
+<span class="material-symbols-outlined text-primary group-hover:text-white transition-colors">campaign</span>
+</div>
+<p class="text-sm font-bold text-primary group-hover:text-white transition-colors">Send Announcement</p>
+<p class="text-[10px] text-slate-500 group-hover:text-white/70 transition-colors">To all faculty</p>
+</button>
+<button class="flex flex-col items-start p-5 bg-white rounded-xl editorial-shadow group hover:bg-primary transition-all active:scale-95">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center mb-4 group-hover:bg-white/20 transition-colors">
+<span class="material-symbols-outlined text-primary group-hover:text-white transition-colors">person_add</span>
+</div>
+<p class="text-sm font-bold text-primary group-hover:text-white transition-colors">Add Student</p>
+<p class="text-[10px] text-slate-500 group-hover:text-white/70 transition-colors">New admission</p>
+</button>
+<button class="flex flex-col items-start p-5 bg-white rounded-xl editorial-shadow group hover:bg-primary transition-all active:scale-95">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center mb-4 group-hover:bg-white/20 transition-colors">
+<span class="material-symbols-outlined text-primary group-hover:text-white transition-colors">schedule</span>
+</div>
+<p class="text-sm font-bold text-primary group-hover:text-white transition-colors">Update Schedule</p>
+<p class="text-[10px] text-slate-500 group-hover:text-white/70 transition-colors">Room changes</p>
+</button>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 pb-safe bg-white/80 backdrop-blur-xl z-50 border-t border-slate-100">
+<button class="flex flex-col items-center justify-center text-[#001e40] bg-[#f2f4f6] rounded-xl px-3 py-1 active:scale-90 duration-150">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-inter text-[10px] uppercase tracking-[0.05em] font-bold mt-0.5">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-slate-400 hover:text-[#003366] transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">folder_shared</span>
+<span class="font-inter text-[10px] uppercase tracking-[0.05em] font-bold mt-0.5">Records</span>
+</button>
+<button class="flex flex-col items-center justify-center text-slate-400 hover:text-[#003366] transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">calendar_month</span>
+<span class="font-inter text-[10px] uppercase tracking-[0.05em] font-bold mt-0.5">Schedules</span>
+</button>
+<button class="flex flex-col items-center justify-center text-slate-400 hover:text-[#003366] transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-inter text-[10px] uppercase tracking-[0.05em] font-bold mt-0.5">Settings</span>
+</button>
+</nav>
+<!-- Floating FAB for key action context -->
+<div class="fixed bottom-24 right-6 z-40">
+<button class="w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-2xl">add</span>
+</button>
+</div>
+</body></html>

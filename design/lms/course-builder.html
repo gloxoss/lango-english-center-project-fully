@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Course Builder - Lango LMS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error": "#ffffff",
+                        "secondary": "#515f74",
+                        "inverse-on-surface": "#f0f1f2",
+                        "tertiary-container": "#656d84",
+                        "inverse-primary": "#b4c5ff",
+                        "tertiary-fixed-dim": "#bec6e0",
+                        "tertiary-fixed": "#dae2fd",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#131b2e",
+                        "outline-variant": "#c3c6d7",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f3f4f5",
+                        "surface-dim": "#d9dadb",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed": "#00174b",
+                        "on-surface-variant": "#434655",
+                        "surface-container-highest": "#e1e3e4",
+                        "secondary-container": "#d5e3fc",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#d5e3fc",
+                        "surface-variant": "#e1e3e4",
+                        "on-primary": "#ffffff",
+                        "surface-tint": "#0053db",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#3a485b",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "surface-container": "#edeeef",
+                        "background": "#f8f9fa",
+                        "secondary-fixed-dim": "#b9c7df",
+                        "on-primary-container": "#eeefff",
+                        "primary": "#004ac6",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "outline": "#737686",
+                        "on-tertiary-fixed-variant": "#3f465c",
+                        "on-surface": "#191c1d",
+                        "surface": "#f8f9fa",
+                        "on-tertiary-container": "#eef0ff",
+                        "on-background": "#191c1d",
+                        "on-secondary-container": "#57657a",
+                        "surface-bright": "#f8f9fa",
+                        "tertiary": "#4d556b",
+                        "inverse-surface": "#2e3132",
+                        "surface-container-high": "#e7e8e9",
+                        "primary-container": "#2563eb",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e1e3e4; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center h-16 px-6 w-full sticky z-50 bg-white dark:bg-slate-900 w-full top-0 border-b border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-4">
+<span class="text-lg font-semibold text-slate-900 dark:text-slate-50">Lango LMS</span>
+<div class="h-6 w-px bg-outline-variant opacity-20"></div>
+<input class="bg-transparent border-none font-medium text-on-surface focus:ring-0 focus:outline-none w-64 p-0" type="text" value="English B1 Complete Course"/>
+</div>
+<div class="flex items-center gap-6">
+<a class="text-slate-500 dark:text-slate-400 font-sans text-sm font-medium tracking-tight hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors px-3 py-2 rounded-md" href="#">Preview as Student</a>
+<div class="flex items-center gap-2 text-slate-500 text-xs">
+<span class="material-symbols-outlined text-sm text-green-500" data-icon="check_circle">check_circle</span>
+<span>Saved</span>
+</div>
+<button class="bg-primary-container text-on-primary-container font-medium text-sm px-4 py-2 rounded-lg hover:opacity-90 transition-opacity">Publish Course</button>
+</div>
+</header>
+<div class="flex h-[calc(100vh-64px)] overflow-hidden">
+<!-- SideNavBar / Curriculum Tree -->
+<aside class="flex flex-col fixed left-0 top-16 bottom-0 z-40 overflow-y-auto w-[280px] bg-slate-50 dark:bg-slate-950 border-r border-slate-100 dark:border-slate-800 custom-scrollbar">
+<div class="p-6">
+<div class="mb-6">
+<h2 class="text-blue-600 font-bold text-xs font-bold uppercase tracking-widest mb-1">Course Builder</h2>
+<p class="text-on-surface font-semibold text-sm">English B1 Complete Course</p>
+</div>
+<div class="space-y-1">
+<!-- Chapter 1 (Expanded) -->
+<div class="group">
+<div class="flex items-center gap-2 p-2 rounded-lg hover:bg-surface-container-low transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-sm text-secondary" data-icon="expand_more">expand_more</span>
+<span class="material-symbols-outlined text-sm text-secondary" data-icon="drag_indicator">drag_indicator</span>
+<span class="text-sm font-semibold text-on-surface">Chapter 1 Introduction</span>
+</div>
+<div class="ml-6 mt-1 space-y-1 border-l-2 border-outline-variant/10 pl-2">
+<!-- Lesson 1.1 -->
+<div class="flex items-center gap-2 p-2 rounded-lg text-blue-600 border-r-2 border-blue-600 bg-blue-50/50 dark:bg-blue-900/20 cursor-pointer">
+<span class="material-symbols-outlined text-sm" data-icon="drag_indicator">drag_indicator</span>
+<span class="material-symbols-outlined text-sm" data-icon="folder" data-weight="fill" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+<span class="text-sm font-medium">1.1 Welcome Video</span>
+</div>
+<!-- Lesson 1.2 -->
+<div class="flex items-center gap-2 p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity" data-icon="drag_indicator">drag_indicator</span>
+<span class="material-symbols-outlined text-sm" data-icon="menu_book">description</span>
+<span class="text-sm font-medium">1.2 Course Overview</span>
+</div>
+<!-- Quiz 1.1 -->
+<div class="flex items-center gap-2 p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity" data-icon="drag_indicator">drag_indicator</span>
+<span class="material-symbols-outlined text-sm" data-icon="account_tree">assignment</span>
+<span class="text-sm font-medium">Quiz 1.1 Entry Test</span>
+</div>
+</div>
+</div>
+<!-- Chapter 2 (Collapsed) -->
+<div class="flex items-center gap-2 p-2 rounded-lg hover:bg-surface-container-low transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-sm text-secondary" data-icon="chevron_right">chevron_right</span>
+<span class="material-symbols-outlined text-sm text-secondary opacity-0 group-hover:opacity-100 transition-opacity" data-icon="drag_indicator">drag_indicator</span>
+<span class="text-sm font-medium text-on-surface">Chapter 2 Present Tenses</span>
+</div>
+<!-- Chapter 3 (Collapsed) -->
+<div class="flex items-center gap-2 p-2 rounded-lg hover:bg-surface-container-low transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-sm text-secondary" data-icon="chevron_right">chevron_right</span>
+<span class="material-symbols-outlined text-sm text-secondary opacity-0 group-hover:opacity-100 transition-opacity" data-icon="drag_indicator">drag_indicator</span>
+<span class="text-sm font-medium text-on-surface">Chapter 3 Past Tenses</span>
+</div>
+</div>
+<button class="mt-8 flex items-center gap-2 text-primary font-semibold text-xs uppercase tracking-widest hover:underline decoration-2 underline-offset-4">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                    Add Section
+                </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-[280px] mr-[240px] flex-1 bg-surface min-h-full overflow-y-auto custom-scrollbar">
+<div class="max-w-4xl mx-auto py-12 px-8">
+<div class="bg-surface-container-lowest rounded-xl p-8 mb-8 border border-outline-variant/10">
+<h1 class="text-2xl font-bold text-on-surface mb-8 tracking-tight">Lesson Editor: Welcome to B1 English</h1>
+<!-- Video Upload Area -->
+<div class="mb-8">
+<label class="block text-xs font-bold uppercase tracking-widest text-secondary mb-3">Lesson Video</label>
+<div class="border-2 border-dashed border-outline-variant rounded-xl p-12 flex flex-col items-center justify-center bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer group">
+<div class="w-16 h-16 rounded-full bg-primary-container/10 flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl" data-icon="cloud_upload">cloud_upload</span>
+</div>
+<p class="text-on-surface font-medium">Drop video here or click to upload</p>
+<p class="text-secondary text-sm mt-1">MP4, WebM up to 2GB</p>
+</div>
+</div>
+<!-- Thumbnail Picker -->
+<div class="mb-8">
+<label class="block text-xs font-bold uppercase tracking-widest text-secondary mb-3">Thumbnail Picker</label>
+<div class="grid grid-cols-4 gap-4">
+<div class="aspect-video rounded-lg bg-surface-container border-2 border-primary overflow-hidden relative">
+<img class="w-full h-full object-cover opacity-50" data-alt="Screenshot of a professional woman speaking to camera in a brightly lit modern office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFyR_it4ulrvV0foIUVRBwr5QQd-T5W1DI3kI9yyCezPEQg-Dyy7hWZhz_VDNfCx_wlul-3Liy2X8YhwPYRpPFf1qQCXbDJmZKtj89qvDLyL--uinE7ywnSY0cZJVYhW_f9FZdoH9ZEdMMqnWtk1Z9YE6HgWyJpzg7wvC342hv7lMM0tOVSRwXWGnIgmPSHS-caOK-Odtv_2HFzW_bQk6sExppaAxIc-LN1jYzGBpcMxbEzMwSNBXmwheJWscVEhGnExR411o7JhIV"/>
+<div class="absolute inset-0 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+<div class="aspect-video rounded-lg bg-surface-container-low hover:bg-surface-container cursor-pointer transition-colors border border-outline-variant/20"></div>
+<div class="aspect-video rounded-lg bg-surface-container-low hover:bg-surface-container cursor-pointer transition-colors border border-outline-variant/20"></div>
+<button class="aspect-video rounded-lg bg-surface-container-low hover:bg-surface-container cursor-pointer transition-colors border border-dashed border-outline-variant flex flex-col items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+<span class="text-[10px] uppercase font-bold mt-1">Custom</span>
+</button>
+</div>
+</div>
+<!-- Inputs -->
+<div class="space-y-6">
+<div>
+<label class="block text-xs font-bold uppercase tracking-widest text-secondary mb-2">Lesson Title</label>
+<input class="w-full bg-surface-container-low border border-outline-variant/20 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-on-surface font-medium" type="text" value="Welcome to B1 English"/>
+</div>
+<div>
+<label class="block text-xs font-bold uppercase tracking-widest text-secondary mb-2">Description</label>
+<textarea class="w-full bg-surface-container-low border border-outline-variant/20 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-on-surface leading-relaxed" rows="6">In this introductory lesson, we will cover the core objectives of the B1 Intermediate level. We'll explore the course structure, learning outcomes, and how to make the most of the resources provided. By the end of this video, you will have a clear roadmap for your English language journey.</textarea>
+</div>
+</div>
+<!-- Drip Release Toggle -->
+<div class="mt-8 pt-8 border-t border-outline-variant/10 flex items-center justify-between">
+<div>
+<h4 class="font-semibold text-on-surface">Drip Release</h4>
+<p class="text-secondary text-sm">Control when students can access this lesson.</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-sm font-medium text-primary">Available immediately</span>
+<button class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-primary transition-colors duration-200 focus:outline-none">
+<span class="translate-x-5 pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200"></span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Right Panel: Lesson Settings -->
+<aside class="fixed right-0 top-16 bottom-0 w-[240px] bg-slate-50 dark:bg-slate-950 border-l border-slate-100 dark:border-slate-800 p-6 overflow-y-auto custom-scrollbar">
+<h3 class="text-xs font-bold uppercase tracking-widest text-secondary mb-6">Lesson Settings</h3>
+<div class="space-y-8">
+<!-- Duration -->
+<div>
+<label class="block text-xs font-medium text-secondary mb-2">Duration</label>
+<div class="flex items-center gap-2 text-on-surface font-semibold">
+<span class="material-symbols-outlined text-lg" data-icon="schedule">schedule</span>
+<span>12:34</span>
+</div>
+</div>
+<!-- Free Preview -->
+<div class="flex items-center justify-between">
+<div>
+<label class="block text-xs font-medium text-secondary">Free Preview</label>
+</div>
+<button class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-primary transition-colors duration-200">
+<span class="translate-x-4 pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200"></span>
+</button>
+</div>
+<!-- Prerequisites -->
+<div>
+<label class="block text-xs font-medium text-secondary mb-2">Prerequisites</label>
+<div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/10 flex items-center justify-between group cursor-pointer hover:bg-surface-container transition-colors">
+<span class="text-sm text-secondary">None</span>
+<span class="material-symbols-outlined text-sm text-outline group-hover:text-primary" data-icon="add_circle">add_circle</span>
+</div>
+</div>
+<!-- Completion Rule -->
+<div>
+<label class="block text-xs font-medium text-secondary mb-2">Completion Rule</label>
+<select class="w-full bg-surface-container-low border border-outline-variant/10 rounded-lg px-3 py-2 text-sm font-medium text-on-surface focus:ring-primary focus:border-primary outline-none">
+<option>Watch 90%</option>
+<option>Watch 100%</option>
+<option>Pass Quiz</option>
+<option>Manual Check</option>
+</select>
+</div>
+<!-- Help Alert -->
+<div class="mt-12 p-4 bg-secondary-container rounded-lg">
+<div class="flex gap-2 text-on-secondary-container">
+<span class="material-symbols-outlined text-sm mt-0.5" data-icon="info">info</span>
+<p class="text-xs leading-relaxed font-medium">Students won't be able to skip ahead until the completion rule is met.</p>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</body></html>

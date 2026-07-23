@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------------------
+  # Reverse Proxy: Traefik
+  # Handles local routing for the Lango ecosystem (API, Web, etc.)
+  # ----------------------------------------------------------------------
+  traefik:
+    image: traefik:v3.0
+    container_name: lango_traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.web.address=:80"
+      - "--entryPoints.websecure.address=:443"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080" # Traefik dashboard
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - lango_network
+    restart: unless-stopped
+
+  # ----------------------------------------------------------------------
+  # Database: PostgreSQL 16
+  # Primary data store for the multi-tenant SaaS
+  # ----------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: lango_postgres
+    environment:
+      POSTGRES_USER: lango_admin
+      POSTGRES_PASSWORD: lango_secret_password
+      POSTGRES_DB: lango_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - lango_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lango_admin -d lango_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------------------
+  # Message Broker & Cache: Redis
+  # Used for caching, session management, and BullMQ background jobs
+  # ----------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: lango_redis
+    command: redis-server --requirepass lango_redis_secret
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - lango_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "lango_redis_secret", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    name: lango_postgres_data
+  redis_data:
+    name: lango_redis_data
+
+networks:
+  lango_network:
+    name: lango_network
+    driver: bridge

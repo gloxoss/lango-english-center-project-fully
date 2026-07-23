@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Roles &amp; Permissions | Lango Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error": "#ba1a1a",
+                    "on-surface": "#191c1d",
+                    "on-surface-variant": "#434655",
+                    "on-primary-container": "#eeefff",
+                    "secondary-fixed": "#d5e3fc",
+                    "on-primary-fixed": "#00174b",
+                    "on-secondary-fixed": "#0d1c2e",
+                    "primary-container": "#2563eb",
+                    "surface-container-high": "#e7e8e9",
+                    "on-tertiary-fixed": "#002109",
+                    "surface": "#f8f9fa",
+                    "inverse-on-surface": "#f0f1f2",
+                    "surface-container-highest": "#e1e3e4",
+                    "surface-tint": "#0053db",
+                    "secondary": "#515f74",
+                    "inverse-surface": "#2e3132",
+                    "on-primary": "#ffffff",
+                    "on-tertiary-container": "#c1ffc5",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "error-container": "#ffdad6",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-bright": "#f8f9fa",
+                    "background": "#f8f9fa",
+                    "secondary-container": "#d5e3fc",
+                    "outline": "#737686",
+                    "surface-container-low": "#f3f4f5",
+                    "on-secondary": "#ffffff",
+                    "tertiary-fixed": "#6bff8f",
+                    "secondary-fixed-dim": "#b9c7df",
+                    "on-error-container": "#93000a",
+                    "inverse-primary": "#b4c5ff",
+                    "surface-dim": "#d9dadb",
+                    "on-tertiary": "#ffffff",
+                    "on-background": "#191c1d",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "on-secondary-container": "#57657a",
+                    "on-tertiary-fixed-variant": "#005321",
+                    "tertiary-container": "#007e37",
+                    "on-error": "#ffffff",
+                    "primary-fixed": "#dbe1ff",
+                    "tertiary-fixed-dim": "#4ae176",
+                    "on-secondary-fixed-variant": "#3a485b",
+                    "primary": "#004ac6",
+                    "tertiary": "#006229",
+                    "surface-variant": "#e1e3e4",
+                    "surface-container": "#edeeef",
+                    "outline-variant": "#c3c6d7"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-panel { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- SideNavBar (Shared Component) -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-slate-200/60 bg-zinc-50 flex flex-col p-4 gap-2 z-50">
+<div class="flex items-center gap-3 px-2 mb-8">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-xl">school</span>
+</div>
+<div>
+<h2 class="text-slate-900 font-black text-sm leading-tight">Lango Portal</h2>
+<p class="text-xs text-on-secondary-container">Precision Admin</p>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-zinc-100 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">school</span>
+<span class="text-sm font-medium tracking-tight">School Profile</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-white text-blue-600 shadow-sm rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">admin_panel_settings</span>
+<span class="text-sm font-medium tracking-tight">Roles &amp; Permissions</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-zinc-100 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="text-sm font-medium tracking-tight">Notifications</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-zinc-100 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">hub</span>
+<span class="text-sm font-medium tracking-tight">Integrations</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-zinc-100 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">extension</span>
+<span class="text-sm font-medium tracking-tight">Custom Fields</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-zinc-100 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">history</span>
+<span class="text-sm font-medium tracking-tight">Audit Logs</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-slate-200/60">
+<button class="w-full bg-primary-container text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-primary transition-colors mb-4">
+                Upgrade Plan
+            </button>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-zinc-100 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+<span class="text-sm font-medium tracking-tight">Log Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-screen">
+<!-- TopAppBar (Shared Component) -->
+<header class="w-full h-16 border-b border-slate-200/60 bg-white flex justify-between items-center px-8 sticky top-0 z-40">
+<div class="flex items-center gap-4">
+<h1 class="text-xl font-bold tracking-tight text-slate-900">Roles &amp; Permissions</h1>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+<input class="pl-9 pr-4 py-1.5 bg-zinc-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary w-64" placeholder="Search resources..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden ml-2">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="professional portrait of a system administrator in a clean modern office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLra9-craCnNnLLw73pw0gWuCc5GPHd0SrnmFftDHQlZ0vWBgmb-1IjkI_Oztk_8qrGQbV0NigWsXNUkGLncM3f7eSiJzijqhHRDEfbyg9hEeVgP9Hyqy3dkr0fQG97A-TkqUtSwwRS7T0N4ZzHDxPjRWYlFf-tHTva6dkqaJWPXUFLm6rlfqzlELy7dOcyEtAYOT-EXm5NxAG__K3UZPieKAoZ57GQADiLHqKQ3YMepV3RGqCCqMWLhYYKTRZ72SkfkL4O1TQmS5s"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Page Workspace -->
+<div class="p-8 max-w-[1440px] mx-auto grid grid-cols-12 gap-6">
+<!-- Left: Role Selection Card -->
+<div class="col-span-12 lg:col-span-3">
+<div class="bg-white border border-zinc-200 rounded-xl overflow-hidden flex flex-col h-fit">
+<div class="p-4 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
+<h3 class="font-semibold text-slate-900 text-sm">System Roles</h3>
+<button class="text-primary text-xs font-bold flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-xs">add</span> Add Role
+                        </button>
+</div>
+<div class="p-2 flex flex-col gap-1 max-h-[calc(100vh-250px)] overflow-y-auto">
+<!-- Role Item -->
+<button class="w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between group hover:bg-zinc-50 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">person</span>
+<span class="text-sm font-medium text-slate-700">Director</span>
+</div>
+<span class="text-[10px] uppercase tracking-wider font-bold bg-green-50 text-green-700 px-1.5 py-0.5 rounded border border-green-200">Full Access</span>
+</button>
+<!-- Selected Role -->
+<button class="w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between bg-blue-50 border border-blue-100 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-blue-600" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="text-sm font-bold text-blue-700">Receptionist</span>
+</div>
+<span class="material-symbols-outlined text-blue-600 text-sm">chevron_right</span>
+</button>
+<button class="w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between group hover:bg-zinc-50 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">school</span>
+<span class="text-sm font-medium text-slate-700">Teacher</span>
+</div>
+</button>
+<button class="w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between group hover:bg-zinc-50 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">face</span>
+<span class="text-sm font-medium text-slate-700">Student</span>
+</div>
+</button>
+<button class="w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between group hover:bg-zinc-50 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">family_restroom</span>
+<span class="text-sm font-medium text-slate-700">Parent</span>
+</div>
+</button>
+<button class="w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between group hover:bg-zinc-50 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">badge</span>
+<span class="text-sm font-medium text-slate-700">HR Manager</span>
+</div>
+</button>
+<button class="w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between group hover:bg-zinc-50 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary">account_balance_wallet</span>
+<span class="text-sm font-medium text-slate-700">Accountant</span>
+</div>
+</button>
+<div class="mt-4 px-3 py-2">
+<p class="text-[10px] uppercase font-bold text-slate-400 tracking-widest mb-2">Custom Roles</p>
+<div class="flex flex-col gap-1">
+<button class="w-full text-left px-3 py-2 rounded-lg flex items-center gap-3 group hover:bg-zinc-50">
+<span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+<span class="text-sm text-slate-600">Marketing</span>
+</button>
+<button class="w-full text-left px-3 py-2 rounded-lg flex items-center gap-3 group hover:bg-zinc-50">
+<span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+<span class="text-sm text-slate-600">Counselor</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right: Permission Configuration Card -->
+<div class="col-span-12 lg:col-span-9">
+<div class="bg-white border border-zinc-200 rounded-xl overflow-hidden flex flex-col shadow-[0_4px_12px_rgba(0,0,0,0.02)]">
+<!-- Config Header -->
+<div class="p-6 border-b border-zinc-100 flex justify-between items-start bg-white">
+<div class="space-y-1">
+<h2 class="text-xl font-bold text-slate-900">Receptionist Permissions</h2>
+<p class="text-sm text-slate-600 max-w-lg leading-relaxed focus:outline-none focus:ring-1 focus:ring-primary/20 rounded px-1 -ml-1 transition-all" contenteditable="true">
+                                Defines access for front-desk personnel. Responsibilities include student check-ins, invoice generation, and basic schedule viewing. Limited access to financial reports.
+                            </p>
+</div>
+<button class="px-5 py-2 bg-primary-container text-white text-sm font-semibold rounded-lg hover:bg-primary transition-all shadow-sm active:scale-95">
+                            Save Changes
+                        </button>
+</div>
+<!-- Permission Matrix -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-zinc-50/50 border-b border-zinc-100">
+<th class="px-6 py-4 text-[11px] uppercase tracking-wider font-bold text-slate-500 w-1/3">Resource</th>
+<th class="px-6 py-4 text-[11px] uppercase tracking-wider font-bold text-slate-500 text-center">Create</th>
+<th class="px-6 py-4 text-[11px] uppercase tracking-wider font-bold text-slate-500 text-center">View</th>
+<th class="px-6 py-4 text-[11px] uppercase tracking-wider font-bold text-slate-500 text-center">Edit</th>
+<th class="px-6 py-4 text-[11px] uppercase tracking-wider font-bold text-slate-500 text-center">Delete</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-zinc-50">
+<!-- Row: Students -->
+<tr class="hover:bg-zinc-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="p-1.5 bg-blue-50 text-blue-600 rounded">
+<span class="material-symbols-outlined text-lg">face</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-800">Students</p>
+<p class="text-[11px] text-slate-500">Student profiles and enrollment</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-center"><input checked="" class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input checked="" class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input checked="" class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+</tr>
+<!-- Row: Invoices -->
+<tr class="bg-zinc-50/30 hover:bg-zinc-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="p-1.5 bg-blue-50 text-blue-600 rounded">
+<span class="material-symbols-outlined text-lg">receipt_long</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-800">Invoices</p>
+<p class="text-[11px] text-slate-500">Billing and fee management</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-center"><input checked="" class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input checked="" class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input checked="" class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+</tr>
+<!-- Row: Payments -->
+<tr class="hover:bg-zinc-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="p-1.5 bg-blue-50 text-blue-600 rounded">
+<span class="material-symbols-outlined text-lg">payments</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-800">Payments</p>
+<p class="text-[11px] text-slate-500">Transaction records and processing</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-center"><input checked="" class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input checked="" class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+</tr>
+<!-- Row: Reports -->
+<tr class="bg-zinc-50/30 hover:bg-zinc-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="p-1.5 bg-blue-50 text-blue-600 rounded">
+<span class="material-symbols-outlined text-lg">analytics</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-800">Reports</p>
+<p class="text-[11px] text-slate-500">Academic and financial analytics</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-center"><input class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input checked="" class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+</tr>
+<!-- Row: CRM -->
+<tr class="hover:bg-zinc-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="p-1.5 bg-blue-50 text-blue-600 rounded">
+<span class="material-symbols-outlined text-lg">groups</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-800">CRM</p>
+<p class="text-[11px] text-slate-500">Lead management and follow-ups</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-center"><input checked="" class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input checked="" class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input checked="" class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+</tr>
+<!-- Row: WhatsApp -->
+<tr class="bg-zinc-50/30 hover:bg-zinc-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="p-1.5 bg-blue-50 text-blue-600 rounded">
+<span class="material-symbols-outlined text-lg">chat</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-800">WhatsApp</p>
+<p class="text-[11px] text-slate-500">Automated messaging and API</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-center"><input class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input checked="" class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+</tr>
+<!-- Row: Schedules -->
+<tr class="hover:bg-zinc-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="p-1.5 bg-blue-50 text-blue-600 rounded">
+<span class="material-symbols-outlined text-lg">calendar_month</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-800">Schedules</p>
+<p class="text-[11px] text-slate-500">Class timing and resource allocation</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-center"><input class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input checked="" class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input checked="" class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input class="w-4 h-4 rounded border-zinc-300 text-primary focus:ring-primary" type="checkbox"/></td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Footer Info -->
+<div class="p-4 bg-zinc-50/50 border-t border-zinc-100 flex items-center gap-2">
+<span class="material-symbols-outlined text-amber-500 text-sm">info</span>
+<p class="text-[11px] text-slate-500 font-medium">Any changes made to this role will instantly apply to all users assigned as 'Receptionist'.</p>
+</div>
+</div>
+<!-- Helper Card -->
+<div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-white border border-zinc-200 p-4 rounded-xl">
+<h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Role Stats</h4>
+<div class="flex items-end justify-between">
+<div>
+<p class="text-2xl font-bold text-slate-900">12</p>
+<p class="text-xs text-slate-500">Active Receptionists</p>
+</div>
+<div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+<span class="material-symbols-outlined">group</span>
+</div>
+</div>
+</div>
+<div class="bg-white border border-zinc-200 p-4 rounded-xl">
+<h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Access Level</h4>
+<div class="flex items-end justify-between">
+<div>
+<p class="text-2xl font-bold text-slate-900">High</p>
+<p class="text-xs text-slate-500">Functional Tier</p>
+</div>
+<div class="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center text-amber-600">
+<span class="material-symbols-outlined">verified_user</span>
+</div>
+</div>
+</div>
+<div class="bg-white border border-zinc-200 p-4 rounded-xl">
+<h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Last Audit</h4>
+<div class="flex items-end justify-between">
+<div>
+<p class="text-sm font-bold text-slate-900">Oct 24, 2023</p>
+<p class="text-xs text-slate-500">By Admin Sarah</p>
+</div>
+<div class="w-10 h-10 bg-zinc-50 rounded-lg flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined">history</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

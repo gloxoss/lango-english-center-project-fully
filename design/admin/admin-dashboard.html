@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lango English Center - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed-dim": "#b4c5ff",
+                    "primary": "#004ac6",
+                    "secondary-fixed-dim": "#b9c7df",
+                    "inverse-surface": "#2e3132",
+                    "secondary-fixed": "#d5e3fc",
+                    "surface-container-high": "#e7e8e9",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "on-surface-variant": "#434655",
+                    "on-primary": "#ffffff",
+                    "surface-container-highest": "#e1e3e4",
+                    "surface-variant": "#e1e3e4",
+                    "surface": "#f8f9fa",
+                    "on-secondary-fixed": "#0d1c2e",
+                    "outline": "#737686",
+                    "surface-container-low": "#f3f4f5",
+                    "primary-container": "#2563eb",
+                    "surface-bright": "#f8f9fa",
+                    "error": "#ba1a1a",
+                    "primary-fixed": "#dbe1ff",
+                    "on-primary-container": "#eeefff",
+                    "on-error-container": "#93000a",
+                    "on-secondary": "#ffffff",
+                    "inverse-on-surface": "#f0f1f2",
+                    "on-secondary-container": "#57657a",
+                    "on-secondary-fixed-variant": "#3a485b",
+                    "tertiary-fixed-dim": "#4ae176",
+                    "surface-dim": "#d9dadb",
+                    "on-surface": "#191c1d",
+                    "inverse-primary": "#b4c5ff",
+                    "outline-variant": "#c3c6d7",
+                    "on-tertiary-fixed-variant": "#005321",
+                    "on-error": "#ffffff",
+                    "secondary-container": "#d5e3fc",
+                    "tertiary-fixed": "#6bff8f",
+                    "on-background": "#191c1d",
+                    "on-tertiary-container": "#c1ffc5",
+                    "tertiary": "#006229",
+                    "secondary": "#515f74",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed": "#002109",
+                    "tertiary-container": "#007e37",
+                    "on-tertiary": "#ffffff",
+                    "background": "#f8f9fa",
+                    "surface-tint": "#0053db",
+                    "on-primary-fixed": "#00174b",
+                    "surface-container": "#edeeef"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-screen w-[220px] bg-slate-50 dark:bg-zinc-900 flex flex-col py-6 px-4 gap-y-2 font-inter text-sm antialiased tracking-tight">
+<div class="mb-8 px-2 flex items-center gap-3">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="minimalist geometric logo for an english language school modern blue and white professional aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-fssEB5cdTx47K2Sn6LcUF8yNWhxypUCI3P0tIEkTyaIBYfk-CFh7PKC5nWF6X0WOBOnPdRUY3yIgYlmqZkS3VzKKQOrNImRyRVqlCZtzE9_rEufl3sBE1sZ4tMcNjcY3cxrqDLK4hMA9qq7-WiEB_4n4G9IZsaD3rMXKQ9_EFb1H7KwOX5pB6QOiHorKsxnULoOFXZsPvGcuSNpYCXaCJ-I3-RCbWAOzlzX-ejmqwYRALO5_4XX3t0PHcSkxn_18QSFBd_AcsKE-"/>
+</div>
+<div>
+<h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">Lango English Center</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Academic Curator</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Dashboard (Active) -->
+<a class="flex items-center gap-3 px-3 py-2 text-blue-600 dark:text-blue-400 font-semibold bg-blue-50/50 dark:bg-blue-900/20 rounded-lg scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">group</span>
+                Students
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">school</span>
+                Academics
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">payments</span>
+                Finance
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">leaderboard</span>
+                CRM
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+                Staff &amp; HR
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+                WhatsApp
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">menu_book</span>
+                LMS
+            </a>
+</nav>
+<div class="mt-auto pt-6 border-t border-slate-200/50">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+                Settings
+            </a>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 h-14 left-[220px] bg-white dark:bg-slate-950 flex justify-between items-center px-8 border-b border-zinc-200 dark:border-zinc-800 z-10">
+<div class="flex items-center w-1/2">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+<input class="w-full pl-10 pr-4 py-1.5 bg-slate-50 border-none rounded-lg text-sm focus:ring-1 focus:ring-primary transition-all" placeholder="Search students, classes... (Cmd+K)" type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="relative text-slate-500 hover:text-slate-900 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border-2 border-white"></span>
+</button>
+<div class="flex items-center gap-3 cursor-pointer group">
+<div class="text-right">
+<p class="text-sm font-semibold text-slate-900">Ahmed Benali</p>
+<p class="text-[10px] text-slate-500 uppercase tracking-tighter">Director</p>
+</div>
+<div class="w-9 h-9 rounded-full bg-slate-200 overflow-hidden ring-2 ring-slate-100 group-hover:ring-primary/20 transition-all">
+<img class="w-full h-full object-cover" data-alt="portrait of a professional middle-aged man with a friendly expression wearing a modern suit soft studio lighting high-end corporate photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC201tZq43hweomXleJERyciX95URIHkHzZjIjSkoTt0iZmL7keJnxZHsT91ltxhOLE_fpSTi8mYfxTgOKewWIVsIbj5X9iKpujiettjn0EAhKxvKeFwkEvvizCY4jkZo9DDF7FkowS0XopZ_XN5fn9EL2GMOcTq6JZMRmzS2cLTxCoiytVMJunO85c_xXo63vHHp0iP7eJCFArm95y0ZFcUNnh9UXGOh4xU9QPdXWvVLXLm1DMyQZSzYacsZNh1uZf7ZWGkzmzKno_"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-[220px] pt-20 px-8 pb-12 min-h-screen">
+<!-- Header Section -->
+<header class="mb-10">
+<div class="flex justify-between items-end">
+<div>
+<h1 class="text-4xl font-extrabold text-slate-900 tracking-tight mb-1">Good morning, Ahmed</h1>
+<p class="text-slate-500 font-medium">Thursday, April 3, 2026</p>
+</div>
+<button class="bg-primary hover:bg-primary-container text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all shadow-sm">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                    New Enrollment
+                </button>
+</div>
+</header>
+<!-- KPI Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+<!-- Active Students -->
+<div class="bg-white border border-zinc-200 rounded-xl p-5 hover:border-primary/30 transition-colors">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-blue-50 rounded-lg text-primary">
+<span class="material-symbols-outlined">group</span>
+</div>
+<span class="text-xs font-bold text-tertiary px-2 py-1 bg-tertiary/10 rounded-full">+12 this month</span>
+</div>
+<p class="text-slate-500 text-sm font-medium mb-1">Active Students</p>
+<h3 class="text-3xl font-bold text-slate-900">247</h3>
+</div>
+<!-- Attendance -->
+<div class="bg-white border border-zinc-200 rounded-xl p-5 hover:border-primary/30 transition-colors">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-green-50 rounded-lg text-green-600">
+<span class="material-symbols-outlined">how_to_reg</span>
+</div>
+<span class="text-xs font-bold text-green-600 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+</span>
+</div>
+<p class="text-slate-500 text-sm font-medium mb-1">Today Attendance</p>
+<h3 class="text-3xl font-bold text-slate-900">87%</h3>
+</div>
+<!-- Invoices -->
+<div class="bg-white border border-zinc-200 rounded-xl p-5 hover:border-primary/30 transition-colors">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-orange-50 rounded-lg text-orange-600">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+<span class="text-xs font-bold text-error px-2 py-1 bg-error/10 rounded-full">8 overdue</span>
+</div>
+<p class="text-slate-500 text-sm font-medium mb-1">Pending Invoices</p>
+<h3 class="text-3xl font-bold text-slate-900">12,400 <span class="text-sm font-semibold">MAD</span></h3>
+</div>
+<!-- CRM Leads -->
+<div class="bg-white border border-zinc-200 rounded-xl p-5 hover:border-primary/30 transition-colors">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-purple-50 rounded-lg text-purple-600">
+<span class="material-symbols-outlined">leaderboard</span>
+</div>
+</div>
+<p class="text-slate-500 text-sm font-medium mb-1">New Leads</p>
+<h3 class="text-3xl font-bold text-slate-900">8</h3>
+<p class="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">From CRM System</p>
+</div>
+</section>
+<!-- Charts Section -->
+<section class="flex flex-col lg:flex-row gap-6 mb-10">
+<!-- Revenue Area Chart Placeholder -->
+<div class="w-full lg:w-[60%] bg-white rounded-2xl p-6 border border-zinc-100">
+<div class="flex justify-between items-center mb-8">
+<h4 class="font-bold text-slate-900">Revenue Analysis</h4>
+<select class="text-xs bg-surface border-none rounded-lg font-semibold text-slate-600 py-1.5 focus:ring-0">
+<option>Last 6 months</option>
+<option>Last year</option>
+</select>
+</div>
+<div class="relative h-64 w-full bg-slate-50 rounded-xl overflow-hidden flex items-end px-4 gap-2">
+<!-- Faux Area Chart -->
+<div class="flex-1 bg-primary/10 rounded-t-lg h-[40%] group relative">
+<div class="absolute inset-x-0 top-0 h-1 bg-primary-container rounded-full"></div>
+<span class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] px-2 py-1 rounded">Nov</span>
+</div>
+<div class="flex-1 bg-primary/10 rounded-t-lg h-[55%] group relative">
+<div class="absolute inset-x-0 top-0 h-1 bg-primary-container rounded-full"></div>
+<span class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] px-2 py-1 rounded">Dec</span>
+</div>
+<div class="flex-1 bg-primary/10 rounded-t-lg h-[45%] group relative">
+<div class="absolute inset-x-0 top-0 h-1 bg-primary-container rounded-full"></div>
+<span class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] px-2 py-1 rounded">Jan</span>
+</div>
+<div class="flex-1 bg-primary/20 rounded-t-lg h-[70%] group relative">
+<div class="absolute inset-x-0 top-0 h-1.5 bg-primary-container rounded-full"></div>
+<span class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] px-2 py-1 rounded">Feb</span>
+</div>
+<div class="flex-1 bg-primary/20 rounded-t-lg h-[65%] group relative">
+<div class="absolute inset-x-0 top-0 h-1.5 bg-primary-container rounded-full"></div>
+<span class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] px-2 py-1 rounded">Mar</span>
+</div>
+<div class="flex-1 bg-primary rounded-t-lg h-[90%] group relative">
+<div class="absolute inset-x-0 top-0 h-2 bg-primary-container rounded-full ring-4 ring-primary/20"></div>
+<span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] px-2 py-1 rounded">Apr</span>
+</div>
+</div>
+</div>
+<!-- Attendance Donut Chart Placeholder -->
+<div class="w-full lg:w-[40%] bg-white rounded-2xl p-6 border border-zinc-100 flex flex-col">
+<h4 class="font-bold text-slate-900 mb-2">Today's Attendance</h4>
+<p class="text-xs text-slate-500 mb-8">Summary of all active morning sessions</p>
+<div class="flex-1 flex flex-col items-center justify-center relative">
+<!-- SVG Circle Chart -->
+<svg class="w-48 h-48 -rotate-90" viewbox="0 0 36 36">
+<path class="text-error" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="100, 100" stroke-width="3"></path>
+<path class="text-tertiary-fixed-dim" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="87, 100" stroke-width="3.5"></path>
+</svg>
+<div class="absolute text-center">
+<p class="text-3xl font-extrabold text-slate-900">87%</p>
+<p class="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Present</p>
+</div>
+</div>
+<div class="mt-6 flex justify-between px-4">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary-fixed-dim"></span>
+<span class="text-xs font-semibold text-slate-600">Present (215)</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-error"></span>
+<span class="text-xs font-semibold text-slate-600">Absent (32)</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Details Grid -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+<!-- Recent Enrollments -->
+<div class="bg-surface-container-low rounded-2xl p-6">
+<div class="flex justify-between items-center mb-6">
+<h4 class="font-bold text-slate-900 flex items-center gap-2">
+                        Recent Enrollments
+                        <span class="text-[10px] font-bold bg-white text-primary px-2 py-0.5 rounded-full border border-primary/10">3 NEW</span>
+</h4>
+<button class="text-primary text-xs font-bold hover:underline">View all</button>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between p-3 bg-white rounded-xl shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-slate-50">
+<img class="w-full h-full object-cover" data-alt="portrait of a young moroccan woman smiling brightly modern fashion soft bokeh background high resolution" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLsm06epxQaKl84ZYINlxx4a6Cm_gJPdaBw7-rX7LQnq1fplVCY9pIKKex1-qxeqSH7V42QpDTyHFRq03hUQBbTNrVI0ipPIfgN0T7NQsPJyaN-cH37QX04BwrakMVpSF7uLhx-zfxa7A4bQq05LUJM00UBRNfoNidus3vT4FxC9ZQYrrBTweqDnsaZWMZcW5T6Nwh12psR-ti9NuUj8_9Os_pRMaFGcrvU6E5zBgdjdWDRu_1GosR1obVFGoB3EG9mprcRx-p9JJq"/>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-900">Fatima Zahra</p>
+<p class="text-[11px] text-slate-500">A1 Monday • Enrollment</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-xs font-semibold text-slate-900">2 days ago</p>
+<span class="text-[9px] px-1.5 py-0.5 bg-green-50 text-green-700 font-bold rounded">PAID</span>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 bg-white rounded-xl shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-slate-50">
+<img class="w-full h-full object-cover" data-alt="close up headshot of a young man with dark hair looking confident stylish professional look natural daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVaB0Ei3ULZAfGa-lqjVUAQWeYEOItW8ifDobfZ5EKuVSCy0ehE6ATz9P22VgYMXz0tTW3sSFKTGBBBwfEUfHNTO19HtmiGBDskWBaG-YHAdOzmBXFy0bx0hJc6UgrMVwBGiylWQt-1QRs58yOaSML126Ie2y7FeWCFlnjVheiMRqCgLzQ0IXaJHDgy59aLtD_TBZpVqJ9gnJ5NYjMQ88FcBlm6bkeofC0Vp32JYz3YXEAkZ-3Sbmg7vkCKoodkf-W9k2FuSdydkiq"/>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-900">Youssef El Idrissi</p>
+<p class="text-[11px] text-slate-500">B2 Evening • Enrollment</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-xs font-semibold text-slate-900">2 days ago</p>
+<span class="text-[9px] px-1.5 py-0.5 bg-green-50 text-green-700 font-bold rounded">PAID</span>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 bg-white rounded-xl shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-slate-50">
+<img class="w-full h-full object-cover" data-alt="portrait of a young girl with a bright smile educational setting background warm lighting professional photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmvcvoY22lCgvbbzFg2TyNu_03FfWGrzT0ThclmAMYuDS1TA7mCoKhlWgc9nWuRNTciLmtqOYsJCAPCA3BlAUVkMXxRNuESJCoq1CvpfR0BXOMWcNqdjM8X46bM9TZ_ON6FHBtGOD_ko_7ykEd6zXcT3wzCCTeQC9Ehk6ERVuLj89i0pnmeh2Lkl5EXuwYR642ois72h02HdnQ-ZvHHmuZ1Gk15zIoLz3YDwrrkI9elcrzCJPhj3Ej6Hl3P_6LoEu23Ux0ITAEggur"/>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-900">Aya Benali</p>
+<p class="text-[11px] text-slate-500">A2 Weekend • Enrollment</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-xs font-semibold text-slate-900">2 days ago</p>
+<span class="text-[9px] px-1.5 py-0.5 bg-orange-50 text-orange-700 font-bold rounded">PENDING</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Upcoming Classes -->
+<div class="bg-white rounded-2xl p-6 border border-zinc-100">
+<div class="flex justify-between items-center mb-6">
+<h4 class="font-bold text-slate-900">Upcoming Classes (Today)</h4>
+<span class="material-symbols-outlined text-slate-400">calendar_today</span>
+</div>
+<div class="space-y-3">
+<div class="group flex gap-4 p-4 rounded-xl border border-transparent hover:border-slate-100 hover:bg-slate-50 transition-all cursor-pointer">
+<div class="text-center min-w-[60px] border-r border-slate-100 pr-4">
+<p class="text-lg font-bold text-slate-900">09:00</p>
+<p class="text-[10px] font-bold text-slate-400 uppercase">Morning</p>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<p class="text-sm font-bold text-slate-900">A1 - Monday Morning</p>
+<span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded uppercase">Teacher Sara</span>
+</div>
+<div class="mt-2 h-1 w-full bg-slate-200 rounded-full overflow-hidden">
+<div class="bg-tertiary h-full w-[80%] rounded-full"></div>
+</div>
+<p class="mt-1 text-[10px] text-slate-500">Room 4 • 12/15 Students</p>
+</div>
+</div>
+<div class="group flex gap-4 p-4 rounded-xl border border-transparent hover:border-slate-100 hover:bg-slate-50 transition-all cursor-pointer">
+<div class="text-center min-w-[60px] border-r border-slate-100 pr-4">
+<p class="text-lg font-bold text-slate-900">14:00</p>
+<p class="text-[10px] font-bold text-slate-400 uppercase">Afternoon</p>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<p class="text-sm font-bold text-slate-900">B1 - Wednesday Afternoon</p>
+<span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded uppercase">Teacher Karim</span>
+</div>
+<div class="mt-2 h-1 w-full bg-slate-200 rounded-full overflow-hidden">
+<div class="bg-primary-container h-full w-[45%] rounded-full"></div>
+</div>
+<p class="mt-1 text-[10px] text-slate-500">Room 1 • 8/18 Students</p>
+</div>
+</div>
+<div class="group flex gap-4 p-4 rounded-xl border border-transparent hover:border-slate-100 hover:bg-slate-50 transition-all cursor-pointer">
+<div class="text-center min-w-[60px] border-r border-slate-100 pr-4">
+<p class="text-lg font-bold text-slate-900">18:00</p>
+<p class="text-[10px] font-bold text-slate-400 uppercase">Evening</p>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<p class="text-sm font-bold text-slate-900">C1 - Evening Advanced</p>
+<span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded uppercase">Teacher Nadia</span>
+</div>
+<div class="mt-2 h-1 w-full bg-slate-200 rounded-full overflow-hidden">
+<div class="bg-secondary-container h-full w-[100%] rounded-full"></div>
+</div>
+<p class="mt-1 text-[10px] text-slate-500">Room 6 • Full (12/12)</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Warning Notices -->
+<section class="space-y-3">
+<div class="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-center gap-4">
+<span class="material-symbols-outlined text-amber-600">warning</span>
+<div class="flex-1">
+<p class="text-sm font-bold text-amber-900">License Renewal Required</p>
+<p class="text-xs text-amber-700">The academic portal subscription expires in 5 days. Please update payment method.</p>
+</div>
+<button class="text-amber-900 font-bold text-xs bg-amber-200 px-3 py-1.5 rounded-lg hover:bg-amber-300 transition-colors">Renew Now</button>
+</div>
+<div class="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-center gap-4">
+<span class="material-symbols-outlined text-amber-600">report_problem</span>
+<div class="flex-1">
+<p class="text-sm font-bold text-amber-900">Pending Staff Certifications</p>
+<p class="text-xs text-amber-700">3 staff members have expired TEFL certifications. Documents must be updated by end of week.</p>
+</div>
+<button class="text-amber-900 font-bold text-xs bg-amber-200 px-3 py-1.5 rounded-lg hover:bg-amber-300 transition-colors">View Staff</button>
+</div>
+</section>
+</main>
+</body></html>

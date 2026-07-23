@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#434655",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "background": "#f8f9fa",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-container": "#394c84",
+                        "tertiary": "#943700",
+                        "primary-container": "#2563eb",
+                        "on-surface": "#191c1d",
+                        "surface-container": "#edeeef",
+                        "error": "#ba1a1a",
+                        "on-primary": "#ffffff",
+                        "secondary": "#495c95",
+                        "primary": "#004ac6",
+                        "surface-bright": "#f8f9fa",
+                        "surface-tint": "#0053db",
+                        "on-tertiary-container": "#ffede6",
+                        "inverse-surface": "#2e3132",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#ffdbcd",
+                        "on-primary-fixed": "#00174b",
+                        "secondary-container": "#acbfff",
+                        "surface-container-low": "#f3f4f5",
+                        "secondary-fixed": "#dbe1ff",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "outline-variant": "#c3c6d7",
+                        "on-secondary-fixed-variant": "#31447b",
+                        "surface-variant": "#e1e3e4",
+                        "surface": "#f8f9fa",
+                        "primary-fixed": "#dbe1ff",
+                        "surface-dim": "#d9dadb",
+                        "on-primary-container": "#eeefff",
+                        "surface-container-high": "#e7e8e9",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#00174b",
+                        "surface-container-highest": "#e1e3e4",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "outline": "#737686",
+                        "tertiary-container": "#bc4800",
+                        "on-error-container": "#93000a",
+                        "on-background": "#191c1d",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#b4c5ff",
+                        "surface-container-lowest": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-background text-on-surface antialiased overflow-hidden">
+<!-- Top Navigation Bar -->
+<header class="bg-white dark:bg-zinc-950 flex justify-between items-center px-6 h-16 w-full border-b border-zinc-100 dark:border-zinc-800 font-['Inter'] antialiased tracking-tight">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold text-slate-900 dark:text-slate-50">Lango English Center</span>
+<nav class="hidden md:flex items-center space-x-6">
+<a class="text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 transition-colors duration-200" href="#">Dashboard</a>
+<a class="text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 transition-colors duration-200" href="#">Students</a>
+<a class="text-blue-600 dark:text-blue-400 font-semibold border-b-2 border-blue-600 pb-1" href="#">Fees</a>
+<a class="text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 transition-colors duration-200" href="#">Reports</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-zinc-50 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-zinc-50 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden">
+<img alt="Administrator Profile" class="w-full h-full object-cover" data-alt="Professional administrator profile portrait with neutral background and soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3K7xgnnHt9l_7McuaVlBWtHLVO29oHBnMGdjX5C6W-uGbGsRBv4XbJ9Gls21Rpuifz5GQ47YnVvo1aS2Ism5UIvk6DiWFST-n1S7zdwT0cAeCAPZYauucuCijSfV8wCSTFa45Jq4Ur-2lLoxyT7Nn2koDi6OPfySYawjt1l8XzQOxzrRiMeEjhY88F-I2VBD-Q_7tbxB9ckP-eXxAsmpNsR2Sdf7zFJYUdl4mapnk8Mwjsbo7GjNNRbD1TpqQWJU_d_zntl2uyvDH"/>
+</div>
+</div>
+</header>
+<main class="flex h-[calc(100vh-64px)]">
+<!-- Sidebar: Find Student -->
+<aside class="w-[360px] bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-100 dark:border-zinc-800 flex flex-col p-6 space-y-8">
+<section class="space-y-4">
+<h2 class="text-lg font-bold text-slate-900 dark:text-slate-50">Find Student</h2>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-3.5 text-slate-400 text-sm" data-icon="search">search</span>
+<input autofocus="" class="w-full pl-10 pr-4 py-3 bg-surface-container-lowest border border-outline-variant/20 rounded-lg focus:ring-2 focus:ring-primary-fixed focus:border-primary outline-none transition-all text-sm" placeholder="Search name or ID..." type="text"/>
+</div>
+<div class="space-y-2">
+<div class="bg-white dark:bg-zinc-800 p-3 rounded-lg border border-primary/20 shadow-sm flex justify-between items-center cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-fixed/30 flex items-center justify-center text-primary font-bold text-xs">FZ</div>
+<div>
+<p class="text-sm font-semibold text-slate-900">Fatima Zahra</p>
+<p class="text-[10px] text-slate-500">ID: #4421</p>
+</div>
+</div>
+<span class="text-sm font-bold text-error">1,200 MAD</span>
+</div>
+<div class="p-3 rounded-lg hover:bg-zinc-100/50 flex justify-between items-center cursor-pointer transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-zinc-200 flex items-center justify-center text-slate-500 font-bold text-xs">AB</div>
+<div>
+<p class="text-sm font-semibold text-slate-900">Ahmed Benmoussa</p>
+<p class="text-[10px] text-slate-500">ID: #4419</p>
+</div>
+</div>
+<span class="text-sm font-bold text-green-600">0 MAD</span>
+</div>
+</div>
+</section>
+<section class="flex-1 overflow-hidden flex flex-col">
+<h3 class="text-sm font-semibold text-slate-500 mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="history">history</span> Recent Payments
+                </h3>
+<div class="space-y-4 overflow-y-auto no-scrollbar">
+<div class="flex items-center gap-3 p-2 hover:bg-zinc-100/50 rounded-lg transition-colors">
+<div class="p-2 bg-green-50 text-green-600 rounded-lg">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+</div>
+<div class="flex-1">
+<p class="text-xs font-bold text-slate-900">Yassine Amrani</p>
+<p class="text-[10px] text-slate-500">2,400 MAD • Cash</p>
+</div>
+<span class="text-[10px] text-slate-400">14:20</span>
+</div>
+<div class="flex items-center gap-3 p-2 hover:bg-zinc-100/50 rounded-lg transition-colors">
+<div class="p-2 bg-green-50 text-green-600 rounded-lg">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+</div>
+<div class="flex-1">
+<p class="text-xs font-bold text-slate-900">Sara El Fassi</p>
+<p class="text-[10px] text-slate-500">1,200 MAD • Stripe</p>
+</div>
+<span class="text-[10px] text-slate-400">13:45</span>
+</div>
+<div class="flex items-center gap-3 p-2 hover:bg-zinc-100/50 rounded-lg transition-colors">
+<div class="p-2 bg-green-50 text-green-600 rounded-lg">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+</div>
+<div class="flex-1">
+<p class="text-xs font-bold text-slate-900">Karim Alaoui</p>
+<p class="text-[10px] text-slate-500">600 MAD • CMI</p>
+</div>
+<span class="text-[10px] text-slate-400">12:30</span>
+</div>
+</div>
+</section>
+<button class="w-full bg-primary-container text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined" data-icon="add">add</span> New Collection
+            </button>
+</aside>
+<!-- Main Panel: Fee Desk -->
+<div class="flex-1 overflow-y-auto bg-white">
+<div class="max-w-5xl mx-auto p-12">
+<!-- Header -->
+<header class="flex justify-between items-start mb-12">
+<div class="flex items-center gap-6">
+<div class="w-20 h-20 rounded-full border-4 border-zinc-50 overflow-hidden">
+<img alt="Fatima Zahra Benmoussa" class="w-full h-full object-cover" data-alt="Close-up portrait of a young Moroccan woman smiling warmly, soft daylight in a modern indoor setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7yZgLz_rbSJU-KqR5MYVdocWWPPxUuP-mvD8UB-w441921B-t8vbETo2kc_CwCBPQ6Mdi29xufIQVQbqUk7SnDPr-P6xIYYS3CgXDi8Zx5fsuUvUh0QwAoSbNfMfxePLbBp95DrWtioFN2w28WtG537NxQakz56CrPzJR6Mb-L0xOuiKMMBcCIjY3b5AitI5yaQSNiBmhPQAoD7gWh4gDeHuc4fOuWwHnOLzei9gHC2BD_VHPST0f-Lth1aKiBFDTeIbyYG0L2ND8"/>
+</div>
+<div>
+<div class="flex items-center gap-3 mb-1">
+<h1 class="text-3xl font-black text-slate-900 tracking-tight">Fatima Zahra Benmoussa</h1>
+<span class="px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed-variant text-[10px] font-bold rounded uppercase tracking-wider">A1 Class</span>
+</div>
+<p class="text-slate-500 font-medium">Student ID: #4421 • Registered since Sep 2023</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Outstanding Balance</p>
+<p class="text-5xl font-black text-error tracking-tighter">1,200 <span class="text-xl font-medium">MAD</span></p>
+</div>
+</header>
+<div class="grid grid-cols-12 gap-12">
+<!-- Invoice Section -->
+<section class="col-span-7 space-y-6">
+<h3 class="text-lg font-bold text-slate-900">Invoices &amp; Fees</h3>
+<div class="space-y-4">
+<!-- Due Item -->
+<div class="bg-surface-container-lowest p-5 rounded-lg border border-zinc-100 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+</div>
+<div>
+<p class="font-bold text-slate-900">Term 1 Course Fee</p>
+<p class="text-xs text-slate-500">Due Jan 1, 2024 • Invoice #INV-2401</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<span class="font-bold text-slate-900">1,200 MAD</span>
+<button class="bg-primary text-white px-5 py-1.5 rounded-lg text-sm font-bold shadow-sm active:scale-95 transition-transform">Pay</button>
+</div>
+</div>
+<!-- Paid Item -->
+<div class="bg-zinc-50/50 p-5 rounded-lg border border-zinc-100 flex items-center justify-between opacity-75">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-green-50 text-green-600 flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div>
+<p class="font-bold text-slate-900">Registration Fee</p>
+<p class="text-xs text-slate-500">Paid Oct 12, 2023 • Reference #TX-9821</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<span class="font-bold text-slate-900">200 MAD</span>
+<span class="w-24 text-center text-[10px] font-bold text-green-600 uppercase tracking-widest bg-green-100/50 py-1 rounded">Paid</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Payment Form -->
+<section class="col-span-5">
+<div class="bg-zinc-50 dark:bg-zinc-900 rounded-xl p-8 space-y-6">
+<h3 class="text-lg font-bold text-slate-900">Process Collection</h3>
+<div class="space-y-4">
+<div>
+<label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Payment Amount (MAD)</label>
+<input class="w-full px-4 py-4 bg-white border border-zinc-200 rounded-lg text-2xl font-bold text-primary-container focus:ring-2 focus:ring-primary-fixed focus:border-primary outline-none transition-all" type="number" value="1200"/>
+</div>
+<div>
+<label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Method</label>
+<div class="grid grid-cols-3 gap-2 p-1 bg-zinc-200/50 rounded-lg">
+<button class="py-2.5 rounded-md bg-white shadow-sm text-sm font-bold text-primary-container">Cash</button>
+<button class="py-2.5 rounded-md text-sm font-medium text-slate-600 hover:bg-white/50 transition-colors">Stripe</button>
+<button class="py-2.5 rounded-md text-sm font-medium text-slate-600 hover:bg-white/50 transition-colors">CMI</button>
+</div>
+</div>
+<div>
+<label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Reference Note</label>
+<textarea class="w-full px-4 py-3 bg-white border border-zinc-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-fixed focus:border-primary outline-none transition-all resize-none" placeholder="Add payment note..." rows="2"></textarea>
+</div>
+<div class="pt-4">
+<button class="w-full bg-gradient-to-br from-[#004AC6] to-[#2563EB] text-white py-4 rounded-lg font-bold text-lg shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+<span class="material-symbols-outlined" data-icon="lock" style="font-variation-settings: 'FILL' 1;">lock</span>
+                                        Process Payment
+                                    </button>
+<p class="text-center text-[10px] text-slate-400 mt-4 px-4">
+                                        Confirming this action will generate an official receipt and update the student ledger instantly.
+                                    </p>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="fixed bottom-0 w-full flex justify-between items-center px-6 py-3 z-40 bg-white/80 backdrop-blur-md border-t border-zinc-100 dark:border-zinc-800">
+<div class="text-xs text-slate-400 dark:text-zinc-500 font-['Inter']">
+            © 2024 Lango English Center • System v2.4.0
+        </div>
+<div class="flex gap-4">
+<a class="text-xs text-slate-400 dark:text-zinc-500 font-['Inter'] hover:text-slate-600 dark:hover:text-zinc-300" href="#">Help Center</a>
+<a class="text-xs text-slate-400 dark:text-zinc-500 font-['Inter'] hover:text-slate-600 dark:hover:text-zinc-300" href="#">Support</a>
+<a class="text-xs text-slate-400 dark:text-zinc-500 font-['Inter'] hover:text-slate-600 dark:hover:text-zinc-300" href="#">Privacy</a>
+</div>
+</footer>
+</body></html>

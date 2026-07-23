@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lango Student Portal | Video Lesson</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-container": "#2563eb",
+                    "on-secondary-container": "#004119",
+                    "on-secondary-fixed-variant": "#005321",
+                    "tertiary": "#ffb95f",
+                    "primary": "#b4c5ff",
+                    "inverse-on-surface": "#283044",
+                    "on-primary-container": "#eeefff",
+                    "surface": "#0b1326",
+                    "surface-variant": "#2d3449",
+                    "on-secondary": "#003915",
+                    "outline-variant": "#434655",
+                    "secondary": "#4ae176",
+                    "secondary-fixed-dim": "#4ae176",
+                    "on-error-container": "#ffdad6",
+                    "background": "#0b1326",
+                    "on-tertiary-container": "#ffeedd",
+                    "on-error": "#690005",
+                    "surface-container": "#171f33",
+                    "on-tertiary-fixed-variant": "#653e00",
+                    "surface-dim": "#0b1326",
+                    "on-primary-fixed": "#00174b",
+                    "outline": "#8d90a0",
+                    "surface-container-high": "#222a3d",
+                    "tertiary-container": "#996100",
+                    "on-primary": "#002a78",
+                    "surface-container-highest": "#2d3449",
+                    "surface-tint": "#b4c5ff",
+                    "surface-bright": "#31394d",
+                    "on-surface-variant": "#c3c6d7",
+                    "tertiary-fixed-dim": "#ffb95f",
+                    "inverse-surface": "#dae2fd",
+                    "primary-fixed": "#dbe1ff",
+                    "on-tertiary": "#472a00",
+                    "error": "#ffb4ab",
+                    "error-container": "#93000a",
+                    "tertiary-fixed": "#ffddb8",
+                    "surface-container-low": "#131b2e",
+                    "on-surface": "#dae2fd",
+                    "on-background": "#dae2fd",
+                    "on-tertiary-fixed": "#2a1700",
+                    "secondary-fixed": "#6bff8f",
+                    "secondary-container": "#00b954",
+                    "on-secondary-fixed": "#002109",
+                    "inverse-primary": "#0053db",
+                    "surface-container-lowest": "#060e20",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "on-primary-fixed-variant": "#003ea8"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-video-mask {
+            mask-image: radial-gradient(circle, black 50%, rgba(0,0,0,0.5) 100%);
+        }
+    </style>
+</head>
+<body class="bg-[#0F172A] text-on-surface selection:bg-primary-container selection:text-white">
+<div class="flex min-h-screen">
+<!-- SideNavBar (JSON Derived) -->
+<aside class="h-screen w-[280px] fixed left-0 top-0 border-r border-slate-800/15 bg-slate-900 dark:bg-slate-900 flex flex-col py-8 px-6 space-y-8 z-50 overflow-y-auto">
+<!-- Header Section -->
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl overflow-hidden bg-surface-container-highest">
+<img alt="Student Profile" class="w-full h-full object-cover" data-alt="Professional profile photo of a student in a clean minimalist environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-5rA5mBC2ZN0TG7-nwnGHZi6ByGpxB6fF5XfwKjLION7PGivLdRQC3g6eazEiVe7JqcHJ_RLXXRiCTO1wwRrc0f5F65ceaj5O8ipNKlyU5G0hceG290IwV6BwJg_BUpCQf-9tiVLFIU4BdMKfC_UU0SRL15w4c6K64XYbQ64pYDybm_ykj6_NJEMf-2AcPgD0FYnICttEPWDj6-Q2vNjtPK0-iXJXc831_ajxm8ieDPEz7obh0IhjOfLlYiqKataH39dQO77fEUAc"/>
+</div>
+<div>
+<h3 class="text-xl font-bold tracking-tighter text-slate-100">English B1 Complete Course</h3>
+<p class="text-xs text-slate-400 font-medium uppercase tracking-widest">35% Complete</p>
+</div>
+</div>
+<!-- Progress Indicator -->
+<div class="h-[2px] w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-secondary to-secondary-container w-[35%] shadow-[0_0_8px_rgba(74,225,118,0.4)]"></div>
+</div>
+</div>
+<!-- Lesson Tree -->
+<nav class="flex-1 space-y-6">
+<!-- Chapter 1 -->
+<div class="space-y-2">
+<button class="flex items-center justify-between w-full group">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Chapter 1: Foundations</span>
+<span class="material-symbols-outlined text-slate-600 text-sm">keyboard_arrow_down</span>
+</button>
+<div class="space-y-1 mt-3">
+<div class="flex items-center gap-3 py-2 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer pl-4">
+<span class="material-symbols-outlined text-secondary text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-sm font-medium">Lesson 1.1</span>
+</div>
+<div class="flex items-center gap-3 py-2 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer pl-4">
+<span class="material-symbols-outlined text-secondary text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-sm font-medium">Lesson 1.2</span>
+</div>
+<div class="flex items-center gap-3 py-2 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer pl-4">
+<span class="material-symbols-outlined text-secondary text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-sm font-medium">Quiz 1.1</span>
+</div>
+</div>
+</div>
+<!-- Chapter 2 -->
+<div class="space-y-2">
+<button class="flex items-center justify-between w-full">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Chapter 2: Intermediate Grammar</span>
+<span class="material-symbols-outlined text-slate-600 text-sm">keyboard_arrow_down</span>
+</button>
+<div class="space-y-1 mt-3">
+<!-- Active Lesson -->
+<div class="bg-primary-container text-on-primary-container rounded-xl flex items-center gap-3 py-3 px-4 transition-all scale-[1.02] shadow-lg shadow-blue-900/20">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+<span class="text-sm font-semibold">Present Simple Tense</span>
+</div>
+<div class="flex items-center gap-3 py-2 text-slate-500 cursor-not-allowed pl-4 opacity-50">
+<span class="material-symbols-outlined text-lg">lock</span>
+<span class="text-sm font-medium">Lesson 2.2</span>
+</div>
+</div>
+</div>
+<!-- Chapter 3 -->
+<div class="space-y-2">
+<button class="flex items-center justify-between w-full opacity-40">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Chapter 3: Advanced Syntax</span>
+<span class="material-symbols-outlined text-slate-600 text-sm">lock</span>
+</button>
+</div>
+</nav>
+<!-- Sidebar CTA -->
+<button class="w-full py-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 rounded-xl text-slate-300 text-sm font-semibold transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">school</span>
+                Continue Learning
+            </button>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-[280px] flex-1 flex flex-col bg-surface-dim overflow-y-auto">
+<!-- Video Player Section -->
+<section class="w-full max-w-6xl mx-auto px-8 pt-8 pb-12">
+<div class="relative aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl group ring-1 ring-white/10">
+<img alt="Lesson Background" class="w-full h-full object-cover opacity-60" data-alt="Wide shot of a clean workspace with a laptop showing a grammar tutorial and soft moody lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhkw3Clq9uCZF1xClYcj2qedTA5yAls02Z5z6GPAsxZRr7aKjDAUhWjKgOB_ILJ63NkkQjKrvx6Rd2Hu3qSFizo3fd2PuFMZ71-Cmv-kluetuTbCRqDgRD_FAy9vz_elFVgbvw_k5zFXt1aFXCb70PbjD5NlJa1H6Q8ae3OvJEa7wS5F-sP0fZSia47bJf2eCqTfvNi8MbBSbS43U7NPurroi_g71MEmJhgSXX8qBTOofnGQ1JoIKO_weVNqAAoyOoItaA0JESrHvy"/>
+<!-- Centered Play Button (Always Visible) -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<div class="w-20 h-20 bg-primary-container/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform cursor-pointer pointer-events-auto">
+<span class="material-symbols-outlined text-white text-4xl" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</div>
+</div>
+<!-- Video Controls Overlay -->
+<div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+<!-- Progress Scrubber -->
+<div class="relative w-full h-1 bg-white/20 rounded-full mb-4 cursor-pointer group/scrub">
+<div class="absolute h-full w-[34%] bg-primary rounded-full">
+<div class="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full scale-0 group-hover/scrub:scale-100 transition-transform"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-white">
+<div class="flex items-center gap-6">
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined">play_arrow</span></button>
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined">volume_up</span></button>
+<span class="text-xs font-medium tracking-tight">4:20 / 12:34</span>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-xs font-bold border border-white/20 px-2 py-0.5 rounded hover:bg-white/10 transition-all">1X</button>
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined">settings</span></button>
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined">fullscreen</span></button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Lesson Content Area -->
+<section class="bg-white rounded-t-[40px] flex-1 px-12 py-16 text-slate-900 shadow-[-20px_0_40px_rgba(0,0,0,0.2)]">
+<div class="max-w-4xl mx-auto">
+<div class="flex items-start justify-between mb-12">
+<div class="space-y-2">
+<span class="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold uppercase tracking-[0.2em] rounded-md">Grammar Module</span>
+<h2 class="text-4xl font-extrabold tracking-tighter text-slate-900">Present Simple Tense</h2>
+</div>
+<div class="flex items-center gap-2 text-slate-400">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<span class="text-xs font-semibold">Duration: 12m 34s</span>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-12">
+<!-- Content Text -->
+<div class="col-span-12 lg:col-span-8 space-y-6">
+<p class="text-lg leading-[1.8] text-slate-600 font-medium">
+                                The Present Simple tense is the foundational building block of English communication. It is used to express facts, habits, and general truths. In this lesson, we break down the structure for positive, negative, and interrogative sentences.
+                            </p>
+<div class="p-8 bg-slate-50 rounded-2xl space-y-4">
+<h4 class="text-sm font-bold uppercase tracking-widest text-slate-400">Key Takeaways</h4>
+<ul class="space-y-3">
+<li class="flex items-start gap-3">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container mt-2"></span>
+<p class="text-slate-600 text-sm">Use the base form of the verb for I, You, We, and They.</p>
+</li>
+<li class="flex items-start gap-3">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container mt-2"></span>
+<p class="text-slate-600 text-sm">Add -s or -es to the verb for He, She, and It.</p>
+</li>
+<li class="flex items-start gap-3">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container mt-2"></span>
+<p class="text-slate-600 text-sm">Auxiliary verbs "do" and "does" are used for negatives and questions.</p>
+</li>
+</ul>
+</div>
+</div>
+<!-- Resource Sidebar -->
+<div class="col-span-12 lg:col-span-4 space-y-4">
+<h4 class="text-xs font-bold uppercase tracking-[0.15em] text-slate-400 mb-6">Learning Resources</h4>
+<!-- Resource Card 1 -->
+<div class="group p-4 bg-white border border-slate-100 rounded-2xl hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all cursor-pointer flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-red-50 text-red-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">picture_as_pdf</span>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-800">PDF Grammar Notes</p>
+<p class="text-[11px] font-medium text-slate-400">1.2 MB • Portable Document</p>
+</div>
+</div>
+<!-- Resource Card 2 -->
+<div class="group p-4 bg-white border border-slate-100 rounded-2xl hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all cursor-pointer flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">assignment</span>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-800">Practice Exercises.pdf</p>
+<p class="text-[11px] font-medium text-slate-400">840 KB • Worksheet</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Action -->
+<div class="mt-20 pt-8 border-t border-slate-100 flex justify-end">
+<button class="bg-primary-container hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-bold tracking-tight shadow-xl shadow-blue-500/20 hover:translate-y-[-2px] transition-all flex items-center gap-3">
+                            Mark Complete &amp; Next Lesson
+                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+</div>
+</body></html>

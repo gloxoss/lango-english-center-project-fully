@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Student Profile - Fatima Zahra Benmoussa</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed": "#dbe1ff",
+                        "inverse-primary": "#b4c5ff",
+                        "on-error": "#ffffff",
+                        "on-surface": "#191c1d",
+                        "on-error-container": "#93000a",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "inverse-surface": "#2e3132",
+                        "surface": "#f8f9fa",
+                        "on-tertiary-container": "#ffede6",
+                        "on-primary": "#ffffff",
+                        "surface-container": "#edeeef",
+                        "on-surface-variant": "#434655",
+                        "on-secondary-fixed": "#00174b",
+                        "outline-variant": "#c3c6d7",
+                        "surface-container-low": "#f3f4f5",
+                        "background": "#f8f9fa",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed": "#00174b",
+                        "on-primary-container": "#eeefff",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "surface-container-high": "#e7e8e9",
+                        "tertiary-fixed": "#ffdbcd",
+                        "secondary": "#495c95",
+                        "surface-bright": "#f8f9fa",
+                        "on-secondary-fixed-variant": "#31447b",
+                        "surface-container-highest": "#e1e3e4",
+                        "surface-variant": "#e1e3e4",
+                        "on-background": "#191c1d",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "outline": "#737686",
+                        "surface-dim": "#d9dadb",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#0053db",
+                        "inverse-on-surface": "#f0f1f2",
+                        "tertiary": "#943700",
+                        "on-secondary": "#ffffff",
+                        "primary": "#004ac6",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "on-secondary-container": "#394c84",
+                        "secondary-container": "#acbfff",
+                        "primary-container": "#2563eb",
+                        "error-container": "#ffdad6",
+                        "tertiary-container": "#bc4800"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        /* Strict No-Border rule except for required context */
+        .tonal-boundary { border: none !important; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- Sidebar (Shared Component Blueprint) -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-zinc-50 border-r border-zinc-200 flex flex-col p-4 space-y-1 z-40">
+<div class="mb-8 px-2">
+<span class="text-xl font-black tracking-tight text-blue-600 block">Lango Center</span>
+<span class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Administration</span>
+</div>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 hover:bg-zinc-100 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-medium text-[13px]">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-blue-600 bg-white rounded-lg font-semibold transition-all duration-200" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-medium text-[13px]">Students</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 hover:bg-zinc-100 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">school</span>
+<span class="font-medium text-[13px]">Academics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 hover:bg-zinc-100 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-medium text-[13px]">Finance</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 hover:bg-zinc-100 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-medium text-[13px]">CRM</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 hover:bg-zinc-100 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span class="font-medium text-[13px]">Staff &amp; HR</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 hover:bg-zinc-100 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">chat</span>
+<span class="font-medium text-[13px]">WhatsApp</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 hover:bg-zinc-100 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="font-medium text-[13px]">LMS</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 hover:bg-zinc-100 rounded-lg transition-all duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-medium text-[13px]">Settings</span>
+</a>
+</nav>
+</aside>
+<div class="ml-64 min-h-screen">
+<!-- Top Nav (Shared Component Blueprint) -->
+<header class="bg-white border-b border-zinc-200 sticky top-0 z-50 flex justify-between items-center w-full px-8 h-16">
+<div class="flex items-center bg-zinc-50 px-3 py-1.5 rounded-lg w-72">
+<span class="material-symbols-outlined text-slate-400 text-sm">search</span>
+<input class="bg-transparent border-none text-sm focus:ring-0 w-full text-slate-600" placeholder="Search anything..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-600 hover:bg-zinc-50 rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="flex items-center gap-3 pl-2">
+<div class="text-right">
+<p class="text-xs font-bold text-slate-900 leading-tight">Admin Ahmed Benali</p>
+<p class="text-[10px] text-slate-500 uppercase tracking-tighter">Super Admin</p>
+</div>
+<img alt="Admin Ahmed Benali" class="w-8 h-8 rounded-full border border-zinc-200" data-alt="Professional portrait of a male administrator in a light office setting, sharp focus, neutral tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCeLoXXJVhNyrust2ed-m1YnoTASU0y3SqBM6c5sY6X5OGzjKh2iVF_4gLeZqUMK7qT-I4xMPu-XwIavn7hcwyE7EnWw8B1ZsXtwhRbEB8RVp3RjxwHAyLTAyY7VilKI2dTH5RW7Z_KmTNEA3gKybdjGcoxclQUABwBEyi2xJTzpy6ISjJO2GZHAHAdpERUciLK81-VCmF0bYpqwlmvIGmOfGl5XkYjPcEoy-GOqW7BD6CuhX_YbnKfxeWzYF4mplbw7tEQyGizCs6z"/>
+</div>
+</div>
+</header>
+<!-- Hero Section -->
+<div class="bg-white border-b border-zinc-200 px-8 pt-8 pb-0">
+<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
+<div class="flex items-center gap-6">
+<div class="relative">
+<img alt="Fatima Zahra Benmoussa" class="w-20 h-20 rounded-xl object-cover ring-4 ring-zinc-50" data-alt="Close-up portrait of a Moroccan woman with a warm smile, wearing a professional headscarf, bright studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZx8C8NxVSZgn_tpalnsjctfo5GkEx0uPS_8Hj7c4jSFdZL5kAXd7pDsQFGu4h_ytvn3nmBUMVHQ2d8gPaujIzplMaXgRazflGZy74bTxZ0XmJfvH7aYLXx3wwM6Nuc9pCJq36oua8NGWq6IM5Ari3nWlzqFMOrXa9QDCMv_IQrAdn3_SZsbVcgdyAAjeWWnSwuko2ygAMf22AGTE-tbVdv3p95M2Edc6xYCHQohpvS8pIas2HPVauRwuQ7DZs737EuymEVrjgf8a6"/>
+<div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full"></div>
+</div>
+<div>
+<h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Fatima Zahra Benmoussa</h1>
+<div class="flex flex-wrap gap-2 mt-2">
+<span class="px-2 py-0.5 bg-zinc-100 text-slate-600 text-[11px] font-bold rounded uppercase tracking-wide">ID #1024</span>
+<span class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[11px] font-bold rounded uppercase tracking-wide">Level A1</span>
+<span class="px-2 py-0.5 bg-green-50 text-green-600 text-[11px] font-bold rounded uppercase tracking-wide">Active</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 bg-white text-slate-700 text-sm font-semibold rounded-lg border border-zinc-200 hover:bg-zinc-50 transition-all">Edit Profile</button>
+<button class="px-4 py-2 bg-white text-slate-700 text-sm font-semibold rounded-lg border border-zinc-200 hover:bg-zinc-50 transition-all">Generate ID Card</button>
+<button class="px-4 py-2 bg-error text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-all">Convert to Alumni</button>
+</div>
+</div>
+<!-- Profile Tabs -->
+<div class="flex gap-8 overflow-x-auto scrollbar-hide">
+<button class="pb-4 text-sm font-bold text-blue-600 border-b-2 border-blue-600 px-1">Overview</button>
+<button class="pb-4 text-sm font-medium text-slate-500 hover:text-slate-900 px-1 transition-colors">Personal Info</button>
+<button class="pb-4 text-sm font-medium text-slate-500 hover:text-slate-900 px-1 transition-colors">Enrollments</button>
+<button class="pb-4 text-sm font-medium text-slate-500 hover:text-slate-900 px-1 transition-colors">Attendance</button>
+<button class="pb-4 text-sm font-medium text-slate-500 hover:text-slate-900 px-1 transition-colors">Fees Ledger</button>
+<button class="pb-4 text-sm font-medium text-slate-500 hover:text-slate-900 px-1 transition-colors">Timeline</button>
+</div>
+</div>
+<!-- Main Content Layout -->
+<main class="p-8 grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8">
+<div class="space-y-8">
+<!-- Overview Stats Bento Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="bg-white p-6 rounded-xl border border-zinc-100 shadow-sm">
+<p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Attendance</p>
+<div class="flex items-end gap-2">
+<span class="text-3xl font-black text-slate-900">92%</span>
+<span class="text-green-500 text-xs font-bold mb-1.5 flex items-center"><span class="material-symbols-outlined text-sm">trending_up</span>+2%</span>
+</div>
+<div class="mt-4 h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
+<div class="h-full bg-blue-600 rounded-full" style="width: 92%"></div>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl border border-zinc-100 shadow-sm">
+<p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Current Balance</p>
+<span class="text-3xl font-black text-slate-900">0 MAD</span>
+<p class="text-[10px] text-slate-500 mt-2 font-medium">All dues cleared</p>
+</div>
+<div class="bg-white p-6 rounded-xl border border-zinc-100 shadow-sm">
+<p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Enrolled Courses</p>
+<span class="text-3xl font-black text-slate-900">1</span>
+<div class="mt-2 flex -space-x-2">
+<div class="w-6 h-6 bg-blue-100 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold text-blue-600">EN</div>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl border border-zinc-100 shadow-sm">
+<p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">GPA</p>
+<span class="text-3xl font-black text-slate-900">16.5<span class="text-lg text-slate-300">/20</span></span>
+<p class="text-[10px] text-green-600 mt-2 font-bold bg-green-50 inline-block px-1.5 py-0.5 rounded">High Performer</p>
+</div>
+</section>
+<!-- Attendance Heatmap Section -->
+<section class="bg-white rounded-xl border border-zinc-100 shadow-sm overflow-hidden">
+<div class="px-6 py-4 border-b border-zinc-50 flex justify-between items-center">
+<h3 class="text-sm font-bold text-slate-900 uppercase tracking-tight">Attendance Activity</h3>
+<div class="flex gap-3 text-[10px] font-bold uppercase text-slate-400">
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-green-500"></span> Present</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-amber-500"></span> Late</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-red-500"></span> Absent</span>
+</div>
+</div>
+<div class="p-6">
+<div class="grid grid-cols-7 gap-2 md:gap-4">
+<!-- Heatmap Days (Mockup for current month) -->
+<div class="aspect-square bg-green-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold">1</div>
+<div class="aspect-square bg-green-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold">2</div>
+<div class="aspect-square bg-red-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold">3</div>
+<div class="aspect-square bg-green-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold">4</div>
+<div class="aspect-square bg-zinc-50 rounded-md flex items-center justify-center text-slate-300 text-[10px] font-bold">5</div>
+<div class="aspect-square bg-zinc-50 rounded-md flex items-center justify-center text-slate-300 text-[10px] font-bold">6</div>
+<div class="aspect-square bg-green-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold">7</div>
+<div class="aspect-square bg-green-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold">8</div>
+<div class="aspect-square bg-amber-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold">9</div>
+<div class="aspect-square bg-green-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold">10</div>
+<div class="aspect-square bg-green-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold">11</div>
+<div class="aspect-square bg-green-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold">12</div>
+<div class="aspect-square bg-green-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold">13</div>
+<div class="aspect-square bg-green-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold">14</div>
+<div class="aspect-square bg-red-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold">15</div>
+<div class="aspect-square bg-green-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold">16</div>
+<div class="aspect-square bg-green-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold">17</div>
+<div class="aspect-square bg-amber-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold">18</div>
+<div class="aspect-square bg-green-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold">19</div>
+<div class="aspect-square bg-green-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold">20</div>
+<div class="aspect-square bg-green-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold">21</div>
+<div class="aspect-square bg-green-500 rounded-md flex items-center justify-center text-white text-[10px] font-bold border-2 border-blue-600">22</div>
+<div class="aspect-square bg-zinc-50 rounded-md"></div>
+<div class="aspect-square bg-zinc-50 rounded-md"></div>
+<div class="aspect-square bg-zinc-50 rounded-md"></div>
+<div class="aspect-square bg-zinc-50 rounded-md"></div>
+<div class="aspect-square bg-zinc-50 rounded-md"></div>
+<div class="aspect-square bg-zinc-50 rounded-md"></div>
+</div>
+</div>
+</section>
+<!-- Fees Ledger Section -->
+<section class="bg-white rounded-xl border border-zinc-100 shadow-sm overflow-hidden">
+<div class="px-6 py-4 border-b border-zinc-50 flex justify-between items-center">
+<h3 class="text-sm font-bold text-slate-900 uppercase tracking-tight">Financial Ledger</h3>
+<button class="text-xs font-bold text-blue-600 hover:underline">View All Invoices</button>
+</div>
+<div class="divide-y divide-zinc-50">
+<div class="px-6 py-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-zinc-50 rounded-lg flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-900">Registration Fee - Level A1</p>
+<p class="text-[11px] text-slate-500">Inv #INV-0923 • Oct 12, 2023</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-slate-900">1,200 MAD</p>
+<span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded uppercase">Paid</span>
+</div>
+</div>
+<div class="px-6 py-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-zinc-50 rounded-lg flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-900">Materials &amp; Textbooks</p>
+<p class="text-[11px] text-slate-500">Inv #INV-1024 • Nov 01, 2023</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-slate-900">450 MAD</p>
+<span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded uppercase">Overdue</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Sidebar -->
+<aside class="space-y-6">
+<div class="bg-zinc-50 p-6 rounded-xl border border-zinc-100">
+<h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">Guardian Profile</h4>
+<div class="flex items-center gap-3 mb-4">
+<img alt="Hassan Benmoussa" class="w-10 h-10 rounded-full border border-zinc-200" data-alt="Portrait of a middle-aged Moroccan man with a kind expression, formal shirt, soft natural indoor lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0JCV4AhW6cmOFDK9qPDbDTawXx-MvE0apcLm_qOTqBa72DijG8ktBlGgQr4Qy-L5MQ9o7SqrQWVBMrvDyO7oxZ7LTiBQuSlu-zXRxZ7O0iNR_q9-Iu40JWyWzGBsOnINiy3aemFJvGZYVsaYNpB0YhrEele4o3uqzqpmidNYW5YGdCYk0G3PpyX1z2HfJ5B8swMG58nPzrKzlavlSKqtlL_kXFvRXPQ1KHU23mkj-7hhwPE3M-1kja3yudPWbRnr5xSh0Gj73Dkfu"/>
+<div>
+<p class="text-sm font-bold text-slate-900">Hassan Benmoussa</p>
+<p class="text-[11px] text-slate-500">Father</p>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex items-center gap-2 text-slate-600">
+<span class="material-symbols-outlined text-sm">phone</span>
+<span class="text-xs font-medium tracking-tight">+212661234567</span>
+</div>
+<div class="flex items-center gap-2 text-slate-600">
+<span class="material-symbols-outlined text-sm">alternate_email</span>
+<span class="text-xs font-medium tracking-tight">h.benmoussa@mail.com</span>
+</div>
+</div>
+<button class="w-full mt-6 flex items-center justify-center gap-2 px-4 py-2 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition-all">
+<span class="material-symbols-outlined text-sm">chat</span>
+                        WhatsApp
+                    </button>
+</div>
+<div class="bg-white p-6 rounded-xl border border-zinc-100 shadow-sm">
+<h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">Emergency Note</h4>
+<p class="text-[12px] text-slate-600 italic leading-relaxed">
+                        "Student has a known allergy to peanuts. Please ensure classroom supervisors are aware during breaks."
+                    </p>
+</div>
+<div class="bg-white p-6 rounded-xl border border-zinc-100 shadow-sm">
+<h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">Quick Documents</h4>
+<div class="space-y-3">
+<a class="flex items-center gap-3 p-2 hover:bg-zinc-50 rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined text-red-400">description</span>
+<span class="text-xs font-medium text-slate-700 group-hover:text-slate-900">Enrolment_Contract.pdf</span>
+</a>
+<a class="flex items-center gap-3 p-2 hover:bg-zinc-50 rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined text-blue-400">image</span>
+<span class="text-xs font-medium text-slate-700 group-hover:text-slate-900">Passport_Copy.jpg</span>
+</a>
+</div>
+</div>
+</aside>
+</main>
+</div>
+</body></html>

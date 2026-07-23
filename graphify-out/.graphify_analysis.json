@@ -1,0 +1,1052 @@
+{
+  "communities": {
+    "0": [
+      "lango_app_package_dependencies",
+      "lango_app_package_dependencies_base_ui_react",
+      "lango_app_package_dependencies_class_variance_authority",
+      "lango_app_package_dependencies_clsx",
+      "lango_app_package_dependencies_lucide_react",
+      "lango_app_package_dependencies_next",
+      "lango_app_package_dependencies_react",
+      "lango_app_package_dependencies_react_dom",
+      "lango_app_package_dependencies_shadcn",
+      "lango_app_package_dependencies_tailwind_merge",
+      "lango_app_package_dependencies_tw_animate_css",
+      "lango_app_package_devdependencies",
+      "lango_app_package_devdependencies_eslint",
+      "lango_app_package_devdependencies_eslint_config_next",
+      "lango_app_package_devdependencies_tailwindcss",
+      "lango_app_package_devdependencies_tailwindcss_postcss",
+      "lango_app_package_devdependencies_types_node",
+      "lango_app_package_devdependencies_types_react",
+      "lango_app_package_devdependencies_types_react_dom",
+      "lango_app_package_devdependencies_typescript",
+      "lango_app_package_json",
+      "lango_app_package_name",
+      "lango_app_package_private",
+      "lango_app_package_scripts",
+      "lango_app_package_scripts_build",
+      "lango_app_package_scripts_dev",
+      "lango_app_package_scripts_lint",
+      "lango_app_package_scripts_start",
+      "lango_app_package_version"
+    ],
+    "1": [
+      "lango_app_components_aliases",
+      "lango_app_components_aliases_components",
+      "lango_app_components_aliases_hooks",
+      "lango_app_components_aliases_lib",
+      "lango_app_components_aliases_ui",
+      "lango_app_components_aliases_utils",
+      "lango_app_components_iconlibrary",
+      "lango_app_components_json",
+      "lango_app_components_menuaccent",
+      "lango_app_components_menucolor",
+      "lango_app_components_registries",
+      "lango_app_components_rsc",
+      "lango_app_components_rtl",
+      "lango_app_components_schema",
+      "lango_app_components_style",
+      "lango_app_components_tailwind",
+      "lango_app_components_tailwind_basecolor",
+      "lango_app_components_tailwind_config",
+      "lango_app_components_tailwind_css",
+      "lango_app_components_tailwind_cssvariables",
+      "lango_app_components_tailwind_prefix",
+      "lango_app_components_tsx"
+    ],
+    "2": [
+      "lango_app_tsconfig_compileroptions",
+      "lango_app_tsconfig_compileroptions_allowjs",
+      "lango_app_tsconfig_compileroptions_esmoduleinterop",
+      "lango_app_tsconfig_compileroptions_incremental",
+      "lango_app_tsconfig_compileroptions_isolatedmodules",
+      "lango_app_tsconfig_compileroptions_jsx",
+      "lango_app_tsconfig_compileroptions_lib",
+      "lango_app_tsconfig_compileroptions_module",
+      "lango_app_tsconfig_compileroptions_moduleresolution",
+      "lango_app_tsconfig_compileroptions_noemit",
+      "lango_app_tsconfig_compileroptions_paths",
+      "lango_app_tsconfig_compileroptions_plugins",
+      "lango_app_tsconfig_compileroptions_resolvejsonmodule",
+      "lango_app_tsconfig_compileroptions_skiplibcheck",
+      "lango_app_tsconfig_compileroptions_strict",
+      "lango_app_tsconfig_compileroptions_target",
+      "lango_app_tsconfig_exclude",
+      "lango_app_tsconfig_include",
+      "lango_app_tsconfig_json",
+      "lango_app_tsconfig_paths"
+    ],
+    "3": [
+      "lango_app_src_components_ui_card_tsx",
+      "lango_app_src_components_ui_table_tsx",
+      "lib_utils_cn",
+      "ui_card_card",
+      "ui_card_cardaction",
+      "ui_card_cardcontent",
+      "ui_card_carddescription",
+      "ui_card_cardfooter",
+      "ui_card_cardheader",
+      "ui_card_cardtitle",
+      "ui_table_table",
+      "ui_table_tablebody",
+      "ui_table_tablecaption",
+      "ui_table_tablecell",
+      "ui_table_tablefooter",
+      "ui_table_tablehead",
+      "ui_table_tableheader",
+      "ui_table_tablerow"
+    ],
+    "4": [
+      "classes_page_classespage",
+      "classes_page_levelcolors",
+      "lango_app_src_app_admin_academics_classes_page_tsx",
+      "lango_app_src_app_admin_crm_proposals_page_tsx",
+      "lango_app_src_app_parent_parent_messages_page_tsx",
+      "lango_app_src_app_saas_saas_tenants_page_tsx",
+      "lango_app_src_components_ui_input_tsx",
+      "messages_page_initialmessages",
+      "messages_page_parentmessagespage",
+      "proposals_page_proposals",
+      "proposals_page_proposalspage",
+      "proposals_page_statusconfig",
+      "tenants_page_statuscolors",
+      "tenants_page_tenants",
+      "tenants_page_tenantspage",
+      "ui_input_input"
+    ],
+    "5": [
+      "lango_app_src_components_ui_dropdown_menu_tsx",
+      "ui_dropdown_menu_dropdownmenu",
+      "ui_dropdown_menu_dropdownmenucheckboxitem",
+      "ui_dropdown_menu_dropdownmenucontent",
+      "ui_dropdown_menu_dropdownmenugroup",
+      "ui_dropdown_menu_dropdownmenuitem",
+      "ui_dropdown_menu_dropdownmenulabel",
+      "ui_dropdown_menu_dropdownmenuportal",
+      "ui_dropdown_menu_dropdownmenuradiogroup",
+      "ui_dropdown_menu_dropdownmenuradioitem",
+      "ui_dropdown_menu_dropdownmenuseparator",
+      "ui_dropdown_menu_dropdownmenushortcut",
+      "ui_dropdown_menu_dropdownmenusub",
+      "ui_dropdown_menu_dropdownmenusubcontent",
+      "ui_dropdown_menu_dropdownmenusubtrigger",
+      "ui_dropdown_menu_dropdownmenutrigger"
+    ],
+    "6": [
+      "classes_page_classes",
+      "classes_page_levelcolor",
+      "classes_page_teacherclassespage",
+      "courses_page_courses",
+      "courses_page_coursespage",
+      "courses_page_lmscoursespage",
+      "lango_app_src_app_admin_lms_courses_page_tsx",
+      "lango_app_src_app_public_courses_page_tsx",
+      "lango_app_src_app_public_layout_tsx",
+      "lango_app_src_app_teacher_teacher_classes_page_tsx",
+      "lango_app_src_components_ui_button_tsx",
+      "public_layout_publiclayout",
+      "ui_button_button",
+      "ui_button_buttonvariants"
+    ],
+    "7": [
+      "attendance_page_attendancepage",
+      "attendance_page_classstudents",
+      "attendance_page_heatcolor",
+      "attendance_page_heatmapweeks",
+      "attendance_page_parentattendancepage",
+      "attendance_page_records",
+      "attendance_page_status",
+      "attendance_page_statusconfig",
+      "attendance_page_studentattendancepage",
+      "attendance_page_summary",
+      "lango_app_src_app_admin_attendance_page_tsx",
+      "lango_app_src_app_parent_parent_attendance_page_tsx",
+      "lango_app_src_app_student_student_attendance_page_tsx"
+    ],
+    "8": [
+      "design_generate_all_downloadfile",
+      "design_generate_all_execsync_spawnsync",
+      "design_generate_all_fs",
+      "design_generate_all_generatescreen",
+      "design_generate_all_http",
+      "design_generate_all_https",
+      "design_generate_all_js",
+      "design_generate_all_output_dir",
+      "design_generate_all_path",
+      "design_generate_all_run",
+      "design_generate_all_screens"
+    ],
+    "9": [
+      "lango_app_src_app_admin_admissions_new_page_tsx",
+      "lango_app_src_app_admin_whatsapp_campaigns_new_page_tsx",
+      "new_page_audiences",
+      "new_page_emptyform",
+      "new_page_form",
+      "new_page_levels",
+      "new_page_newadmissionpage",
+      "new_page_newcampaignwizardpage",
+      "new_page_schedules",
+      "new_page_steps",
+      "new_page_templates"
+    ],
+    "10": [
+      "dashboard_page_child",
+      "dashboard_page_myclasses",
+      "dashboard_page_parentdashboardpage",
+      "dashboard_page_recentactivity",
+      "dashboard_page_teacherdashboardpage",
+      "dashboard_page_todayclasses",
+      "lango_app_src_app_parent_parent_dashboard_page_tsx",
+      "lango_app_src_app_teacher_teacher_dashboard_page_tsx",
+      "lango_app_src_components_ui_badge_tsx",
+      "ui_badge_badge",
+      "ui_badge_badgevariants"
+    ],
+    "11": [
+      "lango_app_src_components_ui_dialog_tsx",
+      "ui_dialog_dialog",
+      "ui_dialog_dialogclose",
+      "ui_dialog_dialogcontent",
+      "ui_dialog_dialogdescription",
+      "ui_dialog_dialogfooter",
+      "ui_dialog_dialogheader",
+      "ui_dialog_dialogoverlay",
+      "ui_dialog_dialogportal",
+      "ui_dialog_dialogtitle",
+      "ui_dialog_dialogtrigger"
+    ],
+    "12": [
+      "invoices_page_invoices",
+      "invoices_page_invoicespage",
+      "invoices_page_methods",
+      "invoices_page_parentinvoicespage",
+      "invoices_page_statuscolors",
+      "invoices_page_statusconfig",
+      "invoices_page_studentinvoicespage",
+      "lango_app_src_app_admin_finance_invoices_page_tsx",
+      "lango_app_src_app_parent_parent_invoices_page_tsx",
+      "lango_app_src_app_student_student_invoices_page_tsx"
+    ],
+    "13": [
+      "lango_app_src_components_ui_label_tsx",
+      "lango_app_src_components_ui_separator_tsx",
+      "lango_app_src_components_ui_tooltip_tsx",
+      "lango_app_src_lib_utils_ts",
+      "ui_label_label",
+      "ui_separator_separator",
+      "ui_tooltip_tooltip",
+      "ui_tooltip_tooltipcontent",
+      "ui_tooltip_tooltipprovider",
+      "ui_tooltip_tooltiptrigger"
+    ],
+    "14": [
+      "lango_app_src_app_admin_finance_overview_page_tsx",
+      "overview_page_categorydata",
+      "overview_page_expenserows",
+      "overview_page_financeoverviewpage",
+      "overview_page_incomerows",
+      "overview_page_kpis",
+      "overview_page_monthlybars",
+      "overview_page_periods",
+      "overview_page_tab"
+    ],
+    "15": [
+      "lango_app_src_app_admin_settings_roles_page_tsx",
+      "roles_page_defaultperms",
+      "roles_page_permission",
+      "roles_page_perms",
+      "roles_page_resources",
+      "roles_page_rolekey",
+      "roles_page_roleperms",
+      "roles_page_roles",
+      "roles_page_rolespage"
+    ],
+    "16": [
+      "admin_student_enrollment_wizard_meta_folder",
+      "admin_student_enrollment_wizard_meta_generatedat",
+      "admin_student_enrollment_wizard_meta_htmlpath",
+      "admin_student_enrollment_wizard_meta_id",
+      "admin_student_enrollment_wizard_meta_pngpath",
+      "admin_student_enrollment_wizard_meta_screenid",
+      "admin_student_enrollment_wizard_meta_screenname",
+      "design_admin_student_enrollment_wizard_meta_json"
+    ],
+    "17": [
+      "crm_lead_profile_meta_folder",
+      "crm_lead_profile_meta_generatedat",
+      "crm_lead_profile_meta_htmlpath",
+      "crm_lead_profile_meta_id",
+      "crm_lead_profile_meta_pngpath",
+      "crm_lead_profile_meta_screenid",
+      "crm_lead_profile_meta_screenname",
+      "design_crm_lead_profile_meta_json"
+    ],
+    "18": [
+      "admin_admin_dashboard_meta_folder",
+      "admin_admin_dashboard_meta_generatedat",
+      "admin_admin_dashboard_meta_htmlpath",
+      "admin_admin_dashboard_meta_id",
+      "admin_admin_dashboard_meta_pngpath",
+      "admin_admin_dashboard_meta_screenid",
+      "admin_admin_dashboard_meta_screenname",
+      "design_admin_admin_dashboard_meta_json"
+    ],
+    "19": [
+      "admin_daily_attendance_meta_folder",
+      "admin_daily_attendance_meta_generatedat",
+      "admin_daily_attendance_meta_htmlpath",
+      "admin_daily_attendance_meta_id",
+      "admin_daily_attendance_meta_pngpath",
+      "admin_daily_attendance_meta_screenid",
+      "admin_daily_attendance_meta_screenname",
+      "design_admin_daily_attendance_meta_json"
+    ],
+    "20": [
+      "admin_marks_entry_meta_folder",
+      "admin_marks_entry_meta_generatedat",
+      "admin_marks_entry_meta_htmlpath",
+      "admin_marks_entry_meta_id",
+      "admin_marks_entry_meta_pngpath",
+      "admin_marks_entry_meta_screenid",
+      "admin_marks_entry_meta_screenname",
+      "design_admin_marks_entry_meta_json"
+    ],
+    "21": [
+      "admin_student_directory_meta_folder",
+      "admin_student_directory_meta_generatedat",
+      "admin_student_directory_meta_htmlpath",
+      "admin_student_directory_meta_id",
+      "admin_student_directory_meta_pngpath",
+      "admin_student_directory_meta_screenid",
+      "admin_student_directory_meta_screenname",
+      "design_admin_student_directory_meta_json"
+    ],
+    "22": [
+      "admin_student_profile_meta_folder",
+      "admin_student_profile_meta_generatedat",
+      "admin_student_profile_meta_htmlpath",
+      "admin_student_profile_meta_id",
+      "admin_student_profile_meta_pngpath",
+      "admin_student_profile_meta_screenid",
+      "admin_student_profile_meta_screenname",
+      "design_admin_student_profile_meta_json"
+    ],
+    "23": [
+      "auth_auth_login_meta_folder",
+      "auth_auth_login_meta_generatedat",
+      "auth_auth_login_meta_htmlpath",
+      "auth_auth_login_meta_id",
+      "auth_auth_login_meta_pngpath",
+      "auth_auth_login_meta_screenid",
+      "auth_auth_login_meta_screenname",
+      "design_auth_auth_login_meta_json"
+    ],
+    "24": [
+      "crm_crm_kanban_meta_folder",
+      "crm_crm_kanban_meta_generatedat",
+      "crm_crm_kanban_meta_htmlpath",
+      "crm_crm_kanban_meta_id",
+      "crm_crm_kanban_meta_pngpath",
+      "crm_crm_kanban_meta_screenid",
+      "crm_crm_kanban_meta_screenname",
+      "design_crm_crm_kanban_meta_json"
+    ],
+    "25": [
+      "design_finance_fee_collection_meta_json",
+      "finance_fee_collection_meta_folder",
+      "finance_fee_collection_meta_generatedat",
+      "finance_fee_collection_meta_htmlpath",
+      "finance_fee_collection_meta_id",
+      "finance_fee_collection_meta_pngpath",
+      "finance_fee_collection_meta_screenid",
+      "finance_fee_collection_meta_screenname"
+    ],
+    "26": [
+      "design_finance_finance_overview_meta_json",
+      "finance_finance_overview_meta_folder",
+      "finance_finance_overview_meta_generatedat",
+      "finance_finance_overview_meta_htmlpath",
+      "finance_finance_overview_meta_id",
+      "finance_finance_overview_meta_pngpath",
+      "finance_finance_overview_meta_screenid",
+      "finance_finance_overview_meta_screenname"
+    ],
+    "27": [
+      "design_lms_course_builder_meta_json",
+      "lms_course_builder_meta_folder",
+      "lms_course_builder_meta_generatedat",
+      "lms_course_builder_meta_htmlpath",
+      "lms_course_builder_meta_id",
+      "lms_course_builder_meta_pngpath",
+      "lms_course_builder_meta_screenid",
+      "lms_course_builder_meta_screenname"
+    ],
+    "28": [
+      "design_lms_lms_storefront_meta_json",
+      "lms_lms_storefront_meta_folder",
+      "lms_lms_storefront_meta_generatedat",
+      "lms_lms_storefront_meta_htmlpath",
+      "lms_lms_storefront_meta_id",
+      "lms_lms_storefront_meta_pngpath",
+      "lms_lms_storefront_meta_screenid",
+      "lms_lms_storefront_meta_screenname"
+    ],
+    "29": [
+      "design_lms_video_player_meta_json",
+      "lms_video_player_meta_folder",
+      "lms_video_player_meta_generatedat",
+      "lms_video_player_meta_htmlpath",
+      "lms_video_player_meta_id",
+      "lms_video_player_meta_pngpath",
+      "lms_video_player_meta_screenid",
+      "lms_video_player_meta_screenname"
+    ],
+    "30": [
+      "design_public_public_courses_meta_json",
+      "public_public_courses_meta_folder",
+      "public_public_courses_meta_generatedat",
+      "public_public_courses_meta_htmlpath",
+      "public_public_courses_meta_id",
+      "public_public_courses_meta_pngpath",
+      "public_public_courses_meta_screenid",
+      "public_public_courses_meta_screenname"
+    ],
+    "31": [
+      "design_settings_admin_settings_meta_json",
+      "settings_admin_settings_meta_folder",
+      "settings_admin_settings_meta_generatedat",
+      "settings_admin_settings_meta_htmlpath",
+      "settings_admin_settings_meta_id",
+      "settings_admin_settings_meta_pngpath",
+      "settings_admin_settings_meta_screenid",
+      "settings_admin_settings_meta_screenname"
+    ],
+    "32": [
+      "design_settings_rbac_permissions_meta_json",
+      "settings_rbac_permissions_meta_folder",
+      "settings_rbac_permissions_meta_generatedat",
+      "settings_rbac_permissions_meta_htmlpath",
+      "settings_rbac_permissions_meta_id",
+      "settings_rbac_permissions_meta_pngpath",
+      "settings_rbac_permissions_meta_screenid",
+      "settings_rbac_permissions_meta_screenname"
+    ],
+    "33": [
+      "design_student_student_invoices_meta_json",
+      "student_student_invoices_meta_folder",
+      "student_student_invoices_meta_generatedat",
+      "student_student_invoices_meta_htmlpath",
+      "student_student_invoices_meta_id",
+      "student_student_invoices_meta_pngpath",
+      "student_student_invoices_meta_screenid",
+      "student_student_invoices_meta_screenname"
+    ],
+    "34": [
+      "design_super_admin_saas_dashboard_meta_json",
+      "super_admin_saas_dashboard_meta_folder",
+      "super_admin_saas_dashboard_meta_generatedat",
+      "super_admin_saas_dashboard_meta_htmlpath",
+      "super_admin_saas_dashboard_meta_id",
+      "super_admin_saas_dashboard_meta_pngpath",
+      "super_admin_saas_dashboard_meta_screenid",
+      "super_admin_saas_dashboard_meta_screenname"
+    ],
+    "35": [
+      "design_super_admin_saas_tenants_meta_json",
+      "super_admin_saas_tenants_meta_folder",
+      "super_admin_saas_tenants_meta_generatedat",
+      "super_admin_saas_tenants_meta_htmlpath",
+      "super_admin_saas_tenants_meta_id",
+      "super_admin_saas_tenants_meta_pngpath",
+      "super_admin_saas_tenants_meta_screenid",
+      "super_admin_saas_tenants_meta_screenname"
+    ],
+    "36": [
+      "design_teacher_class_session_meta_json",
+      "teacher_class_session_meta_folder",
+      "teacher_class_session_meta_generatedat",
+      "teacher_class_session_meta_htmlpath",
+      "teacher_class_session_meta_id",
+      "teacher_class_session_meta_pngpath",
+      "teacher_class_session_meta_screenid",
+      "teacher_class_session_meta_screenname"
+    ],
+    "37": [
+      "design_teacher_teacher_dashboard_meta_json",
+      "teacher_teacher_dashboard_meta_folder",
+      "teacher_teacher_dashboard_meta_generatedat",
+      "teacher_teacher_dashboard_meta_htmlpath",
+      "teacher_teacher_dashboard_meta_id",
+      "teacher_teacher_dashboard_meta_pngpath",
+      "teacher_teacher_dashboard_meta_screenid",
+      "teacher_teacher_dashboard_meta_screenname"
+    ],
+    "38": [
+      "design_whatsapp_wa_inbox_meta_json",
+      "whatsapp_wa_inbox_meta_folder",
+      "whatsapp_wa_inbox_meta_generatedat",
+      "whatsapp_wa_inbox_meta_htmlpath",
+      "whatsapp_wa_inbox_meta_id",
+      "whatsapp_wa_inbox_meta_pngpath",
+      "whatsapp_wa_inbox_meta_screenid",
+      "whatsapp_wa_inbox_meta_screenname"
+    ],
+    "39": [
+      "id_page_lead",
+      "id_page_leaddetailpage",
+      "id_page_stagecolors",
+      "id_page_stages",
+      "id_page_timeline",
+      "id_page_typecolor",
+      "id_page_typeicon",
+      "lango_app_src_app_admin_crm_leads_id_page_tsx"
+    ],
+    "40": [
+      "builder_page_initialmodules",
+      "builder_page_lesson",
+      "builder_page_lessoncolors",
+      "builder_page_lessonicons",
+      "builder_page_lessontype",
+      "builder_page_lmsbuilderpage",
+      "builder_page_module",
+      "lango_app_src_app_admin_lms_builder_page_tsx"
+    ],
+    "41": [
+      "dashboard_page_dashboardpage",
+      "dashboard_page_recentenrollments",
+      "dashboard_page_recentlessons",
+      "dashboard_page_revenuedata",
+      "dashboard_page_studentdashboardpage",
+      "dashboard_page_upcomingclasses",
+      "lango_app_src_app_admin_dashboard_page_tsx",
+      "lango_app_src_app_student_student_dashboard_page_tsx"
+    ],
+    "42": [
+      "courses_page_chapters",
+      "courses_page_enrolledcourse",
+      "courses_page_lessonstatus",
+      "courses_page_statuscolor",
+      "courses_page_statusicon",
+      "courses_page_studentcoursespage",
+      "courses_page_typecolor",
+      "lango_app_src_app_student_student_courses_page_tsx"
+    ],
+    "43": [
+      "design_student_student_dashboard_meta_json",
+      "student_student_dashboard_meta_folder",
+      "student_student_dashboard_meta_generatedat",
+      "student_student_dashboard_meta_htmlpath",
+      "student_student_dashboard_meta_id",
+      "student_student_dashboard_meta_pngpath",
+      "student_student_dashboard_meta_screenid",
+      "student_student_dashboard_meta_screenname"
+    ],
+    "44": [
+      "design_whatsapp_wa_campaigns_meta_json",
+      "whatsapp_wa_campaigns_meta_folder",
+      "whatsapp_wa_campaigns_meta_generatedat",
+      "whatsapp_wa_campaigns_meta_htmlpath",
+      "whatsapp_wa_campaigns_meta_id",
+      "whatsapp_wa_campaigns_meta_pngpath",
+      "whatsapp_wa_campaigns_meta_screenid",
+      "whatsapp_wa_campaigns_meta_screenname"
+    ],
+    "45": [
+      "admin_layout_adminlayout",
+      "lango_app_src_app_admin_layout_tsx",
+      "lango_app_src_components_layout_adminshell_tsx",
+      "layout_adminshell_adminshell",
+      "layout_adminshell_adminshellprops",
+      "layout_adminshell_navitem",
+      "layout_adminshell_navitems"
+    ],
+    "46": [
+      "lango_app_src_app_admin_lms_store_page_tsx",
+      "store_page_catalog",
+      "store_page_course",
+      "store_page_coursecard",
+      "store_page_levels",
+      "store_page_lmsstorepage",
+      "store_page_schedules"
+    ],
+    "47": [
+      "grades_page_avg",
+      "grades_page_exams",
+      "grades_page_getgrade",
+      "grades_page_parentgradespage",
+      "grades_page_studentgradespage",
+      "lango_app_src_app_parent_parent_grades_page_tsx",
+      "lango_app_src_app_student_student_grades_page_tsx"
+    ],
+    "48": [
+      "lango_app_src_app_admin_exams_marks_page_tsx",
+      "marks_page_classes",
+      "marks_page_defaultscores",
+      "marks_page_exammarkspage",
+      "marks_page_exams",
+      "marks_page_getgrade",
+      "marks_page_students"
+    ],
+    "49": [
+      "id_page_chapter",
+      "id_page_chapters",
+      "id_page_lesson",
+      "id_page_lessonstatus",
+      "id_page_notes",
+      "id_page_videoplayerpage",
+      "lango_app_src_app_student_student_learn_id_page_tsx"
+    ],
+    "50": [
+      "lango_app_src_components_ui_avatar_tsx",
+      "ui_avatar_avatar",
+      "ui_avatar_avatarbadge",
+      "ui_avatar_avatarfallback",
+      "ui_avatar_avatargroup",
+      "ui_avatar_avatargroupcount",
+      "ui_avatar_avatarimage"
+    ],
+    "51": [
+      "lango_app_src_app_admin_attendance_mobile_page_tsx",
+      "mobile_page_btnactive",
+      "mobile_page_defaultattendance",
+      "mobile_page_mobileattendancepage",
+      "mobile_page_rowstyle",
+      "mobile_page_status",
+      "mobile_page_students"
+    ],
+    "52": [
+      "lango_app_src_app_admin_students_page_tsx",
+      "lango_app_src_app_teacher_teacher_students_page_tsx",
+      "students_page_statusconfig",
+      "students_page_student",
+      "students_page_students",
+      "students_page_studentspage",
+      "students_page_teacherstudentspage"
+    ],
+    "53": [
+      "design_generation_report_failed",
+      "design_generation_report_json",
+      "design_generation_report_screens",
+      "design_generation_report_skipped",
+      "design_generation_report_success",
+      "design_generation_report_total"
+    ],
+    "54": [
+      "id_page_attendancedays",
+      "id_page_getattendancecolor",
+      "id_page_pageprops",
+      "id_page_studentprofilepage",
+      "id_page_tabs",
+      "lango_app_src_app_admin_students_id_page_tsx"
+    ],
+    "55": [
+      "lango_app_src_app_teacher_teacher_classes_id_session_page_tsx",
+      "session_page_agenda",
+      "session_page_classsessionpage",
+      "session_page_status",
+      "session_page_statusconfig",
+      "session_page_students"
+    ],
+    "56": [
+      "app_page_courses",
+      "app_page_landingpage",
+      "app_page_stats",
+      "app_page_testimonials",
+      "app_page_whyus",
+      "lango_app_src_app_page_tsx"
+    ],
+    "57": [
+      "lango_app_src_components_ui_progress_tsx",
+      "ui_progress_progress",
+      "ui_progress_progressindicator",
+      "ui_progress_progresslabel",
+      "ui_progress_progresstrack",
+      "ui_progress_progressvalue"
+    ],
+    "58": [
+      "lango_app_src_components_ui_tabs_tsx",
+      "ui_tabs_tabs",
+      "ui_tabs_tabscontent",
+      "ui_tabs_tabslist",
+      "ui_tabs_tabslistvariants",
+      "ui_tabs_tabstrigger"
+    ],
+    "59": [
+      "lango_app_src_app_admin_academics_timetable_page_tsx",
+      "timetable_page_days",
+      "timetable_page_hours",
+      "timetable_page_slot",
+      "timetable_page_timetable",
+      "timetable_page_timetablepage"
+    ],
+    "60": [
+      "lango_app_src_app_admin_crm_leads_page_tsx",
+      "leads_page_column",
+      "leads_page_crmleadspage",
+      "leads_page_initialcolumns",
+      "leads_page_lead"
+    ],
+    "61": [
+      "fees_page_feecollectionpage",
+      "fees_page_recentpayments",
+      "fees_page_student",
+      "fees_page_students",
+      "lango_app_src_app_admin_finance_fees_page_tsx"
+    ],
+    "62": [
+      "lango_app_src_app_admin_settings_page_tsx",
+      "settings_page_notiftoggles",
+      "settings_page_sections",
+      "settings_page_settingspage",
+      "settings_page_toggle"
+    ],
+    "63": [
+      "campaigns_page_campaigns",
+      "campaigns_page_statuscolors",
+      "campaigns_page_templates",
+      "campaigns_page_whatsappcampaignspage",
+      "lango_app_src_app_admin_whatsapp_campaigns_page_tsx"
+    ],
+    "64": [
+      "inbox_page_contacts",
+      "inbox_page_messages",
+      "inbox_page_tagcolors",
+      "inbox_page_whatsappinboxpage",
+      "lango_app_src_app_admin_whatsapp_inbox_page_tsx"
+    ],
+    "65": [
+      "dashboard_page_mrrbars",
+      "dashboard_page_saasdashboardpage",
+      "dashboard_page_statuscolors",
+      "dashboard_page_tenants",
+      "lango_app_src_app_saas_saas_dashboard_page_tsx"
+    ],
+    "66": [
+      "app_layout_inter",
+      "app_layout_metadata",
+      "app_layout_rootlayout",
+      "lango_app_src_app_layout_tsx"
+    ],
+    "67": [
+      "lango_app_src_app_admin_staff_page_tsx",
+      "staff_page_rolecolors",
+      "staff_page_staff",
+      "staff_page_staffpage"
+    ],
+    "68": [
+      "lango_app_src_app_admin_lms_live_page_tsx",
+      "live_page_lmslivepage",
+      "live_page_sessions",
+      "live_page_statusconfig"
+    ],
+    "69": [
+      "lango_english_center_project_fully_scrape_fs",
+      "lango_english_center_project_fully_scrape_html",
+      "lango_english_center_project_fully_scrape_results",
+      "scrape_js"
+    ],
+    "70": [
+      "claude_settings_local_json",
+      "claude_settings_local_permissions",
+      "claude_settings_local_permissions_allow"
+    ],
+    "71": [
+      "lango_app_src_app_parent_layout_tsx",
+      "parent_layout_nav",
+      "parent_layout_parentlayout"
+    ],
+    "72": [
+      "lango_app_src_app_saas_layout_tsx",
+      "saas_layout_nav",
+      "saas_layout_saaslayout"
+    ],
+    "73": [
+      "lango_app_src_app_student_layout_tsx",
+      "student_layout_nav",
+      "student_layout_studentlayout"
+    ],
+    "74": [
+      "lango_app_src_app_teacher_layout_tsx",
+      "teacher_layout_nav",
+      "teacher_layout_teacherlayout"
+    ],
+    "75": [
+      "income_page_financeincomepage",
+      "lango_app_src_app_admin_finance_income_page_tsx"
+    ],
+    "76": [
+      "lango_app_eslint_config_eslintconfig",
+      "lango_app_eslint_config_mjs"
+    ],
+    "77": [
+      "lango_app_next_config_nextconfig",
+      "lango_app_next_config_ts"
+    ],
+    "78": [
+      "lango_app_postcss_config_config",
+      "lango_app_postcss_config_mjs"
+    ],
+    "79": [
+      "exams_page_academicsexamspage",
+      "lango_app_src_app_admin_academics_exams_page_tsx"
+    ],
+    "80": [
+      "academics_page_academicspage",
+      "lango_app_src_app_admin_academics_page_tsx"
+    ],
+    "81": [
+      "finance_page_financepage",
+      "lango_app_src_app_admin_finance_page_tsx"
+    ],
+    "82": [
+      "lango_app_src_app_admin_lms_page_tsx",
+      "lms_page_lmspage"
+    ],
+    "83": [
+      "lango_app_src_app_admin_whatsapp_page_tsx",
+      "whatsapp_page_whatsapppage"
+    ],
+    "84": [
+      "lango_app_src_app_auth_login_page_tsx",
+      "login_page_loginpage"
+    ],
+    "85": [
+      "lango_app_next_env_d_ts"
+    ]
+  },
+  "cohesion": {
+    "0": 0.06896551724137931,
+    "1": 0.09090909090909091,
+    "2": 0.1,
+    "3": 0.20915032679738563,
+    "4": 0.15833333333333333,
+    "5": 0.125,
+    "6": 0.2087912087912088,
+    "7": 0.1794871794871795,
+    "8": 0.21818181818181817,
+    "9": 0.18181818181818182,
+    "10": 0.2545454545454545,
+    "11": 0.18181818181818182,
+    "12": 0.2,
+    "13": 0.2,
+    "14": 0.2222222222222222,
+    "15": 0.2222222222222222,
+    "16": 0.25,
+    "17": 0.25,
+    "18": 0.25,
+    "19": 0.25,
+    "20": 0.25,
+    "21": 0.25,
+    "22": 0.25,
+    "23": 0.25,
+    "24": 0.25,
+    "25": 0.25,
+    "26": 0.25,
+    "27": 0.25,
+    "28": 0.25,
+    "29": 0.25,
+    "30": 0.25,
+    "31": 0.25,
+    "32": 0.25,
+    "33": 0.25,
+    "34": 0.25,
+    "35": 0.25,
+    "36": 0.25,
+    "37": 0.25,
+    "38": 0.25,
+    "39": 0.25,
+    "40": 0.25,
+    "41": 0.25,
+    "42": 0.25,
+    "43": 0.25,
+    "44": 0.25,
+    "45": 0.2857142857142857,
+    "46": 0.2857142857142857,
+    "47": 0.38095238095238093,
+    "48": 0.2857142857142857,
+    "49": 0.2857142857142857,
+    "50": 0.2857142857142857,
+    "51": 0.2857142857142857,
+    "52": 0.2857142857142857,
+    "53": 0.3333333333333333,
+    "54": 0.3333333333333333,
+    "55": 0.3333333333333333,
+    "56": 0.3333333333333333,
+    "57": 0.3333333333333333,
+    "58": 0.4,
+    "59": 0.3333333333333333,
+    "60": 0.4,
+    "61": 0.4,
+    "62": 0.4,
+    "63": 0.4,
+    "64": 0.4,
+    "65": 0.4,
+    "66": 0.5,
+    "67": 0.5,
+    "68": 0.5,
+    "69": 0.5,
+    "70": 0.6666666666666666,
+    "71": 0.6666666666666666,
+    "72": 0.6666666666666666,
+    "73": 0.6666666666666666,
+    "74": 0.6666666666666666,
+    "75": 1.0,
+    "76": 1.0,
+    "77": 1.0,
+    "78": 1.0,
+    "79": 1.0,
+    "80": 1.0,
+    "81": 1.0,
+    "82": 1.0,
+    "83": 1.0,
+    "84": 1.0,
+    "85": 1.0
+  },
+  "gods": [
+    {
+      "id": "lib_utils_cn",
+      "label": "cn()",
+      "degree": 66
+    },
+    {
+      "id": "ui_button_button",
+      "label": "Button()",
+      "degree": 38
+    },
+    {
+      "id": "ui_badge_badge",
+      "label": "Badge()",
+      "degree": 33
+    },
+    {
+      "id": "ui_input_input",
+      "label": "Input()",
+      "degree": 19
+    },
+    {
+      "id": "lango_app_tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "degree": 16
+    },
+    {
+      "id": "lango_app_components_tailwind",
+      "label": "tailwind",
+      "degree": 6
+    },
+    {
+      "id": "lango_app_components_aliases",
+      "label": "aliases",
+      "degree": 6
+    },
+    {
+      "id": "lango_app_package_scripts",
+      "label": "scripts",
+      "degree": 5
+    },
+    {
+      "id": "design_generate_all_run",
+      "label": "run()",
+      "degree": 3
+    },
+    {
+      "id": "attendance_page_statusconfig",
+      "label": "statusConfig",
+      "degree": 3
+    }
+  ],
+  "surprises": [
+    {
+      "source": "cn()",
+      "target": "clsx",
+      "source_files": [
+        "lango-app/src/lib/utils.ts",
+        "lango-app/package.json"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; bridges separate communities; peripheral node `clsx` unexpectedly reaches hub `cn()`"
+    },
+    {
+      "source": "Avatar()",
+      "target": "cn()",
+      "source_files": [
+        "lango-app/src/components/ui/avatar.tsx",
+        "lango-app/src/lib/utils.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities; peripheral node `Avatar()` unexpectedly reaches hub `cn()`"
+    },
+    {
+      "source": "AvatarImage()",
+      "target": "cn()",
+      "source_files": [
+        "lango-app/src/components/ui/avatar.tsx",
+        "lango-app/src/lib/utils.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities; peripheral node `AvatarImage()` unexpectedly reaches hub `cn()`"
+    },
+    {
+      "source": "AvatarFallback()",
+      "target": "cn()",
+      "source_files": [
+        "lango-app/src/components/ui/avatar.tsx",
+        "lango-app/src/lib/utils.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities; peripheral node `AvatarFallback()` unexpectedly reaches hub `cn()`"
+    },
+    {
+      "source": "AvatarBadge()",
+      "target": "cn()",
+      "source_files": [
+        "lango-app/src/components/ui/avatar.tsx",
+        "lango-app/src/lib/utils.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities; peripheral node `AvatarBadge()` unexpectedly reaches hub `cn()`"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `cn()` connect `Community 3` to `Community 0`, `Community 4`, `Community 5`, `Community 6`, `Community 10`, `Community 11`, `Community 13`, `Community 50`, `Community 57`, `Community 58`?",
+      "why": "High betweenness centrality (0.113) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `Button()` connect `Community 6` to `Community 3`, `Community 4`, `Community 7`, `Community 9`, `Community 10`, `Community 11`, `Community 12`, `Community 14`, `Community 15`, `Community 39`, `Community 40`, `Community 41`, `Community 42`, `Community 46`, `Community 47`, `Community 48`, `Community 49`, `Community 51`, `Community 55`, `Community 56`, `Community 61`, `Community 62`, `Community 63`, `Community 67`, `Community 68`?",
+      "why": "High betweenness centrality (0.051) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `clsx` connect `Community 0` to `Community 3`?",
+      "why": "High betweenness centrality (0.039) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `fs`, `html`, `results` to the rest of the system?",
+      "why": "378 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 0` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.06896551724137931 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 1` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.09090909090909091 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 2` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.1 - nodes in this community are weakly interconnected."
+    }
+  ]
+}

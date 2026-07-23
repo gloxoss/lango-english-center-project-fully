@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Course Catalog | Lango English Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "on-error": "#ffffff",
+                "secondary": "#515f74",
+                "inverse-on-surface": "#f0f1f2",
+                "tertiary-fixed-dim": "#4ae176",
+                "tertiary-container": "#007e37",
+                "inverse-primary": "#b4c5ff",
+                "on-tertiary-fixed": "#002109",
+                "on-secondary": "#ffffff",
+                "tertiary-fixed": "#6bff8f",
+                "surface-container-lowest": "#ffffff",
+                "outline-variant": "#c3c6d7",
+                "surface-container-low": "#f3f4f5",
+                "surface-dim": "#d9dadb",
+                "error": "#ba1a1a",
+                "on-surface-variant": "#434655",
+                "surface-container-highest": "#e1e3e4",
+                "secondary-container": "#d5e3fc",
+                "on-primary-fixed": "#00174b",
+                "secondary-fixed": "#d5e3fc",
+                "on-error-container": "#93000a",
+                "on-primary": "#ffffff",
+                "surface-variant": "#e1e3e4",
+                "surface-tint": "#0053db",
+                "error-container": "#ffdad6",
+                "on-secondary-fixed-variant": "#3a485b",
+                "on-secondary-fixed": "#0d1c2e",
+                "primary-fixed-dim": "#b4c5ff",
+                "secondary-fixed-dim": "#b9c7df",
+                "surface-container": "#edeeef",
+                "background": "#f8f9fa",
+                "outline": "#737686",
+                "on-tertiary-fixed-variant": "#005321",
+                "on-primary-container": "#eeefff",
+                "primary": "#004ac6",
+                "on-primary-fixed-variant": "#003ea8",
+                "on-surface": "#191c1d",
+                "surface": "#f8f9fa",
+                "on-tertiary-container": "#c1ffc5",
+                "on-background": "#191c1d",
+                "surface-bright": "#f8f9fa",
+                "tertiary": "#006229",
+                "on-secondary-container": "#57657a",
+                "inverse-surface": "#2e3132",
+                "primary-container": "#2563eb",
+                "primary-fixed": "#dbe1ff",
+                "surface-container-high": "#e7e8e9",
+                "on-tertiary": "#ffffff"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+            },
+            "fontFamily": {
+                "headline": ["Inter"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .tonal-shift-surface { background-color: rgba(255, 255, 255, 0.8); }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased selection:bg-primary-fixed">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl no-border tonal-shift-surface">
+<nav class="flex justify-between items-center max-w-7xl mx-auto px-8 h-16">
+<div class="text-xl font-bold tracking-tighter text-slate-900 dark:text-slate-50">Lango English Center</div>
+<div class="hidden md:flex items-center gap-8 font-sans text-sm font-medium tracking-tight">
+<a class="text-blue-600 dark:text-blue-400 font-semibold border-b-2 border-blue-600 transition-colors duration-200" href="#">Courses</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200" href="#">About</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200" href="#">Contact</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-sm font-semibold text-blue-600 dark:text-blue-500 hover:opacity-70 transition-opacity">Login</button>
+<button class="bg-primary text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-primary-container transition-colors">Register</button>
+</div>
+</nav>
+</header>
+<main class="pt-24 pb-20">
+<!-- Hero Section -->
+<section class="max-w-7xl mx-auto px-8 mb-16">
+<div class="flex flex-col gap-4">
+<h1 class="text-5xl font-extrabold tracking-tighter text-slate-900 leading-tight">Our English Courses</h1>
+<p class="text-xl text-slate-600 max-w-2xl leading-relaxed">Invest in your future with our expert-led programs. From foundational basics to master-level proficiency.</p>
+</div>
+<!-- Quick Level Filters -->
+<div class="mt-10 flex gap-3 overflow-x-auto no-scrollbar">
+<button class="px-6 py-2.5 rounded-full bg-primary text-white text-sm font-semibold shadow-sm">All</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant text-sm font-medium hover:bg-surface-container-highest transition-colors">A1</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant text-sm font-medium hover:bg-surface-container-highest transition-colors">A2</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant text-sm font-medium hover:bg-surface-container-highest transition-colors">B1</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant text-sm font-medium hover:bg-surface-container-highest transition-colors">B2</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant text-sm font-medium hover:bg-surface-container-highest transition-colors">C1</button>
+</div>
+</section>
+<!-- Catalog Layout -->
+<div class="max-w-7xl mx-auto px-8 flex flex-col md:flex-row gap-12">
+<!-- Sidebar Filters -->
+<aside class="w-full md:w-[240px] flex-shrink-0">
+<div class="sticky top-24 space-y-10">
+<!-- Level Filter -->
+<div>
+<h4 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-6">Level</h4>
+<div class="space-y-4">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="text-sm font-medium text-slate-600 group-hover:text-slate-900">Beginner (A1-A2)</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="text-sm font-medium text-slate-600 group-hover:text-slate-900">Intermediate (B1-B2)</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="text-sm font-medium text-slate-600 group-hover:text-slate-900">Advanced (C1)</span>
+</label>
+</div>
+</div>
+<!-- Schedule Filter -->
+<div>
+<h4 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-6">Schedule</h4>
+<div class="space-y-4">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="text-sm font-medium text-slate-600 group-hover:text-slate-900">Morning</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="text-sm font-medium text-slate-600 group-hover:text-slate-900">Evening</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="text-sm font-medium text-slate-600 group-hover:text-slate-900">Weekend</span>
+</label>
+</div>
+</div>
+<!-- Format Filter -->
+<div>
+<h4 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-6">Format</h4>
+<div class="space-y-4">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="text-sm font-medium text-slate-600 group-hover:text-slate-900">In-person</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="text-sm font-medium text-slate-600 group-hover:text-slate-900">Online</span>
+</label>
+</div>
+</div>
+<!-- Price Range -->
+<div>
+<h4 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-6">Price Range</h4>
+<input class="w-full h-1.5 bg-surface-container-highest rounded-full appearance-none cursor-pointer accent-primary" type="range"/>
+<div class="flex justify-between mt-2">
+<span class="text-xs font-semibold text-slate-500">500 MAD</span>
+<span class="text-xs font-semibold text-slate-500">2500 MAD</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Grid -->
+<section class="flex-grow">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+<!-- Card 1: A1 Foundation -->
+<article class="group bg-surface-container-lowest rounded-xl overflow-hidden transition-all hover:bg-surface-container-low duration-300">
+<div class="aspect-[4/3] overflow-hidden bg-surface-container-low relative">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="cheerful young adults practicing English in a bright modern classroom with colorful educational posters on the walls" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1a4b_iW_jI2V28WwMc7pN-J6IrWA6MQORE2tDFQJyrFTInzHXwDoCwc8GsD33YN2RK4ITyWAju_k20oLKcJch6W8Nk2KC37v-3T5SB5xhpQ5qK2TVNr7qJcvZycwedM7uij6lKqzVqCGaORECvxElt3jUO6dmp0zrJwj1sKHLGuQQAvH7U1uUzjpaqJfl7xqM8Dgttb2WMOie51KWlzgrKi7KL08sIeWir0pAi5NyTiDU0x_3uaRICF3TS4fqL0Fl_as1dkkFbWhK"/>
+<span class="absolute top-4 left-4 px-3 py-1 bg-tertiary text-white text-[10px] font-bold tracking-widest uppercase rounded">Level A1</span>
+</div>
+<div class="p-6">
+<h3 class="text-xl font-bold text-slate-900 mb-2">A1 Foundation</h3>
+<div class="flex flex-col gap-1.5 mb-6">
+<div class="flex items-center gap-2 text-slate-500 text-sm">
+<span class="material-symbols-outlined text-sm">calendar_today</span>
+<span>Morning / Evening</span>
+</div>
+<div class="flex items-center gap-2 text-slate-500 text-sm">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<span>12 Weeks • 48 Hours</span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-auto">
+<span class="text-lg font-bold text-slate-900">1,200 MAD <span class="text-xs font-normal text-slate-500">/ term</span></span>
+<button class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary-container transition-colors">Enroll Now</button>
+</div>
+</div>
+</article>
+<!-- Card 2: A2 Elementary -->
+<article class="group bg-surface-container-lowest rounded-xl overflow-hidden transition-all hover:bg-surface-container-low duration-300">
+<div class="aspect-[4/3] overflow-hidden bg-surface-container-low relative">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="diverse group of students sitting around a table with laptops and coffee cups, collaborating on a language project" src="https://lh3.googleusercontent.com/aida-public/AB6AXuASDtBUjlOfIvV9gaImgZJaFoOddUH8w69rysZhJkDbUaftWwIX52Ag-gPRntr-AO5FjrloONzbSUn0TBQPd3R-Y5bOa04ndzIN9Ps_r0ovJ0SCOGWUuJLNtbadeRlUQEkGarBDbaApbgIyjPK10Q6bViPmPQH6TAzgGtgmcLR9eE1NPhxGNJCQ4S_HK8n7qOVIS4RP0AtRXYv0KyLdzNpSCQ2Qmr1SQQpnbS22fi4l52m0eTT7uSpCi9QrthUXCBI8gaLBKGAAed5E"/>
+<span class="absolute top-4 left-4 px-3 py-1 bg-tertiary text-white text-[10px] font-bold tracking-widest uppercase rounded">Level A2</span>
+</div>
+<div class="p-6">
+<h3 class="text-xl font-bold text-slate-900 mb-2">A2 Elementary</h3>
+<div class="flex flex-col gap-1.5 mb-6">
+<div class="flex items-center gap-2 text-slate-500 text-sm">
+<span class="material-symbols-outlined text-sm">calendar_today</span>
+<span>Weekend / Morning</span>
+</div>
+<div class="flex items-center gap-2 text-slate-500 text-sm">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<span>12 Weeks • 48 Hours</span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-auto">
+<span class="text-lg font-bold text-slate-900">1,200 MAD <span class="text-xs font-normal text-slate-500">/ term</span></span>
+<button class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary-container transition-colors">Enroll Now</button>
+</div>
+</div>
+</article>
+<!-- Card 3: B1 Intermediate -->
+<article class="group bg-surface-container-lowest rounded-xl overflow-hidden transition-all hover:bg-surface-container-low duration-300">
+<div class="aspect-[4/3] overflow-hidden bg-surface-container-low relative">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="student engaging in a one-on-one conversation with a tutor in a minimalist library setting with soft natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYFxbD-Y89vR-eub1rp0B66xQjRZ4W0khdoAVMmcLrzNeyzOqasbvVlt388AMi_jdfQAZpw_aPUZ0fnwFx9amBxe833B2hSvxSUeM9SvCFP6yp1wAnWNn6wcXeKjD7o35fdeWIVsmSn3MbnZSq_16IW1PfPSKBz5HdLDfx3ckAzT-YS9ZslgFSE5WLecl7g0dvQ_Tz58H34Jh5la_-4bYzYuChNFfYwbErE7_hBw7Mot_JWHOB3Ov-aYJ95g3OwbD1H36BJMEmbExp"/>
+<span class="absolute top-4 left-4 px-3 py-1 bg-primary text-white text-[10px] font-bold tracking-widest uppercase rounded">Level B1</span>
+</div>
+<div class="p-6">
+<h3 class="text-xl font-bold text-slate-900 mb-2">B1 Intermediate</h3>
+<div class="flex flex-col gap-1.5 mb-6">
+<div class="flex items-center gap-2 text-slate-500 text-sm">
+<span class="material-symbols-outlined text-sm">calendar_today</span>
+<span>Evening / Online</span>
+</div>
+<div class="flex items-center gap-2 text-slate-500 text-sm">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<span>10 Weeks • 40 Hours</span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-auto">
+<span class="text-lg font-bold text-slate-900">1,200 MAD <span class="text-xs font-normal text-slate-500">/ term</span></span>
+<button class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary-container transition-colors">Enroll Now</button>
+</div>
+</div>
+</article>
+<!-- Card 4: B2 Upper-Intermediate -->
+<article class="group bg-surface-container-lowest rounded-xl overflow-hidden transition-all hover:bg-surface-container-low duration-300">
+<div class="aspect-[4/3] overflow-hidden bg-surface-container-low relative">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="close up of a hand writing notes in a stylish notebook with a modern laptop and glasses in the background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPQrJu1eGTCfzss8lUVoLS9V6F9p2f1hDDG0JODk8vx3aenGnWDM7s17LVK5I_Ogk4hNW6_5zc8fIZmIk0fzOPkXZ56PEgl1BaQrBosFLH01lPT3GXKQeIbHTx3nD4ROVkqeW2mgS6RWI1Dyyju1e8JDKOxqz5ZKqj9ySfI2Pb9fCn6JsnDPoSfsnJ6vVt4-mNXo5Rz7eT0eW0G4qjo8DfsvEv0XyI3n9NDcyMoDRZSLDZxAsBrB-qmBLpHt6nPNXMoHrnJni5ESJq"/>
+<span class="absolute top-4 left-4 px-3 py-1 bg-primary text-white text-[10px] font-bold tracking-widest uppercase rounded">Level B2</span>
+</div>
+<div class="p-6">
+<h3 class="text-xl font-bold text-slate-900 mb-2">B2 Upper-Intermediate</h3>
+<div class="flex flex-col gap-1.5 mb-6">
+<div class="flex items-center gap-2 text-slate-500 text-sm">
+<span class="material-symbols-outlined text-sm">calendar_today</span>
+<span>Evening / Weekend</span>
+</div>
+<div class="flex items-center gap-2 text-slate-500 text-sm">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<span>10 Weeks • 40 Hours</span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-auto">
+<span class="text-lg font-bold text-slate-900">1,200 MAD <span class="text-xs font-normal text-slate-500">/ term</span></span>
+<button class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary-container transition-colors">Enroll Now</button>
+</div>
+</div>
+</article>
+<!-- Card 5: C1 Advanced -->
+<article class="group bg-surface-container-lowest rounded-xl overflow-hidden transition-all hover:bg-surface-container-low duration-300">
+<div class="aspect-[4/3] overflow-hidden bg-surface-container-low relative">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="confident professional woman presenting in front of a clean white board in a corporate meeting room" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHztsq9K1K2AojAbzrIyiEASYY0Zk1Kg2muRKLiui77pDm5YFHDHP9oLet1FFfDjC6A4n0XAJ0rGRvnp_lND0OP0ux5SGMqJGRFRKNaE6zuuIpTIeSi6h0bnvX6eevvtWJaP9zaZUSw0_EBrf6g63b9EPagKgmWoX4y6CZOOyxyuvKg8oH0U2wqfPs4hxtLDHjlYswHJkZtnEeS0CDF-e6GlABooNCbuh9MdpA8qheYia4hWxlW2Sv1X5q7wJeUUkozj6hPqb1rvFt"/>
+<span class="absolute top-4 left-4 px-3 py-1 bg-secondary text-white text-[10px] font-bold tracking-widest uppercase rounded">Level C1</span>
+</div>
+<div class="p-6">
+<h3 class="text-xl font-bold text-slate-900 mb-2">C1 Advanced</h3>
+<div class="flex flex-col gap-1.5 mb-6">
+<div class="flex items-center gap-2 text-slate-500 text-sm">
+<span class="material-symbols-outlined text-sm">calendar_today</span>
+<span>Evening / Online</span>
+</div>
+<div class="flex items-center gap-2 text-slate-500 text-sm">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<span>8 Weeks • 32 Hours</span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-auto">
+<span class="text-lg font-bold text-slate-900">1,200 MAD <span class="text-xs font-normal text-slate-500">/ term</span></span>
+<button class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary-container transition-colors">Enroll Now</button>
+</div>
+</div>
+</article>
+<!-- Card 6: IELTS Preparation -->
+<article class="group bg-surface-container-lowest rounded-xl overflow-hidden transition-all hover:bg-surface-container-low duration-300">
+<div class="aspect-[4/3] overflow-hidden bg-surface-container-low relative">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="a stack of academic books and a coffee mug on a wooden desk with golden sunlight streaming through a window" src="https://lh3.googleusercontent.com/aida-public/AB6AXuClVzzrP9_aFGc0N0koAkpdSiyETJ97KGsGO1fsGOODe0v8I8p0X2KmUtYHdvdK6EdehMjG4Coz6XXOavE4Cg5sHOkq2oAfOo6WeSjRM6_xJoLLDNMA52tlsENsK4v0MQ9Ea0_Ujfg-P9NsiHMeOI_QzUhLUSwefgX-RwusceP9D92BPaSFlQspm2Mddf97LVP0q2-J6yQQyIhscZ1JpYV1Bls0hqcKoB0-SKllYaFxDxiSqBqoNzU3NmA09cbNRgKGW3S1AC46EjEX"/>
+<span class="absolute top-4 left-4 px-3 py-1 bg-error text-white text-[10px] font-bold tracking-widest uppercase rounded">Exam Prep</span>
+</div>
+<div class="p-6">
+<h3 class="text-xl font-bold text-slate-900 mb-2">IELTS Preparation</h3>
+<div class="flex flex-col gap-1.5 mb-6">
+<div class="flex items-center gap-2 text-slate-500 text-sm">
+<span class="material-symbols-outlined text-sm">calendar_today</span>
+<span>Intensive / Weekend</span>
+</div>
+<div class="flex items-center gap-2 text-slate-500 text-sm">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<span>6 Weeks • 40 Hours</span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-auto">
+<span class="text-lg font-bold text-slate-900">1,200 MAD <span class="text-xs font-normal text-slate-500">/ term</span></span>
+<button class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary-container transition-colors">Enroll Now</button>
+</div>
+</div>
+</article>
+</div>
+</section>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
+<div class="flex flex-col md:flex-row justify-between items-center max-w-7xl mx-auto px-8 gap-4">
+<div class="text-xs font-normal text-slate-500 dark:text-slate-400 leading-relaxed">
+                © 2024 Lango English Center. All rights reserved.
+            </div>
+<div class="flex gap-8">
+<a class="text-xs font-normal text-slate-500 dark:text-slate-400 hover:underline transition-all" href="#">Support</a>
+<a class="text-xs font-normal text-slate-500 dark:text-slate-400 hover:underline transition-all" href="#">Privacy</a>
+<a class="text-xs font-normal text-slate-500 dark:text-slate-400 hover:underline transition-all" href="#">Terms</a>
+</div>
+</div>
+</footer>
+</body></html>

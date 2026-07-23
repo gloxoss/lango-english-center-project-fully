@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lango SaaS Super Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-tint": "#0053db",
+                        "outline-variant": "#c3c6d7",
+                        "surface-container-high": "#e8e7f1",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#2f3038",
+                        "on-secondary-fixed": "#00174b",
+                        "tertiary": "#943700",
+                        "on-primary-fixed": "#00174b",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-on-surface": "#f1effa",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "primary": "#004ac6",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "on-error": "#ffffff",
+                        "on-background": "#1a1b22",
+                        "surface-bright": "#fbf8ff",
+                        "on-primary-container": "#eeefff",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "surface": "#fbf8ff",
+                        "secondary": "#495c95",
+                        "surface-container-low": "#f4f2fd",
+                        "secondary-fixed": "#dbe1ff",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "surface-dim": "#dad9e3",
+                        "tertiary-container": "#bc4800",
+                        "on-secondary-fixed-variant": "#31447b",
+                        "tertiary-fixed": "#ffdbcd",
+                        "surface-container-highest": "#e3e1ec",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#434655",
+                        "on-tertiary-fixed": "#360f00",
+                        "outline": "#737686",
+                        "secondary-container": "#acbfff",
+                        "surface-container": "#eeedf7",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "surface-variant": "#e3e1ec",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-surface": "#1a1b22",
+                        "on-secondary-container": "#394c84",
+                        "on-tertiary-container": "#ffede6",
+                        "background": "#fbf8ff",
+                        "inverse-primary": "#b4c5ff",
+                        "primary-container": "#2563eb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-[220px] bg-zinc-800 dark:bg-zinc-950 flex flex-col py-6 px-4 font-inter antialiased text-sm font-medium">
+<div class="mb-10 px-2 flex items-center gap-3">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-xl" style="font-variation-settings: 'FILL' 1;">cloud</span>
+</div>
+<div>
+<h1 class="text-lg font-bold tracking-tight text-white leading-tight">Lango SaaS</h1>
+<p class="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Super Admin</p>
+</div>
+</div>
+<nav class="flex-1 space-y-8">
+<div>
+<span class="px-2 text-[11px] font-bold text-zinc-500 uppercase tracking-[0.1em] mb-4 block">Platform</span>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 bg-zinc-700/50 text-white font-semibold rounded-lg transition-all scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/30 rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="corporate_fare">corporate_fare</span>
+<span>Tenants</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/30 rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="layers">layers</span>
+<span>Plans</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/30 rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="featured_play_list">featured_play_list</span>
+<span>Features</span>
+</a>
+</div>
+</div>
+<div>
+<span class="px-2 text-[11px] font-bold text-zinc-500 uppercase tracking-[0.1em] mb-4 block">System</span>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/30 rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="hub">hub</span>
+<span>Gateways</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/30 rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/30 rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span>Logs</span>
+</a>
+</div>
+</div>
+</nav>
+<div class="mt-auto px-2 pt-6 border-t border-zinc-700/50">
+<div class="flex items-center gap-3">
+<img alt="Admin" class="w-10 h-10 rounded-full border-2 border-zinc-700 object-cover" data-alt="Professional portrait of a male tech executive with a confident expression in a high-end corporate office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdoO9l10B1kvjLhargnw4Oq2tZ5_sxRVuNoTIjwmgAsOj_DqdBLiYvwrX2_ZY9aY1ZqOFW_LqtR0B4MD8Rk8I6XKU7OvAw22TqmbGJbSfUK3brXa0GF5te6AEWtuviPVa1QhmTXD3zE2xM1IiT2REKQ36doon3yqOiGn1iwpVX2ROLb6sDigk5dKxfcsBmr52LTezYMZvNB7J7W6kfOa4HJXwIHXjumhBgBRNvUjbN5xyBbeM57yvYAiV-srnjqSsUl8blfFq3gMs5"/>
+<div class="overflow-hidden">
+<p class="text-white font-semibold truncate">Alex Rivera</p>
+<p class="text-[11px] text-zinc-400 truncate">alex.r@lango.io</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 h-[56px] left-[220px] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border-b border-zinc-200/20 dark:border-zinc-800/50 flex items-center z-10">
+<div class="flex justify-between items-center px-8 w-full max-w-[1440px] mx-auto font-inter text-sm font-medium">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg">search</span>
+<input class="w-full pl-10 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant/20 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm" placeholder="Search systems, tenants or logs..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-all relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800"></div>
+<div class="flex items-center gap-3">
+<span class="text-xs font-bold bg-primary/10 text-primary px-2 py-1 rounded-full">SYSTEM LIVE</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="ml-[220px] pt-[56px] min-h-screen bg-surface-container-low/30 pb-12">
+<div class="max-w-[1440px] mx-auto px-8 py-8 space-y-8">
+<!-- Page Heading -->
+<div>
+<h2 class="text-2xl font-extrabold tracking-tight text-on-surface mb-1">Platform Overview</h2>
+<p class="text-on-surface-variant text-sm">Welcome back. Everything is running smoothly across all gateways.</p>
+</div>
+<!-- KPI Row -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="bg-surface-container-lowest p-6 rounded-lg border border-outline-variant/10 flex flex-col gap-1">
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">Total Tenants</span>
+<div class="flex items-end gap-2">
+<span class="text-3xl font-extrabold tracking-tight text-on-surface">12</span>
+<span class="text-success text-xs font-bold flex items-center mb-1">
+<span class="material-symbols-outlined text-sm">trending_up</span> +8%
+                        </span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-lg border border-outline-variant/10 flex flex-col gap-1">
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">Active Tenants</span>
+<div class="flex items-end gap-2">
+<span class="text-3xl font-extrabold tracking-tight text-on-surface">10</span>
+<div class="w-2 h-2 bg-green-500 rounded-full mb-2 animate-pulse"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-lg border border-outline-variant/10 flex flex-col gap-1">
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">Platform MRR</span>
+<div class="flex items-end gap-2">
+<span class="text-3xl font-extrabold tracking-tight text-on-surface">48,000 <span class="text-lg font-medium text-on-surface-variant">MAD</span></span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-lg border border-outline-variant/10 flex flex-col gap-1">
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">System Alerts</span>
+<div class="flex items-end gap-2">
+<span class="text-3xl font-extrabold tracking-tight text-error">2</span>
+<span class="text-on-surface-variant text-xs mb-1">Last 24h</span>
+</div>
+</div>
+</div>
+<!-- Row 1: Charts -->
+<div class="grid grid-cols-12 gap-6">
+<!-- MRR Trend Area Chart (60%) -->
+<div class="col-span-12 lg:col-span-7 bg-surface-container-lowest p-6 rounded-lg border border-outline-variant/10">
+<div class="flex justify-between items-center mb-8">
+<h3 class="font-bold text-on-surface tracking-tight">MRR Growth Trend</h3>
+<div class="flex gap-2">
+<button class="text-xs px-3 py-1 rounded bg-surface-container-low text-on-surface font-semibold">12 Months</button>
+<button class="text-xs px-3 py-1 rounded text-on-surface-variant hover:bg-surface-container-low">6 Months</button>
+</div>
+</div>
+<div class="h-[280px] relative w-full flex items-end justify-between px-2">
+<!-- Mock Area Chart using Gradients -->
+<div class="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent rounded-b-lg"></div>
+<div class="absolute inset-x-0 bottom-0 h-[2px] bg-primary/20"></div>
+<div class="w-[8%] h-[40%] bg-primary/40 rounded-t-sm"></div>
+<div class="w-[8%] h-[45%] bg-primary/45 rounded-t-sm"></div>
+<div class="w-[8%] h-[38%] bg-primary/40 rounded-t-sm"></div>
+<div class="w-[8%] h-[55%] bg-primary/50 rounded-t-sm"></div>
+<div class="w-[8%] h-[62%] bg-primary/60 rounded-t-sm"></div>
+<div class="w-[8%] h-[58%] bg-primary/55 rounded-t-sm"></div>
+<div class="w-[8%] h-[75%] bg-primary/70 rounded-t-sm"></div>
+<div class="w-[8%] h-[82%] bg-primary/80 rounded-t-sm"></div>
+<div class="w-[8%] h-[85%] bg-primary/85 rounded-t-sm"></div>
+<div class="w-[8%] h-[92%] bg-primary rounded-t-sm"></div>
+</div>
+</div>
+<!-- Tenant Growth Bar Chart (40%) -->
+<div class="col-span-12 lg:col-span-5 bg-surface-container-lowest p-6 rounded-lg border border-outline-variant/10">
+<h3 class="font-bold text-on-surface tracking-tight mb-8">Tenant Acquisition</h3>
+<div class="space-y-6">
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-bold uppercase text-on-surface-variant">
+<span>Organic</span>
+<span>65%</span>
+</div>
+<div class="w-full bg-surface-container-low h-2 rounded-full">
+<div class="bg-primary h-full rounded-full" style="width: 65%"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-bold uppercase text-on-surface-variant">
+<span>Referral</span>
+<span>25%</span>
+</div>
+<div class="w-full bg-surface-container-low h-2 rounded-full">
+<div class="bg-secondary h-full rounded-full" style="width: 25%"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-bold uppercase text-on-surface-variant">
+<span>Other</span>
+<span>10%</span>
+</div>
+<div class="w-full bg-surface-container-low h-2 rounded-full">
+<div class="bg-outline-variant h-full rounded-full" style="width: 10%"></div>
+</div>
+</div>
+<div class="pt-4 mt-4 border-t border-outline-variant/10">
+<p class="text-xs text-on-surface-variant leading-relaxed">
+                                Most new tenants are opting for the <span class="font-bold text-on-surface">Pro Plan</span> which has seen a 12% increase this quarter.
+                            </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Row 2: Recent Tenants & Health -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Recent Tenants Table -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest rounded-lg border border-outline-variant/10 overflow-hidden">
+<div class="p-6 border-b border-outline-variant/10 flex justify-between items-center">
+<h3 class="font-bold text-on-surface tracking-tight">Recent Tenants</h3>
+<button class="text-xs font-bold text-primary hover:underline">View All</button>
+</div>
+<table class="w-full text-left">
+<thead class="bg-surface-container-low/50">
+<tr>
+<th class="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">School Name</th>
+<th class="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Plan</th>
+<th class="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Status</th>
+<th class="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Created Date</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr>
+<td class="px-6 py-4">
+<div class="font-semibold text-sm">Atlas International Academy</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-[10px] font-extrabold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full uppercase">Enterprise</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+<span class="text-xs font-medium">Active</span>
+</div>
+</td>
+<td class="px-6 py-4 text-xs text-on-surface-variant">Oct 24, 2023</td>
+</tr>
+<tr>
+<td class="px-6 py-4">
+<div class="font-semibold text-sm">Marrakech Tech School</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-[10px] font-extrabold bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase">Pro</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+<span class="text-xs font-medium">Active</span>
+</div>
+</td>
+<td class="px-6 py-4 text-xs text-on-surface-variant">Oct 22, 2023</td>
+</tr>
+<tr>
+<td class="px-6 py-4">
+<div class="font-semibold text-sm">Casablanca Montessori</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-[10px] font-extrabold bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full uppercase">Free</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+<span class="text-xs font-medium text-error">Suspended</span>
+</div>
+</td>
+<td class="px-6 py-4 text-xs text-on-surface-variant">Oct 19, 2023</td>
+</tr>
+<tr>
+<td class="px-6 py-4">
+<div class="font-semibold text-sm">Elite Primary Rabat</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-[10px] font-extrabold bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase">Pro</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+<span class="text-xs font-medium">Active</span>
+</div>
+</td>
+<td class="px-6 py-4 text-xs text-on-surface-variant">Oct 18, 2023</td>
+</tr>
+<tr>
+<td class="px-6 py-4">
+<div class="font-semibold text-sm">Coastal English Hub</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-[10px] font-extrabold bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase">Pro</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+<span class="text-xs font-medium">Active</span>
+</div>
+</td>
+<td class="px-6 py-4 text-xs text-on-surface-variant">Oct 15, 2023</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- System Health -->
+<div class="col-span-12 lg:col-span-4 space-y-4">
+<h3 class="font-bold text-on-surface tracking-tight px-1">System Health</h3>
+<div class="bg-surface-container-lowest p-4 rounded-lg border border-outline-variant/10 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-success text-lg">api</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">API Gateway</p>
+<p class="text-[10px] text-on-surface-variant font-medium">Latency: 24ms</p>
+</div>
+</div>
+<div class="w-2.5 h-2.5 bg-green-500 rounded-full ring-4 ring-green-500/10"></div>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-lg border border-outline-variant/10 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-success text-lg">database</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Main Database</p>
+<p class="text-[10px] text-on-surface-variant font-medium">Load: 12%</p>
+</div>
+</div>
+<div class="w-2.5 h-2.5 bg-green-500 rounded-full ring-4 ring-green-500/10"></div>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-lg border border-outline-variant/10 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-success text-lg">chat</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">WhatsApp Service</p>
+<p class="text-[10px] text-on-surface-variant font-medium">Queue: 0</p>
+</div>
+</div>
+<div class="w-2.5 h-2.5 bg-green-500 rounded-full ring-4 ring-green-500/10"></div>
+</div>
+<div class="bg-tertiary/10 p-6 rounded-lg border border-tertiary/20 mt-6">
+<div class="flex items-start gap-4">
+<span class="material-symbols-outlined text-tertiary">info</span>
+<div>
+<p class="text-sm font-bold text-on-tertiary-fixed-variant">System Advisory</p>
+<p class="text-xs text-on-tertiary-fixed-variant/80 mt-1">Scheduled maintenance for Gateway Node B starting at 02:00 AM UTC. No downtime expected.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Global Command Bar -->
+<div class="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-surface-container-high/80 backdrop-blur-xl border border-white/20 p-2 px-3 rounded-xl shadow-2xl z-50">
+<button class="flex items-center gap-2 px-3 py-2 bg-primary text-white rounded-lg text-xs font-bold hover:opacity-90 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm">add</span>
+            NEW TENANT
+        </button>
+<div class="w-px h-4 bg-on-surface-variant/20 mx-1"></div>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-lowest rounded-lg transition-all" title="System Status">
+<span class="material-symbols-outlined text-lg">monitor_heart</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-lowest rounded-lg transition-all" title="Terminal">
+<span class="material-symbols-outlined text-lg">terminal</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-lowest rounded-lg transition-all" title="Deployment">
+<span class="material-symbols-outlined text-lg">rocket_launch</span>
+</button>
+</div>
+</body></html>

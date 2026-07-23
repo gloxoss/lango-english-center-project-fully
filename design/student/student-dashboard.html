@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed": "#00174b",
+                    "error-container": "#ffdad6",
+                    "on-secondary-fixed-variant": "#31447b",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "surface-variant": "#e1e3e4",
+                    "on-primary": "#ffffff",
+                    "surface-tint": "#0053db",
+                    "on-primary-fixed": "#00174b",
+                    "secondary-container": "#acbfff",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-surface-variant": "#434655",
+                    "on-error-container": "#93000a",
+                    "secondary-fixed": "#dbe1ff",
+                    "surface-dim": "#d9dadb",
+                    "error": "#ba1a1a",
+                    "surface-container-low": "#f3f4f5",
+                    "outline-variant": "#c3c6d7",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-container": "#bc4800",
+                    "inverse-primary": "#b4c5ff",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "tertiary-fixed": "#ffdbcd",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed": "#360f00",
+                    "on-error": "#ffffff",
+                    "secondary": "#495c95",
+                    "inverse-on-surface": "#f0f1f2",
+                    "on-tertiary": "#ffffff",
+                    "inverse-surface": "#2e3132",
+                    "surface-container-high": "#e7e8e9",
+                    "primary-container": "#2563eb",
+                    "primary-fixed": "#dbe1ff",
+                    "on-secondary-container": "#394c84",
+                    "surface-bright": "#f8f9fa",
+                    "tertiary": "#943700",
+                    "on-background": "#191c1d",
+                    "on-tertiary-container": "#ffede6",
+                    "on-surface": "#191c1d",
+                    "surface": "#f8f9fa",
+                    "surface-container": "#edeeef",
+                    "background": "#f8f9fa",
+                    "secondary-fixed-dim": "#b4c5ff",
+                    "on-primary-container": "#eeefff",
+                    "primary": "#004ac6",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "outline": "#737686",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "success": "#22C55E",
+                    "warning": "#F59E0B"
+            },
+            "borderRadius": {
+                    "DEFAULT": "8px",
+                    "lg": "8px",
+                    "xl": "8px",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .active-nav-border { position: relative; }
+        .active-nav-border::after {
+            content: '';
+            position: absolute;
+            bottom: -22px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #2563eb;
+        }
+        .text-on-surface-variant { color: #475569; }
+        .text-on-surface { color: #0F172A; }
+    </style>
+</head>
+<body class="antialiased text-on-surface">
+<!-- Top Navigation Bar -->
+<nav class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl transition-all">
+<div class="flex justify-between items-center px-8 h-16 max-w-[1440px] mx-auto relative">
+<div class="flex items-center gap-12">
+<span class="text-xl font-bold tracking-tighter text-slate-900 dark:text-slate-50">Lango</span>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-blue-600 dark:text-blue-400 font-semibold active-nav-border pb-1 transition-colors" href="#">My Courses</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors" href="#">Calendar</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors" href="#">Invoices</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors" href="#">Profile</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="Close up portrait of a young woman with a friendly smile in a bright professional setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAqtcY7tpsWscgvign7_vw_YMC289pK9_93J2VNwWTEAqVbYawYqu6M9idE40mVwA9ai3BPAX-5KRyrlfhPj9r84nizt_MEIhnKowceFkSp9N6fGCptp6drUfTD4XtCTL12dmv0p6gVDQnZ8y7uDDN4jh-ZDtMX-Qb3DKfdjitBc0PatpfRVhrslIYF-_ZBLM9RgElkcl07m4FCIHLeXj9EdQYfhr5gIAJq_OeAXAvG6t_LbU6n_c1v20sluvCrsj-UG1OcWk-fOa3K"/>
+</div>
+</div>
+<!-- Separation Logic -->
+<div class="bg-slate-100 dark:bg-slate-800 h-[1px] w-full absolute bottom-0 left-0"></div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="pt-24 pb-12 px-8 max-w-[1440px] mx-auto space-y-8">
+<!-- Greeting Banner & Level Progress -->
+<section class="bg-white p-8 rounded-lg flex flex-col md:flex-row justify-between items-end md:items-center gap-6">
+<div class="space-y-1">
+<h1 class="text-4xl font-extrabold tracking-tight text-slate-900">Hi, Fatima!</h1>
+<p class="text-slate-600 font-medium">Level: A1</p>
+</div>
+<div class="w-full md:w-80 space-y-3">
+<div class="flex justify-between items-end">
+<span class="text-xs font-bold uppercase tracking-widest text-slate-400">Total Progress</span>
+<span class="text-lg font-bold text-blue-600">65%</span>
+</div>
+<div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-blue-600 rounded-full transition-all duration-1000" style="width: 65%"></div>
+</div>
+</div>
+</section>
+<!-- KPI Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Next Class -->
+<div class="bg-white p-6 rounded-lg border-l-4 border-blue-600">
+<p class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Next Class</p>
+<h3 class="text-xl font-bold text-slate-900">Tomorrow 09:00</h3>
+<p class="text-slate-600 text-sm mt-1">A1-Monday-Morning</p>
+</div>
+<!-- Attendance -->
+<div class="bg-white p-6 rounded-lg border-l-4 border-emerald-500">
+<p class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Attendance Rate</p>
+<div class="flex items-center gap-2">
+<h3 class="text-3xl font-bold text-emerald-500 tracking-tight">92%</h3>
+<span class="text-sm font-medium text-emerald-600/70 bg-emerald-50 px-2 py-0.5 rounded">This month</span>
+</div>
+</div>
+<!-- Balance -->
+<div class="bg-white p-6 rounded-lg border-l-4 border-emerald-500 flex justify-between items-start">
+<div>
+<p class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Outstanding Balance</p>
+<h3 class="text-xl font-bold text-slate-900">0 MAD</h3>
+</div>
+<div class="text-emerald-500">
+<span class="material-symbols-outlined text-4xl" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+</div>
+<!-- Main Dashboard Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<!-- Left Column: Enrolled Courses -->
+<div class="lg:col-span-8 space-y-6">
+<div class="flex items-center justify-between">
+<h2 class="text-2xl font-bold tracking-tight text-slate-900">Enrolled Courses</h2>
+<button class="text-sm font-semibold text-blue-600 hover:bg-slate-50 px-3 py-1.5 rounded-lg transition-colors">View All</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Course 1 -->
+<div class="bg-white p-6 rounded-lg space-y-6 flex flex-col justify-between min-h-[220px]">
+<div>
+<div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center mb-4">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+</div>
+<h3 class="text-lg font-bold text-slate-900 leading-tight">A1 Foundation English</h3>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-bold text-slate-500">
+<span>Progress</span>
+<span>65% Complete</span>
+</div>
+<div class="h-2 w-full bg-slate-100 rounded-full">
+<div class="h-full bg-blue-600 rounded-full" style="width: 65%"></div>
+</div>
+</div>
+</div>
+<!-- Course 2 -->
+<div class="bg-white p-6 rounded-lg space-y-6 flex flex-col justify-between min-h-[220px]">
+<div>
+<div class="w-12 h-12 bg-slate-50 text-slate-600 rounded-lg flex items-center justify-center mb-4">
+<span class="material-symbols-outlined" data-icon="edit_note">edit_note</span>
+</div>
+<h3 class="text-lg font-bold text-slate-900 leading-tight">Beginner Grammar Workbook</h3>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-bold text-slate-500">
+<span>Progress</span>
+<span>40% Complete</span>
+</div>
+<div class="h-2 w-full bg-slate-100 rounded-full">
+<div class="h-full bg-blue-400 rounded-full" style="width: 40%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Announcements -->
+<div class="bg-amber-50/50 p-6 rounded-lg flex items-start gap-4 border border-amber-100/30">
+<div class="bg-amber-100 text-amber-700 p-2 rounded-lg">
+<span class="material-symbols-outlined" data-icon="campaign" style="font-variation-settings: 'FILL' 1;">campaign</span>
+</div>
+<div class="space-y-1">
+<p class="text-xs font-bold text-amber-700 uppercase tracking-widest">Notice</p>
+<p class="text-slate-900 font-semibold text-lg">End of term exams April 20-25</p>
+<p class="text-slate-600 text-sm">Please check your email for the detailed exam schedule and registration details.</p>
+</div>
+</div>
+</div>
+<!-- Right Column: Homework & Calendar Context -->
+<div class="lg:col-span-4 space-y-6">
+<h2 class="text-2xl font-bold tracking-tight text-slate-900">Upcoming Homework</h2>
+<div class="bg-white rounded-lg overflow-hidden">
+<div class="p-6 space-y-6">
+<!-- Homework 1 -->
+<div class="flex gap-4 items-start">
+<div class="flex-shrink-0 w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+</div>
+<div class="space-y-1 flex-1">
+<h4 class="font-bold text-slate-900">Grammar Exercise 5</h4>
+<div class="flex items-center text-slate-500 text-sm gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="calendar_today">calendar_today</span>
+<span>Due Friday</span>
+</div>
+</div>
+<button class="text-blue-600 transition-transform active:scale-95">
+<span class="material-symbols-outlined" data-icon="arrow_forward_ios" style="font-size: 16px;">arrow_forward_ios</span>
+</button>
+</div>
+<!-- Homework 2 -->
+<div class="flex gap-4 items-start">
+<div class="flex-shrink-0 w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined" data-icon="headset">headset</span>
+</div>
+<div class="space-y-1 flex-1">
+<h4 class="font-bold text-slate-900">Listening Practice</h4>
+<div class="flex items-center text-slate-500 text-sm gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="calendar_today">calendar_today</span>
+<span>Due next Monday</span>
+</div>
+</div>
+<button class="text-blue-600 transition-transform active:scale-95">
+<span class="material-symbols-outlined" data-icon="arrow_forward_ios" style="font-size: 16px;">arrow_forward_ios</span>
+</button>
+</div>
+</div>
+<!-- Call to Action -->
+<div class="px-6 py-4 bg-slate-50 border-t border-slate-100/50">
+<button class="w-full py-3 bg-gradient-to-br from-blue-500 to-blue-700 text-white font-bold rounded-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+<span>Open Learning Portal</span>
+<span class="material-symbols-outlined text-lg" data-icon="open_in_new">open_in_new</span>
+</button>
+</div>
+</div>
+<!-- Subtle Decorative Image -->
+<div class="rounded-lg h-40 w-full relative overflow-hidden bg-slate-200">
+<img alt="Learning Environment" class="w-full h-full object-cover" data-alt="Minimalist workspace with a laptop, a cup of coffee, and a neat stack of books in soft morning light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAH7DtNjD_5LESr6Bp5yMNXNetg2tLFy3YpVLhal9Y_xo7xLKAR8j0NU76obAC90wMoIgxF-ZlH5GYHaBrFi-EZ80YZn6ljz97Qq9hd5ULDnyeudNkqCnltfdhSjd4aLmFeU5cb7XJHhIN8vDrOHyhNJK6BgGsg3cVcteTc4M8l48ERH7r38O7Mj8b2KGfsnCCR4591lBUoqcd3NBB_jjPNRbpj_rxyBg37o-4UTUaLs5TfdlL-hubgWAEafjYLgy8wT7AcoGdE4s1K"/>
+<div class="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent"></div>
+<div class="absolute bottom-4 left-4">
+<p class="text-white text-xs font-bold tracking-widest uppercase opacity-80">Study Tip</p>
+<p class="text-white font-medium text-sm">Consistency beats intensity.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>
