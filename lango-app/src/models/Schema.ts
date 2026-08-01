@@ -2381,12 +2381,6 @@ export const twoFactor = pgTable('two_factor', {
   index('two_factor_secret_idx').on(table.secret),
 ]);
 
-// ==========================================================================
-// Settings Platform — typed, versioned, scoped settings.
-// Replaces the single-row schoolSettings JSON approach with a registry-driven
-// key-value store supporting tenant ? branch inheritance and version history.
-// ==========================================================================
-
 export const settingValues = pgTable('setting_values', {
   id: uuid().defaultRandom().primaryKey().notNull(),
   tenantId: uuid('tenant_id').notNull(),
@@ -2481,7 +2475,7 @@ export const userPermissionOverrides = pgTable('user_permission_overrides', {
 ]);
 
 // ==========================================================================
-// Shared services — files, notifications, export jobs.
+// Shared services ï¿½ files, notifications, export jobs.
 // Used by all modules instead of each building its own.
 // ==========================================================================
 
