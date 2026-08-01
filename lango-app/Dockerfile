@@ -13,7 +13,7 @@ RUN apk add --no-cache libc6-compat python3 make g++
 # react-day-picker / date-fns peer conflict. It must be copied before npm ci.
 FROM base AS deps
 COPY package.json package-lock.json* .npmrc* ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # One-shot migration image used by Compose/deployment jobs. Keeping migrations
 # separate from app startup avoids concurrent schema changes across replicas.
