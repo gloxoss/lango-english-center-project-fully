@@ -12,7 +12,7 @@ RUN apk add --no-cache libc6-compat python3 make g++
 # .npmrc carries legacy-peer-deps=true, without which npm ci aborts on the
 # react-day-picker / date-fns peer conflict. It must be copied before npm ci.
 FROM base AS deps
-COPY package.json package-lock.json* .npmrc ./
+COPY package.json package-lock.json* .npmrc* ./
 RUN npm ci
 
 # One-shot migration image used by Compose/deployment jobs. Keeping migrations
