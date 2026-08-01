@@ -1,0 +1,1 @@
+ALTER TABLE "guardians" ADD COLUMN "default_relation" varchar(50);

@@ -15,6 +15,237 @@
       "when": 1781630630434,
       "tag": "0001_blushing_mad_thinker",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785345560728,
+      "tag": "0002_extend_user_for_students_api",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785349000000,
+      "tag": "0003_add_accountant_role",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785363299146,
+      "tag": "0004_add_audit_logs",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785365004618,
+      "tag": "0005_add_guardian_default_relation",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785366285922,
+      "tag": "0006_add_teacher_fields_to_user",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1785368237364,
+      "tag": "0007_add_academic_structure",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1785418474954,
+      "tag": "0008_restrict_academic_reference_deletes",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1785428115564,
+      "tag": "0009_make_applicant_campaign_program_nullable",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1785431015575,
+      "tag": "0010_make_attendance_student_group_nullable",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1785440162237,
+      "tag": "0011_add_school_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1785453992228,
+      "tag": "0012_add_assessment_plan_class_subject",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1785454255298,
+      "tag": "0013_add_tenant_plan_tier",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1785455078242,
+      "tag": "0014_add_elective_groups",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1785455292610,
+      "tag": "0015_add_communication_sms",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1785502383435,
+      "tag": "0016_add_student_documents",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1785502760803,
+      "tag": "0017_add_school_settings_ice_legal_director",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1785503331338,
+      "tag": "0018_add_access_reset_requests",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1785503816911,
+      "tag": "0019_add_class_schedule_slots",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1785504000000,
+      "tag": "0020_add_user_lockout_and_must_change_password",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1785504200000,
+      "tag": "0021_add_cndp_filings",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1785504400000,
+      "tag": "0022_add_admissions_inquiries",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1785504600000,
+      "tag": "0023_add_announcements",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1785504800000,
+      "tag": "0024_add_assignments_and_meeting_slots",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1785505000000,
+      "tag": "0025_add_online_exams",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1785519154435,
+      "tag": "0026_add_attendance_summary_excuses_flags",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1785521559893,
+      "tag": "0027_add_attendance_late_minutes",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1785525368291,
+      "tag": "0028_add_attendance_registers_flag_assignment_reject_reason",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1785542021313,
+      "tag": "0029_thin_victor_mancha",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1785600000000,
+      "tag": "0030_add_addon_entitlements",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1785600100000,
+      "tag": "0031_add_two_factor",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1785600200000,
+      "tag": "0032_add_setting_values",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1785600300000,
+      "tag": "0033_add_permissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1785600400000,
+      "tag": "0034_add_shared_services",
+      "breakpoints": true
     }
   ]
 }

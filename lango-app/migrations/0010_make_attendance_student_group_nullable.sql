@@ -1,0 +1,1 @@
+ALTER TABLE "attendance" ALTER COLUMN "student_group_id" DROP NOT NULL;

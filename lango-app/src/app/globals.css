@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* SchoolOS BRAND.md Palette */
+  --color-brand-primary: #2487B8;       /* Deep Cerulean */
+  --color-brand-ink: #16212B;           /* Ink */
+  --color-brand-canvas: #F8FAFC;        /* Ultra-light Canvas */
+
+  --color-surface-card: #FFFFFF;
+  --color-surface-border: #E2E8F0;
+
+  --font-sans: 'Albert Sans', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Albert Sans', sans-serif;
+  --font-arabic: 'Cairo', 'IBM Plex Sans Arabic', sans-serif;
+}
+
+@layer base {
+  html, body {
+    font-family: 'Albert Sans', sans-serif;
+    background-color: #F8FAFC !important;
+    color: var(--color-brand-ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  a {
+    text-decoration: none !important;
+  }
+
+  [dir="rtl"],
+  [dir="rtl"] body,
+  [dir="rtl"] h1,
+  [dir="rtl"] h2,
+  [dir="rtl"] h3,
+  [dir="rtl"] h4,
+  [dir="rtl"] h5,
+  [dir="rtl"] h6,
+  [dir="rtl"] p,
+  [dir="rtl"] span,
+  [dir="rtl"] a,
+  [dir="rtl"] button,
+  [dir="rtl"] input {
+    font-family: 'Cairo', 'IBM Plex Sans Arabic', sans-serif !important;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Albert Sans', sans-serif;
+    color: var(--color-brand-ink);
+    letter-spacing: -0.03em;
+    font-weight: 700;
+  }
+}
+
+/* Webflow Color & Style Overrides */
+.section {
+  background-color: #F8FAFC !important;
+}
+
+.section.inverse {
+  border-color: #F8FAFC !important;
+}
+
+.header-bg {
+  background-color: #F8FAFC !important;
+}
+
+.tab-menu {
+  background-color: #F1F5F9 !important;
+}
+
+.tab-item.w--current {
+  background-color: #FFFFFF !important;
+}

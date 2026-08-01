@@ -1,0 +1,81 @@
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { recordAudit } from '@/libs/api/audit';
+import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { apiErrorResponse } from '@/libs/api/errors';
+import { parseJson } from '@/libs/api/validation';
+import {
+  getAllEffectiveValues,
+  getNamespaces,
+  SETTINGS_REGISTRY,
+  setSettingValue,
+} from '@/libs/settings/registry';
+
+// GET /api/settings/values — all effective settings for this tenant/branch.
+export async function GET(request: Request) {
+  try {
+    const context = await requireRequestContext(request, ['school_admin']);
+    const tenantId = requireTenant(context);
+
+    const values = await getAllEffectiveValues(tenantId, context.branchId);
+
+    // Group by namespace for the UI.
+    const namespaces = getNamespaces();
+    const grouped = Object.fromEntries(
+      namespaces.map(ns => [
+        ns,
+        values.filter(v => {
+          const def = SETTINGS_REGISTRY.find(d => d.key === v.key);
+          return def?.namespace === ns;
+        }),
+      ]),
+    );
+
+    return NextResponse.json({ success: true, data: { values, grouped, namespaces } });
+  } catch (error) {
+    return apiErrorResponse(error);
+  }
+}
+
+const batchUpdateSchema = z.object({
+  settings: z.array(z.object({
+    key: z.string().min(1).max(128),
+    value: z.unknown(),
+    reason: z.string().max(500).optional(),
+  })).min(1).max(50),
+}).strict();
+
+// POST /api/settings/values — batch update multiple settings.
+export async function POST(request: Request) {
+  try {
+    const context = await requireRequestContext(request, ['school_admin']);
+    const tenantId = requireTenant(context);
+    const body = await parseJson(request, batchUpdateSchema);
+
+    const results: { key: string; version: number }[] = [];
+
+    for (const item of body.settings) {
+      const version = await setSettingValue(
+        tenantId,
+        context.branchId,
+        item.key,
+        item.value,
+        context,
+        item.reason,
+      );
+      results.push({ key: item.key, version });
+    }
+
+    recordAudit(context, 'update', 'settings', tenantId, {
+      keys: results.map(r => r.key),
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: results,
+      message: `${results.length} paramètre(s) mis à jour.`,
+    });
+  } catch (error) {
+    return apiErrorResponse(error);
+  }
+}
