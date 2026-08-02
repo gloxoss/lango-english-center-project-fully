@@ -60,6 +60,7 @@ export function Sidebar({ locale }: { locale: string }) {
 
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
     'super-admin': true,
+    'school-modules': true,
   });
 
   const toggleMenu = (key: string) => {
@@ -204,6 +205,13 @@ export function Sidebar({ locale }: { locale: string }) {
     },
     { label: 'Statut CNDP F211', href: `/${locale}/dashboard/settings/cndp`, icon: ShieldCheck },
   ];
+
+  const activeMenuLabel = schoolNavItems.find(item =>
+    pathname === item.href
+    || item.subItems?.some(sub =>
+      pathname === sub.href || pathname.startsWith(`${sub.href}/`),
+    ),
+  )?.label;
 
   return (
     <aside className="
@@ -376,7 +384,8 @@ export function Sidebar({ locale }: { locale: string }) {
                 const isActive = pathname === item.href;
                 const Icon = item.icon;
                 const hasSubItems = item.subItems && item.subItems.length > 0;
-                const isSubOpen = openMenus[item.label];
+                const isSubOpen = openMenus[item.label]
+                  || activeMenuLabel === item.label;
 
                 return (
                   <div key={item.href}>

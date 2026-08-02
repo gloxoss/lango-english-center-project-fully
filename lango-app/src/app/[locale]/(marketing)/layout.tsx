@@ -1,6 +1,7 @@
 import React from 'react';
-import { MarketingHeader } from '@/features/marketing/ui/marketing-header';
 import { MarketingFooter } from '@/features/marketing/ui/marketing-footer';
+import { MarketingHeader } from '@/features/marketing/ui/marketing-header';
+import '../../../../public/assets/css/grovia-template.webflow.shared.f6c6fca70.css';
 
 export default async function MarketingLayout({
   children,
@@ -12,9 +13,9 @@ export default async function MarketingLayout({
   const { locale } = await params;
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <MarketingHeader currentLocale={locale} />
-      <main className="flex-grow">{children}</main>
+      <main className="grow">{children}</main>
       <MarketingFooter currentLocale={locale} />
     </div>
   );

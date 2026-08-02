@@ -110,11 +110,19 @@ export async function POST(request: Request) {
     // Dual-write: sync to new settingValues table. Fire-and-forget so a
     // failure in the new system never breaks the existing settings save.
     const legacyData = saved as Record<string, unknown>;
+    // allSettled never rejects, so inspect the results - a .catch() here would
+    // be dead code and silently swallow every dual-write failure.
     Promise.allSettled(
       SETTINGS_REGISTRY
         .filter(def => def.legacyField && legacyData[def.legacyField] !== undefined)
         .map(def => setSettingValue(tenantId, null, def.key, legacyData[def.legacyField!], context, 'dual-write from legacy settings')),
-    ).catch(err => console.error('Settings dual-write failed (non-fatal)', err));
+    ).then((results) => {
+      for (const r of results) {
+        if (r.status === 'rejected') {
+          console.error('Settings dual-write failed (non-fatal)', r.reason);
+        }
+      }
+    });
 
     return NextResponse.json({ success: true, data: saved, message: 'Paramètres enregistrés avec succès' });
   } catch (error) {

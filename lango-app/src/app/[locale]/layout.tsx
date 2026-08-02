@@ -1,9 +1,8 @@
-import '../../../public/assets/css/grovia-template.webflow.shared.f6c6fca70.css';
+import { Cairo } from 'next/font/google';
+import { LocaleProvider } from '@/features/marketing/context/locale-context';
+import { AppProviders } from '@/providers';
 import '../../../public/assets/css/fonts.css';
 import '../globals.css';
-import { Cairo } from 'next/font/google';
-import { AppProviders } from '@/providers';
-import { LocaleProvider } from '@/features/marketing/context/locale-context';
 
 const cairo = Cairo({
   subsets: ['arabic', 'latin'],
@@ -28,8 +27,14 @@ export default async function RootLocaleLayout({
   const isRTL = validLocale === 'ar';
 
   return (
-    <html lang={validLocale} dir={isRTL ? 'rtl' : 'ltr'} className={`${cairo.variable}`}>
-      <body className="bg-[#F8FAFC] text-slate-900 min-h-screen antialiased">
+    <html
+      lang={validLocale}
+      dir={isRTL ? 'rtl' : 'ltr'}
+      className={`
+        ${cairo.variable}
+      `}
+    >
+      <body className="min-h-screen bg-[#F8FAFC] text-slate-900 antialiased">
         <AppProviders>
           <LocaleProvider initialLocale={validLocale}>
             {children}

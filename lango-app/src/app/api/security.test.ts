@@ -108,8 +108,20 @@ describe.skipIf(!hasDb)('API security regression suite', () => {
   });
 
   it('rejects a role outside the endpoint allowlist', async () => {
+    // A teacher may READ students (attendance rosters need it - see the
+    // allowlist on GET /api/students) but must never WRITE them. Asserting the
+    // write side is what actually guards the privilege boundary.
     currentSessionUserId = teacherAId;
-    const res = await studentsRoute.GET(new Request('http://x/api/students'));
+
+    const readRes = await studentsRoute.GET(new Request('http://x/api/students'));
+
+    expect(readRes.status).toBe(200);
+
+    const res = await studentsRoute.POST(new Request('http://x/api/students', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ firstName: 'X', lastName: 'Y', email: 'x@y.local' }),
+    }));
 
     expect(res.status).toBe(403);
 

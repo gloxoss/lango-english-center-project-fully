@@ -13,7 +13,10 @@ import { files } from '@/models/Schema';
 // the read/write/delete implementations, not the callers.
 // ---------------------------------------------------------------------------
 
-const UPLOAD_ROOT = path.resolve(process.cwd(), 'data', 'uploads');
+// Must match src/libs/api/uploads.ts - this is the path the Docker
+// `schoolos_uploads` volume is mounted at. Writing anywhere else means
+// every uploaded file is lost on container restart.
+const UPLOAD_ROOT = process.env.UPLOADS_DIR || '/app/uploads';
 
 // V1 hard limits. These protect the server without configuration.
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
@@ -52,7 +55,10 @@ export async function uploadFile(
   const safeName = meta.fileName.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 200);
   const timestamp = Date.now();
   const storageName = `${timestamp}_${safeName}`;
-  const dir = path.join(UPLOAD_ROOT, meta.tenantId, meta.module);
+  // module is caller-supplied and lands in the path too, so it needs the same
+  // scrubbing as fileName - otherwise "../../etc" escapes the tenant folder.
+  const safeModule = meta.module.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 64);
+  const dir = path.join(UPLOAD_ROOT, meta.tenantId, safeModule);
   const storagePath = path.join(dir, storageName);
 
   // Ensure directory exists.
@@ -112,7 +118,7 @@ export async function deleteFile(
   fileId: string,
   tenantId: string,
 ): Promise<void> {
-  const result = await db
+  await db
     .update(files)
     .set({ isDeleted: true, deletedAt: new Date().toISOString() })
     .where(and(
@@ -120,8 +126,6 @@ export async function deleteFile(
       eq(files.tenantId, tenantId),
       eq(files.isDeleted, false),
     ));
-
-  // Drizzle update returns void for pg, so we just proceed.
 }
 
 /**
