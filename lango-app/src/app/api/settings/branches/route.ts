@@ -2,6 +2,7 @@ import { and, count, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { hasAddon } from '@/libs/api/entitlements';
 import { db } from '@/libs/DB';
 import { branches, tenants } from '@/models/Schema';
 
@@ -43,7 +44,6 @@ export async function POST(request: Request) {
     // Check tenant quota & addon status
     const [tenant] = await db
       .select({
-        hasMultiBranchAddon: tenants.hasMultiBranchAddon,
         maxBranches: tenants.maxBranches,
       })
       .from(tenants)
@@ -63,7 +63,13 @@ export async function POST(request: Request) {
       .where(and(eq(branches.tenantId, tenantId), eq(branches.isActive, true)));
     const totalBranches = countRow?.totalBranches ?? 0;
 
-    if (!tenant.hasMultiBranchAddon && totalBranches >= 1) {
+    // Entitlement, not a column: addon_entitlements is now the source of truth
+    // (migration 0035 backfilled it from tenants.has_multi_branch_addon).
+    // hasAddon rather than requireAddon because a school without the addon is
+    // not denied outright - it just cannot go past its single default branch.
+    const multiBranchActive = await hasAddon(tenantId, 'multi-branch');
+
+    if (!multiBranchActive && totalBranches >= 1) {
       return NextResponse.json(
         {
           success: false,

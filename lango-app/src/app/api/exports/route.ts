@@ -38,10 +38,12 @@ export async function POST(request: Request) {
       requestedBy: context.userId,
     });
 
+    // The job is already finished by the time createExportJob returns; do not
+    // report 'pending' and send the client into a poll that never changes.
     return NextResponse.json({
       success: true,
-      data: { jobId, status: 'pending' },
-      message: 'Demande d\'exportation enregistrée.',
+      data: { jobId, status: 'complete' },
+      message: 'Export généré.',
     });
   } catch (error) {
     return apiErrorResponse(error);

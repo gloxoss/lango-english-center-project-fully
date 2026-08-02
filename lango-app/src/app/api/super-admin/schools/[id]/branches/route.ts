@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireRequestContext, requireSuperAdmin } from '@/libs/api/context';
 import { db } from '@/libs/DB';
-import { branches, tenants } from '@/models/Schema';
+import { addonEntitlements, branches, tenants } from '@/models/Schema';
 
 export async function GET(
   request: Request,
@@ -77,6 +77,25 @@ export async function PATCH(
         { success: false, error: { code: 'NOT_FOUND', message: 'Établissement introuvable.' } },
         { status: 404 },
       );
+    }
+
+    // Keep addon_entitlements in step - POST /api/settings/branches reads the
+    // entitlement, not this column, so writing only the column would toggle a
+    // switch that no longer controls anything.
+    if (hasMultiBranchAddon !== undefined) {
+      await db
+        .insert(addonEntitlements)
+        .values({
+          tenantId: schoolId,
+          addonId: 'multi-branch',
+          isEnabled: Boolean(hasMultiBranchAddon),
+          grantedById: ctx.userId,
+          note: 'synced from super-admin multi-branch toggle',
+        })
+        .onConflictDoUpdate({
+          target: [addonEntitlements.tenantId, addonEntitlements.addonId],
+          set: { isEnabled: Boolean(hasMultiBranchAddon), updatedAt: new Date().toISOString() },
+        });
     }
 
     return NextResponse.json({

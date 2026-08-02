@@ -215,37 +215,41 @@ export function Sidebar({ locale }: { locale: string }) {
 
   return (
     <aside className="
-      flex min-h-screen w-64 shrink-0 flex-col justify-between border-r
-      border-slate-200 bg-[#16212B] text-white
+      sticky top-0 flex h-dvh max-h-dvh w-64 shrink-0 flex-col overflow-hidden
+      border-r border-slate-200 bg-[#16212B] text-white
     "
     >
-      <div className="max-h-screen overflow-y-auto">
-        {/* Brand Header */}
-        <div className="
-          flex items-center justify-between border-b border-slate-800 p-5
-        "
-        >
-          <div className="flex items-center gap-3">
-            <div className="
-              flex size-9 items-center justify-center rounded-xl bg-[#0066FF]
-              text-base font-extrabold text-white shadow-sm
+      {/* Brand Header */}
+      <div className="
+        flex shrink-0 items-center justify-between border-b border-slate-800 p-5
+      "
+      >
+        <div className="flex items-center gap-3">
+          <div className="
+            flex size-9 items-center justify-center rounded-xl bg-[#0066FF]
+            text-base font-extrabold text-white shadow-sm
+          "
+          >
+            S
+          </div>
+          <div>
+            <h1 className="
+              flex items-center text-base font-extrabold tracking-tight
+              text-white
             "
             >
-              S
-            </div>
-            <div>
-              <h1 className="
-                flex items-center text-base font-extrabold tracking-tight
-                text-white
-              "
-              >
-                School
-                <span className="text-[#0066FF]">OS</span>
-              </h1>
-              <p className="text-[11px] font-medium text-slate-400">Plateforme Multi-tenant</p>
-            </div>
+              School
+              <span className="text-[#0066FF]">OS</span>
+            </h1>
+            <p className="text-[11px] font-medium text-slate-400">Plateforme Multi-tenant</p>
           </div>
         </div>
+      </div>
+
+      <div
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+        data-sidebar-scroll
+      >
 
         {/* Section 1: Super Admin Suite (Super Admin Role Only) */}
         {isSuperAdmin && (
@@ -465,7 +469,11 @@ export function Sidebar({ locale }: { locale: string }) {
       </div>
 
       {/* User Profile & Role Footer */}
-      <div className="space-y-3 border-t border-slate-800 bg-[#111A23] p-4">
+      <div className="
+        shrink-0 space-y-3 border-t border-slate-800 bg-[#111A23] p-4
+        shadow-[0_-12px_28px_rgba(0,0,0,0.16)]
+      "
+      >
         <div className="
           flex items-center justify-between text-xs text-slate-300
         "

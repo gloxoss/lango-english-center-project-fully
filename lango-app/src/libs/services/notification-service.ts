@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, isNull } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { notifications } from '@/models/Schema';
 
@@ -12,17 +12,30 @@ export type CreateNotificationInput = {
 
 /**
  * Enqueue a notification into the notification outbox.
+ *
+ * An in_app notification has no delivery step - the row itself is the
+ * delivery, so it is born 'sent'. email/sms rows stay 'pending' until
+ * something actually ships them.
+ *
+ * ponytail: there is no drainer for email/sms yet, so those rows queue up
+ * and never leave. That is deliberately visible in the data (status stays
+ * 'pending') rather than hidden behind a status that lies. Add a worker when
+ * the first real email/sms channel ships.
  */
 export async function sendNotification(input: CreateNotificationInput): Promise<string> {
+  const channel = input.channel ?? 'in_app';
+  const deliveredOnWrite = channel === 'in_app';
+
   const [row] = await db
     .insert(notifications)
     .values({
       tenantId: input.tenantId,
       recipientId: input.recipientId,
-      channel: input.channel ?? 'in_app',
+      channel,
       template: input.template,
       data: input.data ?? null,
-      status: 'pending',
+      status: deliveredOnWrite ? 'sent' : 'pending',
+      sentAt: deliveredOnWrite ? new Date().toISOString() : null,
     })
     .returning();
 
@@ -43,8 +56,10 @@ export async function getRecipientNotifications(
     eq(notifications.tenantId, tenantId),
   ];
 
+  // Unread is readAt IS NULL. Keying off status would call an undelivered
+  // email "unread" and a delivered-but-unopened in-app message "read".
   if (unreadOnly) {
-    conditions.push(eq(notifications.status, 'pending'));
+    conditions.push(isNull(notifications.readAt));
   }
 
   return db
@@ -63,13 +78,12 @@ export async function markNotificationAsRead(
   recipientId: string,
   tenantId: string,
 ) {
-  const now = new Date().toISOString();
+  // Only readAt. Reading a notification says nothing about whether it was
+  // ever delivered, so this must not touch status/sentAt.
   await db
     .update(notifications)
     .set({
-      status: 'sent',
-      readAt: now,
-      sentAt: now,
+      readAt: new Date().toISOString(),
     })
     .where(and(
       eq(notifications.id, notificationId),

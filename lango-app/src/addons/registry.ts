@@ -3,9 +3,10 @@
 // so their eventual code lives under src/addons/<id>/ from day one instead
 // of getting mixed into core features and needing a painful split later.
 //
-// Nothing reads `enabled` to block access right now - every route/page still
-// decides access purely via role/tenant checks like the rest of the app.
-// When real plan-based gating is wanted, this is where it plugs in.
+// `enabled` here means "the module is built", not "this tenant may use it".
+// Per-tenant access lives in the addon_entitlements table and is enforced by
+// requireAddon() in src/libs/api/entitlements.ts. Only `multi-branch` is wired
+// to that gate today; the rest are unbuilt, so there is nothing yet to gate.
 
 export type AddonDefinition = {
   id: string;
@@ -15,6 +16,12 @@ export type AddonDefinition = {
 };
 
 export const ADDONS: AddonDefinition[] = [
+  {
+    id: 'multi-branch',
+    name: 'Multi-Succursales',
+    description: 'Plusieurs succursales/campus par établissement. The only addon actually built and gated today - see POST /api/settings/branches.',
+    enabled: true,
+  },
   {
     id: 'whatsapp',
     name: 'WhatsApp Communication',

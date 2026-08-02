@@ -30,4 +30,10 @@ describe('assertKnownAddon', () => {
     expect(() => assertKnownAddon('library')).not.toThrow();
     expect(() => assertKnownAddon('not-a-real-addon')).toThrow();
   });
+
+  // POST /api/settings/branches gates on this exact id. A rename in the
+  // registry would silently turn that gate into a permanent denial.
+  it('knows the multi-branch addon the branches route gates on', () => {
+    expect(() => assertKnownAddon('multi-branch')).not.toThrow();
+  });
 });
