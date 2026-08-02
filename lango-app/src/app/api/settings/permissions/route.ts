@@ -34,8 +34,11 @@ export async function GET(request: Request) {
       if (role === 'super_admin') continue; // Never configurable.
       matrix[role] = {};
       for (const perm of allPerms) {
-        const hasOverride = overrides.find(o => o.roleId === role && o.permissionId === perm);
-        matrix[role]![perm] = hasOverride ? true : defaults.includes(perm as PermissionKey);
+        // An override row decides in either direction; only fall back to the
+        // default when the tenant has expressed nothing. Must mirror
+        // hasCapability() or the matrix shown will not be what is enforced.
+        const override = overrides.find(o => o.roleId === role && o.permissionId === perm);
+        matrix[role]![perm] = override ? override.granted : defaults.includes(perm as PermissionKey);
       }
     }
 
@@ -70,26 +73,28 @@ export async function POST(request: Request) {
       throw new ApiError(400, 'UNKNOWN_PERMISSION', `Permission inconnue: ${body.permissionId}`);
     }
 
-    if (body.granted) {
-      // Upsert: grant the permission for this role.
-      await db
-        .insert(rolePermissions)
-        .values({
-          tenantId,
-          roleId: body.roleId,
-          permissionId: body.permissionId,
-        })
-        .onConflictDoNothing();
-    } else {
-      // Remove: revoke the grant (falls back to defaults).
-      await db
-        .delete(rolePermissions)
-        .where(and(
-          eq(rolePermissions.tenantId, tenantId),
-          eq(rolePermissions.roleId, body.roleId),
-          eq(rolePermissions.permissionId, body.permissionId),
-        ));
+    // Reject unknown roles: an arbitrary string would write a row that can
+    // never match a caller's role, so the admin would see a saved setting that
+    // silently does nothing.
+    if (!(body.roleId in DEFAULT_ROLE_PERMISSIONS) || body.roleId === 'super_admin') {
+      throw new ApiError(400, 'UNKNOWN_ROLE', `Rôle inconnu ou non configurable: ${body.roleId}`);
     }
+
+    // Store the decision in both directions. Deleting the row on revoke would
+    // fall back to the role default, so revoking a permission that is granted
+    // by default used to report success and change nothing.
+    await db
+      .insert(rolePermissions)
+      .values({
+        tenantId,
+        roleId: body.roleId,
+        permissionId: body.permissionId,
+        granted: body.granted,
+      })
+      .onConflictDoUpdate({
+        target: [rolePermissions.tenantId, rolePermissions.roleId, rolePermissions.permissionId],
+        set: { granted: body.granted },
+      });
 
     recordAudit(context, 'update', 'role_permission', body.permissionId, {
       roleId: body.roleId,

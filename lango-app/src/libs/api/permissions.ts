@@ -171,9 +171,9 @@ export async function hasCapability(
     .limit(1);
 
   if (roleOverride) {
-    // If a tenant-level role permission record exists, it means this
-    // permission is explicitly granted for this role in this tenant.
-    return true;
+    // The row is the tenant's decision for this role, in either direction -
+    // returning true unconditionally here would make revocation impossible.
+    return roleOverride.granted;
   }
 
   // 3. Fall back to hardcoded defaults.

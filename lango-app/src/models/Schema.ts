@@ -2441,6 +2441,10 @@ export const rolePermissions = pgTable('role_permissions', {
   tenantId: uuid('tenant_id').notNull(),
   roleId: varchar('role_id', { length: 50 }).notNull(),
   permissionId: varchar('permission_id', { length: 128 }).notNull(),
+  // A row must be able to say "no", not just "yes". Without this the table is
+  // grant-only and a school cannot take a default permission away from a role,
+  // which is the main thing schools actually want to do with it.
+  granted: boolean().default(true).notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
   foreignKey({
