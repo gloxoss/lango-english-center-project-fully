@@ -309,6 +309,13 @@
       "when": 1785700800000,
       "tag": "0043_add_hr_payroll_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1785700900000,
+      "tag": "0045_add_fee_structure_assignments",
+      "breakpoints": true
     }
   ]
 }

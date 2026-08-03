@@ -1282,6 +1282,32 @@ export const feeStructures = pgTable('fee_structures', {
   }).onDelete('cascade'),
 ]);
 
+export const feeStructureAssignments = pgTable('fee_structure_assignments', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  feeStructureId: uuid('fee_structure_id').notNull(),
+  classId: uuid('class_id').notNull(),
+  effectiveDate: date('effective_date').defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'fee_structure_assignments_tenant_id_fkey',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.feeStructureId],
+    foreignColumns: [feeStructures.id],
+    name: 'fee_structure_assignments_fee_structure_id_fkey',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.classId],
+    foreignColumns: [classes.id],
+    name: 'fee_structure_assignments_class_id_fkey',
+  }).onDelete('cascade'),
+  unique('fee_structure_assignments_tenant_id_fee_structure_id_class__key').on(table.tenantId, table.feeStructureId, table.classId),
+]);
+
 export const feeSchedules = pgTable('fee_schedules', {
   id: uuid().defaultRandom().primaryKey().notNull(),
   tenantId: uuid('tenant_id').notNull(),
