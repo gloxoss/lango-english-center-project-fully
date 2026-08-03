@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { attendanceFlagNotes, user } from '@/models/Schema';
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'teacher']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'attendance.manage');
     const body = await parseJson(request, createNoteSchema);
 
     const [inserted] = await db

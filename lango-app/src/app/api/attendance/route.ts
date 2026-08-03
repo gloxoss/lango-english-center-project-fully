@@ -8,6 +8,7 @@ import { recalculateStudentAttendanceSummary } from '@/libs/api/attendance-summa
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
@@ -98,6 +99,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'teacher']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'attendance.manage');
     const body = await parseJson(request, batchAttendanceSchema);
 
     const savedRecords = await db.transaction(async (tx) => {
