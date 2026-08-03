@@ -4,6 +4,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, teacherCreateSchema, teacherUpdateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { classes, classSections, classTeachers, sections, subjects, subjectTeachers, user } from '@/models/Schema';
@@ -204,6 +205,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'teachers.create');
     const body = await parseJson(request, teacherCreateSchema);
     const id = `TCH-${Date.now()}`;
 
@@ -242,6 +244,7 @@ export async function PUT(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'teachers.update');
     const body = await parseJson(request, teacherUpdateSchema);
 
     const [updated] = await db
@@ -285,6 +288,7 @@ export async function DELETE(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'teachers.delete');
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 

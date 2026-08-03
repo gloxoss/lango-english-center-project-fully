@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, studentImportSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { classes, classSections, sections, user } from '@/models/Schema';
@@ -15,6 +16,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'students.import');
     const body = await parseJson(request, studentImportSchema);
 
     // Build a "2nde a" -> classSectionId lookup once, so each row's free-text
