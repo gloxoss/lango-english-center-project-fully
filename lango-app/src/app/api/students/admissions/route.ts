@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { applicants, user } from '@/models/Schema';
@@ -29,11 +30,19 @@ export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'admissions.view');
+
+    const { searchParams } = new URL(request.url);
+    const statusFilter = searchParams.get('status');
 
     const rows = await db
       .select()
       .from(applicants)
-      .where(eq(applicants.tenantId, tenantId));
+      .where(
+        statusFilter
+          ? and(eq(applicants.tenantId, tenantId), eq(applicants.status, statusFilter))
+          : eq(applicants.tenantId, tenantId),
+      );
 
     return NextResponse.json({
       success: true,
@@ -49,6 +58,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'admissions.manage');
     const body = await parseJson(request, applicantCreateSchema);
 
     // campaignId/targetProgramId intentionally omitted - see the comment on
@@ -85,6 +95,7 @@ export async function PUT(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'admissions.manage');
     const body = await parseJson(request, applicantUpdateStatusSchema);
 
     // Fetch existing applicant

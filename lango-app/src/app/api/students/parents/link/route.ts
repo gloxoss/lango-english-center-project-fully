@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { guardians, guardianStudents, user } from '@/models/Schema';
@@ -18,6 +19,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'students.guardians.manage');
     const body = await parseJson(request, linkGuardianStudentSchema);
 
     // Verify guardian belongs to tenant
@@ -102,6 +104,7 @@ export async function DELETE(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'students.guardians.manage');
     const { searchParams } = new URL(request.url);
     const guardianId = searchParams.get('guardianId');
     const studentId = searchParams.get('studentId');

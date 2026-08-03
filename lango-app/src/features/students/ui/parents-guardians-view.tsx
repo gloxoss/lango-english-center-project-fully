@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,13 +13,14 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import {
-  Users, Phone, Search, Filter, Plus, ChevronLeft, ChevronRight, Mail, Shield, UserPlus, Loader2, X, Link as LinkIcon,
+  Users, Phone, Search, Filter, Plus, ChevronLeft, ChevronRight, Mail, Shield, UserPlus, Loader2, X, Link as LinkIcon, ExternalLink,
 } from 'lucide-react';
 import { Guardian } from '../model/types';
 
 type StudentOption = { id: string; name: string; matricule?: string };
 
 export function ParentsGuardiansView({ locale: _locale }: { locale: string }) {
+  const router = useRouter();
   const [guardians, setGuardians] = useState<Guardian[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedContact, setSelectedContact] = useState<number | null>(0);
@@ -282,6 +284,18 @@ export function ParentsGuardiansView({ locale: _locale }: { locale: string }) {
                         >
                           <LinkIcon className="w-3 h-3" />
                           <span>Lier un élève</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-[11px] gap-1 text-slate-600 hover:text-[#16212B]"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/${_locale}/dashboard/students/parents/${g.id}`);
+                          }}
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          <span>Profil</span>
                         </Button>
                       </td>
                     </tr>

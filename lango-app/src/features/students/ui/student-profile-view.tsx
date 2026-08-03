@@ -15,7 +15,19 @@ import {
   FileText,
   AlertCircle,
   Upload,
+  History,
 } from 'lucide-react';
+
+type ApiPlacementRow = {
+  id: string;
+  sessionYearName: string;
+  classSectionId: string;
+  status: 'enrolled' | 'dropped' | 'graduated';
+  startDate: string;
+  endDate: string | null;
+  isCurrent: boolean;
+  notes: string | null;
+};
 
 type ApiStudentDocument = { documentType: string; uploaded: boolean; uploadedAt: string | null };
 
@@ -68,6 +80,7 @@ export function StudentProfile360View({ id, locale }: { id: string; locale: stri
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [documents, setDocuments] = useState<ApiStudentDocument[]>([]);
+  const [placements, setPlacements] = useState<ApiPlacementRow[]>([]);
   const [uploadingType, setUploadingType] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadTargetType = useRef<string | null>(null);
@@ -108,6 +121,13 @@ export function StudentProfile360View({ id, locale }: { id: string; locale: stri
 
   useEffect(() => {
     loadDocuments();
+  }, [id]);
+
+  useEffect(() => {
+    fetch(`/api/students/placements?studentId=${id}&pageSize=50`)
+      .then(r => r.json())
+      .then((json) => { if (json.success) setPlacements(json.data); })
+      .catch(err => console.error('Failed loading placements', err));
   }, [id]);
 
   function triggerUpload(documentType: string) {
@@ -349,6 +369,60 @@ export function StudentProfile360View({ id, locale }: { id: string; locale: stri
             <FileText className="w-6 h-6 text-slate-300" />
             <p className="text-[11px] text-slate-400">Le module de notation n&apos;est pas encore disponible.</p>
           </div>
+        </Card>
+
+        {/* Placement History */}
+        <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4 lg:col-span-3">
+          <div className="flex items-center gap-2">
+            <History className="w-4 h-4 text-[#2487B8]" />
+            <h3 className="text-sm font-bold text-[#16212B]">Historique de placement</h3>
+            {placements.length > 0 && (
+              <span className="ml-auto text-[10px] font-bold text-slate-400">{placements.length} entrée(s)</span>
+            )}
+          </div>
+          {placements.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-6 text-center gap-2">
+              <History className="w-6 h-6 text-slate-300" />
+              <p className="text-[11px] text-slate-400">Aucun historique de placement trouvé.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#F6F9FC] text-slate-500 font-semibold border-b border-slate-200/80">
+                  <tr>
+                    <th className="py-2.5 px-3">Année scolaire</th>
+                    <th className="py-2.5 px-3">Classe</th>
+                    <th className="py-2.5 px-3">Statut</th>
+                    <th className="py-2.5 px-3">Début</th>
+                    <th className="py-2.5 px-3">Fin</th>
+                    <th className="py-2.5 px-3">Notes</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {placements.map(p => (
+                    <tr key={p.id} className={p.isCurrent ? 'bg-emerald-50/50' : 'hover:bg-slate-50/50'}>
+                      <td className="py-2.5 px-3 font-semibold text-[#16212B]">{p.sessionYearName ?? '—'}</td>
+                      <td className="py-2.5 px-3 text-slate-600 font-mono text-[10px]">{p.classSectionId.slice(0, 8)}…</td>
+                      <td className="py-2.5 px-3">
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          p.status === 'enrolled' ? 'bg-emerald-100 text-emerald-700'
+                            : p.status === 'graduated' ? 'bg-blue-100 text-blue-700'
+                              : 'bg-rose-100 text-rose-700'
+                        }`}>
+                          {p.isCurrent && <span className="w-1.5 h-1.5 rounded-full bg-current" />}
+                          {p.status === 'enrolled' ? 'Inscrit' : p.status === 'graduated' ? 'Diplômé' : 'Sorti'}
+                          {p.isCurrent && ' (actuel)'}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-600">{p.startDate ? new Date(`${p.startDate}T00:00:00`).toLocaleDateString('fr-FR') : '—'}</td>
+                      <td className="py-2.5 px-3 text-slate-400">{p.endDate ? new Date(`${p.endDate}T00:00:00`).toLocaleDateString('fr-FR') : '—'}</td>
+                      <td className="py-2.5 px-3 text-slate-400 max-w-[180px] truncate">{p.notes ?? '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </Card>
 
         {/* Documents */}
