@@ -1,10 +1,10 @@
-import { UsersManageView } from '@/features/auth/ui/users-manage-view';
+import { UsersRolesView } from '@/features/settings/ui/users-roles-view';
 
-export default async function UsersSettingsPage({
+export default async function UsersPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  return <UsersManageView locale={locale} />;
+  return <UsersRolesView locale={locale} />;
 }
