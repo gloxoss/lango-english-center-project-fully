@@ -31,6 +31,7 @@ export default antfu(
     ignores: [
       '.alchemy/**/*',
       'migrations/**/*',
+      'public/**/*',
     ],
   },
   // --- Tailwind CSS Rules ---
