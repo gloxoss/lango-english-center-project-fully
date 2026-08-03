@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { getMoroccanMention, isValidGrade } from '@/libs/grading/moroccan-grade-engine';
 import { db } from '@/libs/DB';
@@ -60,6 +61,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'teacher']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'grading.manage');
     const body = await parseJson(request, batchGradeEntrySchema);
 
     const savedResults = await db.transaction(async (tx) => {

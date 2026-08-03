@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { assessmentCreateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { assessmentPlans, assessmentResults, assessments, classes, classSubjects, subjects } from '@/models/Schema';
@@ -66,6 +67,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'teacher']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'grading.manage');
     const body = await parseJson(request, assessmentCreateSchema);
 
     const [plan] = await db
