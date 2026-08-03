@@ -1,5 +1,12 @@
 # SchoolOS / Lango — Full Agent Handoff Document
 
+> **Stale flag (2026-08-03):** this file, `lango-app/AGENT-HANDOFF.md`, and
+> `lango-app/MASTER_ROADMAP_AND_TRACKER.md` all claim to be the canonical
+> status doc and disagree with each other and with the code (e.g. this file
+> doesn't reflect the Phase 2-7 work landed since 2026-08-02). Don't trust
+> any of them blind — check `git log` and run the test suite for ground
+> truth. Consolidating into one doc is an open task, not done yet.
+
 > **Purpose:** Give this entire file to any AI coding agent so it can continue work with zero context loss. This supersedes every previous version of this file — the prior version (dated 2026-06-15, "Antigravity") predates `PRODUCT-TRUTH.md` and Phases 2–4; do not use it.
 >
 > **Last updated:** 2026-07-31, this session. A full-app audit (`FULL-APP-AUDIT.md`, this directory) enumerated all 83 pages and 33 API routes live (not just typechecked) and found 3 unauthenticated routes, several miswiring bugs, 31 orphaned dead-tree duplicate pages, and — the largest bucket — real authorized backends sitting unused behind static UI. A remediation plan (`~/.claude/plans/whimsical-painting-turtle.md`, sections 1-8) was executed through section 7; section 8 (super-admin platform) and a handful of explicitly-scoped-out items remain. See §3a below for exactly what changed.

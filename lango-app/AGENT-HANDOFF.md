@@ -1,5 +1,12 @@
 # 🚀 SchoolOS Master Project Handoff & Prompt
 
+> **Stale flag (2026-08-03):** this file predates the Phase 2-7 work
+> (finance GL, HR/payroll, CRM, portals) landed since 2026-08-02 - e.g. the
+> account-lockout gap it describes below is closed. The root `AGENT-HANDOFF.md`
+> and `MASTER_ROADMAP_AND_TRACKER.md` also claim canonical status and disagree
+> with this file. Don't trust any of them blind - check `git log` and run the
+> test suite. Consolidating into one doc is an open task, not done yet.
+
 > **Read this file first, always.** It is the single canonical entry point
 > for this project's current state. Everything below "Status as of 2026-07-31
 > (second pass)" is historical — kept for provenance, not required reading.
