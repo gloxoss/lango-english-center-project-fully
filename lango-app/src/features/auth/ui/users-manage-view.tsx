@@ -28,6 +28,9 @@ export function UsersManageView({ locale }: { locale: string }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 20;
 
   // Modals
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -47,11 +50,12 @@ export function UsersManageView({ locale }: { locale: string }) {
   useEffect(() => {
     async function loadData() {
       try {
-        const res = await fetch('/api/users');
+        const res = await fetch(`/api/users?page=${page}&pageSize=${pageSize}`);
         if (res.ok) {
           const json = await res.json();
           if (json.success) {
             setUsers(json.data);
+            setTotal(json.total ?? json.data.length);
           }
         }
       } catch (err) {
@@ -59,7 +63,7 @@ export function UsersManageView({ locale }: { locale: string }) {
       }
     }
     loadData();
-  }, []);
+  }, [page]);
 
   const filteredUsers = users.filter(u => {
     const term = searchTerm.toLowerCase();
@@ -302,11 +306,25 @@ export function UsersManageView({ locale }: { locale: string }) {
           </div>
 
           <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>Affichage de 1 à {filteredUsers.length} sur {users.length} utilisateurs</span>
+            <span>Page {page} sur {Math.max(1, Math.ceil(total / pageSize))} ({total} utilisateurs au total)</span>
             <div className="flex items-center gap-1">
-              <button className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50"><ChevronLeft className="w-4 h-4" /></button>
-              <button className="w-8 h-8 rounded-lg bg-[#0066FF] text-white font-bold flex items-center justify-center">1</button>
-              <button className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50"><ChevronRight className="w-4 h-4" /></button>
+              <button
+                type="button"
+                disabled={page <= 1}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button className="w-8 h-8 rounded-lg bg-[#0066FF] text-white font-bold flex items-center justify-center">{page}</button>
+              <button
+                type="button"
+                disabled={page * pageSize >= total}
+                onClick={() => setPage(p => p + 1)}
+                className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </Card>
