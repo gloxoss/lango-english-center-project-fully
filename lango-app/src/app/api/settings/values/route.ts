@@ -6,16 +6,20 @@ import { apiErrorResponse } from '@/libs/api/errors';
 import { parseJson } from '@/libs/api/validation';
 import {
   getAllEffectiveValues,
+  getDefinition,
   getNamespaces,
   SETTINGS_REGISTRY,
   setSettingValue,
 } from '@/libs/settings/registry';
+import { requireCapability } from '@/libs/api/permissions';
+import type { PermissionKey } from '@/libs/api/permissions';
 
 // GET /api/settings/values — all effective settings for this tenant/branch.
 export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'settings.read');
 
     const values = await getAllEffectiveValues(tenantId, context.branchId);
 
@@ -55,6 +59,11 @@ export async function POST(request: Request) {
     const results: { key: string; version: number }[] = [];
 
     for (const item of body.settings) {
+      // Per-key capability check: each setting carries its own requiredPermission.
+      // getDefinition() throws 400 for unknown keys.
+      const def = getDefinition(item.key);
+      await requireCapability(context, def.requiredPermission as PermissionKey);
+
       const version = await setSettingValue(
         tenantId,
         context.branchId,

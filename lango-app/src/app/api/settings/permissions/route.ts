@@ -8,6 +8,7 @@ import {
   DEFAULT_ROLE_PERMISSIONS,
   getEffectivePermissions,
   PERMISSIONS,
+  requireCapability,
   type PermissionKey,
 } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -19,6 +20,7 @@ export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'users.permissions.manage');
 
     // Get tenant-level role overrides.
     const overrides = await db
@@ -66,6 +68,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'users.permissions.manage');
     const body = await parseJson(request, grantSchema);
 
     // Validate the permission exists.

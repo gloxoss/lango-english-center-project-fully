@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { ZodError } from 'zod';
 
 export class ApiError extends Error {
   constructor(
@@ -11,10 +12,6 @@ export class ApiError extends Error {
   }
 }
 
-// node-postgres error objects carry a SQLSTATE `code`, not an Error subclass -
-// narrow structurally rather than with instanceof. Drizzle wraps the real pg
-// error under `.cause` (a DrizzleQueryError), so the SQLSTATE is never on the
-// outer thrown object - check both, cause first since that's the common case.
 function pgErrorCode(error: unknown): string | undefined {
   for (const candidate of [error, (error as { cause?: unknown } | null)?.cause]) {
     if (typeof candidate === 'object' && candidate !== null && 'code' in candidate && typeof (candidate as { code: unknown }).code === 'string') {
@@ -29,6 +26,13 @@ export function apiErrorResponse(error: unknown): NextResponse {
     return NextResponse.json(
       { success: false, error: { code: error.code, message: error.message } },
       { status: error.status },
+    );
+  }
+
+  if (error instanceof ZodError || (typeof error === 'object' && error !== null && 'name' in error && error.name === 'ZodError')) {
+    return NextResponse.json(
+      { success: false, error: { code: 'BAD_REQUEST', message: 'Données invalides', details: (error as ZodError).issues } },
+      { status: 400 },
     );
   }
 

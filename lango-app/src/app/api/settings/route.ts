@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { requireCapability } from '@/libs/api/permissions';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
@@ -22,6 +23,7 @@ const DEFAULT_SECURITY = { twoFa: true, strongPassword: true, auditLog: true, au
 export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
+    await requireCapability(context, 'settings.read');
     const tenantId = requireTenant(context);
 
     const [row] = await db.select().from(schoolSettings).where(eq(schoolSettings.tenantId, tenantId)).limit(1);
@@ -58,6 +60,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
+    await requireCapability(context, 'settings.organization.manage');
     const tenantId = requireTenant(context);
     const body = await parseJson(request, settingsUpdateSchema);
 

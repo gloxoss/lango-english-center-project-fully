@@ -1,4 +1,5 @@
-import { boolean, date, doublePrecision, foreignKey, index, integer, jsonb, numeric, pgEnum, pgTable, text, timestamp, unique, uuid, varchar } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { boolean, check, date, doublePrecision, foreignKey, index, integer, jsonb, numeric, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
 
 // ponytail: fixed business categories get pgEnum; school-configurable lists
 // (mediums, sections, streams, shifts, semesters) get plain tables instead - see
@@ -31,6 +32,10 @@ export const inquiryFollowUpType = pgEnum('inquiry_follow_up_type', ['call', 'em
 export const assignmentSubmissionStatus = pgEnum('assignment_submission_status', ['pending', 'submitted', 'late', 'graded']);
 export const meetingSlotStatus = pgEnum('meeting_slot_status', ['open', 'booked', 'cancelled']);
 export const examAttemptStatus = pgEnum('exam_attempt_status', ['in_progress', 'submitted', 'graded']);
+export const accountType = pgEnum('account_type', ['asset', 'liability', 'equity', 'revenue', 'expense']);
+export const fiscalPeriodStatus = pgEnum('fiscal_period_status', ['open', 'closed']);
+export const discountApprovalStatus = pgEnum('discount_approval_status', ['pending', 'approved', 'rejected']);
+export const journalStatus = pgEnum('journal_status', ['posted', 'reversed']);
 
 export const verification = pgTable('verification', {
   id: text().primaryKey().notNull(),
@@ -1198,7 +1203,7 @@ export const expenses = pgTable('expenses', {
   id: uuid().defaultRandom().primaryKey().notNull(),
   tenantId: uuid('tenant_id').notNull(),
   category: expenseCategory().default('other').notNull(),
-  amount: doublePrecision().notNull(),
+  amount: numeric({ precision: 14, scale: 2, mode: 'number' }).notNull(),
   expenseDate: date('expense_date').notNull(),
   description: text().notNull(),
   receiptUrl: text('receipt_url'),
@@ -1236,7 +1241,7 @@ export const feeComponents = pgTable('fee_components', {
   feeStructureId: uuid('fee_structure_id').notNull(),
   feeCategoryId: uuid('fee_category_id').notNull(),
   name: varchar({ length: 255 }).notNull(),
-  amount: doublePrecision().notNull(),
+  amount: numeric({ precision: 14, scale: 2, mode: 'number' }).notNull(),
   isMandatory: boolean('is_mandatory').default(true).notNull(),
 }, table => [
   foreignKey({
@@ -1261,7 +1266,7 @@ export const feeStructures = pgTable('fee_structures', {
   tenantId: uuid('tenant_id').notNull(),
   name: varchar({ length: 255 }).notNull(),
   programId: uuid('program_id'),
-  amount: doublePrecision().default(0).notNull(),
+  amount: numeric({ precision: 14, scale: 2, mode: 'number' }).default(0).notNull(),
   description: text(),
   isActive: boolean('is_active').default(true).notNull(),
 }, table => [
@@ -1396,7 +1401,7 @@ export const invoiceItems = pgTable('invoice_items', {
   invoiceId: uuid('invoice_id').notNull(),
   feeCategoryId: uuid('fee_category_id'),
   description: varchar({ length: 255 }).notNull(),
-  amount: doublePrecision().notNull(),
+  amount: numeric({ precision: 14, scale: 2, mode: 'number' }).notNull(),
 }, table => [
   foreignKey({
     columns: [table.tenantId],
@@ -1421,10 +1426,10 @@ export const invoices = pgTable('invoices', {
   studentId: text('student_id').notNull(),
   feeStructureId: uuid('fee_structure_id'),
   invoiceNumber: varchar('invoice_number', { length: 50 }).notNull(),
-  amount: doublePrecision().notNull(),
-  discountAmount: doublePrecision('discount_amount').default(0).notNull(),
-  netAmount: doublePrecision('net_amount').default(0).notNull(),
-  paidAmount: doublePrecision('paid_amount').default(0).notNull(),
+  amount: numeric({ precision: 14, scale: 2, mode: 'number' }).notNull(),
+  discountAmount: numeric('discount_amount', { precision: 14, scale: 2, mode: 'number' }).default(0).notNull(),
+  netAmount: numeric('net_amount', { precision: 14, scale: 2, mode: 'number' }).default(0).notNull(),
+  paidAmount: numeric('paid_amount', { precision: 14, scale: 2, mode: 'number' }).default(0).notNull(),
   status: invoiceStatus().default('pending').notNull(),
   dueDate: date('due_date').notNull(),
   issueDate: date('issue_date').defaultNow().notNull(),
@@ -1466,7 +1471,7 @@ export const payments = pgTable('payments', {
   tenantId: uuid('tenant_id').notNull(),
   invoiceId: uuid('invoice_id').notNull(),
   studentId: text('student_id').notNull(),
-  amount: doublePrecision().notNull(),
+  amount: numeric({ precision: 14, scale: 2, mode: 'number' }).notNull(),
   paymentMethod: paymentMethod('payment_method').default('cash').notNull(),
   paymentDate: timestamp('payment_date', { mode: 'string' }).defaultNow().notNull(),
   referenceId: varchar('reference_id', { length: 100 }),
@@ -2562,4 +2567,585 @@ export const exportJobs = pgTable('export_jobs', {
     name: 'export_jobs_requested_by_user_id_fk',
   }).onDelete('set null'),
   index('export_jobs_tenant_status_idx').on(table.tenantId, table.status),
+]);
+
+// ==========================================================================
+// Effective-Dated Student Placement History (Phase 2).
+// Preserves historical class section placements across academic session years.
+// ==========================================================================
+export const studentPlacements = pgTable('student_placements', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  studentId: text('student_id').notNull(),
+  sessionYearId: uuid('session_year_id').notNull(),
+  classSectionId: uuid('class_section_id').notNull(),
+  status: enrollmentStatus().default('enrolled').notNull(),
+  startDate: date('start_date').notNull(),
+  endDate: date('end_date'),
+  isCurrent: boolean('is_current').default(true).notNull(),
+  promotedFromPlacementId: uuid('promoted_from_placement_id'),
+  notes: text(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'student_placements_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.studentId],
+    foreignColumns: [user.id],
+    name: 'student_placements_student_id_user_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.sessionYearId],
+    foreignColumns: [sessionYears.id],
+    name: 'student_placements_session_year_id_session_years_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.classSectionId],
+    foreignColumns: [classSections.id],
+    name: 'student_placements_class_section_id_class_sections_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.promotedFromPlacementId],
+    foreignColumns: [table.id],
+    name: 'student_placements_promoted_from_placement_id_fk',
+  }).onDelete('set null'),
+  check('student_placements_date_range_check', sql`${table.endDate} IS NULL OR ${table.endDate} > ${table.startDate}`),
+  check('student_placements_current_date_check', sql`(${table.isCurrent} = true AND ${table.endDate} IS NULL) OR (${table.isCurrent} = false AND ${table.endDate} IS NOT NULL)`),
+  uniqueIndex('student_placements_unique_current_idx').on(table.tenantId, table.studentId).where(sql`${table.isCurrent} = true`),
+  index('student_placements_tenant_student_idx').on(table.tenantId, table.studentId),
+  index('student_placements_student_session_idx').on(table.studentId, table.sessionYearId),
+  index('student_placements_tenant_student_start_idx').on(table.tenantId, table.studentId, table.startDate),
+  index('student_placements_tenant_session_idx').on(table.tenantId, table.sessionYearId),
+]);
+
+// ==========================================================================
+// Phase 4: Financial & Accounting Ledgers Tables
+// ==========================================================================
+
+export const paymentAllocations = pgTable('payment_allocations', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  paymentId: uuid('payment_id').notNull(),
+  invoiceId: uuid('invoice_id').notNull(),
+  invoiceItemId: uuid('invoice_item_id'),
+  allocatedAmount: numeric('allocated_amount', { precision: 12, scale: 2 }).notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'payment_allocations_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.paymentId],
+    foreignColumns: [payments.id],
+    name: 'payment_allocations_payment_id_payments_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.invoiceId],
+    foreignColumns: [invoices.id],
+    name: 'payment_allocations_invoice_id_invoices_id_fk',
+  }).onDelete('cascade'),
+  index('payment_allocations_tenant_payment_idx').on(table.tenantId, table.paymentId),
+  index('payment_allocations_invoice_idx').on(table.invoiceId),
+]);
+
+export const creditNotes = pgTable('credit_notes', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  studentId: text('student_id').notNull(),
+  invoiceId: uuid('invoice_id'),
+  creditNoteNumber: varchar('credit_note_number', { length: 50 }).notNull(),
+  amount: numeric({ precision: 12, scale: 2 }).notNull(),
+  reason: text().notNull(),
+  issuedById: text('issued_by_id'),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'credit_notes_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.studentId],
+    foreignColumns: [user.id],
+    name: 'credit_notes_student_id_user_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.issuedById],
+    foreignColumns: [user.id],
+    name: 'credit_notes_issued_by_id_user_id_fk',
+  }).onDelete('set null'),
+  index('credit_notes_tenant_student_idx').on(table.tenantId, table.studentId),
+]);
+
+export const refunds = pgTable('refunds', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  studentId: text('student_id').notNull(),
+  paymentId: uuid('payment_id'),
+  refundNumber: varchar('refund_number', { length: 50 }).notNull(),
+  amount: numeric({ precision: 12, scale: 2 }).notNull(),
+  refundMethod: paymentMethod('refund_method').default('cash').notNull(),
+  reason: text().notNull(),
+  approvedById: text('approved_by_id'),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'refunds_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.studentId],
+    foreignColumns: [user.id],
+    name: 'refunds_student_id_user_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.paymentId],
+    foreignColumns: [payments.id],
+    name: 'refunds_payment_id_payments_id_fk',
+  }).onDelete('set null'),
+  index('refunds_tenant_student_idx').on(table.tenantId, table.studentId),
+]);
+
+export const feeDiscounts = pgTable('fee_discounts', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  studentId: text('student_id').notNull(),
+  feeStructureId: uuid('fee_structure_id'),
+  discountName: varchar('discount_name', { length: 150 }).notNull(),
+  discountType: varchar('discount_type', { length: 20 }).default('percentage').notNull(),
+  amount: numeric({ precision: 12, scale: 2 }).notNull(),
+  approvalStatus: discountApprovalStatus('approval_status').default('pending').notNull(),
+  approvedById: text('approved_by_id'),
+  note: text(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'fee_discounts_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.studentId],
+    foreignColumns: [user.id],
+    name: 'fee_discounts_student_id_user_id_fk',
+  }).onDelete('cascade'),
+  index('fee_discounts_tenant_student_idx').on(table.tenantId, table.studentId),
+]);
+
+export const chartOfAccounts = pgTable('chart_of_accounts', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  code: varchar({ length: 50 }).notNull(),
+  name: varchar({ length: 255 }).notNull(),
+  accountType: accountType('account_type').notNull(),
+  parentAccountId: uuid('parent_account_id'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'chart_of_accounts_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  unique('chart_of_accounts_tenant_code_unique').on(table.tenantId, table.code),
+  index('chart_of_accounts_tenant_type_idx').on(table.tenantId, table.accountType),
+]);
+
+export const fiscalPeriods = pgTable('fiscal_periods', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  name: varchar({ length: 100 }).notNull(),
+  startDate: date('start_date').notNull(),
+  endDate: date('end_date').notNull(),
+  status: fiscalPeriodStatus().default('open').notNull(),
+  closedAt: timestamp('closed_at', { mode: 'string' }),
+  closedById: text('closed_by_id'),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'fiscal_periods_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  unique('fiscal_periods_tenant_name_unique').on(table.tenantId, table.name),
+  index('fiscal_periods_tenant_dates_idx').on(table.tenantId, table.startDate, table.endDate),
+]);
+
+export const journalEntries = pgTable('journal_entries', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  entryNumber: varchar('entry_number', { length: 50 }).notNull(),
+  entryDate: date('entry_date').notNull(),
+  description: text().notNull(),
+  sourceModule: varchar('source_module', { length: 50 }).default('finance').notNull(),
+  sourceId: uuid('source_id'),
+  postedById: text('posted_by_id'),
+  status: journalStatus().default('posted').notNull(),
+  reversedByEntryId: uuid('reversed_by_entry_id'),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'journal_entries_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.reversedByEntryId],
+    foreignColumns: [table.id],
+    name: 'journal_entries_reversed_by_entry_id_fk',
+  }).onDelete('restrict'),
+  unique('journal_entries_tenant_number_unique').on(table.tenantId, table.entryNumber),
+  index('journal_entries_tenant_date_idx').on(table.tenantId, table.entryDate),
+]);
+
+export const journalEntryLines = pgTable('journal_entry_lines', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  journalEntryId: uuid('journal_entry_id').notNull(),
+  accountId: uuid('account_id').notNull(),
+  debitAmount: numeric('debit_amount', { precision: 12, scale: 2 }).default('0').notNull(),
+  creditAmount: numeric('credit_amount', { precision: 12, scale: 2 }).default('0').notNull(),
+  memo: text(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'journal_entry_lines_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.journalEntryId],
+    foreignColumns: [journalEntries.id],
+    name: 'journal_entry_lines_journal_entry_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.accountId],
+    foreignColumns: [chartOfAccounts.id],
+    name: 'journal_entry_lines_account_id_fk',
+  }).onDelete('cascade'),
+  index('journal_entry_lines_journal_idx').on(table.journalEntryId),
+]);
+
+export const bankAccounts = pgTable('bank_accounts', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  bankName: varchar('bank_name', { length: 150 }).notNull(),
+  accountNumber: varchar('account_number', { length: 50 }).notNull(),
+  currency: varchar({ length: 10 }).default('MAD').notNull(),
+  currentBalance: numeric('current_balance', { precision: 12, scale: 2 }).default('0').notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'bank_accounts_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  index('bank_accounts_tenant_idx').on(table.tenantId),
+]);
+
+export const bankReconciliations = pgTable('bank_reconciliations', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  bankAccountId: uuid('bank_account_id').notNull(),
+  statementDate: date('statement_date').notNull(),
+  statementBalance: numeric('statement_balance', { precision: 12, scale: 2 }).notNull(),
+  reconciledBalance: numeric('reconciled_balance', { precision: 12, scale: 2 }).notNull(),
+  status: varchar({ length: 20 }).default('completed').notNull(),
+  reconciledById: text('reconciled_by_id'),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'bank_reconciliations_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.bankAccountId],
+    foreignColumns: [bankAccounts.id],
+    name: 'bank_reconciliations_bank_account_id_fk',
+  }).onDelete('cascade'),
+  index('bank_reconciliations_tenant_bank_idx').on(table.tenantId, table.bankAccountId),
+]);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 6: Workforce Operations, HR & Payroll
+// Migration 0041_add_hr_payroll_tables.sql
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const employeeProfiles = pgTable('employee_profiles', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  userId: text('user_id').notNull(),
+  cnssNumber: varchar('cnss_number', { length: 20 }),
+  amoNumber: varchar('amo_number', { length: 20 }),
+  bankRib: varchar('bank_rib', { length: 34 }),
+  contractType: varchar('contract_type', { length: 20 }).default('cdi').notNull(),
+  dependantsCount: integer('dependants_count').default(0).notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'employee_profiles_tenant_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [user.id],
+    name: 'employee_profiles_user_id_fk',
+  }).onDelete('cascade'),
+  unique('employee_profiles_tenant_user_unique').on(table.tenantId, table.userId),
+]);
+
+export const salaryComponents = pgTable('salary_components', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  name: varchar({ length: 100 }).notNull(),
+  type: varchar({ length: 20 }).notNull(), // earning | deduction
+  rateType: varchar('rate_type', { length: 20 }).notNull(), // fixed | percent | formula
+  fixedValue: numeric('fixed_value', { precision: 12, scale: 4 }),
+  formulaKey: varchar('formula_key', { length: 50 }),
+  isStatutory: boolean('is_statutory').default(false).notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'salary_components_tenant_id_fk',
+  }).onDelete('cascade'),
+]);
+
+export const salaryTemplates = pgTable('salary_templates', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  name: varchar({ length: 100 }).notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'salary_templates_tenant_id_fk',
+  }).onDelete('cascade'),
+]);
+
+export const salaryTemplateComponents = pgTable('salary_template_components', {
+  templateId: uuid('template_id').notNull(),
+  componentId: uuid('component_id').notNull(),
+  sortOrder: integer('sort_order').default(0).notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.templateId],
+    foreignColumns: [salaryTemplates.id],
+    name: 'salary_template_components_template_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.componentId],
+    foreignColumns: [salaryComponents.id],
+    name: 'salary_template_components_component_id_fk',
+  }).onDelete('cascade'),
+]);
+
+export const employeeSalaryAssignments = pgTable('employee_salary_assignments', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  userId: text('user_id').notNull(),
+  templateId: uuid('template_id').notNull(),
+  baseSalary: numeric('base_salary', { precision: 12, scale: 2 }).notNull(),
+  effectiveDate: date('effective_date').notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'employee_salary_assignments_tenant_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [user.id],
+    name: 'employee_salary_assignments_user_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.templateId],
+    foreignColumns: [salaryTemplates.id],
+    name: 'employee_salary_assignments_template_id_fk',
+  }),
+  index('employee_salary_assignments_user_idx').on(table.tenantId, table.userId, table.effectiveDate),
+]);
+
+export const payrollPeriods = pgTable('payroll_periods', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  year: integer('year').notNull(),
+  month: integer('month').notNull(),
+  status: varchar({ length: 20 }).default('draft').notNull(), // draft | locked
+  lockedAt: timestamp('locked_at', { mode: 'string' }),
+  lockedById: text('locked_by_id'),
+  journalEntryId: uuid('journal_entry_id'),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'payroll_periods_tenant_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.lockedById],
+    foreignColumns: [user.id],
+    name: 'payroll_periods_locked_by_id_fk',
+  }),
+  unique('payroll_periods_tenant_year_month_unique').on(table.tenantId, table.year, table.month),
+]);
+
+export const payrollRunLines = pgTable('payroll_run_lines', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  periodId: uuid('period_id').notNull(),
+  userId: text('user_id').notNull(),
+  grossSalary: numeric('gross_salary', { precision: 12, scale: 2 }).notNull(),
+  cnssEmployee: numeric('cnss_employee', { precision: 12, scale: 2 }).notNull(),
+  amoEmployee: numeric('amo_employee', { precision: 12, scale: 2 }).notNull(),
+  irTax: numeric('ir_tax', { precision: 12, scale: 2 }).notNull(),
+  netSalary: numeric('net_salary', { precision: 12, scale: 2 }).notNull(),
+  cnssEmployer: numeric('cnss_employer', { precision: 12, scale: 2 }).notNull(),
+  amoEmployer: numeric('amo_employer', { precision: 12, scale: 2 }).notNull(),
+  totalEmployerCost: numeric('total_employer_cost', { precision: 12, scale: 2 }).notNull(),
+  calculationSnapshot: jsonb('calculation_snapshot'),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'payroll_run_lines_tenant_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.periodId],
+    foreignColumns: [payrollPeriods.id],
+    name: 'payroll_run_lines_period_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [user.id],
+    name: 'payroll_run_lines_user_id_fk',
+  }),
+  unique('payroll_run_lines_period_user_unique').on(table.periodId, table.userId),
+]);
+
+export const payslips = pgTable('payslips', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  periodId: uuid('period_id').notNull(),
+  runLineId: uuid('run_line_id').notNull(),
+  userId: text('user_id').notNull(),
+  issuedAt: timestamp('issued_at', { mode: 'string' }).defaultNow().notNull(),
+  pdfStorageKey: text('pdf_storage_key'),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'payslips_tenant_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.periodId],
+    foreignColumns: [payrollPeriods.id],
+    name: 'payslips_period_id_fk',
+  }),
+  foreignKey({
+    columns: [table.runLineId],
+    foreignColumns: [payrollRunLines.id],
+    name: 'payslips_run_line_id_fk',
+  }),
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [user.id],
+    name: 'payslips_user_id_fk',
+  }),
+  unique('payslips_run_line_unique').on(table.runLineId),
+  index('payslips_user_period_idx').on(table.tenantId, table.userId, table.periodId),
+]);
+
+export const leaveCategories = pgTable('leave_categories', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  name: varchar({ length: 100 }).notNull(),
+  daysPerYear: integer('days_per_year'),
+  isPaid: boolean('is_paid').default(true).notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'leave_categories_tenant_id_fk',
+  }).onDelete('cascade'),
+]);
+
+export const employeeLeaveBalances = pgTable('employee_leave_balances', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  userId: text('user_id').notNull(),
+  categoryId: uuid('category_id').notNull(),
+  year: integer('year').notNull(),
+  accruedDays: numeric('accrued_days', { precision: 5, scale: 2 }).default('0').notNull(),
+  usedDays: numeric('used_days', { precision: 5, scale: 2 }).default('0').notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'employee_leave_balances_tenant_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [user.id],
+    name: 'employee_leave_balances_user_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.categoryId],
+    foreignColumns: [leaveCategories.id],
+    name: 'employee_leave_balances_category_id_fk',
+  }),
+  unique('employee_leave_balances_unique').on(table.tenantId, table.userId, table.categoryId, table.year),
+]);
+
+export const leaveRequests = pgTable('leave_requests', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  userId: text('user_id').notNull(),
+  categoryId: uuid('category_id').notNull(),
+  startDate: date('start_date').notNull(),
+  endDate: date('end_date').notNull(),
+  daysRequested: numeric('days_requested', { precision: 5, scale: 2 }).notNull(),
+  status: varchar({ length: 20 }).default('pending').notNull(), // pending | approved | rejected
+  reviewedById: text('reviewed_by_id'),
+  reviewedAt: timestamp('reviewed_at', { mode: 'string' }),
+  reason: text(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'leave_requests_tenant_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [user.id],
+    name: 'leave_requests_user_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.categoryId],
+    foreignColumns: [leaveCategories.id],
+    name: 'leave_requests_category_id_fk',
+  }),
+  foreignKey({
+    columns: [table.reviewedById],
+    foreignColumns: [user.id],
+    name: 'leave_requests_reviewed_by_id_fk',
+  }),
+  index('leave_requests_user_status_idx').on(table.tenantId, table.userId, table.status),
 ]);

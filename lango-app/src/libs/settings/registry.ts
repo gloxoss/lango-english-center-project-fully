@@ -268,6 +268,8 @@ export type EffectiveValue = {
   version: number;
   /** true when this value can be reset to the parent scope. */
   inherited: boolean;
+  /** Sensitivity of this key — drives masking in the UI. */
+  sensitivity: SettingSensitivity;
 };
 
 /**
@@ -301,6 +303,7 @@ export async function getEffectiveValue(
         source: 'branch',
         version: branchRow.version,
         inherited: false,
+        sensitivity: def.sensitivity,
       };
     }
   }
@@ -323,6 +326,7 @@ export async function getEffectiveValue(
       source: 'tenant',
       version: tenantRow.version,
       inherited: branchId ? true : false,
+      sensitivity: def.sensitivity,
     };
   }
 
@@ -333,6 +337,7 @@ export async function getEffectiveValue(
     source: 'default',
     version: 0,
     inherited: true,
+    sensitivity: def.sensitivity,
   };
 }
 

@@ -59,6 +59,14 @@ export const PERMISSIONS = {
   'guardians.read': 'Voir les parents/tuteurs',
   'guardians.manage': 'Gérer les parents/tuteurs',
 
+  // Students extended
+  'students.guardians.manage': 'Lier/délier tuteurs d\'un élève',
+  'students.placements.manage': 'Gérer l\'historique de placement (rollback)',
+
+  // Admissions
+  'admissions.view': 'Voir les demandes d\'admission',
+  'admissions.manage': 'Gérer les demandes d\'admission',
+
   // Communication
   'communication.read': 'Voir les communications',
   'communication.send': 'Envoyer des communications',
@@ -70,6 +78,13 @@ export const PERMISSIONS = {
   // Reports
   'reports.read': 'Consulter les rapports',
   'reports.export': 'Exporter les rapports',
+
+  // HR & Payroll (Phase 6)
+  'hr.read': 'Voir les données RH et paie',
+  'hr.manage': 'Gérer les RH et la paie',
+
+  // CRM (Phase 7)
+  'crm.manage': 'Gérer le pipeline CRM et les prospects',
 } as const;
 
 export type PermissionKey = keyof typeof PERMISSIONS;
@@ -98,6 +113,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<AppRole, readonly PermissionKey[]>
     'finance.read', 'finance.manage',
     'reports.read', 'reports.export',
     'guardians.read',
+    'hr.read',
   ],
   student: [
     'attendance.read',
@@ -114,7 +130,10 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<AppRole, readonly PermissionKey[]>
   receptionist: [
     'students.read', 'students.create',
     'guardians.read', 'guardians.manage',
+    'students.guardians.manage',
+    'admissions.view', 'admissions.manage',
     'communication.read', 'communication.send',
+    'crm.manage',
   ],
   guard: [
     'students.read',

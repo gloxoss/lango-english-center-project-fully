@@ -115,6 +115,21 @@ const FULL_NAVIGATION: NavItem[] = [
     permission: 'reports.read',
   },
   {
+    id: 'hr',
+    label: 'RH & Paie',
+    icon: 'Briefcase',
+    href: '/dashboard/hr',
+    permission: 'hr.read',
+    children: [
+      { id: 'hr-dashboard', label: 'Tableau de bord RH', icon: 'LayoutDashboard', href: '/dashboard/hr', permission: 'hr.read' },
+      { id: 'hr-self-service', label: 'Mon espace RH', icon: 'User', href: '/dashboard/hr/self-service' },
+      { id: 'hr-employees', label: 'Profils employés', icon: 'Users', href: '/dashboard/hr/employees', permission: 'hr.manage' },
+      { id: 'hr-salary-templates', label: 'Gabarits salariaux', icon: 'DollarSign', href: '/dashboard/hr/salary-templates', permission: 'hr.manage' },
+      { id: 'hr-payroll', label: 'Paie mensuelle', icon: 'CreditCard', href: '/dashboard/hr/payroll', permission: 'hr.manage' },
+      { id: 'hr-leave', label: 'Congés', icon: 'CalendarOff', href: '/dashboard/hr/leave', permission: 'hr.read' },
+    ],
+  },
+  {
     id: 'settings',
     label: 'Paramètres',
     icon: 'Settings',
@@ -135,6 +150,7 @@ const QUICK_ACTIONS: NavItem[] = [
   { id: 'quick-add-student', label: 'Ajouter un élève', icon: 'UserPlus', href: '/dashboard/students?action=create', permission: 'students.create' },
   { id: 'quick-attendance', label: 'Saisir les présences', icon: 'ClipboardCheck', href: '/dashboard/attendance?action=record', permission: 'attendance.manage' },
   { id: 'quick-payment', label: 'Enregistrer un paiement', icon: 'CreditCard', href: '/dashboard/finance/payments?action=create', permission: 'finance.manage' },
+  { id: 'quick-payroll', label: 'Gérer la paie', icon: 'Briefcase', href: '/dashboard/hr', permission: 'hr.manage' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -194,11 +210,15 @@ export async function getPortalManifest(context: RequestContext): Promise<Portal
     homeWidgets.push('my-schedule', 'my-grades', 'my-attendance');
   }
   if (context.role === 'accountant') {
-    homeWidgets.push('finance-overview', 'pending-payments', 'recent-transactions');
+    homeWidgets.push('finance-overview', 'pending-payments', 'recent-transactions', 'payroll-summary');
   }
   if (context.role === 'parent') {
     homeWidgets.push('children-overview', 'attendance-summary', 'payment-status');
   }
+  if (context.role === 'receptionist') {
+    homeWidgets.push('inquiry-intake', 'visitor-log', 'appointments');
+  }
+
 
   return {
     role: context.role,
