@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { employeeProfiles, user } from '@/models/Schema';
@@ -22,6 +23,7 @@ export async function GET(request: Request) {
   try {
     const ctx = await requireRequestContext(request, HR_ROLES);
     const tenantId = requireTenant(ctx);
+    await requireCapability(ctx, 'hr.read');
     const url = new URL(request.url);
     const search = url.searchParams.get('search') ?? '';
 
@@ -64,6 +66,7 @@ export async function POST(request: Request) {
   try {
     const ctx = await requireRequestContext(request, HR_ROLES);
     const tenantId = requireTenant(ctx);
+    await requireCapability(ctx, 'hr.manage');
     const body = await parseJson(request, upsertSchema);
 
     // Verify target user belongs to this tenant

@@ -4,6 +4,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, studentCreateSchema, studentUpdateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { attendance, classes, classSections, guardians, guardianStudents, invoices, payments, sections, user } from '@/models/Schema';
@@ -234,8 +235,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const context = await requireRequestContext(request, ['school_admin']);
+    const context = await requireRequestContext(request, ['school_admin', 'receptionist']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'students.create');
     const body = await parseJson(request, studentCreateSchema);
     const id = `STU-${Date.now()}`;
     const matricule = body.matricule || `AAM-2425-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -279,6 +281,7 @@ export async function PUT(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'students.update');
     const body = await parseJson(request, studentUpdateSchema);
 
     if (body.classSectionId) {
@@ -321,6 +324,7 @@ export async function DELETE(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'students.delete');
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 

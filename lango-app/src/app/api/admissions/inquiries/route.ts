@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { inquiries } from '@/models/Schema';
@@ -28,8 +29,9 @@ const updateInquirySchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    const context = await requireRequestContext(request, ['school_admin']);
+    const context = await requireRequestContext(request, ['school_admin', 'receptionist']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'admissions.view');
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -60,8 +62,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const context = await requireRequestContext(request, ['school_admin']);
+    const context = await requireRequestContext(request, ['school_admin', 'receptionist']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'admissions.manage');
     const body = await parseJson(request, createInquirySchema);
 
     const [newInquiry] = await db
@@ -94,8 +97,9 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const context = await requireRequestContext(request, ['school_admin']);
+    const context = await requireRequestContext(request, ['school_admin', 'receptionist']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'admissions.manage');
     const body = await parseJson(request, updateInquirySchema);
 
     const [existing] = await db

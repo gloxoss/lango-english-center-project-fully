@@ -113,7 +113,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<AppRole, readonly PermissionKey[]>
     'finance.read', 'finance.manage',
     'reports.read', 'reports.export',
     'guardians.read',
-    'hr.read',
+    'hr.read', 'hr.manage',
   ],
   student: [
     'attendance.read',

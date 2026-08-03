@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { applicants, inquiries } from '@/models/Schema';
@@ -14,8 +15,9 @@ const convertInquirySchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const context = await requireRequestContext(request, ['school_admin']);
+    const context = await requireRequestContext(request, ['school_admin', 'receptionist']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'admissions.manage');
     const body = await parseJson(request, convertInquirySchema);
 
     const [inquiry] = await db

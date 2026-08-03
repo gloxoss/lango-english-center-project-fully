@@ -4,6 +4,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
+import { requireCapability } from '@/libs/api/permissions';
 import { guardianCreateSchema, guardianUpdateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { guardians, guardianStudents, user } from '@/models/Schema';
@@ -60,8 +61,9 @@ async function loadLinkedStudentNames(guardianIds: string[]): Promise<Map<string
 
 export async function GET(request: Request) {
   try {
-    const context = await requireRequestContext(request, ['school_admin']);
+    const context = await requireRequestContext(request, ['school_admin', 'receptionist']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'guardians.read');
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
 
@@ -103,8 +105,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const context = await requireRequestContext(request, ['school_admin']);
+    const context = await requireRequestContext(request, ['school_admin', 'receptionist']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'guardians.manage');
     const body = await parseJson(request, guardianCreateSchema);
     const { firstName, lastName } = splitName(body.name);
 
@@ -135,8 +138,9 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const context = await requireRequestContext(request, ['school_admin']);
+    const context = await requireRequestContext(request, ['school_admin', 'receptionist']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'guardians.manage');
     const body = await parseJson(request, guardianUpdateSchema);
     const { firstName, lastName } = body.name ? splitName(body.name) : {};
 
@@ -173,8 +177,9 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const context = await requireRequestContext(request, ['school_admin']);
+    const context = await requireRequestContext(request, ['school_admin', 'receptionist']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'guardians.manage');
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
