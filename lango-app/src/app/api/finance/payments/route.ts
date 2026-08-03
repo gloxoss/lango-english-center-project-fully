@@ -5,6 +5,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { tryPostPaymentGLEntry } from '@/libs/finance/gl-auto-post';
@@ -27,6 +28,7 @@ export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'accountant']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'finance.manage');
     const pagination = parsePagination(new URL(request.url).searchParams);
     const rows = await db.select({
       id: payments.id,
@@ -49,6 +51,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'accountant']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'finance.manage');
     const body = await parseJson(request, createPaymentSchema);
     const paymentCents = moneyToCents(body.amount);
 

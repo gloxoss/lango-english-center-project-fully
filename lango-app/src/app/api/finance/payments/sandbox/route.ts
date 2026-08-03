@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { invoices, payments } from '@/models/Schema';
@@ -20,6 +21,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'accountant']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'finance.manage');
     const body = await parseJson(request, sandboxPaymentSchema);
 
     const [invoice] = await db

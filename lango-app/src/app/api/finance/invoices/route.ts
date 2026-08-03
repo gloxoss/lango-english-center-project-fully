@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { classes, classSections, guardians, guardianStudents, invoiceItems, invoices, payments, sections, user } from '@/models/Schema';
@@ -64,6 +65,7 @@ export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'accountant']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'finance.manage');
     const { searchParams } = new URL(request.url);
 
     const id = searchParams.get('id');
@@ -144,6 +146,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'accountant']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'finance.manage');
     const body = await parseJson(request, createInvoiceSchema);
 
     // Verify student belongs to tenant

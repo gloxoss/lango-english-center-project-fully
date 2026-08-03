@@ -4,6 +4,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
+import { requireCapability } from '@/libs/api/permissions';
 import { expenseCreateSchema, expenseUpdateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { tryPostExpenseGLEntry } from '@/libs/finance/gl-auto-post';
@@ -13,6 +14,7 @@ export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'accountant']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'finance.manage');
     const { searchParams } = new URL(request.url);
     const pagination = parsePagination(searchParams);
     const where = eq(expenses.tenantId, tenantId);
@@ -35,6 +37,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'accountant']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'finance.manage');
     const body = await parseJson(request, expenseCreateSchema);
 
     const [inserted] = await db
@@ -72,6 +75,7 @@ export async function PUT(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'accountant']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'finance.manage');
     const body = await parseJson(request, expenseUpdateSchema);
 
     const [updated] = await db
@@ -102,6 +106,7 @@ export async function DELETE(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'accountant']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'finance.manage');
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
