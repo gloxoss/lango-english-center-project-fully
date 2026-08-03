@@ -26,11 +26,36 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { authClient } from '@/libs/auth-client';
 
+type SearchResult = { id: string; name: string; email?: string; matricule?: string | null };
+type SearchResponse = { students: SearchResult[]; teachers: SearchResult[]; invoices: { id: string; invoiceNumber: string }[] };
+
 export function Header({ locale }: { locale: string }) {
   const router = useRouter();
   const { data: session } = authClient.useSession();
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [unreadList, setUnreadList] = useState<Array<{ id: string; title: string; createdAt: string }>>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResponse | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    const term = searchTerm.trim();
+    if (term.length < 2) {
+      setSearchResults(null);
+      return;
+    }
+    const timeout = setTimeout(() => {
+      fetch(`/api/search?q=${encodeURIComponent(term)}`)
+        .then(res => (res.ok ? res.json() : null))
+        .then((resData) => {
+          if (resData?.success) {
+            setSearchResults(resData.data);
+          }
+        })
+        .catch(() => {});
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [searchTerm]);
 
   useEffect(() => {
     if (!session?.user) return;
@@ -73,15 +98,48 @@ export function Header({ locale }: { locale: string }) {
   return (
     <header className="h-16 border-b border-slate-200/90 bg-white px-6 flex items-center justify-between sticky top-0 z-40 shadow-2xs">
       {/* Search Input */}
-      <div className="flex items-center gap-3 w-80">
+      <div className="flex items-center gap-3 w-80 relative">
         <div className="relative w-full flex items-center">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
-            placeholder="Rechercher élèves, classes, factures..."
+            value={searchTerm}
+            onChange={(e) => { setSearchTerm(e.target.value); setSearchOpen(true); }}
+            onFocus={() => setSearchOpen(true)}
+            onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
+            placeholder="Rechercher élèves, enseignants, factures..."
             className="w-full bg-[#EDF3F8]/50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs text-[#16212B] placeholder-slate-400 focus:outline-none focus:border-[#2487B8] focus:bg-white transition-all shadow-2xs"
           />
         </div>
+
+        {searchOpen && searchResults && (
+          <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-80 overflow-y-auto">
+            {searchResults.students.length === 0 && searchResults.teachers.length === 0 && searchResults.invoices.length === 0 ? (
+              <div className="p-3 text-center text-xs text-slate-500 font-medium">Aucun résultat.</div>
+            ) : (
+              <>
+                {searchResults.students.map(s => (
+                  <Link key={`s-${s.id}`} href={`/${locale}/dashboard/students?id=${s.id}`} className="block px-3 py-2 hover:bg-slate-50 text-xs">
+                    <span className="font-bold text-[#16212B]">{s.name}</span>
+                    <span className="text-slate-400 ml-2">Élève</span>
+                  </Link>
+                ))}
+                {searchResults.teachers.map(t => (
+                  <Link key={`t-${t.id}`} href={`/${locale}/dashboard/teachers/manage?id=${t.id}`} className="block px-3 py-2 hover:bg-slate-50 text-xs">
+                    <span className="font-bold text-[#16212B]">{t.name}</span>
+                    <span className="text-slate-400 ml-2">Enseignant</span>
+                  </Link>
+                ))}
+                {searchResults.invoices.map(i => (
+                  <Link key={`i-${i.id}`} href={`/${locale}/dashboard/finance/invoices?id=${i.id}`} className="block px-3 py-2 hover:bg-slate-50 text-xs">
+                    <span className="font-bold text-[#16212B]">{i.invoiceNumber}</span>
+                    <span className="text-slate-400 ml-2">Facture</span>
+                  </Link>
+                ))}
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Right Controls */}
