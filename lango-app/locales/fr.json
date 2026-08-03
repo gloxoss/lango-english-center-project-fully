@@ -1,0 +1,61 @@
+{
+  "Common": {
+    "appName": "SchoolOS",
+    "tagline": "Plateforme de Gestion Scolaire Marocaine",
+    "search": "Rechercher...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "view": "Voir",
+    "actions": "Actions",
+    "status": "Statut",
+    "export": "Exporter",
+    "import": "Importer Excel",
+    "date": "Date",
+    "total": "Total",
+    "loading": "Chargement en cours..."
+  },
+  "Navigation": {
+    "dashboard": "Tableau de Bord",
+    "analytics": "Analytiques",
+    "students": "Élèves & Profils",
+    "academics": "Académique & Emploi du Temps",
+    "programs": "Programmes & Niveaux",
+    "courses": "Matières & Coefficients",
+    "groups": "Groupes & Classes",
+    "timetable": "Emploi du Temps",
+    "assessments": "Évaluations & Notes",
+    "staff": "Corps Enseignant",
+    "attendance": "Prise de Présence (Mobile)",
+    "finance": "Finance & Recouvrement",
+    "feeStructures": "Structures de Frais",
+    "invoices": "Factures & Règlements",
+    "expenses": "Dépenses d'Exploitation",
+    "communication": "Communication SMS",
+    "reminders": "Rappels Automatisés",
+    "templates": "Modèles de Messages",
+    "documents": "Bulletins & Attestations",
+    "settings": "Paramètres du Établissement",
+    "cndp": "Conformité CNDP F211",
+    "roles": "Gestion des Rôles"
+  },
+  "Roles": {
+    "director": "Directeur / Admin",
+    "teacher": "Enseignant",
+    "accountant": "Comptable",
+    "superadmin": "Super Administrateur"
+  },
+  "Status": {
+    "active": "Actif",
+    "inactive": "Inactif",
+    "present": "Présent",
+    "absent": "Absent",
+    "late": "En Retard",
+    "excused": "Excusé",
+    "paid": "Payé",
+    "unpaid": "Impayé",
+    "partial": "Partiel",
+    "overdue": "En Retard de Paiement"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "Common": {
+    "appName": "SchoolOS",
+    "tagline": "منصة إدارة المؤسسات التعليمية المغربية",
+    "search": "بحث...",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "view": "معاينة",
+    "actions": "الإجراءات",
+    "status": "الحالة",
+    "export": "تصدير",
+    "import": "استيراد Excel",
+    "date": "التاريخ",
+    "total": "المجموع",
+    "loading": "جاري التحميل..."
+  },
+  "Navigation": {
+    "dashboard": "لوحة القيادة",
+    "analytics": "التحليلات والنمو",
+    "students": "التلاميذ والملفات",
+    "academics": "الشؤون الأكاديمية واستعمال الزمن",
+    "programs": "البرامج والمستويات",
+    "courses": "المواد والمعاملات",
+    "groups": "الأقسام والمجموعات",
+    "timetable": "جدول الحصص",
+    "assessments": "الاختبارات والنقط",
+    "staff": "أطقم التدريس",
+    "attendance": "تسجيل الحضور (الهاتف)",
+    "finance": "المالية واستخلاص الواجبات",
+    "feeStructures": "هيكلة الواجبات",
+    "invoices": "الفواتير والأداءات",
+    "expenses": "مصاريف المؤسسة",
+    "communication": "التواصل عبر SMS",
+    "reminders": "التنبيهات التلقائية",
+    "templates": "نماذج الرسائل",
+    "documents": "بيانات النقط والشهادات",
+    "settings": "إعدادات المؤسسة",
+    "cndp": "مطابقة CNDP F211",
+    "roles": "إدارة الصلاحيات"
+  },
+  "Roles": {
+    "director": "المدير / الإدارة",
+    "teacher": "الأستاذ",
+    "accountant": "المحاسب",
+    "superadmin": "المشرف العام"
+  },
+  "Status": {
+    "active": "مفعل",
+    "inactive": "غير مفعل",
+    "present": "حاضر",
+    "absent": "غائب",
+    "late": "متأخر",
+    "excused": "مبرر",
+    "paid": "مؤدى",
+    "unpaid": "غير مؤدى",
+    "partial": "مؤدى جزئيا",
+    "overdue": "متأخر عن الأداء"
+  }
+}

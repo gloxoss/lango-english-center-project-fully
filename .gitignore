@@ -23,6 +23,11 @@ vendor/
 **/vendor/
 composer.lock
 
+# Patch-transfer archives and scratch work, not source
+*.tar.gz
+lango-app/scratch/
+lango-app/scratch_contact_footer.html
+
 # Large Binary Exclusions (Detected during onboarding)
 lango-app/.next/dev/cache/turbopack/ee6e79b1/00000752.sst
 lango-app/.next/dev/cache/turbopack/ee6e79b1/00000762.sst

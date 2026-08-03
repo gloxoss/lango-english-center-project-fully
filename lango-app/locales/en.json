@@ -1,0 +1,61 @@
+{
+  "Common": {
+    "appName": "SchoolOS",
+    "tagline": "Moroccan School Management Platform",
+    "search": "Search...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "actions": "Actions",
+    "status": "Status",
+    "export": "Export",
+    "import": "Excel Import",
+    "date": "Date",
+    "total": "Total",
+    "loading": "Loading..."
+  },
+  "Navigation": {
+    "dashboard": "Command Center",
+    "analytics": "Analytics & Growth",
+    "students": "Students & Profiles",
+    "academics": "Academics & Timetables",
+    "programs": "Programs & Levels",
+    "courses": "Subjects & Coefficients",
+    "groups": "Classes & Groups",
+    "timetable": "Weekly Schedule",
+    "assessments": "Assessments & Grades",
+    "staff": "Faculty & Staff",
+    "attendance": "Mobile Attendance",
+    "finance": "Finance & Invoicing",
+    "feeStructures": "Fee Structures",
+    "invoices": "Invoices & Payments",
+    "expenses": "School Expenses",
+    "communication": "SMS Communication",
+    "reminders": "Automated Reminders",
+    "templates": "Message Templates",
+    "documents": "Report Cards & Certificates",
+    "settings": "School Settings",
+    "cndp": "CNDP F211 Compliance",
+    "roles": "Role Management"
+  },
+  "Roles": {
+    "director": "Director / Admin",
+    "teacher": "Teacher",
+    "accountant": "Accountant",
+    "superadmin": "Super Admin"
+  },
+  "Status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "present": "Present",
+    "absent": "Absent",
+    "late": "Late",
+    "excused": "Excused",
+    "paid": "Paid",
+    "unpaid": "Unpaid",
+    "partial": "Partial",
+    "overdue": "Overdue"
+  }
+}
