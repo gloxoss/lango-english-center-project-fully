@@ -6,6 +6,7 @@ import { apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
 import { expenseCreateSchema, expenseUpdateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
+import { tryPostExpenseGLEntry } from '@/libs/finance/gl-auto-post';
 import { expenses } from '@/models/Schema';
 
 export async function GET(request: Request) {
@@ -51,7 +52,17 @@ export async function POST(request: Request) {
 
     recordAudit(context, 'create', 'expense', inserted!.id);
 
-    return NextResponse.json({ success: true, data: inserted, message: 'Dépense enregistrée avec succès' });
+    // GL auto-posting: fail-open — skips if CoA not set up or no open fiscal period
+    const glEntry = await tryPostExpenseGLEntry({
+      tenantId,
+      actorId: context.userId,
+      expenseId: inserted!.id,
+      description: body.description ?? body.category,
+      amount: String(body.amount),
+      expenseDate: body.expenseDate,
+    });
+
+    return NextResponse.json({ success: true, data: inserted, glPosted: glEntry !== null, message: 'Dépense enregistrée avec succès' });
   } catch (error) {
     return apiErrorResponse(error);
   }
