@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
@@ -91,16 +91,19 @@ export async function POST(
       .values(lines)
       .onConflictDoUpdate({
         target: [payrollRunLines.periodId, payrollRunLines.userId],
+        // Bulk upsert: `set` runs once for the whole statement, so it must
+        // reference the incoming row (`excluded`), not the column itself -
+        // the previous version resolved to a no-op on every recalculation.
         set: {
-          grossSalary: payrollRunLines.grossSalary,
-          cnssEmployee: payrollRunLines.cnssEmployee,
-          amoEmployee: payrollRunLines.amoEmployee,
-          irTax: payrollRunLines.irTax,
-          netSalary: payrollRunLines.netSalary,
-          cnssEmployer: payrollRunLines.cnssEmployer,
-          amoEmployer: payrollRunLines.amoEmployer,
-          totalEmployerCost: payrollRunLines.totalEmployerCost,
-          calculationSnapshot: payrollRunLines.calculationSnapshot,
+          grossSalary: sql`excluded.gross_salary`,
+          cnssEmployee: sql`excluded.cnss_employee`,
+          amoEmployee: sql`excluded.amo_employee`,
+          irTax: sql`excluded.ir_tax`,
+          netSalary: sql`excluded.net_salary`,
+          cnssEmployer: sql`excluded.cnss_employer`,
+          amoEmployer: sql`excluded.amo_employer`,
+          totalEmployerCost: sql`excluded.total_employer_cost`,
+          calculationSnapshot: sql`excluded.calculation_snapshot`,
         },
       });
 
