@@ -1,33 +1,74 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { ShieldCheck, GraduationCap, Users, Bell, Save, CheckCircle2 } from 'lucide-react';
+import { GraduationCap, Users, Save, CheckCircle2 } from 'lucide-react';
+
+const KEYS = [
+  'academic.autoPromotion',
+  'academic.passThreshold',
+  'academic.gradingScale',
+  'portal.guardianEnabled',
+  'portal.studentEnabled',
+  'attendance.smsAlerts',
+] as const;
+
+type Values = Record<(typeof KEYS)[number], unknown>;
 
 export function PoliciesView({ locale: _locale }: { locale: string }) {
-  const [autoPromotion, setAutoPromotion] = useState(false);
-  const [passThreshold, setPassThreshold] = useState('10');
-  const [gradingScale, setGradingScale] = useState('20');
-  const [guardianPortal, setGuardianPortal] = useState(true);
-  const [studentPortal, setStudentPortal] = useState(true);
-  const [absenceNotif, setAbsenceNotif] = useState(true);
-
+  const [values, setValues] = useState<Values | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  const handleSave = () => {
+  useEffect(() => {
+    fetch('/api/settings/values')
+      .then(res => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (json?.success) {
+          const map = Object.fromEntries(
+            KEYS.map(k => [k, json.data.values.find((v: { key: string }) => v.key === k)?.value]),
+          ) as Values;
+          setValues(map);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const setField = (key: (typeof KEYS)[number], value: unknown) => {
+    setValues(prev => (prev ? { ...prev, [key]: value } : prev));
+  };
+
+  const handleSave = async () => {
+    if (!values) {
+      return;
+    }
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
+    try {
+      await Promise.all(
+        KEYS.map(key =>
+          fetch(`/api/settings/values/${key}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ value: values[key] }),
+          }),
+        ),
+      );
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 3000);
-    }, 400);
+    } catch (err) {
+      console.error('Failed to save policies', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (!values) {
+    return <div className="text-xs text-slate-500">Chargement...</div>;
+  }
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
@@ -73,21 +114,22 @@ export function PoliciesView({ locale: _locale }: { locale: string }) {
                 <label className="font-bold text-slate-700">Promotion automatique</label>
                 <p className="text-[10px] text-slate-500">Promouvoir automatiquement les élèves ayant une moyenne ≥ au seuil</p>
               </div>
-              <Switch checked={autoPromotion} onCheckedChange={setAutoPromotion} />
+              <Switch checked={Boolean(values['academic.autoPromotion'])} onCheckedChange={v => setField('academic.autoPromotion', v)} />
             </div>
 
             <div className="space-y-1">
               <label className="font-bold text-slate-700">Seuil de réussite (Moyenne minimale)</label>
               <Input
-                value={passThreshold}
-                onChange={(e) => setPassThreshold(e.target.value)}
+                type="number"
+                value={String(values['academic.passThreshold'] ?? '')}
+                onChange={e => setField('academic.passThreshold', Number(e.target.value))}
                 className="h-10 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold"
               />
             </div>
 
             <div className="space-y-1">
               <label className="font-bold text-slate-700">Barème de notation officiel</label>
-              <Select value={gradingScale} onValueChange={setGradingScale}>
+              <Select value={String(values['academic.gradingScale'] ?? '20')} onValueChange={v => setField('academic.gradingScale', v)}>
                 <SelectTrigger className="h-10 text-xs bg-slate-50 border border-slate-200 rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
@@ -118,7 +160,7 @@ export function PoliciesView({ locale: _locale }: { locale: string }) {
                 <label className="font-bold text-slate-700">Portail tuteurs/parents</label>
                 <p className="text-[10px] text-slate-500">Permet d&apos;accéder aux bulletins, absences et solde des frais</p>
               </div>
-              <Switch checked={guardianPortal} onCheckedChange={setGuardianPortal} />
+              <Switch checked={Boolean(values['portal.guardianEnabled'])} onCheckedChange={v => setField('portal.guardianEnabled', v)} />
             </div>
 
             <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -126,7 +168,7 @@ export function PoliciesView({ locale: _locale }: { locale: string }) {
                 <label className="font-bold text-slate-700">Portail élèves</label>
                 <p className="text-[10px] text-slate-500">Accès à l&apos;emploi du temps, devoirs et cahier de texte</p>
               </div>
-              <Switch checked={studentPortal} onCheckedChange={setStudentPortal} />
+              <Switch checked={Boolean(values['portal.studentEnabled'])} onCheckedChange={v => setField('portal.studentEnabled', v)} />
             </div>
 
             <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -134,7 +176,7 @@ export function PoliciesView({ locale: _locale }: { locale: string }) {
                 <label className="font-bold text-slate-700">Alertes absences SMS automatiques</label>
                 <p className="text-[10px] text-slate-500">Notification immédiate au tuteur en cas d&apos;absence non justifiée</p>
               </div>
-              <Switch checked={absenceNotif} onCheckedChange={setAbsenceNotif} />
+              <Switch checked={Boolean(values['attendance.smsAlerts'])} onCheckedChange={v => setField('attendance.smsAlerts', v)} />
             </div>
           </div>
         </Card>
