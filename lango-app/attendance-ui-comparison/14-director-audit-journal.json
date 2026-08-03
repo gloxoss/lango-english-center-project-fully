@@ -1,0 +1,52 @@
+{
+  "page": "director-audit-journal",
+  "title": "Immutable attendance audit journal (register-modification event log)",
+  "mockup_source_images": ["ChatGPT Image 31 juil. 2026, 19_13_20 (9).png"],
+  "role": "school_admin / director",
+  "mockup_description": {
+    "layout": "Dedicated 'Journal d'audit des présences' page, described in its own subtitle as 'l'historique complet et immuable des événements liés aux présences et aux registres'.",
+    "key_elements": [
+      "Filters: Type d'événement, Utilisateur, Classe, Période (date range), Réinitialiser",
+      "4 KPI cards with trend deltas: Événements aujourd'hui, Modifications de registre, Réouvertures de registre, Exports effectués",
+      "Event table columns: ID événement, Référence registre, Enseignant, Élève/Contexte, Type d'événement (Modification de statut / Soumission de registre / Création de registre / Approbation d'excuse / Rejet d'excuse / Réouverture de registre -- color-tagged), Ancienne valeur, Nouvelle valeur, Modifié par, Date & heure, Établissement, Actions (view icon)",
+      "Right-side 'Détails de l'événement' drawer: full metadata including IP address, Navigateur/Appareil (user agent), and a free-text 'Remarque'"
+    ],
+    "interactions": ["Every register-lifecycle and excuse-decision event is individually inspectable, including WHO did it, FROM what machine/browser -- this is a compliance/forensic surface, explicitly framed as immutable"]
+  },
+  "current_implementation": {
+    "exists": "partial",
+    "file": "src/libs/api/audit.ts",
+    "route": null,
+    "what_matches": [
+      "recordAudit() is real and already called on every attendance-related mutation this session (attendance marks, excuse create/approve/reject, SMS sends) -- the underlying event stream this page needs already exists in the generic auditLogs table",
+      "The GENERIC audit log reader (GET /api/audit-logs, built earlier this session per an unrelated audit-remediation pass) already exposes this data app-wide, filterable by entityType/actorId/date -- so a slice of exactly this data is already viewable today via the generic /dashboard/settings (or wherever that audit-logs-view.tsx page is mounted), just not attendance-scoped or presented with register-specific columns",
+      "The old attendanceAuditEvents table (deleted this session) was this app's earlier, SEPARATE attempt at exactly this concept -- the deletion reasoning explicitly said the generic auditLogs system already covers this need, which this mockup's existence tends to confirm was the right call: build a filtered VIEW over the generic log, don't duplicate the log itself"
+    ],
+    "what_differs": [
+      "No attendance-scoped presentation of the audit log exists -- filtering the generic log down to entityType IN ('attendance','attendance_excuses','sms_message') with these specific columns (old value/new value/register reference) hasn't been built",
+      "'Référence registre' column depends entirely on the register-lifecycle feature not existing yet -- see 05-mobile-register-lifecycle.json",
+      "No IP address or user-agent capture on recordAudit() calls currently -- would need to extend the audit-recording helper to pull these from the request, which none of this session's work needed",
+      "'Modifications de registre' / 'Réouvertures de registre' KPI tiles are meaningless until registers exist"
+    ]
+  },
+  "missing_to_add": [
+    {
+      "item": "New attendance-scoped view: GET /api/attendance/audit-log filtering the existing auditLogs table by entityType, with old/new value diffing where recordAudit() already stores a metadata payload",
+      "priority": "low",
+      "effort": "medium",
+      "notes": "Confirms the earlier decision to keep one generic audit system rather than reviving a bespoke attendanceAuditEvents table -- this page should be a VIEW/query over the existing system, not a new table."
+    },
+    {
+      "item": "IP/user-agent capture in recordAudit() (or a new optional param passed at call sites)",
+      "priority": "low",
+      "effort": "small",
+      "notes": "App-wide change, not attendance-specific -- worth doing once for every audited action if pursued, not just for attendance."
+    },
+    {
+      "item": "'Référence registre' column and 'Réouvertures de registre' KPI -- blocked on the register-lifecycle feature (05-mobile-register-lifecycle.json)",
+      "priority": "medium",
+      "effort": "n/a",
+      "notes": "Not independently buildable -- sequence this after the register-lifecycle decision is made."
+    }
+  ]
+}

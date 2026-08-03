@@ -1,0 +1,67 @@
+{
+  "page": "mobile-attendance-intake",
+  "title": "Attendance-taking roster (mark present/late/absent/excused)",
+  "mockup_source_images": [
+    "ChatGPT Image 31 juil. 2026, 19_12_42 (2).png",
+    "ChatGPT Image 31 juil. 2026, 19_12_42 (3).png",
+    "ChatGPT Image 31 juil. 2026, 19_12_42 (4).png"
+  ],
+  "role": "teacher",
+  "mockup_description": {
+    "layout": "Header shows class/subject/time. Three quick-action buttons row. KPI strip. Per-student rows.",
+    "key_elements": [
+      "'Tout Présent' / 'Tout Absent' / 'Scanner QR' quick-action buttons",
+      "KPI strip: total students, exceptions-to-verify count, approved-excuse count (variant A) OR Présents/Retard/Absent/Excusé counts (variant B)",
+      "Per-student row: avatar/initials, name, real attendance-rate %, 4-way status selector (Présent/Retard/Absent/Excusé)",
+      "Selected row expands (variant A) showing a low-attendance-rate warning card: 'Taux de présence faible < 80% -- N absences ce mois-ci' + 'Voir l'historique' link",
+      "When status = Retard: inline 'Retard (minutes)' numeric input appears (variant B) -- matches what was just built",
+      "Bulk-select checkboxes per row (variant C) for group actions",
+      "'Note de l'enseignant' free-text field (variant B, page-level not per-student)",
+      "Persistent 'Brouillon enregistré / Dernière sauvegarde à HH:MM' or 'Brouillon Non enregistré' status indicator",
+      "Sticky bottom 'Enregistrer la présence' / 'Soumettre la présence (N élèves)' button"
+    ],
+    "interactions": [
+      "Tap a status pill to set that student's status",
+      "Auto-save draft periodically (implied by the 'Dernière sauvegarde' timestamp) before final submit",
+      "Expandable per-student detail card for at-risk students with a deep-link to their history"
+    ]
+  },
+  "current_implementation": {
+    "exists": "partial",
+    "file": "src/features/attendance/ui/attendance-view.tsx",
+    "route": "/dashboard/attendance",
+    "what_matches": [
+      "Tout Présent / Tout Absent quick actions -- real",
+      "Present/Late/Absent/Excused 4-way selector per student -- real",
+      "Real per-student attendance-rate badge, real low-attendance warning badge (<80%)",
+      "Per-student note input -- real (page has per-student notes, mockup variant B has one page-level note -- current app's per-student granularity is arguably better)",
+      "Inline 'Retard (minutes)' input on status=late -- just built this session, matches mockup 3 closely",
+      "Sticky submit button ('Enregistrer la présence') -- real"
+    ],
+    "what_differs": [
+      "No auto-save draft / 'Brouillon enregistré' persistence -- explicitly scoped as optional in ATTENDANCE-IMPLEMENTATION-PLAN.md Section 7.2 and skipped this session",
+      "No expandable low-attendance warning card with 'Voir l'historique' deep-link -- current app shows only a compact badge, no expand-on-tap detail",
+      "No bulk-select checkboxes for group status changes (beyond the existing Tout Présent/Tout Absent which already covers the main bulk use case)",
+      "No 'exceptions à vérifier' summary count in the KPI strip"
+    ]
+  },
+  "missing_to_add": [
+    {
+      "item": "Auto-save draft (localStorage-based, per class/date/period) restored on reload",
+      "priority": "low",
+      "effort": "small",
+      "notes": "Was explicitly deferred as optional per the implementation plan's own framing -- current single-session batch-submit flow is functional without it."
+    },
+    {
+      "item": "Expand-on-tap low-attendance detail card with 'Voir l'historique' linking to the new student-attendance-heatmap (already built, just needs a link target)",
+      "priority": "low",
+      "effort": "small"
+    },
+    {
+      "item": "'Exceptions à vérifier' derived count (e.g. students with an open flag) in the KPI strip",
+      "priority": "low",
+      "effort": "small",
+      "notes": "Real attendanceFlags data already exists to compute this -- would just be a client-side count against GET /api/attendance/flags."
+    }
+  ]
+}

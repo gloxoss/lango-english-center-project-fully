@@ -1,0 +1,62 @@
+{
+  "page": "admin-excuses-list",
+  "title": "Excuses/justification admin list page",
+  "mockup_source_images": ["ChatGPT Image 31 juil. 2026, 19_13_16 (1).png"],
+  "role": "school_admin / director",
+  "mockup_description": {
+    "layout": "Standard desktop admin shell: left sidebar with a 'Présences' section (Tableau de bord / Appels / Absences / Justificatifs / Retards sub-items), top bar with tenant switcher, date, global search, notification bell, locale toggle.",
+    "key_elements": [
+      "Filters row: Période (date range), Classe, Statut, free-text search, Réinitialiser",
+      "4 KPI cards WITH TREND DELTAS: 'En attente 18 (+4 vs hier)', 'Approuvés 42 (+8 vs hier)', 'Refusés 6 (+1 vs hier)', 'Pièces jointes reçues 32 (75% avec pièce jointe)'",
+      "Right-side 'Aperçu du jour' panel: 'À examiner aujourd'hui: 12', 'Temps de réponse moyen: 18h45 (-2h vs hier)', 'Voir le rapport complet' link",
+      "Tabs: Toutes / En attente / Approuvées / Refusées with counts",
+      "Table columns: Élève, Classe, Date d'absence, Soumis par (name+phone), Motif (tag), Pièce jointe (thumbnail), Statut d'examen, Actions ('Examiner' button + overflow menu)",
+      "'Exporter' and 'Ajouter un justificatif' (admin-initiated) buttons"
+    ],
+    "interactions": ["Click 'Examiner' opens the review drawer (see 08-admin-excuse-review-drawer.json)"]
+  },
+  "current_implementation": {
+    "exists": "partial",
+    "file": "src/features/attendance/ui/attendance-excuses-view.tsx",
+    "route": "/dashboard/attendance/excuses",
+    "what_matches": [
+      "Status-tab filtering (pending/approved/rejected/all) -- real",
+      "Student-name search -- real, client-side",
+      "KPI cards for pending/approved/rejected counts -- real, but plain counts, no trend deltas",
+      "CSV export via the shared DataTable component -- real",
+      "Table shows student, date, reason, document link, status, actions -- real"
+    ],
+    "what_differs": [
+      "No date-range or class filter -- only status tab + name search",
+      "No trend deltas ('+4 vs hier') anywhere -- would need a day-over-day comparison query, nothing like this exists in the app's KPI patterns generally",
+      "No 'Aperçu du jour' side panel (today's-queue-count, average response time) -- 'average response time' specifically would need a new derived metric (reviewedAt - createdAt average), not currently computed anywhere",
+      "No 'pièces jointes reçues' attachment-rate KPI",
+      "No admin-initiated 'Ajouter un justificatif' (admin submitting an excuse on a parent's behalf) -- current POST route technically allows school_admin as a caller already (allowedRoles includes it), just no UI button for it",
+      "Attachment shown as a plain 'Voir' link, not a real thumbnail preview (depends on real document upload -- see 08-admin-excuse-review-drawer.json)"
+    ]
+  },
+  "missing_to_add": [
+    {
+      "item": "Date-range and class filters",
+      "priority": "medium",
+      "effort": "small"
+    },
+    {
+      "item": "'Ajouter un justificatif' button wiring the existing POST route with an admin-facing student-picker form",
+      "priority": "low",
+      "effort": "small",
+      "notes": "Backend already supports this (allowedRoles includes school_admin), purely a UI gap."
+    },
+    {
+      "item": "Average-response-time metric (reviewedAt - createdAt, averaged over recently-reviewed excuses)",
+      "priority": "low",
+      "effort": "small"
+    },
+    {
+      "item": "Day-over-day trend deltas on the KPI cards",
+      "priority": "low",
+      "effort": "medium",
+      "notes": "Needs a 'yesterday's snapshot' comparison -- either a stored daily snapshot job or a live query against yesterday's date range. No such pattern exists elsewhere in this app yet."
+    }
+  ]
+}

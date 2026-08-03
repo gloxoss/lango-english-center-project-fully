@@ -1,0 +1,57 @@
+{
+  "page": "admin-sms-queue",
+  "title": "SMS send queue with retry, templates, and status breakdown",
+  "mockup_source_images": ["ChatGPT Image 31 juil. 2026, 19_13_20 (8).png"],
+  "role": "school_admin",
+  "mockup_description": {
+    "layout": "Dedicated 'File d'envoi SMS' page, distinct from a generic communication log.",
+    "key_elements": [
+      "'Mode simulation' banner: 'Les SMS sont enregistrés et simulés. Aucun envoi réel n'est effectué.' -- matches this app's real convention exactly",
+      "4 KPI cards: En file (28), Journalisés (156), Échecs (3), Relancés (7 -- auto-retried)",
+      "Queue table: Événement de présence (icon+label: Arrivée en retard/Absence/Départ anticipé), Élève, Téléphone du responsable, Aperçu du message, Type de déclencheur, Statut de file (En file/Journalisé/Échec/Relancé), Journalisé le, Relances count",
+      "'Modèle de message actuel' side panel: editable template with named variables ({{studentName}}, {{absenceType}}, {{absenceDate}}, {{schoolName}}), 'Modifier' button",
+      "'Statut de la file' donut chart: En file/Journalisé/Échec/Relancé breakdown + total"
+    ],
+    "interactions": ["Failed sends automatically retry ('Relancé') a bounded number of times -- a real queue/retry mechanic, not just fire-and-forget"]
+  },
+  "current_implementation": {
+    "exists": "partial",
+    "file": "src/app/api/communication/messages/route.ts",
+    "route": "/dashboard/communication/reminders",
+    "what_matches": [
+      "The 'Mode simulation' framing is EXACTLY this app's real, established convention -- every SMS-adjacent feature built this session (absence SMS, missing-register reminder SMS) writes a real smsMessages row with status:'sent' immediately, and every UI surface says so explicitly",
+      "Attendance-related SMS (absence-on-mark, missing-register reminder) both land in the real, pre-existing smsMessages table and are visible in the existing /dashboard/communication/reminders send-log page",
+      "smsTemplates table already exists in schema (tenant-scoped name+body) -- the data model for a template system is already there, just not exposed with variable substitution UI"
+    ],
+    "what_differs": [
+      "This session's attendance SMS writes body text inline (hardcoded French sentence with values already interpolated) rather than through a template+variables system -- smsTemplates exists but isn't used by the attendance flows",
+      "smsMessages.status enum is only queued/sent/failed with no 'retried N times' counter or automatic retry logic -- every send in this app is immediate and one-shot",
+      "No dedicated attendance-specific SMS queue view -- the existing communication log is generic (all SMS sources mixed together), not filtered/grouped by triggering attendance event type",
+      "No status donut chart anywhere in the communication module"
+    ]
+  },
+  "missing_to_add": [
+    {
+      "item": "Wire the attendance SMS sends (absence notification, missing-register reminder) through smsTemplates with {{variable}} substitution instead of inline string interpolation",
+      "priority": "low",
+      "effort": "small",
+      "notes": "Schema already supports it -- this is a refactor of existing working code, not new capability."
+    },
+    {
+      "item": "Retry/relance mechanic: bounded auto-retry on status='failed', with a retryCount column on smsMessages",
+      "priority": "low",
+      "effort": "medium",
+      "notes": "Since sends are simulated (never actually fail from a real carrier), 'failed' status would need an artificial failure condition (e.g. no phone number) to ever occur -- lower real value than it appears in the mockup."
+    },
+    {
+      "item": "Attendance-filtered view of the SMS log (filter existing /dashboard/communication/reminders by a 'triggered by attendance' flag, or add a dedicated tab)",
+      "priority": "low",
+      "effort": "small"
+    },
+    {
+      "item": "Status breakdown donut chart",
+      "priority": "low",
+      "effort": "small"
+    }
+  ]
+}

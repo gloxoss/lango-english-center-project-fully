@@ -1,0 +1,51 @@
+{
+  "page": "admin-excuse-approve-reject-modals",
+  "title": "Approve/Reject confirmation modals",
+  "mockup_source_images": [
+    "ChatGPT Image 31 juil. 2026, 19_13_16 (3).png (approve modal)",
+    "ChatGPT Image 31 juil. 2026, 19_13_17 (4).png (reject modal)"
+  ],
+  "role": "school_admin / director",
+  "mockup_description": {
+    "layout": "Centered modal over the excuses list, triggered from the review drawer or row action.",
+    "key_elements": [
+      "APPROVE modal: student summary, document preview, optional 'Note d'approbation' textarea, explicit outcome preview ('Le statut de l'absence du 19 mai 2025 sera défini sur Excusé'), audit-log warning ('Cette action sera enregistrée dans le journal d'audit avec votre identifiant et l'horodatage'), Annuler / Confirmer l'approbation",
+      "REJECT modal: student summary, document preview, MANDATORY 'Motif du refus' textarea (0/500 counter), explicit consequence notice ('Si ce justificatif est refusé, l'absence restera non justifiée pour cet élève'), audit-log warning, Annuler / Confirmer le refus (red/destructive styling)"
+    ],
+    "interactions": [
+      "Reject requires a stated reason -- cannot be a silent one-click action",
+      "Both actions explicitly restate the consequence before the user commits"
+    ]
+  },
+  "current_implementation": {
+    "exists": false,
+    "file": "src/features/attendance/ui/attendance-excuses-view.tsx",
+    "route": "/dashboard/attendance/excuses",
+    "what_matches": [
+      "The underlying PATCH /api/attendance/excuses route is real and already does exactly what the approve-modal promises (flips attendance.status to excused, recalculates summary) -- this is purely a missing confirmation UI, not a missing backend capability",
+      "recordAudit() is already called on every review action, so the 'this will be logged' promise in the mockup is already true today, just not shown to the admin"
+    ],
+    "what_differs": [
+      "Current UI: 'Approuver'/'Refuser' buttons act IMMEDIATELY on click, no confirmation step, no optional note, and critically -- REJECT CAPTURES NO REASON AT ALL. reviewExcuseSchema only accepts {excuseId, status}, there is nowhere in the current schema or UI to record why an excuse was rejected.",
+      "No outcome-preview text before committing"
+    ]
+  },
+  "missing_to_add": [
+    {
+      "item": "Reject reason: this is a real functional gap, not just cosmetic -- add a rejectionReason column to attendanceExcuses (small migration), require it in the PATCH schema when status='rejected', add the confirmation modal with the mandatory textarea",
+      "priority": "high",
+      "effort": "small",
+      "notes": "Small, well-contained fix with real product value (a parent disputing a rejected excuse currently has no recorded reason to reference)."
+    },
+    {
+      "item": "Approve confirmation modal with optional note + outcome preview",
+      "priority": "low",
+      "effort": "small"
+    },
+    {
+      "item": "Surface the 'this will be audit-logged' notice (true today, just not communicated)",
+      "priority": "low",
+      "effort": "small"
+    }
+  ]
+}

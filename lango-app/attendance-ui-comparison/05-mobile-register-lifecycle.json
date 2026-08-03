@@ -1,0 +1,74 @@
+{
+  "page": "mobile-register-lifecycle",
+  "title": "Register submit -> lock -> admin-reopen-with-reason -> resubmit",
+  "mockup_source_images": [
+    "ChatGPT Image 31 juil. 2026, 19_12_43 (8).png",
+    "ChatGPT Image 31 juil. 2026, 19_12_43 (9).png"
+  ],
+  "role": "teacher (view/request-reopen) + school_admin (grant reopen, implied)",
+  "IMPORTANT_FLAG": "This directly contradicts an architecture decision made earlier this session -- see notes below. Read this file before building anything else attendance-related.",
+  "mockup_description": {
+    "layout": "Two related screens: a locked 'Registre soumis' view, and a 'Registre rouvert' correction view.",
+    "key_elements": [
+      "'Registre soumis' screen: 'Soumis' + 'Verrouillé' status badges, class/subject/time/room/student-count header",
+      "Full student list with each one's FINAL locked status (label: 'Statut final')",
+      "'Voir les N autres élèves' progressive disclosure",
+      "Submission metadata: submitted-at timestamp, submitted-by (teacher name+role), register reference ID with copy button",
+      "'Modification désactivée' notice: 'Ce registre a été soumis et verrouillé. La modification directe n'est plus possible afin de garantir l'intégrité des données.'",
+      "'Demander une réouverture' (request reopen) button + 'Voir l'historique' link",
+      "'Registre rouvert' screen (after an admin grants the reopen): banner 'Réouvert par l'administration -- Cette séance a été rouverte pour correction', with a MANDATORY 'Motif' shown read-only (why it was reopened)",
+      "Per-student rows show a before/after diff when changed: 'Ancien statut -> Nouveau statut' (e.g. Absent -> Excusé), highlighted green, vs unchanged rows shown plainly",
+      "'Note de correction (obligatoire)' textarea the teacher must fill before resubmitting",
+      "Warning: 'Toutes les modifications seront journalisées et visibles dans l'historique du registre'",
+      "'Renvoyer le registre' (resubmit) button"
+    ],
+    "interactions": [
+      "Submitting attendance creates an immutable, referenced 'register' -- not just a set of loose per-student rows",
+      "Once submitted, the register is LOCKED -- a teacher cannot silently edit past attendance",
+      "Correcting a locked register requires an admin-granted reopen with a stated reason, and the teacher must state a correction note before resubmitting -- a real two-party audit trail, not just an app-level toast"
+    ]
+  },
+  "current_implementation": {
+    "exists": false,
+    "file": null,
+    "route": null,
+    "what_matches": [
+      "The real attendance table's write pattern (delete existing row for that student/date/period, then reinsert) achieves idempotent correction today -- a teacher CAN correct a mistake, just not with any lock/reopen ceremony or audit trail around it",
+      "recordAudit() is called on every attendance mutation, so a raw event log of who-changed-what-when does technically exist in the generic auditLogs table -- just not surfaced as a register-centric view anywhere"
+    ],
+    "what_differs": [
+      "THERE IS NO REGISTER ENTITY AT ALL. Any teacher (or anyone with write access to that endpoint) can silently re-edit any past date's attendance at any time via POST /api/attendance, with zero lock, zero reopen request, zero mandatory reason, zero before/after diff shown to anyone.",
+      "This is not an oversight -- it was a deliberate architecture decision made in ATTENDANCE-IMPLEMENTATION-PLAN.md (Section 1, this session): the attendanceRegisters / attendanceEntries / attendanceAuditEvents tables were found to have ZERO writers anywhere in the actual codebase at the time, and were DELETED as 'dead weight', with the explicit reasoning: 'if register-level locking ... turns out to be genuinely wanted later, it's a clean, small addition on top of the real attendance table then -- not lost by dropping the currently-empty tables now.'",
+      "These mockups are the evidence that register-level locking WAS genuinely wanted -- it's a first-class part of the product's mental model (two full mockup screens dedicated to it, plus register references appear again in the submission-confirmation and audit-log mockups). The earlier decision wasn't wrong given the information available at the time (those tables really were unused), but it should be revisited now that intent is clearer."
+    ]
+  },
+  "missing_to_add": [
+    {
+      "item": "DECISION NEEDED before building: rebuild a register concept (new table or a status column set added to a per-date/class/period grouping), OR achieve the same lock/reopen guarantee by adding a lightweight status + lockedAt/reopenedAt/reopenReason set of columns directly on top of the existing attendance rows (e.g. a small attendanceRegisters table with just id/tenantId/classSectionId/date/period/status/submittedAt/submittedById/lockedAt/reopenedAt/reopenedById/reopenReason, with attendance.registerId as a nullable pointer) rather than reviving the old entries/audit-event split",
+      "priority": "high",
+      "effort": "large",
+      "notes": "This is the single largest piece of missing scope revealed by the mockups. Recommend the lighter second option -- a status wrapper around the existing real attendance rows -- over reviving the old 3-table model, since the old model's per-entry duplication (attendanceEntries mirroring attendance) was itself part of why it was flagged as redundant."
+    },
+    {
+      "item": "POST /api/attendance should refuse writes against a LOCKED register (reject with a clear error) unless a reopen has been granted",
+      "priority": "high",
+      "effort": "medium",
+      "notes": "Currently there is no such guard at all -- any allowed role can silently overwrite locked history."
+    },
+    {
+      "item": "'Demander une réouverture' + admin-side approve/reject-reopen flow, mandatory reason on both the request and the grant",
+      "priority": "high",
+      "effort": "medium"
+    },
+    {
+      "item": "Before/after diff view when a reopened register is resubmitted",
+      "priority": "medium",
+      "effort": "medium"
+    },
+    {
+      "item": "Register reference ID generation (e.g. REG-{date}-{classSectionCode}-{sequence}), surfaced in the submission-confirmation screen and the audit journal",
+      "priority": "medium",
+      "effort": "small"
+    }
+  ]
+}

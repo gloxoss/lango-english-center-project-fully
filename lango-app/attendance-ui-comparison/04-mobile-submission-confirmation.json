@@ -1,0 +1,48 @@
+{
+  "page": "mobile-submission-confirmation",
+  "title": "Post-submit confirmation screen (register reference, KPI recap, sync status)",
+  "mockup_source_images": ["ChatGPT Image 31 juil. 2026, 19_12_42 (7).png"],
+  "role": "teacher",
+  "mockup_description": {
+    "layout": "Full-page success screen shown after tapping 'Enregistrer la présence'.",
+    "key_elements": [
+      "Big checkmark animation, 'Présence enregistrée', 'Le registre a été soumis avec succès. Les compteurs ont été mis à jour.'",
+      "Metadata card: 'Référence du registre' (REG-2025-05-20-3A-01), Classe, Matière, Horaire, 'Soumis le'",
+      "KPI recap tiles: Présents / Retards / Absents / Excusés counts for this submission",
+      "'Les notifications SMS sont enregistrées en mode simulation' banner with a 'Mode simulation' badge -- explains no real SMS was sent",
+      "'Voir le registre' / 'Retour aux cours' buttons",
+      "Bottom status line: 'Synchronisation serveur réussie -- Données enregistrées et sécurisées' with timestamp"
+    ],
+    "interactions": [
+      "Terminal state after a successful submit, not just an inline toast -- gives the teacher a durable reference number to cite if a parent disputes a mark"
+    ]
+  },
+  "current_implementation": {
+    "exists": "partial",
+    "file": "src/features/attendance/ui/attendance-view.tsx",
+    "route": "/dashboard/attendance",
+    "what_matches": [
+      "A success message IS shown on save (json.message from POST /api/attendance), and the SMS-simulation convention is real and consistent with this mockup's 'Mode simulation' framing",
+      "Real KPI-like counts could be derived client-side from the just-saved records"
+    ],
+    "what_differs": [
+      "Current success feedback is a small inline banner within the same page, not a dedicated confirmation screen",
+      "No 'register reference number' concept exists at all -- there is no register entity anymore (see 05-mobile-register-lifecycle.json for why), so there's nothing to generate a REG-2025-05-20-3A-01-style ID from",
+      "No explicit 'Synchronisation serveur réussie' sync-status indicator (not meaningful currently since there's no offline-first/local-draft layer to sync FROM)"
+    ]
+  },
+  "missing_to_add": [
+    {
+      "item": "Dedicated post-submit confirmation view/step (could be a modal or a route transition) showing the KPI recap + SMS-simulation notice",
+      "priority": "low",
+      "effort": "small",
+      "notes": "Cosmetic upgrade over the current inline banner -- not blocked on anything."
+    },
+    {
+      "item": "A durable per-submission reference number",
+      "priority": "medium",
+      "effort": "medium",
+      "notes": "Directly depends on the register-lifecycle decision in 05-mobile-register-lifecycle.json -- a reference number is far more natural once there's a register row to attach it to than as a standalone concept bolted onto the current per-record attendance table."
+    }
+  ]
+}

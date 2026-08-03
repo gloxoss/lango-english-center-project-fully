@@ -1,0 +1,42 @@
+{
+  "page": "mobile-empty-error-states",
+  "title": "Reference sheet: empty/error states for the intake flow",
+  "mockup_source_images": ["ChatGPT Image 31 juil. 2026, 19_12_43 (10).png"],
+  "role": "teacher",
+  "mockup_description": {
+    "layout": "Three stacked state cards shown as a design-system reference, not a real screen a user lands on all at once.",
+    "key_elements": [
+      "'Aucun cours en cours' (no course right now) -- icon, message, 'Voir l'emploi du temps' CTA",
+      "'Aucun élève trouvé' (no students for this class/group) -- icon, message, 'Contacter l'administration' CTA",
+      "'Impossible de charger les données' (load failure) -- icon, message, 'Réessayer' CTA"
+    ],
+    "interactions": ["Each state has exactly one recovery action -- no dead ends"]
+  },
+  "current_implementation": {
+    "exists": "partial",
+    "file": "src/features/attendance/ui/attendance-view.tsx",
+    "route": "/dashboard/attendance",
+    "what_matches": [
+      "A generic error state exists (setError + inline red banner) for load failures",
+      "Empty roster (zero students) renders an empty table rather than crashing"
+    ],
+    "what_differs": [
+      "None of the three states have the polished icon+message+CTA treatment shown in the mockup -- current states are plain text",
+      "No 'Réessayer' retry button on load failure -- the user must reload the page/reselect the class",
+      "No distinct 'no course in progress right now' state (not applicable today since there's no today's-agenda view yet -- see 01-mobile-teacher-dashboard.json)"
+    ]
+  },
+  "missing_to_add": [
+    {
+      "item": "Reusable empty/error-state component (icon + title + description + single CTA) applied consistently across the attendance intake flow",
+      "priority": "low",
+      "effort": "small",
+      "notes": "Purely cosmetic polish -- no functional gap, the app already handles these situations without crashing or leaving a dead end, just not as prettily."
+    },
+    {
+      "item": "'Réessayer' retry button that re-fires the failed fetch instead of requiring a manual reload",
+      "priority": "low",
+      "effort": "small"
+    }
+  ]
+}

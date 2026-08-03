@@ -1,0 +1,57 @@
+{
+  "page": "director-flags-list",
+  "title": "'Signalements' -- dedicated flags/risk-signals list page",
+  "mockup_source_images": ["ChatGPT Image 31 juil. 2026, 19_13_19 (7).png"],
+  "role": "school_admin / director",
+  "mockup_description": {
+    "layout": "Standalone page under a 'Présences' sidebar section with its own sub-items (Tableau de bord / Pointage / Historique / Analyse / Signalements / Paramètres) -- richer sidebar than what exists today.",
+    "key_elements": [
+      "Filters: Type de signalement, Niveau de risque, Statut, Classe, Date range, Réinitialiser",
+      "4 KPI cards with trend deltas: Absence injustifiée count, Retards répétés count, Taux faible (<75%) count, 'À traiter' total",
+      "'Répartition par niveau de risque' side panel: Critique/Élevé/Moyen/Faible counts + total",
+      "'Activité récente' side feed: signalement created / status updated / resolved / assignment changed events",
+      "Table columns: Type de signalement (icon+label), Élève, Classe, Événement déclencheur (what triggered it, e.g. '3 jours d'absence consécutifs'), Date de création, Tél. parent/tuteur, Assigné à (a staff member), Statut (À traiter/En cours), Actions"
+    ],
+    "interactions": ["Flags can be ASSIGNED to a specific staff member for follow-up -- this is a case-management workflow, not just a list"]
+  },
+  "current_implementation": {
+    "exists": false,
+    "file": null,
+    "route": null,
+    "what_matches": [
+      "The 3 flag types shown (absence injustifiée, retards répétés, taux faible) map directly onto the real, already-built UNJUSTIFIED_ABSENCE / REPEATED_LATE / CONSECUTIVE_ABSENCE detection (attendance-flags.ts) -- though the mockup's 'Taux faible <75%' is a 4th concept (a rolling attendance-rate threshold flag) that doesn't exist as a flag type in the current attendanceFlagType enum (it's only surfaced as a badge in the intake UI, not as a persisted flag)",
+      "GET /api/attendance/flags already returns real, tenant-scoped, filterable-by-type/status data -- the API is a reasonable foundation for this page",
+      "The current audit dashboard shows open-flags-by-type as a summary, which is a compressed version of this page's KPI row"
+    ],
+    "what_differs": [
+      "No dedicated flags list page exists at all -- flags are only visible as a compact breakdown on the audit dashboard, not as a filterable, actionable table",
+      "No flag ASSIGNMENT to staff -- attendanceFlags schema has no assignedToId column, no concept of 'who owns following up on this'",
+      "No risk-level severity tagging (Critique/Élevé/Moyen/Faible) on flags -- schema only has type + status (OPEN/RESOLVED), no severity dimension",
+      "No parent phone number surfaced directly on the flags table (would need a join through guardianStudents, same pattern used for SMS resolution)",
+      "'Taux faible' as a persisted, filterable flag type doesn't exist -- it's computed live/on-the-fly wherever shown, never stored as an attendanceFlags row"
+    ]
+  },
+  "missing_to_add": [
+    {
+      "item": "New attendance-flags list page (GET /api/attendance/flags already supports most of the needed filtering -- add classSectionId filter, extend the query to join guardian phone)",
+      "priority": "medium",
+      "effort": "medium"
+    },
+    {
+      "item": "assignedToId column on attendanceFlags (nullable FK to user) + assign/reassign UI + filter by assignee",
+      "priority": "medium",
+      "effort": "medium"
+    },
+    {
+      "item": "Severity field on attendanceFlags (small migration: severity enum Critique/Élevé/Moyen/Faible, computed at detection time in attendance-flags.ts based on e.g. flag count/streak length) + risk-level breakdown panel",
+      "priority": "low",
+      "effort": "medium"
+    },
+    {
+      "item": "New LOW_ATTENDANCE_RATE flag type, detected alongside the existing 3 in detectAndRecordFlags() when attendanceSummary.attendanceRate drops under a threshold",
+      "priority": "medium",
+      "effort": "small",
+      "notes": "Currently this is only a UI badge computed ad hoc from attendanceSummary -- promoting it to a real persisted flag would make it filterable/assignable/trackable like the other 3."
+    }
+  ]
+}

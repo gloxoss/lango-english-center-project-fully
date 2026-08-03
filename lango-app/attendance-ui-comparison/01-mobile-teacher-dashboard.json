@@ -1,0 +1,54 @@
+{
+  "page": "mobile-teacher-dashboard",
+  "title": "Teacher \"Today\" dashboard (course list + registers status)",
+  "mockup_source_images": ["ChatGPT Image 31 juil. 2026, 19_12_42 (1).png"],
+  "role": "teacher",
+  "mockup_description": {
+    "layout": "Full-page mobile dashboard, opens on login/tab-select. Header: date + 'Vos cours et registres de la journée'.",
+    "key_elements": [
+      "KPI strip: '6 Cours aujourd'hui', '2 Registres soumis', 'En cours: 3e A Mathématiques 10:00-11:00'",
+      "Ordered list of today's course slots, each showing time range, class, subject, room, student count",
+      "Per-slot status badge: 'En cours' (highlighted, blue border) / 'Soumis' (green) / 'Manquant' (red) / 'À venir' (grey)",
+      "'Saisir maintenant' primary CTA on the in-progress slot",
+      "Reminder banner: 'N'oubliez pas: tous les registres doivent être soumis avant 18:00 aujourd'hui'",
+      "Bottom tab bar: Accueil / Présence / Emploi du temps / Classes / Plus"
+    ],
+    "interactions": [
+      "Tap a slot -> opens intake for that slot",
+      "'Manquant' slots visually distinct (red) to prompt action",
+      "Tap 'Saisir maintenant' -> jumps straight into the in-progress class's roster"
+    ]
+  },
+  "current_implementation": {
+    "exists": false,
+    "file": "src/features/attendance/ui/attendance-view.tsx",
+    "route": "/dashboard/attendance",
+    "what_matches": [
+      "The underlying data to build this exists: real classScheduleSlots (Section 20) + real attendance rows could answer 'submitted/missing/in-progress' per slot"
+    ],
+    "what_differs": [
+      "Current page opens directly into a class/subject/period PICKER (dropdowns), not a today's-agenda list",
+      "No per-slot submitted/missing/in-progress status is shown to the teacher at all -- that view only exists for school_admin on the audit dashboard, not for the teacher taking attendance",
+      "No bottom tab bar / mobile-app-shell navigation pattern anywhere in this Next.js web app (it's a responsive web dashboard, not a native/PWA shell) -- this mockup assumes an app-like frame this project doesn't have"
+    ]
+  },
+  "missing_to_add": [
+    {
+      "item": "New teacher-facing 'my schedule today' view: GET already-real classScheduleSlots filtered by teacherId + today's dayOfWeek, left-joined against today's attendance to compute per-slot status (submitted / missing / in-progress by comparing current time to slot start/end)",
+      "priority": "medium",
+      "effort": "medium",
+      "notes": "Real data to build this already exists (Section 20 scheduling + Section 1 attendance). This is a genuinely buildable, non-fabricated feature -- just wasn't in scope for ATTENDANCE-IMPLEMENTATION-PLAN.md."
+    },
+    {
+      "item": "Wire this as the landing view of /dashboard/attendance for role=teacher, keep the class/period picker as a manual override underneath",
+      "priority": "low",
+      "effort": "small"
+    },
+    {
+      "item": "Deadline reminder banner ('submit before 18:00') -- would need a configurable cutoff time, currently no such setting exists anywhere in schoolSettings",
+      "priority": "low",
+      "effort": "small",
+      "notes": "Cosmetic/soft nudge only, not a hard deadline enforced anywhere in the mockup either."
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "page": "director-flag-detail",
+  "title": "Individual flag/signalement detail page",
+  "mockup_source_images": ["ChatGPT Image 31 juil. 2026, 19_13_19 (7).png"],
+  "role": "school_admin / director",
+  "mockup_description": {
+    "layout": "Drill-down page reached from the flags list, breadcrumb: Présences > Signalements > FLG-2025-0148.",
+    "key_elements": [
+      "Student header: photo, name, class, level, real attendance-rate progress bar, contact info (phone/email)",
+      "'Événements déclencheurs' timeline: each triggering event (date, type, 'non justifiée' tag, which session it was) with a 'Voir tous les événements' expand",
+      "'Historique de présence (10 derniers jours)' -- compact mini calendar strip, same present/late/absent/upcoming color coding as the main heatmap but condensed to 10 days inline",
+      "'Document justificatif lié' -- if an excuse/document is attached to the underlying absence, shown here with status (Accepté) and a 'Voir le document' link",
+      "'Notes internes' -- staff notes on this specific student/flag, with author+timestamp, 'Ajouter une note'",
+      "'Historique des SMS envoyés' -- every SMS related to this flag, with delivery status (En attente/Livré)",
+      "Right sidebar 'Résumé du signalement': Gravité (severity), Assigné à (staff member), Créé le, Statut actuel, 'Action recommandée' (a suggested next step, e.g. 'Entretien avec les parents + Plan de suivi')",
+      "Action buttons: Assigner, Marquer résolu, Rouvrir",
+      "'Classes & enseignants associés' -- other classes this student is in, each with their own real attendance % for cross-context"
+    ],
+    "interactions": ["This is a full case file for one at-risk student's flag -- combines timeline, mini-calendar, notes, SMS history, and recommended action into one investigative view"]
+  },
+  "current_implementation": {
+    "exists": false,
+    "file": null,
+    "route": null,
+    "what_matches": [
+      "Every underlying data source this page needs already exists somewhere in the real app: attendanceFlags (the flag itself), attendance (for the 10-day history and trigger events), attendanceExcuses (linked document), smsMessages (SMS history), student-attendance-heatmap.tsx's data-fetching pattern (already built this session, directly reusable for the mini calendar strip)"
+    ],
+    "what_differs": [
+      "No detail/drill-down page exists per flag at all -- flags are only ever shown in aggregate or in a flat list, never as an individual case file",
+      "No 'notes internes' concept tied to a flag or student in this context -- no schema for it",
+      "No 'action recommandée' suggestion logic -- would need simple rule-based text generation (e.g. if type=CONSECUTIVE_ABSENCE and severity=high -> suggest 'Entretien avec les parents'), not a fabricated AI feature, just an if/else on flag type+severity",
+      "No cross-class attendance-rate summary block"
+    ]
+  },
+  "missing_to_add": [
+    {
+      "item": "New route /dashboard/attendance/flags/[id] (or similar) -- assembles data already available across attendanceFlags/attendance/attendanceExcuses/smsMessages into one page",
+      "priority": "medium",
+      "effort": "medium",
+      "notes": "Mostly a UI-assembly task once 11-director-flags-list.json's list page and its assignment/severity fields exist -- this page is a natural drill-down from it, so should be built together."
+    },
+    {
+      "item": "Reuse student-attendance-heatmap.tsx's data fetch pattern for the 10-day mini calendar (just a shorter window, different layout)",
+      "priority": "low",
+      "effort": "small"
+    },
+    {
+      "item": "Internal notes: small new table (flagNotes: id, tenantId, flagId, authorId, body, createdAt) + simple list+add UI",
+      "priority": "low",
+      "effort": "small"
+    },
+    {
+      "item": "Rule-based 'recommended action' text (no new schema, just a small pure function keyed on flag type + severity)",
+      "priority": "low",
+      "effort": "small"
+    }
+  ]
+}

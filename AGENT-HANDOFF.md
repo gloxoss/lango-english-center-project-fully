@@ -1,444 +1,157 @@
-# 🧠 LANGO ENGLISH CENTER — FULL AGENT HANDOFF DOCUMENT
+# SchoolOS / Lango — Full Agent Handoff Document
 
-> **Purpose:** Give this entire file to any AI coding agent so they can continue working on the Lango project with zero context loss. This is the single source of truth.
-
-> **Last Updated:** 2026-06-15T12:00:00+02:00 by Agent "Antigravity" (Conversation `0f024e2c-676d-465a-b9ac-936146710f01`)
-
----
-
-## 1. PROJECT IDENTITY
-
-| Field | Value |
-|-------|-------|
-| **Project Name** | Lango English Center SaaS Platform |
-| **Owner** | Oussama Zaki (Zakio) — Founder @ EPIOSO / Gloxoss |
-| **Type** | Multi-tenant School Management System (SMS) + LMS + CRM + ERP |
-| **Target** | Private English language centers in Morocco (initial), resellable SaaS (future) |
-| **Workspace Root** | `D:\Users\zakio\Desktop\Lango english center project fully\` |
-| **App Directory** | `D:\Users\zakio\Desktop\Lango english center project fully\lango-app\` |
-| **Pre-Dev Docs** | `D:\Users\zakio\Desktop\Lango english center project fully\pre-dev\` |
-| **Progress Tracker** | `pre-dev/PROGRESS.md` |
-| **SMS Build Plan** | `lango-app/sms-build-plan.md` |
+> **Purpose:** Give this entire file to any AI coding agent so it can continue work with zero context loss. This supersedes every previous version of this file — the prior version (dated 2026-06-15, "Antigravity") predates `PRODUCT-TRUTH.md` and Phases 2–4; do not use it.
+>
+> **Last updated:** 2026-07-31, this session. A full-app audit (`FULL-APP-AUDIT.md`, this directory) enumerated all 83 pages and 33 API routes live (not just typechecked) and found 3 unauthenticated routes, several miswiring bugs, 31 orphaned dead-tree duplicate pages, and — the largest bucket — real authorized backends sitting unused behind static UI. A remediation plan (`~/.claude/plans/whimsical-painting-turtle.md`, sections 1-8) was executed through section 7; section 8 (super-admin platform) and a handful of explicitly-scoped-out items remain. See §3a below for exactly what changed.
+>
+> **Working directory:** `c:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app` (this is the real, active codebase — not the sibling `lango-app` at the `lango/` root, which is a separate, unrelated, currently-broken prototype; see §9).
 
 ---
 
-## 2. ARCHITECTURE & TECH STACK
+## 1. Read these four files first, in this order
 
-### Core Stack
+1. **`c:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\PRODUCT-TRUTH.md`** — dated 2026-07-26, explicitly overrides every other document in the repo tree, including this one where they conflict. States: *"The existing codebase is mostly a throwaway prototype... nothing in it should inform design decisions."* Defines the actual v1 scope (K-12 school management: students, classes, attendance, grades, fees, staff, timetable, documents, SMS communication), the v1 role matrix (director/school-admin, teacher, accountant — **not** the older 7-role list), and product decisions (Moroccan `/20` grading, configurable academic calendar, flexible fee structures, French+Arabic+English at launch, SMS-first communication).
+2. **`c:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\task_plan.md`** — the living phase tracker. Phases, checkboxes, decisions made, errors encountered, and a running Notes log of every non-obvious thing done in each slice. **Update this file when you finish a slice** — that is its explicit convention.
+3. **`c:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\MIGRATION-NOTES.md`** — every stopgap column that exists in the schema, why, and its removal condition. Read before touching `user`, `guardians`, or the academic-structure tables.
+4. **`c:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\findings.md`** — the original gap inventory (Phase 1) against the ESchool reference and the PHP codebase.
+
+The project's `CLAUDE.md` (same directory) mandates using ESchool SaaS v1.6.0 as the *business-logic reference*, not code to copy verbatim:
+- `c:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\insperations\eschool_saas_full_schema.sql` — full MySQL schema, 48 tables.
+- `c:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\insperations\ESCHOOL_SAAS_DATABASE_SCHEMA.md` — human-readable summary of the same.
+- `c:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\insperations\eschool-saas-codebase\` — the actual PHP models/controllers/repositories.
+
+---
+
+## 2. Architecture & tech stack
+
 | Layer | Technology | Notes |
-|-------|-----------|-------|
-| **Framework** | Next.js 16.2.6 (App Router, Turbopack) | React 19, Server Components by default |
-| **Language** | TypeScript 5.9 | Strict mode |
-| **ORM** | Drizzle ORM 0.45 | `drizzle-kit` for migrations |
-| **Database** | PostgreSQL (PGLite for local dev) | `@electric-sql/pglite` + `pglite-socket` |
-| **Auth** | Better Auth 1.6 | Replaces Clerk from boilerplate |
-| **Styling** | Tailwind CSS 4.3 + Shadcn/UI | `tw-animate-css` for animations |
-| **i18n** | `next-intl` 4.12 | EN, FR, AR (RTL support) |
-| **Validation** | Zod 4.4 | Used in Env, forms, server actions |
-| **Env Validation** | `@t3-oss/env-nextjs` | See `src/libs/Env.ts` |
-| **Testing** | Vitest 4.1 + Playwright | Unit + E2E |
-| **Icons** | `lucide-react`, `react-icons`, `@tabler/icons-react` | |
+|---|---|---|
+| Framework | Next.js 16.2.6, App Router | React 19 |
+| Language | TypeScript, strict | |
+| ORM | Drizzle ORM 0.45, `drizzle-kit` | Schema in `src/models/Schema.ts` |
+| Database | **PostgreSQL** | Not SQLite, not MySQL, not PGLite in production — see §8 for the history of why this matters |
+| Auth | Better Auth 1.6 | `src/libs/auth.ts`; email+password only, sign-up disabled (admin-provisioned accounts) |
+| Validation | Zod 4 | `src/libs/api/validation.ts` |
+| Styling | Tailwind CSS 4 + shadcn/ui | |
+| i18n | `next-intl` | French primary; Arabic RTL and English also required by `PRODUCT-TRUTH.md` |
+| Testing | Vitest | `src/app/api/security.test.ts` is the only real test file so far |
+| Container | Docker, multi-stage | `Dockerfile` (deps → migrator/builder → runner), `docker-compose.yml` (db → migrate → app) |
 
-### Architecture Pattern
-- **Frankenstein Pivot**: Scaffolded from `ixartz/SaaS-Boilerplate`, then grafted Frappe Education schemas + DevKrishnasai LMS components.
-- **Dynamic-First**: All data from Server Components → Drizzle queries → Dumb UI props. Zero hardcoded data in JSX.
-- **Multi-Tenant**: Every DB table has `tenantId`. Every query MUST filter by it.
-- **Server Components by Default**: Client components ONLY for interactive islands (forms, toggles, modals).
+### Multi-tenancy model
+Every tenant-scoped table has a `tenant_id` FK to `tenants`. There is **no** row-level security at the Postgres level — isolation is enforced entirely in application code via `requireTenant()` (see §4). Every query must filter by `tenantId`; there is no other safety net.
 
-### Key Files Map
-```
-lango-app/
-├── src/
-│   ├── app/[locale]/(protected)/
-│   │   └── lms/courses/
-│   │       ├── page.tsx              ← Courses index (redirects to first course)
-│   │       └── [courseId]/page.tsx    ← Course viewer (Server Component)
-│   ├── components/lms/
-│   │   ├── LeftPart.tsx              ← Sidebar with chapter list + progress bar
-│   │   ├── RightPart.tsx             ← Main content area (video + chapter preview)
-│   │   ├── MobileLeftPart.tsx        ← Sheet-based mobile sidebar
-│   │   ├── ChapterButton.tsx         ← Individual chapter link in sidebar
-│   │   ├── PreviewForChapter.tsx     ← Chapter content renderer
-│   │   ├── VideoPlayer.tsx           ← Native HTML5 video player
-│   │   ├── Preview.tsx               ← HTML content renderer (dangerouslySetInnerHTML)
-│   │   ├── actions.ts                ← Server Actions (getCourse, getFullChapter, etc.)
-│   │   └── actions.test.ts           ← TDD tests (3/3 passing via Vitest)
-│   ├── models/
-│   │   └── Schema.ts                 ← ALL Drizzle table definitions + relations
-│   ├── libs/
-│   │   ├── DB.ts                     ← Cached Drizzle connection (global singleton)
-│   │   ├── Env.ts                    ← T3 Env validation (DATABASE_URL, BETTER_AUTH_SECRET)
-│   │   └── auth-client.ts            ← Better Auth client
-│   └── utils/
-│       ├── DBConnection.ts           ← Pool creation (node-postgres → Drizzle)
-│       └── Helpers.ts                ← cn() utility
-├── .env                              ← DATABASE_URL, BETTER_AUTH_SECRET
-├── .env.local                        ← Overrides (if exists)
-├── vitest.config.ts                  ← Unit + UI test projects
-├── sms-build-plan.md                 ← Step 8 full plan
-└── package.json
-```
+### The `user` table is polymorphic
+There is no separate `students`/`staffs`/`guardians`-as-users table. A single `user` table (Better-Auth-compatible: `id`, `email`, `name`, session/account tables alongside it) carries a `role` enum (`super_admin`, `school_admin`, `teacher`, `accountant`, `student`, `parent`, `receptionist`, `guard`) plus a growing set of role-conditional columns (see `MIGRATION-NOTES.md`). This was an established pattern before this session and was continued rather than replaced, to avoid three competing architectures in one schema. `guardians` is a separate real table (not a `user` role) with its own `guardian_students` join table.
 
 ---
 
-## 3. DATABASE SCHEMA (Current State)
+## 3. What exists and is real (verified live, not just typechecked)
 
-All tables are defined in `src/models/Schema.ts`:
+| Domain | Route(s) | State |
+|---|---|---|
+| Auth | `/api/auth/*`, `/api/auth/me` | Real Better Auth sessions, real tenant/role context. `/api/auth/me` was already correct this session (a stale finding said otherwise). |
+| Students | `/api/students` | Real `user` rows (`role='student'`), tenant-scoped, paginated, audited, Zod-validated. `classSectionId` is the real FK (this session); `level`/`className` are deprecated fallback text. |
+| Staff/teachers | `/api/teachers` | Real `user` rows (`role='teacher'`). Assignments (`subjects`, `assignedClasses`) now computed from real join tables (this session), falling back to deprecated arrays. `teachers-manage-view.tsx` UI wired to fetch real data. `/api/teachers/import` is still fake — see §7. |
+| Guardians | `/api/students/parents` | Real `guardians` table. `guardian_students` linking exists as a table but nothing populates it yet — see §7. |
+| Users (staff/admin directory) | `/api/users` | Real, same pattern as above. |
+| **Academic structure** | `/api/academics/{session-years,semesters,mediums,sections,streams,shifts,classes,class-sections,subjects,class-subjects,class-teachers,subject-teachers}` | 12 routes, real ESchool-aligned tables, full CRUD (except the two join-record routes, which are create+delete only by design). See §6 for the full design. All 10 corresponding UI views are now wired (were static as of the previous handoff version; fixed this session). |
+| Finance | `/api/finance/{invoices,payments,expenses,fee-structures}` | Real, tenant-scoped, authorized. Invoice/payment list + detail pages, payment-entry form, expenses CRUD, and a (simplified) fee-structures CRUD are all wired to real data. |
+| Attendance | `/api/attendance` | Real, tenant-scoped. UI wired (was previously built but never called by its own page — fixed this session). |
+| Students (extended) | `/api/students` (`?id=` detail, `?classSectionId=` filter), `/api/students/{admissions,transfers,promotions,matricules,import}` | Profile page, admissions kanban, transfers, promotions, matricules, and CSV import are all real and wired. `/api/students/photos` is authenticated but still has no real file-storage backend (deliberately deferred, see §7). |
+| Teachers (extended) | `/api/teachers` (`?id=` detail), `/api/teachers/import` | Profile page and CSV import are real (the import route no longer returns a hardcoded `71` — it was a fake stub, now fixed). |
+| Settings | `/api/settings`, `/api/settings/access-reset` | Both are now authenticated and tenant-scoped (were previously wide open — a real security fix, not just a wiring gap). `settings` persists to a real `schoolSettings` table (was an in-memory object shared across every tenant). `access-reset` is still backed by mock request data server-side (no real credential-reset flow exists) but is no longer callable by an anonymous user. |
+| Analytics | `/api/analytics` | New route, real 6-month enrollment/revenue trend + attendance rate, reusing `/api/dashboard/summary`'s aggregate-query pattern. |
+| Not built, explicitly deferred | assessments/grading, optional-subjects, communication (SMS), documents/generator (PDF report cards), students/photos storage, super-admin platform | See §7 — each needs a real design decision first, not just a missing route. |
 
-### Auth & Multi-Tenancy
-| Table | Purpose |
-|-------|---------|
-| `tenants` | Multi-tenant isolation (id, name, slug, logoUrl, isActive) |
-| `user` | Users with roles (7 roles: super_admin, school_admin, teacher, student, parent, receptionist, guard) |
-| `session` | Better Auth sessions |
-| `account` | OAuth accounts |
-| `verification` | Email/token verification |
+### Security foundation (Phase 2, complete)
+- `src/libs/api/context.ts` — `requireRequestContext(request, allowedRoles?)` returns `{ userId, tenantId, role, name, email }`, throws `ApiError(401, 'UNAUTHENTICATED', ...)` if no session, `403 ACCOUNT_DISABLED` / `403 TENANT_DISABLED` / `403 ROLE_NOT_ALLOWED` / `403 FORBIDDEN` as appropriate. `requireTenant(context)` throws if the user has no tenant (only `super_admin` may lack one).
+- `src/libs/api/errors.ts` — `ApiError` class + `apiErrorResponse(error)` catch-all. **As of this session**, it also translates raw Postgres constraint violations into clean responses: SQLSTATE `23505` (unique) → `409 ALREADY_EXISTS`, `23503` (FK) → `409 IN_USE`. **Important gotcha**: Drizzle wraps the real pg error under `.cause` (`DrizzleQueryError`), not on the outer thrown object — the code checks both (`pgErrorCode()` helper). This bit us once already this session; do not "simplify" it back to checking only `error.code`.
+- `src/libs/api/validation.ts` — one Zod `.strict()` schema pair (`xCreateSchema`/`xUpdateSchema`) per resource, rejecting mass-assignment. `parseJson(request, schema)` is the shared entry point, throws `422 VALIDATION_ERROR` on failure.
+- `src/libs/api/pagination.ts` — `parsePagination(searchParams)` → `{ page, pageSize, limit, offset }`, defaults 1/20, cap 100.
+- `src/libs/api/audit.ts` — `recordAudit(context, action, entityType, entityId, metadata?)`, fire-and-forget (a logging failure must never fail the request), writes to `audit_logs`.
+- `src/app/api/security.test.ts` — 8 tests, mocks `@/libs/auth`'s session lookup, runs against a **real** Postgres (`describe.skipIf(!process.env.DATABASE_URL)`). Covers 401/403/tenant-isolation/422/409-self-delete/cross-tenant-delete-noop. Wired into CI (`.github/workflows/CI.yml`'s `unit` job, with a Postgres service container).
 
-### Frappe Education Domain (SMS/ERP)
-| Table | Purpose |
-|-------|---------|
-| `academic_years` | School year periods (e.g., "2026-2027") |
-| `programs` | Educational programs (e.g., "General English Program") |
-| `courses` | Courses within programs + LMS fields (price, isPublished, isFree) |
-| `student_groups` | Class batches (linked to course + academic year) |
-| `enrollments` | Student enrollment tracking (enrolled/dropped/graduated) |
-
-### LMS Domain
-| Table | Purpose |
-|-------|---------|
-| `chapters` | Course chapters (title, content, position, videoUrl, isFree) |
-| `course_attachments` | Files attached to courses |
-| `user_progress` | Per-user chapter completion tracking |
-
-### Drizzle Relations (defined at bottom of Schema.ts)
-- `coursesRelations`: courses → many chapters, many attachments
-- `chaptersRelations`: chapters → one course
-- `courseAttachmentsRelations`: attachments → one course
-
-### Seeded Test Data
-- **Tenant**: "Lango English Center" (slug: `lango-english-center`)
-- **User**: `admin@lango.ma` (school_admin), `test-user-123` (student, for TDD)
-- **Academic Year**: 2026-2027
-- **Program**: "General English Program"
-- **Course**: "TDD Next.js Masterclass" (code: NEXT-101, published, $99.99)
-- **Chapter**: "Introduction to Vitest" (position 1, free, with video URL)
-- **User Progress**: test-user-123 completed the chapter
+**The pattern every new route must follow** (copy `src/app/api/students/parents/route.ts` or `src/app/api/teachers/route.ts` as the template): `requireRequestContext(request, ['school_admin'])` → `requireTenant` → Zod `.strict()` validate → tenant-scoped query with `parsePagination` on GET → `recordAudit` on every mutation → `apiErrorResponse` catch-all.
 
 ---
 
-## 4. ENVIRONMENT SETUP
+## 4. CI/CD and Docker (fixed this session, verified working)
 
-### Required Environment Variables (.env)
-```env
-DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/postgres
-BETTER_AUTH_SECRET=my-secret-key-1234567890
-NEXT_TELEMETRY_DISABLED=1
-NEXT_PUBLIC_LOGGING_LEVEL=debug
-```
+- **The CI workflows lived at `lango-app/.github/workflows/` and had never run once** — GitHub only reads `.github/workflows/` at the git repo root, which is `lango-english-center-project-fully/`, one directory up. Moved. `.github/workflows/CI.yml` now has `build`, `static`, `unit` (Postgres service container), and `docker` (build-only, no push) jobs, all working with `defaults.run.working-directory: lango-app`.
+- **`Dockerfile`**: multi-stage (`base` → `deps` → `migrator`/`builder` → `runner`). Node 24 (matches `package.json` `engines`). `.npmrc` sets `legacy-peer-deps=true` (a real, load-bearing peer conflict: `react-day-picker@8` wants `date-fns@2||3`, repo runs `date-fns@4` — upgrade path is `react-day-picker@9`, not a workaround to remove casually) and retry settings (a cold `npm ci` install is ~9–15 min; a slow registry connection has already timed out a build once). The builder stage passes build-only env sentinels (`DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`) so Next can collect route metadata without a real database; CI verifies the sentinels never leak into the standalone output.
+- **`docker-compose.yml`**: `db` (Postgres 17) → `migrate` (one-shot, `target: migrator`, runs `drizzle-kit migrate`, `restart: "no"`) → `app` (gated on `migrate` completing successfully). No host port on `db` (security). Requires a local `.env` with `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET` (32+ chars) — **there is no `.env.example` committed; write one before handing this off if it doesn't exist**, since compose will hard-fail on the `?:` required-var syntax without it.
+- **Full verification loop used throughout this project** (repeat this for every schema change): spin up a throwaway Postgres container → `drizzle-kit migrate` → `drizzle-kit generate` must report *"No schema changes, nothing to migrate"* → `docker compose up -d --build` → build the `builder` stage separately and run `npx tsx src/scripts/seed.ts` against the compose network to seed demo data → log in via `/api/auth/sign-in/email` → hit routes with `curl` for real 200/401/403/422/409 behavior. Typecheck (`tsc --noEmit`) and lint (`eslint --fix`) alone are not sufficient — two real bugs this session (below) were only caught by this live loop.
 
-### Starting the Dev Environment
-```bash
-# 1. Start the PGLite database server (MUST run first)
-npx pglite-server -m 100 --db=local.db
-
-# 2. Run database migrations
-npm run db:migrate
-
-# 3. Start Next.js dev server
-npm run dev
-
-# App runs at http://localhost:3000
-# LMS route: http://localhost:3000/en/lms/courses
-```
-
-> **CRITICAL**: The DB server (`pglite-server`) MUST be running on port 5432 BEFORE starting Next.js. Without it, all DB queries will throw `ECONNREFUSED 127.0.0.1:5432`.
-
-### Running Tests
-```bash
-npm run test                                    # All tests
-npm run test -- src/components/lms/actions.test.ts  # LMS TDD suite only
-```
+**Seeded demo login** (via `src/scripts/seed.ts`, requires `SCHOOL_ADMIN_SEED_PASSWORD` env var at seed time): `y.elamrani@atlas.ma` / whatever password you set, tenant "Groupe Scolaire Atlas".
 
 ---
 
-## 5. PROGRESS — WHAT IS DONE (Steps 1-6)
+## 5. Two real bugs found by live testing this session — do not reintroduce
 
-### Step 1: Purge & Clone ✅
-- Scaffolded from `ixartz/SaaS-Boilerplate` into `lango-app/`
-- Removed Clerk auth stubs, replaced with Better Auth
-
-### Step 2: Infrastructure Wiring ✅
-- Drizzle connected to local PostgreSQL via Docker (`lango_postgres`)
-- Later migrated to PGLite for zero-Docker local dev
-
-### Step 3: Multi-Tenancy & Auth ✅
-- Better Auth configured with 7 Lango roles
-- `admin@lango.ma` seeded, AdminShell working
-
-### Step 4: i18n & RTL ✅
-- Arabic (`ar`) locale added to `AppConfig.ts`
-- `ar.json` translation file created
-- Dynamic `dir="rtl"` on `<html>` tag
-- `OmitRTL` utility component created
-- Middleware updated: `/api/` excluded from i18n routing
-
-### Step 5: Frappe Database Port ✅
-- Ported Frappe Education schemas: `academic_years`, `programs`, `courses`, `student_groups`, `enrollments`
-- Drizzle migrations applied (10 tables verified)
-- `seed-frappe.ts` executed with test data
-
-### Step 6: LMS UI Transplant ✅
-- Cloned `DevKrishnasai/lms` and extracted React components
-- Refactored ALL components to remove Clerk auth + Prisma dependencies
-- Replaced `video-react` with native HTML5 `<video>` (React 19 compat)
-- Replaced `react-quill` with `dangerouslySetInnerHTML` (React 19 compat)
-- Added Drizzle relations for `courses ↔ chapters ↔ attachments`
-- Created server actions: `getCourse`, `getFullChapter`, `getProgressWithIds`, `getChapterProgress`
-- TDD suite: **3/3 tests passing** via Vitest
+1. **Postgres error codes live under `error.cause`, not `error`.** Drizzle-orm throws a `DrizzleQueryError` wrapping the real `pg` error. `apiErrorResponse`'s constraint-translation originally checked only the outer `error.code` and silently never matched, turning every unique/FK violation into an unhelpful 500. Fixed in `src/libs/api/errors.ts` (`pgErrorCode()` checks both). If you add new error-translation logic anywhere, check `.cause` too.
+2. **`docker compose up -d --build` run in the background/piped through `tail` can report success while the running container is still the old image.** This session hit it twice: Docker Desktop crashed mid-rebuild once and silently auto-restarted the *previous* container on recovery (the `restart: unless-stopped` policy in `docker-compose.yml` did that, not a fresh build); separately, a backgrounded `docker compose up -d --build` call reported exit code 0 while the container stayed ~7 hours stale for reasons that were never fully diagnosed. **The reliable sequence**: run `docker compose build app` in the *foreground* (not backgrounded, not piped through `tail -N` which can hide the real error) and read its full output — if there's a real TypeScript error, this is where it surfaces (see bug 3 below), not in a standalone `tsc --noEmit`. Only after a clean `Image lango-app-app Built` line, run `docker compose up -d` separately. Verify freshness by hitting a route that only exists in the new code and confirming it's not 404 — don't trust the container's reported "Up N minutes" or "Created" timestamp, both were misleading during this session's incidents.
+3. **`npx tsc --noEmit` does not always agree with `next build`'s internal type-check, even against the same `tsconfig.json`.** Concretely: `const [header, ...rows] = someStringArrayArray` was typed as `header: string[] | undefined` inside `next build`'s check (destructuring the first element of an array type isn't guaranteed non-empty) but `tsc --noEmit` run standalone did not flag it across several runs in this session. Root cause not fully pinned down. **Practical rule**: `tsc --noEmit` is a fast pre-check, but the actual gate before rebuilding the container is `docker compose build app`'s TypeScript step — this matches what `CLAUDE.md` already said (`npx next build` after significant edits) and should have been followed literally instead of substituting a plain `tsc` pass.
+4. **`onDelete('cascade')` on reference-data foreign keys silently destroys unrelated data.** `classes.mediumId`, `classSections.sectionId`/`mediumId`, `subjects.mediumId`, `classSubjects.subjectId`, `subjectTeachers.subjectId` were originally written with `.onDelete('cascade')` (copied reflexively from the tenant-scoping FK pattern used everywhere else). This meant deleting one "medium" (e.g. "Français") would cascade-delete every class, section, subject, and assignment built on it — and it silently defeated the intended `409 IN_USE` behavior on those DELETE routes. Fixed via migration `0008_restrict_academic_reference_deletes` (no `onDelete`, defaults to `RESTRICT`). **The rule going forward**: a FK from a structural row to its true parent (e.g. `classSections.classId` → `classes`) may cascade; a FK from a structural row to shared *reference/configuration* data (mediums, sections, streams, shifts, subjects, semesters) must **not** cascade — it should block deletion so the API can return a clean `IN_USE` error instead.
 
 ---
 
-## 6. CURRENT BLOCKERS & KNOWN ISSUES
+## 6. Academic structure — full design (this session, plan-approved)
 
-### 🔴 Blocker: LMS Page Not Rendering in Browser
-**Symptom**: Navigating to `/en/lms/courses` throws `ECONNREFUSED 127.0.0.1:5432`
-**Root Cause**: The PGLite database server was not running when Next.js started. The `npm run db-server:file` script's `--run` flag is broken on Node 24 (`ERR_PARSE_ARGS_UNEXPECTED_POSITIONAL`).
-**Fix Required**:
-1. Start PGLite manually: `npx pglite-server -m 100 --db=local.db`
-2. Run migrations separately: `npm run db:migrate`
-3. Then start Next.js: `npm run dev`
-4. Alternatively, fix the `db-server:file` script in `package.json`
+**Why this exists:** the user asked whether the students/teachers work "follows the logic from ESchool." It partially didn't — teacher-subject-class assignment and student class placement were free-text/array stopgaps on `user` because no classes/sections/subjects tables existed. This session built them.
 
-### 🟡 Issue: Mock Auth in LMS Actions
-- `actions.ts` → `getUserId()` returns hardcoded `"test-user-123"`
-- Must be replaced with real Better Auth `getSession()` before production
-- The `[courseId]/page.tsx` also uses `"demo-user-id"` — must be unified
+**A landmine that was checked and avoided**: the schema already contained an unrelated `programs`→`courses`→`studentGroups`→`programEnrollments`/`courseEnrollments`→`timetableSlots`/`rooms` chain, leftover from the original Next.js "saas-boilerplate" template (course/LMS-shaped, not K-12-shaped). **Confirmed dead — grep shows zero files in `src/` read or write it.** Do not build on it, do not "clean it up" either (out of scope, not asked for). The UI's own `src/features/academics/ui/*` views are already named with ESchool's exact K-12 vocabulary (`mediums-view.tsx`, `classes-view.tsx`, etc.), confirming the *intended* target was always the ESchool-shaped model.
 
-### 🟡 Issue: Shadcn UI Components May Be Missing
-- `@/components/ui/progress` — needed by LeftPart.tsx
-- `@/components/ui/sheet` — needed by MobileLeftPart.tsx
-- `@/components/ui/button` — needed by RightPart.tsx
-- Run `npx shadcn@latest add sheet progress skeleton button` if they don't exist
+**Tables added** (`src/models/Schema.ts`, migration `0007_add_academic_structure` + `0008` for the FK fix):
+- Tier 1, plain tenant-scoped reference tables (schools configure their own — matches `PRODUCT-TRUTH.md` §11 "configurable per school"): `sessionYears`, `semesters`, `mediums`, `sections`, `streams`, `shifts`.
+- Tier 2: `classes` (→ medium required, shift/stream optional), `classSections` (class × section, `mediumId` always derived server-side from `classId`, never client-supplied).
+- Tier 3: `subjects` (→ medium), `classSubjects` (class × subject, no DB unique constraint — see code comment on why; duplicate-assignment prevention is at the API layer, scoped per semester).
+- Tier 4: `classTeachers`, `subjectTeachers` — pure join tables, `teacherId` → `user.id` directly (no separate `staffs` table, matching the established `user`-is-polymorphic pattern). **No PUT route** for either — reassignment is delete + recreate.
+- Tier 5: `user.classSectionId` (nullable FK, `onDelete('set null')`).
 
-### 🟡 Issue: .env encoding
-- The `BETTER_AUTH_SECRET` was previously appended with UTF-16 null bytes via `echo >>`. This was fixed by stripping null chars, but verify `.env` is clean UTF-8.
+**Two enums added**, and *only* these two — everything else is a plain table: `subjectType` (`theory`/`practical`), `classSubjectType` (`compulsory`/`elective`). These are fixed business categories, not school-configurable lists.
+
+**Consumer changes**: `studentCreateSchema`/`studentUpdateSchema` dropped `level`/`className`, added `classSectionId`. `teacherCreateSchema`/`teacherUpdateSchema` dropped `subjects`/`assignedClasses` entirely — assignment now only happens via `POST /api/academics/class-teachers` / `subject-teachers`. Both routes' response mappers fall back to the deprecated columns only when a row has no real linkage yet (pre-migration data).
+
+**Deliberately not built** (see `task_plan.md` and `MIGRATION-NOTES.md` for the full reasoning): UI wiring for the 13 static `academics/ui/*` views, elective subject groups, admissions/enrollment fields on students (`admission_no`/`roll_number`/session-year linkage), teacher-scoped object-level access (a teacher seeing only their own classes), attendance/grading/timetable (separate Phase 4 bullets), dropping the now-deprecated stopgap columns (needs a verified-empty-usage audit first, not safe to do blind).
 
 ---
 
-## 7. WHAT IS NEXT — THE PLAN
+## 7. Known, explicitly-deferred gaps (do not silently "fix" without discussing scope — each is genuinely a separate, larger effort)
 
-### Step 7: Apple-Level Polish (CURRENT STEP)
-- [ ] **7.1** Install `marvkr/better-design` Shadcn tokens
-- [ ] **7.2** Inject Aceternity UI micro-animations on login + dashboard
-- [ ] **7.3** Final UX audit against "Nivel Apple" standard
+*(This table was rewritten this session — most of the previous version's entries, e.g. `guardian_students` linking, the 13 static academics views, admissions/transfers/promotions, are now done. See `FULL-APP-AUDIT.md` for the full page-by-page history if you need it.)*
 
-### Step 8: SMS Application Layer (see `sms-build-plan.md` for full detail)
-
-#### 8A: ERP Core — Student & Academic CRUDs
-- Extend schema (student profile fields, attendance table, indexes)
-- Server Actions: `students.ts`, `programs.ts`, `courses.ts`, `student-groups.ts`, `enrollments.ts`
-- Data Tables UI: Student Directory, Student 360 Profile, Programs/Courses/Groups pages
-- **Gate**: Student Directory lists real DB data with working CRUD → wait for "gloxoss-go"
-
-#### 8B: Attendance Module
-- Server Actions: `markAttendance`, `getAttendance`, `getStudentAttendanceHistory`
-- UI: Fast-toggle grid, attendance summary stats, calendar heatmap
-- **Gate**: Teacher can mark attendance for entire class in one screen
-
-#### 8C: Finance & Billing
-- Schema: `fee_structures`, `invoices`, `payments`, `expenses`
-- Server Actions: CRUD for each + bulk invoice generation
-- UI: Fee templates, invoice table with status badges, payment recording, expense tracker
-- **Gate**: Admin can generate invoices and record payments
-
-#### 8D: Timetable & Class Scheduling
-- Schema: `timetable_slots`
-- UI: Weekly calendar grid, conflict detection
-- **Gate**: Timetable renders weekly grid with real slot data
-
-### Future Phases (Post Step 8)
-- Phase 4: CRM & Leads (Kanban, Lead Profiles)
-- Phase 5: WhatsApp Automation (Shared Inbox, Chatbot Builder)
-- Phase 6: AI Enhancements (Placement Tests, Analytics)
-- Phase 7: Multi-Portal (Student, Parent, Teacher, Guard portals)
-- Phase 8: Production Deploy (Docker build, VPS, CI/CD)
+| Gap | Why it's deferred |
+|---|---|
+| Assessment/grading system (`gradingScales`→`assessmentCriteria`→`assessmentPlans`→`assessmentPlanCriteria`→`assessments`→`assessmentResults`→`assessmentResultDetails`) | This is a full weighted-rubric grading engine with zero existing UI, API, or seed data. **More importantly: `assessmentPlans`/`assessments` have no column linking them to a class or subject at all** (`assessmentPlans.courseId` points at the dead LMS `courses` table, not the real `classSubjects`) — "which class is this assessment for" isn't answerable from the current schema. Needs a schema decision (likely a `classSubjectId` column added to `assessmentPlans`) before any route can be written. Blocks grade entry, report-card generation, and the "moyenne générale" stats that several other pages want to show. |
+| `optional-subjects` (electives) | No dedicated schema beyond the `classSubjectType` enum (`compulsory`/`elective`) already on `classSubjects`. What "optional subjects" should model (student choice, capacity limits, elective groups) needs a real product decision, not inference from the fully-fake UI that exists today. |
+| Communication (SMS reminders/templates) | No schema (templates, send-log) *and* no chosen SMS provider/gateway. Needs both decided before a route is meaningful. |
+| Documents/generator (Massar-style report-card PDF) | Blocked on the assessment-schema gap above (needs real grades to render) plus a PDF-generation approach (no library installed). |
+| `students/photos` real storage | Route is authenticated and tenant-scoped but has no real backend — needs a file-storage decision (S3-compatible bucket vs. local disk + served route) as its own small design pass. |
+| Super-admin / platform-SaaS surface (10 pages: schools, subscriptions, sms, reports, support, platform settings) | Entirely static, zero API, zero schema (no `subscriptions`/`billing`/`platform_*` tables exist). Only the `role === 'super_admin'` layout guard is real. This is a from-scratch SaaS-ops build, not a wiring task — treat as its own project with its own plan. |
+| Root `lango-app/` at the `lango/` root (sibling, **different** codebase) | 32 UI packages imported in `src/` but never added to `package.json`, 169 TypeScript errors, CI red. Entirely separate from everything above — do not confuse the two `lango-app` directories. |
 
 ---
 
-## 8. SKILLS TO USE
+## 8. History worth knowing (so you don't repeat investigation already done)
 
-These are AI skill files located at `C:\Users\oussama\.claude\skills\`. Read the `SKILL.md` in each before applying.
-
-### Core Skills (Use on ALL tasks)
-| Skill | Path | When |
-|-------|------|------|
-| `karpathy-guidelines` | `C:\Users\oussama\.claude\skills\karpathy-guidelines\SKILL.md` | Every coding task — prevents over-engineering |
-| `lango-oss-pivot` | `C:\Users\oussama\.claude\skills\lango-oss-pivot\SKILL.md` | Enforces the Frankenstein Pivot pipeline gates |
-| `lango-sms-context` | `C:\Users\oussama\.claude\skills\lango-sms-context\SKILL.md` | Full SMS/LMS/CRM context for Lango |
-| `epioso-dynamic-first` | `C:\Users\oussama\.claude\skills\epioso-dynamic-first\SKILL.md` | CMS-ready, dynamic-first architecture |
-
-### Architecture & Planning Skills
-| Skill | Path | When |
-|-------|------|------|
-| `plan-writing` | `C:\Users\oussama\.claude\skills\plan-writing\SKILL.md` | Multi-step task planning |
-| `concise-planning` | `C:\Users\oussama\.claude\skills\concise-planning\SKILL.md` | Quick atomic checklists |
-| `nonstop` | `C:\Users\oussama\.claude\skills\nonstop\SKILL.md` | Autonomous work mode |
-| `software-architecture` | `C:\Users\oussama\.claude\skills\software-architecture\SKILL.md` | Quality-focused architecture |
-
-### Frontend & Design Skills
-| Skill | Path | When |
-|-------|------|------|
-| `design-orchestrator` | `C:\Users\oussama\.claude\skills\design-orchestrator\SKILL.md` | UI/UX aesthetics routing |
-| `premium` | `C:\Users\oussama\.claude\skills\premium\SKILL.md` | Apple-inspired aesthetics |
-| `sleek` | `C:\Users\oussama\.claude\skills\sleek\SKILL.md` | Modern minimalist UI |
-| `next-best-practices` | `C:\Users\oussama\.claude\skills\next-best-practices\SKILL.md` | Next.js App Router patterns |
-| `react-best-practices` | `C:\Users\oussama\.claude\skills\react-best-practices\SKILL.md` | React performance |
-| `react-ui-patterns` | `C:\Users\oussama\.claude\skills\react-ui-patterns\SKILL.md` | Loading states, error handling |
-| `nextjs-shadcn` | `C:\Users\oussama\.claude\skills\nextjs-shadcn\SKILL.md` | Shadcn component patterns |
-
-### Backend & Database Skills
-| Skill | Path | When |
-|-------|------|------|
-| `database-design` | `C:\Users\oussama\.claude\skills\database-design\SKILL.md` | Schema design, indexing |
-| `supabase-postgres-best-practices` | `C:\Users\oussama\.claude\skills\supabase-postgres-best-practices\SKILL.md` | Postgres optimization |
-| `better-auth-best-practices` | `C:\Users\oussama\.claude\skills\better-auth-best-practices\SKILL.md` | Auth configuration |
-
-### Security & Quality Skills
-| Skill | Path | When |
-|-------|------|------|
-| `privacy-by-design` | `C:\Users\oussama\.claude\skills\privacy-by-design\SKILL.md` | Data handling |
-| `webapp-testing` | `C:\Users\oussama\.claude\skills\webapp-testing\SKILL.md` | Browser testing with Playwright |
+- The Postgres/Drizzle/Docker setup did not exist at the start of this multi-session effort — it began as a SQLite prototype (`better-sqlite3`, inline table creation in `src/lib/db.ts`) with zero auth. That file and pattern are gone now; if you see any reference to it, it's stale.
+- A prior agent session (before this one) built the security foundation (Phase 2: Better Auth wiring, `requireRequestContext`, RBAC, Zod validation, `students`/`users`/`guardians` initial ports) using a "persistent migration planning" methodology — `task_plan.md`, `findings.md`, `progress.md` are its artifacts, and this session continued updating them rather than starting fresh ones. Keep doing this.
+- `migrations/meta/0003_snapshot.json` was once missing (a migration was hand-written without running `drizzle-kit generate`), which silently corrupted every subsequent `generate` call into re-emitting an already-applied enum change. It was repaired. **Always run `drizzle-kit generate` after any hand-edit to a migration file**, and always do the fresh-DB-then-generate check described in §4 before considering a migration done.
 
 ---
 
-## 9. GOVERNING PRINCIPLES
+## 9. Immediate next steps, in priority order
 
-1. **Simplicity First** (Karpathy): Each CRUD = 1 Server Action file + 1 Data Table component + 1 Form component. No speculative abstractions.
-2. **Surgical Changes**: Each sprint touches ONLY its own module folder. No "improving" unrelated pages.
-3. **Goal-Driven**: Every task has a `Verify:` check. If it doesn't pass, loop until it does.
-4. **Dynamic-First**: No hardcoded data in JSX. All data flows from Server Components → Drizzle queries → Dumb UI components via props.
-5. **Tenant Isolation**: Every query MUST filter by `tenantId`. No exceptions.
-6. **Server Components by Default**: Client components only for interactive islands.
-7. **Gloxoss-Go Gate**: Each sprint is gated. Stop at end, present results, wait for "gloxoss-go" before proceeding.
+1. **Assessment/grading schema design** — the single highest-leverage remaining item. Unblocks grade entry, report cards, and several stats other pages already have placeholder UI for. Needs a product decision (how does an assessment link to a class/subject?) before any code.
+2. **Communication (SMS) schema + provider decision** — needed before `communication/reminders`/`communication/templates` can become real.
+3. **Super-admin platform** — scope as its own project (subscriptions/billing schema from scratch), not bundled with anything else.
+4. **`students/photos` file storage** — small, self-contained infra decision (S3-compatible bucket vs. local disk).
+5. Root `lango-app/` dependency fix — separate codebase, unrelated to the above, entirely your own call on priority.
 
----
-
-## 10. PRE-DEV DOCUMENTATION INDEX
-
-All planning documents are in `pre-dev/`:
-
-| File | Content |
-|------|---------|
-| `00-project-charter.md` | Project vision, scope, stakeholders |
-| `01-market-opportunity.md` | Market analysis for Morocco EdTech |
-| `01-competitive-analysis.md` | Competitor landscape |
-| `01-user-personas.md` | User archetypes (Admin, Teacher, Student, Parent, Guard) |
-| `01-business-case.md` | Financial justification |
-| `02-PRD.md` | Product Requirements Document |
-| `02-SRS.md` | Software Requirements Specification |
-| `02-user-stories.md` | User stories by persona |
-| `03-architecture-overview.md` | System architecture |
-| `03-tech-stack-decisions.md` | Tech stack ADRs |
-| `03-C4-diagrams.md` | C4 architecture diagrams |
-| `03-ADRs/` | Architecture Decision Records |
-| `04-information-architecture.md` | IA and navigation structure |
-| `04-user-journey-maps.md` | User flow diagrams |
-| `04-screen-inventory.md` | Complete screen list |
-| `05-data-and-api-design.md` | Data model + API design |
-| `10-api-design-specification.md` | REST API spec |
-| `11-openapi-spec.yaml` | OpenAPI 3.1 specification |
-| `12-api-developer-guide.md` | Developer guide |
-| `06-security-and-performance.md` | Security requirements |
-| `07-project-blueprint.md` | Execution blueprint |
-| `BLUEPRINT.md` | Master execution plan |
-| `PROGRESS.md` | Live progress tracker |
+Do not start any of these without re-reading `task_plan.md`'s current `Status` lines and `~/.claude/plans/whimsical-painting-turtle.md` (sections 7.5/7.6 and 8) first — they may have moved since this document was written.
 
 ---
 
-## 11. SHARED TASK LOG — INTER-AGENT COORDINATION
+## Note on other files in this directory
 
-> **HOW TO USE**: When an agent completes a task, add an entry below. When starting work, read the latest entries to know what changed. This prevents two agents from stepping on each other.
-
-### Log Format
-```
-[TIMESTAMP] [AGENT_NAME] [STATUS] — Description
-  Files changed: list
-  Verify: how to confirm
-```
-
-### Entries
-
-```
-[2026-06-14T20:00] [Antigravity] [DONE] — Fixed getFullChapter() crash in actions.ts
-  - Removed invalid `with: { attachments: true }` Drizzle query (relation did not exist on chapters)
-  - Now fetches attachments separately via courseAttachments table
-  Files: src/components/lms/actions.ts
-  Verify: npm run test -- src/components/lms/actions.test.ts → 3/3 pass
-
-[2026-06-14T20:05] [Antigravity] [DONE] — Replaced missing Skeleton/Loading with inline Tailwind
-  - RightPart.tsx: Removed @/components/Loading, @/components/ui/skeleton imports
-  - LeftPart.tsx: Removed @/components/ui/skeleton import
-  - Both now use inline animate-pulse divs as skeleton placeholders
-  - Replaced react-icons GiSpinningBlades with lucide-react Loader2
-  Files: src/components/lms/RightPart.tsx, src/components/lms/LeftPart.tsx
-  Verify: Next.js compiles without module-not-found errors
-
-[2026-06-14T20:05] [Antigravity] [DONE] — Created LMS courses index redirect page
-  Files: src/app/[locale]/(protected)/lms/courses/page.tsx
-  Verify: Navigating to /en/lms/courses redirects to /en/lms/courses/{firstCourseId}
-
-[2026-06-14T20:05] [Antigravity] [DONE] — Installed missing npm packages
-  - react-icons, @radix-ui/react-dialog
-  Files: package.json, package-lock.json
-  Verify: npm ls react-icons @radix-ui/react-dialog
-
-[2026-06-14T20:22] [Antigravity] [DONE] — Fixed .env BETTER_AUTH_SECRET encoding
-  - Was appended with UTF-16 null bytes via PowerShell echo
-  - Stripped null characters, now clean UTF-8
-  Files: .env
-  Verify: grep BETTER_AUTH_SECRET .env shows no garbled characters
-
-[2026-06-14T20:30] [Antigravity] [BLOCKED] — LMS page still throws ECONNREFUSED
-  - PGLite server must be started manually BEFORE Next.js
-  - The db-server:file script is broken on Node 24 (--run flag incompatible)
-  - Workaround: npx pglite-server -m 100 --db=local.db  (separate terminal)
-  Files: (none changed, infrastructure issue)
-  Verify: Start PGLite then npm run dev then visit /en/lms/courses
-```
-
-### NEXT TASK FOR INCOMING AGENT:
-1. **FIX DB STARTUP**: Start PGLite (`npx pglite-server -m 100 --db=local.db`), run migrations (`npm run db:migrate`), restart Next.js (`npm run dev`)
-2. **VERIFY LMS RENDERS**: Navigate to `http://localhost:3000/en/lms/courses`, confirm it redirects and shows course viewer with sidebar
-3. **INSTALL SHADCN COMPONENTS**: `npx shadcn@latest add sheet progress skeleton button` (if any are missing)
-4. **BEGIN STEP 7**: Apple-Level Polish (install better-design tokens, add micro-animations)
-5. **OR BEGIN STEP 8A**: If Zakio says skip polish, start ERP Core CRUDs per `sms-build-plan.md`
-
----
-
-## 12. QUICK REFERENCE COMMANDS
-
-```bash
-# Database
-npx pglite-server -m 100 --db=local.db    # Start DB server
-npm run db:generate                         # Generate migration SQL
-npm run db:migrate                          # Apply migrations
-npm run db:studio                           # Open Drizzle Studio GUI
-
-# Development
-npm run dev                                 # Start Next.js (port 3000)
-npm run build                               # Production build
-npm run lint                                # ESLint check
-npm run check:types                         # TypeScript check
-
-# Testing
-npm run test                                # Run all Vitest tests
-npm run test -- src/components/lms/actions.test.ts  # LMS tests only
-npm run test:e2e                            # Playwright E2E tests
-
-# Shadcn UI
-npx shadcn@latest add [component]           # Add UI components
-```
-
----
-
-*End of Handoff Document. Any agent reading this has everything needed to continue.*
+`AGENT-TASK-LOG.md` (repo root) is a separate, older, append-only convention from the pre-`PRODUCT-TRUTH.md` era ("Antigravity" + a planner/coder agent pair). It has not been used or updated during this session's work — `task_plan.md`/`findings.md`/`progress.md` (inside `lango-app/`) are the actively-maintained logs. Don't mix conventions; update those three, not this one, unless the user asks otherwise.

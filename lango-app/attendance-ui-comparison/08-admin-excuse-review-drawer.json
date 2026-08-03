@@ -1,0 +1,53 @@
+{
+  "page": "admin-excuse-review-drawer",
+  "title": "Excuse review side drawer (detail view before approve/reject)",
+  "mockup_source_images": ["ChatGPT Image 31 juil. 2026, 19_13_16 (2).png"],
+  "role": "school_admin / director",
+  "mockup_description": {
+    "layout": "Right-side slide-in drawer, opened from the list row.",
+    "key_elements": [
+      "Student header: photo, name, 'Élève ID', status badge, class, absence date",
+      "'Motif de l'absence' -- short tag + full free-text explanation",
+      "'Contact parent' block: name, phone, email",
+      "'Justificatif fourni': real filename, file size, PDF type, thumbnail preview, 'Aperçu' and download buttons",
+      "'Enregistrement de présence': which attendance record this excuse targets, marked-by + timestamp, current attendance status ('Absent (non justifié)')",
+      "'Statut actuel', 'Soumis le', 'Dernière mise à jour', 'Réviseur' (who's assigned to review, or 'Non révisé')",
+      "'Notes du réviseur (optionnel)' -- internal free-text note field, separate from the parent-facing reason",
+      "'Refuser' / 'Approuver la justification' action buttons"
+    ],
+    "interactions": ["Reviewer can leave an internal note before deciding -- not visible to the parent, distinct from the public reason"]
+  },
+  "current_implementation": {
+    "exists": false,
+    "file": "src/features/attendance/ui/attendance-excuses-view.tsx",
+    "route": "/dashboard/attendance/excuses",
+    "what_matches": [
+      "The underlying data mostly exists: attendanceExcuses row has reason/documentUrl/status/reviewedById/reviewedAt; the linked attendance row and guardian contact info are both reachable via existing tables (guardianStudents/guardians)"
+    ],
+    "what_differs": [
+      "No drawer/detail view at all currently -- approve/reject happen directly from inline row buttons in the table, with no intermediate review screen",
+      "No 'contact parent' info surfaced anywhere on the excuses page (real data exists via guardianStudents, just not queried/joined into this route yet)",
+      "No real document preview/thumbnail/download -- documentUrl is a bare optional URL string with no upload endpoint behind it (confirmed and left honest in this session's build, not faked)",
+      "No 'reviewer notes' internal field -- attendanceExcuses schema has no column for this",
+      "No display of the underlying attendance record's marked-by/timestamp on this screen"
+    ]
+  },
+  "missing_to_add": [
+    {
+      "item": "Convert inline approve/reject buttons into a review drawer/modal, joining guardianStudents+guardians for the 'Contact parent' block",
+      "priority": "medium",
+      "effort": "medium"
+    },
+    {
+      "item": "Real document upload for excuses: reuse src/libs/api/uploads.ts (the shared tenant-namespaced upload helper already used for student documents/photos), add a real POST endpoint accepting a file for attendanceExcuses.documentUrl instead of a bare string, add PDF preview/thumbnail + download in the UI",
+      "priority": "high",
+      "effort": "medium",
+      "notes": "This was explicitly flagged as a known, honest gap in this session's completion report -- the plumbing pattern to copy already exists elsewhere in the app."
+    },
+    {
+      "item": "reviewerNotes column on attendanceExcuses (small migration) + UI field",
+      "priority": "low",
+      "effort": "small"
+    }
+  ]
+}

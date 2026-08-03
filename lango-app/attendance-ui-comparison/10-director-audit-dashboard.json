@@ -1,0 +1,77 @@
+{
+  "page": "director-audit-dashboard",
+  "title": "Attendance audit/risk dashboard (director view)",
+  "mockup_source_images": [
+    "ChatGPT Image 31 juil. 2026, 19_13_17 (6).png",
+    "ChatGPT Image 31 juil. 2026, 19_13_24 (10).png (empty state)"
+  ],
+  "role": "school_admin / director",
+  "mockup_description": {
+    "layout": "Full desktop dashboard with a dedicated 'Audit' sidebar item under Présences.",
+    "key_elements": [
+      "4 KPI cards WITH trend deltas AND horizontal progress bars: 'Taux de présence global 93,2% (+2.4pts vs semaine dernière)', 'Registres manquants 18 -- Critique (vs 12 hier)', 'Élèves à risque 36 (+8 vs semaine dernière)', 'Absences injustifiées 74 (-9 vs semaine dernière)'",
+      "'Évolution du taux de présence (7 derniers jours)' -- line chart",
+      "'Registres manquants (file d'attente)' table: Date, Classe, Enseignant, Statut (Critique/Élevé/Moyen severity tags), Temps (elapsed since class ended, e.g. '2h 15m')",
+      "'Signalements récents' side feed: last few flags with student, class, reason, timestamp",
+      "'Classes avec le taux de présence le plus faible' ranking table: class, level, effectif, taux, absences, injustifiées, trend arrow",
+      "'Interventions récentes' activity feed: Appel aux parents / Avertissement envoyé / Entretien programmé / SMS de rappel / Note interne ajoutée -- each with actor+timestamp",
+      "'Rappels envoyés par SMS (Simulé)' counter: total this week, estimated read rate, explicit '(Simulé)' tag and a footnote confirming no real send happens",
+      "Filters: Période, Date début/fin, Établissement, Classe, Statut",
+      "Empty state (2nd mockup): 'Aucun incident de présence à traiter pour le moment' with a friendly illustration + 'Actualiser les données' button, KPI tiles show '--' placeholders rather than 0 or fabricated numbers"
+    ],
+    "interactions": ["This is a monitoring surface, not a data-entry one -- everything here is read plus a few triage actions (reminder sends, drill into a class or flag)"]
+  },
+  "current_implementation": {
+    "exists": "partial",
+    "file": "src/features/attendance/ui/attendance-audit-view.tsx",
+    "route": "/dashboard/attendance/audit",
+    "what_matches": [
+      "Overall attendance rate, at-risk count, open-flags-by-type, missing-registers-today queue -- all real, all live-verified this session",
+      "Honest empty states throughout (real '0'/'--' shown when no data, no fabricated numbers) -- matches the mockup's empty-state discipline exactly",
+      "'Send reminder' action on a missing register -- real, logs a real (simulated) SMS to the teacher",
+      "Missing-register detection genuinely computed from real classScheduleSlots vs real attendance rows (Section 20 dependency) -- same underlying idea as the mockup's queue, just less detailed per-row"
+    ],
+    "what_differs": [
+      "No trend deltas anywhere (no '+2.4pts vs last week') -- same gap noted in 07-admin-excuses-list.json, no day/week-over-week comparison pattern exists in this app yet",
+      "No 7-day trend line chart",
+      "No severity levels (Critique/Élevé/Moyen) on missing registers -- current queue is a flat list with no urgency ranking",
+      "No 'classes with lowest attendance rate' ranking table",
+      "No 'interventions récentes' activity feed (calls made, warnings sent, meetings scheduled, notes added) -- there is no concept of a logged 'intervention' distinct from a flag or an SMS in the current schema",
+      "SMS counter exists conceptually (communication/reminders send-log already shows this app's messages) but isn't surfaced as a KPI tile on THIS specific page"
+    ]
+  },
+  "missing_to_add": [
+    {
+      "item": "Severity classification on missing registers (e.g. Critique if >2h since class ended, Élevé if >1h, Moyen otherwise) -- pure client/server computation off data already fetched, no new schema",
+      "priority": "medium",
+      "effort": "small"
+    },
+    {
+      "item": "'Classes with lowest attendance rate' ranking -- group existing attendanceSummary/attendance data by classSectionId",
+      "priority": "medium",
+      "effort": "medium"
+    },
+    {
+      "item": "7-day attendance-rate trend line chart -- needs a daily-snapshot or a live day-by-day aggregate query over the past week",
+      "priority": "low",
+      "effort": "medium"
+    },
+    {
+      "item": "Trend deltas (vs yesterday/last week) on all KPI cards",
+      "priority": "low",
+      "effort": "medium",
+      "notes": "Same underlying gap as 07-admin-excuses-list.json and 15 -- worth solving once, generically, rather than per-page."
+    },
+    {
+      "item": "'Interventions récentes' activity log -- would need a new small table (or reuse/extend auditLogs with a specific entityType) to record non-automatic actions like 'called the parent' or 'scheduled a meeting', since these aren't system-generated events",
+      "priority": "low",
+      "effort": "medium",
+      "notes": "New product concept, not just a missing view -- there's currently no way for an admin to log 'I called this parent' anywhere in the app."
+    },
+    {
+      "item": "Embed the SMS-sent-this-week counter as a KPI tile on this page (data already exists in smsMessages)",
+      "priority": "low",
+      "effort": "small"
+    }
+  ]
+}

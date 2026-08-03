@@ -1,0 +1,66 @@
+{
+  "page": "mobile-qr-scanner",
+  "title": "QR badge scanner (camera-based check-in) + scan success feedback",
+  "mockup_source_images": [
+    "ChatGPT Image 31 juil. 2026, 19_12_42 (5).png",
+    "ChatGPT Image 31 juil. 2026, 19_12_42 (6).png"
+  ],
+  "role": "teacher",
+  "mockup_description": {
+    "layout": "Full-screen dark modal overlay with a live camera viewfinder, then a full-screen success confirmation.",
+    "key_elements": [
+      "'Scanner le badge' modal: live camera feed, animated scan-frame corners, blue scan-line animation",
+      "'Flash' toggle button (torch on/off)",
+      "'Saisie manuelle du matricule' fallback link/tab, always visible even in camera mode",
+      "Success screen: confetti animation, green checkmark, 'Présence validée', full student card (photo, name, class, matricule)",
+      "'Heure d'enregistrement' timestamp",
+      "'Scans récents' list -- last 3 scanned students with time + checkmark",
+      "Auto-return-to-scanner countdown ('Retour au scanner dans 3 s')",
+      "'Scanner suivant' / 'Voir le registre' action buttons"
+    ],
+    "interactions": [
+      "Real camera access (getUserMedia) decodes a QR code from a physical student badge",
+      "On successful decode, marks that student Present and shows the success screen automatically",
+      "Auto-advances back to scanning after a few seconds for the next student -- designed for rapid-fire gate check-in of a whole class"
+    ]
+  },
+  "current_implementation": {
+    "exists": "partial",
+    "file": "src/features/attendance/ui/qr-scanner-modal.tsx",
+    "route": "embedded in /dashboard/attendance",
+    "what_matches": [
+      "A modal exists and is reachable from the roster view",
+      "'Saisie manuelle' fallback -- real, this is actually the ONLY input method currently",
+      "On match, marks the student Present in the roster (handleQrScan) -- real, functional"
+    ],
+    "what_differs": [
+      "No camera access anywhere -- grepped the component for camera/video/getUserMedia/BarcodeDetector/any QR-decode library: zero hits. There is no scan frame, no flash toggle, no live video.",
+      "No student photo, no dedicated full-screen success confirmation, no 'scans récents' list, no auto-return countdown, no 'Scanner suivant' flow -- current success feedback is a single inline text banner inside the same small modal",
+      "Current modal accepts typed student ID OR a name substring match against the loaded roster -- functional but manual-only, not really 'QR scanning' in the sense the product name implies"
+    ]
+  },
+  "missing_to_add": [
+    {
+      "item": "Real camera-based QR decoding: getUserMedia + BarcodeDetector API (native, Chrome/Edge/Android support is broad; needs a JS fallback lib like jsQR or @zxing/browser for Safari/iOS since BarcodeDetector isn't universally supported)",
+      "priority": "high",
+      "effort": "large",
+      "notes": "This is the single biggest gap in the whole attendance module vs the mockups -- the feature is currently a manual text-entry form styled/named as a QR scanner, not real QR scanning. Needs student badges to actually encode a scannable matricule/ID as a QR code too (unclear if that's generated anywhere yet -- would need to check student ID-card generation)."
+    },
+    {
+      "item": "Full-screen success confirmation with student photo, class, matricule, timestamp",
+      "priority": "medium",
+      "effort": "medium",
+      "notes": "Photo already exists on user.photoUrl (Section 15 upload work), so this is mostly a UI build once real scanning exists."
+    },
+    {
+      "item": "'Scans récents' running list + auto-return-to-scanner loop for rapid multi-student check-in",
+      "priority": "medium",
+      "effort": "medium"
+    },
+    {
+      "item": "Flash/torch toggle (MediaStreamTrack.applyConstraints({advanced:[{torch:true}]}) where supported)",
+      "priority": "low",
+      "effort": "small"
+    }
+  ]
+}

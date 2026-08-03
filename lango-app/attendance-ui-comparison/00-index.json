@@ -1,0 +1,30 @@
+{
+  "generated": "2026-07-31",
+  "context": "Comparison of 20 product mockup images (C:\\Users\\oussama\\Downloads\\ChatGPT Image 31 juil. 2026, 19_12_42-19_13_24 *.png) against the attendance module as it actually exists in this repo after ATTENDANCE-IMPLEMENTATION-PLAN.md was fully executed this session.",
+  "how_to_read_these_files": "One JSON file per distinct page/flow concept (mockups showing different STATES of the same page were grouped into one file). Each file has: mockup_description (what the image shows), current_implementation (what's real today, with exact file paths), missing_to_add (concrete, scoped gaps with priority/effort).",
+  "headline_finding": "The mockups describe a considerably larger product than ATTENDANCE-IMPLEMENTATION-PLAN.md scoped or built. Most gaps are additive (new pages/columns on top of what's real). One gap is a direct reversal of a decision made this session: the mockups show a full submit -> lock -> admin-reopen-with-reason register lifecycle, which is exactly the attendanceRegisters/attendanceEntries/attendanceAuditEvents model that was deleted this session as 'zero writers, dead weight'. That call was correct given the evidence available at the time (those tables really were unused), but these mockups are new evidence the feature was actually wanted -- see 05-mobile-register-lifecycle.json before building anything else attendance-related.",
+  "pages": [
+    { "file": "01-mobile-teacher-dashboard.json", "status": "missing", "priority": "medium" },
+    { "file": "02-mobile-attendance-intake.json", "status": "mostly real", "priority": "low" },
+    { "file": "03-mobile-qr-scanner.json", "status": "cosmetic shell only, no real camera scanning", "priority": "high" },
+    { "file": "04-mobile-submission-confirmation.json", "status": "partial (inline banner exists, dedicated screen doesn't)", "priority": "low" },
+    { "file": "05-mobile-register-lifecycle.json", "status": "missing -- was deliberately deleted this session", "priority": "high", "flag": "READ THIS ONE FIRST -- architecture decision needed before other attendance work continues" },
+    { "file": "06-mobile-empty-error-states.json", "status": "functional but unpolished", "priority": "low" },
+    { "file": "07-admin-excuses-list.json", "status": "mostly real, missing filters/trends", "priority": "low-medium" },
+    { "file": "08-admin-excuse-review-drawer.json", "status": "missing (inline actions only, no drawer, no real doc upload)", "priority": "medium-high" },
+    { "file": "09-admin-excuse-approve-reject-modals.json", "status": "missing -- rejection captures no reason today", "priority": "high", "flag": "reject-reason gap is a real product defect, not just missing polish" },
+    { "file": "10-director-audit-dashboard.json", "status": "core KPIs real, missing charts/trends/severity/ranking", "priority": "medium" },
+    { "file": "11-director-flags-list.json", "status": "missing (flags only shown as a summary today, no dedicated list)", "priority": "medium" },
+    { "file": "12-director-flag-detail.json", "status": "missing", "priority": "medium" },
+    { "file": "13-admin-sms-queue.json", "status": "SMS itself is real and honestly simulated; dedicated queue UI missing", "priority": "low" },
+    { "file": "14-director-audit-journal.json", "status": "underlying event data real, attendance-scoped view missing", "priority": "low" }
+  ],
+  "recommended_build_order_if_pursued": [
+    "1. Decide on 05 (register lifecycle) -- everything else can proceed independently either way, but 04's register-reference-ID and 14's register columns are blocked on this decision",
+    "2. 09's reject-reason field -- small, high-value, fixes a real gap (rejected excuses currently have no recorded reason)",
+    "3. 03's real QR camera scanning -- the single most visible gap vs. the mockups' emphasis on it (2 of 20 images)",
+    "4. 08's excuse review drawer + real document upload -- was already flagged as a known gap in this session's own completion report",
+    "5. 11 + 12 (flags list + detail) -- natural pair, both depend on the same small schema additions (assignedToId, severity)",
+    "6. Everything else (trend deltas, charts, activity feeds, SMS queue polish) -- lower value, larger effort for what's mostly dashboard richness rather than new capability"
+  ]
+}
