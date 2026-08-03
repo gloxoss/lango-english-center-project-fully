@@ -1,37 +1,52 @@
-# UltraPlan Discovery — Phase 6: Workforce Operations, HR & Payroll
+# UltraPlan Discovery
 
 ## Project Idea
-Phase 6: Workforce Operations, HR & Payroll
-Goal: Complete employee HR lifecycle, statutory CNSS/IR payroll processing, leave management, and payslip generation.
-- **HR & Employee Profiles**: Employee contract details (CDI/CDD/VAC), CNSS/AMO registration number, bank RIB, dependants count, base salary.
-- **Leave Management**: Leave categories (Paid, Sick, Maternity/Paternity, Unpaid), leave balance tracking, request & approval workflows.
-- **Salary Templates & Allowances**: Salary component definitions (Base, Seniority bonus, Transportation allowance, CNSS/AMO deductions, IR tax).
-- **Payroll Runs & Payslip Generator**: Monthly payroll batch run, gross-to-net calculations, printable bulletin de paie (PDF payslip), General Ledger expense posting.
-- **Employee Self-Service**: Employee dashboard view for downloading payslips and requesting leave.
+Fully fix all pages that other agent sessions built with hardcoded/mock data and no real backend wiring. For each: build or connect the real, secure, tenant-scoped business logic behind it so the page reads and writes real data instead of static placeholders.
 
 ## Codebase Context
-- **Tech Stack**: Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, Drizzle ORM, PostgreSQL.
-- **Existing User Model**: `user.salary`, `hireDate`, `workloadHours`, `jobTitle`, `department`.
-- **Existing Ledgers**: `journalEntries`, `journalEntryLines`, `chartOfAccounts` in `src/models/Schema.ts`.
+Existing codebase (not greenfield): SchoolOS/Lango, Next.js 16 App Router, Drizzle ORM, PostgreSQL, Better Auth, Tailwind v4. Multi-tenant K-12/language-center SaaS. Established conventions: `requireRequestContext` → `requireTenant`/`requireSuperAdmin` → Zod `.strict()` → tenant-scoped Drizzle query → `recordAudit()` → `apiErrorResponse()`. 79/133 API routes have `requireCapability` wired (this session's prior work). Category 6 (Existing Patterns) is answered by the codebase itself, not by asking the user.
 
 ## Discovery Q&A
 
-<!-- Categories: 9 total -->
+<!-- Categories: 9 total, condensed per user's existing-codebase context -->
+<!-- Progress is tracked per category -->
 
-### Category 5, 6 & 7: Self-Service, Accounting Integration & UI Vision
-- **Q5: Employee Self-Service**: Dedicated Employee Self-Service tab in portal to view payslips, leave balances, and submit leave requests.
-- **Q6: Payroll & GL Integration**: Automatic double-entry GL journal posting on payroll locking (Debit 6111 Salary Expense, Credit 4432 Staff Payable / 4441 CNSS payable).
-- **Q7: Dashboard UI**: Glassmorphic HR & Payroll dashboard at `/dashboard/hr` with stats overview, monthly payroll calculator modal, leave approvals table, and printable payslip generator.
+### Category 1: Core Requirements
+Q: Cover every hardcoded/mock page the audit finds, or only pages in roadmap-shipped phases?
+A: Everything the audit finds. If a page is reachable in the app, it should work or be clearly marked unavailable, regardless of nominal roadmap phase.
+
+### Category 7: Preferences & Tradeoffs
+Q: Fix newest agent-built pages first, or long-standing known-hardcoded ones (header search, users pagination, report cards) first?
+A: Newest first — most likely actively broken right now; fixing them prevents the gap calcifying while the other agent moves on to yet more new pages.
+
+Q: Default policy when a page shows a stat with no real schema backing (e.g. old fake GPA field)?
+A: Case-by-case, not a blanket rule. Some stats may be worth a small real migration if genuinely valuable; others get removed. Decide per page, not up front.
+
+Q: Coordination with the other agent's ~62 actively-edited files (academics, attendance, homework, settings)?
+A: Plan now, execute later. Planning doesn't touch files. Re-check file stability at execution time, per section, not at planning time.
+
+### Category 4: Edge Cases
+Q: Pages with no backend at all yet (needs new schema/migration) - design that too, or defer to a follow-up plan?
+A: Design it too. One comprehensive plan, no deferred stubs.
+
+### Category 5: Quality Attributes
+Q: Testing bar per fixed page?
+A: Real route-level test for anything touching money, permissions, or tenant isolation. tsc + manual browser check for straightforward CRUD/display pages.
+
+Q: Plan structure - one big plan or split by module?
+A: One plan, many sections. Single traceability matrix and progress view; sections still run independently.
+
+### Categories 2, 3, 6, 8, 9 — answered from existing context, not re-asked
+- **Users & Context**: already established (school_admin, teacher, accountant, receptionist, student, parent, guard roles; web dashboard, French-primary UI).
+- **Integration Points**: no new external integrations implied by this idea — internal DB wiring only, using the existing Drizzle/Postgres/Better Auth stack.
+- **Existing Patterns**: see Codebase Context above — established route pattern is the standard to match.
+- **Monetization**: not applicable, this is internal feature-completion work, not a product/pricing decision.
+- **Visual & UX Vision**: existing design system already defined in CLAUDE.md (slate/blue palette, KPI banners, data-dense tables) — not a redesign, pages keep their current look, just get real data.
 
 ## Discovery Summary
-- Total questions asked: 7
-- Categories fully covered: Core Requirements, Statutory Rules, Payroll Lifecycle, Leave Management, Accounting Integration, UX Vision.
-- Key themes identified:
-  - Moroccan statutory payroll formula (CNSS 4.48% capped 6,000 DH + AMO 2.26% + IR progressive brackets).
-  - New migration `0041_add_hr_payroll_tables.sql` with `employee_profiles`, `salary_components`, `salary_templates`, `payroll_runs`, `payslips`, `leave_categories`, `leave_requests`.
-  - Multi-stage payroll lifecycle (Draft → Calculate → Approve → Lock + GL Post → PDF Payslips).
-  - Leave request workflow with manager approval and balance tracking.
-  - Automatic GL journal posting on payroll lock linking to Phase 4 double-entry ledger.
-  - Glassmorphic HR dashboard UI + Employee self-service payslip/leave tab.
-
+- Total questions asked: 7 (across 4 categories with real decision points)
+- Categories fully covered: Core Requirements, Edge Cases, Quality Attributes, Preferences & Tradeoffs
+- Categories answered from existing context (not re-asked): Users & Context, Integration Points, Existing Patterns, Visual & UX
+- Categories skipped as not applicable: Monetization & Business Model
+- Key themes: fix newest pages first, comprehensive scope (build missing backend, not stubs), case-by-case on fake stats, test money/security paths only, one unified plan
 

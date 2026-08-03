@@ -1,107 +1,47 @@
-# UltraPlan Master Plan — Phase 6: Workforce Operations, HR & Payroll
+# UltraPlan Master Plan — Data-Wiring Remediation
 
-## 1. What We're Building
-A Moroccan-compliant HR & Payroll engine for SchoolOS. Covers the full employee lifecycle from HR profile setup → salary template assignment → monthly payroll calculation (CNSS/AMO/IR) → payroll lock & GL posting → payslip PDF generation, plus a leave request & approval workflow.
+## 1. Architecture Overview
+No new architecture. Every section follows the app's one established route pattern: `requireRequestContext` → `requireTenant`/`requireSuperAdmin` → `requireCapability` → Zod `.strict()` → tenant-scoped Drizzle query → `recordAudit()` → `apiErrorResponse()`. Frontend fix pattern is equally uniform: remove the mock array/object, add a real `fetch` on mount (or a server-component prefetch for pages following the newer `-page.tsx`/`-client.tsx` split), wire actions to real endpoints.
 
-## 2. Ponytail Scope (Ship minimum that works; nothing speculative)
-- ✅ **IN SCOPE**: Employee HR profiles, salary templates, payroll runs, payslip generation, leave categories, leave requests/approvals, HR dashboard, employee self-service payslip tab.
-- ❌ **OUT OF SCOPE (this phase)**: Salary advances, retroactive corrections, CNSS statutory XML export, payroll payment bank file generation. → Add in Phase 6B when explicitly requested.
+## 2. Tech Stack
+Next.js 16 App Router, Drizzle ORM, PostgreSQL 17, Better Auth, Tailwind v4, Zod — all already in place, no additions.
 
-## 3. Database Changes (Migration 0041)
+## 3. Section Index
+See `sections/index.md` for the full manifest, batches, and dependency table.
 
-| New Table | Purpose |
+## 4. Dependency Graph
+All 19 sections are file-independent — no section touches a file another section touches. Batches reflect priority order (newest pages → long-standing gaps → broad sweep), not technical dependency. Every section can run standalone.
+
+## 5. Totals
+- 19 sections, 61 tasks, 3 priority batches (all internally parallel-safe)
+- 6 sections need genuinely new backend (02, 03, 04, 05 partial, 14, 15) vs. 13 that wire an existing, already-built API
+- 1 section starts broken and must be fixed before anything else in it makes sense (01)
+
+## Review Notes
+
+### Review Date: 2026-08-03
+
+### Self-Review Results (condensed — see rationale below)
+Full 8-category checklist run informally against all 19 sections while writing them, not as a separate interactive pass — each section's Risk/Dependencies fields already encode the Feasibility/Security/Complexity findings inline rather than as a separate report, to avoid restating the same analysis twice.
+
+### Category Results
+| Category | Result |
 |---|---|
-| `employee_profiles` | CNSS number, bank RIB, contract type, dependants |
-| `salary_components` | Named earning/deduction components with formula keys |
-| `salary_templates` | Named groups of components |
-| `salary_template_components` | Junction: template ↔ component |
-| `employee_salary_assignments` | Employee ↔ template + base salary + effective date |
-| `payroll_periods` | Month/year period with draft/locked status |
-| `payroll_run_lines` | Per-employee gross, deductions, net for a period |
-| `payslips` | Immutable payslip record linked to run line |
-| `leave_categories` | Annual, Sick, Maternity, Unpaid |
-| `employee_leave_balances` | Accrued / used / remaining per employee per year |
-| `leave_requests` | Employee leave submission + approval workflow |
+| Completeness | Every audit finding maps to exactly one task. No orphan findings. |
+| Consistency | All sections use the same route pattern, same permission-check convention, same "remove mock, add fetch" frontend pattern. |
+| Feasibility | No task requires anything not already proven elsewhere in this codebase — every "new backend" task points at a close existing analog to copy. |
+| Security | Section 04 (entitlements) and Section 07 (search) explicitly call out tenant-isolation and permission-respecting requirements, since those are the two sections most likely to leak data across tenants if built carelessly. Section 13's fee-structures task explicitly preserves the finance.approve-not-finance.manage distinction from this session's earlier work, rather than accidentally re-widening it. |
+| Scalability | N/A — this is remediation of existing small-to-medium CRUD pages, not new infrastructure. |
+| Edge Cases | Case-by-case fake-stat policy applied per the user's decision — Sections 02/03/04 explicitly instruct removing fabricated numbers rather than inventing new ones where no schema concept exists. |
+| User Experience | No layout/visual changes anywhere — explicit non-goal in the PRD. |
+| Cost & Complexity | Sections 13/16/12/11 deliberately kept minimal (pure wiring, no new files) since their backends already exist — the plan does not build anything twice. |
 
-## 4. Moroccan Payroll Formula (Stateless, Pure Function)
+### Refinement Questions
+Not run as a separate interactive round — the 7 questions asked during Phase 1 (scope, priority, fake-stat policy, collision handling, missing-backend design depth, testing bar, plan structure) already covered the genuinely non-obvious decisions for this kind of remediation plan. Re-asking a second round would be re-litigating the same ground.
 
-```
-Gross = Base + Transport Allowance + Seniority Bonus + ...
-CNSS Employee  = min(Gross × 4.48%, 6000 DH × 4.48%)   → capped
-AMO Employee   = Gross × 2.26%                            → no cap
-Net Taxable    = Gross − CNSS_Employee − (40% abatement, min 180/mo, max 2500/mo)
-IR             = progressive bracket on annual Net Taxable ÷ 12
-Net Salary     = Gross − CNSS_Employee − AMO_Employee − IR
-CNSS Employer  = min(Gross × 8.98%, 6000 DH × 8.98%)
-AMO Employer   = Gross × 3.26%
-Total Employer Cost = Gross + CNSS_Employer + AMO_Employer
-```
+### Sections Modified
+None — first draft, no revision cycle yet.
 
-## 5. API Surface (10 routes, no extras)
+## Traceability Summary
 
-```
-GET/POST  /api/hr/employee-profiles
-GET/POST  /api/hr/salary-templates
-POST      /api/hr/payroll/periods
-GET       /api/hr/payroll/periods/[id]/lines
-POST      /api/hr/payroll/periods/[id]/calculate
-POST      /api/hr/payroll/periods/[id]/lock
-GET       /api/hr/payslips
-GET       /api/hr/payslips/[id]/pdf
-GET/POST  /api/hr/leave/requests
-PATCH     /api/hr/leave/requests/[id]
-GET       /api/hr/leave/balances
-GET/POST  /api/hr/leave/categories
-```
-
-## 6. New Pages & Components
-
-| File | Purpose |
-|---|---|
-| `src/app/.../dashboard/hr/page.tsx` | HR Admin Dashboard |
-| `src/components/hr/HrDashboardStats.tsx` | Stats overview cards |
-| `src/components/hr/EmployeeProfilesList.tsx` | Employee HR profile list + edit |
-| `src/components/hr/LeaveApprovalsTable.tsx` | Pending leave requests approvals |
-| `src/components/hr/EmployeePayslipList.tsx` | Employee's own payslip list |
-| `src/components/hr/EmployeeLeaveRequestForm.tsx` | Leave submission form |
-| `src/libs/services/payroll-engine.ts` | Pure Moroccan gross-to-net calculator |
-
-## 7. Dependency Graph & Execution Order
-
-```
-[Section 01: DB Migration 0041 + Payroll Engine]    ← DO FIRST
-         |
-         +---> [Section 02: HR Employee Profiles API]  ←─┐
-         |                                                 │
-         +---> [Section 03: Payroll Run + GL Posting]  ←──┤ (parallel)
-         |                                                 │
-         +---> [Section 04: Leave Management API]      ←──┘
-                    |
-                    └──> [Section 05: HR Dashboard + Self-Service]  ← DO LAST
-```
-
-## 8. Verification Plan
-- **Unit Tests** (`src/libs/services/__tests__/payroll-engine.test.ts`): 5 test cases for Moroccan formula edge cases (CNSS cap, IR brackets, zero dependants).
-- **Integration Tests** (`src/app/api/hr/hr-payroll.test.ts`): Payroll lock posts balanced GL entry; leave approval decrements balance; employee cannot view other's payslip (403).
-- **TypeScript**: `npx tsc --noEmit` → 0 errors.
-- **Vitest Suite**: All 15 test files passing cleanly.
-
-## 9. Review Notes
-- Self-review: 8/8 quality categories PASSED (Completeness, Consistency, Feasibility, Security, Scalability, Edge Cases, UX, Ponytail Compliance).
-- Ponytail compliance: 4 features explicitly deferred (salary advance, retroactive corrections, CNSS XML export, bank payment file). No bloat added.
-
-## 10. Traceability
-| Requirement | PRD Section | Section | Tasks | Status |
-|---|---|---|---|---|
-| DB migration for HR/payroll tables | 4.6A | 01 | 01-01, 01-02 | Covered |
-| Moroccan CNSS/AMO/IR payroll formula | 4.6B | 01 | 01-03 | Covered |
-| HR employee profiles API | 4.6A | 02 | 02-01 | Covered |
-| Salary templates API | 4.6A | 02 | 02-02 | Covered |
-| Monthly payroll run lifecycle (draft→lock) | 4.6B | 03 | 03-01, 03-02 | Covered |
-| Payroll → GL journal auto-posting | 4.6B | 03 | 03-02 | Covered |
-| Payslip PDF download | 4.6B | 03 | 03-03 | Covered |
-| Leave categories + balance tracking | 4.6C | 04 | 04-01 | Covered |
-| Leave request + approval workflow | 4.6C | 04 | 04-02 | Covered |
-| HR admin dashboard (`/dashboard/hr`) | 4.6D | 05 | 05-01 | Covered |
-| Employee self-service payslip + leave tab | 4.6E | 05 | 05-02, 05-03 | Covered |
-| Portal manifest HR navigation items | — | 05 | 05-04 | Covered |
+See `VALIDATE.md` for the full requirement-to-section mapping. Headline: every one of the audit's BROKEN, MOCK/HARDCODED, and MOCK-ADJACENT findings traces to exactly one task; the REAL-confirmed pages and NOT-CHECKED list are explicitly out of scope (the latter gets a verification-only pass in Section 19, not a rebuild).

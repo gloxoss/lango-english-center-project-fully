@@ -1,23 +1,33 @@
-# UltraPlan Summary — Phase 5: Primary Dedicated Role Portals
+# UltraPlan Summary — Data-Wiring Remediation
 
 ## What We're Building
-Role-tailored dashboards and navigation experiences for Teachers, Students, Parents, Accountants, and Receptionists driven by a server-controlled `/api/portal/manifest` payload.
+Every SchoolOS page currently showing hardcoded/mock data — or a save button wired to nothing — gets connected to real, tenant-scoped, secure backend logic. 1 broken page fixed, 9 pages get new backends built, 19 pages get wired to existing-but-unused APIs, 3 pages get their fake actions made real.
 
-## Key Portals & Features
-- **5A Teacher Portal (`/dashboard/teacher`)**: Today schedule, 1-click attendance taker, homework publisher, Moroccan `/20` markbook grid.
-- **5B Student & Parent Portals (`/dashboard/student` & `/dashboard/parent`)**: Multi-child header switcher, academic progress timeline, exam bulletins, tuition invoice breakdown.
-- **5C Accountant Portal (`/dashboard/accountant`)**: Front-desk cashier payment collection modal, receivables allocation subledger, bank reconciliation, fiscal period closing status.
-- **5D Receptionist Portal (`/dashboard/receptionist`)**: Walk-in inquiry intake modal, lead qualification pipeline, visitor check-in log, appointment calendar.
+## Key Findings (from the codebase audit, not guessed)
+- 32 pages need work; ~7 confirmed already real; ~45 unverified (presumed OK, get a lightweight check in Section 19)
+- Most "mock" pages already have a matching backend sitting unused — this is overwhelmingly a wiring problem, not a missing-backend problem
+- 6 sections need genuinely new backend design (exams, rooms, tenant entitlements, report cards, dunning reminders, fee allocation)
 
 ## Tech Stack
-- Next.js 15 (App Router), React 19, TypeScript, Drizzle ORM, PostgreSQL, Tailwind CSS glassmorphic panel design system.
+No changes — Next.js 16, Drizzle, PostgreSQL, Better Auth, Tailwind v4, same route pattern used ~80 times already in this codebase.
+
+## Risk Areas
+- [red] Section 01 (Homework Submissions) — currently fails to compile, fix first
+- [yellow] Section 04 (Entitlements Catalog) — must not leak cross-tenant entitlement data
+- [yellow] Section 07 (Header Search) — must respect each result type's existing read permission, not bypass it
+- [yellow] Section 15 (Financial Reports) — must derive from real ledger data, not a second parallel calculation that could drift
 
 ## Plan Structure
-- **5 sections**, **15 executable tasks** across **3 parallel batches**.
-- **100% traceability** (8 discovery requirements mapped to 15 tasks).
+- 19 sections, 61 tasks, 3 priority batches
+- All sections file-independent — safe to run in any order or fully parallel
+- 100% traceability: every audit finding maps to a task, no invented scope
 
 ## Execution Guide
-To start building Phase 5 Role Portals:
-1. Run: `Read .ultraplan/sections/index.md and execute section 1`
-2. Run Batch 2 (Section 02 & Section 03 in parallel).
-3. Run Batch 3 (Section 04 & Section 05 in parallel).
+1. Before running any section: `git status` its target files — hold if your other agent session has them open.
+2. Batch 1 first (newest pages, per your stated priority): sections 01-06.
+3. Say: "Read .ultraplan/sections/index.md and execute section 01"
+4. After each section: `tsc --noEmit`, then the section's own Verify steps.
+5. Batches 2 and 3 (sections 07-19) can follow in any order once 1 is done, or run in parallel with it on file-independent sections.
+
+## How to Update This Plan
+Run: /ultraplan update
