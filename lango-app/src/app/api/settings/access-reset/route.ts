@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { accessResetRequests, account, guardians, guardianStudents, smsMessages, user } from '@/models/Schema';
@@ -26,6 +27,7 @@ export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'settings.security.manage');
 
     const rows = await db
       .select({
@@ -65,6 +67,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'settings.security.manage');
     const raw = await request.clone().json().catch(() => ({}));
 
     if (raw.action === 'send_sms') {

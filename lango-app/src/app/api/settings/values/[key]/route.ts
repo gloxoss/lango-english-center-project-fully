@@ -4,6 +4,8 @@ import { and, desc, eq } from 'drizzle-orm';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse, ApiError } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
+import type { PermissionKey } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { getDefinition, getEffectiveValue, setSettingValue } from '@/libs/settings/registry';
 import { db } from '@/libs/DB';
@@ -17,6 +19,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     const { key } = await params;
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'settings.read');
 
     const def = getDefinition(key);
     const effective = await getEffectiveValue(tenantId, context.branchId, key);
@@ -52,6 +55,8 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     const { key } = await params;
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    // getDefinition() throws 400 for unknown keys.
+    await requireCapability(context, getDefinition(key).requiredPermission as PermissionKey);
     const body = await parseJson(request, patchSchema);
 
     // Optimistic concurrency check.
@@ -95,6 +100,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     const { key } = await params;
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, getDefinition(key).requiredPermission as PermissionKey);
     const body = await parseJson(request, rollbackSchema);
 
     // Find the version record to rollback to.
