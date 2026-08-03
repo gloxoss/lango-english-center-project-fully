@@ -7,7 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { Users, GraduationCap, Briefcase, Calculator, Search, MoreVertical } from 'lucide-react';
+import { Users, GraduationCap, Briefcase, Calculator, Search, MoreVertical, Trash2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 type StaffMember = {
   id: string;
@@ -28,19 +34,29 @@ export function StaffManagementView({ locale }: { locale: string }) {
   const [roleFilter, setRoleFilter] = useState('Tous');
 
   useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch('/api/users?pageSize=200');
-        const json = await res.json();
-        if (json.success) {
-          setStaff((json.data as StaffMember[]).filter(u => u.role !== 'Tuteur'));
-        }
-      } catch (err) {
-        console.error('Failed to load staff', err);
-      }
-    }
     load();
   }, []);
+
+  async function load() {
+    try {
+      const res = await fetch('/api/users?pageSize=200');
+      const json = await res.json();
+      if (json.success) {
+        setStaff((json.data as StaffMember[]).filter(u => u.role !== 'Tuteur'));
+      }
+    } catch (err) {
+      console.error('Failed to load staff', err);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      await fetch(`/api/users?id=${id}`, { method: 'DELETE' });
+      await load();
+    } catch (err) {
+      console.error('Failed to delete staff member', err);
+    }
+  }
 
   const filtered = staff.filter((s) => {
     const term = searchTerm.trim().toLowerCase();
@@ -168,9 +184,19 @@ export function StaffManagementView({ locale }: { locale: string }) {
                   </td>
                   <td className="py-3.5 px-4 font-bold text-[#2487B8] whitespace-nowrap">{st.status}</td>
                   <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                    <button className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400">
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button type="button" className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400">
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleDelete(st.id)} className="text-rose-600 focus:text-rose-600">
+                          <Trash2 className="mr-2 w-3.5 h-3.5" />
+                          Supprimer
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </td>
                 </tr>
               ))}

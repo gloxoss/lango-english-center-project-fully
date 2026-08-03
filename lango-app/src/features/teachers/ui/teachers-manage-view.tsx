@@ -14,10 +14,10 @@ import {
   Edit2,
   Eye,
   FileText,
-  Filter,
   MoreVertical,
   Plus,
   Search,
+  Trash2,
   Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -27,13 +27,18 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { DataTable, Column } from '@/components/shared/data-table';
 import { exportToCsv } from '@/libs/csv-export';
 
@@ -43,29 +48,83 @@ export function TeachersManageView({ locale }: { locale: string }) {
   const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
   const [filterTab, setFilterTab] = useState<string>('Tous');
   const [searchTerm, setSearchTerm] = useState('');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
+  const [form, setForm] = useState({ fullName: '', email: '', phone: '', employeeId: '', specialization: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    async function loadData() {
-      setIsLoading(true);
-      try {
-        const res = await fetch('/api/teachers?pageSize=200');
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success && Array.isArray(json.data)) {
-            setTeachers(json.data);
-            if (json.data.length > 0) {
-              setSelectedTeacherId(json.data[0].id);
-            }
+  async function loadData() {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/teachers?pageSize=200');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          setTeachers(json.data);
+          if (json.data.length > 0) {
+            setSelectedTeacherId(prev => prev ?? json.data[0].id);
           }
         }
-      } catch (err) {
-        console.error('Failed to load teachers data', err);
-      } finally {
-        setIsLoading(false);
       }
+    } catch (err) {
+      console.error('Failed to load teachers data', err);
+    } finally {
+      setIsLoading(false);
     }
+  }
+
+  useEffect(() => {
     loadData();
   }, []);
+
+  const openCreateDialog = () => {
+    setEditingTeacher(null);
+    setForm({ fullName: '', email: '', phone: '', employeeId: '', specialization: '' });
+    setDialogOpen(true);
+  };
+
+  const openEditDialog = (t: Teacher) => {
+    setEditingTeacher(t);
+    setForm({ fullName: t.name, email: t.email, phone: t.phone, employeeId: t.employeeId, specialization: t.specialization });
+    setDialogOpen(true);
+  };
+
+  const handleSubmit = async () => {
+    if (!form.fullName.trim()) {
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      if (editingTeacher) {
+        await fetch('/api/teachers', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editingTeacher.id, fullName: form.fullName, phone: form.phone, specialization: form.specialization }),
+        });
+      } else {
+        await fetch('/api/teachers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        });
+      }
+      setDialogOpen(false);
+      await loadData();
+    } catch (err) {
+      console.error('Failed to save teacher', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await fetch(`/api/teachers?id=${id}`, { method: 'DELETE' });
+      await loadData();
+    } catch (err) {
+      console.error('Failed to delete teacher', err);
+    }
+  };
 
   const filteredTeachers = teachers.filter((t) => {
     if (filterTab === 'Actifs' && t.status !== 'Actif' && t.status !== 'active') {
@@ -167,12 +226,30 @@ export function TeachersManageView({ locale }: { locale: string }) {
           >
             <Eye className="size-4" />
           </Link>
-          <button className="rounded-lg p-1 text-slate-400 hover:bg-slate-100">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); openEditDialog(t); }}
+            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+          >
             <Edit2 className="size-4" />
           </button>
-          <button className="rounded-lg p-1 text-slate-400 hover:bg-slate-100">
-            <MoreVertical className="size-4" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                onClick={e => e.stopPropagation()}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+              >
+                <MoreVertical className="size-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleDelete(t.id)} className="text-rose-600 focus:text-rose-600">
+                <Trash2 className="mr-2 size-3.5" />
+                Supprimer
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ),
       className: 'text-center',
@@ -329,18 +406,7 @@ export function TeachersManageView({ locale }: { locale: string }) {
               <Button
                 variant="outline"
                 size="sm"
-                className="
-                  h-9 gap-1.5 rounded-full border-slate-200 px-3 text-xs
-                  font-bold
-                "
-              >
-                <Filter className="size-3.5" />
-                {' '}
-                Filtres
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
+                onClick={() => exportToCsv(filteredTeachers, 'enseignants')}
                 className="
                   h-9 gap-1.5 rounded-full border-slate-200 px-3 text-xs
                   font-bold
@@ -353,6 +419,7 @@ export function TeachersManageView({ locale }: { locale: string }) {
               <Button
                 variant="primary"
                 size="sm"
+                onClick={openCreateDialog}
                 className="
                   h-9 gap-1.5 rounded-full bg-[#0066FF] px-4 text-xs font-bold
                   hover:bg-[#0052CC]
@@ -582,6 +649,49 @@ export function TeachersManageView({ locale }: { locale: string }) {
           </Card>
         </div>
       )}
+
+      {/* Create / Edit Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-md rounded-2xl bg-white p-6">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-extrabold text-[#16212B]">
+              {editingTeacher ? 'Modifier l\'enseignant' : 'Créer un nouvel enseignant'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="my-2 space-y-3 text-xs">
+            <div>
+              <label className="mb-1 block font-bold text-slate-700">Nom complet *</label>
+              <Input value={form.fullName} onChange={e => setForm({ ...form, fullName: e.target.value })} className="h-9 rounded-xl text-xs" />
+            </div>
+            {!editingTeacher && (
+              <div>
+                <label className="mb-1 block font-bold text-slate-700">Email</label>
+                <Input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="h-9 rounded-xl text-xs" />
+              </div>
+            )}
+            <div>
+              <label className="mb-1 block font-bold text-slate-700">Téléphone</label>
+              <Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="h-9 rounded-xl text-xs" />
+            </div>
+            {!editingTeacher && (
+              <div>
+                <label className="mb-1 block font-bold text-slate-700">Matricule</label>
+                <Input value={form.employeeId} onChange={e => setForm({ ...form, employeeId: e.target.value })} className="h-9 rounded-xl text-xs" />
+              </div>
+            )}
+            <div>
+              <label className="mb-1 block font-bold text-slate-700">Spécialité</label>
+              <Input value={form.specialization} onChange={e => setForm({ ...form, specialization: e.target.value })} className="h-9 rounded-xl text-xs" />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDialogOpen(false)} className="h-9 rounded-full text-xs">Annuler</Button>
+            <Button variant="primary" disabled={isSubmitting} onClick={handleSubmit} className="h-9 rounded-full bg-[#0066FF] text-xs text-white">
+              {editingTeacher ? 'Mettre à jour' : 'Créer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
