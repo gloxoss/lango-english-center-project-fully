@@ -260,6 +260,55 @@
       "when": 1785700100000,
       "tag": "0036_add_role_permission_granted",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1785700200000,
+      "tag": "0037_add_student_placements",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1785700300000,
+      "tag": "0038_add_receivables_ledger",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1785700400000,
+      "tag": "0039_add_double_entry_ledger",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1785700500000,
+      "tag": "0040_harden_student_placements",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1785700600000,
+      "tag": "0041_convert_finance_money_to_numeric",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1785700700000,
+      "tag": "0042_harden_finance_reference_integrity",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1785700800000,
+      "tag": "0043_add_hr_payroll_tables",
+      "breakpoints": true
     }
   ]
 }
