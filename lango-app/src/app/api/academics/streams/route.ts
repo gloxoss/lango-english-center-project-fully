@@ -4,6 +4,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, streamCreateSchema, streamUpdateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { streams } from '@/models/Schema';
@@ -16,6 +17,7 @@ export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'academics.manage');
     const { searchParams } = new URL(request.url);
     const pagination = parsePagination(searchParams);
     const where = eq(streams.tenantId, tenantId);
@@ -41,6 +43,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'academics.manage');
     const body = await parseJson(request, streamCreateSchema);
 
     const [inserted] = await db.insert(streams).values({ tenantId, name: body.name }).returning();
@@ -57,6 +60,7 @@ export async function PUT(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'academics.manage');
     const body = await parseJson(request, streamUpdateSchema);
 
     const [updated] = await db
@@ -81,6 +85,7 @@ export async function DELETE(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'academics.manage');
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 

@@ -4,6 +4,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
+import { requireCapability } from '@/libs/api/permissions';
 import { classCreateSchema, classUpdateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { classes, mediums, shifts, streams } from '@/models/Schema';
@@ -80,6 +81,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'academics.manage');
     const body = await parseJson(request, classCreateSchema);
 
     await assertSameTenantReferences(tenantId, body);
@@ -108,6 +110,7 @@ export async function PUT(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'academics.manage');
     const body = await parseJson(request, classUpdateSchema);
 
     await assertSameTenantReferences(tenantId, body);
@@ -141,6 +144,7 @@ export async function DELETE(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'academics.manage');
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 

@@ -4,6 +4,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
+import { requireCapability } from '@/libs/api/permissions';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { classSectionCreateSchema, classSectionUpdateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
@@ -90,6 +91,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'academics.manage');
     const body = await parseJson(request, classSectionCreateSchema);
 
     const mediumId = await resolveMediumId(tenantId, body.classId, body.sectionId);
@@ -111,6 +113,7 @@ export async function PUT(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'academics.manage');
     const body = await parseJson(request, classSectionUpdateSchema);
 
     const set: { classId?: string; sectionId?: string; mediumId?: string; updatedAt: string } = {
@@ -150,6 +153,7 @@ export async function DELETE(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'academics.manage');
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 

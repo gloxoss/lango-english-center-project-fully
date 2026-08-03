@@ -4,6 +4,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, semesterCreateSchema, semesterUpdateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { semesters } from '@/models/Schema';
@@ -22,6 +23,7 @@ export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'academics.manage');
     const { searchParams } = new URL(request.url);
     const pagination = parsePagination(searchParams);
     const where = eq(semesters.tenantId, tenantId);
@@ -47,6 +49,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'academics.manage');
     const body = await parseJson(request, semesterCreateSchema);
 
     const [inserted] = await db
@@ -66,6 +69,7 @@ export async function PUT(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'academics.manage');
     const body = await parseJson(request, semesterUpdateSchema);
 
     const [updated] = await db
@@ -90,6 +94,7 @@ export async function DELETE(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'academics.manage');
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, scheduleSlotCreateSchema, scheduleSlotUpdateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { classes, classScheduleSlots, classSections, classSubjects, sections, subjects, user } from '@/models/Schema';
@@ -81,6 +82,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'academics.manage');
     const body = await parseJson(request, scheduleSlotCreateSchema);
 
     await assertReferencesBelongToTenant(tenantId, body);
@@ -102,6 +104,7 @@ export async function PUT(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'academics.manage');
     const body = await parseJson(request, scheduleSlotUpdateSchema);
 
     const [existing] = await db.select().from(classScheduleSlots).where(and(eq(classScheduleSlots.id, body.id), eq(classScheduleSlots.tenantId, tenantId))).limit(1);
@@ -141,6 +144,7 @@ export async function DELETE(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'academics.manage');
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
