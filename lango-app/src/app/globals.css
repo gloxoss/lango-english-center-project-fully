@@ -13,6 +13,46 @@
   --font-sans: 'Albert Sans', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-display: 'Albert Sans', sans-serif;
   --font-arabic: 'Cairo', 'IBM Plex Sans Arabic', sans-serif;
+
+  /* ── SchoolOS DESIGN.md full token set (Batch 1+) ───────────────────── */
+  --color-sos-canvas: #EDF3F8;          /* Cerulean Mist — page background */
+  --color-sos-surface: #FFFFFF;         /* Cards, panels */
+  --color-sos-surface-sunken: #F6F9FC;  /* Table headers, search fields */
+  --color-sos-surface-inverse: #16212B; /* Inverse card (1 per dashboard) */
+
+  --color-sos-primary: #2487B8;
+  --color-sos-primary-hover: #3D9BC9;
+  --color-sos-primary-active: #1B6C93;
+  --color-sos-primary-soft: #DCEBF4;    /* Active nav pill, selected rows */
+  --color-sos-primary-soft-hover: #CBE1EF;
+  --color-sos-on-primary: #FFFFFF;
+
+  --color-sos-ink: #16212B;
+  --color-sos-body: #5A6B7A;
+  --color-sos-muted: #8FA0AE;
+  --color-sos-hairline: #E4EBF2;
+  --color-sos-hairline-strong: #CFDAE4;
+
+  /* Signal Cyan — automated messaging ONLY, never decorative */
+  --color-sos-signal: #0EA5C4;
+  --color-sos-signal-soft: #DFF5F9;
+  --color-sos-signal-active: #0B7A93;
+
+  /* Semantic */
+  --color-sos-success: #17A673;
+  --color-sos-success-soft: #DDF5EC;
+  --color-sos-warning: #E8A33D;
+  --color-sos-warning-soft: #FCF0DC;
+  --color-sos-danger: #E5544B;
+  --color-sos-danger-soft: #FCE4E2;
+  --color-sos-info: #5B8DEF;
+  --color-sos-info-soft: #E4EDFD;
+
+  /* Shadows — two-layer soft elevation */
+  --shadow-sos-raised: 0 1px 2px rgba(22,33,43,0.04), 0 2px 8px rgba(22,33,43,0.05);
+  --shadow-sos-hover: 0 4px 16px rgba(22,33,43,0.09);
+  --shadow-sos-overlay: 0 12px 32px rgba(22,33,43,0.14);
+  --shadow-sos-focus: 0 0 0 3px rgba(36,135,184,0.28);
 }
 
 @layer base {
@@ -50,6 +90,14 @@
     color: var(--color-brand-ink);
     letter-spacing: -0.03em;
     font-weight: 700;
+  }
+
+  table, thead, tbody, tr, th, td {
+    border-color: #E2E8F0;
+  }
+
+  tr {
+    border-bottom-color: #F1F5F9;
   }
 }
 
@@ -99,3 +147,25 @@
     background: #2487B8;
   }
 }
+
+/* ── Global Table & Border Softening (Fix Tailwind v4 dark border fallback) ── */
+table, thead, tbody, tr, th, td {
+  border-color: #E2E8F0 !important;
+}
+
+table tr, table td, table th {
+  border-bottom-color: #E2E8F0 !important;
+}
+
+table tr {
+  border-bottom: 1px solid #E2E8F0 !important;
+}
+
+table thead tr {
+  border-bottom: 1px solid #CBD5E1 !important;
+}
+
+table tbody tr:last-child {
+  border-bottom: none !important;
+}
+

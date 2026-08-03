@@ -1,3 +1,79 @@
+# SchoolOS / Lango Changelog
+
+Real project changes, newest first. Everything below the `---` separator is
+the auto-generated release history of `ixartz/SaaS-Boilerplate`, the
+template this project was forked from — kept for provenance, not relevant
+to SchoolOS/Lango-specific work. See `AGENT-HANDOFF.md` for full context on
+any entry below.
+
+## 2026-07-31 — Ramom School Dashboard Widgets, Charts & Analytics Implementation
+
+### Added
+- Ramom School style 8-card Metric Strength & Operational grid (`strength-metric-cards.tsx`).
+- "Income vs Expense Of [Month]" Donut chart component (`income-expense-donut.tsx`).
+- 12-Month Annual Fee Summary Area Chart component (`annual-fee-summary-chart.tsx`).
+- Student Quantity Donut chart by level/cycle & branch (`student-quantity-donut.tsx`).
+- Weekend / Weekly Attendance Inspection Bar Chart component (`attendance-inspection-chart.tsx`).
+- Interactive monthly School & Platform Calendar widget (`dashboard-calendar-widget.tsx`).
+- Student & Staff Today Birthday Tracker widget (`birthday-tracker-widget.tsx`).
+- Super Admin cross-tenant summary API route (`/api/super-admin/summary`) and "All Branch Dashboard" view.
+- Single-tenant School Admin dashboard summary endpoint extensions (`/api/dashboard/summary`) and view.
+
+## 2026-07-31 (latest pass) — Attendance module: register lifecycle, real QR, document upload, flag case-management
+
+### Added
+- Register lock/reopen lifecycle: submitting attendance locks a
+  per-class/date/period register with a generated reference; admin reopen
+  requires a reason, resubmit requires a correction note. New table
+  `attendanceRegisters`, helper `src/libs/api/attendance-registers.ts`.
+- Real QR camera scanning (`getUserMedia` + `BarcodeDetector`) in
+  `qr-scanner-modal.tsx`, replacing the manual-entry-only implementation.
+- Real document upload for excuses (PDF/image, tenant-namespaced, served
+  with correct content-type) — `POST/GET /api/attendance/excuses/document`.
+- Mandatory reject-reason on excuse rejection (`attendanceExcuses.rejectionReason`).
+- Flag severity (Critique/Élevé/Moyen), staff assignment, internal notes,
+  and a full flag detail page (`/dashboard/attendance/flags/[id]`).
+- Lateness duration (`attendance.lateMinutes`), surfaced in the intake UI,
+  student profile, and heatmap tooltip.
+- Guardian-student link primary-contact default (first link becomes
+  primary) so SMS-on-absence has a real resolution target.
+
+### Fixed
+- **`attendance.studentGroupId`'s foreign key pointed at the dead
+  `studentGroups` table while the real UI always sent a `classes.id`** —
+  every real attendance save from the browser was silently 409ing. Fixed
+  the FK to point at `classes.id`. Pre-existing bug, not introduced this
+  session; found while building the register lifecycle.
+- Attendance flag SMS resolver now prefers the primary guardian contact but
+  falls back to any linked guardian instead of requiring the flag.
+
+### Migrations
+`0026_add_attendance_summary_excuses_flags.sql` through
+`0028_add_attendance_registers_flag_assignment_reject_reason.sql`. Full
+incident notes (a drizzle snapshot-desync that caused migration `0026` to
+initially fail) in `MIGRATION-NOTES.md`.
+
+## 2026-07-31 (earlier pass) — Attendance module foundation
+
+Deleted 3 dead LMS tables (`attendanceRegisters`/`attendanceEntries`/
+`attendanceAuditEvents` — zero writers at the time), migrated
+`attendanceSummary`/`attendanceExcuses`/`attendanceFlags` for real, built
+flag detection (`UNJUSTIFIED_ABSENCE`/`CONSECUTIVE_ABSENCE`/`REPEATED_LATE`),
+event-driven log-only SMS on absence, the excuses admin workspace, the
+director audit dashboard, and the student attendance heatmap. Full detail
+in `ATTENDANCE-COMPLETION-REPORT.md` and `MIGRATION-NOTES.md`.
+
+## 2026-07-31 — V2 roadmap + independent audit
+
+Full V2 roadmap executed across 7 phases (see `V2-PHASE-1-REPORT.md`
+through `V2-PHASE-7-REPORT.md`), then independently re-verified against
+the actual repository rather than trusting the completion report — found 6
+migrations that were generated but never applied, 85 silently-skipped
+tests (missing `DATABASE_URL`), and the account-lockout gap that's still
+open today. Full findings in `V2-INDEPENDENT-AUDIT.md`.
+
+---
+
 ## [1.7.7](https://github.com/ixartz/SaaS-Boilerplate/compare/v1.7.6...v1.7.7) (2025-12-12)
 
 
