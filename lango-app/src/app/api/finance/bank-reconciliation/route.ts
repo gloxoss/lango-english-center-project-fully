@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
   try {
     const ctx = await requireRequestContext(req);
     await requireCapability(ctx, 'finance.read');
+    const bankAccountId = req.nextUrl.searchParams.get('bankAccountId');
 
     const accounts = await db
       .select()
@@ -28,7 +29,17 @@ export async function GET(req: NextRequest) {
       .where(eq(bankAccounts.tenantId, ctx.tenantId!))
       .orderBy(desc(bankAccounts.createdAt));
 
-    return NextResponse.json({ success: true, data: accounts });
+    if (!bankAccountId) {
+      return NextResponse.json({ success: true, data: { accounts, reconciliations: [] } });
+    }
+
+    const reconciliations = await db
+      .select()
+      .from(bankReconciliations)
+      .where(and(eq(bankReconciliations.tenantId, ctx.tenantId!), eq(bankReconciliations.bankAccountId, bankAccountId)))
+      .orderBy(desc(bankReconciliations.statementDate));
+
+    return NextResponse.json({ success: true, data: { accounts, reconciliations } });
   } catch (error) {
     return apiErrorResponse(error);
   }

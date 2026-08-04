@@ -8,7 +8,7 @@ import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { postBalancedJournal } from '@/libs/services/finance-ledger';
-import { journalEntries } from '@/models/Schema';
+import { chartOfAccounts, journalEntries, journalEntryLines } from '@/models/Schema';
 
 const moneySchema = z.string().regex(/^(?:0|[1-9]\d{0,11})(?:\.\d{1,2})?$/);
 const postJournalSchema = z.object({
@@ -28,8 +28,33 @@ export async function GET(req: NextRequest) {
   try {
     const ctx = await requireRequestContext(req);
     await requireCapability(ctx, 'finance.read');
-    const entries = await db.select().from(journalEntries).where(eq(journalEntries.tenantId, ctx.tenantId!)).orderBy(desc(journalEntries.entryDate), desc(journalEntries.createdAt));
-    return NextResponse.json({ success: true, data: entries });
+    const tenantId = ctx.tenantId!;
+
+    // Line-level rows (one per debit/credit line, joined to its entry header
+    // and account) - matches how a journal ledger is actually read, not the
+    // bare entry-header list.
+    const lines = await db
+      .select({
+        lineId: journalEntryLines.id,
+        entryId: journalEntries.id,
+        entryNumber: journalEntries.entryNumber,
+        entryDate: journalEntries.entryDate,
+        description: journalEntries.description,
+        sourceModule: journalEntries.sourceModule,
+        status: journalEntries.status,
+        accountCode: chartOfAccounts.code,
+        accountName: chartOfAccounts.name,
+        debitAmount: journalEntryLines.debitAmount,
+        creditAmount: journalEntryLines.creditAmount,
+        memo: journalEntryLines.memo,
+      })
+      .from(journalEntryLines)
+      .innerJoin(journalEntries, eq(journalEntryLines.journalEntryId, journalEntries.id))
+      .innerJoin(chartOfAccounts, eq(journalEntryLines.accountId, chartOfAccounts.id))
+      .where(eq(journalEntryLines.tenantId, tenantId))
+      .orderBy(desc(journalEntries.entryDate), desc(journalEntries.createdAt));
+
+    return NextResponse.json({ success: true, data: lines });
   } catch (error) {
     return apiErrorResponse(error);
   }
