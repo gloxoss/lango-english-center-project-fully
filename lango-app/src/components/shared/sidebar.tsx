@@ -148,6 +148,9 @@ export function Sidebar({ locale }: { locale: string }) {
         { label: 'Shifts', href: `/${locale}/dashboard/academics/shifts` },
         { label: 'Matières Optionnelles', href: `/${locale}/dashboard/academics/optional-subjects` },
         { label: 'Banque de questions', href: `/${locale}/dashboard/academics/question-bank` },
+        { label: 'Emploi du temps', href: `/${locale}/dashboard/academics/schedule` },
+        { label: 'Emploi du temps enseignant', href: `/${locale}/dashboard/academics/teacher-schedule` },
+        { label: 'Conflits horaires', href: `/${locale}/dashboard/academics/conflicts` },
       ],
     },
 

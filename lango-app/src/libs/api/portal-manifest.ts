@@ -65,6 +65,7 @@ const FULL_NAVIGATION: NavItem[] = [
       { id: 'classes', label: 'Classes', icon: 'School', href: '/dashboard/academics/classes', permission: 'academics.read' },
       { id: 'subjects', label: 'Matières', icon: 'FileText', href: '/dashboard/academics/subjects', permission: 'academics.read' },
       { id: 'schedule', label: 'Emploi du temps', icon: 'Clock', href: '/dashboard/academics/schedule', permission: 'academics.read' },
+      { id: 'teacher-schedule', label: 'Emploi du temps enseignant', icon: 'CalendarClock', href: '/dashboard/academics/teacher-schedule', permission: 'academics.read' },
     ],
   },
   {

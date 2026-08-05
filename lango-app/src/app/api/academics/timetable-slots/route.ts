@@ -5,23 +5,9 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, scheduleSlotCreateSchema, scheduleSlotUpdateSchema } from '@/libs/api/validation';
+import { assertSlotIsValid } from '@/libs/services/timetable-validation';
 import { db } from '@/libs/DB';
 import { classes, classScheduleSlots, classSections, classSubjects, sections, subjects, user } from '@/models/Schema';
-
-async function assertReferencesBelongToTenant(tenantId: string, refs: { classSectionId: string; classSubjectId: string; teacherId: string }) {
-  const [sectionRow] = await db.select({ id: classSections.id }).from(classSections).where(and(eq(classSections.id, refs.classSectionId), eq(classSections.tenantId, tenantId))).limit(1);
-  if (!sectionRow) {
-    throw new ApiError(422, 'INVALID_REFERENCE', 'La classe/section indiquée n\'existe pas pour cet établissement.');
-  }
-  const [subjectRow] = await db.select({ id: classSubjects.id }).from(classSubjects).where(and(eq(classSubjects.id, refs.classSubjectId), eq(classSubjects.tenantId, tenantId))).limit(1);
-  if (!subjectRow) {
-    throw new ApiError(422, 'INVALID_REFERENCE', 'La matière de classe indiquée n\'existe pas pour cet établissement.');
-  }
-  const [teacherRow] = await db.select({ id: user.id }).from(user).where(and(eq(user.id, refs.teacherId), eq(user.tenantId, tenantId), eq(user.role, 'teacher'))).limit(1);
-  if (!teacherRow) {
-    throw new ApiError(422, 'INVALID_REFERENCE', 'L\'enseignant indiqué n\'existe pas pour cet établissement.');
-  }
-}
 
 function toApiSlot(row: {
   id: string;
@@ -42,10 +28,16 @@ export async function GET(request: Request) {
     const tenantId = requireTenant(context);
     const { searchParams } = new URL(request.url);
     const classSectionId = searchParams.get('classSectionId');
+    // Teachers can only ever see their own schedule - self-scope regardless
+    // of what teacherId (if any) they pass; school_admin can filter freely.
+    const teacherId = context.role === 'teacher' ? context.userId : searchParams.get('teacherId');
 
     const filters = [eq(classScheduleSlots.tenantId, tenantId)];
     if (classSectionId) {
       filters.push(eq(classScheduleSlots.classSectionId, classSectionId));
+    }
+    if (teacherId) {
+      filters.push(eq(classScheduleSlots.teacherId, teacherId));
     }
 
     const rows = await db
@@ -85,7 +77,7 @@ export async function POST(request: Request) {
     await requireCapability(context, 'academics.manage');
     const body = await parseJson(request, scheduleSlotCreateSchema);
 
-    await assertReferencesBelongToTenant(tenantId, body);
+    await assertSlotIsValid(tenantId, body);
 
     const [inserted] = await db
       .insert(classScheduleSlots)
@@ -116,17 +108,17 @@ export async function PUT(request: Request) {
       classSectionId: body.classSectionId ?? existing.classSectionId,
       classSubjectId: body.classSubjectId ?? existing.classSubjectId,
       teacherId: body.teacherId ?? existing.teacherId,
+      dayOfWeek: body.dayOfWeek ?? existing.dayOfWeek,
+      startTime: body.startTime ?? existing.startTime,
+      endTime: body.endTime ?? existing.endTime,
+      roomLabel: body.roomLabel !== undefined ? body.roomLabel : existing.roomLabel,
     };
-    await assertReferencesBelongToTenant(tenantId, merged);
+    await assertSlotIsValid(tenantId, merged, body.id);
 
     const [updated] = await db
       .update(classScheduleSlots)
       .set({
         ...merged,
-        dayOfWeek: body.dayOfWeek ?? existing.dayOfWeek,
-        startTime: body.startTime ?? existing.startTime,
-        endTime: body.endTime ?? existing.endTime,
-        roomLabel: body.roomLabel !== undefined ? body.roomLabel : existing.roomLabel,
         updatedAt: new Date().toISOString(),
       })
       .where(and(eq(classScheduleSlots.id, body.id), eq(classScheduleSlots.tenantId, tenantId)))
