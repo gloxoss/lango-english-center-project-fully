@@ -9,7 +9,7 @@ import { fiscalPeriods } from '@/models/Schema';
 export async function POST(req: NextRequest) {
   try {
     const ctx = await requireRequestContext(req);
-    await requireCapability(ctx, 'finance.manage');
+    await requireCapability(ctx, 'finance.approve');
 
     const body = await req.json();
     const { periodId, name, startDate, endDate } = body;

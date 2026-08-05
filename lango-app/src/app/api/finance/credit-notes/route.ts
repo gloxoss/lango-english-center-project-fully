@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const ctx = await requireRequestContext(req);
-    await requireCapability(ctx, 'finance.manage');
+    await requireCapability(ctx, 'finance.approve');
 
     const body = await parseJson(req, createCreditNoteSchema);
     const tenantId = ctx.tenantId!;
