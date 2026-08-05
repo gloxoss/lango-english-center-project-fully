@@ -148,7 +148,13 @@ export function Sidebar({ locale }: { locale: string }) {
   // School OS Standard Operational Navigation Items
   const schoolNavItems: NavItem[] = [
     { label: 'Tableau de bord École', href: `/${locale}/dashboard`, icon: LayoutDashboard },
-    { label: 'Analytics & Croissance', href: `/${locale}/dashboard/analytics`, icon: BarChart3, permission: 'reports.read' },
+    // Director-level cross-module dashboard (academic averages, HR presence,
+    // institutional risk register) - confirmed via a live accountant session
+    // that reports.read let it through and leaked grade averages. No single
+    // existing capability maps to "director portal" cleanly; reusing
+    // settings.organization.manage as the closest already-admin-only proxy
+    // rather than inventing a new one for a single page.
+    { label: 'Analytics & Croissance', href: `/${locale}/dashboard/analytics`, icon: BarChart3, permission: 'settings.organization.manage' },
     {
       label: 'Élèves & Profils',
       href: `/${locale}/dashboard/students`,

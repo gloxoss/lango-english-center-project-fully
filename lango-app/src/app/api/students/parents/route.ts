@@ -61,7 +61,10 @@ async function loadLinkedStudentNames(guardianIds: string[]): Promise<Map<string
 
 export async function GET(request: Request) {
   try {
-    const context = await requireRequestContext(request, ['school_admin', 'receptionist']);
+    // accountant has guardians.read (needs guardian contact info for
+    // billing) - write actions below stay school_admin/receptionist only,
+    // matching guardians.manage which accountant does not have.
+    const context = await requireRequestContext(request, ['school_admin', 'receptionist', 'accountant']);
     const tenantId = requireTenant(context);
     await requireCapability(context, 'guardians.read');
     const { searchParams } = new URL(request.url);
