@@ -137,9 +137,13 @@ async function getStudentDetail(tenantId: string, id: string) {
 export async function GET(request: Request) {
   try {
     // ponytail: teachers need read access for attendance rosters
-    // (POST /api/attendance already allows teacher) - writes stay
-    // school_admin-only below.
-    const context = await requireRequestContext(request, ['school_admin', 'teacher']);
+    // (POST /api/attendance already allows teacher); accountant needs it for
+    // billing/collection lookups (has students.read, matches sidebar/portal
+    // visibility) - writes stay school_admin-only below. Field-level
+    // redaction (hiding academic/medical fields from accountant specifically)
+    // not yet audited here - this route returns the same shape to every
+    // allowed role today.
+    const context = await requireRequestContext(request, ['school_admin', 'teacher', 'accountant']);
     const tenantId = requireTenant(context);
     const { searchParams } = new URL(request.url);
 
