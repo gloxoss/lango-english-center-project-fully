@@ -4,6 +4,7 @@ import {
   BarChart3,
   Building2,
   CalendarCheck,
+  ClipboardList,
   ChevronDown,
   ChevronRight,
   CreditCard,
@@ -82,6 +83,11 @@ export function Sidebar({ locale }: { locale: string }) {
         { label: 'Toutes les écoles', href: `/${locale}/dashboard/super-admin/schools` },
         { label: '+ Créer une école', href: `/${locale}/dashboard/super-admin/schools/create` },
       ],
+    },
+    {
+      label: 'Liste accès prioritaire',
+      href: `/${locale}/dashboard/super-admin/waitlist`,
+      icon: ClipboardList,
     },
     {
       label: 'Abonnements & Tarifs',
@@ -181,13 +187,18 @@ export function Sidebar({ locale }: { locale: string }) {
     { label: 'Mes Devoirs & Exercices', href: `/${locale}/dashboard/homework`, icon: FileText },
     {
       label: 'Finance & Invoicing',
-      href: `/${locale}/dashboard/finance/invoices`,
+      href: `/${locale}/dashboard/finance`,
       icon: CreditCard,
       subItems: [
+        { label: 'Tableau de bord Finance', href: `/${locale}/dashboard/finance` },
+        { label: 'Guichet de Caisse', href: `/${locale}/dashboard/finance/collection-desk` },
+        { label: 'Créances Élèves', href: `/${locale}/dashboard/finance/receivables` },
         { label: 'Factures', href: `/${locale}/dashboard/finance/invoices` },
         { label: 'Enregistrer un paiement', href: `/${locale}/dashboard/finance/payments/new` },
-        { label: 'Dépenses', href: `/${locale}/dashboard/finance/expenses` },
+        { label: 'Dépenses & Journal', href: `/${locale}/dashboard/finance/office-accounting` },
         { label: 'Structures tarifaires', href: `/${locale}/dashboard/finance/pricing` },
+        { label: 'Approbations', href: `/${locale}/dashboard/finance/approvals` },
+        { label: 'Rapports & Exports', href: `/${locale}/dashboard/finance/reports` },
       ],
     },
     {
@@ -229,7 +240,17 @@ export function Sidebar({ locale }: { locale: string }) {
     { label: 'Statut CNDP F211', href: `/${locale}/dashboard/settings/cndp`, icon: ShieldCheck },
   ];
 
-  const activeMenuLabel = schoolNavItems.find(item =>
+  // Filter school nav items based on user role (e.g. Accountant persona boundaries)
+  const visibleSchoolNavItems = schoolNavItems.filter((item) => {
+    if (userRole === 'accountant') {
+      if (item.href.includes('/dashboard/academics') || item.href.includes('/dashboard/settings')) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  const activeMenuLabel = visibleSchoolNavItems.find(item =>
     pathname === item.href
     || item.subItems?.some(sub =>
       pathname === sub.href || pathname.startsWith(`${sub.href}/`),
@@ -407,7 +428,7 @@ export function Sidebar({ locale }: { locale: string }) {
 
           {openMenus['school-modules'] && (
             <div className="space-y-0.5 pt-1">
-              {schoolNavItems.map((item) => {
+              {visibleSchoolNavItems.map((item) => {
                 const isActive = pathname === item.href;
                 const Icon = item.icon;
                 const hasSubItems = item.subItems && item.subItems.length > 0;
