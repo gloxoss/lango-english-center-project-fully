@@ -46,6 +46,7 @@ export const PERMISSIONS = {
   'finance.read': 'Voir les finances',
   'finance.manage': 'Gérer les finances',
   'finance.approve': 'Approuver les opérations financières',
+  'finance.close': 'Clôturer une période fiscale',
 
   // Users & access
   'users.read': 'Voir les utilisateurs',
@@ -113,7 +114,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<AppRole, readonly PermissionKey[]>
     'finance.read', 'finance.manage',
     'reports.read', 'reports.export',
     'guardians.read',
-    'hr.read', 'hr.manage',
+    // hr.read/hr.manage deliberately excluded: payroll isn't part of the
+    // Accountant Portal's scope (future-implementation/accountant-portal) -
+    // grant explicitly if a school ever wants accounting to own payroll too.
   ],
   student: [
     'attendance.read',
