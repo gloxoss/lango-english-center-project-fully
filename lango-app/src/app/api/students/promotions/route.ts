@@ -25,6 +25,18 @@ const commitSchema = z.object({
   decisions: z.array(decisionSchema).min(1).max(500),
 }).strict();
 
+// Bridges the pre-ledger caller shape (bulk move, no per-student decision)
+// while other in-flight UI work still targets it - drop once promotions-view.tsx
+// is wired to the decisions-based contract above.
+const legacyBulkSchema = z.object({
+  sourceClassSectionId: z.string().uuid(),
+  targetClassSectionId: z.string().uuid(),
+  targetSessionYearId: z.string().uuid().optional(),
+  studentIds: z.array(z.string().min(1)).optional(),
+}).strict();
+
+const requestSchema = z.union([commitSchema, legacyBulkSchema]);
+
 export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
@@ -58,26 +70,15 @@ export async function POST(request: Request) {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
     await requireCapability(context, 'students.placements.manage');
-    const body = await parseJson(request, commitSchema);
-
-    // Idempotent retry: an already-committed batch for this key is returned as-is,
-    // not reprocessed - recordStudentPlacement/closeStudentPlacement calls that
-    // already landed must never be repeated once the batch row exists.
-    const [existingBatch] = await db.select().from(promotionBatches)
-      .where(and(eq(promotionBatches.tenantId, tenantId), eq(promotionBatches.idempotencyKey, body.idempotencyKey)))
-      .limit(1);
-    if (existingBatch) {
-      const decisions = await db.select().from(promotionDecisions).where(eq(promotionDecisions.batchId, existingBatch.id));
-      return NextResponse.json({ success: true, data: { batch: existingBatch, decisions } });
-    }
+    const rawBody = await parseJson(request, requestSchema);
 
     const [sourceSection] = await db.select({ id: classSections.id }).from(classSections)
-      .where(and(eq(classSections.id, body.sourceClassSectionId), eq(classSections.tenantId, tenantId))).limit(1);
+      .where(and(eq(classSections.id, rawBody.sourceClassSectionId), eq(classSections.tenantId, tenantId))).limit(1);
     if (!sourceSection) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'La section source n\'existe pas.');
     }
 
-    let targetSessionYearId = body.targetSessionYearId;
+    let targetSessionYearId = rawBody.targetSessionYearId;
     if (!targetSessionYearId) {
       const [activeYear] = await db.select({ id: sessionYears.id }).from(sessionYears)
         .where(and(eq(sessionYears.tenantId, tenantId), eq(sessionYears.isDefault, true))).limit(1);
@@ -89,8 +90,30 @@ export async function POST(request: Request) {
 
     // Students eligible for this batch (must currently sit in the source section).
     const eligibleIds = new Set((await db.select({ id: user.id }).from(user)
-      .where(and(eq(user.tenantId, tenantId), eq(user.role, 'student'), eq(user.classSectionId, body.sourceClassSectionId))))
+      .where(and(eq(user.tenantId, tenantId), eq(user.role, 'student'), eq(user.classSectionId, rawBody.sourceClassSectionId))))
       .map(s => s.id));
+
+    const body = 'decisions' in rawBody
+      ? rawBody
+      : {
+          sourceClassSectionId: rawBody.sourceClassSectionId,
+          targetSessionYearId,
+          idempotencyKey: crypto.randomUUID(),
+          decisions: (rawBody.studentIds && rawBody.studentIds.length > 0 ? rawBody.studentIds : Array.from(eligibleIds))
+            .map(studentId => ({ studentId, decision: 'promote' as const, targetClassSectionId: rawBody.targetClassSectionId })),
+        };
+
+    // Idempotent retry: an already-committed batch for this key is returned as-is,
+    // not reprocessed - recordStudentPlacement/closeStudentPlacement calls that
+    // already landed must never be repeated once the batch row exists. Legacy
+    // callers get a fresh key every call (no retry protection, same as before).
+    const [existingBatch] = await db.select().from(promotionBatches)
+      .where(and(eq(promotionBatches.tenantId, tenantId), eq(promotionBatches.idempotencyKey, body.idempotencyKey)))
+      .limit(1);
+    if (existingBatch) {
+      const decisions = await db.select().from(promotionDecisions).where(eq(promotionDecisions.batchId, existingBatch.id));
+      return NextResponse.json({ success: true, data: { batch: existingBatch, decisions } });
+    }
 
     const decisionRows: (typeof promotionDecisions.$inferInsert)[] = [];
 
