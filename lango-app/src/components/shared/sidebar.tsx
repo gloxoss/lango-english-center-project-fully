@@ -240,7 +240,13 @@ export function Sidebar({ locale }: { locale: string }) {
     { label: 'Statut CNDP F211', href: `/${locale}/dashboard/settings/cndp`, icon: ShieldCheck },
   ];
 
-  // Filter school nav items based on user role (e.g. Accountant persona boundaries)
+  // ponytail: hardcoded role check, not driven by permissions.ts capabilities -
+  // this is a UX convenience (accountant shouldn't see links they'll 403 on),
+  // not the actual security boundary (requireCapability on each API route is).
+  // Upgrade to a generic capability-driven filter (GET /api/me/permissions +
+  // a `permission` field per NavItem, matching portal-manifest.ts's shape) if
+  // a second role ever needs the same kind of nav scoping - not worth the
+  // extra route/fetch for a single hardcoded case today.
   const visibleSchoolNavItems = schoolNavItems.filter((item) => {
     if (userRole === 'accountant') {
       if (item.href.includes('/dashboard/academics') || item.href.includes('/dashboard/settings')) {

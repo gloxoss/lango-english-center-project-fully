@@ -23,6 +23,30 @@ interface CashierSession {
   status: string;
 }
 
+interface StudentResult {
+  id: string;
+  name: string;
+  email: string | null;
+  matricule: string | null;
+}
+
+interface StudentInvoice {
+  id: string;
+  invoiceNumber: string;
+  netAmount: string;
+  paidAmount: string;
+  status: string;
+  dueDate: string;
+}
+
+interface ReceiptData {
+  invoiceNumber: string;
+  studentName: string;
+  amount: number;
+  paymentMethod: string;
+  paymentDate: string;
+}
+
 export default function CollectionDeskPage() {
   const [sessionData, setSessionData] = useState<{ activeSession: CashierSession | null; recentSessions: any[] }>({
     activeSession: null,
@@ -41,6 +65,19 @@ export default function CollectionDeskPage() {
   const [closeModal, setCloseModal] = useState(false);
   const [actualCash, setActualCash] = useState('');
   const [notes, setNotes] = useState('');
+
+  // Collection desk: search -> student -> invoices -> collect
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<StudentResult[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<StudentResult | null>(null);
+  const [studentInvoices, setStudentInvoices] = useState<StudentInvoice[]>([]);
+  const [loadingInvoices, setLoadingInvoices] = useState(false);
+  const [collectModal, setCollectModal] = useState<StudentInvoice | null>(null);
+  const [collectAmount, setCollectAmount] = useState('');
+  const [collectMethod, setCollectMethod] = useState<'cash' | 'card' | 'transfer' | 'check'>('cash');
+  const [collecting, setCollecting] = useState(false);
+  const [receipt, setReceipt] = useState<ReceiptData | null>(null);
 
   const fetchSession = async () => {
     setLoading(true);
@@ -121,6 +158,102 @@ export default function CollectionDeskPage() {
 
   const activeSession = sessionData.activeSession;
   const variance = activeSession && actualCash ? Number(actualCash) - activeSession.expectedCash : 0;
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim().length < 2) {
+      return;
+    }
+    setSearching(true);
+    setError(null);
+    setSelectedStudent(null);
+    setStudentInvoices([]);
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      const json = await res.json();
+      if (json.success) {
+        setSearchResults(json.data.students ?? []);
+      } else {
+        setError(json.error?.message || 'Erreur lors de la recherche.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Erreur réseau.');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleSelectStudent = async (student: StudentResult) => {
+    setSelectedStudent(student);
+    setSearchResults([]);
+    setLoadingInvoices(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/finance/invoices?studentId=${student.id}`);
+      const json = await res.json();
+      if (json.success) {
+        const outstanding = (json.data as StudentInvoice[]).filter(
+          inv => Number(inv.netAmount) - Number(inv.paidAmount) > 0,
+        );
+        setStudentInvoices(outstanding);
+      } else {
+        setError(json.error?.message || json.message || 'Erreur lors de la récupération des factures.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Erreur réseau.');
+    } finally {
+      setLoadingInvoices(false);
+    }
+  };
+
+  const openCollectModal = (invoice: StudentInvoice) => {
+    const balance = Number(invoice.netAmount) - Number(invoice.paidAmount);
+    setCollectAmount(balance.toFixed(2));
+    setCollectMethod('cash');
+    setCollectModal(invoice);
+  };
+
+  const handleCollectPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!collectModal || !selectedStudent) {
+      return;
+    }
+    setCollecting(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/finance/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          invoiceId: collectModal.id,
+          amount: Number(collectAmount),
+          paymentMethod: collectMethod,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setReceipt({
+          invoiceNumber: collectModal.invoiceNumber,
+          studentName: selectedStudent.name,
+          amount: Number(collectAmount),
+          paymentMethod: collectMethod,
+          paymentDate: new Date().toLocaleString('fr-FR'),
+        });
+        setCollectModal(null);
+        // Refresh this student's remaining invoices and the cashier session's
+        // running total - the session's totalCollected is recomputed
+        // server-side from real payments rows, not tracked client-side.
+        handleSelectStudent(selectedStudent);
+        fetchSession();
+      } else {
+        setError(json.error?.message || json.message || 'Impossible d\'enregistrer le paiement.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Erreur réseau.');
+    } finally {
+      setCollecting(false);
+    }
+  };
 
   return (
     <div className="space-y-6 p-6">
@@ -226,22 +359,166 @@ export default function CollectionDeskPage() {
       {/* Fast Receipt Desk Section */}
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
         <h3 className="text-base font-bold text-slate-900">Encaissement Rapide de Scolarité</h3>
-        <p className="text-xs text-slate-500">Recherchez un élève par nom, matricule ou code pour enregistrer un versement immédiat.</p>
+        <p className="text-xs text-slate-500">Recherchez un élève par nom, matricule ou email pour enregistrer un versement immédiat.</p>
 
-        <div className="mt-4 flex gap-3">
+        {!activeSession && (
+          <div className="mt-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-700">
+            <AlertCircle className="size-4 shrink-0" />
+            Ouvrez votre session de caisse ci-dessus avant d'encaisser un paiement.
+          </div>
+        )}
+
+        <form onSubmit={handleSearch} className="mt-4 flex gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3.5 top-3 size-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Rechercher par nom d'élève, CIN tuteur, ou matricule..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Rechercher par nom d'élève, matricule, ou email..."
               className="w-full rounded-lg border border-slate-200 py-2.5 pl-10 pr-4 text-sm text-slate-900 focus:border-[#0066FF] focus:outline-hidden"
             />
           </div>
-          <button className="rounded-lg bg-[#0066FF] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#0052CC]">
-            Rechercher
+          <button
+            type="submit"
+            disabled={searching || searchQuery.trim().length < 2}
+            className="rounded-lg bg-[#0066FF] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#0052CC] disabled:opacity-50"
+          >
+            {searching ? 'Recherche...' : 'Rechercher'}
           </button>
-        </div>
+        </form>
+
+        {searchResults.length > 0 && (
+          <div className="mt-3 divide-y divide-slate-100 rounded-lg border border-slate-200">
+            {searchResults.map(s => (
+              <button
+                key={s.id}
+                onClick={() => handleSelectStudent(s)}
+                className="flex w-full items-center gap-3 p-3 text-left hover:bg-slate-50"
+              >
+                <User className="size-4 text-slate-400" />
+                <div>
+                  <div className="text-sm font-bold text-slate-900">{s.name}</div>
+                  <div className="text-xs text-slate-500">{s.matricule ?? s.email}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {selectedStudent && (
+          <div className="mt-4 rounded-lg border border-slate-200 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <User className="size-4 text-[#0066FF]" />
+                <span className="text-sm font-bold text-slate-900">{selectedStudent.name}</span>
+                {selectedStudent.matricule && <span className="text-xs text-slate-400">({selectedStudent.matricule})</span>}
+              </div>
+              <button onClick={() => { setSelectedStudent(null); setStudentInvoices([]); }} className="text-xs text-slate-400 hover:text-slate-700">
+                Changer
+              </button>
+            </div>
+
+            {loadingInvoices && <p className="mt-3 text-xs text-slate-500">Chargement des factures...</p>}
+
+            {!loadingInvoices && studentInvoices.length === 0 && (
+              <p className="mt-3 text-xs text-slate-500">Aucune facture impayée pour cet élève.</p>
+            )}
+
+            {!loadingInvoices && studentInvoices.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {studentInvoices.map((inv) => {
+                  const balance = Number(inv.netAmount) - Number(inv.paidAmount);
+                  return (
+                    <div key={inv.id} className="flex items-center justify-between rounded-lg bg-slate-50 p-3">
+                      <div>
+                        <div className="text-xs font-bold text-slate-900">{inv.invoiceNumber}</div>
+                        <div className="text-[11px] text-slate-500">Échéance {inv.dueDate} · Solde dû {balance.toFixed(2)} MAD</div>
+                      </div>
+                      <button
+                        onClick={() => openCollectModal(inv)}
+                        disabled={!activeSession}
+                        className="rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-40"
+                      >
+                        Encaisser
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Collect Payment Modal */}
+      {collectModal && selectedStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-bold text-slate-900">Encaissement — {collectModal.invoiceNumber}</h3>
+            <p className="mt-1 text-xs text-slate-500">{selectedStudent.name}</p>
+
+            <form onSubmit={handleCollectPayment} className="mt-4 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700">Montant encaissé (MAD)</label>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  required
+                  value={collectAmount}
+                  onChange={e => setCollectAmount(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-200 p-2.5 text-sm font-semibold text-slate-900 focus:border-[#0066FF] focus:outline-hidden"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700">Mode de paiement</label>
+                <select
+                  value={collectMethod}
+                  onChange={e => setCollectMethod(e.target.value as typeof collectMethod)}
+                  className="mt-1 w-full rounded-lg border border-slate-200 p-2.5 text-sm font-semibold text-slate-900 focus:border-[#0066FF] focus:outline-hidden"
+                >
+                  <option value="cash">Espèces</option>
+                  <option value="check">Chèque</option>
+                  <option value="card">Carte (TPE)</option>
+                  <option value="transfer">Virement</option>
+                </select>
+              </div>
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setCollectModal(null)} className="rounded-lg px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100">
+                  Annuler
+                </button>
+                <button type="submit" disabled={collecting} className="rounded-lg bg-emerald-600 px-5 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50">
+                  {collecting ? 'Encaissement...' : 'Confirmer & Encaisser'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Receipt Modal */}
+      {receipt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl text-center">
+            <CheckCircle2 className="mx-auto size-10 text-emerald-500" />
+            <h3 className="mt-3 text-lg font-bold text-slate-900">Paiement Encaissé</h3>
+            <div className="mt-4 space-y-1 rounded-lg bg-slate-50 p-4 text-left text-xs">
+              <div className="flex justify-between"><span className="text-slate-500">Élève</span><span className="font-bold text-slate-900">{receipt.studentName}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Facture</span><span className="font-bold text-slate-900">{receipt.invoiceNumber}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Montant</span><span className="font-bold text-emerald-700">{receipt.amount.toFixed(2)} MAD</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Mode</span><span className="font-bold text-slate-900">{receipt.paymentMethod}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Date</span><span className="font-bold text-slate-900">{receipt.paymentDate}</span></div>
+            </div>
+            <button onClick={() => window.print()} className="mt-4 w-full rounded-lg border border-slate-200 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">
+              Imprimer le reçu
+            </button>
+            <button onClick={() => setReceipt(null)} className="mt-2 w-full rounded-lg bg-[#0066FF] py-2 text-xs font-bold text-white hover:bg-[#0052CC]">
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Open Session Modal */}
       {openModal && (

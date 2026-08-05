@@ -77,6 +77,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: true, data: detail });
     }
 
+    const studentId = searchParams.get('studentId');
+
     const rows = await db
       .select({
         id: invoices.id,
@@ -99,7 +101,7 @@ export async function GET(request: Request) {
       .leftJoin(classSections, eq(user.classSectionId, classSections.id))
       .leftJoin(classes, eq(classSections.classId, classes.id))
       .leftJoin(sections, eq(classSections.sectionId, sections.id))
-      .where(eq(invoices.tenantId, tenantId));
+      .where(studentId ? and(eq(invoices.tenantId, tenantId), eq(invoices.studentId, studentId)) : eq(invoices.tenantId, tenantId));
 
     // One extra query to resolve a primary-guardian display name per student,
     // same "resolve names in one extra query, not N+1" pattern as
