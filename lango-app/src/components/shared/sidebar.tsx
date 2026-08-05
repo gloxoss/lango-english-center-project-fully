@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { authClient } from '@/libs/auth-client';
 
 // Local, not imported from models/Schema.ts (server-only, would pull drizzle
@@ -43,12 +43,16 @@ const ROLE_LABELS: Record<string, string> = {
 type SubMenuItem = {
   label: string;
   href: string;
+  /** Capability key from src/libs/api/permissions.ts. Undefined = always visible. */
+  permission?: string;
 };
 
 type NavItem = {
   label: string;
   href: string;
   icon: React.ElementType;
+  /** Capability key from src/libs/api/permissions.ts. Undefined = always visible. */
+  permission?: string;
   subItems?: SubMenuItem[];
 };
 
@@ -58,6 +62,27 @@ export function Sidebar({ locale }: { locale: string }) {
   const userRole = (session?.user as any)?.role || 'school_admin';
   const isSuperAdmin = userRole === 'super_admin';
   const roleLabel = ROLE_LABELS[userRole] ?? userRole;
+
+  // Capability-driven nav visibility (GET /api/me/permissions) - replaces the
+  // earlier accountant-only hardcoded href check, which only stripped
+  // Academics/Settings and left every other module fully visible.
+  // null = not loaded yet (render nothing gated, avoid a flash of items the
+  // user doesn't have); super_admin/school_admin get every permission from
+  // the API itself (hasCapability short-circuits true for super_admin, and
+  // school_admin's DEFAULT_ROLE_PERMISSIONS is ALL_PERMISSIONS), so this is
+  // a no-op filter for them.
+  const [myPermissions, setMyPermissions] = useState<Set<string> | null>(null);
+  useEffect(() => {
+    fetch('/api/me/permissions')
+      .then(r => r.json())
+      .then((json) => {
+        if (json.success) {
+          setMyPermissions(new Set<string>(json.data.permissions));
+        }
+      })
+      .catch(() => setMyPermissions(new Set()));
+  }, []);
+  const canSee = (permission?: string) => !permission || (myPermissions !== null && myPermissions.has(permission));
 
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
     'super-admin': true,
@@ -123,44 +148,46 @@ export function Sidebar({ locale }: { locale: string }) {
   // School OS Standard Operational Navigation Items
   const schoolNavItems: NavItem[] = [
     { label: 'Tableau de bord École', href: `/${locale}/dashboard`, icon: LayoutDashboard },
-    { label: 'Analytics & Croissance', href: `/${locale}/dashboard/analytics`, icon: BarChart3 },
+    { label: 'Analytics & Croissance', href: `/${locale}/dashboard/analytics`, icon: BarChart3, permission: 'reports.read' },
     {
       label: 'Élèves & Profils',
       href: `/${locale}/dashboard/students`,
       icon: Users,
+      permission: 'students.read',
       subItems: [
-        { label: 'Répertoire Élèves', href: `/${locale}/dashboard/students` },
-        { label: 'Demandes Admission', href: `/${locale}/dashboard/students/admissions` },
-        { label: '+ Inscrire un élève', href: `/${locale}/dashboard/students/add` },
-        { label: 'Parents & Tuteurs', href: `/${locale}/dashboard/students/parents` },
-        { label: 'Importer Élèves', href: `/${locale}/dashboard/students/import` },
-        { label: 'Matricules & N°', href: `/${locale}/dashboard/students/matricules` },
-        { label: 'Photos Élèves', href: `/${locale}/dashboard/students/photos` },
-        { label: 'Transferts', href: `/${locale}/dashboard/students/transfers` },
-        { label: 'Promotions', href: `/${locale}/dashboard/students/promotions` },
+        { label: 'Répertoire Élèves', href: `/${locale}/dashboard/students`, permission: 'students.read' },
+        { label: 'Demandes Admission', href: `/${locale}/dashboard/students/admissions`, permission: 'admissions.view' },
+        { label: '+ Inscrire un élève', href: `/${locale}/dashboard/students/add`, permission: 'students.create' },
+        { label: 'Parents & Tuteurs', href: `/${locale}/dashboard/students/parents`, permission: 'guardians.read' },
+        { label: 'Importer Élèves', href: `/${locale}/dashboard/students/import`, permission: 'students.import' },
+        { label: 'Matricules & N°', href: `/${locale}/dashboard/students/matricules`, permission: 'students.read' },
+        { label: 'Photos Élèves', href: `/${locale}/dashboard/students/photos`, permission: 'students.read' },
+        { label: 'Transferts', href: `/${locale}/dashboard/students/transfers`, permission: 'students.update' },
+        { label: 'Promotions', href: `/${locale}/dashboard/students/promotions`, permission: 'students.placements.manage' },
       ],
     },
     {
       label: 'Matières & Classes',
       href: `/${locale}/dashboard/academics/classes`,
       icon: GraduationCap,
+      permission: 'academics.read',
       subItems: [
-        { label: 'Classes', href: `/${locale}/dashboard/academics/classes` },
-        { label: 'Mediums', href: `/${locale}/dashboard/academics/mediums` },
-        { label: 'Sections', href: `/${locale}/dashboard/academics/sections` },
-        { label: 'Matières', href: `/${locale}/dashboard/academics/subjects` },
-        { label: 'Semestres', href: `/${locale}/dashboard/academics/semesters` },
-        { label: 'Filières', href: `/${locale}/dashboard/academics/streams` },
-        { label: 'Shifts', href: `/${locale}/dashboard/academics/shifts` },
-        { label: 'Matières Optionnelles', href: `/${locale}/dashboard/academics/optional-subjects` },
-        { label: 'Banque de questions', href: `/${locale}/dashboard/academics/question-bank` },
-        { label: 'Emploi du temps', href: `/${locale}/dashboard/academics/schedule` },
-        { label: 'Emploi du temps enseignant', href: `/${locale}/dashboard/academics/teacher-schedule` },
-        { label: 'Conflits horaires', href: `/${locale}/dashboard/academics/conflicts` },
-        { label: 'Copie de Session', href: `/${locale}/dashboard/academics/session-copy` },
-        { label: 'Espace d\'affectations', href: `/${locale}/dashboard/academics/assignments` },
-        { label: 'Promotion & Réinscription', href: `/${locale}/dashboard/academics/promotions` },
-        { label: 'Bilan de Rentrée', href: `/${locale}/dashboard/academics/readiness` },
+        { label: 'Classes', href: `/${locale}/dashboard/academics/classes`, permission: 'academics.read' },
+        { label: 'Mediums', href: `/${locale}/dashboard/academics/mediums`, permission: 'academics.read' },
+        { label: 'Sections', href: `/${locale}/dashboard/academics/sections`, permission: 'academics.read' },
+        { label: 'Matières', href: `/${locale}/dashboard/academics/subjects`, permission: 'academics.read' },
+        { label: 'Semestres', href: `/${locale}/dashboard/academics/semesters`, permission: 'academics.read' },
+        { label: 'Filières', href: `/${locale}/dashboard/academics/streams`, permission: 'academics.read' },
+        { label: 'Shifts', href: `/${locale}/dashboard/academics/shifts`, permission: 'academics.read' },
+        { label: 'Matières Optionnelles', href: `/${locale}/dashboard/academics/optional-subjects`, permission: 'academics.read' },
+        { label: 'Banque de questions', href: `/${locale}/dashboard/academics/question-bank`, permission: 'academics.read' },
+        { label: 'Emploi du temps', href: `/${locale}/dashboard/academics/schedule`, permission: 'academics.read' },
+        { label: 'Emploi du temps enseignant', href: `/${locale}/dashboard/academics/teacher-schedule`, permission: 'academics.read' },
+        { label: 'Conflits horaires', href: `/${locale}/dashboard/academics/conflicts`, permission: 'academics.read' },
+        { label: 'Copie de Session', href: `/${locale}/dashboard/academics/session-copy`, permission: 'academics.manage' },
+        { label: 'Espace d\'affectations', href: `/${locale}/dashboard/academics/assignments`, permission: 'academics.read' },
+        { label: 'Promotion & Réinscription', href: `/${locale}/dashboard/academics/promotions`, permission: 'academics.manage' },
+        { label: 'Bilan de Rentrée', href: `/${locale}/dashboard/academics/readiness`, permission: 'academics.read' },
       ],
     },
 
@@ -168,93 +195,95 @@ export function Sidebar({ locale }: { locale: string }) {
       label: 'Corps Enseignant',
       href: `/${locale}/dashboard/teachers/manage`,
       icon: UserCheck,
+      permission: 'teachers.read',
       subItems: [
-        { label: 'Gestion Enseignants', href: `/${locale}/dashboard/teachers/manage` },
-        { label: 'Import Massif', href: `/${locale}/dashboard/teachers/bulk-import` },
+        { label: 'Gestion Enseignants', href: `/${locale}/dashboard/teachers/manage`, permission: 'teachers.read' },
+        { label: 'Import Massif', href: `/${locale}/dashboard/teachers/bulk-import`, permission: 'teachers.create' },
       ],
     },
     {
       label: 'Présence',
       href: `/${locale}/dashboard/attendance`,
       icon: CalendarCheck,
+      permission: 'attendance.read',
       subItems: [
-        { label: 'Présence Mobile', href: `/${locale}/dashboard/attendance` },
-        { label: 'Justificatifs', href: `/${locale}/dashboard/attendance/excuses` },
-        { label: 'Signalements', href: `/${locale}/dashboard/attendance/flags` },
-        { label: 'Audit & Alertes', href: `/${locale}/dashboard/attendance/audit` },
+        { label: 'Présence Mobile', href: `/${locale}/dashboard/attendance`, permission: 'attendance.read' },
+        { label: 'Justificatifs', href: `/${locale}/dashboard/attendance/excuses`, permission: 'attendance.read' },
+        { label: 'Signalements', href: `/${locale}/dashboard/attendance/flags`, permission: 'attendance.read' },
+        { label: 'Audit & Alertes', href: `/${locale}/dashboard/attendance/audit`, permission: 'attendance.read' },
       ],
     },
-    { label: 'Mes Devoirs & Exercices', href: `/${locale}/dashboard/homework`, icon: FileText },
+    { label: 'Mes Devoirs & Exercices', href: `/${locale}/dashboard/homework`, icon: FileText, permission: 'academics.read' },
     {
       label: 'Finance & Invoicing',
       href: `/${locale}/dashboard/finance`,
       icon: CreditCard,
+      permission: 'finance.read',
       subItems: [
-        { label: 'Tableau de bord Finance', href: `/${locale}/dashboard/finance` },
-        { label: 'Guichet de Caisse', href: `/${locale}/dashboard/finance/collection-desk` },
-        { label: 'Créances Élèves', href: `/${locale}/dashboard/finance/receivables` },
-        { label: 'Factures', href: `/${locale}/dashboard/finance/invoices` },
-        { label: 'Enregistrer un paiement', href: `/${locale}/dashboard/finance/payments/new` },
-        { label: 'Dépenses & Journal', href: `/${locale}/dashboard/finance/office-accounting` },
-        { label: 'Structures tarifaires', href: `/${locale}/dashboard/finance/pricing` },
-        { label: 'Approbations', href: `/${locale}/dashboard/finance/approvals` },
-        { label: 'Rapports & Exports', href: `/${locale}/dashboard/finance/reports` },
+        { label: 'Tableau de bord Finance', href: `/${locale}/dashboard/finance`, permission: 'finance.read' },
+        { label: 'Guichet de Caisse', href: `/${locale}/dashboard/finance/collection-desk`, permission: 'finance.read' },
+        { label: 'Créances Élèves', href: `/${locale}/dashboard/finance/receivables`, permission: 'finance.read' },
+        { label: 'Factures', href: `/${locale}/dashboard/finance/invoices`, permission: 'finance.read' },
+        { label: 'Enregistrer un paiement', href: `/${locale}/dashboard/finance/payments/new`, permission: 'finance.read' },
+        { label: 'Dépenses & Journal', href: `/${locale}/dashboard/finance/office-accounting`, permission: 'finance.read' },
+        { label: 'Structures tarifaires', href: `/${locale}/dashboard/finance/pricing`, permission: 'finance.read' },
+        { label: 'Approbations', href: `/${locale}/dashboard/finance/approvals`, permission: 'finance.read' },
+        { label: 'Rapports & Exports', href: `/${locale}/dashboard/finance/reports`, permission: 'finance.read' },
       ],
     },
     {
       label: 'SMS Communication',
       href: `/${locale}/dashboard/communication/reminders`,
       icon: MessageSquare,
+      permission: 'communication.read',
       subItems: [
-        { label: 'Envoyer des rappels', href: `/${locale}/dashboard/communication/reminders` },
-        { label: 'Modèles de messages', href: `/${locale}/dashboard/communication/templates` },
-        { label: 'Pipeline CRM', href: `/${locale}/dashboard/communication/crm` },
-        { label: 'Diffusion', href: `/${locale}/dashboard/communication/broadcast` },
+        { label: 'Envoyer des rappels', href: `/${locale}/dashboard/communication/reminders`, permission: 'communication.send' },
+        { label: 'Modèles de messages', href: `/${locale}/dashboard/communication/templates`, permission: 'communication.read' },
+        { label: 'Pipeline CRM', href: `/${locale}/dashboard/communication/crm`, permission: 'crm.manage' },
+        { label: 'Diffusion', href: `/${locale}/dashboard/communication/broadcast`, permission: 'communication.send' },
       ],
     },
-    { label: 'Bulletins Massar', href: `/${locale}/dashboard/documents/generator`, icon: FileText },
+    { label: 'Bulletins Massar', href: `/${locale}/dashboard/documents/generator`, icon: FileText, permission: 'grading.read' },
     {
       label: 'Paramètres École',
       href: `/${locale}/dashboard/settings`,
       icon: Settings,
+      permission: 'settings.read',
       subItems: [
-        { label: 'Paramètres Généraux', href: `/${locale}/dashboard/settings` },
-        { label: 'Migration & Démarrage', href: `/${locale}/dashboard/settings/migration` },
-        { label: 'Politiques Académiques', href: `/${locale}/dashboard/settings/policies` },
-        { label: 'Utilisateurs & Rôles', href: `/${locale}/dashboard/settings/users` },
-        { label: 'Sécurité & Sessions', href: `/${locale}/dashboard/settings/security` },
-        { label: 'Connexions Externes', href: `/${locale}/dashboard/settings/providers` },
-        { label: 'Liaisons Comptables', href: `/${locale}/dashboard/settings/accounting-defaults` },
-        { label: 'Traductions & Champs', href: `/${locale}/dashboard/settings/translations` },
-        { label: 'Tâches & Audit', href: `/${locale}/dashboard/settings/jobs` },
-        { label: 'Modules & Licences', href: `/${locale}/dashboard/settings/entitlements` },
-        { label: 'Registre des paramètres', href: `/${locale}/dashboard/settings/values` },
-        { label: 'Matrice des permissions', href: `/${locale}/dashboard/settings/permissions` },
-        { label: 'Boîte notifications', href: `/${locale}/dashboard/settings/notifications` },
-        { label: 'Exports & téléchargements', href: `/${locale}/dashboard/settings/exports` },
-        { label: 'Succursales & Campus', href: `/${locale}/dashboard/settings/branches` },
-        { label: 'Réinitialisation Accès', href: `/${locale}/dashboard/settings/access-reset` },
-        { label: 'Statut CNDP F211', href: `/${locale}/dashboard/settings/cndp` },
+        { label: 'Paramètres Généraux', href: `/${locale}/dashboard/settings`, permission: 'settings.organization.manage' },
+        { label: 'Migration & Démarrage', href: `/${locale}/dashboard/settings/migration`, permission: 'settings.read' },
+        { label: 'Politiques Académiques', href: `/${locale}/dashboard/settings/policies`, permission: 'settings.read' },
+        { label: 'Utilisateurs & Rôles', href: `/${locale}/dashboard/settings/users`, permission: 'users.manage' },
+        { label: 'Sécurité & Sessions', href: `/${locale}/dashboard/settings/security`, permission: 'settings.security.manage' },
+        { label: 'Connexions Externes', href: `/${locale}/dashboard/settings/providers`, permission: 'settings.read' },
+        { label: 'Liaisons Comptables', href: `/${locale}/dashboard/settings/accounting-defaults`, permission: 'finance.manage' },
+        { label: 'Traductions & Champs', href: `/${locale}/dashboard/settings/translations`, permission: 'settings.localization.manage' },
+        { label: 'Tâches & Audit', href: `/${locale}/dashboard/settings/jobs`, permission: 'audit.read' },
+        { label: 'Modules & Licences', href: `/${locale}/dashboard/settings/entitlements`, permission: 'settings.read' },
+        { label: 'Registre des paramètres', href: `/${locale}/dashboard/settings/values`, permission: 'settings.read' },
+        { label: 'Matrice des permissions', href: `/${locale}/dashboard/settings/permissions`, permission: 'users.permissions.manage' },
+        { label: 'Boîte notifications', href: `/${locale}/dashboard/settings/notifications`, permission: 'settings.read' },
+        { label: 'Exports & téléchargements', href: `/${locale}/dashboard/settings/exports`, permission: 'settings.read' },
+        { label: 'Succursales & Campus', href: `/${locale}/dashboard/settings/branches`, permission: 'settings.organization.manage' },
+        { label: 'Réinitialisation Accès', href: `/${locale}/dashboard/settings/access-reset`, permission: 'users.manage' },
+        { label: 'Statut CNDP F211', href: `/${locale}/dashboard/settings/cndp`, permission: 'settings.read' },
       ],
     },
-    { label: 'Statut CNDP F211', href: `/${locale}/dashboard/settings/cndp`, icon: ShieldCheck },
+    { label: 'Statut CNDP F211', href: `/${locale}/dashboard/settings/cndp`, icon: ShieldCheck, permission: 'settings.read' },
   ];
 
-  // ponytail: hardcoded role check, not driven by permissions.ts capabilities -
-  // this is a UX convenience (accountant shouldn't see links they'll 403 on),
-  // not the actual security boundary (requireCapability on each API route is).
-  // Upgrade to a generic capability-driven filter (GET /api/me/permissions +
-  // a `permission` field per NavItem, matching portal-manifest.ts's shape) if
-  // a second role ever needs the same kind of nav scoping - not worth the
-  // extra route/fetch for a single hardcoded case today.
-  const visibleSchoolNavItems = schoolNavItems.filter((item) => {
-    if (userRole === 'accountant') {
-      if (item.href.includes('/dashboard/academics') || item.href.includes('/dashboard/settings')) {
-        return false;
-      }
-    }
-    return true;
-  });
+  // Capability-driven: an item is visible if its own permission is granted,
+  // AND (for parents with subItems) at least one child is visible too -
+  // otherwise a parent like "Élèves & Profils" would show as a dead link
+  // wrapping zero visible sub-pages once granular per-subitem gating narrows
+  // it down further than the parent's own permission alone would.
+  const visibleSchoolNavItems = schoolNavItems
+    .filter(item => canSee(item.permission))
+    .map(item => ({
+      ...item,
+      subItems: item.subItems ? item.subItems.filter(sub => canSee(sub.permission)) : undefined,
+    }))
+    .filter(item => item.subItems === undefined || item.subItems.length > 0);
 
   const activeMenuLabel = visibleSchoolNavItems.find(item =>
     pathname === item.href
