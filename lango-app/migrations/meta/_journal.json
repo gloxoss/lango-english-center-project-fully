@@ -365,6 +365,20 @@
       "when": 1785701600000,
       "tag": "0052_add_timetable_versions",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1785940000000,
+      "tag": "0053_waitlist_leads",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1785950000000,
+      "tag": "0054_add_cashier_sessions",
+      "breakpoints": true
     }
   ]
 }

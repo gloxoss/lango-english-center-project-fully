@@ -3419,4 +3419,34 @@ export const academicRooms = pgTable('academic_rooms', {
   unique('academic_rooms_tenant_name_unique').on(table.tenantId, table.name),
 ]);
 
+export const cashierSessionStatus = pgEnum('cashier_session_status', ['open', 'closed', 'reconciled']);
+
+export const cashierSessions = pgTable('cashier_sessions', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  cashierId: text('cashier_id').notNull(),
+  openedAt: timestamp('opened_at', { mode: 'string' }).defaultNow().notNull(),
+  closedAt: timestamp('closed_at', { mode: 'string' }),
+  startingFloat: numeric('starting_float', { precision: 14, scale: 2, mode: 'number' }).default(0).notNull(),
+  expectedCash: numeric('expected_cash', { precision: 14, scale: 2, mode: 'number' }).default(0).notNull(),
+  actualCash: numeric('actual_cash', { precision: 14, scale: 2, mode: 'number' }).default(0),
+  totalCollected: numeric('total_collected', { precision: 14, scale: 2, mode: 'number' }).default(0).notNull(),
+  status: cashierSessionStatus().default('open').notNull(),
+  notes: text(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'cashier_sessions_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.cashierId],
+    foreignColumns: [user.id],
+    name: 'cashier_sessions_cashier_id_user_id_fk',
+  }).onDelete('cascade'),
+  index('cashier_sessions_tenant_cashier_idx').on(table.tenantId, table.cashierId),
+  index('cashier_sessions_status_idx').on(table.status),
+]);
+
 
