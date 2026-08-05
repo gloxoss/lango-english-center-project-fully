@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     const breakdown = await Promise.all(
       assignments.map(async (item) => {
         const offering = offerings.find((o) => o.id === item.offeringId);
-        const capacity = offering?.capacity ?? 30;
+        const capacity = offering?.capacity ?? null; // null represents unlimited capacity
 
         let currentStudentsCount = 0;
         const targetSectionId = item.classSectionId || offering?.classSectionId;
@@ -64,8 +64,8 @@ export async function POST(request: Request) {
 
         const proposed = item.studentCount ?? 0;
         const totalAfterPromotion = currentStudentsCount + proposed;
-        const headroom = capacity - totalAfterPromotion;
-        const isExceeded = headroom < 0;
+        const headroom = capacity != null ? capacity - totalAfterPromotion : null;
+        const isExceeded = capacity != null ? headroom! < 0 : false;
 
         return {
           offeringId: item.offeringId ?? null,

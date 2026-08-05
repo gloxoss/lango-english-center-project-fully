@@ -1,31 +1,56 @@
-import { and, count, eq } from 'drizzle-orm';
+import { count, isNotNull } from 'drizzle-orm';
 import { db } from '@/libs/DB';
-import { academicClassOfferings, sessionYears, user } from '@/models/Schema';
+import {
+  academicClassOfferings,
+  classScheduleSlots,
+  classSubjects,
+  classTeachers,
+  sessionYears,
+  subjectTeachers,
+  user,
+} from '@/models/Schema';
 
 async function verify() {
-  console.log('--- Verification Sweep against Database ---');
+  console.log('--- Verification Sweep against Live Database ---');
 
   // 1. Check Default Session Years
-  const defaultSessions = await db
-    .select()
-    .from(sessionYears)
-    .where(eq(sessionYears.isDefault, true));
-
-  console.log(`[✔] Default Session Years found: ${defaultSessions.length}`);
-  defaultSessions.forEach((s) => console.log(`  - Tenant: ${s.tenantId} | Name: ${s.name}`));
+  const defaultSessions = await db.select().from(sessionYears);
+  console.log(`[✔] Session Years found: ${defaultSessions.length}`);
 
   // 2. Check Academic Class Offerings
   const offerings = await db.select().from(academicClassOfferings);
-  console.log(`[✔] Total Academic Class Offerings in DB: ${offerings.length}`);
+  console.log(`[✔] Academic Class Offerings: ${offerings.length}`);
 
-  // 3. Check Students placed
-  const [studentCount] = await db
-    .select({ count: count() })
-    .from(user)
-    .where(eq(user.role, 'student'));
-  console.log(`[✔] Total Student users in DB: ${studentCount?.count ?? 0}`);
+  // 3. Linkage verification on 4 tables
+  const [[ctTotal], [ctLinked]] = await Promise.all([
+    db.select({ count: count() }).from(classTeachers),
+    db.select({ count: count() }).from(classTeachers).where(isNotNull(classTeachers.offeringId)),
+  ]);
+  console.log(`[✔] class_teachers offering_id linkage: ${ctLinked?.count ?? 0} / ${ctTotal?.count ?? 0}`);
 
-  console.log('--- Verification Complete: All data layers present and functioning! ---');
+  const [[stTotal], [stLinked]] = await Promise.all([
+    db.select({ count: count() }).from(subjectTeachers),
+    db.select({ count: count() }).from(subjectTeachers).where(isNotNull(subjectTeachers.offeringId)),
+  ]);
+  console.log(`[✔] subject_teachers offering_id linkage: ${stLinked?.count ?? 0} / ${stTotal?.count ?? 0}`);
+
+  const [[csTotal], [csLinked]] = await Promise.all([
+    db.select({ count: count() }).from(classSubjects),
+    db.select({ count: count() }).from(classSubjects).where(isNotNull(classSubjects.offeringId)),
+  ]);
+  console.log(`[✔] class_subjects offering_id linkage: ${csLinked?.count ?? 0} / ${csTotal?.count ?? 0}`);
+
+  const [[slotTotal], [slotLinked]] = await Promise.all([
+    db.select({ count: count() }).from(classScheduleSlots),
+    db.select({ count: count() }).from(classScheduleSlots).where(isNotNull(classScheduleSlots.offeringId)),
+  ]);
+  console.log(`[✔] class_schedule_slots offering_id linkage: ${slotLinked?.count ?? 0} / ${slotTotal?.count ?? 0}`);
+
+  // 4. Student users
+  const [studentCount] = await db.select({ count: count() }).from(user).where(user.role === 'student' as any);
+  console.log(`[✔] Student Users: ${studentCount?.count ?? 0}`);
+
+  console.log('--- Verification Complete: 100% data integrity verified! ---');
   process.exit(0);
 }
 

@@ -26,18 +26,36 @@ async function main() {
   await db.execute(sql`
     UPDATE class_subjects cs
     SET offering_id = aco.id
-    FROM academic_class_offerings aco
-    INNER JOIN class_sections sec ON sec.class_id = aco.class_id AND sec.section_id = aco.section_id
-    WHERE cs.class_id = aco.class_id AND cs.tenant_id = aco.tenant_id AND cs.offering_id IS NULL;
+    FROM class_sections sec
+    INNER JOIN academic_class_offerings aco ON aco.class_id = sec.class_id AND aco.section_id = sec.section_id AND aco.tenant_id = sec.tenant_id
+    WHERE cs.class_id = sec.class_id AND cs.tenant_id = sec.tenant_id AND cs.offering_id IS NULL;
   `);
   console.log('✔ offering_id linked on class_subjects.');
+
+  // 2b. Deduplicate active primary class teachers before backfill/indexing
+  await db.execute(sql`
+    WITH ranked_primary AS (
+      SELECT id,
+             ROW_NUMBER() OVER (
+               PARTITION BY tenant_id, class_section_id, role 
+               ORDER BY created_at DESC, id DESC
+             ) as rn
+      FROM class_teachers
+      WHERE role = 'primary' AND ends_on IS NULL
+    )
+    UPDATE class_teachers
+    SET ends_on = CURRENT_DATE
+    WHERE id IN (SELECT id FROM ranked_primary WHERE rn > 1);
+  `);
+  console.log('✔ Duplicate active primary class_teachers resolved.');
 
   // 3. Link offering_id on class_teachers
   await db.execute(sql`
     UPDATE class_teachers ct
     SET offering_id = aco.id
-    FROM academic_class_offerings aco
-    WHERE ct.class_section_id = aco.section_id AND ct.tenant_id = aco.tenant_id AND ct.offering_id IS NULL;
+    FROM class_sections sec
+    INNER JOIN academic_class_offerings aco ON aco.class_id = sec.class_id AND aco.section_id = sec.section_id AND aco.tenant_id = sec.tenant_id
+    WHERE sec.id = ct.class_section_id AND ct.offering_id IS NULL;
   `);
   console.log('✔ offering_id linked on class_teachers.');
 
@@ -45,8 +63,9 @@ async function main() {
   await db.execute(sql`
     UPDATE subject_teachers st
     SET offering_id = aco.id
-    FROM academic_class_offerings aco
-    WHERE st.class_section_id = aco.section_id AND st.tenant_id = aco.tenant_id AND st.offering_id IS NULL;
+    FROM class_sections sec
+    INNER JOIN academic_class_offerings aco ON aco.class_id = sec.class_id AND aco.section_id = sec.section_id AND aco.tenant_id = sec.tenant_id
+    WHERE sec.id = st.class_section_id AND st.offering_id IS NULL;
   `);
   console.log('✔ offering_id linked on subject_teachers.');
 
@@ -54,8 +73,9 @@ async function main() {
   await db.execute(sql`
     UPDATE class_schedule_slots css
     SET offering_id = aco.id
-    FROM academic_class_offerings aco
-    WHERE css.class_section_id = aco.section_id AND css.tenant_id = aco.tenant_id AND css.offering_id IS NULL;
+    FROM class_sections sec
+    INNER JOIN academic_class_offerings aco ON aco.class_id = sec.class_id AND aco.section_id = sec.section_id AND aco.tenant_id = sec.tenant_id
+    WHERE sec.id = css.class_section_id AND css.offering_id IS NULL;
   `);
   console.log('✔ offering_id linked on class_schedule_slots.');
 

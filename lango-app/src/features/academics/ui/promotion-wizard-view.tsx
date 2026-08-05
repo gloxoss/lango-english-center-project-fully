@@ -45,10 +45,10 @@ interface CapacityBreakdown {
   classSectionId: string | null;
   className: string;
   sectionName: string;
-  capacity: number;
+  capacity: number | null;
   currentStudentsCount: number;
   proposedStudentsCount: number;
-  headroom: number;
+  headroom: number | null;
   isExceeded: boolean;
 }
 
@@ -118,21 +118,21 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
     });
   }, []);
 
-  // Fetch students when source section changes
+  // Fetch real grade-based student recommendations when source section changes
   useEffect(() => {
     if (!selectedSourceSection) return;
     setLoadingStudents(true);
-    fetch(`/api/students?classSectionId=${selectedSourceSection}`)
+    fetch(`/api/students/promotions/preview?sourceSectionId=${selectedSourceSection}`)
       .then((r) => r.json())
       .then((res) => {
         if (res.success && Array.isArray(res.data)) {
-          const mapped: StudentDecisionState[] = res.data.map((stu: StudentRecord) => ({
-            studentId: stu.id,
-            fullName: stu.fullName,
-            matricule: stu.matricule || 'N/A',
-            decision: 'promote',
+          const mapped: StudentDecisionState[] = res.data.map((item: any) => ({
+            studentId: item.studentId,
+            fullName: item.studentName,
+            matricule: item.matricule || 'N/A',
+            decision: item.recommendation === 'promote' ? 'promote' : item.recommendation === 'retain' ? 'repeat' : 'hold',
             targetClassSectionId: selectedDefaultTargetSection,
-            averagePercentage: 75, // Default grade preview
+            averagePercentage: item.averagePercentage != null ? item.averagePercentage : undefined,
           }));
           setStudentsDecisions(mapped);
         } else {
@@ -376,7 +376,7 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
                   <div>
                     <p className="text-xs font-bold text-[#16212B]">Vérification de la Capacité d'Accueil</p>
                     <p className="text-xs text-slate-500">
-                      {capacityBreakdown.map((b) => `${b.className} ${b.sectionName}: ${b.proposedStudentsCount} candidats (Restant: ${b.headroom})`).join(' | ')}
+                      {capacityBreakdown.map((b) => `${b.className} ${b.sectionName}: ${b.proposedStudentsCount} candidats (Restant: ${b.headroom != null ? b.headroom : 'Illimité'})`).join(' | ')}
                     </p>
                   </div>
                 </div>
