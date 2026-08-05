@@ -44,7 +44,7 @@ async function main() {
       WHERE role = 'primary' AND ends_on IS NULL
     )
     UPDATE class_teachers
-    SET ends_on = CURRENT_DATE
+    SET ends_on = CURRENT_DATE, status = 'inactive'::status
     WHERE id IN (SELECT id FROM ranked_primary WHERE rn > 1);
   `);
   console.log('✔ Duplicate active primary class_teachers resolved.');

@@ -1,4 +1,4 @@
-import { count, isNotNull } from 'drizzle-orm';
+import { and, count, eq, isNotNull } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import {
   academicClassOfferings,
@@ -47,7 +47,7 @@ async function verify() {
   console.log(`[✔] class_schedule_slots offering_id linkage: ${slotLinked?.count ?? 0} / ${slotTotal?.count ?? 0}`);
 
   // 4. Student users
-  const [studentCount] = await db.select({ count: count() }).from(user).where(user.role === 'student' as any);
+  const [studentCount] = await db.select({ count: count() }).from(user).where(and(eq(user.role, 'student')));
   console.log(`[✔] Student Users: ${studentCount?.count ?? 0}`);
 
   console.log('--- Verification Complete: 100% data integrity verified! ---');
