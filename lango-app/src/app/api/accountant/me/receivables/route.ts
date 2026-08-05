@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       .where(
         and(
           eq(invoices.tenantId, tenantId),
-          sql`${invoices.status} in ('pending', 'overdue', 'partially_paid')`,
+          sql`${invoices.status} in ('pending', 'overdue', 'partial')`,
         ),
       )
       .orderBy(desc(invoices.dueDate));
