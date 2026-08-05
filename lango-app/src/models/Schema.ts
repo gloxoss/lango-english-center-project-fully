@@ -2880,6 +2880,14 @@ export const creditNotes = pgTable('credit_notes', {
   reason: text().notNull(),
   issuedById: text('issued_by_id'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  // Maker-checker: reuses discountApprovalStatus (already exactly
+  // pending/approved/rejected) rather than a near-duplicate enum. A creator
+  // with finance.approve is auto-approved (an approver proposing their own
+  // note doesn't need a second approval); everyone else lands pending.
+  status: discountApprovalStatus().default('pending').notNull(),
+  approvedById: text('approved_by_id'),
+  approvedAt: timestamp('approved_at', { mode: 'string' }),
+  rejectionReason: text('rejection_reason'),
 }, table => [
   foreignKey({
     columns: [table.tenantId],
@@ -2896,7 +2904,13 @@ export const creditNotes = pgTable('credit_notes', {
     foreignColumns: [user.id],
     name: 'credit_notes_issued_by_id_user_id_fk',
   }).onDelete('set null'),
+  foreignKey({
+    columns: [table.approvedById],
+    foreignColumns: [user.id],
+    name: 'credit_notes_approved_by_id_user_id_fk',
+  }).onDelete('set null'),
   index('credit_notes_tenant_student_idx').on(table.tenantId, table.studentId),
+  index('credit_notes_tenant_status_idx').on(table.tenantId, table.status),
 ]);
 
 export const refunds = pgTable('refunds', {

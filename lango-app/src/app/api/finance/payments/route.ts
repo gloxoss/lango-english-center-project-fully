@@ -10,7 +10,7 @@ import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { tryPostPaymentGLEntry } from '@/libs/finance/gl-auto-post';
 import { centsToMoney, moneyToCents } from '@/libs/finance/money';
-import { invoices, paymentAllocations, payments, user } from '@/models/Schema';
+import { cashierSessions, invoices, paymentAllocations, payments, user } from '@/models/Schema';
 
 const moneyInput = z.union([
   z.string().regex(/^(?:0|[1-9]\d{0,11})(?:\.\d{1,2})?$/),
@@ -54,6 +54,21 @@ export async function POST(request: Request) {
     await requireCapability(context, 'finance.manage');
     const body = await parseJson(request, createPaymentSchema);
     const paymentCents = moneyToCents(body.amount);
+
+    // Cash accountability: a cashier's collected-cash total (accountant/me/cashier)
+    // is only ever computed from payments recorded during an open session - a
+    // cash payment recorded with no session open would be real money nothing
+    // ever reconciles against. Scoped to accountant + cash only: school_admin
+    // isn't part of this workflow, and card/transfer/check aren't physical
+    // cash a drawer needs to reconcile.
+    if (context.role === 'accountant' && body.paymentMethod === 'cash') {
+      const [openSession] = await db.select({ id: cashierSessions.id }).from(cashierSessions)
+        .where(and(eq(cashierSessions.tenantId, tenantId), eq(cashierSessions.cashierId, context.userId), eq(cashierSessions.status, 'open')))
+        .limit(1);
+      if (!openSession) {
+        throw new ApiError(409, 'NO_OPEN_CASHIER_SESSION', 'Ouvrez votre session de caisse avant d\'encaisser un paiement en espèces.');
+      }
+    }
 
     const { payment, updatedInvoice } = await db.transaction(async (tx) => {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${tenantId}:${body.invoiceId}`}, 0))`);

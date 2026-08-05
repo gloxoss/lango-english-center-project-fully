@@ -5,10 +5,11 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
-import { requireCapability } from '@/libs/api/permissions';
+import { hasCapability, requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { normalizeMoney } from '@/libs/finance/money';
+import { decideCreditNote } from '@/libs/services/credit-note-approval';
 import { creditNotes, invoices, user } from '@/models/Schema';
 
 const createCreditNoteSchema = z.object({
@@ -17,6 +18,15 @@ const createCreditNoteSchema = z.object({
   amount: z.string().regex(/^(?:0|[1-9]\d{0,11})(?:\.\d{1,2})?$/).refine(value => Number(value) > 0),
   reason: z.string().trim().min(1).max(1000),
 }).strict();
+
+const decideCreditNoteSchema = z.object({
+  id: z.string().uuid(),
+  decision: z.enum(['approved', 'rejected']),
+  rejectionReason: z.string().trim().min(1).max(1000).optional(),
+}).strict().refine(
+  body => body.decision !== 'rejected' || !!body.rejectionReason,
+  { message: 'Un motif est requis pour rejeter une note de crédit.', path: ['rejectionReason'] },
+);
 
 export async function GET(req: NextRequest) {
   try {
@@ -58,7 +68,11 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const ctx = await requireRequestContext(req);
-    await requireCapability(ctx, 'finance.approve');
+    // Propose: finance.manage (accountant has this). Whether it lands
+    // pending or auto-approved depends on whether the creator can also
+    // approve - see the auto-approve check below, not a second capability
+    // gate on this action.
+    await requireCapability(ctx, 'finance.manage');
 
     const body = await parseJson(req, createCreditNoteSchema);
     const tenantId = ctx.tenantId!;
@@ -78,6 +92,8 @@ export async function POST(req: NextRequest) {
     }
 
     const creditNoteNumber = `CN-${randomUUID().replaceAll('-', '').slice(0, 16).toUpperCase()}`;
+    const canSelfApprove = await hasCapability(ctx.userId, tenantId, ctx.role, 'finance.approve');
+    const now = new Date().toISOString();
 
     const [record] = await db
       .insert(creditNotes)
@@ -89,10 +105,33 @@ export async function POST(req: NextRequest) {
         amount: normalizeMoney(body.amount),
         reason: body.reason,
         issuedById: ctx.userId,
+        status: canSelfApprove ? 'approved' : 'pending',
+        approvedById: canSelfApprove ? ctx.userId : null,
+        approvedAt: canSelfApprove ? now : null,
       })
       .returning();
 
     return NextResponse.json({ success: true, data: record }, { status: 201 });
+  } catch (error) {
+    return apiErrorResponse(error);
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const ctx = await requireRequestContext(req);
+    await requireCapability(ctx, 'finance.approve');
+    const body = await parseJson(req, decideCreditNoteSchema);
+
+    const updated = await decideCreditNote({
+      tenantId: ctx.tenantId!,
+      id: body.id,
+      decision: body.decision,
+      decidedById: ctx.userId,
+      rejectionReason: body.rejectionReason,
+    });
+
+    return NextResponse.json({ success: true, data: updated });
   } catch (error) {
     return apiErrorResponse(error);
   }

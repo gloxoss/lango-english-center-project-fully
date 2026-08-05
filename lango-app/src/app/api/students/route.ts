@@ -153,6 +153,14 @@ export async function GET(request: Request) {
       if (!detail) {
         return NextResponse.json({ success: false, message: 'Élève non trouvé' }, { status: 404 });
       }
+      // accountant has students.read for billing/collection lookups, not
+      // academic data - attendance is the one field here that crosses that
+      // line (payments/balanceDue are billing-relevant, guardians are needed
+      // for guardian routing, neither of those has an academic/medical concept).
+      if (context.role === 'accountant') {
+        const { attendance: _attendance, ...billingSafeDetail } = detail;
+        return NextResponse.json({ success: true, data: billingSafeDetail });
+      }
       return NextResponse.json({ success: true, data: detail });
     }
 
