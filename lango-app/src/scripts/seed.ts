@@ -141,6 +141,23 @@ async function seed() {
           .returning({ id: sessionYears.id })
       )[0]!.id;
 
+  // Seed target Session Year 2026-2027 for Atlas
+  const [existingNextSessionYear] = await db
+    .select({ id: sessionYears.id })
+    .from(sessionYears)
+    .where(and(eq(sessionYears.tenantId, tenantId), eq(sessionYears.name, '2026-2027')))
+    .limit(1);
+
+  if (!existingNextSessionYear) {
+    await db.insert(sessionYears).values({
+      tenantId,
+      name: '2026-2027',
+      startDate: '2026-09-01',
+      endDate: '2027-06-30',
+      isDefault: false,
+    });
+  }
+
   // Seed default Session Year for Lango
   const [existingLangoSessionYear] = await db
     .select({ id: sessionYears.id })
@@ -155,6 +172,23 @@ async function seed() {
       startDate: '2025-09-01',
       endDate: '2026-06-30',
       isDefault: true,
+    });
+  }
+
+  // Seed target Session Year 2026-2027 for Lango
+  const [existingLangoNextSessionYear] = await db
+    .select({ id: sessionYears.id })
+    .from(sessionYears)
+    .where(and(eq(sessionYears.tenantId, langoTenantId), eq(sessionYears.name, '2026-2027')))
+    .limit(1);
+
+  if (!existingLangoNextSessionYear) {
+    await db.insert(sessionYears).values({
+      tenantId: langoTenantId,
+      name: '2026-2027',
+      startDate: '2026-09-01',
+      endDate: '2027-06-30',
+      isDefault: false,
     });
   }
 
@@ -205,12 +239,30 @@ async function seed() {
         userStatus: 'active',
       },
       {
+        id: 'USR-ACC-001',
+        tenantId,
+        name: 'Karim Bennani (Comptable)',
+        email: 'accountant@atlas.ma',
+        phone: '+212 6 61-998877',
+        role: 'accountant',
+        userStatus: 'active',
+      },
+      {
         id: 'USR-LANGO-001',
         tenantId: langoTenantId,
         name: 'Admin Lango Center',
         email: 'admin@lango.ma',
         phone: '+212 6 00-000000',
         role: 'school_admin',
+        userStatus: 'active',
+      },
+      {
+        id: 'USR-ACC-002',
+        tenantId: langoTenantId,
+        name: 'Siham Tazi (Comptable)',
+        email: 'accountant@lango.ma',
+        phone: '+212 6 62-112233',
+        role: 'accountant',
         userStatus: 'active',
       },
       {
@@ -464,7 +516,7 @@ async function seed() {
 
   // One login credential per role, so RBAC (sidebar/layout guards) can actually
   // be tested against every role, not just school_admin.
-  const credentialUserIds = ['USR-001', 'USR-LANGO-001', 'USR-002', 'USR-SUPER-001'];
+  const credentialUserIds = ['USR-001', 'USR-LANGO-001', 'USR-002', 'USR-SUPER-001', 'USR-ACC-001', 'USR-ACC-002'];
   for (const userId of credentialUserIds) {
     await db
       .insert(account)
