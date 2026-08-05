@@ -66,6 +66,10 @@ const FULL_NAVIGATION: NavItem[] = [
       { id: 'subjects', label: 'Matières', icon: 'FileText', href: '/dashboard/academics/subjects', permission: 'academics.read' },
       { id: 'schedule', label: 'Emploi du temps', icon: 'Clock', href: '/dashboard/academics/schedule', permission: 'academics.read' },
       { id: 'teacher-schedule', label: 'Emploi du temps enseignant', icon: 'CalendarClock', href: '/dashboard/academics/teacher-schedule', permission: 'academics.read' },
+      { id: 'session-copy', label: 'Copie de session', icon: 'Copy', href: '/dashboard/academics/session-copy', permission: 'academics.manage' },
+      { id: 'assignments', label: 'Espace d\'affectations', icon: 'UserCheck', href: '/dashboard/academics/assignments', permission: 'academics.read' },
+      { id: 'promotions', label: 'Promotion & Réinscription', icon: 'Sparkles', href: '/dashboard/academics/promotions', permission: 'academics.manage' },
+      { id: 'readiness', label: 'Bilan de rentrée', icon: 'ShieldCheck', href: '/dashboard/academics/readiness', permission: 'academics.read' },
     ],
   },
   {

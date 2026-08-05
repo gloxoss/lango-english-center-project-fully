@@ -323,6 +323,48 @@
       "when": 1785701000000,
       "tag": "0046_add_promotion_ledger",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1785701100000,
+      "tag": "0047_add_academic_class_offerings",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1785701200000,
+      "tag": "0048_add_offering_id_linkage",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1785701300000,
+      "tag": "0049_add_class_teacher_roles",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1785701400000,
+      "tag": "0050_add_class_subject_curriculum_metadata",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1785701500000,
+      "tag": "0051_add_academic_rooms",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1785701600000,
+      "tag": "0052_add_timetable_versions",
+      "breakpoints": true
     }
   ]
 }

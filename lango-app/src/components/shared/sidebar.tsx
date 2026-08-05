@@ -151,6 +151,10 @@ export function Sidebar({ locale }: { locale: string }) {
         { label: 'Emploi du temps', href: `/${locale}/dashboard/academics/schedule` },
         { label: 'Emploi du temps enseignant', href: `/${locale}/dashboard/academics/teacher-schedule` },
         { label: 'Conflits horaires', href: `/${locale}/dashboard/academics/conflicts` },
+        { label: 'Copie de Session', href: `/${locale}/dashboard/academics/session-copy` },
+        { label: 'Espace d\'affectations', href: `/${locale}/dashboard/academics/assignments` },
+        { label: 'Promotion & Réinscription', href: `/${locale}/dashboard/academics/promotions` },
+        { label: 'Bilan de Rentrée', href: `/${locale}/dashboard/academics/readiness` },
       ],
     },
 

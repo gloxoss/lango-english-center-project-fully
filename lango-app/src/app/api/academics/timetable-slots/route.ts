@@ -7,18 +7,9 @@ import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, scheduleSlotCreateSchema, scheduleSlotUpdateSchema } from '@/libs/api/validation';
 import { assertSlotIsValid } from '@/libs/services/timetable-validation';
 import { db } from '@/libs/DB';
-import { classes, classScheduleSlots, classSections, classSubjects, sections, subjects, user } from '@/models/Schema';
+import { classes, classScheduleSlots, classSections, classSubjects, sections, sessionYears, subjects, timetableVersions, user } from '@/models/Schema';
 
-function toApiSlot(row: {
-  id: string;
-  classSectionId: string;
-  classSubjectId: string;
-  teacherId: string;
-  dayOfWeek: string;
-  startTime: string;
-  endTime: string;
-  roomLabel: string | null;
-}) {
+function toApiSlot(row: typeof classScheduleSlots.$inferSelect) {
   return row;
 }
 
@@ -28,13 +19,47 @@ export async function GET(request: Request) {
     const tenantId = requireTenant(context);
     const { searchParams } = new URL(request.url);
     const classSectionId = searchParams.get('classSectionId');
+    const offeringId = searchParams.get('offeringId');
+    let versionId = searchParams.get('versionId');
+
     // Teachers can only ever see their own schedule - self-scope regardless
     // of what teacherId (if any) they pass; school_admin can filter freely.
     const teacherId = context.role === 'teacher' ? context.userId : searchParams.get('teacherId');
 
+    // If versionId is not supplied, default to the currently published version for default session
+    if (!versionId) {
+      const [defaultSession] = await db
+        .select({ id: sessionYears.id })
+        .from(sessionYears)
+        .where(and(eq(sessionYears.tenantId, tenantId), eq(sessionYears.isDefault, true)))
+        .limit(1);
+
+      if (defaultSession) {
+        const [publishedVer] = await db
+          .select({ id: timetableVersions.id })
+          .from(timetableVersions)
+          .where(and(
+            eq(timetableVersions.tenantId, tenantId),
+            eq(timetableVersions.sessionYearId, defaultSession.id),
+            eq(timetableVersions.status, 'published'),
+          ))
+          .limit(1);
+
+        if (publishedVer) {
+          versionId = publishedVer.id;
+        }
+      }
+    }
+
     const filters = [eq(classScheduleSlots.tenantId, tenantId)];
+    if (versionId) {
+      filters.push(eq(classScheduleSlots.versionId, versionId));
+    }
     if (classSectionId) {
       filters.push(eq(classScheduleSlots.classSectionId, classSectionId));
+    }
+    if (offeringId) {
+      filters.push(eq(classScheduleSlots.offeringId, offeringId));
     }
     if (teacherId) {
       filters.push(eq(classScheduleSlots.teacherId, teacherId));
@@ -50,6 +75,8 @@ export async function GET(request: Request) {
         startTime: classScheduleSlots.startTime,
         endTime: classScheduleSlots.endTime,
         roomLabel: classScheduleSlots.roomLabel,
+        offeringId: classScheduleSlots.offeringId,
+        versionId: classScheduleSlots.versionId,
         className: classes.name,
         sectionName: sections.name,
         subjectName: subjects.name,
@@ -86,7 +113,7 @@ export async function POST(request: Request) {
 
     recordAudit(context, 'create', 'class_schedule_slot', inserted!.id);
 
-    return NextResponse.json({ success: true, data: toApiSlot(inserted!), message: 'Créneau ajouté à l\'emploi du temps' });
+    return NextResponse.json({ success: true, data: toApiSlot(inserted!), message: 'Créneau ajouté à l\'emploi du temps' }, { status: 201 });
   } catch (error) {
     return apiErrorResponse(error);
   }
@@ -112,6 +139,8 @@ export async function PUT(request: Request) {
       startTime: body.startTime ?? existing.startTime,
       endTime: body.endTime ?? existing.endTime,
       roomLabel: body.roomLabel !== undefined ? body.roomLabel : existing.roomLabel,
+      offeringId: body.offeringId !== undefined ? body.offeringId : existing.offeringId,
+      versionId: body.versionId !== undefined ? body.versionId : existing.versionId,
     };
     await assertSlotIsValid(tenantId, merged, body.id);
 

@@ -6,6 +6,10 @@ import { boolean, check, date, doublePrecision, foreignKey, index, integer, json
 // the sessionYears/mediums/etc. tables below.
 export const subjectType = pgEnum('subject_type', ['theory', 'practical']);
 export const classSubjectType = pgEnum('class_subject_type', ['compulsory', 'elective']);
+export const classTeacherRole = pgEnum('class_teacher_role', ['primary', 'assistant', 'support']);
+export const timetableVersionStatus = pgEnum('timetable_version_status', ['draft', 'published', 'archived']);
+export const promotionBatchStatus = pgEnum('promotion_batch_status', ['committed', 'reverted']);
+export const promotionDecisionType = pgEnum('promotion_decision_type', ['promote', 'repeat', 'graduate', 'transfer', 'withdraw', 'hold']);
 
 export const attendanceStatus = pgEnum('attendance_status', ['present', 'absent', 'late', 'excused']);
 export const attendanceExcuseStatus = pgEnum('attendance_excuse_status', ['pending', 'approved', 'rejected']);
@@ -36,8 +40,6 @@ export const accountType = pgEnum('account_type', ['asset', 'liability', 'equity
 export const fiscalPeriodStatus = pgEnum('fiscal_period_status', ['open', 'closed']);
 export const discountApprovalStatus = pgEnum('discount_approval_status', ['pending', 'approved', 'rejected']);
 export const journalStatus = pgEnum('journal_status', ['posted', 'reversed']);
-export const promotionBatchStatus = pgEnum('promotion_batch_status', ['committed', 'reverted']);
-export const promotionDecisionType = pgEnum('promotion_decision_type', ['promote', 'repeat', 'graduate', 'transfer', 'withdraw', 'hold']);
 
 export const verification = pgTable('verification', {
   id: text().primaryKey().notNull(),
@@ -53,6 +55,7 @@ export const tenants = pgTable('tenants', {
   name: varchar({ length: 255 }).notNull(),
   slug: varchar({ length: 100 }).notNull(),
   logoUrl: text('logo_url'),
+  faviconUrl: text('favicon_url'),
   isActive: boolean('is_active').default(true).notNull(),
   planTier: planTier('plan_tier').default('trial').notNull(),
   subscriptionStatus: subscriptionStatus('subscription_status').default('active').notNull(),
@@ -294,9 +297,21 @@ export const classSubjects = pgTable('class_subjects', {
   subjectId: uuid('subject_id').notNull(),
   type: classSubjectType().notNull(),
   semesterId: uuid('semester_id'),
+  offeringId: uuid('offering_id'),
+  weeklyMinutes: integer('weekly_minutes'),
+  displayOrder: integer('display_order').default(0).notNull(),
+  coefficient: numeric('coefficient', { precision: 4, scale: 2 }).default('1.00').notNull(),
+  passThreshold: numeric('pass_threshold', { precision: 5, scale: 2 }),
+  isActive: boolean('is_active').default(true).notNull(),
+  curriculumLabel: varchar('curriculum_label', { length: 100 }),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
+  foreignKey({
+    columns: [table.offeringId],
+    foreignColumns: [academicClassOfferings.id],
+    name: 'class_subjects_offering_id_academic_class_offerings_id_fk',
+  }).onDelete('set null'),
   foreignKey({
     columns: [table.tenantId],
     foreignColumns: [tenants.id],
@@ -325,8 +340,20 @@ export const classTeachers = pgTable('class_teachers', {
   tenantId: uuid('tenant_id').notNull(),
   classSectionId: uuid('class_section_id').notNull(),
   teacherId: text('teacher_id').notNull(),
+  offeringId: uuid('offering_id'),
+  role: classTeacherRole('role').default('primary').notNull(),
+  startsOn: date('starts_on').defaultNow().notNull(),
+  endsOn: date('ends_on'),
+  status: status('status').default('active').notNull(),
+  assignedBy: text('assigned_by'),
+  notes: text('notes'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
+  foreignKey({
+    columns: [table.offeringId],
+    foreignColumns: [academicClassOfferings.id],
+    name: 'class_teachers_offering_id_academic_class_offerings_id_fk',
+  }).onDelete('set null'),
   foreignKey({
     columns: [table.tenantId],
     foreignColumns: [tenants.id],
@@ -342,7 +369,12 @@ export const classTeachers = pgTable('class_teachers', {
     foreignColumns: [user.id],
     name: 'class_teachers_teacher_id_user_id_fk',
   }),
-  unique('class_teachers_class_section_id_teacher_id_unique').on(table.classSectionId, table.teacherId),
+  foreignKey({
+    columns: [table.assignedBy],
+    foreignColumns: [user.id],
+    name: 'class_teachers_assigned_by_user_id_fk',
+  }).onDelete('set null'),
+  uniqueIndex('class_teachers_single_active_primary_idx').on(table.tenantId, table.offeringId).where(sql`role = 'primary' AND ends_on IS NULL`),
 ]);
 
 export const subjectTeachers = pgTable('subject_teachers', {
@@ -352,8 +384,14 @@ export const subjectTeachers = pgTable('subject_teachers', {
   subjectId: uuid('subject_id').notNull(),
   classSubjectId: uuid('class_subject_id').notNull(),
   teacherId: text('teacher_id').notNull(),
+  offeringId: uuid('offering_id'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
+  foreignKey({
+    columns: [table.offeringId],
+    foreignColumns: [academicClassOfferings.id],
+    name: 'subject_teachers_offering_id_academic_class_offerings_id_fk',
+  }).onDelete('set null'),
   foreignKey({
     columns: [table.tenantId],
     foreignColumns: [tenants.id],
@@ -1762,10 +1800,30 @@ export const schoolSettings = pgTable('school_settings', {
   id: uuid().defaultRandom().primaryKey().notNull(),
   tenantId: uuid('tenant_id').notNull(),
   establishmentName: varchar('establishment_name', { length: 255 }).notNull(),
+  shortName: varchar('short_name', { length: 100 }),
   city: varchar({ length: 255 }),
   address: text(),
   phone: varchar({ length: 50 }),
   email: varchar({ length: 255 }),
+  website: varchar({ length: 500 }),
+  country: varchar({ length: 100 }),
+  // Legal / fiscal
+  rc: varchar({ length: 100 }),
+  ice: varchar({ length: 50 }),
+  taxId: varchar('tax_id', { length: 100 }),
+  legalStatus: varchar('legal_status', { length: 100 }),
+  // Director contact
+  directorName: varchar('director_name', { length: 255 }),
+  directorEmail: varchar('director_email', { length: 255 }),
+  directorPhone: varchar('director_phone', { length: 50 }),
+  // Institutional contacts
+  financialContactName: varchar('financial_contact_name', { length: 255 }),
+  financialContactEmail: varchar('financial_contact_email', { length: 255 }),
+  financialContactPhone: varchar('financial_contact_phone', { length: 50 }),
+  admissionsContactName: varchar('admissions_contact_name', { length: 255 }),
+  admissionsContactEmail: varchar('admissions_contact_email', { length: 255 }),
+  admissionsContactPhone: varchar('admissions_contact_phone', { length: 50 }),
+  // Operational
   academicYear: varchar('academic_year', { length: 50 }),
   startDate: date('start_date'),
   endDate: date('end_date'),
@@ -1773,12 +1831,14 @@ export const schoolSettings = pgTable('school_settings', {
   presenceModes: jsonb('presence_modes'),
   languages: jsonb(),
   security: jsonb(),
-  ice: varchar({ length: 50 }),
-  legalStatus: varchar('legal_status', { length: 100 }),
-  directorName: varchar('director_name', { length: 255 }),
+  // Locale / branding preferences
+  localeTimezone: varchar('locale_timezone', { length: 100 }),
+  dateFormat: varchar('date_format', { length: 50 }),
+  documentHeaderStyle: varchar('document_header_style', { length: 50 }),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
+
   foreignKey({
     columns: [table.tenantId],
     foreignColumns: [tenants.id],
@@ -1993,6 +2053,44 @@ export const accessResetRequests = pgTable('access_reset_requests', {
 // conflict detection on the label matters here.
 // ==========================================================================
 
+export const timetableVersions = pgTable('timetable_versions', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  sessionYearId: uuid('session_year_id').notNull(),
+  status: timetableVersionStatus('status').default('draft').notNull(),
+  versionNumber: integer('version_number').default(1).notNull(),
+  effectiveFrom: date('effective_from'),
+  effectiveTo: date('effective_to'),
+  createdBy: text('created_by').notNull(),
+  publishedBy: text('published_by'),
+  publishedAt: timestamp('published_at', { mode: 'string' }),
+  copiedFromVersionId: uuid('copied_from_version_id'),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'timetable_versions_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.sessionYearId],
+    foreignColumns: [sessionYears.id],
+    name: 'timetable_versions_session_year_id_session_years_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.createdBy],
+    foreignColumns: [user.id],
+    name: 'timetable_versions_created_by_user_id_fk',
+  }),
+  foreignKey({
+    columns: [table.publishedBy],
+    foreignColumns: [user.id],
+    name: 'timetable_versions_published_by_user_id_fk',
+  }),
+  uniqueIndex('timetable_versions_single_published_idx').on(table.tenantId, table.sessionYearId).where(sql`status = 'published'`),
+]);
+
 export const classScheduleSlots = pgTable('class_schedule_slots', {
   id: uuid().defaultRandom().primaryKey().notNull(),
   tenantId: uuid('tenant_id').notNull(),
@@ -2003,9 +2101,21 @@ export const classScheduleSlots = pgTable('class_schedule_slots', {
   startTime: varchar('start_time', { length: 5 }).notNull(),
   endTime: varchar('end_time', { length: 5 }).notNull(),
   roomLabel: varchar('room_label', { length: 100 }),
+  offeringId: uuid('offering_id'),
+  versionId: uuid('version_id'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
+  foreignKey({
+    columns: [table.versionId],
+    foreignColumns: [timetableVersions.id],
+    name: 'class_schedule_slots_version_id_timetable_versions_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.offeringId],
+    foreignColumns: [academicClassOfferings.id],
+    name: 'class_schedule_slots_offering_id_academic_class_offerings_id_fk',
+  }).onDelete('set null'),
   foreignKey({
     columns: [table.tenantId],
     foreignColumns: [tenants.id],
@@ -3255,3 +3365,58 @@ export const leaveRequests = pgTable('leave_requests', {
   }),
   index('leave_requests_user_status_idx').on(table.tenantId, table.userId, table.status),
 ]);
+
+export const academicClassOfferings = pgTable('academic_class_offerings', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  sessionYearId: uuid('session_year_id').notNull(),
+  classId: uuid('class_id').notNull(),
+  sectionId: uuid('section_id').notNull(),
+  capacity: integer('capacity'),
+  status: status().default('active').notNull(),
+  displayOrder: integer('display_order').default(0).notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'academic_class_offerings_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.sessionYearId],
+    foreignColumns: [sessionYears.id],
+    name: 'academic_class_offerings_session_year_id_session_years_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.classId],
+    foreignColumns: [classes.id],
+    name: 'academic_class_offerings_class_id_classes_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.sectionId],
+    foreignColumns: [sections.id],
+    name: 'academic_class_offerings_section_id_sections_id_fk',
+  }).onDelete('cascade'),
+  unique('academic_class_offerings_unique').on(table.tenantId, table.sessionYearId, table.classId, table.sectionId),
+]);
+
+export const academicRooms = pgTable('academic_rooms', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  name: varchar('name', { length: 100 }).notNull(),
+  capacity: integer('capacity'),
+  roomType: varchar('room_type', { length: 50 }),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'academic_rooms_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  unique('academic_rooms_tenant_name_unique').on(table.tenantId, table.name),
+]);
+
+

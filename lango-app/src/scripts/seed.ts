@@ -2,6 +2,7 @@ import { hashPassword } from 'better-auth/crypto';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import {
+  academicClassOfferings,
   account,
   attendance,
   classes,
@@ -12,6 +13,7 @@ import {
   mediums,
   payments,
   sections,
+  sessionYears,
   subjects,
   subjectTeachers,
   tenants,
@@ -116,6 +118,78 @@ async function seed() {
   const class2ndeAId = await upsertClassSection(class2ndeId, sectionAId);
   const class2ndeCId = await upsertClassSection(class2ndeId, sectionCId);
   const class1ereBId = await upsertClassSection(class1ereId, sectionBId);
+
+  // Seed default Session Year for Atlas
+  const [existingSessionYear] = await db
+    .select({ id: sessionYears.id })
+    .from(sessionYears)
+    .where(and(eq(sessionYears.tenantId, tenantId), eq(sessionYears.isDefault, true)))
+    .limit(1);
+
+  const sessionYearId
+    = existingSessionYear?.id
+      ?? (
+        await db
+          .insert(sessionYears)
+          .values({
+            tenantId,
+            name: '2025-2026',
+            startDate: '2025-09-01',
+            endDate: '2026-06-30',
+            isDefault: true,
+          })
+          .returning({ id: sessionYears.id })
+      )[0]!.id;
+
+  // Seed default Session Year for Lango
+  const [existingLangoSessionYear] = await db
+    .select({ id: sessionYears.id })
+    .from(sessionYears)
+    .where(and(eq(sessionYears.tenantId, langoTenantId), eq(sessionYears.isDefault, true)))
+    .limit(1);
+
+  if (!existingLangoSessionYear) {
+    await db.insert(sessionYears).values({
+      tenantId: langoTenantId,
+      name: '2025-2026',
+      startDate: '2025-09-01',
+      endDate: '2026-06-30',
+      isDefault: true,
+    });
+  }
+
+  // Seed academicClassOfferings for classSections
+  async function upsertOffering(classSectionId: string, classId: string, sectionId: string): Promise<string> {
+    const [row] = await db
+      .select({ id: academicClassOfferings.id })
+      .from(academicClassOfferings)
+      .where(and(
+        eq(academicClassOfferings.tenantId, tenantId),
+        eq(academicClassOfferings.sessionYearId, sessionYearId),
+        eq(academicClassOfferings.classId, classId),
+        eq(academicClassOfferings.sectionId, sectionId),
+      ))
+      .limit(1);
+    if (row) return row.id;
+
+    const [inserted] = await db
+      .insert(academicClassOfferings)
+      .values({
+        tenantId,
+        sessionYearId,
+        classId,
+        sectionId,
+        capacity: 30,
+        status: 'active',
+      })
+      .returning({ id: academicClassOfferings.id });
+
+    return inserted!.id;
+  }
+
+  const offering2ndeA = await upsertOffering(class2ndeAId, class2ndeId, sectionAId);
+  const offering2ndeC = await upsertOffering(class2ndeCId, class2ndeId, sectionCId);
+  const offering1ereB = await upsertOffering(class1ereBId, class1ereId, sectionBId);
 
   // Users for Atlas & Lango
   await db

@@ -266,6 +266,13 @@ export const classSubjectCreateSchema = z.object({
   subjectId: idSchema,
   type: z.enum(['compulsory', 'elective']),
   semesterId: idSchema.optional().nullable(),
+  offeringId: idSchema.optional().nullable(),
+  weeklyMinutes: z.number().int().positive().optional().nullable(),
+  displayOrder: z.number().int().optional().default(0),
+  coefficient: z.number().positive().optional().default(1),
+  passThreshold: z.number().positive().optional().nullable(),
+  isActive: z.boolean().optional().default(true),
+  curriculumLabel: z.string().max(100).optional().nullable(),
 }).strict();
 
 export const classSubjectUpdateSchema = classSubjectCreateSchema
@@ -278,6 +285,9 @@ export const classSubjectUpdateSchema = classSubjectCreateSchema
 export const classTeacherCreateSchema = z.object({
   classSectionId: idSchema,
   teacherId: z.string().trim().min(1).max(100),
+  offeringId: z.string().uuid().optional().nullable(),
+  role: z.enum(['primary', 'assistant', 'support']).optional().default('primary'),
+  notes: z.string().max(1000).optional().nullable(),
 }).strict();
 
 export const subjectTeacherCreateSchema = z.object({
@@ -288,22 +298,52 @@ export const subjectTeacherCreateSchema = z.object({
 }).strict();
 
 export const settingsUpdateSchema = z.object({
+  // Core identity
   establishmentName: z.string().trim().min(1).max(255),
+  shortName: optionalText(100),
   city: optionalText(255),
   address: optionalText(2000),
   phone: optionalText(50),
   email: z.email().max(255).optional().nullable(),
-  academicYear: optionalText(50),
-  startDate: z.iso.date().optional().nullable(),
-  endDate: z.iso.date().optional().nullable(),
-  allowOperations: z.boolean().optional(),
-  presenceModes: z.record(z.string(), z.boolean()).optional(),
-  languages: z.record(z.string(), z.boolean()).optional(),
-  security: z.record(z.string(), z.boolean()).optional(),
+  website: optionalText(500),
+  country: optionalText(100),
+  // Legal / fiscal
+  rc: optionalText(100),
   ice: optionalText(50),
+  taxId: optionalText(100),
   legalStatus: optionalText(100),
+  // Director contact
   directorName: optionalText(255),
+  directorEmail: z.email().max(255).optional().nullable(),
+  directorPhone: optionalText(50),
+  // Institutional contacts
+  financialContactName: optionalText(255),
+  financialContactEmail: z.email().max(255).optional().nullable(),
+  financialContactPhone: optionalText(50),
+  admissionsContactName: optionalText(255),
+  admissionsContactEmail: z.email().max(255).optional().nullable(),
+  admissionsContactPhone: optionalText(50),
+  // Operational flags
+  allowOperations: z.boolean().optional(),
+  // JSONB fields — key-count limits prevent DoS via oversized payloads
+  presenceModes: z.record(z.string().max(50), z.boolean()).refine(val => !val || Object.keys(val).length <= 20, 'Maximum 20 clés autorisées').optional(),
+  languages: z.record(z.string().max(20), z.boolean()).refine(val => !val || Object.keys(val).length <= 10, 'Maximum 10 clés autorisées').optional(),
+  security: z.record(z.string().max(50), z.boolean()).refine(val => !val || Object.keys(val).length <= 20, 'Maximum 20 clés autorisées').optional(),
+  // Locale preferences
+  localeTimezone: optionalText(100),
+  dateFormat: optionalText(50),
+  documentHeaderStyle: z.enum(['classique', 'minimal', 'moderne']).optional().nullable(),
 }).strict();
+
+export const branchCreateSchema = z.object({
+  name: z.string().trim().min(1).max(255),
+  code: z.string().trim().min(1).max(50).regex(/^[\w-]+$/, 'Code doit être alphanumérique'),
+  city: optionalText(100),
+  address: optionalText(2000),
+  phone: optionalText(50),
+  email: z.email().max(255).optional().nullable(),
+}).strict();
+
 
 // ==========================================================================
 // Assessment/grading engine
@@ -390,6 +430,8 @@ export const scheduleSlotCreateSchema = z.object({
   startTime: timeString,
   endTime: timeString,
   roomLabel: optionalText(100),
+  offeringId: z.uuid().optional().nullable(),
+  versionId: z.uuid().optional().nullable(),
 }).strict().refine(data => data.startTime < data.endTime, { message: 'L\'heure de fin doit être après l\'heure de début.', path: ['endTime'] });
 
 export const scheduleSlotUpdateSchema = z.object({
@@ -401,4 +443,6 @@ export const scheduleSlotUpdateSchema = z.object({
   startTime: timeString.optional(),
   endTime: timeString.optional(),
   roomLabel: optionalText(100),
+  offeringId: z.uuid().optional().nullable(),
+  versionId: z.uuid().optional().nullable(),
 }).strict();

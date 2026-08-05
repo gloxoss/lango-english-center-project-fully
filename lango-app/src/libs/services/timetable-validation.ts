@@ -11,9 +11,17 @@ export type SlotCandidate = {
   startTime: string;
   endTime: string;
   roomLabel?: string | null;
+  versionId?: string | null;
 };
 
-function overlaps(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
+export type TimetableConflict = {
+  slotAId: string;
+  slotBId: string;
+  type: 'TEACHER_CONFLICT' | 'CLASS_SECTION_CONFLICT' | 'ROOM_CONFLICT';
+  message: string;
+};
+
+export function overlaps(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
   return aStart < bEnd && bStart < aEnd;
 }
 
@@ -22,9 +30,7 @@ function overlaps(aStart: string, aEnd: string, bStart: string, bEnd: string): b
  * belong to the section's own class, the teacher must actually be assigned
  * (via subjectTeachers) to teach that subject in that section, the time
  * range must be valid, and the slot must not double-book a teacher, room, or
- * class-section against any other slot already on the timetable. Blocks by
- * default - no override path (ponytail: not requested, add if a school
- * policy actually needs one).
+ * class-section against any other slot already on the timetable.
  */
 export async function assertSlotIsValid(tenantId: string, candidate: SlotCandidate, excludeSlotId?: string): Promise<void> {
   if (!(candidate.startTime < candidate.endTime)) {
@@ -54,10 +60,17 @@ export async function assertSlotIsValid(tenantId: string, candidate: SlotCandida
     throw new ApiError(422, 'TEACHER_NOT_ASSIGNED', 'Cet enseignant n\'est pas assigné à cette matière pour cette section.');
   }
 
-  const filters = [eq(classScheduleSlots.tenantId, tenantId), eq(classScheduleSlots.dayOfWeek, candidate.dayOfWeek as typeof classScheduleSlots.$inferSelect.dayOfWeek)];
+  const filters = [
+    eq(classScheduleSlots.tenantId, tenantId),
+    eq(classScheduleSlots.dayOfWeek, candidate.dayOfWeek as typeof classScheduleSlots.$inferSelect.dayOfWeek)
+  ];
+  if (candidate.versionId) {
+    filters.push(eq(classScheduleSlots.versionId, candidate.versionId));
+  }
   if (excludeSlotId) {
     filters.push(ne(classScheduleSlots.id, excludeSlotId));
   }
+
   const sameDaySlots = await db.select({
     id: classScheduleSlots.id,
     classSectionId: classScheduleSlots.classSectionId,
@@ -81,4 +94,53 @@ export async function assertSlotIsValid(tenantId: string, candidate: SlotCandida
       throw new ApiError(409, 'ROOM_CONFLICT', `La salle "${candidate.roomLabel}" est déjà réservée sur ce créneau.`);
     }
   }
+}
+
+/**
+ * Validates an entire timetable version before publishing. Returns all conflicts.
+ */
+export async function findVersionConflicts(tenantId: string, versionId: string): Promise<TimetableConflict[]> {
+  const slots = await db
+    .select()
+    .from(classScheduleSlots)
+    .where(and(eq(classScheduleSlots.tenantId, tenantId), eq(classScheduleSlots.versionId, versionId)));
+
+  const conflicts: TimetableConflict[] = [];
+
+  for (let i = 0; i < slots.length; i++) {
+    for (let j = i + 1; j < slots.length; j++) {
+      const a = slots[i]!;
+      const b = slots[j]!;
+
+      if (a.dayOfWeek !== b.dayOfWeek) continue;
+      if (!overlaps(a.startTime, a.endTime, b.startTime, b.endTime)) continue;
+
+      if (a.teacherId === b.teacherId) {
+        conflicts.push({
+          slotAId: a.id,
+          slotBId: b.id,
+          type: 'TEACHER_CONFLICT',
+          message: `L'enseignant est sélectionné sur deux cours simultanés (${a.dayOfWeek} ${a.startTime}-${a.endTime}).`,
+        });
+      }
+      if (a.classSectionId === b.classSectionId) {
+        conflicts.push({
+          slotAId: a.id,
+          slotBId: b.id,
+          type: 'CLASS_SECTION_CONFLICT',
+          message: `La section de classe a deux cours en chevauchement (${a.dayOfWeek} ${a.startTime}-${a.endTime}).`,
+        });
+      }
+      if (a.roomLabel && b.roomLabel && a.roomLabel === b.roomLabel) {
+        conflicts.push({
+          slotAId: a.id,
+          slotBId: b.id,
+          type: 'ROOM_CONFLICT',
+          message: `La salle "${a.roomLabel}" est réservée sur deux cours en même temps.`,
+        });
+      }
+    }
+  }
+
+  return conflicts;
 }
