@@ -36,6 +36,8 @@ export const accountType = pgEnum('account_type', ['asset', 'liability', 'equity
 export const fiscalPeriodStatus = pgEnum('fiscal_period_status', ['open', 'closed']);
 export const discountApprovalStatus = pgEnum('discount_approval_status', ['pending', 'approved', 'rejected']);
 export const journalStatus = pgEnum('journal_status', ['posted', 'reversed']);
+export const promotionBatchStatus = pgEnum('promotion_batch_status', ['committed', 'reverted']);
+export const promotionDecisionType = pgEnum('promotion_decision_type', ['promote', 'repeat', 'graduate', 'transfer', 'withdraw', 'hold']);
 
 export const verification = pgTable('verification', {
   id: text().primaryKey().notNull(),
@@ -2646,6 +2648,84 @@ export const studentPlacements = pgTable('student_placements', {
   index('student_placements_student_session_idx').on(table.studentId, table.sessionYearId),
   index('student_placements_tenant_student_start_idx').on(table.tenantId, table.studentId, table.startDate),
   index('student_placements_tenant_session_idx').on(table.tenantId, table.sessionYearId),
+]);
+
+// ==========================================================================
+// Promotion ledger: immutable batch + per-student decision trail.
+// Placements themselves stay in studentPlacements (recordStudentPlacement) -
+// these two tables only record *why* a placement changed and let a batch be
+// looked up idempotently, they never duplicate placement data.
+// ==========================================================================
+
+export const promotionBatches = pgTable('promotion_batches', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  sourceClassSectionId: uuid('source_class_section_id').notNull(),
+  targetSessionYearId: uuid('target_session_year_id').notNull(),
+  status: promotionBatchStatus().default('committed').notNull(),
+  idempotencyKey: varchar('idempotency_key', { length: 100 }).notNull(),
+  operatorId: text('operator_id').notNull(),
+  revertedAt: timestamp('reverted_at', { mode: 'string' }),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'promotion_batches_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.sourceClassSectionId],
+    foreignColumns: [classSections.id],
+    name: 'promotion_batches_source_class_section_id_class_sections_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.targetSessionYearId],
+    foreignColumns: [sessionYears.id],
+    name: 'promotion_batches_target_session_year_id_session_years_id_fk',
+  }).onDelete('cascade'),
+  unique('promotion_batches_tenant_id_idempotency_key_unique').on(table.tenantId, table.idempotencyKey),
+  index('promotion_batches_tenant_idx').on(table.tenantId, table.createdAt),
+]);
+
+export const promotionDecisions = pgTable('promotion_decisions', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  batchId: uuid('batch_id').notNull(),
+  studentId: text('student_id').notNull(),
+  decision: promotionDecisionType().notNull(),
+  targetClassSectionId: uuid('target_class_section_id'),
+  placementId: uuid('placement_id'),
+  averagePercentageAtDecision: numeric('average_percentage_at_decision', { precision: 5, scale: 2 }),
+  reason: text(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'promotion_decisions_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.batchId],
+    foreignColumns: [promotionBatches.id],
+    name: 'promotion_decisions_batch_id_promotion_batches_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.studentId],
+    foreignColumns: [user.id],
+    name: 'promotion_decisions_student_id_user_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.targetClassSectionId],
+    foreignColumns: [classSections.id],
+    name: 'promotion_decisions_target_class_section_id_class_sections_id_fk',
+  }).onDelete('set null'),
+  foreignKey({
+    columns: [table.placementId],
+    foreignColumns: [studentPlacements.id],
+    name: 'promotion_decisions_placement_id_student_placements_id_fk',
+  }).onDelete('set null'),
+  unique('promotion_decisions_batch_id_student_id_unique').on(table.batchId, table.studentId),
+  index('promotion_decisions_tenant_student_idx').on(table.tenantId, table.studentId),
 ]);
 
 // ==========================================================================

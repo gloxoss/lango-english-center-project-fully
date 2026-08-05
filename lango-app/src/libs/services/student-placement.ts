@@ -107,3 +107,50 @@ export async function recordStudentPlacement(input: RecordPlacementInput) {
     return newPlacement;
   });
 }
+
+export type ClosePlacementInput = {
+  tenantId: string;
+  studentId: string;
+  status: 'dropped' | 'graduated';
+  endDate?: string;
+  notes?: string;
+};
+
+/** Ends a student's current placement (graduation/withdrawal/transfer-out) without opening a new one. Safe to retry: no-ops if there is no current placement left to close. */
+export async function closeStudentPlacement(input: ClosePlacementInput) {
+  const { tenantId, studentId, status, notes } = input;
+  const effectiveEndDate = input.endDate ?? new Date().toISOString().slice(0, 10);
+
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${tenantId}:${studentId}`}, 0))`);
+
+    const [currentPlacement] = await tx.select({ id: studentPlacements.id, startDate: studentPlacements.startDate })
+      .from(studentPlacements)
+      .where(and(
+        eq(studentPlacements.tenantId, tenantId),
+        eq(studentPlacements.studentId, studentId),
+        eq(studentPlacements.isCurrent, true),
+      )).limit(1);
+
+    if (!currentPlacement) {
+      return null;
+    }
+    if (effectiveEndDate <= currentPlacement.startDate) {
+      throw new ApiError(409, 'PLACEMENT_DATE_CONFLICT', 'La date de clôture doit être postérieure au placement actuel.');
+    }
+
+    const [closed] = await tx.update(studentPlacements).set({
+      isCurrent: false,
+      status,
+      endDate: effectiveEndDate,
+      notes: notes || null,
+      updatedAt: new Date().toISOString(),
+    }).where(and(
+      eq(studentPlacements.tenantId, tenantId),
+      eq(studentPlacements.studentId, studentId),
+      eq(studentPlacements.isCurrent, true),
+    )).returning();
+
+    return closed ?? null;
+  });
+}

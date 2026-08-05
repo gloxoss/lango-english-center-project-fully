@@ -316,6 +316,13 @@
       "when": 1785700900000,
       "tag": "0045_add_fee_structure_assignments",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1785701000000,
+      "tag": "0046_add_promotion_ledger",
+      "breakpoints": true
     }
   ]
 }
