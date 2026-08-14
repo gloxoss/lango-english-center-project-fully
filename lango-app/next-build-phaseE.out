@@ -1,0 +1,1876 @@
+
+> build:next
+> next build
+
+▲ Next.js 16.2.6 (Turbopack)
+- Environments: .env.production, .env
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+Turbopack build encountered 2 warnings:
+./next.config.ts
+Encountered unexpected file in NFT list
+A file was traced that indicates that the whole project was traced unintentionally. Somewhere in the import trace below, there are:
+- filesystem operations (like path.join, path.resolve or fs.readFile), or
+- very dynamic requires (like require('./' + foo)).
+To resolve this, you can
+- remove them if possible, or
+- only use them in development, or
+- make sure they are statically scoped to some subfolder: path.join(process.cwd(), 'data', bar), or
+- add ignore comments: path.join(/*turbopackIgnore: true*/ process.cwd(), bar)
+
+Import trace:
+  App Route:
+    ./next.config.ts
+    ./src/libs/api/uploads.ts
+    ./src/app/api/teachers/photo/route.ts
+
+
+./next.config.ts
+Encountered unexpected file in NFT list
+A file was traced that indicates that the whole project was traced unintentionally. Somewhere in the import trace below, there are:
+- filesystem operations (like path.join, path.resolve or fs.readFile), or
+- very dynamic requires (like require('./' + foo)).
+To resolve this, you can
+- remove them if possible, or
+- only use them in development, or
+- make sure they are statically scoped to some subfolder: path.join(process.cwd(), 'data', bar), or
+- add ignore comments: path.join(/*turbopackIgnore: true*/ process.cwd(), bar)
+
+Output asset trace:
+  [output]/.next/server/instrumentation.js
+  [output]/.next/server/chunks/src_0ctsasn._.js
+
+Import trace:
+  App Route:
+    ./next.config.ts
+    ./src/libs/api/uploads.ts
+    ./src/app/api/teachers/photo/route.ts
+
+
+✓ Compiled successfully in 3.5min
+  Running TypeScript ...
+  Finished TypeScript in 3.4min ...
+  Collecting page data using 11 workers ...
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:40445)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44004)
+    at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+    ... 3 lines matching cause stack trace ...
+    at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_0et_09~._.js:398:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44219)
+      at async p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:40420)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44004)
+      at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_0et_09~._.js:412:2661)
+      at async eu (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_0et_09~._.js:39:31650)
+      at async ie (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_0et_09~._.js:398:919)
+      at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_0et_09~._.js:398:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__11sry.q._.js:8:40445)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__11sry.q._.js:8:44004)
+    at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+    ... 3 lines matching cause stack trace ...
+    at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__11sry.q._.js:8:44219)
+      at async p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__11sry.q._.js:8:40420)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__11sry.q._.js:8:44004)
+      at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:412:2661)
+      at async eu (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:39:31650)
+      at async ie (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:919)
+      at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__11sry.q._.js:8:40445)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__11sry.q._.js:8:44004)
+    at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+    ... 3 lines matching cause stack trace ...
+    at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__11sry.q._.js:8:44219)
+      at async p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__11sry.q._.js:8:40420)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__11sry.q._.js:8:44004)
+      at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:412:2661)
+      at async eu (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:39:31650)
+      at async ie (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:919)
+      at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:40445)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44004)
+    at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+    ... 3 lines matching cause stack trace ...
+    at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44219)
+      at async p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:40420)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44004)
+      at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:412:2661)
+      at async eu (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:39:31650)
+      at async ie (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:919)
+      at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0fri4i2._.js:8:40445)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0fri4i2._.js:8:44004)
+    at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+    ... 3 lines matching cause stack trace ...
+    at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0fri4i2._.js:8:44219)
+      at async p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0fri4i2._.js:8:40420)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0fri4i2._.js:8:44004)
+      at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:412:2661)
+      at async eu (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:39:31650)
+      at async ie (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:919)
+      at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:40445)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44004)
+    at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+    ... 3 lines matching cause stack trace ...
+    at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44219)
+      at async p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:40420)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44004)
+      at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:412:2661)
+      at async eu (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:39:31650)
+      at async ie (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:919)
+      at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:40445)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44004)
+    at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+    ... 3 lines matching cause stack trace ...
+    at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44219)
+      at async p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:40420)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44004)
+      at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:412:2661)
+      at async eu (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:39:31650)
+      at async ie (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:919)
+      at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:40445)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44004)
+    at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+    ... 3 lines matching cause stack trace ...
+    at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44219)
+      at async p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:40420)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44004)
+      at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:412:2661)
+      at async eu (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:39:31650)
+      at async ie (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:919)
+      at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:40445)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44004)
+    at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+    ... 3 lines matching cause stack trace ...
+    at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44219)
+      at async p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:40420)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44004)
+      at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:412:2661)
+      at async eu (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:39:31650)
+      at async ie (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:919)
+      at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_04m_xyc._.js:398:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:40445)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44004)
+    at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+    ... 3 lines matching cause stack trace ...
+    at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_0et_09~._.js:398:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44219)
+      at async p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:40420)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44004)
+      at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_0et_09~._.js:412:2661)
+      at async eu (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_0et_09~._.js:39:31650)
+      at async ie (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_0et_09~._.js:398:919)
+      at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_0et_09~._.js:398:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:40445)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44004)
+    at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+    ... 3 lines matching cause stack trace ...
+    at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_0et_09~._.js:398:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44219)
+      at async p.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:40420)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__0m2a~pv._.js:8:44004)
+      at async d (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\[root-of-the-server]__08szmrf._.js:1:9714)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_0et_09~._.js:412:2661)
+      at async eu (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_0et_09~._.js:39:31650)
+      at async ie (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_0et_09~._.js:398:919)
+      at async it (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\_0et_09~._.js:398:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40125)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+    at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+    ... 3 lines matching cause stack trace ...
+    at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43898)
+      at async o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40100)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+      at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:163550)
+      at async al (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:100:31654)
+      at async da (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:919)
+      at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40125)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+    at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+    ... 3 lines matching cause stack trace ...
+    at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43898)
+      at async o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40100)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+      at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:163550)
+      at async al (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:100:31654)
+      at async da (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:919)
+      at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40125)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+    at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+    ... 3 lines matching cause stack trace ...
+    at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43898)
+      at async o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40100)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+      at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:163550)
+      at async al (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:100:31654)
+      at async da (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:919)
+      at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40125)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+    at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+    ... 3 lines matching cause stack trace ...
+    at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43898)
+      at async o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40100)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+      at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:163550)
+      at async al (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:100:31654)
+      at async da (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:919)
+      at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40125)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+    at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+    ... 3 lines matching cause stack trace ...
+    at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43898)
+      at async o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40100)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+      at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:163550)
+      at async al (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:100:31654)
+      at async da (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:919)
+      at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40125)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+    at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+    ... 3 lines matching cause stack trace ...
+    at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43898)
+      at async o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40100)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+      at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:163550)
+      at async al (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:100:31654)
+      at async da (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:919)
+      at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40125)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+    at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+    ... 3 lines matching cause stack trace ...
+    at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43898)
+      at async o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40100)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+      at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:163550)
+      at async al (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:100:31654)
+      at async da (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:919)
+      at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40125)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+    at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+    ... 3 lines matching cause stack trace ...
+    at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43898)
+      at async o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40100)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+      at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:163550)
+      at async al (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:100:31654)
+      at async da (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:919)
+      at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40125)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+    at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+    ... 3 lines matching cause stack trace ...
+    at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43898)
+      at async o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40100)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+      at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:163550)
+      at async al (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:100:31654)
+      at async da (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:919)
+      at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40125)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+    at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+    ... 3 lines matching cause stack trace ...
+    at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43898)
+      at async o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:40100)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_12ovuvf._.js:8:43683)
+      at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:163550)
+      at async al (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:100:31654)
+      at async da (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:919)
+      at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+params: approved
+    at o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_0n39mws._.js:8:40125)
+    at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_0n39mws._.js:8:43683)
+    at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+    ... 3 lines matching cause stack trace ...
+    at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+  query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+  params: [ 'approved' ],
+  [cause]: error: password authentication failed for user "build"
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_0n39mws._.js:8:43898)
+      at async o.queryWithCache (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_0n39mws._.js:8:40100)
+      at async (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_0n39mws._.js:8:43683)
+      at async j (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:1174)
+      at async Object.trustedOrigins (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:473:163550)
+      at async al (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:100:31654)
+      at async da (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:919)
+      at async db (C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app\.next\server\chunks\ssr\_07br0kj._.js:459:3605) {
+    length: 101,
+    severity: 'FATAL',
+    code: '28P01',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'auth.c',
+    line: '329',
+    routine: 'auth_failed'
+  }
+}
+  Generating static pages using 11 workers (0/405) ...
+  Generating static pages using 11 workers (101/405) 
+  Generating static pages using 11 workers (202/405) 
+  Generating static pages using 11 workers (303/405) 
+✓ Generating static pages using 11 workers (405/405) in 2.7s
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /[locale]
+├ ƒ /[locale]/alumni
+├ ƒ /[locale]/alumni/directory
+├ ƒ /[locale]/alumni/events
+├ ƒ /[locale]/alumni/mentoring
+├ ƒ /[locale]/alumni/profile
+├ ƒ /[locale]/alumni/records
+├ ƒ /[locale]/alumni/requests
+├ ƒ /[locale]/dashboard
+├ ƒ /[locale]/dashboard/academics/assessment/exam-master
+├ ƒ /[locale]/dashboard/academics/assessment/homework
+├ ƒ /[locale]/dashboard/academics/assessment/online-exams
+├ ƒ /[locale]/dashboard/academics/assignments
+├ ƒ /[locale]/dashboard/academics/calendar
+├ ƒ /[locale]/dashboard/academics/class-section-teachers
+├ ƒ /[locale]/dashboard/academics/class-subjects
+├ ƒ /[locale]/dashboard/academics/classes
+├ ƒ /[locale]/dashboard/academics/classes/[id]
+├ ƒ /[locale]/dashboard/academics/conflicts
+├ ƒ /[locale]/dashboard/academics/evaluations
+├ ƒ /[locale]/dashboard/academics/exams
+├ ƒ /[locale]/dashboard/academics/grades/entry
+├ ƒ /[locale]/dashboard/academics/grading/policies
+├ ƒ /[locale]/dashboard/academics/live-class
+├ ƒ /[locale]/dashboard/academics/live-class-reports
+├ ƒ /[locale]/dashboard/academics/live-class/[id]
+├ ƒ /[locale]/dashboard/academics/live-class/new
+├ ƒ /[locale]/dashboard/academics/mediums
+├ ƒ /[locale]/dashboard/academics/optional-subjects
+├ ƒ /[locale]/dashboard/academics/promotions
+├ ƒ /[locale]/dashboard/academics/question-bank
+├ ƒ /[locale]/dashboard/academics/readiness
+├ ƒ /[locale]/dashboard/academics/results
+├ ƒ /[locale]/dashboard/academics/rooms
+├ ƒ /[locale]/dashboard/academics/schedule
+├ ƒ /[locale]/dashboard/academics/sections
+├ ƒ /[locale]/dashboard/academics/semesters
+├ ƒ /[locale]/dashboard/academics/session-copy
+├ ƒ /[locale]/dashboard/academics/shifts
+├ ƒ /[locale]/dashboard/academics/streams
+├ ƒ /[locale]/dashboard/academics/subjects
+├ ƒ /[locale]/dashboard/academics/syllabus
+├ ƒ /[locale]/dashboard/academics/teacher-schedule
+├ ƒ /[locale]/dashboard/accountant
+├ ƒ /[locale]/dashboard/analytics
+├ ƒ /[locale]/dashboard/attendance
+├ ƒ /[locale]/dashboard/attendance/audit
+├ ƒ /[locale]/dashboard/attendance/badges
+├ ƒ /[locale]/dashboard/attendance/excuses
+├ ƒ /[locale]/dashboard/attendance/flags
+├ ƒ /[locale]/dashboard/attendance/flags/[id]
+├ ƒ /[locale]/dashboard/attendance/qr-reports
+├ ƒ /[locale]/dashboard/attendance/scanner
+├ ƒ /[locale]/dashboard/broadcast
+├ ƒ /[locale]/dashboard/broadcast/automations
+├ ƒ /[locale]/dashboard/broadcast/campaigns
+├ ƒ /[locale]/dashboard/broadcast/campaigns/[id]
+├ ƒ /[locale]/dashboard/broadcast/connections
+├ ƒ /[locale]/dashboard/broadcast/reports
+├ ƒ /[locale]/dashboard/broadcast/segments
+├ ƒ /[locale]/dashboard/broadcast/templates
+├ ƒ /[locale]/dashboard/cards
+├ ƒ /[locale]/dashboard/cards/admit-cards
+├ ƒ /[locale]/dashboard/cards/employees
+├ ƒ /[locale]/dashboard/cards/issued
+├ ƒ /[locale]/dashboard/cards/jobs
+├ ƒ /[locale]/dashboard/cards/students
+├ ƒ /[locale]/dashboard/cards/templates
+├ ƒ /[locale]/dashboard/cards/templates/[id]/edit
+├ ƒ /[locale]/dashboard/certificates
+├ ƒ /[locale]/dashboard/certificates/definitions
+├ ƒ /[locale]/dashboard/certificates/definitions/[id]
+├ ƒ /[locale]/dashboard/certificates/issue/employees
+├ ƒ /[locale]/dashboard/certificates/issue/students
+├ ƒ /[locale]/dashboard/certificates/issued
+├ ƒ /[locale]/dashboard/certificates/issued/[id]
+├ ƒ /[locale]/dashboard/certificates/jobs
+├ ƒ /[locale]/dashboard/certificates/requests
+├ ƒ /[locale]/dashboard/certificates/settings
+├ ƒ /[locale]/dashboard/certificates/templates
+├ ƒ /[locale]/dashboard/certificates/templates/[id]/edit
+├ ƒ /[locale]/dashboard/communication/broadcast
+├ ƒ /[locale]/dashboard/communication/campaign-composer
+├ ƒ /[locale]/dashboard/communication/crm
+├ ƒ /[locale]/dashboard/communication/delivery-reports
+├ ƒ /[locale]/dashboard/communication/events
+├ ƒ /[locale]/dashboard/communication/forms
+├ ƒ /[locale]/dashboard/communication/leads
+├ ƒ /[locale]/dashboard/communication/milestones
+├ ƒ /[locale]/dashboard/communication/reminders
+├ ƒ /[locale]/dashboard/communication/segments
+├ ƒ /[locale]/dashboard/communication/templates
+├ ƒ /[locale]/dashboard/communication/templates-automation
+├ ƒ /[locale]/dashboard/content/library
+├ ƒ /[locale]/dashboard/content/types
+├ ƒ /[locale]/dashboard/documents/generator
+├ ƒ /[locale]/dashboard/events
+├ ƒ /[locale]/dashboard/finance
+├ ƒ /[locale]/dashboard/finance/accounting/accounts
+├ ƒ /[locale]/dashboard/finance/accounting/deposits/new
+├ ƒ /[locale]/dashboard/finance/accounting/expenses
+├ ƒ /[locale]/dashboard/finance/accounting/periods
+├ ƒ /[locale]/dashboard/finance/accounting/statements
+├ ƒ /[locale]/dashboard/finance/accounting/student-accounting
+├ ƒ /[locale]/dashboard/finance/accounting/transactions
+├ ƒ /[locale]/dashboard/finance/accounting/voucher-types
+├ ƒ /[locale]/dashboard/finance/allocation
+├ ƒ /[locale]/dashboard/finance/approvals
+├ ƒ /[locale]/dashboard/finance/bank-reconciliation
+├ ƒ /[locale]/dashboard/finance/chart-of-accounts
+├ ƒ /[locale]/dashboard/finance/collection-desk
+├ ƒ /[locale]/dashboard/finance/credit-notes
+├ ƒ /[locale]/dashboard/finance/expenses
+├ ƒ /[locale]/dashboard/finance/expenses/new
+├ ƒ /[locale]/dashboard/finance/fee-assignments
+├ ƒ /[locale]/dashboard/finance/fee-structures
+├ ƒ /[locale]/dashboard/finance/fee-types
+├ ƒ /[locale]/dashboard/finance/fine-policies
+├ ƒ /[locale]/dashboard/finance/invoices
+├ ƒ /[locale]/dashboard/finance/invoices/[id]
+├ ƒ /[locale]/dashboard/finance/journal
+├ ƒ /[locale]/dashboard/finance/office-accounting
+├ ƒ /[locale]/dashboard/finance/online-payments
+├ ƒ /[locale]/dashboard/finance/payments
+├ ƒ /[locale]/dashboard/finance/payments/new
+├ ƒ /[locale]/dashboard/finance/pricing
+├ ƒ /[locale]/dashboard/finance/receivables
+├ ƒ /[locale]/dashboard/finance/reconciliation
+├ ƒ /[locale]/dashboard/finance/refunds
+├ ƒ /[locale]/dashboard/finance/reminders
+├ ƒ /[locale]/dashboard/finance/reports
+├ ƒ /[locale]/dashboard/homework
+├ ƒ /[locale]/dashboard/homework/submissions
+├ ƒ /[locale]/dashboard/hostel
+├ ƒ /[locale]/dashboard/hostel/allocations
+├ ƒ /[locale]/dashboard/hostel/allocations/[id]
+├ ƒ /[locale]/dashboard/hostel/applications
+├ ƒ /[locale]/dashboard/hostel/board
+├ ƒ /[locale]/dashboard/hostel/categories
+├ ƒ /[locale]/dashboard/hostel/guardian
+├ ƒ /[locale]/dashboard/hostel/hostels
+├ ƒ /[locale]/dashboard/hostel/hostels/[id]
+├ ƒ /[locale]/dashboard/hostel/leave-passes
+├ ƒ /[locale]/dashboard/hostel/me
+├ ƒ /[locale]/dashboard/hostel/policies
+├ ƒ /[locale]/dashboard/hostel/reports
+├ ƒ /[locale]/dashboard/hostel/roll-call
+├ ƒ /[locale]/dashboard/hostel/rooms
+├ ƒ /[locale]/dashboard/hostel/zones
+├ ƒ /[locale]/dashboard/hr
+├ ƒ /[locale]/dashboard/hr/access
+├ ƒ /[locale]/dashboard/hr/advances
+├ ƒ /[locale]/dashboard/hr/awards
+├ ƒ /[locale]/dashboard/hr/departments
+├ ƒ /[locale]/dashboard/hr/designations
+├ ƒ /[locale]/dashboard/hr/employees
+├ ƒ /[locale]/dashboard/hr/employees/[id]
+├ ƒ /[locale]/dashboard/hr/employees/new
+├ ƒ /[locale]/dashboard/hr/leave
+├ ƒ /[locale]/dashboard/hr/leave-management
+├ ƒ /[locale]/dashboard/hr/overview
+├ ƒ /[locale]/dashboard/hr/salary-advances
+├ ƒ /[locale]/dashboard/hr/self-service
+├ ƒ /[locale]/dashboard/inventory
+├ ƒ /[locale]/dashboard/inventory/adjustments
+├ ƒ /[locale]/dashboard/inventory/categories
+├ ƒ /[locale]/dashboard/inventory/issues
+├ ƒ /[locale]/dashboard/inventory/overview
+├ ƒ /[locale]/dashboard/inventory/products
+├ ƒ /[locale]/dashboard/inventory/purchases
+├ ƒ /[locale]/dashboard/inventory/sales
+├ ƒ /[locale]/dashboard/inventory/stock
+├ ƒ /[locale]/dashboard/inventory/stores
+├ ƒ /[locale]/dashboard/inventory/suppliers
+├ ƒ /[locale]/dashboard/inventory/transfers
+├ ƒ /[locale]/dashboard/inventory/units
+├ ƒ /[locale]/dashboard/library
+├ ƒ /[locale]/dashboard/library/catalog
+├ ƒ /[locale]/dashboard/parent
+├ ƒ /[locale]/dashboard/parent/attendance
+├ ƒ /[locale]/dashboard/parent/communication
+├ ƒ /[locale]/dashboard/parent/finance
+├ ƒ /[locale]/dashboard/parent/live-classes
+├ ƒ /[locale]/dashboard/parent/requests
+├ ƒ /[locale]/dashboard/parent/settings
+├ ƒ /[locale]/dashboard/portals/guard
+├ ƒ /[locale]/dashboard/portals/guard/config
+├ ƒ /[locale]/dashboard/portals/guard/emergency
+├ ƒ /[locale]/dashboard/portals/guard/incidents
+├ ƒ /[locale]/dashboard/portals/guard/pickups
+├ ƒ /[locale]/dashboard/portals/guard/scanner
+├ ƒ /[locale]/dashboard/portals/guard/visitors
+├ ƒ /[locale]/dashboard/portals/leadership
+├ ƒ /[locale]/dashboard/portals/librarian
+├ ƒ /[locale]/dashboard/portals/librarian/desk
+├ ƒ /[locale]/dashboard/receptionist
+├ ƒ /[locale]/dashboard/receptionist/appointments
+├ ƒ /[locale]/dashboard/receptionist/handoffs
+├ ƒ /[locale]/dashboard/receptionist/inquiries
+├ ƒ /[locale]/dashboard/receptionist/pickups
+├ ƒ /[locale]/dashboard/receptionist/visitors
+├ ƒ /[locale]/dashboard/reports
+├ ƒ /[locale]/dashboard/reports/[key]
+├ ƒ /[locale]/dashboard/reports/admin
+├ ƒ /[locale]/dashboard/reports/runs
+├ ƒ /[locale]/dashboard/reports/schedules
+├ ƒ /[locale]/dashboard/settings
+├ ƒ /[locale]/dashboard/settings/access-reset
+├ ƒ /[locale]/dashboard/settings/accounting-defaults
+├ ƒ /[locale]/dashboard/settings/attendance
+├ ƒ /[locale]/dashboard/settings/audit-logs
+├ ƒ /[locale]/dashboard/settings/branches
+├ ƒ /[locale]/dashboard/settings/cndp
+├ ƒ /[locale]/dashboard/settings/custom-fields
+├ ƒ /[locale]/dashboard/settings/domain
+├ ƒ /[locale]/dashboard/settings/drafts
+├ ƒ /[locale]/dashboard/settings/entitlements
+├ ƒ /[locale]/dashboard/settings/exports
+├ ƒ /[locale]/dashboard/settings/jobs
+├ ƒ /[locale]/dashboard/settings/live-classrooms
+├ ƒ /[locale]/dashboard/settings/migration
+├ ƒ /[locale]/dashboard/settings/notifications
+├ ƒ /[locale]/dashboard/settings/numbering
+├ ƒ /[locale]/dashboard/settings/onboarding
+├ ƒ /[locale]/dashboard/settings/payment-methods
+├ ƒ /[locale]/dashboard/settings/permissions
+├ ƒ /[locale]/dashboard/settings/policies
+├ ƒ /[locale]/dashboard/settings/providers
+├ ƒ /[locale]/dashboard/settings/scanner-devices
+├ ƒ /[locale]/dashboard/settings/scheduled-jobs
+├ ƒ /[locale]/dashboard/settings/security
+├ ƒ /[locale]/dashboard/settings/security/2fa
+├ ƒ /[locale]/dashboard/settings/staff
+├ ƒ /[locale]/dashboard/settings/translations
+├ ƒ /[locale]/dashboard/settings/users
+├ ƒ /[locale]/dashboard/settings/values
+├ ƒ /[locale]/dashboard/student
+├ ƒ /[locale]/dashboard/student/live-classes
+├ ƒ /[locale]/dashboard/students
+├ ƒ /[locale]/dashboard/students/[id]
+├ ƒ /[locale]/dashboard/students/add
+├ ƒ /[locale]/dashboard/students/admissions
+├ ƒ /[locale]/dashboard/students/admissions/new
+├ ƒ /[locale]/dashboard/students/alumni
+├ ƒ /[locale]/dashboard/students/alumni-transition
+├ ƒ /[locale]/dashboard/students/alumni/events
+├ ƒ /[locale]/dashboard/students/alumni/requests
+├ ƒ /[locale]/dashboard/students/import
+├ ƒ /[locale]/dashboard/students/matricules
+├ ƒ /[locale]/dashboard/students/parents
+├ ƒ /[locale]/dashboard/students/parents/[id]
+├ ƒ /[locale]/dashboard/students/photos
+├ ƒ /[locale]/dashboard/students/promotions
+├ ƒ /[locale]/dashboard/students/transfers
+├ ƒ /[locale]/dashboard/super-admin
+├ ƒ /[locale]/dashboard/super-admin/domains
+├ ƒ /[locale]/dashboard/super-admin/reports
+├ ƒ /[locale]/dashboard/super-admin/schools
+├ ƒ /[locale]/dashboard/super-admin/schools/[id]
+├ ƒ /[locale]/dashboard/super-admin/schools/create
+├ ƒ /[locale]/dashboard/super-admin/settings
+├ ƒ /[locale]/dashboard/super-admin/sms
+├ ƒ /[locale]/dashboard/super-admin/subscriptions
+├ ƒ /[locale]/dashboard/super-admin/subscriptions/list
+├ ƒ /[locale]/dashboard/super-admin/support
+├ ƒ /[locale]/dashboard/teacher
+├ ƒ /[locale]/dashboard/teachers/[id]
+├ ƒ /[locale]/dashboard/teachers/bulk-import
+├ ƒ /[locale]/dashboard/teachers/manage
+├ ƒ /[locale]/dashboard/transport
+├ ƒ /[locale]/dashboard/transport/allocations
+├ ƒ /[locale]/dashboard/transport/boarding
+├ ƒ /[locale]/dashboard/transport/drivers
+├ ƒ /[locale]/dashboard/transport/guardian
+├ ƒ /[locale]/dashboard/transport/incidents
+├ ƒ /[locale]/dashboard/transport/policies
+├ ƒ /[locale]/dashboard/transport/reports
+├ ƒ /[locale]/dashboard/transport/routes
+├ ƒ /[locale]/dashboard/transport/stops
+├ ƒ /[locale]/dashboard/transport/student
+├ ƒ /[locale]/dashboard/transport/trips
+├ ƒ /[locale]/dashboard/transport/vehicles
+├ ƒ /[locale]/dashboard/workforce
+├ ƒ /[locale]/dashboard/workforce/advances
+├ ƒ /[locale]/dashboard/workforce/awards
+├ ƒ /[locale]/dashboard/workforce/leave
+├ ƒ /[locale]/dashboard/workforce/payroll/adjustments
+├ ƒ /[locale]/dashboard/workforce/payroll/assignments
+├ ƒ /[locale]/dashboard/workforce/payroll/components
+├ ƒ /[locale]/dashboard/workforce/payroll/payments
+├ ƒ /[locale]/dashboard/workforce/payroll/payslips
+├ ƒ /[locale]/dashboard/workforce/payroll/regulations
+├ ƒ /[locale]/dashboard/workforce/payroll/runs
+├ ƒ /[locale]/dashboard/workforce/payroll/runs/[id]
+├ ƒ /[locale]/dashboard/workforce/payroll/settings
+├ ƒ /[locale]/dashboard/workforce/payroll/structures
+├ ƒ /[locale]/dashboard/workforce/timeclock
+├ ƒ /[locale]/login
+├ ƒ /[locale]/signup
+├ ƒ /[locale]/verify-document
+├ ƒ /[locale]/verify/card/[token]
+├ ƒ /[locale]/verify/certificate/[token]
+├ ƒ /api/academics/academic-years
+├ ƒ /api/academics/assessment-plans
+├ ƒ /api/academics/assessment-sessions
+├ ƒ /api/academics/assessments
+├ ƒ /api/academics/assignments
+├ ƒ /api/academics/assignments/grade
+├ ƒ /api/academics/assignments/submit
+├ ƒ /api/academics/class-offerings
+├ ƒ /api/academics/class-offerings/copy
+├ ƒ /api/academics/class-results
+├ ƒ /api/academics/class-sections
+├ ƒ /api/academics/class-sections/[id]/homeroom-teacher
+├ ƒ /api/academics/class-subjects
+├ ƒ /api/academics/class-teachers
+├ ƒ /api/academics/classes
+├ ƒ /api/academics/classes/roster
+├ ƒ /api/academics/coverage
+├ ƒ /api/academics/elective-choices
+├ ƒ /api/academics/elective-groups
+├ ƒ /api/academics/exam-halls
+├ ƒ /api/academics/exam-schedules
+├ ƒ /api/academics/exam-terms
+├ ƒ /api/academics/exam-terms/[id]/marksheet
+├ ƒ /api/academics/exam-terms/[id]/rankings
+├ ƒ /api/academics/exam-terms/[id]/seat-allocation
+├ ƒ /api/academics/homework
+├ ƒ /api/academics/homework/[id]/grade
+├ ƒ /api/academics/homework/[id]/submit
+├ ƒ /api/academics/homework/upload
+├ ƒ /api/academics/mediums
+├ ƒ /api/academics/meeting-slots
+├ ƒ /api/academics/meeting-slots/book
+├ ƒ /api/academics/online-exams
+├ ƒ /api/academics/online-exams/[examId]/questions
+├ ƒ /api/academics/online-exams/[examId]/questions/[questionId]
+├ ƒ /api/academics/online-exams/submit
+├ ƒ /api/academics/promotions/capacity-check
+├ ƒ /api/academics/promotions/revert
+├ ƒ /api/academics/question-bank
+├ ƒ /api/academics/question-bank/[id]/copy-into-exam
+├ ƒ /api/academics/readiness
+├ ƒ /api/academics/readiness/export
+├ ƒ /api/academics/room-utilization
+├ ƒ /api/academics/rooms
+├ ƒ /api/academics/sections
+├ ƒ /api/academics/semesters
+├ ƒ /api/academics/session-years
+├ ƒ /api/academics/shifts
+├ ƒ /api/academics/streams
+├ ƒ /api/academics/subject-teachers
+├ ƒ /api/academics/subjects
+├ ƒ /api/academics/timetable-conflicts
+├ ƒ /api/academics/timetable-slots
+├ ƒ /api/academics/timetable-slots/copy
+├ ƒ /api/academics/timetable-versions
+├ ƒ /api/academics/timetable-versions/publish
+├ ƒ /api/accountant/me/approvals
+├ ƒ /api/accountant/me/cashier
+├ ƒ /api/accountant/me/home
+├ ƒ /api/accountant/me/office-accounting
+├ ƒ /api/accountant/me/receivables
+├ ƒ /api/addons/broadcast/automations
+├ ƒ /api/addons/broadcast/automations/[id]
+├ ƒ /api/addons/broadcast/automations/[id]/runs
+├ ƒ /api/addons/broadcast/automations/[id]/test
+├ ƒ /api/addons/broadcast/automations/[id]/toggle
+├ ƒ /api/addons/broadcast/automations/runs/[runId]/recipients
+├ ƒ /api/addons/broadcast/campaigns
+├ ƒ /api/addons/broadcast/campaigns/[id]
+├ ƒ /api/addons/broadcast/campaigns/[id]/approve
+├ ƒ /api/addons/broadcast/campaigns/[id]/cancel
+├ ƒ /api/addons/broadcast/campaigns/[id]/export
+├ ƒ /api/addons/broadcast/campaigns/[id]/preview
+├ ƒ /api/addons/broadcast/campaigns/[id]/recipients
+├ ƒ /api/addons/broadcast/campaigns/[id]/report
+├ ƒ /api/addons/broadcast/campaigns/[id]/schedule
+├ ƒ /api/addons/broadcast/connections
+├ ƒ /api/addons/broadcast/connections/[id]
+├ ƒ /api/addons/broadcast/connections/[id]/test
+├ ƒ /api/addons/broadcast/consents
+├ ƒ /api/addons/broadcast/deliveries/[id]/events
+├ ƒ /api/addons/broadcast/deliveries/[id]/retry
+├ ƒ /api/addons/broadcast/segments
+├ ƒ /api/addons/broadcast/segments/[id]
+├ ƒ /api/addons/broadcast/segments/[id]/preview
+├ ƒ /api/addons/broadcast/suppressions
+├ ƒ /api/addons/broadcast/suppressions/[id]
+├ ƒ /api/addons/broadcast/templates
+├ ƒ /api/addons/broadcast/templates/[id]
+├ ƒ /api/addons/broadcast/templates/[id]/versions
+├ ƒ /api/addons/broadcast/templates/[id]/versions/[versionId]/publish
+├ ƒ /api/addons/broadcast/worker/process
+├ ƒ /api/addons/events
+├ ƒ /api/addons/events/[id]/occurrences
+├ ƒ /api/addons/events/[id]/registrations
+├ ƒ /api/addons/events/calendar
+├ ƒ /api/addons/hostel/allocations
+├ ƒ /api/addons/hostel/allocations/[id]
+├ ƒ /api/addons/hostel/allocations/[id]/check-in
+├ ƒ /api/addons/hostel/allocations/[id]/check-out
+├ ƒ /api/addons/hostel/allocations/[id]/events
+├ ƒ /api/addons/hostel/allocations/[id]/transfer
+├ ƒ /api/addons/hostel/allocations/bulk/commit
+├ ƒ /api/addons/hostel/allocations/bulk/preview
+├ ƒ /api/addons/hostel/allocations/commit
+├ ƒ /api/addons/hostel/allocations/preview
+├ ƒ /api/addons/hostel/applications
+├ ƒ /api/addons/hostel/applications/[id]
+├ ƒ /api/addons/hostel/applications/[id]/decision
+├ ƒ /api/addons/hostel/beds
+├ ƒ /api/addons/hostel/beds/[id]
+├ ƒ /api/addons/hostel/beds/[id]/status
+├ ƒ /api/addons/hostel/board
+├ ƒ /api/addons/hostel/categories
+├ ƒ /api/addons/hostel/categories/[id]
+├ ƒ /api/addons/hostel/escalations
+├ ƒ /api/addons/hostel/escalations/[id]/acknowledge
+├ ƒ /api/addons/hostel/escalations/run
+├ ƒ /api/addons/hostel/guardian/me
+├ ƒ /api/addons/hostel/hostels
+├ ƒ /api/addons/hostel/hostels/[id]
+├ ƒ /api/addons/hostel/leave-passes
+├ ƒ /api/addons/hostel/leave-passes/[id]
+├ ƒ /api/addons/hostel/leave-passes/[id]/return
+├ ƒ /api/addons/hostel/policies
+├ ƒ /api/addons/hostel/reports/allocations
+├ ƒ /api/addons/hostel/reports/occupancy
+├ ƒ /api/addons/hostel/resident/me
+├ ƒ /api/addons/hostel/resident/me/leave-requests
+├ ƒ /api/addons/hostel/roll-calls
+├ ƒ /api/addons/hostel/roll-calls/[id]
+├ ƒ /api/addons/hostel/roll-calls/[id]/close
+├ ƒ /api/addons/hostel/roll-calls/[id]/entries
+├ ƒ /api/addons/hostel/rooms
+├ ƒ /api/addons/hostel/rooms/[id]
+├ ƒ /api/addons/hostel/tonight
+├ ƒ /api/addons/hostel/zones
+├ ƒ /api/addons/hostel/zones/[id]
+├ ƒ /api/addons/inventory/adjustments
+├ ƒ /api/addons/inventory/adjustments/[id]
+├ ƒ /api/addons/inventory/categories
+├ ƒ /api/addons/inventory/categories/[id]
+├ ƒ /api/addons/inventory/export
+├ ƒ /api/addons/inventory/issues
+├ ƒ /api/addons/inventory/issues/[id]
+├ ƒ /api/addons/inventory/issues/[id]/return
+├ ƒ /api/addons/inventory/movements
+├ ƒ /api/addons/inventory/overview
+├ ƒ /api/addons/inventory/products
+├ ƒ /api/addons/inventory/products/[id]
+├ ƒ /api/addons/inventory/purchases
+├ ƒ /api/addons/inventory/purchases/[id]
+├ ƒ /api/addons/inventory/purchases/[id]/receive
+├ ƒ /api/addons/inventory/purchases/[id]/reverse
+├ ƒ /api/addons/inventory/sales
+├ ƒ /api/addons/inventory/sales/[id]
+├ ƒ /api/addons/inventory/sales/[id]/reverse
+├ ƒ /api/addons/inventory/stock
+├ ƒ /api/addons/inventory/stock/reconcile
+├ ƒ /api/addons/inventory/stores
+├ ƒ /api/addons/inventory/stores/[id]
+├ ƒ /api/addons/inventory/suppliers
+├ ƒ /api/addons/inventory/suppliers/[id]
+├ ƒ /api/addons/inventory/transfers
+├ ƒ /api/addons/inventory/transfers/[id]
+├ ƒ /api/addons/inventory/transfers/[id]/cancel
+├ ƒ /api/addons/inventory/transfers/[id]/complete
+├ ƒ /api/addons/inventory/units
+├ ƒ /api/addons/inventory/units/[id]
+├ ƒ /api/addons/library/catalog
+├ ƒ /api/addons/library/catalog/[id]
+├ ƒ /api/addons/library/catalog/[id]/contributors
+├ ƒ /api/addons/library/catalog/[id]/subjects
+├ ƒ /api/addons/library/catalog/categories
+├ ƒ /api/addons/library/catalog/categories/[id]
+├ ƒ /api/addons/library/catalog/contributors
+├ ƒ /api/addons/library/catalog/contributors/[id]
+├ ƒ /api/addons/library/catalog/publishers
+├ ƒ /api/addons/library/catalog/publishers/[id]
+├ ƒ /api/addons/library/catalog/subjects
+├ ƒ /api/addons/library/catalog/subjects/[id]
+├ ƒ /api/addons/library/charges
+├ ƒ /api/addons/library/charges/[id]/post
+├ ƒ /api/addons/library/charges/[id]/waive
+├ ƒ /api/addons/library/circulation/issue
+├ ƒ /api/addons/library/circulation/renew
+├ ƒ /api/addons/library/circulation/return
+├ ƒ /api/addons/library/closures
+├ ƒ /api/addons/library/closures/[id]
+├ ƒ /api/addons/library/copies
+├ ƒ /api/addons/library/copies/[id]
+├ ƒ /api/addons/library/copies/export
+├ ƒ /api/addons/library/copies/import
+├ ƒ /api/addons/library/editions
+├ ƒ /api/addons/library/editions/[id]
+├ ƒ /api/addons/library/holds
+├ ƒ /api/addons/library/holds/[id]/cancel
+├ ƒ /api/addons/library/me/charges
+├ ƒ /api/addons/library/me/children
+├ ƒ /api/addons/library/me/children/[studentId]/loans
+├ ƒ /api/addons/library/me/history
+├ ƒ /api/addons/library/me/holds
+├ ƒ /api/addons/library/me/home
+├ ƒ /api/addons/library/me/loans
+├ ƒ /api/addons/library/me/renew
+├ ƒ /api/addons/library/members
+├ ƒ /api/addons/library/policies
+├ ƒ /api/addons/library/policies/[id]
+├ ƒ /api/addons/library/reports/overdue
+├ ƒ /api/addons/library/reports/overview
+├ ƒ /api/addons/library/stocktakes
+├ ƒ /api/addons/library/stocktakes/[id]/adjustments
+├ ƒ /api/addons/library/stocktakes/[id]/adjustments/apply
+├ ƒ /api/addons/library/stocktakes/[id]/close
+├ ƒ /api/addons/library/stocktakes/[id]/observations
+├ ƒ /api/addons/library/transfers
+├ ƒ /api/addons/library/transfers/[id]/transition
+├ ƒ /api/addons/live-classrooms/health
+├ ƒ /api/addons/live-classrooms/my-sessions
+├ ƒ /api/addons/live-classrooms/my-sessions/[id]/join
+├ ƒ /api/addons/live-classrooms/provider-profiles
+├ ƒ /api/addons/live-classrooms/provider-profiles/[id]
+├ ƒ /api/addons/live-classrooms/provider-profiles/[id]/test
+├ ƒ /api/addons/live-classrooms/reports/export
+├ ƒ /api/addons/live-classrooms/reports/overview
+├ ƒ /api/addons/live-classrooms/reports/sessions
+├ ƒ /api/addons/live-classrooms/sessions
+├ ƒ /api/addons/live-classrooms/sessions/[id]
+├ ƒ /api/addons/live-classrooms/sessions/[id]/attendance
+├ ƒ /api/addons/live-classrooms/sessions/[id]/end
+├ ƒ /api/addons/live-classrooms/sessions/[id]/join
+├ ƒ /api/addons/live-classrooms/sessions/[id]/materials
+├ ƒ /api/addons/live-classrooms/sessions/[id]/materials/[assetId]
+├ ƒ /api/addons/live-classrooms/sessions/[id]/post-attendance
+├ ƒ /api/addons/live-classrooms/sessions/[id]/reconcile
+├ ƒ /api/addons/live-classrooms/sessions/[id]/recordings
+├ ƒ /api/addons/live-classrooms/sessions/[id]/recordings/[recordingId]
+├ ƒ /api/addons/live-classrooms/sessions/[id]/redeem-join
+├ ƒ /api/addons/live-classrooms/sessions/[id]/start
+├ ƒ /api/addons/live-classrooms/sessions/[id]/sync
+├ ƒ /api/addons/live-classrooms/webhooks/[providerType]
+├ ƒ /api/addons/reporting/admin/console
+├ ƒ /api/addons/reporting/catalog
+├ ƒ /api/addons/reporting/favorites
+├ ƒ /api/addons/reporting/reports/[key]/preview
+├ ƒ /api/addons/reporting/reports/[key]/run
+├ ƒ /api/addons/reporting/runs
+├ ƒ /api/addons/reporting/runs/[id]
+├ ƒ /api/addons/reporting/runs/[id]/download
+├ ƒ /api/addons/reporting/saved-views
+├ ƒ /api/addons/reporting/schedules
+├ ƒ /api/addons/reporting/schedules/[id]
+├ ƒ /api/admissions/inquiries
+├ ƒ /api/admissions/inquiries/convert
+├ ƒ /api/alumni/directory
+├ ƒ /api/alumni/me/events
+├ ƒ /api/alumni/me/events/[id]/rsvp
+├ ƒ /api/alumni/me/mentoring
+├ ƒ /api/alumni/me/preferences
+├ ƒ /api/alumni/me/profile
+├ ƒ /api/alumni/me/records
+├ ƒ /api/alumni/me/records/[id]/download
+├ ƒ /api/alumni/me/requests
+├ ƒ /api/alumni/mentoring
+├ ƒ /api/analytics
+├ ƒ /api/attendance
+├ ƒ /api/attendance/audit-summary
+├ ƒ /api/attendance/excuses
+├ ƒ /api/attendance/excuses/document
+├ ƒ /api/attendance/flags
+├ ƒ /api/attendance/flags/detail
+├ ƒ /api/attendance/flags/notes
+├ ƒ /api/attendance/heatmap
+├ ƒ /api/attendance/qr/events
+├ ƒ /api/attendance/qr/events/export
+├ ƒ /api/attendance/qr/scanner-sessions
+├ ƒ /api/attendance/qr/scanner-sessions/[id]/close
+├ ƒ /api/attendance/qr/scanner-sessions/[id]/events
+├ ƒ /api/attendance/qr/verify-and-stage
+├ ƒ /api/attendance/registers
+├ ƒ /api/attendance/registers/reopen
+├ ƒ /api/attendance/summary
+├ ƒ /api/audit-logs
+├ ƒ /api/audit-logs/export
+├ ƒ /api/auth/[...all]
+├ ƒ /api/auth/me
+├ ƒ /api/auth/setup-account
+├ ƒ /api/cards/admit-seats
+├ ƒ /api/cards/employees
+├ ƒ /api/cards/issue
+├ ƒ /api/cards/issued
+├ ƒ /api/cards/issued/[id]/pdf
+├ ƒ /api/cards/issued/[id]/revoke
+├ ƒ /api/cards/jobs
+├ ƒ /api/cards/jobs/[id]
+├ ƒ /api/cards/jobs/[id]/process
+├ ƒ /api/cards/overview
+├ ƒ /api/cards/templates
+├ ƒ /api/cards/templates/[id]
+├ ƒ /api/cards/templates/[id]/versions
+├ ƒ /api/certificates/definitions
+├ ƒ /api/certificates/definitions/[id]
+├ ƒ /api/certificates/definitions/[id]/versions
+├ ƒ /api/certificates/issue
+├ ƒ /api/certificates/issued
+├ ƒ /api/certificates/issued/[id]
+├ ƒ /api/certificates/issued/[id]/pdf
+├ ƒ /api/certificates/issued/[id]/replace
+├ ƒ /api/certificates/issued/[id]/revoke
+├ ƒ /api/certificates/jobs
+├ ƒ /api/certificates/jobs/[id]
+├ ƒ /api/certificates/jobs/[id]/process
+├ ƒ /api/certificates/overview
+├ ƒ /api/certificates/recipients
+├ ƒ /api/certificates/requests
+├ ƒ /api/certificates/requests/[id]
+├ ƒ /api/certificates/settings
+├ ƒ /api/certificates/signatories
+├ ƒ /api/certificates/signatories/[id]
+├ ƒ /api/certificates/templates
+├ ƒ /api/certificates/templates/[id]
+├ ƒ /api/certificates/templates/[id]/versions
+├ ƒ /api/communication/announcements
+├ ƒ /api/communication/announcements/mark-read
+├ ƒ /api/communication/announcements/unread-count
+├ ƒ /api/communication/messages
+├ ƒ /api/communication/send
+├ ƒ /api/communication/templates
+├ ƒ /api/content/assets
+├ ƒ /api/content/assets/[id]
+├ ƒ /api/content/assets/[id]/archive
+├ ƒ /api/content/assets/[id]/download
+├ ƒ /api/content/assets/[id]/publish
+├ ƒ /api/content/assets/[id]/targets
+├ ƒ /api/content/assets/[id]/usage-links
+├ ƒ /api/content/assets/[id]/versions
+├ ƒ /api/content/attachment-types
+├ ƒ /api/content/attachment-types/[id]
+├ ƒ /api/crm/inquiries
+├ ƒ /api/crm/inquiries/[id]
+├ ƒ /api/crm/inquiries/[id]/duplicates
+├ ƒ /api/crm/inquiries/[id]/follow-ups
+├ ƒ /api/crm/inquiries/merge
+├ ƒ /api/dashboard/summary
+├ ƒ /api/employee/me/advances
+├ ƒ /api/employee/me/awards
+├ ƒ /api/employee/me/documents
+├ ƒ /api/employee/me/documents/[documentId]/download
+├ ƒ /api/employee/me/home
+├ ƒ /api/employee/me/leave
+├ ƒ /api/employee/me/leave/[id]/cancel
+├ ƒ /api/employee/me/payroll
+├ ƒ /api/employee/me/payroll/[payslipId]/download
+├ ƒ /api/employee/me/preferences
+├ ƒ /api/employee/me/profile
+├ ƒ /api/employee/me/requests
+├ ƒ /api/employee/me/time
+├ ƒ /api/exports
+├ ƒ /api/exports/[id]
+├ ƒ /api/finance/accounting/accounts
+├ ƒ /api/finance/accounting/deposits
+├ ƒ /api/finance/accounting/expenses
+├ ƒ /api/finance/accounting/expenses/[id]/approve
+├ ƒ /api/finance/accounting/expenses/[id]/post
+├ ƒ /api/finance/accounting/expenses/[id]/reject
+├ ƒ /api/finance/accounting/expenses/[id]/submit
+├ ƒ /api/finance/accounting/journal-entries
+├ ƒ /api/finance/accounting/journals
+├ ƒ /api/finance/accounting/periods
+├ ƒ /api/finance/accounting/periods/[id]/close
+├ ƒ /api/finance/accounting/periods/[id]/reopen
+├ ƒ /api/finance/accounting/periods/[id]/reopen-requests
+├ ƒ /api/finance/accounting/periods/[id]/reopen-requests/[requestId]/decide
+├ ƒ /api/finance/accounting/statements/[type]
+├ ƒ /api/finance/accounting/statements/drill-down
+├ ƒ /api/finance/accounting/student-accounting/exceptions
+├ ƒ /api/finance/accounting/student-accounting/exceptions/[id]
+├ ƒ /api/finance/accounting/student-accounting/mappings
+├ ƒ /api/finance/accounting/student-accounting/mappings/[id]
+├ ƒ /api/finance/accounting/student-accounting/post
+├ ƒ /api/finance/accounting/student-accounting/reconcile
+├ ƒ /api/finance/accounting/transactions
+├ ƒ /api/finance/accounting/transactions/[id]
+├ ƒ /api/finance/accounting/transactions/[id]/reverse
+├ ƒ /api/finance/accounting/trial-balance
+├ ƒ /api/finance/accounting/voucher-types
+├ ƒ /api/finance/allocations
+├ ƒ /api/finance/allocations/[id]/run
+├ ƒ /api/finance/allocations/preview
+├ ƒ /api/finance/bank-reconciliation
+├ ƒ /api/finance/bank-reconciliation/[id]
+├ ƒ /api/finance/bank-reconciliation/[id]/close
+├ ƒ /api/finance/bank-reconciliation/[id]/fee-interest
+├ ƒ /api/finance/bank-reconciliation/[id]/import
+├ ƒ /api/finance/bank-reconciliation/[id]/match
+├ ƒ /api/finance/bank-reconciliation/[id]/matches
+├ ƒ /api/finance/bank-reconciliation/[id]/matches/unmatch
+├ ƒ /api/finance/bank-reconciliation/[id]/merge
+├ ƒ /api/finance/bank-reconciliation/[id]/split
+├ ƒ /api/finance/cashier-sessions/[id]/close
+├ ƒ /api/finance/chart-of-accounts
+├ ƒ /api/finance/credit-notes
+├ ƒ /api/finance/expenses
+├ ƒ /api/finance/fee-allocation
+├ ƒ /api/finance/fee-assignments
+├ ƒ /api/finance/fee-structures
+├ ƒ /api/finance/fee-structures/[id]/versions
+├ ƒ /api/finance/fee-types
+├ ƒ /api/finance/fine-policies
+├ ƒ /api/finance/fine-runs
+├ ƒ /api/finance/fiscal-periods/close
+├ ƒ /api/finance/invoice-events
+├ ƒ /api/finance/invoices
+├ ƒ /api/finance/journals
+├ ƒ /api/finance/payment-methods
+├ ƒ /api/finance/payments
+├ ƒ /api/finance/payments/sandbox
+├ ƒ /api/finance/refunds
+├ ƒ /api/finance/reminder-rules
+├ ƒ /api/finance/reminder-runs
+├ ƒ /api/finance/reminders
+├ ƒ /api/finance/reports
+├ ƒ /api/finance/statements
+├ ƒ /api/gate/credentials/verify
+├ ƒ /api/guard/assignments
+├ ƒ /api/guard/assignments/[id]
+├ ƒ /api/guard/emergency/[activationId]/acknowledge
+├ ƒ /api/guard/emergency/[activationId]/end
+├ ƒ /api/guard/emergency/activate
+├ ƒ /api/guard/emergency/procedures
+├ ƒ /api/guard/gates
+├ ƒ /api/guard/gates/[id]
+├ ƒ /api/guard/incidents
+├ ƒ /api/guard/incidents/[id]
+├ ƒ /api/guard/incidents/[id]/actions
+├ ƒ /api/guard/incidents/[id]/attachments
+├ ƒ /api/guard/incidents/[id]/attachments/[attachmentId]
+├ ƒ /api/guard/kiosk-sessions
+├ ƒ /api/guard/kiosk-sessions/[id]/close
+├ ƒ /api/guard/kiosk-sessions/[id]/lock
+├ ƒ /api/guard/me/expected
+├ ƒ /api/guard/me/gate
+├ ƒ /api/guard/me/incidents
+├ ƒ /api/guard/me/shift
+├ ƒ /api/guard/pickup-authorizations
+├ ƒ /api/guard/pickup-authorizations/[id]/cancel
+├ ƒ /api/guard/pickups/release
+├ ƒ /api/guard/scans
+├ ƒ /api/guard/shifts
+├ ƒ /api/guard/shifts/[id]
+├ ƒ /api/guard/students/[id]/pickups
+├ ƒ /api/guard/students/search
+├ ƒ /api/guard/visitor-invitations
+├ ƒ /api/guard/visitor-invitations/[id]/approve
+├ ƒ /api/guard/visitor-invitations/[id]/reject
+├ ƒ /api/guard/visits
+├ ƒ /api/guard/visits/[id]/check-in
+├ ƒ /api/guard/visits/[id]/check-out
+├ ƒ /api/guard/visits/[id]/pass
+├ ƒ /api/guardian/link/accept
+├ ƒ /api/guardian/link/start
+├ ƒ /api/guardian/me
+├ ƒ /api/guardian/me/children
+├ ƒ /api/guardian/me/children/[relationshipId]
+├ ƒ /api/guardian/me/children/[relationshipId]/announcements
+├ ƒ /api/guardian/me/children/[relationshipId]/attendance
+├ ƒ /api/guardian/me/children/[relationshipId]/documents
+├ ƒ /api/guardian/me/children/[relationshipId]/excuses
+├ ƒ /api/guardian/me/children/[relationshipId]/excuses/[excuseId]/document
+├ ƒ /api/guardian/me/children/[relationshipId]/finance
+├ ƒ /api/guardian/me/children/[relationshipId]/homework
+├ ƒ /api/guardian/me/children/[relationshipId]/meetings
+├ ƒ /api/guardian/me/children/[relationshipId]/overview
+├ ƒ /api/guardian/me/children/[relationshipId]/requests
+├ ƒ /api/guardian/me/children/[relationshipId]/results
+├ ƒ /api/guardian/me/finance
+├ ƒ /api/guardian/me/home
+├ ƒ /api/guardian/me/messages
+├ ƒ /api/guardian/me/preferences
+├ ƒ /api/hr/access
+├ ƒ /api/hr/departments
+├ ƒ /api/hr/departments/[id]
+├ ƒ /api/hr/designations
+├ ƒ /api/hr/designations/[id]
+├ ƒ /api/hr/employee-profiles
+├ ƒ /api/hr/employees
+├ ƒ /api/hr/employees/[id]
+├ ƒ /api/hr/employees/[id]/documents
+├ ƒ /api/hr/employees/[id]/documents/[documentId]
+├ ƒ /api/hr/employees/[id]/history
+├ ƒ /api/hr/employees/[id]/link-account
+├ ƒ /api/hr/employees/[id]/offboard
+├ ƒ /api/hr/employees/[id]/reactivate
+├ ƒ /api/hr/export
+├ ƒ /api/hr/leave/balances
+├ ƒ /api/hr/leave/categories
+├ ƒ /api/hr/leave/requests
+├ ƒ /api/hr/leave/requests/[id]
+├ ƒ /api/hr/overview
+├ ƒ /api/hr/payroll/periods
+├ ƒ /api/hr/payroll/periods/[id]/calculate
+├ ƒ /api/hr/payroll/periods/[id]/lines
+├ ƒ /api/hr/payroll/periods/[id]/lock
+├ ƒ /api/hr/payslips
+├ ƒ /api/hr/payslips/[id]
+├ ƒ /api/hr/profile-edit-requests
+├ ƒ /api/hr/salary-assignments
+├ ƒ /api/hr/salary-templates
+├ ƒ /api/identity-badges
+├ ƒ /api/identity-badges/[id]
+├ ƒ /api/identity-badges/[id]/replace
+├ ƒ /api/identity-badges/bulk-issue
+├ ƒ /api/leadership/admin/authorities
+├ ƒ /api/leadership/admin/scopes
+├ ƒ /api/leadership/me/approvals
+├ ƒ /api/leadership/me/exceptions
+├ ƒ /api/leadership/me/home
+├ ƒ /api/me/permissions
+├ ƒ /api/notifications
+├ ƒ /api/platform/edge-tenant-resolve
+├ ƒ /api/portal/activity
+├ ƒ /api/portal/home
+├ ƒ /api/portal/manifest
+├ ƒ /api/portal/me
+├ ƒ /api/portal/preferences
+├ ƒ /api/portal/role
+├ ƒ /api/portal/search
+├ ƒ /api/public/alumni-documents/verify
+├ ƒ /api/public/cards/verify
+├ ƒ /api/public/certificates/verify
+├ ƒ /api/public/inquiries/[tenantSlug]
+├ ƒ /api/reception/appointments
+├ ƒ /api/reception/appointments/[id]
+├ ƒ /api/reception/appointments/[id]/cancel
+├ ƒ /api/reception/appointments/[id]/check-in
+├ ƒ /api/reception/appointments/[id]/complete
+├ ƒ /api/reception/appointments/[id]/no-show
+├ ƒ /api/reception/appointments/[id]/reschedule
+├ ƒ /api/reception/gates
+├ ƒ /api/reception/handoffs
+├ ƒ /api/reception/handoffs/[id]/acknowledge
+├ ƒ /api/reception/handoffs/[id]/cancel
+├ ƒ /api/reception/handoffs/[id]/resolve
+├ ƒ /api/reception/inquiries
+├ ƒ /api/reception/inquiries/[id]/follow-ups
+├ ƒ /api/reception/lookup
+├ ƒ /api/reception/me/home
+├ ƒ /api/reception/pickups/authorizations
+├ ƒ /api/reception/pickups/authorizations/[id]/cancel
+├ ƒ /api/reception/pickups/release
+├ ƒ /api/reception/pickups/students
+├ ƒ /api/reception/pickups/students/[id]/pickups
+├ ƒ /api/reception/staff
+├ ƒ /api/reception/verifications
+├ ƒ /api/reception/visitors
+├ ƒ /api/reception/visitors/[id]/check-in
+├ ƒ /api/reception/visitors/[id]/check-out
+├ ƒ /api/reception/visitors/[id]/pass
+├ ƒ /api/scanner-devices
+├ ƒ /api/scanner-devices/[id]
+├ ƒ /api/scanner-devices/pair
+├ ƒ /api/search
+├ ƒ /api/security/dashboard
+├ ƒ /api/security/sessions/[id]
+├ ƒ /api/settings
+├ ƒ /api/settings/access-reset
+├ ƒ /api/settings/addons
+├ ƒ /api/settings/addons/[id]
+├ ƒ /api/settings/branches
+├ ƒ /api/settings/branches/[id]
+├ ƒ /api/settings/catalog
+├ ƒ /api/settings/cndp-filing
+├ ƒ /api/settings/custom-fields
+├ ƒ /api/settings/custom-fields/[id]
+├ ƒ /api/settings/custom-fields/[id]/values
+├ ƒ /api/settings/data-export
+├ ƒ /api/settings/domains
+├ ƒ /api/settings/drafts
+├ ƒ /api/settings/drafts/[id]
+├ ƒ /api/settings/drafts/[id]/approve
+├ ƒ /api/settings/drafts/[id]/reject
+├ ƒ /api/settings/jobs/[id]/trigger
+├ ƒ /api/settings/logo
+├ ƒ /api/settings/migration
+├ ƒ /api/settings/migration/tasks/[id]
+├ ƒ /api/settings/migration/template
+├ ƒ /api/settings/numbering
+├ ƒ /api/settings/numbering/[id]
+├ ƒ /api/settings/numbering/[id]/next
+├ ƒ /api/settings/numbering/[id]/preview
+├ ƒ /api/settings/permissions
+├ ƒ /api/settings/providers
+├ ƒ /api/settings/providers/[id]
+├ ƒ /api/settings/providers/[id]/test
+├ ƒ /api/settings/readiness
+├ ƒ /api/settings/scheduled-jobs
+├ ƒ /api/settings/scheduled-jobs/[id]
+├ ƒ /api/settings/scheduled-jobs/[id]/runs
+├ ƒ /api/settings/scheduled-jobs/[id]/toggle
+├ ƒ /api/settings/scheduled-jobs/[id]/trigger
+├ ƒ /api/settings/search
+├ ƒ /api/settings/values
+├ ƒ /api/settings/values/[key]
+├ ƒ /api/settings/values/[key]/peek
+├ ƒ /api/settings/values/[key]/rotate
+├ ƒ /api/student/me/attendance
+├ ƒ /api/student/me/home
+├ ƒ /api/student/me/subjects
+├ ƒ /api/student/me/timetable
+├ ƒ /api/students
+├ ƒ /api/students/[id]/regenerate-access
+├ ƒ /api/students/[id]/reinstate-from-alumni
+├ ƒ /api/students/[id]/transfer
+├ ƒ /api/students/[id]/transition-to-alumni
+├ ƒ /api/students/admissions
+├ ƒ /api/students/admissions/[id]/checklist
+├ ƒ /api/students/admissions/[id]/comments
+├ ƒ /api/students/admissions/[id]/convert
+├ ƒ /api/students/admissions/[id]/interview
+├ ƒ /api/students/admissions/[id]/stage
+├ ƒ /api/students/admissions/documents
+├ ƒ /api/students/alumni
+├ ƒ /api/students/alumni/[id]/documents
+├ ƒ /api/students/alumni/events
+├ ƒ /api/students/alumni/requests
+├ ƒ /api/students/alumni/requests/[id]/decide
+├ ƒ /api/students/bulk-transition-to-alumni
+├ ƒ /api/students/documents
+├ ƒ /api/students/import
+├ ƒ /api/students/matricules
+├ ƒ /api/students/parents
+├ ƒ /api/students/parents/[id]
+├ ƒ /api/students/parents/[id]/activity
+├ ƒ /api/students/parents/[id]/payments
+├ ƒ /api/students/parents/link
+├ ƒ /api/students/photos
+├ ƒ /api/students/placements
+├ ƒ /api/students/promotions
+├ ƒ /api/students/promotions/preview
+├ ƒ /api/students/report-card
+├ ƒ /api/students/transfer-stats
+├ ƒ /api/students/transfers
+├ ƒ /api/super-admin/domains
+├ ƒ /api/super-admin/domains/[id]
+├ ƒ /api/super-admin/entitlements
+├ ƒ /api/super-admin/schools
+├ ƒ /api/super-admin/schools/[id]/branches
+├ ƒ /api/super-admin/schools/anonymize
+├ ƒ /api/super-admin/schools/backup
+├ ƒ /api/super-admin/summary
+├ ƒ /api/teacher/me/classes
+├ ƒ /api/teacher/me/home
+├ ƒ /api/teacher/me/timetable
+├ ƒ /api/teachers
+├ ƒ /api/teachers/import
+├ ƒ /api/teachers/photo
+├ ƒ /api/transport/allocations
+├ ƒ /api/transport/allocations/[id]
+├ ƒ /api/transport/drivers
+├ ƒ /api/transport/incidents
+├ ƒ /api/transport/reports/export
+├ ƒ /api/transport/reports/overview
+├ ƒ /api/transport/rider-events
+├ ƒ /api/transport/routes
+├ ƒ /api/transport/routes/[id]
+├ ƒ /api/transport/self-service/guardian
+├ ƒ /api/transport/self-service/student
+├ ƒ /api/transport/stops
+├ ƒ /api/transport/stops/[id]
+├ ƒ /api/transport/trips
+├ ƒ /api/transport/trips/[id]/complete
+├ ƒ /api/transport/trips/[id]/roster
+├ ƒ /api/transport/trips/[id]/start
+├ ƒ /api/transport/vehicles
+├ ƒ /api/transport/vehicles/[id]
+├ ƒ /api/users
+├ ƒ /api/users/unlock
+├ ƒ /api/webhooks/communication/[provider]
+├ ƒ /api/workforce/advances
+├ ƒ /api/workforce/awards
+├ ƒ /api/workforce/payroll/config
+├ ƒ /api/workforce/payroll/config/[resource]/[id]/action
+├ ƒ /api/workforce/payroll/payments
+├ ƒ /api/workforce/payroll/payments/[id]/action
+├ ƒ /api/workforce/payroll/payslips
+├ ƒ /api/workforce/payroll/runs
+├ ƒ /api/workforce/payroll/runs/[id]
+├ ƒ /api/workforce/payroll/runs/[id]/action
+└ ƒ /api/workforce/punches
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

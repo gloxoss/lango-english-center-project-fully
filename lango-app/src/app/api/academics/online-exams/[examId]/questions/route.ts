@@ -18,6 +18,10 @@ const createQuestionSchema = z.object({
     optionText: z.string().trim().min(1),
     isCorrect: z.boolean(),
   })).max(8).optional(),
+  sectionLabel: z.string().trim().max(255).optional().nullable(),
+  difficulty: z.enum(['facile', 'moyen', 'difficile']).optional().nullable(),
+  subjectId: z.string().uuid().optional().nullable(),
+  cycle: z.enum(['maternelle', 'primaire', 'college', 'lycee']).optional().nullable(),
 }).strict();
 
 type RouteParams = { params: Promise<{ examId: string }> };
@@ -111,6 +115,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           questionText: body.questionText,
           marks: String(body.marks),
           orderIndex: body.orderIndex ?? 0,
+          sectionLabel: body.sectionLabel,
+          difficulty: body.difficulty,
+          subjectId: body.subjectId,
+          cycle: body.cycle,
         })
         .returning();
 

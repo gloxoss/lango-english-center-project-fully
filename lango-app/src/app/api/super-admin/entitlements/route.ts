@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { ADDONS } from '@/addons/registry';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireSuperAdmin } from '@/libs/api/context';
-import { assertKnownAddon } from '@/libs/api/entitlements';
+import { assertAddonDependencies, assertKnownAddon } from '@/libs/api/entitlements';
 import { apiErrorResponse, ApiError } from '@/libs/api/errors';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
@@ -81,6 +81,9 @@ export async function POST(request: Request) {
     const body = await parseJson(request, upsertSchema);
     assertKnownAddon(body.addonId);
     await assertTenantExists(body.tenantId);
+
+    // Enforce add-on dependencies (e.g. payroll-workforce → human-resources).
+    await assertAddonDependencies(body.tenantId, body.addonId, body.isEnabled ?? true);
 
     const values = {
       tenantId: body.tenantId,

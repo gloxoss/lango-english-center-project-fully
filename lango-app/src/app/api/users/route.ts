@@ -5,9 +5,11 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
+import { generateSetupToken, hashSetupToken, SETUP_TOKEN_TTL_MS } from '@/libs/setup-token';
+import { normalizeMoroccanPhone } from '@/libs/sms/moroccan-sms-adapter';
 import { parseJson, userCreateSchema, userUpdateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { user } from '@/models/Schema';
+import { accountSetupTokens, smsMessages, user } from '@/models/Schema';
 import { toDbRole, toDbStatus, toUiRole, toUiStatus } from '@/models/userMapping';
 
 // ponytail: staff/guardian accounts are `user` rows with role != 'student'.
@@ -112,12 +114,42 @@ export async function POST(request: Request) {
       })
       .returning();
 
-    recordAudit(context, 'create', 'user', inserted!.id);
+    // Honest invitation semantics: creating a `user` row is NOT sending an
+    // invitation. When a phone is provided, mint a single-use activation token
+    // (only its SHA-256 digest is stored) and queue the SMS — the gateway is
+    // simulated, so the row is recorded 'queued', never claimed 'sent'. Without
+    // a phone there is no delivery path and no token is created.
+    let invitation: { tokenCreated: boolean; deliveryStatus: 'queued' | 'no_phone' };
+    if (body.phone) {
+      const token = generateSetupToken();
+      const expiresAt = new Date(Date.now() + SETUP_TOKEN_TTL_MS).toISOString();
+      await db.insert(accountSetupTokens).values({
+        tenantId,
+        userId: inserted!.id,
+        token: hashSetupToken(token),
+        expiresAt,
+      });
+      await db.insert(smsMessages).values({
+        tenantId,
+        recipientPhone: normalizeMoroccanPhone(body.phone) || body.phone,
+        body: `Lango SchoolOS : activez votre compte via ce lien : /setup-account?token=${token}`,
+        status: 'queued',
+        createdById: context.userId,
+      });
+      invitation = { tokenCreated: true, deliveryStatus: 'queued' };
+    } else {
+      invitation = { tokenCreated: false, deliveryStatus: 'no_phone' };
+    }
+
+    recordAudit(context, 'create', 'user', inserted!.id, { invitation: invitation.deliveryStatus });
 
     return NextResponse.json({
       success: true,
       data: toApiUser(inserted!),
-      message: 'Utilisateur créé en base de données avec succès',
+      invitation,
+      message: invitation.tokenCreated
+        ? 'Compte créé — lien d\'activation généré et SMS mis en file d\'attente.'
+        : 'Compte créé — aucun numéro de téléphone fourni, aucun lien d\'activation généré.',
     });
   } catch (error) {
     return apiErrorResponse(error);

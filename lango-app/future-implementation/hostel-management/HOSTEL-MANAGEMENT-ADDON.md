@@ -1,6 +1,10 @@
 # Hostel Management Addon Plan
 
-Status: planned optional addon, not built  
+**STATUS: IMPLEMENTED** — see `future-implementation/_tracker/PLANS-AUDIT-AND-PROGRESS.md`
+(#28) for verified details. Migration `0076`, `hostel-schema.ts` (16 tables), full API
++ 15 UI views, allocation/eligibility/escalation/tonight services, `hostel-audit.test.ts`
+(482 lines), addon `enabled:true` in `src/addons/registry.ts`. Phases 0–3 done; visitors,
+incidents, inspections, maintenance (phases 4–5) deferred by design, not gaps.
 Addon ID: `hostel`  
 Scope: Hostel Master, Hostel Room, Category, Allocation Report, resident supervision and operations
 

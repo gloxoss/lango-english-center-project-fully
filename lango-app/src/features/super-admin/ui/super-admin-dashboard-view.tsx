@@ -35,6 +35,7 @@ type SuperAdminSummaryData = {
 export function SuperAdminDashboardView({ locale }: { locale: string }) {
   const [summary, setSummary] = useState<SuperAdminSummaryData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [calendarEvents, setCalendarEvents] = useState([]);
 
   useEffect(() => {
     fetch('/api/super-admin/summary')
@@ -47,6 +48,13 @@ export function SuperAdminDashboardView({ locale }: { locale: string }) {
         console.error('Failed loading super-admin summary', err);
         setError('Connexion au serveur impossible.');
       });
+
+    fetch('/api/addons/events/calendar')
+      .then(r => r.json())
+      .then((json) => {
+        if (json.data) setCalendarEvents(json.data);
+      })
+      .catch(err => console.error('Failed loading calendar events', err));
   }, []);
 
   const schools = summary?.schools ?? [];
@@ -121,7 +129,7 @@ export function SuperAdminDashboardView({ locale }: { locale: string }) {
       {/* 4. Bottom Row: Interactive Platform Calendar & Birthday Tracker */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8 min-h-[420px]">
-          <DashboardCalendarWidget />
+          <DashboardCalendarWidget events={calendarEvents} />
         </div>
         <div className="lg:col-span-4 min-h-[420px]">
           <BirthdayTrackerWidget />

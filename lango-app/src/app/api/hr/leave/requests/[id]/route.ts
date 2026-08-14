@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
+import { requireWorkforceAddon } from '@/libs/api/entitlements';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { employeeLeaveBalances, leaveRequests } from '@/models/Schema';
@@ -21,8 +22,9 @@ export async function PATCH(
 ) {
   try {
     const ctx = await requireRequestContext(request);
-    await requireCapability(ctx, 'hr.manage');
     const tenantId = requireTenant(ctx);
+    await requireWorkforceAddon(tenantId);
+    await requireCapability(ctx, 'payroll.leave.manage');
     const { id } = await params;
     const body = await parseJson(request, reviewSchema);
     const { action } = body;

@@ -205,7 +205,7 @@ export const MarketingHeader: React.FC<MarketingHeaderProps> = ({ currentLocale 
                 className="h-9 sm:h-10 pl-3.5 pr-1 py-0.5 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-semibold text-xs rounded-full flex items-center justify-between gap-2 shadow-[0_4px_14px_rgba(36,135,184,0.3)] transition-colors shrink-0 whitespace-nowrap cursor-pointer border border-transparent"
               >
                 <span className="text-white font-medium pl-0.5 whitespace-nowrap">
-                  {isAr ? 'طلب عرض توضيحي' : 'Demander une démo'}
+                  {isAr ? 'الوصول المبكر' : 'Accès prioritaire'}
                 </span>
                 
                 <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white text-[#2487B8] flex items-center justify-center relative overflow-hidden shrink-0 shadow-inner">
@@ -291,7 +291,7 @@ export const MarketingHeader: React.FC<MarketingHeaderProps> = ({ currentLocale 
               }}
               className="w-full py-3 bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold rounded-xl shadow-lg transition-colors cursor-pointer border-none"
             >
-              {isAr ? 'طلب عرض توضيحي' : 'Demander une démo'}
+              {isAr ? 'الانضمام إلى قائمة الوصول المبكر' : 'Rejoindre la liste d’accès prioritaire'}
             </button>
           </div>
 

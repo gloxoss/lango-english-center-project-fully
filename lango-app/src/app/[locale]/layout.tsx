@@ -1,14 +1,12 @@
-import { Cairo } from 'next/font/google';
 import { LocaleProvider } from '@/features/marketing/context/locale-context';
 import { AppProviders } from '@/providers';
 import '../../../public/assets/css/fonts.css';
 import '../globals.css';
 
-const cairo = Cairo({
-  subsets: ['arabic', 'latin'],
-  variable: '--font-cairo',
-  display: 'swap',
-});
+// Cairo loads at runtime via the Google Fonts @import in globals.css (same
+// delivery as Albert Sans / Geist). It is intentionally NOT imported via
+// next/font/google: that self-hosted build would fetch Google Fonts at
+// `next build` time and fail when the network is unreachable.
 
 export const metadata = {
   title: 'SchoolOS — Moroccan School Management Platform',
@@ -30,9 +28,6 @@ export default async function RootLocaleLayout({
     <html
       lang={validLocale}
       dir={isRTL ? 'rtl' : 'ltr'}
-      className={`
-        ${cairo.variable}
-      `}
     >
       <body className="min-h-screen bg-[#F8FAFC] text-slate-900 antialiased">
         <AppProviders>

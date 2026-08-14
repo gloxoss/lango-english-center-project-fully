@@ -31,6 +31,14 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+# Docker Desktop injects HTTP(S)_PROXY into buildkit, but Node 24's undici fetch
+# ignores env proxies unless opted in — next/font/google then fails to download
+# fonts during `next build`. Opt in so the proxy is honored inside the build.
+ENV NODE_USE_ENV_PROXY=1
+# The generated route/type graph is large (800+ routes). Next's TypeScript
+# worker exceeds Node's default ~2 GiB heap inside BuildKit even though the
+# same production build passes on the host.
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 # `public` is optional in Next.js, but the runner stage copies it unconditionally.
 # Keep the image build valid for apps that do not currently ship static assets.
@@ -42,6 +50,10 @@ RUN mkdir -p public
 # Next evaluates route modules while collecting build metadata. These sentinels
 # exist only for that process; the runner requires real runtime environment values.
 # CI verifies that neither sentinel is embedded in the standalone output.
+# NEXT_IGNORE_TYPES=1 skips the type-check phase (see next.config.ts): the same
+# production build passes type-checking on the host, and the tsc worker's heap
+# is the peak that can OOM Docker Desktop's VM. Host/CI builds still typecheck.
+ENV NEXT_IGNORE_TYPES=1
 RUN DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build \
     BETTER_AUTH_SECRET=build-only-sentinel-secret-never-use-at-runtime \
     BETTER_AUTH_URL=http://build.invalid \
@@ -69,6 +81,7 @@ COPY --from=builder /app/package.json ./package.json
 # in docker-compose.yml - must exist and be writable by `nextjs` before the
 # volume is attached, or writes at runtime fail with EACCES.
 RUN mkdir -p /app/uploads && chown -R nextjs:nodejs /app/uploads
+RUN mkdir -p /app/.next/cache && chown -R nextjs:nodejs /app/.next/cache
 
 USER nextjs
 

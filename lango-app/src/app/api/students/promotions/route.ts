@@ -100,7 +100,13 @@ export async function POST(request: Request) {
           targetSessionYearId,
           idempotencyKey: crypto.randomUUID(),
           decisions: (rawBody.studentIds && rawBody.studentIds.length > 0 ? rawBody.studentIds : Array.from(eligibleIds))
-            .map(studentId => ({ studentId, decision: 'promote' as const, targetClassSectionId: rawBody.targetClassSectionId })),
+            .map(studentId => ({
+              studentId,
+              decision: 'promote' as const,
+              targetClassSectionId: rawBody.targetClassSectionId,
+              averagePercentage: undefined,
+              reason: undefined,
+            })),
         };
 
     // Idempotent retry: an already-committed batch for this key is returned as-is,

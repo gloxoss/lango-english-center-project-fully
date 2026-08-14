@@ -1,5 +1,13 @@
 # Guard and Security Portal — Future Implementation Plan
 
+**STATUS: IMPLEMENTED** — see `future-implementation/_tracker/PLANS-AUDIT-AND-PROGRESS.md`
+(#29) for verified details. Migration `0078_guard_security_portal.sql` (not `0076` as
+reserved in `.implementation-plan/EXECUTION-PLAN.md` — the number shifted before this
+plan was executed), `guard-schema.ts` (16 tables), full `api/guard/**` + `api/gate/credentials/verify`,
+services (credential-adapter, release, kiosk, visitors, incidents, emergency), 8 UI views,
+CRM decoy removed. No v1 gaps; hostel/transport handoffs stubbed and offline manifests
+deferred by design.
+
 ## Goal
 
 Provide a minimal, mobile-first gate workspace for expected arrivals, verified pickup, visitor check-in/out and incidents without exposing school records.

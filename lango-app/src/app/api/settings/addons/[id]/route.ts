@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { assertKnownAddon } from '@/libs/api/entitlements';
+import { assertAddonDependencies, assertKnownAddon } from '@/libs/api/entitlements';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -29,6 +29,10 @@ export async function PATCH(
     assertKnownAddon(addonId);
 
     const body = await parseJson(request, patchSchema);
+
+    // A school_admin can only toggle existing grants (never grant new ones,
+    // enforced below), but the dependency check applies to toggles too.
+    await assertAddonDependencies(tenantId, addonId, body.active);
 
     // Upsert the entitlement row.
     const existing = await db

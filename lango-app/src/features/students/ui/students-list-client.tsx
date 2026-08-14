@@ -23,6 +23,7 @@ import {
   Wallet, CheckCircle2, AlertTriangle,
 } from 'lucide-react';
 import { useEffect } from 'react';
+import { usePermissions } from '@/hooks/use-permissions';
 import { exportToCsv } from '@/libs/csv-export';
 import { StudentItem } from '../data/students-list-config';
 
@@ -76,6 +77,7 @@ type Student = {
 };
 
 export function StudentsListClient({ locale }: { locale?: string } = {}) {
+  const { can } = usePermissions();
   const [students, setStudents] = useState<StudentItem[]>([]);
   const [selectedId, setSelectedId] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -230,11 +232,13 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
             >
               <Download className="w-4 h-4" /> Exporter
             </Button>
-            <Button asChild size="sm" className="gap-2 h-10 rounded-full px-4 text-xs font-bold bg-[#2487B8] hover:bg-[#1B6C93] text-white shadow-2xs">
-              <Link href={`/${locale || 'fr'}/dashboard/students/add`}>
-                <UserPlus className="w-4 h-4" /> + Inscrire un élève
-              </Link>
-            </Button>
+            {can('students.create') && (
+              <Button asChild size="sm" className="gap-2 h-10 rounded-full px-4 text-xs font-bold bg-[#2487B8] hover:bg-[#1B6C93] text-white shadow-2xs">
+                <Link href={`/${locale || 'fr'}/dashboard/students/add`}>
+                  <UserPlus className="w-4 h-4" /> + Inscrire un élève
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
 
@@ -382,6 +386,13 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
               </div>
             </div>
 
+            <Link
+              href={`/${locale || 'fr'}/dashboard/students/${activeStudent.id}`}
+              className="flex items-center justify-center gap-1.5 h-9 rounded-full bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold transition-colors"
+            >
+              Voir le profil complet
+            </Link>
+
             <div className="space-y-2 text-xs border-t border-slate-100 pt-3">
               <div className="flex justify-between">
                 <span className="text-slate-500">Tuteur Légal</span>
@@ -397,24 +408,30 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
               </div>
             </div>
 
-            <div className="flex gap-2 border-t border-slate-100 pt-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => openEditModal({ id: activeStudent.id, fullName: activeStudent.name, level: activeStudent.gradeLevel, className: activeStudent.classSection, guardianName: activeStudent.guardianName, phone: activeStudent.guardianPhone, status: activeStudent.status, paymentStatus: activeStudent.financialStatus })}
-                className="flex-1 text-xs font-bold h-9 rounded-full border-blue-200 text-blue-700 hover:bg-blue-50"
-              >
-                Modifier
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => openDeleteModal({ id: activeStudent.id, fullName: activeStudent.name, level: activeStudent.gradeLevel, className: activeStudent.classSection, guardianName: activeStudent.guardianName, phone: activeStudent.guardianPhone, status: activeStudent.status, paymentStatus: activeStudent.financialStatus })}
-                className="flex-1 text-xs font-bold h-9 rounded-full border-rose-200 text-rose-600 hover:bg-rose-50"
-              >
-                Supprimer
-              </Button>
-            </div>
+            {(can('students.update') || can('students.delete')) && (
+              <div className="flex gap-2 border-t border-slate-100 pt-3">
+                {can('students.update') && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openEditModal({ id: activeStudent.id, fullName: activeStudent.name, level: activeStudent.gradeLevel, className: activeStudent.classSection, guardianName: activeStudent.guardianName, phone: activeStudent.guardianPhone, status: activeStudent.status, paymentStatus: activeStudent.financialStatus })}
+                    className="flex-1 text-xs font-bold h-9 rounded-full border-blue-200 text-blue-700 hover:bg-blue-50"
+                  >
+                    Modifier
+                  </Button>
+                )}
+                {can('students.delete') && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openDeleteModal({ id: activeStudent.id, fullName: activeStudent.name, level: activeStudent.gradeLevel, className: activeStudent.classSection, guardianName: activeStudent.guardianName, phone: activeStudent.guardianPhone, status: activeStudent.status, paymentStatus: activeStudent.financialStatus })}
+                    className="flex-1 text-xs font-bold h-9 rounded-full border-rose-200 text-rose-600 hover:bg-rose-50"
+                  >
+                    Supprimer
+                  </Button>
+                )}
+              </div>
+            )}
           </Card>
         </div>
       )}

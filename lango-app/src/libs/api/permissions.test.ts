@@ -12,12 +12,16 @@ describe('Permissions system', () => {
 
   it('permission keys follow module.action pattern', () => {
     for (const key of ALL_KEYS) {
-      expect(key).toMatch(/^[a-z]+\.[a-z]+(\.[a-z]+)?$/);
+      expect(key).toMatch(/^[a-z]+\.[a-z_]+(\.[a-z_]+)?$/);
     }
   });
 
-  it('every role has at least one permission', () => {
+  it('every role has at least one permission, except roles that are entirely self-scoped', () => {
+    // alumni: self-service routes are scoped by role='alumni' alone, not the
+    // capability system (see the inline comment on DEFAULT_ROLE_PERMISSIONS.alumni).
+    const selfScopedRoles = new Set(['alumni']);
     for (const [role, perms] of Object.entries(DEFAULT_ROLE_PERMISSIONS)) {
+      if (selfScopedRoles.has(role)) continue;
       expect(perms.length, `Role ${role} has no permissions`).toBeGreaterThan(0);
     }
   });
@@ -44,11 +48,24 @@ describe('Permissions system', () => {
     expect(managePerms.length).toBe(0);
   });
 
-  it('guard has minimal permissions', () => {
+  it('guard has the operational portal permission set', () => {
     const guardPerms = DEFAULT_ROLE_PERMISSIONS.guard;
-    expect(guardPerms.length).toBeLessThanOrEqual(5);
-    expect(guardPerms).toContain('students.read');
-    expect(guardPerms).toContain('attendance.read');
+    expect(guardPerms).toEqual([
+      'guard.portal.use',
+      'guard.visitors.manage',
+      'guard.pickup.release',
+      'guard.incidents.manage',
+      'guard.evidence.read',
+      'events.checkin',
+      'transport.read',
+      'transport.boarding.manage',
+      'transport.incident.manage',
+    ]);
+    // Directory keys are inert for guard (students/attendance API allowlists
+    // exclude guard) and must not resurface as dead sidebar links.
+    expect(guardPerms).not.toContain('students.read');
+    expect(guardPerms).not.toContain('attendance.read');
+    expect(guardPerms).not.toContain('events.read');
   });
 
   it('accountant can read and manage finance', () => {

@@ -17,6 +17,7 @@ function toApiClass(row: typeof classes.$inferSelect) {
     mediumId: row.mediumId,
     shiftId: row.shiftId,
     streamId: row.streamId,
+    cycle: row.cycle,
     schoolId: row.tenantId,
   };
 }
@@ -48,9 +49,9 @@ async function assertSameTenantReferences(tenantId: string, refs: { mediumId?: s
 export async function GET(request: Request) {
   try {
     // ponytail: teachers need read access for attendance-page class filters
-    // (POST /api/attendance already allows teacher) - writes stay
-    // school_admin-only below.
-    const context = await requireRequestContext(request, ['school_admin', 'teacher']);
+    // (POST /api/attendance already allows teacher); accountant needs it for
+    // the fee-allocation class picker - writes stay school_admin-only below.
+    const context = await requireRequestContext(request, ['school_admin', 'teacher', 'accountant']);
     const tenantId = requireTenant(context);
     const { searchParams } = new URL(request.url);
     const pagination = parsePagination(searchParams);
@@ -95,6 +96,7 @@ export async function POST(request: Request) {
         mediumId: body.mediumId,
         shiftId: body.shiftId,
         streamId: body.streamId,
+        cycle: body.cycle,
       })
       .returning();
 
@@ -123,6 +125,7 @@ export async function PUT(request: Request) {
         mediumId: body.mediumId,
         shiftId: body.shiftId,
         streamId: body.streamId,
+        cycle: body.cycle,
         updatedAt: new Date().toISOString(),
       })
       .where(and(eq(classes.id, body.id), eq(classes.tenantId, tenantId)))

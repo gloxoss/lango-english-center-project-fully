@@ -5,7 +5,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { parseJson, settingsUpdateSchema } from '@/libs/api/validation';
-import { SETTINGS_REGISTRY, setSettingValue } from '@/libs/settings/registry';
+import { LEGACY_SETTING_COLUMNS, SETTINGS_REGISTRY, getEffectiveValueWithLegacyFallback, setSettingValue } from '@/libs/settings/registry';
 import { db } from '@/libs/DB';
 import { schoolSettings } from '@/models/Schema';
 
@@ -33,29 +33,68 @@ export async function GET(request: Request) {
         success: true,
         data: {
           establishmentName: '',
+          shortName: '',
           city: '',
           address: '',
           phone: '',
           email: '',
-          academicYear: '',
-          startDate: '',
-          endDate: '',
+          website: '',
+          country: '',
+          rc: '',
+          ice: '',
+          taxId: '',
+          legalStatus: '',
+          directorName: '',
+          directorEmail: '',
+          directorPhone: '',
+          financialContactName: '',
+          financialContactEmail: '',
+          financialContactPhone: '',
+          admissionsContactName: '',
+          admissionsContactEmail: '',
+          admissionsContactPhone: '',
           allowOperations: true,
           presenceModes: DEFAULT_PRESENCE_MODES,
           languages: DEFAULT_LANGUAGES,
           security: DEFAULT_SECURITY,
-          ice: '',
-          legalStatus: '',
-          directorName: '',
+          localeTimezone: 'Africa/Casablanca',
+          dateFormat: 'dd/mm/yyyy',
+          documentHeaderStyle: 'classique',
+          attendanceLateGraceMinutes: 15,
+          attendancePeriodStartTime: '08:00',
         },
       });
     }
 
-    return NextResponse.json({ success: true, data: row });
+    // Project only the fields the UI needs — never return tenantId or internal ids
+    const {
+      id: _id,
+      tenantId: _tid,
+      createdAt: _c,
+      updatedAt: _u,
+      ...publicFields
+    } = row;
+
+    // The registry is the source of truth for the fields migrated to typed
+    // settings; the legacy schoolSettings row still carries the rest. When a
+    // tenant has no override yet, getEffectiveValueWithLegacyFallback reads the
+    // legacy column so existing data survives the split.
+    const migratedDefs = SETTINGS_REGISTRY.filter(
+      d => d.legacyField && Object.prototype.hasOwnProperty.call(LEGACY_SETTING_COLUMNS, d.legacyField),
+    );
+    const resolved = await Promise.all(
+      migratedDefs.map(async (def) => [
+        def.legacyField as string,
+        (await getEffectiveValueWithLegacyFallback(tenantId, context.branchId, def.key)).value,
+      ] as const),
+    );
+
+    return NextResponse.json({ success: true, data: { ...publicFields, ...Object.fromEntries(resolved) } });
   } catch (error) {
     return apiErrorResponse(error);
   }
 }
+
 
 export async function POST(request: Request) {
   try {
@@ -64,47 +103,46 @@ export async function POST(request: Request) {
     const tenantId = requireTenant(context);
     const body = await parseJson(request, settingsUpdateSchema);
 
+    const sharedFields = {
+      establishmentName: body.establishmentName,
+      shortName: body.shortName,
+      city: body.city,
+      address: body.address,
+      phone: body.phone,
+      email: body.email,
+      website: body.website,
+      country: body.country,
+      rc: body.rc,
+      ice: body.ice,
+      taxId: body.taxId,
+      legalStatus: body.legalStatus,
+      directorName: body.directorName,
+      directorEmail: body.directorEmail,
+      directorPhone: body.directorPhone,
+      financialContactName: body.financialContactName,
+      financialContactEmail: body.financialContactEmail,
+      financialContactPhone: body.financialContactPhone,
+      admissionsContactName: body.admissionsContactName,
+      admissionsContactEmail: body.admissionsContactEmail,
+      admissionsContactPhone: body.admissionsContactPhone,
+      allowOperations: body.allowOperations,
+      presenceModes: body.presenceModes ?? DEFAULT_PRESENCE_MODES,
+      languages: body.languages ?? DEFAULT_LANGUAGES,
+      security: body.security ?? DEFAULT_SECURITY,
+      localeTimezone: body.localeTimezone,
+      dateFormat: body.dateFormat,
+      documentHeaderStyle: body.documentHeaderStyle,
+      attendanceLateGraceMinutes: body.attendanceLateGraceMinutes ?? 15,
+      attendancePeriodStartTime: body.attendancePeriodStartTime ?? '08:00',
+      updatedAt: new Date().toISOString(),
+    };
+
     const [saved] = await db
       .insert(schoolSettings)
-      .values({
-        tenantId,
-        establishmentName: body.establishmentName,
-        city: body.city,
-        address: body.address,
-        phone: body.phone,
-        email: body.email,
-        academicYear: body.academicYear,
-        startDate: body.startDate,
-        endDate: body.endDate,
-        allowOperations: body.allowOperations,
-        presenceModes: body.presenceModes ?? DEFAULT_PRESENCE_MODES,
-        languages: body.languages ?? DEFAULT_LANGUAGES,
-        security: body.security ?? DEFAULT_SECURITY,
-        ice: body.ice,
-        legalStatus: body.legalStatus,
-        directorName: body.directorName,
-        updatedAt: new Date().toISOString(),
-      })
+      .values({ tenantId, ...sharedFields })
       .onConflictDoUpdate({
         target: schoolSettings.tenantId,
-        set: {
-          establishmentName: body.establishmentName,
-          city: body.city,
-          address: body.address,
-          phone: body.phone,
-          email: body.email,
-          academicYear: body.academicYear,
-          startDate: body.startDate,
-          endDate: body.endDate,
-          allowOperations: body.allowOperations,
-          presenceModes: body.presenceModes ?? DEFAULT_PRESENCE_MODES,
-          languages: body.languages ?? DEFAULT_LANGUAGES,
-          security: body.security ?? DEFAULT_SECURITY,
-          ice: body.ice,
-          legalStatus: body.legalStatus,
-          directorName: body.directorName,
-          updatedAt: new Date().toISOString(),
-        },
+        set: sharedFields,
       })
       .returning();
 
@@ -132,3 +170,4 @@ export async function POST(request: Request) {
     return apiErrorResponse(error);
   }
 }
+

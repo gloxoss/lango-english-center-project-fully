@@ -32,75 +32,102 @@ export async function POST(request: Request) {
       throw new ApiError(404, 'NOT_FOUND', 'Examen introuvable.');
     }
 
-    const now = new Date().toISOString();
-    if (new Date(now) > new Date(exam.endsAt)) {
+    const now = new Date();
+    if (now > new Date(exam.endsAt)) {
       throw new ApiError(422, 'EXAM_EXPIRED', 'Cet examen est expiré.');
     }
 
-    // Fetch all questions and options for this exam
-    const questions = await db
-      .select()
-      .from(onlineExamQuestions)
-      .where(eq(onlineExamQuestions.onlineExamId, body.examId));
+    // Real per-attempt deadline: the FIRST time this student's attempt row is
+    // written, its startedAt becomes their real recorded start (the upsert
+    // below never overwrites startedAt on conflict, so it stays fixed across
+    // any later re-submission). A later submission past
+    // startedAt + durationMinutes is rejected, even if the exam itself
+    // hasn't reached its overall endsAt yet - previously only endsAt was
+    // ever checked, so elapsed time per student was never actually
+    // measured. future-implementation/assessment-and-examination remediation, section-01.
+    const [existingAttempt] = await db
+      .select({ startedAt: onlineExamAttempts.startedAt })
+      .from(onlineExamAttempts)
+      .where(and(eq(onlineExamAttempts.onlineExamId, body.examId), eq(onlineExamAttempts.studentId, context.userId)))
+      .limit(1);
 
-    let totalScore = 0;
-
-    // Create attempt
-    const [attempt] = await db
-      .insert(onlineExamAttempts)
-      .values({
-        tenantId,
-        onlineExamId: body.examId,
-        studentId: context.userId,
-        startedAt: now,
-        submittedAt: now,
-        status: 'graded',
-      })
-      .onConflictDoUpdate({
-        target: [onlineExamAttempts.onlineExamId, onlineExamAttempts.studentId],
-        set: {
-          submittedAt: now,
-          status: 'graded',
-        },
-      })
-      .returning();
-
-    // Process answers & compute score
-    for (const ans of body.answers) {
-      const q = questions.find(item => item.id === ans.questionId);
-      if (!q) continue;
-
-      const [opt] = await db
-        .select({ isCorrect: onlineExamQuestionOptions.isCorrect })
-        .from(onlineExamQuestionOptions)
-        .where(eq(onlineExamQuestionOptions.id, ans.selectedOptionId))
-        .limit(1);
-
-      if (opt?.isCorrect) {
-        totalScore += Number(q.marks);
+    if (existingAttempt) {
+      const deadline = new Date(new Date(existingAttempt.startedAt).getTime() + exam.durationMinutes * 60 * 1000);
+      if (now > deadline) {
+        throw new ApiError(422, 'ATTEMPT_EXPIRED', 'Le temps imparti pour cette tentative est écoulé.');
       }
-
-      await db
-        .insert(onlineExamAnswers)
-        .values({
-          attemptId: attempt!.id,
-          questionId: ans.questionId,
-          selectedOptionId: ans.selectedOptionId,
-        });
     }
 
-    // Save final score
-    const [updatedAttempt] = await db
-      .update(onlineExamAttempts)
-      .set({ score: String(totalScore) })
-      .where(eq(onlineExamAttempts.id, attempt!.id))
-      .returning();
+    const nowIso = now.toISOString();
 
-    await recordAudit(context, 'create', 'online_exam_submission', attempt!.id);
+    const result = await db.transaction(async (tx) => {
+      const questions = await tx
+        .select()
+        .from(onlineExamQuestions)
+        .where(eq(onlineExamQuestions.onlineExamId, body.examId));
+
+      const [attempt] = await tx
+        .insert(onlineExamAttempts)
+        .values({
+          tenantId,
+          onlineExamId: body.examId,
+          studentId: context.userId,
+          startedAt: nowIso,
+          submittedAt: nowIso,
+          status: 'graded',
+        })
+        .onConflictDoUpdate({
+          target: [onlineExamAttempts.onlineExamId, onlineExamAttempts.studentId],
+          set: {
+            submittedAt: nowIso,
+            status: 'graded',
+          },
+        })
+        .returning();
+
+      let totalScore = 0;
+
+      for (const ans of body.answers) {
+        const q = questions.find(item => item.id === ans.questionId);
+        if (!q) continue;
+
+        // Real ownership check - the option must actually belong to the
+        // submitted question, not just exist somewhere in the exam.
+        // Previously trusted isCorrect from any option ID, letting a client
+        // pair a correct option borrowed from a different question.
+        const [opt] = await tx
+          .select({ isCorrect: onlineExamQuestionOptions.isCorrect })
+          .from(onlineExamQuestionOptions)
+          .where(and(eq(onlineExamQuestionOptions.id, ans.selectedOptionId), eq(onlineExamQuestionOptions.questionId, ans.questionId)))
+          .limit(1);
+
+        if (opt?.isCorrect) {
+          totalScore += Number(q.marks);
+        }
+
+        await tx
+          .insert(onlineExamAnswers)
+          .values({
+            attemptId: attempt!.id,
+            questionId: ans.questionId,
+            selectedOptionId: ans.selectedOptionId,
+          });
+      }
+
+      const [updatedAttempt] = await tx
+        .update(onlineExamAttempts)
+        .set({ score: String(totalScore) })
+        .where(eq(onlineExamAttempts.id, attempt!.id))
+        .returning();
+
+      return updatedAttempt;
+    });
+
+    recordAudit(context, 'create', 'online_exam_submission', result!.id);
 
     return NextResponse.json({
       success: true,
-      data: updatedAttempt,
+      data: result,
     });
   } catch (error) {
     return apiErrorResponse(error);

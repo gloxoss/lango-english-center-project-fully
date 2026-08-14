@@ -1,18 +1,32 @@
 import { and, count, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { hasAddon } from '@/libs/api/entitlements';
+import { parseJson, branchCreateSchema } from '@/libs/api/validation';
+import { recordAudit } from '@/libs/api/audit';
 import { db } from '@/libs/DB';
 import { branches, tenants } from '@/models/Schema';
 
 export async function GET(request: Request) {
   try {
     const ctx = await requireRequestContext(request, ['school_admin', 'super_admin', 'teacher', 'accountant', 'receptionist']);
+    // Branch names are read-only display data surfaced in the shared header; the
+    // role allowlist above is the gate. `settings.read` would wrongly block
+    // accountant/teacher/receptionist from seeing the current branch label.
     const tenantId = requireTenant(ctx);
 
+    // Project only the columns the UI needs — do not expose tenantId or timestamps
     const branchList = await db
-      .select()
+      .select({
+        id: branches.id,
+        name: branches.name,
+        code: branches.code,
+        city: branches.city,
+        isDefault: branches.isDefault,
+        isActive: branches.isActive,
+      })
       .from(branches)
       .where(eq(branches.tenantId, tenantId))
       .orderBy(branches.name);
@@ -29,17 +43,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const ctx = await requireRequestContext(request, ['school_admin', 'super_admin']);
+    await requireCapability(ctx, 'settings.organization.manage');
     const tenantId = requireTenant(ctx);
 
-    const body = await request.json();
-    const { name, code, city, address, phone, email } = body;
-
-    if (!name || !code) {
-      return NextResponse.json(
-        { success: false, error: { code: 'INVALID_INPUT', message: 'Le nom et le code de la succursale sont requis.' } },
-        { status: 400 },
-      );
-    }
+    const { name, code, city, address, phone, email } = await parseJson(request, branchCreateSchema);
 
     // Check tenant quota & addon status
     const [tenant] = await db
@@ -109,6 +116,8 @@ export async function POST(request: Request) {
         isActive: true,
       })
       .returning();
+
+    recordAudit(ctx, 'create', 'branch', created!.id);
 
     return NextResponse.json({
       success: true,

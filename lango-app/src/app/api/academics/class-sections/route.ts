@@ -1,4 +1,4 @@
-import { and, count, eq, inArray } from 'drizzle-orm';
+import { and, count, eq, inArray, isNull } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
@@ -8,7 +8,7 @@ import { requireCapability } from '@/libs/api/permissions';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { classSectionCreateSchema, classSectionUpdateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { classes, classSections, sections } from '@/models/Schema';
+import { classes, classSections, classTeachers, rooms, sections, user } from '@/models/Schema';
 
 function toApiClassSection(row: typeof classSections.$inferSelect) {
   return {
@@ -16,8 +16,20 @@ function toApiClassSection(row: typeof classSections.$inferSelect) {
     classId: row.classId,
     sectionId: row.sectionId,
     mediumId: row.mediumId,
+    maxStudents: row.maxStudents,
+    homeRoomId: row.homeRoomId,
     schoolId: row.tenantId,
   };
+}
+
+async function assertRoomBelongsToTenant(tenantId: string, homeRoomId: string | null | undefined) {
+  if (!homeRoomId) {
+    return;
+  }
+  const [row] = await db.select({ id: rooms.id }).from(rooms).where(and(eq(rooms.id, homeRoomId), eq(rooms.tenantId, tenantId))).limit(1);
+  if (!row) {
+    throw new ApiError(422, 'INVALID_REFERENCE', 'La salle indiquée n\'existe pas pour cet établissement.');
+  }
 }
 
 // mediumId is never accepted from the client - it is always derived from the
@@ -44,6 +56,10 @@ export async function GET(request: Request) {
     const pagination = parsePagination(searchParams);
 
     const conditions = [eq(classSections.tenantId, tenantId)];
+    const classIdFilter = searchParams.get('classId');
+    if (classIdFilter) {
+      conditions.push(eq(classSections.classId, classIdFilter));
+    }
     if (context.role === 'teacher') {
       const assignedIds = await getTeacherClassSectionIds(tenantId, context.userId);
       if (assignedIds.length === 0) {
@@ -75,9 +91,38 @@ export async function GET(request: Request) {
       db.select({ total: count() }).from(classSections).where(where),
     ]);
 
+    // Real live roster count per section, batched in one query (not N+1).
+    const sectionIds = rows.map(r => r.classSection.id);
+    const enrolledCounts = sectionIds.length > 0
+      ? await db
+          .select({ classSectionId: user.classSectionId, enrolledCount: count() })
+          .from(user)
+          .where(and(inArray(user.classSectionId, sectionIds), eq(user.role, 'student'), eq(user.tenantId, tenantId)))
+          .groupBy(user.classSectionId)
+      : [];
+    const enrolledById = new Map(enrolledCounts.map(e => [e.classSectionId, e.enrolledCount]));
+
+    const homeroomRows = sectionIds.length > 0
+      ? await db
+          .select({ classSectionId: classTeachers.classSectionId, teacherId: classTeachers.teacherId })
+          .from(classTeachers)
+          .where(and(
+            inArray(classTeachers.classSectionId, sectionIds),
+            eq(classTeachers.role, 'primary'),
+            isNull(classTeachers.endsOn),
+          ))
+      : [];
+    const homeroomById = new Map(homeroomRows.map(h => [h.classSectionId, h.teacherId]));
+
     return NextResponse.json({
       success: true,
-      data: rows.map(r => ({ ...toApiClassSection(r.classSection), className: r.className, sectionName: r.sectionName })),
+      data: rows.map(r => ({
+        ...toApiClassSection(r.classSection),
+        className: r.className,
+        sectionName: r.sectionName,
+        enrolledCount: enrolledById.get(r.classSection.id) ?? 0,
+        homeroomTeacherId: homeroomById.get(r.classSection.id) ?? null,
+      })),
       total: totalRows[0]?.total ?? 0,
       page: pagination.page,
       pageSize: pagination.pageSize,
@@ -95,10 +140,18 @@ export async function POST(request: Request) {
     const body = await parseJson(request, classSectionCreateSchema);
 
     const mediumId = await resolveMediumId(tenantId, body.classId, body.sectionId);
+    await assertRoomBelongsToTenant(tenantId, body.homeRoomId);
 
     const [inserted] = await db
       .insert(classSections)
-      .values({ tenantId, classId: body.classId, sectionId: body.sectionId, mediumId })
+      .values({
+        tenantId,
+        classId: body.classId,
+        sectionId: body.sectionId,
+        mediumId,
+        maxStudents: body.maxStudents,
+        homeRoomId: body.homeRoomId,
+      })
       .returning();
 
     recordAudit(context, 'create', 'class_section', inserted!.id);
@@ -116,7 +169,7 @@ export async function PUT(request: Request) {
     await requireCapability(context, 'academics.manage');
     const body = await parseJson(request, classSectionUpdateSchema);
 
-    const set: { classId?: string; sectionId?: string; mediumId?: string; updatedAt: string } = {
+    const set: { classId?: string; sectionId?: string; mediumId?: string; maxStudents?: number | null; homeRoomId?: string | null; updatedAt: string } = {
       updatedAt: new Date().toISOString(),
     };
     if (body.classId || body.sectionId) {
@@ -129,6 +182,13 @@ export async function PUT(request: Request) {
       set.mediumId = await resolveMediumId(tenantId, classId, sectionId);
       set.classId = classId;
       set.sectionId = sectionId;
+    }
+    if (body.maxStudents !== undefined) {
+      set.maxStudents = body.maxStudents;
+    }
+    if (body.homeRoomId !== undefined) {
+      await assertRoomBelongsToTenant(tenantId, body.homeRoomId);
+      set.homeRoomId = body.homeRoomId;
     }
 
     const [updated] = await db

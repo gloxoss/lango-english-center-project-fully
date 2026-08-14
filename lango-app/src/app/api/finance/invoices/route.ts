@@ -3,19 +3,32 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse } from '@/libs/api/errors';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { classes, classSections, guardians, guardianStudents, invoiceItems, invoices, payments, sections, user } from '@/models/Schema';
+import { consumeDocumentNumber } from '@/libs/finance/document-number';
+import { centsToMoney, moneyToCents } from '@/libs/finance/money';
+import { moneyInput } from '@/libs/finance/validation';
+import { classes, classSections, guardians, guardianStudents, invoiceEvents, invoiceItems, invoices, payments, sections, user } from '@/models/Schema';
 
 const createInvoiceSchema = z.object({
   studentId: z.string().min(1),
-  amount: z.number().positive(),
+  amount: moneyInput,
   discountAmount: z.number().min(0).optional(),
   dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD attendu'),
   note: z.string().trim().max(500).optional(),
 }).strict();
+
+// overdue is derived at read time (never stored): an unpaid/partially-paid
+// invoice whose due date has passed reads as overdue.
+function deriveEffectiveStatus(status: string, dueDate: string, paidAmount: number, netAmount: number): string {
+  const today = new Date().toISOString().slice(0, 10);
+  if ((status === 'pending' || status === 'partial') && dueDate < today && paidAmount < netAmount) {
+    return 'overdue';
+  }
+  return status;
+}
 
 async function getInvoiceDetail(tenantId: string, id: string) {
   const [row] = await db
@@ -51,6 +64,7 @@ async function getInvoiceDetail(tenantId: string, id: string) {
 
   return {
     ...row.invoice,
+    effectiveStatus: deriveEffectiveStatus(row.invoice.status, row.invoice.dueDate, row.invoice.paidAmount, row.invoice.netAmount),
     studentName: row.studentName,
     studentPhone: row.studentPhone,
     studentEmail: row.studentEmail,
@@ -130,6 +144,7 @@ export async function GET(request: Request) {
 
     const data = rows.map(r => ({
       ...r,
+      effectiveStatus: deriveEffectiveStatus(r.status, r.dueDate, r.paidAmount, r.netAmount),
       className: r.className ? `${r.className}${r.sectionName ? ` ${r.sectionName}` : ''}` : null,
       guardianName: guardianByStudent.get(r.studentId) ?? null,
     }));
@@ -157,36 +172,59 @@ export async function POST(request: Request) {
       .from(user)
       .where(and(eq(user.id, body.studentId), eq(user.tenantId, tenantId)))
       .limit(1);
-
     if (!student) {
-      return NextResponse.json({ success: false, message: 'L\'élève indiqué n\'existe pas.' }, { status: 422 });
+      throw new ApiError(422, 'INVALID_REFERENCE', 'L\'élève indiqué n\'existe pas.');
     }
 
-    const discount = body.discountAmount || 0;
-    const netAmount = Math.max(0, body.amount - discount);
-    const invoiceNumber = `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    // Money in BigInt cents — no float arithmetic ever reaches the ledger.
+    const amountCents = moneyToCents(body.amount);
+    const discountCents = body.discountAmount ? moneyToCents(String(body.discountAmount)) : BigInt(0);
+    if (discountCents > amountCents) {
+      throw new ApiError(400, 'DISCOUNT_EXCEEDS_AMOUNT', 'La remise ne peut pas dépasser le montant de la facture.');
+    }
+    const netAmountCents = amountCents - discountCents;
 
-    const [inserted] = await db
-      .insert(invoices)
-      .values({
+    // Number + insert + event ledger are one atomic transaction.
+    const { number: invoiceNumber, invoice } = await db.transaction(async (tx) => {
+      const number = await consumeDocumentNumber(tx, { tenantId, prefix: `INV-${new Date().getFullYear()}-` });
+      const [created] = await tx
+        .insert(invoices)
+        .values({
+          tenantId,
+          studentId: body.studentId,
+          invoiceNumber: number,
+          amount: Number(centsToMoney(amountCents)),
+          discountAmount: Number(centsToMoney(discountCents)),
+          netAmount: Number(centsToMoney(netAmountCents)),
+          paidAmount: 0,
+          status: 'pending',
+          dueDate: body.dueDate,
+          note: body.note || null,
+        })
+        .returning();
+      if (!created) {
+        throw new ApiError(500, 'INVOICE_INSERT_FAILED', 'Facture non enregistrée.');
+      }
+      await tx.insert(invoiceEvents).values({
         tenantId,
-        studentId: body.studentId,
-        invoiceNumber,
-        amount: body.amount,
-        discountAmount: discount,
-        netAmount,
-        paidAmount: 0,
-        status: 'pending',
-        dueDate: body.dueDate,
-        note: body.note || null,
-      })
-      .returning();
+        invoiceId: created.id,
+        eventType: 'created',
+        payload: {
+          invoiceNumber: number,
+          amountCents: amountCents.toString(),
+          discountCents: discountCents.toString(),
+          netAmountCents: netAmountCents.toString(),
+        },
+        actorUserId: context.userId,
+      });
+      return { number, invoice: created };
+    });
 
-    recordAudit(context, 'create', 'invoice', inserted!.id);
+    recordAudit(context, 'create', 'invoice', invoice.id);
 
     return NextResponse.json({
       success: true,
-      data: inserted,
+      data: invoice,
       message: `Facture N° ${invoiceNumber} créée avec succès pour ${student.name}.`,
     });
   } catch (error) {

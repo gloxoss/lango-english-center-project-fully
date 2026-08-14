@@ -1,45 +1,48 @@
-# Product Requirements Document (PRD) — Data-Wiring Remediation
+# Product Requirements Document (PRD) — Academic Management Enhancement
 
 ## 1. What We're Building
-A remediation pass across the SchoolOS dashboard: every page currently showing hardcoded arrays, fake numbers, or a "save" button that doesn't persist anything gets connected to real, tenant-scoped, secure backend logic. One page (`homework-submission-view.tsx`) is currently broken (compile errors) and gets fixed as part of this.
+The remaining implementation of `future-implementation/academic-management-enhancement/ACADEMIC-MANAGEMENT-ENHANCEMENT.md`: session-scoped academic setup, teacher-role/subject-lifecycle history, a timetable with a real draft/publish lifecycle, a room directory, and a completed promotion workflow (wizard UI, capacity checks, rollback). Two of five phases are already partially shipped this session (promotion ledger backend, timetable write-time validation, teacher schedule) — this plan covers everything still missing.
 
 ## 2. The Problem
-Multiple agent sessions have built this app in parallel over several days. Some pages shipped with real backends; others shipped as visual mockups that were never wired up, or had their "Enregistrer" button wired to a `setTimeout` instead of a `fetch`. A school admin using these pages today would see data that looks real but isn't, and actions that appear to succeed but silently do nothing.
+Lango already has every top-level capability the reference product shows, but several of them are timeless or reactive where the school actually needs them to be session-aware and proactive: a class-teacher assignment has no start/end date, a timetable slot can double-book a teacher and nothing stops it until someone runs a report, and — until this session — a promotion just moved a student's `classSectionId` with no record of the decision behind it. None of this blocks day-to-day use today, but none of it survives a real school year transition either: there's no way to prepare next year's classes while this year is still live.
 
 ## 3. Who It's For
-Same roles as the rest of the app: school_admin (sees everything), teacher, accountant, receptionist, student, parent — each page's audience is whichever role already has access to it today; this plan doesn't change access, it makes the pages honest.
+`school_admin` configures and manages everything in this plan. `teacher` gets read-only self-scoped views (their own schedule, their own assigned classes/subjects) — never tenant-wide enumeration. `student`/`parent` are out of scope for this plan (their published-schedule read surface is a documented future item, not built here).
 
 ## 4. What It Does
-- Fixes 1 currently-broken page (compile errors).
-- Wires 9 pages that have zero backend at all — 6 need new API routes (and in some cases new tables/migrations) built from scratch; 3 have real APIs sitting unused.
-- Wires 19 pages that show hardcoded arrays but already have a matching, unused API route.
-- Fixes 3 pages where server-side data is real but client-side actions (job triggers, connection tests, migration steps) are fake local-state changes.
-- Fixes 2 dead-UI issues: global header search has no state at all; users-list pagination buttons have no handlers.
-- Replaces `syllabus-view.tsx` with an honest "coming soon" placeholder (previously-established decision — no schema concept exists for it, not worth inventing one now).
+- **Session-scoped class offerings**: a new concept links a class/section to a specific school year, with capacity, so next year can be configured while this year stays live and unaffected.
+- **Class-teacher roles & history**: distinguishes a primary/homeroom teacher from an assistant, records when an assignment started/ended, and stops two teachers being marked primary for the same offering at once.
+- **Subject curriculum metadata**: weekly hours, display order, and an active/archived state on class-subject assignments, with used assignments protected from silent deletion.
+- **Timetable lifecycle**: schedules move through draft → published states; only the published version is what teachers/admins see as "the" schedule; a school can prepare a future timetable without touching the live one.
+- **Room directory**: a small, real list of physical rooms (name, capacity, type) the timetable and exam-session tooling can reference instead of a free-text label.
+- **Promotion wizard**: the existing ledger backend (shipped this session) gets a real UI — per-student decisions defaulted from real grade averages, a capacity warning, and a controlled rollback for a batch that hasn't been built on top of yet.
+- **Navigation regroup**: Academic Setup / Timetables / Academic Year Operations, replacing today's flat, partly-unlinked list.
 
 ## 5. How It Should Feel
-No visual change. Same design system (CLAUDE.md: slate/blue palette, KPI banners, data-dense tables). The only user-visible difference: numbers are real, buttons work, and where something genuinely isn't built yet, it says so instead of faking it.
+No visual redesign. Same design system already governing this app (slate/blue palette, KPI banners, data-dense tables, inspector sidebars). The promotion wizard and offering/timetable-version workspaces are new screens, built to match the existing pattern exactly — not a new visual language.
 
 ## 6. What It Connects To
-No new external integrations. Everything wires into the existing Drizzle/PostgreSQL/Better Auth stack, following the established route pattern: `requireRequestContext` → `requireTenant` → `requireCapability` → Zod `.strict()` → tenant-scoped query → `recordAudit()` → `apiErrorResponse()`.
+No external integrations. Pure extension of the existing Drizzle/PostgreSQL/Better Auth stack, same route convention as every prior section this session shipped: `requireRequestContext` → `requireTenant` → `requireCapability` → Zod `.strict()` → tenant-scoped query → `recordAudit()` → `apiErrorResponse()`.
 
 ## 7. What It Does NOT Do
-- Does not redesign any page's layout or visuals.
-- Does not change who can access which page (no new roles/permissions beyond what wiring requires).
-- Does not build syllabus tracking (explicitly deferred, placeholder instead).
-- Does not touch the ~45 "NOT CHECKED" pages the audit didn't verify in depth — those are presumed wired (fetch calls present) and out of scope unless a follow-up audit finds otherwise.
-- Does not touch files currently mid-edit by the other agent session until they're confirmed stable (execution-time check, not a planning-time exclusion).
+- Does not touch the deprecated LMS chain (`academicYears`/`courses`/`studentGroups`/old `timetableSlots`/old `rooms`) — confirmed dead, explicitly out of bounds per the source doc.
+- Does not replace `classSectionId` anywhere — every new session-scoped link is additive (`offeringId` alongside it), so no existing route touching `classSectionId` needs to change as part of this plan.
+- Does not build a student/parent-facing published-schedule view — flagged in the doc as a future surface, not this plan's scope.
+- Does not touch any file this session already shipped (`student-placement.ts`, `timetable-validation.ts`, the promotions/timetable-slots routes) except where a section explicitly extends them.
+- Does not proceed past Phase 0 (the ADR) without the schema-approach decision being locked — it already is, per Discovery, but the ADR section formalizes it in-repo for future reference.
 
 ## 8. How We'll Know It Works
-- Every page in scope: `tsc --noEmit` clean, loads with real DB data for a fresh tenant (no leftover mock rows visible), and every action button performs a real, verifiable mutation.
-- Money/permission/tenant-isolation-touching sections: a real automated test, not just manual check.
-- Zero pages left showing a number or row that doesn't trace to a real table.
+- Migrations apply cleanly (`docker compose build migrate` + run), verified against the real `_journal.json` ledger, not assumed.
+- Every new/changed route: `tsc --noEmit` clean, manual round-trip against a real tenant, tenant isolation holds (cross-tenant IDs rejected).
+- Promotion wizard: a batch committed through the UI produces the exact same `promotion_batches`/`promotion_decisions`/`studentPlacements` rows the backend API already produces directly (already verified this session) — the UI is a client of the existing contract, not a new one.
+- Timetable publish: a draft with an unresolved conflict cannot be published; a published version is what `teacher-schedule` and `schedule` both read.
+- Zero regressions: every section is git-status-checked immediately before execution; nothing here reverts or silently overwrites the other concurrent session's work.
 
 ## 9. Business Model
-Not applicable — internal remediation work, no pricing/monetization implications.
+Not applicable — internal admin/academic feature, no billing surface.
 
 ## 10. Risks & Concerns
-1. **Collision risk**: the other agent's session is actively editing ~62 files overlapping several of these targets (academics, attendance, homework, settings). Mitigated by re-checking file state immediately before executing each section, not just at planning time.
-2. **Scope inflation**: 6 pages need genuinely new backends (schema + routes), not just wiring — each is its own small design decision, not a mechanical fix.
-3. **Silent divergence**: some "REAL" pages the audit confirmed still have partial fakes inside them (e.g. `security-sessions` synthesizes device/IP fields) — flagged per-section, not blanket-fixed, since the user asked for case-by-case judgment on this class of issue.
-4. **Volume**: ~35 pages in scope. Executing all of it is a multi-session effort, not one sitting — the plan is structured in independently-runnable sections for exactly this reason.
+1. **Collision risk, elevated for this plan specifically**: Phase 1's `Schema.ts` changes and Phase 3's timetable-version work touch some of the exact files a concurrent session has repeatedly kept dirty this session (`Schema.ts`, `schedule-view.tsx`, academics UI). Every section's file list is deliberately narrow and the isolated-git-blob commit technique is the default for any shared file, not a fallback.
+2. **Migration sequencing**: this plan adds several migrations on top of the `0046` already shipped this session; each section re-checks `migrations/meta/_journal.json`'s true highest `idx` at execution time (the other session creates un-journaled migration files), not at planning time.
+3. **Additive-schema tax**: choosing `offeringId`-alongside-`classSectionId` over a full replacement avoids a large breaking migration but means two "which class/section" pointers coexist for a transition period — sections in this plan are explicit about which one they read from and why.
+4. **Rollback correctness**: promotion rollback only makes sense while nothing downstream (attendance, grades, invoices) has been recorded against the target placement yet — the rollback section's dependency scan is the safety mechanism, not just a confirmation dialog.

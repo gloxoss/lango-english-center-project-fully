@@ -1,8 +1,14 @@
 # Inventory Management — Future Addon
 
-**Status: not started, deliberately deferred.** Genuinely new scope — unlike
-`two-factor-authentication/`, nothing in this app's current schema covers
-any part of this. Read `AGENT-HANDOFF.md` first for overall project state.
+**STATUS: IMPLEMENTED** — see `future-implementation/_tracker/PLANS-AUDIT-AND-PROGRESS.md`
+(#25) for verified details. 30 API routes, 26 tables (`inventory-schema.ts`,
+migration `0077`), 13 pages + sidebar, 7 `inventory.*` permissions are live;
+addon registry (`src/addons/registry.ts`) already lists `inventory` as
+`enabled:true`/"Built." Remaining gaps: most verification lives in
+`scripts/verify-inventory-*.mjs` rather than vitest (only
+`inventory-math.test.ts` is an in-repo test), and `MANUAL-TESTING.md` §14
+manual browser/SQL checks are still open. Read `AGENT-HANDOFF.md` first for
+overall project state.
 
 ## What the reference screenshots show
 

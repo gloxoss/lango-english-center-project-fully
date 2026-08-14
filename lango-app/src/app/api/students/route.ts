@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, ilike, or } from 'drizzle-orm';
+import { and, count, desc, eq, gte, ilike, inArray, or } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
@@ -7,7 +7,8 @@ import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, studentCreateSchema, studentUpdateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { attendance, classes, classSections, guardians, guardianStudents, invoices, payments, sections, user } from '@/models/Schema';
+import { reserveMatricule } from '@/libs/services/matricule';
+import { academicYears, attendance, classes, classSections, guardians, guardianStudents, invoices, payments, sections, user } from '@/models/Schema';
 import { toDbStatus, toUiStatus } from '@/models/userMapping';
 
 // ponytail: students are `user` rows with role = 'student'. The schema has no
@@ -62,6 +63,11 @@ async function loadClassSectionDisplay(classSectionId: string | null | undefined
 // has no [id] dynamic API routes anywhere - every detail/update/delete is a
 // query-param on the collection route (see PUT/DELETE below) - so `?id=`
 // matches the established convention rather than introducing a new one.
+// Accepts role IN ('student', 'alumni') - NOT just 'student' - so the same
+// detail page can show a transitioned alumnus's real profile too
+// (future-implementation/alumni-portal reuses this view for the staff-side
+// alumni admin page). The list query elsewhere in this file stays
+// student-only; this relaxation is scoped to the single-id lookup only.
 async function getStudentDetail(tenantId: string, id: string) {
   const [row] = await db
     .select({
@@ -73,7 +79,7 @@ async function getStudentDetail(tenantId: string, id: string) {
     .leftJoin(classSections, eq(user.classSectionId, classSections.id))
     .leftJoin(classes, eq(classSections.classId, classes.id))
     .leftJoin(sections, eq(classSections.sectionId, sections.id))
-    .where(and(eq(user.id, id), eq(user.tenantId, tenantId), eq(user.role, 'student')))
+    .where(and(eq(user.id, id), eq(user.tenantId, tenantId), inArray(user.role, ['student', 'alumni'])))
     .limit(1);
 
   if (!row) {
@@ -82,7 +88,7 @@ async function getStudentDetail(tenantId: string, id: string) {
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-  const [guardianRows, attendanceRows, paymentRows, invoiceRows] = await Promise.all([
+  const [guardianRows, attendanceRows, paymentRows, invoiceRows, academicYearRow] = await Promise.all([
     db
       .select({
         id: guardians.id,
@@ -110,6 +116,9 @@ async function getStudentDetail(tenantId: string, id: string) {
       .select({ netAmount: invoices.netAmount, paidAmount: invoices.paidAmount, status: invoices.status })
       .from(invoices)
       .where(and(eq(invoices.tenantId, tenantId), eq(invoices.studentId, id))),
+    row.student.academicYearId
+      ? db.select({ name: academicYears.name }).from(academicYears).where(eq(academicYears.id, row.student.academicYearId)).limit(1)
+      : Promise.resolve([]),
   ]);
 
   const presentCount = attendanceRows.filter(a => a.status === 'present').length;
@@ -118,6 +127,7 @@ async function getStudentDetail(tenantId: string, id: string) {
 
   return {
     ...toApiStudent(row.student, row.className ? { className: row.className, sectionName: row.sectionName } : null),
+    role: row.student.role,
     firstName: row.student.firstName,
     lastName: row.student.lastName,
     email: row.student.email,
@@ -125,6 +135,11 @@ async function getStudentDetail(tenantId: string, id: string) {
     gender: row.student.gender,
     address: row.student.address,
     nationalId: row.student.nationalId,
+    nationality: row.student.nationality,
+    motherTongue: row.student.motherTongue,
+    city: row.student.city,
+    bloodGroup: row.student.bloodGroup,
+    academicYearName: academicYearRow[0]?.name ?? null,
     photoUrl: row.student.photoUrl ? `/api/students/photos?id=${row.student.id}` : null,
     createdAt: row.student.createdAt,
     guardians: guardianRows,
@@ -252,7 +267,7 @@ export async function POST(request: Request) {
     await requireCapability(context, 'students.create');
     const body = await parseJson(request, studentCreateSchema);
     const id = `STU-${Date.now()}`;
-    const matricule = body.matricule || `AAM-2425-${Math.floor(1000 + Math.random() * 9000)}`;
+    const matricule = body.matricule || await reserveMatricule(db, tenantId);
 
     if (body.classSectionId) {
       await assertClassSectionBelongsToTenant(tenantId, body.classSectionId);
@@ -264,16 +279,16 @@ export async function POST(request: Request) {
         id,
         tenantId,
         matricule,
-        name: body.fullName || 'Nouvel Élève',
+        name: body.fullName,
         // user.email is NOT NULL and unique; the old students table had no email
         // column, so synthesise one from the id to keep the insert valid.
         email: body.email || `${id.toLowerCase()}@placeholder.local`,
         role: 'student',
         classSectionId: body.classSectionId,
-        guardianName: body.guardianName || 'Mme Parent',
-        phone: body.phone || '+212 6 00 00 00 00',
+        guardianName: body.guardianName,
+        phone: body.phone,
         userStatus: toDbStatus(body.status),
-        paymentStatus: body.paymentStatus || 'À jour',
+        paymentStatus: body.paymentStatus,
       })
       .returning();
 

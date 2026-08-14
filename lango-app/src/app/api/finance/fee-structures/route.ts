@@ -2,19 +2,12 @@ import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse } from '@/libs/api/errors';
+import { apiErrorResponse, ApiError } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { feeStructureCreateSchema, feeStructureUpdateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { feeStructures } from '@/models/Schema';
-
-// ponytail: `feeStructures` has no link to a real class (its only FK,
-// `programId`, points at the dead LMS `programs` table) - so this is a flat
-// list of named pricing plans (amount + description), not "per-class fee
-// structures" the way the old UI implied. Per-class assignment, itemized
-// components (transport/cantine), discounts, and payment schedules have no
-// real schema backing at all - see MIGRATION-NOTES.md.
+import { feeStructures, feeStructureVersions } from '@/models/Schema';
 
 export async function GET(request: Request) {
   try {
@@ -48,9 +41,11 @@ export async function POST(request: Request) {
       .values({
         tenantId,
         name: body.name,
-        amount: body.amount,
+        amount: Number(body.amount),
         description: body.description,
         isActive: body.isActive ?? true,
+        academicTermId: body.academicTermId ?? null,
+        branchId: body.branchId ?? null,
       })
       .returning();
 
@@ -73,9 +68,11 @@ export async function PUT(request: Request) {
       .update(feeStructures)
       .set({
         name: body.name,
-        amount: body.amount,
+        amount: body.amount !== undefined ? Number(body.amount) : undefined,
         description: body.description,
         isActive: body.isActive,
+        academicTermId: body.academicTermId,
+        branchId: body.branchId,
       })
       .where(and(eq(feeStructures.id, body.id), eq(feeStructures.tenantId, tenantId)))
       .returning();
@@ -92,6 +89,9 @@ export async function PUT(request: Request) {
   }
 }
 
+// DELETE is only safe before any version exists. Once a structure has draft or
+// published versions, it can only be deactivated (isActive=false) — published
+// versions are immutable and must never be orphaned.
 export async function DELETE(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
@@ -102,6 +102,15 @@ export async function DELETE(request: Request) {
 
     if (!id) {
       return NextResponse.json({ success: false, message: 'ID non fourni' }, { status: 400 });
+    }
+
+    const [versions] = await db
+      .select({ id: feeStructureVersions.id })
+      .from(feeStructureVersions)
+      .where(and(eq(feeStructureVersions.tenantId, tenantId), eq(feeStructureVersions.feeStructureId, id)))
+      .limit(1);
+    if (versions) {
+      throw new ApiError(409, 'FEE_STRUCTURE_VERSIONED', 'Cette structure possède des versions (brouillon ou publiées). Désactivez-la plutôt que de la supprimer.');
     }
 
     await db.delete(feeStructures).where(and(eq(feeStructures.id, id), eq(feeStructures.tenantId, tenantId)));

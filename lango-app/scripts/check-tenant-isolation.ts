@@ -8,9 +8,21 @@ const ALLOWLIST = [
   'auth',
 ];
 
+// Routes whose handler only delegates to a service that derives the tenant
+// from the authenticated session (`requireTenantId(context)`) — no client id,
+// no inline `tenantId` reference, so the static scanner cannot see the scope.
+const SELF_SCOPED = [
+  'guard/kiosk-sessions/[id]/close',
+  'guard/kiosk-sessions/[id]/lock',
+  'guard/me/gate',
+  'guard/me/shift',
+  'leadership/me/home',
+];
+
 function isAllowlisted(filePath: string): boolean {
   const rel = path.relative(API_DIR, filePath).replace(/\\/g, '/');
-  return ALLOWLIST.some(prefix => rel.startsWith(prefix));
+  return ALLOWLIST.some(prefix => rel.startsWith(prefix))
+    || SELF_SCOPED.some(prefix => rel.startsWith(prefix));
 }
 
 function findTsFiles(dir: string): string[] {

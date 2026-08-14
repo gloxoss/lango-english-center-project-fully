@@ -1,5 +1,14 @@
 # Alumni Portal — Future Implementation Plan
 
+**STATUS: IMPLEMENTED** — see `future-implementation/_tracker/PLANS-AUDIT-AND-PROGRESS.md`
+(#36) for verified details. Migration `0061`, `alumni` role, transition services + API
+(`transition-to-alumni`, `bulk-transition-to-alumni`), the `(alumni-portal)` route group
+(`directory`/`events`/`mentoring`/`profile`/`records`/`requests`), `api/alumni/**`, and the
+public `api/public/alumni-documents/verify` verification endpoint are all live (6 tables).
+Donations/fundraising remain deferred per this plan. The `.ultraplan/STATE.md` in this folder
+tracks only the planning phases (all complete) and was never updated to record the
+subsequent execution — treat this line as the source of truth for build status, not that file.
+
 ## Goal
 
 Provide an opt-in post-graduation relationship for records, events and community without retaining unnecessary student-portal access.

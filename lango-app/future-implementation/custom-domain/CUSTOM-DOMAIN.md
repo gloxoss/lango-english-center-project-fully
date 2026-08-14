@@ -1,11 +1,13 @@
 # Custom Domain Per School — Future Feature
 
-**Status: not started, deliberately deferred.** Genuinely new infra
-capability — this app currently has zero domain-based routing. Read
-`AGENT-HANDOFF.md` first for overall project state, and
-`future-implementation/subscription-licensing/` — this feature is a direct
-extension of that same "sell SchoolOS as a SaaS across Morocco and
-internationally" goal, not a standalone idea.
+**STATUS: IMPLEMENTED** — see `future-implementation/_tracker/PLANS-AUDIT-AND-PROGRESS.md`
+(#5) for verified details. `tenantDomains` table, hostname-based tenant
+resolution in `src/middleware.ts`, super-admin approval list
+(`/dashboard/super-admin/domains`) and school-admin request form
+(`/dashboard/settings/domain`) are live (migration `0068`). Remaining gap:
+`requirePlanTier` gating on this feature is not verified against a helper
+(the feature works without it). This doc's product logic below remains the
+authoritative scope reference; it no longer reflects the build status.
 
 ## What the reference screenshot shows
 

@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, date, doublePrecision, foreignKey, index, integer, jsonb, numeric, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
+import { boolean, check, date, doublePrecision, foreignKey, index, integer, jsonb, numeric, pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
 
 // ponytail: fixed business categories get pgEnum; school-configurable lists
 // (mediums, sections, streams, shifts, semesters) get plain tables instead - see
@@ -24,12 +24,12 @@ export const gender = pgEnum('gender', ['female', 'male', 'other']);
 export const invoiceStatus = pgEnum('invoice_status', ['pending', 'partial', 'paid', 'overdue', 'cancelled']);
 export const leaveStatus = pgEnum('leave_status', ['pending', 'approved', 'rejected']);
 export const paymentMethod = pgEnum('payment_method', ['cash', 'card', 'transfer', 'check']);
-export const role = pgEnum('role', ['super_admin', 'school_admin', 'teacher', 'accountant', 'student', 'parent', 'receptionist', 'guard']);
+export const role = pgEnum('role', ['super_admin', 'school_admin', 'teacher', 'accountant', 'student', 'alumni', 'parent', 'receptionist', 'guard', 'librarian']);
 export const status = pgEnum('status', ['active', 'inactive', 'archived']);
 export const planTier = pgEnum('plan_tier', ['trial', 'basic', 'standard', 'premium']);
 export const subscriptionStatus = pgEnum('subscription_status', ['active', 'suspended', 'cancelled']);
 export const cndpFilingStatus = pgEnum('cndp_filing_status', ['draft', 'submitted', 'approved']);
-export const inquirySource = pgEnum('inquiry_source', ['walk_in', 'phone', 'web', 'referral']);
+export const inquirySource = pgEnum('inquiry_source', ['walk_in', 'phone', 'web', 'referral', 'facebook_ads', 'google_ads']);
 export const inquiryInterestLevel = pgEnum('inquiry_interest_level', ['low', 'medium', 'high']);
 export const inquiryStatus = pgEnum('inquiry_status', ['new', 'contacted', 'qualified', 'converted', 'lost']);
 export const inquiryFollowUpType = pgEnum('inquiry_follow_up_type', ['call', 'email', 'meeting', 'note']);
@@ -40,6 +40,13 @@ export const accountType = pgEnum('account_type', ['asset', 'liability', 'equity
 export const fiscalPeriodStatus = pgEnum('fiscal_period_status', ['open', 'closed']);
 export const discountApprovalStatus = pgEnum('discount_approval_status', ['pending', 'approved', 'rejected']);
 export const journalStatus = pgEnum('journal_status', ['posted', 'reversed']);
+export const classCycle = pgEnum('class_cycle', ['maternelle', 'primaire', 'college', 'lycee']);
+export const questionDifficulty = pgEnum('question_difficulty', ['facile', 'moyen', 'difficile']);
+export const admissionInterviewStatus = pgEnum('admission_interview_status', ['scheduled', 'completed', 'cancelled']);
+export const alumniDocumentStatus = pgEnum('alumni_document_status', ['active', 'superseded']);
+export const alumniEventRsvpStatus = pgEnum('alumni_event_rsvp_status', ['going', 'not_going', 'maybe']);
+export const alumniRequestType = pgEnum('alumni_request_type', ['correction', 'reissue', 'data_access', 'deletion']);
+export const alumniRequestStatus = pgEnum('alumni_request_status', ['pending', 'approved', 'rejected']);
 
 export const verification = pgTable('verification', {
   id: text().primaryKey().notNull(),
@@ -198,6 +205,7 @@ export const classes = pgTable('classes', {
   mediumId: uuid('medium_id').notNull(),
   shiftId: uuid('shift_id'),
   streamId: uuid('stream_id'),
+  cycle: classCycle(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
@@ -236,6 +244,8 @@ export const classSections = pgTable('class_sections', {
   // Denormalized copy of classes.mediumId, matching ESchool's class_sections
   // table exactly - always derived server-side from classId, never client-set.
   mediumId: uuid('medium_id').notNull(),
+  maxStudents: integer('max_students'),
+  homeRoomId: uuid('home_room_id'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
@@ -260,6 +270,11 @@ export const classSections = pgTable('class_sections', {
     foreignColumns: [mediums.id],
     name: 'class_sections_medium_id_mediums_id_fk',
   }),
+  foreignKey({
+    columns: [table.homeRoomId],
+    foreignColumns: [rooms.id],
+    name: 'class_sections_home_room_id_rooms_id_fk',
+  }).onDelete('set null'),
   unique('class_sections_class_section_medium_unique').on(table.classId, table.sectionId, table.mediumId),
 ]);
 
@@ -480,6 +495,12 @@ export const user = pgTable('user', {
   guardianEmail: varchar('guardian_email', { length: 255 }),
   photoUrl: text('photo_url'),
   nationalId: varchar('national_id', { length: 100 }),
+  // Admission-model-enhancement fields, copied from `applicants` at approval.
+  nationality: varchar({ length: 100 }),
+  motherTongue: varchar('mother_tongue', { length: 50 }),
+  city: varchar({ length: 100 }),
+  bloodGroup: varchar('blood_group', { length: 10 }),
+  academicYearId: uuid('academic_year_id'),
   // ponytail: stopgap columns carrying what the students/users API already
   // returns. Each belongs elsewhere long-term - see MIGRATION-NOTES.md.
   matricule: varchar({ length: 50 }),
@@ -511,6 +532,12 @@ export const user = pgTable('user', {
   // Owned by the Better Auth two-factor plugin - shape must match
   // better-auth/plugins/two-factor/schema.mjs exactly.
   twoFactorEnabled: boolean('two_factor_enabled').default(false).notNull(),
+  // Alumni portal (future-implementation/alumni-portal). References the real,
+  // live sessionYears table - NOT academicYearId above, which is the dead
+  // LMS-chain table per the header comment on that table's definition.
+  graduationCohortSessionYearId: uuid('graduation_cohort_session_year_id'),
+  alumniTransitionedAt: timestamp('alumni_transitioned_at', { mode: 'string' }),
+  alumniTransitionedBy: text('alumni_transitioned_by'),
 }, table => [
   foreignKey({
     columns: [table.tenantId],
@@ -522,9 +549,195 @@ export const user = pgTable('user', {
     foreignColumns: [classSections.id],
     name: 'user_class_section_id_class_sections_id_fk',
   }).onDelete('set null'),
+  foreignKey({
+    columns: [table.academicYearId],
+    foreignColumns: [academicYears.id],
+    name: 'user_academic_year_id_academic_years_id_fk',
+  }).onDelete('set null'),
+  foreignKey({
+    columns: [table.graduationCohortSessionYearId],
+    foreignColumns: [sessionYears.id],
+    name: 'user_graduation_cohort_session_year_id_fk',
+  }).onDelete('set null'),
+  foreignKey({
+    columns: [table.alumniTransitionedBy],
+    foreignColumns: [table.id],
+    name: 'user_alumni_transitioned_by_user_id_fk',
+  }).onDelete('set null'),
   unique('user_email_unique').on(table.email),
   unique('user_matricule_unique').on(table.matricule),
   unique('user_employee_id_unique').on(table.employeeId),
+]);
+
+// Alumni portal (future-implementation/alumni-portal). Real issuance history
+// (not overwrite-only like studentDocuments/applicantDocuments) - needed so a
+// reissue can supersede the old verification code instead of just reusing
+// the row, per the discovery decision that an old code must stop verifying.
+export const alumniDocuments = pgTable('alumni_documents', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  alumnusId: text('alumnus_id').notNull(),
+  documentType: varchar('document_type', { length: 50 }).notNull(),
+  fileExt: varchar('file_ext', { length: 10 }).notNull(),
+  verificationCode: varchar('verification_code', { length: 32 }).notNull(),
+  status: alumniDocumentStatus().default('active').notNull(),
+  issuedAt: timestamp('issued_at', { mode: 'string' }).defaultNow().notNull(),
+  supersededAt: timestamp('superseded_at', { mode: 'string' }),
+  issuedBy: text('issued_by'),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'alumni_documents_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.alumnusId],
+    foreignColumns: [user.id],
+    name: 'alumni_documents_alumnus_id_user_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.issuedBy],
+    foreignColumns: [user.id],
+    name: 'alumni_documents_issued_by_user_id_fk',
+  }).onDelete('set null'),
+  unique('alumni_documents_verification_code_unique').on(table.verificationCode),
+  index('alumni_documents_alumnus_type_status_idx').on(table.alumnusId, table.documentType, table.status),
+]);
+
+export const alumniEvents = pgTable('alumni_events', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  title: varchar({ length: 255 }).notNull(),
+  description: text(),
+  location: varchar({ length: 255 }),
+  startsAt: timestamp('starts_at', { mode: 'string' }).notNull(),
+  endsAt: timestamp('ends_at', { mode: 'string' }),
+  createdBy: text('created_by'),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'alumni_events_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.createdBy],
+    foreignColumns: [user.id],
+    name: 'alumni_events_created_by_user_id_fk',
+  }).onDelete('set null'),
+]);
+
+export const alumniEventRsvps = pgTable('alumni_event_rsvps', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  eventId: uuid('event_id').notNull(),
+  alumnusId: text('alumnus_id').notNull(),
+  status: alumniEventRsvpStatus().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'alumni_event_rsvps_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.eventId],
+    foreignColumns: [alumniEvents.id],
+    name: 'alumni_event_rsvps_event_id_alumni_events_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.alumnusId],
+    foreignColumns: [user.id],
+    name: 'alumni_event_rsvps_alumnus_id_user_id_fk',
+  }).onDelete('cascade'),
+  unique('alumni_event_rsvps_event_alumnus_unique').on(table.eventId, table.alumnusId),
+]);
+
+// Per-field opt-in (discovery decision) - nothing shown unless explicitly true.
+export const alumniDirectoryConsent = pgTable('alumni_directory_consent', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  alumnusId: text('alumnus_id').notNull(),
+  showName: boolean('show_name').default(false).notNull(),
+  showCohort: boolean('show_cohort').default(false).notNull(),
+  showCurrentEmployer: boolean('show_current_employer').default(false).notNull(),
+  showContactInfo: boolean('show_contact_info').default(false).notNull(),
+  currentEmployer: varchar('current_employer', { length: 255 }),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'alumni_directory_consent_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.alumnusId],
+    foreignColumns: [user.id],
+    name: 'alumni_directory_consent_alumnus_id_user_id_fk',
+  }).onDelete('cascade'),
+  unique('alumni_directory_consent_alumnus_unique').on(table.alumnusId),
+]);
+
+// Real opt-in listing only - no automated matching (discovery decision).
+export const alumniMentorListings = pgTable('alumni_mentor_listings', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  alumnusId: text('alumnus_id').notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  offering: text().notNull(),
+  contactPreference: varchar('contact_preference', { length: 50 }),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'alumni_mentor_listings_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.alumnusId],
+    foreignColumns: [user.id],
+    name: 'alumni_mentor_listings_alumnus_id_user_id_fk',
+  }).onDelete('cascade'),
+  unique('alumni_mentor_listings_alumnus_unique').on(table.alumnusId),
+]);
+
+// Staff-reviewed request queue - alumni never self-edit official records
+// (discovery decision). One table, type discriminator, four request types.
+export const alumniRequests = pgTable('alumni_requests', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  alumnusId: text('alumnus_id').notNull(),
+  type: alumniRequestType().notNull(),
+  status: alumniRequestStatus().default('pending').notNull(),
+  note: text().notNull(),
+  relatedDocumentId: uuid('related_document_id'),
+  decidedBy: text('decided_by'),
+  decidedAt: timestamp('decided_at', { mode: 'string' }),
+  decisionNote: text('decision_note'),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'alumni_requests_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.alumnusId],
+    foreignColumns: [user.id],
+    name: 'alumni_requests_alumnus_id_user_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.relatedDocumentId],
+    foreignColumns: [alumniDocuments.id],
+    name: 'alumni_requests_related_document_id_fk',
+  }).onDelete('set null'),
+  foreignKey({
+    columns: [table.decidedBy],
+    foreignColumns: [user.id],
+    name: 'alumni_requests_decided_by_user_id_fk',
+  }).onDelete('set null'),
+  index('alumni_requests_tenant_status_idx').on(table.tenantId, table.status),
 ]);
 
 // Records who did what to which record. tenantId/actorId are not foreign keys so a
@@ -610,6 +823,22 @@ export const applicants = pgTable('applicants', {
   guardianEmail: varchar('guardian_email', { length: 255 }),
   applicationDate: timestamp('application_date', { mode: 'string' }).defaultNow().notNull(),
   convertedUserId: varchar('converted_user_id', { length: 255 }),
+  // Admission-model-enhancement fields (future-implementation/admission-and-student-model).
+  // Held here during the wizard, copied onto the real `user` row at approval.
+  gender: gender(),
+  nationality: varchar({ length: 100 }),
+  motherTongue: varchar('mother_tongue', { length: 50 }),
+  city: varchar({ length: 100 }),
+  bloodGroup: varchar('blood_group', { length: 10 }),
+  academicYearId: uuid('academic_year_id'),
+  // Set when Step 2 links an existing guardian via search; left null when the
+  // fallback "create new guardian" form is used instead (guardianName/Phone/
+  // Email above carry that case, same as before this feature existed).
+  guardianId: uuid('guardian_id'),
+  // Fixed admission review checklist (future-implementation/dropped-features-rebuild).
+  checklistDocumentsReceived: boolean('checklist_documents_received').default(false).notNull(),
+  checklistInterviewDone: boolean('checklist_interview_done').default(false).notNull(),
+  checklistFileComplete: boolean('checklist_file_complete').default(false).notNull(),
 }, table => [
   foreignKey({
     columns: [table.tenantId],
@@ -631,6 +860,75 @@ export const applicants = pgTable('applicants', {
     foreignColumns: [user.id],
     name: 'applicants_converted_user_id_user_id_fk',
   }),
+  foreignKey({
+    columns: [table.academicYearId],
+    foreignColumns: [academicYears.id],
+    name: 'applicants_academic_year_id_academic_years_id_fk',
+  }).onDelete('set null'),
+  foreignKey({
+    columns: [table.guardianId],
+    foreignColumns: [guardians.id],
+    name: 'applicants_guardian_id_guardians_id_fk',
+  }).onDelete('set null'),
+  index('applicants_guardian_id_idx').on(table.guardianId),
+]);
+
+// One real interview per applicant (future-implementation/dropped-features-rebuild).
+export const admissionInterviews = pgTable('admission_interviews', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  applicantId: uuid('applicant_id').notNull(),
+  scheduledAt: timestamp('scheduled_at', { mode: 'string' }).notNull(),
+  interviewerId: text('interviewer_id'),
+  location: varchar({ length: 255 }),
+  status: admissionInterviewStatus().default('scheduled').notNull(),
+  notes: text(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'admission_interviews_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.applicantId],
+    foreignColumns: [applicants.id],
+    name: 'admission_interviews_applicant_id_applicants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.interviewerId],
+    foreignColumns: [user.id],
+    name: 'admission_interviews_interviewer_id_user_id_fk',
+  }).onDelete('set null'),
+  unique('admission_interviews_applicant_id_unique').on(table.applicantId),
+]);
+
+// Staff-only, append-only notes thread per applicant (never guardian-visible).
+export const admissionComments = pgTable('admission_comments', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  applicantId: uuid('applicant_id').notNull(),
+  authorId: text('author_id'),
+  body: text().notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'admission_comments_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.applicantId],
+    foreignColumns: [applicants.id],
+    name: 'admission_comments_applicant_id_applicants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.authorId],
+    foreignColumns: [user.id],
+    name: 'admission_comments_author_id_user_id_fk',
+  }).onDelete('set null'),
+  index('admission_comments_applicant_id_idx').on(table.applicantId),
 ]);
 
 export const programs = pgTable('programs', {
@@ -886,12 +1184,16 @@ export const attendance = pgTable('attendance', {
   isVoided: boolean('is_voided').notNull().default(false),
   voidReason: text('void_reason'),
   registerId: uuid('register_id'),
+  // Attendance QR enhancement: links a staged attendance row back to the
+  // immutable attendanceScanEvents row that produced it (evidence chain).
+  scanEventId: uuid('scan_event_id'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
   index('attendance_student_date_idx').using('btree', table.studentId.asc().nullsLast().op('date_ops'), table.date.asc().nullsLast().op('text_ops')),
   index('attendance_tenant_date_idx').using('btree', table.tenantId.asc().nullsLast().op('uuid_ops'), table.date.asc().nullsLast().op('date_ops')),
   index('attendance_register_idx').on(table.registerId),
+  index('attendance_scan_event_idx').on(table.scanEventId),
   foreignKey({
     columns: [table.tenantId],
     foreignColumns: [tenants.id],
@@ -1267,12 +1569,31 @@ export const feeCategories = pgTable('fee_categories', {
   tenantId: uuid('tenant_id').notNull(),
   name: varchar({ length: 255 }).notNull(),
   description: text(),
+  // Phase B: code (optional, unique per tenant when present), tax/refund/
+  // discount/fine flags, revenue mapping into the chart of accounts, active
+  // dates, and archive (types are never deleted — fee components reference them).
+  code: varchar({ length: 50 }),
+  taxable: boolean('taxable').default(false).notNull(),
+  refundable: boolean().default(true).notNull(),
+  discountable: boolean('discountable').default(true).notNull(),
+  fineable: boolean('fineable').default(false).notNull(),
+  revenueAccountId: uuid('revenue_account_id'),
+  effectiveFrom: date('effective_from').defaultNow().notNull(),
+  effectiveTo: date('effective_to'),
+  isArchived: boolean('is_archived').default(false).notNull(),
 }, table => [
   foreignKey({
     columns: [table.tenantId],
     foreignColumns: [tenants.id],
     name: 'fee_categories_tenant_id_tenants_id_fk',
   }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.revenueAccountId],
+    foreignColumns: [chartOfAccounts.id],
+    name: 'fee_categories_revenue_account_id_chart_of_accounts_id_fk',
+  }),
+  uniqueIndex('fee_categories_tenant_code_uidx').on(table.tenantId, table.code).where(sql`${table.code} IS NOT NULL`),
+  index('fee_categories_tenant_archived_idx').on(table.tenantId, table.isArchived),
 ]);
 
 export const feeComponents = pgTable('fee_components', {
@@ -1306,6 +1627,9 @@ export const feeStructures = pgTable('fee_structures', {
   tenantId: uuid('tenant_id').notNull(),
   name: varchar({ length: 255 }).notNull(),
   programId: uuid('program_id'),
+  // Phase B: optional scope by academic term and branch (plan: program/year/term/branch).
+  academicTermId: uuid('academic_term_id'),
+  branchId: uuid('branch_id'),
   amount: numeric({ precision: 14, scale: 2, mode: 'number' }).default(0).notNull(),
   description: text(),
   isActive: boolean('is_active').default(true).notNull(),
@@ -1320,6 +1644,16 @@ export const feeStructures = pgTable('fee_structures', {
     foreignColumns: [programs.id],
     name: 'fee_structures_program_id_programs_id_fk',
   }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.academicTermId],
+    foreignColumns: [semesters.id],
+    name: 'fee_structures_academic_term_id_semesters_id_fk',
+  }),
+  foreignKey({
+    columns: [table.branchId],
+    foreignColumns: [branches.id],
+    name: 'fee_structures_branch_id_branches_id_fk',
+  }),
 ]);
 
 export const feeStructureAssignments = pgTable('fee_structure_assignments', {
@@ -1414,6 +1748,26 @@ export const guardianStudents = pgTable('guardian_students', {
   relationshipType: varchar('relationship_type', { length: 100 }).notNull(),
   isPrimaryContact: boolean('is_primary_contact').default(false).notNull(),
   isEmergencyContact: boolean('is_emergency_contact').default(false).notNull(),
+  // Sort hint for the front desk, not a strict queue - duplicates/gaps allowed
+  // (future-implementation/dropped-features-rebuild, confirmed during Phase 4 review).
+  emergencyPriority: integer('emergency_priority'),
+  canPickup: boolean('can_pickup').default(false).notNull(),
+  // Parent / Guardian Portal — effective relationship lifecycle + per-child
+  // access rights (migration 0087). Backfill-safe: existing rows keep
+  // status='active' and all access flags true, preserving pre-portal behavior.
+  status: varchar('status', { length: 20 }).default('active').notNull(),
+  effectiveFrom: timestamp('effective_from', { mode: 'string' }),
+  effectiveTo: timestamp('effective_to', { mode: 'string' }),
+  canAccessAcademic: boolean('can_access_academic').default(true).notNull(),
+  canAccessAttendance: boolean('can_access_attendance').default(true).notNull(),
+  canAccessFinance: boolean('can_access_finance').default(true).notNull(),
+  canAccessMedical: boolean('can_access_medical').default(true).notNull(),
+  canAccessCommunication: boolean('can_access_communication').default(true).notNull(),
+  canAccessLibrary: boolean('can_access_library').default(true).notNull(),
+  isFinanciallyResponsible: boolean('is_financially_responsible').default(true).notNull(),
+  hasPickupAuthority: boolean('has_pickup_authority').default(false).notNull(),
+  custodyRestriction: varchar('custody_restriction', { length: 50 }),
+  sensitiveContactHidden: boolean('sensitive_contact_hidden').default(false).notNull(),
 }, table => [
   foreignKey({
     columns: [table.tenantId],
@@ -1430,6 +1784,10 @@ export const guardianStudents = pgTable('guardian_students', {
     foreignColumns: [user.id],
     name: 'guardian_students_student_id_user_id_fk',
   }).onDelete('cascade'),
+  index('guardian_students_student_id_idx').on(table.studentId),
+  index('guardian_students_guardian_id_idx').on(table.guardianId),
+  index('guardian_students_tenant_status_idx').on(table.tenantId, table.status),
+  index('guardian_students_guardian_status_eff_idx').on(table.guardianId, table.status, table.effectiveFrom),
 ]);
 
 export const guardians = pgTable('guardians', {
@@ -1446,6 +1804,9 @@ export const guardians = pgTable('guardians', {
   // guardian_students.relationship_type; this is only a fallback for guardians with
   // no linked student yet.
   defaultRelation: varchar('default_relation', { length: 50 }),
+  emailOptIn: boolean('email_opt_in').default(true).notNull(),
+  smsOptIn: boolean('sms_opt_in').default(true).notNull(),
+  preferredLanguage: varchar('preferred_language', { length: 10 }),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
@@ -1459,6 +1820,30 @@ export const guardians = pgTable('guardians', {
     foreignColumns: [user.id],
     name: 'guardians_user_id_user_id_fk',
   }),
+]);
+
+export const parentGuardianLinkTokens = pgTable('parent_guardian_link_tokens', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  guardianId: uuid('guardian_id').notNull(),
+  token: varchar({ length: 64 }).notNull(),
+  expiresAt: timestamp('expires_at', { mode: 'string' }).notNull(),
+  usedAt: timestamp('used_at', { mode: 'string' }),
+  createdBy: text('created_by'),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  unique('parent_guardian_link_tokens_token_unique').on(table.token),
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'parent_guardian_link_tokens_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.guardianId],
+    foreignColumns: [guardians.id],
+    name: 'parent_guardian_link_tokens_guardian_id_guardians_id_fk',
+  }).onDelete('cascade'),
+  index('parent_guardian_link_tokens_guardian_idx').on(table.guardianId),
 ]);
 
 export const invoiceItems = pgTable('invoice_items', {
@@ -1521,10 +1906,11 @@ export const invoices = pgTable('invoices', {
 ]);
 
 export const namingSeries = pgTable('naming_series', {
-  prefix: varchar({ length: 50 }).primaryKey().notNull(),
+  prefix: varchar({ length: 50 }).notNull(),
   tenantId: uuid('tenant_id').notNull(),
   currentVal: integer('current_val').default(0).notNull(),
 }, table => [
+  primaryKey({ columns: [table.tenantId, table.prefix] }),
   foreignKey({
     columns: [table.tenantId],
     foreignColumns: [tenants.id],
@@ -1541,6 +1927,7 @@ export const payments = pgTable('payments', {
   paymentMethod: paymentMethod('payment_method').default('cash').notNull(),
   paymentDate: timestamp('payment_date', { mode: 'string' }).defaultNow().notNull(),
   referenceId: varchar('reference_id', { length: 100 }),
+  idempotencyKey: text('idempotency_key'),
   receivedById: text('received_by_id'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
@@ -1835,6 +2222,14 @@ export const schoolSettings = pgTable('school_settings', {
   localeTimezone: varchar('locale_timezone', { length: 100 }),
   dateFormat: varchar('date_format', { length: 50 }),
   documentHeaderStyle: varchar('document_header_style', { length: 50 }),
+  // Attendance QR staging: a badge scanned before (period start + grace) is
+  // staged `present`, after it is staged `late`.
+  attendanceLateGraceMinutes: integer('attendance_late_grace_minutes').default(15),
+  attendancePeriodStartTime: varchar('attendance_period_start_time', { length: 5 }).default('08:00'),
+  // How a new student's login access is generated at admission approval -
+  // 'invite_link' (log-only simulated SMS) or 'temp_password' (shown once to
+  // the approving admin). See future-implementation/admission-and-student-model.
+  loginAccessMethod: varchar('login_access_method', { length: 20 }).default('invite_link').notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
@@ -1845,6 +2240,36 @@ export const schoolSettings = pgTable('school_settings', {
     name: 'school_settings_tenant_id_tenants_id_fk',
   }).onDelete('cascade'),
   unique('school_settings_tenant_id_unique').on(table.tenantId),
+]);
+
+// ==========================================================================
+// Account setup tokens - one-time, expiring tokens that let a newly-approved
+// student/guardian set their own password via the invite-link login-access
+// path. Deliberately scoped to first-login setup only, not a general
+// password-reset system (see future-implementation/admission-and-student-model).
+// ==========================================================================
+
+export const accountSetupTokens = pgTable('account_setup_tokens', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  userId: text('user_id').notNull(),
+  token: varchar({ length: 64 }).notNull(),
+  expiresAt: timestamp('expires_at', { mode: 'string' }).notNull(),
+  usedAt: timestamp('used_at', { mode: 'string' }),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  unique('account_setup_tokens_token_unique').on(table.token),
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'account_setup_tokens_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [user.id],
+    name: 'account_setup_tokens_user_id_user_id_fk',
+  }).onDelete('cascade'),
+  index('account_setup_tokens_user_id_idx').on(table.userId),
 ]);
 
 // ==========================================================================
@@ -2001,6 +2426,35 @@ export const studentDocuments = pgTable('student_documents', {
     foreignColumns: [user.id],
     name: 'student_documents_student_id_user_id_fk',
   }).onDelete('cascade'),
+]);
+
+// ==========================================================================
+// Applicant documents: same shape as studentDocuments, but for the admission
+// wizard's Step 3 upload, which happens before a real student `user` row
+// exists - only an `applicants` row. Copied forward into studentDocuments at
+// approval (see PUT /api/students/admissions), not deleted afterward.
+// ==========================================================================
+
+export const applicantDocuments = pgTable('applicant_documents', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  applicantId: uuid('applicant_id').notNull(),
+  documentType: studentDocumentType('document_type').notNull(),
+  fileExt: varchar('file_ext', { length: 10 }).notNull(),
+  uploadedAt: timestamp('uploaded_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  unique('applicant_documents_applicant_id_document_type_unique').on(table.applicantId, table.documentType),
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'applicant_documents_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.applicantId],
+    foreignColumns: [applicants.id],
+    name: 'applicant_documents_applicant_id_applicants_id_fk',
+  }).onDelete('cascade'),
+  index('applicant_documents_tenant_applicant_idx').on(table.tenantId, table.applicantId),
 ]);
 
 // ==========================================================================
@@ -2168,6 +2622,7 @@ export const inquiries = pgTable('inquiries', {
   status: inquiryStatus().default('new').notNull(),
   assignedToId: text('assigned_to_id'),
   notes: text(),
+  tags: text('tags').array().default(sql`'{}'::text[]`),
   convertedApplicantId: uuid('converted_applicant_id'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
@@ -2177,6 +2632,8 @@ export const inquiries = pgTable('inquiries', {
     foreignColumns: [tenants.id],
     name: 'inquiries_tenant_id_tenants_id_fk',
   }).onDelete('cascade'),
+  index('inquiries_tenant_status_idx').on(table.tenantId, table.status),
+  index('inquiries_tenant_source_idx').on(table.tenantId, table.source),
   foreignKey({
     columns: [table.assignedToId],
     foreignColumns: [user.id],
@@ -2390,6 +2847,10 @@ export const onlineExamQuestions = pgTable('online_exam_questions', {
   questionText: text('question_text').notNull(),
   marks: numeric({ precision: 5, scale: 2 }).notNull(),
   orderIndex: integer('order_index').default(0).notNull(),
+  sectionLabel: varchar('section_label', { length: 255 }),
+  difficulty: questionDifficulty(),
+  subjectId: uuid('subject_id'),
+  cycle: classCycle(),
 }, table => [
   foreignKey({
     columns: [table.tenantId],
@@ -2401,6 +2862,11 @@ export const onlineExamQuestions = pgTable('online_exam_questions', {
     foreignColumns: [onlineExams.id],
     name: 'online_exam_questions_online_exam_id_online_exams_id_fk',
   }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.subjectId],
+    foreignColumns: [subjects.id],
+    name: 'online_exam_questions_subject_id_subjects_id_fk',
+  }).onDelete('set null'),
 ]);
 
 export const onlineExamQuestionOptions = pgTable('online_exam_question_options', {
@@ -2414,6 +2880,55 @@ export const onlineExamQuestionOptions = pgTable('online_exam_question_options',
     foreignColumns: [onlineExamQuestions.id],
     name: 'online_exam_question_options_question_id_fk',
   }).onDelete('cascade'),
+]);
+
+// Reusable, exam-independent question bank (future-implementation/dropped-features-rebuild).
+// Copying into an exam (see /api/academics/question-bank/[id]/copy-into-exam) makes an
+// independent onlineExamQuestions row - no FK back here, editing a bank item never
+// retroactively changes an exam that already used it.
+export const questionBankItems = pgTable('question_bank_items', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  subjectId: uuid('subject_id'),
+  cycle: classCycle(),
+  difficulty: questionDifficulty(),
+  sectionLabel: varchar('section_label', { length: 255 }),
+  questionText: text('question_text').notNull(),
+  marks: numeric({ precision: 5, scale: 2, mode: 'number' }).default(1).notNull(),
+  createdById: text('created_by_id'),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'question_bank_items_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.subjectId],
+    foreignColumns: [subjects.id],
+    name: 'question_bank_items_subject_id_subjects_id_fk',
+  }).onDelete('set null'),
+  foreignKey({
+    columns: [table.createdById],
+    foreignColumns: [user.id],
+    name: 'question_bank_items_created_by_id_user_id_fk',
+  }).onDelete('set null'),
+  index('question_bank_items_tenant_subject_idx').on(table.tenantId, table.subjectId),
+]);
+
+export const questionBankItemOptions = pgTable('question_bank_item_options', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  questionBankItemId: uuid('question_bank_item_id').notNull(),
+  optionText: text('option_text').notNull(),
+  isCorrect: boolean('is_correct').default(false).notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.questionBankItemId],
+    foreignColumns: [questionBankItems.id],
+    name: 'question_bank_item_options_question_bank_item_id_fk',
+  }).onDelete('cascade'),
+  index('question_bank_item_options_item_id_idx').on(table.questionBankItemId),
 ]);
 
 export const onlineExamAttempts = pgTable('online_exam_attempts', {
@@ -2503,6 +3018,79 @@ export const addonEntitlements = pgTable('addon_entitlements', {
 ]);
 
 // ==========================================================================
+// Subscription & licensing (future-implementation/subscription-licensing, plan
+// #4). `tenants.planTier` stays the single source of truth for the plan; the
+// license key + expiry live here (one row per tenant). Per-addon grants stay in
+// addon_entitlements (super-admin managed); licensePayments is the billing
+// ledger, including school-initiated renewal REQUESTS (status='pending') that
+// the super-admin approves (status='paid', extends the license) or rejects.
+// ==========================================================================
+export const schoolLicenses = pgTable('school_licenses', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  licenseKey: varchar('license_key', { length: 100 }).notNull(),
+  status: varchar('status', { length: 20 }).default('active').notNull(),
+  issuedAt: timestamp('issued_at', { mode: 'string' }).defaultNow().notNull(),
+  expiresAt: timestamp('expires_at', { mode: 'string' }),
+  lastUpgradeAt: timestamp('last_upgrade_at', { mode: 'string' }),
+  notes: text(),
+  issuedById: text('issued_by_id'),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'school_licenses_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.issuedById],
+    foreignColumns: [user.id],
+    name: 'school_licenses_issued_by_id_user_id_fk',
+  }).onDelete('set null'),
+  unique('school_licenses_tenant_id_unique').on(table.tenantId),
+]);
+
+export const licensePayments = pgTable('license_payments', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  licenseId: uuid('license_id'),
+  planTier: planTier('plan_tier').default('trial').notNull(),
+  amount: numeric('amount', { precision: 12, scale: 2 }).default('0').notNull(),
+  currency: varchar('currency', { length: 3 }).default('MAD').notNull(),
+  method: varchar('method', { length: 20 }).default('bank_transfer').notNull(),
+  status: varchar('status', { length: 20 }).default('pending').notNull(),
+  transactionRef: varchar('transaction_ref', { length: 100 }),
+  purchasedAt: timestamp('purchased_at', { mode: 'string' }),
+  expiresAtAtPurchase: timestamp('expires_at_at_purchase', { mode: 'string' }),
+  requestedMonths: integer('requested_months'),
+  requestedById: text('requested_by_id'),
+  recordedById: text('recorded_by_id'),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'license_payments_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.licenseId],
+    foreignColumns: [schoolLicenses.id],
+    name: 'license_payments_license_id_school_licenses_id_fk',
+  }).onDelete('set null'),
+  foreignKey({
+    columns: [table.requestedById],
+    foreignColumns: [user.id],
+    name: 'license_payments_requested_by_id_user_id_fk',
+  }).onDelete('set null'),
+  foreignKey({
+    columns: [table.recordedById],
+    foreignColumns: [user.id],
+    name: 'license_payments_recorded_by_id_user_id_fk',
+  }).onDelete('set null'),
+]);
+
+// ==========================================================================
 // Two-factor authentication (Better Auth `two-factor` plugin).
 // Column names/types are dictated by the plugin - see
 // node_modules/better-auth/dist/plugins/two-factor/schema.mjs. `secret` and
@@ -2522,6 +3110,33 @@ export const twoFactor = pgTable('two_factor', {
   }).onDelete('cascade'),
   index('two_factor_user_id_idx').on(table.userId),
   index('two_factor_secret_idx').on(table.secret),
+]);
+
+// 2FA email-OTP delivery log. Mirror of the SMS log-only convention: the app
+// has no real email gateway, so sendOTP records the code here for audit +
+// test-provider retrieval (see migrations/0109_two_factor_otp.sql).
+export const twoFactorOtps = pgTable('two_factor_otps', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  userId: text('user_id').notNull(),
+  tenantId: uuid('tenant_id'),
+  email: varchar({ length: 255 }).notNull(),
+  otp: varchar({ length: 10 }).notNull(),
+  expiresAt: timestamp('expires_at', { mode: 'string' }).notNull(),
+  consumedAt: timestamp('consumed_at', { mode: 'string' }),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [user.id],
+    name: 'two_factor_otps_user_id_user_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'two_factor_otps_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  index('two_factor_otps_user_idx').on(table.userId),
+  index('two_factor_otps_tenant_idx').on(table.tenantId),
 ]);
 
 export const settingValues = pgTable('setting_values', {
@@ -2922,8 +3537,15 @@ export const refunds = pgTable('refunds', {
   amount: numeric({ precision: 12, scale: 2 }).notNull(),
   refundMethod: paymentMethod('refund_method').default('cash').notNull(),
   reason: text().notNull(),
+  // requester, not an approver - kept despite the misleading name to avoid
+  // an unrelated column rename; see decidedById below for the real approval.
   approvedById: text('approved_by_id'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  // Maker-checker, same shape as creditNotes.status above.
+  status: discountApprovalStatus().default('pending').notNull(),
+  decidedById: text('decided_by_id'),
+  decidedAt: timestamp('decided_at', { mode: 'string' }),
+  rejectionReason: text('rejection_reason'),
 }, table => [
   foreignKey({
     columns: [table.tenantId],
@@ -2940,7 +3562,13 @@ export const refunds = pgTable('refunds', {
     foreignColumns: [payments.id],
     name: 'refunds_payment_id_payments_id_fk',
   }).onDelete('set null'),
+  foreignKey({
+    columns: [table.decidedById],
+    foreignColumns: [user.id],
+    name: 'refunds_decided_by_id_user_id_fk',
+  }).onDelete('set null'),
   index('refunds_tenant_student_idx').on(table.tenantId, table.studentId),
+  index('refunds_tenant_status_idx').on(table.tenantId, table.status),
 ]);
 
 export const feeDiscounts = pgTable('fee_discounts', {
@@ -3042,6 +3670,7 @@ export const journalEntryLines = pgTable('journal_entry_lines', {
   tenantId: uuid('tenant_id').notNull(),
   journalEntryId: uuid('journal_entry_id').notNull(),
   accountId: uuid('account_id').notNull(),
+  reconciliationId: uuid('reconciliation_id'),
   debitAmount: numeric('debit_amount', { precision: 12, scale: 2 }).default('0').notNull(),
   creditAmount: numeric('credit_amount', { precision: 12, scale: 2 }).default('0').notNull(),
   memo: text(),
@@ -3060,7 +3689,12 @@ export const journalEntryLines = pgTable('journal_entry_lines', {
     columns: [table.accountId],
     foreignColumns: [chartOfAccounts.id],
     name: 'journal_entry_lines_account_id_fk',
-  }).onDelete('cascade'),
+  }).onDelete('restrict'),
+  foreignKey({
+    columns: [table.reconciliationId],
+    foreignColumns: [bankReconciliations.id],
+    name: 'journal_entry_lines_reconciliation_id_fk',
+  }).onDelete('set null'),
   index('journal_entry_lines_journal_idx').on(table.journalEntryId),
 ]);
 
@@ -3090,6 +3724,7 @@ export const bankReconciliations = pgTable('bank_reconciliations', {
   reconciledBalance: numeric('reconciled_balance', { precision: 12, scale: 2 }).notNull(),
   status: varchar({ length: 20 }).default('completed').notNull(),
   reconciledById: text('reconciled_by_id'),
+  reconciledAt: timestamp('reconciled_at', { mode: 'string' }),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
   foreignKey({
@@ -3113,11 +3748,40 @@ export const bankReconciliations = pgTable('bank_reconciliations', {
 export const employeeProfiles = pgTable('employee_profiles', {
   id: uuid().defaultRandom().primaryKey().notNull(),
   tenantId: uuid('tenant_id').notNull(),
-  userId: text('user_id').notNull(),
+  // Nullable: an employee can be tracked by HR without an application login.
+  // Payroll/leave/self-service key by user_id, so they only serve employees
+  // with a linked account; one-time link-account provisions it later.
+  userId: text('user_id'),
+  // Identity/contact for no-login employees; linked employees mirror these on user.
+  firstName: varchar('first_name', { length: 100 }),
+  lastName: varchar('last_name', { length: 100 }),
+  email: varchar('email', { length: 255 }),
+  phone: varchar('phone', { length: 50 }),
+  photoUrl: text('photo_url'),
+  branchId: uuid('branch_id'),
+  employeeId: varchar('employee_id', { length: 50 }),
+  // Plain uuid columns (FK enforced in migration 0073 + service tenant checks)
+  // because departments/designations live in src/features/hr/models/hr-schema.ts.
+  departmentId: uuid('department_id'),
+  designationId: uuid('designation_id'),
+  managerEmployeeId: uuid('manager_employee_id'),
+  employmentType: varchar('employment_type', { length: 20 }),
+  employmentStatus: varchar('employment_status', { length: 20 }).default('active').notNull(), // active | probation | on_leave | offboarded | archived
+  hireDate: date('hire_date'),
+  probationEndDate: date('probation_end_date'),
+  contractStartDate: date('contract_start_date'),
+  contractEndDate: date('contract_end_date'),
+  workloadHours: integer('workload_hours'),
+  archivedAt: timestamp('archived_at', { mode: 'string' }),
+  archivedById: text('archived_by_id'),
+  archivedReason: text('archived_reason'),
   cnssNumber: varchar('cnss_number', { length: 20 }),
   amoNumber: varchar('amo_number', { length: 20 }),
   bankRib: varchar('bank_rib', { length: 34 }),
   contractType: varchar('contract_type', { length: 20 }).default('cdi').notNull(),
+  // Sensitive HR data for no-login employees; linked employees mirror these on user.
+  nationalId: varchar('national_id', { length: 100 }),
+  salary: numeric('salary', { precision: 10, scale: 2 }),
   dependantsCount: integer('dependants_count').default(0).notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
@@ -3131,8 +3795,24 @@ export const employeeProfiles = pgTable('employee_profiles', {
     columns: [table.userId],
     foreignColumns: [user.id],
     name: 'employee_profiles_user_id_fk',
-  }).onDelete('cascade'),
+  }).onDelete('set null'),
+  foreignKey({
+    columns: [table.branchId],
+    foreignColumns: [branches.id],
+    name: 'employee_profiles_branch_id_branches_id_fk',
+  }).onDelete('set null'),
+  foreignKey({
+    columns: [table.managerEmployeeId],
+    foreignColumns: [table.id],
+    name: 'employee_profiles_manager_employee_id_employee_profiles_id_fk',
+  }).onDelete('set null'),
+  foreignKey({
+    columns: [table.archivedById],
+    foreignColumns: [user.id],
+    name: 'employee_profiles_archived_by_id_user_id_fk',
+  }).onDelete('set null'),
   unique('employee_profiles_tenant_user_unique').on(table.tenantId, table.userId),
+  unique('employee_profiles_tenant_employee_id_unique').on(table.tenantId, table.employeeId),
 ]);
 
 export const salaryComponents = pgTable('salary_components', {
@@ -3215,10 +3895,27 @@ export const payrollPeriods = pgTable('payroll_periods', {
   tenantId: uuid('tenant_id').notNull(),
   year: integer('year').notNull(),
   month: integer('month').notNull(),
-  status: varchar({ length: 20 }).default('draft').notNull(), // draft | locked
+  // Full payroll lifecycle run (0094): draft → calculating → calculated →
+  // under_review → approved → posted → paid → closed (+ failed/cancelled/reversed).
+  status: varchar({ length: 20 }).default('draft').notNull(),
   lockedAt: timestamp('locked_at', { mode: 'string' }),
   lockedById: text('locked_by_id'),
   journalEntryId: uuid('journal_entry_id'),
+  regulationVersionId: uuid('regulation_version_id'),
+  version: integer('version').default(1).notNull(),
+  frozenInputs: jsonb('frozen_inputs'),
+  calculatedById: text('calculated_by_id'),
+  calculatedAt: timestamp('calculated_at', { mode: 'string' }),
+  approverId: text('approver_id'),
+  approvedAt: timestamp('approved_at', { mode: 'string' }),
+  posterId: text('poster_id'),
+  postedAt: timestamp('posted_at', { mode: 'string' }),
+  paymentBatchId: uuid('payment_batch_id'),
+  closedAt: timestamp('closed_at', { mode: 'string' }),
+  cancelledById: text('cancelled_by_id'),
+  cancelledAt: timestamp('cancelled_at', { mode: 'string' }),
+  cancellationReason: text('cancellation_reason'),
+  reversalOfRunId: uuid('reversal_of_run_id'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
   foreignKey({
@@ -3248,6 +3945,16 @@ export const payrollRunLines = pgTable('payroll_run_lines', {
   amoEmployer: numeric('amo_employer', { precision: 12, scale: 2 }).notNull(),
   totalEmployerCost: numeric('total_employer_cost', { precision: 12, scale: 2 }).notNull(),
   calculationSnapshot: jsonb('calculation_snapshot'),
+  // Immutable summary + provenance (0094).
+  regulationVersionId: uuid('regulation_version_id'),
+  calculationVersion: integer('calculation_version').default(1).notNull(),
+  prorationFactor: numeric('proration_factor', { precision: 6, scale: 4 }).default('1').notNull(),
+  netPayable: numeric('net_payable', { precision: 12, scale: 2 }),
+  paymentMethod: varchar('payment_method', { length: 20 }),
+  paidAt: timestamp('paid_at', { mode: 'string' }),
+  isFrozen: boolean('is_frozen').default(false).notNull(),
+  isReversed: boolean('is_reversed').default(false).notNull(),
+  reversedByLineId: uuid('reversed_by_line_id'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
   foreignKey({
@@ -3276,6 +3983,11 @@ export const payslips = pgTable('payslips', {
   userId: text('user_id').notNull(),
   issuedAt: timestamp('issued_at', { mode: 'string' }).defaultNow().notNull(),
   pdfStorageKey: text('pdf_storage_key'),
+  // Numbered, immutable, replaceable (0094).
+  payslipNumber: varchar('payslip_number', { length: 40 }),
+  status: varchar('status', { length: 20 }).default('issued').notNull(),
+  replacedByPayslipId: uuid('replaced_by_payslip_id'),
+  regulationVersionId: uuid('regulation_version_id'),
 }, table => [
   foreignKey({
     columns: [table.tenantId],
@@ -3324,6 +4036,7 @@ export const employeeLeaveBalances = pgTable('employee_leave_balances', {
   year: integer('year').notNull(),
   accruedDays: numeric('accrued_days', { precision: 5, scale: 2 }).default('0').notNull(),
   usedDays: numeric('used_days', { precision: 5, scale: 2 }).default('0').notNull(),
+  reservedDays: numeric('reserved_days', { precision: 5, scale: 2 }).default('0').notNull(), // (0094)
 }, table => [
   foreignKey({
     columns: [table.tenantId],
@@ -3351,10 +4064,14 @@ export const leaveRequests = pgTable('leave_requests', {
   startDate: date('start_date').notNull(),
   endDate: date('end_date').notNull(),
   daysRequested: numeric('days_requested', { precision: 5, scale: 2 }).notNull(),
-  status: varchar({ length: 20 }).default('pending').notNull(), // pending | approved | rejected
+  // pending | under_review | approved | rejected | cancelled (0094)
+  status: varchar({ length: 20 }).default('pending').notNull(),
   reviewedById: text('reviewed_by_id'),
   reviewedAt: timestamp('reviewed_at', { mode: 'string' }),
   reason: text(),
+  reservedUnits: numeric('reserved_units', { precision: 8, scale: 2 }).default('0').notNull(),
+  consumedUnits: numeric('consumed_units', { precision: 8, scale: 2 }).default('0').notNull(),
+  payrollAllocated: boolean('payroll_allocated').default(false).notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
   foreignKey({
@@ -3463,4 +4180,68 @@ export const cashierSessions = pgTable('cashier_sessions', {
   index('cashier_sessions_status_idx').on(table.status),
 ]);
 
+// Student Accounting add-on exports
+export * from '@/features/finance/models/student-accounting-schema';
 
+// Advanced Reporting Add-on exports
+export * from '@/addons/advanced-reporting/models/reporting-schema';
+
+// Assessment & Examination exports
+export * from '@/features/assessment/models/assessment-schema';
+
+// Attachments Book Add-on exports
+export * from '@/features/attachments/models/attachments-schema';
+
+// Attendance QR Enhancement exports
+export * from '@/features/certificates/models/certificates-schema';
+export * from '@/features/cards/models/cards-schema';
+export * from '@/features/attendance/models/attendance-qr-schema';
+
+// Event Management exports
+export * from '@/features/events/models/events-schema';
+
+// Platform exports
+export * from '@/features/platform/models/domains-schema';
+
+// Advanced HR & Employee Management Add-on exports
+export * from '@/features/hr/models/hr-schema';
+
+// Inventory Management Add-on exports
+export * from '@/features/inventory/models/inventory-schema';
+
+// Broadcast Messaging Add-on exports
+export * from '@/features/broadcast/models/broadcast-schema';
+
+// Hostel Management Add-on exports
+export * from '@/features/hostel/models/hostel-schema';
+
+// Guard & Security Portal exports (core role feature)
+export * from '@/features/guard/models/guard-schema';
+
+// Library Management Add-on exports
+export * from '@/features/library/models/library-schema';
+
+// Live Classrooms Add-on exports
+export * from '@/features/live-classrooms/models/live-classrooms-schema';
+
+// Student Transport Add-on exports
+export * from '@/features/transport/models/transport-schema';
+
+// Role Portals Foundation exports
+export * from '@/features/portal/models/portal-schema';
+
+// Receptionist Portal — front-desk appointments, handoffs, identity verifications
+export * from '@/features/reception/models/reception-schema';
+
+// Office Accounting core ledger extensions
+export * from '@/features/accounting/models/accounting-schema';
+
+// Payroll & Workforce Operations add-on
+export * from '@/features/workforce/models/workforce-schema';
+
+// Settings Platform (DB-backed catalog, drafts/approvals, secrets, numbering,
+// custom fields, scheduled jobs, login events)
+export * from '@/features/settings/models/settings-schema';
+
+// School Website CMS Add-on (public per-tenant marketing site)
+export * from '@/features/website/models/website-schema';

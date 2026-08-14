@@ -1,458 +1,302 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
+import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { StudentAttendanceHeatmap } from '@/features/students/ui/student-attendance-heatmap';
 import {
-  ArrowLeft,
-  Clock,
-  Wallet,
-  Star,
-  Smile,
-  FileText,
-  AlertCircle,
-  Upload,
-  History,
+  BookOpen, Calendar, CheckCircle2, Clock, FileText, Award, TrendingUp, AlertCircle, ChevronRight, MessageSquare
 } from 'lucide-react';
 
-type ApiPlacementRow = {
-  id: string;
-  sessionYearName: string;
-  classSectionId: string;
-  status: 'enrolled' | 'dropped' | 'graduated';
-  startDate: string;
-  endDate: string | null;
-  isCurrent: boolean;
-  notes: string | null;
-};
+const STUDENT_COURSES_TODAY = [
+  { time: '08:00 - 09:00', subject: 'Mathématiques', teacher: 'M. El Amrani', room: 'Salle 201', icon: '📐' },
+  { time: '09:00 - 10:00', subject: 'Physique-Chimie', teacher: 'Mme Bennis', room: 'Salle 205', icon: '🧪' },
+  { time: '10:20 - 11:20', subject: 'Français', teacher: 'M. Haddad', room: 'Salle 103', icon: '📖' },
+  { time: '11:20 - 12:20', subject: 'Anglais', teacher: 'Mme Zahraoui', room: 'Salle 106', icon: '🌐' },
+  { time: '14:30 - 15:30', subject: 'Sciences de la vie et de la terre', teacher: 'M. Touil', room: 'Salle 204', icon: '🍃' },
+  { time: '15:30 - 16:30', subject: 'Informatique', teacher: 'M. Rguig', room: 'Salle Info 1', icon: '💻' },
+];
 
-type ApiStudentDocument = { documentType: string; uploaded: boolean; uploadedAt: string | null };
+const PENDING_HOMEWORK = [
+  { tag: 'Maths', tagColor: 'bg-emerald-100 text-emerald-700', title: 'Exercices sur les suites numériques', due: 'À rendre le 23 mai 2025 à 23:59', daysLeft: '2 jours', urgencyColor: 'bg-rose-100 text-rose-700' },
+  { tag: 'Physique', tagColor: 'bg-[#DCEBF4] text-[#1B6C93]', title: 'TP : Étude d\'un circuit électrique', due: 'À rendre le 24 mai 2025 à 23:59', daysLeft: '3 jours', urgencyColor: 'bg-amber-100 text-amber-700' },
+  { tag: 'Français', tagColor: 'bg-purple-100 text-purple-700', title: 'Dissertation : Le roman réaliste', due: 'À rendre le 26 mai 2025 à 23:59', daysLeft: '5 jours', urgencyColor: 'bg-amber-100 text-amber-700' },
+];
 
-const DOCUMENT_LABELS: Record<string, string> = {
-  photo: 'Photo d\'identité',
-  birth_certificate: 'Acte de naissance',
-  school_certificate: 'Certificat de scolarité',
-  guardian_cni: 'CNI du tuteur',
-  bulletin: 'Bulletins scolaires',
-};
+const RECENT_GRADES = [
+  { subject: 'Mathématiques', date: '16 mai 2025', grade: '15,5/20', color: 'text-[#17A673]' },
+  { subject: 'Physique-Chimie', date: '15 mai 2025', grade: '13,0/20', color: 'text-amber-600' },
+  { subject: 'Français', date: '14 mai 2025', grade: '14,0/20', color: 'text-[#17A673]' },
+  { subject: 'Anglais', date: '12 mai 2025', grade: '16,5/20', color: 'text-[#17A673]' },
+  { subject: 'SVT', date: '10 mai 2025', grade: '17,0/20', color: 'text-[#17A673]' },
+];
 
-type ApiStudentDetail = {
-  id: string;
-  matricule: string | null;
-  fullName: string;
-  firstName: string | null;
-  lastName: string | null;
-  email: string;
-  level: string | null;
-  className: string | null;
-  guardianName: string | null;
-  phone: string | null;
-  status: string;
-  dateOfBirth: string | null;
-  gender: string | null;
-  address: string | null;
-  nationalId: string | null;
-  photoUrl: string | null;
-  createdAt: string;
-  guardians: { id: string; firstName: string; lastName: string; phone: string | null; email: string | null; relationshipType: string }[];
-  attendance: { last30Days: { date: string; status: string; lateMinutes: number | null }[]; rate: number | null };
-  payments: { id: string; amount: number; paymentMethod: string; paymentDate: string }[];
-  balanceDue: number;
-};
+const SUBJECT_PROGRESS = [
+  { subject: 'Maths', grade: 15.2 },
+  { subject: 'Physique', grade: 13.1 },
+  { subject: 'Français', grade: 14.0 },
+  { subject: 'Anglais', grade: 16.5 },
+  { subject: 'SVT', grade: 17.0 },
+  { subject: 'Info', grade: 15.8 },
+];
 
-function age(dateOfBirth: string | null): string {
-  if (!dateOfBirth) {
-    return '—';
-  }
-  const years = Math.floor((Date.now() - new Date(dateOfBirth).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
-  return `${years} ans`;
-}
+const ANNOUNCEMENTS = [
+  { title: 'Examen régional - 1BAC', date: 'Du 02 au 06 juin 2025', desc: 'Préparez-vous bien et révisez régulièrement.' },
+  { title: 'Réunion parents-professeurs', date: 'Samedi 24 mai 2025 à 10h00', desc: 'Votre présence est importante.' },
+];
 
-function formatMad(amount: number): string {
-  return `${amount.toLocaleString('fr-FR')} MAD`;
-}
+const TEACHER_COMMENTS = [
+  { teacher: 'M. El Amrani', subject: 'Mathématiques', text: 'Bon travail dans l\'ensemble. Continue à t\'entraîner sur les exercices d\'application.', date: '16 mai 2025', initials: 'MA' },
+  { teacher: 'Mme Bennis', subject: 'Physique-Chimie', text: 'Participation en classe satisfaisante. Continue ainsi !', date: '15 mai 2025', initials: 'MB' },
+];
 
-export function StudentProfile360View({ id, locale }: { id: string; locale: string }) {
-  const [student, setStudent] = useState<ApiStudentDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [documents, setDocuments] = useState<ApiStudentDocument[]>([]);
-  const [placements, setPlacements] = useState<ApiPlacementRow[]>([]);
-  const [uploadingType, setUploadingType] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const uploadTargetType = useRef<string | null>(null);
-
-  useEffect(() => {
-    async function loadStudent() {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`/api/students?id=${id}`);
-        const json = await res.json();
-        if (!res.ok || !json.success) {
-          setError(json.message || 'Élève introuvable.');
-          return;
-        }
-        setStudent(json.data);
-      } catch (err) {
-        console.error('Failed loading student detail', err);
-        setError('Connexion impossible. Vérifiez votre réseau.');
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadStudent();
-  }, [id]);
-
-  async function loadDocuments() {
-    try {
-      const res = await fetch(`/api/students/documents?studentId=${id}`);
-      const json = await res.json();
-      if (json.success) {
-        setDocuments(json.data);
-      }
-    } catch (err) {
-      console.error('Failed loading student documents', err);
-    }
-  }
-
-  useEffect(() => {
-    loadDocuments();
-  }, [id]);
-
-  useEffect(() => {
-    fetch(`/api/students/placements?studentId=${id}&pageSize=50`)
-      .then(r => r.json())
-      .then((json) => { if (json.success) setPlacements(json.data); })
-      .catch(err => console.error('Failed loading placements', err));
-  }, [id]);
-
-  function triggerUpload(documentType: string) {
-    uploadTargetType.current = documentType;
-    fileInputRef.current?.click();
-  }
-
-  async function handleDocumentFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    const documentType = uploadTargetType.current;
-    if (!file || !documentType) {
-      return;
-    }
-    setUploadingType(documentType);
-    try {
-      const formData = new FormData();
-      formData.append('studentId', id);
-      formData.append('documentType', documentType);
-      formData.append('file', file);
-      const res = await fetch('/api/students/documents', { method: 'POST', body: formData });
-      const json = await res.json();
-      if (res.ok && json.success) {
-        await loadDocuments();
-      }
-    } catch (err) {
-      console.error('Document upload failed', err);
-    } finally {
-      setUploadingType(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  }
-
-  if (loading) {
-    return <div className="max-w-[1600px] mx-auto text-sm text-slate-500">Chargement...</div>;
-  }
-
-  if (error || !student) {
-    return (
-      <div className="max-w-[1600px] mx-auto space-y-4">
-        <Link href={`/${locale}/dashboard/students`} className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-[#2487B8]">
-          <ArrowLeft className="w-4 h-4" />
-          <span>Retour à l&apos;annuaire</span>
-        </Link>
-        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2.5 text-rose-700 text-xs font-semibold">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          <span>{error ?? 'Élève introuvable.'}</span>
-        </div>
-      </div>
-    );
-  }
-
-  const initials = student.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
-
+export function StudentPortalView({ locale: _locale, id: _id }: { locale?: string; id?: string }) {
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
-      {/* Back Link */}
-      <Link href={`/${locale}/dashboard/students`} className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-[#2487B8]">
-        <ArrowLeft className="w-4 h-4" />
-        <span>Fiche élève</span>
-      </Link>
-
-      {/* Main Student Card Header */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-2xs">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
-            <div className="w-20 h-20 rounded-full bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center font-extrabold text-2xl border-4 border-white shadow-md overflow-hidden">
-              {student.photoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- runtime-uploaded file, not a build-time asset
-                <img src={student.photoUrl} alt={student.fullName} className="w-full h-full object-cover" />
-              ) : (
-                initials
-              )}
+    <div className="space-y-6 max-w-[1800px] mx-auto">
+      {/* Top Banner */}
+      <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-[#2487B8] text-white font-extrabold text-xl flex items-center justify-center shrink-0 shadow-md">
+              YE
             </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-extrabold text-[#16212B]">{student.fullName}</h1>
-                <span className="inline-flex items-center gap-1 bg-[#DCEBF4] text-[#1B6C93] text-xs font-bold px-2.5 py-0.5 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#2487B8]"></span>
-                  {student.status}
-                </span>
-              </div>
-              <p className="text-xs font-bold text-slate-500">{student.className ?? student.level ?? 'Non classé'}</p>
-              <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-1">
-                <span><strong className="text-slate-700">Matricule:</strong> {student.matricule ?? '—'}</span>
-                <span><strong className="text-slate-700">Tuteur légal:</strong> {student.guardianName ?? '—'}</span>
-                <span><strong className="text-slate-700">Téléphone:</strong> {student.phone ?? '—'}</span>
-              </div>
+            <div>
+              <h1 className="text-xl font-extrabold text-[#16212B] tracking-tight">Bonjour Youssef 👋</h1>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">Reste concentré, chaque effort te rapproche de tes objectifs !</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full md:w-auto">
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-center">
+              <span className="text-[10px] font-bold text-slate-400 uppercase block">Cours aujourd&apos;hui</span>
+              <span className="text-lg font-extrabold text-[#16212B]">6</span>
+            </div>
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-center">
+              <span className="text-[10px] font-bold text-slate-400 uppercase block">Devoirs à rendre</span>
+              <span className="text-lg font-extrabold text-[#16212B]">3</span>
+            </div>
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-center">
+              <span className="text-[10px] font-bold text-slate-400 uppercase block">Moyenne générale</span>
+              <span className="text-lg font-extrabold text-[#2487B8]">14,6 <span className="text-xs font-normal text-slate-500">/20</span></span>
+            </div>
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-center">
+              <span className="text-[10px] font-bold text-slate-400 uppercase block">Rang de classe</span>
+              <span className="text-lg font-extrabold text-[#17A673]">8 <span className="text-xs font-normal text-slate-500">/32</span></span>
             </div>
           </div>
         </div>
-      </div>
+      </Card>
 
-      {/* 4 Top KPI Stat Tiles */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-slate-500">Taux de présence (30j)</p>
-            <p className="text-2xl font-extrabold text-[#16212B] mt-1">{student.attendance.rate !== null ? `${student.attendance.rate}%` : '—'}</p>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center">
-            <Clock className="w-6 h-6" />
-          </div>
-        </Card>
-
-        <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-slate-500">Solde dû</p>
-            <p className="text-2xl font-extrabold text-[#16212B] mt-1">{formatMad(student.balanceDue)}</p>
-            <p className="text-[11px] font-bold text-[#2487B8] mt-0.5">{student.balanceDue === 0 ? 'À jour' : 'Solde à régler'}</p>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center">
-            <Wallet className="w-6 h-6" />
-          </div>
-        </Card>
-
-        <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-slate-500">Moyenne générale</p>
-            <p className="text-lg font-extrabold text-slate-400 mt-1">Non disponible</p>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center">
-            <Star className="w-6 h-6" />
-          </div>
-        </Card>
-
-        <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-slate-500">Comportement</p>
-            <p className="text-lg font-extrabold text-slate-400 mt-1">Non disponible</p>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center">
-            <Smile className="w-6 h-6" />
-          </div>
-        </Card>
-      </div>
-
-      {/* Bento Grid Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Informations Personnelles */}
-        <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-          <h3 className="text-sm font-bold text-[#16212B]">Informations personnelles</h3>
-          <div className="space-y-3 text-xs">
-            <div>
-              <p className="text-slate-400 text-[11px]">Date de naissance</p>
-              <p className="font-semibold text-slate-700">{student.dateOfBirth ? `${new Date(student.dateOfBirth).toLocaleDateString('fr-FR')} (${age(student.dateOfBirth)})` : '—'}</p>
-            </div>
-            <div>
-              <p className="text-slate-400 text-[11px]">Genre</p>
-              <p className="font-semibold text-slate-700">{student.gender ?? '—'}</p>
-            </div>
-            <div>
-              <p className="text-slate-400 text-[11px]">Adresse</p>
-              <p className="font-semibold text-slate-700">{student.address ?? '—'}</p>
-            </div>
-            <div>
-              <p className="text-slate-400 text-[11px]">Téléphone</p>
-              <p className="font-mono font-semibold text-slate-700">{student.phone ?? '—'}</p>
-            </div>
-            <div>
-              <p className="text-slate-400 text-[11px]">Email</p>
-              <p className="font-semibold text-slate-700">{student.email}</p>
-            </div>
-            <div>
-              <p className="text-slate-400 text-[11px]">Date d&apos;inscription</p>
-              <p className="font-semibold text-slate-700">{new Date(student.createdAt).toLocaleDateString('fr-FR')}</p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Tuteurs */}
-        <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-          <h3 className="text-sm font-bold text-[#16212B]">Parents & tuteurs</h3>
-          <div className="space-y-3 text-xs">
-            {student.guardians.length === 0 && <p className="text-slate-400">Aucun tuteur lié.</p>}
-            {student.guardians.map(g => (
-              <div key={g.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                <p className="font-bold text-[#16212B]">{g.firstName} {g.lastName}</p>
-                <p className="text-[10px] text-slate-400">{g.relationshipType}</p>
-                <p className="text-[11px] text-slate-600 mt-1">{g.phone ?? '—'}</p>
+      {/* Main Grid: Left (8 cols) & Right (4 cols) */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+        {/* Left Column (8 cols) */}
+        <div className="xl:col-span-8 space-y-6">
+          {/* Row 1: Prochains cours (6 cols) & Devoirs à rendre bientôt (6 cols) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-extrabold text-[#16212B]">Prochains cours aujourd&apos;hui</h2>
+                <button className="text-[11px] font-bold text-[#2487B8] hover:underline">Voir l&apos;emploi du temps</button>
               </div>
-            ))}
-          </div>
-        </Card>
 
-        {/* Présence - 30 derniers jours */}
-        <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-          <h3 className="text-sm font-bold text-[#16212B]">Présence — 30 derniers jours</h3>
-          <div className="space-y-1.5 text-xs max-h-[220px] overflow-y-auto">
-            {student.attendance.last30Days.length === 0 && <p className="text-slate-400">Aucune présence enregistrée.</p>}
-            {student.attendance.last30Days.map(a => (
-              <div key={a.date} className="flex items-center justify-between py-1 border-b border-slate-100 last:border-none">
-                <span className="text-slate-600">{new Date(`${a.date}T00:00:00`).toLocaleDateString('fr-FR')}</span>
-                <Badge className={
-                  a.status === 'present' ? 'bg-[#DCEBF4] text-[#1B6C93] text-[10px]'
-                    : a.status === 'excused' ? 'bg-purple-100 text-purple-800 text-[10px]'
-                      : a.status === 'late' ? 'bg-[#FCF0DC] text-[#E8A33D] text-[10px]'
-                        : 'bg-[#FCE4E2] text-[#E5544B] text-[10px]'
-                }
-                >
-                  {a.status === 'present'
-                    ? 'Présent'
-                    : a.status === 'excused'
-                      ? 'Excusé'
-                      : a.status === 'late'
-                        ? `Retard${a.lateMinutes ? ` (${a.lateMinutes} min)` : ''}`
-                        : 'Absent'}
-                </Badge>
+              <div className="space-y-2">
+                {STUDENT_COURSES_TODAY.map((c, idx) => (
+                  <div key={idx} className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between text-xs hover:bg-slate-100/80 transition-colors">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-sm">{c.icon}</span>
+                      <div>
+                        <p className="font-bold text-[#16212B] text-[11px]">{c.subject}</p>
+                        <p className="text-[10px] text-slate-400">{c.teacher}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-mono font-bold text-[#2487B8] text-[11px]">{c.time.split(' - ')[0]}</span>
+                      <p className="text-[10px] text-slate-500 font-medium">{c.room}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </Card>
+            </Card>
 
-        {/* Paiements Récents */}
-        <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-          <h3 className="text-sm font-bold text-[#16212B]">Paiements récents</h3>
-          <div className="space-y-3 text-xs">
-            {student.payments.length === 0 && <p className="text-slate-400">Aucun paiement enregistré.</p>}
-            {student.payments.map(p => (
-              <div key={p.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                <p className="text-[10px] text-slate-400">{new Date(p.paymentDate).toLocaleDateString('fr-FR')}</p>
-                <p className="font-bold text-[#16212B]">{formatMad(p.amount)}</p>
+            <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-extrabold text-[#16212B]">Devoirs à rendre bientôt</h2>
+                <button className="text-[11px] font-bold text-[#2487B8] hover:underline">Voir mes devoirs</button>
               </div>
-            ))}
-          </div>
-        </Card>
 
-        {/* Heatmap de présence mensuelle */}
-        <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs lg:col-span-3">
-          <h3 className="text-sm font-bold text-[#16212B] mb-4">Historique de présence</h3>
-          <StudentAttendanceHeatmap studentId={student.id} />
-        </Card>
-
-        {/* Notes - not yet available */}
-        <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-          <h3 className="text-sm font-bold text-[#16212B]">Notes récentes</h3>
-          <div className="flex flex-col items-center justify-center py-6 text-center gap-2">
-            <FileText className="w-6 h-6 text-slate-300" />
-            <p className="text-[11px] text-slate-400">Le module de notation n&apos;est pas encore disponible.</p>
-          </div>
-        </Card>
-
-        {/* Placement History */}
-        <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4 lg:col-span-3">
-          <div className="flex items-center gap-2">
-            <History className="w-4 h-4 text-[#2487B8]" />
-            <h3 className="text-sm font-bold text-[#16212B]">Historique de placement</h3>
-            {placements.length > 0 && (
-              <span className="ml-auto text-[10px] font-bold text-slate-400">{placements.length} entrée(s)</span>
-            )}
-          </div>
-          {placements.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-6 text-center gap-2">
-              <History className="w-6 h-6 text-slate-300" />
-              <p className="text-[11px] text-slate-400">Aucun historique de placement trouvé.</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-[#F6F9FC] text-slate-500 font-semibold border-b border-slate-200/80">
-                  <tr>
-                    <th className="py-2.5 px-3">Année scolaire</th>
-                    <th className="py-2.5 px-3">Classe</th>
-                    <th className="py-2.5 px-3">Statut</th>
-                    <th className="py-2.5 px-3">Début</th>
-                    <th className="py-2.5 px-3">Fin</th>
-                    <th className="py-2.5 px-3">Notes</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {placements.map(p => (
-                    <tr key={p.id} className={p.isCurrent ? 'bg-emerald-50/50' : 'hover:bg-slate-50/50'}>
-                      <td className="py-2.5 px-3 font-semibold text-[#16212B]">{p.sessionYearName ?? '—'}</td>
-                      <td className="py-2.5 px-3 text-slate-600 font-mono text-[10px]">{p.classSectionId.slice(0, 8)}…</td>
-                      <td className="py-2.5 px-3">
-                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          p.status === 'enrolled' ? 'bg-emerald-100 text-emerald-700'
-                            : p.status === 'graduated' ? 'bg-blue-100 text-blue-700'
-                              : 'bg-rose-100 text-rose-700'
-                        }`}>
-                          {p.isCurrent && <span className="w-1.5 h-1.5 rounded-full bg-current" />}
-                          {p.status === 'enrolled' ? 'Inscrit' : p.status === 'graduated' ? 'Diplômé' : 'Sorti'}
-                          {p.isCurrent && ' (actuel)'}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-3 text-slate-600">{p.startDate ? new Date(`${p.startDate}T00:00:00`).toLocaleDateString('fr-FR') : '—'}</td>
-                      <td className="py-2.5 px-3 text-slate-400">{p.endDate ? new Date(`${p.endDate}T00:00:00`).toLocaleDateString('fr-FR') : '—'}</td>
-                      <td className="py-2.5 px-3 text-slate-400 max-w-[180px] truncate">{p.notes ?? '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Card>
-
-        {/* Documents */}
-        <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-          <h3 className="text-sm font-bold text-[#16212B]">Documents</h3>
-          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,application/pdf" onChange={handleDocumentFileChange} className="hidden" />
-          {documents.map(doc => (
-            <div key={doc.documentType} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-              <div className="flex items-center gap-2">
-                <FileText className="w-3.5 h-3.5 text-slate-400" />
-                <p className="text-[11px] font-bold text-[#16212B]">{DOCUMENT_LABELS[doc.documentType] ?? doc.documentType}</p>
+              <div className="space-y-2">
+                {PENDING_HOMEWORK.map((hw, idx) => (
+                  <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1 text-xs">
+                    <div className="flex items-center justify-between">
+                      <Badge className={`text-[9px] font-bold border-none ${hw.tagColor}`}>{hw.tag}</Badge>
+                      <Badge className={`text-[9px] font-bold border-none ${hw.urgencyColor}`}>{hw.daysLeft}</Badge>
+                    </div>
+                    <p className="font-bold text-[#16212B] text-xs">{hw.title}</p>
+                    <p className="text-[10px] text-slate-400 font-medium">{hw.due}</p>
+                  </div>
+                ))}
               </div>
-              {doc.uploaded ? (
-                <Badge className="bg-[#D1F5E8] text-[#17A673] text-[10px]">Fourni</Badge>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => triggerUpload(doc.documentType)}
-                  disabled={uploadingType === doc.documentType}
-                  className="h-7 gap-1 rounded-lg px-2.5 text-[10px]"
-                >
-                  <Upload className="w-3 h-3" />
-                  {uploadingType === doc.documentType ? 'Envoi...' : 'Téléverser'}
+
+              <button className="text-xs font-extrabold text-[#2487B8] hover:underline w-full text-center pt-1">
+                Voir mes devoirs
+              </button>
+            </Card>
+          </div>
+
+          {/* Row 2: Dernières notes & Progression chart */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-extrabold text-[#16212B]">Dernières notes</h2>
+                <button className="text-[11px] font-bold text-[#2487B8] hover:underline">Consulter mes notes</button>
+              </div>
+
+              <div className="space-y-2">
+                {RECENT_GRADES.map((g, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 text-xs">
+                    <div>
+                      <p className="font-bold text-[#16212B] text-[11px]">{g.subject}</p>
+                      <p className="text-[10px] text-slate-400">{g.date}</p>
+                    </div>
+                    <span className={`font-mono font-extrabold text-xs ${g.color}`}>{g.grade}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-1">
+                <Button className="w-full h-8 text-xs font-bold rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white">
+                  Consulter mes notes
                 </Button>
-              )}
+              </div>
+            </Card>
+
+            <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-extrabold text-[#16212B]">Ma progression par matière</h2>
+                <button className="text-[11px] font-bold text-[#2487B8] hover:underline">Voir le détail</button>
+              </div>
+
+              {/* Bar Chart */}
+              <div className="flex items-end gap-2 h-36 pt-4 border-b border-slate-100">
+                {SUBJECT_PROGRESS.map((item) => (
+                  <div key={item.subject} className="flex-1 flex flex-col items-center gap-1">
+                    <span className="text-[9px] font-bold text-slate-600">{item.grade}</span>
+                    <div className="w-full bg-slate-100 rounded-t-sm flex items-end h-24">
+                      <div className="w-full bg-[#2487B8] rounded-t-sm" style={{ height: `${(item.grade / 20) * 100}%` }} />
+                    </div>
+                    <span className="text-[9px] font-bold text-slate-400">{item.subject}</span>
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-[10px] text-center font-bold text-slate-400 uppercase">Moyenne (/20)</p>
+            </Card>
+          </div>
+        </div>
+
+        {/* Right Column (4 cols) */}
+        <div className="xl:col-span-4 space-y-4">
+          {/* Présences Donut */}
+          <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
+            <h2 className="text-xs font-extrabold text-[#16212B]">Présences</h2>
+
+            <div className="flex items-center justify-center py-2">
+              <div className="relative w-32 h-32 rounded-full border-8 border-[#2487B8] flex flex-col items-center justify-center text-center">
+                <span className="text-xl font-extrabold text-[#16212B]">94%</span>
+                <span className="text-[9px] font-bold text-slate-400">Taux de présence</span>
+              </div>
             </div>
-          ))}
-        </Card>
+
+            <div className="space-y-1.5 text-xs">
+              <div className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#2487B8]" /><span className="font-semibold text-slate-600">Présent</span></div>
+                <span className="font-extrabold text-[#16212B]">94%</span>
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" /><span className="font-semibold text-slate-600">Absent justifié</span></div>
+                <span className="font-extrabold text-[#16212B]">4%</span>
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500" /><span className="font-semibold text-slate-600">Absent non justifié</span></div>
+                <span className="font-extrabold text-[#16212B]">2%</span>
+              </div>
+            </div>
+
+            <p className="text-[10px] text-slate-400 text-center font-medium">Depuis le début de l&apos;année scolaire ℹ️</p>
+          </Card>
+
+          {/* Situation des frais */}
+          <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-extrabold text-[#16212B]">Situation des frais de scolarité</h2>
+              <Badge className="bg-[#DDF5EC] text-[#17A673] border-none text-[9px] font-bold">À jour</Badge>
+            </div>
+
+            <div className="flex items-center gap-2 p-2.5 bg-emerald-50 rounded-xl border border-emerald-200/80 text-xs">
+              <CheckCircle2 className="w-4 h-4 text-[#17A673] shrink-0" />
+              <div>
+                <p className="font-bold text-[#17A673]">Aucun paiement en attente.</p>
+                <p className="text-[10px] text-slate-500 font-medium">Merci de votre régularité.</p>
+              </div>
+            </div>
+
+            <Button variant="outline" className="w-full h-8 text-xs font-bold rounded-xl border-slate-200 text-[#2487B8] hover:bg-[#DCEBF4]/30">
+              Voir l&apos;historique des paiements
+            </Button>
+          </Card>
+
+          {/* Annonces de l'établissement */}
+          <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-extrabold text-[#16212B]">Annonces de l&apos;établissement</h2>
+              <button className="text-[11px] font-bold text-[#2487B8] hover:underline">Voir toutes</button>
+            </div>
+
+            <div className="space-y-2">
+              {ANNOUNCEMENTS.map((anc, idx) => (
+                <div key={idx} className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1 text-xs">
+                  <p className="font-bold text-[#16212B] text-[11px]">{anc.title}</p>
+                  <p className="text-[10px] text-[#2487B8] font-semibold">{anc.date}</p>
+                  <p className="text-[10px] text-slate-500 font-medium">{anc.desc}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Commentaires des enseignants */}
+          <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-extrabold text-[#16212B]">Commentaires des enseignants</h2>
+              <button className="text-[11px] font-bold text-[#2487B8] hover:underline">Voir tous</button>
+            </div>
+
+            <div className="space-y-2">
+              {TEACHER_COMMENTS.map((com, idx) => (
+                <div key={idx} className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex items-start gap-2.5 text-xs">
+                  <div className="w-7 h-7 rounded-full bg-[#DCEBF4] text-[#1B6C93] font-bold text-[10px] flex items-center justify-center shrink-0">
+                    {com.initials}
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-bold text-[#16212B] text-[11px]">{com.teacher}</span>
+                      <span className="text-[9px] text-slate-400">{com.date}</span>
+                    </div>
+                    <p className="text-[10px] font-semibold text-[#2487B8]">{com.subject}</p>
+                    <p className="text-[10px] text-slate-600 mt-0.5">{com.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <Button variant="outline" className="w-full h-8 text-xs font-bold rounded-xl border-slate-200 text-[#2487B8] hover:bg-[#DCEBF4]/30">
+              Voir tous les commentaires
+            </Button>
+          </Card>
+        </div>
       </div>
     </div>
   );
 }
+
+export const StudentProfile360View = StudentPortalView;
+export const StudentProfileView = StudentPortalView;

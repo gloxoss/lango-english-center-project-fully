@@ -1,10 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Search, MessageSquare, Phone } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  AlertTriangle,
+  Bell,
+  CheckCircle2,
+  Clock,
+  FileText,
+  Loader2,
+  RefreshCw,
+  Send,
+} from 'lucide-react';
 
 type OverdueInvoice = {
   id: string;
@@ -17,132 +23,277 @@ type OverdueInvoice = {
   status: string;
 };
 
-function daysOverdue(dueDate: string): number {
-  const diff = Date.now() - new Date(dueDate).getTime();
-  return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
+type SendRecord = {
+  id: string;
+  invoiceNumber: string;
+  studentName: string;
+  recipientPhone: string;
+  body: string;
+  status: string;
+  sentAt: string;
+};
+
+const STATUS_BADGE: Record<string, string> = {
+  pending: 'bg-amber-100 text-amber-700',
+  partial: 'bg-amber-100 text-amber-700',
+  overdue: 'bg-rose-100 text-rose-600',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  pending: 'En attente',
+  partial: 'Partielle',
+  overdue: 'En retard',
+};
+
+function mad(value: number): string {
+  return `${value.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD`;
 }
 
-export function RemindersStatementsView({ locale: _locale }: { locale?: string } = {}) {
-  const [search, setSearch] = useState('');
-  const [invoices, setInvoices] = useState<OverdueInvoice[]>([]);
-  const [sendingId, setSendingId] = useState<string | null>(null);
-  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+function formatDate(date: string): string {
+  if (!date) return '—';
+  const [y, m, d] = date.split('-');
+  return `${d}/${m}/${y}`;
+}
 
-  const load = () => {
-    fetch('/api/finance/reminders')
-      .then(res => (res.ok ? res.json() : null))
-      .then((json) => {
-        if (json?.success) {
-          setInvoices(json.data);
-        }
-      })
-      .catch(() => {});
-  };
+export function RemindersStatementsView() {
+  const [overdue, setOverdue] = useState<OverdueInvoice[]>([]);
+  const [sent, setSent] = useState<SendRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const [flash, setFlash] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setError(null);
+    try {
+      const res = await fetch('/api/finance/reminders');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setOverdue((json?.data ?? []) as OverdueInvoice[]);
+    } catch {
+      setError('Impossible de charger les factures en retard.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
-  const handleSend = async (invoiceId: string) => {
+  const sendReminder = useCallback(async (invoiceId: string, studentName: string) => {
     setSendingId(invoiceId);
+    setFlash(null);
     try {
       const res = await fetch('/api/finance/reminders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ invoiceId }),
       });
-      if (res.ok) {
-        setSentIds(prev => new Set(prev).add(invoiceId));
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setFlash(`Échec : ${json?.message ?? `HTTP ${res.status}`}`);
+        return;
       }
-    } catch (err) {
-      console.error('Failed to send reminder', err);
+      const sms = json.data;
+      const inv = overdue.find((i) => i.id === invoiceId);
+      setSent((prev) => [
+        {
+          id: sms?.id ?? `${Date.now()}`,
+          invoiceNumber: inv?.invoiceNumber ?? invoiceId,
+          studentName,
+          recipientPhone: sms?.recipientPhone ?? '—',
+          body: sms?.body ?? '',
+          status: sms?.status ?? 'sent',
+          sentAt: sms?.sentAt ?? new Date().toISOString(),
+        },
+        ...prev,
+      ]);
+      setFlash(`Rappel envoyé pour ${studentName}.`);
+    } catch {
+      setFlash('Erreur réseau lors de l’envoi du rappel.');
     } finally {
       setSendingId(null);
     }
-  };
+  }, [overdue]);
 
-  const filtered = invoices.filter(r => r.studentName.toLowerCase().includes(search.toLowerCase()));
-  const totalDueSum = invoices.reduce((acc, r) => acc + (r.netAmount - r.paidAmount), 0);
+  const totalOutstanding = overdue.reduce((sum, i) => sum + (Number(i.netAmount) - Number(i.paidAmount)), 0);
+
+  if (loading) {
+    return (
+      <div className="p-6 max-w-[1400px] mx-auto">
+        <div className="h-40 animate-pulse bg-slate-100 rounded-xl" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Relances impayés</h1>
-          <p className="text-xs text-slate-500 mt-1">Factures en retard de paiement, relance par SMS (simulé, journalisé).</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Reçus, rappels &amp; relevés</h1>
+          <p className="text-sm text-slate-500">Factures en retard et envoi de rappels de paiement aux familles.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => load()}
+          aria-label="Actualiser"
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition"
+        >
+          <RefreshCw className="w-4 h-4" /> Actualiser
+        </button>
+      </div>
+
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center gap-2" role="alert">
+          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {flash && (
+        <div className="p-4 bg-[#DDF5EC] border border-[#17A673]/30 rounded-lg text-[#17A673] text-sm flex items-center gap-2" role="status">
+          <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+          <span>{flash}</span>
+        </div>
+      )}
+
+      {/* KPI band */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
+            <Clock className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-500">Factures en retard</p>
+            <p className="text-xl font-extrabold text-slate-900">{overdue.length}</p>
+            <p className="text-[11px] text-slate-400">échéance dépassée</p>
+          </div>
+        </div>
+        <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+            <FileText className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-500">Solde total impayé</p>
+            <p className="text-xl font-extrabold text-slate-900">{mad(totalOutstanding)}</p>
+            <p className="text-[11px] text-slate-400">toutes factures en retard</p>
+          </div>
+        </div>
+        <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#DDF5EC] text-[#17A673] flex items-center justify-center">
+            <Bell className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-500">Rappels envoyés</p>
+            <p className="text-xl font-extrabold text-slate-900">{sent.length}</p>
+            <p className="text-[11px] text-slate-400">cette session</p>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="p-4 bg-white rounded-2xl border border-rose-200/60 bg-rose-50/20 shadow-2xs space-y-1">
-          <p className="text-xs font-bold text-[#E5544B]">Total impayés à recouvrer</p>
-          <p className="text-2xl font-extrabold text-[#E5544B]">{totalDueSum.toLocaleString('fr-FR')} MAD</p>
-          <p className="text-[10px] text-slate-400">{invoices.length} facture(s) en retard</p>
-        </Card>
-        <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-1">
-          <p className="text-xs font-bold text-slate-500">Relances envoyées cette session</p>
-          <p className="text-2xl font-extrabold text-[#16212B]">{sentIds.size}</p>
-        </Card>
-      </div>
-
-      <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-2xs">
-        <div className="relative w-full sm:w-72">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <Input placeholder="Rechercher par élève..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9 text-xs rounded-xl bg-slate-50 border-none" />
+      {/* Overdue invoices */}
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+          <Clock className="w-4 h-4 text-rose-600" />
+          <h2 className="font-semibold text-slate-900">Factures en retard de paiement</h2>
         </div>
-      </div>
-
-      <div className="space-y-3">
-        {filtered.length === 0 && (
-          <Card className="p-8 bg-white rounded-2xl border border-slate-200/80 shadow-2xs text-center text-xs text-slate-400">
-            Aucune facture en retard.
-          </Card>
+        {overdue.length === 0 ? (
+          <p className="px-5 py-8 text-sm text-slate-500">Aucune facture en retard. Toutes les échéances sont à jour.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-slate-500 border-b border-slate-100">
+                  <th className="px-5 py-3 font-semibold">N° facture</th>
+                  <th className="px-5 py-3 font-semibold">Élève</th>
+                  <th className="px-5 py-3 font-semibold">Échéance</th>
+                  <th className="px-5 py-3 text-right font-semibold">Montant</th>
+                  <th className="px-5 py-3 text-right font-semibold">Payé</th>
+                  <th className="px-5 py-3 text-right font-semibold">Solde</th>
+                  <th className="px-5 py-3 text-right font-semibold">Statut</th>
+                  <th className="px-5 py-3 text-right font-semibold">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {overdue.map((inv) => {
+                  const balance = Number(inv.netAmount) - Number(inv.paidAmount);
+                  return (
+                    <tr key={inv.id} className="hover:bg-slate-50/80">
+                      <td className="px-5 py-3 font-mono text-xs font-bold text-[#0066FF]">{inv.invoiceNumber}</td>
+                      <td className="px-5 py-3 font-medium text-slate-800">{inv.studentName}</td>
+                      <td className="px-5 py-3 text-xs text-slate-500">{formatDate(inv.dueDate)}</td>
+                      <td className="px-5 py-3 text-right font-semibold text-slate-800">{mad(Number(inv.netAmount))}</td>
+                      <td className="px-5 py-3 text-right text-slate-500">{mad(Number(inv.paidAmount))}</td>
+                      <td className="px-5 py-3 text-right font-bold text-rose-600">{mad(balance)}</td>
+                      <td className="px-5 py-3 text-right">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_BADGE[inv.status] ?? 'bg-slate-100 text-slate-600'}`}>
+                          {STATUS_LABELS[inv.status] ?? inv.status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <button
+                          type="button"
+                          disabled={sendingId === inv.id}
+                          onClick={() => sendReminder(inv.id, inv.studentName)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#0066FF] rounded-lg hover:bg-[#0052CC] disabled:opacity-60 disabled:cursor-not-allowed transition"
+                        >
+                          {sendingId === inv.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                          Envoyer un rappel
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
-        {filtered.map((r) => {
-          const balance = r.netAmount - r.paidAmount;
-          const alreadySent = sentIds.has(r.id);
-          return (
-            <Card key={r.id} className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-extrabold text-[#16212B]">{r.studentName}</h3>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FCE4E2] text-[#E5544B]">
-                      {daysOverdue(r.dueDate)}
-                      {' '}
-                      jour(s) de retard
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-slate-400">
-                    Facture
-                    {' '}
-                    {r.invoiceNumber}
-                    {' '}
-                    · échéance
-                    {' '}
-                    {r.dueDate}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <p className="text-xl font-extrabold text-[#E5544B]">{balance.toLocaleString('fr-FR')} MAD</p>
-                    <p className="text-[10px] text-slate-400">Solde dû</p>
-                  </div>
-                  <Button
-                    size="sm"
-                    disabled={sendingId === r.id || alreadySent}
-                    onClick={() => handleSend(r.id)}
-                    className="h-8 px-3 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold gap-1"
-                  >
-                    {alreadySent ? <Phone className="w-3.5 h-3.5" /> : <MessageSquare className="w-3.5 h-3.5" />}
-                    {alreadySent ? 'Relance envoyée' : 'Relancer par SMS'}
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
       </div>
+
+      {/* Send log */}
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+          <Bell className="w-4 h-4 text-[#0066FF]" />
+          <h2 className="font-semibold text-slate-900">Journal des rappels envoyés</h2>
+        </div>
+        {sent.length === 0 ? (
+          <p className="px-5 py-8 text-sm text-slate-500">Aucun rappel envoyé lors de cette session.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-slate-500 border-b border-slate-100">
+                  <th className="px-5 py-3 font-semibold">Date / heure</th>
+                  <th className="px-5 py-3 font-semibold">Élève</th>
+                  <th className="px-5 py-3 font-semibold">N° facture</th>
+                  <th className="px-5 py-3 font-semibold">Destinataire</th>
+                  <th className="px-5 py-3 font-semibold">Message</th>
+                  <th className="px-5 py-3 text-right font-semibold">Statut</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {sent.map((s) => (
+                  <tr key={s.id} className="hover:bg-slate-50/80">
+                    <td className="px-5 py-3 text-xs text-slate-500">{new Date(s.sentAt).toLocaleString('fr-FR')}</td>
+                    <td className="px-5 py-3 font-medium text-slate-800">{s.studentName}</td>
+                    <td className="px-5 py-3 font-mono text-xs font-bold text-[#0066FF]">{s.invoiceNumber}</td>
+                    <td className="px-5 py-3 text-xs text-slate-500">{s.recipientPhone}</td>
+                    <td className="px-5 py-3 text-xs text-slate-600 max-w-md truncate" title={s.body}>{s.body}</td>
+                    <td className="px-5 py-3 text-right">
+                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-[#DDF5EC] text-[#17A673]">Envoyé</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <p className="text-xs text-slate-400 flex items-center gap-1">
+        <CheckCircle2 className="w-3.5 h-3.5" /> Rappels envoyés en SMS simulé via le module Finance réel.
+      </p>
     </div>
   );
 }

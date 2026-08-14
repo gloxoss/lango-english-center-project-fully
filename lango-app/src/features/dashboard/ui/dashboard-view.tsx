@@ -72,6 +72,7 @@ export function DashboardView({ locale }: { locale: string }) {
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [summary, setSummary] = useState<FullDashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [calendarEvents, setCalendarEvents] = useState([]);
 
   useEffect(() => {
     async function load() {
@@ -87,7 +88,19 @@ export function DashboardView({ locale }: { locale: string }) {
         setLoading(false);
       }
     }
+    async function loadEvents() {
+      try {
+        const res = await fetch('/api/addons/events/calendar');
+        if (res.ok) {
+          const json = await res.json();
+          setCalendarEvents(json.data || []);
+        }
+      } catch (err) {
+        console.error('Failed to load events', err);
+      }
+    }
     load();
+    loadEvents();
   }, []);
 
   const handleConfirmNav = () => {
@@ -212,7 +225,7 @@ export function DashboardView({ locale }: { locale: string }) {
       {/* 4. Bottom Row: Interactive Calendar & Birthday Tracker */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8 min-h-[420px]">
-          <DashboardCalendarWidget />
+          <DashboardCalendarWidget events={calendarEvents} />
         </div>
         <div className="lg:col-span-4 min-h-[420px]">
           <BirthdayTrackerWidget

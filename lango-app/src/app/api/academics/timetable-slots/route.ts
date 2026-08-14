@@ -20,6 +20,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const classSectionId = searchParams.get('classSectionId');
     const offeringId = searchParams.get('offeringId');
+    const roomLabel = searchParams.get('roomLabel');
     let versionId = searchParams.get('versionId');
 
     // Teachers can only ever see their own schedule - self-scope regardless
@@ -63,6 +64,9 @@ export async function GET(request: Request) {
     }
     if (teacherId) {
       filters.push(eq(classScheduleSlots.teacherId, teacherId));
+    }
+    if (roomLabel) {
+      filters.push(eq(classScheduleSlots.roomLabel, roomLabel));
     }
 
     const rows = await db

@@ -18,6 +18,10 @@ const updateQuestionSchema = z.object({
     optionText: z.string().trim().min(1),
     isCorrect: z.boolean(),
   })).max(8).optional(),
+  sectionLabel: z.string().trim().max(255).optional().nullable(),
+  difficulty: z.enum(['facile', 'moyen', 'difficile']).optional().nullable(),
+  subjectId: z.string().uuid().optional().nullable(),
+  cycle: z.enum(['maternelle', 'primaire', 'college', 'lycee']).optional().nullable(),
 }).strict();
 
 type RouteParams = { params: Promise<{ examId: string; questionId: string }> };
@@ -75,6 +79,10 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       if (body.questionText !== undefined) updateFields.questionText = body.questionText;
       if (body.marks !== undefined) updateFields.marks = String(body.marks);
       if (body.orderIndex !== undefined) updateFields.orderIndex = body.orderIndex;
+      if (body.sectionLabel !== undefined) updateFields.sectionLabel = body.sectionLabel;
+      if (body.difficulty !== undefined) updateFields.difficulty = body.difficulty;
+      if (body.subjectId !== undefined) updateFields.subjectId = body.subjectId;
+      if (body.cycle !== undefined) updateFields.cycle = body.cycle;
 
       const [updated] = await tx
         .update(onlineExamQuestions)

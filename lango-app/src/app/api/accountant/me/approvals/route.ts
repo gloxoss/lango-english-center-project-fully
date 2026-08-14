@@ -8,23 +8,24 @@ import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { decideCreditNote } from '@/libs/services/credit-note-approval';
-import { creditNotes, expenses, user } from '@/models/Schema';
+import { decideRefund } from '@/libs/services/refund-approval';
+import { creditNotes, expenses, refunds, user } from '@/models/Schema';
 
 const actionSchema = z.object({
   id: z.string().uuid(),
-  type: z.enum(['expense', 'credit_note']),
+  type: z.enum(['expense', 'credit_note', 'refund']),
   action: z.enum(['approve', 'reject']),
   reason: z.string().max(500).optional(),
 }).strict();
 
 export async function GET(req: NextRequest) {
   try {
-    const ctx = await requireRequestContext(req);
+    const ctx = await requireRequestContext(req, ['school_admin', 'accountant']);
     await requireCapability(ctx, 'finance.read');
 
     const tenantId = ctx.tenantId!;
 
-    const [pendingExpenses, pendingCreditNotes] = await Promise.all([
+    const [pendingExpenses, pendingCreditNotes, pendingRefunds] = await Promise.all([
       db
         .select({
           id: expenses.id,
@@ -52,6 +53,19 @@ export async function GET(req: NextRequest) {
         .leftJoin(user, eq(creditNotes.studentId, user.id))
         .where(and(eq(creditNotes.tenantId, tenantId), eq(creditNotes.status, 'pending')))
         .orderBy(desc(creditNotes.createdAt)),
+      db
+        .select({
+          id: refunds.id,
+          refundNumber: refunds.refundNumber,
+          amount: refunds.amount,
+          reason: refunds.reason,
+          createdAt: refunds.createdAt,
+          studentName: user.name,
+        })
+        .from(refunds)
+        .leftJoin(user, eq(refunds.studentId, user.id))
+        .where(and(eq(refunds.tenantId, tenantId), eq(refunds.status, 'pending')))
+        .orderBy(desc(refunds.createdAt)),
     ]);
 
     return NextResponse.json({
@@ -59,7 +73,8 @@ export async function GET(req: NextRequest) {
       data: {
         pendingExpenses,
         pendingCreditNotes,
-        totalPendingCount: pendingExpenses.length + pendingCreditNotes.length,
+        pendingRefunds,
+        totalPendingCount: pendingExpenses.length + pendingCreditNotes.length + pendingRefunds.length,
       },
     });
   } catch (error) {
@@ -69,7 +84,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const ctx = await requireRequestContext(req);
+    const ctx = await requireRequestContext(req, ['school_admin', 'accountant']);
     await requireCapability(ctx, 'finance.approve');
 
     const tenantId = ctx.tenantId!;
@@ -91,6 +106,17 @@ export async function POST(req: NextRequest) {
 
     if (body.type === 'credit_note') {
       const updated = await decideCreditNote({
+        tenantId,
+        id: body.id,
+        decision: body.action === 'approve' ? 'approved' : 'rejected',
+        decidedById: ctx.userId,
+        rejectionReason: body.reason,
+      });
+      return NextResponse.json({ success: true, data: updated });
+    }
+
+    if (body.type === 'refund') {
+      const updated = await decideRefund({
         tenantId,
         id: body.id,
         decision: body.action === 'approve' ? 'approved' : 'rejected',

@@ -10,18 +10,15 @@ import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { tryPostPaymentGLEntry } from '@/libs/finance/gl-auto-post';
 import { centsToMoney, moneyToCents } from '@/libs/finance/money';
-import { cashierSessions, invoices, paymentAllocations, payments, user } from '@/models/Schema';
-
-const moneyInput = z.union([
-  z.string().regex(/^(?:0|[1-9]\d{0,11})(?:\.\d{1,2})?$/),
-  z.number().positive().finite().transform(value => value.toFixed(2)),
-]).refine(value => moneyToCents(value) > BigInt(0));
+import { moneyInput } from '@/libs/finance/validation';
+import { cashierSessions, invoiceEvents, invoices, paymentAllocations, payments, user } from '@/models/Schema';
 
 const createPaymentSchema = z.object({
   invoiceId: z.string().uuid(),
   amount: moneyInput,
   paymentMethod: z.enum(['cash', 'card', 'transfer', 'check']),
   referenceId: z.string().trim().max(100).optional(),
+  idempotencyKey: z.string().trim().min(1).max(100).optional(),
 }).strict();
 
 export async function GET(request: Request) {
@@ -70,11 +67,23 @@ export async function POST(request: Request) {
       }
     }
 
-    const { payment, updatedInvoice } = await db.transaction(async (tx) => {
+    const { payment, updatedInvoice, idempotent } = await db.transaction(async (tx) => {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${tenantId}:${body.invoiceId}`}, 0))`);
       const [invoice] = await tx.select().from(invoices).where(and(eq(invoices.id, body.invoiceId), eq(invoices.tenantId, tenantId))).limit(1);
       if (!invoice) {
         throw new ApiError(422, 'INVALID_REFERENCE', 'La facture indiquée n’existe pas.');
+      }
+
+      // Idempotent replay: same tenant + idempotencyKey returns the original
+      // payment instead of double-posting. Serialized by the invoice lock, so
+      // concurrent duplicates can't both pass this check.
+      if (body.idempotencyKey) {
+        const [existing] = await tx.select().from(payments)
+          .where(and(eq(payments.tenantId, tenantId), eq(payments.idempotencyKey, body.idempotencyKey)))
+          .limit(1);
+        if (existing) {
+          return { payment: existing, updatedInvoice: invoice, idempotent: true };
+        }
       }
 
       const remainingCents = moneyToCents(String(invoice.netAmount)) - moneyToCents(String(invoice.paidAmount));
@@ -89,6 +98,7 @@ export async function POST(request: Request) {
         amount: Number(centsToMoney(paymentCents)),
         paymentMethod: body.paymentMethod,
         referenceId: body.referenceId || null,
+        idempotencyKey: body.idempotencyKey || null,
         receivedById: context.userId,
       }).returning();
       if (!newPayment) {
@@ -113,8 +123,30 @@ export async function POST(request: Request) {
       if (!updated) {
         throw new ApiError(500, 'INVOICE_UPDATE_FAILED', 'Facture non mise à jour.');
       }
-      return { payment: newPayment, updatedInvoice: updated };
+
+      await tx.insert(invoiceEvents).values({
+        tenantId,
+        invoiceId: body.invoiceId,
+        eventType: 'payment_recorded',
+        payload: {
+          paymentId: newPayment.id,
+          amountCents: paymentCents.toString(),
+          method: body.paymentMethod,
+        },
+        actorUserId: context.userId,
+      });
+
+      return { payment: newPayment, updatedInvoice: updated, idempotent: false };
     });
+
+    if (idempotent) {
+      return NextResponse.json({
+        success: true,
+        data: { payment, invoice: updatedInvoice },
+        idempotent: true,
+        message: 'Paiement déjà enregistré (clé d\'idempotence) — aucune nouvelle écriture.',
+      });
+    }
 
     recordAudit(context, 'create', 'payment', payment.id, {
       invoiceId: body.invoiceId,

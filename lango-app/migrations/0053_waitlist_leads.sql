@@ -1,0 +1,6 @@
+-- No-op: restores a file the migration journal has referenced since before
+-- this session (migrations/meta/_journal.json idx 52, tag "0053_waitlist_leads"),
+-- but whose .sql file was missing on disk, blocking `drizzle-kit migrate` from
+-- ever reaching later migrations. The waitlist/leads feature it once
+-- corresponded to is not present in the current schema. Left empty since
+-- there is nothing to recreate.

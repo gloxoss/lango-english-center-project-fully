@@ -1,5 +1,8 @@
 import { ClassResultsView } from '@/features/academics/ui/class-results-view';
+import { requireServerPage } from '@/libs/api/page-guard';
 
-export default function ClassResultsPage() {
+export default async function ClassResultsPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
   return <ClassResultsView />;
 }

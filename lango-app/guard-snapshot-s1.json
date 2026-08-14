@@ -1,0 +1,101 @@
+{
+  "atlasBranchDigest": "3529a41c4334c9f1b190",
+  "atlasBranchRow": {
+    "id": "1c14b3ae-9f95-42fb-8734-3e459b710c23",
+    "name": "Atlas Campus",
+    "code": "ATL",
+    "city": "Casablanca",
+    "is_default": true,
+    "is_active": true
+  },
+  "nonFixtureUsersDigest": "972e0e70407aa6eed52a",
+  "nonFixtureUsers": [
+    {
+      "id": "STU-001",
+      "email": "stu-001@placeholder.local",
+      "role": "student",
+      "user_status": "active",
+      "branch_id": null
+    },
+    {
+      "id": "STU-002",
+      "email": "stu-002@placeholder.local",
+      "role": "student",
+      "user_status": "active",
+      "branch_id": null
+    },
+    {
+      "id": "STU-003",
+      "email": "stu-003@placeholder.local",
+      "role": "student",
+      "user_status": "active",
+      "branch_id": null
+    },
+    {
+      "id": "USR-001",
+      "email": "y.elamrani@atlas.ma",
+      "role": "school_admin",
+      "user_status": "active",
+      "branch_id": null
+    },
+    {
+      "id": "USR-002",
+      "email": "fz.idrissi@atlas.ma",
+      "role": "teacher",
+      "user_status": "active",
+      "branch_id": null
+    },
+    {
+      "id": "USR-003",
+      "email": "karim.amrani@email.com",
+      "role": "parent",
+      "user_status": "active",
+      "branch_id": null
+    },
+    {
+      "id": "USR-ACC-001",
+      "email": "accountant@atlas.ma",
+      "role": "accountant",
+      "user_status": "active",
+      "branch_id": null
+    }
+  ],
+  "nonFixtureGuardiansDigest": "8aed0d5e41c632a3b1f5",
+  "nonFixtureGuardians": [
+    {
+      "id": "b9ca7476-f609-4197-8f53-369eb3e73996",
+      "first_name": "Hakim",
+      "last_name": "Zaki",
+      "email": null,
+      "user_id": null
+    }
+  ],
+  "nonFixtureGates": [],
+  "nonFixtureShifts": [],
+  "guardCounts": {
+    "guard_gates": 1,
+    "guard_shifts": 1,
+    "guard_assignments": 1,
+    "guard_pickup_authorizations": 1,
+    "guard_release_events": 0,
+    "guard_incidents": 0,
+    "guard_incident_attachments": 0,
+    "guard_incident_actions": 0,
+    "guard_emergency_activations": 0,
+    "guard_emergency_acknowledgements": 0,
+    "guard_gate_scan_events": 0,
+    "guard_kiosk_sessions": 0,
+    "guard_visits": 0,
+    "guard_visitor_invitations": 0
+  },
+  "fixture": {
+    "branchId": "5cf7a4dd-150d-4c5c-96c4-6110b1ecf163",
+    "branchCode": "VERIFY-GUARD",
+    "guardUserPresent": true,
+    "guardianEmailPresent": true,
+    "gateCount": 1,
+    "shiftCount": 1,
+    "assignmentCount": 1,
+    "authCount": 1
+  }
+}

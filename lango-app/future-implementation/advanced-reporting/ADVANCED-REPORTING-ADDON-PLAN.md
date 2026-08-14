@@ -1,6 +1,16 @@
 # Advanced Reporting Add-on — Full Implementation Plan
 
-Status: planned add-on. Domain source reports remain core; this add-on supplies a governed catalog, cross-module navigation, advanced filters, scheduled exports and analytics. Decisions are provisional.
+**STATUS: IMPLEMENTED — the "100% deployed to production" claim below and in
+`EXECUTION-AUDIT-REPORT.md` is disproven; corrected 2026-08-11.** The code is real and
+live-verified (`src/addons/advanced-reporting/` run-engine/catalog/schedules+worker/
+secure-download/exporters, migrations `0059`/`0062`, 11 API routes, `dashboard/reports/*`
+pages), but it is **not activated for any real tenant**: `addon_entitlements` has zero rows
+for `advanced-reporting` outside the `seed-full.ts` demo-tenant seed (no migration backfills
+it, unlike `0035_backfill_multi_branch_entitlement.sql` did for `multi-branch`) — intentional
+per PRD, to be flipped when shipping. `schedule-worker` is also an in-process `setInterval`
+with no cross-instance lock, a gap for multi-instance deploys. See
+`future-implementation/_tracker/PLANS-AUDIT-AND-PROGRESS.md` (#35) for full verified detail.
+Domain source reports remain core; this add-on supplies a governed catalog, cross-module navigation, advanced filters, scheduled exports and analytics.
 
 ## Screen inventory
 

@@ -1,6 +1,10 @@
-# Library Management Add-on — Future Implementation Plan
+# Library Management Add-on — Implementation Plan
 
-Status: planned, not built. Product decisions are provisional pending owner review.
+Status: **operational core implemented and verified** (2026-08-09) — catalog, copies, policies,
+circulation, holds, transfers, stocktake, charges (incl. Accounting posting), safe CSV import/export,
+and member self-service are DB-backed and covered by 32 live vitest tests. Product decisions below
+remain the authoritative scope; see `VERIFICATION-EVIDENCE.md` and `PLAN-STATUS.md` for the
+delivery record. The remaining manual/browser flows are tracked in `MANUAL-TESTING.md`.
 
 ## Screen inventory
 

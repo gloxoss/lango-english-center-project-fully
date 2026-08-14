@@ -4,112 +4,82 @@ import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  CheckCircle2,
-  AlertTriangle,
-  FileSpreadsheet,
-  Download,
-  Upload,
-  AlertCircle,
-} from 'lucide-react';
-import { findCsvColumn, parseCsv } from '@/libs/csv';
+import { Upload, Download, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 
-type ImportRow = {
-  line: number;
+type ParsedRow = {
   fullName: string;
-  email: string;
-  phone: string;
-  classLabel: string;
-  guardianName: string;
-  guardianPhone: string;
-  valid: boolean;
-  errorMessage?: string;
+  email?: string;
+  phone?: string;
+  classLabel?: string;
+  dateOfBirth?: string;
+  guardianName?: string;
+  guardianPhone?: string;
 };
+type ImportResult = { line: number; status: 'inserted' | 'error'; message?: string; id?: string };
 
-const HEADERS = ['Nom complet', 'Email', 'Téléphone', 'Classe', 'Tuteur', 'Téléphone tuteur'];
-const TEMPLATE_CSV = `${HEADERS.join(',')}\nYassine El Amrani,yassine.elamrani@email.com,0612345678,2nde A,M. El Amrani,0687654321\n`;
+const TEMPLATE_HEADERS = ['fullName', 'email', 'phone', 'classLabel', 'dateOfBirth', 'guardianName', 'guardianPhone'];
 
-export function ExcelImportView({ locale }: { locale: string }) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [rows, setRows] = useState<ImportRow[]>([]);
-  const [importing, setImporting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ insertedCount: number; errorCount: number; message: string } | null>(null);
-
-  function handleDownloadTemplate() {
-    const blob = new Blob([TEMPLATE_CSV], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'modele_import_eleves.csv';
-    link.click();
-    URL.revokeObjectURL(url);
+// ponytail: the "Création manuelle" tab this page used to have was a second,
+// fully fake duplicate of the real admission wizard (/students/add) already
+// built - dropped in favor of linking to it, not maintaining two
+// implementations of the same job. POST /api/students/import + its
+// studentImportSchema are real (built by the other session working this
+// repo in parallel) - wired to that exact shape rather than a fresh one.
+function parseCsv(text: string): ParsedRow[] {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (lines.length < 2) {
+    return [];
   }
-
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) {
-      return;
-    }
-    setFileName(file.name);
-    setError(null);
-    setResult(null);
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const text = String(reader.result ?? '');
-      const parsed = parseCsv(text);
-      if (parsed.length < 2) {
-        setError('Le fichier ne contient aucune ligne de données.');
-        setRows([]);
-        return;
-      }
-      const [header, ...dataRows] = parsed as [string[], ...string[][]];
-      const nameCol = findCsvColumn(header, ['nom complet', 'nom', 'fullname']);
-      const emailCol = findCsvColumn(header, ['email', 'e-mail']);
-      const phoneCol = findCsvColumn(header, ['téléphone', 'telephone', 'phone']);
-      const classCol = findCsvColumn(header, ['classe', 'class']);
-      const guardianCol = findCsvColumn(header, ['tuteur', 'parent', 'guardian']);
-      const guardianPhoneCol = findCsvColumn(header, ['téléphone tuteur', 'telephone tuteur', 'guardian phone']);
-
-      if (nameCol === -1) {
-        setError('Colonne "Nom complet" introuvable. Utilisez le modèle fourni.');
-        setRows([]);
-        return;
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const parsedRows: ImportRow[] = dataRows.map((cols, idx) => {
-        const fullName = (cols[nameCol] ?? '').trim();
-        const email = emailCol !== -1 ? (cols[emailCol] ?? '').trim() : '';
-        let errorMessage: string | undefined;
-        if (!fullName) {
-          errorMessage = 'Nom complet manquant';
-        } else if (email && !emailRegex.test(email)) {
-          errorMessage = 'Email invalide';
-        }
-        return {
-          line: idx + 2,
-          fullName,
-          email,
-          phone: phoneCol !== -1 ? (cols[phoneCol] ?? '').trim() : '',
-          classLabel: classCol !== -1 ? (cols[classCol] ?? '').trim() : '',
-          guardianName: guardianCol !== -1 ? (cols[guardianCol] ?? '').trim() : '',
-          guardianPhone: guardianPhoneCol !== -1 ? (cols[guardianPhoneCol] ?? '').trim() : '',
-          valid: !errorMessage,
-          errorMessage,
-        };
-      });
-      setRows(parsedRows);
+  const headers = lines[0]!.split(',').map(h => h.trim());
+  return lines.slice(1).map((line) => {
+    const cells = line.split(',').map(c => c.trim());
+    const row: Record<string, string> = {};
+    headers.forEach((h, i) => { row[h] = cells[i] ?? ''; });
+    return {
+      fullName: row.fullName ?? '',
+      email: row.email || undefined,
+      phone: row.phone || undefined,
+      classLabel: row.classLabel || undefined,
+      dateOfBirth: row.dateOfBirth || undefined,
+      guardianName: row.guardianName || undefined,
+      guardianPhone: row.guardianPhone || undefined,
     };
-    reader.readAsText(file, 'utf-8');
-  }
+  }).filter(r => r.fullName);
+}
 
-  async function handleConfirmImport() {
-    const validRows = rows.filter(r => r.valid);
-    if (validRows.length === 0) {
-      setError('Aucune ligne valide à importer.');
+export function ExcelImportView({ locale: _locale }: { locale?: string } = {}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [rows, setRows] = useState<ParsedRow[]>([]);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [results, setResults] = useState<ImportResult[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const downloadTemplate = () => {
+    const csv = [TEMPLATE_HEADERS.join(','), 'Yassine El Amrani,yassine@example.com,+212600000000,2nde A'].join('\n');
+    const blob = new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'modele-import-eleves.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleFile = async (file: File) => {
+    setFileName(file.name);
+    setResults(null);
+    setError(null);
+    const text = await file.text();
+    const parsed = parseCsv(text);
+    if (parsed.length === 0) {
+      setError('Aucune ligne valide trouvée. Vérifiez que le fichier suit le modèle (colonne fullName requise).');
+    }
+    setRows(parsed);
+  };
+
+  const handleImport = async () => {
+    if (rows.length === 0) {
       return;
     }
     setImporting(true);
@@ -118,154 +88,131 @@ export function ExcelImportView({ locale }: { locale: string }) {
       const res = await fetch('/api/students/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          rows: validRows.map(r => ({
-            fullName: r.fullName,
-            ...(r.email ? { email: r.email } : {}),
-            ...(r.phone ? { phone: r.phone } : {}),
-            ...(r.classLabel ? { classLabel: r.classLabel } : {}),
-            ...(r.guardianName ? { guardianName: r.guardianName } : {}),
-            ...(r.guardianPhone ? { guardianPhone: r.guardianPhone } : {}),
-          })),
-        }),
+        body: JSON.stringify({ rows }),
       });
       const json = await res.json();
-      if (!res.ok || !json.success) {
-        setError(json.message || 'Échec de l\'import.');
+      if (!json.success) {
+        setError(json.error?.message || json.message || 'Échec de l\'import.');
         return;
       }
-      setResult({ insertedCount: json.insertedCount, errorCount: json.errorCount, message: json.message });
-      setRows([]);
-      setFileName(null);
-    } catch (err) {
-      console.error('Import failed', err);
-      setError('Connexion impossible. Vérifiez votre réseau.');
+      setResults(json.results);
+    } catch {
+      setError('Connexion impossible.');
     } finally {
       setImporting(false);
     }
-  }
-
-  const validCount = rows.filter(r => r.valid).length;
-  const errorCount = rows.length - validCount;
+  };
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
-      <div>
-        <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Import CSV</h1>
-        <p className="text-xs text-slate-500 mt-1">Importez vos données élèves à partir d&apos;un fichier CSV.</p>
+    <div className="space-y-6 max-w-[1200px] mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Import massif d&apos;élèves</h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Importez un lot d&apos;élèves via fichier CSV. Pour un seul élève, utilisez plutôt{' '}
+            <Link href={`/${_locale || 'fr'}/dashboard/students/add`} className="text-[#2487B8] font-bold hover:underline">le formulaire d&apos;admission</Link>.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={downloadTemplate} className="h-10 rounded-xl px-4 gap-2 border-slate-200 text-xs font-bold">
+          <Download className="w-4 h-4 text-slate-600" />
+          <span>Télécharger le modèle CSV</span>
+        </Button>
       </div>
+
+      <Card className="p-8 bg-white rounded-2xl border-2 border-dashed border-slate-200 shadow-2xs text-center space-y-3">
+        <div className="w-12 h-12 rounded-2xl bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center mx-auto">
+          <Upload className="w-6 h-6" />
+        </div>
+        <div>
+          <p className="text-sm font-extrabold text-[#16212B]">{fileName ?? 'Sélectionnez votre fichier CSV'}</p>
+          <p className="text-xs text-slate-400 mt-0.5">Colonnes attendues : fullName (requis), email, phone, classLabel</p>
+        </div>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".csv"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              handleFile(file);
+            }
+          }}
+        />
+        <Button onClick={() => fileRef.current?.click()} variant="outline" size="sm" className="h-9 rounded-xl px-4 text-xs font-bold border-slate-200 text-[#2487B8]">
+          Parcourir mes fichiers
+        </Button>
+      </Card>
 
       {error && (
         <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2.5 text-rose-700 text-xs font-semibold">
-          <AlertCircle className="w-4 h-4 shrink-0" />
+          <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
-      {result && (
-        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2.5 text-emerald-700 text-xs font-semibold">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
-          <span>{result.message}</span>
-        </div>
-      )}
 
-      {/* Upload */}
-      <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-        <input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleFileChange} className="hidden" />
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center space-y-2 bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer"
-        >
-          <Upload className="w-8 h-8 mx-auto text-[#2487B8]" />
-          <p className="font-bold text-slate-700 text-xs">{fileName ?? 'Cliquez pour sélectionner un fichier CSV'}</p>
-          <p className="text-[10px] text-slate-400">Colonnes attendues : {HEADERS.join(', ')}</p>
-        </div>
-      </Card>
-
-      {/* Preview table */}
-      {rows.length > 0 && (
-        <>
-          <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
-              <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                  <FileSpreadsheet className="w-5 h-5" />
-                </div>
-                <p className="font-bold text-xs text-[#16212B]">{fileName}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-xl font-extrabold text-[#2487B8]">{validCount}</p>
-                <p className="text-[10px] text-slate-400">Lignes valides</p>
-              </div>
-              <div className="text-center">
-                <p className="text-xl font-extrabold text-[#E5544B]">{errorCount}</p>
-                <p className="text-[10px] text-slate-400">Lignes avec erreurs</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-[#F6F9FC] text-slate-500 font-semibold border-b border-slate-200/80">
-                  <tr>
-                    <th className="py-3 px-4">Ligne</th>
-                    <th className="py-3 px-4">Statut</th>
-                    <th className="py-3 px-4">Nom complet</th>
-                    <th className="py-3 px-4">Classe</th>
-                    <th className="py-3 px-4">Téléphone</th>
-                    <th className="py-3 px-4">Email</th>
-                    <th className="py-3 px-4">Erreur</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {rows.map(row => (
-                    <tr key={row.line} className={row.valid ? 'hover:bg-slate-50/80' : 'bg-rose-50/50 hover:bg-rose-50'}>
-                      <td className="py-3 px-4 font-mono text-slate-400">{row.line}</td>
-                      <td className="py-3 px-4">
-                        {row.valid ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-bold text-[#2487B8]"><CheckCircle2 className="w-3.5 h-3.5" /> Valide</span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-xs font-bold text-[#E5544B]"><AlertTriangle className="w-3.5 h-3.5" /> Erreur</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 font-semibold text-[#16212B]">{row.fullName || '—'}</td>
-                      <td className="py-3 px-4 text-slate-700">{row.classLabel || '—'}</td>
-                      <td className="py-3 px-4 font-mono text-slate-600">{row.phone || '—'}</td>
-                      <td className="py-3 px-4 text-slate-500">{row.email || '—'}</td>
-                      <td className="py-3 px-4">{row.errorMessage ? <span className="font-bold text-[#E5544B] text-[11px]">{row.errorMessage}</span> : <span className="text-slate-300">—</span>}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </>
-      )}
-
-      {/* Footer Actions Bar */}
-      <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs flex items-center justify-between">
-        <Button variant="outline" size="sm" className="gap-2 text-xs rounded-xl h-10" onClick={handleDownloadTemplate}>
-          <Download className="w-4 h-4" />
-          <span>Télécharger le modèle</span>
-        </Button>
-
-        <div className="flex items-center gap-3">
-          <Link href={`/${locale}/dashboard/students`}>
-            <Button variant="outline" size="sm" className="text-xs rounded-xl h-10 px-4">
-              Retour
+      {rows.length > 0 && !results && (
+        <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+          <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+            <p className="text-xs font-bold text-[#16212B]">{rows.length} ligne(s) prête(s) à importer</p>
+            <Button size="sm" disabled={importing} onClick={handleImport} className="h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold gap-1.5">
+              {importing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+              {importing ? 'Import en cours...' : 'Importer'}
             </Button>
-          </Link>
-          <Button
-            variant="primary"
-            size="sm"
-            className="text-xs rounded-xl h-10 px-5"
-            disabled={importing || validCount === 0}
-            onClick={handleConfirmImport}
-          >
-            {importing ? 'Import en cours...' : `Confirmer l'import (${validCount})`}
-          </Button>
-        </div>
-      </div>
+          </div>
+          <table className="w-full text-left text-xs">
+            <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
+              <tr>
+                <th className="py-2.5 px-4">Nom</th>
+                <th className="py-2.5 px-4">Email</th>
+                <th className="py-2.5 px-4">Téléphone</th>
+                <th className="py-2.5 px-4">Classe</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {rows.map((r, i) => (
+                <tr key={i}>
+                  <td className="py-2 px-4 font-bold text-[#16212B]">{r.fullName}</td>
+                  <td className="py-2 px-4 text-slate-500">{r.email ?? '—'}</td>
+                  <td className="py-2 px-4 text-slate-500">{r.phone ?? '—'}</td>
+                  <td className="py-2 px-4 text-slate-500">{r.classLabel ?? '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      )}
+
+      {results && (
+        <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+          <div className="p-4 border-b border-slate-100">
+            <p className="text-xs font-bold text-[#16212B]">
+              {results.filter(r => r.status === 'inserted').length} élève(s) importé(s) sur {results.length}
+            </p>
+          </div>
+          <table className="w-full text-left text-xs">
+            <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
+              <tr>
+                <th className="py-2.5 px-4">Ligne</th>
+                <th className="py-2.5 px-4">Nom</th>
+                <th className="py-2.5 px-4">Statut</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {results.map(r => (
+                <tr key={r.line}>
+                  <td className="py-2 px-4 text-slate-500">{r.line}</td>
+                  <td className="py-2 px-4 font-bold text-[#16212B]">{rows[r.line - 1]?.fullName ?? '—'}</td>
+                  <td className="py-2 px-4">
+                    {r.status === 'inserted' && <span className="flex items-center gap-1 text-[#17A673] font-bold"><CheckCircle2 className="w-3.5 h-3.5" /> Importé</span>}
+                    {r.status === 'error' && <span className="text-rose-600 font-bold">Échec : {r.message}</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      )}
     </div>
   );
 }

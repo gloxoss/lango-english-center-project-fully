@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from '@/components/ui/select';
-import { GraduationCap, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { GraduationCap, AlertCircle, CheckCircle2, Users, Search, ArrowRight, CheckSquare, Square } from 'lucide-react';
 
 type ApiStudent = { id: string; fullName: string; matricule: string | null };
 type ApiClassSection = { id: string; className: string; sectionName: string };
@@ -17,6 +18,7 @@ export function PromotionsView() {
   const [targetId, setTargetId] = useState('');
   const [roster, setRoster] = useState<ApiStudent[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -51,6 +53,13 @@ export function PromotionsView() {
     }
     return map;
   }, [classSections]);
+
+  const filteredRoster = useMemo(() => {
+    return roster.filter((s) =>
+      s.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (s.matricule ?? '').toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [roster, searchQuery]);
 
   function toggleStudent(id: string) {
     setSelectedIds((prev) => {
@@ -114,6 +123,42 @@ export function PromotionsView() {
         <p className="text-xs text-slate-500 mt-1">Promouvoir les élèves d&apos;une classe vers une autre en un lot</p>
       </div>
 
+      {/* 3 Top Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#DCEBF4] shrink-0 flex items-center justify-center text-[#1B6C93]">
+            <Users className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-slate-400">Classes configurées</p>
+            <p className="text-xl font-extrabold text-[#16212B]">{classSections.length}</p>
+            <p className="text-[10px] font-semibold text-[#17A673]">Prêtes pour promotion</p>
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-100 shrink-0 flex items-center justify-center text-amber-700">
+            <GraduationCap className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-slate-400">Élèves en classe source</p>
+            <p className="text-xl font-extrabold text-[#16212B]">{roster.length}</p>
+            <p className="text-[10px] font-semibold text-amber-700">Effectif chargé</p>
+          </div>
+        </Card>
+
+        <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#DDF5EC] shrink-0 flex items-center justify-center text-[#17A673]">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-slate-400">Élèves sélectionnés</p>
+            <p className="text-xl font-extrabold text-[#16212B]">{selectedIds.size}</p>
+            <p className="text-[10px] font-semibold text-[#17A673]">Prêts à promouvoir</p>
+          </div>
+        </Card>
+      </div>
+
       {error && (
         <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2.5 text-rose-700 text-xs font-semibold">
           <AlertCircle className="w-4 h-4 shrink-0" />
@@ -131,7 +176,7 @@ export function PromotionsView() {
       <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4 text-xs">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-[11px] font-bold text-slate-600">Classe source *</label>
+            <label className="text-[11px] font-bold text-slate-600">Classe actuelle (Source) *</label>
             <Select value={sourceId} onValueChange={setSourceId}>
               <SelectTrigger className="w-full rounded-xl h-9 bg-slate-50 border-slate-200">
                 <SelectValue placeholder="Sélectionnez la classe actuelle" />
@@ -144,7 +189,7 @@ export function PromotionsView() {
             </Select>
           </div>
           <div className="space-y-1">
-            <label className="text-[11px] font-bold text-slate-600">Classe de destination *</label>
+            <label className="text-[11px] font-bold text-slate-600">Nouvelle classe (Destination) *</label>
             <Select value={targetId} onValueChange={setTargetId}>
               <SelectTrigger className="w-full rounded-xl h-9 bg-slate-50 border-slate-200">
                 <SelectValue placeholder="Sélectionnez la nouvelle classe" />
@@ -162,9 +207,22 @@ export function PromotionsView() {
       {/* Roster */}
       {sourceId && (
         <Card className="bg-white rounded-2xl shadow-2xs border border-slate-200/80 overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-            <span className="text-xs font-bold text-[#16212B]">{roster.length} élève(s) dans {classSectionLabel.get(sourceId) ?? 'cette classe'}</span>
-            <span className="text-xs text-slate-500">{selectedIds.size} sélectionné(s)</span>
+          <div className="px-4 py-3 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <span className="text-xs font-bold text-[#16212B]">
+              {roster.length} élève(s) dans {classSectionLabel.get(sourceId) ?? 'cette classe'}
+            </span>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Rechercher un élève..."
+                  className="pl-8 h-8 text-[11px] bg-slate-50 border-slate-200 rounded-xl w-48"
+                />
+              </div>
+              <span className="text-xs text-slate-500 font-bold">{selectedIds.size} sélectionné(s)</span>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
@@ -183,10 +241,10 @@ export function PromotionsView() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
-                {roster.length === 0 && (
-                  <tr><td colSpan={3} className="py-8 px-4 text-center text-slate-400">Aucun élève dans cette classe.</td></tr>
+                {filteredRoster.length === 0 && (
+                  <tr><td colSpan={3} className="py-8 px-4 text-center text-slate-400">Aucun élève trouvé.</td></tr>
                 )}
-                {roster.map(s => (
+                {filteredRoster.map(s => (
                   <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="py-3 px-4"><input type="checkbox" checked={selectedIds.has(s.id)} onChange={() => toggleStudent(s.id)} className="rounded" /></td>
                     <td className="py-3 px-4 font-bold text-[#16212B]">{s.fullName}</td>
@@ -200,7 +258,11 @@ export function PromotionsView() {
       )}
 
       <div className="flex justify-end">
-        <Button variant="primary" size="md" className="gap-2 rounded-full px-6" disabled={saving || !sourceId || !targetId || selectedIds.size === 0} onClick={handlePromote}>
+        <Button
+          className="gap-2 rounded-xl px-6 h-10 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs"
+          disabled={saving || !sourceId || !targetId || selectedIds.size === 0}
+          onClick={handlePromote}
+        >
           <GraduationCap className="w-4 h-4" />
           <span>{saving ? 'Promotion en cours...' : `Promouvoir ${selectedIds.size || ''} élève(s)`}</span>
         </Button>

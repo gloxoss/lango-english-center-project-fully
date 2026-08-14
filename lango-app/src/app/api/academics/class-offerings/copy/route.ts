@@ -180,7 +180,7 @@ export async function POST(request: Request) {
         }
       }
 
-      // Insert new target offerings
+      // Insert new target offerings safely with conflict fallback
       for (const offToCreate of offeringsToCreate) {
         const [inserted] = await tx
           .insert(academicClassOfferings)
@@ -193,54 +193,114 @@ export async function POST(request: Request) {
             status: 'active',
             displayOrder: offToCreate.displayOrder,
           })
-          .returning();
+          .onConflictDoNothing()
+          .returning({ id: academicClassOfferings.id });
 
-        createdOfferingMap.set(offToCreate.id, inserted!.id);
+        if (inserted) {
+          createdOfferingMap.set(offToCreate.id, inserted.id);
+        } else {
+          // If offering already exists in target session, find its ID
+          const [existing] = await tx
+            .select({ id: academicClassOfferings.id })
+            .from(academicClassOfferings)
+            .where(and(
+              eq(academicClassOfferings.tenantId, tenantId),
+              eq(academicClassOfferings.sessionYearId, body.targetSessionYearId),
+              eq(academicClassOfferings.classId, offToCreate.classId),
+              eq(academicClassOfferings.sectionId, offToCreate.sectionId),
+            ))
+            .limit(1);
+          if (existing) {
+            createdOfferingMap.set(offToCreate.id, existing.id);
+          }
+        }
       }
 
       let createdSubjectsCount = 0;
       let createdClassTeachersCount = 0;
       let createdSubjectTeachersCount = 0;
 
-      // Copy classSubjects
+      // Copy classSubjects safely
       for (const subj of linkedSubjects) {
         if (!subj.offeringId) continue;
         const targetOfferingId = createdOfferingMap.get(subj.offeringId);
         if (!targetOfferingId) continue;
 
-        await tx.insert(classSubjects).values({
-          tenantId,
-          classId: subj.classId,
-          subjectId: subj.subjectId,
-          type: subj.type,
-          semesterId: subj.semesterId,
-          offeringId: targetOfferingId,
-        });
-        createdSubjectsCount++;
+        // Check if classSubject already exists for this offering/subject
+        // Check if classSubject already exists for this target offering/subject
+        const [existingSubj] = await tx
+          .select({ id: classSubjects.id })
+          .from(classSubjects)
+          .where(and(
+            eq(classSubjects.tenantId, tenantId),
+            eq(classSubjects.offeringId, targetOfferingId),
+            eq(classSubjects.subjectId, subj.subjectId),
+          ))
+          .limit(1);
+
+        if (!existingSubj) {
+          const [inserted] = await tx
+            .insert(classSubjects)
+            .values({
+              tenantId,
+              classId: subj.classId,
+              subjectId: subj.subjectId,
+              type: subj.type,
+              semesterId: subj.semesterId,
+              offeringId: targetOfferingId,
+            })
+            .onConflictDoNothing()
+            .returning({ id: classSubjects.id });
+
+          if (inserted) {
+            createdSubjectsCount++;
+          }
+        }
       }
 
-      // Copy classTeachers
+      // Copy classTeachers safely
       for (const ct of linkedClassTeachers) {
         if (!ct.offeringId) continue;
         const targetOfferingId = createdOfferingMap.get(ct.offeringId);
         if (!targetOfferingId) continue;
 
-        await tx.insert(classTeachers).values({
-          tenantId,
-          classSectionId: ct.classSectionId,
-          teacherId: ct.teacherId,
-          offeringId: targetOfferingId,
-        });
-        createdClassTeachersCount++;
+        // Check if active classTeacher assignment already exists
+        const [existingCt] = await tx
+          .select({ id: classTeachers.id })
+          .from(classTeachers)
+          .where(and(
+            eq(classTeachers.tenantId, tenantId),
+            eq(classTeachers.offeringId, targetOfferingId),
+            eq(classTeachers.teacherId, ct.teacherId),
+          ))
+          .limit(1);
+
+        if (!existingCt) {
+          const [inserted] = await tx
+            .insert(classTeachers)
+            .values({
+              tenantId,
+              classSectionId: ct.classSectionId,
+              teacherId: ct.teacherId,
+              offeringId: targetOfferingId,
+              role: ct.role,
+            })
+            .onConflictDoNothing()
+            .returning({ id: classTeachers.id });
+
+          if (inserted) {
+            createdClassTeachersCount++;
+          }
+        }
       }
 
-      // Copy subjectTeachers
+      // Copy subjectTeachers safely
       for (const st of linkedSubjectTeachers) {
         if (!st.offeringId) continue;
         const targetOfferingId = createdOfferingMap.get(st.offeringId);
         if (!targetOfferingId) continue;
 
-        // Ensure linked classSubject has been created or matched
+        // Ensure linked classSubject exists in target
         const targetClassSubj = await tx
           .select({ id: classSubjects.id })
           .from(classSubjects)
@@ -252,15 +312,35 @@ export async function POST(request: Request) {
           .limit(1);
 
         if (targetClassSubj.length > 0) {
-          await tx.insert(subjectTeachers).values({
-            tenantId,
-            classSectionId: st.classSectionId,
-            subjectId: st.subjectId,
-            classSubjectId: targetClassSubj[0]!.id,
-            teacherId: st.teacherId,
-            offeringId: targetOfferingId,
-          });
-          createdSubjectTeachersCount++;
+          const [existingSt] = await tx
+            .select({ id: subjectTeachers.id })
+            .from(subjectTeachers)
+            .where(and(
+              eq(subjectTeachers.tenantId, tenantId),
+              eq(subjectTeachers.offeringId, targetOfferingId),
+              eq(subjectTeachers.subjectId, st.subjectId),
+              eq(subjectTeachers.teacherId, st.teacherId),
+            ))
+            .limit(1);
+
+          if (!existingSt) {
+            const [inserted] = await tx
+              .insert(subjectTeachers)
+              .values({
+                tenantId,
+                classSectionId: st.classSectionId,
+                subjectId: st.subjectId,
+                classSubjectId: targetClassSubj[0]!.id,
+                teacherId: st.teacherId,
+                offeringId: targetOfferingId,
+              })
+              .onConflictDoNothing()
+              .returning({ id: subjectTeachers.id });
+
+            if (inserted) {
+              createdSubjectTeachersCount++;
+            }
+          }
         }
       }
 

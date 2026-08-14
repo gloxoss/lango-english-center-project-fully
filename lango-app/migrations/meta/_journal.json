@@ -3,388 +3,836 @@
   "dialect": "postgresql",
   "entries": [
     {
-      "idx": 0,
       "version": "7",
       "when": 1781628263129,
       "tag": "0000_steep_gambit",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 0
     },
     {
-      "idx": 1,
       "version": "7",
       "when": 1781630630434,
       "tag": "0001_blushing_mad_thinker",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 1
     },
     {
-      "idx": 2,
       "version": "7",
       "when": 1785345560728,
       "tag": "0002_extend_user_for_students_api",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 2
     },
     {
-      "idx": 3,
       "version": "7",
       "when": 1785349000000,
       "tag": "0003_add_accountant_role",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 3
     },
     {
-      "idx": 4,
       "version": "7",
       "when": 1785363299146,
       "tag": "0004_add_audit_logs",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 4
     },
     {
-      "idx": 5,
       "version": "7",
       "when": 1785365004618,
       "tag": "0005_add_guardian_default_relation",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 5
     },
     {
-      "idx": 6,
       "version": "7",
       "when": 1785366285922,
       "tag": "0006_add_teacher_fields_to_user",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 6
     },
     {
-      "idx": 7,
       "version": "7",
       "when": 1785368237364,
       "tag": "0007_add_academic_structure",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 7
     },
     {
-      "idx": 8,
       "version": "7",
       "when": 1785418474954,
       "tag": "0008_restrict_academic_reference_deletes",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 8
     },
     {
-      "idx": 9,
       "version": "7",
       "when": 1785428115564,
       "tag": "0009_make_applicant_campaign_program_nullable",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 9
     },
     {
-      "idx": 10,
       "version": "7",
       "when": 1785431015575,
       "tag": "0010_make_attendance_student_group_nullable",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 10
     },
     {
-      "idx": 11,
       "version": "7",
       "when": 1785440162237,
       "tag": "0011_add_school_settings",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 11
     },
     {
-      "idx": 12,
       "version": "7",
       "when": 1785453992228,
       "tag": "0012_add_assessment_plan_class_subject",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 12
     },
     {
-      "idx": 13,
       "version": "7",
       "when": 1785454255298,
       "tag": "0013_add_tenant_plan_tier",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 13
     },
     {
-      "idx": 14,
       "version": "7",
       "when": 1785455078242,
       "tag": "0014_add_elective_groups",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 14
     },
     {
-      "idx": 15,
       "version": "7",
       "when": 1785455292610,
       "tag": "0015_add_communication_sms",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 15
     },
     {
-      "idx": 16,
       "version": "7",
       "when": 1785502383435,
       "tag": "0016_add_student_documents",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 16
     },
     {
-      "idx": 17,
       "version": "7",
       "when": 1785502760803,
       "tag": "0017_add_school_settings_ice_legal_director",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 17
     },
     {
-      "idx": 18,
       "version": "7",
       "when": 1785503331338,
       "tag": "0018_add_access_reset_requests",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 18
     },
     {
-      "idx": 19,
       "version": "7",
       "when": 1785503816911,
       "tag": "0019_add_class_schedule_slots",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 19
     },
     {
-      "idx": 20,
       "version": "7",
       "when": 1785504000000,
       "tag": "0020_add_user_lockout_and_must_change_password",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 20
     },
     {
-      "idx": 21,
       "version": "7",
       "when": 1785504200000,
       "tag": "0021_add_cndp_filings",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 21
     },
     {
-      "idx": 22,
       "version": "7",
       "when": 1785504400000,
       "tag": "0022_add_admissions_inquiries",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 22
     },
     {
-      "idx": 23,
       "version": "7",
       "when": 1785504600000,
       "tag": "0023_add_announcements",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 23
     },
     {
-      "idx": 24,
       "version": "7",
       "when": 1785504800000,
       "tag": "0024_add_assignments_and_meeting_slots",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 24
     },
     {
-      "idx": 25,
       "version": "7",
       "when": 1785505000000,
       "tag": "0025_add_online_exams",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 25
     },
     {
-      "idx": 26,
       "version": "7",
       "when": 1785519154435,
       "tag": "0026_add_attendance_summary_excuses_flags",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 26
     },
     {
-      "idx": 27,
       "version": "7",
       "when": 1785521559893,
       "tag": "0027_add_attendance_late_minutes",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 27
     },
     {
-      "idx": 28,
       "version": "7",
       "when": 1785525368291,
       "tag": "0028_add_attendance_registers_flag_assignment_reject_reason",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 28
     },
     {
-      "idx": 29,
       "version": "7",
       "when": 1785542021313,
       "tag": "0029_thin_victor_mancha",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 29
     },
     {
-      "idx": 30,
       "version": "7",
       "when": 1785600000000,
       "tag": "0030_add_addon_entitlements",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 30
     },
     {
-      "idx": 31,
       "version": "7",
       "when": 1785600100000,
       "tag": "0031_add_two_factor",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 31
     },
     {
-      "idx": 32,
       "version": "7",
       "when": 1785600200000,
       "tag": "0032_add_setting_values",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 32
     },
     {
-      "idx": 33,
       "version": "7",
       "when": 1785600300000,
       "tag": "0033_add_permissions",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 33
     },
     {
-      "idx": 34,
       "version": "7",
       "when": 1785600400000,
       "tag": "0034_add_shared_services",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 34
     },
     {
-      "idx": 35,
       "version": "7",
       "when": 1785700000000,
       "tag": "0035_backfill_multi_branch_entitlement",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 35
     },
     {
-      "idx": 36,
       "version": "7",
       "when": 1785700100000,
       "tag": "0036_add_role_permission_granted",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 36
     },
     {
-      "idx": 37,
       "version": "7",
       "when": 1785700200000,
       "tag": "0037_add_student_placements",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 37
     },
     {
-      "idx": 38,
       "version": "7",
       "when": 1785700300000,
       "tag": "0038_add_receivables_ledger",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 38
     },
     {
-      "idx": 39,
       "version": "7",
       "when": 1785700400000,
       "tag": "0039_add_double_entry_ledger",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 39
     },
     {
-      "idx": 40,
       "version": "7",
       "when": 1785700500000,
       "tag": "0040_harden_student_placements",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 40
     },
     {
-      "idx": 41,
       "version": "7",
       "when": 1785700600000,
       "tag": "0041_convert_finance_money_to_numeric",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 41
     },
     {
-      "idx": 42,
       "version": "7",
       "when": 1785700700000,
       "tag": "0042_harden_finance_reference_integrity",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 42
     },
     {
-      "idx": 43,
       "version": "7",
       "when": 1785700800000,
       "tag": "0043_add_hr_payroll_tables",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 43
     },
     {
-      "idx": 44,
+      "version": "7",
+      "when": 1786111470711,
+      "tag": "0044_pf03_organisation_identity",
+      "breakpoints": true,
+      "idx": 44
+    },
+    {
       "version": "7",
       "when": 1785700900000,
       "tag": "0045_add_fee_structure_assignments",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 45
     },
     {
-      "idx": 45,
       "version": "7",
       "when": 1785701000000,
       "tag": "0046_add_promotion_ledger",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 46
     },
     {
-      "idx": 46,
       "version": "7",
       "when": 1785701100000,
       "tag": "0047_add_academic_class_offerings",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 47
     },
     {
-      "idx": 47,
       "version": "7",
       "when": 1785701200000,
       "tag": "0048_add_offering_id_linkage",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 48
     },
     {
-      "idx": 48,
       "version": "7",
       "when": 1785701300000,
       "tag": "0049_add_class_teacher_roles",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 49
     },
     {
-      "idx": 49,
       "version": "7",
       "when": 1785701400000,
       "tag": "0050_add_class_subject_curriculum_metadata",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 50
     },
     {
-      "idx": 50,
       "version": "7",
       "when": 1785701500000,
       "tag": "0051_add_academic_rooms",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 51
     },
     {
-      "idx": 51,
       "version": "7",
       "when": 1785701600000,
       "tag": "0052_add_timetable_versions",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 52
     },
     {
-      "idx": 52,
       "version": "7",
       "when": 1785940000000,
       "tag": "0053_waitlist_leads",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 53
     },
     {
-      "idx": 53,
       "version": "7",
       "when": 1785950000000,
       "tag": "0054_add_cashier_sessions",
-      "breakpoints": true
+      "breakpoints": true,
+      "idx": 54
     },
     {
-      "idx": 54,
       "version": "7",
       "when": 1785960000000,
       "tag": "0055_add_credit_note_approval",
+      "breakpoints": true,
+      "idx": 55
+    },
+    {
+      "version": "7",
+      "when": 1786111470761,
+      "tag": "0056_add_refund_approval",
+      "breakpoints": true,
+      "idx": 56
+    },
+    {
+      "version": "7",
+      "when": 1786111470762,
+      "tag": "0057_add_admission_model_enhancement",
+      "breakpoints": true,
+      "idx": 57
+    },
+    {
+      "version": "7",
+      "when": 1786111470763,
+      "tag": "0057a_add_journal_line_reconciliation_link",
+      "breakpoints": true,
+      "idx": 58
+    },
+    {
+      "version": "7",
+      "when": 1786111470764,
+      "tag": "0058_dropped_features_rebuild",
+      "breakpoints": true,
+      "idx": 59
+    },
+    {
+      "version": "7",
+      "when": 1786111470765,
+      "tag": "0059_advanced_reporting_addon",
+      "breakpoints": true,
+      "idx": 60
+    },
+    {
+      "version": "7",
+      "when": 1786111470766,
+      "tag": "0060_assessment_and_examination",
+      "breakpoints": true,
+      "idx": 61
+    },
+    {
+      "version": "7",
+      "when": 1786111470767,
+      "tag": "0061_alumni_portal",
+      "breakpoints": true,
+      "idx": 62
+    },
+    {
+      "version": "7",
+      "when": 1786111470768,
+      "tag": "0062_seed_report_definitions",
+      "breakpoints": true,
+      "idx": 63
+    },
+    {
+      "version": "7",
+      "when": 1786111470769,
+      "tag": "0063_attachments_book",
+      "breakpoints": true,
+      "idx": 64
+    },
+    {
+      "version": "7",
+      "when": 1786111470769,
+      "tag": "0064_attendance_qr_staging",
+      "breakpoints": true,
+      "idx": 65
+    },
+    {
+      "version": "7",
+      "when": 1786111470770,
+      "tag": "0065_certificate_management",
+      "breakpoints": true,
+      "idx": 66
+    },
+    {
+      "version": "7",
+      "when": 1786111470771,
+      "tag": "0066_certificate_event_rosters",
+      "breakpoints": true,
+      "idx": 67
+    },
+    {
+      "version": "7",
+      "when": 1786111470772,
+      "tag": "0067_card_and_admit_card_management",
+      "breakpoints": true,
+      "idx": 68
+    },
+    {
+      "version": "7",
+      "when": 1786111470773,
+      "tag": "0068_add_custom_domains",
+      "breakpoints": true,
+      "idx": 69
+    },
+    {
+      "version": "7",
+      "when": 1786111470774,
+      "tag": "0069_fix_document_actor_id_text_types",
+      "breakpoints": true,
+      "idx": 70
+    },
+    {
+      "version": "7",
+      "when": 1786200000000,
+      "tag": "0070_certificates_align_issued_columns",
+      "breakpoints": true,
+      "idx": 71
+    },
+    {
+      "version": "7",
+      "when": 1786200000001,
+      "tag": "0071_event_management",
+      "breakpoints": true,
+      "idx": 72
+    },
+    {
+      "version": "7",
+      "when": 1786200000002,
+      "tag": "0072_leave_request_cancelled_status",
+      "breakpoints": true,
+      "idx": 73
+    },
+    {
+      "version": "7",
+      "when": 1786300000000,
+      "tag": "0073_advanced_hr_employee_management",
+      "breakpoints": true,
+      "idx": 74
+    },
+    {
+      "version": "7",
+      "when": 1786400000000,
+      "tag": "0074_hr_profile_identity_columns",
+      "breakpoints": true,
+      "idx": 75
+    },
+    {
+      "version": "7",
+      "when": 1786500000000,
+      "tag": "0075_hr_profile_national_id_salary",
+      "breakpoints": true,
+      "idx": 76
+    },
+    {
+      "version": "7",
+      "when": 1786600000000,
+      "tag": "0076_hostel_management",
+      "breakpoints": true,
+      "idx": 77
+    },
+    {
+      "version": "7",
+      "when": 1786700000000,
+      "tag": "0077_inventory_management",
+      "breakpoints": true,
+      "idx": 78
+    },
+    {
+      "version": "7",
+      "when": 1786800000000,
+      "tag": "0078_guard_security_portal",
+      "breakpoints": true,
+      "idx": 79
+    },
+    {
+      "version": "7",
+      "when": 1786900000000,
+      "tag": "0079_lead_crm_broadcast",
+      "breakpoints": true,
+      "idx": 80
+    },
+    {
+      "version": "7",
+      "when": 1787000000000,
+      "tag": "0080_library_management",
+      "breakpoints": true,
+      "idx": 81
+    },
+    {
+      "version": "7",
+      "when": 1787100000000,
+      "tag": "0081_live_classrooms",
+      "breakpoints": true,
+      "idx": 82
+    },
+    {
+      "version": "7",
+      "when": 1787200000000,
+      "tag": "0082_student_transport",
+      "breakpoints": true,
+      "idx": 83
+    },
+    {
+      "version": "7",
+      "when": 1787200000001,
+      "tag": "0083_role_portals_foundation",
+      "breakpoints": true,
+      "idx": 84
+    },
+    {
+      "version": "7",
+      "when": 1787200000002,
+      "tag": "0084_student_transport_remediation",
+      "breakpoints": true,
+      "idx": 85
+    },
+    {
+      "version": "7",
+      "when": 1787200000003,
+      "tag": "0085_office_accounting_foundation",
+      "breakpoints": true,
+      "idx": 86
+    },
+    {
+      "version": "7",
+      "when": 1787200000004,
+      "tag": "0086_role_portals_referential_integrity",
+      "breakpoints": true,
+      "idx": 87
+    },
+    {
+      "idx": 88,
+      "version": "7",
+      "when": 1786220546359,
+      "tag": "0087_live_classrooms_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 89,
+      "version": "7",
+      "when": 1787200000005,
+      "tag": "0088_parent_guardian_portal",
+      "breakpoints": true
+    },
+    {
+      "idx": 90,
+      "version": "7",
+      "when": 1787200000006,
+      "tag": "0089_office_accounting_workflow",
+      "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1787200000007,
+      "tag": "0090_office_accounting_reconciliation",
+      "breakpoints": true
+    },
+    {
+      "idx": 92,
+      "version": "7",
+      "when": 1786223111698,
+      "tag": "0091_live_classrooms_schedule_overlap",
+      "breakpoints": true
+    },
+    {
+      "idx": 93,
+      "version": "7",
+      "when": 1788000000001,
+      "tag": "0092_receptionist_portal",
+      "breakpoints": true
+    },
+    {
+      "idx": 94,
+      "version": "7",
+      "when": 1788300000001,
+      "tag": "0093_harden_ledger_invariants",
+      "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "7",
+      "when": 1788500000001,
+      "tag": "0094_payroll_workforce_operations",
+      "breakpoints": true
+    },
+    {
+      "idx": 96,
+      "version": "7",
+      "when": 1786233980525,
+      "tag": "0095_library_management_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 97,
+      "version": "7",
+      "when": 1788700000001,
+      "tag": "0096_school_leadership_portal",
+      "breakpoints": true
+    },
+    {
+      "idx": 98,
+      "version": "7",
+      "when": 1788900000001,
+      "tag": "0097_accounting_period_close_reopen",
+      "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "7",
+      "when": 1788900000002,
+      "tag": "0098_accounting_bank_reconciliation",
+      "breakpoints": true
+    },
+    {
+      "idx": 100,
+      "version": "7",
+      "when": 1788900000003,
+      "tag": "0099_payroll_component_percent_bp",
+      "breakpoints": true
+    },
+    {
+      "idx": 101,
+      "version": "7",
+      "when": 1789000000001,
+      "tag": "0100_employee_self_service_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 102,
+      "version": "7",
+      "when": 1786235503440,
+      "tag": "0101_library_policy_closure_calendar",
+      "breakpoints": true
+    },
+    {
+      "idx": 103,
+      "version": "7",
+      "when": 1786236208033,
+      "tag": "0102_library_member_self_service",
+      "breakpoints": true
+    },
+    {
+      "idx": 104,
+      "version": "7",
+      "when": 1789000000002,
+      "tag": "0103_accounting_student_adapter",
+      "breakpoints": true
+    },
+    {
+      "idx": 105,
+      "version": "7",
+      "when": 1789000000003,
+      "tag": "0104_library_accounting_mappings",
+      "breakpoints": true
+    },
+    {
+      "idx": 106,
+      "version": "7",
+      "when": 1789200000000,
+      "tag": "0105_parent_requests",
+      "breakpoints": true
+    },
+    {
+      "idx": 107,
+      "version": "7",
+      "when": 1789200000001,
+      "tag": "0106_payroll_accounting_mappings",
+      "breakpoints": true
+    },
+    {
+      "idx": 108,
+      "version": "7",
+      "when": 1789400000000,
+      "tag": "0107_settings_platform_enhancement",
+      "breakpoints": true
+    },
+    {
+      "idx": 109,
+      "version": "7",
+      "when": 1789400001000,
+      "tag": "0108_student_accounting",
+      "breakpoints": true
+    },
+    {
+      "idx": 110,
+      "version": "7",
+      "when": 1789400002000,
+      "tag": "0109_two_factor_otp",
+      "breakpoints": true
+    },
+    {
+      "idx": 111,
+      "version": "7",
+      "when": 1789400003000,
+      "tag": "0110_subscription_licensing",
+      "breakpoints": true
+    },
+    {
+      "idx": 112,
+      "version": "7",
+      "when": 1789400004000,
+      "tag": "0111_student_accounting_phase_a",
+      "breakpoints": true
+    },
+    {
+      "idx": 113,
+      "version": "7",
+      "when": 1789400005000,
+      "tag": "0112_student_accounting_phase_b",
+      "breakpoints": true
+    },
+    {
+      "idx": 114,
+      "version": "7",
+      "when": 1789400006000,
+      "tag": "0113_events_addon_completion",
+      "breakpoints": true
+    },
+    {
+      "idx": 115,
+      "version": "7",
+      "when": 1789400007000,
+      "tag": "0114_student_accounting_phase_c",
+      "breakpoints": true
+    },
+    {
+      "idx": 116,
+      "version": "7",
+      "when": 1789400008000,
+      "tag": "0115_school_website_cms",
+      "breakpoints": true
+    },
+    {
+      "idx": 117,
+      "version": "7",
+      "when": 1789400009000,
+      "tag": "0116_live_classrooms_webhook_binding",
+      "breakpoints": true
+    },
+    {
+      "idx": 118,
+      "version": "7",
+      "when": 1789400010000,
+      "tag": "0117_retire_dead_online_exam_addon",
       "breakpoints": true
     }
   ]

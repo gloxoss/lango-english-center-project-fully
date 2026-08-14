@@ -52,5 +52,19 @@ export async function saveUploadedFile(
 }
 
 export async function readUploadedFile(tenantId: string, subpath: string): Promise<Buffer> {
-  return readFile(path.join(UPLOADS_ROOT, tenantId, subpath));
+  const fullPath = path.join(UPLOADS_ROOT, tenantId, subpath);
+  if (!fullPath.startsWith(path.join(UPLOADS_ROOT, tenantId) + path.sep)) {
+    throw new ApiError(400, 'INVALID_PATH', 'Chemin de fichier invalide.');
+  }
+  return readFile(fullPath);
+}
+
+// Moves a file already saved by saveUploadedFile to a new subpath within the
+// same tenant - used to copy an applicant's uploaded documents onto the real
+// student record at admission approval.
+export async function copyUploadedFile(tenantId: string, fromSubpath: string, toSubpath: string): Promise<void> {
+  const bytes = await readFile(path.join(UPLOADS_ROOT, tenantId, fromSubpath));
+  const destPath = path.join(UPLOADS_ROOT, tenantId, toSubpath);
+  await mkdir(path.dirname(destPath), { recursive: true });
+  await writeFile(destPath, bytes);
 }

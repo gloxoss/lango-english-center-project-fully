@@ -1,5 +1,6 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +46,8 @@ const STATUS_BADGE: Record<InvoiceRow['status'], string> = {
 };
 
 export function InvoicesFinanceView({ locale: _locale }: { locale?: string }) {
+  const searchParams = useSearchParams();
+  const studentIdFilter = searchParams.get('studentId');
   const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -58,7 +61,7 @@ export function InvoicesFinanceView({ locale: _locale }: { locale?: string }) {
   const fetchInvoices = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/finance/invoices');
+      const res = await fetch(studentIdFilter ? `/api/finance/invoices?studentId=${studentIdFilter}` : '/api/finance/invoices');
       const json = await res.json();
       if (json.success) {
         setInvoices(json.data);
@@ -72,7 +75,8 @@ export function InvoicesFinanceView({ locale: _locale }: { locale?: string }) {
 
   useEffect(() => {
     fetchInvoices();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [studentIdFilter]);
 
   useEffect(() => {
     if (!selectedId) {

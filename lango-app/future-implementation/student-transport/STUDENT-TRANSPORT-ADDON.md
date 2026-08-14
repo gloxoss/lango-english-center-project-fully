@@ -1,6 +1,9 @@
 # Student Transport Addon Plan
 
-Status: planned optional addon, not built  
+**STATUS: IMPLEMENTED (phases 1–3)** — see `future-implementation/_tracker/PLANS-AUDIT-AND-PROGRESS.md`
+(#27) for verified details. Migrations `0082`/`0084`, `transport-schema.ts` (15 tables), full
+API + 13 pages, `transport-service.ts`, addon `enabled:true`, sidebar + permissions. Deferred
+phases 4–5 (GPS/TrackingProvider adapter, live vehicle telemetry, geofencing, ETA) remain not built.
 Addon ID: `transport`  
 Scope: Route Master, Vehicle Master, Stoppage, Assign Vehicle, Allocation Report and live supervision
 

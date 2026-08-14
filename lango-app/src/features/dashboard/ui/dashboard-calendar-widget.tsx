@@ -74,24 +74,7 @@ export function DashboardCalendarWidget({
 
   const todayIso = new Date().toISOString().slice(0, 10);
 
-  const activeEvents: CalendarEventItem[] = events.length > 0
-    ? events
-    : [
-        {
-          id: 'v1',
-          title: 'Vacances d\'Été',
-          startDate: `${year}-07-01`,
-          endDate: `${year}-08-31`,
-          type: 'vacation',
-        },
-        {
-          id: 'h1',
-          title: 'Fête du Trône',
-          startDate: `${year}-07-30`,
-          endDate: `${year}-07-30`,
-          type: 'holiday',
-        },
-      ];
+  const activeEvents: CalendarEventItem[] = events;
 
   const getEventForDay = (iso: string) => {
     return activeEvents.find(e => iso >= e.startDate && iso <= e.endDate);

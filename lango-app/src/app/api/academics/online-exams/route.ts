@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
@@ -7,7 +7,7 @@ import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { onlineExams } from '@/models/Schema';
+import { classSections, classSubjects, onlineExams, user } from '@/models/Schema';
 
 const createExamSchema = z.object({
   classSubjectId: z.string().uuid(),
@@ -22,6 +22,33 @@ export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request);
     const tenantId = requireTenant(context);
+
+    // Real audience scoping (future-implementation/assessment-and-examination
+    // remediation, section-01): a student only sees online exams for their
+    // own real class, resolved via user.classSectionId -> classSections.classId
+    // -> classSubjects.classId. Previously tenant-scoped only, so any student
+    // saw every online exam in the school. Staff still see the full tenant list.
+    if (context.role === 'student') {
+      const [me] = await db.select({ classSectionId: user.classSectionId }).from(user).where(eq(user.id, context.userId)).limit(1);
+      if (!me?.classSectionId) {
+        return NextResponse.json({ success: true, data: [] });
+      }
+      const [section] = await db.select({ classId: classSections.classId }).from(classSections).where(eq(classSections.id, me.classSectionId)).limit(1);
+      if (!section) {
+        return NextResponse.json({ success: true, data: [] });
+      }
+      const myClassSubjectIds = await db.select({ id: classSubjects.id }).from(classSubjects).where(eq(classSubjects.classId, section.classId));
+      const ids = myClassSubjectIds.map(c => c.id);
+      if (ids.length === 0) {
+        return NextResponse.json({ success: true, data: [] });
+      }
+      const items = await db
+        .select()
+        .from(onlineExams)
+        .where(and(eq(onlineExams.tenantId, tenantId), inArray(onlineExams.classSubjectId, ids)))
+        .orderBy(desc(onlineExams.createdAt));
+      return NextResponse.json({ success: true, data: items });
+    }
 
     const items = await db
       .select()
@@ -60,7 +87,7 @@ export async function POST(request: Request) {
       .returning();
 
     if (exam) {
-      await recordAudit(context, 'create', 'online_exam', exam.id);
+      recordAudit(context, 'create', 'online_exam', exam.id);
     }
 
     return NextResponse.json({

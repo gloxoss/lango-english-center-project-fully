@@ -13,8 +13,10 @@ import {
 } from '@/libs/settings/registry';
 import { requireCapability } from '@/libs/api/permissions';
 import type { PermissionKey } from '@/libs/api/permissions';
+import { getCatalogDefinitions } from '@/features/settings/services/definitions-service';
 
-// GET /api/settings/values — all effective settings for this tenant/branch.
+// GET /api/settings/values — all effective settings for this tenant/branch,
+// plus DB-backed catalog metadata (label/description) for the values page.
 export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
@@ -35,7 +37,21 @@ export async function GET(request: Request) {
       ]),
     );
 
-    return NextResponse.json({ success: true, data: { values, grouped, namespaces } });
+    // Catalog metadata (DB-backed, label/description/scope/sensitivity) keyed
+    // by setting key so the page can render proper labels and help text.
+    const catalog = await getCatalogDefinitions(tenantId);
+    const definitions = Object.fromEntries(
+      catalog.map(d => [d.key, {
+        label: d.label,
+        description: d.description,
+        namespace: d.namespace,
+        scope: d.scope,
+        sensitivity: d.sensitivity,
+        legacyField: d.legacyField,
+      }]),
+    );
+
+    return NextResponse.json({ success: true, data: { values, grouped, namespaces, definitions } });
   } catch (error) {
     return apiErrorResponse(error);
   }

@@ -1,5 +1,4 @@
 import type { NextRequest } from 'next/server';
-import { randomUUID } from 'node:crypto';
 import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -8,14 +7,16 @@ import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { hasCapability, requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
+import { consumeDocumentNumber } from '@/libs/finance/document-number';
 import { normalizeMoney } from '@/libs/finance/money';
+import { moneyInput } from '@/libs/finance/validation';
 import { decideCreditNote } from '@/libs/services/credit-note-approval';
 import { creditNotes, invoices, user } from '@/models/Schema';
 
 const createCreditNoteSchema = z.object({
   studentId: z.string().min(1),
   invoiceId: z.string().uuid().optional(),
-  amount: z.string().regex(/^(?:0|[1-9]\d{0,11})(?:\.\d{1,2})?$/).refine(value => Number(value) > 0),
+  amount: moneyInput,
   reason: z.string().trim().min(1).max(1000),
 }).strict();
 
@@ -52,6 +53,10 @@ export async function GET(req: NextRequest) {
         reason: creditNotes.reason,
         issuedById: creditNotes.issuedById,
         createdAt: creditNotes.createdAt,
+        status: creditNotes.status,
+        approvedById: creditNotes.approvedById,
+        approvedAt: creditNotes.approvedAt,
+        rejectionReason: creditNotes.rejectionReason,
         studentName: user.name,
       })
       .from(creditNotes)
@@ -91,25 +96,31 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const creditNoteNumber = `CN-${randomUUID().replaceAll('-', '').slice(0, 16).toUpperCase()}`;
     const canSelfApprove = await hasCapability(ctx.userId, tenantId, ctx.role, 'finance.approve');
     const now = new Date().toISOString();
 
-    const [record] = await db
-      .insert(creditNotes)
-      .values({
-        tenantId,
-        studentId: body.studentId,
-        invoiceId: body.invoiceId || null,
-        creditNoteNumber,
-        amount: normalizeMoney(body.amount),
-        reason: body.reason,
-        issuedById: ctx.userId,
-        status: canSelfApprove ? 'approved' : 'pending',
-        approvedById: canSelfApprove ? ctx.userId : null,
-        approvedAt: canSelfApprove ? now : null,
-      })
-      .returning();
+    const record = await db.transaction(async (tx) => {
+      const creditNoteNumber = await consumeDocumentNumber(tx, { tenantId, prefix: `CN-${new Date().getFullYear()}-` });
+      const [created] = await tx
+        .insert(creditNotes)
+        .values({
+          tenantId,
+          studentId: body.studentId,
+          invoiceId: body.invoiceId || null,
+          creditNoteNumber,
+          amount: normalizeMoney(body.amount),
+          reason: body.reason,
+          issuedById: ctx.userId,
+          status: canSelfApprove ? 'approved' : 'pending',
+          approvedById: canSelfApprove ? ctx.userId : null,
+          approvedAt: canSelfApprove ? now : null,
+        })
+        .returning();
+      if (!created) {
+        throw new ApiError(500, 'CREDIT_NOTE_INSERT_FAILED', 'Note de crédit non enregistrée.');
+      }
+      return created;
+    });
 
     return NextResponse.json({ success: true, data: record }, { status: 201 });
   } catch (error) {

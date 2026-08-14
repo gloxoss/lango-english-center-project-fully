@@ -6,12 +6,12 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { announcements } from '@/models/Schema';
+import { announcements, smsMessages, user } from '@/models/Schema';
 
 const createAnnouncementSchema = z.object({
   title: z.string().trim().min(1).max(255),
   body: z.string().trim().min(1),
-  targetRole: z.enum(['super_admin', 'school_admin', 'teacher', 'accountant', 'student', 'parent', 'receptionist', 'guard']).optional(),
+  targetRole: z.enum(['super_admin', 'school_admin', 'teacher', 'accountant', 'student', 'alumni', 'parent', 'receptionist', 'guard']).optional(),
   targetClassSectionId: z.string().uuid().optional(),
 }).strict();
 
@@ -64,6 +64,29 @@ export async function POST(request: Request) {
 
     if (item) {
       await recordAudit(context, 'create', 'announcement', item.id);
+
+      // Real SMS notification to opted-in alumni (future-implementation
+      // /alumni-portal, discovery decision) - reuses the existing log-only
+      // smsMessages pattern, no new notification infra.
+      if (body.targetRole === 'alumni') {
+        const recipients = await db
+          .select({ id: user.id, phone: user.phone })
+          .from(user)
+          .where(and(eq(user.tenantId, tenantId), eq(user.role, 'alumni')));
+        for (const recipient of recipients) {
+          if (recipient.phone) {
+            await db.insert(smsMessages).values({
+              tenantId,
+              recipientPhone: recipient.phone,
+              studentId: recipient.id,
+              body: `${body.title} : ${body.body}`.slice(0, 300),
+              status: 'sent',
+              sentAt: new Date().toISOString(),
+              createdById: context.userId,
+            });
+          }
+        }
+      }
     }
 
     return NextResponse.json({

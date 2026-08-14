@@ -15,6 +15,13 @@ const linkGuardianStudentSchema = z.object({
   relationshipType: z.string().trim().max(100).optional(),
 }).strict();
 
+const updateGuardianStudentLinkSchema = z.object({
+  guardianId: z.string().uuid(),
+  studentId: z.string().min(1),
+  emergencyPriority: z.number().int().nullable().optional(),
+  canPickup: z.boolean().optional(),
+}).strict();
+
 export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
@@ -95,6 +102,45 @@ export async function POST(request: Request) {
       },
       message: 'Liaison tuteur-élève enregistrée avec succès',
     });
+  } catch (error) {
+    return apiErrorResponse(error);
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const context = await requireRequestContext(request, ['school_admin']);
+    const tenantId = requireTenant(context);
+    await requireCapability(context, 'students.guardians.manage');
+    const body = await parseJson(request, updateGuardianStudentLinkSchema);
+
+    const [link] = await db
+      .select({ id: guardianStudents.id })
+      .from(guardianStudents)
+      .where(and(
+        eq(guardianStudents.tenantId, tenantId),
+        eq(guardianStudents.guardianId, body.guardianId),
+        eq(guardianStudents.studentId, body.studentId),
+      ))
+      .limit(1);
+
+    if (!link) {
+      throw new ApiError(422, 'INVALID_REFERENCE', 'Cette liaison tuteur-élève n\'existe pas.');
+    }
+
+    const patch: { emergencyPriority?: number | null; canPickup?: boolean } = {};
+    if (body.emergencyPriority !== undefined) {
+      patch.emergencyPriority = body.emergencyPriority;
+    }
+    if (body.canPickup !== undefined) {
+      patch.canPickup = body.canPickup;
+    }
+
+    await db.update(guardianStudents).set(patch).where(eq(guardianStudents.id, link.id));
+
+    recordAudit(context, 'update', 'guardian_student', link.id, patch);
+
+    return NextResponse.json({ success: true, message: 'Liaison mise à jour avec succès' });
   } catch (error) {
     return apiErrorResponse(error);
   }

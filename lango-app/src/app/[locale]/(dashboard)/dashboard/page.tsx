@@ -8,6 +8,7 @@ import { auth } from '@/libs/auth';
 // map if another role gets the same kind of dedicated portal later.
 const ROLE_LANDING_PAGE: Record<string, string> = {
   accountant: 'finance',
+  guard: 'portals/guard',
 };
 
 export default async function DashboardPage({

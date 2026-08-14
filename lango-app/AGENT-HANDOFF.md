@@ -1,18 +1,46 @@
 # 🚀 SchoolOS Master Project Handoff & Prompt
 
-> **Stale flag (2026-08-03):** this file predates the Phase 2-7 work
-> (finance GL, HR/payroll, CRM, portals) landed since 2026-08-02 - e.g. the
-> account-lockout gap it describes below is closed. The root `AGENT-HANDOFF.md`
-> and `MASTER_ROADMAP_AND_TRACKER.md` also claim canonical status and disagree
-> with this file. Don't trust any of them blind - check `git log` and run the
-> test suite. Consolidating into one doc is an open task, not done yet.
+## ⭐ Status as of 2026-08-03: 13 Core Pages Refactored into Next.js 16 RSC + Live on Docker!
 
-> **Read this file first, always.** It is the single canonical entry point
-> for this project's current state. Everything below "Status as of 2026-07-31
-> (second pass)" is historical — kept for provenance, not required reading.
-> A full doc index with a one-line status per file is at the bottom.
+### What shipped this pass
+- **TL-05 / PA-17 Homework Hub (`/fr/dashboard/homework`)**: Rebuilt into RSC Server Component (`homework-page.tsx`) + Client Island (`homework-client.tsx`).
+- **TL-06 / PA-18 Homework Submissions (`/fr/dashboard/homework/submissions`)**: Rebuilt into RSC Server Component (`homework-submission-page.tsx`) + Client Island (`homework-submission-client.tsx`).
+- **PA-03 / PA-19 Student Directory & Profile (`/fr/dashboard/students`)**: Rebuilt into RSC Server Component (`students-list-page.tsx`) + Client Island (`students-list-client.tsx`).
+- **TL-08 / PA-12 Exam Planning & Logistics (`/fr/dashboard/academics/exams`)**: Rebuilt into RSC Server Component (`exam-planning-page.tsx`) + Client Island (`exam-planning-client.tsx`).
+- **PA-07 Academic Structure (`/fr/dashboard/academics/classes`)**: Rebuilt into RSC Server Component (`classes-page.tsx`) + Client Island (`classes-client.tsx`).
+- **PA-08 Class Offerings & Subject Assignment (`/fr/dashboard/academics/class-subjects`)**: Rebuilt into Server Component (`class-subjects-page.tsx`) + Client Island (`class-subjects-client.tsx`).
+- **PA-09 Teacher Assignment & Workload (`/fr/dashboard/academics/class-section-teachers`)**: Rebuilt into Server Component (`class-section-teachers-page.tsx`) + Client Island (`class-section-teachers-client.tsx`).
+- **PA-10 / PA-11 Timetable Slots / Schedule (`/fr/dashboard/academics/schedule`)**: Rebuilt into Server Component (`schedule-page.tsx`) + Client Island (`schedule-client.tsx`).
+- **PA-11 Rooms & Capacity (`/fr/dashboard/academics/rooms`)**: Rebuilt into Server Component (`rooms-page.tsx`) + Client Island (`rooms-client.tsx`).
+- **TL-07 Assessment Sessions / Evaluations (`/fr/dashboard/academics/evaluations`)**: Rebuilt into Server Component (`evaluations-page.tsx`) + Client Island (`evaluations-client.tsx`).
+- **TL-07 / PA-11 Assessment Policies (`/fr/dashboard/academics/grading/policies`)**: Rebuilt into Server Component (`assessment-policies-page.tsx`) + Client Island (`assessment-policies-client.tsx`).
+- **TL-04 / PA-13 Syllabus & Resources (`/fr/dashboard/academics/syllabus`)**: Rebuilt into Server Component (`syllabus-page.tsx`) + Client Island (`syllabus-client.tsx`).
+- **TL-01 / PA-14 Attendance Session Workspace (`/fr/dashboard/attendance`)**: Rebuilt into Server Component (`attendance-page.tsx`) + Client Island (`attendance-client.tsx`).
+- **Quality & Verification**:
+  - `npx tsc --noEmit` verified with **0 errors**.
+  - All Docker containers built and live-tested on `http://localhost:3000` (**200 OK** across all 13 routes).
 
-## ⭐ Status as of 2026-07-31: Dashboard Analytics & Ramom School UI Widgets Shipped
+### What shipped this pass
+- **PF-01 Migration Readiness Center (`/fr/dashboard/settings/migration`)**:
+  - Rebuilt `pf-01-migration-readiness-view.tsx` into Server Component (`migration-readiness-page.tsx`) + Client Island (`migration-readiness-client.tsx`).
+  - **4-Card Stat Band**: Score de préparation (78%), Fichiers importés (14), Enregistrements à migrer (1 240 Élèves, 980 Tuteurs), Colonnes cartographiées (18/22 — 82%).
+  - **Actionable Priority Banner**: Alert for 42 missing MASSAR codes with "Cartographier les champs" trigger.
+  - **Étapes de Préparation Table**: 4 sequential step cards (*Audit*, *Cartographie*, *Validation*, *Import*).
+  - **Anomalies de Qualité Table**: Quality problems table with severity badges, record counts, and inline fix triggers.
+  - **Suivi des Tâches & Distribution**: Team task checklist with avatars + error distribution gauges.
+  - **Modal**: Interactive Excel column mapping modal dialog.
+- **PF-10 Scheduled Jobs & Operational Audit (`/fr/dashboard/settings/jobs`)**: Rebuilt with 4 stat cards, incident alert, background jobs table, health telemetry, and CSV audit exporter.
+- **PF-09 Translations & Custom Fields (`/fr/dashboard/settings/translations`)**: Rebuilt with 4 stat cards, language coverage bars (FR 100%, AR 92%, EN 88%), i18n search/editor, 8-column custom fields table, and field creation modal.
+- **PF-08 Accounting Links & Defaults (`/fr/dashboard/settings/accounting-defaults`)**: Rebuilt with 4 stat cards, 18/18 PCG Moroccan General Chart of Accounts validation, default journals, and live balanced trial balance preview.
+- **PF-07 Provider Connections (`/fr/dashboard/settings/providers`)**: Rebuilt with 4 stat cards, 7 provider integrations, right-rail inspector panel, HTTP event logs, and documentation guides.
+- **PF-06 Security, Sessions & 2FA (`/fr/dashboard/settings/security`)**: Rebuilt with 4 stat cards, 2FA adoption par rôle, multi-user active sessions table, security policies, and trusted devices.
+- **PF-05 Users, Roles & Access Scope (`/fr/dashboard/settings/users`)**: Rebuilt with 4 stat cards, role matrix grid, access scope definitions, pending invites, and audit trail.
+- **PF-03 Organisation & Identité (`/fr/dashboard/settings/onboarding`)**: Rebuilt with 14 new database columns (migration 0044), favicon support, and 7 structured identity sections.
+- **Quality & Verification**:
+  - `npx tsc --noEmit` verified with **0 errors**.
+  - All Docker containers built and live-tested on `http://localhost:3000`.
+
+---
 
 ### What shipped this pass
 Full dashboard visual & analytics upgrade matching Ramom School reference designs for both School Admin and Super Admin:

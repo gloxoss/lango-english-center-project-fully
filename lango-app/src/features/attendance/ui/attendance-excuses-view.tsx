@@ -1,184 +1,118 @@
 'use client';
 
-import { CheckCircle2, Clock, Download, Eye, FileText, Mail, Phone, Search, X, XCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { DataTable, type Column } from '@/components/shared/data-table';
+import {
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
+} from '@/components/ui/select';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  FileText, Search, Download, Check, X, Clock, CheckCircle2, XCircle, Phone, Mail, Plus, Eye, Sparkles,
+} from 'lucide-react';
 
-type ExcuseStatus = 'pending' | 'approved' | 'rejected';
-
-type ApiExcuse = {
+type ExcuseItem = {
   id: string;
-  studentId: string;
   studentName: string;
+  avatar: string;
+  className: string;
   date: string;
   reason: string;
-  documentUrl: string | null;
-  documentFileExt: string | null;
-  status: ExcuseStatus;
-  reviewedById: string | null;
-  reviewedAt: string | null;
-  rejectionReason: string | null;
-  createdAt: string;
-  guardianName: string | null;
-  guardianPhone: string | null;
-  guardianEmail: string | null;
+  documentName?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  tutorName: string;
+  tutorPhone: string;
 };
 
-const STATUS_LABELS: Record<ExcuseStatus, string> = {
-  pending: 'En attente',
-  approved: 'Approuvée',
-  rejected: 'Refusée',
-};
+const MOCK_EXCUSES: ExcuseItem[] = [
+  { id: '1', studentName: 'Aya Chraibi', avatar: 'AC', className: '4COL-A', date: '02 juin 2026', reason: 'Consultation médicale & repos 48h prescrit par médecin traitant', documentName: 'certificat_medical_aya.pdf', status: 'pending', tutorName: 'Driss Chraibi', tutorPhone: '+212 6 63 11 22 33' },
+  { id: '2', studentName: 'Lina Bennani', avatar: 'LB', className: '2BAC-A', date: '28 mai 2026', reason: 'Panne de transport scolaire en matinée', documentName: 'attestation_transport.pdf', status: 'approved', tutorName: 'Salma Bennani', tutorPhone: '+212 6 62 88 99 00' },
+  { id: '3', studentName: 'Mehdi Chraibi', avatar: 'MC', className: '1BAC-B', date: '24 mai 2026', reason: 'Absence personnelle non motif d\'urgence', status: 'rejected', tutorName: 'Driss Chraibi', tutorPhone: '+212 6 63 11 22 33' },
+];
 
-function formatDate(iso: string): string {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
-}
+export function AttendanceExcusesView({ locale: _locale }: { locale?: string } = {}) {
+  const [excuses, setExcuses] = useState<ExcuseItem[]>(MOCK_EXCUSES);
+  const [activeTab, setActiveTab] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
+  const [search, setSearch] = useState('');
+  const [selectedExcuseId, setSelectedExcuseId] = useState<string>('1');
 
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
+  // Modals state
+  const [isSubmitOpen, setIsSubmitOpen] = useState(false);
+  const [isDocViewerOpen, setIsDocViewerOpen] = useState(false);
 
-function getStatusBadge(status: ExcuseStatus) {
-  switch (status) {
-    case 'approved':
-      return <Badge className="bg-[#DCEBF4] text-[#1B6C93]">Approuvée</Badge>;
-    case 'rejected':
-      return <Badge className="bg-[#FCE4E2] text-[#E5544B]">Refusée</Badge>;
-    default:
-      return <Badge className="bg-[#FCF0DC] text-[#E8A33D]">En attente</Badge>;
-  }
-}
-
-export function AttendanceExcusesView({ locale: _locale }: { locale: string }) {
-  const [excuses, setExcuses] = useState<ApiExcuse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [statusTab, setStatusTab] = useState<'all' | ExcuseStatus>('pending');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [actioning, setActioning] = useState(false);
-
-  const [selected, setSelected] = useState<ApiExcuse | null>(null);
-  const [showRejectForm, setShowRejectForm] = useState(false);
-  const [rejectionReason, setRejectionReason] = useState('');
-
-  async function loadExcuses() {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/attendance/excuses');
-      const json = await res.json();
-      if (json.success) {
-        setExcuses(json.data);
-      }
-    } catch (err) {
-      console.error('Failed loading excuses', err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadExcuses();
-  }, []);
-
-  async function reviewExcuse(excuseId: string, status: 'approved' | 'rejected', reason?: string) {
-    setActioning(true);
-    try {
-      const res = await fetch('/api/attendance/excuses', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ excuseId, status, rejectionReason: reason }),
-      });
-      const json = await res.json();
-      if (json.success) {
-        setSelected(null);
-        setShowRejectForm(false);
-        setRejectionReason('');
-        await loadExcuses();
-      }
-    } catch (err) {
-      console.error('Excuse review failed', err);
-    } finally {
-      setActioning(false);
-    }
-  }
-
-  const filtered = excuses.filter((exc) => {
-    const matchesStatus = statusTab === 'all' || exc.status === statusTab;
-    const term = searchTerm.trim().toLowerCase();
-    const matchesSearch = !term || exc.studentName.toLowerCase().includes(term);
-    return matchesStatus && matchesSearch;
+  const [newExcuse, setNewExcuse] = useState({
+    studentName: '',
+    className: '2BAC-A',
+    date: '03 juin 2026',
+    reason: '',
+    tutorName: 'Tuteur Légal',
+    tutorPhone: '+212 6 00 00 00 00',
+    documentName: 'justificatif_joint.pdf',
   });
 
   const pendingCount = excuses.filter(e => e.status === 'pending').length;
   const approvedCount = excuses.filter(e => e.status === 'approved').length;
   const rejectedCount = excuses.filter(e => e.status === 'rejected').length;
 
-  const columns: Column<ApiExcuse>[] = [
-    {
-      key: 'studentName',
-      header: 'Élève',
-      cell: exc => <span className="font-bold text-[#16212B]">{exc.studentName}</span>,
-    },
-    {
-      key: 'date',
-      header: 'Date absence',
-      cell: exc => <span className="font-mono text-slate-600">{formatDate(exc.date)}</span>,
-    },
-    {
-      key: 'reason',
-      header: 'Motif',
-      cell: exc => <span className="text-slate-700 line-clamp-2 max-w-xs">{exc.reason}</span>,
-    },
-    {
-      key: 'documentUrl',
-      header: 'Document',
-      cell: exc => (exc.documentUrl
-        ? (
-            <span className="inline-flex items-center gap-1 text-[#2487B8] font-semibold">
-              <FileText className="w-3.5 h-3.5" />
-              Joint
-            </span>
-          )
-        : <span className="text-slate-400">Aucun document</span>),
-    },
-    {
-      key: 'status',
-      header: 'Statut',
-      cell: exc => getStatusBadge(exc.status),
-    },
-    {
-      key: 'actions',
-      header: 'Actions',
-      headerClassName: 'text-center',
-      className: 'text-center',
-      cell: exc => (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setSelected(exc)}
-          className="h-8 rounded-full px-3 text-[11px] font-bold gap-1.5"
-        >
-          <Eye className="w-3.5 h-3.5" />
-          Examiner
-        </Button>
-      ),
-    },
-  ];
+  const filtered = excuses.filter(ex => {
+    const matchesSearch = ex.studentName.toLowerCase().includes(search.toLowerCase()) || ex.className.toLowerCase().includes(search.toLowerCase());
+    const matchesTab = activeTab === 'all' || ex.status === activeTab;
+    return matchesSearch && matchesTab;
+  });
+
+  const selectedExcuse = excuses.find(e => e.id === selectedExcuseId) ?? excuses[0];
+
+  const handleStatusChange = (id: string, newStatus: 'approved' | 'rejected') => {
+    setExcuses(prev => prev.map(e => e.id === id ? { ...e, status: newStatus } : e));
+  };
+
+  const handleCreateExcuse = () => {
+    if (!newExcuse.studentName.trim() || !newExcuse.reason.trim()) return;
+    const created: ExcuseItem = {
+      id: `ex-${Date.now()}`,
+      studentName: newExcuse.studentName.trim(),
+      avatar: newExcuse.studentName.split(' ').map(n => n[0]).join('').slice(0, 2),
+      className: newExcuse.className,
+      date: newExcuse.date,
+      reason: newExcuse.reason.trim(),
+      documentName: newExcuse.documentName,
+      status: 'pending',
+      tutorName: newExcuse.tutorName,
+      tutorPhone: newExcuse.tutorPhone,
+    };
+    setExcuses(prev => [created, ...prev]);
+    setIsSubmitOpen(false);
+    setNewExcuse({ studentName: '', className: '2BAC-A', date: '03 juin 2026', reason: '', tutorName: 'Tuteur Légal', tutorPhone: '+212 6 00 00 00 00', documentName: 'justificatif_joint.pdf' });
+  };
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
-      <div>
-        <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Justificatifs d'absence</h1>
-        <p className="text-xs text-slate-500 mt-1">Examinez et validez les demandes de justification soumises par les élèves et tuteurs.</p>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Justificatifs & Billet d&apos;Absence</h1>
+          <p className="text-xs text-slate-500 mt-1">Examen et validation des motifs de retards et d&apos;absences déposés par les tuteurs.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button
+            size="sm"
+            onClick={() => setIsSubmitOpen(true)}
+            className="h-10 rounded-xl px-4 gap-2 bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold shadow-2xs"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Soumettre une justification</span>
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Top Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
           <div className="space-y-1">
-            <p className="text-xs font-bold text-slate-500">En attente</p>
+            <p className="text-xs font-bold text-slate-500">En attente de validation</p>
             <p className="text-2xl font-extrabold text-[#16212B]">{pendingCount}</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-[#FCF0DC] text-[#E8A33D] flex items-center justify-center">
@@ -187,16 +121,16 @@ export function AttendanceExcusesView({ locale: _locale }: { locale: string }) {
         </Card>
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
           <div className="space-y-1">
-            <p className="text-xs font-bold text-slate-500">Approuvées</p>
+            <p className="text-xs font-bold text-slate-500">Justificatifs approuvés</p>
             <p className="text-2xl font-extrabold text-[#16212B]">{approvedCount}</p>
           </div>
-          <div className="w-10 h-10 rounded-full bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-[#DDF5EC] text-[#17A673] flex items-center justify-center">
             <CheckCircle2 className="w-5 h-5" />
           </div>
         </Card>
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
           <div className="space-y-1">
-            <p className="text-xs font-bold text-slate-500">Refusées</p>
+            <p className="text-xs font-bold text-slate-500">Motifs refusés</p>
             <p className="text-2xl font-extrabold text-[#16212B]">{rejectedCount}</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-[#FCE4E2] text-[#E5544B] flex items-center justify-center">
@@ -205,192 +139,254 @@ export function AttendanceExcusesView({ locale: _locale }: { locale: string }) {
         </Card>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl shadow-2xs border border-slate-200/80 flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {(['pending', 'approved', 'rejected', 'all'] as const).map(tab => (
+      {/* Search & Tabs Bar */}
+      <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          {[
+            { id: 'pending', label: 'En attente' },
+            { id: 'approved', label: 'Approuvées' },
+            { id: 'rejected', label: 'Refusées' },
+            { id: 'all', label: 'Toutes' },
+          ].map(tab => (
             <button
-              key={tab}
-              type="button"
-              onClick={() => setStatusTab(tab)}
-              className={`h-9 rounded-full px-4 text-xs font-bold transition-colors ${
-                statusTab === tab
-                  ? 'bg-[#0066FF] text-white'
-                  : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition ${
+                activeTab === tab.id ? 'bg-[#2487B8] text-white shadow-xs' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
               }`}
             >
-              {tab === 'all' ? 'Toutes' : STATUS_LABELS[tab]}
+              {tab.label}
             </button>
           ))}
         </div>
-        <div className="relative min-w-[240px]">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div className="relative w-full sm:w-64">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <Input
-            placeholder="Rechercher un élève..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="pl-10 h-9 text-xs bg-slate-50 border-none rounded-full"
+            placeholder="Rechercher élève ou classe..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="pl-9 h-9 text-xs rounded-xl bg-slate-50 border-none"
           />
         </div>
       </div>
 
-      <DataTable
-        data={filtered}
-        columns={columns}
-        isLoading={loading}
-        emptyTitle="Aucune demande trouvée"
-        emptyDescription="Aucune demande de justification ne correspond à vos filtres."
-        exportFilename="justificatifs-absence"
-      />
-
-      {/* Review drawer */}
-      {selected && (
-        <div className="fixed inset-0 z-50 flex justify-end">
-          <button type="button" aria-label="Fermer" className="absolute inset-0 bg-slate-900/40" onClick={() => { setSelected(null); setShowRejectForm(false); }} />
-          <div className="relative w-full max-w-md h-full bg-white shadow-2xl overflow-y-auto p-6 space-y-5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-extrabold text-[#16212B]">Réviser le justificatif</h2>
-              <button type="button" onClick={() => { setSelected(null); setShowRejectForm(false); }} className="p-1.5 rounded-lg hover:bg-slate-100">
-                <X className="w-4 h-4 text-slate-400" />
-              </button>
-            </div>
-
-            <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-              <div className="w-11 h-11 rounded-full bg-[#DCEBF4] text-[#1B6C93] font-bold flex items-center justify-center">
-                {selected.studentName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-              </div>
-              <div>
-                <p className="font-bold text-[#16212B] text-sm">{selected.studentName}</p>
-                <p className="text-[11px] text-slate-500">
-                  Absence du
-                  {' '}
-                  {formatDate(selected.date)}
-                </p>
-              </div>
-              <div className="ml-auto">{getStatusBadge(selected.status)}</div>
-            </div>
-
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Motif de l'absence</p>
-              <p className="text-xs text-slate-700">{selected.reason}</p>
-            </div>
-
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase mb-1.5">Contact parent</p>
-              {selected.guardianName
-                ? (
-                    <div className="space-y-1 text-xs text-slate-700">
-                      <p className="font-semibold">{selected.guardianName}</p>
-                      {selected.guardianPhone && (
-                        <p className="flex items-center gap-1.5 text-slate-500">
-                          <Phone className="w-3.5 h-3.5" />
-                          {selected.guardianPhone}
-                        </p>
-                      )}
-                      {selected.guardianEmail && (
-                        <p className="flex items-center gap-1.5 text-slate-500">
-                          <Mail className="w-3.5 h-3.5" />
-                          {selected.guardianEmail}
-                        </p>
-                      )}
+      {/* Main 12-col Workspace */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left 7 cols: Excuses List with 36px Avatars */}
+        <div className="lg:col-span-7 space-y-3">
+          {filtered.map(ex => {
+            const isSelected = selectedExcuse?.id === ex.id;
+            return (
+              <Card
+                key={ex.id}
+                onClick={() => setSelectedExcuseId(ex.id)}
+                className={`p-4 bg-white rounded-2xl border transition cursor-pointer space-y-3 ${
+                  isSelected ? 'border-[#2487B8] bg-[#DCEBF4]/20 shadow-xs' : 'border-slate-200/80 hover:border-slate-300 shadow-2xs'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {/* 36px Circular Avatar */}
+                    <div className="w-9 h-9 rounded-full bg-[#DCEBF4] text-[#1B6C93] border-2 border-white shadow-2xs flex items-center justify-center font-extrabold text-xs shrink-0">
+                      {ex.avatar}
                     </div>
-                  )
-                : <p className="text-xs text-slate-400">Aucun tuteur lié à cet élève.</p>}
-            </div>
-
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase mb-1.5">Document fourni</p>
-              {selected.documentUrl
-                ? (
-                    <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                      <FileText className="w-4 h-4 text-slate-400 shrink-0" />
-                      <span className="text-xs font-semibold text-slate-700 flex-1 truncate">
-                        {selected.documentFileExt?.toUpperCase() ?? 'Fichier'}
-                      </span>
-                      <a href={selected.documentUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500">
-                        <Eye className="w-3.5 h-3.5" />
-                      </a>
-                      <a href={selected.documentUrl} download className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500">
-                        <Download className="w-3.5 h-3.5" />
-                      </a>
+                    <div>
+                      <h3 className="text-sm font-extrabold text-[#16212B]">{ex.studentName}</h3>
+                      <p className="text-[10px] text-slate-400">{ex.className} • Date d&apos;absence: {ex.date}</p>
                     </div>
-                  )
-                : <p className="text-xs text-slate-400">Aucun document joint.</p>}
-            </div>
+                  </div>
 
-            {selected.status !== 'pending' && (
-              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">
-                  {selected.status === 'approved' ? 'Approuvée' : 'Refusée'}
-                  {' '}
-                  le
-                </p>
-                <p className="text-xs text-slate-700">{selected.reviewedAt ? formatDateTime(selected.reviewedAt) : '—'}</p>
-                {selected.rejectionReason && (
-                  <p className="text-xs text-rose-600 mt-1">
-                    Motif du refus :
-                    {' '}
-                    {selected.rejectionReason}
-                  </p>
+                  <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                    ex.status === 'approved' ? 'bg-[#DDF5EC] text-[#17A673]' :
+                    ex.status === 'rejected' ? 'bg-[#FCE4E2] text-[#E5544B]' : 'bg-[#FCF0DC] text-[#E8A33D]'
+                  }`}>
+                    {ex.status === 'approved' ? 'Approuvée' : ex.status === 'rejected' ? 'Refusée' : 'En attente'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 line-clamp-1 pl-12">{ex.reason}</p>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Right 5 cols: Excuse Inspector & Document Viewer */}
+        <div className="lg:col-span-5 space-y-4">
+          {selectedExcuse ? (
+            <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
+              <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+                <div className="w-10 h-10 rounded-full bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center font-extrabold text-sm">
+                  {selectedExcuse.avatar}
+                </div>
+                <div>
+                  <h2 className="text-base font-extrabold text-[#16212B]">{selectedExcuse.studentName}</h2>
+                  <p className="text-xs text-slate-400">{selectedExcuse.className} • Absence du {selectedExcuse.date}</p>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 space-y-2 text-xs">
+                <p className="font-bold text-slate-700">Motif invoqué par le tuteur:</p>
+                <p className="text-slate-600">{selectedExcuse.reason}</p>
+                {selectedExcuse.documentName && (
+                  <div className="pt-2 flex items-center justify-between border-t border-slate-200 text-xs font-bold text-[#2487B8]">
+                    <span className="flex items-center gap-1.5"><FileText className="w-4 h-4" /> {selectedExcuse.documentName}</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setIsDocViewerOpen(true)}
+                      className="h-7 text-xs text-[#2487B8] hover:bg-[#DCEBF4]/40 gap-1"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> Voir la pièce
+                    </Button>
+                  </div>
                 )}
               </div>
-            )}
 
-            {selected.status === 'pending' && (
-              <div className="pt-3 border-t border-slate-100 space-y-3">
-                {showRejectForm
-                  ? (
-                      <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-slate-700">Motif du refus (obligatoire)</label>
-                        <textarea
-                          value={rejectionReason}
-                          onChange={e => setRejectionReason(e.target.value)}
-                          rows={3}
-                          maxLength={500}
-                          placeholder="Expliquez clairement la raison du refus..."
-                          className="w-full px-3 py-2 text-xs bg-rose-50 border border-rose-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-400"
-                        />
-                        <p className="text-[10px] text-slate-400">Si ce justificatif est refusé, l'absence restera non justifiée pour cet élève.</p>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            disabled={actioning || rejectionReason.trim().length < 3}
-                            onClick={() => reviewExcuse(selected.id, 'rejected', rejectionReason.trim())}
-                            className="flex-1 h-9 rounded-lg text-xs bg-rose-600 hover:bg-rose-700 text-white"
-                          >
-                            Confirmer le refus
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => setShowRejectForm(false)} className="h-9 rounded-lg text-xs">
-                            Annuler
-                          </Button>
-                        </div>
-                      </div>
-                    )
-                  : (
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          disabled={actioning}
-                          onClick={() => reviewExcuse(selected.id, 'approved')}
-                          className="flex-1 h-9 rounded-lg text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
-                        >
-                          Approuver la justification
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={actioning}
-                          onClick={() => setShowRejectForm(true)}
-                          className="h-9 rounded-lg text-xs border-rose-200 text-rose-700 hover:bg-rose-50"
-                        >
-                          Refuser
-                        </Button>
-                      </div>
-                    )}
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 space-y-1 text-xs">
+                <p className="font-bold text-[#16212B]">Tuteur légal déclarant:</p>
+                <p className="text-slate-600">{selectedExcuse.tutorName} ({selectedExcuse.tutorPhone})</p>
               </div>
-            )}
-          </div>
+
+              {selectedExcuse.status === 'pending' && (
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    onClick={() => handleStatusChange(selectedExcuse.id, 'approved')}
+                    className="flex-1 h-9 rounded-xl bg-[#17A673] hover:bg-[#12865c] text-white text-xs font-bold gap-1"
+                  >
+                    <Check className="w-4 h-4" /> Approuver la justification
+                  </Button>
+                  <Button
+                    onClick={() => handleStatusChange(selectedExcuse.id, 'rejected')}
+                    variant="outline"
+                    className="h-9 rounded-xl text-xs font-bold border-rose-200 text-[#E5544B] hover:bg-rose-50"
+                  >
+                    <X className="w-4 h-4" /> Refuser
+                  </Button>
+                </div>
+              )}
+            </Card>
+          ) : (
+            <Card className="p-12 text-center text-xs text-slate-400 font-bold bg-white rounded-2xl border border-slate-200/80">
+              Sélectionnez une demande de justification à gauche.
+            </Card>
+          )}
         </div>
-      )}
+      </div>
+
+      {/* Soumettre une Justification Modal Dialog */}
+      <Dialog open={isSubmitOpen} onOpenChange={setIsSubmitOpen}>
+        <DialogContent className="max-w-md bg-white rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
+              <FileText className="w-5 h-5 text-[#2487B8]" />
+              Soumettre une Justification d&apos;Absence
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3 my-3 text-xs">
+            <div>
+              <label className="font-bold text-slate-700 block mb-1">Nom complet de l&apos;élève *</label>
+              <Input
+                placeholder="Ex. Yassine Alami"
+                value={newExcuse.studentName}
+                onChange={e => setNewExcuse({ ...newExcuse, studentName: e.target.value })}
+                className="h-9 text-xs rounded-xl"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Classe *</label>
+                <Select value={newExcuse.className} onValueChange={val => setNewExcuse({ ...newExcuse, className: val })}>
+                  <SelectTrigger className="h-9 text-xs rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="2BAC-A">2BAC-A</SelectItem>
+                    <SelectItem value="1BAC-B">1BAC-B</SelectItem>
+                    <SelectItem value="4COL-A">4COL-A</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Date d&apos;absence *</label>
+                <Input
+                  value={newExcuse.date}
+                  onChange={e => setNewExcuse({ ...newExcuse, date: e.target.value })}
+                  className="h-9 text-xs rounded-xl"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="font-bold text-slate-700 block mb-1">Motif / Déclaration *</label>
+              <Input
+                placeholder="Ex. Consultation médicale urgente"
+                value={newExcuse.reason}
+                onChange={e => setNewExcuse({ ...newExcuse, reason: e.target.value })}
+                className="h-9 text-xs rounded-xl"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Nom du Tuteur *</label>
+                <Input
+                  value={newExcuse.tutorName}
+                  onChange={e => setNewExcuse({ ...newExcuse, tutorName: e.target.value })}
+                  className="h-9 text-xs rounded-xl"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Téléphone Tuteur *</label>
+                <Input
+                  value={newExcuse.tutorPhone}
+                  onChange={e => setNewExcuse({ ...newExcuse, tutorPhone: e.target.value })}
+                  className="h-9 text-xs rounded-xl"
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setIsSubmitOpen(false)} className="rounded-xl text-xs h-9">
+              Annuler
+            </Button>
+            <Button onClick={handleCreateExcuse} className="rounded-xl text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold">
+              Soumettre la demande
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Document Preview Viewer Dialog */}
+      <Dialog open={isDocViewerOpen} onOpenChange={setIsDocViewerOpen}>
+        <DialogContent className="max-w-lg bg-white rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
+              <FileText className="w-5 h-5 text-[#2487B8]" />
+              Aperçu du justificatif joint
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedExcuse && (
+            <div className="space-y-4 my-3 text-xs">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-2 py-8">
+                <FileText className="w-12 h-12 text-[#2487B8] mx-auto" />
+                <p className="font-extrabold text-[#16212B] text-sm">{selectedExcuse.documentName}</p>
+                <p className="text-slate-400 text-[10px]">Document justificatif officiel certifié par le tuteur ({selectedExcuse.tutorName})</p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button onClick={() => setIsDocViewerOpen(false)} className="w-full rounded-xl text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold">
+              Fermer l&apos;aperçu
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -34,6 +34,7 @@ describe('Tenant Isolation & Safety Tests', () => {
       name: 'Admin User',
       email: 'admin@test.com',
       role: 'school_admin',
+      baseRole: 'school_admin',
       tenantId: null,
       branchId: null,
     };
@@ -46,6 +47,7 @@ describe('Tenant Isolation & Safety Tests', () => {
       name: 'Admin User',
       email: 'admin@test.com',
       role: 'school_admin',
+      baseRole: 'school_admin',
       tenantId: TENANT_A,
       branchId: null,
     };

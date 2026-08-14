@@ -138,7 +138,7 @@ const PricingCard: React.FC<{
         </p>
       </div>
 
-      <CtaButton label={isAr ? 'طلب عرض توضيحي' : 'Planifier une démo'} onClick={onDemo} isAr={isAr} />
+      <CtaButton label={isAr ? 'الوصول المبكر' : 'Accès prioritaire'} onClick={onDemo} isAr={isAr} />
     </div>
 
     <div className="check-list-wrap flex flex-col gap-3 w-full pt-2 border-t border-white/10">

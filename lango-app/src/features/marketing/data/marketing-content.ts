@@ -16,7 +16,7 @@ export const HERO_CONTENT_I18N: Record<Locale, HeroContent> = {
   fr: {
     title: "Le système d'exploitation des établissements scolaires au Maroc",
     subtitle: "Plus de temps pour l'essentiel. Gérez vos élèves, absences, notes et finances sur une plateforme fluide, automatisée et 100% conforme CNDP Loi 09-08.",
-    primaryCtaText: "Planifier une démo gratuite",
+    primaryCtaText: "Rejoindre la liste d’accès prioritaire",
     secondaryCtaText: "Découvrir les modules",
     heroCardMainUrl: "/assets/images/68a5a0547b3405bb7da6391a_Hero_UI_Card.png",
     heroCardSecondaryUrl: "/assets/images/68a5a0543502c2d385a6dc2e_Hero_UI_Card_2.png",
@@ -32,7 +32,7 @@ export const HERO_CONTENT_I18N: Record<Locale, HeroContent> = {
   ar: {
     title: "نظام إدارة المؤسسات التعليمية والشاملة بالمغرب",
     subtitle: "استثمر وقتك في الأهم. أدِر طلابك، غياباتهم، نقاطهم وماليتك على منصة سلسة، مؤتمتة ومطابقة 100% لقانون حماية المعطيات CNDP 09-08.",
-    primaryCtaText: "طلب عرض توضيحي مجاني",
+    primaryCtaText: "الانضمام إلى قائمة الوصول المبكر",
     secondaryCtaText: "استكشاف الوظائف",
     heroCardMainUrl: "/assets/images/68a5a0547b3405bb7da6391a_Hero_UI_Card.png",
     heroCardSecondaryUrl: "/assets/images/68a5a0543502c2d385a6dc2e_Hero_UI_Card_2.png",
@@ -349,12 +349,12 @@ export const FAQ_ITEMS_I18N: Record<Locale, FaqItem[]> = {
 // ─── CONTACT CONTENT DICTIONARY ───────────────────────────────────────────────
 export const CONTACT_CONTENT_I18N: Record<Locale, ContactContent> = {
   fr: {
-    title: "Commencez votre digitalisation",
-    subtitle: "Rejoignez plus de 500 établissements scolaires qui font confiance à SchoolOS pour leur gestion quotidienne.",
+    title: "Préparez votre école pour SchoolOS",
+    subtitle: "SchoolOS arrive bientôt. Rejoignez la liste d'accès prioritaire pour découvrir le pilote et nous aider à l'adapter aux besoins réels de votre établissement.",
     phone: "+212 522 123 456",
     email: "contact@schoolos.ma",
-    ratingText: "4.9/5 Noté par les directeurs",
-    ratingSubtext: "Plus de 500 établissements au Maroc",
+    ratingText: "Accès pilote en préparation",
+    ratingSubtext: "Pensé pour les écoles privées au Maroc",
     profiles: [
       { src: '/assets/images/68a71d7fa79008ec6716ac73_Modern_man_portrait_.avif', alt: 'Directeur M. El Amrani' },
       { src: '/assets/images/68a71d7fa80bb87671d03416_Dreamy_Portrait_of_a_Young_Woman.avif', alt: 'Directrice Mme. Bennani' },
@@ -363,12 +363,12 @@ export const CONTACT_CONTENT_I18N: Record<Locale, ContactContent> = {
     ],
   },
   ar: {
-    title: "ابدأ التحول الرقمي لمؤسستك",
-    subtitle: "انضم إلى أكثر من 500 مؤسسة تعليمية تثق بـ SchoolOS في إدارتها اليومية بالمغرب.",
+    title: "حضّر مؤسستك لـ SchoolOS",
+    subtitle: "SchoolOS قادم قريباً. انضم إلى قائمة الولوج الأولي لاكتشاف النسخة التجريبية ومساعدتنا على ملاءمتها مع احتياجات مؤسستك الحقيقية.",
     phone: "+212 522 123 456",
     email: "contact@schoolos.ma",
-    ratingText: "4.9/5 تقييم المدراء والتنفيذيين",
-    ratingSubtext: "أكثر من 500 مؤسسة بالمغرب",
+    ratingText: "النسخة التجريبية قيد التحضير",
+    ratingSubtext: "مصممة للمدارس الخاصة بالمغرب",
     profiles: [
       { src: '/assets/images/68a71d7fa79008ec6716ac73_Modern_man_portrait_.avif', alt: 'المدير السيد العمراني' },
       { src: '/assets/images/68a71d7fa80bb87671d03416_Dreamy_Portrait_of_a_Young_Woman.avif', alt: 'المديرة السيدة بناني' },

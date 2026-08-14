@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
-import { requireCapability } from '@/libs/api/permissions';
+import { hasCapability, requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { employeeProfiles, user } from '@/models/Schema';
@@ -27,13 +27,22 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const search = url.searchParams.get('search') ?? '';
 
+    // Sensitive fields (RIB / CNSS / AMO / salary) are only selected when the
+    // caller holds hr.sensitive.read — absent from the response otherwise.
+    const sensitive = await hasCapability(ctx.userId, tenantId, ctx.role, 'hr.sensitive.read');
+
     const rows = await db
       .select({
         id: employeeProfiles.id,
         userId: employeeProfiles.userId,
-        cnssNumber: employeeProfiles.cnssNumber,
-        amoNumber: employeeProfiles.amoNumber,
-        bankRib: employeeProfiles.bankRib,
+        ...(sensitive
+          ? {
+              cnssNumber: employeeProfiles.cnssNumber,
+              amoNumber: employeeProfiles.amoNumber,
+              bankRib: employeeProfiles.bankRib,
+              salary: user.salary,
+            }
+          : {}),
         contractType: employeeProfiles.contractType,
         dependantsCount: employeeProfiles.dependantsCount,
         createdAt: employeeProfiles.createdAt,
@@ -42,7 +51,6 @@ export async function GET(request: Request) {
         employeeEmail: user.email,
         employeeRole: user.role,
         employeeStatus: user.userStatus,
-        salary: user.salary,
       })
       .from(employeeProfiles)
       .innerJoin(user, eq(employeeProfiles.userId, user.id))

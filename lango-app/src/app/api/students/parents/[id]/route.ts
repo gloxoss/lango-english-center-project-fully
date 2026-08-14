@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, ne, sql } from 'drizzle-orm';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -18,6 +18,9 @@ const updateGuardianSchema = z.object({
   occupation: z.string().trim().max(255).optional().nullable(),
   address: z.string().trim().max(1000).optional().nullable(),
   defaultRelation: z.string().trim().max(50).optional().nullable(),
+  emailOptIn: z.boolean().optional(),
+  smsOptIn: z.boolean().optional(),
+  preferredLanguage: z.string().trim().max(10).optional().nullable(),
 }).strict().refine(data => Object.keys(data).length > 0, {
   message: 'Au moins un champ doit être fourni.',
 });
@@ -43,7 +46,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     }
 
     // Load linked students with student name and profile info
-    const linkedStudents = await db
+    const linkedStudentRows = await db
       .select({
         linkId: guardianStudents.id,
         studentId: guardianStudents.studentId,
@@ -52,6 +55,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         relationshipType: guardianStudents.relationshipType,
         isPrimaryContact: guardianStudents.isPrimaryContact,
         isEmergencyContact: guardianStudents.isEmergencyContact,
+        emergencyPriority: guardianStudents.emergencyPriority,
+        canPickup: guardianStudents.canPickup,
       })
       .from(guardianStudents)
       .innerJoin(user, eq(guardianStudents.studentId, user.id))
@@ -59,6 +64,26 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         eq(guardianStudents.guardianId, id),
         eq(guardianStudents.tenantId, tenantId),
       ));
+
+    // Real co-tutors: for each linked student, the OTHER guardians also linked
+    // to that same child - this IS the household, per the discovery decision
+    // (no separate household table, just guardians sharing a linked student).
+    const linkedStudents = await Promise.all(linkedStudentRows.map(async (row) => {
+      const coGuardians = await db
+        .select({
+          guardianId: guardianStudents.guardianId,
+          name: sql<string>`${guardians.firstName} || ' ' || ${guardians.lastName}`,
+          relationshipType: guardianStudents.relationshipType,
+        })
+        .from(guardianStudents)
+        .innerJoin(guardians, eq(guardianStudents.guardianId, guardians.id))
+        .where(and(
+          eq(guardianStudents.studentId, row.studentId),
+          eq(guardianStudents.tenantId, tenantId),
+          ne(guardianStudents.guardianId, id),
+        ));
+      return { ...row, coGuardians };
+    }));
 
     return NextResponse.json({
       success: true,

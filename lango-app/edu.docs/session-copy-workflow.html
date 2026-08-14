@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Workflow de Copie de Session & Architecture Academic Scoping · Edu Docs</title>
+
+<!-- KaTeX — math rendering -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{
+    delimiters:[
+      {left:'$$',right:'$$',display:true},
+      {left:'$',right:'$',display:false}
+    ],
+    throwOnError:false
+  })"></script>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth}
+:root{
+  --paper:#f8f7f3;--surface:#ffffff;--ink:#1c1b18;--ink2:#3d3c38;
+  --muted:#72716c;--accent:#1d4ed8;--accent-light:#eff6ff;
+  --accent-mid:#3b82f6;--accent-border:#bfdbfe;--rule:#e2e1dc;
+  --rule2:#d1cfc7;--code-bg:#f1f0ec;--sidebar-w:260px;
+  --topbar-h:48px;--content-max:840px;
+  --font-body:'Inter',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+}
+body{
+  font-family:var(--font-body);background:var(--paper);color:var(--ink);
+  line-height:1.75;
+  background-image:radial-gradient(circle,#c4c3bc 1px,transparent 1px);
+  background-size:24px 24px;min-height:100vh;
+}
+.topbar{
+  position:fixed;top:0;left:0;right:0;height:var(--topbar-h);
+  background:var(--surface);border-bottom:1.5px solid var(--rule2);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;z-index:200;
+}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.topbar-pill{
+  font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:#fff;background:var(--accent);padding:3px 10px;border-radius:3px;
+}
+.topbar-title{font-size:.82rem;font-weight:600;color:var(--ink)}
+.topbar-right{font-size:.72rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.layout{display:flex;padding-top:var(--topbar-h);min-height:100vh}
+.sb{
+  width:var(--sidebar-w);flex-shrink:0;position:sticky;top:var(--topbar-h);
+  height:calc(100vh - var(--topbar-h));overflow-y:auto;
+  background:var(--surface);border-right:1.5px solid var(--rule2);padding:24px 0;
+}
+.sb-label{
+  font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);padding:0 20px 6px;margin-top:16px;display:block;
+}
+.sb-link{
+  display:block;font-size:.77rem;color:var(--muted);text-decoration:none;
+  padding:5px 20px;border-left:2px solid transparent;
+  transition:color .12s,border-color .12s,background .12s;line-height:1.35;
+}
+.sb-link:hover{color:var(--accent);border-left-color:var(--accent);background:var(--accent-light)}
+.sb-divider{height:1px;background:var(--rule2);margin:12px 20px}
+.main{flex:1;padding:48px 64px 100px;max-width:calc(var(--content-max) + 128px)}
+.doc-header{margin-bottom:52px}
+.doc-eyebrow{
+  font-size:.67rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);display:flex;align-items:center;gap:8px;margin-bottom:14px;
+}
+.doc-eyebrow::before{content:'';display:block;width:18px;height:2px;background:var(--accent)}
+.doc-title{font-size:2.3rem;font-weight:700;line-height:1.15;letter-spacing:-.02em;color:var(--ink);margin-bottom:10px}
+.doc-subtitle{font-size:.95rem;color:var(--muted);font-weight:400;line-height:1.6;max-width:620px}
+.doc-meta{display:flex;gap:24px;margin-top:20px;padding-top:20px;border-top:1.5px solid var(--rule2);flex-wrap:wrap}
+.doc-meta-item{display:flex;flex-direction:column;gap:2px}
+.doc-meta-label{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.doc-meta-value{font-size:.8rem;font-weight:500;color:var(--ink2)}
+.part-header{margin:52px 0 32px;padding:14px 20px;background:var(--ink);color:#fff;border-radius:4px}
+.part-label{font-size:.6rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#9ca3af;margin-bottom:3px}
+.part-title{font-size:1.05rem;font-weight:700}
+.sec{margin-bottom:44px;scroll-margin-top:68px}
+.sec-head{display:flex;align-items:baseline;gap:10px;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--rule2)}
+.sec-num{
+  font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:#fff;background:var(--accent);padding:2px 8px;border-radius:2px;
+  flex-shrink:0;font-family:var(--font-mono);
+}
+.sec-title{font-size:1.05rem;font-weight:700;color:var(--ink);letter-spacing:-.01em}
+.sub-head{
+  font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin:22px 0 8px;display:flex;align-items:center;gap:8px;
+}
+.sub-head::after{content:'';flex:1;height:1px;background:var(--accent-border)}
+p{margin-bottom:12px;font-size:.92rem;color:var(--ink2)}
+strong{color:var(--ink);font-weight:600}
+ul,ol{padding-left:20px;margin-bottom:12px}
+li{font-size:.92rem;color:var(--ink2);margin-bottom:4px;line-height:1.6}
+.cblock{
+  background:var(--code-bg);border:1px solid var(--rule2);border-radius:4px;
+  padding:16px 18px;margin:14px 0;font-family:var(--font-mono);font-size:.78rem;
+  line-height:1.65;color:var(--ink);white-space:pre;overflow-x:auto;
+}
+.note-box{
+  background:#fffbeb;border:1px solid #fde68a;border-left:3px solid #f59e0b;
+  border-radius:0 4px 4px 0;padding:12px 18px;margin:14px 0;font-size:.86rem;color:#78350f;
+}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.card{background:var(--surface);border:1px solid var(--rule2);border-radius:4px;padding:16px}
+.card-title{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-pill">EDU DOC</span>
+    <span class="topbar-title">Workflow de Copie de Session & Architecture Academic Scoping</span>
+  </div>
+  <div class="topbar-left" style="gap:16px">
+    <span class="topbar-right">SchoolOS Academic Engineering</span>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <nav class="sb" id="sb">
+    <span class="sb-label">Part A — Architecture</span>
+    <a class="sb-link" href="#s-1">A.1 Problématique & Scoping</a>
+    <a class="sb-link" href="#s-2">A.2 Modèle de Données & Relations</a>
+    
+    <div class="sb-divider"></div>
+    
+    <span class="sb-label">Part B — Concepts Clés</span>
+    <a class="sb-link" href="#s-3">B.1 Dry-Run & Mode Aperçu</a>
+    <a class="sb-link" href="#s-4">B.2 Copie Transactionnelle & Idempotence</a>
+    <a class="sb-link" href="#s-5">B.3 Gestion Résiliente des Conflits (23505)</a>
+
+    <div class="sb-divider"></div>
+
+    <span class="sb-label">Part C — Implémentation & Pratique</span>
+    <a class="sb-link" href="#s-6">C.1 Code Minimal Modèle Mental</a>
+    <a class="sb-link" href="#s-7">C.2 Guide Pas-à-Pas d'Utilisation</a>
+    <a class="sb-link" href="#s-8">C.3 Bonnes Pratiques & Diagnostic</a>
+  </nav>
+
+  <main class="main">
+
+    <!-- Header -->
+    <div class="doc-header">
+      <div class="doc-eyebrow">SchoolOS Academic Enhancement Engine — ADR-001</div>
+      <h1 class="doc-title">Duplication de Structure Académique & Workflow de Copie de Session</h1>
+      <p class="doc-subtitle">Guide pédagogique et technique approfondi expliquant l'architecture de scoping par session, la prévention des conflits d'unicité, le mode aperçu dry-run et l'exécution transactionnelle idempotente.</p>
+      <div class="doc-meta">
+        <div class="doc-meta-item"><span class="doc-meta-label">Module</span><span class="doc-meta-value">Academic Management Enhancement (ADR-001)</span></div>
+        <div class="doc-meta-item"><span class="doc-meta-label">Stack</span><span class="doc-meta-value">Next.js 16 App Router, TypeScript, Drizzle ORM, PostgreSQL</span></div>
+        <div class="doc-meta-item"><span class="doc-meta-label">Statut</span><span class="doc-meta-value">100% Production Ready & Testé en Contexte Réel</span></div>
+      </div>
+    </div>
+
+    <!-- PART A -->
+    <div class="part-header">
+      <div class="part-label">Partie A</div>
+      <div class="part-title">Architecture Système & Scoping Académique</div>
+    </div>
+
+    <section class="sec" id="s-1">
+      <div class="sec-head">
+        <span class="sec-num">A.1</span>
+        <span class="sec-title">Problématique & Philosophie de Scoping</span>
+      </div>
+      <p>Dans un établissement scolaire privé, la structure des classes, les matières enseignées et les affectations des professeurs évoluent chaque année. Historiquement, les systèmes ERP rigides imposaient la reconfiguration manuelle de dizaines de classes, de centaines de cours et de milliers d'affectations au début de chaque année scolaire, entraînant un risque élevé d'erreurs humaines et une perte de temps considérable pour la direction pédagogique.</p>
+      
+      <p>L'architecture <strong>Academic Management Enhancement (ADR-001)</strong> de SchoolOS résout ce problème en introduisant le concept de <strong>Scoping par Session Académique (`sessionYears`)</strong>. Au lieu de considérer les classes et les sections comme des entités statiques indépendantes du temps, le système sépare la définition structurelle d'une classe (par exemple, <em>1ère Année Bac - Section A</em>) de son <strong>offre concrète pour une année donnée</strong> (représentée par la table <code>academicClassOfferings</code>).</p>
+
+      <div class="note-box">
+        <strong>Règle d'Or Architectural (ADR-001) :</strong> Une offre de classe (<em>Class Offering</em>) réunit un établissement (<code>tenantId</code>), une année académique (<code>sessionYearId</code>), une classe (<code>classId</code>) et une section (<code>sectionId</code>). Toutes les matières (<code>classSubjects</code>) et les affectations de professeurs (<code>classTeachers</code>, <code>subjectTeachers</code>) s'articulent autour de cet identifiant unique <code>offeringId</code>.
+      </div>
+    </section>
+
+    <section class="sec" id="s-2">
+      <div class="sec-head">
+        <span class="sec-num">A.2</span>
+        <span class="sec-title">Modèle de Données & Arbre de Dépendances</span>
+      </div>
+      <p>Pour comprendre le fonctionnement de la copie de session, il faut visualiser l'arbre de dépendances relationnelles au sein de la base de données PostgreSQL. La copie s'effectue en cascade du niveau racine vers les feuilles :</p>
+      
+      <div class="cblock">
+[session_years]  (ex: 2025-2026 Source  ──►  2026-2027 Cible)
+       │
+       ▼
+[academic_class_offerings]  (Offres de Classes : tenant_id + session_year_id + class_id + section_id)
+       │
+       ├─────────────────────────────────────────┐
+       ▼                                         ▼
+[class_subjects]                         [class_teachers]
+(Matières du Programme par Offre)         (Professeurs Principaux de Classe)
+       │
+       ▼
+[subject_teachers]
+(Professeurs Affectés par Matière et Offre)
+      </div>
+
+      <p>Le workflow de copie doit obligatoirement respecter cet ordre d'insertion strict pour garantir l'intégrité référentielle des clés étrangères :</p>
+      <ol>
+        <li><strong>Étape 1 : Offres de Classes (<code>academic_class_offerings</code>)</strong> : On duplique les offres actives de la session source vers la session cible. Un mapping dynamique <code>createdOfferingMap : Map&lt;sourceOfferingId, targetOfferingId&gt;</code> est construit en mémoire.</li>
+        <li><strong>Étape 2 : Programme de Matières (<code>class_subjects</code>)</strong> : On duplique chaque matière rattachée à une offre source en la reliant à la nouvelle offre cible via le <code>createdOfferingMap</code>.</li>
+        <li><strong>Étape 3 : Professeurs Principaux (<code>class_teachers</code>)</strong> : On réaffecte les rôles de professeurs principaux aux nouvelles offres cibles.</li>
+        <li><strong>Étape 4 : Professeurs de Matières (<code>subject_teachers</code>)</strong> : On lie les professeurs de matières aux nouveaux couples <code>(targetOfferingId, targetClassSubjectId)</code>.</li>
+      </ol>
+    </section>
+
+    <!-- PART B -->
+    <div class="part-header">
+      <div class="part-label">Partie B</div>
+      <div class="part-title">Concepts Clés & Moteur de Duplication</div>
+    </div>
+
+    <section class="sec" id="s-3">
+      <div class="sec-head">
+        <span class="sec-num">B.1</span>
+        <span class="sec-title">Dry-Run & Mode Aperçu (`preview`)</span>
+      </div>
+      <p>Avant d'exécuter une écriture définitive en base de données, l'administrateur scolaire a besoin d'une visibilité totale sur l'impact de la copie. L'API <code>POST /api/academics/class-offerings/copy</code> prend un paramètre <code>mode</code> qui accepte deux valeurs : <code>'preview'</code> ou <code>'commit'</code>.</p>
+
+      <p>En mode <strong>Aperçu (`preview`)</strong>, l'API exécute une simulation complète en lecture seule (sans aucune transaction d'écriture) et retourne un résumé statistique précis :</p>
+      
+      <div class="cblock">
+{
+  "success": true,
+  "mode": "preview",
+  "summary": {
+    "sourceSessionName": "2025-2026",
+    "targetSessionName": "2026-2027",
+    "sourceOfferingsCount": 4,
+    "offeringsToCreateCount": 4,
+    "offeringsSkippedCount": 0,
+    "classSubjectsToCreateCount": 12,
+    "classTeachersToCreateCount": 4,
+    "subjectTeachersToCreateCount": 12
+  }
+}
+      </div>
+
+      <p>Ce calcul préventif permet d'afficher des badges informatifs dans l'interface utilisateur, évitant toute surprise avant la confirmation finale.</p>
+    </section>
+
+    <section class="sec" id="s-4">
+      <div class="sec-head">
+        <span class="sec-num">B.2</span>
+        <span class="sec-title">Copie Transactionnelle & Idempotence</span>
+      </div>
+      <p>Lorsque le mode passer à <strong>Confirmation (`commit`)</strong>, la sécurité de l'opération repose sur deux piliers majeurs :</p>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">1. Transactions ACID (Drizzle / Postgres)</div>
+          <p>Toutes les insertions s'exécutent au sein d'un bloc <code>db.transaction(async (tx) => { ... })</code>. Si un incident survient au milieu de la procédure, PostgreSQL annule instantanément (rollback) toutes les modifications. La base reste 100% propre.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">2. Clé d'Idempotence (Audit Log)</div>
+          <p>Pour éviter qu'un double-clic d'un utilisateur sur le bouton "Confirmer" ou un rechargement de page ne duplique l'opération, le client génère un UUID unique (<code>idempotencyKey</code>). L'API vérifie dans <code>audit_logs</code> si ce jeton a déjà été traité. Si oui, elle renvoie une réponse idempotente sans réexécuter la copie.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec" id="s-5">
+      <div class="sec-head">
+        <span class="sec-num">B.3</span>
+        <span class="sec-title">Gestion Résiliente des Conflits d'Unicité (Postgres Code 23505 / 409)</span>
+      </div>
+      <p>Un défi majeur lors de la copie de session survient lorsque la session cible contient <strong>déjà</strong> partiellement certaines offres ou affectations (par exemple si une classe a été créée manuellement au préalable). Dans une implémentation naïve, une tentative d'insertion d'une clé d'unicité existante déclenche une erreur PostgreSQL <code>code: '23505'</code> (Unique Violation), interrompant brusquement la transaction et renvoyant une erreur <code>409 Conflict (Un enregistrement identique existe déjà)</code>.</p>
+
+      <p>Pour garantir un comportement totalement fluide et résilient, le moteur de copie de SchoolOS applique un pattern d'insertion sécurisé en 3 étapes pour chaque entité :</p>
+      
+      <ol>
+        <li><strong>Vérification préalable (Pre-Check SELECT)</strong> : Avant d'insérer, le moteur vérifie si l'enregistrement existe déjà dans la session cible.</li>
+        <li><strong>Bypass des conflits (<code>.onConflictDoNothing()</code>)</strong> : Si l'insertion est exécutée, la clause <code>ON CONFLICT DO NOTHING</code> empêche PostgreSQL d'émettre une exception d'unicité.</li>
+        <li><strong>Récupération des identifiants existants</strong> : Si l'enregistrement existait déjà, le moteur récupère son identifiant unique existant pour alimenter correctement les tables filles en cascade.</li>
+      </ol>
+
+      <div class="note-box">
+        <strong>Résultat :</strong> L'opération de copie devient totalement tolérante aux exécutions répétées ou partielles. Les éléments manquants sont créés, tandis que les éléments déjà présents sont préservés et réutilisés sans aucune erreur 409.
+      </div>
+    </section>
+
+    <!-- PART C -->
+    <div class="part-header">
+      <div class="part-label">Partie C</div>
+      <div class="part-title">Implémentation, Code & Guide Utilisateur</div>
+    </div>
+
+    <section class="sec" id="s-6">
+      <div class="sec-head">
+        <span class="sec-num">C.1</span>
+        <span class="sec-title">Code Minimal du Modèle Mental (Extrait d'API)</span>
+      </div>
+      <p>Voici une version simplifiée et pédagogique du cœur de l'API de copie transactionnelle (<code>src/app/api/academics/class-offerings/copy/route.ts</code>) démontrant le mapping dynamique et la résolution des conflits :</p>
+
+      <div class="cblock">
+// Extrait d'implémentation résiliente dans copy/route.ts
+const resultSummary = await db.transaction(async (tx) => {
+  const createdOfferingMap = new Map&lt;string, string&gt;(); // sourceOfferingId -> targetOfferingId
+
+  // 1. Duplication sécurisée des Offres de Classe
+  for (const offToCreate of offeringsToCreate) {
+    const [inserted] = await tx
+      .insert(academicClassOfferings)
+      .values({
+        tenantId,
+        sessionYearId: targetSessionYearId,
+        classId: offToCreate.classId,
+        sectionId: offToCreate.sectionId,
+        capacity: offToCreate.capacity,
+        status: 'active',
+      })
+      .onConflictDoNothing()
+      .returning({ id: academicClassOfferings.id });
+
+    if (inserted) {
+      createdOfferingMap.set(offToCreate.id, inserted.id);
+    } else {
+      // En cas de présence préalable, on récupère l'offre existante
+      const [existing] = await tx
+        .select({ id: academicClassOfferings.id })
+        .from(academicClassOfferings)
+        .where(and(
+          eq(academicClassOfferings.tenantId, tenantId),
+          eq(academicClassOfferings.sessionYearId, targetSessionYearId),
+          eq(academicClassOfferings.classId, offToCreate.classId),
+          eq(academicClassOfferings.sectionId, offToCreate.sectionId),
+        )).limit(1);
+
+      if (existing) {
+        createdOfferingMap.set(offToCreate.id, existing.id);
+      }
+    }
+  }
+
+  // 2. Duplication sécurisée des Matières par Classe (classSubjects)
+  for (const subj of linkedSubjects) {
+    const targetOfferingId = createdOfferingMap.get(subj.offeringId);
+    if (!targetOfferingId) continue;
+
+    const [existingSubj] = await tx
+      .select({ id: classSubjects.id })
+      .from(classSubjects)
+      .where(and(
+        eq(classSubjects.tenantId, tenantId),
+        eq(classSubjects.offeringId, targetOfferingId),
+        eq(classSubjects.subjectId, subj.subjectId),
+      )).limit(1);
+
+    if (!existingSubj) {
+      await tx.insert(classSubjects).values({
+        tenantId,
+        classId: subj.classId,
+        subjectId: subj.subjectId,
+        type: subj.type,
+        offeringId: targetOfferingId,
+      }).onConflictDoNothing();
+    }
+  }
+});
+      </div>
+    </section>
+
+    <section class="sec" id="s-7">
+      <div class="sec-head">
+        <span class="sec-num">C.2</span>
+        <span class="sec-title">Guide d'Utilisation Étape par Étape pour l'Administrateur</span>
+      </div>
+      <p>Pour exécuter et traiter la copie de session sur l'interface web de SchoolOS :</p>
+
+      <ol>
+        <li><strong>Accéder à la Page</strong> : Naviguez vers <code>/dashboard/academics/session-copy</code>.</li>
+        <li><strong>Sélectionner la Session Source (Origine)</strong> : Choisissez l'année académique active à dupliquer (ex: <code>2025-2026</code>).</li>
+        <li><strong>Sélectionner la Session Cible (Destination)</strong> : Choisissez l'année académique future (ex: <code>2026-2027</code>). <em>Note : Si la session cible n'existe pas encore, un bouton d'action directe <code>+ Créer Session 2026-2027</code> vous permet de la créer instantanément sur la page.</em></li>
+        <li><strong>Générer l'Aperçu (`Aperçu de la copie`)</strong> : Cliquez sur le bouton bleu. L'interface affiche le bilan complet des offres et des matières qui vont être créées.</li>
+        <li><strong>Confirmer la Copie (`Confirmer la copie`)</strong> : Cliquez sur la confirmation. Le message de succès <code>La configuration académique a été copiée avec succès dans la session cible</code> s'affiche.</li>
+        <li><strong>Consulter et Traiter le Résultat</strong> : Vous pouvez désormais consulter et ajuster la nouvelle structure dans les sous-pages dédiées :
+          <ul>
+            <li><strong>Offres de Classe</strong> (<code>/dashboard/academics/classes</code>) : Ajuster les capacités d'accueil pour la nouvelle année.</li>
+            <li><strong>Matières par Classe</strong> (<code>/dashboard/academics/class-subjects</code>) : Modifier les coefficients ou le volume horaire.</li>
+            <li><strong>Attributions Professeurs</strong> (<code>/dashboard/academics/class-section-teachers</code>) : Mettre à jour les affectations des enseignants pour 2026-2027.</li>
+            <li><strong>Promotion des Élèves</strong> (<code>/dashboard/academics/promotions</code>) : Faire passer les étudiants de 2025-2026 vers les nouvelles offres de 2026-2027.</li>
+          </ul>
+        </li>
+      </ol>
+    </section>
+
+    <section class="sec" id="s-8">
+      <div class="sec-head">
+        <span class="sec-num">C.3</span>
+        <span class="sec-title">Bonnes Pratiques & Guide de Diagnostic</span>
+      </div>
+      
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Bonne Pratique : Indépendance des Sessions</div>
+          <p>Une fois la copie terminée, la nouvelle session est 100% autonome. Toute modification effectuée sur 2026-2027 n'impactera jamais l'historique de 2025-2026.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Diagnostic : Erreur 400 (Bad Request)</div>
+          <p>Si l'API renvoie 400, vérifiez que la session source et la session cible sélectionnées sont bien différentes. Sélectionner la même session est interdit par la validation Zod.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>

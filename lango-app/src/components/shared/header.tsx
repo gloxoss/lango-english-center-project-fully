@@ -7,6 +7,7 @@ import { LocaleSwitcher } from './locale-switcher';
 import { HeaderCampusSwitcher } from './header-campus-switcher';
 import {
   Bell,
+  Menu,
   Search,
   ShieldCheck,
   User,
@@ -25,12 +26,14 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { authClient } from '@/libs/auth-client';
+import { useSidebarDrawer } from './sidebar-drawer-context';
 
 type SearchResult = { id: string; name: string; email?: string; matricule?: string | null };
 type SearchResponse = { students: SearchResult[]; teachers: SearchResult[]; invoices: { id: string; invoiceNumber: string }[] };
 
 export function Header({ locale }: { locale: string }) {
   const router = useRouter();
+  const { available: drawerAvailable, open: drawerOpen, setOpen: setDrawerOpen } = useSidebarDrawer();
   const { data: session } = authClient.useSession();
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [unreadList, setUnreadList] = useState<Array<{ id: string; title: string; createdAt: string }>>([]);
@@ -45,7 +48,7 @@ export function Header({ locale }: { locale: string }) {
       return;
     }
     const timeout = setTimeout(() => {
-      fetch(`/api/search?q=${encodeURIComponent(term)}`)
+      fetch(`/api/portal/search?q=${encodeURIComponent(term)}`)
         .then(res => (res.ok ? res.json() : null))
         .then((resData) => {
           if (resData?.success) {
@@ -56,6 +59,17 @@ export function Header({ locale }: { locale: string }) {
     }, 300);
     return () => clearTimeout(timeout);
   }, [searchTerm]);
+
+  // Drop stale search results after a role switch (role-scoped results must
+  // never leak across an active-role change).
+  useEffect(() => {
+    const clearOnRoleChange = () => {
+      setSearchResults(null);
+      setSearchTerm('');
+    };
+    window.addEventListener('portal:role-changed', clearOnRoleChange);
+    return () => window.removeEventListener('portal:role-changed', clearOnRoleChange);
+  }, []);
 
   useEffect(() => {
     if (!session?.user) return;
@@ -81,6 +95,20 @@ export function Header({ locale }: { locale: string }) {
   const userEmail = session?.user?.email || 'user@ecole.ma';
   const userRole = (session?.user as any)?.role || 'school_admin';
 
+  // Active-role badge from the server-owned context (shows the effective role,
+  // not just the session base role). Falls back to the session role until the
+  // request resolves.
+  const [portalMe, setPortalMe] = useState<{ role: string } | null>(null);
+  useEffect(() => {
+    fetch('/api/portal/me')
+      .then(res => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (json?.success) setPortalMe(json.data);
+      })
+      .catch(() => {});
+  }, []);
+  const displayRole = portalMe?.role ?? userRole;
+
   const initials = userName
     .split(' ')
     .filter(Boolean)
@@ -96,9 +124,21 @@ export function Header({ locale }: { locale: string }) {
   };
 
   return (
-    <header className="h-16 border-b border-slate-200/90 bg-white px-6 flex items-center justify-between sticky top-0 z-40 shadow-2xs">
+    <header className="h-16 border-b border-slate-200/90 bg-white px-4 lg:px-6 flex items-center justify-between gap-3 sticky top-0 z-40 shadow-2xs">
+      {drawerAvailable && (
+        <button
+          type="button"
+          onClick={() => setDrawerOpen(!drawerOpen)}
+          aria-label="Ouvrir le menu"
+          aria-expanded={drawerOpen}
+          className="lg:hidden shrink-0 p-2 -ml-1 rounded-xl text-slate-500 hover:bg-[#EDF3F8] hover:text-[#16212B] transition-colors focus:outline-none cursor-pointer"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+      )}
+
       {/* Search Input */}
-      <div className="flex items-center gap-3 w-80 relative">
+      <div className="hidden lg:flex items-center gap-3 w-80 relative">
         <div className="relative w-full flex items-center">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
@@ -144,8 +184,10 @@ export function Header({ locale }: { locale: string }) {
 
       {/* Right Controls */}
       <div className="flex items-center gap-3">
-        {/* Campus Switcher */}
-        <HeaderCampusSwitcher />
+        {/* Campus Switcher (hidden on small screens — redundant context on a phone) */}
+        <div className="hidden lg:flex">
+          <HeaderCampusSwitcher />
+        </div>
 
         {/* CNDP Compliance Status Badge per BRAND.md */}
         <div className="hidden md:flex items-center gap-1.5 bg-[#E4EDFD] text-[#2487B8] border border-[#C3DAFB] px-3 py-1 rounded-full text-[11px] font-bold">
@@ -222,7 +264,7 @@ export function Header({ locale }: { locale: string }) {
               <p className="text-[10px] text-slate-500 font-medium">{userEmail}</p>
               <div className="mt-1.5 inline-flex items-center gap-1 bg-[#DCEBF4] text-[#1B6C93] px-2 py-0.5 rounded-md text-[10px] font-bold capitalize">
                 <Lock className="w-3 h-3" />
-                <span>{userRole.replace('_', ' ')}</span>
+                <span>{displayRole.replace('_', ' ')}</span>
               </div>
             </div>
 

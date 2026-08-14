@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ApiError } from './errors';
+import { moneyInput } from '@/libs/finance/validation';
 
 export async function parseJson<T extends z.ZodType>(request: Request, schema: T): Promise<z.output<T>> {
   let body: unknown;
@@ -88,9 +89,11 @@ export const expenseUpdateSchema = expenseCreateSchema
 
 export const feeStructureCreateSchema = z.object({
   name: z.string().trim().min(1).max(255),
-  amount: z.number().min(0),
+  amount: moneyInput,
   description: optionalText(2000),
   isActive: z.boolean().optional(),
+  academicTermId: z.string().uuid().nullable().optional(),
+  branchId: z.string().uuid().nullable().optional(),
 }).strict();
 
 export const feeStructureUpdateSchema = feeStructureCreateSchema
@@ -230,6 +233,7 @@ export const classCreateSchema = z.object({
   mediumId: idSchema,
   shiftId: idSchema.optional().nullable(),
   streamId: idSchema.optional().nullable(),
+  cycle: z.enum(['maternelle', 'primaire', 'college', 'lycee']).optional().nullable(),
 }).strict();
 
 export const classUpdateSchema = classCreateSchema
@@ -242,6 +246,8 @@ export const classUpdateSchema = classCreateSchema
 export const classSectionCreateSchema = z.object({
   classId: idSchema,
   sectionId: idSchema,
+  maxStudents: z.number().int().positive().optional().nullable(),
+  homeRoomId: idSchema.optional().nullable(),
 }).strict();
 
 export const classSectionUpdateSchema = classSectionCreateSchema
@@ -333,6 +339,10 @@ export const settingsUpdateSchema = z.object({
   localeTimezone: optionalText(100),
   dateFormat: optionalText(50),
   documentHeaderStyle: z.enum(['classique', 'minimal', 'moderne']).optional().nullable(),
+  // Attendance QR staging: grace period (minutes) and period start time (HH:MM)
+  // used to decide whether a scan stages `present` or `late`.
+  attendanceLateGraceMinutes: z.number().int().min(0).max(300).optional().nullable(),
+  attendancePeriodStartTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Format HH:MM attendu').optional().nullable(),
 }).strict();
 
 export const branchCreateSchema = z.object({

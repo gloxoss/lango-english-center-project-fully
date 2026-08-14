@@ -1,6 +1,6 @@
 # Student Accounting — Core Finance Enhancement Plan
 
-Status: planned enhancement of existing core Finance; provisional decisions pending owner review.
+Status: **Phase B complete (2026-08-10)** — Phase A (safe money, atomic numbering, event ledger, idempotency, read-time overdue) done; Phase B (fee types enriched + versioned fee structures) done; **Phase C (allocations) next**. Tracked in `../_tracker/PLANS-AUDIT-AND-PROGRESS.md` row #12.
 
 > The general ledger, chart of accounts, office deposits/expenses, vouchers, reconciliation and financial statements are specified separately in `../office-accounting/OFFICE-ACCOUNTING-IMPLEMENTATION-PLAN.md`. Student Accounting remains the fee/receivables subledger and posts into that shared core ledger.
 

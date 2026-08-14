@@ -9,7 +9,7 @@ import { invoices, user } from '@/models/Schema';
 
 export async function GET(req: NextRequest) {
   try {
-    const ctx = await requireRequestContext(req);
+    const ctx = await requireRequestContext(req, ['school_admin', 'accountant']);
     await requireCapability(ctx, 'finance.read');
 
     const tenantId = ctx.tenantId!;

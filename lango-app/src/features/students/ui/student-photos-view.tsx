@@ -5,10 +5,12 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Camera, Users, UserX, Search, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { usePermissions } from '@/hooks/use-permissions';
 
 type ApiStudentPhoto = { id: string; fullName: string; photoUrl: string | null };
 
 export function StudentPhotosView() {
+  const { can } = usePermissions();
   const [students, setStudents] = useState<ApiStudentPhoto[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +83,11 @@ export function StudentPhotosView() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Photos des élèves</h1>
-          <p className="text-xs text-slate-500 mt-1">Cliquez sur un élève pour téléverser sa photo (JPG/PNG, 5 Mo max).</p>
+          <p className="text-xs text-slate-500 mt-1">
+            {can('students.update')
+              ? 'Cliquez sur un élève pour téléverser sa photo de profil (JPG/PNG, 5 Mo max).'
+              : 'Consultation seule.'}
+          </p>
         </div>
       </div>
 
@@ -92,7 +98,7 @@ export function StudentPhotosView() {
         </div>
       )}
       {success && (
-        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2.5 text-emerald-700 text-xs font-semibold">
+        <div className="p-3.5 bg-[#DDF5EC] border border-[#17A673]/30 rounded-xl flex items-center gap-2.5 text-[#17A673] text-xs font-semibold">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span>{success}</span>
         </div>
@@ -100,50 +106,52 @@ export function StudentPhotosView() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-          <div><p className="text-xs font-bold text-slate-500">Élèves</p><p className="text-2xl font-extrabold text-[#16212B]">{students.length}</p></div>
-          <div className="w-10 h-10 rounded-full bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center"><Users className="w-5 h-5" /></div>
+          <div><p className="text-xs font-bold text-slate-400">Total élèves</p><p className="text-2xl font-extrabold text-[#16212B]">{students.length}</p></div>
+          <div className="w-10 h-10 rounded-xl bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center font-bold"><Users className="w-5 h-5" /></div>
         </Card>
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-          <div><p className="text-xs font-bold text-slate-500">Avec photo</p><p className="text-2xl font-extrabold text-emerald-600">{withPhoto}</p></div>
-          <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center"><Camera className="w-5 h-5" /></div>
+          <div><p className="text-xs font-bold text-slate-400">Avec photo</p><p className="text-2xl font-extrabold text-[#17A673]">{withPhoto}</p></div>
+          <div className="w-10 h-10 rounded-xl bg-[#DDF5EC] text-[#17A673] flex items-center justify-center font-bold"><Camera className="w-5 h-5" /></div>
         </Card>
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-          <div><p className="text-xs font-bold text-slate-500">Sans photo</p><p className="text-2xl font-extrabold text-amber-600">{withoutPhoto}</p></div>
-          <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center"><UserX className="w-5 h-5" /></div>
+          <div><p className="text-xs font-bold text-slate-400">Sans photo</p><p className="text-2xl font-extrabold text-amber-700">{withoutPhoto}</p></div>
+          <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold"><UserX className="w-5 h-5" /></div>
         </Card>
       </div>
 
       <div className="relative max-w-sm">
         <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-        <Input placeholder="Rechercher un élève..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9 h-9 text-xs rounded-full bg-white border-slate-200" />
+        <Input placeholder="Rechercher un élève..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9 h-9 text-xs rounded-xl bg-white border-slate-200" />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
         {filtered.map(s => (
           <button
             key={s.id}
+            type="button"
+            disabled={!can('students.update')}
             onClick={() => triggerUpload(s.id)}
-            className="text-left bg-white rounded-xl shadow-2xs border border-slate-200/60 overflow-hidden hover:shadow-md transition-shadow"
+            className="text-left bg-white rounded-2xl shadow-2xs border border-slate-200/80 overflow-hidden transition-all enabled:hover:shadow-md disabled:cursor-default"
           >
-            <div className="aspect-square bg-slate-100 relative flex items-center justify-center">
+            <div className="aspect-square bg-slate-50 relative flex items-center justify-center">
               {s.photoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- runtime-uploaded file, not a build-time asset
+                // eslint-disable-next-line @next/next/no-img-element -- runtime-uploaded file
                 <img src={`/api/students/photos?id=${s.id}`} alt={s.fullName} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-14 h-14 rounded-full bg-slate-300 flex items-center justify-center text-lg font-bold text-slate-500">
+                <div className="w-14 h-14 rounded-full bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center text-base font-extrabold">
                   {s.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </div>
               )}
               {uploadingId === s.id && (
-                <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-[10px] font-bold text-slate-600">Envoi...</div>
+                <div className="absolute inset-0 bg-white/80 flex items-center justify-center text-[10px] font-bold text-[#2487B8]">Envoi...</div>
               )}
               <div className="absolute top-1.5 left-1.5">
-                <Badge className={s.photoUrl ? 'bg-[#D1F5E8] text-[#17A673] text-[9px] px-1.5' : 'bg-slate-100 text-slate-500 text-[9px] px-1.5'}>
+                <Badge className={s.photoUrl ? 'bg-[#DDF5EC] text-[#17A673] text-[9px] px-1.5 border-none font-bold' : 'bg-slate-100 text-slate-500 text-[9px] px-1.5 border-none font-bold'}>
                   {s.photoUrl ? 'Photo' : 'Aucune'}
                 </Badge>
               </div>
             </div>
-            <div className="p-2">
+            <div className="p-2.5">
               <p className="text-[11px] font-bold text-[#16212B] truncate">{s.fullName}</p>
             </div>
           </button>
@@ -153,3 +161,4 @@ export function StudentPhotosView() {
     </div>
   );
 }
+

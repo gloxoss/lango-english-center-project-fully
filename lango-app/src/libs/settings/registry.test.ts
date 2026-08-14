@@ -10,7 +10,8 @@ describe('Settings registry', () => {
 
   it('every key matches namespace.name pattern', () => {
     for (const def of SETTINGS_REGISTRY) {
-      expect(def.key).toMatch(/^[a-z]+\.[a-zA-Z]+$/);
+      // Namespace may contain digits (e.g. the standard `i18n` namespace).
+      expect(def.key).toMatch(/^[a-z0-9]+\.[a-zA-Z]+$/);
       expect(def.key.startsWith(`${def.namespace}.`)).toBe(true);
     }
   });

@@ -14,9 +14,11 @@ const ROLE_TO_DB: Record<string, Role> = {
   'Tuteur': 'parent',
   'Élève': 'student',
   'Eleve': 'student',
+  'Ancien(ne) élève': 'alumni',
   'Super Admin': 'super_admin',
   'Réceptionniste': 'receptionist',
   'Gardien': 'guard',
+  'Bibliothécaire': 'librarian',
 };
 
 const ROLE_TO_UI: Record<Role, string> = {
@@ -25,9 +27,11 @@ const ROLE_TO_UI: Record<Role, string> = {
   teacher: 'Enseignant',
   accountant: 'Comptable',
   student: 'Élève',
+  alumni: 'Ancien(ne) élève',
   parent: 'Tuteur',
   receptionist: 'Réceptionniste',
   guard: 'Gardien',
+  librarian: 'Bibliothécaire',
 };
 
 const STATUS_TO_DB: Record<string, Status> = {

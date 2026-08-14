@@ -1,3 +1,4 @@
+import { requireServerPage } from '@/libs/api/page-guard';
 import { MigrationReadinessCenterView } from '@/features/settings/ui/pf-01-migration-readiness-view';
 
 export default async function MigrationReadinessPage({
@@ -6,5 +7,6 @@ export default async function MigrationReadinessPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
   return <MigrationReadinessCenterView locale={locale} />;
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse, ApiError } from '@/libs/api/errors';
@@ -59,15 +59,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     await requireCapability(context, getDefinition(key).requiredPermission as PermissionKey);
     const body = await parseJson(request, patchSchema);
 
-    // Optimistic concurrency check.
-    if (body.expectedVersion !== undefined) {
-      const current = await getEffectiveValue(tenantId, context.branchId, key);
-      if (current.version !== body.expectedVersion) {
-        throw new ApiError(409, 'VERSION_CONFLICT',
-          `Le paramètre a été modifié par un autre utilisateur (version actuelle: ${current.version}, attendue: ${body.expectedVersion}).`);
-      }
-    }
-
+    // Optimistic concurrency is enforced inside the write transaction
+    // (compare-and-set on the locked version), not as a separate pre-check —
+    // otherwise two concurrent PATCHes could both pass the pre-check and then
+    // both write, losing one update and duplicating history.
     const version = await setSettingValue(
       tenantId,
       context.branchId,
@@ -75,6 +70,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       body.value,
       context,
       body.reason,
+      body.expectedVersion,
     );
 
     recordAudit(context, 'update', 'setting', key, { version });
@@ -103,25 +99,52 @@ export async function POST(request: Request, { params }: RouteParams) {
     await requireCapability(context, getDefinition(key).requiredPermission as PermissionKey);
     const body = await parseJson(request, rollbackSchema);
 
-    // Find the version record to rollback to.
+    // Secrets are masked in version history, so a previous secret can never be
+    // reconstructed — rollback would silently store encrypt('********').
+    const def = getDefinition(key);
+    if (def.sensitivity === 'secret') {
+      throw new ApiError(400, 'SECRET_ROLLBACK_NOT_SUPPORTED',
+        `Le secret "${key}" ne peut pas être restauré : les anciennes valeurs sont masquées par sécurité.`);
+    }
+
+    // Resolve the exact scope row that holds this tenant/branch's history.
+    // A branch-scoped request must roll back from ITS OWN override row; a
+    // tenant-scoped request from the tenant-global row. A branch can never
+    // resolve a version from another branch's or the tenant-global history.
+    const branchScoped = def.scope === 'branch' && context.branchId != null;
+
+    const [targetRow] = await db
+      .select({ id: settingValues.id })
+      .from(settingValues)
+      .where(and(
+        eq(settingValues.tenantId, tenantId),
+        branchScoped ? eq(settingValues.branchId, context.branchId!) : isNull(settingValues.branchId),
+        eq(settingValues.key, key),
+      ))
+      .limit(1);
+
+    if (!targetRow) {
+      throw new ApiError(404, 'VERSION_NOT_FOUND',
+        `Version ${body.targetVersion} introuvable pour le paramètre "${key}" dans ce périmètre.`);
+    }
+
+    // Find the version record for exactly this scope row + version.
     const [versionRow] = await db
       .select()
       .from(settingValueVersions)
-      .innerJoin(settingValues, eq(settingValueVersions.settingValueId, settingValues.id))
       .where(and(
-        eq(settingValues.tenantId, tenantId),
-        eq(settingValues.key, key),
+        eq(settingValueVersions.settingValueId, targetRow.id),
         eq(settingValueVersions.version, body.targetVersion),
       ))
       .limit(1);
 
     if (!versionRow) {
       throw new ApiError(404, 'VERSION_NOT_FOUND',
-        `Version ${body.targetVersion} introuvable pour le paramètre "${key}".`);
+        `Version ${body.targetVersion} introuvable pour le paramètre "${key}" dans ce périmètre.`);
     }
 
     // Rollback means creating a NEW version with the old value.
-    const rollbackValue = versionRow.setting_value_versions.newValue;
+    const rollbackValue = versionRow.newValue;
     const newVersion = await setSettingValue(
       tenantId,
       context.branchId,

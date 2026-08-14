@@ -13,7 +13,8 @@ const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 // is a separate ?id= branch below (binary response, not JSON).
 export async function GET(request: Request) {
   try {
-    const context = await requireRequestContext(request, ['school_admin', 'teacher']);
+    // sidebar shows this link to anyone with students.read (includes accountant)
+    const context = await requireRequestContext(request, ['school_admin', 'teacher', 'accountant']);
     const tenantId = requireTenant(context);
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

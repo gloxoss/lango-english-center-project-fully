@@ -1,19 +1,11 @@
-import React from 'react';
-import { CashierPaymentModal } from '@/components/accountant/CashierPaymentModal';
+import { requireServerPage } from '@/libs/api/page-guard';
+import { AccountantPortalView } from '@/features/finance/ui/accountant-portal-view';
 
-export default function AccountantPortalPage() {
-  return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-emerald-900/40 via-teal-900/30 to-slate-900 p-6 rounded-2xl border border-emerald-500/20 shadow-xl">
-        <div>
-          <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Espace Comptable / Caisse</span>
-          <h1 className="text-2xl font-bold text-white mt-1">Gestion Financière & Guichet Caisse</h1>
-          <p className="text-slate-400 text-sm mt-1">Encaissements rapides, suivi des créances élèves et rapprochement bancaire.</p>
-        </div>
-      </div>
-
-      <CashierPaymentModal />
-    </div>
-  );
+// Accountant portal — server-guarded. Only `accountant` and `school_admin`
+// roles with the finance.read capability may reach this workspace; every other
+// authenticated role is redirected.
+export default async function AccountantPortalPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  await requireServerPage(locale, { allowedRoles: ['accountant', 'school_admin'], requiredCapability: 'finance.read' });
+  return <AccountantPortalView />;
 }

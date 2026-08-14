@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   try {
     const ctx = await requireRequestContext(req);
     await requireCapability(ctx, 'finance.read');
-    const bankAccountId = req.nextUrl.searchParams.get('bankAccountId');
+    const bankAccountId = new URL(req.url).searchParams.get('bankAccountId');
 
     const accounts = await db
       .select()

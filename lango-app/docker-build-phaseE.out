@@ -1,0 +1,1750 @@
+ Image lango-app-app Building 
+ Image lango-app-migrate Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.30kB done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile:
+#2 transferring dockerfile: 3.75kB 0.1s done
+#2 DONE 0.5s
+
+#3 [internal] load metadata for docker.io/library/node:24-alpine
+#3 DONE 0.2s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 129B 0.0s done
+#4 DONE 0.1s
+
+#5 [internal] load build context
+#5 DONE 0.0s
+
+#6 [base 1/3] FROM docker.io/library/node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43
+#6 resolve docker.io/library/node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43 0.1s done
+#6 DONE 0.1s
+
+#5 [internal] load build context
+#5 transferring context: 831.61kB 1.3s done
+#5 DONE 1.5s
+
+#7 [base 2/3] WORKDIR /app
+#7 CACHED
+
+#8 [base 3/3] RUN apk add --no-cache libc6-compat python3 make g++
+#8 CACHED
+
+#9 [deps 1/2] COPY package.json package-lock.json* .npmrc* ./
+#9 CACHED
+
+#10 [deps 2/2] RUN npm ci --legacy-peer-deps
+#10 CACHED
+
+#11 [builder 1/4] COPY --from=deps /app/node_modules ./node_modules
+#11 CACHED
+
+#12 [builder 2/4] COPY . .
+#12 DONE 10.5s
+
+#13 [builder 3/4] RUN mkdir -p public
+#13 DONE 2.3s
+
+#14 [builder 4/4] RUN DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build     BETTER_AUTH_SECRET=build-only-sentinel-secret-never-use-at-runtime     BETTER_AUTH_URL=http://build.invalid     npm run build:next
+#14 3.976 
+#14 3.976 > build:next
+#14 3.976 > next build
+#14 3.976 
+#14 7.205 ▲ Next.js 16.2.6 (Turbopack)
+#14 7.206 
+#14 7.215 ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+#14 7.985   Creating an optimized production build ...
+#14 354.5 Turbopack build encountered 1 warnings:
+#14 354.5 ./next.config.ts
+#14 354.5 Encountered unexpected file in NFT list
+#14 354.5 A file was traced that indicates that the whole project was traced unintentionally. Somewhere in the import trace below, there are:
+#14 354.5 - filesystem operations (like path.join, path.resolve or fs.readFile), or
+#14 354.5 - very dynamic requires (like require('./' + foo)).
+#14 354.5 To resolve this, you can
+#14 354.5 - remove them if possible, or
+#14 354.5 - only use them in development, or
+#14 354.5 - make sure they are statically scoped to some subfolder: path.join(process.cwd(), 'data', bar), or
+#14 354.5 - add ignore comments: path.join(/*turbopackIgnore: true*/ process.cwd(), bar)
+#14 354.5 
+#14 354.5 Import trace:
+#14 354.5   App Route:
+#14 354.5     ./next.config.ts
+#14 354.5     ./src/libs/api/uploads.ts
+#14 354.5     ./src/app/api/teachers/photo/route.ts
+#14 354.5 
+#14 354.5 
+#14 356.6 ✓ Compiled successfully in 5.8min
+#14 356.8   Skipping validation of types
+#14 357.1   Finished TypeScript config validation in 330ms ...
+#14 357.2   Collecting page data using 11 workers ...
+#14 384.1 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 384.1 params: approved
+#14 384.1     at p.queryWithCache (.next/server/chunks/[root-of-the-server]__0fri4i2._.js:8:40445)
+#14 384.1     at async (.next/server/chunks/[root-of-the-server]__0fri4i2._.js:8:44004)
+#14 384.1     at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 384.1     at async Object.trustedOrigins (.next/server/chunks/_04m_xyc._.js:412:2668)
+#14 384.1     at async ep (.next/server/chunks/_04m_xyc._.js:39:31661)
+#14 384.1     at async ii (.next/server/chunks/_04m_xyc._.js:398:919)
+#14 384.1     at async ia (.next/server/chunks/_04m_xyc._.js:398:3605) {
+#14 384.1   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 384.1   params: [ 'approved' ],
+#14 384.1   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 384.1       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 384.1       at async (.next/server/chunks/[root-of-the-server]__0fri4i2._.js:8:44219)
+#14 384.1       at async p.queryWithCache (.next/server/chunks/[root-of-the-server]__0fri4i2._.js:8:40420)
+#14 384.1       at async (.next/server/chunks/[root-of-the-server]__0fri4i2._.js:8:44004)
+#14 384.1       at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 384.1       at async Object.trustedOrigins (.next/server/chunks/_04m_xyc._.js:412:2668)
+#14 384.1       at async ep (.next/server/chunks/_04m_xyc._.js:39:31661)
+#14 384.1       at async ii (.next/server/chunks/_04m_xyc._.js:398:919)
+#14 384.1       at async ia (.next/server/chunks/_04m_xyc._.js:398:3605) {
+#14 384.1     errno: -111,
+#14 384.1     code: 'ECONNREFUSED',
+#14 384.1     syscall: 'connect',
+#14 384.1     address: '127.0.0.1',
+#14 384.1     port: 5432
+#14 384.1   }
+#14 384.1 }
+#14 384.3 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 384.3 params: approved
+#14 384.3     at p.queryWithCache (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:40445)
+#14 384.3     at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44004)
+#14 384.3     at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 384.3     at async Object.trustedOrigins (.next/server/chunks/_04m_xyc._.js:412:2668)
+#14 384.3     at async ep (.next/server/chunks/_04m_xyc._.js:39:31661)
+#14 384.3     at async ii (.next/server/chunks/_04m_xyc._.js:398:919)
+#14 384.3     at async ia (.next/server/chunks/_04m_xyc._.js:398:3605) {
+#14 384.3   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 384.3   params: [ 'approved' ],
+#14 384.3   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 384.3       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 384.3       at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44219)
+#14 384.3       at async p.queryWithCache (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:40420)
+#14 384.3       at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44004)
+#14 384.3       at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 384.3       at async Object.trustedOrigins (.next/server/chunks/_04m_xyc._.js:412:2668)
+#14 384.3       at async ep (.next/server/chunks/_04m_xyc._.js:39:31661)
+#14 384.3       at async ii (.next/server/chunks/_04m_xyc._.js:398:919)
+#14 384.3       at async ia (.next/server/chunks/_04m_xyc._.js:398:3605) {
+#14 384.3     errno: -111,
+#14 384.3     code: 'ECONNREFUSED',
+#14 384.3     syscall: 'connect',
+#14 384.3     address: '127.0.0.1',
+#14 384.3     port: 5432
+#14 384.3   }
+#14 384.3 }
+#14 384.4 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 384.4 params: approved
+#14 384.4     at p.queryWithCache (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:40445)
+#14 384.4     at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44004)
+#14 384.4     at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 384.4     at async Object.trustedOrigins (.next/server/chunks/_04m_xyc._.js:412:2668)
+#14 384.4     at async ep (.next/server/chunks/_04m_xyc._.js:39:31661)
+#14 384.4     at async ii (.next/server/chunks/_04m_xyc._.js:398:919)
+#14 384.4     at async ia (.next/server/chunks/_04m_xyc._.js:398:3605) {
+#14 384.4   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 384.4   params: [ 'approved' ],
+#14 384.4   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 384.4       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 384.4       at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44219)
+#14 384.4       at async p.queryWithCache (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:40420)
+#14 384.4       at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44004)
+#14 384.4       at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 384.4       at async Object.trustedOrigins (.next/server/chunks/_04m_xyc._.js:412:2668)
+#14 384.4       at async ep (.next/server/chunks/_04m_xyc._.js:39:31661)
+#14 384.4       at async ii (.next/server/chunks/_04m_xyc._.js:398:919)
+#14 384.4       at async ia (.next/server/chunks/_04m_xyc._.js:398:3605) {
+#14 384.4     errno: -111,
+#14 384.4     code: 'ECONNREFUSED',
+#14 384.4     syscall: 'connect',
+#14 384.4     address: '127.0.0.1',
+#14 384.4     port: 5432
+#14 384.4   }
+#14 384.4 }
+#14 384.4 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 384.4 params: approved
+#14 384.4     at p.queryWithCache (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:40445)
+#14 384.4     at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44004)
+#14 384.4     at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 384.4     at async Object.trustedOrigins (.next/server/chunks/_04m_xyc._.js:412:2668)
+#14 384.4     at async ep (.next/server/chunks/_04m_xyc._.js:39:31661)
+#14 384.4     at async ii (.next/server/chunks/_04m_xyc._.js:398:919)
+#14 384.4     at async ia (.next/server/chunks/_04m_xyc._.js:398:3605) {
+#14 384.4   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 384.4   params: [ 'approved' ],
+#14 384.4   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 384.4       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 384.4       at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44219)
+#14 384.4       at async p.queryWithCache (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:40420)
+#14 384.4       at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44004)
+#14 384.4       at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 384.4       at async Object.trustedOrigins (.next/server/chunks/_04m_xyc._.js:412:2668)
+#14 384.4       at async ep (.next/server/chunks/_04m_xyc._.js:39:31661)
+#14 384.4       at async ii (.next/server/chunks/_04m_xyc._.js:398:919)
+#14 384.4       at async ia (.next/server/chunks/_04m_xyc._.js:398:3605) {
+#14 384.4     errno: -111,
+#14 384.4     code: 'ECONNREFUSED',
+#14 384.4     syscall: 'connect',
+#14 384.4     address: '127.0.0.1',
+#14 384.4     port: 5432
+#14 384.4   }
+#14 384.4 }
+#14 384.9 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 384.9 params: approved
+#14 384.9     at p.queryWithCache (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:40445)
+#14 384.9     at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44004)
+#14 384.9     at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 384.9     at async Object.trustedOrigins (.next/server/chunks/_04m_xyc._.js:412:2668)
+#14 384.9     at async ep (.next/server/chunks/_04m_xyc._.js:39:31661)
+#14 384.9     at async ii (.next/server/chunks/_04m_xyc._.js:398:919)
+#14 384.9     at async ia (.next/server/chunks/_04m_xyc._.js:398:3605) {
+#14 384.9   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 384.9   params: [ 'approved' ],
+#14 384.9   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 384.9       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 384.9       at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44219)
+#14 384.9       at async p.queryWithCache (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:40420)
+#14 384.9       at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44004)
+#14 384.9       at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 384.9       at async Object.trustedOrigins (.next/server/chunks/_04m_xyc._.js:412:2668)
+#14 384.9       at async ep (.next/server/chunks/_04m_xyc._.js:39:31661)
+#14 384.9       at async ii (.next/server/chunks/_04m_xyc._.js:398:919)
+#14 384.9       at async ia (.next/server/chunks/_04m_xyc._.js:398:3605) {
+#14 384.9     errno: -111,
+#14 384.9     code: 'ECONNREFUSED',
+#14 384.9     syscall: 'connect',
+#14 384.9     address: '127.0.0.1',
+#14 384.9     port: 5432
+#14 384.9   }
+#14 384.9 }
+#14 385.3 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 385.3 params: approved
+#14 385.3     at p.queryWithCache (.next/server/chunks/[root-of-the-server]__11sry.q._.js:8:40445)
+#14 385.3     at async (.next/server/chunks/[root-of-the-server]__11sry.q._.js:8:44004)
+#14 385.3     at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 385.3     at async Object.trustedOrigins (.next/server/chunks/_04m_xyc._.js:412:2668)
+#14 385.3     at async ep (.next/server/chunks/_04m_xyc._.js:39:31661)
+#14 385.3     at async ii (.next/server/chunks/_04m_xyc._.js:398:919)
+#14 385.3     at async ia (.next/server/chunks/_04m_xyc._.js:398:3605) {
+#14 385.3   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 385.3   params: [ 'approved' ],
+#14 385.3   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 385.3       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 385.3       at async (.next/server/chunks/[root-of-the-server]__11sry.q._.js:8:44219)
+#14 385.3       at async p.queryWithCache (.next/server/chunks/[root-of-the-server]__11sry.q._.js:8:40420)
+#14 385.3       at async (.next/server/chunks/[root-of-the-server]__11sry.q._.js:8:44004)
+#14 385.3       at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 385.3       at async Object.trustedOrigins (.next/server/chunks/_04m_xyc._.js:412:2668)
+#14 385.3       at async ep (.next/server/chunks/_04m_xyc._.js:39:31661)
+#14 385.3       at async ii (.next/server/chunks/_04m_xyc._.js:398:919)
+#14 385.3       at async ia (.next/server/chunks/_04m_xyc._.js:398:3605) {
+#14 385.3     errno: -111,
+#14 385.3     code: 'ECONNREFUSED',
+#14 385.3     syscall: 'connect',
+#14 385.3     address: '127.0.0.1',
+#14 385.3     port: 5432
+#14 385.3   }
+#14 385.3 }
+#14 387.9 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 387.9 params: approved
+#14 387.9     at p.queryWithCache (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:40445)
+#14 387.9     at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44004)
+#14 387.9     at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 387.9     at async Object.trustedOrigins (.next/server/chunks/_04m_xyc._.js:412:2668)
+#14 387.9     at async ep (.next/server/chunks/_04m_xyc._.js:39:31661)
+#14 387.9     at async ii (.next/server/chunks/_04m_xyc._.js:398:919)
+#14 387.9     at async ia (.next/server/chunks/_04m_xyc._.js:398:3605) {
+#14 387.9   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 387.9   params: [ 'approved' ],
+#14 387.9   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 387.9       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 387.9       at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44219)
+#14 387.9       at async p.queryWithCache (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:40420)
+#14 387.9       at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44004)
+#14 387.9       at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 387.9       at async Object.trustedOrigins (.next/server/chunks/_04m_xyc._.js:412:2668)
+#14 387.9       at async ep (.next/server/chunks/_04m_xyc._.js:39:31661)
+#14 387.9       at async ii (.next/server/chunks/_04m_xyc._.js:398:919)
+#14 387.9       at async ia (.next/server/chunks/_04m_xyc._.js:398:3605) {
+#14 387.9     errno: -111,
+#14 387.9     code: 'ECONNREFUSED',
+#14 387.9     syscall: 'connect',
+#14 387.9     address: '127.0.0.1',
+#14 387.9     port: 5432
+#14 387.9   }
+#14 387.9 }
+#14 388.2 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 388.2 params: approved
+#14 388.2     at p.queryWithCache (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:40445)
+#14 388.2     at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44004)
+#14 388.2     at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 388.2     at async Object.trustedOrigins (.next/server/chunks/_0et_09~._.js:412:2668)
+#14 388.2     at async ep (.next/server/chunks/_0et_09~._.js:39:31661)
+#14 388.2     at async ii (.next/server/chunks/_0et_09~._.js:398:919)
+#14 388.2     at async ia (.next/server/chunks/_0et_09~._.js:398:3605) {
+#14 388.2   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 388.2   params: [ 'approved' ],
+#14 388.2   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 388.2       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 388.2       at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44219)
+#14 388.2       at async p.queryWithCache (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:40420)
+#14 388.2       at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44004)
+#14 388.2       at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 388.2       at async Object.trustedOrigins (.next/server/chunks/_0et_09~._.js:412:2668)
+#14 388.2       at async ep (.next/server/chunks/_0et_09~._.js:39:31661)
+#14 388.2       at async ii (.next/server/chunks/_0et_09~._.js:398:919)
+#14 388.2       at async ia (.next/server/chunks/_0et_09~._.js:398:3605) {
+#14 388.2     errno: -111,
+#14 388.2     code: 'ECONNREFUSED',
+#14 388.2     syscall: 'connect',
+#14 388.2     address: '127.0.0.1',
+#14 388.2     port: 5432
+#14 388.2   }
+#14 388.2 }
+#14 389.5 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 389.5 params: approved
+#14 389.5     at p.queryWithCache (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:40445)
+#14 389.5     at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44004)
+#14 389.5     at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 389.5     at async Object.trustedOrigins (.next/server/chunks/_0et_09~._.js:412:2668)
+#14 389.5     at async ep (.next/server/chunks/_0et_09~._.js:39:31661)
+#14 389.5     at async ii (.next/server/chunks/_0et_09~._.js:398:919)
+#14 389.5     at async ia (.next/server/chunks/_0et_09~._.js:398:3605) {
+#14 389.5   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 389.5   params: [ 'approved' ],
+#14 389.5   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 389.5       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 389.5       at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44219)
+#14 389.5       at async p.queryWithCache (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:40420)
+#14 389.5       at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44004)
+#14 389.5       at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 389.5       at async Object.trustedOrigins (.next/server/chunks/_0et_09~._.js:412:2668)
+#14 389.5       at async ep (.next/server/chunks/_0et_09~._.js:39:31661)
+#14 389.5       at async ii (.next/server/chunks/_0et_09~._.js:398:919)
+#14 389.5       at async ia (.next/server/chunks/_0et_09~._.js:398:3605) {
+#14 389.5     errno: -111,
+#14 389.5     code: 'ECONNREFUSED',
+#14 389.5     syscall: 'connect',
+#14 389.5     address: '127.0.0.1',
+#14 389.5     port: 5432
+#14 389.5   }
+#14 389.5 }
+#14 389.5 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 389.5 params: approved
+#14 389.5     at p.queryWithCache (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:40445)
+#14 389.5     at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44004)
+#14 389.5     at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 389.5     at async Object.trustedOrigins (.next/server/chunks/_0et_09~._.js:412:2668)
+#14 389.5     at async ep (.next/server/chunks/_0et_09~._.js:39:31661)
+#14 389.5     at async ii (.next/server/chunks/_0et_09~._.js:398:919)
+#14 389.5     at async ia (.next/server/chunks/_0et_09~._.js:398:3605) {
+#14 389.5   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 389.5   params: [ 'approved' ],
+#14 389.5   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 389.5       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 389.5       at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44219)
+#14 389.5       at async p.queryWithCache (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:40420)
+#14 389.5       at async (.next/server/chunks/[root-of-the-server]__0m2a~pv._.js:8:44004)
+#14 389.5       at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 389.5       at async Object.trustedOrigins (.next/server/chunks/_0et_09~._.js:412:2668)
+#14 389.5       at async ep (.next/server/chunks/_0et_09~._.js:39:31661)
+#14 389.5       at async ii (.next/server/chunks/_0et_09~._.js:398:919)
+#14 389.5       at async ia (.next/server/chunks/_0et_09~._.js:398:3605) {
+#14 389.5     errno: -111,
+#14 389.5     code: 'ECONNREFUSED',
+#14 389.5     syscall: 'connect',
+#14 389.5     address: '127.0.0.1',
+#14 389.5     port: 5432
+#14 389.5   }
+#14 389.5 }
+#14 389.7 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 389.7 params: approved
+#14 389.7     at p.queryWithCache (.next/server/chunks/[root-of-the-server]__11sry.q._.js:8:40445)
+#14 389.7     at async (.next/server/chunks/[root-of-the-server]__11sry.q._.js:8:44004)
+#14 389.7     at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 389.7     at async Object.trustedOrigins (.next/server/chunks/_04m_xyc._.js:412:2668)
+#14 389.7     at async ep (.next/server/chunks/_04m_xyc._.js:39:31661)
+#14 389.7     at async ii (.next/server/chunks/_04m_xyc._.js:398:919)
+#14 389.7     at async ia (.next/server/chunks/_04m_xyc._.js:398:3605) {
+#14 389.7   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 389.7   params: [ 'approved' ],
+#14 389.7   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 389.7       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 389.7       at async (.next/server/chunks/[root-of-the-server]__11sry.q._.js:8:44219)
+#14 389.7       at async p.queryWithCache (.next/server/chunks/[root-of-the-server]__11sry.q._.js:8:40420)
+#14 389.7       at async (.next/server/chunks/[root-of-the-server]__11sry.q._.js:8:44004)
+#14 389.7       at async d (.next/server/chunks/[root-of-the-server]__08szmrf._.js:1:9714)
+#14 389.7       at async Object.trustedOrigins (.next/server/chunks/_04m_xyc._.js:412:2668)
+#14 389.7       at async ep (.next/server/chunks/_04m_xyc._.js:39:31661)
+#14 389.7       at async ii (.next/server/chunks/_04m_xyc._.js:398:919)
+#14 389.7       at async ia (.next/server/chunks/_04m_xyc._.js:398:3605) {
+#14 389.7     errno: -111,
+#14 389.7     code: 'ECONNREFUSED',
+#14 389.7     syscall: 'connect',
+#14 389.7     address: '127.0.0.1',
+#14 389.7     port: 5432
+#14 389.7   }
+#14 389.7 }
+#14 426.9 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 426.9 params: approved
+#14 426.9     at o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40125)
+#14 426.9     at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 426.9     at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 426.9     at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 426.9     at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 426.9     at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 426.9     at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 426.9   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 426.9   params: [ 'approved' ],
+#14 426.9   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 426.9       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 426.9       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43898)
+#14 426.9       at async o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40100)
+#14 426.9       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 426.9       at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 426.9       at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 426.9       at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 426.9       at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 426.9       at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 426.9     errno: -111,
+#14 426.9     code: 'ECONNREFUSED',
+#14 426.9     syscall: 'connect',
+#14 426.9     address: '127.0.0.1',
+#14 426.9     port: 5432
+#14 426.9   }
+#14 426.9 }
+#14 427.5 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 427.5 params: approved
+#14 427.5     at o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40125)
+#14 427.5     at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 427.5     at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5     at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5     at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5     at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5     at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 427.5   params: [ 'approved' ],
+#14 427.5   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 427.5       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 427.5       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43898)
+#14 427.5       at async o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40100)
+#14 427.5       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 427.5       at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5       at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5       at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5       at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5       at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5     errno: -111,
+#14 427.5     code: 'ECONNREFUSED',
+#14 427.5     syscall: 'connect',
+#14 427.5     address: '127.0.0.1',
+#14 427.5     port: 5432
+#14 427.5   }
+#14 427.5 }
+#14 427.5 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 427.5 params: approved
+#14 427.5     at o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40125)
+#14 427.5     at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 427.5     at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5     at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5     at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5     at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5     at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 427.5   params: [ 'approved' ],
+#14 427.5   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 427.5       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 427.5       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43898)
+#14 427.5       at async o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40100)
+#14 427.5       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 427.5       at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5       at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5       at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5       at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5       at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5     errno: -111,
+#14 427.5     code: 'ECONNREFUSED',
+#14 427.5     syscall: 'connect',
+#14 427.5     address: '127.0.0.1',
+#14 427.5     port: 5432
+#14 427.5   }
+#14 427.5 }
+#14 427.5 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 427.5 params: approved
+#14 427.5     at o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40125)
+#14 427.5     at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 427.5     at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5     at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5     at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5     at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5     at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 427.5   params: [ 'approved' ],
+#14 427.5   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 427.5       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 427.5       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43898)
+#14 427.5       at async o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40100)
+#14 427.5       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 427.5       at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5       at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5       at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5       at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5       at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5     errno: -111,
+#14 427.5     code: 'ECONNREFUSED',
+#14 427.5     syscall: 'connect',
+#14 427.5     address: '127.0.0.1',
+#14 427.5     port: 5432
+#14 427.5   }
+#14 427.5 }
+#14 427.5 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 427.5 params: approved
+#14 427.5     at o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40125)
+#14 427.5     at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 427.5     at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5     at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5     at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5     at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5     at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 427.5   params: [ 'approved' ],
+#14 427.5   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 427.5       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 427.5       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43898)
+#14 427.5       at async o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40100)
+#14 427.5       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 427.5       at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5       at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5       at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5       at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5       at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5     errno: -111,
+#14 427.5     code: 'ECONNREFUSED',
+#14 427.5     syscall: 'connect',
+#14 427.5     address: '127.0.0.1',
+#14 427.5     port: 5432
+#14 427.5   }
+#14 427.5 }
+#14 427.5 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 427.5 params: approved
+#14 427.5     at o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40125)
+#14 427.5     at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 427.5     at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5     at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5     at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5     at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5     at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 427.5   params: [ 'approved' ],
+#14 427.5   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 427.5       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 427.5       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43898)
+#14 427.5       at async o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40100)
+#14 427.5       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 427.5       at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5       at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5       at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5       at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5       at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5     errno: -111,
+#14 427.5     code: 'ECONNREFUSED',
+#14 427.5     syscall: 'connect',
+#14 427.5     address: '127.0.0.1',
+#14 427.5     port: 5432
+#14 427.5   }
+#14 427.5 }
+#14 427.5 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 427.5 params: approved
+#14 427.5     at o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40125)
+#14 427.5     at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 427.5     at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5     at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5     at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5     at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5     at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 427.5   params: [ 'approved' ],
+#14 427.5   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 427.5       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 427.5       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43898)
+#14 427.5       at async o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40100)
+#14 427.5       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 427.5       at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5       at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5       at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5       at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5       at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5     errno: -111,
+#14 427.5     code: 'ECONNREFUSED',
+#14 427.5     syscall: 'connect',
+#14 427.5     address: '127.0.0.1',
+#14 427.5     port: 5432
+#14 427.5   }
+#14 427.5 }
+#14 427.5 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 427.5 params: approved
+#14 427.5     at o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40125)
+#14 427.5     at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 427.5     at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5     at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5     at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5     at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5     at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 427.5   params: [ 'approved' ],
+#14 427.5   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 427.5       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 427.5       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43898)
+#14 427.5       at async o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40100)
+#14 427.5       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 427.5       at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5       at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5       at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5       at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5       at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5     errno: -111,
+#14 427.5     code: 'ECONNREFUSED',
+#14 427.5     syscall: 'connect',
+#14 427.5     address: '127.0.0.1',
+#14 427.5     port: 5432
+#14 427.5   }
+#14 427.5 }
+#14 427.5 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 427.5 params: approved
+#14 427.5     at o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40125)
+#14 427.5     at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 427.5     at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5     at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5     at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5     at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5     at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 427.5   params: [ 'approved' ],
+#14 427.5   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 427.5       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 427.5       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43898)
+#14 427.5       at async o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40100)
+#14 427.5       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 427.5       at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5       at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5       at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5       at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5       at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5     errno: -111,
+#14 427.5     code: 'ECONNREFUSED',
+#14 427.5     syscall: 'connect',
+#14 427.5     address: '127.0.0.1',
+#14 427.5     port: 5432
+#14 427.5   }
+#14 427.5 }
+#14 427.5 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 427.5 params: approved
+#14 427.5     at o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40125)
+#14 427.5     at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 427.5     at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5     at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5     at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5     at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5     at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 427.5   params: [ 'approved' ],
+#14 427.5   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 427.5       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 427.5       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43898)
+#14 427.5       at async o.queryWithCache (.next/server/chunks/ssr/_12ovuvf._.js:8:40100)
+#14 427.5       at async (.next/server/chunks/ssr/_12ovuvf._.js:8:43683)
+#14 427.5       at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5       at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5       at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5       at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5       at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5     errno: -111,
+#14 427.5     code: 'ECONNREFUSED',
+#14 427.5     syscall: 'connect',
+#14 427.5     address: '127.0.0.1',
+#14 427.5     port: 5432
+#14 427.5   }
+#14 427.5 }
+#14 427.5 Failed to load tenant domains for trustedOrigins: Error: Failed query: select "domain" from "tenant_domains" where "tenant_domains"."status" = $1
+#14 427.5 params: approved
+#14 427.5     at o.queryWithCache (.next/server/chunks/ssr/_0n39mws._.js:8:40125)
+#14 427.5     at async (.next/server/chunks/ssr/_0n39mws._.js:8:43683)
+#14 427.5     at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5     at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5     at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5     at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5     at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5   query: 'select "domain" from "tenant_domains" where "tenant_domains"."status" = $1',
+#14 427.5   params: [ 'approved' ],
+#14 427.5   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5432
+#14 427.5       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5432)
+#14 427.5       at async (.next/server/chunks/ssr/_0n39mws._.js:8:43898)
+#14 427.5       at async o.queryWithCache (.next/server/chunks/ssr/_0n39mws._.js:8:40100)
+#14 427.5       at async (.next/server/chunks/ssr/_0n39mws._.js:8:43683)
+#14 427.5       at async j (.next/server/chunks/ssr/_07br0kj._.js:473:1174)
+#14 427.5       at async Object.trustedOrigins (.next/server/chunks/ssr/_07br0kj._.js:473:163557)
+#14 427.5       at async am (.next/server/chunks/ssr/_07br0kj._.js:100:31665)
+#14 427.5       at async dd (.next/server/chunks/ssr/_07br0kj._.js:459:919)
+#14 427.5       at async de (.next/server/chunks/ssr/_07br0kj._.js:459:3605) {
+#14 427.5     errno: -111,
+#14 427.5     code: 'ECONNREFUSED',
+#14 427.5     syscall: 'connect',
+#14 427.5     address: '127.0.0.1',
+#14 427.5     port: 5432
+#14 427.5   }
+#14 427.5 }
+#14 428.8   Generating static pages using 11 workers (0/405) ...
+#14 432.1   Generating static pages using 11 workers (101/405) 
+#14 432.1   Generating static pages using 11 workers (202/405) 
+#14 433.2   Generating static pages using 11 workers (303/405) 
+#14 438.7 ✓ Generating static pages using 11 workers (405/405) in 9.0s
+#14 438.7   Finalizing page optimization ...
+#14 491.2 
+#14 491.4 Route (app)
+#14 491.4 ┌ ○ /
+#14 491.4 ├ ○ /_not-found
+#14 491.4 ├ ƒ /[locale]
+#14 491.4 ├ ƒ /[locale]/alumni
+#14 491.4 ├ ƒ /[locale]/alumni/directory
+#14 491.4 ├ ƒ /[locale]/alumni/events
+#14 491.4 ├ ƒ /[locale]/alumni/mentoring
+#14 491.4 ├ ƒ /[locale]/alumni/profile
+#14 491.4 ├ ƒ /[locale]/alumni/records
+#14 491.4 ├ ƒ /[locale]/alumni/requests
+#14 491.4 ├ ƒ /[locale]/dashboard
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/assessment/exam-master
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/assessment/homework
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/assessment/online-exams
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/assignments
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/calendar
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/class-section-teachers
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/class-subjects
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/classes
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/classes/[id]
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/conflicts
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/evaluations
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/exams
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/grades/entry
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/grading/policies
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/live-class
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/live-class-reports
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/live-class/[id]
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/live-class/new
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/mediums
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/optional-subjects
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/promotions
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/question-bank
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/readiness
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/results
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/rooms
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/schedule
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/sections
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/semesters
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/session-copy
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/shifts
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/streams
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/subjects
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/syllabus
+#14 491.4 ├ ƒ /[locale]/dashboard/academics/teacher-schedule
+#14 491.4 ├ ƒ /[locale]/dashboard/accountant
+#14 491.4 ├ ƒ /[locale]/dashboard/analytics
+#14 491.4 ├ ƒ /[locale]/dashboard/attendance
+#14 491.4 ├ ƒ /[locale]/dashboard/attendance/audit
+#14 491.4 ├ ƒ /[locale]/dashboard/attendance/badges
+#14 491.4 ├ ƒ /[locale]/dashboard/attendance/excuses
+#14 491.4 ├ ƒ /[locale]/dashboard/attendance/flags
+#14 491.4 ├ ƒ /[locale]/dashboard/attendance/flags/[id]
+#14 491.4 ├ ƒ /[locale]/dashboard/attendance/qr-reports
+#14 491.4 ├ ƒ /[locale]/dashboard/attendance/scanner
+#14 491.4 ├ ƒ /[locale]/dashboard/broadcast
+#14 491.4 ├ ƒ /[locale]/dashboard/broadcast/automations
+#14 491.4 ├ ƒ /[locale]/dashboard/broadcast/campaigns
+#14 491.4 ├ ƒ /[locale]/dashboard/broadcast/campaigns/[id]
+#14 491.4 ├ ƒ /[locale]/dashboard/broadcast/connections
+#14 491.4 ├ ƒ /[locale]/dashboard/broadcast/reports
+#14 491.4 ├ ƒ /[locale]/dashboard/broadcast/segments
+#14 491.4 ├ ƒ /[locale]/dashboard/broadcast/templates
+#14 491.4 ├ ƒ /[locale]/dashboard/cards
+#14 491.4 ├ ƒ /[locale]/dashboard/cards/admit-cards
+#14 491.4 ├ ƒ /[locale]/dashboard/cards/employees
+#14 491.4 ├ ƒ /[locale]/dashboard/cards/issued
+#14 491.4 ├ ƒ /[locale]/dashboard/cards/jobs
+#14 491.4 ├ ƒ /[locale]/dashboard/cards/students
+#14 491.4 ├ ƒ /[locale]/dashboard/cards/templates
+#14 491.4 ├ ƒ /[locale]/dashboard/cards/templates/[id]/edit
+#14 491.4 ├ ƒ /[locale]/dashboard/certificates
+#14 491.4 ├ ƒ /[locale]/dashboard/certificates/definitions
+#14 491.4 ├ ƒ /[locale]/dashboard/certificates/definitions/[id]
+#14 491.4 ├ ƒ /[locale]/dashboard/certificates/issue/employees
+#14 491.4 ├ ƒ /[locale]/dashboard/certificates/issue/students
+#14 491.4 ├ ƒ /[locale]/dashboard/certificates/issued
+#14 491.4 ├ ƒ /[locale]/dashboard/certificates/issued/[id]
+#14 491.4 ├ ƒ /[locale]/dashboard/certificates/jobs
+#14 491.4 ├ ƒ /[locale]/dashboard/certificates/requests
+#14 491.4 ├ ƒ /[locale]/dashboard/certificates/settings
+#14 491.4 ├ ƒ /[locale]/dashboard/certificates/templates
+#14 491.4 ├ ƒ /[locale]/dashboard/certificates/templates/[id]/edit
+#14 491.4 ├ ƒ /[locale]/dashboard/communication/broadcast
+#14 491.4 ├ ƒ /[locale]/dashboard/communication/campaign-composer
+#14 491.4 ├ ƒ /[locale]/dashboard/communication/crm
+#14 491.4 ├ ƒ /[locale]/dashboard/communication/delivery-reports
+#14 491.4 ├ ƒ /[locale]/dashboard/communication/events
+#14 491.4 ├ ƒ /[locale]/dashboard/communication/forms
+#14 491.4 ├ ƒ /[locale]/dashboard/communication/leads
+#14 491.4 ├ ƒ /[locale]/dashboard/communication/milestones
+#14 491.4 ├ ƒ /[locale]/dashboard/communication/reminders
+#14 491.4 ├ ƒ /[locale]/dashboard/communication/segments
+#14 491.4 ├ ƒ /[locale]/dashboard/communication/templates
+#14 491.4 ├ ƒ /[locale]/dashboard/communication/templates-automation
+#14 491.4 ├ ƒ /[locale]/dashboard/content/library
+#14 491.4 ├ ƒ /[locale]/dashboard/content/types
+#14 491.4 ├ ƒ /[locale]/dashboard/documents/generator
+#14 491.4 ├ ƒ /[locale]/dashboard/events
+#14 491.4 ├ ƒ /[locale]/dashboard/finance
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/accounting/accounts
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/accounting/deposits/new
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/accounting/expenses
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/accounting/periods
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/accounting/statements
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/accounting/student-accounting
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/accounting/transactions
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/accounting/voucher-types
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/allocation
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/approvals
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/bank-reconciliation
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/chart-of-accounts
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/collection-desk
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/credit-notes
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/expenses
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/expenses/new
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/fee-assignments
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/fee-structures
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/fee-types
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/fine-policies
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/invoices
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/invoices/[id]
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/journal
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/office-accounting
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/online-payments
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/payments
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/payments/new
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/pricing
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/receivables
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/reconciliation
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/refunds
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/reminders
+#14 491.4 ├ ƒ /[locale]/dashboard/finance/reports
+#14 491.4 ├ ƒ /[locale]/dashboard/homework
+#14 491.4 ├ ƒ /[locale]/dashboard/homework/submissions
+#14 491.4 ├ ƒ /[locale]/dashboard/hostel
+#14 491.4 ├ ƒ /[locale]/dashboard/hostel/allocations
+#14 491.4 ├ ƒ /[locale]/dashboard/hostel/allocations/[id]
+#14 491.4 ├ ƒ /[locale]/dashboard/hostel/applications
+#14 491.4 ├ ƒ /[locale]/dashboard/hostel/board
+#14 491.4 ├ ƒ /[locale]/dashboard/hostel/categories
+#14 491.4 ├ ƒ /[locale]/dashboard/hostel/guardian
+#14 491.4 ├ ƒ /[locale]/dashboard/hostel/hostels
+#14 491.4 ├ ƒ /[locale]/dashboard/hostel/hostels/[id]
+#14 491.4 ├ ƒ /[locale]/dashboard/hostel/leave-passes
+#14 491.4 ├ ƒ /[locale]/dashboard/hostel/me
+#14 491.4 ├ ƒ /[locale]/dashboard/hostel/policies
+#14 491.4 ├ ƒ /[locale]/dashboard/hostel/reports
+#14 491.4 ├ ƒ /[locale]/dashboard/hostel/roll-call
+#14 491.4 ├ ƒ /[locale]/dashboard/hostel/rooms
+#14 491.4 ├ ƒ /[locale]/dashboard/hostel/zones
+#14 491.4 ├ ƒ /[locale]/dashboard/hr
+#14 491.4 ├ ƒ /[locale]/dashboard/hr/access
+#14 491.4 ├ ƒ /[locale]/dashboard/hr/advances
+#14 491.4 ├ ƒ /[locale]/dashboard/hr/awards
+#14 491.4 ├ ƒ /[locale]/dashboard/hr/departments
+#14 491.4 ├ ƒ /[locale]/dashboard/hr/designations
+#14 491.4 ├ ƒ /[locale]/dashboard/hr/employees
+#14 491.4 ├ ƒ /[locale]/dashboard/hr/employees/[id]
+#14 491.4 ├ ƒ /[locale]/dashboard/hr/employees/new
+#14 491.4 ├ ƒ /[locale]/dashboard/hr/leave
+#14 491.4 ├ ƒ /[locale]/dashboard/hr/leave-management
+#14 491.4 ├ ƒ /[locale]/dashboard/hr/overview
+#14 491.4 ├ ƒ /[locale]/dashboard/hr/salary-advances
+#14 491.4 ├ ƒ /[locale]/dashboard/hr/self-service
+#14 491.4 ├ ƒ /[locale]/dashboard/inventory
+#14 491.4 ├ ƒ /[locale]/dashboard/inventory/adjustments
+#14 491.4 ├ ƒ /[locale]/dashboard/inventory/categories
+#14 491.4 ├ ƒ /[locale]/dashboard/inventory/issues
+#14 491.4 ├ ƒ /[locale]/dashboard/inventory/overview
+#14 491.4 ├ ƒ /[locale]/dashboard/inventory/products
+#14 491.4 ├ ƒ /[locale]/dashboard/inventory/purchases
+#14 491.4 ├ ƒ /[locale]/dashboard/inventory/sales
+#14 491.4 ├ ƒ /[locale]/dashboard/inventory/stock
+#14 491.4 ├ ƒ /[locale]/dashboard/inventory/stores
+#14 491.4 ├ ƒ /[locale]/dashboard/inventory/suppliers
+#14 491.4 ├ ƒ /[locale]/dashboard/inventory/transfers
+#14 491.4 ├ ƒ /[locale]/dashboard/inventory/units
+#14 491.4 ├ ƒ /[locale]/dashboard/library
+#14 491.4 ├ ƒ /[locale]/dashboard/library/catalog
+#14 491.4 ├ ƒ /[locale]/dashboard/parent
+#14 491.4 ├ ƒ /[locale]/dashboard/parent/attendance
+#14 491.4 ├ ƒ /[locale]/dashboard/parent/communication
+#14 491.4 ├ ƒ /[locale]/dashboard/parent/finance
+#14 491.4 ├ ƒ /[locale]/dashboard/parent/live-classes
+#14 491.4 ├ ƒ /[locale]/dashboard/parent/requests
+#14 491.4 ├ ƒ /[locale]/dashboard/parent/settings
+#14 491.4 ├ ƒ /[locale]/dashboard/portals/guard
+#14 491.4 ├ ƒ /[locale]/dashboard/portals/guard/config
+#14 491.4 ├ ƒ /[locale]/dashboard/portals/guard/emergency
+#14 491.4 ├ ƒ /[locale]/dashboard/portals/guard/incidents
+#14 491.4 ├ ƒ /[locale]/dashboard/portals/guard/pickups
+#14 491.4 ├ ƒ /[locale]/dashboard/portals/guard/scanner
+#14 491.4 ├ ƒ /[locale]/dashboard/portals/guard/visitors
+#14 491.4 ├ ƒ /[locale]/dashboard/portals/leadership
+#14 491.4 ├ ƒ /[locale]/dashboard/portals/librarian
+#14 491.4 ├ ƒ /[locale]/dashboard/portals/librarian/desk
+#14 491.4 ├ ƒ /[locale]/dashboard/receptionist
+#14 491.4 ├ ƒ /[locale]/dashboard/receptionist/appointments
+#14 491.4 ├ ƒ /[locale]/dashboard/receptionist/handoffs
+#14 491.4 ├ ƒ /[locale]/dashboard/receptionist/inquiries
+#14 491.4 ├ ƒ /[locale]/dashboard/receptionist/pickups
+#14 491.4 ├ ƒ /[locale]/dashboard/receptionist/visitors
+#14 491.4 ├ ƒ /[locale]/dashboard/reports
+#14 491.4 ├ ƒ /[locale]/dashboard/reports/[key]
+#14 491.4 ├ ƒ /[locale]/dashboard/reports/admin
+#14 491.4 ├ ƒ /[locale]/dashboard/reports/runs
+#14 491.4 ├ ƒ /[locale]/dashboard/reports/schedules
+#14 491.4 ├ ƒ /[locale]/dashboard/settings
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/access-reset
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/accounting-defaults
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/attendance
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/audit-logs
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/branches
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/cndp
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/custom-fields
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/domain
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/drafts
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/entitlements
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/exports
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/jobs
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/live-classrooms
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/migration
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/notifications
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/numbering
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/onboarding
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/payment-methods
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/permissions
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/policies
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/providers
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/scanner-devices
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/scheduled-jobs
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/security
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/security/2fa
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/staff
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/translations
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/users
+#14 491.4 ├ ƒ /[locale]/dashboard/settings/values
+#14 491.4 ├ ƒ /[locale]/dashboard/student
+#14 491.4 ├ ƒ /[locale]/dashboard/student/live-classes
+#14 491.4 ├ ƒ /[locale]/dashboard/students
+#14 491.4 ├ ƒ /[locale]/dashboard/students/[id]
+#14 491.4 ├ ƒ /[locale]/dashboard/students/add
+#14 491.4 ├ ƒ /[locale]/dashboard/students/admissions
+#14 491.4 ├ ƒ /[locale]/dashboard/students/admissions/new
+#14 491.4 ├ ƒ /[locale]/dashboard/students/alumni
+#14 491.4 ├ ƒ /[locale]/dashboard/students/alumni-transition
+#14 491.4 ├ ƒ /[locale]/dashboard/students/alumni/events
+#14 491.4 ├ ƒ /[locale]/dashboard/students/alumni/requests
+#14 491.4 ├ ƒ /[locale]/dashboard/students/import
+#14 491.4 ├ ƒ /[locale]/dashboard/students/matricules
+#14 491.4 ├ ƒ /[locale]/dashboard/students/parents
+#14 491.4 ├ ƒ /[locale]/dashboard/students/parents/[id]
+#14 491.4 ├ ƒ /[locale]/dashboard/students/photos
+#14 491.4 ├ ƒ /[locale]/dashboard/students/promotions
+#14 491.4 ├ ƒ /[locale]/dashboard/students/transfers
+#14 491.4 ├ ƒ /[locale]/dashboard/super-admin
+#14 491.4 ├ ƒ /[locale]/dashboard/super-admin/domains
+#14 491.4 ├ ƒ /[locale]/dashboard/super-admin/reports
+#14 491.4 ├ ƒ /[locale]/dashboard/super-admin/schools
+#14 491.4 ├ ƒ /[locale]/dashboard/super-admin/schools/[id]
+#14 491.4 ├ ƒ /[locale]/dashboard/super-admin/schools/create
+#14 491.4 ├ ƒ /[locale]/dashboard/super-admin/settings
+#14 491.4 ├ ƒ /[locale]/dashboard/super-admin/sms
+#14 491.4 ├ ƒ /[locale]/dashboard/super-admin/subscriptions
+#14 491.4 ├ ƒ /[locale]/dashboard/super-admin/subscriptions/list
+#14 491.4 ├ ƒ /[locale]/dashboard/super-admin/support
+#14 491.4 ├ ƒ /[locale]/dashboard/teacher
+#14 491.4 ├ ƒ /[locale]/dashboard/teachers/[id]
+#14 491.4 ├ ƒ /[locale]/dashboard/teachers/bulk-import
+#14 491.4 ├ ƒ /[locale]/dashboard/teachers/manage
+#14 491.4 ├ ƒ /[locale]/dashboard/transport
+#14 491.4 ├ ƒ /[locale]/dashboard/transport/allocations
+#14 491.4 ├ ƒ /[locale]/dashboard/transport/boarding
+#14 491.4 ├ ƒ /[locale]/dashboard/transport/drivers
+#14 491.4 ├ ƒ /[locale]/dashboard/transport/guardian
+#14 491.4 ├ ƒ /[locale]/dashboard/transport/incidents
+#14 491.4 ├ ƒ /[locale]/dashboard/transport/policies
+#14 491.4 ├ ƒ /[locale]/dashboard/transport/reports
+#14 491.4 ├ ƒ /[locale]/dashboard/transport/routes
+#14 491.4 ├ ƒ /[locale]/dashboard/transport/stops
+#14 491.4 ├ ƒ /[locale]/dashboard/transport/student
+#14 491.4 ├ ƒ /[locale]/dashboard/transport/trips
+#14 491.4 ├ ƒ /[locale]/dashboard/transport/vehicles
+#14 491.4 ├ ƒ /[locale]/dashboard/workforce
+#14 491.4 ├ ƒ /[locale]/dashboard/workforce/advances
+#14 491.4 ├ ƒ /[locale]/dashboard/workforce/awards
+#14 491.4 ├ ƒ /[locale]/dashboard/workforce/leave
+#14 491.4 ├ ƒ /[locale]/dashboard/workforce/payroll/adjustments
+#14 491.4 ├ ƒ /[locale]/dashboard/workforce/payroll/assignments
+#14 491.4 ├ ƒ /[locale]/dashboard/workforce/payroll/components
+#14 491.4 ├ ƒ /[locale]/dashboard/workforce/payroll/payments
+#14 491.4 ├ ƒ /[locale]/dashboard/workforce/payroll/payslips
+#14 491.4 ├ ƒ /[locale]/dashboard/workforce/payroll/regulations
+#14 491.4 ├ ƒ /[locale]/dashboard/workforce/payroll/runs
+#14 491.4 ├ ƒ /[locale]/dashboard/workforce/payroll/runs/[id]
+#14 491.4 ├ ƒ /[locale]/dashboard/workforce/payroll/settings
+#14 491.4 ├ ƒ /[locale]/dashboard/workforce/payroll/structures
+#14 491.4 ├ ƒ /[locale]/dashboard/workforce/timeclock
+#14 491.4 ├ ƒ /[locale]/login
+#14 491.4 ├ ƒ /[locale]/signup
+#14 491.4 ├ ƒ /[locale]/verify-document
+#14 491.4 ├ ƒ /[locale]/verify/card/[token]
+#14 491.4 ├ ƒ /[locale]/verify/certificate/[token]
+#14 491.4 ├ ƒ /api/academics/academic-years
+#14 491.4 ├ ƒ /api/academics/assessment-plans
+#14 491.4 ├ ƒ /api/academics/assessment-sessions
+#14 491.4 ├ ƒ /api/academics/assessments
+#14 491.4 ├ ƒ /api/academics/assignments
+#14 491.4 ├ ƒ /api/academics/assignments/grade
+#14 491.4 ├ ƒ /api/academics/assignments/submit
+#14 491.4 ├ ƒ /api/academics/class-offerings
+#14 491.4 ├ ƒ /api/academics/class-offerings/copy
+#14 491.4 ├ ƒ /api/academics/class-results
+#14 491.4 ├ ƒ /api/academics/class-sections
+#14 491.4 ├ ƒ /api/academics/class-sections/[id]/homeroom-teacher
+#14 491.4 ├ ƒ /api/academics/class-subjects
+#14 491.4 ├ ƒ /api/academics/class-teachers
+#14 491.4 ├ ƒ /api/academics/classes
+#14 491.4 ├ ƒ /api/academics/classes/roster
+#14 491.4 ├ ƒ /api/academics/coverage
+#14 491.4 ├ ƒ /api/academics/elective-choices
+#14 491.4 ├ ƒ /api/academics/elective-groups
+#14 491.4 ├ ƒ /api/academics/exam-halls
+#14 491.4 ├ ƒ /api/academics/exam-schedules
+#14 491.4 ├ ƒ /api/academics/exam-terms
+#14 491.4 ├ ƒ /api/academics/exam-terms/[id]/marksheet
+#14 491.4 ├ ƒ /api/academics/exam-terms/[id]/rankings
+#14 491.4 ├ ƒ /api/academics/exam-terms/[id]/seat-allocation
+#14 491.4 ├ ƒ /api/academics/homework
+#14 491.4 ├ ƒ /api/academics/homework/[id]/grade
+#14 491.4 ├ ƒ /api/academics/homework/[id]/submit
+#14 491.4 ├ ƒ /api/academics/homework/upload
+#14 491.4 ├ ƒ /api/academics/mediums
+#14 491.4 ├ ƒ /api/academics/meeting-slots
+#14 491.4 ├ ƒ /api/academics/meeting-slots/book
+#14 491.4 ├ ƒ /api/academics/online-exams
+#14 491.4 ├ ƒ /api/academics/online-exams/[examId]/questions
+#14 491.4 ├ ƒ /api/academics/online-exams/[examId]/questions/[questionId]
+#14 491.4 ├ ƒ /api/academics/online-exams/submit
+#14 491.4 ├ ƒ /api/academics/promotions/capacity-check
+#14 491.4 ├ ƒ /api/academics/promotions/revert
+#14 491.4 ├ ƒ /api/academics/question-bank
+#14 491.4 ├ ƒ /api/academics/question-bank/[id]/copy-into-exam
+#14 491.4 ├ ƒ /api/academics/readiness
+#14 491.4 ├ ƒ /api/academics/readiness/export
+#14 491.4 ├ ƒ /api/academics/room-utilization
+#14 491.4 ├ ƒ /api/academics/rooms
+#14 491.4 ├ ƒ /api/academics/sections
+#14 491.4 ├ ƒ /api/academics/semesters
+#14 491.4 ├ ƒ /api/academics/session-years
+#14 491.4 ├ ƒ /api/academics/shifts
+#14 491.4 ├ ƒ /api/academics/streams
+#14 491.4 ├ ƒ /api/academics/subject-teachers
+#14 491.4 ├ ƒ /api/academics/subjects
+#14 491.4 ├ ƒ /api/academics/timetable-conflicts
+#14 491.4 ├ ƒ /api/academics/timetable-slots
+#14 491.4 ├ ƒ /api/academics/timetable-slots/copy
+#14 491.4 ├ ƒ /api/academics/timetable-versions
+#14 491.4 ├ ƒ /api/academics/timetable-versions/publish
+#14 491.4 ├ ƒ /api/accountant/me/approvals
+#14 491.4 ├ ƒ /api/accountant/me/cashier
+#14 491.4 ├ ƒ /api/accountant/me/home
+#14 491.4 ├ ƒ /api/accountant/me/office-accounting
+#14 491.4 ├ ƒ /api/accountant/me/receivables
+#14 491.4 ├ ƒ /api/addons/broadcast/automations
+#14 491.4 ├ ƒ /api/addons/broadcast/automations/[id]
+#14 491.4 ├ ƒ /api/addons/broadcast/automations/[id]/runs
+#14 491.4 ├ ƒ /api/addons/broadcast/automations/[id]/test
+#14 491.4 ├ ƒ /api/addons/broadcast/automations/[id]/toggle
+#14 491.4 ├ ƒ /api/addons/broadcast/automations/runs/[runId]/recipients
+#14 491.4 ├ ƒ /api/addons/broadcast/campaigns
+#14 491.4 ├ ƒ /api/addons/broadcast/campaigns/[id]
+#14 491.4 ├ ƒ /api/addons/broadcast/campaigns/[id]/approve
+#14 491.4 ├ ƒ /api/addons/broadcast/campaigns/[id]/cancel
+#14 491.4 ├ ƒ /api/addons/broadcast/campaigns/[id]/export
+#14 491.4 ├ ƒ /api/addons/broadcast/campaigns/[id]/preview
+#14 491.4 ├ ƒ /api/addons/broadcast/campaigns/[id]/recipients
+#14 491.4 ├ ƒ /api/addons/broadcast/campaigns/[id]/report
+#14 491.4 ├ ƒ /api/addons/broadcast/campaigns/[id]/schedule
+#14 491.4 ├ ƒ /api/addons/broadcast/connections
+#14 491.4 ├ ƒ /api/addons/broadcast/connections/[id]
+#14 491.4 ├ ƒ /api/addons/broadcast/connections/[id]/test
+#14 491.4 ├ ƒ /api/addons/broadcast/consents
+#14 491.4 ├ ƒ /api/addons/broadcast/deliveries/[id]/events
+#14 491.4 ├ ƒ /api/addons/broadcast/deliveries/[id]/retry
+#14 491.4 ├ ƒ /api/addons/broadcast/segments
+#14 491.4 ├ ƒ /api/addons/broadcast/segments/[id]
+#14 491.4 ├ ƒ /api/addons/broadcast/segments/[id]/preview
+#14 491.4 ├ ƒ /api/addons/broadcast/suppressions
+#14 491.4 ├ ƒ /api/addons/broadcast/suppressions/[id]
+#14 491.4 ├ ƒ /api/addons/broadcast/templates
+#14 491.4 ├ ƒ /api/addons/broadcast/templates/[id]
+#14 491.4 ├ ƒ /api/addons/broadcast/templates/[id]/versions
+#14 491.4 ├ ƒ /api/addons/broadcast/templates/[id]/versions/[versionId]/publish
+#14 491.4 ├ ƒ /api/addons/broadcast/worker/process
+#14 491.4 ├ ƒ /api/addons/events
+#14 491.4 ├ ƒ /api/addons/events/[id]/occurrences
+#14 491.4 ├ ƒ /api/addons/events/[id]/registrations
+#14 491.4 ├ ƒ /api/addons/events/calendar
+#14 491.4 ├ ƒ /api/addons/hostel/allocations
+#14 491.4 ├ ƒ /api/addons/hostel/allocations/[id]
+#14 491.4 ├ ƒ /api/addons/hostel/allocations/[id]/check-in
+#14 491.4 ├ ƒ /api/addons/hostel/allocations/[id]/check-out
+#14 491.4 ├ ƒ /api/addons/hostel/allocations/[id]/events
+#14 491.4 ├ ƒ /api/addons/hostel/allocations/[id]/transfer
+#14 491.4 ├ ƒ /api/addons/hostel/allocations/bulk/commit
+#14 491.4 ├ ƒ /api/addons/hostel/allocations/bulk/preview
+#14 491.4 ├ ƒ /api/addons/hostel/allocations/commit
+#14 491.4 ├ ƒ /api/addons/hostel/allocations/preview
+#14 491.4 ├ ƒ /api/addons/hostel/applications
+#14 491.4 ├ ƒ /api/addons/hostel/applications/[id]
+#14 491.4 ├ ƒ /api/addons/hostel/applications/[id]/decision
+#14 491.4 ├ ƒ /api/addons/hostel/beds
+#14 491.4 ├ ƒ /api/addons/hostel/beds/[id]
+#14 491.4 ├ ƒ /api/addons/hostel/beds/[id]/status
+#14 491.4 ├ ƒ /api/addons/hostel/board
+#14 491.4 ├ ƒ /api/addons/hostel/categories
+#14 491.4 ├ ƒ /api/addons/hostel/categories/[id]
+#14 491.4 ├ ƒ /api/addons/hostel/escalations
+#14 491.4 ├ ƒ /api/addons/hostel/escalations/[id]/acknowledge
+#14 491.4 ├ ƒ /api/addons/hostel/escalations/run
+#14 491.4 ├ ƒ /api/addons/hostel/guardian/me
+#14 491.4 ├ ƒ /api/addons/hostel/hostels
+#14 491.4 ├ ƒ /api/addons/hostel/hostels/[id]
+#14 491.4 ├ ƒ /api/addons/hostel/leave-passes
+#14 491.4 ├ ƒ /api/addons/hostel/leave-passes/[id]
+#14 491.4 ├ ƒ /api/addons/hostel/leave-passes/[id]/return
+#14 491.4 ├ ƒ /api/addons/hostel/policies
+#14 491.4 ├ ƒ /api/addons/hostel/reports/allocations
+#14 491.4 ├ ƒ /api/addons/hostel/reports/occupancy
+#14 491.4 ├ ƒ /api/addons/hostel/resident/me
+#14 491.4 ├ ƒ /api/addons/hostel/resident/me/leave-requests
+#14 491.4 ├ ƒ /api/addons/hostel/roll-calls
+#14 491.4 ├ ƒ /api/addons/hostel/roll-calls/[id]
+#14 491.4 ├ ƒ /api/addons/hostel/roll-calls/[id]/close
+#14 491.4 ├ ƒ /api/addons/hostel/roll-calls/[id]/entries
+#14 491.4 ├ ƒ /api/addons/hostel/rooms
+#14 491.4 ├ ƒ /api/addons/hostel/rooms/[id]
+#14 491.4 ├ ƒ /api/addons/hostel/tonight
+#14 491.4 ├ ƒ /api/addons/hostel/zones
+#14 491.4 ├ ƒ /api/addons/hostel/zones/[id]
+#14 491.4 ├ ƒ /api/addons/inventory/adjustments
+#14 491.4 ├ ƒ /api/addons/inventory/adjustments/[id]
+#14 491.4 ├ ƒ /api/addons/inventory/categories
+#14 491.4 ├ ƒ /api/addons/inventory/categories/[id]
+#14 491.4 ├ ƒ /api/addons/inventory/export
+#14 491.4 ├ ƒ /api/addons/inventory/issues
+#14 491.4 ├ ƒ /api/addons/inventory/issues/[id]
+#14 491.4 ├ ƒ /api/addons/inventory/issues/[id]/return
+#14 491.4 ├ ƒ /api/addons/inventory/movements
+#14 491.4 ├ ƒ /api/addons/inventory/overview
+#14 491.4 ├ ƒ /api/addons/inventory/products
+#14 491.4 ├ ƒ /api/addons/inventory/products/[id]
+#14 491.4 ├ ƒ /api/addons/inventory/purchases
+#14 491.4 ├ ƒ /api/addons/inventory/purchases/[id]
+#14 491.4 ├ ƒ /api/addons/inventory/purchases/[id]/receive
+#14 491.4 ├ ƒ /api/addons/inventory/purchases/[id]/reverse
+#14 491.4 ├ ƒ /api/addons/inventory/sales
+#14 491.4 ├ ƒ /api/addons/inventory/sales/[id]
+#14 491.4 ├ ƒ /api/addons/inventory/sales/[id]/reverse
+#14 491.4 ├ ƒ /api/addons/inventory/stock
+#14 491.4 ├ ƒ /api/addons/inventory/stock/reconcile
+#14 491.4 ├ ƒ /api/addons/inventory/stores
+#14 491.4 ├ ƒ /api/addons/inventory/stores/[id]
+#14 491.4 ├ ƒ /api/addons/inventory/suppliers
+#14 491.4 ├ ƒ /api/addons/inventory/suppliers/[id]
+#14 491.4 ├ ƒ /api/addons/inventory/transfers
+#14 491.4 ├ ƒ /api/addons/inventory/transfers/[id]
+#14 491.4 ├ ƒ /api/addons/inventory/transfers/[id]/cancel
+#14 491.4 ├ ƒ /api/addons/inventory/transfers/[id]/complete
+#14 491.4 ├ ƒ /api/addons/inventory/units
+#14 491.4 ├ ƒ /api/addons/inventory/units/[id]
+#14 491.4 ├ ƒ /api/addons/library/catalog
+#14 491.4 ├ ƒ /api/addons/library/catalog/[id]
+#14 491.4 ├ ƒ /api/addons/library/catalog/[id]/contributors
+#14 491.4 ├ ƒ /api/addons/library/catalog/[id]/subjects
+#14 491.4 ├ ƒ /api/addons/library/catalog/categories
+#14 491.4 ├ ƒ /api/addons/library/catalog/categories/[id]
+#14 491.4 ├ ƒ /api/addons/library/catalog/contributors
+#14 491.4 ├ ƒ /api/addons/library/catalog/contributors/[id]
+#14 491.4 ├ ƒ /api/addons/library/catalog/publishers
+#14 491.4 ├ ƒ /api/addons/library/catalog/publishers/[id]
+#14 491.4 ├ ƒ /api/addons/library/catalog/subjects
+#14 491.4 ├ ƒ /api/addons/library/catalog/subjects/[id]
+#14 491.4 ├ ƒ /api/addons/library/charges
+#14 491.4 ├ ƒ /api/addons/library/charges/[id]/post
+#14 491.4 ├ ƒ /api/addons/library/charges/[id]/waive
+#14 491.4 ├ ƒ /api/addons/library/circulation/issue
+#14 491.4 ├ ƒ /api/addons/library/circulation/renew
+#14 491.4 ├ ƒ /api/addons/library/circulation/return
+#14 491.4 ├ ƒ /api/addons/library/closures
+#14 491.4 ├ ƒ /api/addons/library/closures/[id]
+#14 491.4 ├ ƒ /api/addons/library/copies
+#14 491.4 ├ ƒ /api/addons/library/copies/[id]
+#14 491.4 ├ ƒ /api/addons/library/copies/export
+#14 491.4 ├ ƒ /api/addons/library/copies/import
+#14 491.4 ├ ƒ /api/addons/library/editions
+#14 491.4 ├ ƒ /api/addons/library/editions/[id]
+#14 491.4 ├ ƒ /api/addons/library/holds
+#14 491.4 ├ ƒ /api/addons/library/holds/[id]/cancel
+#14 491.4 ├ ƒ /api/addons/library/me/charges
+#14 491.4 ├ ƒ /api/addons/library/me/children
+#14 491.4 ├ ƒ /api/addons/library/me/children/[studentId]/loans
+#14 491.4 ├ ƒ /api/addons/library/me/history
+#14 491.4 ├ ƒ /api/addons/library/me/holds
+#14 491.4 ├ ƒ /api/addons/library/me/home
+#14 491.4 ├ ƒ /api/addons/library/me/loans
+#14 491.4 ├ ƒ /api/addons/library/me/renew
+#14 491.4 ├ ƒ /api/addons/library/members
+#14 491.4 ├ ƒ /api/addons/library/policies
+#14 491.4 ├ ƒ /api/addons/library/policies/[id]
+#14 491.4 ├ ƒ /api/addons/library/reports/overdue
+#14 491.4 ├ ƒ /api/addons/library/reports/overview
+#14 491.4 ├ ƒ /api/addons/library/stocktakes
+#14 491.4 ├ ƒ /api/addons/library/stocktakes/[id]/adjustments
+#14 491.4 ├ ƒ /api/addons/library/stocktakes/[id]/adjustments/apply
+#14 491.4 ├ ƒ /api/addons/library/stocktakes/[id]/close
+#14 491.4 ├ ƒ /api/addons/library/stocktakes/[id]/observations
+#14 491.4 ├ ƒ /api/addons/library/transfers
+#14 491.4 ├ ƒ /api/addons/library/transfers/[id]/transition
+#14 491.4 ├ ƒ /api/addons/live-classrooms/health
+#14 491.4 ├ ƒ /api/addons/live-classrooms/my-sessions
+#14 491.4 ├ ƒ /api/addons/live-classrooms/my-sessions/[id]/join
+#14 491.4 ├ ƒ /api/addons/live-classrooms/provider-profiles
+#14 491.4 ├ ƒ /api/addons/live-classrooms/provider-profiles/[id]
+#14 491.4 ├ ƒ /api/addons/live-classrooms/provider-profiles/[id]/test
+#14 491.4 ├ ƒ /api/addons/live-classrooms/reports/export
+#14 491.4 ├ ƒ /api/addons/live-classrooms/reports/overview
+#14 491.4 ├ ƒ /api/addons/live-classrooms/reports/sessions
+#14 491.4 ├ ƒ /api/addons/live-classrooms/sessions
+#14 491.4 ├ ƒ /api/addons/live-classrooms/sessions/[id]
+#14 491.4 ├ ƒ /api/addons/live-classrooms/sessions/[id]/attendance
+#14 491.4 ├ ƒ /api/addons/live-classrooms/sessions/[id]/end
+#14 491.4 ├ ƒ /api/addons/live-classrooms/sessions/[id]/join
+#14 491.4 ├ ƒ /api/addons/live-classrooms/sessions/[id]/materials
+#14 491.4 ├ ƒ /api/addons/live-classrooms/sessions/[id]/materials/[assetId]
+#14 491.4 ├ ƒ /api/addons/live-classrooms/sessions/[id]/post-attendance
+#14 491.4 ├ ƒ /api/addons/live-classrooms/sessions/[id]/reconcile
+#14 491.4 ├ ƒ /api/addons/live-classrooms/sessions/[id]/recordings
+#14 491.4 ├ ƒ /api/addons/live-classrooms/sessions/[id]/recordings/[recordingId]
+#14 491.4 ├ ƒ /api/addons/live-classrooms/sessions/[id]/redeem-join
+#14 491.4 ├ ƒ /api/addons/live-classrooms/sessions/[id]/start
+#14 491.4 ├ ƒ /api/addons/live-classrooms/sessions/[id]/sync
+#14 491.4 ├ ƒ /api/addons/live-classrooms/webhooks/[providerType]
+#14 491.4 ├ ƒ /api/addons/reporting/admin/console
+#14 491.4 ├ ƒ /api/addons/reporting/catalog
+#14 491.4 ├ ƒ /api/addons/reporting/favorites
+#14 491.4 ├ ƒ /api/addons/reporting/reports/[key]/preview
+#14 491.4 ├ ƒ /api/addons/reporting/reports/[key]/run
+#14 491.4 ├ ƒ /api/addons/reporting/runs
+#14 491.4 ├ ƒ /api/addons/reporting/runs/[id]
+#14 491.4 ├ ƒ /api/addons/reporting/runs/[id]/download
+#14 491.4 ├ ƒ /api/addons/reporting/saved-views
+#14 491.4 ├ ƒ /api/addons/reporting/schedules
+#14 491.4 ├ ƒ /api/addons/reporting/schedules/[id]
+#14 491.4 ├ ƒ /api/admissions/inquiries
+#14 491.4 ├ ƒ /api/admissions/inquiries/convert
+#14 491.4 ├ ƒ /api/alumni/directory
+#14 491.4 ├ ƒ /api/alumni/me/events
+#14 491.4 ├ ƒ /api/alumni/me/events/[id]/rsvp
+#14 491.4 ├ ƒ /api/alumni/me/mentoring
+#14 491.4 ├ ƒ /api/alumni/me/preferences
+#14 491.4 ├ ƒ /api/alumni/me/profile
+#14 491.4 ├ ƒ /api/alumni/me/records
+#14 491.4 ├ ƒ /api/alumni/me/records/[id]/download
+#14 491.4 ├ ƒ /api/alumni/me/requests
+#14 491.4 ├ ƒ /api/alumni/mentoring
+#14 491.4 ├ ƒ /api/analytics
+#14 491.4 ├ ƒ /api/attendance
+#14 491.4 ├ ƒ /api/attendance/audit-summary
+#14 491.4 ├ ƒ /api/attendance/excuses
+#14 491.4 ├ ƒ /api/attendance/excuses/document
+#14 491.4 ├ ƒ /api/attendance/flags
+#14 491.4 ├ ƒ /api/attendance/flags/detail
+#14 491.4 ├ ƒ /api/attendance/flags/notes
+#14 491.4 ├ ƒ /api/attendance/heatmap
+#14 491.4 ├ ƒ /api/attendance/qr/events
+#14 491.4 ├ ƒ /api/attendance/qr/events/export
+#14 491.4 ├ ƒ /api/attendance/qr/scanner-sessions
+#14 491.4 ├ ƒ /api/attendance/qr/scanner-sessions/[id]/close
+#14 491.4 ├ ƒ /api/attendance/qr/scanner-sessions/[id]/events
+#14 491.4 ├ ƒ /api/attendance/qr/verify-and-stage
+#14 491.4 ├ ƒ /api/attendance/registers
+#14 491.4 ├ ƒ /api/attendance/registers/reopen
+#14 491.4 ├ ƒ /api/attendance/summary
+#14 491.4 ├ ƒ /api/audit-logs
+#14 491.4 ├ ƒ /api/audit-logs/export
+#14 491.4 ├ ƒ /api/auth/[...all]
+#14 491.4 ├ ƒ /api/auth/me
+#14 491.4 ├ ƒ /api/auth/setup-account
+#14 491.4 ├ ƒ /api/cards/admit-seats
+#14 491.4 ├ ƒ /api/cards/employees
+#14 491.4 ├ ƒ /api/cards/issue
+#14 491.4 ├ ƒ /api/cards/issued
+#14 491.4 ├ ƒ /api/cards/issued/[id]/pdf
+#14 491.4 ├ ƒ /api/cards/issued/[id]/revoke
+#14 491.4 ├ ƒ /api/cards/jobs
+#14 491.4 ├ ƒ /api/cards/jobs/[id]
+#14 491.4 ├ ƒ /api/cards/jobs/[id]/process
+#14 491.4 ├ ƒ /api/cards/overview
+#14 491.4 ├ ƒ /api/cards/templates
+#14 491.4 ├ ƒ /api/cards/templates/[id]
+#14 491.4 ├ ƒ /api/cards/templates/[id]/versions
+#14 491.4 ├ ƒ /api/certificates/definitions
+#14 491.4 ├ ƒ /api/certificates/definitions/[id]
+#14 491.4 ├ ƒ /api/certificates/definitions/[id]/versions
+#14 491.4 ├ ƒ /api/certificates/issue
+#14 491.4 ├ ƒ /api/certificates/issued
+#14 491.4 ├ ƒ /api/certificates/issued/[id]
+#14 491.4 ├ ƒ /api/certificates/issued/[id]/pdf
+#14 491.4 ├ ƒ /api/certificates/issued/[id]/replace
+#14 491.4 ├ ƒ /api/certificates/issued/[id]/revoke
+#14 491.4 ├ ƒ /api/certificates/jobs
+#14 491.4 ├ ƒ /api/certificates/jobs/[id]
+#14 491.4 ├ ƒ /api/certificates/jobs/[id]/process
+#14 491.4 ├ ƒ /api/certificates/overview
+#14 491.4 ├ ƒ /api/certificates/recipients
+#14 491.4 ├ ƒ /api/certificates/requests
+#14 491.4 ├ ƒ /api/certificates/requests/[id]
+#14 491.4 ├ ƒ /api/certificates/settings
+#14 491.4 ├ ƒ /api/certificates/signatories
+#14 491.4 ├ ƒ /api/certificates/signatories/[id]
+#14 491.4 ├ ƒ /api/certificates/templates
+#14 491.4 ├ ƒ /api/certificates/templates/[id]
+#14 491.4 ├ ƒ /api/certificates/templates/[id]/versions
+#14 491.4 ├ ƒ /api/communication/announcements
+#14 491.4 ├ ƒ /api/communication/announcements/mark-read
+#14 491.4 ├ ƒ /api/communication/announcements/unread-count
+#14 491.4 ├ ƒ /api/communication/messages
+#14 491.4 ├ ƒ /api/communication/send
+#14 491.4 ├ ƒ /api/communication/templates
+#14 491.4 ├ ƒ /api/content/assets
+#14 491.4 ├ ƒ /api/content/assets/[id]
+#14 491.4 ├ ƒ /api/content/assets/[id]/archive
+#14 491.4 ├ ƒ /api/content/assets/[id]/download
+#14 491.4 ├ ƒ /api/content/assets/[id]/publish
+#14 491.4 ├ ƒ /api/content/assets/[id]/targets
+#14 491.4 ├ ƒ /api/content/assets/[id]/usage-links
+#14 491.4 ├ ƒ /api/content/assets/[id]/versions
+#14 491.4 ├ ƒ /api/content/attachment-types
+#14 491.4 ├ ƒ /api/content/attachment-types/[id]
+#14 491.4 ├ ƒ /api/crm/inquiries
+#14 491.4 ├ ƒ /api/crm/inquiries/[id]
+#14 491.4 ├ ƒ /api/crm/inquiries/[id]/duplicates
+#14 491.4 ├ ƒ /api/crm/inquiries/[id]/follow-ups
+#14 491.4 ├ ƒ /api/crm/inquiries/merge
+#14 491.4 ├ ƒ /api/dashboard/summary
+#14 491.4 ├ ƒ /api/employee/me/advances
+#14 491.4 ├ ƒ /api/employee/me/awards
+#14 491.4 ├ ƒ /api/employee/me/documents
+#14 491.4 ├ ƒ /api/employee/me/documents/[documentId]/download
+#14 491.4 ├ ƒ /api/employee/me/home
+#14 491.4 ├ ƒ /api/employee/me/leave
+#14 491.4 ├ ƒ /api/employee/me/leave/[id]/cancel
+#14 491.4 ├ ƒ /api/employee/me/payroll
+#14 491.4 ├ ƒ /api/employee/me/payroll/[payslipId]/download
+#14 491.4 ├ ƒ /api/employee/me/preferences
+#14 491.4 ├ ƒ /api/employee/me/profile
+#14 491.4 ├ ƒ /api/employee/me/requests
+#14 491.4 ├ ƒ /api/employee/me/time
+#14 491.4 ├ ƒ /api/exports
+#14 491.4 ├ ƒ /api/exports/[id]
+#14 491.4 ├ ƒ /api/finance/accounting/accounts
+#14 491.4 ├ ƒ /api/finance/accounting/deposits
+#14 491.4 ├ ƒ /api/finance/accounting/expenses
+#14 491.4 ├ ƒ /api/finance/accounting/expenses/[id]/approve
+#14 491.4 ├ ƒ /api/finance/accounting/expenses/[id]/post
+#14 491.4 ├ ƒ /api/finance/accounting/expenses/[id]/reject
+#14 491.4 ├ ƒ /api/finance/accounting/expenses/[id]/submit
+#14 491.4 ├ ƒ /api/finance/accounting/journal-entries
+#14 491.4 ├ ƒ /api/finance/accounting/journals
+#14 491.4 ├ ƒ /api/finance/accounting/periods
+#14 491.4 ├ ƒ /api/finance/accounting/periods/[id]/close
+#14 491.4 ├ ƒ /api/finance/accounting/periods/[id]/reopen
+#14 491.4 ├ ƒ /api/finance/accounting/periods/[id]/reopen-requests
+#14 491.4 ├ ƒ /api/finance/accounting/periods/[id]/reopen-requests/[requestId]/decide
+#14 491.4 ├ ƒ /api/finance/accounting/statements/[type]
+#14 491.4 ├ ƒ /api/finance/accounting/statements/drill-down
+#14 491.4 ├ ƒ /api/finance/accounting/student-accounting/exceptions
+#14 491.4 ├ ƒ /api/finance/accounting/student-accounting/exceptions/[id]
+#14 491.4 ├ ƒ /api/finance/accounting/student-accounting/mappings
+#14 491.4 ├ ƒ /api/finance/accounting/student-accounting/mappings/[id]
+#14 491.4 ├ ƒ /api/finance/accounting/student-accounting/post
+#14 491.4 ├ ƒ /api/finance/accounting/student-accounting/reconcile
+#14 491.4 ├ ƒ /api/finance/accounting/transactions
+#14 491.4 ├ ƒ /api/finance/accounting/transactions/[id]
+#14 491.4 ├ ƒ /api/finance/accounting/transactions/[id]/reverse
+#14 491.4 ├ ƒ /api/finance/accounting/trial-balance
+#14 491.4 ├ ƒ /api/finance/accounting/voucher-types
+#14 491.4 ├ ƒ /api/finance/allocations
+#14 491.4 ├ ƒ /api/finance/allocations/[id]/run
+#14 491.4 ├ ƒ /api/finance/allocations/preview
+#14 491.4 ├ ƒ /api/finance/bank-reconciliation
+#14 491.4 ├ ƒ /api/finance/bank-reconciliation/[id]
+#14 491.4 ├ ƒ /api/finance/bank-reconciliation/[id]/close
+#14 491.4 ├ ƒ /api/finance/bank-reconciliation/[id]/fee-interest
+#14 491.4 ├ ƒ /api/finance/bank-reconciliation/[id]/import
+#14 491.4 ├ ƒ /api/finance/bank-reconciliation/[id]/match
+#14 491.4 ├ ƒ /api/finance/bank-reconciliation/[id]/matches
+#14 491.4 ├ ƒ /api/finance/bank-reconciliation/[id]/matches/unmatch
+#14 491.4 ├ ƒ /api/finance/bank-reconciliation/[id]/merge
+#14 491.4 ├ ƒ /api/finance/bank-reconciliation/[id]/split
+#14 491.4 ├ ƒ /api/finance/cashier-sessions/[id]/close
+#14 491.4 ├ ƒ /api/finance/chart-of-accounts
+#14 491.4 ├ ƒ /api/finance/credit-notes
+#14 491.4 ├ ƒ /api/finance/expenses
+#14 491.4 ├ ƒ /api/finance/fee-allocation
+#14 491.4 ├ ƒ /api/finance/fee-assignments
+#14 491.4 ├ ƒ /api/finance/fee-structures
+#14 491.4 ├ ƒ /api/finance/fee-structures/[id]/versions
+#14 491.4 ├ ƒ /api/finance/fee-types
+#14 491.4 ├ ƒ /api/finance/fine-policies
+#14 491.4 ├ ƒ /api/finance/fine-runs
+#14 491.4 ├ ƒ /api/finance/fiscal-periods/close
+#14 491.4 ├ ƒ /api/finance/invoice-events
+#14 491.4 ├ ƒ /api/finance/invoices
+#14 491.4 ├ ƒ /api/finance/journals
+#14 491.4 ├ ƒ /api/finance/payment-methods
+#14 491.4 ├ ƒ /api/finance/payments
+#14 491.4 ├ ƒ /api/finance/payments/sandbox
+#14 491.4 ├ ƒ /api/finance/refunds
+#14 491.4 ├ ƒ /api/finance/reminder-rules
+#14 491.4 ├ ƒ /api/finance/reminder-runs
+#14 491.4 ├ ƒ /api/finance/reminders
+#14 491.4 ├ ƒ /api/finance/reports
+#14 491.4 ├ ƒ /api/finance/statements
+#14 491.4 ├ ƒ /api/gate/credentials/verify
+#14 491.4 ├ ƒ /api/guard/assignments
+#14 491.4 ├ ƒ /api/guard/assignments/[id]
+#14 491.4 ├ ƒ /api/guard/emergency/[activationId]/acknowledge
+#14 491.4 ├ ƒ /api/guard/emergency/[activationId]/end
+#14 491.4 ├ ƒ /api/guard/emergency/activate
+#14 491.4 ├ ƒ /api/guard/emergency/procedures
+#14 491.4 ├ ƒ /api/guard/gates
+#14 491.4 ├ ƒ /api/guard/gates/[id]
+#14 491.4 ├ ƒ /api/guard/incidents
+#14 491.4 ├ ƒ /api/guard/incidents/[id]
+#14 491.4 ├ ƒ /api/guard/incidents/[id]/actions
+#14 491.4 ├ ƒ /api/guard/incidents/[id]/attachments
+#14 491.4 ├ ƒ /api/guard/incidents/[id]/attachments/[attachmentId]
+#14 491.4 ├ ƒ /api/guard/kiosk-sessions
+#14 491.4 ├ ƒ /api/guard/kiosk-sessions/[id]/close
+#14 491.4 ├ ƒ /api/guard/kiosk-sessions/[id]/lock
+#14 491.4 ├ ƒ /api/guard/me/expected
+#14 491.4 ├ ƒ /api/guard/me/gate
+#14 491.4 ├ ƒ /api/guard/me/incidents
+#14 491.4 ├ ƒ /api/guard/me/shift
+#14 491.4 ├ ƒ /api/guard/pickup-authorizations
+#14 491.4 ├ ƒ /api/guard/pickup-authorizations/[id]/cancel
+#14 491.4 ├ ƒ /api/guard/pickups/release
+#14 491.4 ├ ƒ /api/guard/scans
+#14 491.4 ├ ƒ /api/guard/shifts
+#14 491.4 ├ ƒ /api/guard/shifts/[id]
+#14 491.4 ├ ƒ /api/guard/students/[id]/pickups
+#14 491.4 ├ ƒ /api/guard/students/search
+#14 491.4 ├ ƒ /api/guard/visitor-invitations
+#14 491.4 ├ ƒ /api/guard/visitor-invitations/[id]/approve
+#14 491.4 ├ ƒ /api/guard/visitor-invitations/[id]/reject
+#14 491.4 ├ ƒ /api/guard/visits
+#14 491.4 ├ ƒ /api/guard/visits/[id]/check-in
+#14 491.4 ├ ƒ /api/guard/visits/[id]/check-out
+#14 491.4 ├ ƒ /api/guard/visits/[id]/pass
+#14 491.4 ├ ƒ /api/guardian/link/accept
+#14 491.4 ├ ƒ /api/guardian/link/start
+#14 491.4 ├ ƒ /api/guardian/me
+#14 491.4 ├ ƒ /api/guardian/me/children
+#14 491.4 ├ ƒ /api/guardian/me/children/[relationshipId]
+#14 491.4 ├ ƒ /api/guardian/me/children/[relationshipId]/announcements
+#14 491.4 ├ ƒ /api/guardian/me/children/[relationshipId]/attendance
+#14 491.4 ├ ƒ /api/guardian/me/children/[relationshipId]/documents
+#14 491.4 ├ ƒ /api/guardian/me/children/[relationshipId]/excuses
+#14 491.4 ├ ƒ /api/guardian/me/children/[relationshipId]/excuses/[excuseId]/document
+#14 491.4 ├ ƒ /api/guardian/me/children/[relationshipId]/finance
+#14 491.4 ├ ƒ /api/guardian/me/children/[relationshipId]/homework
+#14 491.4 ├ ƒ /api/guardian/me/children/[relationshipId]/meetings
+#14 491.4 ├ ƒ /api/guardian/me/children/[relationshipId]/overview
+#14 491.4 ├ ƒ /api/guardian/me/children/[relationshipId]/requests
+#14 491.4 ├ ƒ /api/guardian/me/children/[relationshipId]/results
+#14 491.4 ├ ƒ /api/guardian/me/finance
+#14 491.4 ├ ƒ /api/guardian/me/home
+#14 491.4 ├ ƒ /api/guardian/me/messages
+#14 491.4 ├ ƒ /api/guardian/me/preferences
+#14 491.4 ├ ƒ /api/hr/access
+#14 491.4 ├ ƒ /api/hr/departments
+#14 491.4 ├ ƒ /api/hr/departments/[id]
+#14 491.4 ├ ƒ /api/hr/designations
+#14 491.4 ├ ƒ /api/hr/designations/[id]
+#14 491.4 ├ ƒ /api/hr/employee-profiles
+#14 491.4 ├ ƒ /api/hr/employees
+#14 491.4 ├ ƒ /api/hr/employees/[id]
+#14 491.4 ├ ƒ /api/hr/employees/[id]/documents
+#14 491.4 ├ ƒ /api/hr/employees/[id]/documents/[documentId]
+#14 491.4 ├ ƒ /api/hr/employees/[id]/history
+#14 491.4 ├ ƒ /api/hr/employees/[id]/link-account
+#14 491.4 ├ ƒ /api/hr/employees/[id]/offboard
+#14 491.4 ├ ƒ /api/hr/employees/[id]/reactivate
+#14 491.4 ├ ƒ /api/hr/export
+#14 491.4 ├ ƒ /api/hr/leave/balances
+#14 491.4 ├ ƒ /api/hr/leave/categories
+#14 491.4 ├ ƒ /api/hr/leave/requests
+#14 491.4 ├ ƒ /api/hr/leave/requests/[id]
+#14 491.4 ├ ƒ /api/hr/overview
+#14 491.4 ├ ƒ /api/hr/payroll/periods
+#14 491.4 ├ ƒ /api/hr/payroll/periods/[id]/calculate
+#14 491.4 ├ ƒ /api/hr/payroll/periods/[id]/lines
+#14 491.4 ├ ƒ /api/hr/payroll/periods/[id]/lock
+#14 491.4 ├ ƒ /api/hr/payslips
+#14 491.4 ├ ƒ /api/hr/payslips/[id]
+#14 491.4 ├ ƒ /api/hr/profile-edit-requests
+#14 491.4 ├ ƒ /api/hr/salary-assignments
+#14 491.4 ├ ƒ /api/hr/salary-templates
+#14 491.4 ├ ƒ /api/identity-badges
+#14 491.4 ├ ƒ /api/identity-badges/[id]
+#14 491.4 ├ ƒ /api/identity-badges/[id]/replace
+#14 491.4 ├ ƒ /api/identity-badges/bulk-issue
+#14 491.4 ├ ƒ /api/leadership/admin/authorities
+#14 491.4 ├ ƒ /api/leadership/admin/scopes
+#14 491.4 ├ ƒ /api/leadership/me/approvals
+#14 491.4 ├ ƒ /api/leadership/me/exceptions
+#14 491.4 ├ ƒ /api/leadership/me/home
+#14 491.4 ├ ƒ /api/me/permissions
+#14 491.4 ├ ƒ /api/notifications
+#14 491.4 ├ ƒ /api/platform/edge-tenant-resolve
+#14 491.4 ├ ƒ /api/portal/activity
+#14 491.4 ├ ƒ /api/portal/home
+#14 491.4 ├ ƒ /api/portal/manifest
+#14 491.4 ├ ƒ /api/portal/me
+#14 491.4 ├ ƒ /api/portal/preferences
+#14 491.4 ├ ƒ /api/portal/role
+#14 491.4 ├ ƒ /api/portal/search
+#14 491.4 ├ ƒ /api/public/alumni-documents/verify
+#14 491.4 ├ ƒ /api/public/cards/verify
+#14 491.4 ├ ƒ /api/public/certificates/verify
+#14 491.4 ├ ƒ /api/public/inquiries/[tenantSlug]
+#14 491.4 ├ ƒ /api/reception/appointments
+#14 491.4 ├ ƒ /api/reception/appointments/[id]
+#14 491.4 ├ ƒ /api/reception/appointments/[id]/cancel
+#14 491.4 ├ ƒ /api/reception/appointments/[id]/check-in
+#14 491.4 ├ ƒ /api/reception/appointments/[id]/complete
+#14 491.4 ├ ƒ /api/reception/appointments/[id]/no-show
+#14 491.4 ├ ƒ /api/reception/appointments/[id]/reschedule
+#14 491.4 ├ ƒ /api/reception/gates
+#14 491.4 ├ ƒ /api/reception/handoffs
+#14 491.4 ├ ƒ /api/reception/handoffs/[id]/acknowledge
+#14 491.4 ├ ƒ /api/reception/handoffs/[id]/cancel
+#14 491.4 ├ ƒ /api/reception/handoffs/[id]/resolve
+#14 491.4 ├ ƒ /api/reception/inquiries
+#14 491.4 ├ ƒ /api/reception/inquiries/[id]/follow-ups
+#14 491.4 ├ ƒ /api/reception/lookup
+#14 491.4 ├ ƒ /api/reception/me/home
+#14 491.4 ├ ƒ /api/reception/pickups/authorizations
+#14 491.4 ├ ƒ /api/reception/pickups/authorizations/[id]/cancel
+#14 491.4 ├ ƒ /api/reception/pickups/release
+#14 491.4 ├ ƒ /api/reception/pickups/students
+#14 491.4 ├ ƒ /api/reception/pickups/students/[id]/pickups
+#14 491.4 ├ ƒ /api/reception/staff
+#14 491.4 ├ ƒ /api/reception/verifications
+#14 491.4 ├ ƒ /api/reception/visitors
+#14 491.4 ├ ƒ /api/reception/visitors/[id]/check-in
+#14 491.4 ├ ƒ /api/reception/visitors/[id]/check-out
+#14 491.4 ├ ƒ /api/reception/visitors/[id]/pass
+#14 491.4 ├ ƒ /api/scanner-devices
+#14 491.4 ├ ƒ /api/scanner-devices/[id]
+#14 491.4 ├ ƒ /api/scanner-devices/pair
+#14 491.4 ├ ƒ /api/search
+#14 491.4 ├ ƒ /api/security/dashboard
+#14 491.4 ├ ƒ /api/security/sessions/[id]
+#14 491.4 ├ ƒ /api/settings
+#14 491.4 ├ ƒ /api/settings/access-reset
+#14 491.4 ├ ƒ /api/settings/addons
+#14 491.4 ├ ƒ /api/settings/addons/[id]
+#14 491.4 ├ ƒ /api/settings/branches
+#14 491.4 ├ ƒ /api/settings/branches/[id]
+#14 491.4 ├ ƒ /api/settings/catalog
+#14 491.4 ├ ƒ /api/settings/cndp-filing
+#14 491.4 ├ ƒ /api/settings/custom-fields
+#14 491.4 ├ ƒ /api/settings/custom-fields/[id]
+#14 491.4 ├ ƒ /api/settings/custom-fields/[id]/values
+#14 491.4 ├ ƒ /api/settings/data-export
+#14 491.4 ├ ƒ /api/settings/domains
+#14 491.4 ├ ƒ /api/settings/drafts
+#14 491.4 ├ ƒ /api/settings/drafts/[id]
+#14 491.4 ├ ƒ /api/settings/drafts/[id]/approve
+#14 491.4 ├ ƒ /api/settings/drafts/[id]/reject
+#14 491.4 ├ ƒ /api/settings/jobs/[id]/trigger
+#14 491.4 ├ ƒ /api/settings/logo
+#14 491.4 ├ ƒ /api/settings/migration
+#14 491.4 ├ ƒ /api/settings/migration/tasks/[id]
+#14 491.4 ├ ƒ /api/settings/migration/template
+#14 491.4 ├ ƒ /api/settings/numbering
+#14 491.4 ├ ƒ /api/settings/numbering/[id]
+#14 491.4 ├ ƒ /api/settings/numbering/[id]/next
+#14 491.4 ├ ƒ /api/settings/numbering/[id]/preview
+#14 491.4 ├ ƒ /api/settings/permissions
+#14 491.4 ├ ƒ /api/settings/providers
+#14 491.4 ├ ƒ /api/settings/providers/[id]
+#14 491.4 ├ ƒ /api/settings/providers/[id]/test
+#14 491.4 ├ ƒ /api/settings/readiness
+#14 491.4 ├ ƒ /api/settings/scheduled-jobs
+#14 491.4 ├ ƒ /api/settings/scheduled-jobs/[id]
+#14 491.4 ├ ƒ /api/settings/scheduled-jobs/[id]/runs
+#14 491.4 ├ ƒ /api/settings/scheduled-jobs/[id]/toggle
+#14 491.4 ├ ƒ /api/settings/scheduled-jobs/[id]/trigger
+#14 491.4 ├ ƒ /api/settings/search
+#14 491.4 ├ ƒ /api/settings/values
+#14 491.4 ├ ƒ /api/settings/values/[key]
+#14 491.4 ├ ƒ /api/settings/values/[key]/peek
+#14 491.4 ├ ƒ /api/settings/values/[key]/rotate
+#14 491.4 ├ ƒ /api/student/me/attendance
+#14 491.4 ├ ƒ /api/student/me/home
+#14 491.4 ├ ƒ /api/student/me/subjects
+#14 491.4 ├ ƒ /api/student/me/timetable
+#14 491.4 ├ ƒ /api/students
+#14 491.4 ├ ƒ /api/students/[id]/regenerate-access
+#14 491.4 ├ ƒ /api/students/[id]/reinstate-from-alumni
+#14 491.4 ├ ƒ /api/students/[id]/transfer
+#14 491.4 ├ ƒ /api/students/[id]/transition-to-alumni
+#14 491.4 ├ ƒ /api/students/admissions
+#14 491.4 ├ ƒ /api/students/admissions/[id]/checklist
+#14 491.4 ├ ƒ /api/students/admissions/[id]/comments
+#14 491.4 ├ ƒ /api/students/admissions/[id]/convert
+#14 491.4 ├ ƒ /api/students/admissions/[id]/interview
+#14 491.4 ├ ƒ /api/students/admissions/[id]/stage
+#14 491.4 ├ ƒ /api/students/admissions/documents
+#14 491.4 ├ ƒ /api/students/alumni
+#14 491.4 ├ ƒ /api/students/alumni/[id]/documents
+#14 491.4 ├ ƒ /api/students/alumni/events
+#14 491.4 ├ ƒ /api/students/alumni/requests
+#14 491.4 ├ ƒ /api/students/alumni/requests/[id]/decide
+#14 491.4 ├ ƒ /api/students/bulk-transition-to-alumni
+#14 491.4 ├ ƒ /api/students/documents
+#14 491.4 ├ ƒ /api/students/import
+#14 491.4 ├ ƒ /api/students/matricules
+#14 491.4 ├ ƒ /api/students/parents
+#14 491.4 ├ ƒ /api/students/parents/[id]
+#14 491.4 ├ ƒ /api/students/parents/[id]/activity
+#14 491.4 ├ ƒ /api/students/parents/[id]/payments
+#14 491.4 ├ ƒ /api/students/parents/link
+#14 491.4 ├ ƒ /api/students/photos
+#14 491.4 ├ ƒ /api/students/placements
+#14 491.4 ├ ƒ /api/students/promotions
+#14 491.4 ├ ƒ /api/students/promotions/preview
+#14 491.4 ├ ƒ /api/students/report-card
+#14 491.4 ├ ƒ /api/students/transfer-stats
+#14 491.4 ├ ƒ /api/students/transfers
+#14 491.4 ├ ƒ /api/super-admin/domains
+#14 491.4 ├ ƒ /api/super-admin/domains/[id]
+#14 491.4 ├ ƒ /api/super-admin/entitlements
+#14 491.4 ├ ƒ /api/super-admin/schools
+#14 491.4 ├ ƒ /api/super-admin/schools/[id]/branches
+#14 491.4 ├ ƒ /api/super-admin/schools/anonymize
+#14 491.4 ├ ƒ /api/super-admin/schools/backup
+#14 491.4 ├ ƒ /api/super-admin/summary
+#14 491.4 ├ ƒ /api/teacher/me/classes
+#14 491.4 ├ ƒ /api/teacher/me/home
+#14 491.4 ├ ƒ /api/teacher/me/timetable
+#14 491.4 ├ ƒ /api/teachers
+#14 491.4 ├ ƒ /api/teachers/import
+#14 491.4 ├ ƒ /api/teachers/photo
+#14 491.4 ├ ƒ /api/transport/allocations
+#14 491.4 ├ ƒ /api/transport/allocations/[id]
+#14 491.4 ├ ƒ /api/transport/drivers
+#14 491.4 ├ ƒ /api/transport/incidents
+#14 491.4 ├ ƒ /api/transport/reports/export
+#14 491.4 ├ ƒ /api/transport/reports/overview
+#14 491.4 ├ ƒ /api/transport/rider-events
+#14 491.4 ├ ƒ /api/transport/routes
+#14 491.4 ├ ƒ /api/transport/routes/[id]
+#14 491.4 ├ ƒ /api/transport/self-service/guardian
+#14 491.4 ├ ƒ /api/transport/self-service/student
+#14 491.4 ├ ƒ /api/transport/stops
+#14 491.4 ├ ƒ /api/transport/stops/[id]
+#14 491.4 ├ ƒ /api/transport/trips
+#14 491.4 ├ ƒ /api/transport/trips/[id]/complete
+#14 491.4 ├ ƒ /api/transport/trips/[id]/roster
+#14 491.4 ├ ƒ /api/transport/trips/[id]/start
+#14 491.4 ├ ƒ /api/transport/vehicles
+#14 491.4 ├ ƒ /api/transport/vehicles/[id]
+#14 491.4 ├ ƒ /api/users
+#14 491.4 ├ ƒ /api/users/unlock
+#14 491.4 ├ ƒ /api/webhooks/communication/[provider]
+#14 491.4 ├ ƒ /api/workforce/advances
+#14 491.4 ├ ƒ /api/workforce/awards
+#14 491.4 ├ ƒ /api/workforce/payroll/config
+#14 491.4 ├ ƒ /api/workforce/payroll/config/[resource]/[id]/action
+#14 491.4 ├ ƒ /api/workforce/payroll/payments
+#14 491.4 ├ ƒ /api/workforce/payroll/payments/[id]/action
+#14 491.4 ├ ƒ /api/workforce/payroll/payslips
+#14 491.4 ├ ƒ /api/workforce/payroll/runs
+#14 491.4 ├ ƒ /api/workforce/payroll/runs/[id]
+#14 491.4 ├ ƒ /api/workforce/payroll/runs/[id]/action
+#14 491.4 └ ƒ /api/workforce/punches
+#14 491.4 
+#14 491.4 
+#14 491.4 ƒ Proxy (Middleware)
+#14 491.4 
+#14 491.4 ○  (Static)   prerendered as static content
+#14 491.4 ƒ  (Dynamic)  server-rendered on demand
+#14 491.4 
+#14 498.3 npm notice
+#14 498.3 npm notice New major version of npm available! 11.17.0 -> 12.0.2
+#14 498.3 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+#14 498.3 npm notice To update run: npm install -g npm@12.0.2
+#14 498.3 npm notice
+#14 DONE 500.9s
+
+#15 [runner 3/9] RUN addgroup --system --gid 1001 nodejs
+#15 CACHED
+
+#16 [runner 4/9] RUN adduser --system --uid 1001 nextjs
+#16 CACHED
+
+#17 [runner 5/9] COPY --from=builder /app/public ./public
+#17 CACHED
+
+#18 [runner 6/9] COPY --from=builder /app/.next/standalone ./
+#18 DONE 9.0s
+
+#19 [runner 7/9] COPY --from=builder /app/.next/static ./.next/static
+#19 DONE 1.9s
+
+#20 [runner 8/9] COPY --from=builder /app/package.json ./package.json
+#20 DONE 0.3s
+
+#21 [runner 9/9] RUN mkdir -p /app/uploads && chown -R nextjs:nodejs /app/uploads
+#21 DONE 1.9s
+
+#22 exporting to image
+#22 exporting layers
+#22 exporting layers 13.6s done
+#22 exporting manifest sha256:4912675f5bf6c3f800dacd2a80e66e8ecbe3a1bf82369fcf5e4d796dccfc415f 0.0s done
+#22 exporting config sha256:4b613f14991b178a2e6819c97354f5f62307338890bafb3efe75c2aeec5b8280 0.0s done
+#22 exporting attestation manifest sha256:a1421c10987d609b0f9fe70bad267a622362ba8eecff8d46c06ffdbfc7fa1a0f 0.1s done
+#22 exporting manifest list sha256:a1e5e1ccdb438d575cc554115f6ddbf3724f1644cff31456f8833b4cbbc32ca4
+#22 exporting manifest list sha256:a1e5e1ccdb438d575cc554115f6ddbf3724f1644cff31456f8833b4cbbc32ca4 0.0s done
+#22 naming to docker.io/library/lango-app-app:latest done
+#22 unpacking to docker.io/library/lango-app-app:latest
+#22 unpacking to docker.io/library/lango-app-app:latest 14.1s done
+#22 DONE 28.0s
+
+#23 resolving provenance for metadata file
+#23 DONE 0.1s
+ Image lango-app-app Built 

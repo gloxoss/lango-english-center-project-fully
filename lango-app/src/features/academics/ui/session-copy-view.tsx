@@ -35,7 +35,7 @@ export function SessionCopyView({ locale }: { locale: string }) {
   const [commitSuccess, setCommitSuccess] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadSessions = () => {
     fetch('/api/academics/session-years')
       .then((r) => r.json())
       .then((res) => {
@@ -44,12 +44,44 @@ export function SessionCopyView({ locale }: { locale: string }) {
           const defaultSession = res.data.find((s: SessionYear) => s.isDefault);
           if (defaultSession) {
             setSourceSessionId(defaultSession.id);
+            const nextSession = res.data.find((s: SessionYear) => s.id !== defaultSession.id);
+            if (nextSession) {
+              setTargetSessionId(nextSession.id);
+            }
           }
         }
       })
       .catch(() => setError('Impossible de charger la liste des sessions académiques.'))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadSessions();
   }, []);
+
+  const handleCreateNextSession = async () => {
+    setError(null);
+    try {
+      const res = await fetch('/api/academics/session-years', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: '2026-2027',
+          startDate: '2026-09-01',
+          endDate: '2027-06-30',
+          isDefault: false,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        loadSessions();
+      } else {
+        setError(data.error?.message || 'Erreur lors de la création de la session suivante.');
+      }
+    } catch {
+      setError('Erreur réseau lors de la création de la session.');
+    }
+  };
 
   const handlePreview = async () => {
     if (!sourceSessionId || !targetSessionId) {
@@ -187,6 +219,20 @@ export function SessionCopyView({ locale }: { locale: string }) {
                     ))}
                 </SelectContent>
               </Select>
+              {sessions.filter((s) => s.id !== sourceSessionId).length === 0 && (
+                <div className="pt-1 flex items-center gap-2">
+                  <span className="text-xs text-amber-600 font-medium">Aucune session cible trouvée.</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCreateNextSession}
+                    className="h-7 text-xs rounded-lg text-[#2487B8] border-[#2487B8] hover:bg-sky-50"
+                  >
+                    + Créer Session 2026-2027
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
 

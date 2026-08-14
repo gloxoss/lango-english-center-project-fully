@@ -1,47 +1,50 @@
-# UltraPlan Master Plan — Data-Wiring Remediation
+# UltraPlan Master Implementation Plan — Attendance QR Enhancement
 
-## 1. Architecture Overview
-No new architecture. Every section follows the app's one established route pattern: `requireRequestContext` → `requireTenant`/`requireSuperAdmin` → `requireCapability` → Zod `.strict()` → tenant-scoped Drizzle query → `recordAudit()` → `apiErrorResponse()`. Frontend fix pattern is equally uniform: remove the mock array/object, add a real `fetch` on mount (or a server-component prefetch for pages following the newer `-page.tsx`/`-client.tsx` split), wire actions to real endpoints.
+Status: COMPLETED & READY FOR EXECUTION  
+Scope: Academic Attendance QR Staging, Identity Badges, Scanner Sessions, Audit Reports & Workforce Timekeeping Kiosk  
 
-## 2. Tech Stack
-Next.js 16 App Router, Drizzle ORM, PostgreSQL 17, Better Auth, Tailwind v4, Zod — all already in place, no additions.
+---
 
-## 3. Section Index
-See `sections/index.md` for the full manifest, batches, and dependency table.
+## 📌 Section Specifications
 
-## 4. Dependency Graph
-All 19 sections are file-independent — no section touches a file another section touches. Batches reflect priority order (newest pages → long-standing gaps → broad sweep), not technical dependency. Every section can run standalone.
+### Section 01: Database Schema & Badges Credentials (`Section 01`)
+- **Scope**: Drizzle schema and PostgreSQL migration adding `identityBadgeCredentials`, `scannerDevices`, `scannerSessions`, `attendanceScanEvents`, and `workforcePunchEvents`.
+- **Key Files**: `src/models/Schema.ts`, `drizzle/0061_attendance_qr_enhancements.sql`
+- **Tasks**:
+  - `<task id="01-01">`: Define Drizzle tables for badge credentials, HMAC hashes, scanner devices, and scan events in `Schema.ts`.
+  - `<task id="01-02">`: Generate and execute PostgreSQL migration `0061_attendance_qr_enhancements.sql`.
 
-## 5. Totals
-- 19 sections, 61 tasks, 3 priority batches (all internally parallel-safe)
-- 6 sections need genuinely new backend (02, 03, 04, 05 partial, 14, 15) vs. 13 that wire an existing, already-built API
-- 1 section starts broken and must be fixed before anything else in it makes sense (01)
+### Section 02: Badge Management & Printable Issuance (`Section 02`)
+- **Scope**: Admin console & APIs to issue, preview, print, revoke, and replace QR student & staff badges.
+- **Key Files**: `src/app/api/identity-badges/route.ts`, `src/features/attendance/ui/badge-management-view.tsx`
+- **Tasks**:
+  - `<task id="02-01">`: Create `POST /api/identity-badges` API supporting 128-bit random token generation and HMAC-SHA256 hashing.
+  - `<task id="02-02">`: Create printable badge renderer component with `node-qrcode` output and student photo card.
 
-## Review Notes
+### Section 03: Trusted Scanner Camera & Staging UI (`Section 03`)
+- **Scope**: Camera scanner modal refactoring with native `BarcodeDetector`, fallback decoder, sound/vibration feedback, live scan feed, and exact manual selection fallback.
+- **Key Files**: `src/features/attendance/ui/qr-scanner-modal.tsx`, `src/components/shared/barcode-camera.tsx`
+- **Tasks**:
+  - `<task id="03-01">`: Refactor `QrScannerModal` to display live accepted/rejected scan feed, student photo verification, and manual roster fallback.
+  - `<task id="03-02">`: Implement audio/vibration feedback triggers on scan success/failure.
 
-### Review Date: 2026-08-03
+### Section 04: QR Verification & Idempotent Pipeline (`Section 04`)
+- **Scope**: Production API route `POST /api/attendance/qr/verify-and-stage` verifying HMAC tokens, checking session validity, roster membership, and staging `present`/`late` status on draft registers.
+- **Key Files**: `src/app/api/attendance/qr/verify-and-stage/route.ts`, `src/features/attendance/services/qr-verification-service.ts`
+- **Tasks**:
+  - `<task id="04-01">`: Build `QrVerificationService` with HMAC hash lookup, role validation, and idempotency locks.
+  - `<task id="04-02">`: Implement API route handler with audit event recording in `attendanceScanEvents`.
 
-### Self-Review Results (condensed — see rationale below)
-Full 8-category checklist run informally against all 19 sections while writing them, not as a separate interactive pass — each section's Risk/Dependencies fields already encode the Feasibility/Security/Complexity findings inline rather than as a separate report, to avoid restating the same analysis twice.
+### Section 05: QR Audit Reports & Scanner Device Pairing (`Section 05`)
+- **Scope**: Admin dashboard for pairing scanner devices, tracking active scan sessions, viewing scan rejection reasons, and exporting CSV/PDF audit reports.
+- **Key Files**: `src/app/[locale]/(dashboard)/dashboard/attendance/qr-reports/page.tsx`, `src/features/attendance/ui/qr-reports-view.tsx`
+- **Tasks**:
+  - `<task id="05-01">`: Build QR audit report table with filters for date, class, device, operator, and rejection reason.
+  - `<task id="05-02">`: Add Scanner Device Pairing management interface.
 
-### Category Results
-| Category | Result |
-|---|---|
-| Completeness | Every audit finding maps to exactly one task. No orphan findings. |
-| Consistency | All sections use the same route pattern, same permission-check convention, same "remove mock, add fetch" frontend pattern. |
-| Feasibility | No task requires anything not already proven elsewhere in this codebase — every "new backend" task points at a close existing analog to copy. |
-| Security | Section 04 (entitlements) and Section 07 (search) explicitly call out tenant-isolation and permission-respecting requirements, since those are the two sections most likely to leak data across tenants if built carelessly. Section 13's fee-structures task explicitly preserves the finance.approve-not-finance.manage distinction from this session's earlier work, rather than accidentally re-widening it. |
-| Scalability | N/A — this is remediation of existing small-to-medium CRUD pages, not new infrastructure. |
-| Edge Cases | Case-by-case fake-stat policy applied per the user's decision — Sections 02/03/04 explicitly instruct removing fabricated numbers rather than inventing new ones where no schema concept exists. |
-| User Experience | No layout/visual changes anywhere — explicit non-goal in the PRD. |
-| Cost & Complexity | Sections 13/16/12/11 deliberately kept minimal (pure wiring, no new files) since their backends already exist — the plan does not build anything twice. |
-
-### Refinement Questions
-Not run as a separate interactive round — the 7 questions asked during Phase 1 (scope, priority, fake-stat policy, collision handling, missing-backend design depth, testing bar, plan structure) already covered the genuinely non-obvious decisions for this kind of remediation plan. Re-asking a second round would be re-litigating the same ground.
-
-### Sections Modified
-None — first draft, no revision cycle yet.
-
-## Traceability Summary
-
-See `VALIDATE.md` for the full requirement-to-section mapping. Headline: every one of the audit's BROKEN, MOCK/HARDCODED, and MOCK-ADJACENT findings traces to exactly one task; the REAL-confirmed pages and NOT-CHECKED list are explicitly out of scope (the latter gets a verification-only pass in Section 19, not a rebuild).
+### Section 06: Workforce Time Clock Kiosk (`Section 06`)
+- **Scope**: Dedicated time clock kiosk for staff and employee In/Out punches linked to payroll work sessions.
+- **Key Files**: `src/app/[locale]/(dashboard)/dashboard/workforce/timeclock/page.tsx`, `src/features/workforce/ui/time-clock-kiosk.tsx`
+- **Tasks**:
+  - `<task id="06-01">`: Build Time Clock Kiosk UI with mode toggle (Check In / Check Out) and live employee punch log.
+  - `<task id="06-02">`: Implement `POST /api/workforce/punches` API enforcing employee badge verification.
