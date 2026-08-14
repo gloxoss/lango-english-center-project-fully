@@ -160,6 +160,26 @@ import { libraryContributors, libraryRecordContributors, libraryPublishers, libr
 import { inventoryCategories, inventoryUnits, inventoryStores, inventorySuppliers, inventoryProducts, inventoryPurchases, inventoryPurchaseLines, inventorySales, inventorySaleLines, inventoryIssues, inventoryIssueLines, inventoryAdjustments, inventoryAdjustmentLines, inventoryTransfers, inventoryTransferLines, inventoryStockMovements, inventoryStockBalances } from '@/features/inventory/models/inventory-schema';
 import { hostelPolicies, hostelZones, hostelApplications, hostelRollCalls, hostelRollCallEntries, hostelLeavePasses, hostelLeavePassApprovals, hostelLeavePassReturns } from '@/features/hostel/models/hostel-schema';
 import { transportVehicleDocuments, transportCrewAssignments, transportTripRosterSnapshots, transportRiderEvents, transportIncidents, transportIncidentActions, transportFareLinks, transportPolicies } from '@/features/transport/models/transport-schema';
+// Additional imports for the remaining module tables (assessment outcomes, live
+// classrooms, accounting, reporting, portal, attachments, leadership, payroll
+// versioning, guard/hostel/library extras, security/settings/audit).
+import { assessmentOutcomes } from '@/features/assessment/models/assessment-schema';
+import { identityBadgeCredentials } from '@/features/attendance/models/attendance-qr-schema';
+import { accountingJournals, accountingVoucherTypes, accountingNumberingSeries, accountingPostingRequests, accountingJournalLinks, accountingDocuments, accountingDocumentLines, accountingClosingRuns, accountingClosingBalances, accountingPeriodReopenRequests, accountingStatementImports, accountingStatementLines, accountingSourceMappings } from '@/features/accounting/models/accounting-schema';
+import { reportDefinitions, reportSavedViews, reportFavorites, reportRuns, reportSchedules, reportSnapshots, reportProjectionWatermarks } from '@/addons/advanced-reporting/models/reporting-schema';
+import { liveClassProviderProfiles, liveClassSessions, liveClassInvitations, liveClassParticipantEvents } from '@/features/live-classrooms/models/live-classrooms-schema';
+import { attachmentTypes, digitalAssets, digitalAssetVersions, digitalAssetTags, digitalAssetTagLinks } from '@/features/attachments/models/attachments-schema';
+import { leadershipScopeAssignments, leadershipApprovalAuthorities } from '@/features/leadership/models/leadership-schema';
+import { employeeProfileEditRequests } from '@/features/hr/models/hr-schema';
+import { payrollSettingsVersions, salaryComponentVersions, salaryStructureVersions, salaryStructureComponents, payrollRegulationPacks, payrollRegulationVersions, payrollCalculationTraces, payrollPostings } from '@/features/workforce/models/workforce-schema';
+import { eventAudienceRules, eventWaitlistEntries, eventFeedback } from '@/features/events/models/events-schema';
+import { portalPreferences, portalActiveContexts, portalActivityEvents } from '@/features/portal/models/portal-schema';
+import { libraryStocktakes, libraryStocktakeObservations, libraryStocktakeAdjustments } from '@/features/library/models/library-schema';
+import { hostelAllocationEvents, hostelEscalations } from '@/features/hostel/models/hostel-schema';
+import { guardKioskSessions, guardIncidentAttachments, guardEmergencyAcknowledgements } from '@/features/guard/models/guard-schema';
+import { settingDefinitions, settingDefinitionVersions, numberingSeriesDefinitions, numberingSeriesVersions, scheduledJobDefinitions, scheduledJobRuns } from '@/features/settings/models/settings-schema';
+import { invoiceEvents, feeStructureVersions, feeAllocationRuns, feeAllocationTargets } from '@/features/finance/models/student-accounting-schema';
+import { notifications, exportJobs, cndpFilings, accessResetRequests, accountSetupTokens, files, alumniDocuments, schoolLicenses, licensePayments, bankReconciliations, parentGuardianLinkTokens, auditLogs, settingValues, session } from '@/models/Schema';
 
 const TENANT_SLUG = 'atlas';
 const SEED_PASSWORD = process.env.SCHOOL_ADMIN_SEED_PASSWORD || 'Admin123!';
@@ -1878,6 +1898,315 @@ async function run() {
     const followUpRows = inqRows2.slice(0, 8).map((q, i) => ({ tenantId, inquiryId: q.id, type: pick(['call', 'email', 'meeting', 'note'] as const), notes: `Relance ${i + 1}`, scheduledFor: i % 2 === 0 ? isoTs(int(1, 5)) : null, completedAt: i % 3 === 0 ? isoTs(-1) : null, createdById: 'USR-001', createdAt: isoTs(-4) }));
     await tx.insert(inquiryFollowUps).values(followUpRows);
     console.log(`  · seeded guard/reception/portal (${gateIds.length} gates, ${gAuthIds.length} authorizations, ${recIds.length} appointments, ${handIds.length} handoffs, ${rolePermRows.length} role permissions)`);
+
+    // -----------------------------------------------------------------------
+    // Assessment outcomes + identity badges
+    // -----------------------------------------------------------------------
+    const outcomeRows: Array<{ tenantId: string; assessmentDefinitionId: string; studentId: string; rawScore: string; maximumScoreSnapshot: string; normalizedScore: string; grade: string; status: string; sourceType: string; markerId: string; moderationState: string }> = [];
+    for (let d = 0; d < examDefIds.length; d++) {
+      const defId = examDefIds[d]!;
+      const cls = ['2nde', '1ère', 'Terminale', '3ème'][d]!;
+      for (const sid of classStudents[cls] ?? []) {
+        const pct = int(45, 96);
+        outcomeRows.push({ tenantId, assessmentDefinitionId: defId, studentId: sid, rawScore: ((pct / 100) * 20).toFixed(2), maximumScoreSnapshot: '20.00', normalizedScore: ((pct / 100) * 20).toFixed(2), grade: gradeFor(pct), status: 'graded', sourceType: 'paper_exam', markerId: teacherIds[d % 20]!, moderationState: 'published' });
+      }
+    }
+    for (let i = 0; i < outcomeRows.length; i += 100) await tx.insert(assessmentOutcomes).values(outcomeRows.slice(i, i + 100));
+    const badgeRows = studentIds.map((sid, i) => ({ tenantId, userId: sid, subjectType: 'student' as const, tokenHash: `hash-stu-${sid.toLowerCase()}`, displayPrefix: `ATL-STU-${pad4(i + 1)}`, status: (i % 12 === 0 ? 'revoked' : 'active') as const, issuedAt: isoTs(-200), expiresAt: isoTs(200), revokedAt: i % 12 === 0 ? isoTs(-30) : null, issuerId: 'USR-001' })).concat(
+      teacherIds.map((tid, i) => ({ tenantId, userId: tid, subjectType: 'staff' as const, tokenHash: `hash-tch-${tid.toLowerCase()}`, displayPrefix: `ATL-STAFF-${pad2(i + 1)}`, status: 'active' as const, issuedAt: isoTs(-200), expiresAt: isoTs(300), revokedAt: null, issuerId: 'USR-001' }))
+    );
+    for (let i = 0; i < badgeRows.length; i += 100) await tx.insert(identityBadgeCredentials).values(badgeRows.slice(i, i + 100));
+    console.log(`  · seeded assessment outcomes (${outcomeRows.length}) + ${badgeRows.length} identity badges`);
+
+    // -----------------------------------------------------------------------
+    // Live classrooms
+    // -----------------------------------------------------------------------
+    const [bbb] = await tx.insert(liveClassProviderProfiles).values({ tenantId, name: 'BigBlueButton Principal', providerType: 'bigbluebutton', scope: 'tenant', baseUrl: 'https://bbb.atlas.ma/bigbluebutton', credentialRef: 'LIVE_BBB_SECRET', capabilities: ['recording', 'chat', 'screenShare', 'breakoutRooms'], enabled: true }).returning();
+    const [devProf] = await tx.insert(liveClassProviderProfiles).values({ tenantId, name: 'Environnement dev', providerType: 'dev', scope: 'tenant', capabilities: ['recording', 'chat'], enabled: true }).returning();
+    const slotRows = await tx.select({ id: classScheduleSlots.id, classSectionId: classScheduleSlots.classSectionId, classSubjectId: classScheduleSlots.classSubjectId, teacherId: classScheduleSlots.teacherId }).from(classScheduleSlots).where(eq(classScheduleSlots.tenantId, tenantId)).limit(6);
+    const lcRows = slotRows.map((slot, i) => {
+      const off = int(3, 25);
+      return {
+        tenantId,
+        providerProfileId: (i % 2 === 0 ? bbb : devProf)!.id,
+        classSectionId: slot.classSectionId,
+        classSubjectId: slot.classSubjectId,
+        teacherUserId: slot.teacherId ?? teacherIds[i % 20]!,
+        title: `Cours en ligne ${i + 1}`,
+        description: 'Séance de classe virtuelle',
+        objectives: 'Objectifs de la séance',
+        providerMeetingId: `bbb-meeting-${pad2(i + 1)}`,
+        scheduledStart: isoTs(off),
+        scheduledEnd: isoTs(off + 0.02),
+        timezone: 'Africa/Casablanca',
+        actualStart: i < 4 ? isoTs(off) : null,
+        actualEnd: i < 4 ? isoTs(off + 0.02) : null,
+        status: (i === 0 ? 'live' : i === 5 ? 'cancelled' : 'ended') as const,
+        policy: { recordingEnabled: true, waitingRoom: true, chat: true, screenShare: true, guestPolicy: 'allow', maxParticipants: 60 },
+        sourceTimetableSlotId: slot.id,
+        creatorUserId: 'USR-001',
+        lastSyncAt: i < 4 ? isoTs(0) : null,
+      };
+    });
+    const lcIds: string[] = [];
+    for (const r of lcRows) { const [ins] = await tx.insert(liveClassSessions).values(r).returning(); lcIds.push(ins!.id); }
+    const lcInvRows = lcIds.slice(0, 4).flatMap((sid, si) => studentIds.slice(si * 3, si * 3 + 3).map((sid2) => ({ tenantId, sessionId: sid, userId: sid2, participantRole: 'student', joinEligible: true, deliveryState: 'delivered', deliveryChannel: 'email', deliveredAt: isoTs(-1), invitedBy: 'USR-001' })));
+    await tx.insert(liveClassInvitations).values(lcInvRows);
+    const lcEvRows = lcIds.slice(0, 3).flatMap((sid, si) => {
+      const session = lcRows[si]!;
+      return (['joined', 'left'] as const).map((et) => ({ tenantId, sessionId: sid, providerEventId: `ev-${sid.slice(0, 8)}-${et}`, providerProfileId: session.providerProfileId, userId: studentIds[si * 2], externalParticipantId: `ext-${si}`, participantRole: 'student', eventType: et, providerTimestamp: session.scheduledStart, processingStatus: 'processed', retries: 0 }));
+    });
+    await tx.insert(liveClassParticipantEvents).values(lcEvRows);
+    console.log(`  · seeded live classrooms (${lcIds.length} sessions, ${lcInvRows.length} invitations, ${lcEvRows.length} participant events)`);
+
+    // -----------------------------------------------------------------------
+    // Finance extras: reconciliations, fee-structure versions, allocation runs
+    // -----------------------------------------------------------------------
+    const baRow = await tx.select({ id: bankAccounts.id }).from(bankAccounts).where(eq(bankAccounts.tenantId, tenantId)).limit(1);
+    const [bankRecon] = await tx.insert(bankReconciliations).values({ tenantId, bankAccountId: baRow[0]!.id, statementDate: '2026-07-31', statementBalance: '1250000.00', reconciledBalance: '1250000.00', status: 'completed', reconciledById: 'USR-ACC-001', reconciledAt: isoTs(-5) }).returning();
+    const fsVerRows: Array<{ k: string; id: string }> = [];
+    for (const [k, sid] of Object.entries(feeStructuresById)) {
+      const [fsv] = await tx.insert(feeStructureVersions).values({ tenantId, feeStructureId: sid, versionNumber: 1, status: 'published', publishedById: 'USR-001', publishedAt: isoTs(-30), componentsSnapshot: { name: k, version: 1 }, effectiveFrom: '2025-09-01' }).returning();
+      fsVerRows.push({ k, id: fsv!.id });
+    }
+    const feeSchRows = await tx.select({ id: feeSchedules.id }).from(feeSchedules).where(eq(feeSchedules.tenantId, tenantId));
+    const [allocRun] = await tx.insert(feeAllocationRuns).values({ tenantId, period: '2025-09', feeStructureVersionId: fsVerRows[0]!.id, feeScheduleId: feeSchRows[0]?.id ?? null, branchId, dueDate: '2025-09-30', status: 'approved', previewSummary: { students: 200, total: 0 }, runById: 'USR-001', approvedById: 'USR-001', approvedAt: isoTs(-90), createdAt: isoTs(-90), completedAt: isoTs(-90) }).returning();
+    const farTargetRows = studentIds.map((sid) => ({ tenantId, runId: allocRun!.id, studentId: sid, amount: studentClassOf[sid] === '3ème' ? 20000 : 24000, status: 'processed', reason: null, invoiceId: null, error: null, processedAt: isoTs(-90) }));
+    await tx.insert(feeAllocationTargets).values(farTargetRows);
+    await tx.insert(invoiceEvents).values([
+      { tenantId, invoiceId: insertedInvoices[0]!.id, eventType: 'invoice.created', payload: { seed: true }, actorUserId: 'USR-ACC-001', createdAt: isoTs(-60) },
+      { tenantId, invoiceId: insertedInvoices[1]!.id, eventType: 'payment.recorded', payload: { amount: 24000 }, actorUserId: 'USR-ACC-001', createdAt: isoTs(-20) },
+    ]);
+    console.log(`  · seeded finance extras (${farTargetRows.length} allocation targets, ${fsVerRows.length} fee-structure versions)`);
+
+    // -----------------------------------------------------------------------
+    // Library stocktake
+    // -----------------------------------------------------------------------
+    const [stk] = await tx.insert(libraryStocktakes).values({ tenantId, branchId, state: 'open', startedById: 'USR-001', startedAt: isoTs(-2) }).returning();
+    const obsRows = copyIds.slice(0, 12).map((cid, i) => ({ tenantId, stocktakeId: stk!.id, copyId: cid, countedById: teacherIds[i % 20]!, countedAt: isoTs(-1), found: i % 5 !== 0, note: i % 5 === 0 ? 'Introuvable' : null }));
+    const obsIds: string[] = [];
+    for (const o of obsRows) { const [r] = await tx.insert(libraryStocktakeObservations).values(o).returning(); obsIds.push(r!.id); }
+    const stkAdjRows = obsIds.slice(0, 4).map((oid, i) => ({ tenantId, stocktakeId: stk!.id, observationId: oid, copyId: copyIds[i]!, fromState: 'available' as const, toState: 'missing' as const, resolvedById: 'USR-001', reason: 'Inventaire', at: isoTs(-1), appliedAt: isoTs(-1) }));
+    await tx.insert(libraryStocktakeAdjustments).values(stkAdjRows);
+    console.log(`  · seeded library stocktake (${obsRows.length} observations, ${stkAdjRows.length} adjustments)`);
+
+    // -----------------------------------------------------------------------
+    // Hostel events + escalations
+    // -----------------------------------------------------------------------
+    const hAllocEvRows = hostelAllocs.slice(0, 10).map((a) => ({ tenantId, allocationId: a.id, eventType: 'checked_in', actorId: 'USR-001', reason: 'Arrivée en internat', metadata: { before: null, after: { state: 'checked_in' } }, createdAt: isoTs(-60) }));
+    await tx.insert(hostelAllocationEvents).values(hAllocEvRows);
+    const hEscRows = hostelAllocs.slice(0, 5).map((a, i) => ({ tenantId, allocationId: a.id, escalationType: 'missing_rollcall', triggerDate: isoDays(-2), tier: 1, recipientType: 'guardian', channel: 'log', acknowledgedAt: i % 2 === 0 ? isoTs(-1) : null, acknowledgedById: i % 2 === 0 ? 'USR-001' : null, closureReason: i % 2 === 0 ? 'Présent après vérification' : null, idempotencyKey: `hostel-esc-${a.id.slice(0, 8)}` }));
+    await tx.insert(hostelEscalations).values(hEscRows);
+    console.log(`  · seeded hostel extras (${hAllocEvRows.length} allocation events, ${hEscRows.length} escalations)`);
+
+    // -----------------------------------------------------------------------
+    // Guard extras: kiosk sessions, incident attachments, emergency acks
+    // -----------------------------------------------------------------------
+    const gAssignRows2 = await tx.select({ id: guardAssignments.id }).from(guardAssignments).where(eq(guardAssignments.tenantId, tenantId));
+    const kioskRows = gAssignRows2.slice(0, 2).map((a, i) => ({ tenantId, branchId, gateId: gateIds[i % 2], deviceId: null, operatorId: teacherIds[i % 20]!, assignmentId: a.id, startedAt: isoTs(-6), lastSeenAt: isoTs(-1), expiresAt: isoTs(10), lockedAt: null, status: i === 0 ? 'active' : 'closed' }));
+    await tx.insert(guardKioskSessions).values(kioskRows);
+    const gIncAttRows = gIncIds.map((iid, i) => ({ tenantId, incidentId: iid, storageKey: `guard/${iid}/photo-${i}.jpg`, originalName: `incident-${i + 1}.jpg`, mimeType: 'image/jpeg', fileSize: 120000 + i * 1000, uploadedById: 'USR-001' }));
+    await tx.insert(guardIncidentAttachments).values(gIncAttRows);
+    const gActRow = await tx.select({ id: guardEmergencyActivations.id }).from(guardEmergencyActivations).where(eq(guardEmergencyActivations.tenantId, tenantId)).limit(1);
+    if (gActRow.length > 0) {
+      await tx.insert(guardEmergencyAcknowledgements).values([{ tenantId, activationId: gActRow[0]!.id, acknowledgedById: 'USR-001', acknowledgedAt: isoTs(-4), deviceId: null, kioskSessionId: null }]);
+    }
+    console.log(`  · seeded guard extras (${kioskRows.length} kiosk sessions, ${gIncAttRows.length} incident attachments)`);
+
+    // -----------------------------------------------------------------------
+    // Content / attachments: attachment types + digital assets + tags
+    // -----------------------------------------------------------------------
+    const [attDoc] = await tx.insert(attachmentTypes).values({ tenantId, name: 'Document officiel', code: 'document', icon: 'file-text', color: 'blue', allowedMimeFamilies: ['pdf', 'document'], maxSizeBytes: 26214400, studentVisible: true, downloadable: true, isSystem: false, isActive: true, displayOrder: 1 }).returning();
+    const [attImg] = await tx.insert(attachmentTypes).values({ tenantId, name: 'Image', code: 'image', icon: 'image', color: 'green', allowedMimeFamilies: ['image'], maxSizeBytes: 10485760, studentVisible: true, downloadable: true, isSystem: false, isActive: true, displayOrder: 2 }).returning();
+    const [attAud] = await tx.insert(attachmentTypes).values({ tenantId, name: 'Audio', code: 'audio', icon: 'music', color: 'purple', allowedMimeFamilies: ['audio'], maxSizeBytes: 52428800, studentVisible: false, downloadable: true, isSystem: false, isActive: true, displayOrder: 3 }).returning();
+    const assetDefs: Array<[string, string, string]> = [
+      ['Règlement intérieur', attDoc!.id, 'pdf'],
+      ['Circulaire rentrée 2026', attDoc!.id, 'pdf'],
+      ['Photo de classe 2nde', attImg!.id, 'jpg'],
+      ["Plan de l'établissement", attImg!.id, 'jpg'],
+      ['Podcast orientation', attAud!.id, 'mp3'],
+      ['Brochure admission', attDoc!.id, 'pdf'],
+      ['Emploi du temps type', attDoc!.id, 'pdf'],
+      ['Cahier de texte SVT', attDoc!.id, 'pdf'],
+    ];
+    for (let i = 0; i < assetDefs.length; i++) {
+      const [title, typeId, ext] = assetDefs[i]!;
+      const [asset] = await tx.insert(digitalAssets).values({ tenantId, title, description: null, attachmentTypeId: typeId, ownerId: teacherIds[i % 20]!, language: 'fr', status: 'ready' as const, currentVersionId: null, publishAt: isoTs(-30), unpublishAt: null, downloadable: true, createdAt: isoTs(-30), updatedAt: isoTs(-30) }).returning();
+      const safeName = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const [ver] = await tx.insert(digitalAssetVersions).values({ assetId: asset!.id, versionNumber: 1, storageKey: `assets/${asset!.id}/v1.${ext}`, originalFilename: `${safeName}.${ext}`, safeFilename: `asset-${i + 1}.${ext}`, detectedMime: ext === 'jpg' ? 'image/jpeg' : ext === 'mp3' ? 'audio/mpeg' : 'application/pdf', extension: ext, byteSize: 50000 + i * 1000, sha256: `a`.repeat(64), scanStatus: 'clean', uploaderId: teacherIds[i % 20]! }).returning();
+      await tx.update(digitalAssets).set({ currentVersionId: ver!.id, updatedAt: isoTs(-30) }).where(eq(digitalAssets.id, asset!.id));
+    }
+    const [tag1] = await tx.insert(digitalAssetTags).values({ tenantId, name: 'Scolarité' }).returning();
+    const [tag2] = await tx.insert(digitalAssetTags).values({ tenantId, name: 'Communication' }).returning();
+    const assetRows2 = await tx.select({ id: digitalAssets.id }).from(digitalAssets).where(eq(digitalAssets.tenantId, tenantId));
+    await tx.insert(digitalAssetTagLinks).values(assetRows2.map((a, i) => ({ assetId: a.id, tagId: (i % 2 === 0 ? tag1 : tag2)!.id })));
+    console.log(`  · seeded content/attachments (${assetDefs.length} digital assets, 3 attachment types, 2 tags)`);
+
+    // -----------------------------------------------------------------------
+    // Notifications, files, export jobs, CNDP, licenses, alumni, security tokens
+    // -----------------------------------------------------------------------
+    const notifRows = teacherIds.slice(0, 12).flatMap((tid, i) => ([
+      { tenantId, recipientId: tid, channel: 'in_app', template: 'attendance.absence', data: { count: int(1, 5) }, status: 'sent' as const, readAt: i % 2 === 0 ? isoTs(-1) : null, sentAt: isoTs(-2) },
+      { tenantId, recipientId: tid, channel: 'in_app', template: 'finance.invoice_due', data: { due: '2026-09-30' }, status: 'pending' as const, readAt: null, sentAt: null },
+    ])).concat(studentIds.slice(0, 8).map((sid, i) => ({ tenantId, recipientId: sid, channel: 'in_app', template: 'events.reminder', data: { title: 'Réunion parents' }, status: 'sent' as const, readAt: i % 3 === 0 ? isoTs(-1) : null, sentAt: isoTs(-1) })));
+    for (let i = 0; i < notifRows.length; i += 100) await tx.insert(notifications).values(notifRows.slice(i, i + 100));
+    await tx.insert(files).values([0, 1, 2, 3].map((i) => ({ tenantId, branchId, module: 'students', fileName: `inscription-${i + 1}.pdf`, mimeType: 'application/pdf', sizeBytes: 100000 + i * 5000, storagePath: `files/students/inscription-${i + 1}.pdf`, uploadedBy: 'USR-001', isDeleted: false, createdAt: isoTs(-40) })));
+    const expTypes = ['students', 'invoices', 'attendance'];
+    await tx.insert(exportJobs).values([0, 1, 2].map((i) => ({ tenantId, reportType: expTypes[i]!, params: { format: 'xlsx' }, status: i === 2 ? 'failed' as const : 'complete' as const, resultPath: i === 2 ? null : `exports/${expTypes[i]}.xlsx`, requestedBy: 'USR-001', createdAt: isoTs(-3), completedAt: i === 2 ? null : isoTs(-2) })));
+    await tx.insert(cndpFilings).values([{ tenantId, filingReference: 'CNDP-2026-001', filedAt: '2026-03-15', status: 'approved', documentUploadPath: 'cndp/f211-2026.pdf', notes: 'Dossier complet', createdAt: isoTs(-30), updatedAt: isoTs(-30) }]);
+    const [lic] = await tx.insert(schoolLicenses).values({ tenantId, licenseKey: 'ATL-2026-LIC-001', status: 'active', issuedAt: isoTs(-150), expiresAt: isoTs(365), lastUpgradeAt: isoTs(-30), notes: 'Licence standard', issuedById: 'USR-SUPER-001', createdAt: isoTs(-150), updatedAt: isoTs(-30) }).returning();
+    await tx.insert(licensePayments).values([{ tenantId, licenseId: lic!.id, planTier: 'standard' as const, amount: '15000.00', currency: 'MAD', method: 'bank_transfer', status: 'completed', transactionRef: 'TX-2026-0001', purchasedAt: isoTs(-150), expiresAtAtPurchase: isoTs(365), requestedMonths: 12, requestedById: 'USR-001', recordedById: 'USR-ACC-001' }]);
+    await tx.insert(alumniDocuments).values(studentIds.slice(0, 10).map((sid, i) => ({ tenantId, alumnusId: sid, documentType: i % 2 === 0 ? 'diploma' : 'certificate', fileExt: 'pdf', verificationCode: `ALUM-${pad4(i + 1)}`, status: 'active' as const, issuedAt: isoTs(-20), supersededAt: null, issuedBy: 'USR-001' })));
+    await tx.insert(accountSetupTokens).values(teacherIds.slice(0, 6).map((tid, i) => ({ tenantId, userId: tid, token: `setup-${tid.toLowerCase()}-${i}`, expiresAt: isoTs(30), usedAt: i % 2 === 0 ? isoTs(-10) : null, createdAt: isoTs(-20) })));
+    await tx.insert(accessResetRequests).values(studentIds.slice(0, 6).map((sid, i) => ({ tenantId, studentId: sid, guardianId: guardianIds[i % 130]!, status: 'code_generated', createdAt: isoTs(-5) })));
+    await tx.insert(parentGuardianLinkTokens).values(guardianIds.slice(0, 5).map((gid, i) => ({ tenantId, guardianId: gid, token: `link-${gid.slice(0, 8)}-${i}`, expiresAt: isoTs(30), usedAt: i % 2 === 0 ? isoTs(-5) : null, createdBy: 'USR-001', createdAt: isoTs(-10) })));
+    const auditRows = [0, 1, 2, 3].map((i) => ({ tenantId, actorId: 'USR-001', action: pick(['student.created', 'invoice.posted', 'attendance.marked', 'settings.updated'] as const), entityType: pick(['student', 'invoice', 'attendance', 'settings'] as const), entityId: i === 0 ? studentIds[0]! : i === 1 ? insertedInvoices[0]!.id : `seed-${i}`, metadata: { seed: true }, createdAt: isoTs(-i) }));
+    await tx.insert(auditLogs).values(auditRows);
+    console.log(`  · seeded notifications (${notifRows.length}) + files/export-jobs/CNDP/license/alumni/security/audit`);
+
+    // -----------------------------------------------------------------------
+    // Settings: definitions, versions, values, numbering series, scheduled jobs
+    // -----------------------------------------------------------------------
+    let settingDefRows = await tx.select({ id: settingDefinitions.id, key: settingDefinitions.key, label: settingDefinitions.label, namespace: settingDefinitions.namespace, scope: settingDefinitions.scope, sensitivity: settingDefinitions.sensitivity }).from(settingDefinitions).where(eq(settingDefinitions.tenantId, tenantId)).limit(3);
+    if (settingDefRows.length === 0) {
+      const seedDefs = [
+        { key: 'general.schoolName', label: 'Nom de l’établissement', namespace: 'general', scope: 'tenant', sensitivity: 'public', defaultValue: { value: 'Groupe Scolaire Atlas' } },
+        { key: 'general.locale', label: 'Langue', namespace: 'general', scope: 'tenant', sensitivity: 'public', defaultValue: { value: 'fr' } },
+        { key: 'finance.currency', label: 'Devise', namespace: 'finance', scope: 'tenant', sensitivity: 'public', defaultValue: { value: 'MAD' } },
+      ] as const;
+      const defIds: string[] = [];
+      for (const d of seedDefs) { const [r] = await tx.insert(settingDefinitions).values({ tenantId, key: d.key, label: d.label, description: null, namespace: d.namespace, scope: d.scope, sensitivity: d.sensitivity, defaultValue: d.defaultValue, requiredPermission: null, legacyField: null, isActive: true, isCodeOwned: false, createdAt: isoTs(-200), updatedAt: isoTs(-200) }).returning(); defIds.push(r!.id); }
+      settingDefRows = seedDefs.map((d, i) => ({ id: defIds[i]!, key: d.key, label: d.label, namespace: d.namespace, scope: d.scope, sensitivity: d.sensitivity }));
+    }
+    await tx.insert(settingDefinitionVersions).values(settingDefRows.map((d) => ({ tenantId, definitionId: d.id, version: 1, label: d.label, description: null, namespace: d.namespace, scope: d.scope, sensitivity: d.sensitivity, defaultValue: { value: null }, requiredPermission: null, legacyField: null, actorId: 'USR-001', reason: 'Création initiale', createdAt: isoTs(-200) })));
+    await tx.insert(settingValues).values([{ tenantId, branchId: null, key: 'general.schoolName', value: { value: 'Groupe Scolaire Atlas' }, version: 1, updatedBy: 'USR-001', createdAt: isoTs(-100), updatedAt: isoTs(-100) }, { tenantId, branchId: null, key: 'general.locale', value: { value: 'fr' }, version: 1, updatedBy: 'USR-001', createdAt: isoTs(-100), updatedAt: isoTs(-100) }]);
+    const nsRows: Array<[string, string, string, number, number]> = [
+      ['student.matricule', 'Matricule élève', 'ATL-2526-', 4, 200],
+      ['invoice.number', 'Numéro facture', 'INV-2026-', 4, 200],
+      ['exam.candidate', 'Numéro candidat', 'CND-', 4, 90],
+    ];
+    const nsIds: string[] = [];
+    for (const [key, name, prefix, padding, current] of nsRows) { const [r] = await tx.insert(numberingSeriesDefinitions).values({ tenantId, key, name, prefix, suffix: null, padding, start: 1, current, step: 1, isActive: true, createdAt: isoTs(-200), updatedAt: isoTs(-200) }).returning(); nsIds.push(r!.id); }
+    await tx.insert(numberingSeriesVersions).values(nsIds.map((sid, i) => ({ tenantId, seriesId: sid, version: 1, prefix: nsRows[i]![2], suffix: null, padding: nsRows[i]![3], start: 1, current: nsRows[i]![4], step: 1, actorId: 'USR-001', reason: 'Initialisation', createdAt: isoTs(-200) })));
+    const jobRows: Array<[string, string, string, number | null, string, boolean]> = [
+      ['fee-reminders', 'Relances de frais', 'feeReminderJob', null, '0 8 * * 1', true],
+      ['attendance-summary', 'Résumé d’assiduité', 'attendanceSummaryJob', null, '0 18 * * 5', true],
+      ['db-backup', 'Sauvegarde nocturne', 'backupJob', null, '0 2 * * *', false],
+    ];
+    const jobIds: string[] = [];
+    for (const [key, name, handler, intervalMinutes, cron, isActive] of jobRows) { const [r] = await tx.insert(scheduledJobDefinitions).values({ tenantId, key, name, handler, intervalMinutes, cron, isActive, lastRunAt: isActive ? isoTs(-1) : null, nextRunAt: isActive ? isoTs(7) : null, createdAt: isoTs(-200), updatedAt: isoTs(-1) }).returning(); jobIds.push(r!.id); }
+    await tx.insert(scheduledJobRuns).values(jobIds.slice(0, 2).map((jid, i) => ({ tenantId, jobId: jid, status: 'success', startedAt: isoTs(-1), finishedAt: isoTs(-1), durationMs: 1200 + i * 400, error: null, triggeredBy: 'worker', metadata: { rows: 40 + i * 20 }, createdAt: isoTs(-1) })));
+    console.log(`  · seeded settings (${settingDefRows.length} defs + versions, numbering series, scheduled jobs)`);
+
+    // -----------------------------------------------------------------------
+    // Advanced reporting: saved views, favorites, runs, schedules, snapshots
+    // -----------------------------------------------------------------------
+    const repDefs = await tx.select({ key: reportDefinitions.key }).from(reportDefinitions).limit(3);
+    if (repDefs.length > 0) {
+      await tx.insert(reportSavedViews).values([{ tenantId, reportKey: repDefs[0]!.key, name: 'Vue principale', description: 'Vue par défaut', ownerId: 'USR-001', isShared: true, parameters: {}, createdAt: isoTs(-10), updatedAt: isoTs(-10) }]);
+      await tx.insert(reportFavorites).values(repDefs.map((r, i) => ({ tenantId, userId: i === 0 ? 'USR-001' : teacherIds[i - 1]!, reportKey: r.key, createdAt: isoTs(-8) })));
+      await tx.insert(reportRuns).values(repDefs.slice(0, 2).map((r, i) => ({ tenantId, branchId, reportKey: r.key, version: 1, requesterId: 'USR-001', status: i === 0 ? 'completed' as const : 'running' as const, parameters: { scope: '2025-2026' }, asOfDate: isoTs(-1), sourceWatermarks: {}, rowCount: i === 0 ? 200 : 0, executionTimeMs: i === 0 ? 2400 : null, errorMessage: null, createdAt: isoTs(-2), finishedAt: i === 0 ? isoTs(-2) : null })));
+      await tx.insert(reportSchedules).values([{ tenantId, branchId, reportKey: repDefs[0]!.key, name: 'Rapport mensuel', cronExpression: '0 7 1 * *', timezone: 'Africa/Casablanca', format: 'xlsx' as const, parameters: {}, isActive: true, createdById: 'USR-001', lastRunAt: isoTs(-30), nextRunAt: isoTs(20), createdAt: isoTs(-60), updatedAt: isoTs(-30) }]);
+      await tx.insert(reportSnapshots).values([{ tenantId, reportKey: repDefs[0]!.key, periodKey: '2025-2026', snapshotData: { students: 200, invoices: 200 }, checksumSha256: 'b'.repeat(64), createdAt: isoTs(-5), createdById: 'USR-001' }]);
+      await tx.insert(reportProjectionWatermarks).values([{ tenantId, projectionName: 'student-enrollment', lastWatermark: isoTs(-1), rowCount: 200, updatedAt: isoTs(-1) }, { tenantId, projectionName: 'invoice-ledger', lastWatermark: isoTs(-1), rowCount: 200, updatedAt: isoTs(-1) }]);
+    }
+    console.log(`  · seeded reporting (views/favorites/runs/schedules/snapshots/watermarks)`);
+
+    // -----------------------------------------------------------------------
+    // Events extras: audience rules, waitlists, feedback
+    // -----------------------------------------------------------------------
+    await tx.insert(eventAudienceRules).values(eventIds.slice(0, 6).map((eid, i) => ({ tenantId, eventId: eid, targetKind: 'role' as const, targetRoleValue: pick(['teacher', 'student', 'parent', 'school_admin'] as const), targetRefId: null, createdAt: isoTs(-30) })));
+    await tx.insert(eventWaitlistEntries).values(occRows.slice(0, 6).flatMap((o, i) => studentIds.slice(i * 2, i * 2 + 2).map((sid) => ({ tenantId, occurrenceId: o.id, personId: sid, status: pick(['queued', 'offered', 'accepted', 'declined'] as const), queuedAt: isoTs(-2), offerExpiresAt: i % 2 === 0 ? isoTs(5) : null }))));
+    await tx.insert(eventFeedback).values(eventIds.slice(0, 4).flatMap((eid, i) => [0, 1].map((j) => ({ tenantId, eventId: eid, occurrenceId: null, personId: i % 2 === 0 ? studentIds[j]! : teacherIds[j]!, rating: int(3, 5), comment: pick(['Très bien', 'À améliorer', 'Merci'] as const), status: i % 2 === 0 ? 'published' : 'pending', createdById: i % 2 === 0 ? studentIds[j]! : teacherIds[j]!, createdAt: isoTs(-1), updatedAt: isoTs(-1) }))));
+    console.log(`  · seeded events extras (audience rules, waitlists, feedback)`);
+
+    // -----------------------------------------------------------------------
+    // HR/payroll: edit requests + versioned components/structures/regulations
+    // -----------------------------------------------------------------------
+    const empWithUser = empProfiles.filter((e) => e.userId !== null);
+    await tx.insert(employeeProfileEditRequests).values(empWithUser.slice(0, 4).map((e, i) => ({ tenantId, employeeId: e.id, userId: e.userId!, requestType: pick(['bank_rib', 'tax_cnss', 'personal_info', 'emergency_contact'] as const), proposedChanges: { field: 'rib', value: '00780000000000000000' }, reason: 'Mise à jour coordonnées', status: i % 2 === 0 ? 'pending' : 'approved', reauthenticatedAt: isoTs(-3), reviewedAt: i % 2 === 0 ? null : isoTs(-1), reviewerId: i % 2 === 0 ? null : 'USR-001', rejectionReason: null })));
+    const cnssComp = await tx.select({ id: salaryComponents.id }).from(salaryComponents).where(and(eq(salaryComponents.tenantId, tenantId), eq(salaryComponents.name, 'CNSS'))).limit(1);
+    const compVerRows: Array<{ componentId: string; code: string; name: string; componentType: string; valueType: string; fixedValue: string | null; percentBp: number | null; taxable: boolean; contributable: boolean; side: string; sortOrder: number }> = [
+      { componentId: compBase!.id, code: 'BASE', name: 'Salaire de base', componentType: 'earning', valueType: 'fixed', fixedValue: '6000.0000', percentBp: null, taxable: true, contributable: true, side: 'employee', sortOrder: 1 },
+      { componentId: compTransp!.id, code: 'TRANS', name: 'Indemnité transport', componentType: 'earning', valueType: 'fixed', fixedValue: '500.0000', percentBp: null, taxable: false, contributable: false, side: 'employee', sortOrder: 2 },
+      { componentId: cnssComp[0]?.id ?? compBase!.id, code: 'CNSS', name: 'CNSS', componentType: 'deduction', valueType: 'percent', fixedValue: null, percentBp: 488, taxable: false, contributable: true, side: 'employee', sortOrder: 3 },
+    ];
+    const compVerIds: string[] = [];
+    for (const cv of compVerRows) {
+      const [r] = await tx.insert(salaryComponentVersions).values({ tenantId, componentId: cv.componentId, versionNo: 1, code: cv.code, name: cv.name, componentType: cv.componentType, valueType: cv.valueType, fixedValue: cv.fixedValue, percentOf: null, percentBp: cv.percentBp, formula: null, taxable: cv.taxable, contributable: cv.contributable, side: cv.side, proratable: true, recurring: true, roundingMode: 'half_up', sortOrder: cv.sortOrder, status: 'published', effectiveFrom: '2025-09-01', effectiveTo: null, publishedAt: isoTs(-200), publishedById: 'USR-001' }).returning();
+      compVerIds.push(r!.id);
+    }
+    const [ssv] = await tx.insert(salaryStructureVersions).values({ tenantId, templateId: tpl!.id, versionNo: 1, name: 'Structure Enseignant v1', status: 'published', effectiveFrom: '2025-09-01', effectiveTo: null, publishedAt: isoTs(-200), publishedById: 'USR-001' }).returning();
+    await tx.insert(salaryStructureComponents).values(compVerIds.map((cvid, i) => ({ tenantId, structureVersionId: ssv!.id, componentId: compVerRows[i]!.componentId, componentVersionId: cvid, sortOrder: i + 1, baseValue: null })));
+    await tx.insert(payrollSettingsVersions).values([{ tenantId, versionNo: 1, settings: { currency: 'MAD', payFrequency: 'monthly', cutoffDay: 25, paymentDay: 1, defaultRounding: 'half_up', employerCnssId: 'CNSS-ATLAS-01', accountingMappings: { salaryAccount: coaSalary!.id } }, status: 'published', publishedAt: isoTs(-200), publishedById: 'USR-001' }]);
+    const [regPack] = await tx.insert(payrollRegulationPacks).values({ tenantId, jurisdiction: 'MA', code: 'MA-2024', name: 'Réglementation Maroc 2024', status: 'published', sourceUrl: null, sourceDocumentRef: 'CGI 2024', publicationDate: '2024-01-01', validationStatus: 'validated_by_professional', validatedById: 'USR-001', validatedAt: isoTs(-300), reviewerNotes: null, notes: 'Bareme CNSS et IR', createdById: 'USR-001', createdAt: isoTs(-300), updatedAt: isoTs(-300) }).returning();
+    const [regVer] = await tx.insert(payrollRegulationVersions).values({ tenantId, packId: regPack!.id, versionLabel: 'MA-2024.1', effectiveFrom: '2025-09-01', effectiveTo: null, status: 'published', ruleConfig: { cnssEmployeeRateBp: 488, cnssCeiling: '6000', irThresholds: [] }, roundingOrder: [{ key: 'cnss_employee', round: 'half_up', places: 2 }], monthlyDefault: true, publishedAt: isoTs(-300), publishedById: 'USR-001' }).returning();
+    const fpRow = await tx.select({ id: fiscalPeriods.id }).from(fiscalPeriods).where(eq(fiscalPeriods.tenantId, tenantId)).limit(1);
+    await tx.insert(payrollCalculationTraces).values(empWithUser.slice(0, 3).map((e, i) => ({ tenantId, runId: periodId, userId: e.userId!, version: 1, regulationVersionId: regVer!.id, trace: { steps: [{ key: 'base', amount: e.salary }] }, inputSnapshot: { salary: e.salary }, createdAt: isoTs(-5) })));
+    await tx.insert(payrollPostings).values([{ tenantId, runId: periodId, journalEntryId: je2!.id, postingRequestId: null, payloadDigest: 'd'.repeat(64), sourceVersion: 1, postingType: 'settlement', status: 'succeeded', idempotencyKey: `payroll-${periodId.slice(0, 8)}`, fiscalPeriodId: fpRow[0]?.id ?? null, postedById: 'USR-ACC-001', postedAt: isoTs(-5) }]);
+    console.log(`  · seeded HR/payroll extras (edit requests, ${compVerIds.length} component versions, structure, regulations, traces, postings)`);
+
+    // -----------------------------------------------------------------------
+    // Leadership scope + approval authorities
+    // -----------------------------------------------------------------------
+    const [scope1] = await tx.insert(leadershipScopeAssignments).values({ tenantId, userId: 'USR-001', scopeType: 'tenant', branchId: null, departmentId: null, startsOn: '2025-09-01', endsOn: null, status: 'active', createdById: 'USR-001', createdAt: isoTs(-200), updatedAt: isoTs(-200) }).returning();
+    await tx.insert(leadershipApprovalAuthorities).values([
+      { tenantId, assignmentId: scope1!.id, domain: 'finance', action: 'approve.invoice', maxAmount: '50000.00', startsOn: '2025-09-01', endsOn: null, delegatedFromAuthorityId: null, status: 'active', createdById: 'USR-001', createdAt: isoTs(-200) },
+      { tenantId, assignmentId: scope1!.id, domain: 'attendance', action: 'approve.exception', maxAmount: null, startsOn: '2025-09-01', endsOn: null, delegatedFromAuthorityId: null, status: 'active', createdById: 'USR-001', createdAt: isoTs(-200) },
+    ]);
+    console.log(`  · seeded leadership (1 scope, 2 approval authorities)`);
+
+    // -----------------------------------------------------------------------
+    // Portal preferences, active contexts, activity events
+    // -----------------------------------------------------------------------
+    await tx.insert(portalPreferences).values([0, 1].map((i) => ({ tenantId, userId: i === 0 ? 'USR-001' : teacherIds[0]!, prefKey: 'notifications', value: { email: true, sms: false, inApp: true }, createdAt: isoTs(-60), updatedAt: isoTs(-60) })));
+    const [seedSession] = await tx.insert(session).values({ id: 'seed-session-001', expiresAt: new Date('2027-12-31T23:59:59Z'), token: `seed-token-${tenantId.slice(0, 8)}`, createdAt: new Date('2026-08-13T00:00:00Z'), updatedAt: new Date('2026-08-13T00:00:00Z'), ipAddress: '127.0.0.1', userAgent: 'seed', userId: 'USR-001' }).returning();
+    await tx.insert(portalActiveContexts).values([{ sessionId: seedSession!.id, userId: 'USR-001', tenantId, activeRole: 'school_admin', activeBranchId: branchId, createdAt: isoTs(-1), updatedAt: isoTs(-1) }]);
+    await tx.insert(portalActivityEvents).values([0, 1, 2].map((i) => ({ tenantId, userId: 'USR-001', role: 'school_admin', action: 'role.switch', entityType: 'portal', entityId: 'USR-001', metadata: { from: 'school_admin', to: 'school_admin' }, createdAt: isoTs(-2) })));
+    console.log(`  · seeded portal (preferences, active contexts, activity events)`);
+
+    // -----------------------------------------------------------------------
+    // Accounting: journals, vouchers, numbering, docs, posting requests, closing
+    // -----------------------------------------------------------------------
+    const [accJournal] = await tx.insert(accountingJournals).values({ tenantId, code: 'GEN', name: 'Journal général', journalType: 'general', isActive: true, createdAt: isoTs(-300), updatedAt: isoTs(-300) }).returning();
+    const [accJournal2] = await tx.insert(accountingJournals).values({ tenantId, code: 'BAN', name: 'Journal de banque', journalType: 'bank', isActive: true, createdAt: isoTs(-300), updatedAt: isoTs(-300) }).returning();
+    const [vtOD] = await tx.insert(accountingVoucherTypes).values({ tenantId, journalId: accJournal!.id, code: 'OD', name: 'Opérations diverses', sourceModule: 'finance', requiresApproval: false, isSystem: false, isActive: true, createdAt: isoTs(-300), updatedAt: isoTs(-300) }).returning();
+    const [vtBQ] = await tx.insert(accountingVoucherTypes).values({ tenantId, journalId: accJournal2!.id, code: 'BQ', name: 'Relevé bancaire', sourceModule: 'bank', requiresApproval: false, isSystem: false, isActive: true, createdAt: isoTs(-300), updatedAt: isoTs(-300) }).returning();
+    await tx.insert(accountingNumberingSeries).values([
+      { tenantId, journalId: accJournal!.id, fiscalYear: 2026, prefix: 'OD-2026-', nextValue: 1, padding: 6, updatedAt: isoTs(-300) },
+      { tenantId, journalId: accJournal2!.id, fiscalYear: 2026, prefix: 'BQ-2026-', nextValue: 1, padding: 6, updatedAt: isoTs(-300) },
+    ]);
+    const [accDoc] = await tx.insert(accountingDocuments).values({ tenantId, documentType: 'deposit', status: 'posted', documentDate: '2026-07-15', reference: 'INV-2026-0001', counterparty: 'Groupe Scolaire Atlas', description: 'Facture de scolarité 2025-2026', currency: 'MAD', totalAmount: '120000.00', sourceVersion: 1, createdById: 'USR-ACC-001', approvedById: 'USR-001', journalEntryId: je!.id, submittedAt: isoTs(-10), approvedAt: isoTs(-9), postedAt: isoTs(-8), createdAt: isoTs(-10), updatedAt: isoTs(-8) }).returning();
+    await tx.insert(accountingDocumentLines).values([
+      { tenantId, documentId: accDoc!.id, accountId: coaReceivable!.id, debitAmount: '120000.00', creditAmount: '0.00', memo: 'Créances élèves' },
+      { tenantId, documentId: accDoc!.id, accountId: coaRevenue!.id, debitAmount: '0.00', creditAmount: '120000.00', memo: 'Revenus scolarité' },
+    ]);
+    const [postReq1] = await tx.insert(accountingPostingRequests).values({ tenantId, sourceModule: 'finance', sourceDocumentId: 'INV-2026-0001', sourceVersion: 1, idempotencyKey: `post-${je!.id.slice(0, 8)}`, payloadDigest: 'e'.repeat(64), status: 'succeeded', journalEntryId: je!.id, errorCode: null, createdById: 'USR-ACC-001', createdAt: isoTs(-8), completedAt: isoTs(-8) }).returning();
+    const [postReq2] = await tx.insert(accountingPostingRequests).values({ tenantId, sourceModule: 'payroll', sourceDocumentId: 'PAY-2026-06', sourceVersion: 1, idempotencyKey: `post-${je2!.id.slice(0, 8)}`, payloadDigest: 'f'.repeat(64), status: 'succeeded', journalEntryId: je2!.id, errorCode: null, createdById: 'USR-ACC-001', createdAt: isoTs(-5), completedAt: isoTs(-5) }).returning();
+    await tx.insert(accountingJournalLinks).values([
+      { tenantId, journalEntryId: je!.id, journalId: accJournal!.id, voucherTypeId: vtOD!.id, postingRequestId: postReq1!.id, reversalOfEntryId: null, createdAt: isoTs(-8) },
+      { tenantId, journalEntryId: je2!.id, journalId: accJournal!.id, voucherTypeId: vtOD!.id, postingRequestId: postReq2!.id, reversalOfEntryId: null, createdAt: isoTs(-5) },
+    ]);
+    const fpRows = await tx.select({ id: fiscalPeriods.id, name: fiscalPeriods.name }).from(fiscalPeriods).where(eq(fiscalPeriods.tenantId, tenantId));
+    await tx.update(fiscalPeriods).set({ status: 'closed' }).where(eq(fiscalPeriods.id, fpRows[0]!.id));
+    const [closing] = await tx.insert(accountingClosingRuns).values({ tenantId, fiscalPeriodId: fpRows[0]!.id, reason: 'Clôture exercice', closedById: 'USR-ACC-001', periodEndDate: '2026-06-30', postedEntryCount: 2, debitTotal: '216000.00', creditTotal: '216000.00', netBalance: '0.00', superseded: false, supersededById: null, supersededAt: null, createdAt: isoTs(-3) }).returning();
+    await tx.insert(accountingClosingBalances).values([
+      { tenantId, closingRunId: closing!.id, accountId: coaCash!.id, accountCode: '512', accountName: 'Banque', accountType: 'asset' as const, debitTotal: '120000.00', creditTotal: '96000.00', netBalance: '24000.00', createdAt: isoTs(-3) },
+      { tenantId, closingRunId: closing!.id, accountId: coaRevenue!.id, accountCode: '701', accountName: 'Ventes – scolarité', accountType: 'revenue' as const, debitTotal: '0.00', creditTotal: '120000.00', netBalance: '-120000.00', createdAt: isoTs(-3) },
+    ]);
+    await tx.insert(accountingPeriodReopenRequests).values([{ tenantId, fiscalPeriodId: fpRows[1]!.id, requestedById: 'USR-ACC-001', reason: 'Saisie complémentaire', status: 'approved', decidedById: 'USR-001', decidedAt: isoTs(-2), decisionNote: 'Approuvé', createdAt: isoTs(-3) }]);
+    const [reconOpen] = await tx.insert(bankReconciliations).values({ tenantId, bankAccountId: baRow[0]!.id, statementDate: '2026-08-05', statementBalance: '75000.00', reconciledBalance: '75000.00', status: 'draft', reconciledById: 'USR-ACC-001', reconciledAt: null }).returning();
+    const reconId = reconOpen!.id;
+    await tx.insert(accountingStatementImports).values([{ tenantId, reconciliationId: reconId, filename: 'releve-juillet.csv', contentFingerprint: 'g'.repeat(64), rowsImported: 2, importedById: 'USR-ACC-001', createdAt: isoTs(-6) }]);
+    await tx.insert(accountingStatementLines).values([
+      { tenantId, reconciliationId: reconId, lineDate: '2026-07-10', description: 'Virement parents', reference: 'VIR-001', debitAmount: '0.00', creditAmount: '50000.00', status: 'matched' },
+      { tenantId, reconciliationId: reconId, lineDate: '2026-07-12', description: 'Chèque 0001', reference: 'CHEQ-001', debitAmount: '0.00', creditAmount: '25000.00', status: 'unmatched' },
+    ]);
+    await tx.insert(accountingSourceMappings).values([
+      { tenantId, sourceModule: 'finance', sourceKeyType: 'fee_category', sourceKey: 'Scolarité', accountId: coaRevenue!.id, createdBy: 'USR-001', createdAt: isoTs(-200), updatedBy: 'USR-001', updatedAt: isoTs(-200) },
+      { tenantId, sourceModule: 'finance', sourceKeyType: 'payment_method', sourceKey: 'cash', accountId: coaCash!.id, createdBy: 'USR-001', createdAt: isoTs(-200), updatedBy: 'USR-001', updatedAt: isoTs(-200) },
+    ]);
+    console.log(`  · seeded accounting (journals, vouchers, docs, posting requests, closing, statement imports)`);
 
     // -----------------------------------------------------------------------
     // Accounts (login credentials) - all use the shared hashed password.
