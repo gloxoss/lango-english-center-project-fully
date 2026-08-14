@@ -1259,26 +1259,38 @@ export const TransportService = {
 
   // --- Self-Service Projections ---
   async getGuardianTransportView(tenantId: string, guardianUserId: string) {
+    // guardians.id is a uuid column; guardianUserId is normally a user.id
+    // (e.g. "PARENT-001"), never a uuid. Comparing a non-uuid string against
+    // a uuid column throws a hard Postgres type error rather than "no match",
+    // so only include that branch when the value actually looks like a uuid.
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(guardianUserId);
     const [guardianRecord] = await db
       .select({ id: guardians.id })
       .from(guardians)
       .where(
         and(
           eq(guardians.tenantId, tenantId as any),
-          or(
-            eq(guardians.userId, guardianUserId as any),
-            eq(guardians.id, guardianUserId as any),
-          ),
+          isUuid
+            ? or(
+                eq(guardians.userId, guardianUserId as any),
+                eq(guardians.id, guardianUserId as any),
+              )
+            : eq(guardians.userId, guardianUserId as any),
         ),
       )
       .limit(1);
 
-    const guardianIdToQuery = guardianRecord ? guardianRecord.id : guardianUserId;
+    // guardian_students.guardianId is also a uuid column (guardians.id). If no
+    // guardians row was found above, there is no valid uuid to query with —
+    // falling back to the raw guardianUserId here would hit the exact same
+    // uuid type error one query later. No guardian profile means no linked
+    // students, so return empty rather than attempting an unmatchable query.
+    if (!guardianRecord) return [];
 
     const linkedStudents = await db
       .select({ studentId: guardianStudents.studentId })
       .from(guardianStudents)
-      .where(and(eq(guardianStudents.tenantId, tenantId as any), eq(guardianStudents.guardianId, guardianIdToQuery as any)));
+      .where(and(eq(guardianStudents.tenantId, tenantId as any), eq(guardianStudents.guardianId, guardianRecord.id as any)));
 
     const studentIds = linkedStudents.map(s => s.studentId);
     if (studentIds.length === 0) {

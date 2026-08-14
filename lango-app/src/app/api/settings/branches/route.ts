@@ -11,10 +11,10 @@ import { branches, tenants } from '@/models/Schema';
 
 export async function GET(request: Request) {
   try {
-    const ctx = await requireRequestContext(request, ['school_admin', 'super_admin', 'teacher', 'accountant', 'receptionist']);
+    const ctx = await requireRequestContext(request, ['school_admin', 'super_admin', 'teacher', 'accountant', 'receptionist', 'guard', 'librarian']);
     // Branch names are read-only display data surfaced in the shared header; the
     // role allowlist above is the gate. `settings.read` would wrongly block
-    // accountant/teacher/receptionist from seeing the current branch label.
+    // any staff role from seeing the current branch label.
     const tenantId = requireTenant(ctx);
 
     // Project only the columns the UI needs — do not expose tenantId or timestamps
