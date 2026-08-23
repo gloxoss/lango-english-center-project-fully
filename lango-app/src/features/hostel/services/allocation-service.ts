@@ -20,6 +20,8 @@ import { resolveCandidateBeds } from '@/features/hostel/server/placement-resolve
 import { emitCharge, recordSimulatedFinanceFailure, FinanceUnavailableError } from '@/features/hostel/server/finance-adapter';
 import { firstRow } from '@/features/hostel/server/db-utils';
 
+const ALLOCATION_STATES = new Set(['reserved', 'checked_in', 'checked_out', 'cancelled']);
+
 // ---------------------------------------------------------------------------
 // 23P01 mapping (EXCLUDE USING gist violation) — not covered by apiErrorResponse
 // ---------------------------------------------------------------------------
@@ -677,7 +679,9 @@ export async function listAllocations(tenantId: string, opts?: {
   if (opts?.hostelId) conds.push(eq(hostelRooms.hostelId, opts.hostelId));
   if (opts?.bedId) conds.push(eq(hostelAllocations.bedId, opts.bedId));
   if (opts?.studentId) conds.push(eq(hostelAllocations.studentId, opts.studentId));
-  if (opts?.state) conds.push(sql`${hostelAllocations.state} = ${opts.state}`);
+  // `state` is a Postgres enum; ignore the UI's 'all' sentinel (and any other
+  // non-enum value) rather than emitting an invalid enum comparison.
+  if (opts?.state && ALLOCATION_STATES.has(opts.state)) conds.push(sql`${hostelAllocations.state} = ${opts.state}`);
   if (opts?.asOf) {
     conds.push(sql`${hostelAllocations.effectiveStartDate} <= ${opts.asOf}`);
     conds.push(sql`${hostelAllocations.effectiveEndDate} > ${opts.asOf}`);

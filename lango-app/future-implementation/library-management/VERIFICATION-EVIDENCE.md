@@ -1,6 +1,6 @@
 # Library Management Add-on — Verification Evidence
 
-Date: **2026-08-09**. Live environment: local `schoolos` PostgreSQL 17 via `DATABASE_URL`
+Date: **2026-08-14**. Live environment: local `schoolos` PostgreSQL 17 via `DATABASE_URL`
 (`localhost:5432`). All checks repeatable — every vitest suite and migration verifier runs green
 back-to-back. Companion docs: `MANUAL-TESTING.md` (human/browser flow), `PLAN-STATUS.md`
 (deliverable-level status), `.implementation-plan/IMPLEMENTATION-REPORT.md` (full audit matrix).
@@ -12,16 +12,17 @@ back-to-back. Companion docs: `MANUAL-TESTING.md` (human/browser flow), `PLAN-ST
 | Migration `0080_library_management` apply + idempotent rerun | PASS — 23 tables, `librarian` role, 17 unique/partial-unique indexes (`scripts/verify-library-0080.mjs`, both applies) |
 | Migration `0104_library_accounting_mappings` apply | PASS — `accounting_source_mappings_shape_check` extended with `library_member` / `library_charge_reason` |
 | Migration `0104` idempotent rerun | PASS — re-applies cleanly, no constraint reset |
-| Live vitest suite (7 files, 35 tests) | PASS — `npx vitest run src/features/library/services/` |
+| Live vitest suite (8 files, 40 tests) | PASS — `npx vitest run src/features/library/services/` |
 | `tsc --noEmit` | PASS — exit 0, 0 errors project-wide |
 | `npx next build` | PASS — exit 0, full route manifest generated |
 | Tenant isolation static check (`check-tenant-isolation.ts`) | PASS for library scope — no library route flagged; only 6 pre-existing non-library flags (guard/kiosk-sessions, guard/me, guardian/me/children, leadership/me/home) |
+| Adversarial HTTP harness (`scripts/verify-library-adversarial.mjs`) | PASS — 11/11 (C01–C11): anon 401, wrong-role 403, capability denial, tenant-scoped super_admin, waive + replay 409, zod 422, add-on gate, cross-tenant 404s, e2e report reads (2026-08-14) |
 | Orphaned accounting test-tenant cleanup | PASS — 6 orphaned `ACC Test/ACC Other` tenants removed; 0 remaining |
 
-## 2. Live vitest suite — 7 files / 35 tests
+## 2. Live vitest suite — 8 files / 40 tests
 
 Command: `npx vitest run src/features/library/services/` (real Postgres, `describe.skipIf(!hasDb)`,
-two-tenant fixtures, no mocks). Duration ~8 s. **All 35 tests pass.**
+two-tenant fixtures, no mocks). Duration ~8 s. **All 40 tests pass.**
 
 ### `library-service.test.ts` (5)
 | Test | Assertion |
@@ -86,6 +87,13 @@ two-tenant fixtures, no mocks). Duration ~8 s. **All 35 tests pass.**
 | Gates capability: librarian denied sensitive keys, granted operational keys | librarian passes `library.circulation.operate` / `library.catalog.read`; denied `library.charge.waive`, `library.circulation.override`, `library.stocktake.approve` (all `FORBIDDEN`) |
 | `school_admin` holds all library capabilities; a user override grants one key | `school_admin` passes `library.charge.waive` (default ALL); a `userPermissionOverrides` row grants the sensitive key to a librarian (positive override path) |
 
+### `library-operations-service.test.ts` (3)
+| Test | Assertion |
+|---|---|
+| `inventoryReport` pivots real copy states and conditions per branch | per-branch `total/available/checkedOut/withdrawn/active` + `conditions` from real copies; issuing moves available→checkedOut; withdrawing removes from `active`; foreign tenant → zeroed totals |
+| `circulationReport` aggregates real loan/hold/charge activity and is tenant-scoped | issue/renew/return move `active`/`issued30`/`renewed30`/`returned30` by the expected deltas; hold `waiting`, charge `open` + `openAmount`; 30-day series gap-filled (30 buckets summing to aggregates); foreign tenant → zeroed |
+| `getMemberDetail` returns member with branch and populated nested arrays; foreign tenant 404s | `branchName`/`name` + `activeLoans`/`openCharges`/`waitingHolds` populated from real rows; unknown tenant → `NOT_FOUND` (safe cross-tenant 404) |
+
 ## 3. Migration evidence
 
 - **`migrations/0080_library_management.sql`** (base add-on): 23 `library_*` tables, `librarian`
@@ -99,7 +107,7 @@ two-tenant fixtures, no mocks). Duration ~8 s. **All 35 tests pass.**
   [check] shape_check -> ok [pass2] applied 3 statement(s) [check] shape_check -> ok`.
 - **Journal**: `migrations/meta/_journal.json` — `0104_library_accounting_mappings` at `idx 105`.
 
-## 4. API route inventory — 48 route files under `src/app/api/addons/library/**`
+## 4. API route inventory — 52 route files under `src/app/api/addons/library/**`
 
 Catalog & taxonomy: `catalog`, `catalog/[id]`, `catalog/contributors(+/[id])`,
 `catalog/publishers(+/[id])`, `catalog/categories(+/[id])`, `catalog/subjects(+/[id])`,
@@ -116,7 +124,8 @@ Charges: `charges`, `charges/[id]/waive`, `charges/[id]/post` (WA6 Accounting po
 Stocktakes: `stocktakes`, `stocktakes/[id]/close`, `stocktakes/[id]/observations`,
 `stocktakes/[id]/adjustments`, `stocktakes/[id]/adjustments/apply`.
 
-Members & reports: `members`, `reports/overview`, `reports/overdue`.
+Members & reports: `members`, `members/[id]`, `reports/overview`, `reports/overdue`,
+`reports/inventory`, `reports/circulation`.
 
 Self-service (session-derived identity, no client member id): `me/home`, `me/loans`, `me/history`,
 `me/holds`, `me/charges`, `me/renew`, `me/children`, `me/children/[studentId]/loans`.
@@ -125,7 +134,7 @@ Self-service (session-derived identity, no client member id): `me/home`, `me/loa
 
 `src/features/library/services/`: `library-service.ts`, `library-catalog-service.ts`,
 `library-policy-service.ts`, `library-operations-service.ts`, `library-self-service.ts`,
-`library-copies-csv.ts`, `library-accounting-adapter.ts` (+ 6 co-located `.test.ts` files).
+`library-copies-csv.ts`, `library-accounting-adapter.ts` (+ 7 co-located `.test.ts` files).
 
 ## 6. Capabilities & role
 

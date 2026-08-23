@@ -8,10 +8,14 @@ import { requireServerPage } from '@/libs/api/page-guard';
 // the same workflow - one real, one fake.
 export default async function PaymentEntryPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ studentId?: string }>;
 }) {
   const { locale } = await params;
   await requireServerPage(locale, { allowedRoles: ['accountant', 'school_admin', 'super_admin'] });
-  redirect(`/${locale}/dashboard/finance/collection-desk`);
+  const { studentId } = await searchParams;
+  const query = studentId ? `?studentId=${encodeURIComponent(studentId)}` : '';
+  redirect(`/${locale}/dashboard/finance/collection-desk${query}`);
 }

@@ -39,9 +39,19 @@ const applicantCreateSchema = z.object({
 // from the PUT status-transition handler below - PATCH never touches status.
 const applicantPatchSchema = z.object({
   id: z.string().uuid(),
+  firstName: z.string().trim().min(1).max(255).optional(),
+  lastName: z.string().trim().min(1).max(255).optional(),
+  email: z.string().email().max(255).optional(),
+  phone: z.string().trim().min(1).max(50).optional(),
+  dateOfBirth: z.string().optional(),
   guardianName: z.string().trim().max(255).optional(),
   guardianPhone: z.string().trim().max(50).optional(),
   guardianEmail: z.string().email().max(255).optional(),
+  occupation: z.string().trim().max(255).optional(),
+  address: z.string().trim().max(1000).optional(),
+  emailOptIn: z.boolean().optional(),
+  smsOptIn: z.boolean().optional(),
+  preferredLanguage: z.string().max(10).optional(),
   guardianId: z.string().uuid().optional(),
   gender: z.enum(['female', 'male', 'other']).optional(),
   nationality: z.string().max(100).optional(),
@@ -143,7 +153,7 @@ export async function PATCH(request: Request) {
     if (!existing) {
       throw new ApiError(404, 'NOT_FOUND', 'Demande d\'admission introuvable.');
     }
-    if (existing.status !== 'applied') {
+    if (existing.status !== 'applied' && existing.status !== 'in_review') {
       throw new ApiError(409, 'ALREADY_DECIDED', 'Cette demande d\'admission a déjà été traitée et ne peut plus être modifiée.');
     }
 
@@ -297,6 +307,11 @@ export async function PUT(request: Request) {
               lastName: guardianLastName,
               phone: current.guardianPhone,
               email: current.guardianEmail,
+              occupation: current.occupation,
+              address: current.address,
+              emailOptIn: current.emailOptIn ?? true,
+              smsOptIn: current.smsOptIn ?? true,
+              preferredLanguage: current.preferredLanguage,
               defaultRelation: 'Parent',
             })
             .returning();

@@ -126,6 +126,10 @@ export const guardianCreateSchema = z.object({
   phone: optionalText(50),
   email: z.email().max(255).optional(),
   address: optionalText(255),
+  occupation: optionalText(255),
+  emailOptIn: z.boolean().optional(),
+  smsOptIn: z.boolean().optional(),
+  preferredLanguage: optionalText(10),
   // Free-text names, not student ids - the current UI has no student picker.
   // See MIGRATION-NOTES.md: this is never written to guardian_students.
   linkedStudents: z.array(z.string().trim().max(255)).max(20).optional(),
@@ -387,6 +391,28 @@ export const schoolUpdateSchema = z.object({
   planTier: z.enum(['trial', 'basic', 'standard', 'premium']).optional(),
   subscriptionStatus: z.enum(['active', 'suspended', 'cancelled']).optional(),
   isActive: z.boolean().optional(),
+}).strict();
+
+// Super-admin waitlist (bug 1.2). `waitlistSubmitSchema` is used by the PUBLIC
+// marketing form endpoint (no auth), hence the conservative field limits.
+export const waitlistSubmitSchema = z.object({
+  schoolName: z.string().trim().min(2).max(255),
+  contactName: z.string().trim().min(2).max(255),
+  city: z.string().trim().max(100).optional().nullable(),
+  studentCount: z.enum(['under-200', '200-600', 'over-600']).optional().nullable(),
+  phone: z.string().trim().max(50).optional().nullable(),
+  email: z.union([z.email().max(255), z.literal('')]).optional().nullable(),
+}).strict();
+
+export const waitlistUpdateSchema = z.object({
+  status: z.enum(['new', 'contacted', 'converted', 'dismissed']).optional(),
+  notes: z.string().trim().max(2000).optional().nullable(),
+}).strict();
+
+export const waitlistConvertSchema = z.object({
+  adminEmail: z.email().max(255).optional(),
+  adminName: z.string().trim().min(2).max(255).optional(),
+  planTier: z.enum(['trial', 'basic', 'standard', 'premium']).optional(),
 }).strict();
 
 // ==========================================================================

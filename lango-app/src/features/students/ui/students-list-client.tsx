@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/avatar';
 import {
   Users, UserPlus, Download, Filter, Search,
-  Wallet, CheckCircle2, AlertTriangle,
+  Wallet, CheckCircle2, AlertTriangle, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { useEffect } from 'react';
 import { usePermissions } from '@/hooks/use-permissions';
@@ -76,6 +76,8 @@ type Student = {
   paymentStatus?: string;
 };
 
+const PAGE_SIZE = 100;
+
 export function StudentsListClient({ locale }: { locale?: string } = {}) {
   const { can } = usePermissions();
   const [students, setStudents] = useState<StudentItem[]>([]);
@@ -84,6 +86,8 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
   const [search, setSearch] = useState('');
   const [levelFilter, setLevelFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -95,20 +99,24 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
   const activeStudent = students.find(s => s.id === selectedId) ?? students[0];
 
   const filteredStudents = students.filter(s => {
-    const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.matricule.toLowerCase().includes(search.toLowerCase());
     const matchesLevel = levelFilter === 'all' || s.gradeLevel.includes(levelFilter);
     const matchesStatus = statusFilter === 'all' || s.status === statusFilter;
-    return matchesSearch && matchesLevel && matchesStatus;
+    return matchesLevel && matchesStatus;
   });
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/students?pageSize=200');
+      const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
+      if (search.trim()) params.set('search', search.trim());
+      const res = await fetch(`/api/students?${params}`);
       const json = await res.json();
       if (json.success) {
         const mapped = (json.data as ApiStudent[]).map(fromApiStudent);
         setStudents(mapped);
+        setTotal(json.total ?? mapped.length);
         setSelectedId(prev => (mapped.some(s => s.id === prev) ? prev : (mapped[0]?.id ?? '')));
       }
     } catch (e) {
@@ -119,9 +127,10 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
   };
 
   useEffect(() => {
-    fetchStudents();
+    const t = setTimeout(fetchStudents, search ? 300 : 0);
+    return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [page, search]);
 
   const handleCreateStudent = async () => {
     if (!formStudent.fullName) return;
@@ -246,7 +255,7 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { label: 'Élèves actifs', value: students.filter(s => s.status === 'Actif').length, sub: 'Sur cet établissement', color: 'text-[#2487B8]', icon: Users, iconBg: 'bg-[#DCEBF4]', iconColor: 'text-[#1B6C93]' },
-            { label: 'Inscriptions', value: students.length, sub: 'Total répertorié', color: 'text-emerald-600', icon: CheckCircle2, iconBg: 'bg-[#D1F5E8]', iconColor: 'text-[#17A673]' },
+            { label: 'Inscriptions', value: total, sub: 'Total répertorié', color: 'text-emerald-600', icon: CheckCircle2, iconBg: 'bg-[#D1F5E8]', iconColor: 'text-[#17A673]' },
             { label: 'Sans classe assignée', value: students.filter(s => !s.classSection).length, sub: 'À placer', color: 'text-amber-600', icon: AlertTriangle, iconBg: 'bg-[#FCF0DC]', iconColor: 'text-[#E8A33D]' },
             { label: 'Paiements en retard', value: students.filter(s => s.financialStatus !== 'À jour').length, sub: 'Suivi des impayés', color: 'text-rose-600', icon: Wallet, iconBg: 'bg-[#FCE4E2]', iconColor: 'text-[#E5544B]' },
           ].map((kpi, i) => (
@@ -269,7 +278,7 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               placeholder="Rechercher par nom, matricule, classe..."
               className="pl-10 h-10 text-xs bg-slate-50 border-none rounded-full"
             />
@@ -359,6 +368,19 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
               ))}
             </TableBody>
           </Table>
+        </div>
+
+        {/* Pagination */}
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-slate-500">Page {page} / {totalPages} · {total} élève(s)</span>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="h-9 rounded-xl px-3 text-xs font-bold" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+              <ChevronLeft className="w-4 h-4" /> Précédent
+            </Button>
+            <Button variant="outline" size="sm" className="h-9 rounded-xl px-3 text-xs font-bold" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+              Suivant <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
 

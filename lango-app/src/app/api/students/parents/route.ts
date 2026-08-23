@@ -21,6 +21,10 @@ function toApiGuardian(row: typeof guardians.$inferSelect, linkedStudents: strin
     email: row.email ?? '',
     linkedStudents,
     address: row.address ?? '',
+    occupation: row.occupation ?? '',
+    emailOptIn: row.emailOptIn,
+    smsOptIn: row.smsOptIn,
+    preferredLanguage: row.preferredLanguage ?? '',
     // No portal_access column exists; a linked user account is what portal login
     // actually requires, so its presence is the real signal, not a stored flag.
     portalAccess: row.userId !== null,
@@ -123,6 +127,10 @@ export async function POST(request: Request) {
         phone: body.phone,
         email: body.email,
         address: body.address,
+        occupation: body.occupation,
+        emailOptIn: body.emailOptIn ?? true,
+        smsOptIn: body.smsOptIn ?? true,
+        preferredLanguage: body.preferredLanguage,
         defaultRelation: body.relation || 'Père',
       })
       .returning();
@@ -155,6 +163,10 @@ export async function PUT(request: Request) {
         phone: body.phone,
         email: body.email,
         address: body.address,
+        occupation: body.occupation,
+        emailOptIn: body.emailOptIn,
+        smsOptIn: body.smsOptIn,
+        preferredLanguage: body.preferredLanguage,
         defaultRelation: body.relation,
         updatedAt: new Date().toISOString(),
       })

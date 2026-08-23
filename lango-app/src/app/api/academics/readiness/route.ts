@@ -1,4 +1,4 @@
-import { and, count, eq, isNotNull, isNull } from 'drizzle-orm';
+import { and, count, countDistinct, eq, isNotNull, isNull } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
@@ -77,7 +77,7 @@ export async function GET(request: Request) {
     const [[totalClassSubjects], [assignedSubjects]] = await Promise.all([
       db.select({ count: count() }).from(classSubjects).where(and(eq(classSubjects.tenantId, tenantId), eq(classSubjects.isActive, true))),
       db
-        .select({ count: count() })
+        .select({ count: countDistinct(classSubjects.id) })
         .from(classSubjects)
         .innerJoin(subjectTeachers, eq(subjectTeachers.classSubjectId, classSubjects.id))
         .where(and(eq(classSubjects.tenantId, tenantId), eq(classSubjects.isActive, true))),

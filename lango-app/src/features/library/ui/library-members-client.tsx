@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { RefreshCw, Search, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -40,7 +41,7 @@ export function LibraryMembersClient() {
         <Button type="submit">Rechercher</Button>
       </form>
       {loading ? <div className="py-12 text-center text-sm text-slate-500">Chargement…</div> : members.length === 0 ? <div className="py-12 text-center"><Users className="mx-auto mb-3 h-8 w-8 text-slate-300" /><p className="font-medium">Aucun adhérent trouvé</p></div> :
-        <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b text-slate-500"><th className="p-3">Adhérent</th><th className="p-3">Numéro</th><th className="p-3">Rôle</th><th className="p-3">Statut</th><th className="p-3">Blocage</th></tr></thead><tbody>{members.map(member => { const s = STATE_LABELS[member.state] ?? { label: member.state, cls: 'bg-slate-100 text-slate-500' }; const today = new Date().toISOString().slice(0, 10); const blockedUntil = member.blockUntil && member.blockUntil >= today; return <tr key={member.id} className="border-b last:border-0"><td className="p-3"><div className="font-semibold">{member.name}</div><div className="text-xs text-slate-500">{member.email ?? ''}</div></td><td className="p-3 font-mono text-xs">{member.memberNumber}</td><td className="p-3 capitalize">{member.role}</td><td className="p-3"><Badge className={s.cls}>{s.label}</Badge></td><td className="p-3 text-xs">{blockedUntil ? `Jusqu’au ${member.blockUntil}` : member.blockReason ?? '—'}</td></tr>; })}</tbody></table></div>}
+        <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b text-slate-500"><th className="p-3">Adhérent</th><th className="p-3">Numéro</th><th className="p-3">Rôle</th><th className="p-3">Statut</th><th className="p-3">Blocage</th></tr></thead><tbody>{members.map(member => { const s = STATE_LABELS[member.state] ?? { label: member.state, cls: 'bg-slate-100 text-slate-500' }; const today = new Date().toISOString().slice(0, 10); const blockedUntil = member.blockUntil && member.blockUntil >= today; return <tr key={member.id} className="border-b last:border-0"><td className="p-3"><Link href={`/dashboard/portals/librarian/members/${member.id}`} className="font-semibold text-[#16212B] hover:text-[#2487B8]">{member.name}</Link><div className="text-xs text-slate-500">{member.email ?? ''}</div></td><td className="p-3 font-mono text-xs">{member.memberNumber}</td><td className="p-3 capitalize">{member.role}</td><td className="p-3"><Badge className={s.cls}>{s.label}</Badge></td><td className="p-3 text-xs">{blockedUntil ? `Jusqu’au ${member.blockUntil}` : member.blockReason ?? '—'}</td></tr>; })}</tbody></table></div>}
     </Card>
   </div>;
 }

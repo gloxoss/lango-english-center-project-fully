@@ -114,7 +114,7 @@ export function SmsTemplatesView() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2487B8] to-[#1B6C93] flex items-center justify-center text-white shadow-2xs shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0066FF] to-[#0052CC] flex items-center justify-center text-white shadow-2xs shrink-0">
             <FileCode className="w-6 h-6" />
           </div>
           <div>
@@ -153,7 +153,7 @@ export function SmsTemplatesView() {
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Modèles Enregistrés</h3>
             <button
               onClick={newTemplate}
-              className="text-xs font-bold text-[#2487B8] hover:underline flex items-center gap-1 cursor-pointer"
+              className="text-xs font-bold text-[#0066FF] hover:underline flex items-center gap-1 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Nouveau</span>
@@ -164,13 +164,13 @@ export function SmsTemplatesView() {
               <div
                 key={t.id}
                 className={`w-full p-3 rounded-xl border flex items-start gap-2 transition-all ${
-                  selectedId === t.id ? 'bg-blue-50/70 border-[#2487B8]' : 'bg-white border-slate-200/80 hover:bg-slate-50'
+                  selectedId === t.id ? 'bg-blue-50/70 border-[#0066FF]' : 'bg-white border-slate-200/80 hover:bg-slate-50'
                 }`}
               >
                 <button onClick={() => selectTemplate(t)} className="flex-1 min-w-0 text-left flex items-start gap-2 cursor-pointer">
                   <div
                     className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                      selectedId === t.id ? 'bg-[#2487B8] text-white' : 'bg-slate-100 text-slate-500'
+                      selectedId === t.id ? 'bg-[#0066FF] text-white' : 'bg-slate-100 text-slate-500'
                     }`}
                   >
                     <MessageSquare className="w-4 h-4" />
@@ -214,7 +214,7 @@ export function SmsTemplatesView() {
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder="Saisissez le texte du modèle..."
-              className="w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2487B8] text-slate-800 leading-relaxed font-mono"
+              className="w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0066FF] text-slate-800 leading-relaxed font-mono"
             />
 
             <div className="space-y-2 pt-2">
@@ -227,7 +227,7 @@ export function SmsTemplatesView() {
                     key={v}
                     type="button"
                     onClick={() => insertVariable(v)}
-                    className="px-3 py-1 bg-blue-50 text-[#1B6C93] hover:bg-blue-100 rounded-xl text-xs font-mono font-bold border border-blue-100 transition-colors cursor-pointer"
+                    className="px-3 py-1 bg-blue-50 text-[#0052CC] hover:bg-blue-100 rounded-xl text-xs font-mono font-bold border border-blue-100 transition-colors cursor-pointer"
                   >
                     {v}
                   </button>
@@ -240,7 +240,7 @@ export function SmsTemplatesView() {
             <Button
               disabled={saving}
               onClick={handleSave}
-              className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold gap-2 text-xs rounded-xl h-10 px-6 cursor-pointer"
+              className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-2 text-xs rounded-xl h-10 px-6 cursor-pointer"
             >
               <Save className="w-4 h-4" />
               <span>{saving ? 'Enregistrement...' : 'Enregistrer le Modèle'}</span>
@@ -251,7 +251,7 @@ export function SmsTemplatesView() {
         {/* Mobile Live Simulator Column */}
         <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
           <div className="flex items-center gap-2">
-            <Smartphone className="w-4 h-4 text-[#2487B8]" />
+            <Smartphone className="w-4 h-4 text-[#0066FF]" />
             <h3 className="text-sm font-bold text-[#16212B]">Simulateur Mobile Live</h3>
           </div>
 

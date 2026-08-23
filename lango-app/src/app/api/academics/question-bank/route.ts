@@ -129,6 +129,69 @@ export async function POST(request: Request) {
   }
 }
 
+export async function PUT(request: Request) {
+  try {
+    const context = await requireRequestContext(request, ['school_admin', 'teacher']);
+    const tenantId = requireTenant(context);
+    await requireCapability(context, 'grading.manage');
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ success: false, message: 'ID non fourni' }, { status: 400 });
+    }
+
+    const body = await parseJson(request, createBankItemSchema);
+
+    if (body.options && body.options.length > 0) {
+      const hasCorrect = body.options.some(o => o.isCorrect);
+      if (!hasCorrect) {
+        throw new ApiError(422, 'MISSING_CORRECT_ANSWER', 'Au moins une réponse correcte est requise pour les questions à choix multiple.');
+      }
+    }
+
+    const [existing] = await db.select({ id: questionBankItems.id, createdById: questionBankItems.createdById })
+      .from(questionBankItems)
+      .where(and(eq(questionBankItems.id, id), eq(questionBankItems.tenantId, tenantId)))
+      .limit(1);
+
+    if (!existing) {
+      return NextResponse.json({ success: false, message: 'Question introuvable' }, { status: 404 });
+    }
+
+    if (context.role !== 'school_admin' && context.role !== 'super_admin' && existing.createdById !== context.userId) {
+      throw new ApiError(403, 'FORBIDDEN', 'Vous ne pouvez modifier que vos propres questions.');
+    }
+
+    const result = await db.transaction(async (tx) => {
+      const [updated] = await tx.update(questionBankItems).set({
+        questionText: body.questionText,
+        marks: body.marks,
+        subjectId: body.subjectId,
+        cycle: body.cycle,
+        difficulty: body.difficulty,
+        sectionLabel: body.sectionLabel,
+        updatedAt: new Date().toISOString(),
+      }).where(and(eq(questionBankItems.id, id), eq(questionBankItems.tenantId, tenantId))).returning();
+
+      await tx.delete(questionBankItemOptions).where(eq(questionBankItemOptions.questionBankItemId, id));
+      const options = body.options && body.options.length > 0
+        ? await tx.insert(questionBankItemOptions).values(
+            body.options.map(o => ({ questionBankItemId: id, optionText: o.optionText, isCorrect: o.isCorrect })),
+          ).returning()
+        : [];
+
+      return { ...updated, options };
+    });
+
+    recordAudit(context, 'update', 'question_bank_item', id);
+
+    return NextResponse.json({ success: true, data: result });
+  } catch (error) {
+    return apiErrorResponse(error);
+  }
+}
+
 export async function DELETE(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'teacher']);
@@ -139,6 +202,19 @@ export async function DELETE(request: Request) {
 
     if (!id) {
       return NextResponse.json({ success: false, message: 'ID non fourni' }, { status: 400 });
+    }
+
+    const [existing] = await db.select({ createdById: questionBankItems.createdById })
+      .from(questionBankItems)
+      .where(and(eq(questionBankItems.id, id), eq(questionBankItems.tenantId, tenantId)))
+      .limit(1);
+
+    if (!existing) {
+      return NextResponse.json({ success: false, message: 'Question introuvable' }, { status: 404 });
+    }
+
+    if (context.role !== 'school_admin' && context.role !== 'super_admin' && existing.createdById !== context.userId) {
+      throw new ApiError(403, 'FORBIDDEN', 'Vous ne pouvez supprimer que vos propres questions.');
     }
 
     // Safe to delete unconditionally - copies made via copy-into-exam are

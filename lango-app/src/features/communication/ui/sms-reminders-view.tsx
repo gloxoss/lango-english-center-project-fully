@@ -18,6 +18,7 @@ import {
 type ApiAtRiskStudent = { id: string; name: string; className: string; riskLevel: string };
 type ApiStudent = { id: string; fullName: string; phone: string | null; guardianName: string | null };
 type ApiTemplate = { id: string; name: string; body: string };
+type ApiClassSection = { id: string; className: string; sectionName: string };
 
 type Recipient = { studentId: string; studentName: string; className: string; phone: string; guardianName: string };
 
@@ -26,14 +27,30 @@ export function SmsRemindersView() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [templates, setTemplates] = useState<ApiTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [classSections, setClassSections] = useState<ApiClassSection[]>([]);
+  const [selectedClassSectionId, setSelectedClassSectionId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [sentCount, setSentCount] = useState(0);
 
   useEffect(() => {
+    fetch('/api/academics/class-sections?pageSize=200')
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success && Array.isArray(json.data)) {
+          setClassSections(json.data);
+        }
+      })
+      .catch((err) => console.error('Failed loading class sections', err));
+  }, []);
+
+  useEffect(() => {
+    const summaryUrl = selectedClassSectionId
+      ? `/api/dashboard/summary?classSectionId=${encodeURIComponent(selectedClassSectionId)}`
+      : '/api/dashboard/summary';
     Promise.all([
-      fetch('/api/dashboard/summary').then((r) => r.json()),
+      fetch(summaryUrl).then((r) => r.json()),
       fetch('/api/students?pageSize=200').then((r) => r.json()),
       fetch('/api/communication/templates').then((r) => r.json()),
     ])
@@ -65,7 +82,7 @@ export function SmsRemindersView() {
         }
       })
       .catch((err) => console.error('Failed loading reminder data', err));
-  }, []);
+  }, [selectedClassSectionId]);
 
   function toggle(id: string) {
     setSelectedIds((prev) => {
@@ -162,10 +179,25 @@ export function SmsRemindersView() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
           <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-              <span className="text-xs font-extrabold text-[#16212B]">
-                {recipients.length} destinataire(s) nécessitant un rappel
-              </span>
+            <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-extrabold text-[#16212B]">
+                  {recipients.length} destinataire(s) nécessitant un rappel
+                </span>
+                <Select value={selectedClassSectionId || 'all'} onValueChange={(v) => setSelectedClassSectionId(v === 'all' ? '' : v)}>
+                  <SelectTrigger className="w-56 h-9 text-xs rounded-lg border-slate-200">
+                    <SelectValue placeholder="Toutes les classes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Toutes les classes</SelectItem>
+                    {classSections.map((cs) => (
+                      <SelectItem key={cs.id} value={cs.id}>
+                        {cs.className} {cs.sectionName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <label className="flex items-center gap-2 text-xs font-bold text-[#2487B8] cursor-pointer">
                 <span>Tout sélectionner</span>
                 <input

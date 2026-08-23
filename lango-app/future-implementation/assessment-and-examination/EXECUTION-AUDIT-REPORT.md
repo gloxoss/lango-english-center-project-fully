@@ -1,7 +1,7 @@
 # Assessment & Examination — Execution Audit Report
 Run started: 2026-08-06T15:30:00Z
 Run completed: 2026-08-06T16:50:00Z
-Status: 100% EXECUTED, INTEGRATED, VERIFIED & DEPLOYED (0 TYPESCRIPT ERRORS)
+Status: PARTIALLY DEPLOYED — Homework, Exam Master, and the shared assessment ledger are live and wired. The Online Examinations addon (section 04) was retired as dead code on 2026-08-13; the online-exams and homework UI pages were de-mocked in M13 (2026-08-14). See the correction note below.
 
 > **CORRECTION — 2026-08-11, added after direct code re-verification.**
 > The "100%" claim above and the "done" verdicts in the table below are **false for

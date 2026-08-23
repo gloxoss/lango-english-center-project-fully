@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2, Clock, CheckCircle2, Copy, Library } from 'lucide-react';
+import { Plus, Trash2, Clock, CheckCircle2, Copy, Library, Pencil } from 'lucide-react';
 import { usePermissions } from '@/hooks/use-permissions';
 
 type ClassSubjectOption = { id: string; classId: string; subjectId: string };
@@ -54,6 +54,7 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
   const [examForm, setExamForm] = useState({ classSubjectId: '', title: '', durationMinutes: '60', totalMarks: '20', startsAt: '', endsAt: '' });
   const [showQuestionForm, setShowQuestionForm] = useState(false);
   const [questionForm, setQuestionForm] = useState({ questionText: '', marks: '1', isQcm: false, options: [{ optionText: '', isCorrect: true }, { optionText: '', isCorrect: false }], sectionLabel: '', difficulty: '' });
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,6 +63,7 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
   const [bankFilter, setBankFilter] = useState({ subjectId: '', cycle: '', difficulty: '' });
   const [showBankForm, setShowBankForm] = useState(false);
   const [bankForm, setBankForm] = useState({ questionText: '', marks: '1', subjectId: '', cycle: '', difficulty: '', sectionLabel: '', isQcm: false, options: [{ optionText: '', isCorrect: true }, { optionText: '', isCorrect: false }] });
+  const [editingBankItemId, setEditingBankItemId] = useState<string | null>(null);
   const [copyTarget, setCopyTarget] = useState<{ bankItemId: string; onlineExamId: string } | null>(null);
 
   const loadBankItems = () => {
@@ -79,14 +81,16 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, bankFilter]);
 
-  const handleCreateBankItem = async () => {
+  const resetBankForm = () => setBankForm({ questionText: '', marks: '1', subjectId: '', cycle: '', difficulty: '', sectionLabel: '', isQcm: false, options: [{ optionText: '', isCorrect: true }, { optionText: '', isCorrect: false }] });
+
+  const handleSubmitBankItem = async () => {
     if (!bankForm.questionText.trim()) return;
     setSaving(true);
     setError(null);
     try {
       const options = bankForm.isQcm ? bankForm.options.filter(o => o.optionText.trim()) : undefined;
-      const res = await fetch('/api/academics/question-bank', {
-        method: 'POST',
+      const res = await fetch(editingBankItemId ? `/api/academics/question-bank?id=${editingBankItemId}` : '/api/academics/question-bank', {
+        method: editingBankItemId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           questionText: bankForm.questionText.trim(),
@@ -100,17 +104,33 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
       });
       const json = await res.json();
       if (!json.success) {
-        setError(json.error?.message || json.message || 'Échec de la création.');
+        setError(json.error?.message || json.message || 'Échec de l\'enregistrement.');
         return;
       }
       setShowBankForm(false);
-      setBankForm({ questionText: '', marks: '1', subjectId: '', cycle: '', difficulty: '', sectionLabel: '', isQcm: false, options: [{ optionText: '', isCorrect: true }, { optionText: '', isCorrect: false }] });
+      setEditingBankItemId(null);
+      resetBankForm();
       loadBankItems();
     } catch {
       setError('Connexion impossible.');
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleEditBankItem = (item: BankItem) => {
+    setEditingBankItemId(item.id);
+    setBankForm({
+      questionText: item.questionText,
+      marks: String(item.marks),
+      subjectId: item.subjectId ?? '',
+      cycle: item.cycle ?? '',
+      difficulty: item.difficulty ?? '',
+      sectionLabel: item.sectionLabel ?? '',
+      isQcm: item.options.length > 0,
+      options: item.options.length > 0 ? item.options : [{ optionText: '', isCorrect: true }, { optionText: '', isCorrect: false }],
+    });
+    setShowBankForm(true);
   };
 
   const handleDeleteBankItem = async (id: string) => {
@@ -209,13 +229,15 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
     setError(null);
     try {
       const options = questionForm.isQcm ? questionForm.options.filter(o => o.optionText.trim()) : undefined;
-      const res = await fetch(`/api/academics/online-exams/${selectedExamId}/questions`, {
-        method: 'POST',
+      const res = await fetch(editingQuestionId
+        ? `/api/academics/online-exams/${selectedExamId}/questions/${editingQuestionId}`
+        : `/api/academics/online-exams/${selectedExamId}/questions`, {
+        method: editingQuestionId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           questionText: questionForm.questionText.trim(),
           marks: Number(questionForm.marks),
-          orderIndex: questions.length,
+          ...(editingQuestionId ? {} : { orderIndex: questions.length }),
           options,
           sectionLabel: questionForm.sectionLabel || undefined,
           difficulty: questionForm.difficulty || undefined,
@@ -223,10 +245,11 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
       });
       const json = await res.json();
       if (!json.success) {
-        setError(json.error?.message || json.message || 'Échec de la création de la question.');
+        setError(json.error?.message || json.message || 'Échec de l\'enregistrement de la question.');
         return;
       }
       setShowQuestionForm(false);
+      setEditingQuestionId(null);
       setQuestionForm({ questionText: '', marks: '1', isQcm: false, options: [{ optionText: '', isCorrect: true }, { optionText: '', isCorrect: false }], sectionLabel: '', difficulty: '' });
       loadQuestions(selectedExamId);
     } catch {
@@ -234,6 +257,19 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleEditQuestion = (q: Question) => {
+    setEditingQuestionId(q.id);
+    setQuestionForm({
+      questionText: q.questionText,
+      marks: String(q.marks),
+      isQcm: q.options.length > 0,
+      options: q.options.length > 0 ? q.options : [{ optionText: '', isCorrect: true }, { optionText: '', isCorrect: false }],
+      sectionLabel: q.sectionLabel ?? '',
+      difficulty: q.difficulty ?? '',
+    });
+    setShowQuestionForm(true);
   };
 
   const handleDeleteQuestion = async (id: string) => {
@@ -259,7 +295,7 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
           </Button>
         )}
         {canManage && tab === 'bank' && (
-          <Button size="sm" onClick={() => setShowBankForm(v => !v)} className="h-9 text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5">
+          <Button size="sm" onClick={() => { setEditingBankItemId(null); resetBankForm(); setShowBankForm(v => !v); }} className="h-9 text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5">
             <Plus className="w-3.5 h-3.5" />
             Nouvelle question
           </Button>
@@ -360,7 +396,7 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
               </div>
 
               {canManage && (
-                <Button size="sm" onClick={() => setShowQuestionForm(v => !v)} className="h-9 text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5">
+                <Button size="sm" onClick={() => { setEditingQuestionId(null); setShowQuestionForm(v => !v); }} className="h-9 text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5">
                   <Plus className="w-3.5 h-3.5" />
                   Ajouter une question
                 </Button>
@@ -428,9 +464,9 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
                   )}
                   <div className="flex items-center gap-2">
                     <Button size="sm" disabled={saving} onClick={handleCreateQuestion} className="h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold">
-                      {saving ? 'Enregistrement...' : 'Ajouter'}
+                      {saving ? 'Enregistrement...' : editingQuestionId ? 'Enregistrer' : 'Ajouter'}
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setShowQuestionForm(false)} className="h-9 rounded-xl text-xs font-bold">
+                    <Button size="sm" variant="outline" onClick={() => { setShowQuestionForm(false); setEditingQuestionId(null); }} className="h-9 rounded-xl text-xs font-bold">
                       Annuler
                     </Button>
                   </div>
@@ -469,9 +505,14 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
                       <div className="flex items-center gap-2 shrink-0">
                         <Badge className="bg-[#DCEBF4] text-[#1B6C93] border-none text-[10px] font-bold">{q.marks} pts</Badge>
                         {canManage && (
-                          <button onClick={() => handleDeleteQuestion(q.id)} className="p-1 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          <>
+                            <button onClick={() => handleEditQuestion(q)} className="p-1 rounded-lg text-slate-400 hover:bg-[#DCEBF4] hover:text-[#1B6C93]" title="Modifier">
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => handleDeleteQuestion(q.id)} className="p-1 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </>
                         )}
                       </div>
                     </div>
@@ -575,10 +616,10 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
                 </div>
               )}
               <div className="flex items-center gap-2">
-                <Button size="sm" disabled={saving} onClick={handleCreateBankItem} className="h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold">
-                  {saving ? 'Enregistrement...' : 'Ajouter'}
+                <Button size="sm" disabled={saving} onClick={handleSubmitBankItem} className="h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold">
+                  {saving ? 'Enregistrement...' : editingBankItemId ? 'Enregistrer' : 'Ajouter'}
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => setShowBankForm(false)} className="h-9 rounded-xl text-xs font-bold">
+                <Button size="sm" variant="outline" onClick={() => { setShowBankForm(false); setEditingBankItemId(null); }} className="h-9 rounded-xl text-xs font-bold">
                   Annuler
                 </Button>
               </div>
@@ -618,6 +659,9 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
                     <Badge className="bg-[#DCEBF4] text-[#1B6C93] border-none text-[10px] font-bold">{item.marks} pts</Badge>
                     {canManage && (
                       <>
+                        <button onClick={() => handleEditBankItem(item)} className="p-1 rounded-lg text-slate-400 hover:bg-[#DCEBF4] hover:text-[#1B6C93]" title="Modifier">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
                         <button onClick={() => setCopyTarget({ bankItemId: item.id, onlineExamId: '' })} className="p-1 rounded-lg text-slate-400 hover:bg-[#DCEBF4] hover:text-[#1B6C93]" title="Copier dans un examen">
                           <Copy className="w-3.5 h-3.5" />
                         </button>

@@ -66,6 +66,10 @@ export function ParentsGuardiansClient({ locale }: { locale?: string } = {}) {
     primaryTutorPhone: '+212 6 ',
     primaryTutorEmail: '',
     address: 'Casablanca',
+    occupation: '',
+    emailOptIn: true,
+    smsOptIn: true,
+    preferredLanguage: '',
     childName: '',
     childClass: '2BAC-A',
   });
@@ -106,6 +110,10 @@ export function ParentsGuardiansClient({ locale }: { locale?: string } = {}) {
           phone: newHousehold.primaryTutorPhone,
           email: newHousehold.primaryTutorEmail || undefined,
           address: newHousehold.address,
+          occupation: newHousehold.occupation || undefined,
+          emailOptIn: newHousehold.emailOptIn,
+          smsOptIn: newHousehold.smsOptIn,
+          preferredLanguage: newHousehold.preferredLanguage || undefined,
           linkedStudents: newHousehold.childName ? [newHousehold.childName] : [],
         }),
       });
@@ -115,7 +123,7 @@ export function ParentsGuardiansClient({ locale }: { locale?: string } = {}) {
         return;
       }
       setIsAddOpen(false);
-      setNewHousehold({ familyName: '', primaryTutorName: '', primaryTutorPhone: '+212 6 ', primaryTutorEmail: '', address: 'Casablanca', childName: '', childClass: '2BAC-A' });
+      setNewHousehold({ familyName: '', primaryTutorName: '', primaryTutorPhone: '+212 6 ', primaryTutorEmail: '', address: 'Casablanca', occupation: '', emailOptIn: true, smsOptIn: true, preferredLanguage: '', childName: '', childClass: '2BAC-A' });
       await fetchHouseholds();
     } catch (e) {
       console.error('API Error saving guardian', e);
@@ -394,12 +402,58 @@ export function ParentsGuardiansClient({ locale }: { locale?: string } = {}) {
             </div>
 
             <div>
+              <label className="font-bold text-slate-700 block mb-1">Email</label>
+              <Input
+                type="email"
+                placeholder="Ex. karim@example.com"
+                value={newHousehold.primaryTutorEmail}
+                onChange={e => setNewHousehold({ ...newHousehold, primaryTutorEmail: e.target.value })}
+                className="h-9 text-xs rounded-xl"
+              />
+            </div>
+
+            <div>
               <label className="font-bold text-slate-700 block mb-1">Adresse de résidence</label>
               <Input
                 value={newHousehold.address}
                 onChange={e => setNewHousehold({ ...newHousehold, address: e.target.value })}
                 className="h-9 text-xs rounded-xl"
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Profession</label>
+                <Input
+                  value={newHousehold.occupation}
+                  onChange={e => setNewHousehold({ ...newHousehold, occupation: e.target.value })}
+                  className="h-9 text-xs rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Langue de communication</label>
+                <select
+                  value={newHousehold.preferredLanguage}
+                  onChange={e => setNewHousehold({ ...newHousehold, preferredLanguage: e.target.value })}
+                  className="h-9 w-full rounded-xl border border-slate-200 px-2 text-xs"
+                >
+                  <option value="">Par défaut</option>
+                  <option value="fr">Français</option>
+                  <option value="ar">Arabe</option>
+                  <option value="en">Anglais</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-1.5 font-semibold text-slate-600">
+                <input type="checkbox" checked={newHousehold.emailOptIn} onChange={e => setNewHousehold({ ...newHousehold, emailOptIn: e.target.checked })} className="rounded border-slate-300" />
+                Email
+              </label>
+              <label className="flex items-center gap-1.5 font-semibold text-slate-600">
+                <input type="checkbox" checked={newHousehold.smsOptIn} onChange={e => setNewHousehold({ ...newHousehold, smsOptIn: e.target.checked })} className="rounded border-slate-300" />
+                SMS
+              </label>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

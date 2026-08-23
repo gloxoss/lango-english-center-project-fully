@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { createAccountingDocument } from '@/features/accounting/services/document-service';
 import { requireRequestContext } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
@@ -14,6 +15,9 @@ const createExpenseSchema = z.object({
   category: z.enum(['salary', 'rent', 'utilities', 'supplies', 'marketing', 'other']),
   expenseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   description: z.string().max(1000).optional(),
+  counterparty: z.string().max(255).optional(),
+  expenseAccountId: z.string().uuid().optional(),
+  settlementAccountId: z.string().uuid().optional(),
 }).strict();
 
 export async function GET(req: NextRequest) {
@@ -93,7 +97,29 @@ export async function POST(req: NextRequest) {
       throw new ApiError(500, 'CREATE_EXPENSE_FAILED', 'Impossible de créer la dépense.');
     }
 
-    return NextResponse.json({ success: true, data: newExpense }, { status: 201 });
+    // Feed the real double-entry ledger: when account references are provided,
+    // also create an accounting document (draft) so this expense appears in the
+    // Plan Comptable and can go through submit → approve → post, instead of
+    // living only in the disconnected office journal.
+    let accountingDocumentId: string | null = null;
+    if (body.expenseAccountId && body.settlementAccountId) {
+      const document = await createAccountingDocument({
+        tenantId,
+        actorId: ctx.userId,
+        documentType: 'expense',
+        documentDate: body.expenseDate,
+        reference: `OFF-${newExpense.id.slice(0, 8).toUpperCase()}`,
+        counterparty: body.counterparty,
+        description: body.description || body.category,
+        lines: [
+          { accountId: body.expenseAccountId, debitAmount: Number(body.amount).toFixed(2), creditAmount: '0', memo: body.description || body.category },
+          { accountId: body.settlementAccountId, debitAmount: '0', creditAmount: Number(body.amount).toFixed(2), memo: body.description || body.category },
+        ],
+      });
+      accountingDocumentId = document.id;
+    }
+
+    return NextResponse.json({ success: true, data: { ...newExpense, accountingDocumentId } }, { status: 201 });
   } catch (error) {
     return apiErrorResponse(error);
   }

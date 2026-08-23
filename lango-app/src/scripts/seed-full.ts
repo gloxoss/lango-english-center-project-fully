@@ -127,7 +127,6 @@ import {
   semesters,
   shifts,
   smsMessages,
-  smsTemplates,
   streams,
   studentDiscipline,
   studentDocuments,
@@ -179,7 +178,7 @@ import { hostelAllocationEvents, hostelEscalations } from '@/features/hostel/mod
 import { guardKioskSessions, guardIncidentAttachments, guardEmergencyAcknowledgements } from '@/features/guard/models/guard-schema';
 import { settingDefinitions, settingDefinitionVersions, numberingSeriesDefinitions, numberingSeriesVersions, scheduledJobDefinitions, scheduledJobRuns } from '@/features/settings/models/settings-schema';
 import { invoiceEvents, feeStructureVersions, feeAllocationRuns, feeAllocationTargets } from '@/features/finance/models/student-accounting-schema';
-import { notifications, exportJobs, cndpFilings, accessResetRequests, accountSetupTokens, files, alumniDocuments, schoolLicenses, licensePayments, bankReconciliations, parentGuardianLinkTokens, auditLogs, settingValues, session } from '@/models/Schema';
+import { notifications, exportJobs, cndpFilings, accessResetRequests, accountSetupTokens, files, alumniDocuments, schoolLicenses, licensePayments, bankReconciliations, parentGuardianLinkTokens, auditLogs, settingValues, session, schoolAccessRequests } from '@/models/Schema';
 
 const TENANT_SLUG = 'atlas';
 const SEED_PASSWORD = process.env.SCHOOL_ADMIN_SEED_PASSWORD || 'Admin123!';
@@ -365,7 +364,7 @@ async function run() {
     }
 
     // Naming series so generated numbers continue cleanly.
-    for (const [prefix, currentVal] of [['ATL-2526', 200] as const, ['INV-2026', 200] as const]) {
+    for (const [prefix, currentVal] of [['ATL-2526', 200] as const, ['INV-2026-', 200] as const]) {
       await tx
         .insert(namingSeries)
         .values({ prefix, tenantId, currentVal })
@@ -1200,6 +1199,7 @@ async function run() {
     for (const className of CLASSES) {
       const sections = classInfo[className].sections;
       const subjects = CLASS_SUBJECT_MAP[className];
+      const classIdx = CLASSES.indexOf(className);
       for (const [si, csIdX] of sections.entries()) {
         for (let d = 0; d < 5; d++) {
           const subjName = subjects[(d + si) % subjects.length]!;
@@ -1207,7 +1207,11 @@ async function run() {
           const csSubjectId = classSubjectIds[csKey];
           if (!csSubjectId) continue;
           const [tch] = await tx.select({ teacherId: subjectTeachers.teacherId }).from(subjectTeachers).where(and(eq(subjectTeachers.tenantId, tenantId), eq(subjectTeachers.classSubjectId, csSubjectId))).limit(1);
-          csSlotRows.push({ tenantId, classSectionId: csIdX, classSubjectId: csSubjectId, teacherId: tch?.teacherId ?? teacherIds[(d + si) % 20], dayOfWeek: DAYS[d], startTime: `${8 + d}:00`, endTime: `${8 + d}:55`, roomLabel: `Salle ${(d + si) % 8 + 1}`, offeringId: classInfo[className].offerings[['A', 'B', 'C'][si]!] ?? null, versionId: timetableVersionId });
+          // A subject's responsible teacher is the same across all classes (see
+          // subject_teachers rotation above), so stagger each class's start time
+          // to keep that teacher from being double-booked at the same slot.
+          const startHour = 8 + d + classIdx;
+          csSlotRows.push({ tenantId, classSectionId: csIdX, classSubjectId: csSubjectId, teacherId: tch?.teacherId ?? teacherIds[(d + si) % 20], dayOfWeek: DAYS[d], startTime: `${startHour}:00`, endTime: `${startHour}:55`, roomLabel: `Salle ${(d + si) % 8 + 1}`, offeringId: classInfo[className].offerings[['A', 'B', 'C'][si]!] ?? null, versionId: timetableVersionId });
         }
       }
     }
@@ -1307,7 +1311,7 @@ async function run() {
       invoiceId: inv.id,
       amount: int(40, 200),
       reason: 'Retard de paiement de la scolarité',
-      status: 'open',
+      status: 'assessed',
       waivedAmount: 0,
       assessedAt: isoDays(-int(3, 20)),
     }));
@@ -1744,8 +1748,6 @@ async function run() {
     for (const r of runRows) { const [rr] = await tx.insert(communicationAutomationRuns).values(r).returning(); runIds.push(rr!.id); }
     const autoRecRows = runIds.flatMap((rid) => studentIds.slice(0, 6).map((sid, k) => ({ tenantId, runId: rid, personId: sid, channel: 'sms' as const, status: (k === 5 ? 'skipped' : 'sent') as const, skipReason: k === 5 ? 'NO_CONSENT' : null, createdAt: isoTs(0) })));
     await tx.insert(communicationAutomationRecipients).values(autoRecRows);
-    const smsTplRows = ['Rappel scolarité', 'Absence', 'Convocation'].map((name) => ({ tenantId, name, body: `Message automatique : ${name}.`, createdAt: isoTs(-30), updatedAt: isoTs(-30) }));
-    await tx.insert(smsTemplates).values(smsTplRows);
     const smsMsgRows = studentIds.slice(0, 25).map((sid, i) => ({ tenantId, recipientPhone: `+2126${String(70000000 + i).slice(0, 8)}`, studentId: sid, body: 'Rappel : réunion parents samedi à 10h.', status: (i % 5 === 0 ? 'failed' : 'sent') as const, sentAt: i % 5 === 0 ? null : isoTs(-1), createdById: 'USR-001', createdAt: isoTs(-1) }));
     for (let i = 0; i < smsMsgRows.length; i += 50) await tx.insert(smsMessages).values(smsMsgRows.slice(i, i + 50));
     console.log(`  · seeded communication (${connIds.length} connections, ${tplIds.length} templates, ${campIds.length} campaigns, ${deliveryIds.length} deliveries, ${autoIds.length} automations)`);
@@ -1758,12 +1760,12 @@ async function run() {
     const defIds: string[] = [];
     for (const d of defRows) { const [r] = await tx.insert(certificateDefinitions).values(d).returning(); defIds.push(r!.id); }
     const defVerIds: string[] = [];
-    for (const did of defIds) { const [r] = await tx.insert(certificateDefinitionVersions).values({ tenantId, definitionId: did, versionNumber: 1, fieldAllowlist: ['nom', 'classe', 'annee'], templateSchema: { layout: 'A4' }, pdfmeBasePdf: { page: { width: 210, height: 297 } }, status: 'active' as const, createdAt: isoTs(-50), createdBy: 'USR-001' }).returning(); defVerIds.push(r!.id); }
+    for (const did of defIds) { const [r] = await tx.insert(certificateDefinitionVersions).values({ tenantId, definitionId: did, versionNumber: 1, fieldAllowlist: ['nom', 'classe', 'annee'], templateSchema: [[{ name: 'nom', type: 'text', position: { x: 30, y: 60 }, width: 150, height: 12, content: '{nom}', fontName: 'Roboto', fontSize: 16, alignment: 'center' }]], pdfmeBasePdf: { width: 210, height: 297, padding: [0, 0, 0, 0] }, status: 'active' as const, createdAt: isoTs(-50), createdBy: 'USR-001' }).returning(); defVerIds.push(r!.id); }
     const certTplRows = ['Modèle diplôme lycée', 'Modèle certificat scolarité'].map((name, i) => ({ tenantId, name, description: `Gabarit ${name}`, status: (i === 0 ? 'active' : 'draft') as const, createdAt: isoTs(-50), createdBy: 'USR-001' }));
     const certTplIds: string[] = [];
     for (const t of certTplRows) { const [r] = await tx.insert(certificateTemplates).values(t).returning(); certTplIds.push(r!.id); }
     const certTplVerIds: string[] = [];
-    for (const tid of certTplIds) { const [r] = await tx.insert(certificateTemplateVersions).values({ tenantId, templateId: tid, versionNumber: 1, templateSchema: { fields: ['nom', 'classe'] }, pdfmeBasePdf: { page: { width: 210, height: 297 } }, status: 'active' as const, createdAt: isoTs(-50), createdBy: 'USR-001' }).returning(); certTplVerIds.push(r!.id); }
+    for (const tid of certTplIds) { const [r] = await tx.insert(certificateTemplateVersions).values({ tenantId, templateId: tid, versionNumber: 1, templateSchema: [[{ name: 'nom', type: 'text', position: { x: 30, y: 60 }, width: 150, height: 12, content: '{nom}', fontName: 'Roboto', fontSize: 16, alignment: 'center' }]], pdfmeBasePdf: { width: 210, height: 297, padding: [0, 0, 0, 0] }, status: 'active' as const, createdAt: isoTs(-50), createdBy: 'USR-001' }).returning(); certTplVerIds.push(r!.id); }
     const reqRows = studentIds.slice(0, 18).map((sid, i) => ({ tenantId, definitionId: defIds[i % 3], requesterId: 'USR-001', recipientId: sid, evidenceSnapshot: { source: 'admin' }, status: pick(['submitted', 'approved', 'issued', 'under_review'] as const), notes: null, createdAt: isoTs(-20), updatedAt: isoTs(-5) }));
     const reqIds: string[] = [];
     for (let i = 0; i < reqRows.length; i += 50) { const rows = await tx.insert(certificateRequests).values(reqRows.slice(i, i + 50)).returning({ id: certificateRequests.id }); reqIds.push(...rows.map((r) => r.id)); }
@@ -1784,7 +1786,7 @@ async function run() {
     const docTplIds: string[] = [];
     for (const t of docTplRows) { const [r] = await tx.insert(documentTemplates).values(t).returning(); docTplIds.push(r!.id); }
     const docTplVerIds: string[] = [];
-    for (const tid of docTplIds) { const [r] = await tx.insert(documentTemplateVersions).values({ tenantId, templateId: tid, versionNumber: 1, pageWidthMm: 86, pageHeightMm: 54, orientation: 'landscape', schemaJson: { fields: ['nom', 'photo', 'classe'] }, storageKey: null, publishedById: 'USR-001', publishedAt: isoTs(-40), createdAt: isoTs(-40) }).returning(); docTplVerIds.push(r!.id); }
+    for (const tid of docTplIds) { const [r] = await tx.insert(documentTemplateVersions).values({ tenantId, templateId: tid, versionNumber: 1, pageWidthMm: 86, pageHeightMm: 54, orientation: 'landscape', schemaJson: { basePdf: { width: 86, height: 54, padding: [0, 0, 0, 0] }, schemas: [[{ name: 'nom', type: 'text', position: { x: 10, y: 10 }, width: 66, height: 10, content: '{nom}', fontName: 'Roboto', fontSize: 12, alignment: 'left' }]] }, storageKey: null, publishedById: 'USR-001', publishedAt: isoTs(-40), createdAt: isoTs(-40) }).returning(); docTplVerIds.push(r!.id); }
     const issuedDocRows = studentIds.slice(0, 12).map((sid, i) => ({ tenantId, type: (i % 3 === 2 ? 'admit_card' : 'student_id') as const, templateVersionId: docTplVerIds[i % 3 === 2 ? 2 : 0], subjectType: 'student' as const, subjectId: sid, examCandidateId: null, publicTokenHash: `doc-${i}-${sid.slice(0, 6)}`, status: (i % 6 === 0 ? 'revoked' : 'active') as const, validFrom: '2025-09-01T00:00:00.000Z', validUntil: '2026-08-31T00:00:00.000Z', renderDataSnapshot: { nom: sid }, issuedById: 'USR-001', issuedAt: isoTs(-90), replacedDocumentId: null, revokedAt: i % 6 === 0 ? isoTs(-3) : null, revokedById: i % 6 === 0 ? 'USR-001' : null, revokeReason: i % 6 === 0 ? 'perdu' : null }));
     const issuedDocIds: string[] = [];
     for (let i = 0; i < issuedDocRows.length; i += 50) { const rows = await tx.insert(issuedDocuments).values(issuedDocRows.slice(i, i + 50)).returning({ id: issuedDocuments.id }); issuedDocIds.push(...rows.map((r) => r.id)); }
@@ -2056,6 +2058,13 @@ async function run() {
     await tx.insert(cndpFilings).values([{ tenantId, filingReference: 'CNDP-2026-001', filedAt: '2026-03-15', status: 'approved', documentUploadPath: 'cndp/f211-2026.pdf', notes: 'Dossier complet', createdAt: isoTs(-30), updatedAt: isoTs(-30) }]);
     const [lic] = await tx.insert(schoolLicenses).values({ tenantId, licenseKey: 'ATL-2026-LIC-001', status: 'active', issuedAt: isoTs(-150), expiresAt: isoTs(365), lastUpgradeAt: isoTs(-30), notes: 'Licence standard', issuedById: 'USR-SUPER-001', createdAt: isoTs(-150), updatedAt: isoTs(-30) }).returning();
     await tx.insert(licensePayments).values([{ tenantId, licenseId: lic!.id, planTier: 'standard' as const, amount: '15000.00', currency: 'MAD', method: 'bank_transfer', status: 'completed', transactionRef: 'TX-2026-0001', purchasedAt: isoTs(-150), expiresAtAtPurchase: isoTs(365), requestedMonths: 12, requestedById: 'USR-001', recordedById: 'USR-ACC-001' }]);
+    await tx.insert(schoolAccessRequests).values([
+      { schoolName: 'Groupe Scolaire Al Amal', contactName: 'M. Hassan Bennani', city: 'Casablanca', studentCount: '200-600', phone: '+212661234567', email: 'direction@alamal.ma', status: 'new', notes: null, convertedTenantId: null, createdAt: isoTs(-1) },
+      { schoolName: 'École Privée Les Oliviers', contactName: 'Mme Salma Idrissi', city: 'Rabat', studentCount: 'under-200', phone: '+212662345678', email: 'contact@oliviers.ma', status: 'contacted', notes: 'À rappeler jeudi', convertedTenantId: null, createdAt: isoTs(-3) },
+      { schoolName: 'Lycée Ibn Khaldoun', contactName: 'M. Youssef El Amrani', city: 'Fès', studentCount: 'over-600', phone: '+212663456789', email: 'admin@ibnkhaldoun.ma', status: 'new', notes: null, convertedTenantId: null, createdAt: isoTs(-5) },
+      { schoolName: 'Groupe Scolaire La Pléiade', contactName: 'Mme Nadia Chraibi', city: 'Tanger', studentCount: '200-600', phone: '+212664567890', email: null, status: 'converted', notes: null, convertedTenantId: tenantId, createdAt: isoTs(-10) },
+      { schoolName: 'École Internationale Al Manar', contactName: 'M. Karim Tazi', city: 'Marrakech', studentCount: 'under-200', phone: '+212665678901', email: 'info@almanar.ma', status: 'dismissed', notes: 'Doublon', convertedTenantId: null, createdAt: isoTs(-12) },
+    ]);
     await tx.insert(alumniDocuments).values(studentIds.slice(0, 10).map((sid, i) => ({ tenantId, alumnusId: sid, documentType: i % 2 === 0 ? 'diploma' : 'certificate', fileExt: 'pdf', verificationCode: `ALUM-${pad4(i + 1)}`, status: 'active' as const, issuedAt: isoTs(-20), supersededAt: null, issuedBy: 'USR-001' })));
     await tx.insert(accountSetupTokens).values(teacherIds.slice(0, 6).map((tid, i) => ({ tenantId, userId: tid, token: `setup-${tid.toLowerCase()}-${i}`, expiresAt: isoTs(30), usedAt: i % 2 === 0 ? isoTs(-10) : null, createdAt: isoTs(-20) })));
     await tx.insert(accessResetRequests).values(studentIds.slice(0, 6).map((sid, i) => ({ tenantId, studentId: sid, guardianId: guardianIds[i % 130]!, status: 'code_generated', createdAt: isoTs(-5) })));

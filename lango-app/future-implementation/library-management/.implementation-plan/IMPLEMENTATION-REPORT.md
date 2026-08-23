@@ -97,11 +97,11 @@ Legend: ✅ implemented+verified · 🟡 implemented but incomplete/unverified �
 | Plan requirement | Status | Evidence |
 |---|---|---|
 | Overview + overdue reports | ✅ | `/reports/overview`, `/reports/overdue` |
-| Inventory / circulation reports | ❌ | missing |
+| Inventory / circulation reports | ✅ | `/reports/inventory` (per-branch state/condition pivot + totals), `/reports/circulation` (loan/hold/transfer/charge aggregates + 30-day daily series), wired into the reports page |
 | CSV export (filter parity) | ❌ | missing |
 | CSV import (validate→preview→commit) | ❌ | missing |
-| Dashboard + desk pages | 🟡 | `/portals/librarian` + `/desk` exist; **rest of operational pages missing** (copies/members/policies/holds/transfers/stocktake/reports) |
-| Member detail page | ❌ | missing |
+| Dashboard + desk pages | ✅ | `/portals/librarian` dashboard + `/desk` + 10 operational pages (catalog, copies, members, policies, holds, transfers, stocktake, reports, …) |
+| Member detail page | ✅ | `/api/addons/library/members/[id]` + `/portals/librarian/members/[id]` page + detail client; members list row → detail `<Link>` navigation |
 | Add-on disable → 403 + identity preserved | 🟡 | `requireAddon` in guard; **no regression test** |
 | Direct-URL protection | 🟡 | `requireLibraryPage` server guard; **no client-side 403 state** |
 
@@ -118,7 +118,7 @@ Legend: ✅ implemented+verified · 🟡 implemented but incomplete/unverified �
 ## 2b. Status refresh — 2026-08-09 (supersedes the matrix rows below)
 
 The audit matrix below was written when the add-on was a 4-happy-path core. Between then and now the
-workstream delivered (evidence: 35 live tests in `src/features/library/services/`):
+workstream delivered (evidence: 40 live tests in `src/features/library/services/`):
 
 - **Catalog/copy/policy completion** — record detail (`catalog/[id]`), taxonomy CRUD
   (contributors/publishers/categories/subjects), edition/copy CRUD, copy re-home + withdrawal
@@ -140,6 +140,12 @@ workstream delivered (evidence: 35 live tests in `src/features/library/services/
   preserved (identity survives for reactivation), and the librarian capability denial/grant matrix
   incl. the positive `userPermissionOverrides` grant path. (§3 matrix rows "add-on disable regression"
   and the override/waive denial gaps; `library-guard`, 3 tests)
+- **Final buildable gaps (2026-08-14)** — `reports/inventory` + `reports/circulation` routes with
+  real tenant-scoped aggregates wired into the reports page; `GET /api/addons/library/members/[id]`
+  + `members/[id]` detail page with list→detail row navigation; live HTTP acceptance harness
+  (`scripts/seed-library-test-data.ts` + `scripts/verify-library-adversarial.mjs`, 11 checks C01–C11
+  covering 401/403/404/409/422/`ADDON_NOT_ACTIVATED` + cross-tenant isolation). Route inventory is now
+  52 route files. (`library-operations-service`, `library-service`, 3 new tests → 8 files / 40 tests)
 
 Still open (honest): **manual/browser sign-off** per `MANUAL-TESTING.md` §0, and the out-of-V1 items
 (RFID/SIP2, barcode printing, acquisitions, digital-asset hosting, self-checkout, SMS/email delivery).
@@ -166,7 +172,7 @@ Still open (honest): **manual/browser sign-off** per `MANUAL-TESTING.md` §0, an
 
 ## 4. Verified operational behavior (executed against real local Postgres)
 
-`npx vitest run src/features/library/services/` → **7 files, 35 tests, all pass** (2026-08-09, live DB).
+`npx vitest run src/features/library/services/` → **8 files, 40 tests, all pass** (2026-08-14, live DB).
 Full inventory with per-test assertions: `VERIFICATION-EVIDENCE.md` §2. The original happy-path set
 (`library-service.test.ts`):
 

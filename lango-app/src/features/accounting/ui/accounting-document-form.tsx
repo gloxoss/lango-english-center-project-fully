@@ -11,6 +11,8 @@ type Account = { id: string; code: string; name: string };
 export function AccountingDocumentForm({ mode, locale = 'fr' }: { mode: 'deposit' | 'expense'; locale?: string }) {
   const ar = locale === 'ar';
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [journals, setJournals] = useState<{ id: string; code: string; name: string }[]>([]);
+  const [vouchers, setVouchers] = useState<{ id: string; code: string; name: string; journalCode: string }[]>([]);
   const [form, setForm] = useState({
     date: new Date().toISOString().slice(0, 10), reference: '', counterparty: '', description: '', amount: '', debitAccountId: '', creditAccountId: '', journalCode: '', voucherTypeCode: '',
   });
@@ -22,6 +24,12 @@ export function AccountingDocumentForm({ mode, locale = 'fr' }: { mode: 'deposit
     fetch('/api/finance/accounting/accounts?pageSize=100').then(response => response.json()).then((json) => {
       if (json.success) setAccounts(json.data);
     }).catch(() => setError('Impossible de charger les comptes.'));
+    fetch('/api/finance/accounting/journals').then(response => response.json()).then((json) => {
+      if (json.success) setJournals(json.data);
+    }).catch(() => {});
+    fetch('/api/finance/accounting/voucher-types').then(response => response.json()).then((json) => {
+      if (json.success) setVouchers(json.data);
+    }).catch(() => {});
   }, []);
 
   const submit = async (event: React.FormEvent) => {
@@ -54,7 +62,7 @@ export function AccountingDocumentForm({ mode, locale = 'fr' }: { mode: 'deposit
       <label className="text-xs font-bold">{mode === 'deposit' ? 'Compte banque/caisse à débiter' : 'Compte de charge à débiter'}<select required value={form.debitAccountId} onChange={event => field('debitAccountId', event.target.value)} className="mt-1 h-10 w-full rounded-md border px-3"><option value="">Sélectionner…</option>{accounts.map(account => <option key={account.id} value={account.id}>{account.code} — {account.name}</option>)}</select></label>
       <label className="text-xs font-bold">{mode === 'deposit' ? 'Compte source à créditer' : 'Compte banque/fournisseur à créditer'}<select required value={form.creditAccountId} onChange={event => field('creditAccountId', event.target.value)} className="mt-1 h-10 w-full rounded-md border px-3"><option value="">Sélectionner…</option>{accounts.map(account => <option key={account.id} value={account.id}>{account.code} — {account.name}</option>)}</select></label>
       <label className="text-xs font-bold">Montant MAD<Input required inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" value={form.amount} onChange={event => field('amount', event.target.value)} className="mt-1" /></label>
-      {mode === 'deposit' && <><label className="text-xs font-bold">Code journal<Input required value={form.journalCode} onChange={event => field('journalCode', event.target.value.toUpperCase())} className="mt-1" /></label><label className="text-xs font-bold">Type de pièce<Input required value={form.voucherTypeCode} onChange={event => field('voucherTypeCode', event.target.value.toUpperCase())} className="mt-1" /></label></>}
+      {mode === 'deposit' && <><label className="text-xs font-bold">Code journal<select required value={form.journalCode} onChange={event => { field('journalCode', event.target.value); field('voucherTypeCode', ''); }} className="mt-1 h-10 w-full rounded-md border px-3"><option value="">Sélectionner…</option>{journals.map(journal => <option key={journal.id} value={journal.code}>{journal.code} — {journal.name}</option>)}</select></label><label className="text-xs font-bold">Type de pièce<select required value={form.voucherTypeCode} onChange={event => field('voucherTypeCode', event.target.value)} className="mt-1 h-10 w-full rounded-md border px-3"><option value="">Sélectionner…</option>{vouchers.filter(v => !form.journalCode || v.journalCode === form.journalCode).map(voucher => <option key={voucher.id} value={voucher.code}>{voucher.code} — {voucher.name}</option>)}</select></label></>}
       <label className="text-xs font-bold sm:col-span-2">Description<Input required value={form.description} onChange={event => field('description', event.target.value)} className="mt-1" /></label>
       <div className="sm:col-span-2"><Button type="submit" disabled={saving} className="bg-[#2487B8] text-white">{saving ? (ar ? 'جارٍ الحفظ…' : 'Enregistrement…') : ar ? (mode === 'deposit' ? 'ترحيل القيد' : 'إنشاء المسودة') : mode === 'deposit' ? 'Comptabiliser' : 'Créer le brouillon'}</Button></div>
     </form></Card>

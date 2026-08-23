@@ -5,7 +5,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, CheckCircle2, XCircle, Eye, Clock } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Search, CheckCircle2, XCircle, Eye, Clock, Pencil } from 'lucide-react';
 import { usePermissions } from '@/hooks/use-permissions';
 
 type Applicant = {
@@ -34,6 +35,22 @@ type ClassSectionOption = { id: string; className: string; sectionName: string }
 type StaffOption = { id: string; name: string };
 type Interview = { scheduledAt: string; interviewerId: string | null; location: string | null; status: string; notes: string | null };
 type Comment = { id: string; body: string; createdAt: string; authorName: string | null };
+
+type EditForm = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  dateOfBirth: string;
+  gender: string;
+  nationality: string;
+  city: string;
+  motherTongue: string;
+  bloodGroup: string;
+  guardianName: string;
+  guardianPhone: string;
+  guardianEmail: string;
+};
 
 const STATUS_LABEL: Record<Applicant['status'], string> = {
   applied: 'Reçue', in_review: 'En revue', approved: 'Approuvée', rejected: 'Rejetée',
@@ -65,6 +82,9 @@ export function AdmissionRequestsClient({ locale: _locale }: { locale?: string }
   const [interviewForm, setInterviewForm] = useState({ scheduledAt: '', interviewerId: '', location: '', status: 'scheduled' });
   const [comments, setComments] = useState<Comment[] | null>(null);
   const [newComment, setNewComment] = useState('');
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState<EditForm | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -191,7 +211,67 @@ export function AdmissionRequestsClient({ locale: _locale }: { locale?: string }
     }
   };
 
+  const openEdit = () => {
+    if (!activeCandidate) return;
+    setEditForm({
+      firstName: activeCandidate.firstName,
+      lastName: activeCandidate.lastName,
+      email: activeCandidate.email,
+      phone: activeCandidate.phone,
+      dateOfBirth: activeCandidate.dateOfBirth?.slice(0, 10) ?? '',
+      gender: activeCandidate.gender ?? '',
+      nationality: activeCandidate.nationality ?? '',
+      city: activeCandidate.city ?? '',
+      motherTongue: activeCandidate.motherTongue ?? '',
+      bloodGroup: activeCandidate.bloodGroup ?? '',
+      guardianName: activeCandidate.guardianName ?? '',
+      guardianPhone: activeCandidate.guardianPhone ?? '',
+      guardianEmail: activeCandidate.guardianEmail ?? '',
+    });
+    setEditOpen(true);
+  };
+
+  const saveEdit = async () => {
+    if (!activeCandidate || !editForm) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/students/admissions', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: activeCandidate.id,
+          firstName: editForm.firstName.trim(),
+          lastName: editForm.lastName.trim(),
+          email: editForm.email.trim(),
+          phone: editForm.phone.trim(),
+          dateOfBirth: editForm.dateOfBirth || undefined,
+          gender: editForm.gender || undefined,
+          nationality: editForm.nationality.trim() || undefined,
+          city: editForm.city.trim() || undefined,
+          motherTongue: editForm.motherTongue.trim() || undefined,
+          bloodGroup: editForm.bloodGroup.trim() || undefined,
+          guardianName: editForm.guardianName.trim() || undefined,
+          guardianPhone: editForm.guardianPhone.trim() || undefined,
+          guardianEmail: editForm.guardianEmail.trim() || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        setError(json.error?.message || json.message || 'Échec de la mise à jour.');
+        return;
+      }
+      setEditOpen(false);
+      load();
+    } catch {
+      setError('Connexion impossible.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const canDecide = can('admissions.manage');
+  const canEdit = can('admissions.manage') && (activeCandidate?.status === 'applied' || activeCandidate?.status === 'in_review');
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
@@ -251,7 +331,14 @@ export function AdmissionRequestsClient({ locale: _locale }: { locale?: string }
                       <h2 className="text-lg font-extrabold text-[#16212B]">{activeCandidate.firstName} {activeCandidate.lastName}</h2>
                       <p className="text-xs text-slate-500">Reçue le {activeCandidate.applicationDate.slice(0, 10)}</p>
                     </div>
-                    <Badge className={`${STATUS_BADGE[activeCandidate.status]} border-none text-[10px] font-bold`}>{STATUS_LABEL[activeCandidate.status]}</Badge>
+                    <div className="flex items-center gap-2">
+                      {canEdit && (
+                        <Button variant="outline" size="sm" onClick={openEdit} className="h-8 rounded-xl text-[11px] font-bold gap-1.5">
+                          <Pencil className="w-3.5 h-3.5" /> Modifier
+                        </Button>
+                      )}
+                      <Badge className={`${STATUS_BADGE[activeCandidate.status]} border-none text-[10px] font-bold`}>{STATUS_LABEL[activeCandidate.status]}</Badge>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
@@ -388,6 +475,85 @@ export function AdmissionRequestsClient({ locale: _locale }: { locale?: string }
               )}
         </div>
       </div>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Modifier la demande</DialogTitle>
+            <DialogDescription>
+              Mettez à jour les informations du candidat. Les modifications restent possibles tant qu&apos;aucune décision (approuvée / rejetée) n&apos;a été prise.
+            </DialogDescription>
+          </DialogHeader>
+          {editForm && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className="flex flex-col gap-1 text-xs">
+                <span className="font-bold text-slate-500">Prénom *</span>
+                <Input value={editForm.firstName} onChange={e => setEditForm({ ...editForm, firstName: e.target.value })} className="h-9 rounded-xl text-xs" />
+              </label>
+              <label className="flex flex-col gap-1 text-xs">
+                <span className="font-bold text-slate-500">Nom *</span>
+                <Input value={editForm.lastName} onChange={e => setEditForm({ ...editForm, lastName: e.target.value })} className="h-9 rounded-xl text-xs" />
+              </label>
+              <label className="flex flex-col gap-1 text-xs">
+                <span className="font-bold text-slate-500">Email *</span>
+                <Input type="email" value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} className="h-9 rounded-xl text-xs" />
+              </label>
+              <label className="flex flex-col gap-1 text-xs">
+                <span className="font-bold text-slate-500">Téléphone *</span>
+                <Input type="tel" value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} className="h-9 rounded-xl text-xs" />
+              </label>
+              <label className="flex flex-col gap-1 text-xs">
+                <span className="font-bold text-slate-500">Date de naissance</span>
+                <Input type="date" value={editForm.dateOfBirth} onChange={e => setEditForm({ ...editForm, dateOfBirth: e.target.value })} className="h-9 rounded-xl text-xs" />
+              </label>
+              <label className="flex flex-col gap-1 text-xs">
+                <span className="font-bold text-slate-500">Genre</span>
+                <select value={editForm.gender} onChange={e => setEditForm({ ...editForm, gender: e.target.value })} className="h-9 rounded-xl border border-slate-200 px-2 text-xs">
+                  <option value="">Non renseigné</option>
+                  <option value="male">Homme</option>
+                  <option value="female">Femme</option>
+                  <option value="other">Autre</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-xs">
+                <span className="font-bold text-slate-500">Nationalité</span>
+                <Input value={editForm.nationality} onChange={e => setEditForm({ ...editForm, nationality: e.target.value })} className="h-9 rounded-xl text-xs" />
+              </label>
+              <label className="flex flex-col gap-1 text-xs">
+                <span className="font-bold text-slate-500">Ville</span>
+                <Input value={editForm.city} onChange={e => setEditForm({ ...editForm, city: e.target.value })} className="h-9 rounded-xl text-xs" />
+              </label>
+              <label className="flex flex-col gap-1 text-xs">
+                <span className="font-bold text-slate-500">Langue maternelle</span>
+                <Input value={editForm.motherTongue} onChange={e => setEditForm({ ...editForm, motherTongue: e.target.value })} className="h-9 rounded-xl text-xs" />
+              </label>
+              <label className="flex flex-col gap-1 text-xs">
+                <span className="font-bold text-slate-500">Groupe sanguin</span>
+                <Input value={editForm.bloodGroup} onChange={e => setEditForm({ ...editForm, bloodGroup: e.target.value })} className="h-9 rounded-xl text-xs" />
+              </label>
+              <label className="flex flex-col gap-1 text-xs">
+                <span className="font-bold text-slate-500">Tuteur</span>
+                <Input value={editForm.guardianName} onChange={e => setEditForm({ ...editForm, guardianName: e.target.value })} className="h-9 rounded-xl text-xs" />
+              </label>
+              <label className="flex flex-col gap-1 text-xs">
+                <span className="font-bold text-slate-500">Téléphone tuteur</span>
+                <Input type="tel" value={editForm.guardianPhone} onChange={e => setEditForm({ ...editForm, guardianPhone: e.target.value })} className="h-9 rounded-xl text-xs" />
+              </label>
+              <label className="flex flex-col gap-1 text-xs sm:col-span-2">
+                <span className="font-bold text-slate-500">Email tuteur</span>
+                <Input type="email" value={editForm.guardianEmail} onChange={e => setEditForm({ ...editForm, guardianEmail: e.target.value })} className="h-9 rounded-xl text-xs" />
+              </label>
+            </div>
+          )}
+          {error && <p className="text-xs font-semibold text-rose-600">{error}</p>}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)} className="h-9 rounded-xl text-xs font-bold">Annuler</Button>
+            <Button disabled={saving} onClick={saveEdit} className="h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold">
+              {saving ? 'Enregistrement...' : 'Enregistrer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

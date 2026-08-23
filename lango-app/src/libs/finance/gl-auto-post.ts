@@ -141,3 +141,90 @@ export async function tryPostRefundGLEntry(opts: {
   }
 }
 
+// Payment reversal — mirror of the payment entry: DR AR (34) / CR Cash (11).
+export async function tryPostPaymentReversalGLEntry(opts: {
+  tenantId: string;
+  actorId: string;
+  reversalId: string;
+  invoiceNumber: string;
+  amount: string; // decimal string
+  reversalDate: string; // ISO date string
+}): Promise<PostResult> {
+  try {
+    const [arAccount, cashAccount] = await Promise.all([
+      resolveAccount(opts.tenantId, '34'),
+      resolveAccount(opts.tenantId, '11'),
+    ]);
+    if (!arAccount || !cashAccount) return null;
+
+    return await postBalancedJournal({
+      tenantId: opts.tenantId,
+      actorId: opts.actorId,
+      entryDate: opts.reversalDate.slice(0, 10),
+      description: `Annulation paiement — Facture ${opts.invoiceNumber}`,
+      sourceModule: 'payment_reversal',
+      sourceId: opts.reversalId,
+      lines: [
+        { accountId: arAccount.id, debitAmount: opts.amount, creditAmount: '0', memo: `Annulation paiement — Facture ${opts.invoiceNumber}` },
+        { accountId: cashAccount.id, debitAmount: '0', creditAmount: opts.amount, memo: `Réintégration caisse — Facture ${opts.invoiceNumber}` },
+      ],
+    });
+  } catch (err) {
+    if (isSoftError(err)) return null;
+    throw err;
+  }
+}
+
+// Cashier close variance — only posted when variance !== 0.
+// overage (variance > 0):  DR Cash (11) / CR Other income (75)
+// shortage (variance < 0): DR Other expense (65) / CR Cash (11)
+export async function tryPostCashierVarianceGLEntry(opts: {
+  tenantId: string;
+  actorId: string;
+  cashierClosingId: string;
+  variance: number;
+  closeDate: string; // ISO date string
+}): Promise<PostResult> {
+  if (opts.variance === 0) return null;
+  try {
+    const amount = Math.abs(opts.variance).toFixed(2);
+    const cashAccount = await resolveAccount(opts.tenantId, '11');
+    if (!cashAccount) return null;
+
+    if (opts.variance > 0) {
+      const incomeAccount = await resolveAccount(opts.tenantId, '75');
+      if (!incomeAccount) return null;
+      return await postBalancedJournal({
+        tenantId: opts.tenantId,
+        actorId: opts.actorId,
+        entryDate: opts.closeDate.slice(0, 10),
+        description: 'Écart de caisse — excédent',
+        sourceModule: 'cashier_variance',
+        sourceId: opts.cashierClosingId,
+        lines: [
+          { accountId: cashAccount.id, debitAmount: amount, creditAmount: '0', memo: 'Excédent de caisse' },
+          { accountId: incomeAccount.id, debitAmount: '0', creditAmount: amount, memo: 'Excédent de caisse' },
+        ],
+      });
+    }
+
+    const expenseAccount = await resolveAccount(opts.tenantId, '65');
+    if (!expenseAccount) return null;
+    return await postBalancedJournal({
+      tenantId: opts.tenantId,
+      actorId: opts.actorId,
+      entryDate: opts.closeDate.slice(0, 10),
+      description: 'Écart de caisse — manquant',
+      sourceModule: 'cashier_variance',
+      sourceId: opts.cashierClosingId,
+      lines: [
+        { accountId: expenseAccount.id, debitAmount: amount, creditAmount: '0', memo: 'Manquant de caisse' },
+        { accountId: cashAccount.id, debitAmount: '0', creditAmount: amount, memo: 'Manquant de caisse' },
+      ],
+    });
+  } catch (err) {
+    if (isSoftError(err)) return null;
+    throw err;
+  }
+}
+

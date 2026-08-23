@@ -3,6 +3,11 @@
 // vocabulary and handles fetch/error consistently.
 export type ApiErrorShape = { code?: string; message?: string };
 
+export const ADDON_NOT_ACTIVATED = 'ADDON_NOT_ACTIVATED';
+export function isAddonNotActivated(error?: ApiErrorShape): boolean {
+  return error?.code === ADDON_NOT_ACTIVATED;
+}
+
 export async function api<T>(url: string, init?: RequestInit): Promise<{ ok: boolean; status: number; data?: T; error?: ApiErrorShape }> {
   try {
     const res = await fetch(url, { ...init, credentials: 'include', headers: { 'Content-Type': 'application/json' } });

@@ -71,6 +71,9 @@ export function AttendanceFlagDetailView({ id, locale }: { id: string; locale: s
   const [newNote, setNewNote] = useState('');
   const [savingNote, setSavingNote] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [smsBody, setSmsBody] = useState('');
+  const [sendingSms, setSendingSms] = useState(false);
+  const [smsStatus, setSmsStatus] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
 
   async function loadFlag() {
     setLoading(true);
@@ -147,6 +150,34 @@ export function AttendanceFlagDetailView({ id, locale }: { id: string; locale: s
       console.error('Add note failed', err);
     } finally {
       setSavingNote(false);
+    }
+  }
+
+  async function sendSms() {
+    if (!flag?.guardianPhone || !smsBody.trim()) {
+      return;
+    }
+    setSendingSms(true);
+    setSmsStatus(null);
+    try {
+      const res = await fetch('/api/communication/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipientPhone: flag.guardianPhone, studentId: flag.studentId, body: smsBody.trim() }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setSmsBody('');
+        setSmsStatus({ kind: 'success', text: 'SMS enregistré (mode simulation, aucun envoi réel).' });
+        await loadFlag();
+      } else {
+        setSmsStatus({ kind: 'error', text: json.error?.message || json.message || 'Envoi impossible.' });
+      }
+    } catch (err) {
+      console.error('Send SMS failed', err);
+      setSmsStatus({ kind: 'error', text: 'Erreur réseau.' });
+    } finally {
+      setSendingSms(false);
     }
   }
 
@@ -359,6 +390,32 @@ export function AttendanceFlagDetailView({ id, locale }: { id: string; locale: s
                   </div>
                 )
               : <p className="text-xs text-slate-400">Aucun tuteur lié.</p>}
+
+            {flag.guardianPhone && (
+              <div className="pt-3 border-t border-slate-100 space-y-2">
+                <textarea
+                  rows={2}
+                  value={smsBody}
+                  onChange={e => setSmsBody(e.target.value)}
+                  placeholder="Écrire un SMS au tuteur..."
+                  className="w-full p-2.5 text-xs bg-slate-50 border border-slate-200 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-[#2487B8]/40"
+                />
+                {smsStatus && (
+                  <p className={`text-[11px] font-semibold ${smsStatus.kind === 'success' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {smsStatus.text}
+                  </p>
+                )}
+                <Button
+                  size="sm"
+                  disabled={sendingSms || !smsBody.trim()}
+                  onClick={sendSms}
+                  className="w-full h-9 rounded-lg text-xs"
+                >
+                  {sendingSms ? 'Envoi...' : 'Envoyer un SMS'}
+                </Button>
+                <p className="text-[10px] text-slate-400">Mode simulation : aucun SMS réel n'est envoyé.</p>
+              </div>
+            )}
           </Card>
         </div>
       </div>

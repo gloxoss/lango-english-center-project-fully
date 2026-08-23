@@ -43,6 +43,7 @@ const NS_LABELS: Record<string, string> = {
   attendance: 'Présence',
   localization: 'Localisation',
   security: 'Sécurité',
+  finance: 'Finance',
 };
 
 const SOURCE_BADGES: Record<string, { label: string; cls: string }> = {

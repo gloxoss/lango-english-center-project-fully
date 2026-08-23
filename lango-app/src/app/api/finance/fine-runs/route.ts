@@ -7,7 +7,7 @@ import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { fineAssessments, finePolicies, invoiceEvents, invoices, user } from '@/models/Schema';
+import { classSections, fineAssessments, finePolicies, invoiceEvents, invoices, user } from '@/models/Schema';
 
 const runSchema = z.object({
   finePolicyId: z.string().uuid().optional(),
@@ -61,10 +61,12 @@ export async function POST(request: Request) {
         dueDate: invoices.dueDate,
         netAmount: invoices.netAmount,
         paidAmount: invoices.paidAmount,
-        className: user.classSectionId,
+        classId: classSections.classId,
+        sectionId: user.classSectionId,
       })
       .from(invoices)
       .innerJoin(user, eq(invoices.studentId, user.id))
+      .leftJoin(classSections, eq(user.classSectionId, classSections.id))
       .where(and(
         eq(invoices.tenantId, tenantId),
         ne(invoices.status, 'paid'),
@@ -87,7 +89,8 @@ export async function POST(request: Request) {
     const created: { invoiceId: string; finePolicyId: string; amount: number; studentId: string }[] = [];
     for (const inv of overdue) {
       for (const p of active) {
-        if (p.scopeClassId && inv.className !== p.scopeClassId) continue;
+        if (p.scopeClassId && inv.classId !== p.scopeClassId) continue;
+        if (p.scopeSectionId && inv.sectionId !== p.scopeSectionId) continue;
         const key = `${inv.invoiceId}:${p.id}`;
         if (existing.has(key)) continue;
 

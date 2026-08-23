@@ -67,13 +67,228 @@ export function PayrollRunDetail({ id }: { id: string }) {
   </Workspace>;
 }
 
-const resourceLabels: Record<string,[string,string]> = { regulations:['Réglementation','Provenance, dates effectives et statut de validation.'], settings:['Paramètres de paie','Versions de configuration immuables après publication.'], components:['Composantes salariales','Gains, retenues, contributions et formules sécurisées.'], structures:['Structures salariales','Assemblages versionnés de composantes publiées.'], assignments:['Affectations salariales','Structure et salaire de base effectifs par employé.'], adjustments:['Ajustements','Primes, corrections et retenues soumises à approbation.'] };
-export function PayrollResource({ resource }: { resource: keyof typeof resourceLabels }) {
-  const [rows,setRows]=useState<unknown[]>([]);const[error,setError]=useState('');const[loading,setLoading]=useState(true);
-  const load=useCallback(()=>{setLoading(true);return api<unknown[]>(`/api/workforce/payroll/config?resource=${resource}`).then(setRows).catch(e=>setError(e.message)).finally(()=>setLoading(false));},[resource]);
-  useEffect(()=>{void load();},[load]);
-  const [title,description]=resourceLabels[resource]!;
-  return <Workspace title={title} description={description}><Status error={error} loading={loading}/>{rows.length===0&&!loading?<Empty label="Aucune donnée configurée."/>:<div className="space-y-3">{rows.map((row,i)=><article key={i} className="rounded-xl border bg-white p-4"><pre className="overflow-auto whitespace-pre-wrap text-xs text-slate-700">{JSON.stringify(row,null,2)}</pre></article>)}</div>}<p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Les taux et règles affichés sont configurés, pas juridiquement certifiés. Toute publication exige une revue professionnelle externe.</p></Workspace>;
+type PayrollResourceName = 'regulations' | 'settings' | 'components' | 'structures' | 'assignments' | 'adjustments';
+const resourceLabels: Record<PayrollResourceName,[string,string]> = { regulations:['Réglementation','Provenance, dates effectives et statut de validation.'], settings:['Paramètres de paie','Versions de configuration immuables après publication.'], components:['Composantes salariales','Gains, retenues, contributions et formules sécurisées.'], structures:['Structures salariales','Assemblages versionnés de composantes publiées.'], assignments:['Affectations salariales','Structure et salaire de base effectifs par employé.'], adjustments:['Ajustements','Primes, corrections et retenues soumises à approbation.'] };
+
+type RegulationRow = { pack: Json; version: Json | null };
+type SettingsRow = Json & { id: string; versionNo: number; status: string; settings: Json; publishedAt: string | null };
+type ComponentRow = { component: Json & { id: string; name: string }; version: Json | null };
+type StructureRow = { template: Json & { id: string; name: string }; version: Json | null };
+type AssignmentRow = { assignment: Json & { id: string; baseSalary: string; effectiveDate: string }; employeeName: string | null };
+type AdjustmentRow = Json & { id: string };
+type EmployeeRow = Json & { employeeId: string; userId: string | null; employeeCode: string | null; name: string | null };
+
+const inputCls = 'w-full rounded border px-3 py-2 text-sm';
+const str = (v: unknown, fb = '—') => (v === null || v === undefined || v === '' ? fb : String(v));
+const day = (v: unknown) => str(v).slice(0, 10);
+
+function useList<T>(resource: string) {
+  const [rows, setRows] = useState<T[]>([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const load = useCallback(() => { setLoading(true); return api<T[]>(`/api/workforce/payroll/config?resource=${resource}`).then(setRows).catch(e => setError(e.message)).finally(() => setLoading(false)); }, [resource]);
+  useEffect(() => { void load(); }, [load]);
+  return { rows, error, loading, load };
+}
+function useMutation(reload: () => Promise<unknown>) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const run = useCallback(async (fn: () => Promise<unknown>) => {
+    setBusy(true); setError('');
+    try { await fn(); await reload(); } catch (e) { setError(e instanceof Error ? e.message : 'Erreur'); } finally { setBusy(false); }
+  }, [reload]);
+  return { busy, error, run };
+}
+function List({ head, children }: { head: string[]; children: React.ReactNode }) {
+  return <div className="overflow-x-auto rounded-xl border bg-white"><table className="min-w-full text-sm"><thead className="bg-slate-50 text-left"><tr>{head.map(h => <Th key={h}>{h}</Th>)}</tr></thead><tbody>{children}</tbody></table></div>;
+}
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return <label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{label}</span>{children}</label>;
+}
+function CreateForm({ title, busy, onSubmit, children }: { title: string; busy: boolean; onSubmit: () => void; children: React.ReactNode }) {
+  return <section className="rounded-xl border bg-white p-4"><h2 className="font-semibold">{title}</h2><div className="mt-3 grid gap-3 sm:grid-cols-2">{children}</div><div className="mt-4 flex justify-end"><button disabled={busy} onClick={onSubmit} className="rounded bg-sky-700 px-4 py-2 font-semibold text-white disabled:opacity-50">{busy ? 'Enregistrement…' : 'Créer'}</button></div></section>;
+}
+function Compliance() {
+  return <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Les taux et règles affichés sont configurés, pas juridiquement certifiés. Toute publication exige une revue professionnelle externe.</p>;
+}
+function componentValue(v: Json | null): string {
+  if (!v) return '—';
+  const type = str(v.valueType);
+  if (type === 'fixed') return money(v.fixedValue);
+  if (type === 'percent') return `${(Number(v.percentBp ?? 0) / 100).toLocaleString('fr-MA')}%${v.percentOf ? ` de ${str(v.percentOf)}` : ''}`;
+  if (type === 'formula') return str(v.formula);
+  return '—';
+}
+
+export function PayrollResource({ resource }: { resource: PayrollResourceName }) {
+  switch (resource) {
+    case 'regulations': return <RegulationsView />;
+    case 'settings': return <SettingsView />;
+    case 'components': return <ComponentsView />;
+    case 'structures': return <StructuresView />;
+    case 'assignments': return <AssignmentsView />;
+    case 'adjustments': return <AdjustmentsView />;
+  }
+}
+
+function RegulationsView() {
+  const { rows, error, loading } = useList<RegulationRow>('regulations');
+  return <Workspace title={resourceLabels.regulations[0]} description={resourceLabels.regulations[1]}>
+    <Status error={error} loading={loading} />
+    {rows.length === 0 && !loading ? <Empty label="Aucune réglementation." /> : <List head={['Code', 'Nom', 'Juridiction', 'Statut', 'Validation', 'Version', 'Effectif', 'Échéance']}>{rows.map((row, i) => <tr key={str(row.pack?.id, String(i))} className="border-t"><Td>{str(row.pack?.code)}</Td><Td>{str(row.pack?.name)}</Td><Td>{str(row.pack?.jurisdiction)}</Td><Td><Badge value={str(row.pack?.status)} /></Td><Td><Badge value={str(row.pack?.validationStatus)} /></Td><Td>{str(row.version?.versionLabel)}</Td><Td>{day(row.version?.effectiveFrom)}</Td><Td>{day(row.version?.effectiveTo)}</Td></tr>)}</List>}
+    <Compliance />
+  </Workspace>;
+}
+
+function SettingsView() {
+  const { rows, error, loading, load } = useList<SettingsRow>('settings');
+  const { busy, error: mutErr, run } = useMutation(load);
+  const [currency, setCurrency] = useState('MAD');
+  const [payFrequency, setPayFrequency] = useState('monthly');
+  const [cutoffDay, setCutoffDay] = useState('25');
+  const [paymentDay, setPaymentDay] = useState('1');
+  const [rounding, setRounding] = useState('half_up');
+  const [cnssId, setCnssId] = useState('');
+  return <Workspace title={resourceLabels.settings[0]} description={resourceLabels.settings[1]}>
+    <Status error={error || mutErr} loading={loading} />
+    <CreateForm title="Nouvelle version de paramètres" busy={busy} onSubmit={() => run(() => api('/api/workforce/payroll/config', { method: 'POST', body: JSON.stringify({ resource: 'settings', settings: { currency, payFrequency, cutoffDay: Number(cutoffDay), paymentDay: Number(paymentDay), defaultRounding: rounding, employerCnssId: cnssId } }) }))}>
+      <Field label="Devise"><input className={inputCls} value={currency} onChange={e => setCurrency(e.target.value)} /></Field>
+      <Field label="Fréquence de paie"><select className={inputCls} value={payFrequency} onChange={e => setPayFrequency(e.target.value)}><option value="monthly">Mensuelle</option></select></Field>
+      <Field label="Jour d'arrêté"><input className={inputCls} type="number" value={cutoffDay} onChange={e => setCutoffDay(e.target.value)} /></Field>
+      <Field label="Jour de paiement"><input className={inputCls} type="number" value={paymentDay} onChange={e => setPaymentDay(e.target.value)} /></Field>
+      <Field label="Arrondi"><select className={inputCls} value={rounding} onChange={e => setRounding(e.target.value)}><option value="half_up">Demi supérieur</option></select></Field>
+      <Field label="Identifiant CNSS employeur"><input className={inputCls} value={cnssId} onChange={e => setCnssId(e.target.value)} /></Field>
+    </CreateForm>
+    {rows.length === 0 && !loading ? <Empty label="Aucune version de paramètres." /> : <List head={['Version', 'Statut', 'Paramètres', 'Publié le', '']}>{rows.map(row => <tr key={row.id} className="border-t"><Td>v{row.versionNo}</Td><Td><Badge value={row.status} /></Td><Td><pre className="max-w-md whitespace-pre-wrap text-xs text-slate-600">{JSON.stringify(row.settings, null, 2)}</pre></Td><Td>{day(row.publishedAt)}</Td><Td>{row.status === 'draft' && <button disabled={busy} onClick={() => run(() => api(`/api/workforce/payroll/config/settings/${row.id}/action`, { method: 'POST', body: JSON.stringify({ action: 'publish' }) }))} className="rounded bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">Publier</button>}</Td></tr>)}</List>}
+    <Compliance />
+  </Workspace>;
+}
+
+function ComponentsView() {
+  const { rows, error, loading, load } = useList<ComponentRow>('components');
+  const { busy, error: mutErr, run } = useMutation(load);
+  const [code, setCode] = useState('');
+  const [name, setName] = useState('');
+  const [componentType, setComponentType] = useState('earning');
+  const [valueType, setValueType] = useState('fixed');
+  const [fixedValue, setFixedValue] = useState('');
+  const [percentOf, setPercentOf] = useState('base_salary');
+  const [percentBp, setPercentBp] = useState('');
+  const [formula, setFormula] = useState('');
+  const [taxable, setTaxable] = useState(true);
+  const [contributable, setContributable] = useState(true);
+  const [proratable, setProratable] = useState(true);
+  function create() {
+    const body: Json = { resource: 'components', code, name, componentType, valueType, taxable, contributable, proratable };
+    if (valueType === 'fixed') body.fixedValue = fixedValue || null;
+    else if (valueType === 'percent') { body.percentOf = percentOf || null; body.percentBp = percentBp ? Number(percentBp) : null; }
+    else { body.formula = formula || null; }
+    return run(() => api('/api/workforce/payroll/config', { method: 'POST', body: JSON.stringify(body) }));
+  }
+  return <Workspace title={resourceLabels.components[0]} description={resourceLabels.components[1]}>
+    <Status error={error || mutErr} loading={loading} />
+    <CreateForm title="Nouvelle composante salariale" busy={busy} onSubmit={create}>
+      <Field label="Code (majuscules/underscore)"><input className={inputCls} value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="EX: CNSS_EMPLOYER" /></Field>
+      <Field label="Nom"><input className={inputCls} value={name} onChange={e => setName(e.target.value)} /></Field>
+      <Field label="Type"><select className={inputCls} value={componentType} onChange={e => setComponentType(e.target.value)}><option value="earning">Gain</option><option value="deduction">Retenue</option><option value="employer">Employeur</option><option value="info">Info</option></select></Field>
+      <Field label="Mode de calcul"><select className={inputCls} value={valueType} onChange={e => setValueType(e.target.value)}><option value="fixed">Fixe</option><option value="percent">Pourcentage</option><option value="formula">Formule</option></select></Field>
+      {valueType === 'fixed' && <Field label="Montant fixe (MAD)"><input className={inputCls} value={fixedValue} onChange={e => setFixedValue(e.target.value)} placeholder="0.00" /></Field>}
+      {valueType === 'percent' && <><Field label="Base (clé)"><input className={inputCls} value={percentOf} onChange={e => setPercentOf(e.target.value)} /></Field><Field label="Points de base (1% = 100)"><input className={inputCls} type="number" value={percentBp} onChange={e => setPercentBp(e.target.value)} /></Field></>}
+      {valueType === 'formula' && <Field label="Formule"><input className={inputCls} value={formula} onChange={e => setFormula(e.target.value)} placeholder="base_salary * 0.05" /></Field>}
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={taxable} onChange={e => setTaxable(e.target.checked)} />Imposable</label>
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={contributable} onChange={e => setContributable(e.target.checked)} />Soumis à cotisation</label>
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={proratable} onChange={e => setProratable(e.target.checked)} />Proratisable</label>
+    </CreateForm>
+    {rows.length === 0 && !loading ? <Empty label="Aucune composante." /> : <List head={['Code', 'Nom', 'Type', 'Valeur', 'Statut', '']}>{rows.map(row => { const v = row.version; const vid = v ? String(v.id) : String(row.component.id); const status = v ? String(v.status) : ''; return <tr key={vid} className="border-t"><Td>{str(v?.code)}</Td><Td>{str(v?.name)}</Td><Td>{str(v?.componentType)}</Td><Td>{componentValue(v)}</Td><Td>{v && <Badge value={status} />}</Td><Td>{v && <div className="flex gap-2">{status !== 'published' && status !== 'retired' && <button disabled={busy} onClick={() => run(() => api(`/api/workforce/payroll/config/components/${vid}/action`, { method: 'POST', body: JSON.stringify({ action: 'publish' }) }))} className="rounded bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">Publier</button>}{status !== 'retired' && <button disabled={busy} onClick={() => run(() => api(`/api/workforce/payroll/config/components/${vid}/action`, { method: 'POST', body: JSON.stringify({ action: 'retire' }) }))} className="rounded border px-3 py-1.5 text-xs font-semibold disabled:opacity-50">Retirer</button>}</div>}</Td></tr>; })}</List>}
+    <Compliance />
+  </Workspace>;
+}
+
+function StructuresView() {
+  const { rows, error, loading, load } = useList<StructureRow>('structures');
+  const { busy, error: mutErr, run } = useMutation(load);
+  const [components, setComponents] = useState<ComponentRow[]>([]);
+  const [name, setName] = useState('');
+  const [selected, setSelected] = useState<string[]>([]);
+  const [effectiveFrom, setEffectiveFrom] = useState('');
+  useEffect(() => { void api<ComponentRow[]>('/api/workforce/payroll/config?resource=components').then(setComponents).catch(() => {}); }, []);
+  const published = components.filter(c => c.version && c.version.status === 'published');
+  function toggle(id: string) { setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]); }
+  function create() {
+    const body: Json = { resource: 'structures', name, componentVersionIds: selected };
+    if (effectiveFrom) body.effectiveFrom = effectiveFrom;
+    return run(() => api('/api/workforce/payroll/config', { method: 'POST', body: JSON.stringify(body) }));
+  }
+  return <Workspace title={resourceLabels.structures[0]} description={resourceLabels.structures[1]}>
+    <Status error={error || mutErr} loading={loading} />
+    <section className="rounded-xl border bg-white p-4"><h2 className="font-semibold">Nouvelle structure salariale</h2><div className="mt-3 grid gap-3 sm:grid-cols-2"><Field label="Nom"><input className={inputCls} value={name} onChange={e => setName(e.target.value)} /></Field><Field label="Date d'effet (optionnel)"><input className={inputCls} type="date" value={effectiveFrom} onChange={e => setEffectiveFrom(e.target.value)} /></Field></div><div className="mt-3"><p className="text-xs font-semibold text-slate-600">Composantes publiées</p>{published.length === 0 ? <p className="text-sm text-slate-500">Aucune composante publiée.</p> : <div className="mt-2 grid gap-1 sm:grid-cols-2">{published.map(c => <label key={String(c.version!.id)} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={selected.includes(String(c.version!.id))} onChange={() => toggle(String(c.version!.id))} />{str(c.version!.code)} — {str(c.version!.name)}</label>)}</div>}</div><div className="mt-4 flex justify-end"><button disabled={busy || selected.length === 0} onClick={create} className="rounded bg-sky-700 px-4 py-2 font-semibold text-white disabled:opacity-50">{busy ? 'Enregistrement…' : 'Créer'}</button></div></section>
+    {rows.length === 0 && !loading ? <Empty label="Aucune structure." /> : <List head={['Modèle', 'Version', 'Statut', 'Effectif', 'Échéance', '']}>{rows.map(row => { const v = row.version; const vid = v ? String(v.id) : String(row.template.id); const status = v ? String(v.status) : ''; return <tr key={vid} className="border-t"><Td>{str(row.template?.name)}</Td><Td>{str(v?.name)}</Td><Td>{v && <Badge value={status} />}</Td><Td>{day(v?.effectiveFrom)}</Td><Td>{day(v?.effectiveTo)}</Td><Td>{v && <div className="flex flex-wrap gap-2">{status !== 'published' && status !== 'retired' && <button disabled={busy} onClick={() => run(() => api(`/api/workforce/payroll/config/structures/${vid}/action`, { method: 'POST', body: JSON.stringify({ action: 'review' }) }))} className="rounded border px-3 py-1.5 text-xs font-semibold disabled:opacity-50">Réviser</button>}{status !== 'published' && status !== 'retired' && <button disabled={busy} onClick={() => run(() => api(`/api/workforce/payroll/config/structures/${vid}/action`, { method: 'POST', body: JSON.stringify({ action: 'publish' }) }))} className="rounded bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">Publier</button>}{status !== 'retired' && <button disabled={busy} onClick={() => run(() => api(`/api/workforce/payroll/config/structures/${vid}/action`, { method: 'POST', body: JSON.stringify({ action: 'retire' }) }))} className="rounded border px-3 py-1.5 text-xs font-semibold disabled:opacity-50">Retirer</button>}</div>}</Td></tr>; })}</List>}
+    <Compliance />
+  </Workspace>;
+}
+
+function AssignmentsView() {
+  const { rows, error, loading, load } = useList<AssignmentRow>('assignments');
+  const { busy, error: mutErr, run } = useMutation(load);
+  const [employees, setEmployees] = useState<EmployeeRow[]>([]);
+  const [structures, setStructures] = useState<StructureRow[]>([]);
+  const [userId, setUserId] = useState('');
+  const [structureVersionId, setStructureVersionId] = useState('');
+  const [baseSalary, setBaseSalary] = useState('');
+  const [effectiveDate, setEffectiveDate] = useState('');
+  useEffect(() => {
+    void api<EmployeeRow[]>('/api/workforce/payroll/config?resource=employees').then(setEmployees).catch(() => {});
+    void api<StructureRow[]>('/api/workforce/payroll/config?resource=structures').then(setStructures).catch(() => {});
+  }, []);
+  const staff = employees.filter(e => e.userId);
+  const publishedStructures = structures.filter(s => s.version && s.version.status === 'published');
+  function create() {
+    return run(() => api('/api/workforce/payroll/config', { method: 'POST', body: JSON.stringify({ resource: 'assignments', userId, structureVersionId, baseSalary, effectiveDate }) }));
+  }
+  return <Workspace title={resourceLabels.assignments[0]} description={resourceLabels.assignments[1]}>
+    <Status error={error || mutErr} loading={loading} />
+    <CreateForm title="Nouvelle affectation" busy={busy} onSubmit={create}>
+      <Field label="Employé"><select className={inputCls} value={userId} onChange={e => setUserId(e.target.value)}><option value="">Sélectionner</option>{staff.map(e => <option key={String(e.userId)} value={String(e.userId)}>{str(e.name, str(e.userId))}</option>)}</select></Field>
+      <Field label="Structure publiée"><select className={inputCls} value={structureVersionId} onChange={e => setStructureVersionId(e.target.value)}><option value="">Sélectionner</option>{publishedStructures.map(s => <option key={String(s.version!.id)} value={String(s.version!.id)}>{str(s.version!.name)}</option>)}</select></Field>
+      <Field label="Salaire de base (MAD)"><input className={inputCls} value={baseSalary} onChange={e => setBaseSalary(e.target.value)} placeholder="0.00" /></Field>
+      <Field label="Date d'effet"><input className={inputCls} type="date" value={effectiveDate} onChange={e => setEffectiveDate(e.target.value)} /></Field>
+    </CreateForm>
+    {rows.length === 0 && !loading ? <Empty label="Aucune affectation." /> : <List head={['Employé', 'Salaire de base', 'Date d\'effet']}>{rows.map(row => <tr key={String(row.assignment.id)} className="border-t"><Td>{str(row.employeeName, 'Sans compte')}</Td><Td>{money(row.assignment.baseSalary)}</Td><Td>{day(row.assignment.effectiveDate)}</Td></tr>)}</List>}
+    <Compliance />
+  </Workspace>;
+}
+
+function AdjustmentsView() {
+  const { rows, error, loading, load } = useList<AdjustmentRow>('adjustments');
+  const { busy, error: mutErr, run } = useMutation(load);
+  const [employees, setEmployees] = useState<EmployeeRow[]>([]);
+  const [employeeId, setEmployeeId] = useState('');
+  const [adjustmentType, setAdjustmentType] = useState('bonus');
+  const [amount, setAmount] = useState('');
+  const [reason, setReason] = useState('');
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  useEffect(() => { void api<EmployeeRow[]>('/api/workforce/payroll/config?resource=employees').then(setEmployees).catch(() => {}); }, []);
+  const staff = employees.filter(e => e.userId);
+  const nameByUser = useMemo(() => new Map(employees.map(e => [String(e.userId), e.name ?? '—'])), [employees]);
+  function create() {
+    const emp = staff.find(e => e.employeeId === employeeId);
+    if (!emp) return;
+    return run(() => api('/api/workforce/payroll/config', { method: 'POST', body: JSON.stringify({ resource: 'adjustments', employeeId: emp.employeeId, userId: String(emp.userId), adjustmentType, amount, reason, year, month }) }));
+  }
+  return <Workspace title={resourceLabels.adjustments[0]} description={resourceLabels.adjustments[1]}>
+    <Status error={error || mutErr} loading={loading} />
+    <CreateForm title="Nouvel ajustement" busy={busy} onSubmit={create}>
+      <Field label="Employé"><select className={inputCls} value={employeeId} onChange={e => setEmployeeId(e.target.value)}><option value="">Sélectionner</option>{staff.map(e => <option key={String(e.employeeId)} value={String(e.employeeId)}>{str(e.name, str(e.userId))}</option>)}</select></Field>
+      <Field label="Type"><select className={inputCls} value={adjustmentType} onChange={e => setAdjustmentType(e.target.value)}><option value="bonus">Prime</option><option value="overtime">Heures sup.</option><option value="award">Récompense</option><option value="correction">Correction</option><option value="reimbursement">Remboursement</option><option value="deduction">Retenue</option><option value="recovery">Recouvrement</option></select></Field>
+      <Field label="Montant (MAD)"><input className={inputCls} value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" /></Field>
+      <Field label="Motif"><input className={inputCls} value={reason} onChange={e => setReason(e.target.value)} /></Field>
+      <Field label="Année"><input className={inputCls} type="number" value={year} onChange={e => setYear(Number(e.target.value))} /></Field>
+      <Field label="Mois"><select className={inputCls} value={month} onChange={e => setMonth(Number(e.target.value))}>{Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select></Field>
+    </CreateForm>
+    {rows.length === 0 && !loading ? <Empty label="Aucun ajustement." /> : <List head={['Employé', 'Type', 'Montant', 'Période', 'Motif', 'Statut', '']}>{rows.map(row => <tr key={row.id} className="border-t"><Td>{nameByUser.get(str(row.userId)) ?? '—'}</Td><Td>{str(row.adjustmentType)}</Td><Td>{money(row.amount)}</Td><Td>{str(row.effectivePeriodMonth, '').padStart(2, '0')}/{str(row.effectivePeriodYear)}</Td><Td>{str(row.reason)}</Td><Td><Badge value={str(row.status)} /></Td><Td>{row.status === 'submitted' && <div className="flex gap-2"><button disabled={busy} onClick={() => run(() => api(`/api/workforce/payroll/config/adjustments/${row.id}/action`, { method: 'POST', body: JSON.stringify({ action: 'approve' }) }))} className="rounded bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">Approuver</button><button disabled={busy} onClick={() => run(() => api(`/api/workforce/payroll/config/adjustments/${row.id}/action`, { method: 'POST', body: JSON.stringify({ action: 'reject' }) }))} className="rounded border px-3 py-1.5 text-xs font-semibold disabled:opacity-50">Refuser</button></div>}</Td></tr>)}</List>}
+    <Compliance />
+  </Workspace>;
 }
 
 export function PayrollPayments() {

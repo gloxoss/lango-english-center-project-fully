@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertCircle, Loader2, Save } from 'lucide-react';
 import { api, errMessage } from './api';
 
@@ -76,6 +77,14 @@ export function HostelPoliciesView() {
 
   const set = <K extends keyof HostelPolicies>(key: K, value: HostelPolicies[K]) => {
     setData(prev => prev ? { ...prev, policies: { ...prev.policies, [key]: value } } : prev);
+  };
+
+  const setTier = (index: number, patch: Partial<EscalationTier>) => {
+    setData(prev => {
+      if (!prev) return prev;
+      const escalationTiers = prev.policies.escalationTiers.map((t, i) => i === index ? { ...t, ...patch } : t);
+      return { ...prev, policies: { ...prev.policies, escalationTiers } };
+    });
   };
 
   const save = async () => {
@@ -160,11 +169,29 @@ export function HostelPoliciesView() {
             </div>
             <div>
               <p className="mb-1 text-sm font-medium text-slate-700">Palier d&apos;escalade après appels manqués</p>
-              {data.policies.escalationTiers.map(tier => (
-                <div key={tier.tier} className="mb-2 flex items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm">
+              {data.policies.escalationTiers.map((tier, i) => (
+                <div key={tier.tier} className="mb-2 flex flex-wrap items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm">
                   <Badge className="bg-slate-100 text-slate-600">Palier {tier.tier}</Badge>
-                  <span className="text-slate-600">après {tier.afterMissingRollCalls} appel(s)</span>
-                  <span className="ml-auto text-xs text-slate-500">→ {tier.recipient} · {tier.channel}</span>
+                  <Select value={tier.recipient} onValueChange={v => setTier(i, { recipient: v })}>
+                    <SelectTrigger className="h-8 w-44 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="warden">Intendant</SelectItem>
+                      <SelectItem value="school_admin">Admin établissement</SelectItem>
+                      <SelectItem value="guardian">Tuteur</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <label className="flex items-center gap-1.5 text-xs text-slate-500">
+                    après
+                    <Input type="number" min={1} value={tier.afterMissingRollCalls} onChange={e => setTier(i, { afterMissingRollCalls: Number(e.target.value) })} className="h-8 w-16 text-xs" />
+                    appel(s)
+                  </label>
+                  <Select value={tier.channel} onValueChange={v => setTier(i, { channel: v })}>
+                    <SelectTrigger className="h-8 w-28 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="log">Journal</SelectItem>
+                      <SelectItem value="sms">SMS</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               ))}
             </div>

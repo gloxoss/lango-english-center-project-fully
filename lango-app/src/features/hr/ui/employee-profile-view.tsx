@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  AlertCircle, ArrowLeft, Building2, Calendar, FileText, History, Loader2, Lock, Mail, Pencil, Phone, Save, UserRound, X,
+  AlertCircle, ArrowLeft, Building2, Calendar, CalendarClock, FileText, History, Loader2, Lock, Mail, Pencil, Phone, Save, UserRound, Wallet, X,
 } from 'lucide-react';
 import { EmployeeDocumentsView } from '@/features/hr/ui/employee-documents-view';
 import {
@@ -70,10 +70,19 @@ const EVENT_LABELS: Record<string, string> = {
 
 type Field = 'departmentId' | 'designationId' | 'managerEmployeeId' | 'employmentType' | 'employmentStatus' | 'hireDate' | 'contractStartDate' | 'contractEndDate' | 'workloadHours';
 
+type PayslipRecord = { id: string; year: number; month: number; grossSalary: string; netSalary: string; issuedAt: string | null };
+type PunchRecord = { id: string; punchType: string; scannedAt: string; notes: string | null };
+type PayrollAttendance = { linked: boolean; payslips: PayslipRecord[]; punches: PunchRecord[] };
+
+function monthLabel(year: number, month: number) {
+  return new Date(year, month - 1, 1).toLocaleDateString('fr-MA', { month: 'long', year: 'numeric' });
+}
+
 export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
   const router = useRouter();
   const [employee, setEmployee] = useState<EmployeeRow | null>(null);
   const [events, setEvents] = useState<EmploymentEventRow[]>([]);
+  const [records, setRecords] = useState<PayrollAttendance | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -93,13 +102,15 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const [emp, hist] = await Promise.all([
+    const [emp, hist, rec] = await Promise.all([
       api<EmployeeRow>(`/api/hr/employees/${employeeId}`),
       api<EmploymentEventRow[]>(`/api/hr/employees/${employeeId}/history`),
+      api<PayrollAttendance>(`/api/hr/employees/${employeeId}/payroll-attendance`),
     ]);
     if (emp.ok && emp.data) setEmployee(emp.data);
     else setError(emp.error?.message ?? 'Employé introuvable.');
     if (hist.ok && Array.isArray(hist.data)) setEvents(hist.data);
+    if (rec.ok && rec.data) setRecords(rec.data);
     setLoading(false);
   }, [employeeId]);
 
@@ -240,6 +251,8 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
           <TabsTrigger value="sensitive" className="flex items-center gap-1"><Lock className="h-4 w-4" /> Données sensibles</TabsTrigger>
           <TabsTrigger value="documents" className="flex items-center gap-1"><FileText className="h-4 w-4" /> Documents</TabsTrigger>
           <TabsTrigger value="history" className="flex items-center gap-1"><History className="h-4 w-4" /> Chronologie</TabsTrigger>
+          <TabsTrigger value="payroll" className="flex items-center gap-1"><Wallet className="h-4 w-4" /> Finance</TabsTrigger>
+          <TabsTrigger value="attendance" className="flex items-center gap-1"><CalendarClock className="h-4 w-4" /> Présences</TabsTrigger>
         </TabsList>
 
         <TabsContent value="details">
@@ -318,6 +331,76 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
                   </li>
                 ))}
               </ol>
+            )}
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="payroll">
+          <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
+            {!records || records.linked === false ? (
+              <p className="flex items-center gap-2 p-6 text-sm text-slate-500">
+                <Wallet className="h-4 w-4" /> Cet employé est « Sans compte » : aucune donnée de paie n'est rattachée à un compte de connexion.
+              </p>
+            ) : records.payslips.length === 0 ? (
+              <p className="p-6 text-center text-sm text-slate-500">Aucun bulletin de paie émis.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="border-b text-xs uppercase tracking-wide text-slate-400">
+                    <tr>
+                      <th className="py-2 pr-4">Période</th>
+                      <th className="py-2 px-4 text-right">Salaire brut</th>
+                      <th className="py-2 pl-4 text-right">Net à payer</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {records.payslips.map(p => (
+                      <tr key={p.id}>
+                        <td className="py-2.5 pr-4 font-medium text-[#16212B]">{monthLabel(p.year, p.month)}</td>
+                        <td className="py-2.5 px-4 text-right text-slate-600">{Number(p.grossSalary).toFixed(2)} MAD</td>
+                        <td className="py-2.5 pl-4 text-right font-semibold text-[#16212B]">{Number(p.netSalary).toFixed(2)} MAD</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="attendance">
+          <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
+            {!records || records.linked === false ? (
+              <p className="flex items-center gap-2 p-6 text-sm text-slate-500">
+                <CalendarClock className="h-4 w-4" /> Cet employé est « Sans compte » : aucun pointage n'est rattaché à un compte de connexion.
+              </p>
+            ) : records.punches.length === 0 ? (
+              <p className="p-6 text-center text-sm text-slate-500">Aucun pointage enregistré.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="border-b text-xs uppercase tracking-wide text-slate-400">
+                    <tr>
+                      <th className="py-2 pr-4">Type</th>
+                      <th className="py-2 px-4">Horodatage</th>
+                      <th className="py-2 pl-4">Note</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {records.punches.map(p => (
+                      <tr key={p.id}>
+                        <td className="py-2.5 pr-4">
+                          <Badge className={p.punchType === 'in' ? 'bg-[#D1F5E8] text-[#0b5c3a]' : 'bg-slate-100 text-slate-600'}>
+                            {p.punchType === 'in' ? 'Entrée' : 'Sortie'}
+                          </Badge>
+                        </td>
+                        <td className="py-2.5 px-4 font-mono text-xs text-slate-600">{fmtDate(p.scannedAt)} {new Date(p.scannedAt).toLocaleTimeString('fr-MA')}</td>
+                        <td className="py-2.5 pl-4 text-slate-500">{p.notes ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </Card>
         </TabsContent>

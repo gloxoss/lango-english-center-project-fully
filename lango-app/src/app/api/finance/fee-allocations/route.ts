@@ -4,7 +4,7 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
-import { branches, feeAllocationRuns, feeAllocationTargets, feeStructures, feeStructureVersions } from '@/models/Schema';
+import { branches, feeAllocationRuns, feeAllocationTargets, feeStructures, feeStructureVersions, user } from '@/models/Schema';
 
 // GET /api/finance/fee-allocations — tenant-scoped list of allocation runs with
 // per-run target counts (pending/included/error). Fee allocations live here, on
@@ -26,6 +26,7 @@ export async function GET(request: Request) {
         status: feeAllocationRuns.status,
         previewSummary: feeAllocationRuns.previewSummary,
         runById: feeAllocationRuns.runById,
+        runByName: user.name,
         dueDate: feeAllocationRuns.dueDate,
         createdAt: feeAllocationRuns.createdAt,
         completedAt: feeAllocationRuns.completedAt,
@@ -34,6 +35,7 @@ export async function GET(request: Request) {
       .leftJoin(feeStructureVersions, eq(feeAllocationRuns.feeStructureVersionId, feeStructureVersions.id))
       .leftJoin(feeStructures, eq(feeStructureVersions.feeStructureId, feeStructures.id))
       .leftJoin(branches, eq(feeAllocationRuns.branchId, branches.id))
+      .leftJoin(user, eq(feeAllocationRuns.runById, user.id))
       .where(eq(feeAllocationRuns.tenantId, tenantId))
       .orderBy(desc(feeAllocationRuns.createdAt));
 

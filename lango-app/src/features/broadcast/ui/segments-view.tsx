@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import {
   Loader2, Plus, RefreshCw, Users, AlertCircle, X, Trash2,
 } from 'lucide-react';
-import { api, fmtDate, fmtCount, RECIPIENT_KIND_LABELS } from './broadcast-ui';
+import { api, fmtDate, fmtCount, RECIPIENT_KIND_LABELS, isAddonNotActivated, type ApiErrorShape } from './broadcast-ui';
 
 type SegmentDefinition = {
   kind: string;
@@ -61,7 +61,7 @@ const FILTER_LABELS: Record<string, string> = {
 export function SegmentsView() {
   const [rows, setRows] = useState<Segment[] | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiErrorShape | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -76,7 +76,7 @@ export function SegmentsView() {
     setError(null);
     const res = await api<Segment[]>('/api/addons/broadcast/segments');
     if (res.ok && res.data) setRows(res.data);
-    else setError(res.error?.message ?? 'Impossible de charger les segments.');
+    else setError(res.error ?? { message: 'Impossible de charger les segments.' });
     setLoading(false);
   }, []);
 
@@ -120,9 +120,16 @@ export function SegmentsView() {
   }
 
   if (error && !rows) {
+    if (isAddonNotActivated(error)) {
+      return (
+        <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-700">
+          <AlertCircle className="h-5 w-5 shrink-0" /> {error.message ?? 'Module non activé.'}
+        </div>
+      );
+    }
     return (
       <div className="flex items-center gap-2 py-20 text-rose-600">
-        <AlertCircle className="h-5 w-5" /> {error}
+        <AlertCircle className="h-5 w-5" /> {error.message ?? 'Erreur inconnue.'}
         <Button variant="outline" size="sm" onClick={load}><RefreshCw className="mr-1 h-4 w-4" />Réessayer</Button>
       </div>
     );

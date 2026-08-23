@@ -419,6 +419,19 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     requiredPermission: 'settings.organization.manage',
   },
 
+  // -- Finance --
+  {
+    key: 'finance.currency',
+    label: 'Devise',
+    description: 'Devise de facturation de l\'établissement (code ISO 4217). Les clients marocains utilisent par défaut MAD ; les clients hors Maroc configurent leur propre devise.',
+    namespace: 'finance',
+    valueSchema: z.enum(['MAD', 'USD', 'EUR', 'GBP', 'AED', 'SAR', 'DZD', 'TND', 'CAD', 'CHF']),
+    defaultValue: 'MAD',
+    scope: 'tenant',
+    sensitivity: 'public',
+    requiredPermission: 'settings.finance_mapping.manage',
+  },
+
   // -- Localization / i18n --
   {
     key: 'i18n.translations',

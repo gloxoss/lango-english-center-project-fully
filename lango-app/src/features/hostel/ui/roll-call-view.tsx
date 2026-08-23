@@ -16,6 +16,7 @@ type HostelRow = { id: string; name: string; code: string; status: string };
 type RollCallRow = {
   id: string;
   hostelId: string;
+  hostelName: string | null;
   callDate: string;
   status: 'open' | 'closed';
   openedById: string;
@@ -178,7 +179,7 @@ export function RollCallView() {
               >
                 <div>
                   <p className="text-sm font-semibold text-[#16212B]">Appel du {call.callDate}</p>
-                  <p className="text-xs text-slate-500">Résidence {call.hostelId.slice(0, 8)}…</p>
+                  <p className="text-xs text-slate-500">Résidence {call.hostelName ?? call.hostelId.slice(0, 8)}</p>
                 </div>
                 <Badge className={call.status === 'open' ? 'bg-[#D1F5E8] text-[#0b5c3a]' : 'bg-slate-100 text-slate-500'}>
                   {call.status === 'open' ? 'Ouvert' : 'Clos'}

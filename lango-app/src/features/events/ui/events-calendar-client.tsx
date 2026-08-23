@@ -87,6 +87,11 @@ export function EventsCalendarClient({ locale: _locale }: { locale?: string }) {
     return events.find((evt) => evt.id === selectedEventId) || events[0]!;
   }, [events, selectedEventId]);
 
+  const totalRegistrations = events.reduce((sum, e) => sum + e.registeredCount, 0);
+  const totalCapacity = events.reduce((sum, e) => sum + e.capacity, 0);
+  const occupancyRate = totalCapacity > 0 ? Math.round((totalRegistrations / totalCapacity) * 100) : 0;
+  const distinctVenues = new Set(events.map(e => e.location).filter(Boolean)).size;
+
   const handleCreateEvent = async () => {
     if (!newEvent.title.trim()) return;
     const [startTime, endTime] = newEvent.time.split(' - ').map((t) => t.trim());
@@ -153,8 +158,8 @@ export function EventsCalendarClient({ locale: _locale }: { locale?: string }) {
         </div>
       )}
 
-      {/* 4 Top Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* 3 Top Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <Card className="p-3.5 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#DCEBF4] shrink-0 flex items-center justify-center text-[#1B6C93]">
             <Calendar className="w-5 h-5" />
@@ -172,8 +177,8 @@ export function EventsCalendarClient({ locale: _locale }: { locale?: string }) {
           </div>
           <div>
             <p className="text-[10px] font-bold text-slate-400">Inscriptions totales</p>
-            <p className="text-xl font-extrabold text-[#16212B]">845</p>
-            <p className="text-[10px] font-semibold text-[#17A673]">Taux d&apos;occupation 88%</p>
+            <p className="text-xl font-extrabold text-[#16212B]">{totalRegistrations}</p>
+            <p className="text-[10px] font-semibold text-[#17A673]">Taux d&apos;occupation {occupancyRate}%</p>
           </div>
         </Card>
 
@@ -183,19 +188,8 @@ export function EventsCalendarClient({ locale: _locale }: { locale?: string }) {
           </div>
           <div>
             <p className="text-[10px] font-bold text-slate-400">Lieux mobilisés</p>
-            <p className="text-xl font-extrabold text-[#16212B]">5 campus</p>
-            <p className="text-[10px] font-semibold text-slate-500">Amphithéâtre &amp; Terrains</p>
-          </div>
-        </Card>
-
-        <Card className="p-3.5 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-100 shrink-0 flex items-center justify-center text-amber-700">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-slate-400">Satisfaction événements</p>
-            <p className="text-xl font-extrabold text-[#16212B]">4,8 / 5</p>
-            <p className="text-[10px] font-semibold text-[#17A673]">Avis positifs ⭐️</p>
+            <p className="text-xl font-extrabold text-[#16212B]">{distinctVenues}</p>
+            <p className="text-[10px] font-semibold text-slate-500">Lieux distincts</p>
           </div>
         </Card>
       </div>

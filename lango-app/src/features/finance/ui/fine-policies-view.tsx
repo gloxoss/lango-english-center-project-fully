@@ -22,6 +22,16 @@ type FinePolicy = {
   status: 'active' | 'archived';
 };
 
+type FineAssessment = {
+  id: string;
+  studentName: string | null;
+  policyName: string | null;
+  amount: number;
+  reason: string | null;
+  status: string;
+  assessedAt: string;
+};
+
 const formulaLabel: Record<FinePolicy['formula'], string> = {
   flat: 'Forfait',
   per_day: 'Par jour',
@@ -39,6 +49,9 @@ export function FinePoliciesView() {
   const [saving, setSaving] = useState(false);
   const [running, setRunning] = useState(false);
   const [runResult, setRunResult] = useState<string | null>(null);
+  const [assessments, setAssessments] = useState<FineAssessment[]>([]);
+  const [assessmentsLoading, setAssessmentsLoading] = useState(false);
+  const [waivingId, setWaivingId] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -65,7 +78,37 @@ export function FinePoliciesView() {
 
   useEffect(() => {
     load();
+    loadAssessments();
   }, []);
+
+  const loadAssessments = () => {
+    setAssessmentsLoading(true);
+    fetch('/api/finance/fine-assessments')
+      .then(res => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (json?.success) setAssessments(json.data);
+      })
+      .catch(() => {})
+      .finally(() => setAssessmentsLoading(false));
+  };
+
+  const handleWaive = async (a: FineAssessment) => {
+    const reason = window.prompt('Motif de l\'exonération ?', '');
+    if (!reason) return;
+    setWaivingId(a.id);
+    try {
+      const res = await fetch('/api/finance/fine-assessments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: a.id, waiveReason: reason }),
+      });
+      if (res.ok) loadAssessments();
+    } catch (err) {
+      console.error('Failed to waive fine', err);
+    } finally {
+      setWaivingId(null);
+    }
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -291,6 +334,57 @@ export function FinePoliciesView() {
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
                     </div>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+
+      <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+        <div className="p-4 border-b border-slate-200/80 flex items-center justify-between">
+          <h3 className="text-xs font-extrabold text-[#16212B]">Évaluations de pénalités</h3>
+          <span className="text-[10px] font-bold text-slate-400">{assessments.length} évaluation(s)</span>
+        </div>
+        <table className="w-full text-left text-xs">
+          <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
+            <tr>
+              <th className="py-3.5 px-4">Élève</th>
+              <th className="py-3.5 px-4">Politique</th>
+              <th className="py-3.5 px-4 text-right">Montant</th>
+              <th className="py-3.5 px-4">Motif</th>
+              <th className="py-3.5 px-4 text-center">Statut</th>
+              {canManage && <th className="py-3.5 px-4" />}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {!assessmentsLoading && assessments.length === 0 && (
+              <tr><td colSpan={canManage ? 6 : 5} className="py-8 text-center text-slate-400">Aucune pénalité évaluée.</td></tr>
+            )}
+            {assessments.map(a => (
+              <tr key={a.id} className="hover:bg-slate-50/80 transition font-medium">
+                <td className="py-3.5 px-4 font-bold text-[#16212B]">{a.studentName ?? '—'}</td>
+                <td className="py-3.5 px-4 text-slate-500">{a.policyName ?? '—'}</td>
+                <td className="py-3.5 px-4 text-right font-extrabold text-[#16212B]">{a.amount.toFixed(2)} MAD</td>
+                <td className="py-3.5 px-4 text-slate-500">{a.reason ?? '—'}</td>
+                <td className="py-3.5 px-4 text-center">
+                  <Badge className={`text-[10px] border-none font-bold ${a.status === 'waived' ? 'bg-violet-100 text-violet-700' : 'bg-amber-100 text-amber-700'}`}>
+                    {a.status === 'waived' ? 'Exonérée' : 'Évaluée'}
+                  </Badge>
+                </td>
+                {canManage && (
+                  <td className="py-3.5 px-4">
+                    {a.status !== 'waived' && (
+                      <button
+                        onClick={() => handleWaive(a)}
+                        disabled={waivingId === a.id}
+                        className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#2487B8] disabled:opacity-50"
+                        title="Exonérer"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </td>
                 )}
               </tr>

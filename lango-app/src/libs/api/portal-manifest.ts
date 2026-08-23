@@ -22,6 +22,8 @@ export type NavItem = {
   badge?: string;
   /** If true, this item only shows when the related addon is enabled. */
   addonId?: string;
+  /** Marks a dedicated-portal home: a portal-confined role lands here, not the cross-module dashboard. */
+  portalHome?: boolean;
 };
 
 export type PortalManifest = {
@@ -110,6 +112,8 @@ const FULL_NAVIGATION: NavItem[] = [
       { id: 'fee-structures', label: 'Structures de frais', icon: 'FileText', href: '/dashboard/finance/fee-structures', permission: 'finance.read' },
       { id: 'fee-types', label: 'Types de frais', icon: 'Copy', href: '/dashboard/finance/fee-types', permission: 'finance.read' },
       { id: 'fine-policies', label: 'Politiques d\'amendes', icon: 'AlertTriangle', href: '/dashboard/finance/fine-policies', permission: 'finance.read' },
+      { id: 'reminders', label: 'Rappels de frais', icon: 'Bell', href: '/dashboard/finance/reminders', permission: 'finance.manage' },
+      { id: 'cashier-sessions', label: 'Sessions de caisse', icon: 'Wallet', href: '/dashboard/finance/cashier-sessions', permission: 'finance.manage' },
       { id: 'payment-methods', label: 'Méthodes de paiement', icon: 'CreditCard', href: '/dashboard/settings/payment-methods', permission: 'finance.manage' },
     ],
   },
@@ -154,6 +158,7 @@ const FULL_NAVIGATION: NavItem[] = [
     label: 'Sécurité & Gardiens',
     icon: 'ShieldCheck',
     href: '/dashboard/portals/guard',
+    portalHome: true,
     permission: 'guard.portal.use',
     children: [
       { id: 'guard-home', label: 'Accueil du portail', icon: 'LayoutDashboard', href: '/dashboard/portals/guard', permission: 'guard.portal.use' },
@@ -170,6 +175,7 @@ const FULL_NAVIGATION: NavItem[] = [
     label: 'Accueil & Réception',
     icon: 'ConciergeBell',
     href: '/dashboard/receptionist',
+    portalHome: true,
     permission: 'reception.portal.use',
     children: [
       { id: 'reception-home', label: 'Accueil du portail', icon: 'LayoutDashboard', href: '/dashboard/receptionist', permission: 'reception.portal.use' },
@@ -206,6 +212,7 @@ const FULL_NAVIGATION: NavItem[] = [
     label: 'Bibliothèque',
     icon: 'BookOpen',
     href: '/dashboard/portals/librarian',
+    portalHome: true,
     permission: 'library.catalog.read',
     addonId: 'library',
     children: [
@@ -317,12 +324,52 @@ export async function getPortalManifest(context: RequestContext): Promise<Portal
   const homeWidgets = HOME_WIDGETS[context.role] ?? [];
   const availableRoles = await listAvailableRoles(context.tenantId, context.baseRole, context.userId);
 
+  // A portal-confined role (guard, receptionist, librarian) has exactly one
+  // portal home; drop the generic cross-module "Tableau de bord" item so its
+  // sidebar renders only its own portal.
+  const portalConfined = navigation.filter((item) => item.portalHome).length === 1;
+
   return {
     role: context.role,
     baseRole: context.baseRole,
-    navigation,
+    navigation: portalConfined ? navigation.filter((item) => item.id !== 'dashboard') : navigation,
     quickActions,
     homeWidgets,
     availableRoles,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Landing-page resolution
+//
+// A dedicated-portal role (guard, receptionist, librarian) lands on its portal,
+// not the cross-module school dashboard. The landing is derived from the same
+// navigation source the sidebar renders, so a new portal is declared exactly
+// once (here) and every role granted its permission lands there automatically.
+// ---------------------------------------------------------------------------
+
+/** Shared-module roles whose whole job is one module rather than a dedicated portal. */
+const MODULE_HOME: Partial<Record<AppRole, string>> = {
+  accountant: '/dashboard/finance',
+};
+
+export async function resolveLandingPath(context: {
+  userId: string;
+  tenantId: string | null;
+  role: AppRole;
+}): Promise<string | null> {
+  const navigation = await filterByPermission(
+    FULL_NAVIGATION,
+    context.userId,
+    context.tenantId ?? '',
+    context.role,
+  );
+  const homes = navigation.filter((item) => item.portalHome);
+
+  // A dedicated-portal role has exactly one portal home; a cross-module admin
+  // (school_admin/super_admin) matches several and a non-portal role matches
+  // none — only the unambiguous single-portal case redirects.
+  if (homes.length === 1) return homes[0]!.href;
+
+  return MODULE_HOME[context.role] ?? null;
 }

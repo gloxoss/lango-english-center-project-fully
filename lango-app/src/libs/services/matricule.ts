@@ -25,3 +25,19 @@ export async function reserveMatricule(db: Pick<typeof dbClient, 'select' | 'upd
 
   return `${prefix}${String(currentVal).padStart(4, '0')}`;
 }
+
+// Non-mutating preview of the next matricule in the series. Reads the counter
+// without incrementing it - the "what would the next number be" peek must never
+// burn a real number (see bug 2.6).
+export async function previewMatricule(db: Pick<typeof dbClient, 'select'>, tenantId: string): Promise<string> {
+  const year = new Date().getFullYear();
+  const prefix = `STD-${year}-`;
+  const [series] = await db
+    .select()
+    .from(namingSeries)
+    .where(and(eq(namingSeries.prefix, prefix), eq(namingSeries.tenantId, tenantId)))
+    .limit(1);
+
+  const nextVal = series ? series.currentVal + 1 : 1;
+  return `${prefix}${String(nextVal).padStart(4, '0')}`;
+}

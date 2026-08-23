@@ -25,7 +25,7 @@ import { checkConsent } from './consent-service';
 import { STAFF_ROLES } from './segments-service';
 import { getPublishedVersion, renderVersion } from './templates-service';
 import { getProvider } from '../providers/provider';
-import '../providers/test-provider';
+import '../providers';
 
 type Channel = (typeof broadcastChannel.enumValues)[number];
 const SMS_LIKE: Channel[] = ['sms', 'whatsapp', 'telegram', 'messenger'];

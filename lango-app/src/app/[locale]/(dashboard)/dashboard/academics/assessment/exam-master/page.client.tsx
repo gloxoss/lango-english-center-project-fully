@@ -5,6 +5,9 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 import {
   GraduationCap,
   Calendar,
@@ -17,6 +20,8 @@ import {
   Save,
   Grid,
   FileSpreadsheet,
+  Check,
+  ChevronsUpDown,
 } from 'lucide-react';
 
 type ExamTerm = { id: string; name: string; code: string; startDate: string; endDate: string; status: string };
@@ -24,6 +29,52 @@ type ExamHall = { id: string; name: string; code: string; capacity: number };
 type ExamSchedule = { id: string; examTermId: string; assessmentDefinitionId: string; examHallId: string | null; startTime: string; endTime: string; status: string };
 type StudentRow = { id: string; fullName: string; matricule: string };
 type MarkRow = { studentId: string; matricule: string; name: string; rawScore: string; status: 'graded' | 'absent' | 'exempted' | 'withheld'; grade?: string };
+type AssessmentDefinition = { id: string; title: string };
+
+function EpreuveCombobox({ definitions, value, onChange, placeholder }: {
+  definitions: AssessmentDefinition[];
+  value: string;
+  onChange: (id: string) => void;
+  placeholder: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = definitions.find(d => d.id === value);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full flex items-center justify-between gap-2 h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-[#16212B] hover:bg-slate-50"
+        >
+          <span className="truncate">{selected ? selected.title : placeholder}</span>
+          <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Rechercher une épreuve..." />
+          <CommandList>
+            <CommandEmpty>Aucune épreuve trouvée.</CommandEmpty>
+            <CommandGroup>
+              {definitions.map(d => (
+                <CommandItem
+                  key={d.id}
+                  value={d.title}
+                  onSelect={() => { onChange(d.id); setOpen(false); }}
+                >
+                  <Check className={cn('mr-2 h-4 w-4', value === d.id ? 'opacity-100' : 'opacity-0')} />
+                  <span className="truncate">{d.title}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 export default function ExamMasterPage() {
   const [activeTab, setActiveTab] = useState<'seats' | 'schedules' | 'marksheet'>('marksheet');
@@ -59,6 +110,8 @@ export default function ExamMasterPage() {
   const [newHallCode, setNewHallCode] = useState('');
   const [newHallCapacity, setNewHallCapacity] = useState('30');
 
+  const [definitions, setDefinitions] = useState<AssessmentDefinition[]>([]);
+
   const loadTerms = () => fetch('/api/academics/exam-terms').then(r => r.json()).then(j => j.success && setTerms(j.data));
   const loadHalls = () => fetch('/api/academics/exam-halls').then(r => r.json()).then(j => j.success && setHalls(j.data));
   const loadSchedules = () => fetch('/api/academics/exam-schedules').then(r => r.json()).then(j => j.success && setSchedules(j.data));
@@ -70,12 +123,17 @@ export default function ExamMasterPage() {
           setStudents(j.data.map((s: any) => ({ id: s.id, fullName: s.fullName, matricule: s.matricule })));
         }
       });
+  const loadDefinitions = () =>
+    fetch('/api/academics/assessment-definitions')
+      .then(r => r.json())
+      .then(j => j.success && setDefinitions(j.data));
 
   useEffect(() => {
     loadTerms();
     loadHalls();
     loadSchedules();
     loadStudents();
+    loadDefinitions();
   }, []);
 
   useEffect(() => {
@@ -311,13 +369,18 @@ export default function ExamMasterPage() {
         <Card className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-5">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex-1 max-w-md">
-              <label className="text-xs font-bold text-slate-700">ID de l'épreuve (assessmentDefinitionId)</label>
-              <Input
-                value={assessmentDefinitionId}
-                onChange={e => setAssessmentDefinitionId(e.target.value)}
-                placeholder="uuid de l'épreuve à noter"
-                className="mt-1 text-xs rounded-xl h-9 border-slate-200"
-              />
+              <label className="text-xs font-bold text-slate-700">Épreuve à noter</label>
+              <div className="mt-1">
+                <EpreuveCombobox
+                  definitions={definitions}
+                  value={assessmentDefinitionId}
+                  onChange={setAssessmentDefinitionId}
+                  placeholder="Sélectionner une épreuve..."
+                />
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1">
+                Choisissez l&apos;épreuve dont vous voulez saisir la grille de notes.
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -523,7 +586,12 @@ export default function ExamMasterPage() {
                 <option value="">Session --</option>
                 {terms.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
-              <Input placeholder="assessmentDefinitionId" value={scheduleDefId} onChange={e => setScheduleDefId(e.target.value)} className="rounded-xl h-9" />
+              <EpreuveCombobox
+                definitions={definitions}
+                value={scheduleDefId}
+                onChange={setScheduleDefId}
+                placeholder="Épreuve..."
+              />
               <select value={scheduleHallId} onChange={e => setScheduleHallId(e.target.value)} className="p-2.5 rounded-xl border border-slate-200 font-medium">
                 <option value="">Salle (optionnel)</option>
                 {halls.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
@@ -546,7 +614,7 @@ export default function ExamMasterPage() {
                     <Badge variant="info" className="text-[10px] mb-1">
                       {new Date(s.startTime).toLocaleString('fr-FR')} - {new Date(s.endTime).toLocaleString('fr-FR')}
                     </Badge>
-                    <p className="text-[11px] text-slate-500">Épreuve: {s.assessmentDefinitionId}</p>
+                    <p className="text-[11px] text-slate-500">Épreuve: {definitions.find(d => d.id === s.assessmentDefinitionId)?.title ?? s.assessmentDefinitionId}</p>
                   </div>
                   <Badge variant={s.status === 'published' ? 'success' : 'info'} className="font-bold">{s.status}</Badge>
                 </div>

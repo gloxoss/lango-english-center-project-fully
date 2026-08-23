@@ -9,6 +9,7 @@ import {
   scheduledJobDefinitions,
   scheduledJobRuns,
 } from '@/features/settings/models/settings-schema';
+import { runAllActiveFinanceReminders } from '@/libs/services/finance-reminders';
 
 // ---------------------------------------------------------------------------
 // DB-backed scheduled jobs registry. Each job has an allowlisted handler - no
@@ -20,6 +21,7 @@ import {
 export const SCHEDULED_HANDLERS = {
   purge_sessions: { label: 'Purge des sessions expirées' },
   noop: { label: 'Test (aucun effet)' },
+  feeReminderJob: { label: 'Relances de frais automatiques' },
 } as const;
 
 const HANDLER_IMPLS: Record<string, (tenantId: string) => Promise<Record<string, unknown>>> = {
@@ -33,6 +35,11 @@ const HANDLER_IMPLS: Record<string, (tenantId: string) => Promise<Record<string,
   },
   async noop() {
     return { note: 'Aucun traitement exécuté.' };
+  },
+  async feeReminderJob(tenantId) {
+    const today = new Date().toISOString().slice(0, 10);
+    const { runs, sentTotal } = await runAllActiveFinanceReminders(tenantId, null, today);
+    return { reminderRuns: runs, remindersSent: sentTotal };
   },
 };
 

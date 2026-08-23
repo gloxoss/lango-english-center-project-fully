@@ -1,5 +1,5 @@
 import { requireServerPage } from '@/libs/api/page-guard';
-import { TeacherProfile360View } from '@/features/academics/ui/teacher-profile-view';
+import { TeacherAdminDetailView } from '@/features/teachers/ui/teacher-admin-detail-view';
 
 export default async function TeacherProfilePage({
   params,
@@ -8,5 +8,5 @@ export default async function TeacherProfilePage({
 }) {
   const { locale, id } = await params;
   await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
-  return <TeacherProfile360View id={id} locale={locale} />;
+  return <TeacherAdminDetailView id={id} locale={locale} />;
 }

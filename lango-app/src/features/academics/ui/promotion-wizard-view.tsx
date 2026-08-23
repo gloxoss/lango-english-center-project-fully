@@ -88,19 +88,17 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/academics/classes').then((r) => r.json()),
+      fetch('/api/academics/class-sections?pageSize=200').then((r) => r.json()),
       fetch('/api/academics/session-years').then((r) => r.json()),
     ]).then(([clsRes, sessRes]) => {
       if (clsRes.success && Array.isArray(clsRes.data)) {
-        // Flatten classes + sections into section list
-        const flattened: ClassSection[] = [];
-        clsRes.data.forEach((c: any) => {
-          if (Array.isArray(c.sections)) {
-            c.sections.forEach((s: any) => {
-              flattened.push({ id: s.id, className: c.name, sectionName: s.name });
-            });
-          }
-        });
+        // /api/academics/classes has no nested `sections` array - use
+        // class-sections directly (already returns className/sectionName pairs).
+        const flattened: ClassSection[] = clsRes.data.map((s: any) => ({
+          id: s.id,
+          className: s.className,
+          sectionName: s.sectionName,
+        }));
         setSectionsList(flattened);
         const firstSection = flattened[0];
         const secondSection = flattened[1];

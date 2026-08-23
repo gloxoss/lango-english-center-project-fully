@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,82 +11,152 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import {
-  FileText, Search, Download, Check, X, Clock, CheckCircle2, XCircle, Phone, Mail, Plus, Eye, Sparkles,
+  FileText, Search, Check, X, Clock, CheckCircle2, XCircle, Phone, Plus, Eye, Loader2,
 } from 'lucide-react';
 
 type ExcuseItem = {
   id: string;
+  studentId: string;
   studentName: string;
-  avatar: string;
-  className: string;
   date: string;
   reason: string;
-  documentName?: string;
+  documentUrl: string | null;
+  documentFileExt: string | null;
   status: 'pending' | 'approved' | 'rejected';
-  tutorName: string;
-  tutorPhone: string;
+  rejectionReason: string | null;
+  guardianName: string | null;
+  guardianPhone: string | null;
 };
 
-const MOCK_EXCUSES: ExcuseItem[] = [
-  { id: '1', studentName: 'Aya Chraibi', avatar: 'AC', className: '4COL-A', date: '02 juin 2026', reason: 'Consultation médicale & repos 48h prescrit par médecin traitant', documentName: 'certificat_medical_aya.pdf', status: 'pending', tutorName: 'Driss Chraibi', tutorPhone: '+212 6 63 11 22 33' },
-  { id: '2', studentName: 'Lina Bennani', avatar: 'LB', className: '2BAC-A', date: '28 mai 2026', reason: 'Panne de transport scolaire en matinée', documentName: 'attestation_transport.pdf', status: 'approved', tutorName: 'Salma Bennani', tutorPhone: '+212 6 62 88 99 00' },
-  { id: '3', studentName: 'Mehdi Chraibi', avatar: 'MC', className: '1BAC-B', date: '24 mai 2026', reason: 'Absence personnelle non motif d\'urgence', status: 'rejected', tutorName: 'Driss Chraibi', tutorPhone: '+212 6 63 11 22 33' },
-];
+type StudentOption = { id: string; fullName: string; className: string };
+
+function formatDate(value: string): string {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString('fr-FR');
+}
+
+function initials(name: string): string {
+  return name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
+}
 
 export function AttendanceExcusesView({ locale: _locale }: { locale?: string } = {}) {
-  const [excuses, setExcuses] = useState<ExcuseItem[]>(MOCK_EXCUSES);
+  const [excuses, setExcuses] = useState<ExcuseItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
   const [search, setSearch] = useState('');
-  const [selectedExcuseId, setSelectedExcuseId] = useState<string>('1');
+  const [selectedExcuseId, setSelectedExcuseId] = useState<string | null>(null);
 
-  // Modals state
+  // Document viewer
+  const [viewingExcuse, setViewingExcuse] = useState<ExcuseItem | null>(null);
+
+  // Reject dialog
+  const [rejectExcuse, setRejectExcuse] = useState<ExcuseItem | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  // Submit modal
   const [isSubmitOpen, setIsSubmitOpen] = useState(false);
-  const [isDocViewerOpen, setIsDocViewerOpen] = useState(false);
+  const [students, setStudents] = useState<StudentOption[]>([]);
+  const [newExcuse, setNewExcuse] = useState({ studentId: '', date: new Date().toISOString().slice(0, 10), reason: '' });
 
-  const [newExcuse, setNewExcuse] = useState({
-    studentName: '',
-    className: '2BAC-A',
-    date: '03 juin 2026',
-    reason: '',
-    tutorName: 'Tuteur Légal',
-    tutorPhone: '+212 6 00 00 00 00',
-    documentName: 'justificatif_joint.pdf',
-  });
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/attendance/excuses');
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Échec du chargement des justificatifs.');
+      }
+      const rows: ExcuseItem[] = json.data ?? [];
+      setExcuses(rows);
+      setSelectedExcuseId((prev) => prev ?? rows[0]?.id ?? null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Échec du chargement.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const pendingCount = excuses.filter(e => e.status === 'pending').length;
-  const approvedCount = excuses.filter(e => e.status === 'approved').length;
-  const rejectedCount = excuses.filter(e => e.status === 'rejected').length;
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  const filtered = excuses.filter(ex => {
-    const matchesSearch = ex.studentName.toLowerCase().includes(search.toLowerCase()) || ex.className.toLowerCase().includes(search.toLowerCase());
+  const pendingCount = excuses.filter((e) => e.status === 'pending').length;
+  const approvedCount = excuses.filter((e) => e.status === 'approved').length;
+  const rejectedCount = excuses.filter((e) => e.status === 'rejected').length;
+
+  const filtered = excuses.filter((ex) => {
+    const matchesSearch = ex.studentName.toLowerCase().includes(search.toLowerCase());
     const matchesTab = activeTab === 'all' || ex.status === activeTab;
     return matchesSearch && matchesTab;
   });
 
-  const selectedExcuse = excuses.find(e => e.id === selectedExcuseId) ?? excuses[0];
+  const selectedExcuse = excuses.find((e) => e.id === selectedExcuseId) ?? null;
 
-  const handleStatusChange = (id: string, newStatus: 'approved' | 'rejected') => {
-    setExcuses(prev => prev.map(e => e.id === id ? { ...e, status: newStatus } : e));
-  };
+  async function review(id: string, status: 'approved' | 'rejected', rejectionReason?: string) {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/attendance/excuses', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ excuseId: id, status, rejectionReason }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || json.error?.message || 'Échec de la mise à jour.');
+      }
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Échec de la mise à jour.');
+    } finally {
+      setSubmitting(false);
+      setRejectExcuse(null);
+      setRejectReason('');
+    }
+  }
 
-  const handleCreateExcuse = () => {
-    if (!newExcuse.studentName.trim() || !newExcuse.reason.trim()) return;
-    const created: ExcuseItem = {
-      id: `ex-${Date.now()}`,
-      studentName: newExcuse.studentName.trim(),
-      avatar: newExcuse.studentName.split(' ').map(n => n[0]).join('').slice(0, 2),
-      className: newExcuse.className,
-      date: newExcuse.date,
-      reason: newExcuse.reason.trim(),
-      documentName: newExcuse.documentName,
-      status: 'pending',
-      tutorName: newExcuse.tutorName,
-      tutorPhone: newExcuse.tutorPhone,
-    };
-    setExcuses(prev => [created, ...prev]);
-    setIsSubmitOpen(false);
-    setNewExcuse({ studentName: '', className: '2BAC-A', date: '03 juin 2026', reason: '', tutorName: 'Tuteur Légal', tutorPhone: '+212 6 00 00 00 00', documentName: 'justificatif_joint.pdf' });
-  };
+  async function openSubmit() {
+    setIsSubmitOpen(true);
+    if (students.length === 0) {
+      try {
+        const res = await fetch('/api/students?pageSize=200');
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          setStudents(json.data.map((s: any) => ({ id: s.id, fullName: s.fullName, className: s.className ?? '' })));
+        }
+      } catch {
+        // non-fatal: the picker just stays empty
+      }
+    }
+  }
+
+  async function submitExcuse() {
+    if (!newExcuse.studentId || !newExcuse.reason.trim()) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/attendance/excuses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId: newExcuse.studentId, date: newExcuse.date, reason: newExcuse.reason.trim() }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || json.error?.message || 'Échec de la création.');
+      }
+      setIsSubmitOpen(false);
+      setNewExcuse({ studentId: '', date: new Date().toISOString().slice(0, 10), reason: '' });
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Échec de la création.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
@@ -99,7 +169,7 @@ export function AttendanceExcusesView({ locale: _locale }: { locale?: string } =
         <div className="flex items-center gap-3">
           <Button
             size="sm"
-            onClick={() => setIsSubmitOpen(true)}
+            onClick={openSubmit}
             className="h-10 rounded-xl px-4 gap-2 bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold shadow-2xs"
           >
             <Plus className="w-4 h-4" />
@@ -107,6 +177,10 @@ export function AttendanceExcusesView({ locale: _locale }: { locale?: string } =
           </Button>
         </div>
       </div>
+
+      {error && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-semibold text-rose-700">{error}</div>
+      )}
 
       {/* Top Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -147,7 +221,7 @@ export function AttendanceExcusesView({ locale: _locale }: { locale?: string } =
             { id: 'approved', label: 'Approuvées' },
             { id: 'rejected', label: 'Refusées' },
             { id: 'all', label: 'Toutes' },
-          ].map(tab => (
+          ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
@@ -162,9 +236,9 @@ export function AttendanceExcusesView({ locale: _locale }: { locale?: string } =
         <div className="relative w-full sm:w-64">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <Input
-            placeholder="Rechercher élève ou classe..."
+            placeholder="Rechercher un élève..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             className="pl-9 h-9 text-xs rounded-xl bg-slate-50 border-none"
           />
         </div>
@@ -172,41 +246,50 @@ export function AttendanceExcusesView({ locale: _locale }: { locale?: string } =
 
       {/* Main 12-col Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left 7 cols: Excuses List with 36px Avatars */}
+        {/* Left 7 cols: Excuses List */}
         <div className="lg:col-span-7 space-y-3">
-          {filtered.map(ex => {
-            const isSelected = selectedExcuse?.id === ex.id;
-            return (
-              <Card
-                key={ex.id}
-                onClick={() => setSelectedExcuseId(ex.id)}
-                className={`p-4 bg-white rounded-2xl border transition cursor-pointer space-y-3 ${
-                  isSelected ? 'border-[#2487B8] bg-[#DCEBF4]/20 shadow-xs' : 'border-slate-200/80 hover:border-slate-300 shadow-2xs'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {/* 36px Circular Avatar */}
-                    <div className="w-9 h-9 rounded-full bg-[#DCEBF4] text-[#1B6C93] border-2 border-white shadow-2xs flex items-center justify-center font-extrabold text-xs shrink-0">
-                      {ex.avatar}
+          {loading ? (
+            <Card className="p-12 flex items-center justify-center text-slate-400 bg-white rounded-2xl border border-slate-200/80">
+              <Loader2 className="w-5 h-5 animate-spin" />
+            </Card>
+          ) : filtered.length === 0 ? (
+            <Card className="p-12 text-center text-xs text-slate-400 font-bold bg-white rounded-2xl border border-slate-200/80">
+              Aucun justificatif ne correspond à ce filtre.
+            </Card>
+          ) : (
+            filtered.map((ex) => {
+              const isSelected = selectedExcuse?.id === ex.id;
+              return (
+                <Card
+                  key={ex.id}
+                  onClick={() => setSelectedExcuseId(ex.id)}
+                  className={`p-4 bg-white rounded-2xl border transition cursor-pointer space-y-3 ${
+                    isSelected ? 'border-[#2487B8] bg-[#DCEBF4]/20 shadow-xs' : 'border-slate-200/80 hover:border-slate-300 shadow-2xs'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-[#DCEBF4] text-[#1B6C93] border-2 border-white shadow-2xs flex items-center justify-center font-extrabold text-xs shrink-0">
+                        {initials(ex.studentName)}
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-extrabold text-[#16212B]">{ex.studentName}</h3>
+                        <p className="text-[10px] text-slate-400">Date d&apos;absence : {formatDate(ex.date)}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-sm font-extrabold text-[#16212B]">{ex.studentName}</h3>
-                      <p className="text-[10px] text-slate-400">{ex.className} • Date d&apos;absence: {ex.date}</p>
-                    </div>
-                  </div>
 
-                  <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                    ex.status === 'approved' ? 'bg-[#DDF5EC] text-[#17A673]' :
-                    ex.status === 'rejected' ? 'bg-[#FCE4E2] text-[#E5544B]' : 'bg-[#FCF0DC] text-[#E8A33D]'
-                  }`}>
-                    {ex.status === 'approved' ? 'Approuvée' : ex.status === 'rejected' ? 'Refusée' : 'En attente'}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-600 line-clamp-1 pl-12">{ex.reason}</p>
-              </Card>
-            );
-          })}
+                    <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                      ex.status === 'approved' ? 'bg-[#DDF5EC] text-[#17A673]' :
+                      ex.status === 'rejected' ? 'bg-[#FCE4E2] text-[#E5544B]' : 'bg-[#FCF0DC] text-[#E8A33D]'
+                    }`}>
+                      {ex.status === 'approved' ? 'Approuvée' : ex.status === 'rejected' ? 'Refusée' : 'En attente'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 line-clamp-1 pl-12">{ex.reason}</p>
+                </Card>
+              );
+            })
+          )}
         </div>
 
         {/* Right 5 cols: Excuse Inspector & Document Viewer */}
@@ -215,24 +298,26 @@ export function AttendanceExcusesView({ locale: _locale }: { locale?: string } =
             <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
               <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
                 <div className="w-10 h-10 rounded-full bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center font-extrabold text-sm">
-                  {selectedExcuse.avatar}
+                  {initials(selectedExcuse.studentName)}
                 </div>
                 <div>
                   <h2 className="text-base font-extrabold text-[#16212B]">{selectedExcuse.studentName}</h2>
-                  <p className="text-xs text-slate-400">{selectedExcuse.className} • Absence du {selectedExcuse.date}</p>
+                  <p className="text-xs text-slate-400">Absence du {formatDate(selectedExcuse.date)}</p>
                 </div>
               </div>
 
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 space-y-2 text-xs">
-                <p className="font-bold text-slate-700">Motif invoqué par le tuteur:</p>
+                <p className="font-bold text-slate-700">Motif invoqué par le tuteur :</p>
                 <p className="text-slate-600">{selectedExcuse.reason}</p>
-                {selectedExcuse.documentName && (
+                {(selectedExcuse.documentUrl || selectedExcuse.documentFileExt) && (
                   <div className="pt-2 flex items-center justify-between border-t border-slate-200 text-xs font-bold text-[#2487B8]">
-                    <span className="flex items-center gap-1.5"><FileText className="w-4 h-4" /> {selectedExcuse.documentName}</span>
+                    <span className="flex items-center gap-1.5">
+                      <FileText className="w-4 h-4" /> Pièce jointe
+                    </span>
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => setIsDocViewerOpen(true)}
+                      onClick={() => setViewingExcuse(selectedExcuse)}
                       className="h-7 text-xs text-[#2487B8] hover:bg-[#DCEBF4]/40 gap-1"
                     >
                       <Eye className="w-3.5 h-3.5" /> Voir la pièce
@@ -242,20 +327,36 @@ export function AttendanceExcusesView({ locale: _locale }: { locale?: string } =
               </div>
 
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 space-y-1 text-xs">
-                <p className="font-bold text-[#16212B]">Tuteur légal déclarant:</p>
-                <p className="text-slate-600">{selectedExcuse.tutorName} ({selectedExcuse.tutorPhone})</p>
+                <p className="font-bold text-[#16212B]">Tuteur légal déclarant :</p>
+                <p className="text-slate-600 flex items-center gap-1.5">
+                  {selectedExcuse.guardianName ?? 'Non renseigné'}
+                  {selectedExcuse.guardianPhone && (
+                    <span className="inline-flex items-center gap-1 text-slate-400">
+                      <Phone className="w-3 h-3" /> {selectedExcuse.guardianPhone}
+                    </span>
+                  )}
+                </p>
               </div>
+
+              {selectedExcuse.status === 'rejected' && selectedExcuse.rejectionReason && (
+                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-100 text-xs">
+                  <p className="font-bold text-rose-700">Motif de refus :</p>
+                  <p className="text-rose-600 mt-1">{selectedExcuse.rejectionReason}</p>
+                </div>
+              )}
 
               {selectedExcuse.status === 'pending' && (
                 <div className="flex gap-2 pt-2">
                   <Button
-                    onClick={() => handleStatusChange(selectedExcuse.id, 'approved')}
+                    disabled={submitting}
+                    onClick={() => review(selectedExcuse.id, 'approved')}
                     className="flex-1 h-9 rounded-xl bg-[#17A673] hover:bg-[#12865c] text-white text-xs font-bold gap-1"
                   >
-                    <Check className="w-4 h-4" /> Approuver la justification
+                    <Check className="w-4 h-4" /> Approuver
                   </Button>
                   <Button
-                    onClick={() => handleStatusChange(selectedExcuse.id, 'rejected')}
+                    disabled={submitting}
+                    onClick={() => { setRejectExcuse(selectedExcuse); setRejectReason(''); }}
                     variant="outline"
                     className="h-9 rounded-xl text-xs font-bold border-rose-200 text-[#E5544B] hover:bg-rose-50"
                   >
@@ -272,7 +373,7 @@ export function AttendanceExcusesView({ locale: _locale }: { locale?: string } =
         </div>
       </div>
 
-      {/* Soumettre une Justification Modal Dialog */}
+      {/* Soumettre une Justification Modal */}
       <Dialog open={isSubmitOpen} onOpenChange={setIsSubmitOpen}>
         <DialogContent className="max-w-md bg-white rounded-2xl p-6">
           <DialogHeader>
@@ -284,38 +385,27 @@ export function AttendanceExcusesView({ locale: _locale }: { locale?: string } =
 
           <div className="space-y-3 my-3 text-xs">
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Nom complet de l&apos;élève *</label>
-              <Input
-                placeholder="Ex. Yassine Alami"
-                value={newExcuse.studentName}
-                onChange={e => setNewExcuse({ ...newExcuse, studentName: e.target.value })}
-                className="h-9 text-xs rounded-xl"
-              />
+              <label className="font-bold text-slate-700 block mb-1">Élève *</label>
+              <Select value={newExcuse.studentId} onValueChange={(val) => setNewExcuse({ ...newExcuse, studentId: val })}>
+                <SelectTrigger className="h-9 text-xs rounded-xl">
+                  <SelectValue placeholder="Sélectionner un élève" />
+                </SelectTrigger>
+                <SelectContent>
+                  {students.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>{s.fullName}{s.className ? ` — ${s.className}` : ''}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">Classe *</label>
-                <Select value={newExcuse.className} onValueChange={val => setNewExcuse({ ...newExcuse, className: val })}>
-                  <SelectTrigger className="h-9 text-xs rounded-xl">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="2BAC-A">2BAC-A</SelectItem>
-                    <SelectItem value="1BAC-B">1BAC-B</SelectItem>
-                    <SelectItem value="4COL-A">4COL-A</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">Date d&apos;absence *</label>
-                <Input
-                  value={newExcuse.date}
-                  onChange={e => setNewExcuse({ ...newExcuse, date: e.target.value })}
-                  className="h-9 text-xs rounded-xl"
-                />
-              </div>
+            <div>
+              <label className="font-bold text-slate-700 block mb-1">Date d&apos;absence *</label>
+              <Input
+                type="date"
+                value={newExcuse.date}
+                onChange={(e) => setNewExcuse({ ...newExcuse, date: e.target.value })}
+                className="h-9 text-xs rounded-xl"
+              />
             </div>
 
             <div>
@@ -323,29 +413,9 @@ export function AttendanceExcusesView({ locale: _locale }: { locale?: string } =
               <Input
                 placeholder="Ex. Consultation médicale urgente"
                 value={newExcuse.reason}
-                onChange={e => setNewExcuse({ ...newExcuse, reason: e.target.value })}
+                onChange={(e) => setNewExcuse({ ...newExcuse, reason: e.target.value })}
                 className="h-9 text-xs rounded-xl"
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">Nom du Tuteur *</label>
-                <Input
-                  value={newExcuse.tutorName}
-                  onChange={e => setNewExcuse({ ...newExcuse, tutorName: e.target.value })}
-                  className="h-9 text-xs rounded-xl"
-                />
-              </div>
-
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">Téléphone Tuteur *</label>
-                <Input
-                  value={newExcuse.tutorPhone}
-                  onChange={e => setNewExcuse({ ...newExcuse, tutorPhone: e.target.value })}
-                  className="h-9 text-xs rounded-xl"
-                />
-              </div>
             </div>
           </div>
 
@@ -353,16 +423,50 @@ export function AttendanceExcusesView({ locale: _locale }: { locale?: string } =
             <Button variant="outline" onClick={() => setIsSubmitOpen(false)} className="rounded-xl text-xs h-9">
               Annuler
             </Button>
-            <Button onClick={handleCreateExcuse} className="rounded-xl text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold">
+            <Button
+              disabled={submitting || !newExcuse.studentId || newExcuse.reason.trim().length < 3}
+              onClick={submitExcuse}
+              className="rounded-xl text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold"
+            >
               Soumettre la demande
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* Reject reason Dialog */}
+      <Dialog open={!!rejectExcuse} onOpenChange={(open) => { if (!open) setRejectExcuse(null); }}>
+        <DialogContent className="max-w-md bg-white rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-base font-extrabold text-[#16212B]">Refuser la justification</DialogTitle>
+          </DialogHeader>
+          <div className="my-3 space-y-2 text-xs">
+            <label className="font-bold text-slate-700 block">Motif de refus *</label>
+            <Input
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Ex. Justificatif non recevable"
+              className="h-9 text-xs rounded-xl"
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setRejectExcuse(null)} className="rounded-xl text-xs h-9">
+              Annuler
+            </Button>
+            <Button
+              disabled={submitting || rejectReason.trim().length < 3}
+              onClick={() => rejectExcuse && review(rejectExcuse.id, 'rejected', rejectReason.trim())}
+              className="rounded-xl text-xs h-9 bg-[#E5544B] hover:bg-[#c93f38] text-white font-bold"
+            >
+              Confirmer le refus
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Document Preview Viewer Dialog */}
-      <Dialog open={isDocViewerOpen} onOpenChange={setIsDocViewerOpen}>
-        <DialogContent className="max-w-lg bg-white rounded-2xl p-6">
+      <Dialog open={!!viewingExcuse} onOpenChange={(open) => { if (!open) setViewingExcuse(null); }}>
+        <DialogContent className="max-w-2xl bg-white rounded-2xl p-6">
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
               <FileText className="w-5 h-5 text-[#2487B8]" />
@@ -370,18 +474,26 @@ export function AttendanceExcusesView({ locale: _locale }: { locale?: string } =
             </DialogTitle>
           </DialogHeader>
 
-          {selectedExcuse && (
-            <div className="space-y-4 my-3 text-xs">
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-2 py-8">
-                <FileText className="w-12 h-12 text-[#2487B8] mx-auto" />
-                <p className="font-extrabold text-[#16212B] text-sm">{selectedExcuse.documentName}</p>
-                <p className="text-slate-400 text-[10px]">Document justificatif officiel certifié par le tuteur ({selectedExcuse.tutorName})</p>
-              </div>
+          {viewingExcuse && (
+            <div className="my-3">
+              {viewingExcuse.documentFileExt === 'pdf' ? (
+                <iframe
+                  src={viewingExcuse.documentUrl ?? `/api/attendance/excuses/document?excuseId=${viewingExcuse.id}`}
+                  title="Justificatif"
+                  className="h-[60vh] w-full rounded-xl border border-slate-200"
+                />
+              ) : (
+                <img
+                  src={viewingExcuse.documentUrl ?? `/api/attendance/excuses/document?excuseId=${viewingExcuse.id}`}
+                  alt="Justificatif"
+                  className="max-h-[60vh] w-full rounded-xl border border-slate-200 object-contain bg-slate-50"
+                />
+              )}
             </div>
           )}
 
           <DialogFooter>
-            <Button onClick={() => setIsDocViewerOpen(false)} className="w-full rounded-xl text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold">
+            <Button onClick={() => setViewingExcuse(null)} className="w-full rounded-xl text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold">
               Fermer l&apos;aperçu
             </Button>
           </DialogFooter>

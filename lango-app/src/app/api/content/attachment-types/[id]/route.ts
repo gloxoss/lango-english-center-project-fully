@@ -18,6 +18,7 @@ const updateAttachmentTypeSchema = z.object({
   studentVisible: z.boolean().optional(),
   downloadable: z.boolean().optional(),
   displayOrder: z.number().int().optional(),
+  isActive: z.boolean().optional(),
 }).strict();
 
 export async function PUT(

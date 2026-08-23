@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lango / SchoolOS — Design Motion & Visual Style Library</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #030712; color: #f3f4f6; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="min-h-screen pb-16">
+
+  <!-- Sticky Topbar -->
+  <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-50 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-400 via-teal-500 to-indigo-500 flex items-center justify-center text-slate-950 font-black text-lg shadow-lg shadow-emerald-500/20">L</div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base font-bold text-white tracking-tight">Design Motion & Style Library</h1>
+            <span class="text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">37+ STYLES READY</span>
+          </div>
+          <p class="text-xs text-slate-400">Interactive Aesthetic Catalog for SchoolOS & Lango Platform</p>
+        </div>
+      </div>
+
+      <!-- Quick Category Filter Pills -->
+      <div class="flex items-center gap-2 overflow-x-auto text-xs font-medium py-1">
+        <button onclick="filterCategory('all')" class="filter-btn active px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold transition">All Styles</button>
+        <button onclick="filterCategory('SaaS & Dashboard')" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 transition border border-slate-800">SaaS & Dashboard</button>
+        <button onclick="filterCategory('High-End & Luxury')" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 transition border border-slate-800">High-End & Luxury</button>
+        <button onclick="filterCategory('Retro & Cyber')" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 transition border border-slate-800">Retro & Cyber</button>
+        <button onclick="filterCategory('Playful & EdTech')" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 transition border border-slate-800">Playful & EdTech</button>
+        <button onclick="filterCategory('Tactile & Spatial')" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 transition border border-slate-800">Tactile & Spatial</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Header -->
+  <main class="max-w-7xl mx-auto px-6 pt-8 space-y-8">
+    
+    <div class="bg-gradient-to-r from-slate-900 via-slate-900/90 to-indigo-950/40 border border-slate-800 rounded-2xl p-6 md:p-8 relative overflow-hidden">
+      <div class="max-w-3xl space-y-3 relative z-10">
+        <span class="text-xs font-mono text-emerald-400 font-semibold uppercase tracking-wider">Visual Logic Directory</span>
+        <h2 class="text-2xl md:text-3xl font-extrabold text-white">Choose Your Ideal Visual Identity</h2>
+        <p class="text-sm text-slate-300 leading-relaxed">
+          Every card below is rendered with real SchoolOS KPI stats, active Moroccan campus tuition cards, interactive enrollment tables, and exact typography scales. Click any preview to test and select the look for your platform.
+        </p>
+      </div>
+    </div>
+
+    <!-- Cards Grid -->
+    <div id="cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="SaaS & Minimal" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              SaaS & Minimal
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Sleek Minimalist</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Clean 60-30-10 color ratio, subtle interactions, high-density SaaS clarity.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#3b82f6</span></span>
+            <span>Radius: <span class="text-slate-200">0.75rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-sleek-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="SaaS & Dashboard" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              SaaS & Dashboard
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Modern Bento Grid</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Modular rounded bento compartments with organic proportions & quick glanceability.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#58a6ff</span></span>
+            <span>Radius: <span class="text-slate-200">1rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-bento-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Tactile & Spatial" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              Tactile & Spatial
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Frosted Glassmorphism</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Translucent frosted layers, multi-colored backdrop blurs, and soft luminous glows.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#818cf8</span></span>
+            <span>Radius: <span class="text-slate-200">1.25rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-glassmorphism-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Playful & Bold" data-theme="light">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              Playful & Bold
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">☀️ LIGHT</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Neo-Brutalism Raw</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Thick black borders, hard offset drop-shadows, and unapologetic high-saturation punch.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#ffe600</span></span>
+            <span>Radius: <span class="text-slate-200">0.5rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-neobrutalism-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Retro & Cyber" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              Retro & Cyber
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Cyberpunk Neon Glow</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Electric synthwave palette, neon edge glows, and high-energy HUD telemetry.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#ff007f</span></span>
+            <span>Radius: <span class="text-slate-200">0.5rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-neon-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Tactile & Spatial" data-theme="light">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              Tactile & Spatial
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">☀️ LIGHT</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Soft Tactile Neumorphism</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Soft extruded physical elements with paired convex and concave light source shadowing.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#4c6ef5</span></span>
+            <span>Radius: <span class="text-slate-200">1.25rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-neumorphism-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Playful & EdTech" data-theme="light">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              Playful & EdTech
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">☀️ LIGHT</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Playful Claymorphism</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Soft 3D toy-like clay volumes, marshmallow roundness, and colorful friendly tactile buttons.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#ec4899</span></span>
+            <span>Radius: <span class="text-slate-200">2rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-claymorphism-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Retro & Cyber" data-theme="light">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              Retro & Cyber
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">☀️ LIGHT</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Vintage Retro Arcade</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">1980s computer terminal warm sepia, mono typefaces, and mechanical control buttons.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#ea580c</span></span>
+            <span>Radius: <span class="text-slate-200">0.25rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-retro-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Retro & Cyber" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              Retro & Cyber
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Cyber Matrix Terminal</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Phosphor monochrome CRT aesthetic, blinking status cursors, and matrix hacker feeds.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#00ff41</span></span>
+            <span>Radius: <span class="text-slate-200">0px</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-matrix-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="High-End & Luxury" data-theme="light">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              High-End & Luxury
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">☀️ LIGHT</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">High-End Editorial Press</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Magazine editorial masthead typography, elegant serif display, and refined layout columns.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#1c1917</span></span>
+            <span>Radius: <span class="text-slate-200">0.25rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-editorial-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="High-End & Luxury" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              High-End & Luxury
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Midnight Luxury Gold</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Deep onyx obsidian backgrounds, champagne gold metallic borders, and haute-couture elegance.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#c9a96e</span></span>
+            <span>Radius: <span class="text-slate-200">0.25rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-luxury-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Playful & EdTech" data-theme="light">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              Playful & EdTech
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">☀️ LIGHT</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Gamified Lingo EdTech</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Duolingo-inspired chunky tactile 3D buttons, energetic XP counters, and friendly progress trackers.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#58cc02</span></span>
+            <span>Radius: <span class="text-slate-200">1rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-lingo-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Retro & Cyber" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              Retro & Cyber
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Deep Cosmic Galaxy</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Nebula gradients, deep space backdrop, stardust highlights, and sci-fi command cards.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#a855f7</span></span>
+            <span>Radius: <span class="text-slate-200">1rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-cosmic-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Retro & Cyber" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              Retro & Cyber
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Futuristic HUD Sci-Fi</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Sci-fi heads-up telemetry, angular corner accents, and high-precision data readouts.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#00d4ff</span></span>
+            <span>Radius: <span class="text-slate-200">0.25rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-futuristic-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Retro & Cyber" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              Retro & Cyber
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Sega 16-Bit Arcade</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Mega Drive 16-bit arcade pixel aesthetics, hard rectangular geometry, and vibrant saturated colors.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#ff4444</span></span>
+            <span>Radius: <span class="text-slate-200">0px</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-sega-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Retro & Cyber" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              Retro & Cyber
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Pacman 8-Bit Pixel Maze</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Authentic arcade cabinet dot grid, high score counters, and retro 8-bit typography.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#ffd700</span></span>
+            <span>Radius: <span class="text-slate-200">0px</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-pacman-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Retro & Cyber" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              Retro & Cyber
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Tetris Vibrant Blocks</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Iconic geometric block shapes, saturated secondary color outlines, and playful game energy.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#ff3366</span></span>
+            <span>Radius: <span class="text-slate-200">0.5rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-tetris-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Playful & Bold" data-theme="light">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              Playful & Bold
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">☀️ LIGHT</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Risograph Art Print</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Two-color riso ink overlay, grain misregistration aesthetic, and artistic print warmth.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#ec4899</span></span>
+            <span>Radius: <span class="text-slate-200">0.75rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-riso-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="High-End & Luxury" data-theme="light">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              High-End & Luxury
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">☀️ LIGHT</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Mediterranean Terracotta</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Sun-baked earthen clay tones, organic linen textures, and Mediterranean boutique elegance.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#c2714f</span></span>
+            <span>Radius: <span class="text-slate-200">1rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-terracotta-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="SaaS & Minimal" data-theme="light">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              SaaS & Minimal
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">☀️ LIGHT</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Anthropic Claude Stone</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Ivory parchment paper background, refined editorial serif type, and warm terracotta ochre.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#d97706</span></span>
+            <span>Radius: <span class="text-slate-200">0.75rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-claude-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="SaaS & Minimal" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              SaaS & Minimal
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Radical Minimal Codex</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Pure stark achromatic contrast, sub-pixel alignment, edge-to-edge engineering typography.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#ffffff</span></span>
+            <span>Radius: <span class="text-slate-200">0.25rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-codex-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="SaaS & Dashboard" data-theme="light">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              SaaS & Dashboard
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">☀️ LIGHT</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Enterprise Ant Design</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Enterprise data density, clean input states, structured tables, and business efficiency.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#1677ff</span></span>
+            <span>Radius: <span class="text-slate-200">0.375rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-ant-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="SaaS & Dashboard" data-theme="light">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              SaaS & Dashboard
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">☀️ LIGHT</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Modern Enterprise B2B</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Crisp corporate navigation, robust audit tables, and structured business intelligence.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#0284c7</span></span>
+            <span>Radius: <span class="text-slate-200">0.5rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-enterprise-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="SaaS & Minimal" data-theme="light">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              SaaS & Minimal
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">☀️ LIGHT</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Levels High-Conversion SaaS</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Frictionless CTA buttons, high-trust social proof badges, and bold value-driven copy.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#000000</span></span>
+            <span>Radius: <span class="text-slate-200">0.75rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-levels-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="SaaS & Dashboard" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              SaaS & Dashboard
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Developer Application IDE</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Deep indigo developer IDE console, command palette cards, and monospaced code telemetry.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#7f5af0</span></span>
+            <span>Radius: <span class="text-slate-200">0.5rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-application-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Playful & Bold" data-theme="light">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              Playful & Bold
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">☀️ LIGHT</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Playful Hand-Drawn Doodle</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Hand-drawn organic imperfect lines, yellow highlighter strokes, and sketchbook creativity.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#fdcb6e</span></span>
+            <span>Radius: <span class="text-slate-200">1.25rem 0.5rem 1rem 0.75rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-doodle-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Playful & Bold" data-theme="light">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              Playful & Bold
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">☀️ LIGHT</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Warm Pencil Sketchbook</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Drafting paper grain, charcoal pencil borders, and artisan illustration notes.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#2d2d2d</span></span>
+            <span>Radius: <span class="text-slate-200">0.5rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-sketch-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="High-End & Luxury" data-theme="light">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              High-End & Luxury
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">☀️ LIGHT</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Fine Art Gallery Canvas</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Museum-curated aesthetic, classical Roman serif headers, and subtle champagne gold borders.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#2c1810</span></span>
+            <span>Radius: <span class="text-slate-200">0.25rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-artistic-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="High-End & Luxury" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              High-End & Luxury
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Cinematic Dramatic Noir</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">High-contrast theatrical scale, condensed display banners, and moody atmospheric noir.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#ffffff</span></span>
+            <span>Radius: <span class="text-slate-200">0px</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-dramatic-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Tactile & Spatial" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              Tactile & Spatial
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Luminous Multi-Mesh Gradient</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Fluid multi-stop aurora mesh gradients, vibrant color transitions, and polished cards.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">linear-gradient(to right</span></span>
+            <span>Radius: <span class="text-slate-200">1.25rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-gradient-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="SaaS & Dashboard" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              SaaS & Dashboard
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Agentic AI Workflow</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Autonomous agent action trays, streaming token telemetry, and human-in-the-loop controls.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#8b5cf6</span></span>
+            <span>Radius: <span class="text-slate-200">0.75rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-agentic-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Playful & EdTech" data-theme="light">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              Playful & EdTech
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">☀️ LIGHT</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Friendly Soft Pastel</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Marshmallow soft rounded widgets, warm friendly greetings, and cheerful pastel bubbles.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#f472b6</span></span>
+            <span>Radius: <span class="text-slate-200">1.5rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-friendly-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="High-End & Luxury" data-theme="light">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              High-End & Luxury
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">☀️ LIGHT</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Artisanal Cozy Cafe</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Warm roasted espresso tones, steamed milk foam beige, and artisanal boutique hospitality.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#5d4037</span></span>
+            <span>Radius: <span class="text-slate-200">0.75rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-cafe-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Retro & Cyber" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              Retro & Cyber
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Mystical Fantasy RPG</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Arcane runes, ancient parchment scrolls, gold ornamental gilding, and mystical spell cards.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#9333ea</span></span>
+            <span>Radius: <span class="text-slate-200">0.375rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-fantasy-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Retro & Cyber" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              Retro & Cyber
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Pure Monospace Terminal</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Developer-first CLI telemetry, strict tabular ASCII alignment, and monospaced syntax clarity.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#22c55e</span></span>
+            <span>Radius: <span class="text-slate-200">0.25rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-mono-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="Retro & Cyber" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              Retro & Cyber
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Retro Dithered 1-Bit</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Classic Macintosh 1-bit dither patterns, bitmap monochrome graphics, and pixel crispness.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#ffffff</span></span>
+            <span>Radius: <span class="text-slate-200">0px</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-dithered-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-xl p-5 flex flex-col justify-between transition group hover:shadow-xl hover:shadow-slate-950/50" data-category="SaaS & Minimal" data-theme="dark">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              SaaS & Minimal
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">🌙 DARK</span>
+          </div>
+
+          <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition mb-1">Shadcn Radix Primitives</h3>
+          <p class="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">Accessible Radix UI primitives, clean neutral zinc grayscale, and unstyled utility elegance.</p>
+        </div>
+
+        <div class="space-y-3 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span>Primary: <span class="text-slate-200">#fafafa</span></span>
+            <span>Radius: <span class="text-slate-200">0.5rem</span></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="lango-schoolos-design-shadcn-preview.html" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg transition shadow-sm">
+              Open Full Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    
+    </div>
+
+  </main>
+
+  <script>
+    function filterCategory(cat) {
+      document.querySelectorAll('.filter-btn').forEach(b => {
+        b.classList.remove('bg-emerald-500', 'text-slate-950', 'font-bold');
+        b.classList.add('bg-slate-900', 'text-slate-300');
+      });
+      event.target.classList.remove('bg-slate-900', 'text-slate-300');
+      event.target.classList.add('bg-emerald-500', 'text-slate-950', 'font-bold');
+
+      const cards = document.querySelectorAll('#cards-grid > div');
+      cards.forEach(card => {
+        if (cat === 'all' || card.dataset.category === cat) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>

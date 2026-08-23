@@ -92,6 +92,7 @@ export function GuardIncidentsView() {
   const [error, setError] = useState<string | null>(null);
 
   const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [createForm, setCreateForm] = useState({
     category: 'acces', severity: 'medium', location: '', description: '',
   });
@@ -129,7 +130,7 @@ export function GuardIncidentsView() {
 
   const create = async () => {
     if (!createForm.description.trim()) return;
-    setCreating(true);
+    setSaving(true);
     setError(null);
     const res = await api('/api/guard/incidents', {
       method: 'POST',
@@ -138,9 +139,10 @@ export function GuardIncidentsView() {
         location: createForm.location.trim() || null,
       }),
     });
-    setCreating(false);
+    setSaving(false);
     if (res.ok) {
       setCreateForm({ category: 'acces', severity: 'medium', location: '', description: '' });
+      setCreating(false);
       setStatusFilter('');
       await load();
     } else {
@@ -217,7 +219,7 @@ export function GuardIncidentsView() {
             <SelectItem value="closed">Clos</SelectItem>
           </SelectContent>
         </Select>
-        <Button onClick={() => { setCreateForm({ category: 'acces', severity: 'medium', location: '', description: '' }); }}>
+        <Button onClick={() => { setCreateForm({ category: 'acces', severity: 'medium', location: '', description: '' }); setCreating(true); }}>
           <Plus className="mr-2 h-4 w-4" /> Signaler un incident
         </Button>
       </div>
@@ -313,6 +315,7 @@ export function GuardIncidentsView() {
                       {i.status !== 'escalated' && <Button size="sm" variant="outline" onClick={() => void addAction('escalate')}>Escalader</Button>}
                       {i.status !== 'resolved' && <Button size="sm" variant="outline" onClick={() => void addAction('resolve')}>Résoudre</Button>}
                       {i.status !== 'closed' && <Button size="sm" variant="outline" onClick={() => void addAction('close')}>Clore</Button>}
+                      {i.status === 'closed' && <Button size="sm" variant="outline" onClick={() => void addAction('reopen')}>Réouvrir</Button>}
                     </div>
                     {detailError && <p className="mt-2 flex items-center gap-1 text-xs text-rose-600"><AlertCircle className="h-3.5 w-3.5" />{detailError}</p>}
                   </div>
@@ -364,8 +367,8 @@ export function GuardIncidentsView() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreating(false)}>Annuler</Button>
-            <Button onClick={() => void create()} disabled={!createForm.description.trim()}>
-              {creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <AlertTriangle className="mr-2 h-4 w-4" />} Signaler
+            <Button onClick={() => void create()} disabled={saving || !createForm.description.trim()}>
+              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <AlertTriangle className="mr-2 h-4 w-4" />} Signaler
             </Button>
           </DialogFooter>
         </DialogContent>

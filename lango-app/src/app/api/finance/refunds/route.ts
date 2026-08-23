@@ -8,10 +8,9 @@ import { hasCapability, requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { consumeDocumentNumber } from '@/libs/finance/document-number';
-import { tryPostRefundGLEntry } from '@/libs/finance/gl-auto-post';
 import { normalizeMoney } from '@/libs/finance/money';
 import { moneyInput } from '@/libs/finance/validation';
-import { decideRefund } from '@/libs/services/refund-approval';
+import { applyApprovedRefund, decideRefund } from '@/libs/services/refund-approval';
 import { payments, refunds, user } from '@/models/Schema';
 
 const createRefundSchema = z.object({
@@ -95,7 +94,7 @@ export async function POST(req: NextRequest) {
     const canSelfApprove = await hasCapability(ctx.userId, tenantId, ctx.role, 'finance.approve');
     const now = new Date().toISOString();
 
-    const { record, refundNumber } = await db.transaction(async (tx) => {
+    const { record } = await db.transaction(async (tx) => {
       const number = await consumeDocumentNumber(tx, { tenantId, prefix: `RF-${new Date().getFullYear()}-` });
       const [created] = await tx
         .insert(refunds)
@@ -116,20 +115,17 @@ export async function POST(req: NextRequest) {
       if (!created) {
         throw new ApiError(500, 'REFUND_INSERT_FAILED', 'Remboursement non enregistré.');
       }
-      return { record: created, refundNumber: number };
+      return { record: created };
     });
 
-    // GL auto-posting only once a refund is actually approved - a pending
-    // request hasn't happened yet, nothing should hit the ledger for it.
+    // GL auto-posting + ledger linkage only once a refund is actually approved -
+    // a pending request hasn't happened yet, nothing should hit the ledger for it.
     let glPosted = false;
     if (canSelfApprove) {
-      const glEntry = await tryPostRefundGLEntry({
+      const glEntry = await applyApprovedRefund({
         tenantId,
         actorId: ctx.userId,
-        refundId: record.id,
-        refundNumber,
-        amount: body.amount,
-        refundDate: now,
+        refund: record,
       });
       glPosted = glEntry !== null;
     }

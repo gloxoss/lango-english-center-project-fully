@@ -13,6 +13,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 interface CashierSession {
   id: string;
@@ -39,15 +40,29 @@ interface StudentInvoice {
   dueDate: string;
 }
 
-interface ReceiptData {
+interface CollectRow {
+  invoiceId: string;
   invoiceNumber: string;
+  balance: number;
+  amount: string;
+  included: boolean;
+}
+
+interface PersistedReceipt {
+  id: string;
+  receiptNumber: string;
   studentName: string;
+  studentEmail: string | null;
   amount: number;
-  paymentMethod: string;
   paymentDate: string;
+  allocations: { invoiceId: string; invoiceNumber: string; amount: string }[];
+  method: 'cash' | 'card' | 'transfer' | 'check';
 }
 
 export default function CollectionDeskPage() {
+  const searchParams = useSearchParams();
+  const studentIdParam = searchParams.get('studentId');
+
   const [sessionData, setSessionData] = useState<{ activeSession: CashierSession | null; recentSessions: any[] }>({
     activeSession: null,
     recentSessions: [],
@@ -66,18 +81,18 @@ export default function CollectionDeskPage() {
   const [actualCash, setActualCash] = useState('');
   const [notes, setNotes] = useState('');
 
-  // Collection desk: search -> student -> invoices -> collect
+  // Collection desk: search -> student -> invoices -> multi-invoice collect
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<StudentResult[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<StudentResult | null>(null);
   const [studentInvoices, setStudentInvoices] = useState<StudentInvoice[]>([]);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
-  const [collectModal, setCollectModal] = useState<StudentInvoice | null>(null);
-  const [collectAmount, setCollectAmount] = useState('');
+  const [collectOpen, setCollectOpen] = useState(false);
+  const [collectRows, setCollectRows] = useState<CollectRow[]>([]);
   const [collectMethod, setCollectMethod] = useState<'cash' | 'card' | 'transfer' | 'check'>('cash');
   const [collecting, setCollecting] = useState(false);
-  const [receipt, setReceipt] = useState<ReceiptData | null>(null);
+  const [receipt, setReceipt] = useState<PersistedReceipt | null>(null);
 
   const fetchSession = async () => {
     setLoading(true);
@@ -192,8 +207,10 @@ export default function CollectionDeskPage() {
       const res = await fetch(`/api/finance/invoices?studentId=${student.id}`);
       const json = await res.json();
       if (json.success) {
+        // Draft invoices aren't collectable until issued; cancelled ones never
+        // are. Only pending/partial/overdue balances belong on the desk.
         const outstanding = (json.data as StudentInvoice[]).filter(
-          inv => Number(inv.netAmount) - Number(inv.paidAmount) > 0,
+          inv => inv.status !== 'draft' && inv.status !== 'cancelled' && Number(inv.netAmount) - Number(inv.paidAmount) > 0,
         );
         setStudentInvoices(outstanding);
       } else {
@@ -206,17 +223,74 @@ export default function CollectionDeskPage() {
     }
   };
 
-  const openCollectModal = (invoice: StudentInvoice) => {
-    const balance = Number(invoice.netAmount) - Number(invoice.paidAmount);
-    setCollectAmount(balance.toFixed(2));
+  // Deep-link support: /finance/collection-desk?studentId=... skips the search
+  // step and pre-selects that student (used by the invoice detail "Enregistrer
+  // un paiement" button so the cashier doesn't re-search the same student).
+  useEffect(() => {
+    if (!studentIdParam) return;
+    (async () => {
+      try {
+        const res = await fetch(`/api/students?id=${encodeURIComponent(studentIdParam)}`);
+        const json = await res.json();
+        if (!json.success || !json.data) return;
+        handleSelectStudent({
+          id: json.data.id,
+          name: json.data.fullName,
+          email: json.data.email ?? null,
+          matricule: json.data.matricule ?? null,
+        });
+      } catch {
+        // ignore — fall back to the normal search step
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [studentIdParam]);
+
+  const openCollect = () => {
+    // Default: every outstanding invoice included at its full remaining
+    // balance. The cashier unticks invoices or trims amounts as needed.
+    setCollectRows(studentInvoices.map(inv => {
+      const balance = Number(inv.netAmount) - Number(inv.paidAmount);
+      return { invoiceId: inv.id, invoiceNumber: inv.invoiceNumber, balance, amount: balance.toFixed(2), included: true };
+    }));
     setCollectMethod('cash');
-    setCollectModal(invoice);
+    setCollectOpen(true);
   };
+
+  const toggleRow = (invoiceId: string) => {
+    setCollectRows(rows => rows.map(r => r.invoiceId === invoiceId ? { ...r, included: !r.included } : r));
+  };
+
+  const setRowAmount = (invoiceId: string, amount: string) => {
+    setCollectRows(rows => rows.map(r => r.invoiceId === invoiceId ? { ...r, amount } : r));
+  };
+
+  const collectTotal = collectRows
+    .filter(r => r.included)
+    .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
 
   const handleCollectPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!collectModal || !selectedStudent) {
+    if (!selectedStudent) {
       return;
+    }
+    const selected = collectRows.filter(r => r.included && Number(r.amount) > 0);
+    if (selected.length === 0) {
+      setError('Sélectionnez au moins une facture avec un montant valide.');
+      return;
+    }
+    // Strict overpay guard mirrors the server rule (PAYMENT_EXCEEDS_BALANCE):
+    // the sum of allocated amounts may never exceed the outstanding balances.
+    const totalBalance = collectRows.reduce((sum, r) => sum + r.balance, 0);
+    if (collectTotal > totalBalance) {
+      setError('Le montant total dépasse le solde restant des factures sélectionnées.');
+      return;
+    }
+    for (const r of selected) {
+      if (Number(r.amount) > r.balance) {
+        setError(`Le montant alloué à la facture ${r.invoiceNumber} dépasse son solde restant.`);
+        return;
+      }
     }
     setCollecting(true);
     setError(null);
@@ -225,21 +299,29 @@ export default function CollectionDeskPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          invoiceId: collectModal.id,
-          amount: Number(collectAmount),
+          allocations: selected.map(r => ({ invoiceId: r.invoiceId, amount: Number(r.amount) })),
           paymentMethod: collectMethod,
         }),
       });
       const json = await res.json();
       if (json.success) {
-        setReceipt({
-          invoiceNumber: collectModal.invoiceNumber,
-          studentName: selectedStudent.name,
-          amount: Number(collectAmount),
-          paymentMethod: collectMethod,
-          paymentDate: new Date().toLocaleString('fr-FR'),
-        });
-        setCollectModal(null);
+        // Open the persisted receipt (RC-...) for display + window.print, not a
+        // client-built lookalike.
+        const recRes = await fetch(`/api/finance/receipts/${json.data.receipt.id}`);
+        const recJson = await recRes.json();
+        setReceipt(recJson.success
+          ? { ...recJson.data, method: collectMethod }
+          : {
+              id: json.data.receipt.id,
+              receiptNumber: json.data.receipt.receiptNumber,
+              studentName: selectedStudent.name,
+              studentEmail: null,
+              amount: Number(json.data.receipt.amount),
+              paymentDate: json.data.receipt.paymentDate,
+              allocations: selected.map(r => ({ invoiceId: r.invoiceId, invoiceNumber: r.invoiceNumber, amount: r.amount })),
+              method: collectMethod,
+            });
+        setCollectOpen(false);
         // Refresh this student's remaining invoices and the cashier session's
         // running total - the session's totalCollected is recomputed
         // server-side from real payments rows, not tracked client-side.
@@ -426,51 +508,79 @@ export default function CollectionDeskPage() {
             )}
 
             {!loadingInvoices && studentInvoices.length > 0 && (
-              <div className="mt-3 space-y-2">
-                {studentInvoices.map((inv) => {
-                  const balance = Number(inv.netAmount) - Number(inv.paidAmount);
-                  return (
-                    <div key={inv.id} className="flex items-center justify-between rounded-lg bg-slate-50 p-3">
-                      <div>
-                        <div className="text-xs font-bold text-slate-900">{inv.invoiceNumber}</div>
-                        <div className="text-[11px] text-slate-500">Échéance {inv.dueDate} · Solde dû {balance.toFixed(2)} MAD</div>
+              <div className="mt-3">
+                <div className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+                  {studentInvoices.map((inv) => {
+                    const balance = Number(inv.netAmount) - Number(inv.paidAmount);
+                    return (
+                      <div key={inv.id} className="flex items-center justify-between px-3 py-2.5">
+                        <div>
+                          <div className="text-xs font-bold text-slate-900">{inv.invoiceNumber}</div>
+                          <div className="text-[11px] text-slate-500">Échéance {inv.dueDate} · Solde dû {balance.toFixed(2)} MAD</div>
+                        </div>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${inv.status === 'overdue' ? 'bg-red-100 text-red-700' : 'bg-blue-50 text-blue-700'}`}>
+                          {inv.status === 'overdue' ? 'En retard' : 'En attente'}
+                        </span>
                       </div>
-                      <button
-                        onClick={() => openCollectModal(inv)}
-                        disabled={!activeSession}
-                        className="rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-40"
-                      >
-                        Encaisser
-                      </button>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={openCollect}
+                  disabled={!activeSession}
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-40"
+                >
+                  <PlusCircle className="size-4" />
+                  Encaisser ({studentInvoices.length} facture{studentInvoices.length > 1 ? 's' : ''})
+                </button>
               </div>
             )}
           </div>
         )}
       </div>
 
-      {/* Collect Payment Modal */}
-      {collectModal && selectedStudent && (
+      {/* Collect Payment Modal — multi-invoice */}
+      {collectOpen && selectedStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-bold text-slate-900">Encaissement — {collectModal.invoiceNumber}</h3>
-            <p className="mt-1 text-xs text-slate-500">{selectedStudent.name}</p>
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-bold text-slate-900">Encaissement — {selectedStudent.name}</h3>
+            <p className="mt-1 text-xs text-slate-500">
+              Cochez les factures à régler et ajustez les montants si nécessaire.
+            </p>
 
             <form onSubmit={handleCollectPayment} className="mt-4 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700">Montant encaissé (MAD)</label>
-                <input
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  required
-                  value={collectAmount}
-                  onChange={e => setCollectAmount(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 p-2.5 text-sm font-semibold text-slate-900 focus:border-[#0066FF] focus:outline-hidden"
-                />
+              <div className="space-y-1.5 max-h-64 overflow-y-auto rounded-lg border border-slate-200 p-2">
+                {collectRows.map(r => (
+                  <div key={r.invoiceId} className="flex items-center gap-2 rounded-lg bg-slate-50 px-2.5 py-2">
+                    <input
+                      type="checkbox"
+                      checked={r.included}
+                      onChange={() => toggleRow(r.invoiceId)}
+                      className="size-3.5 accent-emerald-600"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-slate-900">{r.invoiceNumber}</div>
+                      <div className="text-[10px] text-slate-500">Solde dû {r.balance.toFixed(2)} MAD</div>
+                    </div>
+                    <input
+                      type="number"
+                      min="0.01"
+                      max={r.balance}
+                      step="0.01"
+                      disabled={!r.included}
+                      value={r.amount}
+                      onChange={e => setRowAmount(r.invoiceId, e.target.value)}
+                      className={`w-28 rounded-lg border border-slate-200 p-1.5 text-right text-xs font-semibold text-slate-900 focus:border-[#0066FF] focus:outline-hidden ${!r.included ? 'opacity-40' : ''}`}
+                    />
+                  </div>
+                ))}
               </div>
+
+              <div className="flex items-center justify-between rounded-lg bg-slate-100 px-3 py-2.5">
+                <span className="text-xs font-bold text-slate-700">Total encaissé</span>
+                <span className="text-sm font-extrabold text-emerald-700">{collectTotal.toFixed(2)} MAD</span>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-slate-700">Mode de paiement</label>
                 <select
@@ -485,7 +595,7 @@ export default function CollectionDeskPage() {
                 </select>
               </div>
               <div className="flex items-center justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setCollectModal(null)} className="rounded-lg px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100">
+                <button type="button" onClick={() => setCollectOpen(false)} className="rounded-lg px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100">
                   Annuler
                 </button>
                 <button type="submit" disabled={collecting} className="rounded-lg bg-emerald-600 px-5 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50">
@@ -497,17 +607,25 @@ export default function CollectionDeskPage() {
         </div>
       )}
 
-      {/* Receipt Modal */}
+      {/* Receipt Modal — persisted RC- receipt */}
       {receipt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl text-center">
             <CheckCircle2 className="mx-auto size-10 text-emerald-500" />
             <h3 className="mt-3 text-lg font-bold text-slate-900">Paiement Encaissé</h3>
+            <p className="mt-0.5 text-xs font-mono font-bold text-slate-500">Reçu N° {receipt.receiptNumber}</p>
             <div className="mt-4 space-y-1 rounded-lg bg-slate-50 p-4 text-left text-xs">
               <div className="flex justify-between"><span className="text-slate-500">Élève</span><span className="font-bold text-slate-900">{receipt.studentName}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Facture</span><span className="font-bold text-slate-900">{receipt.invoiceNumber}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Montant</span><span className="font-bold text-emerald-700">{receipt.amount.toFixed(2)} MAD</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Mode</span><span className="font-bold text-slate-900">{receipt.paymentMethod}</span></div>
+              <div className="mt-1.5 border-t border-slate-200 pt-1.5">
+                {receipt.allocations.map(a => (
+                  <div key={a.invoiceId} className="flex justify-between py-0.5">
+                    <span className="text-slate-500">{a.invoiceNumber}</span>
+                    <span className="font-bold text-slate-900">{Number(a.amount).toFixed(2)} MAD</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between border-t border-slate-200 pt-1.5"><span className="text-slate-500">Montant total</span><span className="font-bold text-emerald-700">{receipt.amount.toFixed(2)} MAD</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Mode</span><span className="font-bold text-slate-900">{{ cash: 'Espèces', check: 'Chèque', card: 'Carte (TPE)', transfer: 'Virement' }[receipt.method]}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Date</span><span className="font-bold text-slate-900">{receipt.paymentDate}</span></div>
             </div>
             <button onClick={() => window.print()} className="mt-4 w-full rounded-lg border border-slate-200 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">

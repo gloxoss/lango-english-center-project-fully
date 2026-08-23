@@ -10,6 +10,7 @@ import {
   hostelRollCallEntries,
   hostelRollCalls,
   hostelRooms,
+  hostels,
 } from '@/features/hostel/models/hostel-schema';
 import { firstRow } from '@/features/hostel/server/db-utils';
 import { dateString, requireHostel } from '@/features/hostel/services/inventory-service';
@@ -70,7 +71,23 @@ export async function listRollCalls(tenantId: string, opts?: { hostelId?: string
   const conds = [eq(hostelRollCalls.tenantId, tenantId)];
   if (opts?.hostelId) conds.push(eq(hostelRollCalls.hostelId, opts.hostelId));
   if (opts?.callDate) conds.push(eq(hostelRollCalls.callDate, opts.callDate));
-  return db.select().from(hostelRollCalls).where(and(...conds)).orderBy(desc(hostelRollCalls.callDate));
+  return db
+    .select({
+      id: hostelRollCalls.id,
+      tenantId: hostelRollCalls.tenantId,
+      hostelId: hostelRollCalls.hostelId,
+      hostelName: hostels.name,
+      callDate: hostelRollCalls.callDate,
+      status: hostelRollCalls.status,
+      openedById: hostelRollCalls.openedById,
+      closedById: hostelRollCalls.closedById,
+      closedAt: hostelRollCalls.closedAt,
+      createdAt: hostelRollCalls.createdAt,
+    })
+    .from(hostelRollCalls)
+    .leftJoin(hostels, eq(hostelRollCalls.hostelId, hostels.id))
+    .where(and(...conds))
+    .orderBy(desc(hostelRollCalls.callDate));
 }
 
 export async function getRollCall(tenantId: string, rollCallId: string) {

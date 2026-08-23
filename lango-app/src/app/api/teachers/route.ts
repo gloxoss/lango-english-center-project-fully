@@ -7,7 +7,7 @@ import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, teacherCreateSchema, teacherUpdateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { classes, classSections, classTeachers, sections, subjects, subjectTeachers, user } from '@/models/Schema';
+import { classes, classSections, classTeachers, employeeProfiles, sections, subjects, subjectTeachers, user } from '@/models/Schema';
 import { toDbStatus, toUiStatus } from '@/models/userMapping';
 
 // ponytail: teachers are `user` rows with role = 'teacher'. employeeId,
@@ -123,11 +123,39 @@ async function getTeacherDetail(tenantId: string, id: string) {
 
   const [taughtSubjects] = await Promise.all([loadTaughtSubjectNames([id])]);
 
+  // HR employment profile, when a linked one exists. Teachers created via the
+  // teachers flow live only on `user`; contract/employment terms come from the
+  // HR addon's employee_profiles when that module has a record for them.
+  const [profile] = await db
+    .select({
+      contractType: employeeProfiles.contractType,
+      employmentType: employeeProfiles.employmentType,
+      employmentStatus: employeeProfiles.employmentStatus,
+      contractStartDate: employeeProfiles.contractStartDate,
+      contractEndDate: employeeProfiles.contractEndDate,
+      cnssNumber: employeeProfiles.cnssNumber,
+      amoNumber: employeeProfiles.amoNumber,
+      bankRib: employeeProfiles.bankRib,
+    })
+    .from(employeeProfiles)
+    .where(and(eq(employeeProfiles.userId, id), eq(employeeProfiles.tenantId, tenantId)))
+    .limit(1);
+
   return {
     ...toApiTeacher(row, assignmentRows.map(a => `${a.className} ${a.sectionName}`.trim()), taughtSubjects.get(id) ?? []),
     firstName: row.firstName,
     lastName: row.lastName,
     createdAt: row.createdAt,
+    // Employment + contact fields carried on the `user` stopgap columns.
+    salary: row.salary,
+    qualification: row.qualification,
+    nationalId: row.nationalId,
+    address: row.address,
+    city: row.city,
+    dateOfBirth: row.dateOfBirth,
+    gender: row.gender,
+    lastLogin: row.lastLogin,
+    employment: profile ?? null,
     assignedClassDetails: assignmentRows.map(a => ({
       classSectionId: a.classSectionId,
       label: `${a.className} ${a.sectionName}`.trim(),

@@ -49,7 +49,7 @@ export const MATRIX_MODULES = [
   { key: 'academics', label: 'Matières & Classes', perms: ['academics.read', 'academics.manage'] },
   { key: 'finance', label: 'Finances & Facturation', perms: ['finance.read', 'finance.manage', 'finance.approve'] },
   { key: 'communication', label: 'Communication & SMS', perms: ['communication.read', 'communication.send'] },
-  { key: 'grading', label: 'Examens & Bulletins', perms: ['grading.read', 'grading.manage'] },
+  { key: 'grading', label: 'Examens & Bulletins', perms: ['grading.read', 'grading.review', 'grading.manage'] },
   { key: 'reports', label: 'Rapports & Analytics', perms: ['reports.read', 'reports.export'] },
   { key: 'settings', label: 'Paramètres Établissement', perms: ['settings.organization.manage', 'settings.security.manage', 'users.permissions.manage'] },
 ] as const;

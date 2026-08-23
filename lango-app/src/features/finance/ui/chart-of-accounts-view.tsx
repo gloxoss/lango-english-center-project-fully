@@ -71,10 +71,13 @@ export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
   const [selected, setSelected] = useState<Account | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
-  const [form, setForm] = useState({ code: '', name: '', accountType: 'asset' });
+  const [form, setForm] = useState({ code: '', name: '', accountType: 'asset', parentAccountId: '' });
   const [isSaving, setIsSaving] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [drillRows, setDrillRows] = useState<{ id: string; entryNumber: string; entryDate: string; description: string | null; debit: string; credit: string; balance: string }[]>([]);
+  const [drillLoading, setDrillLoading] = useState(false);
+  const [drillMeta, setDrillMeta] = useState<{ runningBalance?: string } | null>(null);
 
   const load = () => {
     fetch('/api/finance/accounting/accounts?pageSize=100')
@@ -91,6 +94,28 @@ export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
     load();
   }, []);
 
+  useEffect(() => {
+    if (!selected) {
+      setDrillRows([]);
+      setDrillMeta(null);
+      return;
+    }
+    let cancelled = false;
+    setDrillLoading(true);
+    fetch(`/api/finance/accounting/statements/drill-down?accountId=${selected.id}`)
+      .then(res => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (cancelled) return;
+        if (json?.success) {
+          setDrillRows(json.data ?? []);
+          setDrillMeta(json.meta ?? null);
+        }
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setDrillLoading(false); });
+    return () => { cancelled = true; };
+  }, [selected]);
+
   const handleCreate = async () => {
     if (!form.code || !form.name) {
       return;
@@ -100,11 +125,11 @@ export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
       const response = await fetch('/api/finance/accounting/accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, parentAccountId: form.parentAccountId || null }),
       });
       if (!response.ok) throw new Error('ACCOUNT_CREATE_FAILED');
       setIsAddModalOpen(false);
-      setForm({ code: '', name: '', accountType: 'asset' });
+      setForm({ code: '', name: '', accountType: 'asset', parentAccountId: '' });
       setFeedbackMsg(`Compte "${form.code} - ${form.name}" ajouté au Plan Comptable.`);
       setTimeout(() => setFeedbackMsg(null), 4000);
       load();
@@ -249,6 +274,36 @@ export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
                 <span className="text-slate-500 font-semibold">Statut</span>
                 <span className="font-bold text-[#16212B]">{selected.isActive ? 'Actif' : 'Inactif'}</span>
               </div>
+              <div className="space-y-1 border-t border-slate-100 pt-2">
+                <p className="text-[10px] font-extrabold text-slate-400 uppercase">Historique des écritures</p>
+                {drillLoading ? (
+                  <p className="text-xs text-slate-400 py-2">Chargement...</p>
+                ) : drillRows.length === 0 ? (
+                  <p className="text-xs text-slate-400 py-2">Aucune écriture comptabilisée.</p>
+                ) : (
+                  <div className="space-y-1 max-h-64 overflow-y-auto pr-1">
+                    {drillRows.map(line => (
+                      <div key={line.id} className="flex items-start justify-between gap-2 border-b border-slate-50 pb-1">
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold text-[#16212B] truncate">{line.description || line.entryNumber}</p>
+                          <p className="text-[9px] text-slate-400">{line.entryNumber} · {line.entryDate}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          {Number(line.debit) > 0 && <p className="text-[10px] font-bold text-[#16212B]">D {line.debit}</p>}
+                          {Number(line.credit) > 0 && <p className="text-[10px] font-bold text-[#16212B]">C {line.credit}</p>}
+                          <p className="text-[9px] font-mono text-slate-500">Solde {line.balance}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {drillMeta?.runningBalance != null && (
+                  <div className="flex justify-between pt-1 font-bold text-[#16212B]">
+                    <span className="text-slate-500">Solde courant</span>
+                    <span className="font-mono">{drillMeta.runningBalance}</span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </Card>
@@ -291,6 +346,19 @@ export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
                 <option value="equity">Capitaux propres</option>
                 <option value="revenue">Produits</option>
                 <option value="expense">Charges</option>
+              </select>
+            </div>
+            <div>
+              <label className="font-bold text-slate-700 block mb-1">Compte parent</label>
+              <select
+                value={form.parentAccountId}
+                onChange={e => setForm({ ...form, parentAccountId: e.target.value })}
+                className="w-full h-9 text-xs rounded-xl border border-slate-200 px-3 bg-white font-medium"
+              >
+                <option value="">Aucun (compte racine)</option>
+                {[...accounts].sort((a, b) => a.code.localeCompare(b.code)).map(a => (
+                  <option key={a.id} value={a.id}>{a.code} — {a.name}</option>
+                ))}
               </select>
             </div>
           </div>

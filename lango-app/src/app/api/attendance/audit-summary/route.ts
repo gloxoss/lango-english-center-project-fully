@@ -6,7 +6,8 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { attendance, attendanceFlags, attendanceSummary, classes, classScheduleSlots, classSections, classSubjects, sections, smsMessages, subjects, user } from '@/models/Schema';
+import { attendance, attendanceFlags, attendanceSummary, classes, classScheduleSlots, classSections, classSubjects, sections, subjects, user } from '@/models/Schema';
+import { sendSmsMessage } from '@/features/broadcast/services/sms-delivery';
 
 const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
 
@@ -104,25 +105,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: { code: 'NO_PHONE', message: 'Aucun numéro de téléphone enregistré pour cet enseignant' } }, { status: 400 });
     }
 
-    const now = new Date().toISOString();
-    const [inserted] = await db
-      .insert(smsMessages)
-      .values({
-        tenantId,
-        recipientPhone: slot.teacherPhone,
-        body: `Rappel: la présence n'a pas encore été enregistrée pour votre cours d'aujourd'hui.`,
-        status: 'sent',
-        sentAt: now,
-        createdById: context.userId,
-      })
-      .returning();
+    const result = await sendSmsMessage(tenantId, {
+      to: slot.teacherPhone,
+      body: `Rappel: la présence n'a pas encore été enregistrée pour votre cours d'aujourd'hui.`,
+      createdById: context.userId,
+    });
 
-    recordAudit(context, 'create', 'sms_message', inserted!.id, { reason: 'missing_attendance_register_reminder', teacherId: slot.teacherId });
+    recordAudit(context, 'create', 'sms_message', result.id, { reason: 'missing_attendance_register_reminder', teacherId: slot.teacherId });
+
+    const message = result.delivery === 'simulated'
+      ? `Rappel enregistré pour ${slot.teacherName} (mode simulation, aucun SMS réel envoyé).`
+      : result.delivery === 'failed'
+        ? `Échec de l'envoi du rappel à ${slot.teacherName}${result.failureReason ? ` (${result.failureReason})` : ''}.`
+        : `Rappel envoyé à ${slot.teacherName}.`;
 
     return NextResponse.json({
       success: true,
-      data: inserted,
-      message: `Rappel simulé envoyé à ${slot.teacherName} (mode simulation, aucun SMS réel envoyé).`,
+      data: { id: result.id, delivery: result.delivery, simulated: result.delivery === 'simulated' },
+      message,
     });
   } catch (error) {
     return apiErrorResponse(error);

@@ -1,6 +1,6 @@
 # Student Accounting — Core Finance Enhancement Plan
 
-Status: **Phase B complete (2026-08-10)** — Phase A (safe money, atomic numbering, event ledger, idempotency, read-time overdue) done; Phase B (fee types enriched + versioned fee structures) done; **Phase C (allocations) next**. Tracked in `../_tracker/PLANS-AUDIT-AND-PROGRESS.md` row #12.
+Status: **Phase G complete (2026-08-15)** — Phase A (safe money, atomic numbering, event ledger, idempotency, read-time overdue) done; Phase B (fee types enriched + versioned fee structures) done; Phase C (allocation preview/approve/run + generated invoices, `/api/finance/fee-allocations` namespace + `/dashboard/finance/allocations` screen) done; Phase D (invoice lifecycle + multi-invoice payment allocations + persisted receipts + statements) done; Phase E (payment reversals + refund linkage + cashier closing/reconciliation + credits) done; Phase F (fine policies + assessments + waive, `fees.fines` report, `scopeSectionId` in fine-runs) done; Phase G (Broadcast-backed reminders + `feeReminderJob` handler + quiet hours + reminders nav) done; **Phase H (gateways/accounting export) deferred — needs a provider + export-target choice**. Tracked in `../_tracker/PLANS-AUDIT-AND-PROGRESS.md` row #12.
 
 > The general ledger, chart of accounts, office deposits/expenses, vouchers, reconciliation and financial statements are specified separately in `../office-accounting/OFFICE-ACCOUNTING-IMPLEMENTATION-PLAN.md`. Student Accounting remains the fee/receivables subledger and posts into that shared core ledger.
 

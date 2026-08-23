@@ -83,13 +83,35 @@ export async function GET(request: Request) {
     const where = and(...conditions);
 
     const [rows, totalRows] = await Promise.all([
-      db.select().from(classSubjects).where(where).orderBy(classSubjects.displayOrder).limit(pagination.limit).offset(pagination.offset),
+      db
+        .select({
+          id: classSubjects.id,
+          classId: classSubjects.classId,
+          subjectId: classSubjects.subjectId,
+          type: classSubjects.type,
+          semesterId: classSubjects.semesterId,
+          offeringId: classSubjects.offeringId,
+          weeklyMinutes: classSubjects.weeklyMinutes,
+          displayOrder: classSubjects.displayOrder,
+          coefficient: classSubjects.coefficient,
+          passThreshold: classSubjects.passThreshold,
+          isActive: classSubjects.isActive,
+          curriculumLabel: classSubjects.curriculumLabel,
+          tenantId: classSubjects.tenantId,
+          subjectName: subjects.name,
+        })
+        .from(classSubjects)
+        .leftJoin(subjects, eq(classSubjects.subjectId, subjects.id))
+        .where(where)
+        .orderBy(classSubjects.displayOrder)
+        .limit(pagination.limit)
+        .offset(pagination.offset),
       db.select({ total: count() }).from(classSubjects).where(where),
     ]);
 
     return NextResponse.json({
       success: true,
-      data: rows.map(toApiClassSubject),
+      data: rows.map((r) => ({ ...toApiClassSubject(r as any), subjectName: r.subjectName })),
       total: totalRows[0]?.total ?? 0,
       page: pagination.page,
       pageSize: pagination.pageSize,

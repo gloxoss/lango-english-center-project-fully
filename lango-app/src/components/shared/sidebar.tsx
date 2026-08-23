@@ -149,12 +149,14 @@ export function Sidebar({ locale }: { locale: string }) {
   // dropped after a role switch.
   const [portalMe, setPortalMe] = useState<{ role: string; availableRoles: string[] } | null>(null);
   const [manifestNav, setManifestNav] = useState<NavItem[] | null>(null);
+  const [hasEmployeeProfile, setHasEmployeeProfile] = useState<boolean | null>(null);
 
   const loadPortalContext = async () => {
     try {
-      const [meRes, manifestRes] = await Promise.all([
+      const [meRes, manifestRes, eligRes] = await Promise.all([
         fetch('/api/portal/me'),
         fetch('/api/portal/manifest'),
+        fetch('/api/hr/me/self-service-eligibility'),
       ]);
       const meJson = await meRes.json();
       if (meJson.success) {
@@ -165,8 +167,11 @@ export function Sidebar({ locale }: { locale: string }) {
       if (manifestJson.success && Array.isArray(manifestJson.data.navigation)) {
         setManifestNav(manifestJson.data.navigation.map((n: ManifestItem) => manifestToNav(n, locale)));
       }
+      const eligJson = await eligRes.json().catch(() => ({}));
+      setHasEmployeeProfile(Boolean(eligJson?.data?.eligible));
     } catch {
       setMyPermissions(new Set());
+      setHasEmployeeProfile(false);
     }
   };
 
@@ -414,7 +419,11 @@ export function Sidebar({ locale }: { locale: string }) {
       permission: 'library.catalog.read',
       subItems: [
         { label: 'Vue d’ensemble', href: `/${locale}/dashboard/portals/librarian`, permission: 'library.report.read' },
-        { label: 'Comptoir de prêt', href: `/${locale}/dashboard/portals/librarian/desk`, permission: 'library.circulation.operate' },
+        // "Comptoir de prêt" (the operational checkout counter) is a librarian
+        // self-service action, not an admin oversight surface — deliberately
+        // absent here so school_admin/super_admin don't get the raw circulation
+        // desk in their everyday nav (PRODUCT-REVIEW §12.5). Librarians still
+        // see it via the portal manifest.
         { label: 'Catalogue', href: `/${locale}/dashboard/library/catalog`, permission: 'library.catalog.read' },
       ],
     },
@@ -428,7 +437,11 @@ export function Sidebar({ locale }: { locale: string }) {
         { label: 'Tableau de bord Finance', href: `/${locale}/dashboard/finance`, permission: 'finance.read' },
         { label: 'Guichet de Caisse', href: `/${locale}/dashboard/finance/collection-desk`, permission: 'finance.read' },
         { label: 'Créances Élèves', href: `/${locale}/dashboard/finance/receivables`, permission: 'finance.read' },
+        { label: 'Rappels de frais', href: `/${locale}/dashboard/finance/reminders`, permission: 'finance.manage' },
         { label: 'Factures', href: `/${locale}/dashboard/finance/invoices`, permission: 'finance.read' },
+        { label: 'Reçus', href: `/${locale}/dashboard/finance/receipts`, permission: 'finance.read' },
+        { label: 'Relevés élèves', href: `/${locale}/dashboard/finance/statements`, permission: 'finance.read' },
+        { label: 'Sessions de caisse', href: `/${locale}/dashboard/finance/cashier-sessions`, permission: 'finance.manage' },
         { label: 'Enregistrer un paiement', href: `/${locale}/dashboard/finance/payments/new`, permission: 'finance.read' },
         { label: 'Dépenses & Journal', href: `/${locale}/dashboard/finance/office-accounting`, permission: 'finance.read' },
         { label: 'Plan comptable', href: `/${locale}/dashboard/finance/accounting/accounts`, permission: 'accounting.account.read' },
@@ -445,6 +458,7 @@ export function Sidebar({ locale }: { locale: string }) {
         { label: 'Politiques d\'amendes', href: `/${locale}/dashboard/finance/fine-policies`, permission: 'finance.read' },
         { label: 'Assignations tarifaires', href: `/${locale}/dashboard/finance/fee-assignments`, permission: 'finance.read' },
         { label: 'Affectation des frais', href: `/${locale}/dashboard/finance/allocation`, permission: 'finance.read' },
+        { label: 'Allocations de frais', href: `/${locale}/dashboard/finance/allocations`, permission: 'finance.read' },
         { label: 'Notes de crédit', href: `/${locale}/dashboard/finance/credit-notes`, permission: 'finance.read' },
         { label: 'Remboursements', href: `/${locale}/dashboard/finance/refunds`, permission: 'finance.read' },
         { label: 'Approbations', href: `/${locale}/dashboard/finance/approvals`, permission: 'finance.read' },
@@ -530,7 +544,7 @@ export function Sidebar({ locale }: { locale: string }) {
         { label: 'Récompenses', href: `/${locale}/dashboard/workforce/awards`, permission: 'payroll.awards.manage' },
       ],
     },
-    { label: 'Portail Employé', href: `/${locale}/dashboard/hr/self-service`, icon: UserCheck },
+    ...(hasEmployeeProfile ? [{ label: 'Portail Employé', href: `/${locale}/dashboard/hr/self-service`, icon: UserCheck }] : []),
     {
       label: 'Sécurité & Gardiens',
       href: `/${locale}/dashboard/portals/guard`,

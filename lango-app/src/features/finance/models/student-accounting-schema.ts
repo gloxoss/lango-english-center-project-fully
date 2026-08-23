@@ -133,6 +133,7 @@ export const paymentReversals = pgTable('payment_reversals', {
   status: varchar({ length: 20 }).default('draft').notNull(),
   reversedById: text('reversed_by_id'),
   approvedById: text('approved_by_id'),
+  rejectionReason: text('rejection_reason'),
   reversedAt: timestamp('reversed_at', { mode: 'string' }),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
@@ -270,6 +271,10 @@ export const paymentMethodConfigurations = pgTable('payment_method_configuration
   isActive: boolean('is_active').default(true).notNull(),
   branchScopeId: uuid('branch_scope_id'),
   accountingAccountId: uuid('accounting_account_id'),
+  provider: varchar('provider', { length: 30 }),
+  gatewayMode: varchar('gateway_mode', { length: 10 }).default('sandbox'),
+  credentialSecretKey: varchar('credential_secret_key', { length: 128 }),
+  webhookSecretKey: varchar('webhook_secret_key', { length: 128 }),
   effectiveFrom: date('effective_from').defaultNow().notNull(),
   effectiveTo: date('effective_to'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
@@ -281,6 +286,36 @@ export const paymentMethodConfigurations = pgTable('payment_method_configuration
     name: 'payment_method_configurations_tenant_id_tenants_id_fk',
   }).onDelete('cascade'),
   index('payment_method_configurations_tenant_code_idx').on(table.tenantId, table.methodCode),
+]);
+
+export const paymentGatewaySessions = pgTable('payment_gateway_sessions', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  invoiceId: uuid('invoice_id').notNull(),
+  paymentId: uuid('payment_id'),
+  provider: varchar('provider', { length: 30 }).notNull(),
+  externalReference: varchar('external_reference', { length: 100 }),
+  amount: numeric('amount', { precision: 14, scale: 2, mode: 'number' }).notNull(),
+  currency: varchar('currency', { length: 3 }).default('MAD').notNull(),
+  status: varchar('status', { length: 20 }).default('pending').notNull(),
+  mode: varchar('mode', { length: 10 }).default('sandbox').notNull(),
+  rawCallback: jsonb('raw_callback'),
+  expiresAt: timestamp('expires_at', { mode: 'string' }),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'payment_gateway_sessions_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.invoiceId],
+    foreignColumns: [invoices.id],
+    name: 'payment_gateway_sessions_invoice_id_invoices_id_fk',
+  }).onDelete('cascade'),
+  index('payment_gateway_sessions_tenant_ext_idx').on(table.tenantId, table.externalReference),
+  index('payment_gateway_sessions_tenant_status_idx').on(table.tenantId, table.status),
 ]);
 
 export const feeStructureVersions = pgTable('fee_structure_versions', {
@@ -378,4 +413,32 @@ export const feeAllocationTargets = pgTable('fee_allocation_targets', {
     name: 'fee_allocation_targets_student_id_user_id_fk',
   }).onDelete('cascade'),
   index('fee_allocation_targets_tenant_run_idx').on(table.tenantId, table.runId),
+]);
+
+// Persisted receipts (Phase D): one row per cash/check/card/transfer collection,
+// number issued atomically via consumeDocumentNumber (prefix RC-{year}-).
+// allocations stores the payment_allocations breakdown as jsonb, so a split
+// multi-invoice collection is fully reproducible from the single receipt.
+export const receipts = pgTable('receipts', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  receiptNumber: varchar('receipt_number', { length: 50 }).notNull(),
+  studentId: text('student_id').notNull(),
+  amount: numeric({ precision: 14, scale: 2, mode: 'number' }).notNull(),
+  paymentDate: date('payment_date').notNull(),
+  allocations: jsonb().notNull().default([]),
+  createdById: text('created_by_id'),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'receipts_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.studentId],
+    foreignColumns: [user.id],
+    name: 'receipts_student_id_user_id_fk',
+  }).onDelete('cascade'),
+  index('receipts_tenant_student_idx').on(table.tenantId, table.studentId),
 ]);

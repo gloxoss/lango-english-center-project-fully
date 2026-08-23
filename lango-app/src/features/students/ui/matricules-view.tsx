@@ -17,6 +17,7 @@ export function MatriculesView() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [nextMatricule, setNextMatricule] = useState<string | null>(null);
+  const [reserved, setReserved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,19 +28,28 @@ export function MatriculesView() {
       .finally(() => setLoading(false));
   }, []);
 
-  async function handleGenerateNext() {
+  // Non-mutating preview on load - shows the next number without burning it.
+  useEffect(() => {
+    fetch('/api/students/matricules')
+      .then(res => res.json())
+      .then((json) => { if (json.success) setNextMatricule(json.matricule); })
+      .catch(() => {});
+  }, []);
+
+  async function handleReserveNext() {
     setGenerating(true);
     setError(null);
     try {
-      const res = await fetch('/api/students/matricules');
+      const res = await fetch('/api/students/matricules', { method: 'POST' });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.message || 'Échec de la génération du matricule.');
+        setError(json.message || 'Échec de la réservation du matricule.');
         return;
       }
       setNextMatricule(json.matricule);
+      setReserved(true);
     } catch (err) {
-      console.error('Matricule generation failed', err);
+      console.error('Matricule reservation failed', err);
       setError('Connexion impossible. Vérifiez votre réseau.');
     } finally {
       setGenerating(false);
@@ -165,16 +175,16 @@ export function MatriculesView() {
         <div className="w-[300px] shrink-0 space-y-4 hidden xl:block">
           <Card className="p-5 bg-white rounded-2xl shadow-2xs border border-slate-200/80 space-y-3">
             <h3 className="text-sm font-extrabold text-[#16212B]">Générer le prochain matricule</h3>
-            <p className="text-[11px] text-slate-500">Réserve le prochain numéro de la série d&apos;identifiants (format STD-{new Date().getFullYear()}-####). Les matricules sont attribués automatiquement à l&apos;inscription d&apos;un élève.</p>
+            <p className="text-[11px] text-slate-500">Aperçu du prochain numéro de la série (format STD-{new Date().getFullYear()}-####). Réservez-le uniquement lorsque vous êtes prêt — l&apos;aperçu ne consomme aucun numéro.</p>
             {nextMatricule && (
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
-                <p className="text-[10px] text-slate-400 font-bold uppercase">Réservé</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase">{reserved ? 'Réservé' : 'Aperçu'}</p>
                 <p className="text-lg font-extrabold font-mono text-[#2487B8]">{nextMatricule}</p>
               </div>
             )}
-            <Button className="w-full gap-2 h-10 rounded-xl text-xs bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold" disabled={generating} onClick={handleGenerateNext}>
+            <Button className="w-full gap-2 h-10 rounded-xl text-xs bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold" disabled={generating} onClick={handleReserveNext}>
               <Wand2 className="w-4 h-4" />
-              <span>{generating ? 'Génération...' : 'Réserver le prochain'}</span>
+              <span>{generating ? 'Réservation...' : 'Réserver ce matricule'}</span>
             </Button>
           </Card>
         </div>

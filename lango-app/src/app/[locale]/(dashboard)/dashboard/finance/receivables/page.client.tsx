@@ -12,6 +12,8 @@ import {
   User,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { exportToCsv } from '@/libs/csv-export';
 
 interface InvoiceReceivable {
   id: string;
@@ -42,6 +44,7 @@ export default function ReceivablesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [sendingSms, setSendingSms] = useState<string | null>(null);
 
   const fetchReceivables = async () => {
     setLoading(true);
@@ -64,6 +67,27 @@ export default function ReceivablesPage() {
   useEffect(() => {
     fetchReceivables();
   }, []);
+
+  const handleSendSms = async (inv: InvoiceReceivable) => {
+    setSendingSms(inv.id);
+    try {
+      const res = await fetch('/api/finance/reminders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoiceId: inv.id }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        toast.error(json.error?.message || 'Échec de l\'envoi du rappel.');
+      } else {
+        toast.success(json.message || `Rappel SMS envoyé à la famille de ${inv.studentName || 'l\'élève'}.`);
+      }
+    } catch {
+      toast.error('Erreur réseau lors de l\'envoi du rappel.');
+    } finally {
+      setSendingSms(null);
+    }
+  };
 
   const filteredInvoices = data?.invoices.filter((inv) => {
     if (!search) return true;
@@ -96,7 +120,7 @@ export default function ReceivablesPage() {
             Actualiser
           </button>
           <button
-            onClick={() => alert('Export du tableau d\'ancienneté généré avec succès.')}
+            onClick={() => exportToCsv(filteredInvoices, 'anciennete-creances')}
             className="flex items-center gap-2 rounded-lg bg-[#0066FF] px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#0052CC]"
           >
             <Download className="size-4" />
@@ -206,11 +230,12 @@ export default function ReceivablesPage() {
                   <td className="px-4 py-3 font-extrabold text-red-700">{inv.balance} MAD</td>
                   <td className="px-4 py-3 text-right">
                     <button
-                      onClick={() => alert(`Rappel SMS envoyé à la famille de ${inv.studentName || 'l\'élève'}`)}
-                      className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-semibold text-[#0066FF] hover:bg-blue-100"
+                      onClick={() => handleSendSms(inv)}
+                      disabled={sendingSms === inv.id}
+                      className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-semibold text-[#0066FF] hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <MessageSquare className="size-3" />
-                      Relancer SMS
+                      {sendingSms === inv.id ? 'Envoi...' : 'Relancer SMS'}
                     </button>
                   </td>
                 </tr>

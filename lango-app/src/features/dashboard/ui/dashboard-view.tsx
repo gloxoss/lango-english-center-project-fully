@@ -66,13 +66,14 @@ function formatMad(amount: number): string {
   return `${Math.round(amount).toLocaleString('fr-FR')} MAD`;
 }
 
-export function DashboardView({ locale }: { locale: string }) {
+export function DashboardView({ locale, notice }: { locale: string; notice?: string | null }) {
   const router = useRouter();
   const [pendingNav, setPendingNav] = useState<{ title: string; route: string } | null>(null);
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [summary, setSummary] = useState<FullDashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [calendarEvents, setCalendarEvents] = useState([]);
+  const [noticeDismissed, setNoticeDismissed] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -142,6 +143,15 @@ export function DashboardView({ locale }: { locale: string }) {
 
   return (
     <div className="mx-auto max-w-[1600px] space-y-6">
+      {notice === 'employee_portal_unavailable' && !noticeDismissed && (
+        <div className="flex items-start justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span>Ce compte n&apos;a pas de fiche employé — le portail libre-service ne s&apos;applique pas.</span>
+          </div>
+          <button onClick={() => setNoticeDismissed(true)} aria-label="Fermer" className="text-amber-600 transition hover:text-amber-900">×</button>
+        </div>
+      )}
       {/* Top Header Bar Title & Quick Actions */}
       <div className="flex flex-col gap-4 border-b border-slate-200/80 pb-3 lg:flex-row lg:items-center lg:justify-between">
         <div>

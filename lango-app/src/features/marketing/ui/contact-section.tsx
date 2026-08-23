@@ -58,15 +58,41 @@ export const ContactSection: React.FC = () => {
   const isAr = locale === 'ar';
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    setError(null);
+
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const payload = {
+      schoolName: String(data.get('schoolName') ?? '').trim(),
+      contactName: String(data.get('name') ?? '').trim(),
+      city: String(data.get('city') ?? '').trim(),
+      studentCount: String(data.get('studentCount') ?? ''),
+      phone: String(data.get('phone') ?? '').trim(),
+      email: String(data.get('email') ?? '').trim(),
+    };
+
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        throw new Error(json?.message ?? 'Erreur lors de l\'envoi.');
+      }
       setSubmitted(true);
-    }, 600);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de l\'envoi.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -227,6 +253,12 @@ export const ContactSection: React.FC = () => {
                       ? 'بإرسال هذا النموذج، توافقون على أن نتواصل معكم بخصوص المرحلة التجريبية القادمة لـ SchoolOS. دون أي التزام بالشراء.'
                       : 'En envoyant ce formulaire, vous acceptez d’être contacté au sujet du prochain pilote SchoolOS. Aucune obligation d’achat.'}
                   </p>
+
+                  {error && (
+                    <p className="m-0 text-sm font-medium text-rose-300">
+                      {error}
+                    </p>
+                  )}
 
                   <div className="pt-1 text-start">
                     <button

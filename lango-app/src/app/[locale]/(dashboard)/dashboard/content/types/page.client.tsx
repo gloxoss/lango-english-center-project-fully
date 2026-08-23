@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ShieldCheck, Plus, Lock, Archive } from 'lucide-react';
+import { ShieldCheck, Plus, Lock, Archive, RotateCcw } from 'lucide-react';
 
 type AttachmentType = {
   id: string;
@@ -20,19 +20,41 @@ type AttachmentType = {
   isActive: boolean;
 };
 
+function slugify(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 export default function AttachmentTypesPage() {
   const [types, setTypes] = useState<AttachmentType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [archivedOnly, setArchivedOnly] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
+  const [codeTouched, setCodeTouched] = useState(false);
   const [mimeFamilies, setMimeFamilies] = useState('image,pdf,document');
   const [maxSizeMb, setMaxSizeMb] = useState('25');
   const [error, setError] = useState('');
 
-  const load = () => fetch('/api/content/attachment-types').then(r => r.json()).then((j) => { if (j.success) setTypes(j.data); }).finally(() => setLoading(false));
+  const load = () => fetch('/api/content/attachment-types?includeArchived=true').then(r => r.json()).then((j) => { if (j.success) setTypes(j.data); }).finally(() => setLoading(false));
 
   useEffect(() => { load(); }, []);
+
+  const visibleTypes = types.filter(t => (archivedOnly ? !t.isActive : t.isActive));
+
+  const handleRestore = async (id: string) => {
+    await fetch(`/api/content/attachment-types/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isActive: true }),
+    });
+    load();
+  };
 
   const handleCreate = async () => {
     if (!name.trim() || !code.trim()) {
@@ -52,7 +74,7 @@ export default function AttachmentTypesPage() {
     });
     const json = await res.json();
     if (json.success) {
-      setName(''); setCode(''); setMimeFamilies('image,pdf,document'); setMaxSizeMb('25');
+      setName(''); setCode(''); setCodeTouched(false); setMimeFamilies('image,pdf,document'); setMaxSizeMb('25');
       setCreateOpen(false);
       load();
     } else {
@@ -82,9 +104,26 @@ export default function AttachmentTypesPage() {
         </Button>
       </div>
 
-      <Card className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs">
+      <Card className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-4">
+        <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+          {([
+            { value: false, label: 'Types actifs' },
+            { value: true, label: 'Types archivés' },
+          ] as const).map(tab => (
+            <button
+              key={String(tab.value)}
+              onClick={() => setArchivedOnly(tab.value)}
+              className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${archivedOnly === tab.value ? 'bg-[#0066FF] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'}`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         {loading ? (
           <p className="text-xs text-slate-400 text-center py-8">Chargement...</p>
+        ) : visibleTypes.length === 0 ? (
+          <p className="text-xs text-slate-400 text-center py-8">{archivedOnly ? 'Aucun type archivé.' : 'Aucun type actif.'}</p>
         ) : (
           <table className="w-full text-xs">
             <thead>
@@ -98,7 +137,7 @@ export default function AttachmentTypesPage() {
               </tr>
             </thead>
             <tbody>
-              {types.map(t => (
+              {visibleTypes.map(t => (
                 <tr key={t.id} className="border-b border-slate-50">
                   <td className="py-3 pr-4 font-semibold text-[#16212B] flex items-center gap-1.5">
                     {t.name}
@@ -111,14 +150,24 @@ export default function AttachmentTypesPage() {
                     <Badge variant={t.studentVisible ? 'success' : 'neutral'} className="text-[10px]">{t.studentVisible ? 'Oui' : 'Non'}</Badge>
                   </td>
                   <td className="py-3 pr-4">
-                    <button
-                      onClick={() => handleArchive(t.id)}
-                      disabled={t.isSystem}
-                      title={t.isSystem ? 'Type système - verrouillé' : 'Archiver'}
-                      className={`cursor-pointer ${t.isSystem ? 'text-slate-300 cursor-not-allowed' : 'text-slate-500 hover:text-red-600'}`}
-                    >
-                      <Archive className="w-4 h-4" />
-                    </button>
+                    {!t.isActive ? (
+                      <button
+                        onClick={() => handleRestore(t.id)}
+                        title="Restaurer"
+                        className="cursor-pointer text-slate-500 hover:text-emerald-600"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleArchive(t.id)}
+                        disabled={t.isSystem}
+                        title={t.isSystem ? 'Type système - verrouillé' : 'Archiver'}
+                        className={`cursor-pointer ${t.isSystem ? 'text-slate-300 cursor-not-allowed' : 'text-slate-500 hover:text-red-600'}`}
+                      >
+                        <Archive className="w-4 h-4" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -133,11 +182,11 @@ export default function AttachmentTypesPage() {
           <div className="space-y-3">
             <div>
               <label className="text-xs font-bold text-slate-700">Nom</label>
-              <Input value={name} onChange={e => setName(e.target.value)} className="mt-1 text-xs rounded-xl h-9" />
+              <Input value={name} onChange={e => { const v = e.target.value; setName(v); if (!codeTouched) setCode(slugify(v)); }} className="mt-1 text-xs rounded-xl h-9" />
             </div>
             <div>
               <label className="text-xs font-bold text-slate-700">Code</label>
-              <Input value={code} onChange={e => setCode(e.target.value)} className="mt-1 text-xs rounded-xl h-9" />
+              <Input value={code} onChange={e => { setCode(e.target.value); setCodeTouched(true); }} className="mt-1 text-xs rounded-xl h-9" />
             </div>
             <div>
               <label className="text-xs font-bold text-slate-700">Familles MIME autorisées (séparées par virgule)</label>

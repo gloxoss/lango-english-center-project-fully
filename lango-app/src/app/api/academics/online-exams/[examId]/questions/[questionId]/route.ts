@@ -26,10 +26,10 @@ const updateQuestionSchema = z.object({
 
 type RouteParams = { params: Promise<{ examId: string; questionId: string }> };
 
-/** Verify both exam and question belong to the tenant. */
+/** Verify both exam and question belong to the tenant, and return the exam owner. */
 async function resolveQuestion(tenantId: string, examId: string, questionId: string) {
   const [exam] = await db
-    .select({ id: onlineExams.id })
+    .select({ id: onlineExams.id, createdById: onlineExams.createdById })
     .from(onlineExams)
     .where(and(eq(onlineExams.id, examId), eq(onlineExams.tenantId, tenantId)))
     .limit(1);
@@ -52,7 +52,14 @@ async function resolveQuestion(tenantId: string, examId: string, questionId: str
     throw new ApiError(404, 'QUESTION_NOT_FOUND', 'Question introuvable.');
   }
 
-  return question;
+  return { exam, question };
+}
+
+/** Teachers may only modify questions of exams they authored; admins override. */
+function assertExamOwnership(ctx: { role: string; userId: string }, exam: { createdById: string | null }) {
+  if (ctx.role !== 'school_admin' && ctx.role !== 'super_admin' && exam.createdById !== ctx.userId) {
+    throw new ApiError(403, 'FORBIDDEN', 'Vous ne pouvez modifier que les questions de vos propres examens.');
+  }
 }
 
 export async function PUT(req: NextRequest, { params }: RouteParams) {
@@ -64,7 +71,8 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const { examId, questionId } = await params;
     const body = await parseJson(req, updateQuestionSchema);
 
-    await resolveQuestion(tenantId, examId, questionId);
+    const { exam } = await resolveQuestion(tenantId, examId, questionId);
+    assertExamOwnership(ctx, exam);
 
     // Validate MCQ constraint if options are being replaced
     if (body.options && body.options.length > 0) {
@@ -135,7 +143,8 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     await requireCapability(ctx, 'grading.manage');
 
     const { examId, questionId } = await params;
-    await resolveQuestion(tenantId, examId, questionId);
+    const { exam } = await resolveQuestion(tenantId, examId, questionId);
+    assertExamOwnership(ctx, exam);
 
     // Options cascade-delete via FK onDelete('cascade') on questionId
     await db

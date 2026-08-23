@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { TemplateDesigner } from '@/libs/document-studio/TemplateDesigner';
@@ -13,12 +13,11 @@ const ALLOWLISTS: Record<string, { allowedFields: string[] }> = {
   admit_card: { allowedFields: ['photo', 'firstName', 'lastName', 'dateOfBirth', 'matricule', 'barcode', 'examName', 'date', 'seatNumber', 'hall', 'title', 'subtitle', 'instructions'] },
 };
 
-export default function TemplateDesignerPage({
-  params: { locale, id }
-}: {
-  params: { locale: string, id: string }
-}) {
+export default function TemplateDesignerPage() {
   const router = useRouter();
+  const params = useParams<{ locale?: string; id?: string }>();
+  const locale = params?.locale ?? 'fr';
+  const id = params?.id ?? '';
   const [template, setTemplate] = useState<any>(null);
   const [latestVersion, setLatestVersion] = useState<any>(null);
   const [loading, setLoading] = useState(true);

@@ -679,6 +679,13 @@ export const TransportService = {
           .for('update');
 
         if (vehicle) {
+          const [policy] = await tx
+            .select({ margin: transportPolicies.maxCapacityMarginPercent })
+            .from(transportPolicies)
+            .where(eq(transportPolicies.tenantId, tenantId))
+            .limit(1);
+          const marginPercent = policy?.margin ?? 0;
+
           const routeAllocations = await tx
             .select()
             .from(transportStudentAllocations)
@@ -707,7 +714,7 @@ export const TransportService = {
               }
             }
 
-            const { isOverbooked } = calculateSegmentCapacity(vehicle.capacity, activeOnSegment + 1);
+            const { isOverbooked } = calculateSegmentCapacity(vehicle.capacity, activeOnSegment + 1, marginPercent);
             if (isOverbooked) {
               throw new ApiError(409, 'CAPACITY_EXCEEDED', 'La capacité maximale du véhicule pour cet itinéraire est atteinte.');
             }
@@ -844,6 +851,13 @@ export const TransportService = {
             .for('update');
 
           if (vehicle) {
+            const [policy] = await tx
+              .select({ margin: transportPolicies.maxCapacityMarginPercent })
+              .from(transportPolicies)
+              .where(eq(transportPolicies.tenantId, tenantId))
+              .limit(1);
+            const marginPercent = policy?.margin ?? 0;
+
             const routeAllocations = await tx
               .select()
               .from(transportStudentAllocations)
@@ -874,7 +888,7 @@ export const TransportService = {
                 }
               }
 
-              const { isOverbooked } = calculateSegmentCapacity(vehicle.capacity, activeOnSegment + 1);
+              const { isOverbooked } = calculateSegmentCapacity(vehicle.capacity, activeOnSegment + 1, marginPercent);
               if (isOverbooked) {
                 throw new ApiError(409, 'CAPACITY_EXCEEDED', 'La capacité maximale du véhicule pour cet itinéraire est atteinte.');
               }
@@ -1255,6 +1269,52 @@ export const TransportService = {
     }
 
     return created;
+  },
+
+  // --- Policies ---
+  async getPolicies(tenantId: string) {
+    const [row] = await db
+      .select()
+      .from(transportPolicies)
+      .where(eq(transportPolicies.tenantId, tenantId))
+      .limit(1);
+    return row
+      ? {
+          maxCapacityMarginPercent: row.maxCapacityMarginPercent ?? 0,
+          requireSafeHandoffYoungerStudents: row.requireSafeHandoffYoungerStudents ?? false,
+          handoffAgeThresholdYears: row.handoffAgeThresholdYears ?? 8,
+        }
+      : {
+          maxCapacityMarginPercent: 0,
+          requireSafeHandoffYoungerStudents: false,
+          handoffAgeThresholdYears: 8,
+        };
+  },
+
+  async upsertPolicies(tenantId: string, data: {
+    maxCapacityMarginPercent?: number;
+    requireSafeHandoffYoungerStudents?: boolean;
+    handoffAgeThresholdYears?: number;
+  }) {
+    const [row] = await db
+      .insert(transportPolicies)
+      .values({
+        tenantId,
+        maxCapacityMarginPercent: data.maxCapacityMarginPercent ?? 0,
+        requireSafeHandoffYoungerStudents: data.requireSafeHandoffYoungerStudents ?? false,
+        handoffAgeThresholdYears: data.handoffAgeThresholdYears ?? 8,
+      })
+      .onConflictDoUpdate({
+        target: transportPolicies.tenantId,
+        set: {
+          maxCapacityMarginPercent: data.maxCapacityMarginPercent ?? 0,
+          requireSafeHandoffYoungerStudents: data.requireSafeHandoffYoungerStudents ?? false,
+          handoffAgeThresholdYears: data.handoffAgeThresholdYears ?? 8,
+          updatedAt: new Date().toISOString(),
+        },
+      })
+      .returning();
+    return row;
   },
 
   // --- Self-Service Projections ---

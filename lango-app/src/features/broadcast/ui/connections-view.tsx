@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import {
   Loader2, Plus, RefreshCw, Plug, Zap, AlertCircle, X, CheckCircle2, Cable,
 } from 'lucide-react';
-import { api, CHANNEL_LABELS, CHANNEL_BADGE, CONNECTION_STATUS_BADGE, fmtDate } from './broadcast-ui';
+import { api, CHANNEL_LABELS, CHANNEL_BADGE, CONNECTION_STATUS_BADGE, fmtDate, isAddonNotActivated, type ApiErrorShape } from './broadcast-ui';
 
 type Connection = {
   id: string;
@@ -38,7 +38,7 @@ const SECRET_FIELDS: Record<string, string[]> = {
 export function ConnectionsView() {
   const [rows, setRows] = useState<Connection[] | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiErrorShape | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({ channel: 'sms', name: '', provider: 'test', apiKey: '', sender: '' });
@@ -49,7 +49,7 @@ export function ConnectionsView() {
     setError(null);
     const res = await api<Connection[]>('/api/addons/broadcast/connections');
     if (res.ok && res.data) setRows(res.data);
-    else setError(res.error?.message ?? 'Impossible de charger les connexions.');
+    else setError(res.error ?? { message: 'Impossible de charger les connexions.' });
     setLoading(false);
   }, []);
 
@@ -90,9 +90,16 @@ export function ConnectionsView() {
   }
 
   if (error && !rows) {
+    if (isAddonNotActivated(error)) {
+      return (
+        <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-700">
+          <AlertCircle className="h-5 w-5 shrink-0" /> {error.message ?? 'Module non activé.'}
+        </div>
+      );
+    }
     return (
       <div className="flex items-center gap-2 py-20 text-rose-600">
-        <AlertCircle className="h-5 w-5" /> {error}
+        <AlertCircle className="h-5 w-5" /> {error.message ?? 'Erreur inconnue.'}
         <Button variant="outline" size="sm" onClick={load}><RefreshCw className="mr-1 h-4 w-4" />Réessayer</Button>
       </div>
     );
@@ -192,7 +199,7 @@ export function ConnectionsView() {
       </div>
       {error && (
         <div className="flex items-center gap-2 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          <Plug className="h-4 w-4" /> {error}
+          <Plug className="h-4 w-4" /> {error.message}
         </div>
       )}
     </div>

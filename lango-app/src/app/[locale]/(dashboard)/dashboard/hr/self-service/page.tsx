@@ -16,8 +16,9 @@ export default async function HrSelfServicePage({ params }: { params: Promise<{ 
     await resolveEmployeeContext(ctx.tenantId, ctx.userId, { allowRetainedReadOnly: true });
   } catch {
     // Not an employee (or no retained read-only record): bounce back into the
-    // app, not out to the public marketing homepage.
-    redirect(`/${locale}/dashboard`);
+    // app, not out to the public marketing homepage. Carry a notice so the
+    // landing page can explain why instead of dropping the user silently.
+    redirect(`/${locale}/dashboard?notice=employee_portal_unavailable`);
   }
   return <EmployeePortalView />;
 }

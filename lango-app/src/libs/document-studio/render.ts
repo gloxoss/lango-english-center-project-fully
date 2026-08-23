@@ -1,5 +1,6 @@
 import { generate } from '@pdfme/generator';
 import { text, image, barcodes } from '@pdfme/schemas';
+import { ApiError } from '@/libs/api/errors';
 import { DocumentTemplateSchema } from './types';
 import { loadFonts } from './fonts';
 
@@ -33,6 +34,25 @@ function normalizeBasePdf(template: DocumentTemplateSchema): DocumentTemplateSch
  * It automatically injects the Arabic and default fonts.
  */
 export async function renderPdf({ template, inputs }: RenderPdfOptions): Promise<Buffer> {
+  const t = template as { basePdf?: unknown; schemas?: unknown } | null;
+  if (!t || !t.basePdf || !Array.isArray(t.schemas) || t.schemas.length === 0) {
+    throw new ApiError(
+      422,
+      'INVALID_TEMPLATE',
+      'Ce modèle n\'est pas un gabarit valide (basePdf/schemas manquants). Rouvrez-le dans le designer et republiez-le.',
+    );
+  }
+
+  // pdfme expects schemas as a 2D array (pages -> schema rows). A flat/1D array
+  // (legacy seed data) would reach generate() and throw a cryptic INTERNAL_ERROR.
+  if (!t.schemas.every((page) => Array.isArray(page))) {
+    throw new ApiError(
+      422,
+      'INVALID_TEMPLATE',
+      'Ce modèle n\'est pas un gabarit valide (schemas invalides). Rouvrez-le dans le designer et republiez-le.',
+    );
+  }
+
   const plugins = {
     text,
     image,

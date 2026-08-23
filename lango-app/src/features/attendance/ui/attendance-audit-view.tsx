@@ -34,11 +34,14 @@ const FLAG_LABELS: Record<FlagTypeCount['type'], string> = {
   REPEATED_LATE: 'Retards répétés',
 };
 
+const PAGE_SIZE = 10;
+
 export function AttendanceAuditView({ locale: _locale }: { locale: string }) {
   const [summary, setSummary] = useState<AuditSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
 
   async function load() {
     setLoading(true);
@@ -83,6 +86,11 @@ export function AttendanceAuditView({ locale: _locale }: { locale: string }) {
   }
 
   const flagCountByType = new Map(summary?.openFlagsByType.map(f => [f.type, f.count]) ?? []);
+
+  const missing = summary?.missingRegistersToday ?? [];
+  const totalPages = Math.max(1, Math.ceil(missing.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pagedSlots = missing.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
@@ -148,46 +156,57 @@ export function AttendanceAuditView({ locale: _locale }: { locale: string }) {
 
       <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
         <h2 className="text-sm font-extrabold text-[#16212B] mb-4">Registres manquants aujourd'hui</h2>
-        {!summary || summary.missingRegistersToday.length === 0
+        {missing.length === 0
           ? (
               <p className="text-xs text-slate-400 py-6 text-center">Aucun registre manquant — tous les cours programmés aujourd'hui ont une présence enregistrée.</p>
             )
           : (
-              <div className="space-y-2">
-                {summary.missingRegistersToday.map(slot => (
-                  <div key={slot.id} className="flex items-center justify-between rounded-xl border border-slate-200/80 px-4 py-3">
-                    <div>
-                      <p className="text-xs font-bold text-[#16212B]">
-                        {slot.className}
-                        {' '}
-                        -
-                        {slot.sectionName}
-                        {' '}
-                        •
-                        {slot.subjectName}
-                      </p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        {slot.teacherName}
-                        {' '}
-                        •
-                        {slot.startTime}
-                        {' '}
-                        -
-                        {slot.endTime}
-                      </p>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  {pagedSlots.map(slot => (
+                    <div key={slot.id} className="flex items-center justify-between rounded-xl border border-slate-200/80 px-4 py-3">
+                      <div>
+                        <p className="text-xs font-bold text-[#16212B]">
+                          {slot.className}
+                          {' '}
+                          -
+                          {slot.sectionName}
+                          {' '}
+                          •
+                          {slot.subjectName}
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          {slot.teacherName}
+                          {' '}
+                          •
+                          {slot.startTime}
+                          {' '}
+                          -
+                          {slot.endTime}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={sendingId === slot.id || sentIds.has(slot.id)}
+                        onClick={() => sendReminder(slot.id)}
+                        className="h-8 rounded-full px-3 text-[11px] font-bold gap-1.5"
+                      >
+                        <Bell className="w-3.5 h-3.5" />
+                        {sentIds.has(slot.id) ? 'Rappel envoyé' : 'Envoyer un rappel'}
+                      </Button>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={sendingId === slot.id || sentIds.has(slot.id)}
-                      onClick={() => sendReminder(slot.id)}
-                      className="h-8 rounded-full px-3 text-[11px] font-bold gap-1.5"
-                    >
-                      <Bell className="w-3.5 h-3.5" />
-                      {sentIds.has(slot.id) ? 'Rappel envoyé' : 'Envoyer un rappel'}
-                    </Button>
+                  ))}
+                </div>
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                    <span className="text-[11px] font-bold text-slate-500">{missing.length} registre(s) — page {safePage}/{totalPages}</span>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" disabled={safePage <= 1} onClick={() => setPage(p => Math.max(1, p - 1))} className="h-8 rounded-full px-3 text-[11px] font-bold">Précédent</Button>
+                      <Button size="sm" variant="outline" disabled={safePage >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))} className="h-8 rounded-full px-3 text-[11px] font-bold">Suivant</Button>
+                    </div>
                   </div>
-                ))}
+                )}
               </div>
             )}
       </Card>

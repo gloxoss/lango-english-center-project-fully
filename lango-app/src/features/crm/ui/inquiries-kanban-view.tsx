@@ -66,7 +66,7 @@ interface StaffMember {
 }
 
 const STAGES: { key: ProspectStage; label: string; color: string; bg: string }[] = [
-  { key: 'new', label: 'Nouveau', color: 'text-[#2487B8]', bg: 'bg-blue-50 border-blue-200' },
+  { key: 'new', label: 'Nouveau', color: 'text-[#0066FF]', bg: 'bg-blue-50 border-blue-200' },
   { key: 'contacted', label: 'Contacté', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },
   { key: 'qualified', label: 'Qualifié', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200' },
   { key: 'converted', label: 'Converti', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
@@ -146,6 +146,10 @@ export function InquiriesKanbanView() {
     window.setTimeout(() => setToast(null), 3500);
   };
 
+  // Drag-and-drop state (native HTML5 DnD — no dependency).
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverStage, setDragOverStage] = useState<ProspectStage | null>(null);
+
   const loadPipeline = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -224,6 +228,21 @@ export function InquiriesKanbanView() {
     } finally {
       setBusyAction(null);
     }
+  };
+
+  const handleDrop = (targetStage: ProspectStage) => {
+    if (!dragId) return;
+    const id = dragId;
+    const source = inquiries.find((i) => i.id === id);
+    setDragId(null);
+    setDragOverStage(null);
+    if (!source) return;
+    if (source.status === targetStage) return;
+    if (!TRANSITIONS[source.status].includes(targetStage)) {
+      showToast('err', `Transition de « ${source.status} » vers « ${targetStage} » non autorisée`);
+      return;
+    }
+    void updateStage(id, targetStage);
   };
 
   const saveLead = async () => {
@@ -371,7 +390,7 @@ export function InquiriesKanbanView() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2487B8] to-[#1B6C93] flex items-center justify-center text-white shadow-2xs shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0066FF] to-[#0052CC] flex items-center justify-center text-white shadow-2xs shrink-0">
             <UserCheck className="w-6 h-6" />
           </div>
           <div>
@@ -385,10 +404,10 @@ export function InquiriesKanbanView() {
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" onClick={loadPipeline} className="rounded-xl border-slate-200 text-slate-700 font-bold text-xs gap-1.5 h-10 px-4 cursor-pointer">
-            <RefreshCw className={`w-4 h-4 text-[#2487B8] ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 text-[#0066FF] ${loading ? 'animate-spin' : ''}`} />
             <span>Actualiser</span>
           </Button>
-          <Button onClick={() => setIsAddOpen(true)} size="sm" className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold rounded-xl shadow-2xs gap-2 h-10 px-4 cursor-pointer">
+          <Button onClick={() => setIsAddOpen(true)} size="sm" className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold rounded-xl shadow-2xs gap-2 h-10 px-4 cursor-pointer">
             <Plus className="w-4 h-4" />
             <span>+ Nouveau Prospect</span>
           </Button>
@@ -398,7 +417,7 @@ export function InquiriesKanbanView() {
       {/* KPI / capacity bar */}
       <Card className="p-4 rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/80 to-slate-50 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white text-[#2487B8] flex items-center justify-center shadow-2xs font-extrabold shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-white text-[#0066FF] flex items-center justify-center shadow-2xs font-extrabold shrink-0">
             <TrendingUp className="w-5 h-5" />
           </div>
           <div>
@@ -461,11 +480,17 @@ export function InquiriesKanbanView() {
       )}
 
       {/* Kanban board */}
+      <p className="text-[11px] text-slate-400 font-medium">Astuce : glissez-déposez une carte vers une autre colonne pour changer son statut.</p>
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-start">
         {STAGES.map((stg) => {
           const colItems = grouped[stg.key];
           return (
-            <div key={stg.key} className="space-y-3 bg-slate-50/70 p-3 rounded-2xl border border-slate-200/70 min-h-[520px] flex flex-col justify-between">
+            <div
+              key={stg.key}
+              onDragOver={(e) => { e.preventDefault(); if (dragOverStage !== stg.key) setDragOverStage(stg.key); }}
+              onDrop={() => handleDrop(stg.key)}
+              className={`space-y-3 p-3 rounded-2xl border min-h-[520px] flex flex-col justify-between transition-colors ${dragOverStage === stg.key ? 'bg-blue-50/80 border-[#0066FF] ring-2 ring-[#0066FF]/20' : 'bg-slate-50/70 border-slate-200/70'}`}
+            >
               <div className="space-y-3">
                 <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/80">
                   <span className={`text-xs font-extrabold px-3 py-1 rounded-xl border ${stg.bg} ${stg.color}`}>{stg.label}</span>
@@ -473,25 +498,32 @@ export function InquiriesKanbanView() {
                 </div>
                 <div className="space-y-3">
                   {colItems.map((item) => (
-                    <Card key={item.id} onClick={() => openProfile(item.id)} className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs space-y-3 hover:border-[#2487B8] hover:shadow-md transition-all cursor-pointer group">
+                    <Card
+                      key={item.id}
+                      draggable
+                      onDragStart={() => setDragId(item.id)}
+                      onDragEnd={() => { setDragId(null); setDragOverStage(null); }}
+                      onClick={() => openProfile(item.id)}
+                      className={`p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs space-y-3 hover:border-[#0066FF] hover:shadow-md transition-all cursor-grab active:cursor-grabbing group ${dragId === item.id ? 'opacity-40' : ''}`}
+                    >
                       <div className="flex items-center justify-between gap-2">
-                        <h3 className="text-xs font-extrabold text-[#16212B] group-hover:text-[#2487B8] transition-colors leading-snug truncate">{item.contactName}</h3>
+                        <h3 className="text-xs font-extrabold text-[#16212B] group-hover:text-[#0066FF] transition-colors leading-snug truncate">{item.contactName}</h3>
                         <Badge variant={item.interestLevel === 'high' ? 'success' : item.interestLevel === 'medium' ? 'info' : 'neutral'} className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 shrink-0">
                           {INTEREST_LABELS[item.interestLevel]}
                         </Badge>
                       </div>
                       <div className="text-[11px] text-slate-500 space-y-1">
-                        {item.phone && <p className="flex items-center gap-1.5 font-medium"><Phone className="w-3 h-3 text-[#2487B8]" /><span>{item.phone}</span></p>}
+                        {item.phone && <p className="flex items-center gap-1.5 font-medium"><Phone className="w-3 h-3 text-[#0066FF]" /><span>{item.phone}</span></p>}
                         {item.email && <p className="flex items-center gap-1.5 font-medium truncate"><Mail className="w-3 h-3 text-slate-400" /><span className="truncate">{item.email}</span></p>}
                       </div>
                       {(item.tags ?? []).length > 0 && (
                         <div className="flex flex-wrap gap-1">
-                          {item.tags!.slice(0, 3).map((t) => <Badge key={t} variant="neutral" className="text-[9px] font-bold text-[#2487B8]">{t}</Badge>)}
+                          {item.tags!.slice(0, 3).map((t) => <Badge key={t} variant="neutral" className="text-[9px] font-bold text-[#0066FF]">{t}</Badge>)}
                         </div>
                       )}
                       {item.notes && <p className="text-[10px] text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100 line-clamp-2">{item.notes}</p>}
                       <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-semibold text-slate-400">
-                        <span className="uppercase text-[#2487B8] font-bold">{item.source.replace('_', ' ')}</span>
+                        <span className="uppercase text-[#0066FF] font-bold">{item.source.replace('_', ' ')}</span>
                         <span>{new Date(item.createdAt).toLocaleDateString('fr-FR')}</span>
                       </div>
                     </Card>
@@ -567,11 +599,11 @@ export function InquiriesKanbanView() {
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-700">Notes / Remarques</label>
-                <textarea value={newLead.notes} onChange={(e) => setNewLead({ ...newLead, notes: e.target.value })} placeholder="Objectif de formation, niveau souhaité..." rows={3} className="mt-1 w-full p-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2487B8]" />
+                <textarea value={newLead.notes} onChange={(e) => setNewLead({ ...newLead, notes: e.target.value })} placeholder="Objectif de formation, niveau souhaité..." rows={3} className="mt-1 w-full p-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0066FF]" />
               </div>
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
                 <Button type="button" variant="ghost" onClick={() => setIsAddOpen(false)} className="text-xs rounded-xl">Annuler</Button>
-                <Button type="submit" disabled={creating} className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl shadow-2xs">
+                <Button type="submit" disabled={creating} className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs rounded-xl shadow-2xs">
                   {creating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Ajouter le Prospect'}
                 </Button>
               </div>
@@ -585,7 +617,7 @@ export function InquiriesKanbanView() {
         <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/40 backdrop-blur-xs">
           <div className="bg-white w-full max-w-xl h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
             {drawerLoading ? (
-              <div className="flex-1 flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#2487B8]" /></div>
+              <div className="flex-1 flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#0066FF]" /></div>
             ) : (
               <div className="flex-1 overflow-y-auto p-6 space-y-5">
                 <div className="flex items-start justify-between border-b border-slate-100 pb-4">
@@ -611,7 +643,7 @@ export function InquiriesKanbanView() {
                           key={stg.key}
                           disabled={!isCurrent && !isReachable}
                           onClick={() => updateStage(selected.id, stg.key)}
-                          className={`p-2 rounded-xl text-[10px] font-extrabold transition-all text-center border ${isCurrent ? 'bg-[#2487B8] text-white border-[#2487B8] shadow-2xs' : isReachable ? 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 cursor-pointer' : 'bg-slate-50 text-slate-300 border-slate-100 opacity-60'}`}
+                          className={`p-2 rounded-xl text-[10px] font-extrabold transition-all text-center border ${isCurrent ? 'bg-[#0066FF] text-white border-[#0066FF] shadow-2xs' : isReachable ? 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 cursor-pointer' : 'bg-slate-50 text-slate-300 border-slate-100 opacity-60'}`}
                         >
                           {stg.label}
                         </button>
@@ -642,7 +674,7 @@ export function InquiriesKanbanView() {
                     </div>
                   )}
                   <div className="flex items-center gap-2">
-                    <Button onClick={saveLead} disabled={busyAction === 'save'} className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl gap-1.5">
+                    <Button onClick={saveLead} disabled={busyAction === 'save'} className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs rounded-xl gap-1.5">
                       {busyAction === 'save' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />} Enregistrer
                     </Button>
                     {selected.phone && (
@@ -693,7 +725,7 @@ export function InquiriesKanbanView() {
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') { e.preventDefault(); const v = (e.target as HTMLInputElement).value.trim(); if (v) { toggleTag(v); (e.target as HTMLInputElement).value = ''; } }
                         }}
-                        className="w-20 text-[11px] px-2 py-1 rounded-lg border border-dashed border-slate-300 bg-white text-slate-700 focus:outline-none focus:border-[#2487B8]"
+                        className="w-20 text-[11px] px-2 py-1 rounded-lg border border-dashed border-slate-300 bg-white text-slate-700 focus:outline-none focus:border-[#0066FF]"
                       />
                     )}
                   </div>
@@ -712,7 +744,7 @@ export function InquiriesKanbanView() {
                         <div className="text-[10px] text-amber-700">{d.phone || d.email} · {d.status}</div>
                         <div className="flex gap-2">
                           {!confirmMergeId ? (
-                            <button onClick={() => setConfirmMergeId(d.id)} className="text-[10px] font-bold text-[#2487B8] hover:underline cursor-pointer flex items-center gap-1"><Link2 className="w-3 h-3" /> Fusionner dans cette fiche</button>
+                            <button onClick={() => setConfirmMergeId(d.id)} className="text-[10px] font-bold text-[#0066FF] hover:underline cursor-pointer flex items-center gap-1"><Link2 className="w-3 h-3" /> Fusionner dans cette fiche</button>
                           ) : (
                             <button onClick={() => mergeInto(selected.id, d.id)} disabled={busyAction === 'merge'} className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200 cursor-pointer">
                               {busyAction === 'merge' ? 'Fusion...' : 'Confirmer la fusion'}
@@ -732,7 +764,7 @@ export function InquiriesKanbanView() {
                     onChange={(e) => setSelected({ ...selected, notes: e.target.value })}
                     rows={3}
                     placeholder="Notes internes..."
-                    className="w-full p-3 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2487B8]"
+                    className="w-full p-3 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
                   />
                 </div>
 
@@ -784,13 +816,13 @@ function FollowUpComposer({ busy, onSubmit }: { busy: boolean; onSubmit: (type: 
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Résumé de l'appel / de la relance..."
-          className="flex-1 text-xs px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2487B8]"
+          className="flex-1 text-xs px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
         />
         <Button
           size="sm"
           disabled={busy || !notes.trim()}
           onClick={() => { onSubmit(type, notes); setNotes(''); }}
-          className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-lg cursor-pointer"
+          className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs rounded-lg cursor-pointer"
         >
           {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
         </Button>

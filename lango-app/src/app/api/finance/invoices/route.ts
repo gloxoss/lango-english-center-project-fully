@@ -10,7 +10,12 @@ import { db } from '@/libs/DB';
 import { consumeDocumentNumber } from '@/libs/finance/document-number';
 import { centsToMoney, moneyToCents } from '@/libs/finance/money';
 import { moneyInput } from '@/libs/finance/validation';
-import { classes, classSections, guardians, guardianStudents, invoiceEvents, invoiceItems, invoices, payments, sections, user } from '@/models/Schema';
+import { classes, classSections, guardians, guardianStudents, invoiceEvents, invoiceItems, invoices, payments, paymentAllocations, sections, user } from '@/models/Schema';
+
+const createInvoiceItemSchema = z.object({
+  description: z.string().trim().min(1).max(255),
+  amount: moneyInput,
+}).strict();
 
 const createInvoiceSchema = z.object({
   studentId: z.string().min(1),
@@ -18,6 +23,8 @@ const createInvoiceSchema = z.object({
   discountAmount: z.number().min(0).optional(),
   dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD attendu'),
   note: z.string().trim().max(500).optional(),
+  status: z.enum(['draft', 'pending']).optional(),
+  items: z.array(createInvoiceItemSchema).max(100).optional(),
 }).strict();
 
 // overdue is derived at read time (never stored): an unpaid/partially-paid
@@ -54,7 +61,23 @@ async function getInvoiceDetail(tenantId: string, id: string) {
 
   const [items, paymentRows, guardianRows] = await Promise.all([
     db.select().from(invoiceItems).where(and(eq(invoiceItems.invoiceId, id), eq(invoiceItems.tenantId, tenantId))),
-    db.select().from(payments).where(and(eq(payments.invoiceId, id), eq(payments.tenantId, tenantId))).orderBy(desc(payments.paymentDate)),
+    // Payments attach to an invoice through payment_allocations (a single
+    // payment can be split across several invoices, anchored on its first
+    // invoice) — joining by payments.invoiceId would hide split collections.
+    db
+      .select({
+        id: payments.id,
+        amount: payments.amount,
+        paymentMethod: payments.paymentMethod,
+        paymentDate: payments.paymentDate,
+        referenceId: payments.referenceId,
+        status: payments.status,
+        allocatedAmount: paymentAllocations.allocatedAmount,
+      })
+      .from(paymentAllocations)
+      .innerJoin(payments, eq(paymentAllocations.paymentId, payments.id))
+      .where(and(eq(paymentAllocations.invoiceId, id), eq(paymentAllocations.tenantId, tenantId)))
+      .orderBy(desc(payments.paymentDate)),
     db
       .select({ firstName: guardians.firstName, lastName: guardians.lastName, phone: guardians.phone, email: guardians.email, relationshipType: guardianStudents.relationshipType })
       .from(guardianStudents)
@@ -183,8 +206,15 @@ export async function POST(request: Request) {
       throw new ApiError(400, 'DISCOUNT_EXCEEDS_AMOUNT', 'La remise ne peut pas dépasser le montant de la facture.');
     }
     const netAmountCents = amountCents - discountCents;
+    // A draft stays invisible to the collection desk until issued; when no
+    // explicit items are given, one line item carries the full amount so the
+    // invoice detail is never an empty list.
+    const status = body.status ?? 'pending';
+    const itemLines = body.items?.length
+      ? body.items.map(it => ({ description: it.description, amount: Number(centsToMoney(moneyToCents(it.amount))) }))
+      : [{ description: 'Frais de scolarité', amount: Number(centsToMoney(netAmountCents)) }];
 
-    // Number + insert + event ledger are one atomic transaction.
+    // Number + insert + line items + event ledger are one atomic transaction.
     const { number: invoiceNumber, invoice } = await db.transaction(async (tx) => {
       const number = await consumeDocumentNumber(tx, { tenantId, prefix: `INV-${new Date().getFullYear()}-` });
       const [created] = await tx
@@ -197,7 +227,7 @@ export async function POST(request: Request) {
           discountAmount: Number(centsToMoney(discountCents)),
           netAmount: Number(centsToMoney(netAmountCents)),
           paidAmount: 0,
-          status: 'pending',
+          status,
           dueDate: body.dueDate,
           note: body.note || null,
         })
@@ -205,6 +235,13 @@ export async function POST(request: Request) {
       if (!created) {
         throw new ApiError(500, 'INVOICE_INSERT_FAILED', 'Facture non enregistrée.');
       }
+      await tx.insert(invoiceItems).values(itemLines.map(it => ({
+        tenantId,
+        invoiceId: created.id,
+        feeCategoryId: null,
+        description: it.description,
+        amount: it.amount,
+      })));
       await tx.insert(invoiceEvents).values({
         tenantId,
         invoiceId: created.id,
@@ -214,6 +251,7 @@ export async function POST(request: Request) {
           amountCents: amountCents.toString(),
           discountCents: discountCents.toString(),
           netAmountCents: netAmountCents.toString(),
+          status,
         },
         actorUserId: context.userId,
       });
@@ -224,7 +262,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      data: invoice,
+      data: { ...invoice, items: itemLines },
       message: `Facture N° ${invoiceNumber} créée avec succès pour ${student.name}.`,
     });
   } catch (error) {

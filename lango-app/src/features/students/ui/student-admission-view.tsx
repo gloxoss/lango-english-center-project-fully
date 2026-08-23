@@ -40,7 +40,14 @@ type FormState = {
   guardianName: string;
   guardianPhone: string;
   guardianEmail: string;
+  guardianOccupation: string;
+  guardianAddress: string;
+  guardianEmailOptIn: boolean;
+  guardianSmsOptIn: boolean;
+  guardianPreferredLanguage: string;
 };
+
+type StringField = { [K in keyof FormState]: FormState[K] extends string ? K : never }[keyof FormState];
 
 const EMPTY_FORM: FormState = {
   firstName: '',
@@ -57,6 +64,11 @@ const EMPTY_FORM: FormState = {
   guardianName: '',
   guardianPhone: '',
   guardianEmail: '',
+  guardianOccupation: '',
+  guardianAddress: '',
+  guardianEmailOptIn: true,
+  guardianSmsOptIn: true,
+  guardianPreferredLanguage: '',
 };
 
 const STEPS = [
@@ -108,6 +120,10 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
 
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
 
+  // Real pipeline counts for the four KPI cards, derived from the tenant's
+  // existing admission requests (GET /api/students/admissions).
+  const [kpi, setKpi] = useState({ inProgress: 0, complete: 0, missingDocs: 0, approved: 0 });
+
   // Step 2: guardian search-first.
   const [guardianSearch, setGuardianSearch] = useState('');
   const [guardianResults, setGuardianResults] = useState<GuardianResult[]>([]);
@@ -122,7 +138,7 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
   const [uploadingDocType, setUploadingDocType] = useState<string | null>(null);
   const [docUploadErrors, setDocUploadErrors] = useState<Record<string, string>>({});
 
-  const set = (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+  const set = (field: StringField) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm(prev => ({ ...prev, [field]: e.target.value }));
 
   const canGoNext = step !== 1 || isStep1Valid(form);
@@ -131,6 +147,22 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
     fetch('/api/academics/academic-years')
       .then(res => (res.ok ? res.json() : null))
       .then(json => json?.success && setAcademicYears(json.data))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/students/admissions')
+      .then(res => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (!json?.success || !Array.isArray(json.data)) return;
+        const rows = json.data as Array<{ status: string; checklistDocumentsReceived: boolean; checklistFileComplete: boolean }>;
+        setKpi({
+          inProgress: rows.filter(r => r.status === 'applied' || r.status === 'in_review').length,
+          complete: rows.filter(r => r.checklistFileComplete).length,
+          missingDocs: rows.filter(r => !r.checklistDocumentsReceived).length,
+          approved: rows.filter(r => r.status === 'approved').length,
+        });
+      })
       .catch(() => {});
   }, []);
 
@@ -232,7 +264,17 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
         body: JSON.stringify(
           selectedGuardian
             ? { id: applicantId, guardianId: selectedGuardian.id }
-            : { id: applicantId, guardianName: form.guardianName || undefined, guardianPhone: form.guardianPhone || undefined, guardianEmail: form.guardianEmail || undefined },
+            : {
+                id: applicantId,
+                guardianName: form.guardianName || undefined,
+                guardianPhone: form.guardianPhone || undefined,
+                guardianEmail: form.guardianEmail || undefined,
+                occupation: form.guardianOccupation || undefined,
+                address: form.guardianAddress || undefined,
+                emailOptIn: form.guardianEmailOptIn,
+                smsOptIn: form.guardianSmsOptIn,
+                preferredLanguage: form.guardianPreferredLanguage || undefined,
+              },
         ),
       });
       const json = await res.json();
@@ -379,10 +421,10 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
         "
         >
           {[
-            { label: 'Dossiers en cours', value: '—', icon: FolderOpen, iconBg: 'bg-[#DCEBF4]', iconColor: 'text-[#1B6C93]' },
-            { label: 'Dossiers complets', value: '—', icon: CheckCircle2, iconBg: 'bg-[#D1F5E8]', iconColor: 'text-[#17A673]' },
-            { label: 'Documents manquants', value: '—', icon: AlertTriangle, iconBg: 'bg-[#FCF0DC]', iconColor: 'text-[#E8A33D]' },
-            { label: 'Frais d\'inscription', value: '—', icon: Wallet, iconBg: 'bg-[#DCEBF4]', iconColor: 'text-[#1B6C93]' },
+            { label: 'Dossiers en cours', value: kpi.inProgress, icon: FolderOpen, iconBg: 'bg-[#DCEBF4]', iconColor: 'text-[#1B6C93]' },
+            { label: 'Dossiers complets', value: kpi.complete, icon: CheckCircle2, iconBg: 'bg-[#D1F5E8]', iconColor: 'text-[#17A673]' },
+            { label: 'Documents manquants', value: kpi.missingDocs, icon: AlertTriangle, iconBg: 'bg-[#FCF0DC]', iconColor: 'text-[#E8A33D]' },
+            { label: 'Frais d\'inscription', value: kpi.approved, icon: Wallet, iconBg: 'bg-[#DCEBF4]', iconColor: 'text-[#1B6C93]' },
           ].map((kpi, i) => (
             <Card
               key={i}
@@ -581,9 +623,38 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
                       <Input id="admission-guardian-phone" value={form.guardianPhone} onChange={set('guardianPhone')} className="mt-1 h-10 rounded-xl text-xs" />
                     </div>
                   </div>
-                  <div>
+                  <div className="mb-3">
                     <label htmlFor="admission-guardian-email" className="text-[10px] font-bold text-slate-500">Email du tuteur</label>
                     <Input id="admission-guardian-email" type="email" value={form.guardianEmail} onChange={set('guardianEmail')} className="mt-1 h-10 rounded-xl text-xs" />
+                  </div>
+                  <div className="mb-3 grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="admission-guardian-occupation" className="text-[10px] font-bold text-slate-500">Profession</label>
+                      <Input id="admission-guardian-occupation" value={form.guardianOccupation} onChange={set('guardianOccupation')} className="mt-1 h-10 rounded-xl text-xs" />
+                    </div>
+                    <div>
+                      <label htmlFor="admission-guardian-pref-lang" className="text-[10px] font-bold text-slate-500">Langue de communication</label>
+                      <select id="admission-guardian-pref-lang" value={form.guardianPreferredLanguage} onChange={set('guardianPreferredLanguage')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs">
+                        <option value="">Par défaut</option>
+                        <option value="fr">Français</option>
+                        <option value="ar">Arabe</option>
+                        <option value="en">Anglais</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="admission-guardian-address" className="text-[10px] font-bold text-slate-500">Adresse</label>
+                    <Input id="admission-guardian-address" value={form.guardianAddress} onChange={set('guardianAddress')} className="mt-1 h-10 rounded-xl text-xs" />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600">
+                      <input type="checkbox" checked={form.guardianEmailOptIn} onChange={e => setForm(prev => ({ ...prev, guardianEmailOptIn: e.target.checked }))} className="rounded border-slate-300" />
+                      Email
+                    </label>
+                    <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600">
+                      <input type="checkbox" checked={form.guardianSmsOptIn} onChange={e => setForm(prev => ({ ...prev, guardianSmsOptIn: e.target.checked }))} className="rounded border-slate-300" />
+                      SMS
+                    </label>
                   </div>
                 </div>
               )}

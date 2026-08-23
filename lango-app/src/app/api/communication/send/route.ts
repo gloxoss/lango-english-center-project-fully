@@ -1,7 +1,7 @@
 /**
  * POST /api/communication/send
  *
- * Broadcast dispatcher: sends SMS (simulated — no real carrier) or an announcement.
+ * Broadcast dispatcher: sends SMS (real via a configured provider, else log-only) or an announcement.
  *
  * Body shape:
  *   channel:      'sms' | 'announcement'
@@ -13,8 +13,8 @@
  *   body: string                — message text
  *   targetRole?: string         — for announcement: restrict to role
  *
- * ponytail: SMS is simulation only — see messages/route.ts banner comment.
- *   Do not wire a carrier here until the school pays for one.
+ * SMS goes through the shared send path: real when a provider connection exists,
+ * honest log-only simulation otherwise.
  */
 
 import { and, eq, inArray } from 'drizzle-orm';
@@ -26,7 +26,8 @@ import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { announcements, smsMessages, studentPlacements, user } from '@/models/Schema';
+import { announcements, studentPlacements, user } from '@/models/Schema';
+import { sendSmsMessages } from '@/features/broadcast/services/sms-delivery';
 
 const sendSchema = z.discriminatedUnion('channel', [
   z.object({
@@ -109,22 +110,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, data: { channel: 'sms', sent: 0, warning: 'Aucun destinataire avec un numéro de téléphone trouvé.' } });
     }
 
-    // Bulk insert — simulation (no real carrier)
-    const now = new Date().toISOString();
-    await db.insert(smsMessages).values(
-      phones.map(p => ({
-        tenantId,
-        recipientPhone: p.phone,
-        studentId: p.studentId,
-        body: body.body,
-        status: 'sent' as const,
-        sentAt: now,
-        createdById: ctx.userId,
-      })),
-    );
+    const results = await sendSmsMessages(tenantId, phones.map(p => ({
+      to: p.phone,
+      body: body.body,
+      studentId: p.studentId,
+      createdById: ctx.userId,
+    })));
 
-    recordAudit(ctx, 'create', 'sms_broadcast', ctx.userId, { count: phones.length });
-    return NextResponse.json({ success: true, data: { channel: 'sms', sent: phones.length, simulated: true } }, { status: 201 });
+    const failed = results.filter(r => r.delivery === 'failed').length;
+    const realSent = results.filter(r => r.delivery === 'sent' || r.delivery === 'delivered').length;
+
+    recordAudit(ctx, 'create', 'sms_broadcast', ctx.userId, { count: phones.length, realSent, failed });
+    return NextResponse.json({ success: true, data: { channel: 'sms', sent: phones.length, simulated: realSent === 0, realSent, failed } }, { status: 201 });
   } catch (error) {
     return apiErrorResponse(error);
   }

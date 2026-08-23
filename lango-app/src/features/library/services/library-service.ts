@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ilike, inArray, isNotNull, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, getTableColumns, ilike, inArray, isNotNull, isNull, or, sql } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { ApiError } from '@/libs/api/errors';
 import { cancelHold } from '@/features/library/services/library-operations-service';
@@ -116,7 +116,10 @@ export async function createCopy(tenantId: string, input: {
   condition?: 'new' | 'good' | 'fair' | 'poor' | 'damaged'; price?: string | null; acquiredAt?: string | null;
 }) {
   const [[edition], [branch]] = await Promise.all([
-    db.select({ id: libraryEditions.id }).from(libraryEditions).where(and(eq(libraryEditions.id, input.editionId), eq(libraryEditions.tenantId, tenantId))).limit(1),
+    db.select({ id: libraryEditions.id }).from(libraryEditions)
+      .innerJoin(libraryBibliographicRecords, eq(libraryEditions.recordId, libraryBibliographicRecords.id))
+      .where(and(eq(libraryEditions.id, input.editionId), eq(libraryEditions.tenantId, tenantId), isNull(libraryBibliographicRecords.deletedAt)))
+      .limit(1),
     db.select({ id: branches.id }).from(branches).where(and(eq(branches.id, input.branchId), eq(branches.tenantId, tenantId))).limit(1),
   ]);
   if (!edition || !branch) throw new ApiError(422, 'INVALID_REFERENCE', 'Édition ou succursale introuvable.');
@@ -138,6 +141,44 @@ export async function listMembers(tenantId: string, query = '') {
     userId: user.id, name: user.name, email: user.email, role: user.role, branchId: libraryMembers.branchId,
   }).from(libraryMembers).innerJoin(user, eq(libraryMembers.userId, user.id))
     .where(and(...conditions)).orderBy(asc(user.name)).limit(50);
+}
+
+export async function getMemberDetail(tenantId: string, memberId: string) {
+  const [member] = await db.select({
+    ...getTableColumns(libraryMembers),
+    branchName: branches.name,
+    userId: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  }).from(libraryMembers)
+    .innerJoin(branches, eq(libraryMembers.branchId, branches.id))
+    .innerJoin(user, eq(libraryMembers.userId, user.id))
+    .where(and(eq(libraryMembers.id, memberId), eq(libraryMembers.tenantId, tenantId), eq(user.tenantId, tenantId)))
+    .limit(1);
+  if (!member) throw new ApiError(404, 'NOT_FOUND', 'Adhérent introuvable.');
+
+  const [activeLoans, openCharges, waitingHolds] = await Promise.all([
+    db.select({ loanId: libraryLoans.id, dueDate: libraryLoans.dueDate, issuedAt: libraryLoans.issuedAt, renewedCount: libraryLoans.renewedCount, accessionNumber: libraryCopies.accessionNumber, title: libraryBibliographicRecords.title })
+      .from(libraryLoans)
+      .innerJoin(libraryCopies, eq(libraryLoans.copyId, libraryCopies.id))
+      .innerJoin(libraryEditions, eq(libraryCopies.editionId, libraryEditions.id))
+      .innerJoin(libraryBibliographicRecords, eq(libraryEditions.recordId, libraryBibliographicRecords.id))
+      .where(and(eq(libraryLoans.tenantId, tenantId), eq(libraryLoans.memberId, memberId), isNull(libraryLoans.returnedAt)))
+      .orderBy(desc(libraryLoans.issuedAt)).limit(50),
+    db.select({ id: libraryCharges.id, amount: libraryCharges.amount, reason: libraryCharges.reason, state: libraryCharges.state, createdAt: libraryCharges.createdAt })
+      .from(libraryCharges)
+      .where(and(eq(libraryCharges.tenantId, tenantId), eq(libraryCharges.memberId, memberId), eq(libraryCharges.state, 'open')))
+      .orderBy(desc(libraryCharges.createdAt)).limit(50),
+    db.select({ id: libraryHolds.id, placedAt: libraryHolds.placedAt, expiresAt: libraryHolds.expiresAt, accessionNumber: libraryCopies.accessionNumber, title: libraryBibliographicRecords.title })
+      .from(libraryHolds)
+      .innerJoin(libraryCopies, eq(libraryHolds.copyId, libraryCopies.id))
+      .innerJoin(libraryEditions, eq(libraryCopies.editionId, libraryEditions.id))
+      .innerJoin(libraryBibliographicRecords, eq(libraryEditions.recordId, libraryBibliographicRecords.id))
+      .where(and(eq(libraryHolds.tenantId, tenantId), eq(libraryHolds.memberId, memberId), eq(libraryHolds.state, 'waiting')))
+      .orderBy(asc(libraryHolds.placedAt)).limit(50),
+  ]);
+  return { ...member, activeLoans, openCharges, waitingHolds };
 }
 
 export async function createMember(tenantId: string, input: { userId: string; memberNumber: string; branchId: string }) {

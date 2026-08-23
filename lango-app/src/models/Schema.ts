@@ -21,9 +21,10 @@ export const dayOfWeek = pgEnum('day_of_week', ['monday', 'tuesday', 'wednesday'
 export const enrollmentStatus = pgEnum('enrollment_status', ['enrolled', 'dropped', 'graduated']);
 export const expenseCategory = pgEnum('expense_category', ['salary', 'rent', 'utilities', 'supplies', 'marketing', 'other']);
 export const gender = pgEnum('gender', ['female', 'male', 'other']);
-export const invoiceStatus = pgEnum('invoice_status', ['pending', 'partial', 'paid', 'overdue', 'cancelled']);
+export const invoiceStatus = pgEnum('invoice_status', ['draft', 'pending', 'partial', 'paid', 'overdue', 'cancelled', 'credited']);
 export const leaveStatus = pgEnum('leave_status', ['pending', 'approved', 'rejected']);
 export const paymentMethod = pgEnum('payment_method', ['cash', 'card', 'transfer', 'check']);
+export const paymentStatus = pgEnum('payment_status', ['posted', 'reversed', 'refunded']);
 export const role = pgEnum('role', ['super_admin', 'school_admin', 'teacher', 'accountant', 'student', 'alumni', 'parent', 'receptionist', 'guard', 'librarian']);
 export const status = pgEnum('status', ['active', 'inactive', 'archived']);
 export const planTier = pgEnum('plan_tier', ['trial', 'basic', 'standard', 'premium']);
@@ -93,6 +94,33 @@ export const branches = pgTable('branches', {
     name: 'branches_tenant_id_tenants_id_fk',
   }).onDelete('cascade'),
   unique('branches_tenant_id_code_unique').on(table.tenantId, table.code),
+]);
+
+// Super-admin waitlist: schools that requested early access from the public
+// marketing form before being onboarded as tenants. Global (no tenantId) — a
+// waitlist entry exists precisely because there is no tenant yet. `status` is
+// varchar (not pgEnum) to match the subscription/licensing global tables; the
+// allowed values are enforced at the API layer.
+export const schoolAccessRequests = pgTable('school_access_requests', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  schoolName: varchar('school_name', { length: 255 }).notNull(),
+  contactName: varchar('contact_name', { length: 255 }).notNull(),
+  city: varchar({ length: 100 }),
+  studentCount: varchar('student_count', { length: 20 }),
+  phone: varchar({ length: 50 }),
+  email: varchar({ length: 255 }),
+  status: varchar('status', { length: 20 }).default('new').notNull(),
+  notes: text(),
+  convertedTenantId: uuid('converted_tenant_id'),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.convertedTenantId],
+    foreignColumns: [tenants.id],
+    name: 'school_access_requests_converted_tenant_id_tenants_id_fk',
+  }).onDelete('set null'),
+  index('school_access_requests_status_idx').on(table.status),
 ]);
 
 // ==========================================================================
@@ -839,6 +867,13 @@ export const applicants = pgTable('applicants', {
   checklistDocumentsReceived: boolean('checklist_documents_received').default(false).notNull(),
   checklistInterviewDone: boolean('checklist_interview_done').default(false).notNull(),
   checklistFileComplete: boolean('checklist_file_complete').default(false).notNull(),
+  // Guardian detail captured by the wizard's "create tutor" mini-form and
+  // copied onto the real guardian at approval (bug 2.5).
+  occupation: varchar({ length: 255 }),
+  address: text(),
+  emailOptIn: boolean('email_opt_in').default(true).notNull(),
+  smsOptIn: boolean('sms_opt_in').default(true).notNull(),
+  preferredLanguage: varchar('preferred_language', { length: 10 }),
 }, table => [
   foreignKey({
     columns: [table.tenantId],
@@ -1924,11 +1959,12 @@ export const payments = pgTable('payments', {
   invoiceId: uuid('invoice_id').notNull(),
   studentId: text('student_id').notNull(),
   amount: numeric({ precision: 14, scale: 2, mode: 'number' }).notNull(),
-  paymentMethod: paymentMethod('payment_method').default('cash').notNull(),
+  paymentMethod: varchar('payment_method', { length: 50 }).default('cash').notNull(),
   paymentDate: timestamp('payment_date', { mode: 'string' }).defaultNow().notNull(),
   referenceId: varchar('reference_id', { length: 100 }),
   idempotencyKey: text('idempotency_key'),
   receivedById: text('received_by_id'),
+  status: paymentStatus('status').default('posted').notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
   foreignKey({
@@ -2359,21 +2395,6 @@ export const studentElectiveChoices = pgTable('student_elective_choices', {
 // ==========================================================================
 
 export const smsMessageStatus = pgEnum('sms_message_status', ['queued', 'sent', 'failed']);
-
-export const smsTemplates = pgTable('sms_templates', {
-  id: uuid().defaultRandom().primaryKey().notNull(),
-  tenantId: uuid('tenant_id').notNull(),
-  name: varchar({ length: 255 }).notNull(),
-  body: text().notNull(),
-  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
-}, table => [
-  foreignKey({
-    columns: [table.tenantId],
-    foreignColumns: [tenants.id],
-    name: 'sms_templates_tenant_id_tenants_id_fk',
-  }).onDelete('cascade'),
-]);
 
 export const smsMessages = pgTable('sms_messages', {
   id: uuid().defaultRandom().primaryKey().notNull(),
@@ -4164,6 +4185,8 @@ export const cashierSessions = pgTable('cashier_sessions', {
   totalCollected: numeric('total_collected', { precision: 14, scale: 2, mode: 'number' }).default(0).notNull(),
   status: cashierSessionStatus().default('open').notNull(),
   notes: text(),
+  reconciledById: text('reconciled_by_id'),
+  reconciledAt: timestamp('reconciled_at', { mode: 'string' }),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
   foreignKey({

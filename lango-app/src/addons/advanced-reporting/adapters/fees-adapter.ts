@@ -1,7 +1,7 @@
-import { and, count, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { db } from '@/libs/DB';
-import { invoices, payments, user } from '@/models/Schema';
-import { ReportNotReadyError } from '../services/report-not-ready-error';
+import { fineAssessments, invoices, payments, user } from '@/models/Schema';
 
 export class FeesAdapter {
   /**
@@ -101,14 +101,33 @@ export class FeesAdapter {
   }
 
   /**
-   * 4. Fine Assessment & Waiver Report.
-   * No fines/penalty/waiver table exists anywhere in this schema (unlike
-   * every other report in this file, which all have real backing tables) -
-   * honestly not-ready rather than querying nonexistent data or returning
-   * fake rows. See future-implementation/advanced-reporting remediation,
-   * section-03.
+   * 4. Fine Assessment & Waiver Report (backed by fine_assessments).
    */
-  static async getFinesReport(tenantId: string, params?: any): Promise<never> {
-    throw new ReportNotReadyError('Le suivi des pénalités n\'a pas encore de modèle de données réel dans ce système.');
+  static async getFinesReport(tenantId: string, params?: any) {
+    const waiver = alias(user, 'waiver');
+    const list = await db
+      .select({
+        id: fineAssessments.id,
+        studentName: user.name,
+        amount: fineAssessments.amount,
+        reason: fineAssessments.reason,
+        status: fineAssessments.status,
+        waivedAmount: fineAssessments.waivedAmount,
+        waivedByName: waiver.name,
+      })
+      .from(fineAssessments)
+      .innerJoin(user, eq(fineAssessments.studentId, user.id))
+      .leftJoin(waiver, eq(fineAssessments.waiveById, waiver.id))
+      .where(eq(fineAssessments.tenantId, tenantId))
+      .orderBy(desc(fineAssessments.assessedAt));
+
+    return list.map(f => ({
+      fineId: f.id,
+      studentName: f.studentName,
+      amount: Number(f.amount || 0),
+      reason: f.reason ?? '—',
+      isWaived: f.status === 'waived' || Number(f.waivedAmount || 0) > 0,
+      waivedBy: f.waivedByName ?? (f.status === 'waived' ? '—' : ''),
+    }));
   }
 }

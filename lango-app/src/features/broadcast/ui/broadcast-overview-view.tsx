@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   Loader2, RefreshCw, Megaphone, AlertCircle, Cable, Users, FileText, CheckCircle2,
 } from 'lucide-react';
-import { api, CHANNEL_LABELS, CHANNEL_BADGE, CAMPAIGN_STATUS_LABELS, CAMPAIGN_STATUS_BADGE, fmtDate, fmtCount } from './broadcast-ui';
+import { api, CHANNEL_LABELS, CHANNEL_BADGE, CAMPAIGN_STATUS_LABELS, CAMPAIGN_STATUS_BADGE, fmtDate, fmtCount, isAddonNotActivated, type ApiErrorShape } from './broadcast-ui';
 
 type Campaign = {
   id: string; name: string; channel: string; status: string; scheduleAt: string | null;
@@ -37,7 +37,7 @@ export function BroadcastOverviewView() {
   const locale = params?.locale ?? '';
   const [data, setData] = useState<{ connections: number; segments: number; templates: number; campaigns: Campaign[] } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiErrorShape | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -49,7 +49,8 @@ export function BroadcastOverviewView() {
       api<Campaign[]>('/api/addons/broadcast/campaigns'),
     ]);
     if (!c.ok || !s.ok || !t.ok || !camps.ok) {
-      setError('Impossible de charger le tableau de bord de diffusion.');
+      const addonError = [c, s, t, camps].find((r) => isAddonNotActivated(r.error));
+      setError(addonError?.error ?? { message: 'Impossible de charger le tableau de bord de diffusion.' });
     } else {
       setData({
         connections: c.data?.length ?? 0,
@@ -68,9 +69,16 @@ export function BroadcastOverviewView() {
   }
 
   if (error || !data) {
+    if (isAddonNotActivated(error ?? undefined)) {
+      return (
+        <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-700">
+          <AlertCircle className="h-5 w-5 shrink-0" /> {error?.message ?? 'Module non activé.'}
+        </div>
+      );
+    }
     return (
       <div className="flex items-center gap-2 py-20 text-rose-600">
-        <AlertCircle className="h-5 w-5" /> {error ?? 'Erreur inconnue.'}
+        <AlertCircle className="h-5 w-5" /> {error?.message ?? 'Erreur inconnue.'}
         <Button variant="outline" size="sm" onClick={load}><RefreshCw className="mr-1 h-4 w-4" />Réessayer</Button>
       </div>
     );

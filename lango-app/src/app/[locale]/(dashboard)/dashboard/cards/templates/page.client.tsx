@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,12 +44,10 @@ const STATUS_BADGE: Record<string, { label: string, variant: 'neutral' | 'info' 
   archived: { label: 'Archivé', variant: 'warning' },
 };
 
-export default function TemplatesLibraryPage({
-  params: { locale }
-}: {
-  params: { locale: string }
-}) {
+export default function TemplatesLibraryPage() {
   const router = useRouter();
+  const params = useParams<{ locale?: string }>();
+  const locale = params?.locale ?? 'fr';
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');

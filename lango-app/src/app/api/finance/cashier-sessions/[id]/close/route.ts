@@ -1,13 +1,11 @@
-import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
-import { db } from '@/libs/DB';
-import { cashierClosings, cashierSessions } from '@/models/Schema';
+import { closeCashierSession } from '@/libs/services/cashier-close';
 
 const closeSchema = z.object({
   actualCash: z.number().min(0),
@@ -17,7 +15,8 @@ const closeSchema = z.object({
 // POST /api/finance/cashier-sessions/:id/close — close an open cashier session
 // with a declared physical count. Expected cash = float + total collected;
 // variance = actual - expected. The closing is snapshotted into
-// cashier_closings and the session is flipped to closed.
+// cashier_closings, the session is flipped to closed, and any variance is
+// posted to GL (fail-open).
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'accountant']);
@@ -26,46 +25,19 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const { id } = await params;
     const body = await parseJson(request, closeSchema);
 
-    const [session] = await db
-      .select()
-      .from(cashierSessions)
-      .where(and(eq(cashierSessions.id, id), eq(cashierSessions.tenantId, tenantId)))
-      .limit(1);
-    if (!session) {
-      throw new ApiError(404, 'NOT_FOUND', 'Session de caisse introuvable.');
-    }
-    if (session.status !== 'open') {
-      throw new ApiError(409, 'ALREADY_CLOSED', 'Cette session de caisse est déjà clôturée.');
-    }
+    const { closing, variance } = await closeCashierSession({
+      tenantId,
+      sessionId: id,
+      actualCash: body.actualCash,
+      notes: body.notes,
+      actorId: context.userId,
+    });
 
-    const expectedCash = Number(session.startingFloat) + Number(session.totalCollected);
-    const actualCash = body.actualCash;
-    const variance = actualCash - expectedCash;
-
-    const [closing] = await db
-      .insert(cashierClosings)
-      .values({
-        tenantId,
-        cashierSessionId: id,
-        cashierId: session.cashierId,
-        expectedCash,
-        actualCash,
-        variance,
-        notes: body.notes ?? null,
-        closedById: context.userId,
-      })
-      .returning();
-
-    await db
-      .update(cashierSessions)
-      .set({ status: 'closed', closedAt: new Date().toISOString(), expectedCash, actualCash })
-      .where(eq(cashierSessions.id, id));
-
-    recordAudit(context, 'create', 'cashier_closing', closing!.id, { variance });
+    recordAudit(context, 'create', 'cashier_closing', closing.id, { variance });
 
     return NextResponse.json({
       success: true,
-      data: closing!,
+      data: closing,
       message: `Session clôturée — écart de ${variance >= 0 ? '+' : ''}${variance.toFixed(2)} MAD.`,
     });
   } catch (error) {

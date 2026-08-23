@@ -12,6 +12,7 @@ import {
 import {
   Search, Plus, Download, Printer, X,
   CheckCircle2, Clock, TrendingUp, AlertCircle,
+  Send, Ban, RotateCcw,
 } from 'lucide-react';
 import { exportToCsv } from '@/libs/csv-export';
 
@@ -26,7 +27,7 @@ type InvoiceRow = {
   discountAmount: string;
   netAmount: string;
   paidAmount: string;
-  status: 'pending' | 'partial' | 'paid' | 'overdue' | 'cancelled';
+  status: 'draft' | 'pending' | 'partial' | 'paid' | 'overdue' | 'cancelled' | 'credited';
   dueDate: string;
   issueDate: string;
 };
@@ -34,15 +35,17 @@ type InvoiceRow = {
 type InvoiceDetail = InvoiceRow & {
   note: string | null;
   items: { id: string; description: string; quantity: number; unitPrice: string; amount: string }[];
-  payments: { id: string; amount: string; paymentMethod: string; paymentDate: string; referenceId: string | null }[];
+  payments: { id: string; amount: string; paymentMethod: string; paymentDate: string; referenceId: string | null; status: 'posted' | 'reversed' | 'refunded'; allocatedAmount: string | null }[];
 };
 
 const STATUS_LABEL: Record<InvoiceRow['status'], string> = {
-  pending: 'En attente', partial: 'Partielle', paid: 'Payée', overdue: 'En retard', cancelled: 'Annulée',
+  draft: 'Brouillon', pending: 'En attente', partial: 'Partielle', paid: 'Payée',
+  overdue: 'En retard', cancelled: 'Annulée', credited: 'Créditée',
 };
 const STATUS_BADGE: Record<InvoiceRow['status'], string> = {
-  pending: 'bg-slate-100 text-slate-600', partial: 'bg-amber-100 text-amber-700',
+  draft: 'bg-slate-100 text-slate-400', pending: 'bg-slate-100 text-slate-600', partial: 'bg-amber-100 text-amber-700',
   paid: 'bg-[#DDF5EC] text-[#17A673]', overdue: 'bg-rose-100 text-rose-600', cancelled: 'bg-slate-200 text-slate-500 line-through',
+  credited: 'bg-violet-100 text-violet-600',
 };
 
 export function InvoicesFinanceView({ locale: _locale }: { locale?: string }) {
@@ -57,6 +60,9 @@ export function InvoicesFinanceView({ locale: _locale }: { locale?: string }) {
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState({ studentId: '', amount: '', dueDate: '', note: '' });
   const [saving, setSaving] = useState(false);
+  const [studentSearch, setStudentSearch] = useState('');
+  const [studentResults, setStudentResults] = useState<{ id: string; name: string; matricule: string | null }[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<{ id: string; name: string; matricule: string | null } | null>(null);
 
   const fetchInvoices = async () => {
     setLoading(true);
@@ -93,6 +99,33 @@ export function InvoicesFinanceView({ locale: _locale }: { locale?: string }) {
       .catch(() => {});
   }, [selectedId]);
 
+  // Debounced student search for the create-invoice dialog (same /api/search
+  // source as the collection desk, so the form no longer needs a raw UUID).
+  useEffect(() => {
+    const q = studentSearch.trim();
+    if (q.length < 2) {
+      setStudentResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+        const json = await res.json();
+        if (json.success) setStudentResults(json.data.students ?? []);
+      } catch {
+        // ignore transient search failures
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [studentSearch]);
+
+  const selectStudent = (s: { id: string; name: string; matricule: string | null }) => {
+    setSelectedStudent(s);
+    setCreateForm(f => ({ ...f, studentId: s.id }));
+    setStudentSearch('');
+    setStudentResults([]);
+  };
+
   const filtered = invoices.filter((inv) => {
     const matchSearch = inv.studentName.toLowerCase().includes(search.toLowerCase()) || inv.invoiceNumber.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'all' || inv.status === statusFilter;
@@ -125,6 +158,7 @@ export function InvoicesFinanceView({ locale: _locale }: { locale?: string }) {
       if (json.success) {
         setCreateOpen(false);
         setCreateForm({ studentId: '', amount: '', dueDate: '', note: '' });
+        setSelectedStudent(null);
         await fetchInvoices();
       } else {
         console.error('API error creating invoice', json.message);
@@ -133,6 +167,60 @@ export function InvoicesFinanceView({ locale: _locale }: { locale?: string }) {
       console.error('Failed to create invoice', e);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleReversePayment = async (p: { id: string }) => {
+    const reason = window.prompt('Motif de l\'annulation du paiement ?');
+    if (reason === null) return;
+    if (!reason.trim()) {
+      window.alert('Un motif est requis pour annuler un paiement.');
+      return;
+    }
+    try {
+      const res = await fetch(`/api/finance/payments/${p.id}/reverse`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        window.alert(json.error?.message ?? json.message ?? 'Annulation impossible.');
+        return;
+      }
+      await fetchInvoices();
+      const d = await fetch(`/api/finance/invoices?id=${selectedId}`).then(r => r.json());
+      if (d.success) {
+        setDetail(d.data);
+      }
+    } catch (e) {
+      console.error('Failed to reverse payment', e);
+    }
+  };
+
+  const runLifecycleAction = async (action: 'issue' | 'cancel' | 'credit') => {
+    if (!selectedId) {
+      return;
+    }
+    const config = {
+      issue: { method: 'PUT', path: `/api/finance/invoices/${selectedId}/issue` },
+      cancel: { method: 'PUT', path: `/api/finance/invoices/${selectedId}/cancel` },
+      credit: { method: 'POST', path: `/api/finance/invoices/${selectedId}/credit` },
+    }[action];
+    try {
+      const res = await fetch(config.path, { method: config.method });
+      const json = await res.json();
+      if (!json.success) {
+        window.alert(json.error?.message ?? json.message ?? 'Action impossible.');
+        return;
+      }
+      await fetchInvoices();
+      const d = await fetch(`/api/finance/invoices?id=${selectedId}`).then(r => r.json());
+      if (d.success) {
+        setDetail(d.data);
+      }
+    } catch (e) {
+      console.error('Failed to run invoice lifecycle action', e);
     }
   };
 
@@ -285,12 +373,27 @@ export function InvoicesFinanceView({ locale: _locale }: { locale?: string }) {
               <p className="text-[11px] font-extrabold text-[#16212B]">Historique des paiements ({detail.payments.length})</p>
               {detail.payments.length === 0 && <p className="text-[10px] text-slate-400">Aucun paiement enregistré.</p>}
               {detail.payments.map(p => (
-                <div key={p.id} className="flex items-center justify-between text-[10px] border-b border-slate-100 pb-1.5">
-                  <div>
-                    <p className="font-semibold text-[#16212B]">{p.paymentDate} · {p.paymentMethod}</p>
+                <div key={p.id} className="flex items-center justify-between text-[10px] border-b border-slate-100 pb-1.5 gap-2">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-[#16212B] flex items-center gap-1.5">
+                      {p.paymentDate} · {p.paymentMethod}
+                      {p.status === 'reversed' && <Badge className="text-[8px] border-none font-bold bg-rose-100 text-rose-600">Annulé</Badge>}
+                      {p.status === 'refunded' && <Badge className="text-[8px] border-none font-bold bg-violet-100 text-violet-600">Remboursé</Badge>}
+                    </p>
                     {p.referenceId && <p className="text-slate-400 font-mono">Réf. {p.referenceId}</p>}
                   </div>
-                  <span className="font-extrabold text-[#17A673]">{Number(p.amount).toLocaleString('fr-FR')} MAD</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className={`font-extrabold ${p.status === 'posted' ? 'text-[#17A673]' : 'text-slate-400 line-through'}`}>{Number(p.amount).toLocaleString('fr-FR')} MAD</span>
+                    {p.status === 'posted' && (
+                      <button
+                        type="button"
+                        onClick={() => handleReversePayment(p)}
+                        className="text-[9px] font-bold text-rose-600 hover:underline"
+                      >
+                        Annuler
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -303,7 +406,22 @@ export function InvoicesFinanceView({ locale: _locale }: { locale?: string }) {
             )}
 
             <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
-              <Button variant="outline" size="sm" onClick={() => window.print()} className="h-8 text-[11px] rounded-xl border-slate-200 gap-1">
+              {detail.status === 'draft' && (
+                <Button variant="default" size="sm" onClick={() => runLifecycleAction('issue')} className="h-8 text-[11px] rounded-xl bg-[#0066FF] gap-1">
+                  <Send className="w-3 h-3" />Émettre
+                </Button>
+              )}
+              {detail.status === 'pending' && (
+                <Button variant="outline" size="sm" onClick={() => runLifecycleAction('cancel')} className="h-8 text-[11px] rounded-xl border-slate-200 text-rose-600 hover:text-rose-600 gap-1">
+                  <Ban className="w-3 h-3" />Annuler
+                </Button>
+              )}
+              {(detail.status === 'pending' || detail.status === 'partial') && (
+                <Button variant="outline" size="sm" onClick={() => runLifecycleAction('credit')} className="h-8 text-[11px] rounded-xl border-slate-200 text-violet-600 hover:text-violet-600 gap-1">
+                  <RotateCcw className="w-3 h-3" />Créditer
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={() => window.print()} className="h-8 text-[11px] rounded-xl border-slate-200 gap-1 ml-auto">
                 <Printer className="w-3 h-3" />Imprimer
               </Button>
             </div>
@@ -324,8 +442,38 @@ export function InvoicesFinanceView({ locale: _locale }: { locale?: string }) {
           <DialogHeader><DialogTitle>Créer une facture</DialogTitle></DialogHeader>
           <div className="space-y-3 text-xs">
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">ID élève</label>
-              <Input value={createForm.studentId} onChange={e => setCreateForm({ ...createForm, studentId: e.target.value })} placeholder="ID de l'élève" className="h-9 rounded-xl" />
+              <label className="font-bold text-slate-600">Élève</label>
+              {selectedStudent ? (
+                <div className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2">
+                  <span className="text-xs font-semibold text-slate-800">{selectedStudent.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedStudent(null); setCreateForm(f => ({ ...f, studentId: '' })); }}
+                    className="text-[11px] font-semibold text-[#2487B8] hover:underline"
+                  >
+                    Changer
+                  </button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <Input value={studentSearch} onChange={e => setStudentSearch(e.target.value)} placeholder="Rechercher un élève (nom, matricule)..." className="h-9 rounded-xl" />
+                  {studentResults.length > 0 && (
+                    <div className="absolute z-10 mt-1 w-full divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white shadow-lg">
+                      {studentResults.map(s => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => selectStudent(s)}
+                          className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-slate-50"
+                        >
+                          <span className="text-xs font-semibold text-slate-800">{s.name}</span>
+                          {s.matricule && <span className="text-[10px] text-slate-400">{s.matricule}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div className="space-y-1">
               <label className="font-bold text-slate-600">Montant (MAD)</label>

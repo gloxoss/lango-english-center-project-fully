@@ -1,9 +1,10 @@
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, count, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { requireAddon } from '@/libs/api/entitlements';
+import { parsePagination } from '@/libs/api/pagination';
 import { db } from '@/libs/DB';
 import { user } from '@/models/Schema';
 
@@ -18,20 +19,35 @@ export async function GET(request: Request) {
     await requireAddon(tenantId, 'card-management');
     await requireCapability(context, 'cards.issue');
 
-    const rows = await db.select({
-      id: user.id,
-      name: user.name,
-      role: user.role,
-      employeeId: user.employeeId,
-      specialization: user.specialization,
-      qualification: user.qualification,
-      phone: user.phone,
-    })
-      .from(user)
-      .where(and(eq(user.tenantId, tenantId), inArray(user.role, ['teacher', 'accountant', 'receptionist', 'guard', 'school_admin'])))
-      .orderBy(asc(user.name));
+    const { searchParams } = new URL(request.url);
+    const pagination = parsePagination(searchParams);
+    const where = and(eq(user.tenantId, tenantId), inArray(user.role, ['teacher', 'accountant', 'receptionist', 'guard', 'school_admin']));
 
-    return NextResponse.json({ success: true, data: rows });
+    const [rows, totalRows] = await Promise.all([
+      db.select({
+        id: user.id,
+        name: user.name,
+        role: user.role,
+        employeeId: user.employeeId,
+        specialization: user.specialization,
+        qualification: user.qualification,
+        phone: user.phone,
+      })
+        .from(user)
+        .where(where)
+        .orderBy(asc(user.name))
+        .limit(pagination.limit)
+        .offset(pagination.offset),
+      db.select({ total: count() }).from(user).where(where),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      data: rows,
+      total: totalRows[0]?.total ?? 0,
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+    });
   } catch (error) {
     return apiErrorResponse(error);
   }

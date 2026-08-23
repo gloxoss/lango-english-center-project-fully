@@ -26,10 +26,16 @@ export async function GET(request: Request) {
     const context = await requireRequestContext(request);
     const tenantId = requireTenant(context);
 
+    const { searchParams } = new URL(request.url);
+    const includeArchived = searchParams.get('includeArchived') === 'true';
+
+    const conditions = [eq(attachmentTypes.tenantId, tenantId)];
+    if (!includeArchived) conditions.push(eq(attachmentTypes.isActive, true));
+
     const types = await db
       .select()
       .from(attachmentTypes)
-      .where(and(eq(attachmentTypes.tenantId, tenantId), eq(attachmentTypes.isActive, true)))
+      .where(and(...conditions))
       .orderBy(asc(attachmentTypes.displayOrder));
 
     return NextResponse.json({ success: true, data: types });

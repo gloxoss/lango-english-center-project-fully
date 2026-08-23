@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import {
   Loader2, Plus, RefreshCw, Megaphone, AlertCircle, X, Eye, CheckCircle2, CalendarClock,
 } from 'lucide-react';
-import { api, CHANNEL_LABELS, CHANNEL_BADGE, CAMPAIGN_STATUS_LABELS, CAMPAIGN_STATUS_BADGE, fmtDate, fmtCount } from './broadcast-ui';
+import { api, CHANNEL_LABELS, CHANNEL_BADGE, CAMPAIGN_STATUS_LABELS, CAMPAIGN_STATUS_BADGE, fmtDate, fmtCount, isAddonNotActivated, type ApiErrorShape } from './broadcast-ui';
 
 type Connection = { id: string; name: string; channel: string };
 type Segment = { id: string; name: string; memberCount: number | null };
@@ -49,7 +49,7 @@ export function CampaignsView() {
   const locale = params?.locale ?? '';
   const [rows, setRows] = useState<Campaign[] | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiErrorShape | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -75,7 +75,7 @@ export function CampaignsView() {
     setError(null);
     const res = await api<Campaign[]>('/api/addons/broadcast/campaigns');
     if (res.ok && res.data) setRows(res.data);
-    else setError(res.error?.message ?? 'Impossible de charger les campagnes.');
+    else setError(res.error ?? { message: 'Impossible de charger les campagnes.' });
     setLoading(false);
   }, []);
 
@@ -133,9 +133,16 @@ export function CampaignsView() {
   }
 
   if (error && !rows) {
+    if (isAddonNotActivated(error)) {
+      return (
+        <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-700">
+          <AlertCircle className="h-5 w-5 shrink-0" /> {error.message ?? 'Module non activé.'}
+        </div>
+      );
+    }
     return (
       <div className="flex items-center gap-2 py-20 text-rose-600">
-        <AlertCircle className="h-5 w-5" /> {error}
+        <AlertCircle className="h-5 w-5" /> {error.message ?? 'Erreur inconnue.'}
         <Button variant="outline" size="sm" onClick={load}><RefreshCw className="mr-1 h-4 w-4" />Réessayer</Button>
       </div>
     );

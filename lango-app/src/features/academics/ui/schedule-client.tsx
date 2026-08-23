@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, Clock } from 'lucide-react';
+import { toast } from 'sonner';
 import { usePermissions } from '@/hooks/use-permissions';
 import { SchedulePublishBar } from './schedule-publish-bar';
 
@@ -55,7 +56,6 @@ export function ScheduleClient({ locale: _locale }: { locale?: string } = {}) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ classSubjectId: '', teacherId: '', dayOfWeek: 'monday', startTime: '08:00', endTime: '09:00', roomLabel: '' });
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/academics/session-years?pageSize=50')
@@ -173,7 +173,6 @@ export function ScheduleClient({ locale: _locale }: { locale?: string } = {}) {
       return;
     }
     setSaving(true);
-    setError(null);
     try {
       const res = await fetch('/api/academics/timetable-slots', {
         method: 'POST',
@@ -182,13 +181,13 @@ export function ScheduleClient({ locale: _locale }: { locale?: string } = {}) {
       });
       const json = await res.json();
       if (!json.success) {
-        setError(json.error?.message || json.message || 'Échec de la création du créneau.');
+        toast.error(json.error?.message || json.message || 'Échec de la création du créneau.');
         return;
       }
       setShowForm(false);
       loadSlots();
     } catch {
-      setError('Connexion impossible.');
+      toast.error('Connexion impossible.');
     } finally {
       setSaving(false);
     }
@@ -275,7 +274,6 @@ export function ScheduleClient({ locale: _locale }: { locale?: string } = {}) {
 
       {canManage && viewMode === 'class' && showForm && (
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-          {error && <p className="text-xs font-semibold text-rose-600">{error}</p>}
           <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
             <div className="space-y-1 lg:col-span-2">
               <label className="font-bold text-slate-600">Matière</label>

@@ -4,7 +4,7 @@ import { db } from '@/libs/DB';
 import {
   branches, libraryBibliographicRecords, libraryChargeAdjustments, libraryCharges,
   libraryClosureDays, libraryCopies, libraryEditions, libraryHoldEvents, libraryHolds,
-  libraryLoanPolicies, libraryLoans, libraryMembers, libraryStocktakeAdjustments,
+  libraryLoanEvents, libraryLoanPolicies, libraryLoans, libraryMembers, libraryStocktakeAdjustments,
   libraryStocktakeObservations, libraryStocktakes, libraryTransferEvents, libraryTransfers, user,
 } from '@/models/Schema';
 
@@ -269,3 +269,72 @@ export async function applyStocktakeAdjustments(tenantId: string, actorId: strin
 }
 
 export async function overdueReport(tenantId: string) { const today = new Date().toISOString().slice(0, 10); return db.select({ loanId: libraryLoans.id, dueDate: libraryLoans.dueDate, memberNumber: libraryMembers.memberNumber, memberName: user.name, accessionNumber: libraryCopies.accessionNumber, title: libraryBibliographicRecords.title }).from(libraryLoans).innerJoin(libraryMembers, eq(libraryLoans.memberId, libraryMembers.id)).innerJoin(user, eq(libraryMembers.userId, user.id)).innerJoin(libraryCopies, eq(libraryLoans.copyId, libraryCopies.id)).innerJoin(libraryEditions, eq(libraryCopies.editionId, libraryEditions.id)).innerJoin(libraryBibliographicRecords, eq(libraryEditions.recordId, libraryBibliographicRecords.id)).where(and(eq(libraryLoans.tenantId, tenantId), isNull(libraryLoans.returnedAt), sql`${libraryLoans.dueDate} < ${today}`)).orderBy(asc(libraryLoans.dueDate)); }
+
+const COPY_STATE_KEYS = ['available', 'on_hold_shelf', 'checked_out', 'in_transit', 'repair', 'lost', 'missing', 'withdrawn'] as const;
+
+export async function inventoryReport(tenantId: string) {
+  const [branchRows, stateRows, conditionRows] = await Promise.all([
+    db.select({ id: branches.id, name: branches.name }).from(branches).where(eq(branches.tenantId, tenantId)).orderBy(asc(branches.name)),
+    db.select({ branchId: libraryCopies.branchId, state: libraryCopies.state, n: sql<number>`count(*)::int` }).from(libraryCopies).where(eq(libraryCopies.tenantId, tenantId)).groupBy(libraryCopies.branchId, libraryCopies.state),
+    db.select({ branchId: libraryCopies.branchId, condition: libraryCopies.condition, n: sql<number>`count(*)::int` }).from(libraryCopies).where(eq(libraryCopies.tenantId, tenantId)).groupBy(libraryCopies.branchId, libraryCopies.condition),
+  ]);
+  const byBranch = branchRows.map(branch => {
+    const counts: Record<string, number> = {};
+    for (const key of COPY_STATE_KEYS) counts[key] = 0;
+    for (const row of stateRows) if (row.branchId === branch.id && row.state && counts[row.state] !== undefined) counts[row.state] = Number(row.n);
+    const conditions: Record<string, number> = {};
+    for (const row of conditionRows) if (row.branchId === branch.id && row.condition) conditions[row.condition] = Number(row.n);
+    const total = COPY_STATE_KEYS.reduce((sum, key) => sum + (counts[key] ?? 0), 0);
+    return {
+      branchId: branch.id, branchName: branch.name, conditions, total,
+      available: counts.available ?? 0, checkedOut: counts.checked_out ?? 0, onHoldShelf: counts.on_hold_shelf ?? 0,
+      inTransit: counts.in_transit ?? 0, repair: counts.repair ?? 0, lost: counts.lost ?? 0, missing: counts.missing ?? 0, withdrawn: counts.withdrawn ?? 0,
+      active: total - (counts.withdrawn ?? 0),
+    };
+  });
+  const totals = byBranch.reduce((acc, b) => ({ total: acc.total + b.total, active: acc.active + b.active, withdrawn: acc.withdrawn + b.withdrawn }), { total: 0, active: 0, withdrawn: 0 });
+  return { byBranch, totals };
+}
+
+export async function circulationReport(tenantId: string) {
+  const cutoff30 = new Date(Date.now() - 30 * 86_400_000).toISOString();
+  const cutoff90 = new Date(Date.now() - 90 * 86_400_000).toISOString();
+  const [issued30, returned30, renewed30, issued90, returned90, renewed90, active, holdRows, transferRows, chargeRows, issuedDaily, returnedDaily, renewedDaily] = await Promise.all([
+    db.select({ n: sql<number>`count(*)::int` }).from(libraryLoans).where(and(eq(libraryLoans.tenantId, tenantId), gte(libraryLoans.issuedAt, cutoff30))),
+    db.select({ n: sql<number>`count(*)::int` }).from(libraryLoans).where(and(eq(libraryLoans.tenantId, tenantId), gte(libraryLoans.returnedAt, cutoff30))),
+    db.select({ n: sql<number>`count(*)::int` }).from(libraryLoanEvents).where(and(eq(libraryLoanEvents.tenantId, tenantId), eq(libraryLoanEvents.eventType, 'renewed'), gte(libraryLoanEvents.at, cutoff30))),
+    db.select({ n: sql<number>`count(*)::int` }).from(libraryLoans).where(and(eq(libraryLoans.tenantId, tenantId), gte(libraryLoans.issuedAt, cutoff90))),
+    db.select({ n: sql<number>`count(*)::int` }).from(libraryLoans).where(and(eq(libraryLoans.tenantId, tenantId), gte(libraryLoans.returnedAt, cutoff90))),
+    db.select({ n: sql<number>`count(*)::int` }).from(libraryLoanEvents).where(and(eq(libraryLoanEvents.tenantId, tenantId), eq(libraryLoanEvents.eventType, 'renewed'), gte(libraryLoanEvents.at, cutoff90))),
+    db.select({ n: sql<number>`count(*)::int` }).from(libraryLoans).where(and(eq(libraryLoans.tenantId, tenantId), isNull(libraryLoans.returnedAt))),
+    db.select({ state: libraryHolds.state, n: sql<number>`count(*)::int` }).from(libraryHolds).where(eq(libraryHolds.tenantId, tenantId)).groupBy(libraryHolds.state),
+    db.select({ state: libraryTransfers.state, n: sql<number>`count(*)::int` }).from(libraryTransfers).where(eq(libraryTransfers.tenantId, tenantId)).groupBy(libraryTransfers.state),
+    db.select({ state: libraryCharges.state, n: sql<number>`count(*)::int`, amount: sql<number>`sum(${libraryCharges.amount})::float8` }).from(libraryCharges).where(eq(libraryCharges.tenantId, tenantId)).groupBy(libraryCharges.state),
+    db.select({ day: sql<string>`to_char(${libraryLoans.issuedAt}, 'YYYY-MM-DD')`, n: sql<number>`count(*)::int` }).from(libraryLoans).where(and(eq(libraryLoans.tenantId, tenantId), gte(libraryLoans.issuedAt, cutoff30))).groupBy(sql`to_char(${libraryLoans.issuedAt}, 'YYYY-MM-DD')`),
+    db.select({ day: sql<string>`to_char(${libraryLoans.returnedAt}, 'YYYY-MM-DD')`, n: sql<number>`count(*)::int` }).from(libraryLoans).where(and(eq(libraryLoans.tenantId, tenantId), gte(libraryLoans.returnedAt, cutoff30))).groupBy(sql`to_char(${libraryLoans.returnedAt}, 'YYYY-MM-DD')`),
+    db.select({ day: sql<string>`to_char(${libraryLoanEvents.at}, 'YYYY-MM-DD')`, n: sql<number>`count(*)::int` }).from(libraryLoanEvents).where(and(eq(libraryLoanEvents.tenantId, tenantId), eq(libraryLoanEvents.eventType, 'renewed'), gte(libraryLoanEvents.at, cutoff30))).groupBy(sql`to_char(${libraryLoanEvents.at}, 'YYYY-MM-DD')`),
+  ]);
+  const days: string[] = [];
+  for (let i = 29; i >= 0; i--) days.push(new Date(Date.now() - i * 86_400_000).toISOString().slice(0, 10));
+  const toMap = (rows: Array<{ day: string; n: number }>) => new Map(rows.map(r => [r.day, Number(r.n)]));
+  const issuedMap = toMap(issuedDaily);
+  const returnedMap = toMap(returnedDaily);
+  const renewedMap = toMap(renewedDaily);
+  const daily = days.map(day => ({ day, issued: issuedMap.get(day) ?? 0, returned: returnedMap.get(day) ?? 0, renewed: renewedMap.get(day) ?? 0 }));
+  const holdCounts = { waiting: 0, fulfilled: 0, cancelled: 0, expired: 0 };
+  for (const r of holdRows) if (r.state && r.state in holdCounts) holdCounts[r.state as keyof typeof holdCounts] = Number(r.n);
+  const transferCounts = { requested: 0, dispatched: 0, received: 0, discrepancy: 0, cancelled: 0 };
+  for (const r of transferRows) if (r.state && r.state in transferCounts) transferCounts[r.state as keyof typeof transferCounts] = Number(r.n);
+  const chargeCounts = { open: 0, waived: 0, posted: 0 };
+  let openAmount = 0;
+  for (const r of chargeRows) { if (r.state && r.state in chargeCounts) chargeCounts[r.state as keyof typeof chargeCounts] = Number(r.n); if (r.state === 'open') openAmount = Number(r.amount ?? 0); }
+  return {
+    loans: {
+      active: Number(active?.[0]?.n ?? 0), issued30: Number(issued30?.[0]?.n ?? 0), returned30: Number(returned30?.[0]?.n ?? 0), renewed30: Number(renewed30?.[0]?.n ?? 0),
+      issued90: Number(issued90?.[0]?.n ?? 0), returned90: Number(returned90?.[0]?.n ?? 0), renewed90: Number(renewed90?.[0]?.n ?? 0), daily,
+    },
+    holds: holdCounts,
+    transfers: transferCounts,
+    charges: { open: chargeCounts.open, waived: chargeCounts.waived, paid: chargeCounts.posted, openAmount },
+  };
+}

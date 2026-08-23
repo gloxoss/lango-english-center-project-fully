@@ -51,6 +51,7 @@ export function TonightView() {
   const [data, setData] = useState<TonightData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
 
   const loadHostels = useCallback(async () => {
     const res = await api<HostelRow[]>('/api/addons/hostel/hostels');
@@ -92,6 +93,10 @@ export function TonightView() {
   const s = data?.summary;
   const openMissing = data?.openEscalations.missing_rollcall ?? 0;
   const openOverdue = data?.openEscalations.overdue_return ?? 0;
+  const q = search.trim().toLowerCase();
+  const filteredResidents = (data?.residents ?? []).filter(r =>
+    !q || (r.studentName ?? '').toLowerCase().includes(q) || r.roomCode.toLowerCase().includes(q) || r.bedCode.toLowerCase().includes(q),
+  );
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -194,14 +199,16 @@ export function TonightView() {
                 <h2 className="font-semibold text-[#16212B]">Résidents ({s?.total ?? 0})</h2>
                 <div className="relative w-full max-w-xs">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Input placeholder="Rechercher un résident…" className="pl-9" />
+                  <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un résident…" className="pl-9" />
                 </div>
               </div>
               <div className="divide-y divide-slate-100">
                 {data.residents.length === 0 ? (
                   <div className="p-10 text-center text-sm text-slate-500">Aucun résident présent ce soir.</div>
+                ) : filteredResidents.length === 0 ? (
+                  <div className="p-10 text-center text-sm text-slate-500">Aucun résident ne correspond à la recherche.</div>
                 ) : (
-                  data.residents.map(r => (
+                  filteredResidents.map(r => (
                     <div key={r.allocationId} className="flex items-center justify-between gap-4 p-4">
                       <div className="flex items-center gap-3">
                         <div className={`flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold ${r.accounted ? 'bg-[#D1F5E8] text-[#0b5c3a]' : 'bg-red-50 text-red-600'}`}>

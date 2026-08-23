@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     // Create an initial empty version
     const defaultSchemaJson = {
       basePdf: { width: 85.60, height: 53.98, padding: [0, 0, 0, 0] },
-      schemas: [{}] // pdfme structure
+      schemas: [[]] // pdfme structure: one empty page
     };
 
     const [newVersion] = await db.insert(documentTemplateVersions).values({

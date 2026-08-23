@@ -110,6 +110,7 @@ export const PERMISSIONS = {
   // Grading
   'grading.read': 'Voir les notes',
   'grading.manage': 'Gérer les notes',
+  'grading.review': 'Relire les notes en lecture seule (vérification sans modification)',
 
   // Reports
   'reports.read': 'Consulter les rapports',
@@ -324,9 +325,13 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<AppRole, readonly PermissionKey[]>
     'accounting.statement.read', 'accounting.export',
     'reports.read', 'reports.export',
     'guardians.read',
-    // hr.read/hr.manage deliberately excluded: payroll isn't part of the
-    // Accountant Portal's scope (future-implementation/accountant-portal) -
-    // grant explicitly if a school ever wants accounting to own payroll too.
+    // Read-only payroll review only (maker/checker separation): accountant can
+    // open the workforce hub and review calculated runs, but cannot calculate,
+    // approve, or post (those stay school_admin). Matches the workforce page
+    // guards which list 'accountant' in allowedRoles with payroll.review.
+    'payroll.review',
+    // hr.read/hr.manage deliberately excluded: full HR/payroll ownership isn't
+    // part of the Accountant Portal's scope (future-implementation/accountant-portal).
     // Procurement is finance-adjacent: accountants view inventory and manage
     // purchase orders/receipts but not the shop (no inventory.sell).
     'inventory.read', 'inventory.purchase.manage',
@@ -497,6 +502,33 @@ export async function requireCapability(
     throw new ApiError(403, 'FORBIDDEN',
       `Permission manquante: ${PERMISSIONS[permission] ?? permission}`);
   }
+}
+
+/**
+ * Guard: throws 403 if the user lacks all of the required permissions.
+ * Used where a read-only "review" capability should unlock the same surface as
+ * the broader read capability (e.g. grading.review alongside grading.read).
+ */
+export async function requireAnyCapability(
+  context: RequestContext,
+  permissions: readonly PermissionKey[],
+): Promise<void> {
+  if (!context.tenantId && context.role !== 'super_admin') {
+    throw new ApiError(403, 'TENANT_REQUIRED', 'Un établissement est requis.');
+  }
+
+  for (const permission of permissions) {
+    const allowed = await hasCapability(
+      context.userId,
+      context.tenantId ?? '',
+      context.role,
+      permission,
+    );
+    if (allowed) return;
+  }
+
+  throw new ApiError(403, 'FORBIDDEN',
+    `Permission manquante: ${permissions.map(p => PERMISSIONS[p] ?? p).join(' ou ')}`);
 }
 
 /**

@@ -9,6 +9,8 @@ export type DeliveryTarget = {
   subject?: string | null;
   bodyText: string;
   bodyHtml?: string | null;
+  /** Decrypted connection config (webhook URL, headers, etc.) for real adapters. */
+  config?: Record<string, unknown>;
 };
 
 export type ProviderSendResult =

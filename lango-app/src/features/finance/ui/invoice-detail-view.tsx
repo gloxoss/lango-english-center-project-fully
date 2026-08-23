@@ -9,6 +9,7 @@ import { CreditCard, Phone, Mail, AlertCircle, Printer } from 'lucide-react';
 
 type ApiInvoiceDetail = {
   id: string;
+  studentId: string;
   invoiceNumber: string;
   studentName: string;
   studentPhone: string | null;
@@ -245,7 +246,7 @@ export function InvoiceDetailView({ locale, invoiceId }: { locale: string; invoi
             </div>
 
             {balance > 0 && (
-              <Link href={`/${locale}/dashboard/finance/payments/new`}>
+              <Link href={`/${locale}/dashboard/finance/payments/new?studentId=${invoice.studentId}`}>
                 <Button variant="primary" size="md" className="w-full gap-2 rounded-xl">
                   <CreditCard className="w-4 h-4" />
                   <span>Enregistrer un paiement</span>

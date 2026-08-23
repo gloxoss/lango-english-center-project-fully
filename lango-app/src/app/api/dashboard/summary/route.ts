@@ -18,6 +18,8 @@ export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    const { searchParams } = new URL(request.url);
+    const classSectionId = searchParams.get('classSectionId');
     const today = todayIso();
     const monthStart = monthStartIso();
     const currentYear = new Date().getFullYear();
@@ -247,12 +249,13 @@ export async function GET(request: Request) {
     const absentToday = todayAttendanceRows.find(r => r.status === 'absent')?.count ?? 0;
     const totalMarkedToday = todayAttendanceRows.reduce((sum, r) => sum + r.count, 0);
 
-    const riskByStudent = new Map<string, { studentId: string; name: string; className: string; absences: number; hasOverdueInvoice: boolean }>();
+    const riskByStudent = new Map<string, { studentId: string; name: string; className: string; classSectionId: string | null; absences: number; hasOverdueInvoice: boolean }>();
     for (const row of absenceCounts) {
       riskByStudent.set(row.studentId, {
         studentId: row.studentId,
         name: row.studentName,
         className: displayClass(row.classSectionId),
+        classSectionId: row.classSectionId,
         absences: row.absentCount,
         hasOverdueInvoice: false,
       });
@@ -266,6 +269,7 @@ export async function GET(request: Request) {
           studentId: row.studentId,
           name: row.studentName,
           className: displayClass(row.classSectionId),
+          classSectionId: row.classSectionId,
           absences: 0,
           hasOverdueInvoice: true,
         });
@@ -273,16 +277,17 @@ export async function GET(request: Request) {
     }
 
     const atRiskStudents = [...riskByStudent.values()]
+      .filter(r => !classSectionId || r.classSectionId === classSectionId)
       .map(r => ({
         id: r.studentId,
         name: r.name,
         className: r.className,
+        classSectionId: r.classSectionId,
         indicators: (r.absences > 0 ? 1 : 0) + (r.hasOverdueInvoice ? 1 : 0),
         riskLevel: r.absences >= 4 || (r.absences > 0 && r.hasOverdueInvoice) ? 'Risque élevé' : r.absences > 0 ? 'Risque moyen' : 'À surveiller',
         badge: r.absences >= 4 || (r.absences > 0 && r.hasOverdueInvoice) ? 'danger' : 'warning',
       }))
-      .sort((a, b) => b.indicators - a.indicators)
-      .slice(0, 6);
+      .sort((a, b) => b.indicators - a.indicators);
 
     return NextResponse.json({
       success: true,

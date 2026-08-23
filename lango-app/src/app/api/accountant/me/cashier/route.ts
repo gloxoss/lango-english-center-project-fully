@@ -7,6 +7,7 @@ import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
+import { closeCashierSession } from '@/libs/services/cashier-close';
 import { cashierSessions, payments } from '@/models/Schema';
 
 const openSessionSchema = z.object({
@@ -56,6 +57,7 @@ export async function GET(req: NextRequest) {
           eq(payments.tenantId, tenantId),
           eq(payments.receivedById, userId),
           eq(payments.paymentMethod, 'cash'),
+          eq(payments.status, 'posted'),
           sql`${payments.createdAt} >= ${activeSession.openedAt}`,
         ),
       );
@@ -139,7 +141,7 @@ export async function PUT(req: NextRequest) {
     const body = await parseJson(req, closeSessionSchema);
 
     const [activeSession] = await db
-      .select()
+      .select({ id: cashierSessions.id })
       .from(cashierSessions)
       .where(
         and(
@@ -154,37 +156,19 @@ export async function PUT(req: NextRequest) {
       throw new ApiError(404, 'NO_OPEN_SESSION', 'Aucune session de caisse ouverte à clôturer.');
     }
 
-    const [cashSummary] = await db
-      .select({
-        totalCash: sql<number>`coalesce(sum(${payments.amount}), 0)`,
-      })
-      .from(payments)
-      .where(
-        and(
-          eq(payments.tenantId, tenantId),
-          eq(payments.receivedById, userId),
-          eq(payments.paymentMethod, 'cash'),
-          sql`${payments.createdAt} >= ${activeSession.openedAt}`,
-        ),
-      );
+    const { closing, variance } = await closeCashierSession({
+      tenantId,
+      sessionId: activeSession.id,
+      actualCash: body.actualCash,
+      notes: body.notes,
+      actorId: userId,
+    });
 
-    const totalCollected = Number(cashSummary?.totalCash ?? 0);
-    const expectedCash = activeSession.startingFloat + totalCollected;
-
-    const [closedSession] = await db
-      .update(cashierSessions)
-      .set({
-        status: 'closed',
-        closedAt: new Date().toISOString(),
-        totalCollected,
-        expectedCash,
-        actualCash: body.actualCash,
-        notes: body.notes || null,
-      })
-      .where(eq(cashierSessions.id, activeSession.id))
-      .returning();
-
-    return NextResponse.json({ success: true, data: closedSession });
+    return NextResponse.json({
+      success: true,
+      data: closing,
+      message: `Session clôturée — écart de ${variance >= 0 ? '+' : ''}${variance.toFixed(2)} MAD.`,
+    });
   } catch (error) {
     return apiErrorResponse(error);
   }

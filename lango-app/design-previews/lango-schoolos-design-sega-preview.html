@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lango SchoolOS — Sega 16-Bit Arcade Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&display=swap&display=swap">
+  <style>
+    :root {
+      --bg: #000018;
+      --surface: #080838;
+      --border: #4488ff;
+      --text: #ffff00;
+      --text-muted: #00ffff;
+      --primary: #ff4444;
+      --accent: #4488ff;
+      --radius: 0px;
+    }
+    body {
+      font-family: 'VT323', monospace;
+      background: #000018;
+      color: #ffff00;
+      min-height: 100vh;
+    }
+    h1, h2, h3, .head-font {
+      font-family: 'VT323', monospace;
+    }
+    .custom-card {
+      background: #080838;
+      border: 3px solid #4488ff;
+      border-radius: 0px;
+      box-shadow: 4px 4px 0px #4488ff;
+      
+    }
+    .custom-btn-primary {
+      background-color: #ff4444;
+      color: #000000;
+      border-radius: 0px;
+      border: 3px solid #4488ff;
+      box-shadow: 4px 4px 0px #4488ff;
+      transition: all 0.2s ease;
+    }
+    .custom-btn-primary:hover {
+      background-color: #cc2222;
+      transform: translateY(-1px);
+    }
+    .custom-btn-outline {
+      background: transparent;
+      border: 1px solid #4488ff;
+      color: #ffff00;
+      border-radius: 0px;
+      transition: all 0.2s ease;
+    }
+    .custom-btn-outline:hover {
+      background: rgba(255,255,255,0.05);
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8 flex flex-col items-center">
+
+  <div class="w-full max-w-6xl space-y-6">
+
+    <!-- Header / Navbar Banner -->
+    <header class="custom-card p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2 flex-wrap mb-1">
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full uppercase" style="background: rgba(255,255,255,0.1); color: #4488ff;">
+            Retro & Cyber
+          </span>
+          <span class="text-xs opacity-75 font-mono">STYLE ID: sega</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Sega 16-Bit Arcade</h1>
+        <p class="text-sm mt-1" style="color: #00ffff;">Mega Drive 16-bit arcade pixel aesthetics, hard rectangular geometry, and vibrant saturated colors.</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="custom-btn-outline px-4 py-2 text-xs font-semibold inline-flex items-center gap-1.5">
+          ← Gallery Index
+        </a>
+        <button class="custom-btn-primary px-4 py-2 text-xs font-bold shadow">
+          Apply This Design
+        </button>
+      </div>
+    </header>
+
+    <!-- Key Metrics / KPI Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="custom-card p-5">
+        <div class="text-xs uppercase font-medium" style="color: #00ffff;">Total Active Students</div>
+        <div class="text-3xl font-bold mt-2 head-font">1,482</div>
+        <div class="text-xs mt-2 font-medium" style="color: #4488ff;">↑ +14.8% Active Retention</div>
+      </div>
+
+      <div class="custom-card p-5">
+        <div class="text-xs uppercase font-medium" style="color: #00ffff;">Tuition Volume (Monthly)</div>
+        <div class="text-3xl font-bold mt-2 head-font">485,200 <span class="text-sm font-normal">MAD</span></div>
+        <div class="text-xs mt-2 font-medium" style="color: #4488ff;">⚡ 98.4% On-time Settlement</div>
+      </div>
+
+      <div class="custom-card p-5">
+        <div class="text-xs uppercase font-medium" style="color: #00ffff;">Active English Centers</div>
+        <div class="text-3xl font-bold mt-2 head-font">6 Campuses</div>
+        <div class="text-xs mt-2 font-medium" style="color: #00ffff;">Casablanca • Rabat • Fes</div>
+      </div>
+
+      <div class="custom-card p-5">
+        <div class="text-xs uppercase font-medium" style="color: #00ffff;">Class Attendance Average</div>
+        <div class="text-3xl font-bold mt-2 head-font">96.8%</div>
+        <div class="text-xs mt-2 font-medium" style="color: #4488ff;">★ Top Tier Engagement</div>
+      </div>
+    </div>
+
+    <!-- Main Content Dual Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Left Column: Data Table -->
+      <div class="lg:col-span-2 custom-card p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-lg font-bold">Recent Student Registrations</h2>
+            <p class="text-xs" style="color: #00ffff;">Live placement tests and enrollment roster</p>
+          </div>
+          <button class="custom-btn-outline px-3 py-1.5 text-xs font-medium">Filter Records</button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b" style="border-color: #4488ff; color: #00ffff;">
+                <th class="py-2.5 px-3">STUDENT</th>
+                <th class="py-2.5 px-3">CAMPUS</th>
+                <th class="py-2.5 px-3">CEFR LEVEL</th>
+                <th class="py-2.5 px-3">STATUS</th>
+                <th class="py-2.5 px-3 text-right">TUITION</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y" style="border-color: #4488ff;">
+              <tr>
+                <td class="py-3 px-3 font-semibold">Amine El Amrani</td>
+                <td class="px-3" style="color: #00ffff;">Fes Ville Nouvelle</td>
+                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-mono" style="background: rgba(255,255,255,0.08);">B2 Upper</span></td>
+                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #4488ff;">Enrolled</span></td>
+                <td class="px-3 text-right font-bold">1,200 MAD</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 font-semibold">Salma Benjelloun</td>
+                <td class="px-3" style="color: #00ffff;">Rabat Agdal</td>
+                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-mono" style="background: rgba(255,255,255,0.08);">C1 Advanced</span></td>
+                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #4488ff;">Enrolled</span></td>
+                <td class="px-3 text-right font-bold">1,450 MAD</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 font-semibold">Youssef Tazi</td>
+                <td class="px-3" style="color: #00ffff;">Casablanca Oasis</td>
+                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-mono" style="background: rgba(255,255,255,0.08);">A2 Beginner</span></td>
+                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #ff4444;">Pending</span></td>
+                <td class="px-3 text-right font-bold">1,100 MAD</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Right Column: Interactive Controls & Tokens -->
+      <div class="space-y-6">
+
+        <!-- Action Card -->
+        <div class="custom-card p-6">
+          <h3 class="text-base font-bold mb-1">Interactive Form Control</h3>
+          <p class="text-xs mb-4" style="color: #00ffff;">Test inputs and toggle behaviors</p>
+          
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-medium mb-1" style="color: #00ffff;">Student Email / Phone</label>
+              <input type="text" placeholder="student@example.com" class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: rgba(255,255,255,0.05); border-color: #4488ff; color: #ffff00;">
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium mb-1" style="color: #00ffff;">Target Course Level</label>
+              <select class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: #18181b; border-color: #4488ff; color: #ffff00;">
+                <option>General English (A1 - C2)</option>
+                <option>Business English & Public Speaking</option>
+                <option>IELTS / TOEFL Intensive Prep</option>
+              </select>
+            </div>
+
+            <button class="custom-btn-primary w-full py-2.5 text-xs font-bold shadow mt-2">
+              Confirm & Enroll Student
+            </button>
+          </div>
+        </div>
+
+        <!-- Token Inspector -->
+        <div class="custom-card p-5 text-xs space-y-2">
+          <div class="font-bold border-b pb-2 flex items-center justify-between" style="border-color: #4488ff;">
+            <span>🎨 DESIGN TOKENS</span>
+            <span class="font-mono text-xs opacity-60">sega</span>
+          </div>
+          <div class="flex justify-between">
+            <span style="color: #00ffff;">Font Family:</span>
+            <span class="font-mono font-semibold">'VT323'</span>
+          </div>
+          <div class="flex justify-between">
+            <span style="color: #00ffff;">Border Radius:</span>
+            <span class="font-mono font-semibold">0px</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span style="color: #00ffff;">Primary Accent:</span>
+            <div class="flex items-center gap-1.5">
+              <div class="w-3.5 h-3.5 rounded" style="background: #ff4444; border: 1px solid rgba(0,0,0,0.2);"></div>
+              <span class="font-mono">#ff4444</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

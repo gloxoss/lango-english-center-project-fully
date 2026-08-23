@@ -1,6 +1,6 @@
 # Assessment and Examination Implementation Plan
 
-Status: COMPLETED & DEPLOYED TO PRODUCTION (Database Migration 0060 Applied, 22 New Tables Created, Shared Assessment Ledger Operational, 0 TypeScript Errors)
+Status: PARTIALLY DEPLOYED — Homework, Exam Master, and the shared assessment ledger are live and wired (migration 0060). The Online Examinations addon was retired 2026-08-13 (dead code removed, see EXECUTION-AUDIT-REPORT.md decision record); the online-exams and homework UI pages were de-mocked in M13 (2026-08-14).
 Scope: Homework, Evaluation Reports, Exam Master, Exam Schedule, Marks, Question Bank, Online Exams, and Exam Results  
 Optional addon ID: `online-examinations`
 

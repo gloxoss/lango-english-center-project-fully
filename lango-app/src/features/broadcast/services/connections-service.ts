@@ -4,7 +4,7 @@ import { communicationConnections } from '@/models/Schema';
 import { ApiError } from '@/libs/api/errors';
 import { decryptSecret, encryptSecret, isEncrypted } from '@/libs/api/secrets';
 import { getProvider } from '../providers/provider';
-import '../providers/test-provider';
+import '../providers';
 import type { broadcastChannel } from '../models/broadcast-schema';
 
 type Channel = (typeof broadcastChannel.enumValues)[number];

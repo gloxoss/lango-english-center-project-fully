@@ -111,7 +111,8 @@ landmine collision and unreachable code. Executed:
 - [x] `npx tsc --noEmit` clean and unit tests passing as of last build check (11 tests in `assessment.test.ts`)
 
 ## Next Steps (real, remaining)
-- [ ] Decide + execute the online-exam addon resolution (rename-and-wire vs retire `OnlineExamService`) — currently just documented, not resolved (see decision record).
-- [ ] Build Online Examinations addon services properly if resolution is "wire it up": question bank UI, blueprints, server-timed attempt runner with auto-save, live candidate monitor.
-- [ ] Build UI Workspaces for Question Bank / Online Exam Student Runner (Homework and Exam Master API layers exist; verify their UI workspaces separately — out of scope for this pass).
-- [ ] Accommodations, manual-grading task queue, QTI import/export.
+- [x] Resolve the online-exam addon — retired 2026-08-13 (see "Online-exam addon decision" above).
+- [x] De-mock the online-exams page to the legacy `0025` MCQ routes (list, create, question authoring, real submit + score) — M13 section 01.
+- [x] De-mock the homework page (remove demo seed + fake student-submit; keep teacher create/grade) — M13 section 02.
+- [x] Verify the exam-master page against a real tenant — M13 section 03.
+- [x] Final gates: tsc, vitest, tenant isolation, live HTTP (two tenants), `next build` — M13 section 05. All green 2026-08-14.
