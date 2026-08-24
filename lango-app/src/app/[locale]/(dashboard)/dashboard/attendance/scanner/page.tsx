@@ -1,4 +1,4 @@
-import { AttendanceScannerKiosk } from '@/features/attendance/ui/attendance-scanner-kiosk';
+import { AttendanceScannerPlayground } from '@/features/attendance/ui/attendance-scanner-playground';
 import { requireServerPage } from '@/libs/api/page-guard';
 
 export const metadata = {
@@ -15,7 +15,7 @@ export default async function Page({
   await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <AttendanceScannerKiosk />
+      <AttendanceScannerPlayground locale={locale} />
     </div>
   );
 }

@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS payment_gateway_sessions (
   tenant_id uuid NOT NULL,
   invoice_id uuid NOT NULL,
   payment_id uuid,
+  method_code varchar(50) NOT NULL,
   provider varchar(30) NOT NULL,
   external_reference varchar(100),
   amount numeric(14,2) NOT NULL,
@@ -37,6 +38,8 @@ CREATE TABLE IF NOT EXISTS payment_gateway_sessions (
   CONSTRAINT payment_gateway_sessions_tenant_id_tenants_id_fk FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
   CONSTRAINT payment_gateway_sessions_invoice_id_invoices_id_fk FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
 );
+--> statement-breakpoint
+ALTER TABLE payment_gateway_sessions ADD COLUMN IF NOT EXISTS method_code varchar(50);
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS payment_gateway_sessions_tenant_ext_idx ON payment_gateway_sessions (tenant_id, external_reference);
 --> statement-breakpoint

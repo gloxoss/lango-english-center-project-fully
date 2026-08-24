@@ -1,6 +1,6 @@
 import { count, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
-import { ADDONS } from '@/addons/registry';
+import { listAddonDefinitions } from '@/libs/api/addon-catalog';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     await requireCapability(ctx, 'settings.read');
     const tenantId = requireTenant(ctx);
 
-    const [grants, [tenant], [branchCount]] = await Promise.all([
+    const [grants, [tenant], [branchCount], addons] = await Promise.all([
       listEntitlements(tenantId),
       db
         .select({
@@ -32,6 +32,7 @@ export async function GET(request: Request) {
         .select({ value: count() })
         .from(branches)
         .where(eq(branches.tenantId, tenantId)),
+      listAddonDefinitions(),
     ]);
 
     const byId = new Map(grants.map(g => [g.addonId, g]));
@@ -50,7 +51,7 @@ export async function GET(request: Request) {
         hasMultiBranchAddon: tenant?.hasMultiBranchAddon ?? false,
         branchCount: branchCount?.value ?? 0,
       },
-      data: ADDONS.map(addon => ({
+      data: addons.map(addon => ({
         addonId: addon.id,
         name: addon.name,
         description: addon.description,

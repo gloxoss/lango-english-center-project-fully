@@ -160,6 +160,13 @@ export const teacherCreateSchema = z.object({
   cycle: optionalText(100),
   workloadHours: z.coerce.number().int().min(0).max(80).optional(),
   hireDate: optionalText(50),
+  dateOfBirth: optionalText(50),
+  gender: z.enum(['female', 'male', 'other']).optional(),
+  nationalId: optionalText(100),
+  address: optionalText(1000),
+  city: optionalText(100),
+  qualification: optionalText(255),
+  salary: z.coerce.number().finite().min(0).max(10000000).optional().nullable(),
   status: staffStatus.optional(),
   documents: documentsSchema,
 }).strict();
@@ -391,6 +398,15 @@ export const schoolUpdateSchema = z.object({
   planTier: z.enum(['trial', 'basic', 'standard', 'premium']).optional(),
   subscriptionStatus: z.enum(['active', 'suspended', 'cancelled']).optional(),
   isActive: z.boolean().optional(),
+}).strict();
+
+// Per-plan capacity caps (max students, storage). `null` means "unlimited" for
+// that tier; a missing key means "leave unchanged".
+export const planLimitsUpdateSchema = z.object({
+  planTier: z.enum(['trial', 'basic', 'standard', 'premium']),
+  label: z.string().trim().min(1).max(100).optional(),
+  maxStudents: z.number().int().min(0).max(100000).nullable().optional(),
+  maxStorageMb: z.number().int().min(0).max(10000000).nullable().optional(),
 }).strict();
 
 // Super-admin waitlist (bug 1.2). `waitlistSubmitSchema` is used by the PUBLIC

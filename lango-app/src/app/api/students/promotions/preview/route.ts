@@ -5,14 +5,12 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
+import { getEffectiveValueWithLegacyFallback } from '@/libs/settings/registry';
 import { assessmentResults, assessments, assessmentPlans, user } from '@/models/Schema';
 
-// ponytail: 50% pass threshold — make configurable via settings when schools ask
-const PASS_THRESHOLD = 50;
-
-function recommend(avgPct: number | null): 'promote' | 'retain' | 'defer' {
+function recommend(avgPct: number | null, passThresholdPct: number): 'promote' | 'retain' | 'defer' {
   if (avgPct === null) return 'defer'; // no grades recorded yet
-  if (avgPct >= PASS_THRESHOLD) return 'promote';
+  if (avgPct >= passThresholdPct) return 'promote';
   return 'retain';
 }
 
@@ -29,6 +27,17 @@ export async function GET(req: NextRequest) {
     if (!sourceSectionId) {
       throw new ApiError(400, 'MISSING_PARAM', 'sourceSectionId requis.');
     }
+
+    // Configurable pass threshold: academic.passThreshold is expressed on the
+    // school's grading scale (default 10/20); assessmentResults.finalPercentage
+    // is always a 0-100 percentage, so normalize before comparing.
+    const [{ value: passThresholdValue }, { value: gradingScaleValue }] = await Promise.all([
+      getEffectiveValueWithLegacyFallback(tenantId, null, 'academic.passThreshold'),
+      getEffectiveValueWithLegacyFallback(tenantId, null, 'academic.gradingScale'),
+    ]);
+    const gradingScale = gradingScaleValue === '100' ? '100' : '20';
+    const passThresholdRaw = Number(passThresholdValue) || 10;
+    const passThresholdPct = gradingScale === '20' ? passThresholdRaw * 5 : passThresholdRaw;
 
     // All active students in the source section
     const students = await db
@@ -49,7 +58,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         success: true,
         data: [],
-        meta: { sourceSectionId, targetSectionId, passThreshold: PASS_THRESHOLD, total: 0 },
+        meta: { sourceSectionId, targetSectionId, passThreshold: passThresholdPct, gradingScale, passThresholdRaw, total: 0 },
       });
     }
 
@@ -84,7 +93,7 @@ export async function GET(req: NextRequest) {
         studentName: s.name,
         matricule: s.matricule,
         averagePercentage: avgPct !== null ? Math.round(avgPct * 100) / 100 : null,
-        recommendation: recommend(avgPct),
+        recommendation: recommend(avgPct, passThresholdPct),
         currentStatus: s.userStatus,
       };
     });
@@ -99,7 +108,9 @@ export async function GET(req: NextRequest) {
       meta: {
         sourceSectionId,
         targetSectionId: targetSectionId ?? null,
-        passThreshold: PASS_THRESHOLD,
+        passThreshold: passThresholdPct,
+        gradingScale,
+        passThresholdRaw,
         total: preview.length,
         toPromote: preview.filter(p => p.recommendation === 'promote').length,
         toRetain: preview.filter(p => p.recommendation === 'retain').length,

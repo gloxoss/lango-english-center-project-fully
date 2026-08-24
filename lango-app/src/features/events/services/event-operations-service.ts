@@ -192,6 +192,47 @@ export async function cancelEvent(tenantId: string, eventId: string, actorId: st
   });
 }
 
+export type UpdateEventInput = {
+  title?: string;
+  description?: string | null;
+  visibility?: 'internal' | 'public' | 'targeted';
+  timezone?: string;
+  typeId?: string | null;
+};
+
+export async function updateEvent(
+  tenantId: string,
+  eventId: string,
+  actorId: string,
+  input: UpdateEventInput,
+) {
+  return db.transaction(async (tx) => {
+    const [ev] = await tx.select().from(events)
+      .where(and(eq(events.id, eventId), eq(events.tenantId, tenantId)))
+      .for('update');
+    if (!ev) throw new ApiError(404, 'EVENT_NOT_FOUND', 'Événement introuvable.');
+    if (ev.lifecycle === 'cancelled') {
+      throw new ApiError(409, 'EVENT_CANCELLED', 'Un événement annulé ne peut pas être modifié.');
+    }
+    const [updated] = await tx.update(events).set({
+      ...(input.title !== undefined ? { title: input.title } : {}),
+      ...(input.description !== undefined ? { description: input.description } : {}),
+      ...(input.visibility !== undefined ? { visibility: input.visibility } : {}),
+      ...(input.timezone !== undefined ? { timezone: input.timezone } : {}),
+      ...(input.typeId !== undefined ? { typeId: input.typeId } : {}),
+      updatedAt: new Date().toISOString(),
+    }).where(eq(events.id, eventId)).returning();
+    await tx.insert(eventAuditEvents).values({
+      tenantId,
+      eventId,
+      action: 'update',
+      actorId,
+      details: { fields: Object.keys(input) },
+    });
+    return updated;
+  });
+}
+
 export async function checkinOccurrence(input: {
   tenantId: string;
   occurrenceId: string;

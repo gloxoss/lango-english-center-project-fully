@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { ADDONS } from '@/addons/registry';
+import { listAddonDefinitions } from '@/libs/api/addon-catalog';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireSuperAdmin } from '@/libs/api/context';
 import { assertAddonDependencies, assertKnownAddon } from '@/libs/api/entitlements';
@@ -45,16 +45,19 @@ export async function GET(request: Request) {
     }
     await assertTenantExists(tenantId);
 
-    const grants = await db
-      .select()
-      .from(addonEntitlements)
-      .where(eq(addonEntitlements.tenantId, tenantId));
+    const [grants, addons] = await Promise.all([
+      db
+        .select()
+        .from(addonEntitlements)
+        .where(eq(addonEntitlements.tenantId, tenantId)),
+      listAddonDefinitions(),
+    ]);
 
     const byId = new Map(grants.map(g => [g.addonId, g]));
 
     return NextResponse.json({
       success: true,
-      data: ADDONS.map((addon) => {
+      data: addons.map((addon) => {
         const grant = byId.get(addon.id);
         return {
           addonId: addon.id,
@@ -79,7 +82,7 @@ export async function POST(request: Request) {
     requireSuperAdmin(ctx);
 
     const body = await parseJson(request, upsertSchema);
-    assertKnownAddon(body.addonId);
+    await assertKnownAddon(body.addonId);
     await assertTenantExists(body.tenantId);
 
     // Enforce add-on dependencies (e.g. payroll-workforce → human-resources).

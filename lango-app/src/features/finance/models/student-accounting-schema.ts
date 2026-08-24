@@ -293,6 +293,7 @@ export const paymentGatewaySessions = pgTable('payment_gateway_sessions', {
   tenantId: uuid('tenant_id').notNull(),
   invoiceId: uuid('invoice_id').notNull(),
   paymentId: uuid('payment_id'),
+  methodCode: varchar('method_code', { length: 50 }).notNull(),
   provider: varchar('provider', { length: 30 }).notNull(),
   externalReference: varchar('external_reference', { length: 100 }),
   amount: numeric('amount', { precision: 14, scale: 2, mode: 'number' }).notNull(),

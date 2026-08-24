@@ -9,6 +9,7 @@ const METRIC_DEFINITIONS = {
   attendance: 'Present attendance rows divided by all marked attendance rows in the trailing 30-day window.',
   collections: 'Recorded payments divided by non-cancelled invoiced net amount.',
   academicAverage: 'Average final percentage across recorded assessment results.',
+  igp: 'Composite /100 leadership index: weighted blend of monthly presence (40%), average assessment score (30%) and collection rate (30%), re-weighted proportionally over whichever pillars have data.',
   workforcePresence: 'Present staff attendance rows divided by all marked staff attendance rows in the trailing 30-day window.',
   alerts: 'Open attendance flags, overdue invoices, and currently locked accounts, reported separately by source.',
 } as const;

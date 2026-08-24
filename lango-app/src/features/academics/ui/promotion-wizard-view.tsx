@@ -80,6 +80,7 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
 
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [passThresholdPct, setPassThresholdPct] = useState<number | null>(null);
 
   // History state
   const [historyBatches, setHistoryBatches] = useState<PromotionBatchHistory[]>([]);
@@ -133,6 +134,9 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
             averagePercentage: item.averagePercentage != null ? item.averagePercentage : undefined,
           }));
           setStudentsDecisions(mapped);
+          if (typeof res.meta?.passThreshold === 'number') {
+            setPassThresholdPct(res.meta.passThreshold);
+          }
         } else {
           setStudentsDecisions([]);
         }
@@ -213,6 +217,17 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
   const handleTargetSectionChange = (studentId: string, targetClassSectionId: string) => {
     setStudentsDecisions((prev) =>
       prev.map((s) => (s.studentId === studentId ? { ...s, targetClassSectionId } : s))
+    );
+  };
+
+  const handleSelectEligible = () => {
+    if (passThresholdPct == null) return;
+    setStudentsDecisions((prev) =>
+      prev.map((s) => ({
+        ...s,
+        decision:
+          s.averagePercentage == null ? 'hold' : s.averagePercentage >= passThresholdPct ? 'promote' : 'repeat',
+      }))
     );
   };
 
@@ -392,16 +407,30 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
                 <CardTitle className="text-base font-bold text-[#16212B]">Matrice de Décision des Élèves</CardTitle>
                 <CardDescription className="text-xs text-slate-500">
                   Définissez l'orientation de chaque élève pour l'année suivante.
+                  {passThresholdPct != null && (
+                    <span className="text-slate-400"> · Seuil de réussite : ≥ {passThresholdPct}%</span>
+                  )}
                 </CardDescription>
               </div>
-              <Button
-                onClick={handleCommitPromotion}
-                disabled={submitting || studentsDecisions.length === 0 || hasCapacityExceeded}
-                className="rounded-xl h-9 text-xs bg-[#2487B8] hover:bg-[#1B6C93] gap-1.5"
-              >
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                Valider et Confirmer la Promotion
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleSelectEligible}
+                  disabled={passThresholdPct == null || studentsDecisions.length === 0}
+                  className="rounded-xl h-9 text-xs gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Sélectionner les éligibles
+                </Button>
+                <Button
+                  onClick={handleCommitPromotion}
+                  disabled={submitting || studentsDecisions.length === 0 || hasCapacityExceeded}
+                  className="rounded-xl h-9 text-xs bg-[#2487B8] hover:bg-[#1B6C93] gap-1.5"
+                >
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  Valider et Confirmer la Promotion
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <Table>

@@ -308,3 +308,154 @@ export async function reversePurchase(context: RequestContext, tenantId: string,
   recordAudit(context, 'update', 'inventory_purchase', id, { action: 'reverse' });
   return getPurchase(tenantId, id);
 }
+
+// ---------------------------------------------------------------------------
+// Auto-Purchase & Reorder Suggestions (§14.3)
+// ---------------------------------------------------------------------------
+
+export type ReorderSuggestionItem = {
+  productId: string;
+  productName: string;
+  productCode: string;
+  currentStock: number;
+  reorderThreshold: number;
+  suggestedQuantity: number;
+  unitCost: number;
+  estimatedTotal: number;
+  defaultSupplierId: string | null;
+  defaultSupplierName: string | null;
+  targetStoreId: string | null;
+  targetStoreName: string | null;
+};
+
+export async function getReorderSuggestions(tenantId: string, opts: { storeId?: string | null; threshold?: number } = {}) {
+  const threshold = opts.threshold ?? 5;
+  const [products, suppliers, stores] = await Promise.all([
+    db.select({
+      id: inventoryProducts.id,
+      name: inventoryProducts.name,
+      code: inventoryProducts.code,
+      purchasePrice: inventoryProducts.purchasePrice,
+      unitRatio: inventoryProducts.unitRatio,
+    })
+      .from(inventoryProducts)
+      .where(and(eq(inventoryProducts.tenantId, tenantId), eq(inventoryProducts.isActive, true))),
+    db.select({ id: inventorySuppliers.id, name: inventorySuppliers.name })
+      .from(inventorySuppliers)
+      .where(and(eq(inventorySuppliers.tenantId, tenantId), eq(inventorySuppliers.status, 'active'))),
+    db.select({ id: inventoryStores.id, name: inventoryStores.name })
+      .from(inventoryStores)
+      .where(and(eq(inventoryStores.tenantId, tenantId), eq(inventoryStores.status, 'active'))),
+  ]);
+
+  const defaultSupplier = suppliers[0] ?? null;
+  const defaultStore = (opts.storeId ? stores.find((s) => s.id === opts.storeId) : stores[0]) ?? null;
+
+  // Query actual stock balances across products
+  const productIds = products.map((p) => p.id);
+  const balances = productIds.length > 0
+    ? await db.select({
+      productId: inventoryPurchaseLines.productId,
+      supplierId: inventoryPurchases.supplierId,
+    })
+      .from(inventoryPurchaseLines)
+      .innerJoin(inventoryPurchases, eq(inventoryPurchases.id, inventoryPurchaseLines.purchaseId))
+      .where(and(eq(inventoryPurchaseLines.tenantId, tenantId), inArray(inventoryPurchaseLines.productId, productIds)))
+      .orderBy(desc(inventoryPurchases.orderDate))
+      .limit(100)
+    : [];
+
+  const recentSupplierMap = new Map<string, string>();
+  for (const b of balances) {
+    if (!recentSupplierMap.has(b.productId)) {
+      recentSupplierMap.set(b.productId, b.supplierId);
+    }
+  }
+
+  // Load balances from catalog service helper logic
+  const stockRows = productIds.length > 0
+    ? await db.select({
+      productId: sql<string>`product_id`,
+      totalStock: sql<number>`COALESCE(SUM(CAST(quantity AS numeric)), 0)`,
+    })
+      .from(sql`inventory_stock_balances`)
+      .where(and(eq(sql`tenant_id`, tenantId), inArray(sql`product_id`, productIds)))
+      .groupBy(sql`product_id`)
+    : [];
+
+  const stockMap = new Map<string, number>();
+  for (const s of stockRows) {
+    stockMap.set(s.productId, Number(s.totalStock));
+  }
+
+  const suggestions: ReorderSuggestionItem[] = [];
+  for (const p of products) {
+    const currentStock = stockMap.get(p.id) ?? 0;
+    if (currentStock <= threshold) {
+      const suggestedQty = Math.max(10, Math.ceil(25 - currentStock));
+      const unitCost = p.purchasePrice ? Number(p.purchasePrice) : 50;
+      const estimatedTotal = suggestedQty * unitCost;
+
+      const matchedSupplierId = recentSupplierMap.get(p.id) || defaultSupplier?.id || null;
+      const matchedSupplier = suppliers.find((s) => s.id === matchedSupplierId) || defaultSupplier;
+
+      suggestions.push({
+        productId: p.id,
+        productName: p.name,
+        productCode: p.code,
+        currentStock,
+        reorderThreshold: threshold,
+        suggestedQuantity: suggestedQty,
+        unitCost,
+        estimatedTotal,
+        defaultSupplierId: matchedSupplier?.id ?? null,
+        defaultSupplierName: matchedSupplier?.name ?? null,
+        targetStoreId: defaultStore?.id ?? null,
+        targetStoreName: defaultStore?.name ?? null,
+      });
+    }
+  }
+
+  return {
+    threshold,
+    totalSuggestions: suggestions.length,
+    estimatedTotalBudget: suggestions.reduce((sum, item) => sum + item.estimatedTotal, 0),
+    suggestions,
+    suppliers,
+    stores,
+  };
+}
+
+export type AutoGeneratePoGroup = {
+  supplierId: string;
+  storeId: string;
+  lines: Array<{ productId: string; qtyInPurchaseUnit: string; unitCost: number }>;
+  notes?: string;
+};
+
+export async function generateDraftPurchaseOrders(
+  context: RequestContext,
+  tenantId: string,
+  orders: AutoGeneratePoGroup[],
+) {
+  const createdPurchases = [];
+  const today = new Date().toISOString().slice(0, 10);
+
+  for (const order of orders) {
+    if (!order.supplierId || !order.storeId || order.lines.length === 0) continue;
+    const po = await createPurchase(context, tenantId, {
+      supplierId: order.supplierId,
+      storeId: order.storeId,
+      orderDate: today,
+      notes: order.notes || 'Généré automatiquement par l\'assistant de réapprovisionnement',
+      lines: order.lines,
+    });
+    createdPurchases.push(po);
+  }
+
+  return {
+    createdCount: createdPurchases.length,
+    purchases: createdPurchases,
+  };
+}
+

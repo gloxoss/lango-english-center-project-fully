@@ -42,6 +42,44 @@ import {
 import { DataTable, Column } from '@/components/shared/data-table';
 import { exportToCsv } from '@/libs/csv-export';
 
+type TeacherForm = {
+  fullName: string;
+  email: string;
+  phone: string;
+  employeeId: string;
+  specialization: string;
+  hireDate: string;
+  dateOfBirth: string;
+  gender: string;
+  nationalId: string;
+  address: string;
+  city: string;
+  qualification: string;
+  salary: string;
+  contract: boolean;
+  cin: boolean;
+  diploma: boolean;
+};
+
+const emptyTeacherForm: TeacherForm = {
+  fullName: '',
+  email: '',
+  phone: '',
+  employeeId: '',
+  specialization: '',
+  hireDate: '',
+  dateOfBirth: '',
+  gender: '',
+  nationalId: '',
+  address: '',
+  city: '',
+  qualification: '',
+  salary: '',
+  contract: false,
+  cin: false,
+  diploma: false,
+};
+
 export function TeachersManageView({ locale }: { locale: string }) {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,7 +88,7 @@ export function TeachersManageView({ locale }: { locale: string }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
-  const [form, setForm] = useState({ fullName: '', email: '', phone: '', employeeId: '', specialization: '' });
+  const [form, setForm] = useState<TeacherForm>(emptyTeacherForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function loadData() {
@@ -79,15 +117,47 @@ export function TeachersManageView({ locale }: { locale: string }) {
 
   const openCreateDialog = () => {
     setEditingTeacher(null);
-    setForm({ fullName: '', email: '', phone: '', employeeId: '', specialization: '' });
+    setForm(emptyTeacherForm);
     setDialogOpen(true);
   };
 
   const openEditDialog = (t: Teacher) => {
     setEditingTeacher(t);
-    setForm({ fullName: t.name, email: t.email, phone: t.phone, employeeId: t.employeeId, specialization: t.specialization });
+    setForm({
+      fullName: t.name,
+      email: t.email,
+      phone: t.phone,
+      employeeId: t.employeeId,
+      specialization: t.specialization,
+      hireDate: t.hireDate ?? '',
+      dateOfBirth: t.dateOfBirth ?? '',
+      gender: t.gender ?? '',
+      nationalId: t.nationalId ?? '',
+      address: t.address ?? '',
+      city: t.city ?? '',
+      qualification: t.qualification ?? '',
+      salary: t.salary != null ? String(t.salary) : '',
+      contract: t.documents?.contract ?? false,
+      cin: t.documents?.cin ?? false,
+      diploma: t.documents?.diploma ?? false,
+    });
     setDialogOpen(true);
   };
+
+  const buildPayload = () => ({
+    fullName: form.fullName,
+    phone: form.phone,
+    specialization: form.specialization,
+    hireDate: form.hireDate || undefined,
+    dateOfBirth: form.dateOfBirth || undefined,
+    gender: form.gender || undefined,
+    nationalId: form.nationalId || undefined,
+    address: form.address || undefined,
+    city: form.city || undefined,
+    qualification: form.qualification || undefined,
+    salary: form.salary ? Number(form.salary) : null,
+    documents: { contract: form.contract, cin: form.cin, diploma: form.diploma },
+  });
 
   const handleSubmit = async () => {
     if (!form.fullName.trim()) {
@@ -99,13 +169,13 @@ export function TeachersManageView({ locale }: { locale: string }) {
         await fetch('/api/teachers', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: editingTeacher.id, fullName: form.fullName, phone: form.phone, specialization: form.specialization }),
+          body: JSON.stringify({ id: editingTeacher.id, ...buildPayload() }),
         });
       } else {
         await fetch('/api/teachers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form),
+          body: JSON.stringify({ email: form.email, employeeId: form.employeeId, ...buildPayload() }),
         });
       }
       setDialogOpen(false);
@@ -652,36 +722,88 @@ export function TeachersManageView({ locale }: { locale: string }) {
 
       {/* Create / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md rounded-2xl bg-white p-6">
+        <DialogContent className="max-w-2xl rounded-2xl bg-white p-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-extrabold text-[#16212B]">
               {editingTeacher ? 'Modifier l\'enseignant' : 'Créer un nouvel enseignant'}
             </DialogTitle>
           </DialogHeader>
-          <div className="my-2 space-y-3 text-xs">
-            <div>
+          <div className="my-2 grid grid-cols-2 gap-3 text-xs">
+            <div className="col-span-2">
               <label className="mb-1 block font-bold text-slate-700">Nom complet *</label>
               <Input value={form.fullName} onChange={e => setForm({ ...form, fullName: e.target.value })} className="h-9 rounded-xl text-xs" />
             </div>
             {!editingTeacher && (
-              <div>
-                <label className="mb-1 block font-bold text-slate-700">Email</label>
-                <Input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="h-9 rounded-xl text-xs" />
-              </div>
+              <>
+                <div>
+                  <label className="mb-1 block font-bold text-slate-700">Email</label>
+                  <Input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="h-9 rounded-xl text-xs" />
+                </div>
+                <div>
+                  <label className="mb-1 block font-bold text-slate-700">Matricule</label>
+                  <Input value={form.employeeId} onChange={e => setForm({ ...form, employeeId: e.target.value })} className="h-9 rounded-xl text-xs" />
+                </div>
+              </>
             )}
             <div>
               <label className="mb-1 block font-bold text-slate-700">Téléphone</label>
               <Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="h-9 rounded-xl text-xs" />
             </div>
-            {!editingTeacher && (
-              <div>
-                <label className="mb-1 block font-bold text-slate-700">Matricule</label>
-                <Input value={form.employeeId} onChange={e => setForm({ ...form, employeeId: e.target.value })} className="h-9 rounded-xl text-xs" />
-              </div>
-            )}
             <div>
               <label className="mb-1 block font-bold text-slate-700">Spécialité</label>
               <Input value={form.specialization} onChange={e => setForm({ ...form, specialization: e.target.value })} className="h-9 rounded-xl text-xs" />
+            </div>
+            <div>
+              <label className="mb-1 block font-bold text-slate-700">Date d'embauche</label>
+              <Input type="date" value={form.hireDate} onChange={e => setForm({ ...form, hireDate: e.target.value })} className="h-9 rounded-xl text-xs" />
+            </div>
+            <div>
+              <label className="mb-1 block font-bold text-slate-700">Date de naissance</label>
+              <Input type="date" value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })} className="h-9 rounded-xl text-xs" />
+            </div>
+            <div>
+              <label className="mb-1 block font-bold text-slate-700">Genre</label>
+              <select value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })} className="h-9 w-full rounded-xl border border-slate-200 px-3 text-xs">
+                <option value="">—</option>
+                <option value="female">Féminin</option>
+                <option value="male">Masculin</option>
+                <option value="other">Autre</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block font-bold text-slate-700">CIN</label>
+              <Input value={form.nationalId} onChange={e => setForm({ ...form, nationalId: e.target.value })} className="h-9 rounded-xl text-xs" />
+            </div>
+            <div>
+              <label className="mb-1 block font-bold text-slate-700">Ville</label>
+              <Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} className="h-9 rounded-xl text-xs" />
+            </div>
+            <div>
+              <label className="mb-1 block font-bold text-slate-700">Qualification / Diplôme</label>
+              <Input value={form.qualification} onChange={e => setForm({ ...form, qualification: e.target.value })} className="h-9 rounded-xl text-xs" />
+            </div>
+            <div>
+              <label className="mb-1 block font-bold text-slate-700">Salaire (MAD)</label>
+              <Input type="number" value={form.salary} onChange={e => setForm({ ...form, salary: e.target.value })} className="h-9 rounded-xl text-xs" />
+            </div>
+            <div className="col-span-2">
+              <label className="mb-1 block font-bold text-slate-700">Adresse</label>
+              <Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className="h-9 rounded-xl text-xs" />
+            </div>
+            <div className="col-span-2 rounded-xl border border-slate-100 bg-slate-50 p-3">
+              <p className="mb-2 font-bold text-slate-700">Documents fournis</p>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  ['contract', 'Contrat'],
+                  ['cin', 'CIN'],
+                  ['diploma', 'Diplôme'],
+                ] as const).map(([key, label]) => (
+                  <label key={key} className="flex items-center gap-2 font-medium text-slate-600">
+                    <input type="checkbox" checked={form[key]} onChange={e => setForm({ ...form, [key]: e.target.checked })} className="size-3.5 accent-[#0066FF]" />
+                    {label}
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
           <DialogFooter className="gap-2">

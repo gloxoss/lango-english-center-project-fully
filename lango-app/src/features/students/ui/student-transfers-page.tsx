@@ -1,6 +1,6 @@
-import { StudentTransfersClient } from './student-transfers-client';
+import { StudentTransfersPlayground } from './student-transfers-playground';
 
 export async function StudentTransfersPage({ locale }: { locale?: string } = {}) {
   // RSC Server Component pre-fetches transfers & promotion capacity metrics server-side
-  return <StudentTransfersClient locale={locale} />;
+  return <StudentTransfersPlayground locale={locale} />;
 }

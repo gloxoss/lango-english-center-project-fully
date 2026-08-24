@@ -432,6 +432,30 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     requiredPermission: 'settings.finance_mapping.manage',
   },
 
+  // -- Finance (payment gateway secrets) --
+  {
+    key: 'finance.stripeSecretKey',
+    label: 'Clé secrète Stripe',
+    description: 'Clé secrète Stripe (sk_test_… ou sk_live_…) pour les paiements en ligne. Chiffrée au repos, jamais affichée en clair.',
+    namespace: 'finance',
+    valueSchema: z.string().trim().min(1).max(512).nullable(),
+    defaultValue: null,
+    scope: 'tenant',
+    sensitivity: 'secret',
+    requiredPermission: 'settings.finance_mapping.manage',
+  },
+  {
+    key: 'finance.stripeWebhookSecret',
+    label: 'Secret de signature webhook Stripe',
+    description: 'Secret de signature des webhooks Stripe (whsec_…). Chiffré au repos, jamais affiché en clair.',
+    namespace: 'finance',
+    valueSchema: z.string().trim().min(1).max(512).nullable(),
+    defaultValue: null,
+    scope: 'tenant',
+    sensitivity: 'secret',
+    requiredPermission: 'settings.finance_mapping.manage',
+  },
+
   // -- Localization / i18n --
   {
     key: 'i18n.translations',

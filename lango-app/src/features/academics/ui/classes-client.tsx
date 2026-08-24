@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Search, Plus, Trash2, Pencil, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { usePermissions } from '@/hooks/use-permissions';
 
-type ClassRow = { id: string; name: string; includeSemesters: boolean; mediumId: string; shiftId: string | null; streamId: string | null; cycle: string | null; schoolId: string };
+type ClassRow = { id: string; name: string; includeSemesters: boolean; periodMode?: string | null; mediumId: string; shiftId: string | null; streamId: string | null; cycle: string | null; schoolId: string };
 type RefOption = { id: string; name: string };
 
 const CYCLE_OPTIONS = [
@@ -16,6 +16,13 @@ const CYCLE_OPTIONS = [
   { value: 'primaire', label: 'Primaire' },
   { value: 'college', label: 'Collège' },
   { value: 'lycee', label: 'Lycée' },
+];
+
+const PERIOD_MODE_OPTIONS = [
+  { value: 'semester', label: 'Semestriel (2 semestres)' },
+  { value: 'trimester', label: 'Trimestriel (3 trimestres)' },
+  { value: 'month', label: 'Mensuel' },
+  { value: 'annual', label: 'Annuel' },
 ];
 
 type SectionRow = {
@@ -46,7 +53,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<ClassRow | null>(null);
-  const [form, setForm] = useState({ name: '', mediumId: '', shiftId: '', streamId: '', cycle: '' });
+  const [form, setForm] = useState({ name: '', mediumId: '', shiftId: '', streamId: '', cycle: '', periodMode: 'semester' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedClassId, setExpandedClassId] = useState<string | null>(null);
@@ -121,13 +128,20 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', mediumId: mediums[0]?.id ?? '', shiftId: '', streamId: '', cycle: '' });
+    setForm({ name: '', mediumId: mediums[0]?.id ?? '', shiftId: '', streamId: '', cycle: '', periodMode: 'semester' });
     setShowForm(true);
   };
 
   const openEdit = (cls: ClassRow) => {
     setEditing(cls);
-    setForm({ name: cls.name, mediumId: cls.mediumId, shiftId: cls.shiftId ?? '', streamId: cls.streamId ?? '', cycle: cls.cycle ?? '' });
+    setForm({
+      name: cls.name,
+      mediumId: cls.mediumId,
+      shiftId: cls.shiftId ?? '',
+      streamId: cls.streamId ?? '',
+      cycle: cls.cycle ?? '',
+      periodMode: cls.periodMode || (cls.includeSemesters ? 'semester' : 'trimester'),
+    });
     setShowForm(true);
   };
 
@@ -144,6 +158,8 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
         shiftId: form.shiftId || undefined,
         streamId: form.streamId || undefined,
         cycle: form.cycle || undefined,
+        periodMode: form.periodMode || 'semester',
+        includeSemesters: form.periodMode === 'semester',
         ...(editing ? { id: editing.id } : {}),
       };
       const res = await fetch('/api/academics/classes', {
@@ -198,7 +214,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
       {canManage && showForm && (
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
           {error && <p className="text-xs font-semibold text-rose-600">{error}</p>}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
             <div className="space-y-1">
               <label className="font-bold text-slate-600">Nom de la classe</label>
               <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="h-9 rounded-xl" placeholder="Ex. 2nde A" />
@@ -231,6 +247,12 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                 {CYCLE_OPTIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
             </div>
+            <div className="space-y-1">
+              <label className="font-bold text-slate-600">Mode Période (§6.5)</label>
+              <select value={form.periodMode} onChange={e => setForm({ ...form, periodMode: e.target.value })} className="h-9 w-full rounded-xl border border-slate-200 px-3 font-medium">
+                {PERIOD_MODE_OPTIONS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+              </select>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Button size="sm" disabled={saving} onClick={handleSave} className="h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold">
@@ -252,12 +274,13 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
               <th className="py-3.5 px-4">Shift</th>
               <th className="py-3.5 px-4">Filière</th>
               <th className="py-3.5 px-4">Cycle</th>
+              <th className="py-3.5 px-4">Période (§6.5)</th>
               <th className="py-3.5 px-4" />
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {!loading && filtered.length === 0 && (
-              <tr><td colSpan={6} className="py-8 text-center text-slate-400">Aucune classe configurée.</td></tr>
+              <tr><td colSpan={7} className="py-8 text-center text-slate-400">Aucune classe configurée.</td></tr>
             )}
             {filtered.map(cls => (
               <Fragment key={cls.id}>
@@ -267,6 +290,11 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                 <td className="py-3.5 px-4 text-slate-600">{nameOf(shifts, cls.shiftId) ?? '—'}</td>
                 <td className="py-3.5 px-4 text-slate-600">{nameOf(streams, cls.streamId) ?? '—'}</td>
                 <td className="py-3.5 px-4 text-slate-600">{CYCLE_OPTIONS.find(c => c.value === cls.cycle)?.label ?? '—'}</td>
+                <td className="py-3.5 px-4">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-[#0066FF] border border-blue-200/60">
+                    {cls.periodMode === 'trimester' ? 'Trimestriel' : cls.periodMode === 'month' ? 'Mensuel' : cls.periodMode === 'annual' ? 'Annuel' : 'Semestriel'}
+                  </span>
+                </td>
                 <td className="py-3.5 px-4">
                   <div className="flex items-center justify-end gap-1">
                     <button onClick={() => toggleExpand(cls.id)} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#2487B8]" title="Sections">
@@ -290,7 +318,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
               </tr>
               {expandedClassId === cls.id && (
                 <tr>
-                  <td colSpan={6} className="bg-slate-50/60 px-4 py-3">
+                  <td colSpan={7} className="bg-slate-50/60 px-4 py-3">
                     {!sectionsByClass[cls.id] && <p className="text-[11px] text-slate-400">Chargement des sections...</p>}
                     {sectionsByClass[cls.id]?.length === 0 && <p className="text-[11px] text-slate-400">Aucune section pour cette classe.</p>}
                     {(sectionsByClass[cls.id]?.length ?? 0) > 0 && (

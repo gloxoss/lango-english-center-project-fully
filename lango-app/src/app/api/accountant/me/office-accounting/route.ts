@@ -8,6 +8,7 @@ import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
+import { tryPostExpenseGLEntry } from '@/libs/finance/gl-auto-post';
 import { expenses, user } from '@/models/Schema';
 
 const createExpenseSchema = z.object({
@@ -98,10 +99,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Feed the real double-entry ledger: when account references are provided,
-    // also create an accounting document (draft) so this expense appears in the
-    // Plan Comptable and can go through submit → approve → post, instead of
-    // living only in the disconnected office journal.
+    // create an accounting document (draft) so this expense appears in the
+    // Plan Comptable and can go through submit → approve → post.
+    // When account references are not provided, auto-post directly via default GL accounts (fail-open).
     let accountingDocumentId: string | null = null;
+    let glPosted = false;
     if (body.expenseAccountId && body.settlementAccountId) {
       const document = await createAccountingDocument({
         tenantId,
@@ -117,9 +119,19 @@ export async function POST(req: NextRequest) {
         ],
       });
       accountingDocumentId = document.id;
+    } else {
+      const glEntry = await tryPostExpenseGLEntry({
+        tenantId,
+        actorId: ctx.userId,
+        expenseId: newExpense.id,
+        description: body.description || body.category,
+        amount: String(body.amount),
+        expenseDate: body.expenseDate,
+      });
+      glPosted = glEntry !== null;
     }
 
-    return NextResponse.json({ success: true, data: { ...newExpense, accountingDocumentId } }, { status: 201 });
+    return NextResponse.json({ success: true, data: { ...newExpense, accountingDocumentId, glPosted } }, { status: 201 });
   } catch (error) {
     return apiErrorResponse(error);
   }

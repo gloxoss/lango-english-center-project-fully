@@ -12,6 +12,13 @@ export interface Teacher {
   workloadHours: number;
   avatarUrl?: string;
   hireDate?: string;
+  dateOfBirth?: string;
+  gender?: 'female' | 'male' | 'other';
+  nationalId?: string;
+  address?: string;
+  city?: string;
+  qualification?: string;
+  salary?: number | null;
   documents?: {
     contract: boolean;
     cin: boolean;

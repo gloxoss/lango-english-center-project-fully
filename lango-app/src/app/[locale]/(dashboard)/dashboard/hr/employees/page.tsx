@@ -1,4 +1,4 @@
-import { EmployeeDirectoryView } from '@/features/hr/ui/employee-directory-view';
+import { PersonnelPlayground } from '@/features/hr/ui/personnel-playground';
 import { requireServerPage } from '@/libs/api/page-guard';
 
 export const metadata = {
@@ -9,5 +9,5 @@ export const metadata = {
 export default async function HrEmployeesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
-  return <EmployeeDirectoryView />;
+  return <PersonnelPlayground locale={locale} />;
 }

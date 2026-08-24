@@ -402,18 +402,18 @@ export function Sidebar({ locale }: { locale: string }) {
     },
 
     {
-      label: 'Bibliothèque de Ressources',
+      label: 'Ressources Pédagogiques',
       href: `/${locale}/dashboard/content/library`,
       icon: FolderOpen,
       permission: 'academics.read',
       subItems: [
-        { label: 'Ressources Pédagogiques', href: `/${locale}/dashboard/content/library`, permission: 'academics.read' },
+        { label: 'Médiathèque', href: `/${locale}/dashboard/content/library`, permission: 'academics.read' },
         { label: 'Types de Pièces Jointes', href: `/${locale}/dashboard/content/types`, permission: 'content.types.manage' },
       ],
     },
 
     {
-      label: 'Bibliothèque',
+      label: 'Bibliothèque & Prêt d’Ouvrages',
       href: `/${locale}/dashboard/portals/librarian`,
       icon: BookOpen,
       permission: 'library.catalog.read',
@@ -424,7 +424,7 @@ export function Sidebar({ locale }: { locale: string }) {
         // absent here so school_admin/super_admin don't get the raw circulation
         // desk in their everyday nav (PRODUCT-REVIEW §12.5). Librarians still
         // see it via the portal manifest.
-        { label: 'Catalogue', href: `/${locale}/dashboard/library/catalog`, permission: 'library.catalog.read' },
+        { label: 'Catalogue & Ouvrages', href: `/${locale}/dashboard/library/catalog`, permission: 'library.catalog.read' },
       ],
     },
 

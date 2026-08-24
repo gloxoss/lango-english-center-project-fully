@@ -47,7 +47,7 @@ export const admissionInterviewStatus = pgEnum('admission_interview_status', ['s
 export const alumniDocumentStatus = pgEnum('alumni_document_status', ['active', 'superseded']);
 export const alumniEventRsvpStatus = pgEnum('alumni_event_rsvp_status', ['going', 'not_going', 'maybe']);
 export const alumniRequestType = pgEnum('alumni_request_type', ['correction', 'reissue', 'data_access', 'deletion']);
-export const alumniRequestStatus = pgEnum('alumni_request_status', ['pending', 'approved', 'rejected']);
+export const alumniRequestStatus = pgEnum('alumni_request_status', ['received', 'accepted', 'preparing', 'ready', 'taken', 'refused']);
 
 export const verification = pgTable('verification', {
   id: text().primaryKey().notNull(),
@@ -737,7 +737,7 @@ export const alumniRequests = pgTable('alumni_requests', {
   tenantId: uuid('tenant_id').notNull(),
   alumnusId: text('alumnus_id').notNull(),
   type: alumniRequestType().notNull(),
-  status: alumniRequestStatus().default('pending').notNull(),
+  status: alumniRequestStatus().default('received').notNull(),
   note: text().notNull(),
   relatedDocumentId: uuid('related_document_id'),
   decidedBy: text('decided_by'),
@@ -3004,6 +3004,38 @@ export const onlineExamAnswers = pgTable('online_exam_answers', {
 ]);
 
 // ==========================================================================
+// Addon definitions — the platform addon catalog, DB-driven so a super-admin
+// can add/edit a module without a code change (supersedes the hardcoded
+// src/addons/registry.ts array). `enabled` = "the module is built", a platform
+// fact independent of any per-tenant grant (which lives in addon_entitlements).
+// `requires` are addon ids that must be entitled before this one can activate.
+// ==========================================================================
+export const addonDefinitions = pgTable('addon_definitions', {
+  id: varchar({ length: 64 }).primaryKey().notNull(),
+  name: varchar({ length: 255 }).notNull(),
+  description: text().notNull(),
+  enabled: boolean('enabled').default(false).notNull(),
+  requires: text('requires').array().default(sql`'{}'::text[]`).notNull(),
+  sortOrder: integer('sort_order').default(0).notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+});
+
+// ==========================================================================
+// Plan-tier limits — per-plan capacity caps surfaced and (soft) enforced so
+// `tenants.planTier` is a real rule, not just a label. A null cap means
+// "unlimited" for that tier.
+// ==========================================================================
+export const planLimits = pgTable('plan_limits', {
+  planTier: planTier('plan_tier').primaryKey().notNull(),
+  label: varchar({ length: 100 }).notNull(),
+  maxStudents: integer('max_students'),
+  maxStorageMb: integer('max_storage_mb'),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+});
+
+// ==========================================================================
 // Addon entitlements — per-tenant module grants (Roadmap phase 1 "entitlement
 // core"). One row per (tenant, addon). No row = not entitled. `isEnabled`
 // is the emergency kill switch: a tenant can be entitled but switched off
@@ -3011,8 +3043,8 @@ export const onlineExamAnswers = pgTable('online_exam_answers', {
 //
 // ponytail: no plan/price/billing tables here. Grants are set by super-admin
 // directly; commercial billing is roadmap phase 13. `addonId` is a plain
-// varchar matching src/addons/registry.ts ids, not a pgEnum, so adding an
-// addon doesn't need a migration.
+// varchar matching addon_definitions.id, not a pgEnum, so adding an addon
+// needs no migration.
 // ==========================================================================
 export const addonEntitlements = pgTable('addon_entitlements', {
   id: uuid().defaultRandom().primaryKey().notNull(),

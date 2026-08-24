@@ -21,6 +21,13 @@ const methodSchema = z.object({
   isActive: z.boolean().optional(),
   effectiveFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   effectiveTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  // Gateway fields. credentialSecretKey / webhookSecretKey hold the *name* of a
+  // settings secret key (resolved server-side via secrets-service), never the
+  // raw secret value — secrets are stored encrypted in secretReferences.
+  provider: z.string().trim().min(1).max(30).optional(),
+  gatewayMode: z.enum(['sandbox', 'live']).optional(),
+  credentialSecretKey: z.string().trim().min(1).max(128).optional(),
+  webhookSecretKey: z.string().trim().min(1).max(128).optional(),
 }).strict();
 
 // GET /api/finance/payment-methods — configurable payment methods, tenant-scoped.
@@ -74,6 +81,10 @@ export async function POST(request: Request) {
         isActive: body.isActive ?? true,
         effectiveFrom: body.effectiveFrom ?? new Date().toISOString().slice(0, 10),
         effectiveTo: body.effectiveTo ?? null,
+        provider: body.provider ?? null,
+        gatewayMode: body.gatewayMode ?? 'sandbox',
+        credentialSecretKey: body.credentialSecretKey ?? null,
+        webhookSecretKey: body.webhookSecretKey ?? null,
       })
       .returning();
 
@@ -115,6 +126,10 @@ export async function PUT(request: Request) {
         isActive: body.isActive,
         effectiveFrom: body.effectiveFrom,
         effectiveTo: body.effectiveTo ?? null,
+        provider: body.provider,
+        gatewayMode: body.gatewayMode,
+        credentialSecretKey: body.credentialSecretKey,
+        webhookSecretKey: body.webhookSecretKey,
         updatedAt: new Date().toISOString(),
       })
       .where(eq(paymentMethodConfigurations.id, body.id))

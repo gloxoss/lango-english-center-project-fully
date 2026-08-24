@@ -10,10 +10,14 @@ import { db } from '@/libs/DB';
 import {
   academicClassOfferings,
   auditLogs,
+  classes,
   classSubjects,
   classTeachers,
+  sections,
   sessionYears,
+  subjects,
   subjectTeachers,
+  user,
 } from '@/models/Schema';
 
 export const copySessionSetupSchema = z.object({
@@ -21,6 +25,7 @@ export const copySessionSetupSchema = z.object({
   targetSessionYearId: z.string().uuid({ message: 'L\'identifiant de la session cible est requis.' }),
   mode: z.enum(['preview', 'commit']),
   idempotencyKey: z.string().optional(),
+  offeringIds: z.array(z.string().uuid()).optional(),
 }).strict().refine((data) => data.sourceSessionYearId !== data.targetSessionYearId, {
   message: 'La session source et la session cible doivent être différentes.',
   path: ['targetSessionYearId'],
@@ -83,7 +88,7 @@ export async function POST(request: Request) {
     }
 
     // Fetch active offerings from source session
-    const sourceOfferings = await db
+    let sourceOfferings = await db
       .select()
       .from(academicClassOfferings)
       .where(and(
@@ -94,6 +99,15 @@ export async function POST(request: Request) {
 
     if (sourceOfferings.length === 0) {
       throw new ApiError(400, 'BAD_REQUEST', 'La session source ne contient aucune offre de classe active.');
+    }
+
+    // Apply the editable-preview selection when provided (subset of source offerings to copy)
+    if (body.offeringIds && body.offeringIds.length > 0) {
+      const selected = new Set(body.offeringIds);
+      sourceOfferings = sourceOfferings.filter((o) => selected.has(o.id));
+      if (sourceOfferings.length === 0) {
+        throw new ApiError(400, 'BAD_REQUEST', 'Aucune offre de classe sélectionnée pour la copie.');
+      }
     }
 
     // Fetch existing offerings in target session
@@ -150,6 +164,64 @@ export async function POST(request: Request) {
       : [];
 
     if (body.mode === 'preview') {
+      // Resolve human-readable names for the editable item-level preview
+      const classIds = [...new Set(sourceOfferings.map((o) => o.classId))];
+      const sectionIds = [...new Set(sourceOfferings.map((o) => o.sectionId))];
+      const subjectIds = [...new Set([
+        ...linkedSubjects.map((s) => s.subjectId),
+        ...linkedSubjectTeachers.map((s) => s.subjectId),
+      ])];
+      const teacherIds = [...new Set([
+        ...linkedClassTeachers.map((c) => c.teacherId),
+        ...linkedSubjectTeachers.map((s) => s.teacherId),
+      ])];
+
+      const [classRows, sectionRows, subjectRows, teacherRows] = await Promise.all([
+        classIds.length > 0
+          ? db.select({ id: classes.id, name: classes.name }).from(classes).where(and(eq(classes.tenantId, tenantId), inArray(classes.id, classIds)))
+          : Promise.resolve([] as { id: string; name: string }[]),
+        sectionIds.length > 0
+          ? db.select({ id: sections.id, name: sections.name }).from(sections).where(and(eq(sections.tenantId, tenantId), inArray(sections.id, sectionIds)))
+          : Promise.resolve([] as { id: string; name: string }[]),
+        subjectIds.length > 0
+          ? db.select({ id: subjects.id, name: subjects.name }).from(subjects).where(and(eq(subjects.tenantId, tenantId), inArray(subjects.id, subjectIds)))
+          : Promise.resolve([] as { id: string; name: string }[]),
+        teacherIds.length > 0
+          ? db.select({ id: user.id, name: user.name }).from(user).where(inArray(user.id, teacherIds))
+          : Promise.resolve([] as { id: string; name: string }[]),
+      ]);
+
+      const classNameMap = new Map(classRows.map((c) => [c.id, c.name]));
+      const sectionNameMap = new Map(sectionRows.map((s) => [s.id, s.name]));
+      const subjectNameMap = new Map(subjectRows.map((s) => [s.id, s.name]));
+      const teacherNameMap = new Map(teacherRows.map((t) => [t.id, t.name]));
+
+      const items = sourceOfferings.map((o) => ({
+        sourceOfferingId: o.id,
+        classId: o.classId,
+        sectionId: o.sectionId,
+        className: classNameMap.get(o.classId) ?? o.classId,
+        sectionName: sectionNameMap.get(o.sectionId) ?? o.sectionId,
+        capacity: o.capacity,
+        willCreate: offeringsToCreate.some((x) => x.id === o.id),
+        classSubjects: linkedSubjects.filter((s) => s.offeringId === o.id).map((s) => ({
+          subjectId: s.subjectId,
+          subjectName: subjectNameMap.get(s.subjectId) ?? s.subjectId,
+          type: s.type,
+        })),
+        classTeachers: linkedClassTeachers.filter((c) => c.offeringId === o.id).map((c) => ({
+          teacherId: c.teacherId,
+          teacherName: teacherNameMap.get(c.teacherId) ?? c.teacherId,
+          role: c.role,
+        })),
+        subjectTeachers: linkedSubjectTeachers.filter((s) => s.offeringId === o.id).map((s) => ({
+          teacherId: s.teacherId,
+          teacherName: teacherNameMap.get(s.teacherId) ?? s.teacherId,
+          subjectId: s.subjectId,
+          subjectName: subjectNameMap.get(s.subjectId) ?? s.subjectId,
+        })),
+      }));
+
       return NextResponse.json({
         success: true,
         mode: 'preview',
@@ -163,6 +235,7 @@ export async function POST(request: Request) {
           classTeachersToCreateCount: linkedClassTeachers.length,
           subjectTeachersToCreateCount: linkedSubjectTeachers.length,
         },
+        items,
       });
     }
 

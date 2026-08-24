@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { ADDONS } from '@/addons/registry';
+import { listAddonDefinitions } from '@/libs/api/addon-catalog';
 import { requireRequestContext, requireSuperAdmin } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { listSchoolsWithLicenses } from '@/features/subscriptions/services/subscription-service';
@@ -11,13 +11,16 @@ export async function GET(request: Request) {
     const ctx = await requireRequestContext(request);
     requireSuperAdmin(ctx);
 
-    const data = await listSchoolsWithLicenses();
+    const [data, catalog] = await Promise.all([
+      listSchoolsWithLicenses(),
+      listAddonDefinitions(),
+    ]);
     return NextResponse.json({
       success: true,
       data: {
         schools: data.schools,
         summary: data.summary,
-        catalog: ADDONS.map(addon => ({
+        catalog: catalog.map(addon => ({
           addonId: addon.id,
           name: addon.name,
           description: addon.description,

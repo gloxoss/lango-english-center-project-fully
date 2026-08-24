@@ -1,7 +1,7 @@
 import { pgTable, uuid, varchar, text, timestamp, boolean, jsonb, integer, foreignKey, index, unique, pgEnum } from 'drizzle-orm/pg-core';
 import { tenants } from '@/models/Schema';
 
-export const documentTemplateTypeEnum = pgEnum('document_template_type', ['student_id', 'employee_id', 'admit_card']);
+export const documentTemplateTypeEnum = pgEnum('document_template_type', ['student_id', 'employee_id', 'admit_card', 'report_card']);
 export const documentTemplateStatusEnum = pgEnum('document_template_status', ['draft', 'published', 'archived']);
 export const issuedDocumentStatusEnum = pgEnum('issued_document_status', ['active', 'expired', 'revoked', 'replaced']);
 export const documentSubjectTypeEnum = pgEnum('document_subject_type', ['student', 'employee', 'exam_candidate']);

@@ -21,6 +21,10 @@ type PaymentMethod = {
   isActive: boolean;
   effectiveFrom: string;
   effectiveTo: string | null;
+  provider: string | null;
+  gatewayMode: string | null;
+  credentialSecretKey: string | null;
+  webhookSecretKey: string | null;
 };
 
 // Payment methods — configurable payment_method_configurations (Payment Type
@@ -48,6 +52,10 @@ export function PaymentMethodsView() {
     isActive: true,
     effectiveFrom: new Date().toISOString().slice(0, 10),
     effectiveTo: '',
+    provider: '',
+    gatewayMode: 'sandbox',
+    credentialSecretKey: '',
+    webhookSecretKey: '',
   });
 
   const load = () => {
@@ -80,6 +88,10 @@ export function PaymentMethodsView() {
       isActive: true,
       effectiveFrom: new Date().toISOString().slice(0, 10),
       effectiveTo: '',
+      provider: '',
+      gatewayMode: 'sandbox',
+      credentialSecretKey: '',
+      webhookSecretKey: '',
     });
     setShowForm(true);
   };
@@ -99,6 +111,10 @@ export function PaymentMethodsView() {
       isActive: m.isActive,
       effectiveFrom: m.effectiveFrom,
       effectiveTo: m.effectiveTo ?? '',
+      provider: m.provider ?? '',
+      gatewayMode: m.gatewayMode ?? 'sandbox',
+      credentialSecretKey: m.credentialSecretKey ?? '',
+      webhookSecretKey: m.webhookSecretKey ?? '',
     });
     setShowForm(true);
   };
@@ -120,6 +136,10 @@ export function PaymentMethodsView() {
         isActive: form.isActive,
         effectiveFrom: form.effectiveFrom,
         effectiveTo: form.effectiveTo || null,
+        provider: form.provider || null,
+        gatewayMode: form.gatewayMode,
+        credentialSecretKey: form.credentialSecretKey || null,
+        webhookSecretKey: form.webhookSecretKey || null,
       };
       const res = await fetch('/api/finance/payment-methods', {
         method: editing ? 'PUT' : 'POST',
@@ -196,6 +216,33 @@ export function PaymentMethodsView() {
               <Input type="date" value={form.effectiveTo} onChange={e => setForm({ ...form, effectiveTo: e.target.value })} className="h-9 rounded-xl" />
             </div>
           </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div className="space-y-1">
+              <label className="font-bold text-slate-600">Passerelle en ligne</label>
+              <select value={form.provider} onChange={e => setForm({ ...form, provider: e.target.value })} className="w-full h-9 rounded-xl border border-slate-200 bg-white px-2 text-xs">
+                <option value="">Aucune (hors ligne)</option>
+                <option value="cmi-naps">CMI NAPS</option>
+                <option value="stripe">Stripe</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="font-bold text-slate-600">Mode passerelle</label>
+              <select value={form.gatewayMode} onChange={e => setForm({ ...form, gatewayMode: e.target.value })} className="w-full h-9 rounded-xl border border-slate-200 bg-white px-2 text-xs">
+                <option value="sandbox">Sandbox</option>
+                <option value="live">Production</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div className="space-y-1">
+              <label className="font-bold text-slate-600">Clé identifiants (nom de clé secret)</label>
+              <Input value={form.credentialSecretKey} onChange={e => setForm({ ...form, credentialSecretKey: e.target.value })} className="h-9 rounded-xl" placeholder="ex. payments.cmi_naps.store_key" />
+            </div>
+            <div className="space-y-1">
+              <label className="font-bold text-slate-600">Clé webhook (nom de clé secret)</label>
+              <Input value={form.webhookSecretKey} onChange={e => setForm({ ...form, webhookSecretKey: e.target.value })} className="h-9 rounded-xl" placeholder="ex. payments.cmi_naps.webhook_secret" />
+            </div>
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {([
               ['requiresReference', 'Référence requise'],
@@ -244,6 +291,7 @@ export function PaymentMethodsView() {
                 <td className="py-3.5 px-4">
                   <div className="font-bold text-[#16212B]">{m.labelFr}</div>
                   {m.labelAr && <div className="text-[10px] text-slate-400">{m.labelAr}</div>}
+                  {m.provider && <div className="text-[10px] font-bold text-[#2487B8] mt-0.5">{m.provider}{m.gatewayMode === 'live' ? ' · production' : ' · sandbox'}</div>}
                 </td>
                 <td className="py-3.5 px-4">
                   <div className="flex flex-wrap gap-1">

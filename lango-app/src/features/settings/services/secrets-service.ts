@@ -91,6 +91,16 @@ export async function peekSecretValue(context: RequestContext, key: string): Pro
   return resolveSecret(context.tenantId, context.branchId, key);
 }
 
+/**
+ * Server-side secret resolution by tenant + key (tenant scope, no branch).
+ * Exposed for trusted internal code paths (e.g. payment gateway adapters) that
+ * hold a tenantId + settings key but no RequestContext. No capability gate —
+ * callers are worker/adapter code, not request handlers.
+ */
+export async function resolveSecretByKey(tenantId: string, key: string): Promise<ResolvedSecret> {
+  return resolveSecret(tenantId, null, key);
+}
+
 export async function rotateSecretValue(
   context: RequestContext,
   key: string,

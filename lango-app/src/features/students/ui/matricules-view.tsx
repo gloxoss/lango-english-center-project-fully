@@ -19,14 +19,18 @@ export function MatriculesView() {
   const [nextMatricule, setNextMatricule] = useState<string | null>(null);
   const [reserved, setReserved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
-    fetch('/api/students?pageSize=200')
+    setLoading(true);
+    fetch(`/api/students?page=${page}&pageSize=${pageSize}`)
       .then(res => res.json())
-      .then((json) => { if (json.success) setStudents(json.data); })
+      .then((json) => { if (json.success) { setStudents(json.data); setTotal(json.total ?? 0); } })
       .catch(err => console.error('Failed loading students', err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [page, pageSize]);
 
   // Non-mutating preview on load - shows the next number without burning it.
   useEffect(() => {
@@ -166,13 +170,48 @@ export function MatriculesView() {
                 ))}
               </tbody>
             </table>
+            <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <div className="flex items-center gap-2">
+                <span>Afficher</span>
+                <select
+                  className="border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-[#16212B]"
+                  value={pageSize}
+                  onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <span>sur {total} élève{total > 1 ? 's' : ''}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={page <= 1}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  className="px-2 py-1 rounded-lg border border-slate-200 font-bold text-[#16212B] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50"
+                >
+                  Précédent
+                </button>
+                <span>Page {page} / {Math.max(1, Math.ceil(total / pageSize))}</span>
+                <button
+                  type="button"
+                  disabled={page >= Math.ceil(total / pageSize)}
+                  onClick={() => setPage(p => p + 1)}
+                  className="px-2 py-1 rounded-lg border border-slate-200 font-bold text-[#16212B] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50"
+                >
+                  Suivant
+                </button>
+              </div>
+            </div>
           </div>
         </Card>
       </div>
 
       {/* Right Panel - reserving a matricule is school_admin-only server-side */}
       {role === 'school_admin' && (
-        <div className="w-[300px] shrink-0 space-y-4 hidden xl:block">
+        <div className="w-[300px] shrink-0 space-y-4 hidden xl:block sticky top-6 self-start max-h-[calc(100vh-3rem)] overflow-y-auto">
           <Card className="p-5 bg-white rounded-2xl shadow-2xs border border-slate-200/80 space-y-3">
             <h3 className="text-sm font-extrabold text-[#16212B]">Générer le prochain matricule</h3>
             <p className="text-[11px] text-slate-500">Aperçu du prochain numéro de la série (format STD-{new Date().getFullYear()}-####). Réservez-le uniquement lorsque vous êtes prêt — l&apos;aperçu ne consomme aucun numéro.</p>

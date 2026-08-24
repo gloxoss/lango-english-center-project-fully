@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { AttendanceAdapter } from '../adapters/attendance-adapter';
 import { ExaminationAdapter } from '../adapters/examination-adapter';
@@ -206,5 +206,32 @@ export class RunEngine {
 
     const rows = await fetcher(tenantId, parameters);
     return rows.length > EXPORT_ROW_LIMIT ? rows.slice(0, EXPORT_ROW_LIMIT) : rows;
+  }
+
+  /**
+   * Recovers stuck report runs (e.g. after server restart or timeout) (§21.1).
+   * Any run stuck in 'running' or 'queued' for > 15 minutes is transitioned to 'failed'.
+   */
+  static async recoverStuckRuns(tenantId?: string, maxAgeMinutes = 15): Promise<number> {
+    const cutoff = new Date(Date.now() - maxAgeMinutes * 60 * 1000).toISOString();
+    const conditions = [
+      inArray(reportRuns.status, ['running', 'queued']),
+      sql`${reportRuns.createdAt} < ${cutoff}`,
+    ];
+    if (tenantId) {
+      conditions.push(eq(reportRuns.tenantId, tenantId));
+    }
+
+    const updated = await db
+      .update(reportRuns)
+      .set({
+        status: 'failed',
+        errorMessage: 'Exécution interrompue (délai d\'exécution dépassé ou redémarrage du serveur).',
+        finishedAt: new Date().toISOString(),
+      })
+      .where(and(...conditions))
+      .returning({ id: reportRuns.id });
+
+    return updated.length;
   }
 }

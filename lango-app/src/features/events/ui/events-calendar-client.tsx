@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -267,9 +268,11 @@ export function EventsCalendarClient({ locale: _locale }: { locale?: string }) {
                   <div className="flex justify-between"><span className="text-slate-500">Statut :</span><span className="font-bold text-emerald-700">{activeEvent.status}</span></div>
                 </div>
 
-                <Button className="w-full h-9 text-xs font-bold rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white">
-                  Gérer l&apos;événement &amp; les billets
-                </Button>
+                <Link href={`/${_locale || 'fr'}/dashboard/events/${activeEvent.id}`} className="block w-full">
+                  <Button className="w-full h-9 text-xs font-bold rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white">
+                    Gérer l&apos;événement &amp; les billets
+                  </Button>
+                </Link>
               </>
             ) : (
               <p className="text-xs text-slate-400">Sélectionnez un événement.</p>

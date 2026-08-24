@@ -7,10 +7,14 @@ import { Input } from '@/components/ui/input';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 import { Search, GraduationCap, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
 import { usePermissions } from '@/hooks/use-permissions';
 
 type StudentRow = { id: string; fullName: string; matricule: string | null; className: string | null };
+type ClassSection = { id: string; className: string; sectionName: string };
 type ItemResult = { studentId: string; success: boolean; tempPassword?: string | null; loginAccessDeliveryStatus?: string | null; error?: string };
 
 // Real bulk transition for a whole graduating cohort at once (Phase 4
@@ -19,6 +23,8 @@ type ItemResult = { studentId: string; success: boolean; tempPassword?: string |
 export function BulkAlumniTransitionView({ locale: _locale }: { locale?: string } = {}) {
   const { can } = usePermissions();
   const [students, setStudents] = useState<StudentRow[]>([]);
+  const [classSections, setClassSections] = useState<ClassSection[]>([]);
+  const [terminalClassSectionId, setTerminalClassSectionId] = useState('');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showConfirm, setShowConfirm] = useState(false);
@@ -27,6 +33,7 @@ export function BulkAlumniTransitionView({ locale: _locale }: { locale?: string 
 
   useEffect(() => {
     fetch('/api/students?pageSize=200').then(r => r.json()).then(j => j?.success && setStudents(j.data)).catch(() => {});
+    fetch('/api/academics/class-sections?pageSize=200').then(r => r.json()).then(j => j?.success && setClassSections(j.data)).catch(() => {});
   }, []);
 
   const filtered = students.filter(s => s.fullName.toLowerCase().includes(search.toLowerCase()) || (s.matricule ?? '').toLowerCase().includes(search.toLowerCase()));
@@ -62,6 +69,21 @@ export function BulkAlumniTransitionView({ locale: _locale }: { locale?: string 
     }
   };
 
+  // "Promouvoir la classe sortante" — one-click select of every student in the
+  // chosen graduating class (Terminale / 3ème), then the same single confirmation.
+  const handlePromoteGraduatingClass = async () => {
+    if (!terminalClassSectionId) return;
+    try {
+      const res = await fetch(`/api/students?classSectionId=${terminalClassSectionId}&pageSize=200`).then(r => r.json());
+      const ids: string[] = (res?.data ?? []).map((s: StudentRow) => s.id).filter(Boolean);
+      if (ids.length === 0) return;
+      setSelected(new Set(ids));
+      setShowConfirm(true);
+    } catch {
+      // ignore — the confirm dialog simply won't open
+    }
+  };
+
   const canManage = can('admissions.manage');
 
   if (!canManage) {
@@ -78,6 +100,34 @@ export function BulkAlumniTransitionView({ locale: _locale }: { locale?: string 
         <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Transition en masse — Anciens élèves</h1>
         <p className="text-xs text-slate-500 mt-1">Sélectionnez plusieurs élèves d&apos;une même cohorte diplômée et confirmez une seule fois.</p>
       </div>
+
+      <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-bold text-[#16212B]">Promouvoir la classe sortante</span>
+          <span className="text-[11px] text-slate-500">Transférer d&apos;un coup tous les élèves d&apos;une classe terminale (Terminale / 3ème) vers le statut Ancien élève.</span>
+        </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Select value={terminalClassSectionId} onValueChange={setTerminalClassSectionId}>
+            <SelectTrigger className="h-9 text-xs rounded-xl bg-slate-50 border-slate-200 flex-1 sm:w-64">
+              <SelectValue placeholder="Choisir la classe sortante" />
+            </SelectTrigger>
+            <SelectContent>
+              {classSections.map(cs => (
+                <SelectItem key={cs.id} value={cs.id}>{cs.className} {cs.sectionName}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            size="sm"
+            disabled={!terminalClassSectionId}
+            onClick={handlePromoteGraduatingClass}
+            className="h-9 rounded-xl bg-[#17A673] hover:bg-[#12845B] text-white text-xs font-bold gap-1.5"
+          >
+            <GraduationCap className="w-3.5 h-3.5" />
+            Sélectionner
+          </Button>
+        </div>
+      </Card>
 
       <Card className="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between gap-3">
         <div className="relative flex-1 max-w-md">

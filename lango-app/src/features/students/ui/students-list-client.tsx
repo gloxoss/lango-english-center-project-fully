@@ -76,7 +76,7 @@ type Student = {
   paymentStatus?: string;
 };
 
-const PAGE_SIZE = 100;
+const DEFAULT_PAGE_SIZE = 10;
 
 export function StudentsListClient({ locale }: { locale?: string } = {}) {
   const { can } = usePermissions();
@@ -104,12 +104,12 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
     return matchesLevel && matchesStatus;
   });
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / DEFAULT_PAGE_SIZE));
 
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
+      const params = new URLSearchParams({ page: String(page), pageSize: String(DEFAULT_PAGE_SIZE) });
       if (search.trim()) params.set('search', search.trim());
       const res = await fetch(`/api/students?${params}`);
       const json = await res.json();
@@ -386,7 +386,7 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
 
       {/* Right Inspector Drawer */}
       {activeStudent && (
-        <div className="w-[340px] shrink-0 space-y-4 hidden xl:block">
+        <div className="w-[340px] shrink-0 space-y-4 hidden xl:block sticky top-6 self-start max-h-[calc(100vh-3rem)] overflow-y-auto">
           <Card className="p-5 bg-white rounded-2xl shadow-2xs border border-slate-200/80 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-extrabold text-[#16212B]">Profil Élève</h3>

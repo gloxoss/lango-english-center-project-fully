@@ -59,6 +59,9 @@ export function ParentsGuardiansClient({ locale }: { locale?: string } = {}) {
   const [relationFilter, setRelationFilter] = useState('Tous');
   const [selectedHousehold, setSelectedHousehold] = useState<HouseholdItem | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
 
   const [newHousehold, setNewHousehold] = useState({
     familyName: '',
@@ -83,10 +86,11 @@ export function ParentsGuardiansClient({ locale }: { locale?: string } = {}) {
 
   const fetchHouseholds = async () => {
     try {
-      const res = await fetch('/api/students/parents?pageSize=200');
+      const res = await fetch(`/api/students/parents?page=${page}&pageSize=${pageSize}`);
       const json = await res.json();
       if (json.success) {
         setHouseholds((json.data as ApiGuardian[]).map(fromApiGuardian));
+        setTotal(json.total ?? 0);
       }
     } catch (e) {
       console.error('Failed to load guardians', e);
@@ -96,7 +100,7 @@ export function ParentsGuardiansClient({ locale }: { locale?: string } = {}) {
   useEffect(() => {
     fetchHouseholds();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [page, pageSize]);
 
   const handleAddHousehold = async () => {
     if (!newHousehold.familyName.trim() || !newHousehold.primaryTutorName.trim()) return;
@@ -265,14 +269,38 @@ export function ParentsGuardiansClient({ locale }: { locale?: string } = {}) {
             <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
               <div className="flex items-center gap-2">
                 <span>Afficher</span>
-                <select className="border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-[#16212B]">
-                  <option>10</option>
-                  <option>25</option>
-                  <option>50</option>
+                <select
+                  className="border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-[#16212B]"
+                  value={pageSize}
+                  onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
                 </select>
                 <span>
-                  sur {households.length} foyer{households.length > 1 ? 's' : ''}
+                  sur {total} foyer{total > 1 ? 's' : ''}
                 </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={page <= 1}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  className="px-2 py-1 rounded-lg border border-slate-200 font-bold text-[#16212B] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50"
+                >
+                  Précédent
+                </button>
+                <span>Page {page} / {Math.max(1, Math.ceil(total / pageSize))}</span>
+                <button
+                  type="button"
+                  disabled={page >= Math.ceil(total / pageSize)}
+                  onClick={() => setPage(p => p + 1)}
+                  className="px-2 py-1 rounded-lg border border-slate-200 font-bold text-[#16212B] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50"
+                >
+                  Suivant
+                </button>
               </div>
             </div>
           </Card>
@@ -280,7 +308,7 @@ export function ParentsGuardiansClient({ locale }: { locale?: string } = {}) {
 
         {/* Right: Family Inspector Panel */}
         {selectedHousehold && (
-          <div className="w-80 xl:w-96 shrink-0 space-y-3">
+          <div className="w-80 xl:w-96 shrink-0 space-y-3 sticky top-6 self-start max-h-[calc(100vh-3rem)] overflow-y-auto">
             <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
               {/* Inspector Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">

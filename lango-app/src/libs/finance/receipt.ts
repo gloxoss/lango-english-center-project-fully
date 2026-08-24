@@ -18,7 +18,7 @@ export interface CreateReceiptOptions {
   amountCents: bigint;
   paymentDate: string; // YYYY-MM-DD
   allocations: ReceiptAllocation[];
-  createdById: string;
+  createdById: string | null;
 }
 
 // Persists a receipt with an atomically-issued RC-{year}- number. MUST be called

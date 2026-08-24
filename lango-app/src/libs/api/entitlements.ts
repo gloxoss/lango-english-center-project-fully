@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
-import { ADDONS } from '@/addons/registry';
 import { db } from '@/libs/DB';
 import { addonEntitlements } from '@/models/Schema';
+import { getAddonDefinition, listAddonDefinitions } from './addon-catalog';
 import { ApiError } from './errors';
 
 export type Entitlement = {
@@ -11,10 +11,8 @@ export type Entitlement = {
   active: boolean;
 };
 
-const KNOWN_ADDON_IDS = new Set(ADDONS.map(a => a.id));
-
-export function assertKnownAddon(addonId: string): void {
-  if (!KNOWN_ADDON_IDS.has(addonId)) {
+export async function assertKnownAddon(addonId: string): Promise<void> {
+  if (!(await getAddonDefinition(addonId))) {
     throw new ApiError(422, 'UNKNOWN_ADDON', `Module inconnu: ${addonId}.`);
   }
 }
@@ -56,7 +54,7 @@ export async function hasAddon(tenantId: string, addonId: string): Promise<boole
  * the caller learns "not activated", never which of the three it was.
  */
 export async function requireAddon(tenantId: string, addonId: string): Promise<void> {
-  assertKnownAddon(addonId);
+  await assertKnownAddon(addonId);
   if (!(await hasAddon(tenantId, addonId))) {
     throw new ApiError(
       403,
@@ -91,13 +89,13 @@ export async function requireWorkforceAddon(tenantId: string): Promise<void> {
  * state).
  */
 export async function assertAddonDependencies(tenantId: string, addonId: string, targetActive: boolean): Promise<void> {
-  const def = ADDONS.find((a) => a.id === addonId);
+  const def = await getAddonDefinition(addonId);
   if (!def) {
     throw new ApiError(422, 'UNKNOWN_ADDON', `Module inconnu: ${addonId}.`);
   }
   if (targetActive) {
     for (const dependencyId of def.requires ?? []) {
-      assertKnownAddon(dependencyId);
+      await assertKnownAddon(dependencyId);
       if (!(await hasAddon(tenantId, dependencyId))) {
         throw new ApiError(
           409,
@@ -110,7 +108,7 @@ export async function assertAddonDependencies(tenantId: string, addonId: string,
   }
   // Deactivation: an add-on that others depend on cannot be turned off while a
   // dependent add-on is still active for this tenant.
-  for (const dependent of ADDONS) {
+  for (const dependent of await listAddonDefinitions()) {
     if ((dependent.requires ?? []).includes(addonId) && (await hasAddon(tenantId, dependent.id))) {
       throw new ApiError(
         409,

@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 
     const conditions = [eq(alumniRequests.tenantId, tenantId)];
     if (status) {
-      conditions.push(eq(alumniRequests.status, status as 'pending' | 'approved' | 'rejected'));
+      conditions.push(eq(alumniRequests.status, status as 'received' | 'accepted' | 'preparing' | 'ready' | 'taken' | 'refused'));
     }
     const where = and(...conditions);
 
@@ -35,6 +35,7 @@ export async function GET(request: Request) {
           note: alumniRequests.note,
           relatedDocumentId: alumniRequests.relatedDocumentId,
           decisionNote: alumniRequests.decisionNote,
+          decidedAt: alumniRequests.decidedAt,
           createdAt: alumniRequests.createdAt,
         })
         .from(alumniRequests)

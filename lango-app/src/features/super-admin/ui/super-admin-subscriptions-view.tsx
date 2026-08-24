@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { DataTable, Column } from '@/components/shared/data-table';
-import { ShieldCheck, AlertCircle, Layers, RefreshCw } from 'lucide-react';
+import { ShieldCheck, AlertCircle, Layers, RefreshCw, CheckCircle2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 type CatalogAddon = { addonId: string; name: string; description: string; built: boolean; requires: string[] };
 type ApiSchool = {
@@ -14,18 +15,30 @@ type ApiSchool = {
 type Summary = { total: number; active: number; expiring: number; expired: number; suspended: number; cancelled: number; none: number; pendingPayments: number };
 type ApiData = { schools: ApiSchool[]; summary: Summary; catalog: CatalogAddon[] };
 
-const PLAN_LABELS: Record<string, string> = { trial: 'Essai', basic: 'Basique', standard: 'Standard', premium: 'Premium' };
-const PLAN_DESC: Record<string, string> = {
-  trial: 'Offre découverte pour les nouveaux établissements.',
-  basic: 'Fonctionnalités essentielles pour les petites écoles.',
-  standard: 'Modules étendus pour les établissements en croissance.',
-  premium: 'Tous les modules, campus illimités, support prioritaire.',
-};
+type PlanLimit = { planTier: string; label: string; maxStudents: number | null; maxStorageMb: number | null };
+type PlanDraft = { label: string; maxStudents: string; maxStorageMb: string };
+
+const TIERS = ['trial', 'basic', 'standard', 'premium'] as const;
+const PLAN_LABELS: Record<(typeof TIERS)[number], string> = { trial: 'Essai', basic: 'Basique', standard: 'Standard', premium: 'Premium' };
+
+function draftFromLimit(limit: PlanLimit): PlanDraft {
+  return {
+    label: limit.label,
+    maxStudents: limit.maxStudents == null ? '' : String(limit.maxStudents),
+    maxStorageMb: limit.maxStorageMb == null ? '' : String(limit.maxStorageMb),
+  };
+}
 
 export function SuperAdminSubscriptionsView() {
   const [data, setData] = useState<ApiData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [limits, setLimits] = useState<PlanLimit[] | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, PlanDraft>>({});
+  const [savingTier, setSavingTier] = useState<string | null>(null);
+  const [limitError, setLimitError] = useState<string | null>(null);
+  const [limitSuccess, setLimitSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -34,7 +47,52 @@ export function SuperAdminSubscriptionsView() {
       .then((json) => { if (json.success) setData(json.data); else setError(json.message || 'Erreur.'); })
       .catch(() => setError('Connexion impossible.'))
       .finally(() => setLoading(false));
+
+    fetch('/api/super-admin/plan-limits')
+      .then(r => r.json())
+      .then((json) => {
+        if (json.success) {
+          setLimits(json.data);
+          const next: Record<string, PlanDraft> = {};
+          for (const l of json.data) next[l.planTier] = draftFromLimit(l);
+          setDrafts(next);
+        } else {
+          setLimitError(json.message || 'Impossible de charger les limites.');
+        }
+      })
+      .catch(() => setLimitError('Connexion impossible.'));
   }, []);
+
+  async function saveLimit(tier: (typeof TIERS)[number]) {
+    const draft = drafts[tier];
+    if (!draft) return;
+    setSavingTier(tier);
+    setLimitError(null);
+    setLimitSuccess(null);
+    try {
+      const res = await fetch('/api/super-admin/plan-limits', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          planTier: tier,
+          label: draft.label,
+          maxStudents: draft.maxStudents.trim() === '' ? null : Number(draft.maxStudents),
+          maxStorageMb: draft.maxStorageMb.trim() === '' ? null : Number(draft.maxStorageMb),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setLimitError(json.message || 'Échec de l\'enregistrement.');
+        return;
+      }
+      setLimits(prev => (prev ?? []).map(l => (l.planTier === tier ? json.data : l)));
+      setLimitSuccess(`Limites du plan ${PLAN_LABELS[tier] ?? tier} enregistrées.`);
+    } catch {
+      setLimitError('Connexion impossible.');
+    } finally {
+      setSavingTier(null);
+    }
+  }
 
   const summary = data?.summary;
   const planCounts: Record<string, number> = { trial: 0, basic: 0, standard: 0, premium: 0 };
@@ -101,16 +159,80 @@ export function SuperAdminSubscriptionsView() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {(['trial', 'basic', 'standard', 'premium'] as const).map(tier => (
-          <Card key={tier} className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-extrabold text-[#0F172A]">{PLAN_LABELS[tier]}</span>
-              <span className="text-xs font-extrabold text-[#0066FF]">{planCounts[tier] ?? 0} école(s)</span>
-            </div>
-            <p className="text-xs text-slate-500">{PLAN_DESC[tier]}</p>
-          </Card>
-        ))}
+      {/* Plan-tier capacity limits (editable) */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-4 space-y-4">
+        <div className="pb-3 border-b border-slate-100">
+          <h3 className="text-sm font-extrabold text-[#0F172A]">Limites par plan</h3>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Capacités appliquées à chaque formule. Laissez un champ vide pour « illimité ».
+          </p>
+        </div>
+
+        {limitError && (
+          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 text-rose-700 text-xs font-semibold">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{limitError}</span>
+          </div>
+        )}
+        {limitSuccess && (
+          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-emerald-700 text-xs font-semibold">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>{limitSuccess}</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {TIERS.map(tier => {
+            const draft = drafts[tier] ?? { label: PLAN_LABELS[tier]!, maxStudents: '', maxStorageMb: '' };
+            return (
+              <Card key={tier} className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-extrabold text-[#0F172A]">{PLAN_LABELS[tier]}</span>
+                  <span className="text-xs font-extrabold text-[#0066FF]">{planCounts[tier] ?? 0} école(s)</span>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 block mb-1">Libellé</label>
+                  <Input
+                    value={draft.label}
+                    onChange={e => setDrafts(prev => ({ ...prev, [tier]: { ...draft, label: e.target.value } }))}
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 block mb-1">Élèves max</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    placeholder="Illimité"
+                    value={draft.maxStudents}
+                    onChange={e => setDrafts(prev => ({ ...prev, [tier]: { ...draft, maxStudents: e.target.value } }))}
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 block mb-1">Stockage max (Mo)</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    placeholder="Illimité"
+                    value={draft.maxStorageMb}
+                    onChange={e => setDrafts(prev => ({ ...prev, [tier]: { ...draft, maxStorageMb: e.target.value } }))}
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={savingTier === tier}
+                  onClick={() => saveLimit(tier)}
+                  className="w-full h-8 text-xs rounded-lg gap-1.5"
+                >
+                  <Save className="w-3.5 h-3.5" /> {savingTier === tier ? 'Enregistrement…' : 'Enregistrer'}
+                </Button>
+              </Card>
+            );
+          })}
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-4 space-y-4">

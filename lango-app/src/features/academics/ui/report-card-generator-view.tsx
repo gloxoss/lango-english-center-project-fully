@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { Printer, Eye, Layers, Loader2 } from 'lucide-react';
+import { Printer, Eye, Layers, Loader2, Download } from 'lucide-react';
 
 type ClassSectionOption = { id: string; className: string; sectionName: string };
 type StudentOption = { id: string; fullName: string; matricule?: string };
@@ -27,6 +27,9 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
   const [loading, setLoading] = useState(false);
   const [batchCards, setBatchCards] = useState<ReportCard[] | null>(null);
   const [batchLoading, setBatchLoading] = useState(false);
+  const [issueLoading, setIssueLoading] = useState(false);
+  const [batchIssueLoading, setBatchIssueLoading] = useState(false);
+  const [batchIssueResult, setBatchIssueResult] = useState<{ count: number } | null>(null);
 
   useEffect(() => {
     fetch('/api/academics/class-sections')
@@ -97,6 +100,61 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
     }
   }
 
+  function downloadBase64Pdf(base64: string, filename: string) {
+    const byteChars = atob(base64);
+    const byteNumbers = new Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i += 1) byteNumbers[i] = byteChars.charCodeAt(i);
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function downloadPdf() {
+    if (!studentId) return;
+    setIssueLoading(true);
+    try {
+      const res = await fetch('/api/students/report-card/issue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId }),
+      });
+      const json = res.ok ? await res.json() : null;
+      if (json?.success && json.data?.pdfBase64) {
+        downloadBase64Pdf(json.data.pdfBase64, `bulletin-${studentId}.pdf`);
+      }
+    } catch {
+      // download failure is non-fatal; the issued document remains stored
+    } finally {
+      setIssueLoading(false);
+    }
+  }
+
+  async function generatePdfs() {
+    if (!classSectionId) return;
+    setBatchIssueLoading(true);
+    setBatchIssueResult(null);
+    try {
+      const res = await fetch('/api/students/report-card/issue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ classSectionId }),
+      });
+      const json = res.ok ? await res.json() : null;
+      setBatchIssueResult({ count: json?.success ? Number(json.data?.count) || 0 : 0 });
+    } catch {
+      setBatchIssueResult({ count: 0 });
+    } finally {
+      setBatchIssueLoading(false);
+    }
+  }
+
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
       <style>{`
@@ -124,6 +182,26 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
           >
             {batchLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Layers className="w-3.5 h-3.5" />}
             <span>{batchLoading ? 'Génération...' : 'Générer tous les bulletins'}</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 h-9 text-xs rounded-xl"
+            onClick={downloadPdf}
+            disabled={issueLoading || !studentId}
+          >
+            {issueLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+            <span>{issueLoading ? 'Génération...' : 'Télécharger PDF'}</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 h-9 text-xs rounded-xl"
+            onClick={generatePdfs}
+            disabled={batchIssueLoading || !classSectionId}
+          >
+            {batchIssueLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Layers className="w-3.5 h-3.5" />}
+            <span>{batchIssueLoading ? 'Génération...' : 'Générer les PDF (classe)'}</span>
           </Button>
           <Button variant="outline" size="sm" className="gap-2 h-9 text-xs rounded-xl" onClick={() => window.print()}>
             <Printer className="w-3.5 h-3.5" />
@@ -179,6 +257,11 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
             {batchCards && (
               <p className="text-xs font-bold text-[#16212B]">
                 {batchCards.length} bulletin(s) généré(s) pour la classe sélectionnée.
+              </p>
+            )}
+            {batchIssueResult && (
+              <p className="text-xs font-bold text-[#16212B]">
+                {batchIssueResult.count} bulletin(s) PDF émis (storable, vérifiable).
               </p>
             )}
           </Card>

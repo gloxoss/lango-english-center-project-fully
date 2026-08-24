@@ -56,8 +56,19 @@ interface PersistedReceipt {
   amount: number;
   paymentDate: string;
   allocations: { invoiceId: string; invoiceNumber: string; amount: string }[];
-  method: 'cash' | 'card' | 'transfer' | 'check';
+  method: string;
 }
+
+type MethodOption = { methodCode: string; labelFr: string };
+
+// Fallback to the 4 built-in methods until the tenant's config is loaded (or
+// when no config exists yet — back-compat). Config-driven options replace these.
+const LEGACY_METHODS: MethodOption[] = [
+  { methodCode: 'cash', labelFr: 'Espèces' },
+  { methodCode: 'card', labelFr: 'Carte (TPE)' },
+  { methodCode: 'transfer', labelFr: 'Virement' },
+  { methodCode: 'check', labelFr: 'Chèque' },
+];
 
 export default function CollectionDeskPage() {
   const searchParams = useSearchParams();
@@ -90,9 +101,10 @@ export default function CollectionDeskPage() {
   const [loadingInvoices, setLoadingInvoices] = useState(false);
   const [collectOpen, setCollectOpen] = useState(false);
   const [collectRows, setCollectRows] = useState<CollectRow[]>([]);
-  const [collectMethod, setCollectMethod] = useState<'cash' | 'card' | 'transfer' | 'check'>('cash');
+  const [collectMethod, setCollectMethod] = useState<string>('cash');
   const [collecting, setCollecting] = useState(false);
   const [receipt, setReceipt] = useState<PersistedReceipt | null>(null);
+  const [paymentMethods, setPaymentMethods] = useState<MethodOption[]>(LEGACY_METHODS);
 
   const fetchSession = async () => {
     setLoading(true);
@@ -114,6 +126,22 @@ export default function CollectionDeskPage() {
 
   useEffect(() => {
     fetchSession();
+  }, []);
+
+  // Load the tenant's configured (active) payment methods; fall back to the
+  // built-in methods when no config exists yet.
+  useEffect(() => {
+    fetch('/api/finance/payment-methods')
+      .then(res => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (json?.success && Array.isArray(json.data)) {
+          const active = json.data
+            .filter((m: { isActive?: boolean }) => m.isActive)
+            .map((m: { methodCode: string; labelFr: string }) => ({ methodCode: m.methodCode, labelFr: m.labelFr }));
+          if (active.length > 0) setPaymentMethods(active);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const handleOpenSession = async (e: React.FormEvent) => {
@@ -253,7 +281,7 @@ export default function CollectionDeskPage() {
       const balance = Number(inv.netAmount) - Number(inv.paidAmount);
       return { invoiceId: inv.id, invoiceNumber: inv.invoiceNumber, balance, amount: balance.toFixed(2), included: true };
     }));
-    setCollectMethod('cash');
+    setCollectMethod(paymentMethods[0]?.methodCode ?? 'cash');
     setCollectOpen(true);
   };
 
@@ -588,10 +616,9 @@ export default function CollectionDeskPage() {
                   onChange={e => setCollectMethod(e.target.value as typeof collectMethod)}
                   className="mt-1 w-full rounded-lg border border-slate-200 p-2.5 text-sm font-semibold text-slate-900 focus:border-[#0066FF] focus:outline-hidden"
                 >
-                  <option value="cash">Espèces</option>
-                  <option value="check">Chèque</option>
-                  <option value="card">Carte (TPE)</option>
-                  <option value="transfer">Virement</option>
+                  {paymentMethods.map(m => (
+                    <option key={m.methodCode} value={m.methodCode}>{m.labelFr}</option>
+                  ))}
                 </select>
               </div>
               <div className="flex items-center justify-end gap-3 pt-2">
@@ -625,7 +652,7 @@ export default function CollectionDeskPage() {
                 ))}
               </div>
               <div className="flex justify-between border-t border-slate-200 pt-1.5"><span className="text-slate-500">Montant total</span><span className="font-bold text-emerald-700">{receipt.amount.toFixed(2)} MAD</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Mode</span><span className="font-bold text-slate-900">{{ cash: 'Espèces', check: 'Chèque', card: 'Carte (TPE)', transfer: 'Virement' }[receipt.method]}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Mode</span><span className="font-bold text-slate-900">{paymentMethods.find(m => m.methodCode === receipt.method)?.labelFr ?? receipt.method}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Date</span><span className="font-bold text-slate-900">{receipt.paymentDate}</span></div>
             </div>
             <button onClick={() => window.print()} className="mt-4 w-full rounded-lg border border-slate-200 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">

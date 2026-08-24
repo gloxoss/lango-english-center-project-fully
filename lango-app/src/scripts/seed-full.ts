@@ -1824,7 +1824,22 @@ async function run() {
     await tx.insert(alumniEventRsvps).values(alumRsvpRows);
     const mentorRows = studentIds.slice(0, 6).map((sid, i) => ({ tenantId, alumnusId: sid, isActive: true, offering: pick(['Orientation universitaire', 'Coaching carrière', 'Aide aux devoirs']), contactPreference: 'email', createdAt: isoTs(-40), updatedAt: isoTs(-1) }));
     await tx.insert(alumniMentorListings).values(mentorRows);
-    const alumReqRows = studentIds.slice(0, 8).map((sid, i) => ({ tenantId, alumnusId: sid, type: pick(['correction', 'reissue', 'data_access', 'deletion'] as const), status: pick(['pending', 'approved', 'rejected'] as const), note: 'Demande de réédition de diplôme', relatedDocumentId: null, decidedBy: i % 2 === 0 ? 'USR-001' : null, decidedAt: i % 2 === 0 ? isoTs(-3) : null, decisionNote: i % 2 === 0 ? 'Approuvé' : null, createdAt: isoTs(-20) }));
+    const alumReqStatuses = ['received', 'accepted', 'preparing', 'ready', 'taken', 'refused'] as const;
+    const alumReqRows = studentIds.slice(0, 12).map((sid, i) => {
+      const status = alumReqStatuses[i % alumReqStatuses.length];
+      const decided = status !== 'received';
+      return {
+        tenantId, alumnusId: sid,
+        type: pick(['correction', 'reissue', 'data_access', 'deletion'] as const),
+        status,
+        note: 'Demande de réédition de diplôme',
+        relatedDocumentId: null,
+        decidedBy: decided ? 'USR-001' : null,
+        decidedAt: decided ? isoTs(-3) : null,
+        decisionNote: status === 'refused' ? 'Demande non éligible' : decided ? 'Approuvé' : null,
+        createdAt: isoTs(-20),
+      };
+    });
     await tx.insert(alumniRequests).values(alumReqRows);
     const studDocRows = studentIds.slice(0, 16).flatMap((sid, i) => [
       { tenantId, studentId: sid, documentType: 'photo' as const, fileExt: 'jpg', uploadedAt: isoTs(-100) },

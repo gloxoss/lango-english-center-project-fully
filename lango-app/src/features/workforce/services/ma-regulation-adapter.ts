@@ -91,6 +91,17 @@ const DEFAULT_PROVENANCE: Provenance = {
   reviewerNotes: null,
 };
 
+// TODO(M — Morocco statutory certification): the rates below are coded from public
+// texts but NOT yet signed off by an accountant. Certification enumerates, per the
+// Phase-H plan, exactly these items — flip `provenance.validationStatus` to
+// 'validated_by_professional' (and record reviewer notes/source doc) once approved:
+//   - CNSS: salariale 4.48% / patronale 8.98%, plafond 6 000 MAD (Dahir n° 1-72-184)
+//   - AMO:  salariale 2.26% / patronale 3.26% (Loi 65-00)
+//   - IR:   barème CGI 2024 (tranches + abattement 40% + charges de famille 30 MAD/dépendant)
+//   - TVA:  20% — hardcoded as `tauxTva` in accounting-defaults-config.ts (DEFAULT_ACCOUNTING_SETTINGS)
+//   - DGI form codes + currency (MAD) for the DAMANCOM/INP filing (Phase L)
+// The `validationStatus`/`Provenance` plumbing is already wired; only the sign-off is pending.
+
 export const MOROCCO_V1_DEFAULT_RULE_CONFIG: MoroccoV1RuleConfig = {
   jurisdiction: 'MA',
   effectiveFrom: '2024-01-01',

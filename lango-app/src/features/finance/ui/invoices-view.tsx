@@ -1,6 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +13,7 @@ import {
 import {
   Search, Plus, Download, Printer, X,
   CheckCircle2, Clock, TrendingUp, AlertCircle,
-  Send, Ban, RotateCcw,
+  Send, Ban, RotateCcw, Layers,
 } from 'lucide-react';
 import { exportToCsv } from '@/libs/csv-export';
 
@@ -48,7 +49,7 @@ const STATUS_BADGE: Record<InvoiceRow['status'], string> = {
   credited: 'bg-violet-100 text-violet-600',
 };
 
-export function InvoicesFinanceView({ locale: _locale }: { locale?: string }) {
+export function InvoicesFinanceView({ locale = 'fr' }: { locale?: string }) {
   const searchParams = useSearchParams();
   const studentIdFilter = searchParams.get('studentId');
   const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
@@ -233,6 +234,12 @@ export function InvoicesFinanceView({ locale: _locale }: { locale?: string }) {
           <p className="text-xs text-slate-500 mt-1">{invoices.length} facture(s) réelle(s), tenant-scopées.</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <Link href={`/${locale}/dashboard/finance/allocations`}>
+            <Button variant="outline" size="sm" className="h-9 text-xs rounded-xl border-slate-200 bg-white gap-1.5 hover:border-[#0066FF] hover:text-[#0066FF]">
+              <Layers className="w-3.5 h-3.5" />
+              Facturation groupée
+            </Button>
+          </Link>
           <Button variant="outline" size="sm" onClick={() => setCreateOpen(true)} className="h-9 text-xs rounded-xl border-slate-200 bg-white gap-1.5">
             <Plus className="w-3.5 h-3.5" />
             Créer une facture

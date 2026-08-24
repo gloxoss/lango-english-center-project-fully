@@ -26,7 +26,7 @@ export async function PATCH(
     await requireCapability(ctx, 'users.permissions.manage');
     const tenantId = requireTenant(ctx);
 
-    assertKnownAddon(addonId);
+    await assertKnownAddon(addonId);
 
     const body = await parseJson(request, patchSchema);
 

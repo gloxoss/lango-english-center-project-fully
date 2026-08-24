@@ -1,6 +1,7 @@
 import { and, count, desc, eq } from 'drizzle-orm';
 import { type NextRequest, NextResponse } from 'next/server';
 import { reportRuns } from '@/addons/advanced-reporting/models/reporting-schema';
+import { RunEngine } from '@/addons/advanced-reporting/services/run-engine';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireAddon } from '@/libs/api/entitlements';
@@ -14,6 +15,9 @@ export async function GET(request: NextRequest) {
     const tenantId = requireTenant(context);
     await requireAddon(tenantId, 'advanced-reporting');
     await requireCapability(context, 'reports.read');
+
+    // Run stuck executions recovery (§21.1)
+    await RunEngine.recoverStuckRuns(tenantId);
 
     const { searchParams } = new URL(request.url);
     const pagination = parsePagination(searchParams);

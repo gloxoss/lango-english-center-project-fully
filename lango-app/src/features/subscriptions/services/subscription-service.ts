@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { and, desc, eq } from 'drizzle-orm';
-import { ADDONS } from '@/addons/registry';
+import { listAddonDefinitions } from '@/libs/api/addon-catalog';
 import { listEntitlements } from '@/libs/api/entitlements';
 import { ApiError } from '@/libs/api/errors';
 import { recordAudit } from '@/libs/api/audit';
@@ -96,10 +96,11 @@ export async function getSubscriptionDetail(tenantId: string) {
     .limit(1);
   if (!tenant) throw new ApiError(404, 'NOT_FOUND', 'Établissement introuvable.');
 
-  const [license, payments, grants] = await Promise.all([
+  const [license, payments, grants, addons] = await Promise.all([
     getSchoolLicense(tenantId),
     listTenantPayments(tenantId),
     listEntitlements(tenantId),
+    listAddonDefinitions(),
   ]);
 
   const grantById = new Map(grants.map(g => [g.addonId, g]));
@@ -139,7 +140,7 @@ export async function getSubscriptionDetail(tenantId: string) {
       requestedMonths: p.requestedMonths,
       createdAt: p.createdAt,
     })),
-    addons: ADDONS.map(addon => {
+    addons: addons.map(addon => {
       const grant = grantById.get(addon.id);
       return {
         addonId: addon.id,

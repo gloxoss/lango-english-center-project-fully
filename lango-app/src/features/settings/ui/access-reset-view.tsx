@@ -285,7 +285,7 @@ export function AccessResetView() {
       </div>
 
       {sel && (
-        <div className="w-[320px] shrink-0 space-y-4 hidden xl:block">
+        <div className="w-[320px] shrink-0 space-y-4 hidden xl:block sticky top-6 self-start max-h-[calc(100vh-3rem)] overflow-y-auto">
           <Card className="p-5 bg-white rounded-2xl shadow-2xs border border-slate-200/80 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-extrabold text-[#16212B]">Détail de la demande</h3>
