@@ -8,7 +8,7 @@ The prompt is **usable but has one dangerous gap and two smaller factual errors*
 
 ## Factual errors in the prompt (fix before handing it to a fresh agent)
 
-1. **Wrong "project root."** The prompt tells the agent to read `PRODUCT-TRUTH.md` "in the project root," but the working directory it also specifies is `lango-app/`. `PRODUCT-TRUTH.md` and the whole `attendance-plan/` directory actually live **one level above** `lango-app/`, at `Documents/lango/` (a sibling of `lango-app`, `insperations/`, etc.), not inside it. A fresh agent literally following "project root = working directory" will fail to find either.
+1. **Wrong "project root."** The prompt tells the agent to read `PRODUCT-TRUTH.md` "in the project root," but the working directory it also specifies is `schoolos-app/`. `PRODUCT-TRUTH.md` and the whole `attendance-plan/` directory actually live **one level above** `schoolos-app/`, at `Documents/schoolos/` (a sibling of `schoolos-app`, `insperations/`, etc.), not inside it. A fresh agent literally following "project root = working directory" will fail to find either.
 2. **`SCHOOLOS_ATTENDANCE_DESIGN.md` doesn't exist under that name anywhere in the tree.** The real design tokens live at `attendance-plan/02_DESIGN_SYSTEM.md`. Minor, but a fresh agent will burn a turn searching for a file that isn't there.
 3. Everything else file-path-wise checks out: `attendance-plan/00_MASTER_INDEX.md` through `05_RESEARCH_ANALYSIS_REPORT.md` and `sections/section-01` through `section-05` all exist exactly as listed.
 

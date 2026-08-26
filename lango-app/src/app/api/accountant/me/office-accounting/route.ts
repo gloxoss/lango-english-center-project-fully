@@ -11,6 +11,9 @@ import { db } from '@/libs/DB';
 import { tryPostExpenseGLEntry } from '@/libs/finance/gl-auto-post';
 import { expenses, user } from '@/models/Schema';
 
+// Deprecated write path: Office Accounting now uses /api/finance/expenses,
+// the canonical expense + double-entry posting pipeline.
+
 const createExpenseSchema = z.object({
   amount: z.number().positive(),
   category: z.enum(['salary', 'rent', 'utilities', 'supplies', 'marketing', 'other']),

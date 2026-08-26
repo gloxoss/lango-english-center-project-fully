@@ -18,7 +18,12 @@ export async function GET(request: Request) {
     const context = await requireRequestContext(request);
     const tenantId = requireTenant(context);
     await requireAddon(tenantId, 'transport');
-    await requireCapability(context, 'transport.report');
+    // Basic module KPIs (vehicle/route/allocation/trip counts) for the
+    // module's own landing dashboard - anyone who can land on /dashboard/
+    // transport (transport.read: teacher, receptionist, guard...) should see
+    // them. transport.report stays reserved for the actual deep-analytics
+    // "Rapports & Exports" page.
+    await requireCapability(context, 'transport.read');
 
     const todayStr: string = new Date().toISOString().split('T')[0]!;
 

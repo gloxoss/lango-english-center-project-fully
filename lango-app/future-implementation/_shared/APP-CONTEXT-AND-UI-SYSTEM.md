@@ -1,4 +1,4 @@
-# Lango/SchoolOS — App Context & UI System (shared reference)
+# SchoolOS — App Context & UI System (shared reference)
 
 > Read this before writing or executing ANY future-implementation plan. It exists so every plan gives the executing agent the same ground truth instead of re-deriving it, and so no plan invents new component styles, new route conventions, or a parallel architecture. Established and proven across the advanced-reporting, assessment-and-examination, and attachments-book builds this session — every rule below has real working code behind it, not aspiration.
 
@@ -73,7 +73,7 @@ Two established patterns, pick based on need:
 - **Never trust a piped/tailed exit code.** Always: `docker compose build app > /tmp/log.txt 2>&1; echo "EXIT_CODE:$?" >> /tmp/log.txt` and read the real code from the file.
 - New service healthchecks that gate app startup: `depends_on: <service>: condition: service_healthy` on `app`, plus a real `healthcheck:` block with a generous `start_period` on the new service. Verify the gate actually held (check container start timestamps), don't just trust the YAML.
 - If Docker Desktop's engine itself stops responding mid-session (has happened once, unrelated to any code change), restart it: `Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"` then poll `docker info` until it responds (~10-30s typical).
-- Auth sessions are invalidated by container restarts. Re-login test accounts after every redeploy. Seed password for both demo tenants: `Admin123!` (`src/scripts/seed.ts`, `SCHOOL_ADMIN_SEED_PASSWORD` env override). Known seeded admins: `y.elamrani@atlas.ma` (Atlas tenant `c9177d8a-d1c8-491d-a56b-70f082865d79`), `admin@lango.ma` (Lango tenant `17c1db51-4a33-4b90-9396-b4bae1f585f8`).
+- Auth sessions are invalidated by container restarts. Re-login test accounts after every redeploy. Seed password for both demo tenants: `Admin123!` (`src/scripts/seed.ts`, `SCHOOL_ADMIN_SEED_PASSWORD` env override). Known seeded admins: `y.elamrani@atlas.ma` (Atlas tenant `c9177d8a-d1c8-491d-a56b-70f082865d79`), `admin@schoolos.ma` (SchoolOS tenant `17c1db51-4a33-4b90-9396-b4bae1f585f8`).
 - No real student/employee login credentials exist for seeded test accounts, and better-auth signs its session cookie (a raw DB-inserted session-token row will NOT authenticate). To test a route as a specific student/staff member without their password, add a narrow `?asXId=`-style admin-preview override restricted to `school_admin`/`super_admin` (precedent: homework route's `?studentId=`, attachments-book's `?asStudentId=`) rather than fighting cookie signing.
 
 ## 8. Testing

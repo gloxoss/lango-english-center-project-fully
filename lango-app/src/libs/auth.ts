@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { createAuthMiddleware } from 'better-auth/api';
@@ -88,14 +89,17 @@ export const auth = betterAuth({
         // production; do NOT keep writing plaintext OTPs to disk there.
         sendOTP: async ({ user, otp }) => {
           const tenantId = (user as { tenantId?: string | null }).tenantId ?? null;
-          console.log(`[2FA OTP] user=${user.id} email=${user.email} code=${otp}`);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log(`[2FA OTP] user=${user.id} email=${user.email} (dispatched)`);
+          }
+          const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
           await db
             .insert(schema.twoFactorOtps)
             .values({
               userId: user.id,
               tenantId,
               email: user.email,
-              otp,
+              otp: hashedOtp,
               expiresAt: new Date(Date.now() + 3 * 60 * 1000).toISOString(),
             })
             .onConflictDoNothing();

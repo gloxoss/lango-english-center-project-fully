@@ -5,44 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lango SchoolOS — Mystical Fantasy RPG Preview</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=MedievalSharp&family=Cinzel:wght@600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@600&display=swap">
   <style>
-    :root {
-      --bg: #0d001a;
-      --surface: #1a0033;
-      --border: #ffd700;
-      --text: #f3e8ff;
-      --text-muted: #c084fc;
-      --primary: #9333ea;
-      --accent: #ffd700;
-      --radius: 0.375rem;
-    }
     body {
       font-family: 'Cinzel', serif;
       background: #0d001a;
       color: #f3e8ff;
       min-height: 100vh;
     }
-    h1, h2, h3, .head-font {
-      font-family: 'Cinzel Decorative', cursive;
-    }
+    h1, h2, h3, .head-font { font-family: 'Cinzel Decorative', cursive; }
     .custom-card {
       background: #1a0033;
       border: 1px solid #ffd700;
       border-radius: 0.375rem;
-      box-shadow: 0 0 20px rgba(147, 51, 234, 0.4);
+      box-shadow: 0 0 20px rgba(147,51,234,0.4);
       
     }
     .custom-btn-primary {
       background-color: #9333ea;
-      color: #000000;
+      color: #ffffff;
       border-radius: 0.375rem;
-      border: 1px solid #ffd700;
-      box-shadow: 0 0 20px rgba(147, 51, 234, 0.4);
+      
+      box-shadow: 0 0 20px rgba(147,51,234,0.4);
       transition: all 0.2s ease;
     }
     .custom-btn-primary:hover {
-      background-color: #7e22ce;
       transform: translateY(-1px);
     }
     .custom-btn-outline {
@@ -51,9 +38,6 @@
       color: #f3e8ff;
       border-radius: 0.375rem;
       transition: all 0.2s ease;
-    }
-    .custom-btn-outline:hover {
-      background: rgba(255,255,255,0.05);
     }
   </style>
 </head>
@@ -71,7 +55,7 @@
           <span class="text-xs opacity-75 font-mono">STYLE ID: fantasy</span>
         </div>
         <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Mystical Fantasy RPG</h1>
-        <p class="text-sm mt-1" style="color: #c084fc;">Arcane runes, ancient parchment scrolls, gold ornamental gilding, and mystical spell cards.</p>
+        <p class="text-sm mt-1" style="color: #c084fc;">Magic RPG deep purple and gold spell cards.</p>
       </div>
 
       <div class="flex items-center gap-3">
@@ -154,7 +138,7 @@
                 <td class="py-3 px-3 font-semibold">Youssef Tazi</td>
                 <td class="px-3" style="color: #c084fc;">Casablanca Oasis</td>
                 <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-mono" style="background: rgba(255,255,255,0.08);">A2 Beginner</span></td>
-                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #9333ea;">Pending</span></td>
+                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #ffd700;">Pending</span></td>
                 <td class="px-3 text-right font-bold">1,100 MAD</td>
               </tr>
             </tbody>
@@ -162,36 +146,34 @@
         </div>
       </div>
 
-      <!-- Right Column: Interactive Controls & Tokens -->
+      <!-- Right Column: Interactive Form & Tokens -->
       <div class="space-y-6">
 
-        <!-- Action Card -->
         <div class="custom-card p-6">
           <h3 class="text-base font-bold mb-1">Interactive Form Control</h3>
-          <p class="text-xs mb-4" style="color: #c084fc;">Test inputs and toggle behaviors</p>
+          <p class="text-xs mb-4" style="color: #c084fc;">Test inputs and typography response</p>
           
           <div class="space-y-3">
             <div>
-              <label class="block text-xs font-medium mb-1" style="color: #c084fc;">Student Email / Phone</label>
-              <input type="text" placeholder="student@example.com" class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: rgba(255,255,255,0.05); border-color: #ffd700; color: #f3e8ff;">
+              <label class="block text-xs font-medium mb-1" style="color: #c084fc;">Student Contact</label>
+              <input type="text" placeholder="student@lango.ma" class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: rgba(255,255,255,0.05); border-color: #ffd700; color: #f3e8ff;">
             </div>
 
             <div>
-              <label class="block text-xs font-medium mb-1" style="color: #c084fc;">Target Course Level</label>
+              <label class="block text-xs font-medium mb-1" style="color: #c084fc;">Program Track</label>
               <select class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: #18181b; border-color: #ffd700; color: #f3e8ff;">
                 <option>General English (A1 - C2)</option>
                 <option>Business English & Public Speaking</option>
-                <option>IELTS / TOEFL Intensive Prep</option>
+                <option>IELTS / Cambridge Exam Prep</option>
               </select>
             </div>
 
             <button class="custom-btn-primary w-full py-2.5 text-xs font-bold shadow mt-2">
-              Confirm & Enroll Student
+              Confirm & Enroll
             </button>
           </div>
         </div>
 
-        <!-- Token Inspector -->
         <div class="custom-card p-5 text-xs space-y-2">
           <div class="font-bold border-b pb-2 flex items-center justify-between" style="border-color: #ffd700;">
             <span>🎨 DESIGN TOKENS</span>

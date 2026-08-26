@@ -1,9 +1,21 @@
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { branches } from '@/models/Schema';
+
+const updateBranchSchema = z.object({
+  name: z.string().trim().min(1).max(255).optional(),
+  code: z.string().trim().min(1).max(50).optional(),
+  city: z.string().trim().max(255).nullable().optional(),
+  address: z.string().trim().max(1000).nullable().optional(),
+  phone: z.string().trim().max(50).nullable().optional(),
+  email: z.string().trim().email().max(255).nullable().optional(),
+  isActive: z.boolean().optional(),
+}).strict();
 
 export async function PUT(
   request: Request,
@@ -14,7 +26,7 @@ export async function PUT(
     const tenantId = requireTenant(ctx);
     const { id } = await params;
 
-    const body = await request.json();
+    const body = await parseJson(request, updateBranchSchema);
     const { name, code, city, address, phone, email, isActive } = body;
 
     const [existing] = await db

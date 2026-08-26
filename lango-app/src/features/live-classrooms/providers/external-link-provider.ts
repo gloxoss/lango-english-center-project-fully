@@ -1,6 +1,6 @@
 // External-link connector (Google Meet / Zoom / Teams style, reduced capability).
 //
-// Lango can only store and gate the link — there is no room lifecycle, no
+// SchoolOS can only store and gate the link — there is no room lifecycle, no
 // attendance events, no recordings, no webhook. Capability flags are all false
 // so the UI disables unsupported controls honestly.
 //

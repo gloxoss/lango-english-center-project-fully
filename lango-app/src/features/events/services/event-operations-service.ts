@@ -1,9 +1,10 @@
 import { db } from '@/libs/DB';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import {
   events, eventSchedules, eventOccurrences, eventVenues, eventAudienceRules,
   eventRegistrations, eventWaitlistEntries, eventCheckins, eventAuditEvents,
   eventFeedback, eventTypes, eventTasks, eventIncidents, eventCommunicationJobs,
+  eventAttachments,
 } from '@/features/events/models/events-schema';
 import { ApiError } from '@/libs/api/errors';
 import { sendNotification } from '@/libs/services/notification-service';
@@ -198,6 +199,12 @@ export type UpdateEventInput = {
   visibility?: 'internal' | 'public' | 'targeted';
   timezone?: string;
   typeId?: string | null;
+  // Core-record edit also reaches the first schedule (start/end) and the first
+  // venue (name/capacity/online link). The full venues CRUD lives in the
+  // venues tab; this only edits the primary record surfaced by the "Modifier"
+  // modal.
+  schedule?: { startTime?: string; endTime?: string; timezone?: string };
+  venue?: { name?: string | null; capacity?: number | null; onlineLink?: string | null };
 };
 
 export async function updateEvent(
@@ -222,6 +229,58 @@ export async function updateEvent(
       ...(input.typeId !== undefined ? { typeId: input.typeId } : {}),
       updatedAt: new Date().toISOString(),
     }).where(eq(events.id, eventId)).returning();
+
+    if (input.schedule) {
+      const [sched] = await tx.select().from(eventSchedules)
+        .where(and(eq(eventSchedules.eventId, eventId), eq(eventSchedules.tenantId, tenantId)))
+        .orderBy(asc(eventSchedules.createdAt))
+        .limit(1);
+      if (sched) {
+        await tx.update(eventSchedules).set({
+          ...(input.schedule.startTime !== undefined ? { startTime: input.schedule.startTime } : {}),
+          ...(input.schedule.endTime !== undefined ? { endTime: input.schedule.endTime } : {}),
+          ...(input.schedule.timezone !== undefined ? { timezone: input.schedule.timezone } : {}),
+          updatedAt: new Date().toISOString(),
+        }).where(eq(eventSchedules.id, sched.id));
+        // Single-session events materialize exactly one occurrence; keep it in
+        // sync. Recurring series are left to the occurrence-level tooling.
+        if (sched.recurrenceRule === 'none') {
+          await tx.update(eventOccurrences).set({
+            ...(input.schedule.startTime !== undefined ? { startTime: input.schedule.startTime, originalDate: input.schedule.startTime.slice(0, 10) } : {}),
+            ...(input.schedule.endTime !== undefined ? { endTime: input.schedule.endTime } : {}),
+            updatedAt: new Date().toISOString(),
+          }).where(and(
+            eq(eventOccurrences.scheduleId, sched.id),
+            eq(eventOccurrences.tenantId, tenantId),
+          ));
+        }
+      }
+    }
+
+    if (input.venue) {
+      const [venue] = await tx.select().from(eventVenues)
+        .where(and(eq(eventVenues.eventId, eventId), eq(eventVenues.tenantId, tenantId)))
+        .orderBy(asc(eventVenues.createdAt))
+        .limit(1);
+      if (venue) {
+        await tx.update(eventVenues).set({
+          ...(input.venue.name !== undefined ? { name: input.venue.name } : {}),
+          ...(input.venue.capacity !== undefined ? { capacity: input.venue.capacity } : {}),
+          ...(input.venue.onlineLink !== undefined ? { onlineLink: input.venue.onlineLink } : {}),
+          updatedAt: new Date().toISOString(),
+        }).where(eq(eventVenues.id, venue.id));
+      } else {
+        await tx.insert(eventVenues).values({
+          tenantId,
+          eventId,
+          venueType: 'physical',
+          name: input.venue.name ?? null,
+          capacity: input.venue.capacity ?? null,
+          onlineLink: input.venue.onlineLink ?? null,
+        });
+      }
+    }
+
     await tx.insert(eventAuditEvents).values({
       tenantId,
       eventId,
@@ -542,14 +601,14 @@ export async function buildEventIcs(tenantId: string, eventId: string): Promise<
   const lines: string[] = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Lango//SchoolOS Events//EN',
+    'PRODID:-//SchoolOS//SchoolOS Events//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
   ];
   const venueName = venues[0]?.name ?? null;
   for (const occ of occurrences) {
     lines.push('BEGIN:VEVENT');
-    lines.push(`UID:${occ.id}@lango`);
+    lines.push(`UID:${occ.id}@schoolos`);
     lines.push(`DTSTAMP:${icsDate(new Date().toISOString())}`);
     lines.push(`DTSTART:${icsDate(occ.startTime)}`);
     lines.push(`DTEND:${icsDate(occ.endTime)}`);
@@ -651,6 +710,72 @@ export async function deleteEventVenue(tenantId: string, eventId: string, venueI
   const result = await db.delete(eventVenues)
     .where(and(eq(eventVenues.id, venueId), eq(eventVenues.eventId, eventId), eq(eventVenues.tenantId, tenantId)));
   if (!result.rowCount) throw new ApiError(404, 'EVENT_VENUE_NOT_FOUND', 'Lieu introuvable.');
+}
+
+// ---------------------------------------------------------------------------
+// Attachments
+// ---------------------------------------------------------------------------
+
+export type CreateAttachmentInput = {
+  title: string;
+  fileKey: string;
+  mimeType?: string | null;
+  sizeBytes?: number | null;
+  kind?: 'document' | 'image' | 'other';
+  occurrenceId?: string | null;
+};
+
+export async function listEventAttachments(tenantId: string, eventId: string) {
+  await assertEventInTenant(tenantId, eventId);
+  return db.select().from(eventAttachments)
+    .where(and(eq(eventAttachments.eventId, eventId), eq(eventAttachments.tenantId, tenantId)))
+    .orderBy(asc(eventAttachments.createdAt));
+}
+
+export async function addEventAttachment(tenantId: string, eventId: string, uploadedById: string, input: CreateAttachmentInput) {
+  await assertEventInTenant(tenantId, eventId);
+  if (input.occurrenceId) {
+    const [occ] = await db.select({ id: eventOccurrences.id }).from(eventOccurrences)
+      .where(and(eq(eventOccurrences.id, input.occurrenceId), eq(eventOccurrences.eventId, eventId), eq(eventOccurrences.tenantId, tenantId)))
+      .limit(1);
+    if (!occ) throw new ApiError(404, 'EVENT_OCCURRENCE_NOT_FOUND', 'Occurrence d\'événement introuvable.');
+  }
+  const [row] = await db.insert(eventAttachments).values({
+    tenantId,
+    eventId,
+    occurrenceId: input.occurrenceId ?? null,
+    title: input.title,
+    fileKey: input.fileKey,
+    mimeType: input.mimeType ?? null,
+    sizeBytes: input.sizeBytes ?? null,
+    kind: input.kind ?? 'document',
+    uploadedById,
+  }).returning();
+  if (!row) throw new ApiError(500, 'EVENT_ATTACHMENT_CREATE_FAILED', 'Impossible d\'enregistrer la pièce jointe.');
+  return row;
+}
+
+export async function getEventAttachment(tenantId: string, eventId: string, attachmentId: string) {
+  await assertEventInTenant(tenantId, eventId);
+  const [row] = await db.select().from(eventAttachments)
+    .where(and(
+      eq(eventAttachments.id, attachmentId),
+      eq(eventAttachments.eventId, eventId),
+      eq(eventAttachments.tenantId, tenantId),
+    ))
+    .limit(1);
+  return row ?? null;
+}
+
+export async function deleteEventAttachment(tenantId: string, eventId: string, attachmentId: string) {
+  await assertEventInTenant(tenantId, eventId);
+  const result = await db.delete(eventAttachments)
+    .where(and(
+      eq(eventAttachments.id, attachmentId),
+      eq(eventAttachments.eventId, eventId),
+      eq(eventAttachments.tenantId, tenantId),
+    ));
+  if (!result.rowCount) throw new ApiError(404, 'EVENT_ATTACHMENT_NOT_FOUND', 'Pièce jointe introuvable.');
 }
 
 // ---------------------------------------------------------------------------

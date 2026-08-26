@@ -1,7 +1,7 @@
 # UltraPlan Discovery — Advanced Reporting Add-on
 
 ## Project Idea
-Build an enterprise-grade, governed Advanced Reporting Add-on for the Lango English Center platform (`lango-app`), covering catalog management, cross-module navigation, parameter validation, asynchronous CSV/XLSX/PDF exports, immutable period snapshots, scheduled background delivery, projection watermarks, and domain-specific operational & statutory reports (Student, Fees, Financial, Attendance, HR, Examination, Inventory).
+Build an enterprise-grade, governed Advanced Reporting Add-on for the SchoolOS English Center platform (`schoolos-app`), covering catalog management, cross-module navigation, parameter validation, asynchronous CSV/XLSX/PDF exports, immutable period snapshots, scheduled background delivery, projection watermarks, and domain-specific operational & statutory reports (Student, Fees, Financial, Attendance, HR, Examination, Inventory).
 
 ## Codebase Context
 - **Framework:** Next.js 15 (App Router), TypeScript, Tailwind CSS v4, React 19, Recharts.

@@ -3,13 +3,15 @@ import { z } from 'zod';
 import { requireTenant, type RequestContext } from '@/libs/api/context';
 import { ApiError } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
-import { session, user } from '@/models/Schema';
+import { session, sessionYears, studentPlacements, user } from '@/models/Schema';
 import {
   scheduledJobControls,
   scheduledJobDefinitions,
   scheduledJobRuns,
 } from '@/features/settings/models/settings-schema';
 import { runAllActiveFinanceReminders } from '@/libs/services/finance-reminders';
+import { transitionStudentToAlumni } from '@/libs/services/alumni-transition';
+import { getEffectiveValue } from '@/libs/settings/registry';
 
 // ---------------------------------------------------------------------------
 // DB-backed scheduled jobs registry. Each job has an allowlisted handler - no
@@ -22,6 +24,7 @@ export const SCHEDULED_HANDLERS = {
   purge_sessions: { label: 'Purge des sessions expirées' },
   noop: { label: 'Test (aucun effet)' },
   feeReminderJob: { label: 'Relances de frais automatiques' },
+  alumniTransitionJob: { label: 'Transition automatique vers Anciens Élèves' },
 } as const;
 
 const HANDLER_IMPLS: Record<string, (tenantId: string) => Promise<Record<string, unknown>>> = {
@@ -40,6 +43,59 @@ const HANDLER_IMPLS: Record<string, (tenantId: string) => Promise<Record<string,
     const today = new Date().toISOString().slice(0, 10);
     const { runs, sentTotal } = await runAllActiveFinanceReminders(tenantId, null, today);
     return { reminderRuns: runs, remindersSent: sentTotal };
+  },
+  // Auto-transitions students whose *current* placement points at a session
+  // year that has already ended - i.e. finished the year but never re-enrolled
+  // or promoted into a newer one. Opt-in by construction: it only runs when an
+  // admin creates/enables a job with this handler, never unconditionally.
+  async alumniTransitionJob(tenantId) {
+    const enabled = await getEffectiveValue(tenantId, null, 'alumni.autoTransitionEnabled');
+    if (enabled.value !== true) {
+      return { note: 'Transition automatique désactivée pour cet établissement.' };
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    // System jobs carry no request context; the transition audit + SMS sender
+    // need a real user FK, so attribute the run to the tenant's first active
+    // school_admin rather than fabricating a phantom actor id.
+    const [actor] = await db
+      .select({ id: user.id })
+      .from(user)
+      .where(and(eq(user.tenantId, tenantId), eq(user.role, 'school_admin'), eq(user.userStatus, 'active')))
+      .limit(1);
+    if (!actor) {
+      return { note: 'Aucun administrateur actif pour cet établissement.' };
+    }
+
+    const candidates = await db
+      .select({ id: user.id, sessionYearId: sessionYears.id })
+      .from(user)
+      .innerJoin(studentPlacements, and(
+        eq(studentPlacements.studentId, user.id),
+        eq(studentPlacements.isCurrent, true),
+      ))
+      .innerJoin(sessionYears, eq(studentPlacements.sessionYearId, sessionYears.id))
+      .where(and(
+        eq(user.tenantId, tenantId),
+        eq(user.role, 'student'),
+        eq(user.userStatus, 'active'),
+        lt(sessionYears.endDate, today),
+      ));
+
+    let transitioned = 0;
+    for (const candidate of candidates) {
+      try {
+        await db.transaction(async (tx) => {
+          await transitionStudentToAlumni(tx, tenantId, candidate.id, actor.id, candidate.sessionYearId);
+        });
+        transitioned += 1;
+      } catch (err) {
+        // One ineligible/concurrent student must not abort the whole run.
+        console.error('[alumni-transition] transition failed', candidate.id, err);
+      }
+    }
+    return { candidates: candidates.length, transitioned };
   },
 };
 

@@ -4,7 +4,7 @@
 
 ## 1. What's already real vs. what the source spec assumes
 
-The source spec's own "Where Lango is today" section is accurate and was verified again for this plan:
+The source spec's own "Where SchoolOS is today" section is accurate and was verified again for this plan:
 
 - **Confirmed dead**: `certificates`/`courses` tables — zero routes reference either, `Schema.ts` has an explicit header comment (`Schema.ts:98-103`) marking the whole `academicYears/academicTerms/programs/courses/studentGroups` chain as a dead LMS/course-platform remnant. Do not build on it, per the source spec's own instruction.
 - **Confirmed real and reusable**: `user` table already has `employeeId` (unique), `hireDate`, `qualification`, `documents` jsonb, `branchId`, `matricule` (unique), `classSectionId`, `photoUrl` (`Schema.ts:476-570`). `branches` has `name`/`code`/`address`/`phone`/`email`/`city` (`Schema.ts:76-96`) — **no logo field on branches**, only `tenants.logoUrl`/`faviconUrl` (`Schema.ts:60-74`).

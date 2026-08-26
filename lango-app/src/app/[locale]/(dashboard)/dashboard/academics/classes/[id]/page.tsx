@@ -7,6 +7,6 @@ export default async function ClassDetailPage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'academics.read' });
   return <ClassDetail360View id={id} locale={locale} />;
 }

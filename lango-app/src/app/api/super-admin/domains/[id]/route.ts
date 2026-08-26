@@ -5,6 +5,7 @@ import { tenantDomains } from '@/features/platform/models/domains-schema';
 import { requireRequestContext } from '@/libs/api/context';
 import { apiErrorResponse, ApiError } from '@/libs/api/errors';
 import { recordAudit } from '@/libs/api/audit';
+import { parseJson } from '@/libs/api/validation';
 import { eq } from 'drizzle-orm';
 
 const updateDomainSchema = z.object({
@@ -18,9 +19,8 @@ export async function PATCH(
   try {
     const context = await requireRequestContext(request, ['super_admin']);
     const resolvedParams = await params;
-    
-    const body = await request.json();
-    const parsed = updateDomainSchema.parse(body);
+
+    const parsed = await parseJson(request, updateDomainSchema);
 
     const [existing] = await db
       .select()

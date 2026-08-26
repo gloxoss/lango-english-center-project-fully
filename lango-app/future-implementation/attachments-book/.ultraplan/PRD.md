@@ -4,7 +4,7 @@
 
 ## 1. What We're Building
 
-A school-wide resource library inside Lango where teachers and admins upload learning materials once — worksheets, notes, presentations, answer keys, policy documents — and reuse them across classes instead of re-attaching the same file to every homework or announcement. Each resource can be aimed at exactly the right audience (the whole school, a role, a specific class, or a specific student), gets scanned for malware before anyone can download it, and keeps a full version history so replacing a file never breaks something that already links to it.
+A school-wide resource library inside SchoolOS where teachers and admins upload learning materials once — worksheets, notes, presentations, answer keys, policy documents — and reuse them across classes instead of re-attaching the same file to every homework or announcement. Each resource can be aimed at exactly the right audience (the whole school, a role, a specific class, or a specific student), gets scanned for malware before anyone can download it, and keeps a full version history so replacing a file never breaks something that already links to it.
 
 ## 2. The Problem
 
@@ -32,7 +32,7 @@ Today, a teacher who wants to share a worksheet with three different classes has
 
 ## 5. How It Should Feel
 
-Same look and feel as the rest of the Lango dashboard — the slate/blue palette, dense data tables, a KPI banner at the top of the library page, and a slide-out inspector for a resource's details. No separate visual language, no new component library. Uploading feels like a normal form: pick a file, fill in a few fields, hit publish — not a multi-step wizard, since v1 uploads are single-request and don't need one.
+Same look and feel as the rest of the SchoolOS dashboard — the slate/blue palette, dense data tables, a KPI banner at the top of the library page, and a slide-out inspector for a resource's details. No separate visual language, no new component library. Uploading feels like a normal form: pick a file, fill in a few fields, hit publish — not a multi-step wizard, since v1 uploads are single-request and don't need one.
 
 ## 6. What It Connects To
 

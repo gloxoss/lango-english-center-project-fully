@@ -1,4 +1,4 @@
-﻿# SchoolOS/Lango — Master Agent Context Prompt
+﻿# SchoolOS — Master Agent Context Prompt
 # Version: 2026-08-03 | Owner: Oussama Zaki (Zakio)
 # Give this ENTIRE file to any new agent before asking it to do any work.
 
@@ -6,13 +6,13 @@
 
 ## IDENTITY & MISSION
 
-You are working on **SchoolOS / Lango** — a multi-tenant school-management SaaS built for Moroccan K-12 schools and language centers. The UI is trilingual: French (primary), Arabic (RTL), English.
+You are working on **SchoolOS** — a multi-tenant school-management SaaS built for Moroccan K-12 schools and language centers. The UI is trilingual: French (primary), Arabic (RTL), English.
 
 Owner: **Oussama Zaki (Zakio)**. He is a software engineer and founder. Move fast, explain architecture clearly, don't hide complexity. Every line must be inspectable and understandable by him. Produce work he can continue manually.
 
 **Working directory (absolute, never cd into it):**
 ```
-c:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app
+c:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\schoolos\schoolos-english-center-project-fully\schoolos-app
 ```
 
 ---
@@ -373,7 +373,7 @@ App Shell:
 
 ### Local Build & Run
 ```powershell
-# From project root (lango-app/)
+# From project root (schoolos-app/)
 docker compose build               # builds BOTH app and migrate images
 docker compose build app           # build only app image
 docker compose build migrate       # build only migrate image (separate!)
@@ -397,10 +397,10 @@ curl http://localhost:3000/fr/dashboard/settings/migration
 tar -czf my-fix.tar.gz "src/path/to/changed/file.tsx" "src/another/file.ts"
 
 # 2. Upload to server
-scp -i "C:\Users\oussama\.gemini\antigravity\scratch\mypc.pem" -o StrictHostKeyChecking=no my-fix.tar.gz ubuntu@43.157.17.129:/home/ubuntu/lango-english-center-project-fully/lango-app/
+scp -i "C:\Users\oussama\.gemini\antigravity\scratch\mypc.pem" -o StrictHostKeyChecking=no my-fix.tar.gz ubuntu@43.157.17.129:/home/ubuntu/schoolos-english-center-project-fully/schoolos-app/
 
 # 3. SSH, extract, rebuild app container
-ssh -i "C:\Users\oussama\.gemini\antigravity\scratch\mypc.pem" -o StrictHostKeyChecking=no ubuntu@43.157.17.129 "cd /home/ubuntu/lango-english-center-project-fully/lango-app && tar -xzf my-fix.tar.gz && rm my-fix.tar.gz && docker compose up -d --build --force-recreate --no-deps app"
+ssh -i "C:\Users\oussama\.gemini\antigravity\scratch\mypc.pem" -o StrictHostKeyChecking=no ubuntu@43.157.17.129 "cd /home/ubuntu/schoolos-english-center-project-fully/schoolos-app && tar -xzf my-fix.tar.gz && rm my-fix.tar.gz && docker compose up -d --build --force-recreate --no-deps app"
 ```
 
 ### CRITICAL Migration Rules
@@ -415,7 +415,7 @@ ssh -i "C:\Users\oussama\.gemini\antigravity\scratch\mypc.pem" -o StrictHostKeyC
 | Email | Role | Tenant |
 |---|---|---|
 | `y.elamrani@atlas.ma` | school_admin | Atlas |
-| `admin@lango.ma` | school_admin | Lango |
+| `admin@schoolos.ma` | school_admin | SchoolOS |
 | `superadmin@schoolos.ma` | super_admin | cross-tenant |
 
 ---
@@ -529,7 +529,7 @@ PERMISSIONS = {
 
 ---
 
-## LANGO/SCHOOLOS PRODUCT CONTEXT
+## SCHOOLOS/SCHOOLOS PRODUCT CONTEXT
 
 SchoolOS is a Moroccan school management SaaS for K-12 schools and language centers. Core modules:
 

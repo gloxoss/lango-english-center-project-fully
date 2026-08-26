@@ -1,4 +1,4 @@
-# Graph Report - d:\Users\zakio\Desktop\Lango english center project fully  (2026-06-13)
+# Graph Report - d:\Users\zakio\Desktop\SchoolOS english center project fully  (2026-06-13)
 
 ## Corpus Check
 - 207 files · ~166,269 words
@@ -103,15 +103,15 @@
 
 ## Surprising Connections (you probably didn't know these)
 - `cn()` --calls--> `clsx`  [INFERRED]
-  lango-app/src/lib/utils.ts → lango-app/package.json
+  schoolos-app/src/lib/utils.ts → schoolos-app/package.json
 - `Avatar()` --calls--> `cn()`  [EXTRACTED]
-  lango-app/src/components/ui/avatar.tsx → lango-app/src/lib/utils.ts
+  schoolos-app/src/components/ui/avatar.tsx → schoolos-app/src/lib/utils.ts
 - `AvatarImage()` --calls--> `cn()`  [EXTRACTED]
-  lango-app/src/components/ui/avatar.tsx → lango-app/src/lib/utils.ts
+  schoolos-app/src/components/ui/avatar.tsx → schoolos-app/src/lib/utils.ts
 - `AvatarFallback()` --calls--> `cn()`  [EXTRACTED]
-  lango-app/src/components/ui/avatar.tsx → lango-app/src/lib/utils.ts
+  schoolos-app/src/components/ui/avatar.tsx → schoolos-app/src/lib/utils.ts
 - `AvatarBadge()` --calls--> `cn()`  [EXTRACTED]
-  lango-app/src/components/ui/avatar.tsx → lango-app/src/lib/utils.ts
+  schoolos-app/src/components/ui/avatar.tsx → schoolos-app/src/lib/utils.ts
 
 ## Communities (86 total, 11 thin omitted)
 

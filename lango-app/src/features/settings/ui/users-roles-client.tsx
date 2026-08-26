@@ -2,12 +2,13 @@
 // CLIENT ISLAND — owns search, filters, tab switching, invite modals, and role matrix mutation calls
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useEffect, useState, useTransition } from 'react';
 import Link from 'next/link';
 import {
   Users, UserPlus, Shield, Key, Search, Plus, Filter, Edit, CheckCircle2,
   AlertTriangle, Lock, Eye, Mail, Building2, ChevronRight, MoreVertical,
-  RefreshCw, Check, X, ShieldAlert, ArrowUpRight, ArrowRight
+  RefreshCw, Check, X, ShieldAlert, ArrowUpRight, ArrowRight, Copy, Trash2, Clock,
+  Link as LinkIcon, Send, UserCheck
 } from 'lucide-react';
 import { ACCESS_SCOPES, MATRIX_MODULES, ROLE_CONFIG } from '@/features/settings/data/access-scopes-config';
 
@@ -21,6 +22,16 @@ export type UserItem = {
   tfa: boolean;
   schoolName: string;
   accessScope: string;
+};
+
+export type InvitationItem = {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+  token: string;
+  expiresAt: string;
+  createdAt: string;
 };
 
 export type AuditEvent = {
@@ -68,7 +79,7 @@ type Props = {
 };
 
 export function UsersRolesClient({ initialUsers, initialMatrix, initialAuditEvents }: Props) {
-  const [activeTab, setActiveTab] = useState<'users' | 'matrix'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'invitations' | 'matrix'>('users');
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -77,15 +88,61 @@ export function UsersRolesClient({ initialUsers, initialMatrix, initialAuditEven
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const [auditEvents] = useState<AuditEvent[]>(initialAuditEvents);
 
+  const [invitations, setInvitations] = useState<InvitationItem[]>([]);
+  const [loadingInvitations, setLoadingInvitations] = useState(false);
+  const [copiedToken, setCopiedToken] = useState<string | null>(null);
+
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [invitePhone, setInvitePhone] = useState('');
   const [inviteRole, setInviteRole] = useState('teacher');
   const [inviteStatus, setInviteStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [inviteMessage, setInviteMessage] = useState('');
+  const [generatedInviteUrl, setGeneratedInviteUrl] = useState<string | null>(null);
 
   const [selectedRoleForMatrix, setSelectedRoleForMatrix] = useState<string>('school_admin');
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (activeTab === 'invitations') {
+      void fetchInvitations();
+    }
+  }, [activeTab]);
+
+  async function fetchInvitations() {
+    try {
+      setLoadingInvitations(true);
+      const res = await fetch('/api/settings/invitations');
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setInvitations(json.data ?? []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch invitations:', err);
+    } finally {
+      setLoadingInvitations(false);
+    }
+  }
+
+  async function handleRevokeInvitation(id: string) {
+    try {
+      const res = await fetch(`/api/settings/invitations/${id}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setInvitations(prev =>
+          prev.map(inv => (inv.id === id ? { ...inv, status: 'revoked' } : inv))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to revoke invitation:', err);
+    }
+  }
+
+  function handleCopyInviteLink(token: string) {
+    const url = `${window.location.origin}/invitations/${token}`;
+    void navigator.clipboard.writeText(url);
+    setCopiedToken(token);
+    setTimeout(() => setCopiedToken(null), 2500);
+  }
 
   // Filtered Users List
   const filteredUsers = users.filter(u => {
@@ -96,11 +153,18 @@ export function UsersRolesClient({ initialUsers, initialMatrix, initialAuditEven
     return matchesSearch && matchesRole && matchesStatus;
   });
 
+  // Filtered Invitations List
+  const filteredInvitations = invitations.filter(inv => {
+    const matchesSearch = inv.email.toLowerCase().includes(search.toLowerCase());
+    const matchesRole = roleFilter === 'ALL' || inv.role === roleFilter;
+    const matchesStatus = statusFilter === 'ALL' || inv.status === statusFilter;
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
   // Calculate Stat Summary Counts
   const activeCount = users.filter(u => u.status === 'Actif' || u.status === 'active').length;
-  // The DB has no 'pending' status; "pending activation" honestly means a created
-  // account that has never logged in.
   const pendingCount = users.filter(u => !u.lastLogin).length;
+  const pendingInvitesCount = invitations.filter(i => i.status === 'pending').length;
   const noTfaSensitiveCount = users.filter(u => !u.tfa && (u.role === 'school_admin' || u.role === 'accountant' || u.role === 'super_admin')).length;
 
   // Re-fetch the staff list after a successful invite so the table reflects the DB.
@@ -122,8 +186,6 @@ export function UsersRolesClient({ initialUsers, initialMatrix, initialAuditEven
         accessScope: accessScopeForRole(ROLE_LABEL_TO_ENUM[u.role] ?? u.role),
       }));
 
-      // Merge by id, preserving server-provided campus/scope/2FA for rows the API
-      // does not carry (e.g. newly invited users get sensible defaults).
       setUsers(prev => {
         const merged = new Map(prev.map(u => [u.id, u]));
         for (const f of fetched) {
@@ -150,40 +212,29 @@ export function UsersRolesClient({ initialUsers, initialMatrix, initialAuditEven
     if (!inviteEmail) return;
     setInviteStatus('idle');
     setInviteMessage('');
+    setGeneratedInviteUrl(null);
     try {
-      const res = await fetch('/api/users', {
+      const res = await fetch('/api/settings/invitations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fullName: inviteEmail.split('@')[0] || 'Nouvel utilisateur',
           email: inviteEmail,
-          phone: invitePhone || undefined,
           role: inviteRole,
-          userStatus: 'active',
         }),
       });
       const json = await res.json();
-      if (!res.ok || !json.success) throw new Error(json.error?.message || 'Erreur de création du compte');
+      if (!res.ok || !json.success) {
+        throw new Error(json.error?.message || json.message || 'Erreur lors de la génération de l\'invitation');
+      }
 
-      // The server returns the true invitation state; we mirror it instead of
-      // claiming an SMS was sent. A user row alone is not a delivered invite.
-      const delivery = json.invitation?.deliveryStatus;
+      const fullUrl = `${window.location.origin}/invitations/${json.data.token}`;
+      setGeneratedInviteUrl(fullUrl);
       setInviteStatus('success');
-      setInviteMessage(
-        delivery === 'queued'
-          ? 'Compte créé — lien d\'activation généré, SMS mis en file d\'attente.'
-          : 'Compte créé — aucun numéro de téléphone fourni, aucun lien d\'activation généré. Ajoutez un téléphone puis régénérez l\'accès.',
-      );
-      void refreshUsers();
-      setTimeout(() => {
-        setInviteModalOpen(false);
-        setInviteStatus('idle');
-        setInviteMessage('');
-        setInviteEmail('');
-        setInvitePhone('');
-      }, 2500);
-    } catch {
+      setInviteMessage(json.message || 'Invitation générée avec succès !');
+      void fetchInvitations();
+    } catch (err: any) {
       setInviteStatus('error');
+      setInviteMessage(err?.message || 'Erreur lors de l\'envoi de l\'invitation.');
     }
   }
 
@@ -349,6 +400,21 @@ export function UsersRolesClient({ initialUsers, initialMatrix, initialAuditEven
         >
           <Users className="w-4 h-4" />
           Utilisateurs &amp; Périmètres ({users.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('invitations')}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
+            activeTab === 'invitations'
+              ? 'bg-[#4B6BFB] text-white shadow-sm'
+              : 'text-[#6B7280] hover:text-[#111827] hover:bg-[#F9FAFB]'
+          }`}
+        >
+          <Mail className="w-4 h-4" />
+          Invitations d'Équipe {pendingInvitesCount > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+              {pendingInvitesCount}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveTab('matrix')}
@@ -555,7 +621,181 @@ export function UsersRolesClient({ initialUsers, initialMatrix, initialAuditEven
         </div>
       )}
 
-      {/* ── TAB 2: Matrice des Rôles & Permissions ── */}
+      {/* ── TAB 2: Invitations d'Équipe ── */}
+      {activeTab === 'invitations' && (
+        <div className="flex flex-col gap-6">
+          <div className="bg-white p-4 rounded-2xl border border-[#E5E7EB] flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
+            <div className="relative w-full sm:w-80">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9CA3AF]" />
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Rechercher par email..."
+                className="w-full pl-9 pr-3 py-2 text-xs bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#4B6BFB]/20"
+              />
+            </div>
+
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <select
+                value={roleFilter}
+                onChange={e => setRoleFilter(e.target.value)}
+                className="px-3 py-2 text-xs bg-white border border-[#E5E7EB] rounded-xl text-[#374151] focus:outline-none"
+              >
+                <option value="ALL">Tous les rôles</option>
+                {Object.entries(ROLE_CONFIG).map(([k, v]) => (
+                  <option key={k} value={k}>{v.label}</option>
+                ))}
+              </select>
+
+              <select
+                value={statusFilter}
+                onChange={e => setStatusFilter(e.target.value)}
+                className="px-3 py-2 text-xs bg-white border border-[#E5E7EB] rounded-xl text-[#374151] focus:outline-none"
+              >
+                <option value="ALL">Tous les statuts</option>
+                <option value="pending">En attente</option>
+                <option value="accepted">Acceptée</option>
+                <option value="revoked">Révoquée</option>
+                <option value="expired">Expirée</option>
+              </select>
+
+              <button
+                onClick={() => void fetchInvitations()}
+                className="p-2 text-[#6B7280] hover:text-[#111827] hover:bg-[#F9FAFB] rounded-xl border border-[#E5E7EB]"
+                title="Actualiser la liste"
+              >
+                <RefreshCw className={`w-4 h-4 ${loadingInvitations ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden shadow-2xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#F9FAFB] text-[#6B7280] font-semibold border-b border-[#E5E7EB]">
+                  <tr>
+                    <th className="py-3 px-4">Email Invité</th>
+                    <th className="py-3 px-4">Rôle Attribué</th>
+                    <th className="py-3 px-4">Statut</th>
+                    <th className="py-3 px-4">Date d'expiration</th>
+                    <th className="py-3 px-4">Lien d'invitation</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#F3F4F6]">
+                  {loadingInvitations ? (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-slate-400">
+                        Chargement des invitations...
+                      </td>
+                    </tr>
+                  ) : filteredInvitations.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-slate-400">
+                        Aucune invitation trouvée. Cliquez sur "Inviter un utilisateur" pour commencer.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredInvitations.map(inv => {
+                      const isExpired = new Date(inv.expiresAt).getTime() < Date.now();
+                      const effectiveStatus = inv.status === 'pending' && isExpired ? 'expired' : inv.status;
+
+                      let statusBadge = (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                          <Clock className="w-3 h-3 mr-1" /> En attente
+                        </span>
+                      );
+                      if (effectiveStatus === 'accepted') {
+                        statusBadge = (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <CheckCircle2 className="w-3 h-3 mr-1" /> Acceptée
+                          </span>
+                        );
+                      } else if (effectiveStatus === 'revoked') {
+                        statusBadge = (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                            <X className="w-3 h-3 mr-1" /> Révoquée
+                          </span>
+                        );
+                      } else if (effectiveStatus === 'expired') {
+                        statusBadge = (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                            <AlertTriangle className="w-3 h-3 mr-1" /> Expirée
+                          </span>
+                        );
+                      }
+
+                      return (
+                        <tr key={inv.id} className="hover:bg-[#F9FAFB]">
+                          <td className="py-3 px-4 font-semibold text-[#111827]">
+                            <div className="flex items-center gap-2">
+                              <Mail className="w-3.5 h-3.5 text-slate-400" />
+                              <span>{inv.email}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E4EDFD] text-[#2487B8]">
+                              {ROLE_CONFIG[inv.role]?.label || inv.role}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">{statusBadge}</td>
+                          <td className="py-3 px-4 text-[#6B7280] text-[11px]">
+                            {new Date(inv.expiresAt).toLocaleDateString('fr-FR', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </td>
+                          <td className="py-3 px-4">
+                            {effectiveStatus === 'pending' ? (
+                              <button
+                                type="button"
+                                onClick={() => handleCopyInviteLink(inv.token)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-[#0066FF] hover:text-[#0052CC] bg-blue-50 border border-blue-100 rounded-lg transition-colors cursor-pointer"
+                              >
+                                {copiedToken === inv.token ? (
+                                  <>
+                                    <Check className="w-3 h-3 text-emerald-600" />
+                                    <span className="text-emerald-700 font-bold">Copié !</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3 h-3" />
+                                    <span>Copier le lien</span>
+                                  </>
+                                )}
+                              </button>
+                            ) : (
+                              <span className="text-[11px] text-slate-400">—</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            {effectiveStatus === 'pending' && (
+                              <button
+                                type="button"
+                                onClick={() => void handleRevokeInvitation(inv.id)}
+                                className="text-rose-600 hover:text-rose-800 text-[11px] font-bold p-1 rounded hover:bg-rose-50 inline-flex items-center gap-1 transition-colors"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                <span>Révoquer</span>
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 3: Matrice des Rôles & Permissions ── */}
       {activeTab === 'matrix' && (
         <div className="bg-white p-6 rounded-2xl border border-[#E5E7EB] space-y-6 shadow-2xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F3F4F6] pb-4">
@@ -646,75 +886,135 @@ export function UsersRolesClient({ initialUsers, initialMatrix, initialAuditEven
         <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl border border-[#E5E7EB]">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-[#111827]">Inviter un nouvel utilisateur</h3>
-              <button onClick={() => setInviteModalOpen(false)} className="text-[#9CA3AF] hover:text-[#111827]">
+              <h3 className="text-base font-bold text-[#111827]">Inviter un collaborateur</h3>
+              <button
+                onClick={() => {
+                  setInviteModalOpen(false);
+                  setGeneratedInviteUrl(null);
+                  setInviteStatus('idle');
+                  setInviteMessage('');
+                }}
+                className="text-[#9CA3AF] hover:text-[#111827]"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSendInvite} className="space-y-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#374151]">Adresse Email *</label>
-                <input
-                  type="email"
-                  required
-                  value={inviteEmail}
-                  onChange={e => setInviteEmail(e.target.value)}
-                  placeholder="nom@etablissement.ma"
-                  className="px-3 py-2 text-xs bg-white border border-[#E5E7EB] rounded-xl text-[#111827] focus:ring-2 focus:ring-[#4B6BFB]/20 focus:border-[#4B6BFB] outline-none"
-                />
-              </div>
+            {generatedInviteUrl ? (
+              <div className="space-y-4 py-2">
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-2">
+                  <div className="flex items-center gap-2 text-emerald-800 text-xs font-bold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Invitation créée avec succès !</span>
+                  </div>
+                  <p className="text-[11px] text-emerald-700">
+                    Transmettez ce lien direct à votre collaborateur pour qu'il active son compte. Le lien est valable pendant 7 jours.
+                  </p>
+                </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#374151]">Téléphone (pour le lien d'activation)</label>
-                <input
-                  type="tel"
-                  value={invitePhone}
-                  onChange={e => setInvitePhone(e.target.value)}
-                  placeholder="06 61 22 33 44"
-                  className="px-3 py-2 text-xs bg-white border border-[#E5E7EB] rounded-xl text-[#111827] outline-none"
-                />
-                <p className="text-[10px] text-[#6B7280]">
-                  Sans téléphone, le compte est créé sans lien d'activation (aucun SMS ne peut être envoyé).
-                </p>
-              </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#374151]">Lien d'activation sécurisé</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={generatedInviteUrl}
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-[#111827] outline-none font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(generatedInviteUrl);
+                        setInviteMessage('Lien copié dans le presse-papier !');
+                      }}
+                      className="px-3 py-2 bg-[#0066FF] hover:bg-[#0052CC] text-white text-xs font-bold rounded-xl shrink-0 flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copier</span>
+                    </button>
+                  </div>
+                  {inviteMessage && (
+                    <p className="text-[11px] text-emerald-600 font-semibold">{inviteMessage}</p>
+                  )}
+                </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#374151]">Rôle attribué *</label>
-                <select
-                  value={inviteRole}
-                  onChange={e => setInviteRole(e.target.value)}
-                  className="px-3 py-2 text-xs bg-white border border-[#E5E7EB] rounded-xl text-[#111827] outline-none"
-                >
-                  {Object.entries(ROLE_CONFIG).filter(([k]) => k !== 'super_admin').map(([k, v]) => (
-                    <option key={k} value={k}>{v.label}</option>
-                  ))}
-                </select>
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGeneratedInviteUrl(null);
+                      setInviteStatus('idle');
+                      setInviteMessage('');
+                      setInviteEmail('');
+                    }}
+                    className="px-4 py-2 text-xs font-semibold text-[#0066FF] hover:bg-blue-50 rounded-xl"
+                  >
+                    Inviter un autre membre
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInviteModalOpen(false);
+                      setGeneratedInviteUrl(null);
+                      setInviteStatus('idle');
+                      setInviteMessage('');
+                      setInviteEmail('');
+                    }}
+                    className="px-4 py-2 text-xs font-semibold text-white bg-[#16212B] hover:bg-slate-800 rounded-xl shadow-xs"
+                  >
+                    Fermer
+                  </button>
+                </div>
               </div>
+            ) : (
+              <form onSubmit={handleSendInvite} className="space-y-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-[#374151]">Adresse Email Professionnelle *</label>
+                  <input
+                    type="email"
+                    required
+                    value={inviteEmail}
+                    onChange={e => setInviteEmail(e.target.value)}
+                    placeholder="nom@etablissement.ma"
+                    className="px-3 py-2 text-xs bg-white border border-[#E5E7EB] rounded-xl text-[#111827] focus:ring-2 focus:ring-[#4B6BFB]/20 focus:border-[#4B6BFB] outline-none"
+                  />
+                </div>
 
-              {inviteStatus === 'success' && (
-                <p className="text-xs text-emerald-600 font-medium">{inviteMessage}</p>
-              )}
-              {inviteStatus === 'error' && (
-                <p className="text-xs text-rose-600 font-medium">Erreur lors de la création du compte.</p>
-              )}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-[#374151]">Rôle attribué *</label>
+                  <select
+                    value={inviteRole}
+                    onChange={e => setInviteRole(e.target.value)}
+                    className="px-3 py-2 text-xs bg-white border border-[#E5E7EB] rounded-xl text-[#111827] outline-none"
+                  >
+                    {Object.entries(ROLE_CONFIG).filter(([k]) => k !== 'super_admin').map(([k, v]) => (
+                      <option key={k} value={k}>{v.label}</option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setInviteModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-[#6B7280] hover:bg-[#F9FAFB] rounded-xl"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-xs font-semibold text-white bg-[#4B6BFB] hover:bg-[#3B5BDB] rounded-xl shadow-xs"
-                >
-                  Envoyer l'invitation
-                </button>
-              </div>
-            </form>
+                {inviteStatus === 'error' && (
+                  <p className="text-xs text-rose-600 font-medium">{inviteMessage}</p>
+                )}
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setInviteModalOpen(false)}
+                    className="px-4 py-2 text-xs font-semibold text-[#6B7280] hover:bg-[#F9FAFB] rounded-xl"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 text-xs font-semibold text-white bg-[#0066FF] hover:bg-[#0052CC] rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Générer l'invitation</span>
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

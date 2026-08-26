@@ -1,10 +1,10 @@
 # UltraPlan PRD — Advanced Reporting Add-on
 
 ## 1. What We're Building
-The Advanced Reporting Add-on is a governed, enterprise-grade reporting, analytics, export, and scheduled delivery system for Lango English Center (`lango-app`). It introduces a centralized Report Center catalog, asynchronous CSV/XLSX/PDF generation, saved filter views, period snapshots, automated delivery via background schedules, projection freshness tracking, and curated report suites across all 7 operational domains (Student, Fees, Financial, Attendance, HR, Examination, Inventory).
+The Advanced Reporting Add-on is a governed, enterprise-grade reporting, analytics, export, and scheduled delivery system for SchoolOS English Center (`schoolos-app`). It introduces a centralized Report Center catalog, asynchronous CSV/XLSX/PDF generation, saved filter views, period snapshots, automated delivery via background schedules, projection freshness tracking, and curated report suites across all 7 operational domains (Student, Fees, Financial, Attendance, HR, Examination, Inventory).
 
 ## 2. The Problem
-Lango's core modules currently rely on isolated client-side exports or basic list views. School leaders, accountants, and administrators lack:
+SchoolOS's core modules currently rely on isolated client-side exports or basic list views. School leaders, accountants, and administrators lack:
 - A single governed catalog to discover and run cross-module reports.
 - Reliable asynchronous background exports for large datasets without timing out web requests.
 - Immutable snapshotting for closed financial periods and official student report cards.

@@ -1,6 +1,6 @@
 # 📘 Master Operational & Business Logic Guide — Advanced Reporting Add-on
 
-> **SchoolOS / Lango English Center Project**  
+> **SchoolOS English Center Project**  
 > **Status:** Active Add-on Module  
 > **Target Audience:** School Administrators, Technical Leads, and System Operators  
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,9 @@ import {
 } from '../data/assessment-policies-config';
 
 export function AssessmentPoliciesClient({ locale: _locale }: { locale?: string } = {}) {
+  const [classes, setClasses] = useState<{ id: string; name: string; periodType: 'semester' | 'trimester' | 'month' }[]>([]);
+  const [classId, setClassId] = useState('');
+  const [period, setPeriod] = useState('1');
   const [cycle, setCycle] = useState('Secondaire Qualifiant (BAC)');
   const [rules, setRules] = useState<EvaluationRule[]>(MOCK_WEIGHTS);
   const [passingScore, setPassingScore] = useState<number>(10);
@@ -25,6 +28,9 @@ export function AssessmentPoliciesClient({ locale: _locale }: { locale?: string 
   const [newRule, setNewRule] = useState({ name: '', weight: '10', description: '' });
 
   const totalWeight = rules.reduce((acc, curr) => acc + curr.weight, 0);
+  useEffect(() => { fetch('/api/academics/classes?pageSize=200').then(r => r.json()).then(j => { if (j.success) { setClasses(j.data); setClassId(j.data[0]?.id ?? ''); } }); }, []);
+  const periodType = classes.find(c => c.id === classId)?.periodType ?? 'semester';
+  const periodCount = periodType === 'semester' ? 2 : periodType === 'trimester' ? 3 : 12;
 
   const handleRuleWeightChange = (id: string, newWeight: number) => {
     setRules(prev => prev.map(r => r.id === id ? { ...r, weight: Math.max(0, newWeight) } : r));
@@ -77,6 +83,8 @@ export function AssessmentPoliciesClient({ locale: _locale }: { locale?: string 
               <option value="Collège">Collège (1AC - 3AC)</option>
               <option value="Primaire">Primaire</option>
             </select>
+            <select value={classId} onChange={e => { setClassId(e.target.value); setPeriod('1'); }} className="h-10 px-3 rounded-xl border border-slate-200 text-xs font-extrabold bg-white text-[#16212B]"><option value="">Classe…</option>{classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+            <select value={period} onChange={e => setPeriod(e.target.value)} className="h-10 px-3 rounded-xl border border-slate-200 text-xs font-extrabold bg-white text-[#16212B]">{Array.from({ length: periodCount }, (_, i) => <option key={i + 1} value={String(i + 1)}>{periodType === 'month' ? `Mois ${i + 1}` : periodType === 'trimester' ? `Trimestre ${i + 1}` : `Semestre ${i + 1}`}</option>)}</select>
           </div>
 
           <div className={`px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 ${

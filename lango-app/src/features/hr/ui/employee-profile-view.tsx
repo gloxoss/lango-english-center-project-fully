@@ -9,9 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  AlertCircle, ArrowLeft, Building2, Calendar, CalendarClock, FileText, History, Loader2, Lock, Mail, Pencil, Phone, Save, UserRound, Wallet, X,
+  AlertCircle, ArrowLeft, Building2, Calendar, CalendarClock, FileText, History, IdCard, Loader2, Lock, Mail, Pencil, Phone, Save, UserRound, Wallet, X,
 } from 'lucide-react';
 import { EmployeeDocumentsView } from '@/features/hr/ui/employee-documents-view';
+import { IssueCardDialog } from '@/features/cards/ui/issue-card-dialog';
+import { usePermissions } from '@/hooks/use-permissions';
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
@@ -80,6 +82,7 @@ function monthLabel(year: number, month: number) {
 
 export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
   const router = useRouter();
+  const { can } = usePermissions();
   const [employee, setEmployee] = useState<EmployeeRow | null>(null);
   const [events, setEvents] = useState<EmploymentEventRow[]>([]);
   const [records, setRecords] = useState<PayrollAttendance | null>(null);
@@ -94,6 +97,7 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [issueCardOpen, setIssueCardOpen] = useState(false);
   const [form, setForm] = useState<Record<Field, string>>({
     departmentId: '', designationId: '', managerEmployeeId: '',
     employmentType: '', employmentStatus: '', hireDate: '', contractStartDate: '', contractEndDate: '', workloadHours: '',
@@ -209,6 +213,9 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-[#16212B]">Dossier employé</h1>
         </div>
+        {can('cards.issue') && employee.userId && (
+          <Button variant="outline" onClick={() => setIssueCardOpen(true)}><IdCard className="mr-2 h-4 w-4" /> Émettre une carte</Button>
+        )}
         <Button onClick={openEdit}><Pencil className="mr-2 h-4 w-4" /> Modifier</Button>
       </div>
 
@@ -487,6 +494,16 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <IssueCardDialog
+        open={issueCardOpen}
+        onOpenChange={setIssueCardOpen}
+        subjectType="employee"
+        templateType="employee_id"
+        subjectId={employee.userId ?? ''}
+        subjectLabel="Employé"
+        subjectName={employee.displayName}
+      />
     </div>
   );
 }

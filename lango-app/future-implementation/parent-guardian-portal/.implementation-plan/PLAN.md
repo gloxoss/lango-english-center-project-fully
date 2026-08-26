@@ -4,7 +4,7 @@
 > and the Role Portals Foundation. This file is the atomic, gate-per-phase working
 > plan, grounded in the **current real state** of the repo (audited 2026-08-08,
 > live tree on :3002, Postgres via Docker, tenants Atlas
-> `ca40c88e-339c-4fea-b5c4-51d5c9cc0239` and Lango `f62f31eb-1fc8-4102-9145-a5ce0bca989b`).
+> `ca40c88e-339c-4fea-b5c4-51d5c9cc0239` and SchoolOS `f62f31eb-1fc8-4102-9145-a5ce0bca989b`).
 > See `DOWNSTREAM-INTEGRATION-NOTES.md` for the Foundation contract conformance +
 > gap documentation required by the wave rules.
 
@@ -386,12 +386,12 @@ session):
 
 ### 5.3 Mandatory release verification steps (20)
 1. Migration preflight: `0086` SQL parses; table before/after.
-2. Migration applies live (Atlas + Lango tenants); idempotent re-run no-op.
+2. Migration applies live (Atlas + SchoolOS tenants); idempotent re-run no-op.
 3. Relationship authz unit tests (`relationship-resolver.test.ts`) green.
 4. Foundation baseline: `node scripts/verify-portal-foundation.mjs` (40/40).
 5. `npx vitest run` for portal + guardian test files green.
 6. Authenticated HTTP adversarial sweep (`verify-parent-security.mjs`) green.
-7. Two-tenant isolation: Lango untouched by Atlas verify data (DB count 0).
+7. Two-tenant isolation: SchoolOS untouched by Atlas verify data (DB count 0).
 8. Cross-child / cross-guardian / sibling isolation live asserts green.
 9. Revocation-without-relogin live assert green.
 10. Addon-disable sweep green (transport/hostel/events).

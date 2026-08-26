@@ -28,12 +28,12 @@
 | # | Step | Result | Evidence |
 |---|---|---|---|
 | 1 | Migration preflight: SQL parses; table before/after | ✅ | `0105_parent_requests.sql` applied via `psql -v ON_ERROR_STOP=1`; `parent_requests` present |
-| 2 | Migration applies live (Atlas + Lango); idempotent re-run no-op | ✅ | Applied; re-run exits clean (CREATE TABLE IF NOT EXISTS + indexes) |
+| 2 | Migration applies live (Atlas + SchoolOS); idempotent re-run no-op | ✅ | Applied; re-run exits clean (CREATE TABLE IF NOT EXISTS + indexes) |
 | 3 | Relationship authz unit tests green | ✅ | `src/features/parent/services/__tests__/relationship-resolver.test.ts` (from P1) |
 | 4 | Foundation baseline `verify-portal-foundation.mjs` 40/40 | ✅ | Prior session (P1 gate) |
 | 5 | `vitest run` portal + guardian tests green | ✅ | Prior session (P1 gate) |
 | 6 | Authenticated HTTP adversarial sweep | ✅ | `verify-parent-security.mjs` **40/40**, two consecutive runs (idempotency proven) |
-| 7 | Two-tenant isolation: Lango untouched by Atlas verify data | ✅ | DB count: Lango invoices/payments/announcements/parent_requests = **0**; the single Lango `guardian_students` row is the intentional cross-tenant fixture (prn-guard-c ↔ PRN-CHILD-LANGO) used by S14 |
+| 7 | Two-tenant isolation: SchoolOS untouched by Atlas verify data | ✅ | DB count: SchoolOS invoices/payments/announcements/parent_requests = **0**; the single SchoolOS `guardian_students` row is the intentional cross-tenant fixture (prn-guard-c ↔ PRN-CHILD-SCHOOLOS) used by S14 |
 | 8 | Cross-child / cross-guardian / sibling isolation live asserts | ✅ | S6–S11, S27, S30, S32 |
 | 9 | Revocation-without-relogin live assert | ✅ | S23 |
 | 10 | Addon-disable sweep (transport/hostel/events) | ✅ | S40: `403 ADDON_NOT_ACTIVATED` for transport + hostel (off on both tenants) |
@@ -46,7 +46,7 @@
 | 17 | Degraded-network pass | ✅ | scripted — throttled home/finance render without crash; offline `Actualiser` shows explicit `role="alert"` banner, no pageerror |
 | 18 | DB cleanup scan (0 leftover verify fixtures) | ✅ | Verify script self-cleans excuses/requests/consents; link state reset at start; S23 restores revoked link |
 | 19 | Docs complete | ✅ | PLAN, IMPLEMENTATION-REPORT, AUDIT-RESPONSE, MANUAL-TESTING, DOWNSTREAM-INTEGRATION-NOTES |
-| 20 | Final `git status --short` attributable to feature only | ✅ | No git repo in tree (documented in `project_lango_env` memory); all touched files are parent-portal or the two shared edits below |
+| 20 | Final `git status --short` attributable to feature only | ✅ | No git repo in tree (documented in `project_schoolos_env` memory); all touched files are parent-portal or the two shared edits below |
 
 ## Shared-file footprint (merge-safe, minimal)
 

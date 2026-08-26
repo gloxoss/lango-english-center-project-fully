@@ -1,6 +1,6 @@
-# Lango/SchoolOS — Implementation Plans: Audit & Progress Tracker
+# SchoolOS — Implementation Plans: Audit & Progress Tracker
 
-> **Generated:** 2026-08-09 from a full codebase audit (36 plans verified against live code in `lango-app`).
+> **Generated:** 2026-08-09 from a full codebase audit (36 plans verified against live code in `schoolos-app`).
 > **How to use:** This is your single working document. Tick the `- [ ]` box next to each gap as you fix it. When a plan's overall state changes, update the **Status (edit me)** cell in the Summary Table. Keep the plan-folder docs for detail; keep this file as the source of truth for *what's built vs what isn't*.
 
 ## Status Legend
@@ -258,7 +258,7 @@
   - **Authorities GET** added to `app/api/leadership/admin/authorities/route.ts` (joined assignment + user, gated `leadership.scope.manage`).
   - **Sidebar "Direction" nav section** added to `portal-manifest.ts` (home/approvals/exceptions/admin; admin child gated `leadership.scope.manage`).
 - **Gaps / next actions:** none structural. Remaining plan items (saved/scheduled reports, delegation thresholds, metric freshness UIs, wellbeing/reports sections) are future scope.
-- **Verification (live, 2026-08-10):** `npx tsc --noEmit` exit 0; scope-service vitest 7/7 (school_admin implicit tenant scope; teacher without capability FORBIDDEN; active branch/department scope resolution; expired/future/revoked rejected; authorities only in-window + own assignment); tenant-isolation static check pass; 4 pages render 200 for Atlas school_admin; all 5 leadership APIs 200 with real data; admin POST create (branch scope + finance authority) round-trips through GET lists; **two-tenant adversarial**: Lango admin sees empty scopes/authorities (no Atlas leak); deny path: student 403 on admin + approvals APIs, 307 page, unauthenticated 401; test rows cleaned; `npx next build` exit 0.
+- **Verification (live, 2026-08-10):** `npx tsc --noEmit` exit 0; scope-service vitest 7/7 (school_admin implicit tenant scope; teacher without capability FORBIDDEN; active branch/department scope resolution; expired/future/revoked rejected; authorities only in-window + own assignment); tenant-isolation static check pass; 4 pages render 200 for Atlas school_admin; all 5 leadership APIs 200 with real data; admin POST create (branch scope + finance authority) round-trips through GET lists; **two-tenant adversarial**: SchoolOS admin sees empty scopes/authorities (no Atlas leak); deny path: student 403 on admin + approvals APIs, 307 page, unauthenticated 401; test rows cleaned; `npx next build` exit 0.
 - **Key files:** `src/features/leadership/` (ui/page-guard, ui/leadership-{approvals,exceptions,admin}-client, services/scope-service.ts + test), `src/app/api/leadership/**`, `src/features/crm/ui/leadership-portal-view.tsx`, `src/libs/api/portal-manifest.ts`.
 
 ### 19. teacher-portal — `future-implementation/teacher-portal/`

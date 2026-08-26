@@ -1,5 +1,5 @@
 import { db } from '@/libs/DB';
-import { eq, and, sql, inArray } from 'drizzle-orm';
+import { eq, and, sql, inArray, asc, desc } from 'drizzle-orm';
 import {
   events, eventSchedules, eventOccurrences, eventVenues,
   eventAudienceRules, eventRegistrations, eventWaitlistEntries
@@ -255,6 +255,76 @@ export async function listVisibleEvents(
       totalCapacity: capByEvent.get(event.id) ?? 0,
     }];
   });
+}
+
+export type PublicEvent = {
+  id: string;
+  title: string;
+  description: string | null;
+  timezone: string;
+  occurrences: { startTime: string; endTime: string; originalDate: string }[];
+  venueName: string | null;
+  onlineLink: string | null;
+};
+
+// Unauthenticated read for the public school site. Tenant is resolved by slug
+// at the route layer; here we filter strictly to published + public events and
+// never touch session-derived state.
+export async function listPublicEvents(tenantId: string): Promise<PublicEvent[]> {
+  const eventRows = await db.select().from(events)
+    .where(and(
+      eq(events.tenantId, tenantId),
+      eq(events.visibility, 'public'),
+      eq(events.lifecycle, 'published'),
+    ))
+    .orderBy(desc(events.createdAt));
+  if (eventRows.length === 0) return [];
+
+  const eventIds = eventRows.map(r => r.id);
+  const [schedules, venues] = await Promise.all([
+    db.select().from(eventSchedules).where(inArray(eventSchedules.eventId, eventIds)),
+    db.select().from(eventVenues).where(inArray(eventVenues.eventId, eventIds)),
+  ]);
+  const scheduleIds = schedules.map(s => s.id);
+  const occurrences = scheduleIds.length
+    ? await db.select().from(eventOccurrences)
+        .where(and(inArray(eventOccurrences.scheduleId, scheduleIds), eq(eventOccurrences.isCancelled, false)))
+    : [];
+
+  const schedulesByEvent = new Map<string, typeof schedules>();
+  for (const s of schedules) {
+    const list = schedulesByEvent.get(s.eventId) ?? [];
+    list.push(s);
+    schedulesByEvent.set(s.eventId, list);
+  }
+  const occurrencesBySchedule = new Map<string, typeof occurrences>();
+  for (const o of occurrences) {
+    const list = occurrencesBySchedule.get(o.scheduleId) ?? [];
+    list.push(o);
+    occurrencesBySchedule.set(o.scheduleId, list);
+  }
+  const venuesByEvent = new Map<string, typeof venues>();
+  for (const v of venues) {
+    const list = venuesByEvent.get(v.eventId) ?? [];
+    list.push(v);
+    venuesByEvent.set(v.eventId, list);
+  }
+
+  return eventRows.map(ev => ({
+    id: ev.id,
+    title: ev.title,
+    description: ev.description,
+    timezone: ev.timezone,
+    occurrences: (schedulesByEvent.get(ev.id) ?? []).flatMap(s =>
+      (occurrencesBySchedule.get(s.id) ?? []).map(o => ({
+        startTime: o.startTime,
+        endTime: o.endTime,
+        originalDate: o.originalDate,
+      })),
+    ).sort((a, b) => a.startTime.localeCompare(b.startTime)),
+    venueName: venuesByEvent.get(ev.id)?.[0]?.name ?? null,
+    onlineLink: venuesByEvent.get(ev.id)?.[0]?.onlineLink ?? null,
+  }));
 }
 
 export async function registerForEvent(

@@ -74,7 +74,7 @@ The **Student Transport Add-on** (`transport`) has been fully designed, implemen
 
 Run command:
 ```bash
-npx --prefix lango-english-center-project-fully/lango-app tsx --tsconfig lango-english-center-project-fully/lango-app/tsconfig.json lango-english-center-project-fully/lango-app/scripts/test-transport-live-acceptance.ts
+npx --prefix schoolos-english-center-project-fully/schoolos-app tsx --tsconfig schoolos-english-center-project-fully/schoolos-app/tsconfig.json schoolos-english-center-project-fully/schoolos-app/scripts/test-transport-live-acceptance.ts
 ```
 
 Output:

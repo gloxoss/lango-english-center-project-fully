@@ -45,15 +45,22 @@ export async function GET(request: Request) {
 
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
+    // teacher has students.read/academics.read here, not finance.read -
+    // balanceDue is billing data and must not ride along (same boundary as
+    // the /api/students detail route).
+    const canSeeFinance = context.role !== 'teacher';
+
     const [attendanceRows, invoiceRows, gradeRows] = await Promise.all([
       db
         .select({ studentId: attendance.studentId, status: attendance.status })
         .from(attendance)
         .where(and(eq(attendance.tenantId, tenantId), inArray(attendance.studentId, studentIds), gte(attendance.date, thirtyDaysAgo))),
-      db
-        .select({ studentId: invoices.studentId, netAmount: invoices.netAmount, paidAmount: invoices.paidAmount })
-        .from(invoices)
-        .where(and(eq(invoices.tenantId, tenantId), inArray(invoices.studentId, studentIds))),
+      canSeeFinance
+        ? db
+            .select({ studentId: invoices.studentId, netAmount: invoices.netAmount, paidAmount: invoices.paidAmount })
+            .from(invoices)
+            .where(and(eq(invoices.tenantId, tenantId), inArray(invoices.studentId, studentIds)))
+        : Promise.resolve([]),
       db
         .select({ studentId: assessmentResults.studentId, title: assessments.title, finalPercentage: assessmentResults.finalPercentage })
         .from(assessmentResults)
@@ -101,7 +108,7 @@ export async function GET(request: Request) {
         matricule: s.matricule,
         sectionName: s.sectionName,
         attendanceRate: att && att.total > 0 ? Math.round((att.present / att.total) * 1000) / 10 : null,
-        balanceDue: balanceByStudent.get(s.id) ?? 0,
+        balanceDue: canSeeFinance ? (balanceByStudent.get(s.id) ?? 0) : null,
         average,
       };
     }).sort((a, b) => a.name.localeCompare(b.name));

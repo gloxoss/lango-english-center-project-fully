@@ -133,7 +133,7 @@ Also, only 4 of the 14 existing finance pages have a sidebar entry today (`invoi
 - Real `psql` row checks after every migration/backfill, not just a "migrations applied successfully" log line.
 - Real `docker compose build app` + container restart + real `curl`/browser check for every route and page — `tsc --noEmit` alone is not sufficient and has produced false confidence in this exact repo before.
 - Read every UI file's actual fetch calls before claiming it's "wired to real data" — check for hardcoded fallback values (`|| 20`, `?? 30`, a literal placeholder number) the way the academic-enhancement work's promotion wizard had one that survived two rounds of claimed fixes.
-- Login as `accountant@lango.ma`, click through the real sidebar (post-Phase-1), confirm Academics/Settings/HR-employee-detail are genuinely gone from view, confirm every finance page loads with real data.
+- Login as `accountant@schoolos.ma`, click through the real sidebar (post-Phase-1), confirm Academics/Settings/HR-employee-detail are genuinely gone from view, confirm every finance page loads with real data.
 - Test the maker-checker boundary for real: attempt a credit note and a fiscal-period close as `accountant`, confirm both are rejected (403) after Phase 0; confirm both succeed as `school_admin`.
 
 ## Done when

@@ -1,9 +1,9 @@
-# Lango english center project fully
+# SchoolOS english center project fully
 
 This project is part of the consolidated **EPIOSO Studio** agency workspace catalog.
 
 ## 📝 Description
-AI-assisted curriculum generation, lesson plans progression, and content pipelines built for Lango English Center. Connects n8n flows with Gemini APIs for lessons creation.
+AI-assisted curriculum generation, lesson plans progression, and content pipelines built for SchoolOS English Center. Connects n8n flows with Gemini APIs for lessons creation.
 
 ## 🛠️ Technology Stack
 - **Framework/Language**: GENERIC

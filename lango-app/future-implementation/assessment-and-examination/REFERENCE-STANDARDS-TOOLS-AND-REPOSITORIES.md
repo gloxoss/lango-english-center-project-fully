@@ -7,8 +7,8 @@ Verified: 2026-08-01. Re-check versions, licenses, advisories, standards errata 
 - Overview: https://www.imsglobal.org/spec/qti/v3p0/oview/
 - Standards portal: https://standards.1edtech.org/
 - Purpose: portable assessment items, tests and results; QTI 3 also strengthens accessibility and supports custom interactions and adaptive testing.
-- Recommendation: make Lango's internal model clean and versioned first, then provide bounded QTI import/export. Do not make raw QTI XML the operational database schema.
-- V1 interoperability profile should publish exactly which question types and response-processing rules Lango supports.
+- Recommendation: make SchoolOS's internal model clean and versioned first, then provide bounded QTI import/export. Do not make raw QTI XML the operational database schema.
+- V1 interoperability profile should publish exactly which question types and response-processing rules SchoolOS supports.
 
 ## Best product/domain reference: Moodle Quiz and Question Bank
 
@@ -16,14 +16,14 @@ Verified: 2026-08-01. Re-check versions, licenses, advisories, standards errata 
 - Documentation: https://docs.moodle.org/
 - License: GPL-3.0.
 - Study: question-bank contexts/categories/versioning, quiz slots/random questions, attempts, question behaviours, manual grading, review options and statistics.
-- Use as behavioral inspiration only. Do not copy GPL implementation into Lango without legal review.
+- Use as behavioral inspiration only. Do not copy GPL implementation into SchoolOS without legal review.
 
 ## Advanced generated-assessment reference: PrairieLearn
 
 - Repository: https://github.com/PrairieLearn/PrairieLearn
 - Documentation: https://prairielearn.readthedocs.io/
 - Study: question generators, randomized variants, assessment zones, external grading, workspaces and high-scale university assessment.
-- Verify the current repository/component licenses before reuse. Treat it as later-stage inspiration; its course-as-code model is not Lango's primary school workflow.
+- Verify the current repository/component licenses before reuse. Treat it as later-stage inspiration; its course-as-code model is not SchoolOS's primary school workflow.
 
 ## Interactive-content reference: H5P
 
@@ -55,7 +55,7 @@ Do not permit arbitrary HTML/script from any editor. Store a restricted structur
 - UniTime: https://github.com/UniTime/unitime
 - License: Apache-2.0.
 - Study: examination timetabling constraints, rooms, student conflicts and solver concepts.
-- Recommendation: Lango v1 should use deterministic validation plus manual scheduling. Adopt optimization/solver logic only when real school scale demonstrates the need.
+- Recommendation: SchoolOS v1 should use deterministic validation plus manual scheduling. Adopt optimization/solver logic only when real school scale demonstrates the need.
 
 ## Standards roadmap
 
@@ -66,7 +66,7 @@ Do not permit arbitrary HTML/script from any editor. Store a restricted structur
 
 ## Selection recommendation
 
-- Build the core exam/gradebook logic in Lango around its Moroccan/session/class-subject model.
+- Build the core exam/gradebook logic in SchoolOS around its Moroccan/session/class-subject model.
 - Use QTI 3 for future portability.
 - Use Moodle as the deepest workflow reference, not a code dependency.
 - Use KaTeX/MathLive and a constrained rich-text editor for authoring.

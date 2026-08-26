@@ -38,6 +38,14 @@ interface Teacher {
   lastName: string;
 }
 
+interface ClassTeacher {
+  id: string;
+  classSectionId: string;
+  offeringId: string | null;
+  teacherId: string;
+  role: string;
+}
+
 export function AssignmentWorkspaceView({ locale }: { locale: string }) {
   const [coverage, setCoverage] = useState<CoverageData | null>(null);
   const [offerings, setOfferings] = useState<ClassOffering[]>([]);
@@ -50,6 +58,10 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [classTeachers, setClassTeachers] = useState<ClassTeacher[]>([]);
+  const [substituteModalOpen, setSubstituteModalOpen] = useState(false);
+  const [substituteTeacherId, setSubstituteTeacherId] = useState<string>('');
+  const [savingSubstitute, setSavingSubstitute] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -77,6 +89,13 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
       .then((res) => {
         if (res.success && Array.isArray(res.data)) {
           setClassSubjectsList(res.data);
+        }
+      });
+    fetch(`/api/academics/class-teachers?offeringId=${selectedOfferingId}`)
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.success && Array.isArray(res.data)) {
+          setClassTeachers(res.data);
         }
       });
   }, [selectedOfferingId]);
@@ -113,6 +132,53 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
       setMessage('Erreur réseau lors de l\'affectation.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAssignSubstitute = async () => {
+    if (!substituteTeacherId || !selectedOfferingId) return;
+    setSavingSubstitute(true);
+    setMessage(null);
+    try {
+      const offering = offerings.find((o) => o.id === selectedOfferingId);
+      let classSectionId = classTeachers.find((ct) => ct.classSectionId)?.classSectionId ?? '';
+      if (!classSectionId && offering) {
+        const csRes = await fetch(`/api/academics/class-sections?classId=${offering.classId}`);
+        const csJson = await csRes.json();
+        const sections: Array<{ id: string; sectionId: string }> = Array.isArray(csJson.data) ? csJson.data : [];
+        classSectionId = sections.find((s) => s.sectionId === offering.sectionId)?.id ?? '';
+      }
+      if (!classSectionId) {
+        setMessage('Impossible de déterminer la section de classe pour cette offre.');
+        setSavingSubstitute(false);
+        return;
+      }
+      const res = await fetch('/api/academics/class-teachers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          classSectionId,
+          teacherId: substituteTeacherId,
+          offeringId: selectedOfferingId,
+          role: 'substitute',
+          notes: `Remplaçant affecté le ${new Date().toISOString().split('T')[0]}`,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMessage('Remplaçant affecté avec succès.');
+        setSubstituteModalOpen(false);
+        setSubstituteTeacherId('');
+        fetch(`/api/academics/class-teachers?offeringId=${selectedOfferingId}`)
+          .then((r) => r.json())
+          .then((res) => { if (res.success && Array.isArray(res.data)) setClassTeachers(res.data); });
+      } else {
+        setMessage(data.error?.message || 'Erreur lors de l\'affectation du remplaçant.');
+      }
+    } catch {
+      setMessage('Erreur réseau lors de l\'affectation du remplaçant.');
+    } finally {
+      setSavingSubstitute(false);
     }
   };
 
@@ -181,6 +247,48 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Titulaire & Remplaçants */}
+      <Card className="rounded-2xl border border-slate-200/80 shadow-xs bg-white">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-base font-bold text-[#16212B]">Titulaire &amp; Remplaçants</CardTitle>
+            <CardDescription className="text-xs text-slate-500">
+              Enseignant principal de la section et remplaçants assignés.
+            </CardDescription>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => { setSubstituteTeacherId(''); setSubstituteModalOpen(true); }}
+            className="h-8 text-xs rounded-xl gap-1"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Affecter un remplaçant
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {classTeachers.length === 0 && (
+              <p className="text-xs text-slate-400">Aucun titulaire ou remplaçant pour cette section.</p>
+            )}
+            {classTeachers.map((ct) => {
+              const t = teachers.find((x) => x.id === ct.teacherId);
+              const name = t ? `${t.firstName} ${t.lastName}` : ct.teacherId;
+              const isPrimary = ct.role === 'primary';
+              return (
+                <Badge
+                  key={ct.id}
+                  variant="neutral"
+                  className={isPrimary ? 'bg-blue-50 text-[#2487B8] border-blue-200' : 'bg-amber-50 text-amber-700 border-amber-200'}
+                >
+                  {name} {isPrimary ? '(Titulaire)' : '(Remplaçant)'}
+                </Badge>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Main Assignment Workspace */}
       <Card className="rounded-2xl border border-slate-200/80 shadow-xs bg-white">
@@ -296,6 +404,46 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
               className="rounded-xl h-9 text-xs bg-[#2487B8] hover:bg-[#1B6C93]"
             >
               {saving ? 'Enregistrement...' : 'Confirmer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Substitute Modal */}
+      <Dialog open={substituteModalOpen} onOpenChange={setSubstituteModalOpen}>
+        <DialogContent className="rounded-2xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-[#16212B]">
+              Affecter un Remplaçant
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-700">Enseignant remplaçant</label>
+              <Select value={substituteTeacherId} onValueChange={setSubstituteTeacherId}>
+                <SelectTrigger className="rounded-xl h-10 border-slate-200">
+                  <SelectValue placeholder="Choisir un enseignant remplaçant" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teachers.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.firstName} {t.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSubstituteModalOpen(false)} className="rounded-xl h-9 text-xs">
+              Annuler
+            </Button>
+            <Button
+              onClick={handleAssignSubstitute}
+              disabled={!substituteTeacherId || savingSubstitute}
+              className="rounded-xl h-9 text-xs bg-[#2487B8] hover:bg-[#1B6C93]"
+            >
+              {savingSubstitute ? 'Enregistrement...' : 'Confirmer'}
             </Button>
           </DialogFooter>
         </DialogContent>

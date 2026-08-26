@@ -6,7 +6,7 @@
 Plan Lead CRM and Broadcast Messaging from the repository's current real state.
 
 Working directory:
-C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app
+C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\schoolos\schoolos-english-center-project-fully\schoolos-app
 
 Read completely, in order:
 1. future-implementation/_shared/APP-CONTEXT-AND-UI-SYSTEM.md
@@ -31,7 +31,7 @@ Plan CRM completion before Broadcast. Plan email before one Morocco-capable SMS 
 Plan the Library Management add-on from the current repository state.
 
 Working directory:
-C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app
+C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\schoolos\schoolos-english-center-project-fully\schoolos-app
 
 Read completely, in order:
 1. future-implementation/_shared/APP-CONTEXT-AND-UI-SYSTEM.md
@@ -57,7 +57,7 @@ Plan the Librarian Portal as a restricted projection over Library Management.
 Do not start until Library Management phases A-D and their stable service contracts exist.
 
 Working directory:
-C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app
+C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\schoolos\schoolos-english-center-project-fully\schoolos-app
 
 Read completely, in order:
 1. future-implementation/_shared/APP-CONTEXT-AND-UI-SYSTEM.md
@@ -80,7 +80,7 @@ Do not build a second library backend. A designation never grants permissions. I
 Plan Live Classrooms from the current repository and real provider constraints.
 
 Working directory:
-C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app
+C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\schoolos\schoolos-english-center-project-fully\schoolos-app
 
 Read completely, in order:
 1. future-implementation/_shared/APP-CONTEXT-AND-UI-SYSTEM.md

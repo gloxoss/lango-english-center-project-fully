@@ -27,7 +27,7 @@ export function HeaderCampusSwitcher() {
       .then(json => {
         if (json?.success && Array.isArray(json.data)) {
           setBranches(json.data);
-          const saved = localStorage.getItem('lango_active_branch_id');
+          const saved = localStorage.getItem('schoolos_active_branch_id');
           if (saved && json.data.some((b: BranchItem) => b.id === saved)) {
             setSelectedBranchId(saved);
           }
@@ -63,9 +63,9 @@ export function HeaderCampusSwitcher() {
 
   const handleSelect = (id: string | null) => {
     if (id) {
-      localStorage.setItem('lango_active_branch_id', id);
+      localStorage.setItem('schoolos_active_branch_id', id);
     } else {
-      localStorage.removeItem('lango_active_branch_id');
+      localStorage.removeItem('schoolos_active_branch_id');
     }
     setSelectedBranchId(id);
     window.location.reload();

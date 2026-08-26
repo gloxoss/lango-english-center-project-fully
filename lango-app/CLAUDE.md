@@ -1,11 +1,11 @@
-# Lango / SchoolOS — AI Agent Development Rules & Context
+# SchoolOS — AI Agent Development Rules & Context
 
 ## 1. Project Architecture & Migration Philosophy
-This project is an enterprise multi-tenant school operating system (SchoolOS / Lango) built with Next.js 15 App Router, TypeScript, Tailwind CSS, and shadcn/ui.
+This project is an enterprise multi-tenant school operating system (SchoolOS) built with Next.js 15 App Router, TypeScript, Tailwind CSS, and shadcn/ui.
 
 We use **ESchool SaaS v1.6.0** as our business logic & database reference:
-- Database Schema: [`insperations/ESCHOOL_SAAS_DATABASE_SCHEMA.md`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/lango/insperations/ESCHOOL_SAAS_DATABASE_SCHEMA.md) and [`insperations/eschool_saas_full_schema.sql`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/lango/insperations/eschool_saas_full_schema.sql)
-- PHP Business Logic & Repositories: [`insperations/eschool-saas-codebase/`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/lango/insperations/eschool-saas-codebase/)
+- Database Schema: [`insperations/ESCHOOL_SAAS_DATABASE_SCHEMA.md`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/schoolos/insperations/ESCHOOL_SAAS_DATABASE_SCHEMA.md) and [`insperations/eschool_saas_full_schema.sql`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/schoolos/insperations/eschool_saas_full_schema.sql)
+- PHP Business Logic & Repositories: [`insperations/eschool-saas-codebase/`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/schoolos/insperations/eschool-saas-codebase/)
 
 When building or refactoring any module (Students, Teachers, Academics, Attendance, Finance, Exams, Settings):
 1. **Consult Reference Logic**: Inspect corresponding models, controllers, and database tables in `insperations/`.
@@ -32,3 +32,13 @@ When building or refactoring any module (Students, Teachers, Academics, Attendan
 - **Teachers**: `/dashboard/teachers/manage` (Directory, Bulk Import, Workload)
 - **Academics**: `/dashboard/academics/*` (Mediums, Sections, Subjects, Semesters, Streams, Shifts, Optional Subjects)
 - **Settings & Admin**: `/dashboard/settings/*` (General, Access Reset, CNDP F211)
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

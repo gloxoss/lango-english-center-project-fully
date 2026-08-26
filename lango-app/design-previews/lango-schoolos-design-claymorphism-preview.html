@@ -3,34 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lango SchoolOS — Playful Claymorphism Preview</title>
+  <title>Lango SchoolOS — Playful Clay 3D Preview</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Quicksand:wght@600;700&display=swap">
   <style>
-    :root {
-      --bg: #fce7f3;
-      --surface: #ffffff;
-      --border: rgba(255,255,255,0.7);
-      --text: #831843;
-      --text-muted: #9d174d;
-      --primary: #ec4899;
-      --accent: #a855f7;
-      --radius: 2rem;
-    }
     body {
       font-family: 'Quicksand', sans-serif;
       background: #fce7f3;
       color: #831843;
       min-height: 100vh;
     }
-    h1, h2, h3, .head-font {
-      font-family: 'Quicksand', sans-serif;
-    }
+    h1, h2, h3, .head-font { font-family: 'Quicksand', sans-serif; }
     .custom-card {
       background: #ffffff;
       border: 1px solid rgba(255,255,255,0.7);
       border-radius: 2rem;
-      box-shadow: 0 20px 30px -10px rgba(236, 72, 153, 0.3), inset 0 4px 6px rgba(255, 255, 255, 0.8);
+      box-shadow: 0 20px 30px -10px rgba(236,72,153,0.3), inset 0 4px 6px rgba(255,255,255,0.8);
       
     }
     .custom-btn-primary {
@@ -38,11 +26,10 @@
       color: #ffffff;
       border-radius: 2rem;
       
-      box-shadow: 0 20px 30px -10px rgba(236, 72, 153, 0.3), inset 0 4px 6px rgba(255, 255, 255, 0.8);
+      box-shadow: 0 20px 30px -10px rgba(236,72,153,0.3), inset 0 4px 6px rgba(255,255,255,0.8);
       transition: all 0.2s ease;
     }
     .custom-btn-primary:hover {
-      background-color: #db2777;
       transform: translateY(-1px);
     }
     .custom-btn-outline {
@@ -51,9 +38,6 @@
       color: #831843;
       border-radius: 2rem;
       transition: all 0.2s ease;
-    }
-    .custom-btn-outline:hover {
-      background: rgba(0,0,0,0.05);
     }
   </style>
 </head>
@@ -70,8 +54,8 @@
           </span>
           <span class="text-xs opacity-75 font-mono">STYLE ID: claymorphism</span>
         </div>
-        <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Playful Claymorphism</h1>
-        <p class="text-sm mt-1" style="color: #9d174d;">Soft 3D toy-like clay volumes, marshmallow roundness, and colorful friendly tactile buttons.</p>
+        <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Playful Clay 3D</h1>
+        <p class="text-sm mt-1" style="color: #9d174d;">Puffy 3D clay elements and marshmallow curves.</p>
       </div>
 
       <div class="flex items-center gap-3">
@@ -154,7 +138,7 @@
                 <td class="py-3 px-3 font-semibold">Youssef Tazi</td>
                 <td class="px-3" style="color: #9d174d;">Casablanca Oasis</td>
                 <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-mono" style="background: rgba(0,0,0,0.06);">A2 Beginner</span></td>
-                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #ec4899;">Pending</span></td>
+                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #a855f7;">Pending</span></td>
                 <td class="px-3 text-right font-bold">1,100 MAD</td>
               </tr>
             </tbody>
@@ -162,36 +146,34 @@
         </div>
       </div>
 
-      <!-- Right Column: Interactive Controls & Tokens -->
+      <!-- Right Column: Interactive Form & Tokens -->
       <div class="space-y-6">
 
-        <!-- Action Card -->
         <div class="custom-card p-6">
           <h3 class="text-base font-bold mb-1">Interactive Form Control</h3>
-          <p class="text-xs mb-4" style="color: #9d174d;">Test inputs and toggle behaviors</p>
+          <p class="text-xs mb-4" style="color: #9d174d;">Test inputs and typography response</p>
           
           <div class="space-y-3">
             <div>
-              <label class="block text-xs font-medium mb-1" style="color: #9d174d;">Student Email / Phone</label>
-              <input type="text" placeholder="student@example.com" class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: #ffffff; border-color: rgba(255,255,255,0.7); color: #831843;">
+              <label class="block text-xs font-medium mb-1" style="color: #9d174d;">Student Contact</label>
+              <input type="text" placeholder="student@lango.ma" class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: #ffffff; border-color: rgba(255,255,255,0.7); color: #831843;">
             </div>
 
             <div>
-              <label class="block text-xs font-medium mb-1" style="color: #9d174d;">Target Course Level</label>
+              <label class="block text-xs font-medium mb-1" style="color: #9d174d;">Program Track</label>
               <select class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: #ffffff; border-color: rgba(255,255,255,0.7); color: #831843;">
                 <option>General English (A1 - C2)</option>
                 <option>Business English & Public Speaking</option>
-                <option>IELTS / TOEFL Intensive Prep</option>
+                <option>IELTS / Cambridge Exam Prep</option>
               </select>
             </div>
 
             <button class="custom-btn-primary w-full py-2.5 text-xs font-bold shadow mt-2">
-              Confirm & Enroll Student
+              Confirm & Enroll
             </button>
           </div>
         </div>
 
-        <!-- Token Inspector -->
         <div class="custom-card p-5 text-xs space-y-2">
           <div class="font-bold border-b pb-2 flex items-center justify-between" style="border-color: rgba(255,255,255,0.7);">
             <span>🎨 DESIGN TOKENS</span>

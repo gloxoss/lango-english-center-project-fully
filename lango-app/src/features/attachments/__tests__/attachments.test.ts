@@ -70,4 +70,14 @@ describe('Attachments Book Invariants', () => {
       expect(AssetService.nextVersionNumberFromExisting([1, 3])).toBe(4);
     });
   });
+
+  describe('Entitlement gating behavior', () => {
+    it('verifies isActive returns false when isEnabled is false or expired', async () => {
+      const { isActive } = await import('@/libs/api/entitlements');
+      expect(isActive({ isEnabled: false, expiresAt: null })).toBe(false);
+      expect(isActive({ isEnabled: true, expiresAt: new Date(Date.now() - 10000).toISOString() })).toBe(false);
+      expect(isActive({ isEnabled: true, expiresAt: new Date(Date.now() + 10000).toISOString() })).toBe(true);
+      expect(isActive({ isEnabled: true, expiresAt: null })).toBe(true);
+    });
+  });
 });

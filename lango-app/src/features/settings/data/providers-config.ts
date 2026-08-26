@@ -40,7 +40,7 @@ export const PROVIDER_LIST = [
     name: 'Stockage Cloud Documents',
     category: 'Infrastructures',
     providerName: 'Supabase Storage',
-    endpointUrl: 'https://s3.eu-west-1.amazonaws.com/lango-docs',
+    endpointUrl: 'https://s3.eu-west-1.amazonaws.com/schoolos-docs',
     status: 'disconnected' as const,
     latencyMs: 0,
     ownerName: '',

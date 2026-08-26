@@ -245,6 +245,9 @@ export const classCreateSchema = z.object({
   shiftId: idSchema.optional().nullable(),
   streamId: idSchema.optional().nullable(),
   cycle: z.enum(['maternelle', 'primaire', 'college', 'lycee']).optional().nullable(),
+  periodType: z.enum(['semester', 'trimester', 'month']).optional(),
+  sectionCount: z.number().int().min(0).max(26).optional(),
+  teacherId: z.string().min(1).optional().nullable(),
 }).strict();
 
 export const classUpdateSchema = classCreateSchema
@@ -303,7 +306,7 @@ export const classTeacherCreateSchema = z.object({
   classSectionId: idSchema,
   teacherId: z.string().trim().min(1).max(100),
   offeringId: z.string().uuid().optional().nullable(),
-  role: z.enum(['primary', 'assistant', 'support']).optional().default('primary'),
+  role: z.enum(['primary', 'assistant', 'support', 'substitute']).optional().default('primary'),
   notes: z.string().max(1000).optional().nullable(),
 }).strict();
 
@@ -320,6 +323,9 @@ export const settingsUpdateSchema = z.object({
   shortName: optionalText(100),
   city: optionalText(255),
   address: optionalText(2000),
+  academicYear: optionalText(50),
+  startDate: z.iso.date().optional().nullable(),
+  endDate: z.iso.date().optional().nullable(),
   phone: optionalText(50),
   email: z.email().max(255).optional().nullable(),
   website: optionalText(500),

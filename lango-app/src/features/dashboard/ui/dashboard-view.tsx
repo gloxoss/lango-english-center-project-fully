@@ -106,7 +106,7 @@ export function DashboardView({ locale, notice }: { locale: string; notice?: str
 
   const handleConfirmNav = () => {
     if (dontShowAgain && typeof window !== 'undefined') {
-      localStorage.setItem('lango_skip_card_confirm', 'true');
+      localStorage.setItem('schoolos_skip_card_confirm', 'true');
     }
     if (pendingNav) {
       const target = pendingNav.route;

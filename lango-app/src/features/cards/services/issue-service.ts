@@ -1,12 +1,15 @@
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq, isNotNull } from 'drizzle-orm';
 import { createHash, randomBytes } from 'node:crypto';
 import { ApiError } from '@/libs/api/errors';
+import { hasAddon } from '@/libs/api/entitlements';
+import { getEffectiveValue } from '@/libs/settings/registry';
 import { db } from '@/libs/DB';
 import { classes, classSections, sections, user } from '@/models/Schema';
 import { examHalls, examSeats, examTerms } from '@/features/assessment/models/assessment-schema';
 import {
   documentTemplates,
   documentTemplateVersions,
+  documentEvents,
   issuedDocuments,
 } from '@/features/cards/models/cards-schema';
 import { renderPdf } from '@/libs/document-studio/render';
@@ -218,4 +221,79 @@ export async function issueDocument(params: IssueDocumentParams): Promise<Issued
   }
 
   return { issuedDocument, rawToken, pdfBase64 };
+}
+
+/**
+ * Resolve the tenant's default published template version for a document type.
+ * Prefers the template flagged `isDefault`; falls back to the first published
+ * template of that type. Only a version with a published version row (a non-null
+ * publishedById) is issuable. Returns null when nothing is ready to issue.
+ */
+export async function resolveDefaultPublishedTemplateVersion(
+  tenantId: string,
+  type: 'student_id' | 'employee_id' | 'admit_card',
+): Promise<string | null> {
+  const templates = await db
+    .select({ id: documentTemplates.id, isDefault: documentTemplates.isDefault })
+    .from(documentTemplates)
+    .where(and(
+      eq(documentTemplates.tenantId, tenantId),
+      eq(documentTemplates.type, type),
+      eq(documentTemplates.status, 'published'),
+    ));
+
+  if (templates.length === 0) return null;
+  const first = templates[0];
+  if (!first) return null;
+  const preferredId = (templates.find(t => t.isDefault) ?? first).id;
+
+  const [version] = await db
+    .select({ id: documentTemplateVersions.id })
+    .from(documentTemplateVersions)
+    .where(and(
+      eq(documentTemplateVersions.tenantId, tenantId),
+      eq(documentTemplateVersions.templateId, preferredId),
+      isNotNull(documentTemplateVersions.publishedById),
+    ))
+    .orderBy(desc(documentTemplateVersions.versionNumber))
+    .limit(1);
+
+  return version?.id ?? null;
+}
+
+/**
+ * Auto-issue a student ID card when the school has opted in via the
+ * `cards.autoIssueStudentCardOnApproval` setting. Best-effort by design: the
+ * caller swallows any error so a missing template/disabled addon never blocks
+ * the admission conversion that triggered it.
+ */
+export async function autoIssueStudentCardOnAdmission(
+  tenantId: string,
+  studentId: string,
+  issuedBy: string,
+): Promise<IssuedResult | null> {
+  const setting = await getEffectiveValue(tenantId, null, 'cards.autoIssueStudentCardOnApproval');
+  if (setting.value !== true) return null;
+  if (!(await hasAddon(tenantId, 'card-management'))) return null;
+
+  const templateVersionId = await resolveDefaultPublishedTemplateVersion(tenantId, 'student_id');
+  if (!templateVersionId) return null;
+
+  const result = await issueDocument({
+    tenantId,
+    templateVersionId,
+    subjectType: 'student',
+    subjectId: studentId,
+    issuedBy,
+  });
+
+  await db.insert(documentEvents).values({
+    tenantId,
+    issuedDocumentId: result.issuedDocument.id,
+    eventKind: 'issued',
+    actorId: issuedBy,
+    metadata: { subjectType: 'student', source: 'admission_auto_issue' },
+  });
+
+  return result;
 }

@@ -13,9 +13,9 @@ This initiative has one academic model but two commercial surfaces:
 
 The addon must not introduce a second gradebook. Homework, paper exams, and online attempts all post moderated outcomes into the same core assessment/result ledger.
 
-## 2. Current Lango reality
+## 2. Current SchoolOS reality
 
-Lango is partially implemented, not empty:
+SchoolOS is partially implemented, not empty:
 
 - `assignments` and `assignmentSubmissions` store homework metadata, submission status, score, and feedback.
 - Assignment APIs create, submit, and grade records.

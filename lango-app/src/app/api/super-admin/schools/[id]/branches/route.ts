@@ -1,9 +1,16 @@
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireRequestContext, requireSuperAdmin } from '@/libs/api/context';
+import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { addonEntitlements, branches, tenants } from '@/models/Schema';
+
+const patchSchoolBranchesSchema = z.object({
+  hasMultiBranchAddon: z.boolean().optional(),
+  maxBranches: z.number().int().min(1).max(1000).optional(),
+}).strict();
 
 export async function GET(
   request: Request,
@@ -60,7 +67,7 @@ export async function PATCH(
     requireSuperAdmin(ctx);
     const { id: schoolId } = await params;
 
-    const body = await request.json();
+    const body = await parseJson(request, patchSchoolBranchesSchema);
     const { hasMultiBranchAddon, maxBranches } = body;
 
     const [updated] = await db

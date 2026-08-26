@@ -66,7 +66,7 @@ export class WebhookProvider implements BroadcastProvider {
     const result = await this.send({
       channel: 'sms',
       to: 'test',
-      bodyText: 'Test de connexion Lango (webhook)',
+      bodyText: 'Test de connexion SchoolOS (webhook)',
       config,
     });
     return result.ok

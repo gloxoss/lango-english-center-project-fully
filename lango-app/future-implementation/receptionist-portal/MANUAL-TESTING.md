@@ -36,10 +36,10 @@ All accounts use password `RecepVerify123!` and email `<id-lowercase>@placeholde
 | `rec-pickup-user@placeholder.local` | receptionist / Atlas | REC-BR-A | Same role + user-level `reception.pickup.release` override |
 | `rec-user-b@placeholder.local` | receptionist / Atlas | REC-BR-B | Wrong-branch probe |
 | `rec-teacher@placeholder.local` | teacher / Atlas | REC-BR-A | Wrong-role probe → 403 |
-| `rec-lango-user@placeholder.local` | receptionist / Lango | — | Cross-tenant probe → uniform 404 |
+| `rec-schoolos-user@placeholder.local` | receptionist / SchoolOS | — | Cross-tenant probe → uniform 404 |
 | `rec-host@placeholder.local` | teacher / Atlas | REC-BR-A | Appointment host / visitor host / handoff assignee |
 | `rec-stu-a@placeholder.local` | student / Atlas | REC-BR-A | Child A (matricule `REC-001`, linked guardian) |
-| `rec-stu-lango@placeholder.local` | student / Lango | — | Cross-tenant student |
+| `rec-stu-schoolos@placeholder.local` | student / SchoolOS | — | Cross-tenant student |
 
 Fixture rows also created: branches `REC-BR-A` / `REC-BR-B` (Atlas), gate `REC-GATE` (branch A),
 one linked guardian (child A) + one **unlinked** guardian, one active pickup authorization for child A
@@ -83,7 +83,7 @@ Sign in as `rec-user@placeholder.local` → `/dashboard/receptionist`.
 |---|---|---|
 | Anonymous 401 | Log out, hit `/api/reception/me/home` | 401 |
 | Wrong role 403 | Sign in `rec-teacher@placeholder.local`, open any reception page/API | 403 |
-| Two-tenant isolation | Sign in `rec-lango-user@placeholder.local`, request an Atlas appointment/student/pickup | 404 (never 403, no existence oracle) |
+| Two-tenant isolation | Sign in `rec-schoolos-user@placeholder.local`, request an Atlas appointment/student/pickup | 404 (never 403, no existence oracle) |
 | Wrong-branch isolation | Sign in `rec-user-b@placeholder.local`, request a branch-A resource | 404 |
 | Lookup PII | Search `REC-001`, inspect response | Only id/name/masked contact/type/branch+class/guardian status; no national id, salary, bank, medical, grades, finance, raw phone/email |
 | Release default-deny | `rec-user@placeholder.local` hits `/api/reception/pickups/release` | 403 |

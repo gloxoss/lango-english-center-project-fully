@@ -44,7 +44,7 @@ verify runs green back-to-back.
 | T19 | Handoff create = intent only (no voucher/invoice/finance row) | PASS |
 | T20 | Static scan: no finance/admissions imports under `features/reception` or `app/api/reception` | PASS |
 | T21 | Finance denial: `/api/finance/expenses` → 403 for receptionist | PASS |
-| T22 | Cross-tenant (Lango receptionist) + wrong-branch (branch-B receptionist) → uniform 404 | PASS |
+| T22 | Cross-tenant (SchoolOS receptionist) + wrong-branch (branch-B receptionist) → uniform 404 | PASS |
 | T23 | Schema: 5 tables + 2 partial-unique idempotency indexes | PASS |
 | T24 | Manifest: `reception` group + 6 permission-gated children | PASS |
 | T25 | Routes guard ctx/tenant/capability; pages guard `requireServerPage` | PASS |

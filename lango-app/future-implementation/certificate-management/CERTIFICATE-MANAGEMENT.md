@@ -1,7 +1,7 @@
 # Certificate Issuance & Verification — Future Addon
 
 **Status: planned, not started.** This specification evaluates the supplied
-RamomSchool Certificate pages against the real Lango/SchoolOS codebase and adds
+RamomSchool Certificate pages against the real SchoolOS codebase and adds
 the issuance, evidence, approval, verification, correction, revocation, batch,
 and delivery logic that the reference navigation does not show.
 
@@ -49,7 +49,7 @@ needs to answer:
 - How do we avoid issuing duplicates during a failed bulk job?
 - Is the visible signature an image or an actual cryptographic signature?
 
-## Where Lango is today (verified in the repository)
+## Where SchoolOS is today (verified in the repository)
 
 ### Existing foundations
 
@@ -412,7 +412,7 @@ Certificate wording must match the evidence:
 - Participation must not be presented as successful completion unless criteria
   actually say so.
 
-Because Lango's legacy `programs/courses` chain is explicitly inactive, the
+Because SchoolOS's legacy `programs/courses` chain is explicitly inactive, the
 implementation must either map completion to the active class/subject/session
 model or first introduce a real language-program enrollment/completion domain.
 Do not revive dead schema silently just to satisfy the old certificate FK.
@@ -554,7 +554,7 @@ See `REFERENCE-REPOSITORIES-AND-STANDARDS.md` beside this document.
 
 ## Decisions to confirm before implementation
 
-1. Which student certificate types does Lango actually issue today, and what
+1. Which student certificate types does SchoolOS actually issue today, and what
    evidence/criteria authorizes each?
 2. Are enrollment attestations legally/core-required documents that should
    remain core while advanced certificates are add-on?

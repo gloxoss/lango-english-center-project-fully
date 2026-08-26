@@ -8,9 +8,21 @@ import { ApiError } from '@/libs/api/errors';
 export const UPLOADS_ROOT = process.env.UPLOADS_DIR || '/app/uploads';
 
 export function contentTypeFor(ext: string): string {
-  if (ext === 'png') return 'image/png';
-  if (ext === 'pdf') return 'application/pdf';
-  return 'image/jpeg';
+  const cleanExt = ext.toLowerCase().replace(/^\./, '');
+  if (cleanExt === 'png') return 'image/png';
+  if (cleanExt === 'pdf') return 'application/pdf';
+  if (cleanExt === 'jpg' || cleanExt === 'jpeg') return 'image/jpeg';
+  if (cleanExt === 'webp') return 'image/webp';
+  return 'application/octet-stream';
+}
+
+export function resolveTenantPath(tenantId: string, subpath: string): string {
+  const tenantRoot = path.resolve(UPLOADS_ROOT, tenantId);
+  const targetPath = path.resolve(tenantRoot, subpath);
+  if (targetPath !== tenantRoot && !targetPath.startsWith(tenantRoot + path.sep)) {
+    throw new ApiError(400, 'INVALID_PATH', 'Chemin de fichier invalide.');
+  }
+  return targetPath;
 }
 
 export async function saveUploadedFile(
@@ -45,17 +57,14 @@ export async function saveUploadedFile(
     }
   }
 
-  const fullPath = path.join(UPLOADS_ROOT, tenantId, subpath.replace('{ext}', ext));
+  const fullPath = resolveTenantPath(tenantId, subpath.replace('{ext}', ext));
   await mkdir(path.dirname(fullPath), { recursive: true });
   await writeFile(fullPath, bytes);
   return ext;
 }
 
 export async function readUploadedFile(tenantId: string, subpath: string): Promise<Buffer> {
-  const fullPath = path.join(UPLOADS_ROOT, tenantId, subpath);
-  if (!fullPath.startsWith(path.join(UPLOADS_ROOT, tenantId) + path.sep)) {
-    throw new ApiError(400, 'INVALID_PATH', 'Chemin de fichier invalide.');
-  }
+  const fullPath = resolveTenantPath(tenantId, subpath);
   return readFile(fullPath);
 }
 
@@ -63,8 +72,9 @@ export async function readUploadedFile(tenantId: string, subpath: string): Promi
 // same tenant - used to copy an applicant's uploaded documents onto the real
 // student record at admission approval.
 export async function copyUploadedFile(tenantId: string, fromSubpath: string, toSubpath: string): Promise<void> {
-  const bytes = await readFile(path.join(UPLOADS_ROOT, tenantId, fromSubpath));
-  const destPath = path.join(UPLOADS_ROOT, tenantId, toSubpath);
+  const srcPath = resolveTenantPath(tenantId, fromSubpath);
+  const destPath = resolveTenantPath(tenantId, toSubpath);
+  const bytes = await readFile(srcPath);
   await mkdir(path.dirname(destPath), { recursive: true });
   await writeFile(destPath, bytes);
 }

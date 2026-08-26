@@ -60,6 +60,8 @@ interface PersistedReceipt {
 }
 
 type MethodOption = { methodCode: string; labelFr: string };
+type ClassSectionOption = { id: string; className: string; sectionName: string };
+type AgingRow = { studentId: string; studentName: string | null; studentEmail: string | null; balance: string | number; dueDate: string; daysOverdue: number };
 
 // Fallback to the 4 built-in methods until the tenant's config is loaded (or
 // when no config exists yet — back-compat). Config-driven options replace these.
@@ -105,6 +107,11 @@ export default function CollectionDeskPage() {
   const [collecting, setCollecting] = useState(false);
   const [receipt, setReceipt] = useState<PersistedReceipt | null>(null);
   const [paymentMethods, setPaymentMethods] = useState<MethodOption[]>(LEGACY_METHODS);
+  const [deskMode, setDeskMode] = useState<'search' | 'class' | 'due'>('search');
+  const [classSections, setClassSections] = useState<ClassSectionOption[]>([]);
+  const [selectedClassSection, setSelectedClassSection] = useState('');
+  const [roster, setRoster] = useState<StudentResult[]>([]);
+  const [agingRows, setAgingRows] = useState<AgingRow[]>([]);
 
   const fetchSession = async () => {
     setLoading(true);
@@ -126,7 +133,16 @@ export default function CollectionDeskPage() {
 
   useEffect(() => {
     fetchSession();
+    fetch('/api/academics/class-sections?pageSize=200').then(r => r.json()).then(j => j.success && setClassSections(j.data)).catch(() => {});
+    fetch('/api/accountant/me/receivables').then(r => r.json()).then(j => j.success && setAgingRows(j.data.invoices || [])).catch(() => {});
   }, []);
+
+  const loadRoster = async (classSectionId: string) => {
+    setSelectedClassSection(classSectionId);
+    if (!classSectionId) { setRoster([]); return; }
+    const json = await fetch(`/api/students?classSectionId=${encodeURIComponent(classSectionId)}&pageSize=200`).then(r => r.json());
+    if (json.success) setRoster(json.data.map((s: any) => ({ id: s.id, name: s.fullName || s.name, email: s.email || null, matricule: s.matricule || null })));
+  };
 
   // Load the tenant's configured (active) payment methods; fall back to the
   // built-in methods when no config exists yet.
@@ -469,7 +485,11 @@ export default function CollectionDeskPage() {
       {/* Fast Receipt Desk Section */}
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
         <h3 className="text-base font-bold text-slate-900">Encaissement Rapide de Scolarité</h3>
-        <p className="text-xs text-slate-500">Recherchez un élève par nom, matricule ou email pour enregistrer un versement immédiat.</p>
+        <p className="text-xs text-slate-500">Choisissez une vue de travail puis sélectionnez un élève pour enregistrer un versement.</p>
+
+        <div className="mt-4 inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1">
+          {[['search','Recherche'],['class','Classe / section'],['due','Échéances du jour']] .map(([value,label]) => <button key={value} type="button" onClick={() => setDeskMode(value as typeof deskMode)} className={`rounded-lg px-3 py-2 text-xs font-bold ${deskMode === value ? 'bg-[#2487B8] text-white shadow-xs' : 'text-slate-600 hover:bg-white'}`}>{label}</button>)}
+        </div>
 
         {!activeSession && (
           <div className="mt-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-700">
@@ -478,7 +498,7 @@ export default function CollectionDeskPage() {
           </div>
         )}
 
-        <form onSubmit={handleSearch} className="mt-4 flex gap-3">
+        {deskMode === 'search' && <form onSubmit={handleSearch} className="mt-4 flex gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3.5 top-3 size-4 text-slate-400" />
             <input
@@ -496,9 +516,13 @@ export default function CollectionDeskPage() {
           >
             {searching ? 'Recherche...' : 'Rechercher'}
           </button>
-        </form>
+        </form>}
 
-        {searchResults.length > 0 && (
+        {deskMode === 'class' && <div className="mt-4 space-y-3"><select value={selectedClassSection} onChange={e => loadRoster(e.target.value)} className="h-10 w-full max-w-md rounded-xl border border-slate-200 px-3 text-sm"><option value="">Choisir une classe / section…</option>{classSections.map(s => <option key={s.id} value={s.id}>{s.className} · {s.sectionName}</option>)}</select><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{roster.map(s => <button key={s.id} onClick={() => handleSelectStudent(s)} className="rounded-xl border border-slate-200 p-3 text-left hover:border-[#2487B8] hover:bg-[#DCEBF4]/30"><p className="text-sm font-bold text-slate-900">{s.name}</p><p className="text-xs text-slate-500">{s.matricule || s.email || '—'}</p></button>)}</div></div>}
+
+        {deskMode === 'due' && <div className="mt-4 divide-y divide-slate-100 rounded-xl border border-slate-200">{agingRows.filter(r => r.daysOverdue > 0 || r.dueDate <= new Date().toISOString().slice(0,10)).map((row, index) => <button key={`${row.studentId}-${index}`} onClick={() => handleSelectStudent({ id: row.studentId, name: row.studentName || 'Élève', email: row.studentEmail, matricule: null })} className="flex w-full items-center justify-between gap-4 p-3 text-left hover:bg-slate-50"><div><p className="text-sm font-bold text-slate-900">{row.studentName || 'Élève'}</p><p className="text-xs text-slate-500">Échéance {row.dueDate} · {row.daysOverdue} jour(s) de retard</p></div><span className="font-bold text-[#E5544B]">{Number(row.balance).toFixed(2)} MAD</span></button>)}</div>}
+
+        {deskMode === 'search' && searchResults.length > 0 && (
           <div className="mt-3 divide-y divide-slate-100 rounded-lg border border-slate-200">
             {searchResults.map(s => (
               <button

@@ -12,7 +12,7 @@ import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { getJoinSecretConfig } from './signing-key';
 
 export type JoinGrantPayload = {
-  sub: string; // Lango user id
+  sub: string; // SchoolOS user id
   tenant: string; // tenant id the grant is bound to
   session: string; // live_class_sessions.id
   role: 'moderator' | 'viewer';

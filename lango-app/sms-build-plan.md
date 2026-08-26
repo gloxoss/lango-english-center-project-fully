@@ -1,9 +1,9 @@
-# Lango SMS Build Plan — The Application Layer
+# SchoolOS SMS Build Plan — The Application Layer
 
 ## Goal
 Build the full School Management System (SMS) logic — CRUDs, Attendance, Finance, Data Tables — on top of the Frappe-ported database schemas. This plan picks up **after** the Frankenstein Pivot (Steps 1–7) is complete and the foundation is stable.
 
-> **IMPORTANT:** This is **STEP 8** of the Lango OSS Pivot. It cannot be cloned from open-source because Frappe's frontend is Python/Vue and is incompatible with our Next.js/React stack. We must build it ourselves, guided by Frappe's domain logic and the `pre-dev/` specifications.
+> **IMPORTANT:** This is **STEP 8** of the SchoolOS OSS Pivot. It cannot be cloned from open-source because Frappe's frontend is Python/Vue and is incompatible with our Next.js/React stack. We must build it ourselves, guided by Frappe's domain logic and the `pre-dev/` specifications.
 
 ---
 
@@ -14,12 +14,12 @@ Build the full School Management System (SMS) logic — CRUDs, Attendance, Finan
 - **Surgical Changes.** Each sprint touches only its own module folder. No "improving" unrelated pages.
 - **Goal-Driven.** Every task has a `Verify:` check. If it doesn't pass, loop until it does.
 
-### From @lango-sms-context (Dynamic-First)
+### From @schoolos-sms-context (Dynamic-First)
 - **No hardcoded data in JSX.** All data flows from Server Components -> Drizzle queries -> Dumb UI components via props.
 - **Tenant isolation.** Every query must filter by `tenantId`. No exceptions.
 - **Server Components by default.** Client components only for interactive islands (forms, toggles, modals).
 
-### From @lango-oss-pivot (Gloxoss-Go Gate)
+### From @schoolos-oss-pivot (Gloxoss-Go Gate)
 - Each sprint below is a **gated step**. Stop at the end of each sprint, present results to Zakio, and wait for **"gloxoss-go"** before proceeding.
 
 ---

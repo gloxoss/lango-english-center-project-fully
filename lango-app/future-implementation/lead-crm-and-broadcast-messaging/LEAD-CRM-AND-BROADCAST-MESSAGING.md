@@ -15,8 +15,8 @@ a new system from zero."
 
 ## What the original design mockups show (found per the user's request to check old-version context)
 
-Two original "Lango CRM" design mockups exist at
-`lango-english-center-project-fully/design/crm/crm-kanban.html` /
+Two original "SchoolOS CRM" design mockups exist at
+`schoolos-english-center-project-fully/design/crm/crm-kanban.html` /
 `.png` and `lead-profile.html` / `.png`, generated 2026-04-03 — this is
 real design work for THIS project, not a competitor reference:
 

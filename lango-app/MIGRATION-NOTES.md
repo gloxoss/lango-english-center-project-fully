@@ -161,7 +161,7 @@ this:
   `rejected`) instead of an invented 5-stage sales funnel.
 - Verified live: full admissions lifecycle (create -> in_review -> approve ->
   real `user` row created), promotions round-trip, tenant isolation on every
-  modified/new route (Atlas vs. Lango).
+  modified/new route (Atlas vs. SchoolOS).
 
 **Section 5 done and live-verified** (2026-07-30): `GET /api/students?id=`
 added (student profile page, real detail + joined guardians/attendance-30d/
@@ -521,12 +521,12 @@ student's primary guardian via `guardianStudents.isPrimaryContact`, inserts a
 real `smsMessages` row (`status: 'sent'` immediately, log-only, same pattern as
 every other SMS feature in this app), silently skips if no guardian is linked.
 
-**Live-verified** (Lango tenant, `admin@lango.ma`): marked a real student
+**Live-verified** (SchoolOS tenant, `admin@schoolos.ma`): marked a real student
 absent → real `UNJUSTIFIED_ABSENCE` flag + real SMS log row appeared; submitted
 + approved a real excuse for that date → flag flipped to `RESOLVED`, attendance
 rate recalculated correctly; marked a second student absent 3 consecutive real
 weekdays → real `CONSECUTIVE_ABSENCE` flag appeared. Confirmed tenant isolation
-(Atlas session saw zero Lango flags/excuses). SMS-guardian test required
+(Atlas session saw zero SchoolOS flags/excuses). SMS-guardian test required
 inserting a temporary guardian/`guardianStudents` link (none exists in seed
 data — `guardian_students` has 0 rows app-wide, a pre-existing gap, not part of
 this section's scope) — all test data (attendance rows, excuse, flags, SMS row,
@@ -553,7 +553,7 @@ nothing to clean up. **Skipped 7.2 (auto-save draft)** — the plan itself
 flagged this as genuinely optional ("the current single-session batch-submit
 flow is honest and functional without it"); not built.
 
-**Live-verified** (Lango tenant): `/dashboard/attendance/excuses`,
+**Live-verified** (SchoolOS tenant): `/dashboard/attendance/excuses`,
 `/dashboard/attendance/audit`, `/dashboard/attendance` (post-QR-extraction
 regression check), and a real student profile page (heatmap embed) all
 return real `200`s post-rebuild. `GET /api/attendance/audit-summary` returns

@@ -269,6 +269,27 @@ export const resultPublications = pgTable('result_publications', {
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
 });
 
+// 5. Teacher Question Bank (devoir authoring aid — distinct from the retired
+// Academics question bank). A teacher's reusable question/instruction snippets
+// that can be picked into the "Créer un Devoir" dialog.
+export const teacherQuestionBankItems = pgTable(
+  'teacher_question_bank_items',
+  {
+    id: uuid('id').defaultRandom().primaryKey().notNull(),
+    tenantId: text('tenant_id').notNull(),
+    createdById: text('created_by_id').notNull(),
+    title: text('title').notNull(),
+    content: text('content'),
+    attachmentUrl: text('attachment_url'),
+    tags: jsonb('tags').default([]).notNull(),
+    createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+  },
+  (table) => [
+    index('idx_teacher_qbank_tenant').on(table.tenantId),
+  ]
+);
+
 // 4. Online Examinations Addon — retired 2026-08-13. This block used to define
 // questionBanks/questionItems/questionOptions/onlineExamPolicies/onlineExamAttempts/
 // onlineExamResponses for the dead OnlineExamService (zero route consumers). Its

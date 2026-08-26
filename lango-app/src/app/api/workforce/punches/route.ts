@@ -10,7 +10,7 @@ import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { identityBadgeCredentials, user, workforcePunchEvents } from '@/models/Schema';
 
-const HMAC_SECRET = process.env.BETTER_AUTH_SECRET || 'lango-qr-secret-key-sentinel';
+const HMAC_SECRET = process.env.BETTER_AUTH_SECRET || 'schoolos-qr-secret-key-sentinel';
 
 function computeHmacHash(rawToken: string): string {
   return crypto.createHmac('sha256', HMAC_SECRET).update(rawToken).digest('hex');

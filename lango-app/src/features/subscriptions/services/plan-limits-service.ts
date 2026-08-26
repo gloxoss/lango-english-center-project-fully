@@ -1,9 +1,9 @@
-import { eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { recordAudit } from '@/libs/api/audit';
 import type { RequestContext } from '@/libs/api/context';
 import { ApiError } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
-import { planLimits } from '@/models/Schema';
+import { planLimits, tenants, user } from '@/models/Schema';
 
 export type PlanTier = 'trial' | 'basic' | 'standard' | 'premium';
 
@@ -15,6 +15,40 @@ export type PlanLimit = {
 };
 
 const TIER_ORDER: PlanTier[] = ['trial', 'basic', 'standard', 'premium'];
+
+// Hard enforcement for the per-plan student cap (§1.3): blocks creating more
+// students than the tenant's plan tier allows. No-op when the tier has no cap
+// configured (null = unlimited) or the tenant is missing a plan-limit row, so
+// existing tenants are never retroactively broken until a super-admin sets a cap.
+export async function assertStudentCapacity(tenantId: string, additional: number): Promise<void> {
+  const [tenant] = await db
+    .select({ planTier: tenants.planTier })
+    .from(tenants)
+    .where(eq(tenants.id, tenantId))
+    .limit(1);
+  if (!tenant) return;
+
+  const [limit] = await db
+    .select({ maxStudents: planLimits.maxStudents })
+    .from(planLimits)
+    .where(eq(planLimits.planTier, tenant.planTier))
+    .limit(1);
+  if (!limit || limit.maxStudents == null) return;
+
+  const [countRow] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(user)
+    .where(and(eq(user.tenantId, tenantId), eq(user.role, 'student'), eq(user.userStatus, 'active')));
+  const current = countRow?.n ?? 0;
+
+  if (current + additional > limit.maxStudents) {
+    throw new ApiError(
+      403,
+      'PLAN_STUDENT_LIMIT_REACHED',
+      `Limite de ${limit.maxStudents} élèves atteinte pour votre plan (${current} actif(s)). Passez à un plan supérieur pour inscrire davantage d'élèves.`,
+    );
+  }
+}
 
 export async function listPlanLimits(): Promise<PlanLimit[]> {
   const rows = await db.select().from(planLimits);

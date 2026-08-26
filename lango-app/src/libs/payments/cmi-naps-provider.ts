@@ -8,6 +8,13 @@ import {
   type VerifyCallbackResult,
 } from './provider';
 
+export function isSandboxPaymentAllowed(): boolean {
+  if (process.env.NODE_ENV !== 'production') {
+    return true;
+  }
+  return process.env.ALLOW_PAYMENT_SANDBOX === 'true';
+}
+
 // CMI NAPS (Morocco) hosted-redirect provider. Sandbox mode is fully testable
 // without real merchant credentials; live mode requires real merchant creds +
 // CMI sandbox approval and is a documented follow-up (never faked).
@@ -16,6 +23,13 @@ export class CmiNapsProvider implements PaymentGatewayProvider {
 
   async createSession(input: CreateSessionInput): Promise<CreateSessionResult> {
     if (input.mode === 'sandbox') {
+      if (!isSandboxPaymentAllowed()) {
+        throw new ApiError(
+          403,
+          'SANDBOX_DISABLED_IN_PRODUCTION',
+          'Le mode sandbox de paiement est désactivé en environnement de production.',
+        );
+      }
       // No real redirect: the sandbox simulator drives the callback directly.
       return { redirectUrl: null, externalReference: input.externalReference, mode: 'sandbox' };
     }
@@ -39,12 +53,30 @@ export class CmiNapsProvider implements PaymentGatewayProvider {
 
   async verifyCallback(input: VerifyCallbackInput): Promise<VerifyCallbackResult> {
     if (input.mode === 'sandbox') {
-      // The sandbox simulator is authoritative; signature verification is not a
-      // real security boundary here.
+      if (!isSandboxPaymentAllowed()) {
+        throw new ApiError(
+          403,
+          'SANDBOX_DISABLED_IN_PRODUCTION',
+          'Les callbacks de paiement en mode sandbox sont désactivés en environnement de production.',
+        );
+      }
+
+      const externalReference = String(input.rawBody.externalReference ?? input.rawBody.oid ?? '').trim();
+      if (!externalReference) {
+        throw new ApiError(400, 'INVALID_CALLBACK', 'Référence externe manquante dans le callback sandbox.');
+      }
+
+      const amount = Number(input.rawBody.amount);
+      if (Number.isNaN(amount) || amount <= 0) {
+        throw new ApiError(400, 'INVALID_AMOUNT', 'Montant de paiement sandbox invalide.');
+      }
+
+      // The sandbox simulator is authoritative in non-prod environments;
+      // signature verification is enforced in live mode.
       return {
-        externalReference: String(input.rawBody.externalReference ?? input.rawBody.oid ?? ''),
+        externalReference,
         status: input.rawBody.status === 'failed' ? 'failed' : 'paid',
-        amount: Number(input.rawBody.amount),
+        amount,
         currency: String(input.rawBody.currency ?? 'MAD'),
       };
     }

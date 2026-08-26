@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { Send, Plus, CheckCircle2, AlertTriangle, Copy, ShieldAlert } from 'lucide-react';
+import { Send, Plus, CheckCircle2, AlertTriangle, Copy, ShieldAlert, Sparkles } from 'lucide-react';
 
 interface TimetableVersion {
   id: string;
@@ -41,6 +41,7 @@ export function SchedulePublishBar({
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [copySourceId, setCopySourceId] = useState<string>('none');
   const [creating, setCreating] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   // Conflict modal
   const [conflictModalOpen, setConflictModalOpen] = useState(false);
@@ -111,6 +112,34 @@ export function SchedulePublishBar({
     }
   };
 
+  const handleGenerate = async () => {
+    if (!sessionYearId) return;
+    setGenerating(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/academics/timetable-versions/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionYearId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        const s = data.data;
+        const skipped = s.skippedNoTeacher > 0 ? ` · ${s.skippedNoTeacher} matière(s) sans enseignant` : '';
+        const unplaced = s.unplaced > 0 ? ` · ${s.unplaced} créneau(x) non placé(s)` : '';
+        setMessage({ type: 'success', text: `${s.slotsCreated} créneau(x) généré(s) — v${s.version.versionNumber}${skipped}${unplaced}.` });
+        await loadVersions();
+        handleSelectVersion(data.data.version.id);
+      } else {
+        setMessage({ type: 'error', text: data.error?.message || 'Erreur lors de la génération.' });
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'Erreur réseau lors de la génération.' });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const handlePublish = async () => {
     if (!selectedVersionId) return;
     setPublishing(true);
@@ -169,6 +198,17 @@ export function SchedulePublishBar({
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleGenerate}
+            disabled={generating || !sessionYearId}
+            className="h-9 text-xs rounded-xl gap-1.5 border-slate-200"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#2487B8]" />
+            {generating ? 'Génération...' : 'Générer automatiquement'}
+          </Button>
+
           <Button
             size="sm"
             variant="outline"

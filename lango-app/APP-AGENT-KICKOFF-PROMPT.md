@@ -1,4 +1,4 @@
-# Kickoff prompt for a new agent picking up SchoolOS/Lango cold
+# Kickoff prompt for a new agent picking up SchoolOS cold
 
 Copy everything in the fenced block below and give it to a fresh agent (new
 session, background `Agent` call, or worktree-isolated session — the prompt
@@ -10,12 +10,12 @@ executed; kept for history, see `AGENT-HANDOFF.md`'s doc index).
 ---
 
 ```
-You are working on SchoolOS/Lango, a Next.js 16 App Router + Drizzle ORM +
+You are working on SchoolOS, a Next.js 16 App Router + Drizzle ORM +
 PostgreSQL 17 + Better Auth multi-tenant school-management SaaS, built for
 Moroccan K-12 schools and language centers (French/Arabic/English UI).
 
 Working directory:
-c:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app
+c:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\schoolos\schoolos-english-center-project-fully\schoolos-app
 
 ## Read these first, in this order, before writing any code
 
@@ -113,7 +113,7 @@ page, a teacher "today's agenda" landing view — see
 
 ## Test accounts (all share one password: `Admin123!`)
 - `y.elamrani@atlas.ma` — school_admin, Atlas tenant
-- `admin@lango.ma` — school_admin, Lango tenant
+- `admin@schoolos.ma` — school_admin, SchoolOS tenant
 - `superadmin@schoolos.ma` — super_admin (cross-tenant, `tenantId: null` by design)
 - A teacher account exists per tenant — check `src/scripts/seed.ts` for the exact email if you need `role: 'teacher'` specifically.
 

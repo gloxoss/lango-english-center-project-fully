@@ -112,4 +112,4 @@ Track billing success, unallocated payments, cashier variance, collection rate, 
 - ERPNext accounting/payment document patterns: https://github.com/frappe/erpnext
 - Medusa provider-neutral payment concepts only: https://github.com/medusajs/medusa
 
-Evolve Lango’s existing Finance domain; do not embed a second ERP. Confirm later: MAD-only vs multi-currency, fine rules, first gateway/accounting export, and whether cashier/maker-checker controls are mandatory or configurable.
+Evolve SchoolOS’s existing Finance domain; do not embed a second ERP. Confirm later: MAD-only vs multi-currency, fine rules, first gateway/accounting export, and whether cashier/maker-checker controls are mandatory or configurable.

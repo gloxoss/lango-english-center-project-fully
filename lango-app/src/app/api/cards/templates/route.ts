@@ -1,12 +1,19 @@
-import { desc, eq, and, sql } from 'drizzle-orm';
+import { desc, eq, and } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse, ApiError } from '@/libs/api/errors';
+import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { recordAudit } from '@/libs/api/audit';
 import { requireAddon } from '@/libs/api/entitlements';
+import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { documentTemplates, documentTemplateVersions } from '@/features/cards/models/cards-schema';
+
+const createDocumentTemplateSchema = z.object({
+  name: z.string().trim().min(1, 'Le nom est obligatoire').max(255),
+  type: z.enum(['student_id', 'employee_id', 'admit_card', 'report_card']),
+}).strict();
 
 export async function GET(request: Request) {
   try {
@@ -42,12 +49,8 @@ export async function POST(request: Request) {
     await requireAddon(tenantId, 'card-management');
     await requireCapability(context, 'cards.templates.manage');
 
-    const body = await request.json();
+    const body = await parseJson(request, createDocumentTemplateSchema);
     const { name, type } = body;
-
-    if (!name || !type) {
-      throw new ApiError(400, 'VALIDATION_ERROR', 'Le nom et le type sont obligatoires.');
-    }
 
     const [newTemplate] = await db.insert(documentTemplates).values({
       tenantId,

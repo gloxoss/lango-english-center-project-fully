@@ -8,6 +8,7 @@ import { resolveStudentAudienceContext } from '@/libs/academics/audience-context
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
+import { requireAddon } from '@/libs/api/entitlements';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { classSections, classSubjects, user } from '@/models/Schema';
 import { db } from '@/libs/DB';
@@ -53,6 +54,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'teacher']);
     const tenantId = requireTenant(context);
+    await requireAddon(tenantId, 'attachments-book');
     await requireCapability(context, 'content.manage');
 
     const contentLength = Number(request.headers.get('content-length') || 0);
@@ -67,6 +69,8 @@ export async function POST(request: Request) {
     const attachmentTypeId = String(formData.get('attachmentTypeId') || '');
     const language = formData.get('language') ? String(formData.get('language')) : undefined;
     const targets: TargetInput[] = JSON.parse(String(formData.get('targets') || '[]'));
+    const tags: string[] = JSON.parse(String(formData.get('tags') || '[]'));
+    const expiresAt = formData.get('expiresAt') ? String(formData.get('expiresAt')) : undefined;
     const file = formData.get('file');
 
     if (!title || !attachmentTypeId || !(file instanceof File)) {
@@ -93,6 +97,10 @@ export async function POST(request: Request) {
     }
 
     await AssetService.setTargets(tenantId, result.asset.id, targets);
+    await AssetService.setTags(tenantId, result.asset.id, tags);
+    if (expiresAt) {
+      await db.update(digitalAssets).set({ unpublishAt: expiresAt, updatedAt: new Date().toISOString() }).where(and(eq(digitalAssets.id, result.asset.id), eq(digitalAssets.tenantId, tenantId)));
+    }
 
     recordAudit(context, 'create', 'digital_asset', result.asset.id, { title });
 
@@ -106,6 +114,7 @@ export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request);
     const tenantId = requireTenant(context);
+    await requireAddon(tenantId, 'attachments-book');
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
     const includeArchived = searchParams.get('includeArchived') === 'true';
@@ -148,6 +157,7 @@ export async function GET(request: Request) {
     }
     const viewer = { userId: effectiveStudentId, role: 'student', sectionId: audience.sectionId, offeringIds: audience.offeringIds, classSubjectIds: audience.classSubjectIds };
     const visible = published.filter((a) => {
+      if (a.unpublishAt && new Date(a.unpublishAt).getTime() <= Date.now()) return false;
       const type = typeById.get(a.attachmentTypeId);
       return isAssetVisibleToUser(targetsByAsset.get(a.id) ?? [], type?.studentVisible ?? true, viewer);
     });

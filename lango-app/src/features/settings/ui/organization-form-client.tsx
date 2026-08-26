@@ -20,6 +20,9 @@ export type OrganisationFormData = {
   shortName: string;
   city: string;
   address: string;
+  academicYear: string;
+  startDate: string;
+  endDate: string;
   phone: string;
   email: string;
   website: string;
@@ -341,7 +344,7 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
       <SectionCard icon={Building2} title="Informations Générales">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Nom complet de l'établissement *">
-            <Input value={form.establishmentName} onChange={field('establishmentName')} placeholder="ex: Lango English Center" />
+            <Input value={form.establishmentName} onChange={field('establishmentName')} placeholder="ex: SchoolOS English Center" />
           </Field>
           <Field label="Nom abrégé" hint="Utilisé dans les documents compacts">
             <Input value={form.shortName} onChange={field('shortName')} placeholder="ex: LEC" />
@@ -362,12 +365,27 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
             <Input value={form.phone} onChange={field('phone')} type="tel" placeholder="+212 5 22 00 00 00" />
           </Field>
           <Field label="Email">
-            <Input value={form.email} onChange={field('email')} type="email" placeholder="contact@lango.ma" />
+            <Input value={form.email} onChange={field('email')} type="email" placeholder="contact@schoolos.ma" />
           </Field>
         </div>
       </SectionCard>
 
-      {/* ── Section 3: Informations Légales ── */}
+      {/* ── Section 3: Année scolaire ── */}
+      <SectionCard icon={GraduationCap} title="Année scolaire">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Field label="Année scolaire *" hint="Exemple : 2026-2027">
+            <Input value={form.academicYear} onChange={field('academicYear')} placeholder="2026-2027" />
+          </Field>
+          <Field label="Date de début">
+            <Input value={form.startDate} onChange={field('startDate')} type="date" />
+          </Field>
+          <Field label="Date de fin">
+            <Input value={form.endDate} onChange={field('endDate')} type="date" />
+          </Field>
+        </div>
+      </SectionCard>
+
+      {/* ── Section 4: Informations Légales ── */}
       <SectionCard icon={FileText} title="Informations Légales">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Forme juridique">

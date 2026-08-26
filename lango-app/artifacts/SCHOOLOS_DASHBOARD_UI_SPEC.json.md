@@ -2,7 +2,7 @@
 
 ```json
 {
-  "system": "SchoolOS (Lango Platform) V1",
+  "system": "SchoolOS (SchoolOS Platform) V1",
   "archetype": "Moroccan K-12 & Higher-Ed Operating System",
   "brandTokens": {
     "primary": "#2487B8",

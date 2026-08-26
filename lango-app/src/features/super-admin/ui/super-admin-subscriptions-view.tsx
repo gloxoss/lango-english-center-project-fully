@@ -3,9 +3,17 @@
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { DataTable, Column } from '@/components/shared/data-table';
-import { ShieldCheck, AlertCircle, Layers, RefreshCw, CheckCircle2, Save } from 'lucide-react';
+import { ShieldCheck, AlertCircle, Layers, RefreshCw, CheckCircle2, Save, PlusCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 type CatalogAddon = { addonId: string; name: string; description: string; built: boolean; requires: string[] };
 type ApiSchool = {
@@ -39,6 +47,13 @@ export function SuperAdminSubscriptionsView() {
   const [savingTier, setSavingTier] = useState<string | null>(null);
   const [limitError, setLimitError] = useState<string | null>(null);
   const [limitSuccess, setLimitSuccess] = useState<string | null>(null);
+
+  // Addon create form state
+  const [addonOpen, setAddonOpen] = useState(false);
+  const [addonForm, setAddonForm] = useState({ id: '', name: '', description: '', enabled: false, requires: '' });
+  const [addonSubmitting, setAddonSubmitting] = useState(false);
+  const [addonError, setAddonError] = useState<string | null>(null);
+  const [addonSuccess, setAddonSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -94,6 +109,49 @@ export function SuperAdminSubscriptionsView() {
     }
   }
 
+  async function refreshCatalog() {
+    const r = await fetch('/api/super-admin/subscriptions');
+    const json = await r.json();
+    if (json.success) setData(json.data);
+  }
+
+  async function submitAddon(e: React.FormEvent) {
+    e.preventDefault();
+    setAddonSubmitting(true);
+    setAddonError(null);
+    setAddonSuccess(null);
+    try {
+      const requires = addonForm.requires
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+      const res = await fetch('/api/super-admin/addon-definitions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: addonForm.id.trim(),
+          name: addonForm.name.trim(),
+          description: addonForm.description.trim(),
+          enabled: addonForm.enabled,
+          requires,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setAddonError(json.error?.message || json.message || 'Échec de la création.');
+        return;
+      }
+      setAddonSuccess(`Module « ${json.data.name} » ajouté au catalogue.`);
+      setAddonForm({ id: '', name: '', description: '', enabled: false, requires: '' });
+      setAddonOpen(false);
+      refreshCatalog();
+    } catch {
+      setAddonError('Connexion impossible.');
+    } finally {
+      setAddonSubmitting(false);
+    }
+  }
+
   const summary = data?.summary;
   const planCounts: Record<string, number> = { trial: 0, basic: 0, standard: 0, premium: 0 };
   for (const s of data?.schools ?? []) planCounts[s.planTier] = (planCounts[s.planTier] ?? 0) + 1;
@@ -135,6 +193,17 @@ export function SuperAdminSubscriptionsView() {
           <p className="text-xs text-slate-500 font-medium mt-1">Catalogue des offres tarifaires et des modules de la plateforme.</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            onClick={() => {
+              setAddonError(null);
+              setAddonSuccess(null);
+              setAddonOpen(true);
+            }}
+            className="h-8 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5"
+          >
+            <PlusCircle className="w-3.5 h-3.5" /> Nouveau module
+          </Button>
           {error && (
             <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="h-8 text-xs rounded-xl border-slate-200 gap-1.5">
               <RefreshCw className="w-3.5 h-3.5" /> Réessayer
@@ -242,6 +311,20 @@ export function SuperAdminSubscriptionsView() {
             Activation par école dans <span className="font-mono">Gestion Abonnements</span> — un module n&apos;est visible pour un établissement que s&apos;il y est activé.
           </p>
         </div>
+
+        {addonSuccess && (
+          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-emerald-700 text-xs font-semibold">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>{addonSuccess}</span>
+          </div>
+        )}
+        {addonError && (
+          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 text-rose-700 text-xs font-semibold">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{addonError}</span>
+          </div>
+        )}
+
         <DataTable
           data={data?.catalog ?? []}
           columns={columns}
@@ -251,6 +334,95 @@ export function SuperAdminSubscriptionsView() {
           defaultPageSize={10}
         />
       </div>
+
+      {/* Addon create dialog */}
+      <Dialog open={addonOpen} onOpenChange={setAddonOpen}>
+        <DialogContent className="max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-extrabold text-[#0F172A]">
+              Nouveau module
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={submitAddon} className="space-y-4 py-2">
+            <div>
+              <label className="text-xs font-bold text-slate-600 block mb-1">Identifiant</label>
+              <Input
+                value={addonForm.id}
+                onChange={e => setAddonForm({ ...addonForm, id: e.target.value })}
+                placeholder="ex: reporting-custom"
+                pattern="[a-z0-9][a-z0-9-]*"
+                title="Minuscules, chiffres et tirets uniquement"
+                className="h-9 text-xs rounded-xl border-slate-200 font-mono"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-600 block mb-1">Nom</label>
+              <Input
+                value={addonForm.name}
+                onChange={e => setAddonForm({ ...addonForm, name: e.target.value })}
+                placeholder="ex: Reporting personnalisé"
+                className="h-9 text-xs rounded-xl border-slate-200"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-600 block mb-1">Description</label>
+              <Textarea
+                value={addonForm.description}
+                onChange={e => setAddonForm({ ...addonForm, description: e.target.value })}
+                placeholder="Ce que fait le module et pour qui."
+                rows={3}
+                className="text-xs rounded-xl border-slate-200 resize-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-600 block mb-1">Prérequis (identifiants séparés par des virgules)</label>
+              <Input
+                value={addonForm.requires}
+                onChange={e => setAddonForm({ ...addonForm, requires: e.target.value })}
+                placeholder="ex: human-resources"
+                className="h-9 text-xs rounded-xl border-slate-200 font-mono"
+              />
+            </div>
+
+            <label className="flex items-center gap-2.5 text-xs text-slate-700 font-medium cursor-pointer">
+              <input
+                type="checkbox"
+                checked={addonForm.enabled}
+                onChange={e => setAddonForm({ ...addonForm, enabled: e.target.checked })}
+                className="h-4 w-4 rounded border-slate-300 text-[#0066FF] focus:ring-[#0066FF]"
+              />
+              Module construit (visible dans le catalogue, sinon « À venir »)
+            </label>
+
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setAddonOpen(false)}
+                className="h-9 text-xs rounded-xl border-slate-200"
+              >
+                Annuler
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={addonSubmitting}
+                className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5"
+              >
+                {addonSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Créer le module
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

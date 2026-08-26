@@ -18,7 +18,7 @@ Replaces every hardcoded/fake return value found by the audit with a real, tenan
 - Test: `ExaminationAdapter.getReportCardSnapshotReport()` throws `ReportNotReadyError` when no snapshot has been generated for the requested period, instead of the previous hardcoded fallback grades.
 - Test: `StudentAdapter.getClassSectionOccupancyReport()`'s `enrolled` count matches the real number of students in each class section (`user.classSectionId`), not a hardcoded 22.
 - Test: `StudentAdapter.getCredentialStatusReport()`'s `isProvisioned` reflects a real row in the `account` table, not a hardcoded `true`.
-- Test: Every fixed method returns different, tenant-specific data for two different tenants (Lango vs Atlas), proving it's a real query and not a shared fake constant.
+- Test: Every fixed method returns different, tenant-specific data for two different tenants (SchoolOS vs Atlas), proving it's a real query and not a shared fake constant.
 
 ## Tasks
 
@@ -28,7 +28,7 @@ Replaces every hardcoded/fake return value found by the audit with a real, tenan
   <action>
     Read the file in full to see the 3 already-real methods' query style (`getAccountStatementReport`/`getIncomeExpenseReport`/`getTransactionsReport`) and copy that exact style. Replace `getBalanceSheetReport()`'s hardcoded `450000/120000/330000` with a real tenant-scoped aggregation: Assets from summed real invoice/receivable balances, Liabilities from summed real payable/refund-approval balances, Equity computed as the real difference (or from a real equity-tracking source if one exists in the schema - check `financeMoney`/ledger tables used by the other 3 methods first). Replace `getIncomeVsExpenseReport()`'s hardcoded fictional months with a real monthly aggregation of `payments`/`expenses` tables, matching the date-range pattern already used in `getIncomeExpenseReport`. Also fix `getTransactionsReport` to filter `status = 'posted'`, matching the invariant the original plan specified but which the audit found missing.
   </action>
-  <verify>Call both fixed methods for Lango and Atlas tenants and confirm different real numbers are returned for each, and Assets = Liabilities + Equity holds from real underlying data.</verify>
+  <verify>Call both fixed methods for SchoolOS and Atlas tenants and confirm different real numbers are returned for each, and Assets = Liabilities + Equity holds from real underlying data.</verify>
   <done>Both fabricated FinancialAdapter methods now compute from real tenant data, and the posted-status filter is applied.</done>
 </task>
 

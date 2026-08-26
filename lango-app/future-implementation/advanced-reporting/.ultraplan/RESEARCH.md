@@ -30,7 +30,7 @@
 - Capability Gates: Reuses existing domain capabilities (`students.read`, `finance.read`, `academics.read`, `attendance.read`) plus reporting management capabilities.
 
 ### 4. UI Design System Integration
-- Follows Lango's design system: Tailwind v4 styling, dark/light theme support, accessible tables, filter drawers, chart cards (Recharts), status pills, and empty/error states.
+- Follows SchoolOS's design system: Tailwind v4 styling, dark/light theme support, accessible tables, filter drawers, chart cards (Recharts), status pills, and empty/error states.
 - Shared views:
   - `ReportCenterView`: Catalog grid, search, filter by domain, favorites, domain readiness badges.
   - `ReportWorkspaceView`: Parameters bar, live preview table, pagination, chart visualization, export actions, schedule trigger.

@@ -1,9 +1,9 @@
-# SchoolOS / Lango Changelog
+# SchoolOS Changelog
 
 Real project changes, newest first. Everything below the `---` separator is
 the auto-generated release history of `ixartz/SaaS-Boilerplate`, the
 template this project was forked from — kept for provenance, not relevant
-to SchoolOS/Lango-specific work. See `AGENT-HANDOFF.md` for full context on
+to SchoolOS-specific work. See `AGENT-HANDOFF.md` for full context on
 any entry below.
 
 ## 2026-07-31 — Ramom School Dashboard Widgets, Charts & Analytics Implementation

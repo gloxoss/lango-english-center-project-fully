@@ -30,13 +30,32 @@ export async function GET(req: NextRequest) {
     const context = await requireRequestContext(req);
     const tenantId = requireTenant(context);
 
-    const requestedStudentId = new URL(req.url).searchParams.get('studentId');
-    const studentId = context.role === 'student' ? context.userId : (requestedStudentId ?? context.userId);
-    if (context.role === 'student' && requestedStudentId && requestedStudentId !== context.userId) {
+    // Students only ever see their own audience-matched assignments.
+    if (context.role === 'student') {
+      const requestedStudentId = new URL(req.url).searchParams.get('studentId');
+      if (requestedStudentId && requestedStudentId !== context.userId) {
+        return NextResponse.json({ success: false, error: { code: 'FORBIDDEN', message: 'Vous ne disposez pas des autorisations nécessaires.' } }, { status: 403 });
+      }
+      const homeworkList = await HomeworkService.getHomeworkForStudent(tenantId, context.userId);
+      return NextResponse.json({ success: true, data: homeworkList });
+    }
+
+    // Staff-only branch: matches the question-bank pattern - the whole-tenant
+    // list (with class/subject labels and submission counts) is for
+    // teachers/school_admin/super_admin only; parent/guardian/accountant get 403.
+    if (context.role !== 'school_admin' && context.role !== 'super_admin' && context.role !== 'teacher') {
       return NextResponse.json({ success: false, error: { code: 'FORBIDDEN', message: 'Vous ne disposez pas des autorisations nécessaires.' } }, { status: 403 });
     }
 
-    const homeworkList = await HomeworkService.getHomeworkForStudent(tenantId, studentId);
+    // Drill into one student's list via ?studentId=, otherwise the whole-tenant
+    // teaching hub list.
+    const requestedStudentId = new URL(req.url).searchParams.get('studentId');
+    if (requestedStudentId) {
+      const homeworkList = await HomeworkService.getHomeworkForStudent(tenantId, requestedStudentId);
+      return NextResponse.json({ success: true, data: homeworkList });
+    }
+
+    const homeworkList = await HomeworkService.listHomeworkForTeacher(tenantId);
     return NextResponse.json({ success: true, data: homeworkList });
   } catch (error) {
     return apiErrorResponse(error);

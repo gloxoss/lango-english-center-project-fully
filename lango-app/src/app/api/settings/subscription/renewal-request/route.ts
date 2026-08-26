@@ -16,7 +16,7 @@ const schema = z.object({
 // approves or rejects. No fake success: the request is real and visible.
 export async function POST(request: Request) {
   try {
-    const ctx = await requireRequestContext(request, ['school_admin', 'super_admin']);
+    const ctx = await requireRequestContext(request, ['school_admin', 'super_admin'], { allowSuspended: true });
     await requireCapability(ctx, 'settings.read');
     const tenantId = requireTenant(ctx);
 

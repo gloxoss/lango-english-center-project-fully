@@ -19,7 +19,7 @@ describe('Moroccan SMS Adapter & Phone Normalizer (+212)', () => {
     const text = formatAbsenceSms('Youssef Benjelloun', '30 mai 2026');
     expect(text).toContain('Youssef Benjelloun');
     expect(text).toContain('30 mai 2026');
-    expect(text).toContain('Lango Center');
+    expect(text).toContain('SchoolOS Center');
   });
 
   it('formats payment reminder SMS correctly', () => {

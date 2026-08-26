@@ -8,7 +8,7 @@ Verified: 2026-08-01. Re-check versions, transitive licenses, advisories, and de
 - Documentation: https://uppy.io/docs/
 - License: MIT.
 - Why: modular React-capable UI, metadata editing, progress, recovery, accessibility, and tus support.
-- Use: upload client only; Lango remains responsible for authorization, target metadata, quota, and publish lifecycle.
+- Use: upload client only; SchoolOS remains responsible for authorization, target metadata, quota, and publish lifecycle.
 
 ## Recommended resumable protocol/server: tus and tusd
 
@@ -17,7 +17,7 @@ Verified: 2026-08-01. Re-check versions, transitive licenses, advisories, and de
 - Documentation: https://tus.github.io/tusd/
 - License: MIT.
 - Why: official resumable-upload reference server with local, GCS, AWS S3, and S3-compatible storage support.
-- Use: isolated upload service with pre-create/pre-finish hooks back to Lango. Never expose an unauthenticated arbitrary upload endpoint.
+- Use: isolated upload service with pre-create/pre-finish hooks back to SchoolOS. Never expose an unauthenticated arbitrary upload endpoint.
 
 ## Object storage candidate: SeaweedFS
 
@@ -46,13 +46,13 @@ Verified: 2026-08-01. Re-check versions, transitive licenses, advisories, and de
 
 ## Product inspiration only
 
-- Nextcloud server: https://github.com/nextcloud/server (AGPL-3.0). Useful for versioning, sharing, activity, trash, retention, and file UX patterns; do not copy into Lango without legal review.
+- Nextcloud server: https://github.com/nextcloud/server (AGPL-3.0). Useful for versioning, sharing, activity, trash, retention, and file UX patterns; do not copy into SchoolOS without legal review.
 - ResourceSpace: https://www.resourcespace.com/ and its official source distribution. Useful DAM taxonomy, metadata, permissions, previews, and usage patterns; verify its current license/source before any reuse.
 
 ## Selection recommendation
 
 1. Uppy + tusd for reliable uploads.
-2. Lango-owned BlobStore abstraction with local development and production S3-compatible adapters.
+2. SchoolOS-owned BlobStore abstraction with local development and production S3-compatible adapters.
 3. Managed object storage first unless self-hosting requirements justify SeaweedFS operations.
 4. ClamAV before publish and Apache Tika only as a sandboxed optional worker.
 5. Nextcloud/ResourceSpace as UX/domain inspiration, not embedded dependencies.

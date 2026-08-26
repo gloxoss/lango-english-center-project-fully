@@ -32,7 +32,7 @@ DB-backed live suite** — not by a written claim.
 | # | Requirement | Implementation | Proof |
 |---|---|---|---|
 | 1 | Every request derives tenant & actor from the authenticated session | `requireRequestContext` → `requireTenant` on CRM routes; `broadcastGuard` (`context → tenantId → requireAddon → requireCapability`) on every broadcast route. Tenant/actor never read from the body | `src/features/broadcast/api/guard.ts`; CRM routes; all live scripts sign in real sessions |
-| 2 | Tenant filtering on every query/mutation | All service queries scope `tenantId` (connections, segments, templates, campaigns, deliveries, consents, suppressions, automations, inquiries, follow-ups) | live scripts assert "Lango tenant untouched by verify data — count 0" at the DB; `check-tenant-isolation.ts` |
+| 2 | Tenant filtering on every query/mutation | All service queries scope `tenantId` (connections, segments, templates, campaigns, deliveries, consents, suppressions, automations, inquiries, follow-ups) | live scripts assert "SchoolOS tenant untouched by verify data — count 0" at the DB; `check-tenant-isolation.ts` |
 | 3 | Branch filtering where applicable | Connections/segments carry `branchId` in projection and scoping | `connections-service.ts` `connectionPublic`; live GET assertions |
 | 4 | Capability checks on every staff operation | `requireCapability(context, 'crm.manage'/'broadcast.read'/'broadcast.manage'/'broadcast.send'/'broadcast.export'/'broadcast.automations.manage'/'broadcast.connections.manage')` | guard chain on every route; gate + live scripts exercise role-gated routes |
 | 5 | Add-on entitlement checks | `requireAddon(tenantId, 'lead-crm'/'broadcast-messaging')` | both addon-gate scripts: 403 `ADDON_NOT_ACTIVATED` on every route when disabled |
@@ -52,7 +52,7 @@ DB-backed live suite** — not by a written claim.
 ## What was verified live this session
 
 - Lead CRM backend **41/41** (create/update/assign/transitions/tags/duplicates/
-  merge/follow-ups/convert idempotency/cross-tenant rejection/audit; Lango
+  merge/follow-ups/convert idempotency/cross-tenant rejection/audit; SchoolOS
   untouched).
 - Broadcast backend **54/54** (connections masking, templates versioned publish,
   segments, preview exclusions incl. consent+suppression, approve snapshot,

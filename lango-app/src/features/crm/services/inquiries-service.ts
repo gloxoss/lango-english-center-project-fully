@@ -411,7 +411,7 @@ export async function convertInquiryToApplicant(context: RequestContext, inquiry
       tenantId,
       firstName,
       lastName,
-      email: inquiry.email || `prospect-${inquiry.id.slice(0, 8)}@lango.local`,
+      email: inquiry.email || `prospect-${inquiry.id.slice(0, 8)}@schoolos.local`,
       phone: inquiry.phone || '0600000000',
       status: 'applied',
     })

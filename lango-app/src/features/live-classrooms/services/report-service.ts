@@ -1,6 +1,6 @@
 // Live Classrooms reporting.
 //
-// Reports are computed from normalized Lango rows (sessions, invitations,
+// Reports are computed from normalized SchoolOS rows (sessions, invitations,
 // participant events, derived attendance summaries, recordings) — never from
 // fabricated metrics. Provider-specific signals are labeled as such; no
 // synthetic engagement scores are invented.

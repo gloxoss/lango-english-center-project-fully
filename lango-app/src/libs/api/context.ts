@@ -1,6 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { auth } from '@/libs/auth';
 import { db } from '@/libs/DB';
+import { isSubscriptionBlocked } from '@/libs/subscriptions/subscription-gate-logic';
 import { tenants, user } from '@/models/Schema';
 import { resolveActiveContext } from '@/features/portal/services/active-context';
 import { ApiError } from './errors';
@@ -26,6 +27,7 @@ export function isAppRole(value: string): value is AppRole {
 export async function requireRequestContext(
   request: Request,
   allowedRoles?: readonly AppRole[],
+  opts?: { allowSuspended?: boolean },
 ): Promise<RequestContext> {
   const session = await auth.api.getSession({ headers: request.headers });
 
@@ -43,6 +45,7 @@ export async function requireRequestContext(
       name: user.name,
       email: user.email,
       tenantActive: tenants.isActive,
+      tenantSubscriptionStatus: tenants.subscriptionStatus,
     })
     .from(user)
     .leftJoin(tenants, eq(user.tenantId, tenants.id))
@@ -57,6 +60,16 @@ export async function requireRequestContext(
   }
   if (principal.role !== 'super_admin' && (!principal.tenantId || !principal.tenantActive)) {
     throw new ApiError(403, 'TENANT_DISABLED', 'Cet établissement est indisponible.');
+  }
+  // Billing enforcement: a tenant whose subscription is suspended or cancelled
+  // is blocked here (the same single choke point as isActive), except on the
+  // self-service renewal endpoints which opt out via `allowSuspended`.
+  if (
+    principal.role !== 'super_admin' &&
+    !opts?.allowSuspended &&
+    isSubscriptionBlocked(principal.tenantSubscriptionStatus)
+  ) {
+    throw new ApiError(402, 'SUBSCRIPTION_SUSPENDED', 'Abonnement suspendu. Contactez votre administrateur.');
   }
 
   // Server-owned active-role context (Role Portals Foundation). Falls back to

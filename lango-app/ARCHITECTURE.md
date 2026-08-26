@@ -1,4 +1,4 @@
-# SchoolOS / Lango — Multi-Tenant Architecture & Security Model
+# SchoolOS — Multi-Tenant Architecture & Security Model
 
 ## 1. Multi-Tenant Request Lifecycle & Authorization
 

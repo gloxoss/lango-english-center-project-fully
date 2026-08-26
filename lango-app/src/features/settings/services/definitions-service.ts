@@ -1,4 +1,4 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { RequestContext } from '@/libs/api/context';
 import { db } from '@/libs/DB';
 import {
@@ -88,33 +88,68 @@ export async function syncSettingDefinitions(
   await db.transaction(async (tx) => {
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext('settings-sync:' || ${tenantId}))`);
 
-    for (const def of SETTINGS_REGISTRY) {
-      const [existing] = await tx
-        .select({
-          id: settingDefinitions.id,
-          tenantId: settingDefinitions.tenantId,
-          key: settingDefinitions.key,
-          label: settingDefinitions.label,
-          description: settingDefinitions.description,
-          namespace: settingDefinitions.namespace,
-          scope: settingDefinitions.scope,
-          sensitivity: settingDefinitions.sensitivity,
-          defaultValueIsNull: sql<boolean>`${settingDefinitions.defaultValue} IS NULL`,
-          requiredPermission: settingDefinitions.requiredPermission,
-          legacyField: settingDefinitions.legacyField,
-        })
-        .from(settingDefinitions)
-        .where(and(
-          eq(settingDefinitions.tenantId, tenantId),
-          eq(settingDefinitions.key, def.key),
-        ))
-        .limit(1);
+    // Batch 1: resolve every code-owned definition in one query instead of one
+    // SELECT per registry entry (the registry is ~45 keys, and this runs on
+    // every sync including idempotent re-runs at startup).
+    const existingRows = await tx
+      .select({
+        id: settingDefinitions.id,
+        key: settingDefinitions.key,
+        label: settingDefinitions.label,
+        description: settingDefinitions.description,
+        namespace: settingDefinitions.namespace,
+        scope: settingDefinitions.scope,
+        sensitivity: settingDefinitions.sensitivity,
+        defaultValueIsNull: sql<boolean>`${settingDefinitions.defaultValue} IS NULL`,
+        requiredPermission: settingDefinitions.requiredPermission,
+        legacyField: settingDefinitions.legacyField,
+      })
+      .from(settingDefinitions)
+      .where(and(
+        eq(settingDefinitions.tenantId, tenantId),
+        inArray(settingDefinitions.key, SETTINGS_REGISTRY.map(d => d.key)),
+      ));
+    const existingByKey = new Map(existingRows.map(r => [r.key, r]));
 
-      const actorId = context?.userId ?? null;
-      const syncReason = reason ?? 'Synchronisé depuis le registre de code';
+    // Batch 2: jsonb equality is order-insensitive for object keys and
+    // distinguishes "20" (string) from 20 (number) — a plain JS comparison is
+    // corrupted by drizzle's double-parse of scalar jsonb strings, so compare in
+    // SQL. One VALUES-join query replaces ~45 per-row IS NOT DISTINCT FROM checks.
+    const toCompare: Array<{ def: SettingDefinition; existing: (typeof existingRows)[number] }> = [];
+    for (const row of existingRows) {
+      const def = SETTINGS_REGISTRY.find(d => d.key === row.key);
+      if (def && def.defaultValue !== null && def.defaultValue !== undefined) {
+        toCompare.push({ def, existing: row });
+      }
+    }
+    const sameByDefinitionId = new Map<string, boolean>();
+    if (toCompare.length > 0) {
+      const valueRows = toCompare.map(({ def, existing }) =>
+        sql`(${existing.id}::uuid, ${JSON.stringify(def.defaultValue)}::jsonb)`);
+      const values = sql.join(valueRows, sql`, `);
+      const res = await tx.execute(sql`
+        SELECT ${settingDefinitions.id} AS id,
+               ${settingDefinitions.defaultValue} IS NOT DISTINCT FROM v.val AS same
+        FROM ${settingDefinitions}
+        JOIN (VALUES ${values}) AS v(id, val) ON v.id = ${settingDefinitions.id}
+        WHERE ${settingDefinitions.tenantId} = ${tenantId}
+      `);
+      for (const r of res.rows as Array<{ id: string; same: boolean }>) {
+        sameByDefinitionId.set(r.id, r.same);
+      }
+    }
+
+    const actorId = context?.userId ?? null;
+    const syncReason = reason ?? 'Synchronisé depuis le registre de code';
+
+    const newDefinitions: (typeof settingDefinitions.$inferInsert)[] = [];
+    const versionInserts: (typeof settingDefinitionVersions.$inferInsert)[] = [];
+
+    for (const def of SETTINGS_REGISTRY) {
+      const existing = existingByKey.get(def.key);
 
       if (!existing) {
-        const [inserted] = await tx.insert(settingDefinitions).values({
+        newDefinitions.push({
           tenantId,
           key: def.key,
           label: def.label,
@@ -126,42 +161,17 @@ export async function syncSettingDefinitions(
           requiredPermission: def.requiredPermission,
           legacyField: def.legacyField,
           isCodeOwned: true,
-        }).returning();
-        await tx.insert(settingDefinitionVersions).values({
-          tenantId,
-          definitionId: inserted!.id,
-          version: 1,
-          label: def.label,
-          description: def.description,
-          namespace: def.namespace,
-          scope: def.scope,
-          sensitivity: def.sensitivity,
-          defaultValue: def.defaultValue as never,
-          requiredPermission: def.requiredPermission,
-          legacyField: def.legacyField,
-          actorId,
-          reason: syncReason,
         });
         result.created += 1;
         continue;
       }
 
-      // jsonb equality is order-insensitive for object keys and distinguishes
-      // "20" (string) from 20 (number) — a plain JS comparison is corrupted by
-      // drizzle's double-parse of scalar jsonb strings.
       const codeDv = def.defaultValue === null || def.defaultValue === undefined
         ? null
         : JSON.stringify(def.defaultValue);
-      let dvSame: boolean;
-      if (codeDv === null) {
-        dvSame = existing.defaultValueIsNull;
-      } else {
-        const [dvRow] = await tx
-          .select({ same: sql<boolean>`${settingDefinitions.defaultValue} IS NOT DISTINCT FROM ${codeDv}::jsonb` })
-          .from(settingDefinitions)
-          .where(eq(settingDefinitions.id, existing.id));
-        dvSame = dvRow?.same ?? false;
-      }
+      const dvSame = codeDv === null
+        ? existing.defaultValueIsNull
+        : sameByDefinitionId.get(existing.id) ?? false;
 
       const changed = existing.label !== def.label
         || existing.description !== (def.description ?? null)
@@ -185,7 +195,7 @@ export async function syncSettingDefinitions(
           legacyField: def.legacyField,
           updatedAt: new Date().toISOString(),
         }).where(eq(settingDefinitions.id, existing.id));
-        await tx.insert(settingDefinitionVersions).values({
+        versionInserts.push({
           tenantId,
           definitionId: existing.id,
           version: nextVersion,
@@ -204,6 +214,33 @@ export async function syncSettingDefinitions(
       } else {
         result.unchanged += 1;
       }
+    }
+
+    if (newDefinitions.length > 0) {
+      const inserted = await tx.insert(settingDefinitions).values(newDefinitions).returning();
+      for (let i = 0; i < inserted.length; i++) {
+        const row = inserted[i]!;
+        const def = newDefinitions[i]!;
+        versionInserts.push({
+          tenantId,
+          definitionId: row.id,
+          version: 1,
+          label: def.label,
+          description: def.description,
+          namespace: def.namespace,
+          scope: def.scope ?? 'school',
+          sensitivity: def.sensitivity ?? 'internal',
+          defaultValue: def.defaultValue,
+          requiredPermission: def.requiredPermission,
+          legacyField: def.legacyField,
+          actorId,
+          reason: syncReason,
+        });
+      }
+    }
+
+    if (versionInserts.length > 0) {
+      await tx.insert(settingDefinitionVersions).values(versionInserts);
     }
   });
 

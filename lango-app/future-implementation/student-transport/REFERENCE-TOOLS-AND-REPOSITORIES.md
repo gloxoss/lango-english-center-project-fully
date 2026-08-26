@@ -8,7 +8,7 @@ Verified: 2026-08-01. Re-check releases, licenses, advisories, map-data terms an
 - Documentation/API: https://www.traccar.org/documentation/
 - License: Apache-2.0.
 - Strengths: 200+ GPS protocols, broad device support, REST API, real-time positions, geofences, alarms, notifications and reports.
-- Recommendation: deploy as a separate telemetry service and integrate through a Lango adapter. Do not expose Traccar's tenant/user model directly to school users or make it the school transport database.
+- Recommendation: deploy as a separate telemetry service and integrate through a SchoolOS adapter. Do not expose Traccar's tenant/user model directly to school users or make it the school transport database.
 
 ## Maps: MapLibre
 
@@ -58,5 +58,5 @@ Verified: 2026-08-01. Re-check releases, licenses, advisories, map-data terms an
 
 ## Best-solution recommendation
 
-Use MapLibre in the Lango UI, Traccar as a separate GPS/device service, and a provider-neutral routing adapter initially backed by Valhalla or a managed API. Add OR-Tools only for transparent operator-approved suggestions. Lango remains authoritative for students, routes, allocations, trip state, rider events, guardians, safety incidents and notification policy.
+Use MapLibre in the SchoolOS UI, Traccar as a separate GPS/device service, and a provider-neutral routing adapter initially backed by Valhalla or a managed API. Add OR-Tools only for transparent operator-approved suggestions. SchoolOS remains authoritative for students, routes, allocations, trip state, rider events, guardians, safety incidents and notification policy.
 

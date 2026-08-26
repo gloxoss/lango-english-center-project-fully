@@ -13,6 +13,7 @@ import {
   Users, Star, AlertCircle, Pencil, Trash2, ShieldCheck, CheckCircle2,
   Wallet, Clock, KeyRound,
 } from 'lucide-react';
+import { usePermissions } from '@/hooks/use-permissions';
 
 type CoGuardian = { guardianId: string; name: string; relationshipType: string };
 
@@ -79,6 +80,7 @@ export default function GuardianDetailPage() {
   const router = useRouter();
   const guardianId = typeof params.id === 'string' ? params.id : '';
   const locale = typeof params.locale === 'string' ? params.locale : 'fr';
+  const { can } = usePermissions();
 
   const [guardian, setGuardian] = useState<GuardianDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -280,7 +282,7 @@ export default function GuardianDetailPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
-        {TABS.map(tab => (
+        {TABS.filter(tab => tab.id !== 'payments' || can('finance.read')).map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}

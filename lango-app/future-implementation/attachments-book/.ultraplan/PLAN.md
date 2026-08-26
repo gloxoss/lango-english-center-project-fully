@@ -70,7 +70,7 @@ A new self-contained feature module (`src/features/attachments/`) inside the exi
 
 ## Review Notes — Section 09 Live Execution Findings (2026-08-07)
 
-All live verification was run against the real running app, a real ClamAV daemon, and the real Atlas (`c9177d8a-...`) / Lango (`17c1db51-...`) tenants — no mocks, no synthetic unit-test-only claims.
+All live verification was run against the real running app, a real ClamAV daemon, and the real Atlas (`c9177d8a-...`) / SchoolOS (`17c1db51-...`) tenants — no mocks, no synthetic unit-test-only claims.
 
 **Environment note:** Docker Desktop's engine stopped mid-session (unrelated to this work) and had to be restarted (`Start-Process "Docker Desktop.exe"`, polled `docker info` until responsive, ~10s). Not a code issue, documented for completeness.
 
@@ -80,7 +80,7 @@ All live verification was run against the real running app, a real ClamAV daemon
 - A genuinely clean file (real PNG) uploaded, scanned clean, published, and downloaded back byte-identical with correct `Content-Disposition`/`nosniff`/real-detected-`Content-Type` headers — proving the scanner isn't failing everything indiscriminately.
 - Full version/reuse lifecycle: replaced a published asset's file (creates v2, reverts status to `ready` by design so a swapped file never silently goes live without an explicit re-publish); confirmed v1's version row and the usage-link both survive unchanged; confirmed the download route now serves v2's real bytes; confirmed archiving blocks download unconditionally, even for the owner.
 - Audience targeting: confirmed a class-section-targeted asset is visible to a real student in that section and invisible to a real student in a different section of the same class; confirmed a `studentVisible: false` (staff-only/answer-key) asset is invisible to a targeted student despite a matching section target, while still visible to the owning teacher/admin; confirmed changing a target immediately de-authorizes a previously-visible asset on the very next request (no caching/staleness).
-- Cross-tenant sweep: a Lango-tenant admin was rejected (`404`) on every read/write route against Atlas's real IDs (attachment-type update, asset detail, download, publish, archive, targets-update) and rejected (`422`, asset never created) when attempting to create an asset referencing Atlas's real `attachmentTypeId`.
+- Cross-tenant sweep: a SchoolOS-tenant admin was rejected (`404`) on every read/write route against Atlas's real IDs (attachment-type update, asset detail, download, publish, archive, targets-update) and rejected (`422`, asset never created) when attempting to create an asset referencing Atlas's real `attachmentTypeId`.
 
 **Bugs found and fixed during live execution (not caught by planning or unit tests):**
 1. **`allowedMimeFamilies` was stored but never enforced.** `AssetService.ingestVersion` checked file size and per-extension magic bytes but never cross-checked the uploaded file's MIME family against the attachment type's configured `allowedMimeFamilies` — an "Images only" type would have silently accepted a Word document. Found while constructing the EICAR test (needed a MIME type with no magic-byte check to reach the scanner) and confirmed missing on inspection. Fixed by adding a `MIME_TO_FAMILY` map and a real family-membership check in `ingestVersion`, before the magic-byte check.

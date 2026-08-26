@@ -2,7 +2,7 @@
 
 ## Project Idea
 
-Build the "attachments-book" addon for Lango/SchoolOS: a tenant-scoped academic resource library (content library, attachment-type taxonomy, versioned digital assets, secure upload pipeline, targeting/publish lifecycle, previews, reuse links, reporting). Full source spec: `ATTACHMENTS-BOOK-ADDON.md` + `REFERENCE-TOOLS-AND-REPOSITORIES.md` in this same folder.
+Build the "attachments-book" addon for SchoolOS: a tenant-scoped academic resource library (content library, attachment-type taxonomy, versioned digital assets, secure upload pipeline, targeting/publish lifecycle, previews, reuse links, reporting). Full source spec: `ATTACHMENTS-BOOK-ADDON.md` + `REFERENCE-TOOLS-AND-REPOSITORIES.md` in this same folder.
 
 ## Codebase Context
 

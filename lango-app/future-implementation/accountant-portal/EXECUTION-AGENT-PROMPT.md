@@ -79,7 +79,7 @@ Same structure as the academic-enhancement plan's audit report — an overview t
 
 ## 5. WHAT "TESTED" MEANS HERE
 
-- **Capability gates (Phase 0)**: log in (or simulate the request context) as `accountant@lango.ma` and as `admin@lango.ma`/`y.elamrani@atlas.ma`, hit the actual endpoint both ways, paste both real HTTP status codes. A code review of the `requireCapability` line is not a test.
+- **Capability gates (Phase 0)**: log in (or simulate the request context) as `accountant@schoolos.ma` and as `admin@schoolos.ma`/`y.elamrani@atlas.ma`, hit the actual endpoint both ways, paste both real HTTP status codes. A code review of the `requireCapability` line is not a test.
 - **Cashier session / collection desk (Phase 3)**: open a session, collect a real payment against a real invoice, confirm the invoice's balance actually changed in the database, close the session, confirm the closing totals match what was actually collected — computed from real rows, not asserted.
 - **Sidebar filtering (Phase 1)**: log in as accountant, take the actual rendered nav item list (or query `/api/me/permissions` directly), confirm Academics/Settings/HR-employee-management items are absent — not "the filter logic looks right."
 - **Migrations/backfills**: query real row counts before and after. If a backfill is supposed to link N rows and produces 0, that is not success with a caveat — it's a bug, find it before moving on (the exact bug that shipped twice in the academic-enhancement work was a join comparing two different foreign-key ID spaces that looked plausible on read but matched nothing at runtime).

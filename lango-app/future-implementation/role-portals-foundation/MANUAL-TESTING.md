@@ -8,8 +8,8 @@ layers first; the browser section is the final human acceptance gate.
 
 - Dev server running: `npm run dev` (this document assumes `http://localhost:3002`).
 - Local Postgres with the `schoolos` DB seeded (tenant A "Atlas" admin
-  `y.elamrani@atlas.ma` / `Admin123!`, tenant B "Lango" admin
-  `admin@lango.ma` / `Admin123!`).
+  `y.elamrani@atlas.ma` / `Admin123!`, tenant B "SchoolOS" admin
+  `admin@schoolos.ma` / `Admin123!`).
 - Migration `0083_role_portals_foundation` applied and idempotent (see §2.6).
 
 ## 1. Automated checks (run in order)

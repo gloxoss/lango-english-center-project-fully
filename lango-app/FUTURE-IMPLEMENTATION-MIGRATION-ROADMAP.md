@@ -2,7 +2,7 @@
 
 ## Goal
 
-Migrate the planned Lango school-management features in an order that protects existing data, establishes shared foundations once, and lets every later add-on reuse stable permissions, settings, academic records, finance, files, notifications, and reporting.
+Migrate the planned SchoolOS school-management features in an order that protects existing data, establishes shared foundations once, and lets every later add-on reuse stable permissions, settings, academic records, finance, files, notifications, and reporting.
 
 This is the master execution order. The linked documents remain the detailed specifications for each module.
 

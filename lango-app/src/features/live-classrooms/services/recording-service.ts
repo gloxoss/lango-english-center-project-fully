@@ -1,8 +1,8 @@
 // Recordings & classroom resources.
 //
-// Recordings are provider evidence (listRecordings) synced into Lango as an
+// Recordings are provider evidence (listRecordings) synced into SchoolOS as an
 // immutable-ish, tenant-scoped projection. Deletion is provider-agnostic:
-// the provider is asked to remove the remote recording, then the Lango row is
+// the provider is asked to remove the remote recording, then the SchoolOS row is
 // marked `deleted` (the audit/report record survives, per spec). Retention is
 // policy-controlled and persisted as an expiry timestamp; a periodic job may
 // later mark expired rows.

@@ -1,12 +1,22 @@
 import { desc, eq, and } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse, ApiError } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { recordAudit } from '@/libs/api/audit';
 import { requireAddon } from '@/libs/api/entitlements';
+import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { documentTemplates, documentTemplateVersions } from '@/features/cards/models/cards-schema';
+
+const createDocumentTemplateVersionSchema = z.object({
+  schemaJson: z.record(z.string(), z.unknown()),
+  pageWidthMm: z.number().int().positive().optional(),
+  pageHeightMm: z.number().int().positive().optional(),
+  orientation: z.enum(['portrait', 'landscape']).optional(),
+  publish: z.boolean().optional(),
+}).strict();
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -39,12 +49,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     await requireAddon(tenantId, 'card-management');
     await requireCapability(context, 'cards.templates.manage');
 
-    const body = await request.json();
+    const body = await parseJson(request, createDocumentTemplateVersionSchema);
     const { schemaJson, pageWidthMm, pageHeightMm, orientation, publish } = body;
-
-    if (!schemaJson) {
-      throw new ApiError(400, 'VALIDATION_ERROR', 'Le schéma du modèle est requis.');
-    }
 
     const [template] = await db.select().from(documentTemplates)
       .where(and(eq(documentTemplates.tenantId, tenantId), eq(documentTemplates.id, id))).limit(1);

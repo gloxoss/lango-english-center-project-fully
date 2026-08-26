@@ -23,7 +23,7 @@ export function CampaignComposerClient({ locale: _locale }: { locale?: string })
 
   const [isTestModalOpen, setIsTestModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
-  const [testRecipient, setTestRecipient] = useState('parent.test@lango.ma');
+  const [testRecipient, setTestRecipient] = useState('parent.test@schoolos.ma');
   const [scheduledDate, setScheduledDate] = useState('2025-09-01T10:00');
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
 
@@ -181,8 +181,8 @@ export function CampaignComposerClient({ locale: _locale }: { locale?: string })
             <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200 space-y-3">
               <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-2 text-xs">
                 <div className="flex justify-between border-b border-slate-100 pb-1.5 text-[10px]">
-                  <span className="text-slate-400">De : Direction Lango</span>
-                  <span className="text-slate-400">À : parents@lango.ma</span>
+                  <span className="text-slate-400">De : Direction SchoolOS</span>
+                  <span className="text-slate-400">À : parents@schoolos.ma</span>
                 </div>
                 <p className="font-extrabold text-[#16212B]">{subject || 'Sans objet'}</p>
                 <p className="text-slate-700 text-[11px] leading-relaxed">

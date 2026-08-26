@@ -32,7 +32,7 @@ Closes out the remediation with the same independent, live re-verification disci
   <name>Live end-to-end lifecycle and cross-tenant sweep</name>
   <files>none</files>
   <action>
-    Deploy the rebuilt image. Exercise the full Exam Master lifecycle for real against the Lango tenant, confirming real database state via psql at each step. Reproduce the original answer-forgery and no-deadline bugs against the live app to confirm both are now genuinely rejected. Confirm homework audience scoping with two real distinct student accounts. Then sweep every new/changed route with Atlas tenant credentials against Lango's real IDs, confirming rejection.
+    Deploy the rebuilt image. Exercise the full Exam Master lifecycle for real against the SchoolOS tenant, confirming real database state via psql at each step. Reproduce the original answer-forgery and no-deadline bugs against the live app to confirm both are now genuinely rejected. Confirm homework audience scoping with two real distinct student accounts. Then sweep every new/changed route with Atlas tenant credentials against SchoolOS's real IDs, confirming rejection.
   </action>
   <verify>Every step produces the expected real state change or rejection, confirmed via psql/HTTP, not assumed.</verify>
   <done>The complete remediation is confirmed live-working and tenant-isolated, not assumed from code review.</done>

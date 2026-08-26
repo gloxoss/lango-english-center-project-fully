@@ -3,29 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lango SchoolOS — Tetris Vibrant Blocks Preview</title>
+  <title>Lango SchoolOS — Tetris Geometric Grid Preview</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&family=Press+Start+2P&display=swap">
   <style>
-    :root {
-      --bg: #101026;
-      --surface: #1a1a3a;
-      --border: #00f0ff;
-      --text: #ffffff;
-      --text-muted: #94a3b8;
-      --primary: #ff3366;
-      --accent: #ffcc00;
-      --radius: 0.5rem;
-    }
     body {
       font-family: 'Nunito', sans-serif;
       background: #101026;
       color: #ffffff;
       min-height: 100vh;
     }
-    h1, h2, h3, .head-font {
-      font-family: 'Press Start 2P', monospace;
-    }
+    h1, h2, h3, .head-font { font-family: 'Press Start 2P', monospace; }
     .custom-card {
       background: #1a1a3a;
       border: 2px solid #00f0ff;
@@ -35,14 +23,13 @@
     }
     .custom-btn-primary {
       background-color: #ff3366;
-      color: #000000;
+      color: #ffffff;
       border-radius: 0.5rem;
       border: 2px solid #00f0ff;
       box-shadow: 4px 4px 0px #00f0ff;
       transition: all 0.2s ease;
     }
     .custom-btn-primary:hover {
-      background-color: #e02454;
       transform: translateY(-1px);
     }
     .custom-btn-outline {
@@ -51,9 +38,6 @@
       color: #ffffff;
       border-radius: 0.5rem;
       transition: all 0.2s ease;
-    }
-    .custom-btn-outline:hover {
-      background: rgba(255,255,255,0.05);
     }
   </style>
 </head>
@@ -70,8 +54,8 @@
           </span>
           <span class="text-xs opacity-75 font-mono">STYLE ID: tetris</span>
         </div>
-        <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Tetris Vibrant Blocks</h1>
-        <p class="text-sm mt-1" style="color: #94a3b8;">Iconic geometric block shapes, saturated secondary color outlines, and playful game energy.</p>
+        <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Tetris Geometric Grid</h1>
+        <p class="text-sm mt-1" style="color: #94a3b8;">Vibrant block builds and playful compact grids.</p>
       </div>
 
       <div class="flex items-center gap-3">
@@ -154,7 +138,7 @@
                 <td class="py-3 px-3 font-semibold">Youssef Tazi</td>
                 <td class="px-3" style="color: #94a3b8;">Casablanca Oasis</td>
                 <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-mono" style="background: rgba(255,255,255,0.08);">A2 Beginner</span></td>
-                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #ff3366;">Pending</span></td>
+                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #ffcc00;">Pending</span></td>
                 <td class="px-3 text-right font-bold">1,100 MAD</td>
               </tr>
             </tbody>
@@ -162,36 +146,34 @@
         </div>
       </div>
 
-      <!-- Right Column: Interactive Controls & Tokens -->
+      <!-- Right Column: Interactive Form & Tokens -->
       <div class="space-y-6">
 
-        <!-- Action Card -->
         <div class="custom-card p-6">
           <h3 class="text-base font-bold mb-1">Interactive Form Control</h3>
-          <p class="text-xs mb-4" style="color: #94a3b8;">Test inputs and toggle behaviors</p>
+          <p class="text-xs mb-4" style="color: #94a3b8;">Test inputs and typography response</p>
           
           <div class="space-y-3">
             <div>
-              <label class="block text-xs font-medium mb-1" style="color: #94a3b8;">Student Email / Phone</label>
-              <input type="text" placeholder="student@example.com" class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: rgba(255,255,255,0.05); border-color: #00f0ff; color: #ffffff;">
+              <label class="block text-xs font-medium mb-1" style="color: #94a3b8;">Student Contact</label>
+              <input type="text" placeholder="student@lango.ma" class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: rgba(255,255,255,0.05); border-color: #00f0ff; color: #ffffff;">
             </div>
 
             <div>
-              <label class="block text-xs font-medium mb-1" style="color: #94a3b8;">Target Course Level</label>
+              <label class="block text-xs font-medium mb-1" style="color: #94a3b8;">Program Track</label>
               <select class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: #18181b; border-color: #00f0ff; color: #ffffff;">
                 <option>General English (A1 - C2)</option>
                 <option>Business English & Public Speaking</option>
-                <option>IELTS / TOEFL Intensive Prep</option>
+                <option>IELTS / Cambridge Exam Prep</option>
               </select>
             </div>
 
             <button class="custom-btn-primary w-full py-2.5 text-xs font-bold shadow mt-2">
-              Confirm & Enroll Student
+              Confirm & Enroll
             </button>
           </div>
         </div>
 
-        <!-- Token Inspector -->
         <div class="custom-card p-5 text-xs space-y-2">
           <div class="font-bold border-b pb-2 flex items-center justify-between" style="border-color: #00f0ff;">
             <span>🎨 DESIGN TOKENS</span>

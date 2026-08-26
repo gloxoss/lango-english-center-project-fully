@@ -8,7 +8,7 @@
 
 ## 1. Verified current-state inventory (Finance + billing integration points)
 
-Live-verified against the real Postgres on 2026-08-08 (DB reachable via `docker compose up -d db`, migrations at `0075`/journal `idx 76`). Real tenant IDs: **Atlas** `ca40c88e-339c-4fea-b5c4-51d5c9cc0239`, **Lango** `f62f31eb-1fc8-4102-9145-a5ce0bca989b` (the shared context doc's `c9177d8a…`/`17c1db51…` are **stale** — do not use them). Seeded users: `USR-001` (school_admin, Atlas), `USR-LANGO-001` (school_admin, Lango), `USR-ACC-001` (accountant, Atlas), `STU-001…` (students, Atlas). Password `Admin123!`.
+Live-verified against the real Postgres on 2026-08-08 (DB reachable via `docker compose up -d db`, migrations at `0075`/journal `idx 76`). Real tenant IDs: **Atlas** `ca40c88e-339c-4fea-b5c4-51d5c9cc0239`, **SchoolOS** `f62f31eb-1fc8-4102-9145-a5ce0bca989b` (the shared context doc's `c9177d8a…`/`17c1db51…` are **stale** — do not use them). Seeded users: `USR-001` (school_admin, Atlas), `USR-SCHOOLOS-001` (school_admin, SchoolOS), `USR-ACC-001` (accountant, Atlas), `STU-001…` (students, Atlas). Password `Admin123!`.
 
 ### 1.1 Finance schema (`src/models/Schema.ts` — real shapes, not assumptions)
 
@@ -210,7 +210,7 @@ Target operations: **receive, sale, issue-return, adjustment-apply, transfer-com
 ```
 requireRequestContext(request, [roles]?) → requireTenant(ctx) → requireAddon(tenantId, 'inventory') → requireCapability(ctx, 'inventory.…')
 ```
-**Dev activation (Phase 0):** insert `addonEntitlements` rows (`isEnabled=true`) for Atlas + Lango for `addonId='inventory'` (events precedent). `registry.ts` already lists the addon; leave its `enabled:false` candidate flag as-is unless activation requires otherwise (verify, don't assume). **Addon-disabled regression:** with entitlement off, every inventory route → `403 ADDON_NOT_ACTIVATED`; `finance/*`, `users`, student billing → unchanged 200. Re-enable → data visible again.
+**Dev activation (Phase 0):** insert `addonEntitlements` rows (`isEnabled=true`) for Atlas + SchoolOS for `addonId='inventory'` (events precedent). `registry.ts` already lists the addon; leave its `enabled:false` candidate flag as-is unless activation requires otherwise (verify, don't assume). **Addon-disabled regression:** with entitlement off, every inventory route → `403 ADDON_NOT_ACTIVATED`; `finance/*`, `users`, student billing → unchanged 200. Re-enable → data visible again.
 
 ---
 
@@ -290,7 +290,7 @@ Then append exactly one journal entry: `{ "version":"7", "when":<ts > 1786500000
 
 Shared gate after **every** phase: `npx tsc --noEmit` (0), `npx next build` (exit 0), `docker compose build migrate && docker compose up migrate` (captured exit codes), `npx tsx scripts/check-tenant-isolation.ts` (no new flags), plus the live checks for that phase.
 
-- **Phase 0 — Preflight (no code):** `git status --short` snapshot of the 7 shared files; confirm highest migration = `0075`, journal idx 76; insert `inventory` entitlement rows for Atlas + Lango; confirm dev server + DB up.
+- **Phase 0 — Preflight (no code):** `git status --short` snapshot of the 7 shared files; confirm highest migration = `0075`, journal idx 76; insert `inventory` entitlement rows for Atlas + SchoolOS; confirm dev server + DB up.
 - **Phase 1 — Schema + migration + math/sequence + permissions:** `inventory-schema.ts`, `0076` migration + journal entry, `permissions.ts` `inventory.*` keys + role defaults, Schema.ts barrel line, `inventory-math.ts` pure helpers + vitest (deliberately-break-to-prove), `inventory-sequence.ts`. Verify: migrate applies idempotently, tsc.
 - **Phase 2 — Catalog + ledger + balances + reconcile:** catalog service + CRUD routes + products (stockByStore) + `inventory-transactions.ts` + `stock`/`reconcile` + master-data pages. Verify: CRUD, tenant isolation on every foreign id, balance==Σmovements reconcile, archive `IN_USE` guards.
 - **Phase 3 — Purchasing & receiving:** purchases routes + receive + expense link + GL. Verify: ordered≠stock, receive-once idempotency, expense row created, GL fail-open.

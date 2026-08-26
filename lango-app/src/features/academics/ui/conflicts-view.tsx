@@ -4,7 +4,18 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, CheckCircle2, User, DoorOpen, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, ArrowRight, CheckCircle2, Loader2, User, Wand2, DoorOpen, Users } from 'lucide-react';
+
+type ApiSuggestion = {
+  id: string;
+  moveSlotId: string;
+  kind: 'time' | 'room';
+  label: string;
+  from: { startTime: string; endTime: string; roomLabel: string | null };
+  to: { startTime: string; endTime: string; roomLabel: string | null };
+  detail: string;
+};
 
 type ApiConflict = {
   type: 'teacher' | 'room' | 'class_section';
@@ -12,6 +23,7 @@ type ApiConflict = {
   slotA: { id: string; label: string; startTime: string; endTime: string };
   slotB: { id: string; label: string; startTime: string; endTime: string };
   detail: string;
+  suggestions?: ApiSuggestion[];
 };
 
 const DAY_LABELS: Record<string, string> = {
@@ -24,8 +36,11 @@ const TYPE_LABEL: Record<ApiConflict['type'], string> = { teacher: 'Enseignant',
 export function ConflictsView({ locale }: { locale: string }) {
   const [conflicts, setConflicts] = useState<ApiConflict[]>([]);
   const [loading, setLoading] = useState(true);
+  const [applyingId, setApplyingId] = useState<string | null>(null);
+  const [applyState, setApplyState] = useState<{ id: string; ok: boolean; message: string } | null>(null);
 
-  useEffect(() => {
+  const loadConflicts = () => {
+    setLoading(true);
     fetch('/api/academics/timetable-conflicts')
       .then(r => r.json())
       .then((json) => {
@@ -35,7 +50,43 @@ export function ConflictsView({ locale }: { locale: string }) {
       })
       .catch(err => console.error('Failed loading conflicts', err))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadConflicts();
   }, []);
+
+  // Applies a suggestion through the shared slot PUT endpoint (school_admin +
+  // academics.manage, enforced server-side), then refreshes the conflict list.
+  const handleApply = async (s: ApiSuggestion) => {
+    setApplyingId(s.id);
+    setApplyState(null);
+    try {
+      const body: Record<string, unknown> = { id: s.moveSlotId };
+      if (s.kind === 'time') {
+        body.startTime = s.to.startTime;
+        body.endTime = s.to.endTime;
+      } else {
+        body.roomLabel = s.to.roomLabel;
+      }
+      const res = await fetch('/api/academics/timetable-slots', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setApplyState({ id: s.id, ok: false, message: json?.message ?? 'Échec de l\'application de la suggestion.' });
+        return;
+      }
+      setApplyState({ id: s.id, ok: true, message: 'Suggestion appliquée.' });
+      loadConflicts();
+    } catch {
+      setApplyState({ id: s.id, ok: false, message: 'Erreur réseau lors de l\'application.' });
+    } finally {
+      setApplyingId(null);
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
@@ -85,6 +136,50 @@ export function ConflictsView({ locale }: { locale: string }) {
                       <p className="text-slate-400">{c.slotB.startTime} - {c.slotB.endTime}</p>
                     </div>
                   </div>
+                  {c.suggestions && c.suggestions.length > 0 && (
+                    <div className="p-3 bg-[#EAF1FF] border border-[#D3E3FF] rounded-xl">
+                      <div className="flex items-start gap-2">
+                        <Wand2 className="w-4 h-4 text-[#0066FF] mt-0.5 shrink-0" />
+                        <div className="flex-1 space-y-2">
+                          <p className="text-[11px] font-extrabold text-[#0066FF]">
+                            {c.suggestions.length > 1 ? `Suggestions automatiques (${c.suggestions.length})` : 'Suggestion automatique'}
+                          </p>
+                          {c.suggestions.map((s) => (
+                            <div key={s.id} className="p-2.5 bg-white/70 border border-[#D3E3FF] rounded-lg space-y-1.5">
+                              <p className="text-[11px] text-slate-600">{s.detail}</p>
+                              <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-700">
+                                <span className="line-through text-slate-400">{s.from.startTime}–{s.from.endTime}</span>
+                                <ArrowRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                <span>{s.to.startTime}–{s.to.endTime}</span>
+                              </div>
+                              {s.kind === 'room' && (
+                                <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-700">
+                                  <span className="line-through text-slate-400">Salle {s.from.roomLabel ?? '—'}</span>
+                                  <ArrowRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                  <span>Salle {s.to.roomLabel ?? '—'}</span>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-2 pt-1">
+                                <Button
+                                  size="sm"
+                                  disabled={applyingId === s.id}
+                                  onClick={() => handleApply(s)}
+                                >
+                                  {applyingId === s.id
+                                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    : <CheckCircle2 className="w-3.5 h-3.5" />}
+                                  Appliquer
+                                </Button>
+                                {applyState?.id === s.id && (
+                                  <span className={`text-[11px] font-bold ${applyState.ok ? 'text-emerald-600' : 'text-rose-600'}`}>{applyState.message}</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <Link href={`/${locale}/dashboard/academics/schedule`} className="text-[11px] font-bold text-[#0066FF] hover:underline inline-block pt-1">
                     Résoudre dans l&apos;emploi du temps →
                   </Link>

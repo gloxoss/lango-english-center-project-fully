@@ -1,6 +1,6 @@
 # SERVER & DATABASE SETUP AGENT BRIEFING
 
-You are tasked with deploying and configuring the production database server and hosting environment for **SchoolOS / Lango Multi-Tenant School Management System**.
+You are tasked with deploying and configuring the production database server and hosting environment for **SchoolOS Multi-Tenant School Management System**.
 
 ---
 
@@ -32,7 +32,7 @@ The full production database DDL schema is provided in 2 locations:
 ### Option A: Using Docker & Docker Compose (Recommended)
 1. Navigate to the project root:
    ```bash
-   cd lango-app
+   cd schoolos-app
    ```
 2. Start the application and database containers:
    ```bash

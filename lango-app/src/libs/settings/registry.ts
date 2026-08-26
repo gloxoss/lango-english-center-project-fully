@@ -482,6 +482,32 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     requiredPermission: 'settings.jobs.manage',
   },
 
+  // -- Alumni --
+  {
+    key: 'alumni.autoTransitionEnabled',
+    label: 'Transition automatique vers Anciens Élèves',
+    description: 'Autoriser la transition automatique des élèves dont l\'année scolaire est terminée vers le statut Ancien(ne) élève. Désactivé par défaut car cela modifie leurs accès de connexion.',
+    namespace: 'alumni',
+    valueSchema: z.boolean(),
+    defaultValue: false,
+    scope: 'tenant',
+    sensitivity: 'internal',
+    requiredPermission: 'admissions.manage',
+  },
+
+  // -- Cards --
+  {
+    key: 'cards.autoIssueStudentCardOnApproval',
+    label: 'Carte élève automatique à l\'admission',
+    description: 'Émettre automatiquement la carte d\'identité élève (modèle publié par défaut) dès qu\'une demande d\'admission est approuvée puis convertie en inscription.',
+    namespace: 'cards',
+    valueSchema: z.boolean(),
+    defaultValue: false,
+    scope: 'tenant',
+    sensitivity: 'internal',
+    requiredPermission: 'admissions.manage',
+  },
+
   // -- Migration --
   {
     key: 'migration.state',

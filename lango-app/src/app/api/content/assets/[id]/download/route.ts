@@ -6,6 +6,7 @@ import { resolveStudentAudienceContext } from '@/libs/academics/audience-context
 import { recordAudit } from '@/libs/api/audit';
 import { blobStore } from '@/libs/api/blob-store';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { requireAddon } from '@/libs/api/entitlements';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
 
@@ -17,6 +18,7 @@ export async function GET(
     const { id } = await params;
     const context = await requireRequestContext(request);
     const tenantId = requireTenant(context);
+    await requireAddon(tenantId, 'attachments-book');
 
     const [asset] = await db.select().from(digitalAssets).where(and(eq(digitalAssets.id, id), eq(digitalAssets.tenantId, tenantId))).limit(1);
     if (!asset) {

@@ -1,7 +1,7 @@
 # Lead CRM & Broadcast Messaging — Manual Testing Guide
 
 Complete human-facing acceptance logic for the **Lead CRM** and **Broadcast
-Messaging** add-ons (Lango / SchoolOS, Next.js App Router, Drizzle + PostgreSQL).
+Messaging** add-ons (SchoolOS, Next.js App Router, Drizzle + PostgreSQL).
 This is the companion to the automated live scripts
 `scripts/verify-lead-crm.mjs`, `scripts/verify-broadcast.mjs`,
 `scripts/verify-lead-crm-addon-gate.mjs`, `scripts/verify-broadcast-addon-gate.mjs`,
@@ -21,9 +21,9 @@ emulated and every recipient shown as "Envoyé/Délivré" is simulated.
 | App URL | `http://localhost:3000` (locale `en` or `fr`; dev server :3002 in this workspace) |
 | DB | `postgresql://schoolos:local_dev_password_change_me@localhost:5432/schoolos` |
 | Tenant A | Atlas — `ca40c88e-339c-4fea-b5c4-51d5c9cc0239` |
-| Tenant B | Lango — `f62f31eb-1fc8-4102-9145-a5ce0bca989b` |
+| Tenant B | SchoolOS — `f62f31eb-1fc8-4102-9145-a5ce0bca989b` |
 | Atlas admin | `y.elamrani@atlas.ma` / `Admin123!` (school_admin) |
-| Lango admin | `admin@lango.ma` / `Admin123!` (school_admin) |
+| SchoolOS admin | `admin@schoolos.ma` / `Admin123!` (school_admin) |
 | Add-ons | `lead-crm` and `broadcast-messaging` must be `is_enabled=true` for **both** tenants |
 | Permissions | school_admin role defaults include `crm.manage` and all `broadcast.*` keys |
 
@@ -121,7 +121,7 @@ Route `/api/addons/broadcast/segments`. UI at **CRM & Diffusion → Segments**.
 2. The list shows `memberCount` computed live (matches the number of matching inquiries).
 3. **Recalculer** re-runs the definition and refreshes the count.
 4. **Negative:** an empty/invalid kind → 422 `VALIDATION_ERROR`.
-5. **Cross-tenant:** a segment created by Lango is never visible/addressable from
+5. **Cross-tenant:** a segment created by SchoolOS is never visible/addressable from
    the Atlas session (404 on direct ID).
 
 ---
@@ -196,10 +196,10 @@ enqueued / sent / delivered / failed / delivery-rate and CSV + detail links.
 ## 10. Cross-cutting suites
 
 ### 10.1 Tenant isolation
-- From Atlas, request a campaign/segment/template ID created by Lango → **404**.
+- From Atlas, request a campaign/segment/template ID created by SchoolOS → **404**.
 - `scripts/check-tenant-isolation.ts` reports no missing `tenantId` scoping on any
   `src/app/api/crm/**` or `src/app/api/addons/broadcast/**` route.
-- Both live scripts assert "Lango tenant untouched by verify data" at the DB.
+- Both live scripts assert "SchoolOS tenant untouched by verify data" at the DB.
 
 ### 10.2 Add-on disable
 - `node scripts/verify-lead-crm-addon-gate.mjs` → 8/8 (all CRM routes 403

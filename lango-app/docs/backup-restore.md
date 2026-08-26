@@ -19,7 +19,7 @@ This produces a tenant-scoped JSON export containing all users, academic section
 
 Full PostgreSQL database dumps are generated via `pg_dump`:
 ```bash
-docker exec -t lango-db-1 pg_dump -U schoolos -d schoolos -F c -b -v -f /var/lib/postgresql/data/backups/backup-$(date +%Y%m%d_%H%M%S).dump
+docker exec -t schoolos-db-1 pg_dump -U schoolos -d schoolos -F c -b -v -f /var/lib/postgresql/data/backups/backup-$(date +%Y%m%d_%H%M%S).dump
 ```
 
 ---
@@ -30,13 +30,13 @@ To restore a database dump into a fresh PostgreSQL instance:
 
 ### Step 1: Drop & Re-create Database
 ```bash
-docker exec -i lango-db-1 dropdb -U schoolos schoolos
-docker exec -i lango-db-1 createdb -U schoolos schoolos
+docker exec -i schoolos-db-1 dropdb -U schoolos schoolos
+docker exec -i schoolos-db-1 createdb -U schoolos schoolos
 ```
 
 ### Step 2: Restore Binary Dump
 ```bash
-docker exec -i lango-db-1 pg_restore -U schoolos -d schoolos --verbose /path/to/backup.dump
+docker exec -i schoolos-db-1 pg_restore -U schoolos -d schoolos --verbose /path/to/backup.dump
 ```
 
 ### Step 3: Align Migrations

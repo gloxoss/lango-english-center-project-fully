@@ -1,4 +1,4 @@
-# 🔄 LANGO — SHARED AGENT TASK LOG
+# 🔄 SCHOOLOS — SHARED AGENT TASK LOG
 
 > **Purpose:** Both agents (Antigravity + your planner/coder agent) write to this file after completing tasks. Before starting any work, read the latest entries here.
 
@@ -113,12 +113,12 @@
 [2026-06-15T12:15] [Codex] [DONE] â€” Unblocked local LMS runtime and verified course route
   Context: Weekly plan is still on Frankenstein Pivot Step 7, but the app had an operational Step 6/7 blocker: PGLite was not starting through the npm script, leaving LMS routes/tests with ECONNREFUSED.
   Changes:
-    - lango-app/package.json: Replaced broken PGLite `--run 'npm run db:migrate'` scripts with `--run="node scripts/run-db-migrate.cjs"`.
-    - lango-app/scripts/run-db-migrate.cjs: Added a tiny cross-platform wrapper that runs `npm run db:migrate` from PGLite's child process.
-    - lango-app/src/app/[locale]/(protected)/lms/courses/page.tsx: Awaited Next 16 async params, fixed locale-aware redirect, removed unused import, guarded first course access.
-    - lango-app/src/app/[locale]/(protected)/lms/courses/[courseId]/page.tsx: Awaited Next 16 async params, removed dead placeholder progress/enrollment queries, normalized LMS import casing.
-    - lango-app/local.db: Migrated and seeded with base tenant/admin/Frappe/LMS test data.
-    - Runtime logs created by local verification: lango-app/pglite-server.out.log, lango-app/pglite-server.err.log, lango-app/next-dev.out.log, lango-app/next-dev.err.log.
+    - schoolos-app/package.json: Replaced broken PGLite `--run 'npm run db:migrate'` scripts with `--run="node scripts/run-db-migrate.cjs"`.
+    - schoolos-app/scripts/run-db-migrate.cjs: Added a tiny cross-platform wrapper that runs `npm run db:migrate` from PGLite's child process.
+    - schoolos-app/src/app/[locale]/(protected)/lms/courses/page.tsx: Awaited Next 16 async params, fixed locale-aware redirect, removed unused import, guarded first course access.
+    - schoolos-app/src/app/[locale]/(protected)/lms/courses/[courseId]/page.tsx: Awaited Next 16 async params, removed dead placeholder progress/enrollment queries, normalized LMS import casing.
+    - schoolos-app/local.db: Migrated and seeded with base tenant/admin/Frappe/LMS test data.
+    - Runtime logs created by local verification: schoolos-app/pglite-server.out.log, schoolos-app/pglite-server.err.log, schoolos-app/next-dev.out.log, schoolos-app/next-dev.err.log.
     - AGENT-TASK-LOG.md: Appended this entry.
   Verify: `npm run test -- src/components/lms/actions.test.ts` -> 3/3 pass; `Invoke-WebRequest http://localhost:3000/en/lms/courses -MaximumRedirection 5` -> 200 at `/en/lms/courses/{courseId}` with course title; Playwright route check -> 200 and rendered "Level 1 Beginners".
   Notes: PGLite is currently listening on 127.0.0.1:5432 and Next dev is running on localhost:3000. `npm run check:types` still fails with 46 broader strict-mode errors across dashboard/auth/seed/LMS cleanup files; the route-specific casing/params errors were fixed.
@@ -128,9 +128,9 @@
 [2026-06-15T12:21] [Codex] [DONE] â€” Disabled Sentry Spotlight noise unless explicitly enabled
   Context: Browser console showed repeated `POST http://localhost:8969/stream net::ERR_CONNECTION_REFUSED` from Sentry Spotlight while the local Spotlight server was not running.
   Changes:
-    - lango-app/src/instrumentation-client.ts: Added explicit Sentry/Spotlight env gates; browser Spotlight now only runs with `NEXT_PUBLIC_SENTRY_SPOTLIGHT=true`.
-    - lango-app/src/instrumentation.ts: Added matching server-side Sentry/Spotlight env gates.
-    - lango-app/next.config.ts: Only wraps Next config with Sentry when Sentry is not disabled and `NEXT_PUBLIC_SENTRY_DSN` is configured.
+    - schoolos-app/src/instrumentation-client.ts: Added explicit Sentry/Spotlight env gates; browser Spotlight now only runs with `NEXT_PUBLIC_SENTRY_SPOTLIGHT=true`.
+    - schoolos-app/src/instrumentation.ts: Added matching server-side Sentry/Spotlight env gates.
+    - schoolos-app/next.config.ts: Only wraps Next config with Sentry when Sentry is not disabled and `NEXT_PUBLIC_SENTRY_DSN` is configured.
     - AGENT-TASK-LOG.md: Appended this entry.
   Verify: Playwright reload of `http://localhost:3000/en/lms/courses` -> 200, zero failed `8969` requests, zero console messages mentioning `8969`; `npm run test -- src/components/lms/actions.test.ts` -> 3/3 pass.
   Notes: To use Spotlight intentionally, start `npm run dev:spotlight` and set `NEXT_PUBLIC_SENTRY_SPOTLIGHT=true`.
@@ -140,12 +140,12 @@
 [2026-06-15T12:29] [Codex] [DONE] â€” Switched local DB back to Docker, repaired migrations, and reseeded
   Context: Zakio started Docker and asked to seed/fix the DB. Port 5432 was still held by the previous PGLite process, and the Docker Postgres migration journal was out of sync with the existing schema.
   Changes:
-    - Stopped the old PGLite listener on 127.0.0.1:5432 and started Docker services `lango_postgres` + `lango_redis`.
-    - Docker DB `lango_db`: Added the missing current `0001_known_storm` hash to `drizzle.__drizzle_migrations` because the tables already existed but Drizzle was trying to recreate `chapters`.
-    - lango-app/src/scripts/seed.ts: Made base tenant/admin seed idempotent.
-    - lango-app/src/scripts/seed-frappe.ts: Made Frappe seed idempotent and added a published `Welcome to Level 1` LMS chapter for `Level 1 Beginners`.
-    - lango-app/package.json: Added `db:seed` and `db:seed:frappe` scripts.
-    - lango-app/src/app/[locale]/(protected)/lms/courses/page.tsx: Made LMS index deterministic by redirecting to published courses ordered by name.
+    - Stopped the old PGLite listener on 127.0.0.1:5432 and started Docker services `schoolos_postgres` + `schoolos_redis`.
+    - Docker DB `schoolos_db`: Added the missing current `0001_known_storm` hash to `drizzle.__drizzle_migrations` because the tables already existed but Drizzle was trying to recreate `chapters`.
+    - schoolos-app/src/scripts/seed.ts: Made base tenant/admin seed idempotent.
+    - schoolos-app/src/scripts/seed-frappe.ts: Made Frappe seed idempotent and added a published `Welcome to Level 1` LMS chapter for `Level 1 Beginners`.
+    - schoolos-app/package.json: Added `db:seed` and `db:seed:frappe` scripts.
+    - schoolos-app/src/app/[locale]/(protected)/lms/courses/page.tsx: Made LMS index deterministic by redirecting to published courses ordered by name.
     - AGENT-TASK-LOG.md: Appended this entry.
   Verify: `docker compose up -d postgres redis`; `npm run db:migrate` -> success; `npm run db:seed` -> success; `npm run db:seed:frappe` -> success; Docker counts show 1 tenant, 1 user, 1 program, 2 courses, 2 chapters, 1 group, 1 enrollment; `npm run test -- src/components/lms/actions.test.ts` -> 3/3 pass; `http://localhost:3000/en/lms/courses` -> 200 and redirects to `Level 1 Beginners` with `Welcome to Level 1`.
   Notes: Docker is now the active DB on 127.0.0.1:5432. The TDD test course/chapter still exists because the LMS test suite seeds it idempotently, but the app entry route now prefers the real published Level 1 course.
@@ -164,14 +164,14 @@
 [2026-06-15T12:50] [Codex] [DONE] â€” Started Step 8A with build-stable DB-backed Students and Academics foundations
   Context: Zakio asked to begin the real Step 8 app build with polished UI, scalable backend structure, and Karpathy-style surgical best practices before publishing.
   Changes:
-    - lango-app/src/models/Schema.ts: Added nullable student profile fields, `gender` enum, `attendance_status` enum, `attendance` table, and Step 8A indexes on attendance/enrollments.
-    - lango-app/migrations/0002_spooky_rachel_grey.sql: Generated migration for Step 8A schema additions.
-    - lango-app/src/actions/students.ts: Added tenant-scoped student directory query plus create/update/delete/get student server actions with Zod validation.
-    - lango-app/src/actions/academics.ts: Added tenant-scoped academic overview action for programs, courses, groups, enrollments, and active academic year.
-    - lango-app/src/app/[locale]/(auth)/dashboard/students/page.tsx: Replaced mocked student table with real DB-backed Student Directory, search/status filters, KPI cards, empty state, and semantic status badges.
-    - lango-app/src/app/[locale]/(auth)/dashboard/academics/page.tsx: Replaced mocked academic cards with real DB-backed program/course/group/enrollment overview.
-    - lango-app/src/scripts/seed-frappe.ts: Added idempotent seeded students and enrollments for Amina Benali and Youssef Mansouri.
-    - lango-app/src/types/tabler-icons-react.d.ts: Added local declarations for used Tabler icons.
+    - schoolos-app/src/models/Schema.ts: Added nullable student profile fields, `gender` enum, `attendance_status` enum, `attendance` table, and Step 8A indexes on attendance/enrollments.
+    - schoolos-app/migrations/0002_spooky_rachel_grey.sql: Generated migration for Step 8A schema additions.
+    - schoolos-app/src/actions/students.ts: Added tenant-scoped student directory query plus create/update/delete/get student server actions with Zod validation.
+    - schoolos-app/src/actions/academics.ts: Added tenant-scoped academic overview action for programs, courses, groups, enrollments, and active academic year.
+    - schoolos-app/src/app/[locale]/(auth)/dashboard/students/page.tsx: Replaced mocked student table with real DB-backed Student Directory, search/status filters, KPI cards, empty state, and semantic status badges.
+    - schoolos-app/src/app/[locale]/(auth)/dashboard/academics/page.tsx: Replaced mocked academic cards with real DB-backed program/course/group/enrollment overview.
+    - schoolos-app/src/scripts/seed-frappe.ts: Added idempotent seeded students and enrollments for Amina Benali and Youssef Mansouri.
+    - schoolos-app/src/types/tabler-icons-react.d.ts: Added local declarations for used Tabler icons.
     - Stability cleanup across dashboard/LMS/proxy/auth-client files to make strict TypeScript pass without changing behavior.
     - AGENT-TASK-LOG.md: Appended this entry.
   Verify: `npm run db:generate` -> created migration; `npm run db:migrate` -> success; `npm run db:seed:frappe` -> success; `npm run check:types` -> pass; `npm run test -- src/components/lms/actions.test.ts` -> 3/3 pass; authenticated Playwright checks for `/en/dashboard/students` and `/en/dashboard/academics` show real DB data and no old mock rows; `npm run build` -> production build passes.
@@ -243,4 +243,19 @@
     - src/components/academics/CertificatesClientWrapper.tsx: Created the UI with a data table and a 'Generate Certificate' modal (Shadcn Dialog).
   Verify: Navigate to /en/dashboard/academics/certificates to generate and view certificates.
   Notes: 8E (Assessments) was actually fully built under /dashboard/academics/assessments, correcting a previous audit oversight. Step 8 is now 100% complete.
+---
+
+---
+[2026-08-25T16:40] [Agent4-infra-bucket4-deps] [DONE] -- Infra verification, billing tests un-skipped (35/35), build green, npm audit 45->16, D1-D4 briefs, Bucket-4 recount doc
+  Context: Dispatched as Agent 4 (infra + Bucket 4 recount + dependency audit + external-blocker readiness). Postgres/tests had been skipping all session; ~40-item Bucket 4 figure was stale.
+  Changes:
+    - lango-app/vitest.config.ts: moved poisonous global define('process.env'->NEXT_PUBLIC-only) into ui project only; restored test.env loadEnv with DATABASE_URL shell override support. Root cause of ALL DB-test skips.
+    - lango-app/src/features/subscriptions/services/__tests__/license-expiry-worker.test.ts (+ .test.ts sibling subscription-enforcement): skipIf(()=>fn) never invoked by Vitest v4 -> TLA ping const dbReachable + describe.skipIf(!dbReachable).
+    - lango-app/src/features/settings/__tests__/onboarding-flow.test.ts, src/app/api/public/__tests__/signup-and-invitations.test.ts, src/app/api/webhooks/stripe-platform/stripe-webhook-transitions.test.ts: same guard fix; signup file also updated to current public-invitation contract (json.valid top-level; revoked => 200 valid:false status:'revoked' instead of 400 INVITATION_NOT_PENDING) per route src/app/api/public/invitations/[token]/route.ts.
+    - lango-app/package.json + package-lock.json: npm audit fix (45->16 vulns, criticals 0). better-auth PINNED to ~1.6.18 (installed 1.6.30) because audit-fix minor 1.7.1 broke two-factor-required.tsx types -- Agent 1 territory, did NOT edit that component. Revert pin deliberately when adopting better-auth 1.7 (2-line narrowing fix needed there).
+    - NEXT-TASKS-BUILD-AND-SECURITY.md: appended section 3 with D1-D4 decision briefs (context-only).
+    - BUCKET-4-CURRENT-STATE.md (repo root, NEW): recount vs live code at a431047+worktree -> 17 built / 6 partial / 7 truly unbuilt / 1 by-design. Evidence per item.
+    - AGENT-TASK-LOG.md: this entry.
+  Verify: DATABASE_URL=schoolos_test npx vitest run on the 5 billing files -> 35/35 PASS; npm run check:types -> exit 0; docker-compose build app AND migrate -> exit 0. Full suite on migrations-only DB: 1229P/280F/227S -- every failure traced to Schema.ts-ahead-of-journal drift (0125/0126 not registered in drizzle journal; dev DB was hand-pushed: stripe_* columns, 4 subscription_status labels, tenant_invitations, processed_stripe_events confirmed missing from journal path). I patched ONLY the throwaway schoolos_test DB (docker exec schoolos-db), zero repo migration files touched.
+  Notes: schoolos_test DB created for isolated runs (owner schoolos). Host threw transient OOM twice during run (docker CLI + powershell) -- memory pressure from parallel agents; commands recovered on retry. External blockers verified honest-fail (CMI GATEWAY_LIVE_PENDING / ERP_NOT_IMPLEMENTED / BBB NOT_CONFIGURED) -- no fixes needed there.
 ---

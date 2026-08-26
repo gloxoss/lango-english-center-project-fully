@@ -1,6 +1,6 @@
 # SchoolOS v2 — Master Audit & Implementation Handoff Report
 
-**Project**: SchoolOS / Lango — Multi-Tenant School Management SaaS (Next.js 16 App Router + Drizzle ORM + PostgreSQL 17 + Better Auth)  
+**Project**: SchoolOS — Multi-Tenant School Management SaaS (Next.js 16 App Router + Drizzle ORM + PostgreSQL 17 + Better Auth)  
 **Execution Objective**: Full end-to-end implementation of `V2-ROADMAP.md` (Phases 1 through 8) under `/goal` directive.  
 **Completion Date**: 2026-07-31  
 

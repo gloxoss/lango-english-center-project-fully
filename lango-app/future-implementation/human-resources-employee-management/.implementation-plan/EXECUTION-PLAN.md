@@ -17,7 +17,7 @@
 ## 1. Verified current-state inventory
 
 Everything below was read from the repository or queried from the live database
-(`postgresql://schoolos:...@localhost:5432/schoolos`, tenants: Lango `f62f31eb-1fc8-4102-9145-a5ce0bca989b`,
+(`postgresql://schoolos:...@localhost:5432/schoolos`, tenants: SchoolOS `f62f31eb-1fc8-4102-9145-a5ce0bca989b`,
 Atlas `ca40c88e-339c-4fea-b5c4-51d5c9cc0239`).
 
 ### 1.1 Staff identity (core, must remain core)

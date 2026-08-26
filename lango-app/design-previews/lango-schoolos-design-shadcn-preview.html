@@ -7,42 +7,29 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <style>
-    :root {
-      --bg: #09090b;
-      --surface: #18181b;
-      --border: #27272a;
-      --text: #fafafa;
-      --text-muted: #a1a1aa;
-      --primary: #fafafa;
-      --accent: #3b82f6;
-      --radius: 0.5rem;
-    }
     body {
       font-family: 'Inter', sans-serif;
       background: #09090b;
       color: #fafafa;
       min-height: 100vh;
     }
-    h1, h2, h3, .head-font {
-      font-family: 'Inter', sans-serif;
-    }
+    h1, h2, h3, .head-font { font-family: 'Inter', sans-serif; }
     .custom-card {
       background: #18181b;
       border: 1px solid #27272a;
       border-radius: 0.5rem;
-      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       
     }
     .custom-btn-primary {
       background-color: #fafafa;
-      color: #09090b;
+      color: #ffffff;
       border-radius: 0.5rem;
       
-      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       transition: all 0.2s ease;
     }
     .custom-btn-primary:hover {
-      background-color: #e4e4e7;
       transform: translateY(-1px);
     }
     .custom-btn-outline {
@@ -51,9 +38,6 @@
       color: #fafafa;
       border-radius: 0.5rem;
       transition: all 0.2s ease;
-    }
-    .custom-btn-outline:hover {
-      background: rgba(255,255,255,0.05);
     }
   </style>
 </head>
@@ -71,7 +55,7 @@
           <span class="text-xs opacity-75 font-mono">STYLE ID: shadcn</span>
         </div>
         <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Shadcn Radix Primitives</h1>
-        <p class="text-sm mt-1" style="color: #a1a1aa;">Accessible Radix UI primitives, clean neutral zinc grayscale, and unstyled utility elegance.</p>
+        <p class="text-sm mt-1" style="color: #a1a1aa;">Accessible Radix primitives and zinc monochrome.</p>
       </div>
 
       <div class="flex items-center gap-3">
@@ -154,7 +138,7 @@
                 <td class="py-3 px-3 font-semibold">Youssef Tazi</td>
                 <td class="px-3" style="color: #a1a1aa;">Casablanca Oasis</td>
                 <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-mono" style="background: rgba(255,255,255,0.08);">A2 Beginner</span></td>
-                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #fafafa;">Pending</span></td>
+                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #3b82f6;">Pending</span></td>
                 <td class="px-3 text-right font-bold">1,100 MAD</td>
               </tr>
             </tbody>
@@ -162,36 +146,34 @@
         </div>
       </div>
 
-      <!-- Right Column: Interactive Controls & Tokens -->
+      <!-- Right Column: Interactive Form & Tokens -->
       <div class="space-y-6">
 
-        <!-- Action Card -->
         <div class="custom-card p-6">
           <h3 class="text-base font-bold mb-1">Interactive Form Control</h3>
-          <p class="text-xs mb-4" style="color: #a1a1aa;">Test inputs and toggle behaviors</p>
+          <p class="text-xs mb-4" style="color: #a1a1aa;">Test inputs and typography response</p>
           
           <div class="space-y-3">
             <div>
-              <label class="block text-xs font-medium mb-1" style="color: #a1a1aa;">Student Email / Phone</label>
-              <input type="text" placeholder="student@example.com" class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: rgba(255,255,255,0.05); border-color: #27272a; color: #fafafa;">
+              <label class="block text-xs font-medium mb-1" style="color: #a1a1aa;">Student Contact</label>
+              <input type="text" placeholder="student@lango.ma" class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: rgba(255,255,255,0.05); border-color: #27272a; color: #fafafa;">
             </div>
 
             <div>
-              <label class="block text-xs font-medium mb-1" style="color: #a1a1aa;">Target Course Level</label>
+              <label class="block text-xs font-medium mb-1" style="color: #a1a1aa;">Program Track</label>
               <select class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: #18181b; border-color: #27272a; color: #fafafa;">
                 <option>General English (A1 - C2)</option>
                 <option>Business English & Public Speaking</option>
-                <option>IELTS / TOEFL Intensive Prep</option>
+                <option>IELTS / Cambridge Exam Prep</option>
               </select>
             </div>
 
             <button class="custom-btn-primary w-full py-2.5 text-xs font-bold shadow mt-2">
-              Confirm & Enroll Student
+              Confirm & Enroll
             </button>
           </div>
         </div>
 
-        <!-- Token Inspector -->
         <div class="custom-card p-5 text-xs space-y-2">
           <div class="font-bold border-b pb-2 flex items-center justify-between" style="border-color: #27272a;">
             <span>🎨 DESIGN TOKENS</span>

@@ -48,7 +48,8 @@ export async function POST(request: Request) {
       .where(eq(issuedDocuments.publicTokenHash, hash))
       .limit(1);
 
-    if (!row || row.status !== 'active') {
+    const isExpired = Boolean(row?.validUntil) && new Date(row!.validUntil!).getTime() < Date.now();
+    if (!row || row.status !== 'active' || isExpired) {
       return NextResponse.json({ success: true, data: { valid: false } });
     }
 

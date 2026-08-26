@@ -60,6 +60,12 @@ type TemplateVersionOption = {
   versionNumber: number;
 };
 
+type ClassSectionOption = {
+  id: string;
+  className: string;
+  sectionName: string;
+};
+
 export default function CardsAdmitCardsPage() {
   const params = useParams<{ locale?: string }>();
 
@@ -68,6 +74,8 @@ export default function CardsAdmitCardsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [termFilter, setTermFilter] = useState('all');
+  const [classSections, setClassSections] = useState<ClassSectionOption[]>([]);
+  const [selectedClassSectionId, setSelectedClassSectionId] = useState('all');
 
   // Single issuance dialog
   const [dialog, setDialog] = useState<Seat | null>(null);
@@ -84,17 +92,20 @@ export default function CardsAdmitCardsPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const [sRes, iRes, tplRes] = await Promise.all([
+      const [sRes, iRes, tplRes, csRes] = await Promise.all([
         fetch('/api/cards/admit-seats'),
         fetch('/api/cards/issued?type=admit_card'),
         fetch('/api/cards/templates?type=admit_card'),
+        fetch('/api/academics/class-sections?pageSize=100'),
       ]);
       const s = await sRes.json();
       const i = await iRes.json();
       const tpl = await tplRes.json();
+      const cs = await csRes.json();
 
       if (s.success) setSeats(s.data);
       if (i.success) setIssued(i.data);
+      if (cs.success && Array.isArray(cs.data)) setClassSections(cs.data);
 
       if (tpl.success && Array.isArray(tpl.data)) {
         const versions: TemplateVersionOption[] = [];
@@ -158,6 +169,27 @@ export default function CardsAdmitCardsPage() {
       for (const s of filtered) updated[s.id] = true;
     }
     setSelectedSeatIds(updated);
+  };
+
+  // Additive pre-select: choosing a class/section marks the seats of every
+  // student in that class, merged with whatever is already checked.
+  const handleClassSectionSelect = async (classSectionId: string) => {
+    setSelectedClassSectionId(classSectionId);
+    if (classSectionId === 'all') return;
+    try {
+      const res = await fetch(`/api/students?classSectionId=${classSectionId}&pageSize=100`).then(r => r.json());
+      if (!res.success || !Array.isArray(res.data)) return;
+      const studentIds = new Set(res.data.map((s: { id: string }) => s.id));
+      setSelectedSeatIds(prev => {
+        const next = { ...prev };
+        for (const seat of seats) {
+          if (studentIds.has(seat.studentId)) next[seat.id] = true;
+        }
+        return next;
+      });
+    } catch {
+      // A failed bulk pre-select should not block the rest of the page.
+    }
   };
 
   const handleBulkIssueSubmit = async () => {
@@ -287,6 +319,19 @@ export default function CardsAdmitCardsPage() {
                 <SelectItem value="all" className="text-xs">Toutes les sessions ({terms.length})</SelectItem>
                 {terms.map(t => (
                   <SelectItem key={t.id} value={t.id} className="text-xs">{t.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={selectedClassSectionId} onValueChange={handleClassSectionSelect}>
+              <SelectTrigger className="w-56 h-9 text-xs rounded-xl border-slate-200 bg-white">
+                <SelectValue placeholder="Pré-sélectionner une classe" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-xs">Toutes les classes</SelectItem>
+                {classSections.map(cs => (
+                  <SelectItem key={cs.id} value={cs.id} className="text-xs">
+                    {`${cs.className} ${cs.sectionName}`.trim()}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>

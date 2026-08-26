@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { broadcastGuard } from '@/features/broadcast/api/guard';
 import { getSegment, updateSegment, deleteSegment } from '@/features/broadcast/services/segments-service';
 import { recordAudit } from '@/libs/api/audit';
+import { parseJson } from '@/libs/api/validation';
+
+const updateSegmentSchema = z.object({
+  name: z.string().trim().min(1).max(255).optional(),
+  description: z.string().max(1000).optional(),
+  definition: z.record(z.string(), z.unknown()).optional(),
+}).strict();
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -21,7 +29,7 @@ export async function PUT(request: Request, { params }: Ctx) {
   try {
     const { context, tenantId } = await broadcastGuard(request, 'broadcast.manage');
     const { id } = await params;
-    const body = await request.json();
+    const body = await parseJson(request, updateSegmentSchema);
     const data = await updateSegment(tenantId, id, body);
     recordAudit(context, 'update', 'broadcast.segment', data.id);
     return NextResponse.json({ success: true, data });

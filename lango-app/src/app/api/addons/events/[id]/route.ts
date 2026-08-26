@@ -16,6 +16,16 @@ const updateEventSchema = z.object({
   visibility: z.enum(['public', 'internal', 'targeted']).optional(),
   timezone: z.string().max(64).optional(),
   typeId: z.string().max(64).nullable().optional(),
+  schedule: z.object({
+    startTime: z.string().min(1).max(64).optional(),
+    endTime: z.string().min(1).max(64).optional(),
+    timezone: z.string().max(64).optional(),
+  }).optional(),
+  venue: z.object({
+    name: z.string().max(255).nullable().optional(),
+    capacity: z.number().int().positive().nullable().optional(),
+    onlineLink: z.string().max(1000).nullable().optional(),
+  }).optional(),
 }).strict();
 
 export async function GET(request: Request, { params }: Params) {

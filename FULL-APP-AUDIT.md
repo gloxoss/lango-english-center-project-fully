@@ -1,4 +1,4 @@
-# SchoolOS/Lango — Full App Audit
+# SchoolOS — Full App Audit
 
 Date: 2026-07-30. Scope: every `page.tsx` under `src/app/` (83 total, including dead-tree duplicates) and every `route.ts` under `src/app/api/` (33 total). Ground truth for "is this page reachable" is `src/components/shared/sidebar.tsx` — this app has two parallel route trees everywhere (`(dashboard)` is a route group and adds no URL segment, so `students/*` and `dashboard/students/*` are both real, independently-buildable routes; sidebar only ever links the `dashboard/`-prefixed one). Verified with real file reads and, where noted, live process tests — not typecheck/build alone.
 
@@ -25,7 +25,7 @@ Date: 2026-07-30. Scope: every `page.tsx` under `src/app/` (83 total, including 
 1. **`POST /api/students/photos`** (`src/app/api/students/photos/route.ts`) — no `requireRequestContext`/`requireTenant`, no `db` import at all. GET returns hardcoded mock data; POST is a no-op that ignores its body. Unauthenticated, public, does nothing real.
 2. **`GET/POST /api/settings`** (`src/app/api/settings/route.ts`) — no auth, no `db`. Persists to a single **process-global `let memorySettings` object shared across every tenant in the deployment**. Any caller — authenticated or not — can read or overwrite every school's settings. Also lies to the user: the UI (`settings-view.tsx:343`) and the API's own response message both claim the data is "saved to the database." It is not; it's lost on every restart.
 3. **`POST /api/settings/access-reset`** (`src/app/api/settings/access-reset/route.ts`) — no auth, not covered by middleware (middleware.ts explicitly excludes `/api/*`). Accepts any body from any caller and returns a freshly generated 6-digit "reset code," no rate limiting, no identity binding. Currently harmless only because its own UI never calls it — but it's a live, discoverable, unauthenticated endpoint in production.
-4. **`(auth)/login/page.tsx`** — hardcodes `router.push('/fr/dashboard')` regardless of the actual `locale` route param (destructured, never used). Also ships two real-looking demo credential pairs (`y.elamrani@atlas.ma` / `admin@lango.ma`, both `Admin123!`) as autofill buttons directly in production client markup.
+4. **`(auth)/login/page.tsx`** — hardcodes `router.push('/fr/dashboard')` regardless of the actual `locale` route param (destructured, never used). Also ships two real-looking demo credential pairs (`y.elamrani@atlas.ma` / `admin@schoolos.ma`, both `Admin123!`) as autofill buttons directly in production client markup.
 
 ---
 

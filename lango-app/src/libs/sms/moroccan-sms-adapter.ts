@@ -42,14 +42,14 @@ export function normalizeMoroccanPhone(phone: string): string {
  * Formats an Attendance Absence SMS template in French.
  */
 export function formatAbsenceSms(studentName: string, dateStr: string): string {
-  return `Lango Center: Nous vous informons de l'absence de votre enfant ${studentName} le ${dateStr}. Merci de contacter l'administration.`;
+  return `SchoolOS Center: Nous vous informons de l'absence de votre enfant ${studentName} le ${dateStr}. Merci de contacter l'administration.`;
 }
 
 /**
  * Formats a Payment Due Reminder SMS template.
  */
 export function formatPaymentReminderSms(studentName: string, amountMad: number, dueDateStr: string): string {
-  return `Lango Center: Rappel de paiement de la scolarité pour ${studentName} d'un montant de ${amountMad} MAD à régler avant le ${dueDateStr}.`;
+  return `SchoolOS Center: Rappel de paiement de la scolarité pour ${studentName} d'un montant de ${amountMad} MAD à régler avant le ${dueDateStr}.`;
 }
 
 /**

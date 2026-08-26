@@ -5,6 +5,7 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, studentImportSchema } from '@/libs/api/validation';
+import { assertStudentCapacity } from '@/features/subscriptions/services/plan-limits-service';
 import { db } from '@/libs/DB';
 import { classes, classSections, sections, user } from '@/models/Schema';
 
@@ -18,6 +19,8 @@ export async function POST(request: Request) {
     const tenantId = requireTenant(context);
     await requireCapability(context, 'students.import');
     const body = await parseJson(request, studentImportSchema);
+
+    await assertStudentCapacity(tenantId, body.rows.length);
 
     // Build a "2nde a" -> classSectionId lookup once, so each row's free-text
     // class label can be resolved without an N+1 query per row.

@@ -11,16 +11,16 @@ if you want the reasoning behind the corrections.
 ---
 
 ```
-You are working on SchoolOS/Lango, a Next.js 16 App Router + Drizzle ORM +
+You are working on SchoolOS, a Next.js 16 App Router + Drizzle ORM +
 PostgreSQL 17 + Better Auth multi-tenant school-management SaaS, built for
 Moroccan K-12 schools and language centers.
 
 Working directory:
-c:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app
+c:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\schoolos\schoolos-english-center-project-fully\schoolos-app
 
 Two directories you'll also need are ONE LEVEL ABOVE the working directory
 above, at:
-c:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\
+c:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\schoolos\
   - PRODUCT-TRUTH.md               (product vision, non-negotiables)
   - attendance-plan\                (the full attendance spec suite, see below)
 
@@ -130,7 +130,7 @@ each section's spec, and enhance/complete what's missing:
   `apiErrorResponse()` catch-all.
 - Test accounts (all share one password):
   - `y.elamrani@atlas.ma` / `Admin123!` — school_admin, Atlas tenant
-  - `admin@lango.ma` / `Admin123!` — school_admin, Lango tenant
+  - `admin@schoolos.ma` / `Admin123!` — school_admin, SchoolOS tenant
   - A teacher account exists too — check `src\scripts\seed.ts` for its
     email if you need the `teacher` role specifically for intake-flow
     testing.

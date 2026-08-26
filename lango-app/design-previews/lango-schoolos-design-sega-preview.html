@@ -3,29 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lango SchoolOS — Sega 16-Bit Arcade Preview</title>
+  <title>Lango SchoolOS — Sega 16-Bit Console Preview</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&display=swap&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&display=swap">
   <style>
-    :root {
-      --bg: #000018;
-      --surface: #080838;
-      --border: #4488ff;
-      --text: #ffff00;
-      --text-muted: #00ffff;
-      --primary: #ff4444;
-      --accent: #4488ff;
-      --radius: 0px;
-    }
     body {
-      font-family: 'VT323', monospace;
+      font-family: 'VT323', sans-serif;
       background: #000018;
       color: #ffff00;
       min-height: 100vh;
     }
-    h1, h2, h3, .head-font {
-      font-family: 'VT323', monospace;
-    }
+    h1, h2, h3, .head-font { font-family: 'VT323', sans-serif; }
     .custom-card {
       background: #080838;
       border: 3px solid #4488ff;
@@ -35,14 +23,13 @@
     }
     .custom-btn-primary {
       background-color: #ff4444;
-      color: #000000;
+      color: #ffffff;
       border-radius: 0px;
       border: 3px solid #4488ff;
       box-shadow: 4px 4px 0px #4488ff;
       transition: all 0.2s ease;
     }
     .custom-btn-primary:hover {
-      background-color: #cc2222;
       transform: translateY(-1px);
     }
     .custom-btn-outline {
@@ -51,9 +38,6 @@
       color: #ffff00;
       border-radius: 0px;
       transition: all 0.2s ease;
-    }
-    .custom-btn-outline:hover {
-      background: rgba(255,255,255,0.05);
     }
   </style>
 </head>
@@ -70,8 +54,8 @@
           </span>
           <span class="text-xs opacity-75 font-mono">STYLE ID: sega</span>
         </div>
-        <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Sega 16-Bit Arcade</h1>
-        <p class="text-sm mt-1" style="color: #00ffff;">Mega Drive 16-bit arcade pixel aesthetics, hard rectangular geometry, and vibrant saturated colors.</p>
+        <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Sega 16-Bit Console</h1>
+        <p class="text-sm mt-1" style="color: #00ffff;">90s console arcade with chunky offset borders.</p>
       </div>
 
       <div class="flex items-center gap-3">
@@ -154,7 +138,7 @@
                 <td class="py-3 px-3 font-semibold">Youssef Tazi</td>
                 <td class="px-3" style="color: #00ffff;">Casablanca Oasis</td>
                 <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-mono" style="background: rgba(255,255,255,0.08);">A2 Beginner</span></td>
-                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #ff4444;">Pending</span></td>
+                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #4488ff;">Pending</span></td>
                 <td class="px-3 text-right font-bold">1,100 MAD</td>
               </tr>
             </tbody>
@@ -162,36 +146,34 @@
         </div>
       </div>
 
-      <!-- Right Column: Interactive Controls & Tokens -->
+      <!-- Right Column: Interactive Form & Tokens -->
       <div class="space-y-6">
 
-        <!-- Action Card -->
         <div class="custom-card p-6">
           <h3 class="text-base font-bold mb-1">Interactive Form Control</h3>
-          <p class="text-xs mb-4" style="color: #00ffff;">Test inputs and toggle behaviors</p>
+          <p class="text-xs mb-4" style="color: #00ffff;">Test inputs and typography response</p>
           
           <div class="space-y-3">
             <div>
-              <label class="block text-xs font-medium mb-1" style="color: #00ffff;">Student Email / Phone</label>
-              <input type="text" placeholder="student@example.com" class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: rgba(255,255,255,0.05); border-color: #4488ff; color: #ffff00;">
+              <label class="block text-xs font-medium mb-1" style="color: #00ffff;">Student Contact</label>
+              <input type="text" placeholder="student@lango.ma" class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: rgba(255,255,255,0.05); border-color: #4488ff; color: #ffff00;">
             </div>
 
             <div>
-              <label class="block text-xs font-medium mb-1" style="color: #00ffff;">Target Course Level</label>
+              <label class="block text-xs font-medium mb-1" style="color: #00ffff;">Program Track</label>
               <select class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: #18181b; border-color: #4488ff; color: #ffff00;">
                 <option>General English (A1 - C2)</option>
                 <option>Business English & Public Speaking</option>
-                <option>IELTS / TOEFL Intensive Prep</option>
+                <option>IELTS / Cambridge Exam Prep</option>
               </select>
             </div>
 
             <button class="custom-btn-primary w-full py-2.5 text-xs font-bold shadow mt-2">
-              Confirm & Enroll Student
+              Confirm & Enroll
             </button>
           </div>
         </div>
 
-        <!-- Token Inspector -->
         <div class="custom-card p-5 text-xs space-y-2">
           <div class="font-bold border-b pb-2 flex items-center justify-between" style="border-color: #4488ff;">
             <span>🎨 DESIGN TOKENS</span>

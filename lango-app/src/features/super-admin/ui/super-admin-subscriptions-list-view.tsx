@@ -107,6 +107,27 @@ export function SuperAdminSubscriptionsListView() {
     window.setTimeout(() => setSuccess(null), 4000);
   };
 
+  async function updateSchool(schoolId: string, patch: { planTier?: string; subscriptionStatus?: string; isActive?: boolean }) {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/super-admin/schools', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: schoolId, ...patch }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.message || 'Échec de la mise à jour.');
+      flash('École mise à jour.');
+      await loadDetail(schoolId);
+      await loadList();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Connexion impossible.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function licenseAction(action: 'issue' | 'extend' | 'revoke', schoolId: string, months?: number) {
     setBusy(true);
     setError(null);
@@ -354,6 +375,18 @@ export function SuperAdminSubscriptionsListView() {
                     );
                   })()}
                 </div>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-slate-400 font-bold shrink-0">Type de licence</p>
+                  <Select value={detail.tenant.planTier} onValueChange={v => void updateSchool(detail.tenant.id, { planTier: v })} disabled={busy}>
+                    <SelectTrigger className="h-8 text-xs w-40 rounded-lg border-slate-200"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="trial">Essai</SelectItem>
+                      <SelectItem value="basic">Basique</SelectItem>
+                      <SelectItem value="standard">Standard</SelectItem>
+                      <SelectItem value="premium">Premium</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 {detail.license ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                     <div><p className="text-slate-400 font-bold">Clé</p><p className="font-mono text-[#0F172A] font-semibold mt-0.5 break-all">{detail.license.licenseKey}</p></div>
@@ -380,6 +413,11 @@ export function SuperAdminSubscriptionsListView() {
                   {detail.license && detail.license.status === 'active' && (
                     <Button size="sm" variant="outline" disabled={busy} onClick={() => void licenseAction('extend', detail.tenant.id, 12)} className="h-8 text-xs font-bold rounded-lg border-slate-200">
                       Prolonger de 12 mois
+                    </Button>
+                  )}
+                  {detail.license && detail.license.status === 'cancelled' && (
+                    <Button size="sm" disabled={busy} onClick={() => void licenseAction('extend', detail.tenant.id, 12)} className="h-8 text-xs font-bold rounded-lg bg-[#17A673] hover:bg-[#128a5f] text-white">
+                      Réactiver (+12 mois)
                     </Button>
                   )}
                   {detail.license && detail.license.status !== 'cancelled' && (

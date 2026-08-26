@@ -13,19 +13,19 @@ Password for every account below: **`Admin123!`**
 |---|---|---|---|
 | Super Admin | `superadmin@schoolos.ma` | — (platform-wide) | **2FA is ON** for this account (could not disable — blocked by permission policy). On the OTP screen, click "Recevoir un code par e-mail", then ask me to look up the code (I can read it from `two_factor_otps`, read-only). |
 | School Admin | `y.elamrani@atlas.ma` | Groupe Scolaire Atlas | |
-| School Admin | `admin@lango.ma` | Lango Center | Use this + Atlas admin together to test cross-tenant isolation |
+| School Admin | `admin@schoolos.ma` | SchoolOS Center | Use this + Atlas admin together to test cross-tenant isolation |
 | Teacher | `prof.01@atlas.ma` | Atlas | |
-| Teacher | `sara.bennis@lango.ma` | Lango | |
+| Teacher | `sara.bennis@schoolos.ma` | SchoolOS | |
 | Accountant | `accountant@atlas.ma` | Atlas | |
-| Accountant | `accountant@lango.ma` | Lango | |
+| Accountant | `accountant@schoolos.ma` | SchoolOS | |
 | Student | `etudiant.0001@atlas.ma` | Atlas | |
 | Parent | `parent.001@atlas.ma` | Atlas | |
-| Receptionist | `rec-lango-user@placeholder.local` | Lango | |
+| Receptionist | `rec-schoolos-user@placeholder.local` | SchoolOS | |
 | Guard | `guard.demo@atlas.ma` | Atlas | Newly created this session |
 | Librarian | `librarian.demo@atlas.ma` | Atlas | Newly created this session |
 | Alumni | — | — | **No account exists.** `alumni` role has zero seeded users; would need a fresh one created + an `alumni_transitioned_at` record to test properly. Flag to me if you want this created. |
 
-**Two-tenant testing**: Atlas (`admin@lango.ma`... wait, use `y.elamrani@atlas.ma`) and Lango (`admin@lango.ma`) school-admin accounts exist specifically so you can confirm one tenant never sees another's data — this is the single most important thing to break if you can.
+**Two-tenant testing**: Atlas (`admin@schoolos.ma`... wait, use `y.elamrani@atlas.ma`) and SchoolOS (`admin@schoolos.ma`) school-admin accounts exist specifically so you can confirm one tenant never sees another's data — this is the single most important thing to break if you can.
 
 ---
 
@@ -239,7 +239,7 @@ reports, reports/[key], reports/admin, reports/runs, reports/schedules
 
 ### Public site (school-website-cms — no login required)
 ```
-http://localhost:3000/fr/<tenant-slug>              (e.g. /fr/atlas or /fr/lango)
+http://localhost:3000/fr/<tenant-slug>              (e.g. /fr/atlas or /fr/schoolos)
 /fr/<tenant-slug>/about, /gallery, /faq, /contact, /services, /news, /news/[slug]
 ```
 Confirm the reverse: a tenant with **no** theme configured shows a safe "coming soon" state, never another tenant's content, and that image URLs don't leak across tenant slugs.

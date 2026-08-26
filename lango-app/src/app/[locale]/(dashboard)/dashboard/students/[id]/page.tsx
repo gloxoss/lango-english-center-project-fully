@@ -7,6 +7,6 @@ export default async function StudentProfilePage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'students.read' });
   return <StudentDetailView id={id} locale={locale} />;
 }

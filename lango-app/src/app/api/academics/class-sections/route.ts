@@ -80,6 +80,7 @@ export async function GET(request: Request) {
         .select({
           classSection: classSections,
           className: classes.name,
+          periodType: classes.periodType,
           sectionName: sections.name,
         })
         .from(classSections)
@@ -119,6 +120,7 @@ export async function GET(request: Request) {
       data: rows.map(r => ({
         ...toApiClassSection(r.classSection),
         className: r.className,
+        periodType: r.periodType,
         sectionName: r.sectionName,
         enrolledCount: enrolledById.get(r.classSection.id) ?? 0,
         homeroomTeacherId: homeroomById.get(r.classSection.id) ?? null,

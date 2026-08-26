@@ -2,7 +2,7 @@
 
 ## What We're Building
 
-A school-wide, tenant-scoped academic resource library for Lango: teachers and admins upload learning materials once, target them at the right audience (school-wide, a role, a class, or a specific student), and reuse them across the app instead of re-attaching the same file everywhere. Every upload is malware-scanned before it can ever be downloaded, and every replacement creates a new version without breaking anything that already links to the old one.
+A school-wide, tenant-scoped academic resource library for SchoolOS: teachers and admins upload learning materials once, target them at the right audience (school-wide, a role, a class, or a specific student), and reuse them across the app instead of re-attaching the same file everywhere. Every upload is malware-scanned before it can ever be downloaded, and every replacement creates a new version without breaking anything that already links to the old one.
 
 ## Key Features
 

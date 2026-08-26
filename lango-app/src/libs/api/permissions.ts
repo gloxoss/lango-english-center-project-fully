@@ -539,13 +539,14 @@ export async function getEffectivePermissions(
   tenantId: string,
   role: AppRole,
 ): Promise<Record<PermissionKey, boolean>> {
-  const result: Record<string, boolean> = {};
+  // Resolve every key in parallel: sequential resolution is ~2 DB round-trips
+  // per permission (user + role override lookups) and the full map runs into
+  // the hundreds — serializing that made /api/portal/me take >7s.
+  const entries = await Promise.all(
+    ALL_PERMISSIONS.map(async (key) => [key, await hasCapability(userId, tenantId, role, key)] as const),
+  );
 
-  for (const key of ALL_PERMISSIONS) {
-    result[key] = await hasCapability(userId, tenantId, role, key);
-  }
-
-  return result as Record<PermissionKey, boolean>;
+  return Object.fromEntries(entries) as Record<PermissionKey, boolean>;
 }
 
 /**

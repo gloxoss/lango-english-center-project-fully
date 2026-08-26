@@ -6,6 +6,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
+import { requireAddon } from '@/libs/api/entitlements';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 
@@ -25,6 +26,7 @@ export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request);
     const tenantId = requireTenant(context);
+    await requireAddon(tenantId, 'attachments-book');
 
     const { searchParams } = new URL(request.url);
     const includeArchived = searchParams.get('includeArchived') === 'true';
@@ -48,6 +50,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireAddon(tenantId, 'attachments-book');
     await requireCapability(context, 'content.types.manage');
     const body = await parseJson(request, createAttachmentTypeSchema);
 

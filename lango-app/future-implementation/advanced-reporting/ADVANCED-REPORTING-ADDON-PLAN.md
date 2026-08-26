@@ -26,7 +26,7 @@ Domain source reports remain core; this add-on supplies a governed catalog, cros
 
 Duplicate Fees and Examination screenshots represent the same screens and are counted once.
 
-## Feature map against Lango
+## Feature map against SchoolOS
 
 ### Keep
 
@@ -291,7 +291,7 @@ Implement A → B → C first. Domain-dependent reports stay visibly `not_ready`
 - DuckDB: optional isolated export/analytics processing over Parquet, not the transactional source of truth — https://github.com/duckdb/duckdb
 - ExcelJS: XLSX generation candidate — https://github.com/exceljs/exceljs
 
-V1 recommendation: build curated reporting natively in Lango with existing React/Recharts and PostgreSQL read models. Do not embed a full BI platform until self-service analyst demand, operational capacity and licensing have been proven.
+V1 recommendation: build curated reporting natively in SchoolOS with existing React/Recharts and PostgreSQL read models. Do not embed a full BI platform until self-service analyst demand, operational capacity and licensing have been proven.
 
 ## Decisions to confirm later
 

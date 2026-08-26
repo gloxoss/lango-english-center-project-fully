@@ -35,6 +35,7 @@ type Asset = {
   status: string;
   currentVersionId: string | null;
   createdAt: string;
+  expiresAt?: string | null;
   versions?: AssetVersion[];
   targets?: AssetTarget[];
   tags?: string[];
@@ -75,6 +76,8 @@ export default function ContentLibraryPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [tags, setTags] = useState('');
+  const [expiresAt, setExpiresAt] = useState('');
   const [attachmentTypeId, setAttachmentTypeId] = useState('');
   const [targetKind, setTargetKind] = useState('school');
   const [targetRoleValue, setTargetRoleValue] = useState('teacher');
@@ -86,6 +89,8 @@ export default function ContentLibraryPage() {
   const [uploadResultStatus, setUploadResultStatus] = useState('');
 
   const [inspecting, setInspecting] = useState<Asset | null>(null);
+  const [editingInspector, setEditingInspector] = useState(false);
+  const [editForm, setEditForm] = useState({ title: '', description: '', tags: '', expiresAt: '', targetKind: 'school', targetRoleValue: 'teacher', targetRefId: '' });
 
   const loadAssets = () => fetch('/api/content/assets').then(r => r.json()).then((j) => { if (j.success) setAssets(j.data); });
   const loadTypes = () => fetch('/api/content/attachment-types').then(r => r.json()).then((j) => { if (j.success) setTypes(j.data); });
@@ -100,7 +105,12 @@ export default function ContentLibraryPage() {
   const openInspector = async (asset: Asset) => {
     const res = await fetch(`/api/content/assets/${asset.id}`);
     const json = await res.json();
-    if (json.success) setInspecting(json.data);
+    if (json.success) {
+      setInspecting(json.data);
+      const target = json.data.targets?.[0];
+      setEditForm({ title: json.data.title, description: json.data.description || '', tags: (json.data.tags || []).join(', '), expiresAt: json.data.expiresAt ? json.data.expiresAt.slice(0, 16) : '', targetKind: target?.targetKind || 'school', targetRoleValue: target?.targetRoleValue || 'teacher', targetRefId: target?.targetRefId || '' });
+      setEditingInspector(false);
+    }
   };
 
   const handlePublish = async (id: string) => {
@@ -123,7 +133,7 @@ export default function ContentLibraryPage() {
   };
 
   const resetCreateForm = () => {
-    setTitle(''); setDescription(''); setAttachmentTypeId(''); setTargetKind('school');
+    setTitle(''); setDescription(''); setTags(''); setExpiresAt(''); setAttachmentTypeId(''); setTargetKind('school');
     setTargetRoleValue('teacher'); setTargetRefId(''); setFile(null); setUploadProgress(0);
     setUploadError(''); setUploadResultStatus('');
   };
@@ -150,6 +160,8 @@ export default function ContentLibraryPage() {
     if (description.trim()) formData.append('description', description.trim());
     formData.append('attachmentTypeId', attachmentTypeId);
     formData.append('targets', JSON.stringify(targets));
+    formData.append('tags', JSON.stringify(tags.split(',').map(t => t.trim()).filter(Boolean)));
+    if (expiresAt) formData.append('expiresAt', new Date(expiresAt).toISOString());
     formData.append('file', file);
 
     const xhr = new XMLHttpRequest();
@@ -174,6 +186,14 @@ export default function ContentLibraryPage() {
     };
     xhr.onerror = () => { setUploading(false); setUploadError('Erreur réseau lors du téléversement.'); };
     xhr.send(formData);
+  };
+
+  const handleInspectorSave = async () => {
+    if (!inspecting || !editForm.title.trim()) return;
+    const targets = editForm.targetKind === 'school' ? [{ targetKind: 'school' }] : editForm.targetKind === 'role' ? [{ targetKind: 'role', targetRoleValue: editForm.targetRoleValue }] : editForm.targetRefId ? [{ targetKind: editForm.targetKind, targetRefId: editForm.targetRefId }] : [];
+    const res = await fetch(`/api/content/assets/${inspecting.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: editForm.title.trim(), description: editForm.description.trim() || null, tags: editForm.tags.split(',').map(t => t.trim()).filter(Boolean), targets, expiresAt: editForm.expiresAt ? new Date(editForm.expiresAt).toISOString() : null }) });
+    const json = await res.json();
+    if (json.success) { await loadAssets(); await openInspector(inspecting); } else alert(json.error?.message || 'Échec de la modification.');
   };
 
   const filtered = assets.filter(a => a.title.toLowerCase().includes(search.toLowerCase()));
@@ -325,6 +345,7 @@ export default function ContentLibraryPage() {
               <label className="text-xs font-bold text-slate-700">Description</label>
               <Textarea value={description} onChange={e => setDescription(e.target.value)} className="mt-1 text-xs rounded-xl" rows={2} />
             </div>
+            <div className="grid grid-cols-2 gap-3"><div><label className="text-xs font-bold text-slate-700">Tags</label><Input value={tags} onChange={e => setTags(e.target.value)} placeholder="cours, révision, bac" className="mt-1 h-9 rounded-xl text-xs" /></div><div><label className="text-xs font-bold text-slate-700">Visible jusqu’au</label><Input type="datetime-local" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} className="mt-1 h-9 rounded-xl text-xs" /></div></div>
             <div>
               <label className="text-xs font-bold text-slate-700">Type de pièce jointe</label>
               <Select value={attachmentTypeId} onValueChange={setAttachmentTypeId}>
@@ -406,7 +427,7 @@ export default function ContentLibraryPage() {
                 <DialogTitle>{inspecting.title}</DialogTitle>
               </DialogHeader>
               <div className="space-y-3 text-xs">
-                <p className="text-slate-500">{inspecting.description || 'Aucune description.'}</p>
+                {editingInspector ? <div className="space-y-3"><Input value={editForm.title} onChange={e => setEditForm({...editForm,title:e.target.value})} /><Textarea value={editForm.description} onChange={e => setEditForm({...editForm,description:e.target.value})} rows={3} /><div className="grid grid-cols-2 gap-3"><Input value={editForm.tags} onChange={e => setEditForm({...editForm,tags:e.target.value})} placeholder="Tags séparés par des virgules" /><Input type="datetime-local" value={editForm.expiresAt} onChange={e => setEditForm({...editForm,expiresAt:e.target.value})} /></div><Select value={editForm.targetKind} onValueChange={v=>setEditForm({...editForm,targetKind:v,targetRefId:''})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{Object.entries(TARGET_KIND_LABEL).filter(([k])=>k!=='class_offering').map(([k,v])=><SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select>{editForm.targetKind==='role'&&<Select value={editForm.targetRoleValue} onValueChange={v=>setEditForm({...editForm,targetRoleValue:v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="teacher">Enseignants</SelectItem><SelectItem value="student">Élèves</SelectItem><SelectItem value="parent">Parents</SelectItem></SelectContent></Select>}{editForm.targetKind==='class_section'&&<Select value={editForm.targetRefId} onValueChange={v=>setEditForm({...editForm,targetRefId:v})}><SelectTrigger><SelectValue placeholder="Section" /></SelectTrigger><SelectContent>{sections.map(s=><SelectItem key={s.id} value={s.id}>{s.id}</SelectItem>)}</SelectContent></Select>}{editForm.targetKind==='class_subject'&&<Select value={editForm.targetRefId} onValueChange={v=>setEditForm({...editForm,targetRefId:v})}><SelectTrigger><SelectValue placeholder="Matière" /></SelectTrigger><SelectContent>{subjects.map(s=><SelectItem key={s.id} value={s.id}>{s.id}</SelectItem>)}</SelectContent></Select>}{editForm.targetKind==='user'&&<Select value={editForm.targetRefId} onValueChange={v=>setEditForm({...editForm,targetRefId:v})}><SelectTrigger><SelectValue placeholder="Élève" /></SelectTrigger><SelectContent>{students.map(s=><SelectItem key={s.id} value={s.id}>{s.fullName}</SelectItem>)}</SelectContent></Select>}</div> : <p className="text-slate-500">{inspecting.description || 'Aucune description.'}</p>}
                 <div className="flex items-center gap-2">
                   <Badge variant={STATUS_BADGE[inspecting.status]?.variant || 'neutral'}>{STATUS_BADGE[inspecting.status]?.label || inspecting.status}</Badge>
                   {(inspecting.tags || []).map(t => <Badge key={t} variant="neutral">{t}</Badge>)}
@@ -428,6 +449,7 @@ export default function ContentLibraryPage() {
                 )}
               </div>
               <DialogFooter className="gap-2">
+                {editingInspector ? <><Button variant="outline" onClick={()=>setEditingInspector(false)}>Annuler</Button><Button onClick={handleInspectorSave} className="bg-[#0066FF] text-white">Enregistrer</Button></> : <Button variant="outline" onClick={()=>setEditingInspector(true)}>Modifier</Button>}
                 {inspecting.status === 'ready' && (
                   <Button onClick={() => handlePublish(inspecting.id)} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl cursor-pointer">
                     Publier

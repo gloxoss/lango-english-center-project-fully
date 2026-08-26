@@ -1,4 +1,4 @@
-# SchoolOS (Lango Platform) V1 — Product Context & Architecture Map
+# SchoolOS (SchoolOS Platform) V1 — Product Context & Architecture Map
 
 ## 1. Product Summary
 **SchoolOS** is a comprehensive, multi-tenant school-management platform engineered for Moroccan private K-12 schools (primaire, collège, lycée), language training institutes, and private higher-education institutions. It replaces dated legacy desktop software with a modern, fast, trilingual (French, Arabic RTL, English) web experience that handles academics, mobile attendance, Moroccan `/20` grading, financial invoicing, automated SMS communication, and local CNDP compliance.

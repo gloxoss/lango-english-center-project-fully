@@ -34,7 +34,7 @@ this plan; the next hand-authored migration will hit the same issue.
 
 ## Live verification performed (all real, all cleaned up after)
 
-- Logged in as real `admin@lango.ma` (school_admin, Lango tenant) and
+- Logged in as real `admin@schoolos.ma` (school_admin, SchoolOS tenant) and
   `y.elamrani@atlas.ma` (Atlas tenant) via real `/api/auth/sign-in/email`.
 - Marked a real student absent → confirmed a real `UNJUSTIFIED_ABSENCE` flag
   and a real `smsMessages` row (required inserting a temporary test
@@ -45,7 +45,7 @@ this plan; the next hand-authored migration will hit the same issue.
   (50% → 100%).
 - Marked a second real student absent 3 consecutive real weekdays → confirmed
   a real `CONSECUTIVE_ABSENCE` flag.
-- Confirmed tenant isolation: Atlas session saw zero Lango flags/excuses.
+- Confirmed tenant isolation: Atlas session saw zero SchoolOS flags/excuses.
 - Post-rebuild: `/dashboard/attendance/excuses`, `/dashboard/attendance/audit`,
   `/dashboard/attendance` (QR-extraction regression check), and a real student
   profile page (heatmap embed) all returned real `200`s.

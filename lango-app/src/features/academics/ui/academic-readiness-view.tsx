@@ -6,20 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { usePermissions } from '@/hooks/use-permissions';
 import {
   Download,
   ShieldCheck,
-  CheckCircle2,
   AlertTriangle,
-  AlertCircle,
   RefreshCw,
   TrendingUp,
+  TrendingDown,
+  Camera,
   ArrowRight,
-  Sparkles,
-  Layers,
-  GraduationCap,
-  Calendar,
-  Users,
 } from 'lucide-react';
 
 interface ReadinessCheck {
@@ -32,61 +28,111 @@ interface ReadinessCheck {
   deepLinkLabel?: string;
 }
 
+interface TrendPoint {
+  score: number;
+  capturedAt: string;
+}
+
 interface ReadinessData {
   overallScore: number;
-  weeklyTrendDelta?: number;
+  weeklyTrendDelta?: number | null;
+  trend: TrendPoint[];
   checks: ReadinessCheck[];
 }
 
-const DEFAULT_DEEP_LINKS: Record<string, { href: string; label: string }> = {
-  classes: { href: '/dashboard/academics/classes', label: 'Gérer les classes & sections' },
-  subjects: { href: '/dashboard/academics/class-subjects', label: 'Affecter les matières' },
-  teachers: { href: '/dashboard/academics/class-section-teachers', label: 'Vérifier la charge enseignants' },
-  timetable: { href: '/dashboard/academics/schedule', label: 'Résoudre les conflits horaires' },
-  students: { href: '/dashboard/students', label: 'Consulter les effectifs élèves' },
+function Sparkline({ points }: { points: number[] }) {
+  const w = 272;
+  const h = 40;
+  const min = Math.min(...points, 0);
+  const max = Math.max(...points, 100);
+  const range = max - min || 1;
+  const step = points.length > 1 ? w / (points.length - 1) : 0;
+  const coords = points.map((p, i) => {
+    const x = i * step;
+    const y = h - ((p - min) / range) * h;
+    return { x, y };
+  });
+  return (
+    <svg width="100%" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="h-10 w-full">
+      <polyline
+        points={coords.map(c => `${c.x},${c.y}`).join(' ')}
+        fill="none"
+        stroke="#0066FF"
+        strokeWidth="2"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      {coords.map((c, i) => (
+        <circle key={i} cx={c.x} cy={c.y} r="2.5" fill="#0066FF" />
+      ))}
+    </svg>
+  );
+}
+
+const CHECK_DEEP_LINKS: Record<string, { href: string; label: string }> = {
+  class_offerings: { href: '/dashboard/academics/classes', label: 'Gérer les offres de classes & sections' },
+  primary_teachers: { href: '/dashboard/academics/class-section-teachers', label: 'Affecter les titulaires manquants' },
+  subject_teachers: { href: '/dashboard/academics/assignments', label: 'Affecter les enseignants aux matières' },
+  timetable_published: { href: '/dashboard/academics/schedule', label: 'Générer & publier l\'emploi du temps' },
+  rooms_allocated: { href: '/dashboard/academics/rooms', label: 'Affecter les salles de cours' },
+  student_placements: { href: '/dashboard/students', label: 'Affecter les élèves aux sections' },
 };
 
 export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {}) {
+  const { role } = usePermissions();
   const [data, setData] = useState<ReadinessData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [capturing, setCapturing] = useState(false);
 
-  const fetchReadiness = () => {
+  const fetchReadiness = async () => {
     setLoading(true);
-    fetch('/api/academics/readiness')
-      .then((r) => r.json())
-      .then((res) => {
-        if (res.success && res.data) {
-          const checksWithLinks = (res.data.checks || []).map((c: ReadinessCheck) => {
-            const key = Object.keys(DEFAULT_DEEP_LINKS).find(k => c.id.toLowerCase().includes(k) || c.title.toLowerCase().includes(k));
-            const dl = key ? DEFAULT_DEEP_LINKS[key] : { href: '/dashboard/academics/classes', label: 'Examiner les éléments' };
-            return {
-              ...c,
-              deepLink: `/${locale}${dl?.href}`,
-              deepLinkLabel: dl?.label,
-            };
-          });
-          setData({
-            overallScore: res.data.overallScore ?? 88,
-            weeklyTrendDelta: res.data.weeklyTrendDelta ?? 12,
-            checks: checksWithLinks,
-          });
-        }
-      })
-      .catch(() => {
-        // fallback display
-        setData({
-          overallScore: 88,
-          weeklyTrendDelta: 12,
-          checks: [
-            { id: 'classes', title: 'Classes & Sections', score: 100, status: 'conforme', detail: 'Toutes les classes disposent d\'au moins une section active.', deepLink: `/${locale}/dashboard/academics/classes`, deepLinkLabel: 'Voir les classes' },
-            { id: 'subjects', title: 'Matières & Coefficients', score: 94, status: 'conforme', detail: 'Coefficients et matières principaux affectés pour 94% des programmes.', deepLink: `/${locale}/dashboard/academics/class-subjects`, deepLinkLabel: 'Affecter les matières' },
-            { id: 'teachers', title: 'Affectation Enseignants & Suppléances', score: 82, status: 'attention', detail: '3 sections nécessitent l\'affectation d\'un enseignant ou suppléant.', deepLink: `/${locale}/dashboard/academics/class-section-teachers`, deepLinkLabel: 'Affecter les enseignants' },
-            { id: 'timetable', title: 'Emploi du Temps & Conflits', score: 78, status: 'attention', detail: '2 chevauchements de salles détectés dans l\'emploi du temps provisoire.', deepLink: `/${locale}/dashboard/academics/schedule`, deepLinkLabel: 'Résoudre les conflits' },
-            { id: 'students', title: 'Effectifs & Inscriptions', score: 96, status: 'conforme', detail: 'Capacités maximales respectées dans 96% des salles.', deepLink: `/${locale}/dashboard/students`, deepLinkLabel: 'Consulter les effectifs' },
-          ],
+    setError(null);
+    try {
+      const res = await fetch('/api/academics/readiness');
+      const json = await res.json();
+      if (json.success && json.data) {
+        const checksWithLinks = (json.data.checks || []).map((c: ReadinessCheck) => {
+          const dl = CHECK_DEEP_LINKS[c.id];
+          const href = dl?.href ?? '/dashboard/academics/classes';
+          const label = dl?.label ?? 'Examiner les éléments';
+          return {
+            ...c,
+            deepLink: `/${locale}${href}`,
+            deepLinkLabel: label,
+          };
         });
-      })
-      .finally(() => setLoading(false));
+        setData({
+          overallScore: json.data.overallScore ?? 0,
+          weeklyTrendDelta: json.data.weeklyTrendDelta ?? null,
+          trend: json.data.trend ?? [],
+          checks: checksWithLinks,
+        });
+      } else {
+        setData(null);
+        setError('Impossible de charger le bilan de préparation académique.');
+      }
+    } catch {
+      setData(null);
+      setError('Impossible de charger le bilan de préparation académique.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCaptureSnapshot = async () => {
+    setCapturing(true);
+    try {
+      const res = await fetch('/api/academics/readiness/snapshots', { method: 'POST' });
+      const json = await res.json();
+      if (json.success) {
+        await fetchReadiness();
+      }
+    } catch {
+      // Ignore — refresh is best-effort.
+    } finally {
+      setCapturing(false);
+    }
   };
 
   useEffect(() => {
@@ -107,6 +153,18 @@ export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {
           </p>
         </div>
         <div className="flex items-center gap-2.5">
+          {role === 'school_admin' && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleCaptureSnapshot}
+              disabled={capturing || loading}
+              className="h-9 text-xs rounded-xl gap-1.5 border-slate-200 bg-white font-bold"
+            >
+              <Camera className="w-3.5 h-3.5 text-[#2487B8]" />
+              {capturing ? 'Capture...' : 'Capturer un instantané'}
+            </Button>
+          )}
           <Button
             size="sm"
             variant="outline"
@@ -130,6 +188,13 @@ export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {
         </div>
       </div>
 
+      {error && (
+        <div className="flex items-center gap-2 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          {error}
+        </div>
+      )}
+
       {/* Main Score Gauge with Weekly Trend (§6.16) */}
       <Card className="rounded-2xl border border-slate-200/80 shadow-xs bg-white">
         <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
@@ -140,10 +205,24 @@ export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-extrabold text-[#16212B]">Score Global de Préparation Académique</h2>
-                <Badge className="bg-[#DDF5EC] text-[#17A673] border-none font-bold text-[10px] gap-1">
-                  <TrendingUp className="w-3 h-3" />
-                  +{data?.weeklyTrendDelta ?? 12}% cette semaine
-                </Badge>
+                {typeof data?.weeklyTrendDelta === 'number' && (
+                  <Badge
+                    className={`border-none font-bold text-[10px] gap-1 ${
+                      data.weeklyTrendDelta > 0
+                        ? 'bg-[#DDF5EC] text-[#17A673]'
+                        : data.weeklyTrendDelta < 0
+                          ? 'bg-red-50 text-red-600'
+                          : 'bg-slate-100 text-slate-600'
+                    }`}
+                  >
+                    {data.weeklyTrendDelta > 0 ? (
+                      <TrendingUp className="w-3 h-3" />
+                    ) : data.weeklyTrendDelta < 0 ? (
+                      <TrendingDown className="w-3 h-3" />
+                    ) : null}
+                    {data.weeklyTrendDelta > 0 ? '+' : ''}{data.weeklyTrendDelta}% cette semaine
+                  </Badge>
+                )}
               </div>
               <p className="text-xs text-slate-500 mt-1 max-w-lg">
                 Progression mesurée semaine après semaine. Cliquez sur chaque carte ci-dessous pour corriger directement les points non conformes.
@@ -156,6 +235,12 @@ export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {
               <span className="text-[#0066FF] font-mono">{data?.overallScore ?? 0} / 100</span>
             </div>
             <Progress value={data?.overallScore ?? 0} className="h-3 rounded-full bg-slate-100" />
+            {data?.trend && data.trend.length >= 2 && (
+              <div className="pt-1">
+                <Sparkline points={data.trend.map(t => t.score)} />
+                <p className="text-[10px] text-slate-400 mt-1">Historique des instantanés (les plus récents à droite)</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

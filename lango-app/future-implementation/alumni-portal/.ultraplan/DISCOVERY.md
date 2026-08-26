@@ -4,7 +4,7 @@
 See `.ultraplan/STATE.md` "Idea" section — full alumni lifecycle, records, events/community, opt-in directory, profile, and requests, built on the existing spec at `future-implementation/alumni-portal/ALUMNI-PORTAL-PLAN.md`.
 
 ## Codebase Context
-Existing, actively-developed codebase: SchoolOS/Lango, Next.js App Router + Drizzle ORM + PostgreSQL + Better Auth, multi-tenant. New, security-sensitive domain relative to prior work this session (consent, minors safeguarding, document verification, data subject rights) — full discovery warranted, not condensed, given real legal/safeguarding stakes.
+Existing, actively-developed codebase: SchoolOS, Next.js App Router + Drizzle ORM + PostgreSQL + Better Auth, multi-tenant. New, security-sensitive domain relative to prior work this session (consent, minors safeguarding, document verification, data subject rights) — full discovery warranted, not condensed, given real legal/safeguarding stakes.
 
 ## Discovery Q&A
 

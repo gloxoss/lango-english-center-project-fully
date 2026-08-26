@@ -1,6 +1,6 @@
 // Provider-neutral contract for the Live Classrooms add-on.
 //
-// Lango owns scheduling, authorization, roster, normalized immutable events,
+// SchoolOS owns scheduling, authorization, roster, normalized immutable events,
 // derived attendance, recording policy and reports. A provider adapter owns
 // media-room semantics only. Capability flags gate which UI controls are
 // honored; the UI disables unsupported controls instead of pretending support.
@@ -90,7 +90,7 @@ export type RoomState = {
 export type CreateJoinTokenInput = {
   providerMeetingId: string;
   role: ProviderParticipantRole;
-  identity: string; // Lango user id
+  identity: string; // SchoolOS user id
   displayName: string;
   ttlSeconds: number;
   config: ProviderConfig;

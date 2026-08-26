@@ -1,11 +1,11 @@
 ---
-name: lango-sms-context
-description: Use this skill whenever the user asks to continue, rebuild, audit, plan, design, or implement the Lango English Center SaaS Platform (SMS, LMS, CRM, ERP). Make sure to use this skill whenever the user mentions Lango, school management, Next.js frontend for Lango, NestJS backend, or wants to check the Lango architecture/blueprint.
+name: schoolos-sms-context
+description: Use this skill whenever the user asks to continue, rebuild, audit, plan, design, or implement the SchoolOS English Center SaaS Platform (SMS, LMS, CRM, ERP). Make sure to use this skill whenever the user mentions SchoolOS, school management, Next.js frontend for SchoolOS, NestJS backend, or wants to check the SchoolOS architecture/blueprint.
 ---
 
-# Lango English Center SaaS Context
+# SchoolOS English Center SaaS Context
 
-Use this skill whenever the user asks to continue, rebuild, audit, plan, design, or implement the **Lango English Center SaaS Platform**. This skill acts as the project memory for future sessions and agents, preserving the conversation context, target product, architecture, design rules, and development progress.
+Use this skill whenever the user asks to continue, rebuild, audit, plan, design, or implement the **SchoolOS English Center SaaS Platform**. This skill acts as the project memory for future sessions and agents, preserving the conversation context, target product, architecture, design rules, and development progress.
 
 ---
 
@@ -23,7 +23,7 @@ When assisting him:
 
 ## Product Target
 
-The project is **Lango English Center SaaS Platform**.
+The project is **SchoolOS English Center SaaS Platform**.
 It is a comprehensive School Management System (SMS) with modular add-ons (LMS, WhatsApp CRM, ERP). Initially built as a single-tenant MVP for a specific client in Casablanca, Morocco, but architected from Day 1 to be a **Multi-Tenant SaaS**.
 
 Target behavior:
@@ -38,15 +38,15 @@ Target behavior:
 ## Repositories & Important Paths
 
 Main workspace:
-`D:\Users\zakio\Desktop\Lango english center project fully`
+`D:\Users\zakio\Desktop\SchoolOS english center project fully`
 
 Core directories:
 - **`pre-dev/`**: Contains the source-of-truth documents (PRD, SRS, C4 Diagrams, UI/UX specs, API specifications).
 - **`apps/api/`**: NestJS backend modular monolith.
-- **`apps/web/`** (or `lango-app/`): Next.js App Router frontend.
+- **`apps/web/`** (or `schoolos-app/`): Next.js App Router frontend.
 - **`design/`**: HTML/CSS UI prototypes and reference `.png` mockups.
 - **`graphify-out/`**: Contains the AST Knowledge Graph `GRAPH_REPORT.md` and `graph.html`.
-- **`.gemini/antigravity/brain/.../artifacts/lango_full_audit.md`**: The exhaustive pre-dev audit.
+- **`.gemini/antigravity/brain/.../artifacts/schoolos_full_audit.md`**: The exhaustive pre-dev audit.
 
 ---
 

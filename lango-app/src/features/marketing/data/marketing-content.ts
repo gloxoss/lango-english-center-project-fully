@@ -23,7 +23,7 @@ export const HERO_CONTENT_I18N: Record<Locale, HeroContent> = {
     tickerLogos: [
       { id: 'logo-1', name: 'Groupe Scolaire Atlas', logoUrl: '/assets/images/68a70127ff28015ac9fee3f8_Fake_Logo_1.svg' },
       { id: 'logo-2', name: 'École Al Amal Casablanca', logoUrl: '/assets/images/68a7012708a760adb36255e0_Fake_Logo_2.svg' },
-      { id: 'logo-3', name: 'Institut Lango Center', logoUrl: '/assets/images/68a701274180c858df689f8b_Fake_Logo_3.svg' },
+      { id: 'logo-3', name: 'Institut SchoolOS Center', logoUrl: '/assets/images/68a701274180c858df689f8b_Fake_Logo_3.svg' },
       { id: 'logo-4', name: 'Collège Anfa Rabat', logoUrl: '/assets/images/68a70127369f354d650b5176_Fake_Logo_4.svg' },
       { id: 'logo-5', name: 'Lycée Privé El Menzeh', logoUrl: '/assets/images/68a701274df0addd226bdf2e_Fake_Logo_5.svg' },
       { id: 'logo-6', name: 'Académie Pédagogique Marrakech', logoUrl: '/assets/images/68a70127c70239b918860830_Fake_Logo_6.svg' },
@@ -165,7 +165,7 @@ export const INTEGRATION_TOOLS_COL2: IntegrationTool[] = [
   { id: '9', name: 'PDF Engine /20', category: 'Génération Bulletins', logoUrl: '/assets/images/68a70127ff28015ac9fee3f8_Fake_Logo_1.svg' },
   { id: '10', name: 'Scanner QR Caméra', category: 'Présences Instantanées', logoUrl: '/assets/images/68a7012708a760adb36255e0_Fake_Logo_2.svg' },
   { id: '11', name: 'Stripe Payments', category: 'Paiements en ligne', logoUrl: '/assets/images/68a701274180c858df689f8b_Fake_Logo_3.svg' },
-  { id: '12', name: 'Lango Core Sync', category: 'Gestion Pédagogique', logoUrl: '/assets/images/68a70127369f354d650b5176_Fake_Logo_4.svg' },
+  { id: '12', name: 'SchoolOS Core Sync', category: 'Gestion Pédagogique', logoUrl: '/assets/images/68a70127369f354d650b5176_Fake_Logo_4.svg' },
 ];
 
 // ─── PRICING TIERS DICTIONARY ────────────────────────────────────────────────

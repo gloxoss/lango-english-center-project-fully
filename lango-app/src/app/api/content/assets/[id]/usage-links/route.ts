@@ -8,6 +8,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
+import { requireAddon } from '@/libs/api/entitlements';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 
@@ -24,6 +25,7 @@ export async function GET(
     const { id } = await params;
     const context = await requireRequestContext(request);
     const tenantId = requireTenant(context);
+    await requireAddon(tenantId, 'attachments-book');
 
     const [asset] = await db.select({ id: digitalAssets.id }).from(digitalAssets).where(and(eq(digitalAssets.id, id), eq(digitalAssets.tenantId, tenantId))).limit(1);
     if (!asset) {
@@ -45,6 +47,7 @@ export async function POST(
     const { id } = await params;
     const context = await requireRequestContext(request, ['school_admin', 'teacher']);
     const tenantId = requireTenant(context);
+    await requireAddon(tenantId, 'attachments-book');
     await requireCapability(context, 'content.manage');
     const body = await parseJson(request, createUsageLinkSchema);
 
@@ -89,6 +92,7 @@ export async function DELETE(
     const { id } = await params;
     const context = await requireRequestContext(request, ['school_admin', 'teacher']);
     const tenantId = requireTenant(context);
+    await requireAddon(tenantId, 'attachments-book');
     await requireCapability(context, 'content.manage');
     const { searchParams } = new URL(request.url);
     const usageRefId = searchParams.get('usageRefId');

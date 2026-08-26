@@ -36,6 +36,9 @@ export async function GET(request: Request) {
           shortName: '',
           city: '',
           address: '',
+          academicYear: '',
+          startDate: null,
+          endDate: null,
           phone: '',
           email: '',
           website: '',
@@ -108,6 +111,9 @@ export async function POST(request: Request) {
       shortName: body.shortName,
       city: body.city,
       address: body.address,
+      academicYear: body.academicYear,
+      startDate: body.startDate,
+      endDate: body.endDate,
       phone: body.phone,
       email: body.email,
       website: body.website,
@@ -170,4 +176,3 @@ export async function POST(request: Request) {
     return apiErrorResponse(error);
   }
 }
-

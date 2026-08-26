@@ -1,5 +1,3 @@
-import { generate } from '@pdfme/generator';
-import { text, image, barcodes } from '@pdfme/schemas';
 import { ApiError } from '@/libs/api/errors';
 import { DocumentTemplateSchema } from './types';
 import { loadFonts } from './fonts';
@@ -52,6 +50,14 @@ export async function renderPdf({ template, inputs }: RenderPdfOptions): Promise
       'Ce modèle n\'est pas un gabarit valide (schemas invalides). Rouvrez-le dans le designer et republiez-le.',
     );
   }
+
+  // Lazy-load pdfme: its generator + schema plugins pull in PDF.js/WASM and add
+  // seconds to any module that imports this file. Deferring to render time keeps
+  // route imports (cards/issue, certificates/issue) light.
+  const [{ generate }, { text, image, barcodes }] = await Promise.all([
+    import('@pdfme/generator'),
+    import('@pdfme/schemas'),
+  ]);
 
   const plugins = {
     text,

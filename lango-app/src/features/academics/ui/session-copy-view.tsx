@@ -68,6 +68,9 @@ export function SessionCopyView({ locale }: { locale: string }) {
   const [selectedOfferingIds, setSelectedOfferingIds] = useState<Set<string>>(new Set());
   const [commitSuccess, setCommitSuccess] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [jsonText, setJsonText] = useState<string>('');
+  const [editingJson, setEditingJson] = useState(false);
+  const [jsonError, setJsonError] = useState<string | null>(null);
 
   const loadSessions = () => {
     fetch('/api/academics/session-years')
@@ -142,6 +145,9 @@ export function SessionCopyView({ locale }: { locale: string }) {
         const items: PreviewItem[] = Array.isArray(data.items) ? data.items : [];
         setPreviewItems(items);
         setSelectedOfferingIds(new Set(items.map((i) => i.sourceOfferingId)));
+        setJsonText(JSON.stringify({ summary: data.summary, items }, null, 2));
+        setEditingJson(false);
+        setJsonError(null);
       } else {
         setError(data.error?.message || 'Erreur lors de la génération de l\'aperçu.');
       }
@@ -149,6 +155,28 @@ export function SessionCopyView({ locale }: { locale: string }) {
       setError('Erreur réseau lors de la génération de l\'aperçu.');
     } finally {
       setPreviewing(false);
+    }
+  };
+
+  const applyJsonEdits = () => {
+    setJsonError(null);
+    try {
+      const parsed = JSON.parse(jsonText);
+      const items: unknown[] = Array.isArray(parsed.items) ? parsed.items : [];
+      const ids = new Set<string>();
+      for (const it of items) {
+        if (it && typeof it === 'object' && typeof (it as { sourceOfferingId?: unknown }).sourceOfferingId === 'string') {
+          ids.add((it as { sourceOfferingId: string }).sourceOfferingId);
+        }
+      }
+      if (ids.size === 0) {
+        setJsonError('Aucune offre valide (sourceOfferingId) trouvée dans le JSON.');
+        return;
+      }
+      setSelectedOfferingIds(ids);
+      setEditingJson(false);
+    } catch {
+      setJsonError('JSON invalide. Corrigez la syntaxe avant d\'appliquer.');
     }
   };
 
@@ -466,14 +494,49 @@ export function SessionCopyView({ locale }: { locale: string }) {
                   })}
                 </div>
 
-                <details className="text-xs">
-                  <summary className="cursor-pointer text-slate-500 hover:text-slate-700 font-medium">
-                    Voir le JSON complet de l'aperçu
-                  </summary>
-                  <pre className="mt-2 p-3 rounded-lg bg-slate-900 text-slate-100 text-[11px] overflow-x-auto">
-                    {JSON.stringify(previewItems, null, 2)}
-                  </pre>
-                </details>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (editingJson) {
+                          applyJsonEdits();
+                        } else {
+                          setJsonText(JSON.stringify({ summary: preview, items: previewItems }, null, 2));
+                          setEditingJson(true);
+                        }
+                      }}
+                      className="text-xs font-bold text-[#0066FF] hover:underline"
+                    >
+                      {editingJson ? 'Appliquer le JSON' : 'Éditer le JSON de l\'aperçu'}
+                    </button>
+                    {editingJson && (
+                      <button
+                        type="button"
+                        onClick={() => { setEditingJson(false); setJsonError(null); }}
+                        className="text-xs text-slate-500 hover:underline"
+                      >
+                        Annuler
+                      </button>
+                    )}
+                  </div>
+                  {jsonError && <p className="text-[11px] text-rose-600 font-medium">{jsonError}</p>}
+                  {editingJson ? (
+                    <textarea
+                      value={jsonText}
+                      onChange={(e) => setJsonText(e.target.value)}
+                      spellCheck={false}
+                      className="w-full h-64 p-3 rounded-lg bg-slate-900 text-slate-100 text-[11px] font-mono overflow-auto border border-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
+                    />
+                  ) : (
+                    <pre className="p-3 rounded-lg bg-slate-900 text-slate-100 text-[11px] overflow-x-auto max-h-64 overflow-y-auto">
+                      {jsonText}
+                    </pre>
+                  )}
+                  <p className="text-[11px] text-slate-400">
+                    Modifiez le tableau « items » (ajoutez ou retirez des offres) puis « Appliquer le JSON » pour mettre à jour la sélection qui sera copiée.
+                  </p>
+                </div>
               </div>
             )}
 

@@ -10,7 +10,7 @@ Build a tenant-scoped academic resource library, not a generic file manager and 
 
 This is an addon because existing student/teacher documents and assignment submissions must continue to work independently. The addon supplies richer reusable learning content, taxonomy, publishing, quotas, search, previews, and analytics.
 
-## What Lango has today
+## What SchoolOS has today
 
 - A secure helper for small purpose-specific local-disk uploads with tenant namespace, size/type checks, and basic magic-byte validation.
 - Real student documents, photos, logos, excuse documents, and assignment-submission metadata.

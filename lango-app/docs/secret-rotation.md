@@ -1,4 +1,4 @@
-# SchoolOS / Lango — Secret Rotation Runbook
+# SchoolOS — Secret Rotation Runbook
 
 This document describes the zero-downtime procedure to rotate production secrets (`DATABASE_URL` password and `BETTER_AUTH_SECRET`).
 

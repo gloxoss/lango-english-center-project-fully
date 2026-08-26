@@ -325,7 +325,7 @@ export function LeadPipelineClient({ locale: _locale }: { locale?: string }) {
                     <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 space-y-1 text-[10px]">
                       <div className="flex justify-between"><span className="text-slate-400">Parents :</span><span className="font-bold text-[#16212B]">Famille {activeLead.name.split(' ').pop()}</span></div>
                       <div className="flex justify-between"><span className="text-slate-400">Téléphone :</span><span className="font-bold text-[#2487B8]">+212 6 61 88 99 00</span></div>
-                      <div className="flex justify-between"><span className="text-slate-400">Email :</span><span className="font-bold text-[#2487B8]">prospect@lango.ma</span></div>
+                      <div className="flex justify-between"><span className="text-slate-400">Email :</span><span className="font-bold text-[#2487B8]">prospect@schoolos.ma</span></div>
                     </div>
                   </div>
                 </div>

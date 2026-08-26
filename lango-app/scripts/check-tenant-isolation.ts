@@ -6,6 +6,7 @@ const API_DIR = path.join(process.cwd(), 'src', 'app', 'api');
 const ALLOWLIST = [
   'super-admin',
   'auth',
+  'waitlist',
 ];
 
 // Routes whose handler only delegates to a service that derives the tenant

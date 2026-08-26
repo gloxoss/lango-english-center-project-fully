@@ -35,33 +35,17 @@ export default function OfficeAccountingPage() {
   const [category, setCategory] = useState<'salary' | 'rent' | 'utilities' | 'supplies' | 'marketing' | 'other'>('supplies');
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().slice(0, 10));
   const [description, setDescription] = useState('');
-  const [counterparty, setCounterparty] = useState('');
-  const [expenseAccountId, setExpenseAccountId] = useState('');
-  const [settlementAccountId, setSettlementAccountId] = useState('');
-  const [accounts, setAccounts] = useState<{ id: string; code: string; name: string; accountType: string }[]>([]);
-
-  const loadAccounts = async () => {
-    try {
-      const res = await fetch('/api/finance/accounting/accounts?pageSize=100');
-      const json = await res.json();
-      if (json.success && Array.isArray(json.data)) setAccounts(json.data);
-    } catch {
-      // account picker is best-effort; a non-blocking fetch failure shouldn't
-      // stop expense entry
-    }
-  };
-
-  const expenseAccounts = accounts.filter(a => a.accountType === 'expense');
-  const settlementAccounts = accounts.filter(a => a.accountType === 'asset' || a.accountType === 'liability');
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
 
   const fetchExpenses = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/accountant/me/office-accounting');
+      const res = await fetch('/api/finance/expenses?pageSize=200');
       const json = await res.json();
       if (json.success) {
-        setData(json.data);
+        const rows = (json.data || []).map((row: any) => ({ ...row, amount: Number(row.amount), recordedByName: null }));
+        setData({ summary: { totalAmount: rows.reduce((sum: number, row: ExpenseItem) => sum + row.amount, 0), count: rows.length }, expenses: rows });
       } else {
         setError(json.error?.message || 'Erreur lors du chargement des dépenses.');
       }
@@ -82,7 +66,16 @@ export default function OfficeAccountingPage() {
     setError(null);
     setSuccessMsg(null);
     try {
-      const res = await fetch('/api/accountant/me/office-accounting', {
+      let receiptUrl: string | undefined;
+      if (receiptFile) {
+        const upload = new FormData();
+        upload.append('file', receiptFile);
+        const uploadRes = await fetch('/api/finance/expenses/receipt', { method: 'POST', body: upload });
+        const uploadJson = await uploadRes.json();
+        if (!uploadJson.success) throw new Error(uploadJson.error?.message || 'Échec du téléversement du justificatif.');
+        receiptUrl = uploadJson.data.url;
+      }
+      const res = await fetch('/api/finance/expenses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -90,20 +83,16 @@ export default function OfficeAccountingPage() {
           category,
           expenseDate,
           description,
-          counterparty: counterparty.trim() || undefined,
-          expenseAccountId: expenseAccountId || undefined,
-          settlementAccountId: settlementAccountId || undefined,
+          receiptUrl,
         }),
       });
       const json = await res.json();
       if (json.success) {
-        setSuccessMsg(json.data?.accountingDocumentId ? 'Dépense enregistrée et comptabilisée dans le plan comptable.' : 'Dépense enregistrée dans le journal avec succès.');
+        setSuccessMsg(json.glPosted ? 'Dépense enregistrée et comptabilisée dans le grand livre.' : 'Dépense enregistrée; la liaison GL sera créée dès que les comptes par défaut seront configurés.');
         setShowModal(false);
         setAmount('');
         setDescription('');
-        setCounterparty('');
-        setExpenseAccountId('');
-        setSettlementAccountId('');
+        setReceiptFile(null);
         fetchExpenses();
       } else {
         setError(json.error?.message || 'Impossible d\'enregistrer la dépense.');
@@ -121,10 +110,10 @@ export default function OfficeAccountingPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Petite Caisse & Journal des Dépenses
+            Dépenses & Grand Livre
           </h1>
           <p className="text-sm text-slate-500">
-            Saisie des dépenses de fonctionnement, petite caisse, loyer, salaires et factures d'exploitation.
+            Chaque dépense alimente le registre financier officiel et tente une comptabilisation automatique en partie double.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -137,7 +126,7 @@ export default function OfficeAccountingPage() {
             Actualiser
           </button>
           <button
-            onClick={() => { setShowModal(true); loadAccounts(); }}
+            onClick={() => setShowModal(true)}
             className="flex items-center gap-2 rounded-lg bg-[#0066FF] px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#0052CC]"
           >
             <PlusCircle className="size-4" />
@@ -279,43 +268,11 @@ export default function OfficeAccountingPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700">Bénéficiaire / Fournisseur</label>
-                <input
-                  type="text"
-                  value={counterparty}
-                  onChange={e => setCounterparty(e.target.value)}
-                  placeholder="Nom du fournisseur ou du bénéficiaire"
-                  className="mt-1 w-full rounded-lg border border-slate-200 p-2.5 text-sm text-slate-900 focus:border-[#0066FF] focus:outline-hidden"
-                />
+                <label className="block text-xs font-bold text-slate-700">Justificatif (PDF, JPG ou PNG)</label>
+                <input type="file" accept="application/pdf,image/jpeg,image/png" onChange={e => setReceiptFile(e.target.files?.[0] || null)} className="mt-1 w-full text-xs text-slate-600" />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700">Compte de charge</label>
-                  <select
-                    value={expenseAccountId}
-                    onChange={e => setExpenseAccountId(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-slate-200 p-2.5 text-sm text-slate-900 focus:border-[#0066FF] focus:outline-hidden"
-                  >
-                    <option value="">— Compte —</option>
-                    {expenseAccounts.map(a => <option key={a.id} value={a.id}>{a.code} · {a.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700">Compte de règlement</label>
-                  <select
-                    value={settlementAccountId}
-                    onChange={e => setSettlementAccountId(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-slate-200 p-2.5 text-sm text-slate-900 focus:border-[#0066FF] focus:outline-hidden"
-                  >
-                    <option value="">— Compte —</option>
-                    {settlementAccounts.map(a => <option key={a.id} value={a.id}>{a.code} · {a.name}</option>)}
-                  </select>
-                </div>
-              </div>
-              <p className="text-[11px] text-slate-500">
-                En renseignant les deux comptes, la dépense est aussi enregistrée dans le plan comptable (pièce en brouillon, à valider puis comptabiliser).
-              </p>
+              <p className="text-[11px] text-slate-500">La dépense sera transmise automatiquement au grand livre via les comptes comptables par défaut.</p>
 
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button

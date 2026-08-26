@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/libs/env/server', () => ({
   serverEnv: {
-    DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/lango',
+    DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/schoolos',
     BETTER_AUTH_SECRET: 'dummy-secret-for-testing-123456789',
   },
 }));

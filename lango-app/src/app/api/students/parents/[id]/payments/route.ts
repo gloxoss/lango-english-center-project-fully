@@ -17,7 +17,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const ctx = await requireRequestContext(req);
     const tenantId = requireTenant(ctx);
-    await requireCapability(ctx, 'guardians.read');
+    // Household invoice/payment amounts are billing data, not guardian
+    // contact info - finance.read is the correct gate here (guardians.read
+    // would let e.g. a teacher see another family's payment history).
+    await requireCapability(ctx, 'finance.read');
 
     const { id: guardianId } = await params;
     const { searchParams } = new URL(req.url);

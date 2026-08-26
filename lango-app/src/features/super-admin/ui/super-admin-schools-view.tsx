@@ -14,10 +14,18 @@ type ApiSchool = { id: string; name: string; slug: string; planTier: string; sub
 const PLAN_LABELS: Record<string, string> = { trial: 'Essai', basic: 'Basique', standard: 'Standard', premium: 'Premium' };
 const STATUS_LABELS: Record<string, string> = { active: 'Actif', suspended: 'Suspendu', cancelled: 'Annulé' };
 
-export function SuperAdminSchoolsView({ locale }: { locale: string }) {
+type StatusFilter = 'all' | 'active' | 'suspended' | 'cancelled';
+
+function normalizeStatus(value?: string): StatusFilter {
+  if (value === 'active' || value === 'suspended' || value === 'cancelled') return value;
+  return 'all';
+}
+
+export function SuperAdminSchoolsView({ locale, initialStatus }: { locale: string; initialStatus?: string }) {
   const [schools, setSchools] = useState<ApiSchool[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(normalizeStatus(initialStatus));
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -29,9 +37,13 @@ export function SuperAdminSchoolsView({ locale }: { locale: string }) {
       .finally(() => setIsLoading(false));
   }, []);
 
-  const filtered = schools.filter(s => (s.name ?? '').toLowerCase().includes(searchTerm.trim().toLowerCase()));
+  const filtered = schools.filter(s => {
+    const matchSearch = (s.name ?? '').toLowerCase().includes(searchTerm.trim().toLowerCase());
+    const matchStatus = statusFilter === 'all' || s.subscriptionStatus === statusFilter;
+    return matchSearch && matchStatus;
+  });
   const activeCount = schools.filter(s => s.subscriptionStatus === 'active' && s.isActive).length;
-  const suspendedCount = schools.filter(s => s.subscriptionStatus === 'suspended' || !s.isActive).length;
+  const suspendedCount = schools.filter(s => s.subscriptionStatus === 'suspended' || s.subscriptionStatus === 'cancelled' || !s.isActive).length;
 
   const columns: Column<ApiSchool>[] = [
     {
@@ -125,11 +137,21 @@ export function SuperAdminSchoolsView({ locale }: { locale: string }) {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-4 space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div className="relative flex-1 max-w-sm">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input placeholder="Rechercher une école..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9 h-9 text-xs bg-slate-50 border-none rounded-xl" />
           </div>
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value as StatusFilter)}
+            className="h-9 px-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-700 font-medium"
+          >
+            <option value="all">Tous les statuts</option>
+            <option value="active">Actives</option>
+            <option value="suspended">Suspendues</option>
+            <option value="cancelled">Annulées</option>
+          </select>
         </div>
 
         <DataTable

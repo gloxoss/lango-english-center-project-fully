@@ -1,6 +1,6 @@
 # Student Transport Add-on — Manual & Automated Verification Guide
 
-This document outlines manual testing procedures, cURL commands, and automated test suite execution steps for verifying the production-ready **Student Transport Add-on** (`transport`) in Lango / SchoolOS.
+This document outlines manual testing procedures, cURL commands, and automated test suite execution steps for verifying the production-ready **Student Transport Add-on** (`transport`) in SchoolOS.
 
 ---
 
@@ -10,14 +10,14 @@ This document outlines manual testing procedures, cURL commands, and automated t
 Execute the transport migration script to create all 15 transport tables, 13 PostgreSQL enums, foreign keys, and unique indexes:
 
 ```bash
-npx --prefix lango-english-center-project-fully/lango-app tsx lango-english-center-project-fully/lango-app/scripts/migrate-0082-transport.ts
+npx --prefix schoolos-english-center-project-fully/schoolos-app tsx schoolos-english-center-project-fully/schoolos-app/scripts/migrate-0082-transport.ts
 ```
 
 ### Step 1.2: Verify Database Schema
 Verify that all 15 transport tables, 13 enums, and the unique idempotency index `idx_transport_rider_events_idempotency` exist in live PostgreSQL:
 
 ```bash
-npx --prefix lango-english-center-project-fully/lango-app tsx lango-english-center-project-fully/lango-app/scripts/check-0082-transport-migration.ts
+npx --prefix schoolos-english-center-project-fully/schoolos-app tsx schoolos-english-center-project-fully/schoolos-app/scripts/check-0082-transport-migration.ts
 ```
 
 *Expected Output:*
@@ -34,7 +34,7 @@ SUCCESS: All 15 transport tables, 13 enums, and idempotency unique index verifie
 Run the full end-to-end acceptance & concurrency test harness:
 
 ```bash
-npx --prefix lango-english-center-project-fully/lango-app tsx --tsconfig lango-english-center-project-fully/lango-app/tsconfig.json lango-english-center-project-fully/lango-app/scripts/test-transport-live-acceptance.ts
+npx --prefix schoolos-english-center-project-fully/schoolos-app tsx --tsconfig schoolos-english-center-project-fully/schoolos-app/tsconfig.json schoolos-english-center-project-fully/schoolos-app/scripts/test-transport-live-acceptance.ts
 ```
 
 ### Verifications Performed by Test Harness (13/13 Passing):

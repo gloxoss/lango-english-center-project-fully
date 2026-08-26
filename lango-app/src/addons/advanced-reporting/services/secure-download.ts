@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 
 export class SecureDownloadService {
-  private static SECRET_KEY = process.env.REPORTING_SIGNING_SECRET || 'lango-default-reporting-secret-key-2026';
+  private static SECRET_KEY = process.env.REPORTING_SIGNING_SECRET || 'schoolos-default-reporting-secret-key-2026';
 
   /**
    * Generates an HMAC SHA-256 signature for a report run download URL.

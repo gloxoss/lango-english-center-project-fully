@@ -42,7 +42,7 @@ fonts, signature images, or artwork.
   checks, tamper/status explanations, and verifier UI.
 - Recommendation: do not adopt blockchain issuance in version 1. Blockchain
   anchoring adds keys, fees/networks, recovery, privacy, and operational
-  complexity that Lango does not currently need.
+  complexity that SchoolOS does not currently need.
 
 ## Bulk generation/delivery inspiration — zedomel/certificate-generator
 

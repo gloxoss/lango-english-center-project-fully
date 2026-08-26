@@ -11,8 +11,9 @@ import {
   homeworkRubrics,
   homeworkRubricCriteria,
 } from '../models/assessment-schema';
+import { classes, classSubjects, subjects, user } from '@/models/Schema';
 import { OutcomeService } from './outcome-service';
-import { eq, and, inArray, desc } from 'drizzle-orm';
+import { eq, and, inArray, desc, asc } from 'drizzle-orm';
 
 type AudienceRow = { studentId: string | null; sectionId: string | null; classOfferingId: string | null };
 
@@ -229,6 +230,106 @@ export class HomeworkService {
       submission: attemptsMap.get(hw.id) || null,
       linkedResources: linksByHomework.get(hw.id) ?? [],
     }));
+  }
+
+  /**
+   * Teacher/admin hub list: every homework in the tenant with subject/class
+   * labels resolved and per-homework submission counts. Unlike the
+   * student-scoped list this is not filtered by audience - a teacher grades
+   * whatever was assigned regardless of who saw it - but it is still
+   * hard-isolated to the tenant (the caller already ran requireRequestContext
+   * + requireTenant).
+   */
+  static async listHomeworkForTeacher(tenantId: string) {
+    const rows = await db
+      .select({
+        id: assessmentDefinitions.id,
+        title: assessmentDefinitions.title,
+        description: assessmentDefinitions.description,
+        maximumScore: assessmentDefinitions.maximumScore,
+        coefficient: assessmentDefinitions.coefficient,
+        status: assessmentDefinitions.status,
+        createdAt: assessmentDefinitions.createdAt,
+        createdBy: assessmentDefinitions.createdBy,
+        subjectName: subjects.name,
+        className: classes.name,
+        instructions: homeworkDetails.instructions,
+        allowAttachments: homeworkDetails.allowAttachments,
+        closeAt: homeworkDetails.closeAt,
+      })
+      .from(assessmentDefinitions)
+      .innerJoin(homeworkDetails, eq(assessmentDefinitions.id, homeworkDetails.assessmentDefinitionId))
+      .leftJoin(classSubjects, eq(assessmentDefinitions.classSubjectId, classSubjects.id))
+      .leftJoin(subjects, eq(classSubjects.subjectId, subjects.id))
+      .leftJoin(classes, eq(classSubjects.classId, classes.id))
+      .where(
+        and(
+          eq(assessmentDefinitions.tenantId, tenantId),
+          eq(assessmentDefinitions.type, 'homework'),
+        )
+      )
+      .orderBy(desc(assessmentDefinitions.createdAt));
+
+    if (rows.length === 0) {
+      return [];
+    }
+
+    const attemptRows = await db
+      .select({
+        assessmentDefinitionId: homeworkAttempts.assessmentDefinitionId,
+        status: homeworkAttempts.status,
+      })
+      .from(homeworkAttempts)
+      .where(inArray(homeworkAttempts.assessmentDefinitionId, rows.map(r => r.id)));
+
+    const counts = new Map<string, { submitted: number; graded: number }>();
+    for (const attempt of attemptRows) {
+      const current = counts.get(attempt.assessmentDefinitionId) ?? { submitted: 0, graded: 0 };
+      current.submitted += 1;
+      if (attempt.status === 'graded') {
+        current.graded += 1;
+      }
+      counts.set(attempt.assessmentDefinitionId, current);
+    }
+
+    return rows.map(row => ({
+      ...row,
+      subjectName: row.subjectName ?? null,
+      className: row.className ?? null,
+      submittedCount: counts.get(row.id)?.submitted ?? 0,
+      gradedCount: counts.get(row.id)?.graded ?? 0,
+    }));
+  }
+
+  /**
+   * Roster of submissions (attempts) for one homework, joined with the
+   * student's name/matricule for the correction inbox. Tenant-isolated through
+   * the user join; the caller already ran requireRequestContext + requireTenant.
+   */
+  static async listHomeworkAttempts(tenantId: string, assessmentDefinitionId: string) {
+    const rows = await db
+      .select({
+        id: homeworkAttempts.id,
+        attemptNumber: homeworkAttempts.attemptNumber,
+        studentId: homeworkAttempts.studentId,
+        studentName: user.name,
+        matricule: user.matricule,
+        responseText: homeworkAttempts.responseText,
+        submittedAt: homeworkAttempts.submittedAt,
+        isLate: homeworkAttempts.isLate,
+        status: homeworkAttempts.status,
+        score: homeworkAttempts.score,
+        feedbackText: homeworkAttempts.feedbackText,
+      })
+      .from(homeworkAttempts)
+      .innerJoin(user, eq(homeworkAttempts.studentId, user.id))
+      .where(and(
+        eq(homeworkAttempts.assessmentDefinitionId, assessmentDefinitionId),
+        eq(user.tenantId, tenantId),
+      ))
+      .orderBy(asc(homeworkAttempts.submittedAt));
+
+    return rows;
   }
 
   /**

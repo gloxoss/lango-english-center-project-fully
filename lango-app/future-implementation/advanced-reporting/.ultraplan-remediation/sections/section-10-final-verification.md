@@ -31,7 +31,7 @@ Closes out the remediation with the same independent, live re-verification disci
   <name>Grant a temporary test entitlement and run the live end-to-end lifecycle</name>
   <files>none</files>
   <action>
-    Grant the advanced-reporting addon entitlement to the Lango test tenant via the app's own real entitlement-granting mechanism (temporarily, for verification purposes only - per the PRD, actually turning this on for a real school long-term is a separate later decision). Log in as a real admin, teacher, and accountant test account in turn and exercise the full lifecycle from the TDD stub above for each role, confirming real database state via psql at each step (not just HTTP 200s) - a real run produces a real `report_runs` row with real data, a real export file exists on disk with a real checksum, a real schedule actually fires via the worker built in section-06.
+    Grant the advanced-reporting addon entitlement to the SchoolOS test tenant via the app's own real entitlement-granting mechanism (temporarily, for verification purposes only - per the PRD, actually turning this on for a real school long-term is a separate later decision). Log in as a real admin, teacher, and accountant test account in turn and exercise the full lifecycle from the TDD stub above for each role, confirming real database state via psql at each step (not just HTTP 200s) - a real run produces a real `report_runs` row with real data, a real export file exists on disk with a real checksum, a real schedule actually fires via the worker built in section-06.
   </action>
   <verify>Every step produces the expected real row/state change, confirmed via psql, not assumed from a 200 response.</verify>
   <done>The complete reporting lifecycle is confirmed live-working against the real database for every named role.</done>
@@ -41,7 +41,7 @@ Closes out the remediation with the same independent, live re-verification disci
   <name>Cross-tenant isolation sweep</name>
   <files>none</files>
   <action>
-    Using a second real tenant's (Atlas) admin/staff accounts, probe every reporting route with the first tenant's (Lango) real IDs (run IDs, schedule IDs, saved-view IDs, report keys where relevant) - confirm every one is rejected rather than leaking data, matching the sweep pattern already used successfully for the alumni-portal work earlier this session.
+    Using a second real tenant's (Atlas) admin/staff accounts, probe every reporting route with the first tenant's (SchoolOS) real IDs (run IDs, schedule IDs, saved-view IDs, report keys where relevant) - confirm every one is rejected rather than leaking data, matching the sweep pattern already used successfully for the alumni-portal work earlier this session.
   </action>
   <verify>Every cross-tenant probe is rejected with a 4xx and no data leakage. Document and fix any that isn't before considering this section done.</verify>
   <done>Tenant isolation is confirmed live on every reporting route, not assumed from the route convention alone.</done>

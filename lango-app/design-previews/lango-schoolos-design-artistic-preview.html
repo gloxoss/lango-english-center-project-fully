@@ -3,34 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lango SchoolOS — Fine Art Gallery Canvas Preview</title>
+  <title>Lango SchoolOS — Museum Fine Art Preview</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cormorant:ital,wght@0,500;1,400&family=Inter:wght@300;400&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400&display=swap">
   <style>
-    :root {
-      --bg: #fcfbf7;
-      --surface: #ffffff;
-      --border: #e7e2d7;
-      --text: #2c1810;
-      --text-muted: #8b7355;
-      --primary: #2c1810;
-      --accent: #b38b59;
-      --radius: 0.25rem;
-    }
     body {
       font-family: 'Inter', sans-serif;
       background: #fcfbf7;
       color: #2c1810;
       min-height: 100vh;
     }
-    h1, h2, h3, .head-font {
-      font-family: 'Cinzel', serif;
-    }
+    h1, h2, h3, .head-font { font-family: 'Cinzel', serif; }
     .custom-card {
       background: #ffffff;
       border: 1px solid #e7e2d7;
       border-radius: 0.25rem;
-      box-shadow: 0 15px 35px -5px rgba(44, 24, 16, 0.08);
+      box-shadow: 0 15px 35px rgba(44,24,16,0.08);
       
     }
     .custom-btn-primary {
@@ -38,11 +26,10 @@
       color: #ffffff;
       border-radius: 0.25rem;
       
-      box-shadow: 0 15px 35px -5px rgba(44, 24, 16, 0.08);
+      box-shadow: 0 15px 35px rgba(44,24,16,0.08);
       transition: all 0.2s ease;
     }
     .custom-btn-primary:hover {
-      background-color: #43281c;
       transform: translateY(-1px);
     }
     .custom-btn-outline {
@@ -51,9 +38,6 @@
       color: #2c1810;
       border-radius: 0.25rem;
       transition: all 0.2s ease;
-    }
-    .custom-btn-outline:hover {
-      background: rgba(0,0,0,0.05);
     }
   </style>
 </head>
@@ -70,8 +54,8 @@
           </span>
           <span class="text-xs opacity-75 font-mono">STYLE ID: artistic</span>
         </div>
-        <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Fine Art Gallery Canvas</h1>
-        <p class="text-sm mt-1" style="color: #8b7355;">Museum-curated aesthetic, classical Roman serif headers, and subtle champagne gold borders.</p>
+        <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Museum Fine Art</h1>
+        <p class="text-sm mt-1" style="color: #8b7355;">Fine art inspired, painterly, museum quality.</p>
       </div>
 
       <div class="flex items-center gap-3">
@@ -154,7 +138,7 @@
                 <td class="py-3 px-3 font-semibold">Youssef Tazi</td>
                 <td class="px-3" style="color: #8b7355;">Casablanca Oasis</td>
                 <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-mono" style="background: rgba(0,0,0,0.06);">A2 Beginner</span></td>
-                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #2c1810;">Pending</span></td>
+                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #b38b59;">Pending</span></td>
                 <td class="px-3 text-right font-bold">1,100 MAD</td>
               </tr>
             </tbody>
@@ -162,36 +146,34 @@
         </div>
       </div>
 
-      <!-- Right Column: Interactive Controls & Tokens -->
+      <!-- Right Column: Interactive Form & Tokens -->
       <div class="space-y-6">
 
-        <!-- Action Card -->
         <div class="custom-card p-6">
           <h3 class="text-base font-bold mb-1">Interactive Form Control</h3>
-          <p class="text-xs mb-4" style="color: #8b7355;">Test inputs and toggle behaviors</p>
+          <p class="text-xs mb-4" style="color: #8b7355;">Test inputs and typography response</p>
           
           <div class="space-y-3">
             <div>
-              <label class="block text-xs font-medium mb-1" style="color: #8b7355;">Student Email / Phone</label>
-              <input type="text" placeholder="student@example.com" class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: #ffffff; border-color: #e7e2d7; color: #2c1810;">
+              <label class="block text-xs font-medium mb-1" style="color: #8b7355;">Student Contact</label>
+              <input type="text" placeholder="student@lango.ma" class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: #ffffff; border-color: #e7e2d7; color: #2c1810;">
             </div>
 
             <div>
-              <label class="block text-xs font-medium mb-1" style="color: #8b7355;">Target Course Level</label>
+              <label class="block text-xs font-medium mb-1" style="color: #8b7355;">Program Track</label>
               <select class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: #ffffff; border-color: #e7e2d7; color: #2c1810;">
                 <option>General English (A1 - C2)</option>
                 <option>Business English & Public Speaking</option>
-                <option>IELTS / TOEFL Intensive Prep</option>
+                <option>IELTS / Cambridge Exam Prep</option>
               </select>
             </div>
 
             <button class="custom-btn-primary w-full py-2.5 text-xs font-bold shadow mt-2">
-              Confirm & Enroll Student
+              Confirm & Enroll
             </button>
           </div>
         </div>
 
-        <!-- Token Inspector -->
         <div class="custom-card p-5 text-xs space-y-2">
           <div class="font-bold border-b pb-2 flex items-center justify-between" style="border-color: #e7e2d7;">
             <span>🎨 DESIGN TOKENS</span>

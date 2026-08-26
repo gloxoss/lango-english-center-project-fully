@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lango SchoolOS — Vivid Colorful Pop Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&display=swap">
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: #ffffff;
+      color: #1e1e24;
+      min-height: 100vh;
+    }
+    h1, h2, h3, .head-font { font-family: 'Nunito', sans-serif; }
+    .custom-card {
+      background: #fff8f8;
+      border: 1px solid #ffccd5;
+      border-radius: 1rem;
+      box-shadow: 0 8px 20px rgba(255,107,107,0.15);
+      
+    }
+    .custom-btn-primary {
+      background-color: #ff6b6b;
+      color: #ffffff;
+      border-radius: 1rem;
+      
+      box-shadow: 0 8px 20px rgba(255,107,107,0.15);
+      transition: all 0.2s ease;
+    }
+    .custom-btn-primary:hover {
+      transform: translateY(-1px);
+    }
+    .custom-btn-outline {
+      background: transparent;
+      border: 1px solid #ffccd5;
+      color: #1e1e24;
+      border-radius: 1rem;
+      transition: all 0.2s ease;
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8 flex flex-col items-center">
+
+  <div class="w-full max-w-6xl space-y-6">
+
+    <!-- Header / Navbar Banner -->
+    <header class="custom-card p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2 flex-wrap mb-1">
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full uppercase" style="background: rgba(0,0,0,0.06); color: #4ecdc4;">
+            Playful & Bold
+          </span>
+          <span class="text-xs opacity-75 font-mono">STYLE ID: colorful</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Vivid Colorful Pop</h1>
+        <p class="text-sm mt-1" style="color: #6c757d;">Vivid gradients, high-contrast and friendly.</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="custom-btn-outline px-4 py-2 text-xs font-semibold inline-flex items-center gap-1.5">
+          ← Gallery Index
+        </a>
+        <button class="custom-btn-primary px-4 py-2 text-xs font-bold shadow">
+          Apply This Design
+        </button>
+      </div>
+    </header>
+
+    <!-- Key Metrics / KPI Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="custom-card p-5">
+        <div class="text-xs uppercase font-medium" style="color: #6c757d;">Total Active Students</div>
+        <div class="text-3xl font-bold mt-2 head-font">1,482</div>
+        <div class="text-xs mt-2 font-medium" style="color: #4ecdc4;">↑ +14.8% Active Retention</div>
+      </div>
+
+      <div class="custom-card p-5">
+        <div class="text-xs uppercase font-medium" style="color: #6c757d;">Tuition Volume (Monthly)</div>
+        <div class="text-3xl font-bold mt-2 head-font">485,200 <span class="text-sm font-normal">MAD</span></div>
+        <div class="text-xs mt-2 font-medium" style="color: #4ecdc4;">⚡ 98.4% On-time Settlement</div>
+      </div>
+
+      <div class="custom-card p-5">
+        <div class="text-xs uppercase font-medium" style="color: #6c757d;">Active English Centers</div>
+        <div class="text-3xl font-bold mt-2 head-font">6 Campuses</div>
+        <div class="text-xs mt-2 font-medium" style="color: #6c757d;">Casablanca • Rabat • Fes</div>
+      </div>
+
+      <div class="custom-card p-5">
+        <div class="text-xs uppercase font-medium" style="color: #6c757d;">Class Attendance Average</div>
+        <div class="text-3xl font-bold mt-2 head-font">96.8%</div>
+        <div class="text-xs mt-2 font-medium" style="color: #4ecdc4;">★ Top Tier Engagement</div>
+      </div>
+    </div>
+
+    <!-- Main Content Dual Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Left Column: Data Table -->
+      <div class="lg:col-span-2 custom-card p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-lg font-bold">Recent Student Registrations</h2>
+            <p class="text-xs" style="color: #6c757d;">Live placement tests and enrollment roster</p>
+          </div>
+          <button class="custom-btn-outline px-3 py-1.5 text-xs font-medium">Filter Records</button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b" style="border-color: #ffccd5; color: #6c757d;">
+                <th class="py-2.5 px-3">STUDENT</th>
+                <th class="py-2.5 px-3">CAMPUS</th>
+                <th class="py-2.5 px-3">CEFR LEVEL</th>
+                <th class="py-2.5 px-3">STATUS</th>
+                <th class="py-2.5 px-3 text-right">TUITION</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y" style="border-color: #ffccd5;">
+              <tr>
+                <td class="py-3 px-3 font-semibold">Amine El Amrani</td>
+                <td class="px-3" style="color: #6c757d;">Fes Ville Nouvelle</td>
+                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-mono" style="background: rgba(0,0,0,0.06);">B2 Upper</span></td>
+                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #4ecdc4;">Enrolled</span></td>
+                <td class="px-3 text-right font-bold">1,200 MAD</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 font-semibold">Salma Benjelloun</td>
+                <td class="px-3" style="color: #6c757d;">Rabat Agdal</td>
+                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-mono" style="background: rgba(0,0,0,0.06);">C1 Advanced</span></td>
+                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #4ecdc4;">Enrolled</span></td>
+                <td class="px-3 text-right font-bold">1,450 MAD</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 font-semibold">Youssef Tazi</td>
+                <td class="px-3" style="color: #6c757d;">Casablanca Oasis</td>
+                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-mono" style="background: rgba(0,0,0,0.06);">A2 Beginner</span></td>
+                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #4ecdc4;">Pending</span></td>
+                <td class="px-3 text-right font-bold">1,100 MAD</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Right Column: Interactive Form & Tokens -->
+      <div class="space-y-6">
+
+        <div class="custom-card p-6">
+          <h3 class="text-base font-bold mb-1">Interactive Form Control</h3>
+          <p class="text-xs mb-4" style="color: #6c757d;">Test inputs and typography response</p>
+          
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-medium mb-1" style="color: #6c757d;">Student Contact</label>
+              <input type="text" placeholder="student@lango.ma" class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: #ffffff; border-color: #ffccd5; color: #1e1e24;">
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium mb-1" style="color: #6c757d;">Program Track</label>
+              <select class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: #ffffff; border-color: #ffccd5; color: #1e1e24;">
+                <option>General English (A1 - C2)</option>
+                <option>Business English & Public Speaking</option>
+                <option>IELTS / Cambridge Exam Prep</option>
+              </select>
+            </div>
+
+            <button class="custom-btn-primary w-full py-2.5 text-xs font-bold shadow mt-2">
+              Confirm & Enroll
+            </button>
+          </div>
+        </div>
+
+        <div class="custom-card p-5 text-xs space-y-2">
+          <div class="font-bold border-b pb-2 flex items-center justify-between" style="border-color: #ffccd5;">
+            <span>🎨 DESIGN TOKENS</span>
+            <span class="font-mono text-xs opacity-60">colorful</span>
+          </div>
+          <div class="flex justify-between">
+            <span style="color: #6c757d;">Font Family:</span>
+            <span class="font-mono font-semibold">'Nunito'</span>
+          </div>
+          <div class="flex justify-between">
+            <span style="color: #6c757d;">Border Radius:</span>
+            <span class="font-mono font-semibold">1rem</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span style="color: #6c757d;">Primary Accent:</span>
+            <div class="flex items-center gap-1.5">
+              <div class="w-3.5 h-3.5 rounded" style="background: #ff6b6b; border: 1px solid rgba(0,0,0,0.2);"></div>
+              <span class="font-mono">#ff6b6b</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

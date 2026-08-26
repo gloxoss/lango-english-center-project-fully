@@ -143,7 +143,7 @@ the real check.
 ## 5. WHAT "TESTED" MEANS HERE
 
 - **Every gated button/form**: log in as `accountant@atlas.ma` (or
-  `accountant@lango.ma`), confirm the control does NOT render. Log in as
+  `accountant@schoolos.ma`), confirm the control does NOT render. Log in as
   `y.elamrani@atlas.ma` (school_admin), confirm it DOES. Then, for at
   least the accountant session, hit the underlying route directly with
   `curl` to confirm the server still rejects it — the UI gate is not the

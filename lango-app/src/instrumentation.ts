@@ -20,6 +20,15 @@ export async function register() {
       console.error('Failed to start settings worker', err);
     }
 
+    // License-expiry sweep: flip tenants to 'suspended' when their license
+    // expires without a paid renewal. Fail-open like the other workers.
+    try {
+      const { startLicenseExpiryWorker } = await import('@/features/subscriptions/services/license-expiry-worker');
+      startLicenseExpiryWorker();
+    } catch (err) {
+      console.error('Failed to start license expiry worker', err);
+    }
+
     // Sync the code-owned settings registry into the DB catalog at startup so
     // the settings hub never shows an empty/incomplete catalog. Fail-open:
     // a DB hiccup here must never prevent the app from starting.

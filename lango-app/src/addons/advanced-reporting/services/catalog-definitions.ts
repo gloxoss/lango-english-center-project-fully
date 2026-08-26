@@ -562,7 +562,7 @@ export const CORE_REPORT_DEFINITIONS: ReportDefinitionContract[] = [
       { key: 'totalValuation', label: 'Valeur Stock', type: 'currency' },
     ],
     supportedFormats: ['csv', 'xlsx', 'pdf'],
-    requiredPermissions: ['reports.read'],
+    requiredPermissions: ['inventory.read'],
     isActive: true,
   },
   {
@@ -582,7 +582,7 @@ export const CORE_REPORT_DEFINITIONS: ReportDefinitionContract[] = [
       { key: 'totalAmount', label: 'Montant Total', type: 'currency' },
     ],
     supportedFormats: ['csv', 'xlsx', 'pdf'],
-    requiredPermissions: ['reports.read'],
+    requiredPermissions: ['inventory.read'],
     isActive: true,
   },
   {
@@ -602,7 +602,7 @@ export const CORE_REPORT_DEFINITIONS: ReportDefinitionContract[] = [
       { key: 'totalRevenue', label: 'Recette Total', type: 'currency' },
     ],
     supportedFormats: ['csv', 'xlsx', 'pdf'],
-    requiredPermissions: ['reports.read'],
+    requiredPermissions: ['inventory.read'],
     isActive: true,
   },
   {
@@ -624,7 +624,7 @@ export const CORE_REPORT_DEFINITIONS: ReportDefinitionContract[] = [
       { key: 'isOverdue', label: 'En Retard', type: 'boolean' },
     ],
     supportedFormats: ['csv', 'xlsx', 'pdf'],
-    requiredPermissions: ['reports.read'],
+    requiredPermissions: ['inventory.read'],
     isActive: true,
   },
 ];

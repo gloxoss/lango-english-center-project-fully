@@ -7,6 +7,8 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
+import { assertStudentCapacity } from '@/features/subscriptions/services/plan-limits-service';
+import { autoIssueStudentCardOnAdmission } from '@/features/cards/services/issue-service';
 import { db } from '@/libs/DB';
 import { applicants, user } from '@/models/Schema';
 
@@ -49,6 +51,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       throw new ApiError(409, 'NOT_APPROVED', `La demande doit être à l'étape "approuvé" pour être convertie (statut actuel: ${applicant.status}).`);
     }
 
+    await assertStudentCapacity(tenantId, 1);
+
     const result = await db.transaction(async (tx) => {
       const studentId = `STD-${Date.now().toString().slice(-8)}`;
       const fullName = `${applicant.firstName} ${applicant.lastName}`.trim();
@@ -88,6 +92,14 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     });
 
     recordAudit(ctx, 'create', 'student_from_admission', result.id, { applicantId: id });
+
+    // Best-effort auto-issue of the student ID card when the school opted in.
+    // Never blocks or rolls back the admission conversion on failure.
+    try {
+      await autoIssueStudentCardOnAdmission(tenantId, result.id, ctx.userId);
+    } catch (error) {
+      console.error('Auto-issue student card failed for admission', id, error);
+    }
 
     return NextResponse.json({
       success: true,

@@ -7,7 +7,7 @@ export interface ReassignClassTeacherInput {
   classSectionId: string;
   offeringId?: string | null;
   teacherId: string;
-  role?: 'primary' | 'assistant' | 'support';
+  role?: 'primary' | 'assistant' | 'support' | 'substitute';
   assignedBy?: string | null;
   notes?: string | null;
 }

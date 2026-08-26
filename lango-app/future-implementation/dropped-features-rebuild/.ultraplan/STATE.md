@@ -62,7 +62,7 @@ Rebuild the 6 dropped/disclosed-as-fake feature areas across Élèves & Profils 
 
 Explicitly excluded: rebuilding the "Création manuelle" duplicate tab in Import massif, the drag-and-drop schedule grid, and interview SMS notification — all confirmed intentional exclusions, not gaps.
 
-Codebase: SchoolOS/Lango, Next.js App Router, Drizzle ORM, PostgreSQL. Route convention: `requireRequestContext` → `requireTenant` → `requireCapability` → Zod `.strict()` → tenant-scoped Drizzle query → `recordAudit()` → `apiErrorResponse()`. No new permission/capability strings introduced anywhere in this plan.
+Codebase: SchoolOS, Next.js App Router, Drizzle ORM, PostgreSQL. Route convention: `requireRequestContext` → `requireTenant` → `requireCapability` → Zod `.strict()` → tenant-scoped Drizzle query → `recordAudit()` → `apiErrorResponse()`. No new permission/capability strings introduced anywhere in this plan.
 
 ---
 

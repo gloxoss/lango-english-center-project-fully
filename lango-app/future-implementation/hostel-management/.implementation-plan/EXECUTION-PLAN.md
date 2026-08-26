@@ -20,7 +20,7 @@
 
 ## 1. Verified integration map
 
-Everything below was read from the repository at `lango-english-center-project-fully/lango-app`
+Everything below was read from the repository at `schoolos-english-center-project-fully/schoolos-app`
 (432-file pre-existing dirty worktree, per `git status --short` — no shared file is assumed clean).
 
 | Integration | Verified source | How Hostel consumes it |
@@ -659,7 +659,7 @@ Finance ledger routes (adapter reads only), `/api/students/placements` (read-onl
   immediately before writing (binding decision).
 - **R6 Tenant UUID drift**: the HR plan and the shared context list different dev tenant UUIDs —
   re-read tenant ids from the live DB at implementation time (use seeded admin emails
-  `y.elamrani@atlas.ma`, `admin@lango.ma` as anchors).
+  `y.elamrani@atlas.ma`, `admin@schoolos.ma` as anchors).
 - **R7 Docker build cost**: ~6 min; build `migrate` then `app` sequentially; capture exit codes.
 - **Dependencies**: HR employee contract (verified ready). `studentPlacements`/`sessionYears`
   (verified). `branches`, `guardians`/`guardianStudents`, Finance invoice/fee tables, Attachments

@@ -12,9 +12,10 @@ import {
 import {
   ArrowLeft, User, Phone, Mail, MapPin, Calendar, Droplet, Globe,
   FileText, CheckCircle2, Wallet, Users, TrendingUp, Pencil, ExternalLink,
-  GraduationCap, Undo2, AlertTriangle,
+  GraduationCap, Undo2, AlertTriangle, IdCard,
 } from 'lucide-react';
 import { usePermissions } from '@/hooks/use-permissions';
+import { IssueCardDialog } from '@/features/cards/ui/issue-card-dialog';
 
 type GuardianLink = { id: string; firstName: string; lastName: string; phone: string | null; email: string | null; relationshipType: string };
 type AttendanceDay = { date: string; status: string; lateMinutes: number | null };
@@ -43,8 +44,10 @@ type StudentDetail = {
   createdAt: string;
   guardians: GuardianLink[];
   attendance?: { last30Days: AttendanceDay[]; rate: number | null };
-  payments: Payment[];
-  balanceDue: number;
+  // Omitted entirely by the API for roles without finance.read (e.g.
+  // teacher) - same shape as `attendance` above for accountant.
+  payments?: Payment[];
+  balanceDue?: number;
 };
 
 type DocumentStatus = { documentType: string; uploaded: boolean; uploadedAt: string | null };
@@ -88,6 +91,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
   const [newDocFile, setNewDocFile] = useState<File | null>(null);
   const [issuingDoc, setIssuingDoc] = useState(false);
   const [issueDocError, setIssueDocError] = useState<string | null>(null);
+  const [issueCardOpen, setIssueCardOpen] = useState(false);
 
   const loadAlumniDocs = () => {
     fetch(`/api/students/alumni/${id}/documents`).then(r => r.json()).then(j => j?.success && setAlumniDocs(j.data));
@@ -192,7 +196,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
   }
 
   const initials = student.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
-  const totalPaid = student.payments.reduce((sum, p) => sum + Number(p.amount), 0);
+  const totalPaid = (student.payments ?? []).reduce((sum, p) => sum + Number(p.amount), 0);
 
   return (
     <div className="space-y-6 max-w-[1200px] mx-auto">
@@ -229,6 +233,12 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
             </Badge>
             {student.role === 'alumni' && (
               <Badge className="bg-[#DCEBF4] text-[#1B6C93] border-none text-[10px]">Ancien(ne) élève</Badge>
+            )}
+            {can('cards.issue') && student.role === 'student' && (
+              <Button size="sm" onClick={() => setIssueCardOpen(true)} className="h-8 rounded-full text-xs gap-1.5">
+                <IdCard className="w-3.5 h-3.5" />
+                Émettre une carte
+              </Button>
             )}
             {can('admissions.manage') && student.role === 'student' && (
               <Button size="sm" variant="outline" onClick={() => setShowTransitionDialog(true)} className="h-8 rounded-full text-xs gap-1.5">
@@ -283,7 +293,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
       </Dialog>
 
       <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit overflow-x-auto">
-        {TABS.map(tab => (
+        {TABS.filter(tab => tab.id !== 'finance' || can('finance.read')).map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -437,48 +447,62 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
       )}
 
       {activeTab === 'finance' && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-              <p className="text-xs font-bold text-slate-400">Total payé</p>
-              <p className="text-xl font-extrabold text-[#16212B]">{totalPaid.toLocaleString('fr-FR')} MAD</p>
-            </Card>
-            <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-              <p className="text-xs font-bold text-slate-400">Solde dû</p>
-              <p className={`text-xl font-extrabold ${student.balanceDue > 0 ? 'text-rose-600' : 'text-[#17A673]'}`}>
-                {student.balanceDue.toLocaleString('fr-FR')} MAD
-              </p>
-            </Card>
-          </div>
-          <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
-                <tr>
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4">Méthode</th>
-                  <th className="py-3 px-4 text-right">Montant</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {student.payments.map(p => (
-                  <tr key={p.id}>
-                    <td className="py-2.5 px-4 text-slate-500">{p.paymentDate.slice(0, 10)}</td>
-                    <td className="py-2.5 px-4 text-slate-600">{p.paymentMethod}</td>
-                    <td className="py-2.5 px-4 text-right font-bold text-[#16212B]">{Number(p.amount).toLocaleString('fr-FR')} MAD</td>
-                  </tr>
-                ))}
-                {student.payments.length === 0 && (
-                  <tr><td colSpan={3} className="py-8 text-center text-slate-400">Aucun paiement enregistré.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </Card>
-          <Link href={`/${locale}/dashboard/finance/invoices?studentId=${student.id}`} className="flex items-center gap-1.5 text-xs font-bold text-[#2487B8] hover:underline w-fit">
-            <Wallet className="w-3.5 h-3.5" />
-            Voir les factures de cet élève
-          </Link>
-        </div>
+        student.payments && student.balanceDue !== undefined
+          ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                    <p className="text-xs font-bold text-slate-400">Total payé</p>
+                    <p className="text-xl font-extrabold text-[#16212B]">{totalPaid.toLocaleString('fr-FR')} MAD</p>
+                  </Card>
+                  <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                    <p className="text-xs font-bold text-slate-400">Solde dû</p>
+                    <p className={`text-xl font-extrabold ${student.balanceDue > 0 ? 'text-rose-600' : 'text-[#17A673]'}`}>
+                      {student.balanceDue.toLocaleString('fr-FR')} MAD
+                    </p>
+                  </Card>
+                </div>
+                <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
+                      <tr>
+                        <th className="py-3 px-4">Date</th>
+                        <th className="py-3 px-4">Méthode</th>
+                        <th className="py-3 px-4 text-right">Montant</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {student.payments.map(p => (
+                        <tr key={p.id}>
+                          <td className="py-2.5 px-4 text-slate-500">{p.paymentDate.slice(0, 10)}</td>
+                          <td className="py-2.5 px-4 text-slate-600">{p.paymentMethod}</td>
+                          <td className="py-2.5 px-4 text-right font-bold text-[#16212B]">{Number(p.amount).toLocaleString('fr-FR')} MAD</td>
+                        </tr>
+                      ))}
+                      {student.payments.length === 0 && (
+                        <tr><td colSpan={3} className="py-8 text-center text-slate-400">Aucun paiement enregistré.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </Card>
+                <Link href={`/${locale}/dashboard/finance/invoices?studentId=${student.id}`} className="flex items-center gap-1.5 text-xs font-bold text-[#2487B8] hover:underline w-fit">
+                  <Wallet className="w-3.5 h-3.5" />
+                  Voir les factures de cet élève
+                </Link>
+              </div>
+            )
+          : <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs"><p className="text-xs text-slate-400 text-center py-8">Données financières non disponibles pour ce rôle.</p></Card>
       )}
+
+      <IssueCardDialog
+        open={issueCardOpen}
+        onOpenChange={setIssueCardOpen}
+        subjectType="student"
+        templateType="student_id"
+        subjectId={student.id}
+        subjectLabel="Élève"
+        subjectName={student.fullName}
+      />
     </div>
   );
 }

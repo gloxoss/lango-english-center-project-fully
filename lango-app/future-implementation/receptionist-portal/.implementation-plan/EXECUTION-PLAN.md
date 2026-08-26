@@ -7,10 +7,10 @@
 
 **Live ground truth (verified 2026-08-09):**
 - Atlas tenant: `ca40c88e-339c-4fea-b5c4-51d5c9cc0239` ("Groupe Scolaire Atlas") — **the live DB UUID, NOT the stale `c9177d8a…` in APP-CONTEXT-AND-UI-SYSTEM.md §7**.
-- Lango tenant: `f62f31eb-1fc8-4102-9145-a5ce0bca989b` ("Lango Center").
-- Atlas school_admin login: `y.elamrani@atlas.ma` / `Admin123!`; Lango: `admin@lango.ma` / `Admin123!`.
-- No `guard_gates` rows exist for Atlas/Lango → seed one active gate per tenant in fixtures.
-- No receptionist user exists for Atlas/Lango → seed one per tenant in fixtures.
+- SchoolOS tenant: `f62f31eb-1fc8-4102-9145-a5ce0bca989b` ("SchoolOS Center").
+- Atlas school_admin login: `y.elamrani@atlas.ma` / `Admin123!`; SchoolOS: `admin@schoolos.ma` / `Admin123!`.
+- No `guard_gates` rows exist for Atlas/SchoolOS → seed one active gate per tenant in fixtures.
+- No receptionist user exists for Atlas/SchoolOS → seed one per tenant in fixtures.
 - Latest migration file: `0091_…`, journal `idx` max 92. **This plan allocates `0092_receptionist_portal.sql`, journal `idx` 93.**
 
 ---
@@ -110,7 +110,7 @@ src/app/[locale]/(dashboard)/dashboard/receptionist/
   appointments/page.tsx               # guarded appointments
   handoffs/page.tsx                   # guarded handoffs
 migrations/0092_receptionist_portal.sql   # hand-written idempotent
-scripts/seed-reception-fixtures.ts         # Atlas + Lango fixtures
+scripts/seed-reception-fixtures.ts         # Atlas + SchoolOS fixtures
 scripts/verify-reception-security.mjs      # acceptance battery (§9)
 ```
 
@@ -230,13 +230,13 @@ New keys (`PERMISSIONS`) + added to `receptionist` in `DEFAULT_ROLE_PERMISSIONS`
 
 ## 9. Tests + verification (acceptance battery, `scripts/verify-reception-security.mjs`)
 
-Fixture set (Atlas + Lango, seeded by `scripts/seed-reception-fixtures.ts`): 1 receptionist per tenant (Atlas: grant `reception.pickup.release` via userPermissionOverrides), 1 guard gate per tenant, students + linked guardians + one active pickup authorization, one CRM inquiry, host user. Cleanup removes every seeded row idempotently.
+Fixture set (Atlas + SchoolOS, seeded by `scripts/seed-reception-fixtures.ts`): 1 receptionist per tenant (Atlas: grant `reception.pickup.release` via userPermissionOverrides), 1 guard gate per tenant, students + linked guardians + one active pickup authorization, one CRM inquiry, host user. Cleanup removes every seeded row idempotently.
 
 | # | Check |
 |---|---|
 | T01 | Anonymous → 401 on every `/api/reception/**` route. |
 | T02 | `school_admin` (wrong role) → 403 on reception-only routes. |
-| T03 | Two-tenant isolation: Atlas receptionist cannot read/act on Lango appointments/handoffs/visitors/pickups (uniform 404). |
+| T03 | Two-tenant isolation: Atlas receptionist cannot read/act on SchoolOS appointments/handoffs/visitors/pickups (uniform 404). |
 | T04 | Wrong-branch isolation when a branch is active → 404/403. |
 | T05 | Lookup enumeration resistance: `q` < 2 chars → empty; term cap enforced; projection has **no** national-id/salary/bank/medical/grades/finance fields; phone/email masked. |
 | T06 | Lookup rate limit: burst > limit → 429. |

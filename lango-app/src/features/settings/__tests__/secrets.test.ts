@@ -60,6 +60,19 @@ describe('encryptSecret', () => {
     const corrupted = `${parts[0]}:${parts[1]}:${parts[2]}:${parts[3]!.slice(0, -1)}x`;
     expect(() => decryptSecret(corrupted)).toThrow();
   });
+
+  it('throws if neither ENCRYPTION_KEY nor BETTER_AUTH_SECRET is set', () => {
+    const origEnc = process.env.ENCRYPTION_KEY;
+    const origAuth = process.env.BETTER_AUTH_SECRET;
+    try {
+      delete process.env.ENCRYPTION_KEY;
+      delete process.env.BETTER_AUTH_SECRET;
+      expect(() => encryptSecret('test-secret')).toThrow(/Missing required encryption key/);
+    } finally {
+      process.env.ENCRYPTION_KEY = origEnc;
+      process.env.BETTER_AUTH_SECRET = origAuth;
+    }
+  });
 });
 
 describe.skipIf(!hasDb)('secret storage at rest', () => {

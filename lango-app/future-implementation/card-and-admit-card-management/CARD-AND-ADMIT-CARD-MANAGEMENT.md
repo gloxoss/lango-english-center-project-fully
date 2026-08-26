@@ -2,7 +2,7 @@
 
 **Status: planned, not started.** This specification was produced from the
 RamomSchool Card Management screenshots supplied on 2026-08-01, a direct audit
-of Lango/SchoolOS, and open-source repository research. It defines the complete
+of SchoolOS, and open-source repository research. It defines the complete
 logic needed for a useful product rather than copying five menu entries.
 
 ## Product decision
@@ -38,7 +38,7 @@ template versioning, bulk-job failures, secure QR contents, issued-card status,
 reprints, revocation, expiry, duplex alignment, exam eligibility, or audit
 history. Those missing rules are specified below.
 
-## Where Lango is today (verified in the repository)
+## Where SchoolOS is today (verified in the repository)
 
 ### Useful foundations already present
 
@@ -261,7 +261,7 @@ Route: `/dashboard/cards/admit-cards`
 
 #### Required exam-domain gap
 
-Lango has assessments, sessions, rooms, schedule slots, and online exams, but
+SchoolOS has assessments, sessions, rooms, schedule slots, and online exams, but
 does not yet have a complete physical exam-event/candidate seating model.
 Admit cards therefore need either new addon-owned tables or an agreed extension
 to academics:

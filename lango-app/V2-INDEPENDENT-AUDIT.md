@@ -17,7 +17,7 @@ I ran `docker compose up migrate` (applied cleanly, all 6 migrations, no SQL err
 
 **Genuinely real and working (82/85 tenant-isolation + security tests pass for real, plus live-verified):**
 - All 6 migrations apply cleanly — the SQL itself is correct.
-- Real cross-tenant isolation holds on every route the automated suite checks (76 routes), confirmed both by the test suite and by a live curl check (created an inquiry as Atlas, confirmed Lango's session gets an empty list).
+- Real cross-tenant isolation holds on every route the automated suite checks (76 routes), confirmed both by the test suite and by a live curl check (created an inquiry as Atlas, confirmed SchoolOS's session gets an empty list).
 - Phase 4 (inquiries, announcements), Phase 5 (assignments), Phase 6 (online-exams, payment-sandbox route) all respond with real, empty-until-populated data — not mocks.
 - Login rate limiting is real — 6 rapid bad-password attempts genuinely produced `429`s, including on the correct password on the 6th attempt (self-clears after Better Auth's window).
 - `scripts/check-tenant-isolation.ts` is a genuine static analyzer (line-scans every `db.select/update/delete`, checks a 50-line lookback for a `tenantId` reference), not a rubber stamp.

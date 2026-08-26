@@ -25,7 +25,7 @@ After the audit (below), the seed/session blocker was cleared (`npm run db:seed`
 **Live HTTP evidence** (dev server on :3001, two real sessions, separate cookie jars, `Origin` header):
 - Create + publish template → `200`; issue STU-001 → `201` with a **real rendered PDF** (6 KB base64), 64-char raw token; DB stores **sha256 hash only** (verified: no raw token column, hash row in `issued_documents.public_token_hash`).
 - `POST /api/public/cards/verify` good token → `{valid:true, subjectName, schoolName, documentType}`; random token → `{valid:false}`; honeypot → `{valid:false}`; missing token → `422`.
-- **Cross-tenant (by-id + issue)**: Lango against Atlas template version → `404 NOT_FOUND` (issue, admit-card, by-id GET/PATCH/DELETE all verified); Lango issued-list → `0` rows.
+- **Cross-tenant (by-id + issue)**: SchoolOS against Atlas template version → `404 NOT_FOUND` (issue, admit-card, by-id GET/PATCH/DELETE all verified); SchoolOS issued-list → `0` rows.
 - **Bulk idempotency**: job of 3 students → run1 `completed, success=3, error=0`; run2 `0 processed ("Lot déjà terminé")`; **STU-001 active-card count = 1** after single-issue + bulk + retry (dedupe-by-existing-active works).
 - **Disable addon** (flip `addon_entitlements.is_enabled=false`): issue/list → `403 ADDON_NOT_ACTIVATED`, but existing card **still verifies** (`valid:true`).
 - **Admit card** from real seeded `exam_terms`/`exam_halls`/`exam_seats`: issue `201`, verify `valid:true` with `subjectType: exam_candidate`, candidate/seat/hall from the real seat row.
@@ -56,7 +56,7 @@ The remaining card routes and pages from §7 were built and **live-verified end-
 - Template create + publish → `200`; exam term + hall + seat allocation → 3 `201`s; admit-seats lists the allocated seat with hall/term/desk; employees lists staff (tenant-scoped, name-ordered).
 - Student card + admit card issued → `201` with real PDFs; issued list filters by type; overview counts match (templates total/published, issued by status, recent ≤8); PDF download → `application/pdf`, >500 bytes.
 - Verify valid → revoke (reason stored) → re-verify returns same generic `{valid:false}` as a nonexistent token → **re-revoke idempotent** (no duplicate event).
-- **Cross-tenant**: Lango issued-list empty; Lango revoke against Atlas doc → `404`; overview empty; seats empty.
+- **Cross-tenant**: SchoolOS issued-list empty; SchoolOS revoke against Atlas doc → `404`; overview empty; seats empty.
 - HTML page smoke for all 5 pages (overview/students/employees/admit-cards/issued) renders without error.
 
 **DB evidence (post-sweep):** revoked row has `status='revoked'`, `revoked_at` set, `revoked_by_id='USR-001'`, `revoke_reason='Carte perdue (test)'`; matching `document_events` row `event_kind='revoked'` with actor; `public_token_hash` is 64-char sha256 hex; 1 card remains `active`.
@@ -67,7 +67,7 @@ The remaining card routes and pages from §7 were built and **live-verified end-
 
 ### 1c. Fourth pass (2026-08-07) — certificates surface built + live-verified end-to-end, one schema/migration defect found & fixed
 
-The entire certificate surface (routes + pages + public verifier + sidebar + capabilities) was built and **live-verified end-to-end** against the running app (three real sessions — Atlas admin `USR-001`, Atlas teacher `USR-002`, Lango admin `USR-LANGO-001` — separate cookie jars, `Origin` header, real HTTP + DB-row evidence). All test data cleaned back to 0 after the sweep.
+The entire certificate surface (routes + pages + public verifier + sidebar + capabilities) was built and **live-verified end-to-end** against the running app (three real sessions — Atlas admin `USR-001`, Atlas teacher `USR-002`, SchoolOS admin `USR-SCHOOLOS-001` — separate cookie jars, `Origin` header, real HTTP + DB-row evidence). All test data cleaned back to 0 after the sweep.
 
 **Schema/DB defect found & fixed (blocking every INSERT on `issued_certificates`):** migration `0065` created the table with `verification_token varchar(255) NOT NULL` (no default) and **without** `file_ext`, but the Drizzle schema (`certificates-schema.ts:89-109`) declares the opposite: `fileExt varchar('file_ext',{length:10}).notNull()` and hash-only verification. `certificate-service.issueCertificate` inserts `fileExt: 'pdf'` and never sets `verification_token` → every INSERT/SELECT would fail at runtime (`file_ext does not exist` / null-value violation). Grep confirmed no source code reads the raw token column (hash-only design). **Fix:** new migration `migrations/0070_certificates_align_issued_columns.sql` (`ADD COLUMN file_ext varchar(10) NOT NULL DEFAULT 'pdf'; DROP COLUMN verification_token`), applied to the live DB (journaled idx 71). Post-fix probe: `file_ext` present with default `'pdf'`, raw-token column gone, `verification_token_hash` intact. Note: `issued_by` was already `text` on the live table (0069) matching the schema.
 
@@ -81,8 +81,8 @@ The entire certificate surface (routes + pages + public verifier + sidebar + cap
 - Revoke → `status='revoked'`, `certificate_events` kind `revoked` with reason, re-verify `{valid:false}`. Replace → new serial + token created (`status='valid'`), original → `replaced`, original token verify `{valid:false}`.
 - Bulk job (2 students) → run1 `processed=2 success=2 error=0`; run2 `processed=0` ("Lot déjà terminé") — idempotent. Job items `status='success'`, job `status='completed'`.
 - Signatories create/toggle/delete all live (`201`/`PATCH`/`DELETE`).
-- **Cross-tenant**: Lango admin sees 0 Atlas definitions / issued; direct by-id access → `404 NOT_FOUND`.
-- **Addon guard**: flip `certificate-management` entitlement off for Lango → `403 ADDON_NOT_ACTIVATED`; re-enabled.
+- **Cross-tenant**: SchoolOS admin sees 0 Atlas definitions / issued; direct by-id access → `404 NOT_FOUND`.
+- **Addon guard**: flip `certificate-management` entitlement off for SchoolOS → `403 ADDON_NOT_ACTIVATED`; re-enabled.
 - Overview KPIs matched DB during sweep (definitions 2, issued 8, valid 6 / replaced 1 / revoked 1, job completed 1).
 - `tsc --noEmit`: certificates + render.ts add **zero** errors. (At the time of this pass the pre-existing events/domains baseline still had errors and `next build` was blocked by the `getAuthContext` import in `addons/events/route.ts`; that whole baseline was subsequently resolved in the fifth pass — see §8.)
 
@@ -219,7 +219,7 @@ Same latent bug will hit **certificate routes when they are built** — they mus
 | Issue a real card, opaque hashed token, generic verify response | ✅ VERIFIED | `201` + 64-char raw token; only sha256 hash stored. `/verify/card/[token]` page + `POST /api/public/cards/verify` return generic `{valid:false}` for both nonexistent and (by status guard) revoked/superseded. |
 | Bulk-issue idempotency (kill/retry mid-batch) | ✅ VERIFIED | Job of 3 → run1 success=3, run2 "Lot déjà terminé", 0 reprocessed; STU-001 active-card count = 1 after single+bulk+retry (dedupe by existing-active). |
 | Admit card from real `examTerms`/`examSeats` | ✅ VERIFIED | Seeded real term/hall/seat → admit issue `201`, verify `valid:true`, candidate/seat/hall from the real `exam_seats` row. |
-| Cross-tenant sweep on every new route | ✅ VERIFIED | Seed + entitlements + sessions live. Issue/by-id/jobs cross attempts → `404`/`403`; Lango list empty; isolation sweep no new violations. Revoke + overview + seats + employees cross attempts → `404`/empty (this pass). |
+| Cross-tenant sweep on every new route | ✅ VERIFIED | Seed + entitlements + sessions live. Issue/by-id/jobs cross attempts → `404`/`403`; SchoolOS list empty; isolation sweep no new violations. Revoke + overview + seats + employees cross attempts → `404`/empty (this pass). |
 | Disabling addon blocks new actions, existing cards still verify | ✅ VERIFIED | Entitlement flip → issue/list `403 ADDON_NOT_ACTIVATED`; existing token still `valid:true`. |
 | Revoke flow: soft-revoke + reason + immediate verify invalidation | ✅ VERIFIED | `POST …/issued/[id]/revoke` sets `status='revoked'` + `revoked_at` + `revoked_by_id` + `revoke_reason`; `document_events` row `event_kind='revoked'`; re-verify returns generic `{valid:false}` matching a nonexistent token; re-revoke idempotent (no duplicate event). |
 | PDF re-download of an issued card | ✅ VERIFIED | `GET …/issued/[id]/pdf` re-renders stored `schemaJson` + `renderDataSnapshot` → `application/pdf`, >500 bytes. |
@@ -239,7 +239,7 @@ Same latent bug will hit **certificate routes when they are built** — they mus
 | Revocation reflected immediately on verify page | ✅ VERIFIED | `POST …/issued/[id]/revoke` → `status='revoked'`, `certificate_events` kind `revoked` with reason; re-verify same token → `{valid:false}`. Public page `/verify/certificate/[token]` exists. |
 | Public verify never leaks evidence/DOB/NID/salary/guardian | ✅ VERIFIED | `POST /api/public/certificates/verify` response shape is `{valid, recipientName, certificateTitle, serialNumber, issuedAt, schoolName}` — no evidenceSnapshot/DOB/NID/salary/guardian echoed. Honeypot + rate limit + generic `{valid:false}` verified. |
 | Four-eyes approval (preparer ≠ approver) | ✅ VERIFIED | Teacher creates/submits/reviews, admin approves (four-eyes satisfied). Same-user approve → `400 FOUR_EYES_VIOLATION`; teacher (no `certificates.approve`) → `403`. |
-| Cross-tenant sweep on every new route | ✅ VERIFIED | Lango admin: 0 Atlas definitions/issued; by-id access to Atlas cert → `404 NOT_FOUND`; addon-disabled → `403 ADDON_NOT_ACTIVATED`. |
+| Cross-tenant sweep on every new route | ✅ VERIFIED | SchoolOS admin: 0 Atlas definitions/issued; by-id access to Atlas cert → `404 NOT_FOUND`; addon-disabled → `403 ADDON_NOT_ACTIVATED`. |
 | Serial collision-safety under concurrent load | ⚠️ PARTIAL | Retry loop + unique constraint verified (§3). Parallel load-test not run (serial service is single-process dev; production would use Postgres advisory locks or the existing retry loop). |
 
 ---
@@ -252,7 +252,7 @@ Same latent bug will hit **certificate routes when they are built** — they mus
 - Remaining known nit (non-blocking, pre-existing): `pdfme` **browser-designer** preview is still unexercised live (server render is proven); this is the editor component's own preview, not a card-management gap.
 
 **Runtime/verification preconditions — ✅ all resolved (task #15):**
-- `npm run db:seed` run → 2 tenants (Atlas + Lango) + 6 credential accounts; sign-in path established via `POST /api/auth/sign-in/email` (better-auth) with fresh cookie jars per session.
+- `npm run db:seed` run → 2 tenants (Atlas + SchoolOS) + 6 credential accounts; sign-in path established via `POST /api/auth/sign-in/email` (better-auth) with fresh cookie jars per session.
 - Both `card-management` and `certificate-management` entitlements granted to both tenants (addon-disabled flip tested live).
 
 ---

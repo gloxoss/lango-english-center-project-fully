@@ -497,7 +497,7 @@ export function BranchesManageView() {
                 <Label className="text-xs font-bold text-slate-700">Email de contact</Label>
                 <Input
                   type="email"
-                  placeholder="Ex: anfa@lango.ma"
+                  placeholder="Ex: anfa@schoolos.ma"
                   value={formData.email}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
                   className="h-10 rounded-xl border-slate-200 bg-slate-50 text-xs focus:bg-white"

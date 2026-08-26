@@ -6,6 +6,7 @@ import { requireRequestContext } from '@/libs/api/context';
 import { apiErrorResponse, ApiError } from '@/libs/api/errors';
 import { requirePlanTier } from '@/libs/api/permissions';
 import { recordAudit } from '@/libs/api/audit';
+import { parseJson } from '@/libs/api/validation';
 import { eq, desc } from 'drizzle-orm';
 
 const requestDomainSchema = z.object({
@@ -40,8 +41,7 @@ export async function POST(request: Request) {
     // Gate on plan tier
     await requirePlanTier(context, ['standard', 'premium']);
 
-    const body = await request.json();
-    const parsed = requestDomainSchema.parse(body);
+    const parsed = await parseJson(request, requestDomainSchema);
 
     // Basic validation for subdomain vs custom domain format
     if (parsed.domainType === 'subdomain') {

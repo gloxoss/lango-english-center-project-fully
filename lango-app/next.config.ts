@@ -38,6 +38,12 @@ const nextConfig: NextConfig = {
   // skipped inside the Docker image build to keep peak memory inside BuildKit
   // within Docker Desktop's VM. Env-gated so host/CI builds still typecheck.
   typescript: { ignoreBuildErrors: process.env.NEXT_IGNORE_TYPES === '1' },
+  // Caps the worker pool used for "Collecting page data" (~280 routes) to 2
+  // instead of auto-detecting all cores - that phase pegging every core at
+  // 100% for minutes is what's been driving Docker Desktop's BuildKit builds
+  // to crash and, worse, causing thermal shutdowns on the build machine.
+  // Slower build, much lower peak heat/CPU draw.
+  experimental: { cpus: 2 },
   poweredByHeader: false,
   reactStrictMode: true,
   headers: async () => [

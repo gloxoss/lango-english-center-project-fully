@@ -1,12 +1,6 @@
-// Addon registry - organizational only, no gating logic yet (by design, see
-// AGENT-HANDOFF.md "Addon system" decision). Lists optional/future modules
-// so their eventual code lives under src/addons/<id>/ from day one instead
-// of getting mixed into core features and needing a painful split later.
-//
-// `enabled` here means "the module is built", not "this tenant may use it".
-// Per-tenant access lives in the addon_entitlements table and is enforced by
-// requireAddon() in src/libs/api/entitlements.ts. Only `multi-branch` is wired
-// to that gate today; the rest are unbuilt, so there is nothing yet to gate.
+// Addon registry: single source of truth for all 27 SchoolOS optional modules.
+// Per-tenant access lives in the addon_entitlements table and is enforced across
+// all module routes by requireAddon() from src/libs/api/entitlements.ts.
 
 export type AddonDefinition = {
   id: string;

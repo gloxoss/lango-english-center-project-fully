@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary
 
-The **Employee Self-Service Portal** has been fully implemented in `lango-app` to provide an additive, privacy-preserving workspace for all staff members who hold an active `employeeProfiles` record (e.g. teachers, accountants, receptionists, librarians, workforce staff).
+The **Employee Self-Service Portal** has been fully implemented in `schoolos-app` to provide an additive, privacy-preserving workspace for all staff members who hold an active `employeeProfiles` record (e.g. teachers, accountants, receptionists, librarians, workforce staff).
 
 Operational roles (`school_admin`, `teacher`, `accountant`, etc.) remain fully intact. Self-service capability is dynamically attached based on the presence of a server-owned `employeeProfiles` link resolving through `resolveEmployeeContext`.
 

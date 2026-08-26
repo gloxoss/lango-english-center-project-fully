@@ -8,11 +8,11 @@ assumes no prior conversation context).
 ---
 
 ```
-You are working on SchoolOS/Lango, a Next.js 16 App Router + Drizzle ORM +
+You are working on SchoolOS, a Next.js 16 App Router + Drizzle ORM +
 PostgreSQL 17 + Better Auth multi-tenant school-management SaaS.
 
 Working directory:
-c:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app
+c:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\schoolos\schoolos-english-center-project-fully\schoolos-app
 
 ## Read these first, in this order, before writing any code
 
@@ -69,7 +69,7 @@ fixes come before anything else). For each phase:
    typecheck/build:
    - Seeded test accounts already exist:
      - `y.elamrani@atlas.ma` / `Admin123!` — school_admin, Atlas tenant
-     - `admin@lango.ma` / `Admin123!` — school_admin, Lango tenant
+     - `admin@schoolos.ma` / `Admin123!` — school_admin, SchoolOS tenant
      - `superadmin@schoolos.ma` / `Admin123!` — super_admin, tenantId null
        (all seeded accounts share one password, set via
        `SCHOOL_ADMIN_SEED_PASSWORD` env var, default `Admin123!` — see
@@ -148,7 +148,7 @@ phase, include:
 - What they should see if it's working (be specific: real numbers,
   real names, not "should show data").
 - What a tenant-isolation check looks like in the UI (e.g. "log out, log
-  in as the Lango account instead, confirm you do NOT see the Atlas data
+  in as the SchoolOS account instead, confirm you do NOT see the Atlas data
   you just created").
 
 Write both documents as real files in the repo (e.g.

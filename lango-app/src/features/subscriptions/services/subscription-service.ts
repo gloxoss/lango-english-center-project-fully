@@ -252,6 +252,7 @@ export async function issueLicense(
       })
       .where(eq(schoolLicenses.id, existing.id))
       .returning();
+    await db.update(tenants).set({ subscriptionStatus: 'active' }).where(eq(tenants.id, tenantId));
     recordAudit({ ...ctx, tenantId }, 'update', 'school_license', row!.id, {
       action: 'issue',
       expiresAt,
@@ -273,6 +274,7 @@ export async function issueLicense(
       issuedById: ctx.userId,
     })
     .returning();
+  await db.update(tenants).set({ subscriptionStatus: 'active' }).where(eq(tenants.id, tenantId));
   recordAudit({ ...ctx, tenantId }, 'create', 'school_license', row!.id, {
     action: 'issue',
     expiresAt,
@@ -301,6 +303,7 @@ export async function extendLicense(
     })
     .where(eq(schoolLicenses.id, existing.id))
     .returning();
+  await db.update(tenants).set({ subscriptionStatus: 'active' }).where(eq(tenants.id, tenantId));
   recordAudit({ ...ctx, tenantId }, 'update', 'school_license', row!.id, {
     action: 'extend',
     months,
@@ -321,6 +324,7 @@ export async function revokeLicense(ctx: RequestContext, tenantId: string): Prom
     })
     .where(eq(schoolLicenses.id, existing.id))
     .returning();
+  await db.update(tenants).set({ subscriptionStatus: 'cancelled' }).where(eq(tenants.id, tenantId));
   recordAudit({ ...ctx, tenantId }, 'update', 'school_license', row!.id, { action: 'revoke' });
   return row!;
 }
@@ -390,29 +394,76 @@ export async function decidePayment(
   }
 
   const months = payment.requestedMonths ?? 1;
-  let license = await getSchoolLicense(tenantId);
-  if (!license) {
-    license = await issueLicense(ctx, tenantId, { months });
-  } else {
-    license = await extendLicense(ctx, tenantId, months);
-  }
 
-  const [row] = await db
-    .update(licensePayments)
-    .set({
-      status: 'paid',
-      licenseId: license.id,
-      amount: (opts.amount ?? 0).toFixed(2),
-      purchasedAt: new Date().toISOString(),
-      expiresAtAtPurchase: license.expiresAt,
-      recordedById: ctx.userId,
-    })
-    .where(eq(licensePayments.id, payment.id))
-    .returning();
-  recordAudit({ ...ctx, tenantId }, 'update', 'license_payment', row!.id, {
+  const result = await db.transaction(async (tx) => {
+    const existing = await tx
+      .select()
+      .from(schoolLicenses)
+      .where(eq(schoolLicenses.tenantId, tenantId))
+      .limit(1)
+      .then(r => r[0] ?? null);
+
+    const isNew = !existing;
+    let license: LicenseRow;
+    if (!existing) {
+      const expiresAt = monthsFromNow(months);
+      const [row] = await tx
+        .insert(schoolLicenses)
+        .values({
+          tenantId,
+          licenseKey: generateLicenseKey(),
+          status: 'active',
+          issuedAt: new Date().toISOString(),
+          expiresAt,
+          lastUpgradeAt: new Date().toISOString(),
+          notes: null,
+          issuedById: ctx.userId,
+        })
+        .returning();
+      await tx.update(tenants).set({ subscriptionStatus: 'active' }).where(eq(tenants.id, tenantId));
+      license = row!;
+    } else {
+      const expiresAt = monthsFromNow(months, existing.expiresAt);
+      const [row] = await tx
+        .update(schoolLicenses)
+        .set({
+          status: 'active',
+          expiresAt,
+          lastUpgradeAt: new Date().toISOString(),
+          issuedById: ctx.userId,
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(schoolLicenses.id, existing.id))
+        .returning();
+      await tx.update(tenants).set({ subscriptionStatus: 'active' }).where(eq(tenants.id, tenantId));
+      license = row!;
+    }
+
+    const [paidRow] = await tx
+      .update(licensePayments)
+      .set({
+        status: 'paid',
+        licenseId: license.id,
+        amount: (opts.amount ?? 0).toFixed(2),
+        purchasedAt: new Date().toISOString(),
+        expiresAtAtPurchase: license.expiresAt,
+        recordedById: ctx.userId,
+      })
+      .where(eq(licensePayments.id, payment.id))
+      .returning();
+
+    return { license, payment: paidRow!, isNew };
+  });
+
+  recordAudit({ ...ctx, tenantId }, result.isNew ? 'create' : 'update', 'school_license', result.license.id, {
+    action: result.isNew ? 'issue' : 'extend',
+    months,
+    expiresAt: result.license.expiresAt,
+  });
+  recordAudit({ ...ctx, tenantId }, 'update', 'license_payment', result.payment.id, {
     decision: 'approved',
     months,
     amount: opts.amount ?? 0,
   });
-  return row!;
+  return result.payment;
 }

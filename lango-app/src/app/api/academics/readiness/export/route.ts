@@ -1,7 +1,11 @@
+import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
+import { db } from '@/libs/DB';
+import { computeReadiness } from '@/libs/services/academic-readiness';
+import { sessionYears } from '@/models/Schema';
 
 export async function GET(request: Request) {
   try {
@@ -9,23 +13,24 @@ export async function GET(request: Request) {
     await requireCapability(context, 'academics.read');
     const tenantId = requireTenant(context);
 
-    // Fetch metrics from internal GET handler logic or endpoint
-    const url = new URL(request.url);
-    const origin = url.origin;
-    const res = await fetch(`${origin}/api/academics/readiness`, {
-      headers: { cookie: request.headers.get('cookie') || '' },
-    });
-    const json = await res.json();
+    const { searchParams } = new URL(request.url);
+    let targetSessionId = searchParams.get('sessionYearId');
+    if (!targetSessionId) {
+      const [defaultSession] = await db
+        .select({ id: sessionYears.id })
+        .from(sessionYears)
+        .where(and(eq(sessionYears.tenantId, tenantId), eq(sessionYears.isDefault, true)))
+        .limit(1);
+      targetSessionId = defaultSession?.id ?? null;
+    }
 
-    const data = json.data || {};
-    const overallScore = data.overallScore ?? 0;
-    const checks = data.checks || [];
+    const readiness = targetSessionId ? await computeReadiness(tenantId, targetSessionId) : { overallScore: 0, checks: [] };
 
     let csvContent = `Rapport de Bilan de Rentree Academique\n`;
-    csvContent += `Score Global de Preparation,${overallScore}%\n\n`;
+    csvContent += `Score Global de Preparation,${readiness.overallScore}%\n\n`;
     csvContent += `Controle,Score (%),Statut,Detail\n`;
 
-    for (const c of checks) {
+    for (const c of readiness.checks) {
       csvContent += `"${c.title}",${c.score}%,${c.status},"${c.detail}"\n`;
     }
 

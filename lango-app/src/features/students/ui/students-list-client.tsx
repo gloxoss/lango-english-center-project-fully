@@ -21,6 +21,7 @@ import {
 import {
   Users, UserPlus, Download, Filter, Search,
   Wallet, CheckCircle2, AlertTriangle, ChevronLeft, ChevronRight,
+  Pencil, Trash2,
 } from 'lucide-react';
 import { useEffect } from 'react';
 import { usePermissions } from '@/hooks/use-permissions';
@@ -75,6 +76,19 @@ type Student = {
   status?: string;
   paymentStatus?: string;
 };
+
+function toStudent(st: StudentItem): Student {
+  return {
+    id: st.id,
+    fullName: st.name,
+    level: st.gradeLevel,
+    className: st.classSection,
+    guardianName: st.guardianName,
+    phone: st.guardianPhone,
+    status: st.status,
+    paymentStatus: st.financialStatus,
+  };
+}
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -329,6 +343,9 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                 <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">Tuteur Légal</TableHead>
                 <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">Statut Financier</TableHead>
                 <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">Statut</TableHead>
+                {(can('students.update') || can('students.delete')) && (
+                  <TableHead className="text-xs font-bold text-slate-600 h-10 px-4 text-right">Actions</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -364,6 +381,34 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                       {st.status}
                     </Badge>
                   </TableCell>
+                  {(can('students.update') || can('students.delete')) && (
+                    <TableCell className="text-xs text-slate-700 p-3.5">
+                      <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                        {can('students.update') && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditModal(toStudent(st))}
+                            className="h-8 w-8 p-0 text-blue-700 hover:bg-blue-50 rounded-lg"
+                            aria-label={`Modifier ${st.name}`}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {can('students.delete') && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openDeleteModal(toStudent(st))}
+                            className="h-8 w-8 p-0 text-rose-600 hover:bg-rose-50 rounded-lg"
+                            aria-label={`Supprimer ${st.name}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

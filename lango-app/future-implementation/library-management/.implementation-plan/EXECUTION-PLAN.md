@@ -321,7 +321,7 @@ harness `scripts/verify-library-adversarial.mjs` for curl-level coverage.
 | 19 | Librarian role blast radius | librarian token 403 on students/HR/finance/admin routes |
 | 20 | Active-loan/copy-state reconciliation | DB invariant: no two active loans on one copy; copy state consistent |
 
-## 16. Verification commands (run in `lango-app`)
+## 16. Verification commands (run in `schoolos-app`)
 
 **Executed 2026-08-09 — results recorded. Live evidence: `VERIFICATION-EVIDENCE.md`, `PLAN-STATUS.md`.**
 

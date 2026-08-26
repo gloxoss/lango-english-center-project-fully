@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
-import { attachmentTypes, digitalAssets, digitalAssetTargets, digitalAssetVersions } from '@/features/attachments/models/attachments-schema';
+import { attachmentTypes, digitalAssetTagLinks, digitalAssetTags, digitalAssets, digitalAssetTargets, digitalAssetVersions } from '@/features/attachments/models/attachments-schema';
 import { blobKeyFor, blobStore, quarantineKeyFor } from '@/libs/api/blob-store';
 import { db } from '@/libs/DB';
 import { scanBuffer } from '@/libs/api/malware-scan';
@@ -168,6 +168,20 @@ export class AssetService {
         targetRefId: t.targetRefId,
       })));
     }
+  }
+
+  static async setTags(tenantId: string, assetId: string, names: string[]) {
+    const normalized = Array.from(new Set(names.map(name => name.trim().toLowerCase()).filter(Boolean))).slice(0, 20);
+    await db.transaction(async (tx) => {
+      await tx.delete(digitalAssetTagLinks).where(eq(digitalAssetTagLinks.assetId, assetId));
+      for (const name of normalized) {
+        const [tag] = await tx.insert(digitalAssetTags).values({ tenantId, name }).onConflictDoUpdate({
+          target: [digitalAssetTags.tenantId, digitalAssetTags.name],
+          set: { name },
+        }).returning();
+        await tx.insert(digitalAssetTagLinks).values({ assetId, tagId: tag!.id }).onConflictDoNothing();
+      }
+    });
   }
 
   static async publishAsset(tenantId: string, assetId: string) {

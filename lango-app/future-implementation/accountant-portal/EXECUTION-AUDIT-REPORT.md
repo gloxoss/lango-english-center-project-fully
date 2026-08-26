@@ -1,7 +1,7 @@
 # Accountant Portal — Execution Audit Report
 
 **Owner:** Oussama Zaki (Zakio)
-**Repository:** `lango-app`
+**Repository:** `schoolos-app`
 
 This report was originally written with claims not backed by pasted evidence (only Phase 0 had real detail). It has been rewritten here with the actual evidence independently gathered during a follow-up audit pass, plus the fixes that pass produced. Where the original execution's own claim differed from what independent verification found, both are shown.
 
@@ -43,7 +43,7 @@ This report was originally written with claims not backed by pasted evidence (on
 ### Phase 3 — Accountant APIs
 - 5 routes confirmed to exist: `/api/accountant/me/{home,cashier,approvals,receivables,office-accounting}`.
 - `cashier/route.ts` read in full: GET computes `totalCollected`/`expectedCash` from a real query against `payments` (`receivedById` = current user, `paymentMethod = 'cash'`, `createdAt >= session.openedAt`), not a placeholder. POST blocks opening a second session with a 409. PUT closes the session, recomputes the same real total, and records `actualCash` for variance. This is genuine, correct logic.
-- `accountant@atlas.ma` / `accountant@lango.ma` confirmed present in `src/scripts/seed.ts`.
+- `accountant@atlas.ma` / `accountant@schoolos.ma` confirmed present in `src/scripts/seed.ts`.
 
 ### Phase 4 — Portal UI pages
 - All 6 page files read directly, every `fetch(...)` call inspected for the specific failure pattern seen on an earlier, unrelated plan in this repo (a hardcoded fallback number standing in for real data, e.g. `students.length || 20`): **none found** across `finance/page.tsx`, `receivables`, `approvals`, `office-accounting`. All fetch their real corresponding `/api/accountant/me/*` endpoint; mutations POST for real.
@@ -90,7 +90,7 @@ This report was originally written with claims not backed by pasted evidence (on
 6. **`docker compose logs app --tail 40`** grepped for `Failed to compile|Module not found|error TS` — no matches.
 
 ### What this does and does not prove
-This confirms every route compiles, deploys, and enforces authentication correctly from a genuinely clean build. It does **not** prove the authenticated business logic is correct end-to-end (e.g. that collecting a payment through the Collection Desk UI actually updates an invoice's balance) — that requires a real logged-in session, which wasn't performed this pass. Recommended next check before considering this fully done: log in as `accountant@lango.ma`, open a cashier session, search a real student, collect a real payment, and confirm the invoice balance and cashier total both change correctly in the database.
+This confirms every route compiles, deploys, and enforces authentication correctly from a genuinely clean build. It does **not** prove the authenticated business logic is correct end-to-end (e.g. that collecting a payment through the Collection Desk UI actually updates an invoice's balance) — that requires a real logged-in session, which wasn't performed this pass. Recommended next check before considering this fully done: log in as `accountant@schoolos.ma`, open a cashier session, search a real student, collect a real payment, and confirm the invoice balance and cashier total both change correctly in the database.
 
 ## Outstanding (not fixed this pass)
 - Sidebar filtering remains a hardcoded role check by deliberate choice (documented, not a defect) — upgrade to capability-driven only if a second role needs the same treatment.

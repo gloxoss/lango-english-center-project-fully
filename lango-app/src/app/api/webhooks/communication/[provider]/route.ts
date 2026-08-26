@@ -14,7 +14,7 @@ import {
 
 type Ctx = { params: Promise<{ provider: string }> };
 
-const HMAC_SECRET = process.env.WEBHOOK_SIGNING_KEY || process.env.BETTER_AUTH_SECRET || 'lango-webhook-secret-sentinel';
+const HMAC_SECRET = process.env.WEBHOOK_SIGNING_KEY || process.env.BETTER_AUTH_SECRET || 'schoolos-webhook-secret-sentinel';
 const MAX_AGE_MS = 5 * 60 * 1000;
 
 const VALID_TRANSITIONS: Record<string, string[]> = {

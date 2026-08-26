@@ -5,10 +5,14 @@ import { DashboardShell } from '@/components/shared/dashboard-shell';
 import { Header } from '@/components/shared/header';
 import { Sidebar } from '@/components/shared/sidebar';
 import { TwoFactorRequired } from '@/components/auth/two-factor-required';
+import { SubscriptionGate } from '@/components/auth/subscription-gate';
+import { OnboardingGate } from '@/components/auth/onboarding-gate';
 import { auth } from '@/libs/auth';
 import { db } from '@/libs/DB';
 import { requiresTwoFactor } from '@/libs/auth/two-factor-policy';
-import { user as userTable } from '@/models/Schema';
+import { isSubscriptionBlocked } from '@/libs/subscriptions/subscription-gate-logic';
+import { isSchoolOnboardingComplete } from '@/features/settings/services/onboarding-completeness';
+import { tenants, user as userTable } from '@/models/Schema';
 
 export default async function DashboardLayout({
   children,
@@ -41,13 +45,40 @@ export default async function DashboardLayout({
     return <TwoFactorRequired locale={locale} email={session.user.email} />;
   }
 
+  // Subscription enforcement: a suspended/cancelled tenant (except super_admin)
+  // is blocked from the dashboard shell and shown a renewal prompt instead. The
+  // subscription settings page stays reachable (SubscriptionGate) so the admin
+  // can still submit a renewal request.
+  let subscriptionSuspended = false;
+  const tenantId = session.user.tenantId;
+  if (principal?.role !== 'super_admin' && tenantId) {
+    const [tenant] = await db
+      .select({ subscriptionStatus: tenants.subscriptionStatus })
+      .from(tenants)
+      .where(eq(tenants.id, tenantId))
+      .limit(1);
+    subscriptionSuspended = isSubscriptionBlocked(tenant?.subscriptionStatus ?? null);
+  }
+
+  // Onboarding gate: a freshly-provisioned school_admin whose required fields
+  // are not yet filled is redirected to the onboarding wizard from every
+  // dashboard route. The OnboardingGate client component handles path exemptions.
+  let onboardingIncomplete = false;
+  if (principal?.role === 'school_admin' && tenantId && !subscriptionSuspended) {
+    onboardingIncomplete = !await isSchoolOnboardingComplete(tenantId);
+  }
+
   return (
-    <DashboardShell
-      locale={locale}
-      sidebar={<Sidebar locale={locale} />}
-      header={<Header locale={locale} />}
-    >
-      {children}
-    </DashboardShell>
+    <SubscriptionGate locale={locale} suspended={subscriptionSuspended}>
+      <OnboardingGate locale={locale} incomplete={onboardingIncomplete}>
+      <DashboardShell
+        locale={locale}
+        sidebar={<Sidebar locale={locale} />}
+        header={<Header locale={locale} />}
+      >
+        {children}
+      </DashboardShell>
+      </OnboardingGate>
+    </SubscriptionGate>
   );
 }

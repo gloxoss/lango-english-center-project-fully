@@ -1,6 +1,6 @@
 # `_tracker/` — Implementation-Plan Audit & Progress Workspace
 
-This folder is your working space for tracking every future-implementation plan against the live `lango-app` codebase.
+This folder is your working space for tracking every future-implementation plan against the live `schoolos-app` codebase.
 
 ## What's here
 

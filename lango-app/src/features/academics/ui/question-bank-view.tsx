@@ -104,6 +104,11 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
   const [composeTargetExamId, setComposeTargetExamId] = useState('');
   const [composing, setComposing] = useState(false);
 
+  // Generate N variants state (§6.9b)
+  const [variantsOpen, setVariantsOpen] = useState(false);
+  const [variantCount, setVariantCount] = useState('2');
+  const [generatingVariants, setGeneratingVariants] = useState(false);
+
   const loadBankItems = () => {
     const params = new URLSearchParams();
     if (bankFilter.subjectId) params.set('subjectId', bankFilter.subjectId);
@@ -379,6 +384,36 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
     }
   };
 
+  // Generate N variants of the selected exam (§6.9b)
+  const handleGenerateVariants = async () => {
+    if (!selectedExamId) {
+      setError('Veuillez sélectionner un examen source.');
+      return;
+    }
+    setGeneratingVariants(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/academics/online-exams/${selectedExamId}/variants`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ count: Number(variantCount) || 1 }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        setError(json.error?.message || json.message || 'Échec de la génération des variantes.');
+        return;
+      }
+      setVariantsOpen(false);
+      setSuccessMsg(`${json.total} variante(s) générée(s) avec ordre des questions et des choix QCM mélangés.`);
+      setTimeout(() => setSuccessMsg(null), 5000);
+      loadExams();
+    } catch {
+      setError('Connexion impossible.');
+    } finally {
+      setGeneratingVariants(false);
+    }
+  };
+
   const canManage = can('grading.manage');
   const totalQuestionMarks = questions.reduce((sum, q) => sum + Number(q.marks), 0);
   const selectedExam = exams.find(e => e.id === selectedExamId);
@@ -539,6 +574,10 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
                   <Button size="sm" onClick={() => { setEditingQuestionId(null); setShowQuestionForm(v => !v); }} className="h-9 text-xs rounded-xl bg-[#0066FF] text-white font-bold gap-1.5">
                     <Plus className="w-3.5 h-3.5" />
                     Ajouter une question
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setVariantsOpen(true)} className="h-9 text-xs rounded-xl border-slate-200 font-bold gap-1.5">
+                    <Layers className="w-3.5 h-3.5" />
+                    Générer des variantes
                   </Button>
                 </div>
               )}
@@ -904,6 +943,43 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
             >
               {composing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
               Générer et injecter
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* GENERATE VARIANTS MODAL (§6.9b) */}
+      <Dialog open={variantsOpen} onOpenChange={setVariantsOpen}>
+        <DialogContent className="max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
+              <Layers className="w-4 h-4 text-[#0066FF]" />
+              Générer des Variantes (§6.9b)
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2 text-xs">
+            <p className="text-slate-600">
+              Crée plusieurs variantes de l&apos;examen <strong>{selectedExam?.title ?? 'sélectionné'}</strong>. Chaque variante reprend les mêmes questions dans un ordre aléatoire, avec les choix QCM réordonnés.
+            </p>
+
+            <div className="space-y-1">
+              <label className="font-bold text-slate-700 block">Nombre de variantes</label>
+              <Input type="number" min={1} max={20} value={variantCount} onChange={e => setVariantCount(e.target.value)} className="h-9 text-xs rounded-xl" />
+            </div>
+          </div>
+
+          <DialogFooter className="pt-2">
+            <Button variant="outline" onClick={() => setVariantsOpen(false)} className="h-9 text-xs rounded-xl border-slate-200">
+              Annuler
+            </Button>
+            <Button
+              onClick={handleGenerateVariants}
+              disabled={generatingVariants || !selectedExamId}
+              className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5"
+            >
+              {generatingVariants ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+              Générer
             </Button>
           </DialogFooter>
         </DialogContent>

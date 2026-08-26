@@ -37,6 +37,7 @@ import {
   Check,
   X,
   Sparkles,
+  Paperclip,
 } from 'lucide-react';
 
 interface EventDetail {
@@ -126,8 +127,25 @@ interface WaitlistEntry {
   queuedAt: string;
 }
 
+interface Attachment {
+  id: string;
+  title: string;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  kind: 'document' | 'image' | 'other';
+  createdAt: string;
+}
+
+function toLocalInput(iso?: string): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export function EventAdminDetailView({ eventId, locale = 'fr' }: { eventId: string; locale?: string }) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'venues' | 'registrations' | 'tasks' | 'incidents' | 'comms' | 'feedback' | 'reports'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'venues' | 'registrations' | 'tasks' | 'incidents' | 'comms' | 'feedback' | 'reports' | 'attachments'>('overview');
   const [event, setEvent] = useState<EventDetail | null>(null);
   const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -137,6 +155,7 @@ export function EventAdminDetailView({ eventId, locale = 'fr' }: { eventId: stri
   const [communications, setCommunications] = useState<Communication[]>([]);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [loading, setLoading] = useState(true);
   const [feedbackBanner, setFeedbackBanner] = useState<string | null>(null);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
@@ -158,7 +177,21 @@ export function EventAdminDetailView({ eventId, locale = 'fr' }: { eventId: stri
   const [feedbackForm, setFeedbackForm] = useState({ rating: 5, comment: '' });
 
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editForm, setEditForm] = useState({ title: '', description: '', visibility: 'internal' as EventDetail['visibility'], timezone: 'UTC' });
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
+    visibility: 'internal' as EventDetail['visibility'],
+    timezone: 'UTC',
+    startTime: '',
+    endTime: '',
+    venueName: '',
+    venueCapacity: '',
+    venueOnlineLink: '',
+  });
+
+  const [attachmentModalOpen, setAttachmentModalOpen] = useState(false);
+  const [attachmentTitle, setAttachmentTitle] = useState('');
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
 
   const [modalLoading, setModalLoading] = useState(false);
 
@@ -166,7 +199,7 @@ export function EventAdminDetailView({ eventId, locale = 'fr' }: { eventId: stri
     setLoading(true);
     setErrorBanner(null);
     try {
-      const [evtRes, venRes, tskRes, incRes, fbRes, comRes, regRes] = await Promise.all([
+      const [evtRes, venRes, tskRes, incRes, fbRes, comRes, regRes, attRes] = await Promise.all([
         fetch(`/api/addons/events/${eventId}`).then(r => r.json()),
         fetch(`/api/addons/events/${eventId}/venues`).then(r => r.json()),
         fetch(`/api/addons/events/${eventId}/tasks`).then(r => r.json()),
@@ -174,6 +207,7 @@ export function EventAdminDetailView({ eventId, locale = 'fr' }: { eventId: stri
         fetch(`/api/addons/events/${eventId}/feedback`).then(r => r.json()),
         fetch(`/api/addons/events/${eventId}/communications`).then(r => r.json()),
         fetch(`/api/addons/events/${eventId}/registrations`).then(r => r.json()),
+        fetch(`/api/addons/events/${eventId}/attachments`).then(r => r.json()),
       ]);
 
       if (evtRes.success && evtRes.data) {
@@ -186,6 +220,7 @@ export function EventAdminDetailView({ eventId, locale = 'fr' }: { eventId: stri
       if (fbRes.success && Array.isArray(fbRes.data)) setFeedback(fbRes.data);
       if (comRes.success && Array.isArray(comRes.data)) setCommunications(comRes.data);
       if (regRes.success && Array.isArray(regRes.data)) setRegistrations(regRes.data);
+      if (attRes.success && Array.isArray(attRes.data)) setAttachments(attRes.data);
 
       if (evtRes.data?.occurrences?.[0]?.id) {
         const occId = evtRes.data.occurrences[0].id;
@@ -450,6 +485,11 @@ export function EventAdminDetailView({ eventId, locale = 'fr' }: { eventId: stri
       description: event.description ?? '',
       visibility: event.visibility,
       timezone: event.timezone ?? 'UTC',
+      startTime: toLocalInput(occurrences[0]?.startTime),
+      endTime: toLocalInput(occurrences[0]?.endTime),
+      venueName: venues[0]?.name ?? '',
+      venueCapacity: venues[0]?.capacity ? String(venues[0].capacity) : '',
+      venueOnlineLink: venues[0]?.onlineLink ?? '',
     });
     setEditModalOpen(true);
   };
@@ -459,15 +499,29 @@ export function EventAdminDetailView({ eventId, locale = 'fr' }: { eventId: stri
     if (!editForm.title.trim()) return;
     setModalLoading(true);
     try {
+      const body: Record<string, unknown> = {
+        title: editForm.title.trim(),
+        description: editForm.description.trim() || null,
+        visibility: editForm.visibility,
+        timezone: editForm.timezone.trim() || undefined,
+      };
+      if (editForm.startTime || editForm.endTime) {
+        body.schedule = {
+          startTime: editForm.startTime ? new Date(editForm.startTime).toISOString() : undefined,
+          endTime: editForm.endTime ? new Date(editForm.endTime).toISOString() : undefined,
+        };
+      }
+      if (editForm.venueName.trim() || editForm.venueCapacity || editForm.venueOnlineLink.trim()) {
+        body.venue = {
+          name: editForm.venueName.trim() || null,
+          capacity: editForm.venueCapacity ? Number(editForm.venueCapacity) : null,
+          onlineLink: editForm.venueOnlineLink.trim() || null,
+        };
+      }
       const res = await fetch(`/api/addons/events/${eventId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: editForm.title.trim(),
-          description: editForm.description.trim() || null,
-          visibility: editForm.visibility,
-          timezone: editForm.timezone.trim() || undefined,
-        }),
+        body: JSON.stringify(body),
       });
       const json = await res.json();
       if (json.success) {
@@ -481,6 +535,48 @@ export function EventAdminDetailView({ eventId, locale = 'fr' }: { eventId: stri
       setErrorBanner('Impossible de modifier cet événement.');
     } finally {
       setModalLoading(false);
+    }
+  };
+
+  // Attachment actions
+  const handleAddAttachment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!attachmentFile) return;
+    setModalLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', attachmentFile);
+      if (attachmentTitle.trim()) formData.append('title', attachmentTitle.trim());
+      const res = await fetch(`/api/addons/events/${eventId}/attachments`, {
+        method: 'POST',
+        body: formData,
+      });
+      const json = await res.json();
+      if (json.success) {
+        setFeedbackBanner('Pièce jointe ajoutée.');
+        setAttachmentModalOpen(false);
+        setAttachmentTitle('');
+        setAttachmentFile(null);
+        fetchEventData();
+      } else {
+        setErrorBanner(json.error?.message || 'Impossible d\'ajouter la pièce jointe.');
+      }
+    } catch (err) {
+      setErrorBanner('Impossible d\'ajouter la pièce jointe.');
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    try {
+      const res = await fetch(`/api/addons/events/${eventId}/attachments/${attachmentId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setFeedbackBanner('Pièce jointe supprimée.');
+        fetchEventData();
+      }
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -632,6 +728,7 @@ export function EventAdminDetailView({ eventId, locale = 'fr' }: { eventId: stri
           { id: 'incidents', label: `Incidents (${incidents.length})`, icon: AlertTriangle },
           { id: 'comms', label: `Communications (${communications.length})`, icon: Send },
           { id: 'feedback', label: `Retours (${feedback.length})`, icon: MessageSquare },
+          { id: 'attachments', label: `Pièces jointes (${attachments.length})`, icon: Paperclip },
           { id: 'reports', label: 'Rapport Analytique', icon: Sparkles },
         ].map(t => (
           <button
@@ -927,7 +1024,45 @@ export function EventAdminDetailView({ eventId, locale = 'fr' }: { eventId: stri
         </Card>
       )}
 
-      {/* TAB 8: Reports */}
+      {/* TAB 8: Attachments */}
+      {activeTab === 'attachments' && (
+        <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-extrabold text-[#16212B]">Pièces Jointes &amp; Documents</h2>
+            <Button size="sm" onClick={() => setAttachmentModalOpen(true)} className="h-8 text-xs rounded-xl bg-[#0066FF] text-white font-bold gap-1">
+              <Paperclip className="w-3.5 h-3.5" /> Ajouter un document
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {attachments.map(a => (
+              <div key={a.id} className="p-3.5 rounded-xl border border-slate-200 bg-white flex items-center justify-between text-xs hover:bg-slate-50/50 transition-colors">
+                <div className="flex items-center gap-3 min-w-0">
+                  <FileText className="w-4 h-4 text-[#0066FF] shrink-0" />
+                  <div className="min-w-0">
+                    <a
+                      href={`/api/addons/events/${eventId}/attachments?file=${a.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-bold text-[#16212B] hover:text-[#0066FF] truncate block"
+                    >
+                      {a.title}
+                    </a>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {a.kind} · {a.sizeBytes ? `${Math.round(a.sizeBytes / 1024)} Ko` : '—'} · {new Date(a.createdAt).toLocaleDateString('fr-FR')}
+                    </span>
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => handleDeleteAttachment(a.id)} className="h-7 text-[10px] text-rose-600 hover:bg-rose-50">
+                  <Trash2 className="w-3 h-3 mr-1" /> Supprimer
+                </Button>
+              </div>
+            ))}
+            {attachments.length === 0 && <p className="text-xs text-slate-400 py-6 text-center">Aucune pièce jointe pour cet événement.</p>}
+          </div>
+        </Card>
+      )}
+
+      {/* TAB 9: Reports */}
       {activeTab === 'reports' && (
         <Card className="p-6 rounded-2xl border border-slate-200/80 bg-white shadow-2xs space-y-5">
           <h2 className="text-sm font-extrabold text-[#16212B]">Bilan Analytique &amp; Conversion de l&apos;Événement</h2>
@@ -1108,6 +1243,33 @@ export function EventAdminDetailView({ eventId, locale = 'fr' }: { eventId: stri
         </DialogContent>
       </Dialog>
 
+      {/* Attachment Modal */}
+      <Dialog open={attachmentModalOpen} onOpenChange={setAttachmentModalOpen}>
+        <DialogContent className="max-w-md rounded-2xl">
+          <DialogHeader><DialogTitle className="text-base font-extrabold">Ajouter une pièce jointe</DialogTitle></DialogHeader>
+          <form onSubmit={handleAddAttachment} className="space-y-3 py-2 text-xs">
+            <div>
+              <label className="font-bold text-slate-700 block mb-1">Titre (optionnel)</label>
+              <Input value={attachmentTitle} onChange={e => setAttachmentTitle(e.target.value)} placeholder="ex: Programme de la journée" className="h-9 text-xs rounded-xl" />
+            </div>
+            <div>
+              <label className="font-bold text-slate-700 block mb-1">Fichier (PDF, JPG, PNG — 10 Mo max) *</label>
+              <input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,image/jpeg,image/png,application/pdf"
+                onChange={e => setAttachmentFile(e.target.files?.[0] ?? null)}
+                className="w-full text-xs"
+                required
+              />
+            </div>
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" onClick={() => setAttachmentModalOpen(false)} className="h-9 text-xs rounded-xl">Annuler</Button>
+              <Button type="submit" disabled={modalLoading || !attachmentFile} className="h-9 text-xs rounded-xl bg-[#0066FF] text-white font-bold">Téléverser</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Edit Event Modal */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
         <DialogContent className="max-w-md rounded-2xl">
@@ -1134,6 +1296,30 @@ export function EventAdminDetailView({ eventId, locale = 'fr' }: { eventId: stri
                 <label className="font-bold text-slate-700 block mb-1">Fuseau horaire</label>
                 <Input value={editForm.timezone} onChange={e => setEditForm({ ...editForm, timezone: e.target.value })} placeholder="UTC" className="h-9 text-xs rounded-xl" />
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Début</label>
+                <Input type="datetime-local" value={editForm.startTime} onChange={e => setEditForm({ ...editForm, startTime: e.target.value })} className="h-9 text-xs rounded-xl" />
+              </div>
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Fin</label>
+                <Input type="datetime-local" value={editForm.endTime} onChange={e => setEditForm({ ...editForm, endTime: e.target.value })} className="h-9 text-xs rounded-xl" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Lieu</label>
+                <Input value={editForm.venueName} onChange={e => setEditForm({ ...editForm, venueName: e.target.value })} placeholder="ex: Salle Polyvalente" className="h-9 text-xs rounded-xl" />
+              </div>
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Capacité</label>
+                <Input type="number" value={editForm.venueCapacity} onChange={e => setEditForm({ ...editForm, venueCapacity: e.target.value })} className="h-9 text-xs rounded-xl" />
+              </div>
+            </div>
+            <div>
+              <label className="font-bold text-slate-700 block mb-1">Lien en ligne (si visio)</label>
+              <Input value={editForm.venueOnlineLink} onChange={e => setEditForm({ ...editForm, venueOnlineLink: e.target.value })} placeholder="https://meet..." className="h-9 text-xs rounded-xl" />
             </div>
             <DialogFooter className="pt-2">
               <Button type="button" variant="outline" onClick={() => setEditModalOpen(false)} className="h-9 text-xs rounded-xl">Annuler</Button>

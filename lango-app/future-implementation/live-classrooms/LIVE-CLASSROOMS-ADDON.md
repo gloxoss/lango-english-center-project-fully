@@ -6,13 +6,13 @@ Reference scope: Live Class Rooms, Add Live Class, provider setup, and Live Clas
 
 ## Product decision
 
-Build scheduling, authorization, attendance reconciliation, recordings, and reports inside Lango, but do not build a WebRTC media server. Integrate a conferencing provider behind a provider-neutral adapter.
+Build scheduling, authorization, attendance reconciliation, recordings, and reports inside SchoolOS, but do not build a WebRTC media server. Integrate a conferencing provider behind a provider-neutral adapter.
 
 Recommended first provider: BigBlueButton, because it is designed for education and already supplies whiteboards, polls, breakout rooms, recordings, and a Learning Analytics Dashboard. Support external-link providers such as Google Meet and Zoom as reduced-capability connectors. Keep LiveKit/Jitsi adapters possible without forcing their lower-level room semantics into the domain model.
 
 This is an addon because ordinary in-person academic operation must continue without video infrastructure, and video hosting/recording creates substantial variable infrastructure cost.
 
-## What Lango has today
+## What SchoolOS has today
 
 - Active tenant-scoped classes, sections, subjects, class teachers, and subject teachers.
 - Weekly class timetables and collision reporting.
@@ -72,7 +72,7 @@ Do not repurpose `meetingSlots`: a guardian appointment has one booked guardian 
 - `liveClassRecordings`: provider recording ID, state, playback/download references, duration, retention/expiry, consent/policy snapshot.
 - `liveClassWebhookReceipts`: provider event ID, signature result, processing status, retries and error.
 
-Use unique `(providerProfileId, externalMeetingId)` and `(providerProfileId, providerEventId)` constraints. Store provider payloads only as bounded diagnostic evidence; normalized rows remain authoritative for Lango reporting.
+Use unique `(providerProfileId, externalMeetingId)` and `(providerProfileId, providerEventId)` constraints. Store provider payloads only as bounded diagnostic evidence; normalized rows remain authoritative for SchoolOS reporting.
 
 ## Core logic and invariants
 
@@ -80,12 +80,12 @@ Use unique `(providerProfileId, externalMeetingId)` and `(providerProfileId, pro
 - Students/parents can discover only sessions for their active placement.
 - Join URLs are generated just in time and are never stored as reusable public links.
 - Provider callbacks require signature/checksum verification, timestamp/replay checks, idempotent ingestion, and asynchronous processing.
-- Creation is a saga: persist a Lango draft, create provider room, store external ID, then schedule notifications. Retriable failures must not duplicate provider rooms.
+- Creation is a saga: persist a SchoolOS draft, create provider room, store external ID, then schedule notifications. Retriable failures must not duplicate provider rooms.
 - Cancellation/updates reconcile both systems and expose partial failure for repair.
 - Actual attendance is derived from immutable join/leave events with reconnect intervals and configurable grace periods.
-- Lango attendance is not changed silently. A teacher/admin reviews a proposed reconciliation before posting to the core attendance register.
+- SchoolOS attendance is not changed silently. A teacher/admin reviews a proposed reconciliation before posting to the core attendance register.
 - Recordings require explicit school policy, retention, access control, and applicable consent/legal review. Default v1 policy: recording off.
-- Provider deletion never destroys the Lango audit/report record.
+- Provider deletion never destroys the SchoolOS audit/report record.
 
 ## Provider adapter
 

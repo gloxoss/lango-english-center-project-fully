@@ -717,32 +717,50 @@ export function Sidebar({ locale }: { locale: string }) {
           ...(userRole === 'parent' ? parentPortalNav : []),
           ...(userRole === 'teacher' ? teacherPortalNav : []),
           ...(userRole === 'student' ? studentPortalNav : []),
-          {
-            label: userRole === 'student' ? 'Mon Internat' : 'Internat de mon enfant',
-            href: userRole === 'student'
-              ? `/${locale}/dashboard/hostel/me`
-              : `/${locale}/dashboard/hostel/guardian`,
-            icon: BedDouble,
-          },
-          {
-            label: userRole === 'student' ? 'Mes classes en direct' : 'Classes en direct de mon enfant',
-            href: userRole === 'student'
-              ? `/${locale}/dashboard/student/live-classes`
-              : `/${locale}/dashboard/parent/live-classes`,
-            icon: Video,
-          },
+          // These two links point at self-scoped student/parent pages
+          // (hostel/me, hostel/guardian, student|parent/live-classes) - a
+          // teacher has neither, so they're only relevant for those two roles.
+          ...(userRole === 'student' || userRole === 'parent'
+            ? [
+                {
+                  label: userRole === 'student' ? 'Mon Internat' : 'Internat de mon enfant',
+                  href: userRole === 'student'
+                    ? `/${locale}/dashboard/hostel/me`
+                    : `/${locale}/dashboard/hostel/guardian`,
+                  icon: BedDouble,
+                },
+                {
+                  label: userRole === 'student' ? 'Mes classes en direct' : 'Classes en direct de mon enfant',
+                  href: userRole === 'student'
+                    ? `/${locale}/dashboard/student/live-classes`
+                    : `/${locale}/dashboard/parent/live-classes`,
+                  icon: Video,
+                },
+              ]
+            : []),
         ]
       : [];
 
   // Nav selection: admin roles keep the existing capability-filtered school
-  // nav; every other role renders the server-owned manifest nav (already
-  // capability- and addon-filtered by /api/portal/manifest), plus any
-  // self-service links. Until the manifest loads, non-admin roles render
-  // nothing (no flash of items the server will filter out).
+  // nav; staff-ish roles (teacher, accountant, receptionist, guard,
+  // librarian) render the server-owned manifest nav (already capability- and
+  // addon-filtered by /api/portal/manifest), plus any self-service links.
+  // student/parent are excluded from the manifest nav entirely: several of
+  // their granted permissions (students.read, attendance.read, grading.read,
+  // finance.read, communication.read...) exist so they can read their OWN/
+  // their child's data through otherwise-staff API routes, not to open the
+  // staff-wide admin module for that domain - showing "Élèves"/"Finances"/
+  // "Communication" etc. to a parent would open the school-wide staff view,
+  // not their child's data (that already lives in Espace Parent/Espace
+  // Élève, via selfServiceNavItems). Until the manifest loads, staff roles
+  // render nothing (no flash of items the server will filter out).
   const isAdminRole = effectiveRole === 'super_admin' || effectiveRole === 'school_admin';
+  const isSelfServiceOnlyRole = effectiveRole === 'student' || effectiveRole === 'parent';
   const navItems = isAdminRole
     ? [...visibleSchoolNavItems, ...selfServiceNavItems]
-    : [...(manifestNav ?? []), ...selfServiceNavItems];
+    : isSelfServiceOnlyRole
+      ? selfServiceNavItems
+      : [...(manifestNav ?? []), ...selfServiceNavItems];
 
   const activeMenuLabel = navItems.find(item =>
     pathname === item.href
@@ -788,6 +806,15 @@ export function Sidebar({ locale }: { locale: string }) {
         className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
         data-sidebar-scroll
       >
+        {canSee('guard.portal.use') && (
+          <div className="border-b border-slate-800 p-3">
+            <Link href={`/${locale}/dashboard/portals/guard/emergency`} className="flex items-center gap-3 rounded-xl border border-[#E5544B]/50 bg-[#E5544B]/15 px-3 py-2.5 text-xs font-extrabold text-white shadow-sm transition hover:bg-[#E5544B]/25">
+              <span className="flex size-7 items-center justify-center rounded-lg bg-[#E5544B] text-white"><Siren className="size-4" /></span>
+              <span>Urgence sécurité</span>
+              <span className="ml-auto size-2 animate-pulse rounded-full bg-[#E5544B]" />
+            </Link>
+          </div>
+        )}
 
         {/* Section 1: Super Admin Suite (Super Admin Role Only) */}
         {isSuperAdmin && (

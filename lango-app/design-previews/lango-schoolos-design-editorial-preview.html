@@ -3,34 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lango SchoolOS — High-End Editorial Press Preview</title>
+  <title>Lango SchoolOS — Editorial Magazine Press Preview</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Source+Sans+3:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap">
   <style>
-    :root {
-      --bg: #faf8f5;
-      --surface: #ffffff;
-      --border: #e5e0d8;
-      --text: #1c1917;
-      --text-muted: #78716c;
-      --primary: #1c1917;
-      --accent: #991b1b;
-      --radius: 0.25rem;
-    }
     body {
       font-family: 'Source Sans 3', sans-serif;
       background: #faf8f5;
       color: #1c1917;
       min-height: 100vh;
     }
-    h1, h2, h3, .head-font {
-      font-family: 'Playfair Display', serif;
-    }
+    h1, h2, h3, .head-font { font-family: 'Playfair Display', serif; }
     .custom-card {
       background: #ffffff;
       border: 1px solid #e5e0d8;
       border-radius: 0.25rem;
-      box-shadow: 0 4px 20px -2px rgba(28, 25, 23, 0.06);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
       
     }
     .custom-btn-primary {
@@ -38,11 +26,10 @@
       color: #ffffff;
       border-radius: 0.25rem;
       
-      box-shadow: 0 4px 20px -2px rgba(28, 25, 23, 0.06);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
       transition: all 0.2s ease;
     }
     .custom-btn-primary:hover {
-      background-color: #292524;
       transform: translateY(-1px);
     }
     .custom-btn-outline {
@@ -51,9 +38,6 @@
       color: #1c1917;
       border-radius: 0.25rem;
       transition: all 0.2s ease;
-    }
-    .custom-btn-outline:hover {
-      background: rgba(0,0,0,0.05);
     }
   </style>
 </head>
@@ -70,8 +54,8 @@
           </span>
           <span class="text-xs opacity-75 font-mono">STYLE ID: editorial</span>
         </div>
-        <h1 class="text-2xl md:text-3xl font-bold tracking-tight">High-End Editorial Press</h1>
-        <p class="text-sm mt-1" style="color: #78716c;">Magazine editorial masthead typography, elegant serif display, and refined layout columns.</p>
+        <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Editorial Magazine Press</h1>
+        <p class="text-sm mt-1" style="color: #78716c;">Magazine masthead typography and column grids.</p>
       </div>
 
       <div class="flex items-center gap-3">
@@ -154,7 +138,7 @@
                 <td class="py-3 px-3 font-semibold">Youssef Tazi</td>
                 <td class="px-3" style="color: #78716c;">Casablanca Oasis</td>
                 <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-mono" style="background: rgba(0,0,0,0.06);">A2 Beginner</span></td>
-                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #1c1917;">Pending</span></td>
+                <td class="px-3"><span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: #991b1b;">Pending</span></td>
                 <td class="px-3 text-right font-bold">1,100 MAD</td>
               </tr>
             </tbody>
@@ -162,36 +146,34 @@
         </div>
       </div>
 
-      <!-- Right Column: Interactive Controls & Tokens -->
+      <!-- Right Column: Interactive Form & Tokens -->
       <div class="space-y-6">
 
-        <!-- Action Card -->
         <div class="custom-card p-6">
           <h3 class="text-base font-bold mb-1">Interactive Form Control</h3>
-          <p class="text-xs mb-4" style="color: #78716c;">Test inputs and toggle behaviors</p>
+          <p class="text-xs mb-4" style="color: #78716c;">Test inputs and typography response</p>
           
           <div class="space-y-3">
             <div>
-              <label class="block text-xs font-medium mb-1" style="color: #78716c;">Student Email / Phone</label>
-              <input type="text" placeholder="student@example.com" class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: #ffffff; border-color: #e5e0d8; color: #1c1917;">
+              <label class="block text-xs font-medium mb-1" style="color: #78716c;">Student Contact</label>
+              <input type="text" placeholder="student@lango.ma" class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: #ffffff; border-color: #e5e0d8; color: #1c1917;">
             </div>
 
             <div>
-              <label class="block text-xs font-medium mb-1" style="color: #78716c;">Target Course Level</label>
+              <label class="block text-xs font-medium mb-1" style="color: #78716c;">Program Track</label>
               <select class="w-full px-3 py-2 text-xs rounded border outline-none" style="background: #ffffff; border-color: #e5e0d8; color: #1c1917;">
                 <option>General English (A1 - C2)</option>
                 <option>Business English & Public Speaking</option>
-                <option>IELTS / TOEFL Intensive Prep</option>
+                <option>IELTS / Cambridge Exam Prep</option>
               </select>
             </div>
 
             <button class="custom-btn-primary w-full py-2.5 text-xs font-bold shadow mt-2">
-              Confirm & Enroll Student
+              Confirm & Enroll
             </button>
           </div>
         </div>
 
-        <!-- Token Inspector -->
         <div class="custom-card p-5 text-xs space-y-2">
           <div class="font-bold border-b pb-2 flex items-center justify-between" style="border-color: #e5e0d8;">
             <span>🎨 DESIGN TOKENS</span>

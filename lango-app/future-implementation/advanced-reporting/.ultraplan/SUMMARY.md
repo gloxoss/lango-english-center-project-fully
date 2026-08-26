@@ -1,7 +1,7 @@
 # UltraPlan Final Deliverable Summary — Advanced Reporting Add-on
 
 ## Plan Highlights
-The Advanced Reporting Add-on UltraPlan is a complete, production-grade, AI-executable implementation plan for Lango English Center (`lango-app`).
+The Advanced Reporting Add-on UltraPlan is a complete, production-grade, AI-executable implementation plan for SchoolOS English Center (`schoolos-app`).
 
 ### Key Deliverables Produced
 - `.ultraplan/STATE.md`: Execution tracking & phase status.

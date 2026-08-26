@@ -77,7 +77,7 @@ const bigbluebuttonProvider: LiveClassProvider = {
 
   async createRoom(input: CreateRoomInput) {
     if (!BBB_BASE || !BBB_SECRET) return { ok: false, code: 'NOT_CONFIGURED', error: 'BigBlueButton non configuré.' };
-    const meetingId = `lango-${input.sessionId}`;
+    const meetingId = `schoolos-${input.sessionId}`;
     const params: Record<string, string> = {
       meetingID: meetingId,
       name: input.title,

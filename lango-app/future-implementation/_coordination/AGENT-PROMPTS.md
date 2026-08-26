@@ -6,7 +6,7 @@
 Implement Advanced HR & Employee Management from the repository's current real state.
 
 Working directory:
-C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app
+C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\schoolos\schoolos-english-center-project-fully\schoolos-app
 
 Read, in order:
 1. future-implementation/_shared/APP-CONTEXT-AND-UI-SYSTEM.md
@@ -27,7 +27,7 @@ Finish with real Docker build/migrate, migration rerun, existing-staff backfill 
 Implement Inventory Management as an optional add-on.
 
 Working directory:
-C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app
+C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\schoolos\schoolos-english-center-project-fully\schoolos-app
 
 Read, in order:
 1. future-implementation/_shared/APP-CONTEXT-AND-UI-SYSTEM.md
@@ -48,7 +48,7 @@ Complete the plan through reporting/reconciliation. Prove concurrent last-unit p
 Implement Hostel Management v1 phases 0-3 only unless explicitly authorized to continue.
 
 Working directory:
-C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app
+C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\schoolos\schoolos-english-center-project-fully\schoolos-app
 
 Read, in order:
 1. future-implementation/_shared/APP-CONTEXT-AND-UI-SYSTEM.md
@@ -70,7 +70,7 @@ Prove real allocation races, atomic transfers and rollback, out-of-service impac
 Implement the Guard & Security Portal from the current repository state.
 
 Working directory:
-C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app
+C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\schoolos\schoolos-english-center-project-fully\schoolos-app
 
 Read, in order:
 1. future-implementation/_shared/APP-CONTEXT-AND-UI-SYSTEM.md

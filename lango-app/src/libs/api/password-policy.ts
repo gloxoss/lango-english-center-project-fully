@@ -7,7 +7,7 @@ const COMMON_DISALLOWED_PASSWORDS = new Set([
   'qwertyuiop',
   'admin123456',
   'schoolos123',
-  'lango123456',
+  'schoolos1234',
   'changeme123',
 ]);
 

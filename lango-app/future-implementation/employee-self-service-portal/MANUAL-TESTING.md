@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide details manual test cases to verify the **Employee Self-Service Portal** in `lango-app`. It ensures that staff users can manage their personal profiles, submit leave applications, request salary advances, view clock punches, and download published payslips securely.
+This guide details manual test cases to verify the **Employee Self-Service Portal** in `schoolos-app`. It ensures that staff users can manage their personal profiles, submit leave applications, request salary advances, view clock punches, and download published payslips securely.
 
 ---
 

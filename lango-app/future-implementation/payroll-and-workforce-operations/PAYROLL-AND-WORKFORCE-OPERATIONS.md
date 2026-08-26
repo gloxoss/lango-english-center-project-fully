@@ -2,7 +2,7 @@
 
 **Status: planned, not started.** This specification covers the RamomSchool
 Human Resource submenu shown on 2026-08-01: Payroll, Advance Salary, Leave, and
-Award. It compares those screens with Lango/SchoolOS and defines the complete
+Award. It compares those screens with SchoolOS and defines the complete
 Morocco-first logic required for a trustworthy implementation.
 
 ## Product and addon decision
@@ -54,7 +54,7 @@ maker/checker controls, leave accrual/carryover, advance recovery, accounting
 posting, payment reconciliation, corrected payslips, statutory export, or data
 privacy. This plan includes those missing rules.
 
-## Where Lango is today (verified)
+## Where SchoolOS is today (verified)
 
 ### Existing foundations
 
@@ -441,7 +441,7 @@ Recommended posting model:
 - Statutory payment clears corresponding liabilities.
 - Reversal creates equal/opposite entries and keeps original history.
 
-If Lango does not build a real ledger, clearly label this as payroll subledger
+If SchoolOS does not build a real ledger, clearly label this as payroll subledger
 and export/accounting integration—not full accounting.
 
 ## Recommended data model
@@ -593,6 +593,6 @@ See `REFERENCE-REPOSITORIES-AND-COMPLIANCE.md` beside this plan.
    internal capability flags for future packaging.
 8. What maker/checker roles exist at small schools where one administrator wears
    several hats?
-9. Does Lango need cash payroll, bank payroll, or both?
+9. Does SchoolOS need cash payroll, bank payroll, or both?
 10. How many parallel shadow payroll periods are required before go-live?
 

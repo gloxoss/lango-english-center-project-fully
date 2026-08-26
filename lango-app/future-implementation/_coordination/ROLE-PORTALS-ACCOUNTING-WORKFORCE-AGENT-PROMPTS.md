@@ -8,7 +8,7 @@ Use the agents in the order shown. Foundation and Office Accounting can begin to
 Implement the Role Portals Foundation from the repository's current real state.
 
 Working directory:
-C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app
+C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\schoolos\schoolos-english-center-project-fully\schoolos-app
 
 Read fully, in order:
 1. future-implementation/_shared/APP-CONTEXT-AND-UI-SYSTEM.md
@@ -28,7 +28,7 @@ Prove stale-context rejection, multi-role switching, manifest/API agreement, bra
 Implement Office Accounting by consolidating the existing Finance domain, not by creating a parallel ledger.
 
 Working directory:
-C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app
+C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\schoolos\schoolos-english-center-project-fully\schoolos-app
 
 Read fully, in order:
 1. future-implementation/_shared/APP-CONTEXT-AND-UI-SYSTEM.md
@@ -48,7 +48,7 @@ Coordinate shared schema/journal/permissions/sidebar edits. Prove fixed-precisio
 Implement the Parent/Guardian Portal on the shared Role Portals Foundation and the authoritative guardian-student relationship model.
 
 Working directory:
-C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app
+C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\schoolos\schoolos-english-center-project-fully\schoolos-app
 
 Read fully, in order:
 1. future-implementation/_shared/APP-CONTEXT-AND-UI-SYSTEM.md
@@ -70,7 +70,7 @@ Stay within parent feature/API paths and use adapters for Finance, academics, Ho
 Implement the Receptionist Portal as a least-privilege front-desk workspace using the shared Role Portals Foundation.
 
 Working directory:
-C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app
+C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\schoolos\schoolos-english-center-project-fully\schoolos-app
 
 Read fully, in order:
 1. future-implementation/_shared/APP-CONTEXT-AND-UI-SYSTEM.md
@@ -92,7 +92,7 @@ Prove enumeration resistance, minimum search length/rate limits/audit, sensitive
 Implement Payroll & Workforce Operations by extending the completed HR employee foundation and consolidating the repository's existing payroll, leave, advance, award and employee self-service work.
 
 Working directory:
-C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\lango\lango-english-center-project-fully\lango-app
+C:\Users\oussama\oussama\OneDrive - 雪玲团队\Documents\schoolos\schoolos-english-center-project-fully\schoolos-app
 
 Read fully, in order:
 1. future-implementation/_shared/APP-CONTEXT-AND-UI-SYSTEM.md

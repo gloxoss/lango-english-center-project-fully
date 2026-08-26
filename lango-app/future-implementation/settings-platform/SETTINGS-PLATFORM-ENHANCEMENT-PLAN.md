@@ -21,7 +21,7 @@ Replace the current collection of partially connected forms with a safe, searcha
 | 9 | Attendance Type | Attendance granularity/type selector |
 | 10 | Settings navigation | School Settings, Translations, Cron Job, System Student Field, Custom Field, User Login Log |
 
-## Feature map against current Lango
+## Feature map against current SchoolOS
 
 ### Keep — real foundations
 
@@ -36,7 +36,7 @@ Replace the current collection of partially connected forms with a safe, searcha
 - The current Settings UI must load and save every displayed value, surface API errors and avoid demo defaults that can overwrite real data.
 - `academicYear/startDate/endDate` must use authoritative `sessionYears`; eliminate competing sources of academic-period truth.
 - Security toggles must control real implemented policies or show read-only readiness. A checkbox cannot claim 2FA, backup or strong-password enforcement when no enforcement exists.
-- Provider credentials must never be displayed after save. The screenshots expose secrets in plaintext; Lango must explicitly reject that pattern.
+- Provider credentials must never be displayed after save. The screenshots expose secrets in plaintext; SchoolOS must explicitly reject that pattern.
 - Attendance configuration must replace the current Coming Soon page only after rules are modeled and used by attendance services.
 
 ### Add — platform capabilities
@@ -369,7 +369,7 @@ Definition of done: every visible control maps to an enforced typed policy or is
 - Unleash for typed feature-management, strategies, audit and safe rollout concepts: https://github.com/Unleash/unleash
 - Flagsmith for feature flag/remote-config UX concepts: https://github.com/Flagsmith/flagsmith
 - Frappe Framework for metadata/custom-field/version/workflow concepts: https://github.com/frappe/frappe
-- JSON Schema concepts may inform provider schema rendering, but Lango’s server authority remains strict Zod/domain validation.
+- JSON Schema concepts may inform provider schema rendering, but SchoolOS’s server authority remains strict Zod/domain validation.
 
 Use these as architectural references. Review exact licenses, deployment cost and operational burden before adoption. V1 recommendation: build the typed Settings Center natively; use the deployment’s secret manager through a small adapter rather than embedding a full external admin product.
 

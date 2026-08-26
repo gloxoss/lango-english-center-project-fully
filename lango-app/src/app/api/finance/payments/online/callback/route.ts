@@ -47,6 +47,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, data: { status: session.status }, message: 'Déjà traité.' });
     }
 
+    if (session.mode === 'sandbox' && process.env.NODE_ENV === 'production' && process.env.ALLOW_PAYMENT_SANDBOX !== 'true') {
+      return NextResponse.json({ success: false, message: 'Les callbacks de paiement sandbox sont désactivés en production.' }, { status: 403 });
+    }
+
     const [methodConfig] = await db
       .select()
       .from(paymentMethodConfigurations)

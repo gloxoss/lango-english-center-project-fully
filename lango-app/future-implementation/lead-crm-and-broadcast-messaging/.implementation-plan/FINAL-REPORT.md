@@ -6,7 +6,7 @@ Feature spec:
 
 ## 1. What was built
 
-Two add-ons on Lango / SchoolOS (Next.js App Router, Drizzle + PostgreSQL, Better Auth):
+Two add-ons on SchoolOS (Next.js App Router, Drizzle + PostgreSQL, Better Auth):
 
 - **Lead CRM** (`lead-crm`): inquiry capture + lifecycle (status transitions, sources,
   interest levels, tags), duplicate detection + safe merge, follow-ups, conversion to
@@ -68,7 +68,7 @@ Every verbatim requirement from the spec is implemented and proven — see
 `AUDIT-RESPONSE.md` for the full requirement→evidence table. Highlights:
 
 - Session-derived tenant/actor everywhere (`broadcastGuard`, `requireRequestContext`/`requireTenant`); never from body.
-- **Tenant isolation**: live scripts assert "Lango tenant untouched — count 0" at the DB; cross-tenant IDs → 404.
+- **Tenant isolation**: live scripts assert "SchoolOS tenant untouched — count 0" at the DB; cross-tenant IDs → 404.
 - **Add-on + capability gates**: both gate scripts prove 403 `ADDON_NOT_ACTIVATED` on every route when disabled.
 - **Idempotency**: campaign create (`idempotencyKey`), preview, send/retry — live-verified (same-key replay returns SAME campaign).
 - **No forbidden-field leakage**: `guardianId`, `studentId`, `salary`, `nationalId`, `financeBalance`, `privateNote`, `matricule`, `paymentStatus` asserted absent from campaign/recipient projections.

@@ -8,7 +8,7 @@ requirement isn't lost, not because work is in progress. Read
 
 SchoolOS is meant to become a **licensed SaaS product sold to schools across
 Morocco and, later, internationally** — not just the two tenants (Atlas,
-Lango) it currently runs for. Two requirements follow directly from that:
+SchoolOS) it currently runs for. Two requirements follow directly from that:
 
 1. **License-key based selling.** A school buys SchoolOS, gets a license.
    The core app should not require reasoning about licensing to run day to

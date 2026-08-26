@@ -1,6 +1,6 @@
 # Inventory Management — Manual Testing Logic
 
-Complete manual acceptance logic for the **Inventory Management** add-on (Lango / SchoolOS,
+Complete manual acceptance logic for the **Inventory Management** add-on (SchoolOS,
 Next.js 15 App Router, Drizzle + PostgreSQL). This is the human-facing companion to the automated
 live scripts `scripts/verify-inventory-sales.mjs` and `scripts/verify-inventory-issues.mjs`.
 
@@ -18,9 +18,9 @@ in `EXECUTION-PLAN.md` §17 (C1–C14).
 | App URL | `http://localhost:3000` (locale `en` or `fr`; dev server :3002 in this workspace) |
 | DB | `postgresql://schoolos:local_dev_password_change_me@localhost:5432/schoolos` |
 | Tenant A | Atlas — `ca40c88e-339c-4fea-b5c4-51d5c9cc0239` |
-| Tenant B | Lango — `f62f31eb-1fc8-4102-9145-a5ce0bca989b` |
+| Tenant B | SchoolOS — `f62f31eb-1fc8-4102-9145-a5ce0bca989b` |
 | Atlas admin | `y.elamrani@atlas.ma` / `Admin123!` (`USR-001`, school_admin) |
-| Lango admin | `admin@lango.ma` / `Admin123!` (`USR-LANGO-001`) |
+| SchoolOS admin | `admin@schoolos.ma` / `Admin123!` (`USR-SCHOOLOS-001`) |
 | Student (Atlas) | `STU-001` — Yassine El Amrani |
 | Add-on | `inventory` must be `is_enabled=true` for **both** tenants (Phase 0 entitlement rows) |
 | Permissions | school_admin role defaults include all `inventory.*` keys (verified in `permissions.ts`) |
@@ -104,7 +104,7 @@ Route family `/api/addons/inventory/purchases` (+ `[id]`, `[id]/receive`, `[id]/
 
 ### 4.2 Negative
 - Receive with insufficient quantity in a line → clear validation error, no partial state.
-- Cross-tenant: from Lango admin, GET / PATCH / receive / reverse an Atlas purchase → `404`.
+- Cross-tenant: from SchoolOS admin, GET / PATCH / receive / reverse an Atlas purchase → `404`.
 - Reverse a received purchase → stock restored exactly once; original receipt movements intact +
   compensating rows present (no DELETEs). Reversing again → idempotent, no double restore.
 
@@ -180,7 +180,7 @@ Route family `/api/addons/inventory/issues` (+ `[id]`, `[id]/return`).
 ### 6.4 Negative
 - Issue 100 × `Cahier A5` → `409 INSUFFICIENT_STOCK`; stock unchanged.
 - Issue with same `idempotencyKey` twice → same doc id, stock effect once.
-- Cross-tenant: Lango admin GET / return / create an issue on Atlas store → `404` / `422 INVALID_REF`.
+- Cross-tenant: SchoolOS admin GET / return / create an issue on Atlas store → `404` / `422 INVALID_REF`.
 
 ---
 
@@ -229,7 +229,7 @@ Two multi-line transfers crossing the same stores in opposite order, completed c
 both succeed without timeout (sorted lock order in `postStockMovements`).
 
 ### 8.5 Cross-tenant (C6)
-Lango admin GET / complete / cancel / create an Atlas transfer → `404` / `422 INVALID_REF`.
+SchoolOS admin GET / complete / cancel / create an Atlas transfer → `404` / `422 INVALID_REF`.
 
 ---
 
@@ -275,7 +275,7 @@ Checked automatically (no browser required):
    `Content-Disposition: attachment; filename="inventory-<type>-<YYYY-MM-DD>.csv"`.
 5. **CSV filters:** `type=stock&lowStock=1` returns only sub-threshold balances; movements support
    `movementType` / `productId` filters.
-6. **Tenant isolation:** the Lango export contains no Atlas `P6-` rows.
+6. **Tenant isolation:** the SchoolOS export contains no Atlas `P6-` rows.
 7. **Capability gate (static):** the export route requires `inventory.export`; the overview route
    requires `inventory.read`.
 8. **Sidebar order:** under *Inventaire*, **Aperçu** is the first sub-item.
@@ -366,17 +366,17 @@ left it disabled. Final check: both tenants show empty balances and zero movemen
 
 - [x] **Catalog 45/45** — `node scripts/verify-inventory-catalog.mjs` (exit 0): categories/units/
       stores/suppliers/products CRUD, duplicate 409, IN_USE archive guards, reconcile, ledger/balance
-      drift, low-stock filter, tenant isolation (Lango zero rows).
+      drift, low-stock filter, tenant isolation (SchoolOS zero rows).
 - [x] **Purchases 32/32** — `node scripts/verify-inventory-purchases.mjs` (exit 0): order→receive→
       expense, receive-once idempotency, ordered≠stock, ratio math, reverse restores once, cross-tenant
-      404, Lango zero.
+      404, SchoolOS zero.
 - [x] **Sales 57/57** — `node scripts/verify-inventory-sales.mjs` (exit 0): student sale→
       invoice/payment/allocation + Finance statement, guest sale no invoice, partial `partial`,
-      reversal restores once, C1 race (one 201 + one 409, never negative), Lango zero.
+      reversal restores once, C1 race (one 201 + one 409, never negative), SchoolOS zero.
 - [x] **Issues/loans 86/86** — `node scripts/verify-inventory-issues.mjs` (exit 0): issue→return,
       overdue derived flag, damaged/lost dispositions (no double decrement), insufficient 409,
       idempotent retries, adjustments in/out, transfer atomic complete/cancel guards + insufficient on
-      complete, deadlock/race paths, cross-tenant 404/422, Lango zero.
+      complete, deadlock/race paths, cross-tenant 404/422, SchoolOS zero.
 - [x] **Add-on gate 7/7** — `node scripts/verify-inventory-addon-gate.mjs` (exit 0): all 10 inventory
       routes `403 ADDON_NOT_ACTIVATED` while disabled; finance + students still `200`; data intact on
       re-enable; add-on left **re-enabled**.

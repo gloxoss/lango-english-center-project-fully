@@ -1,22 +1,56 @@
+import { randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { parseJson } from '@/libs/api/validation';
 import { contentTypeFor, readUploadedFile, saveUploadedFile } from '@/libs/api/uploads';
 import { db } from '@/libs/DB';
-import { user } from '@/models/Schema';
+import { studentPhotos, user } from '@/models/Schema';
+
+const setProfilePhotoSchema = z.object({
+  studentId: z.string().trim().min(1, 'studentId requis.'),
+  photoId: z.string().trim().min(1, 'photoId requis.'),
+}).strict();
 
 const ALLOWED_TYPES: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png' };
 const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
-// List roster + photo status - real GET of a specific student's image bytes
-// is a separate ?id= branch below (binary response, not JSON).
+function photoBinary(bytes: Buffer, url: string) {
+  const ext = url.split('.').pop() ?? 'jpg';
+  return new NextResponse(new Uint8Array(bytes), {
+    headers: { 'Content-Type': contentTypeFor(ext), 'Cache-Control': 'private, max-age=3600' },
+  });
+}
+
+// Query-param branches: ?photoId= serves a gallery photo, ?id= serves the
+// profile photo, ?gallery= lists a student's gallery, default lists the roster.
 export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'teacher', 'accountant']);
     const tenantId = requireTenant(context);
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
+    const photoId = searchParams.get('photoId');
+    const galleryStudentId = searchParams.get('gallery');
+
+    if (photoId) {
+      const [photo] = await db
+        .select({ url: studentPhotos.url })
+        .from(studentPhotos)
+        .where(and(eq(studentPhotos.id, photoId), eq(studentPhotos.tenantId, tenantId)))
+        .limit(1);
+      if (!photo) {
+        return NextResponse.json({ success: false, message: 'Photo non trouvée' }, { status: 404 });
+      }
+      try {
+        const bytes = await readUploadedFile(tenantId, photo.url);
+        return photoBinary(bytes, photo.url);
+      } catch {
+        return NextResponse.json({ success: false, message: 'Photo non trouvée' }, { status: 404 });
+      }
+    }
 
     if (id) {
       const [student] = await db
@@ -27,13 +61,37 @@ export async function GET(request: Request) {
       if (!student?.photoUrl) {
         return NextResponse.json({ success: false, message: 'Photo non trouvée' }, { status: 404 });
       }
-      const ext = student.photoUrl.split('.').pop() ?? 'jpg';
       try {
-        const bytes = await readUploadedFile(tenantId, `${id}.${ext}`);
-        return new NextResponse(new Uint8Array(bytes), { headers: { 'Content-Type': contentTypeFor(ext), 'Cache-Control': 'private, max-age=3600' } });
+        const bytes = await readUploadedFile(tenantId, student.photoUrl);
+        return photoBinary(bytes, student.photoUrl);
       } catch {
         return NextResponse.json({ success: false, message: 'Photo non trouvée' }, { status: 404 });
       }
+    }
+
+    if (galleryStudentId) {
+      const [student] = await db
+        .select({ photoUrl: user.photoUrl })
+        .from(user)
+        .where(and(eq(user.id, galleryStudentId), eq(user.tenantId, tenantId), eq(user.role, 'student')))
+        .limit(1);
+      if (!student) {
+        throw new ApiError(404, 'STUDENT_NOT_FOUND', 'Élève introuvable pour cet établissement.');
+      }
+      const photos = await db
+        .select()
+        .from(studentPhotos)
+        .where(and(eq(studentPhotos.tenantId, tenantId), eq(studentPhotos.studentId, galleryStudentId)))
+        .orderBy(studentPhotos.uploadedAt);
+      return NextResponse.json({
+        success: true,
+        data: photos.map(p => ({
+          id: p.id,
+          src: `/api/students/photos?photoId=${p.id}`,
+          uploadedAt: p.uploadedAt,
+          isProfile: p.url === student.photoUrl,
+        })),
+      });
     }
 
     const rows = await db
@@ -52,6 +110,16 @@ export async function GET(request: Request) {
   }
 }
 
+// Save a gallery photo + promote it to the profile photo (most-recent wins).
+async function storePhoto(tenantId: string, studentId: string, file: File, uploadedBy: string | undefined) {
+  const photoId = randomUUID();
+  const ext = await saveUploadedFile(tenantId, `${studentId}/${photoId}.{ext}`, file, ALLOWED_TYPES, MAX_SIZE_BYTES);
+  const url = `${studentId}/${photoId}.${ext}`;
+  await db.insert(studentPhotos).values({ tenantId, studentId, url, uploadedBy });
+  await db.update(user).set({ photoUrl: url }).where(and(eq(user.id, studentId), eq(user.tenantId, tenantId)));
+  return url;
+}
+
 export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'teacher']);
@@ -65,11 +133,7 @@ export async function POST(request: Request) {
     // Case 1: Batch multi-photo upload (§2.7)
     if (batchFiles.length > 0 && !(singleFile instanceof File && studentId)) {
       const allStudents = await db
-        .select({
-          id: user.id,
-          name: user.name,
-          matricule: user.matricule,
-        })
+        .select({ id: user.id, name: user.name, matricule: user.matricule })
         .from(user)
         .where(and(eq(user.tenantId, tenantId), eq(user.role, 'student')));
 
@@ -91,32 +155,15 @@ export async function POST(request: Request) {
         const filename = item.name;
         const baseName = filename.replace(/\.[^/.]+$/, '').trim().toLowerCase();
 
-        // 1. Try match by matricule
         let targetId = matriculeMap.get(baseName);
-
-        // 2. Try match by user UUID
-        if (!targetId && idMap.has(baseName)) {
-          targetId = baseName;
-        }
-
-        // 3. Try match by slugified name
-        if (!targetId) {
-          targetId = nameMap.get(baseName.replace(/\s+/g, '_'));
-        }
+        if (!targetId && idMap.has(baseName)) targetId = baseName;
+        if (!targetId) targetId = nameMap.get(baseName.replace(/\s+/g, '_'));
 
         if (targetId) {
           const student = allStudents.find((s) => s.id === targetId);
           try {
-            const ext = await saveUploadedFile(tenantId, `${targetId}.{ext}`, item, ALLOWED_TYPES, MAX_SIZE_BYTES);
-            await db
-              .update(user)
-              .set({ photoUrl: `${targetId}.${ext}` })
-              .where(and(eq(user.id, targetId), eq(user.tenantId, tenantId)));
-            matched.push({
-              filename,
-              studentId: targetId,
-              studentName: student?.name || targetId,
-            });
+            await storePhoto(tenantId, targetId, item, context.userId);
+            matched.push({ filename, studentId: targetId, studentName: student?.name || targetId });
           } catch {
             unmatched.push(`${filename} (erreur format/taille)`);
           }
@@ -155,12 +202,39 @@ export async function POST(request: Request) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'L\'élève indiqué n\'existe pas pour cet établissement.');
     }
 
-    const ext = await saveUploadedFile(tenantId, `${studentId}.{ext}`, singleFile, ALLOWED_TYPES, MAX_SIZE_BYTES);
+    await storePhoto(tenantId, studentId, singleFile, context.userId);
 
-    const photoUrl = `/api/students/photos?id=${studentId}`;
-    await db.update(user).set({ photoUrl: `${studentId}.${ext}` }).where(and(eq(user.id, studentId), eq(user.tenantId, tenantId)));
+    return NextResponse.json({ success: true, data: { studentId }, message: 'Photo enregistrée avec succès' });
+  } catch (error) {
+    return apiErrorResponse(error);
+  }
+}
 
-    return NextResponse.json({ success: true, data: { studentId, photoUrl }, message: 'Photo enregistrée avec succès' });
+// Promote an existing gallery photo to the student's profile photo.
+export async function PUT(request: Request) {
+  try {
+    const context = await requireRequestContext(request, ['school_admin', 'teacher']);
+    const tenantId = requireTenant(context);
+
+    const body = await parseJson(request, setProfilePhotoSchema);
+    const { studentId, photoId } = body;
+
+    const [photo] = await db
+      .select({ url: studentPhotos.url })
+      .from(studentPhotos)
+      .where(and(
+        eq(studentPhotos.id, photoId),
+        eq(studentPhotos.studentId, studentId),
+        eq(studentPhotos.tenantId, tenantId),
+      ))
+      .limit(1);
+    if (!photo) {
+      throw new ApiError(404, 'PHOTO_NOT_FOUND', 'Photo introuvable pour cet élève.');
+    }
+
+    await db.update(user).set({ photoUrl: photo.url }).where(and(eq(user.id, studentId), eq(user.tenantId, tenantId)));
+
+    return NextResponse.json({ success: true, data: { studentId, photoId }, message: 'Photo de profil définie.' });
   } catch (error) {
     return apiErrorResponse(error);
   }

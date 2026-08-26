@@ -6,7 +6,7 @@ Scope: classes and sections, class teachers, subjects and class assignment, clas
 
 ## 1. Executive conclusion
 
-Lango already has every top-level capability visible in the reference product. This is not a missing-module build. It is a hardening and workflow-completion project.
+SchoolOS already has every top-level capability visible in the reference product. This is not a missing-module build. It is a hardening and workflow-completion project.
 
 The strongest existing areas are the tenant-scoped class/section/subject model, class-subject assignment, teacher assignment, real timetable storage, and conflict reporting. The largest weakness is promotion: the current implementation performs an atomic batch move, but only changes `user.classSectionId`. It does not preserve a student's academic placement history, session-year transition, decision, or rollback record.
 
@@ -14,15 +14,15 @@ The timetable is also operational but immature. It has CRUD, copy, and a conflic
 
 This work must stay in the core Academic module. The existing database comments explicitly identify the older `academicYears`/`courses`/`studentGroups`/`timetableSlots` chain as dead LMS boilerplate. New work must extend the active ESchool-aligned tables instead.
 
-## 2. Reference-to-Lango comparison
+## 2. Reference-to-SchoolOS comparison
 
-| Reference feature | Lango today | Assessment | Enhancement needed |
+| Reference feature | SchoolOS today | Assessment | Enhancement needed |
 |---|---|---|---|
-| Control Classes | Real `classes`, `sections`, and `classSections` tables; full class CRUD; separate sections page; medium, shift, and stream support | Lango is broader than the reference | Consolidated class setup workspace, capacity/status/order, current session context, dependency-safe archive |
+| Control Classes | Real `classes`, `sections`, and `classSections` tables; full class CRUD; separate sections page; medium, shift, and stream support | SchoolOS is broader than the reference | Consolidated class setup workspace, capacity/status/order, current session context, dependency-safe archive |
 | Assign Class Teacher | Real `classTeachers` table, API, and `class-section-teachers` page | Feature parity, but assignment is timeless and allows several equal teachers | Add primary/assistant role, effective session/date range, uniqueness policy, history, teacher workload visibility |
-| Subject | Real subject CRUD with code, medium, and theory/practical type | Lango is at least equivalent | Add active/archive state, curriculum metadata, ordering, optional workload defaults |
+| Subject | Real subject CRUD with code, medium, and theory/practical type | SchoolOS is at least equivalent | Add active/archive state, curriculum metadata, ordering, optional workload defaults |
 | Class Assign | Real `classSubjects` table and CRUD with compulsory/elective and semester scope | Stronger than the reference's apparent basic assignment | Make assignments session-aware; add weekly-hours/coefficient/order; bulk copy and validation; protect used assignments |
-| Subject teacher assignment | Separate real `subjectTeachers` model and API, although not shown in the reference menu | Lango has an extra useful layer | Expose a clear UI and enforce that timetable teachers come from valid subject-teacher assignments |
+| Subject teacher assignment | Separate real `subjectTeachers` model and API, although not shown in the reference menu | SchoolOS has an extra useful layer | Expose a clear UI and enforce that timetable teachers come from valid subject-teacher assignments |
 | Class Schedule | Real weekly `classScheduleSlots`, CRUD UI, copy endpoint, and conflict report | Functional foundation | Add draft/published versions, effective dates, structured rooms, inline preflight, edit/move UI, printing/export |
 | Teacher Schedule | No dedicated teacher schedule page; current API can return all slots or a class section only | Main visible parity gap | Add teacher filter/API and dedicated admin + self-service teacher timetable derived from published class slots |
 | Promotion | Real selection UI and atomic API that moves selected students | Superficial parity only; academically lossy | Introduce session-aware placement history, decisions, preview, capacity checks, idempotent batches, rollback and audit |
@@ -178,7 +178,7 @@ Reorganize the current scattered links into one Academic group without removing 
   - Promotion
   - Promotion History
 
-Keep Mediums, Semesters, Streams, Shifts, and Optional Subjects under an Advanced Setup subsection. This matches the reference product's discoverability while preserving Lango's richer features.
+Keep Mediums, Semesters, Streams, Shifts, and Optional Subjects under an Advanced Setup subsection. This matches the reference product's discoverability while preserving SchoolOS's richer features.
 
 ## 6. Implementation phases
 

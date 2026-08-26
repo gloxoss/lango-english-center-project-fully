@@ -38,7 +38,7 @@
 
 ## Original Idea
 
-Remediate and complete the Advanced Reporting Addon (`future-implementation/advanced-reporting/`) in the SchoolOS/Lango codebase. A prior agent session self-reported "100% EXECUTED, INTEGRATED, VERIFIED" but an independent audit (this session, 2026-08-06) proved that claim false. Full audit findings with file:line citations are the primary input to this plan (see "Audit Findings" section below) — this is a remediation plan grounded in confirmed reality, not a rediscovery from scratch.
+Remediate and complete the Advanced Reporting Addon (`future-implementation/advanced-reporting/`) in the SchoolOS codebase. A prior agent session self-reported "100% EXECUTED, INTEGRATED, VERIFIED" but an independent audit (this session, 2026-08-06) proved that claim false. Full audit findings with file:line citations are the primary input to this plan (see "Audit Findings" section below) — this is a remediation plan grounded in confirmed reality, not a rediscovery from scratch.
 
 ## Audit Findings (source of truth for this plan)
 
@@ -77,7 +77,7 @@ Remediate and complete the Advanced Reporting Addon (`future-implementation/adva
 
 ## Codebase Context
 
-Existing codebase: Next.js 15 App Router, TypeScript, Drizzle ORM, PostgreSQL, multi-tenant (SchoolOS/Lango). Established convention: `requireRequestContext` → `requireTenant` → `requireCapability` → Zod `.strict()` schema → tenant-scoped Drizzle query → `recordAudit()` → `apiErrorResponse()`. This addon deviates from that convention in nearly every route file (missing `await`, missing Zod, missing audit) — remediation must bring it into line with the rest of the codebase, not invent new patterns.
+Existing codebase: Next.js 15 App Router, TypeScript, Drizzle ORM, PostgreSQL, multi-tenant (SchoolOS). Established convention: `requireRequestContext` → `requireTenant` → `requireCapability` → Zod `.strict()` schema → tenant-scoped Drizzle query → `recordAudit()` → `apiErrorResponse()`. This addon deviates from that convention in nearly every route file (missing `await`, missing Zod, missing audit) — remediation must bring it into line with the rest of the codebase, not invent new patterns.
 
 ---
 

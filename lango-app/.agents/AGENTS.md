@@ -1,4 +1,4 @@
-# SchoolOS (Lango) Workspace Rules & Color Guidelines
+# SchoolOS (SchoolOS) Workspace Rules & Color Guidelines
 
 ## NON-NEGOTIABLE COLOR & BRAND RULES
 

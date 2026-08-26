@@ -6,7 +6,7 @@ import { boolean, check, date, doublePrecision, foreignKey, index, integer, json
 // the sessionYears/mediums/etc. tables below.
 export const subjectType = pgEnum('subject_type', ['theory', 'practical']);
 export const classSubjectType = pgEnum('class_subject_type', ['compulsory', 'elective']);
-export const classTeacherRole = pgEnum('class_teacher_role', ['primary', 'assistant', 'support']);
+export const classTeacherRole = pgEnum('class_teacher_role', ['primary', 'assistant', 'support', 'substitute']);
 export const timetableVersionStatus = pgEnum('timetable_version_status', ['draft', 'published', 'archived']);
 export const promotionBatchStatus = pgEnum('promotion_batch_status', ['committed', 'reverted']);
 export const promotionDecisionType = pgEnum('promotion_decision_type', ['promote', 'repeat', 'graduate', 'transfer', 'withdraw', 'hold']);
@@ -28,7 +28,15 @@ export const paymentStatus = pgEnum('payment_status', ['posted', 'reversed', 're
 export const role = pgEnum('role', ['super_admin', 'school_admin', 'teacher', 'accountant', 'student', 'alumni', 'parent', 'receptionist', 'guard', 'librarian']);
 export const status = pgEnum('status', ['active', 'inactive', 'archived']);
 export const planTier = pgEnum('plan_tier', ['trial', 'basic', 'standard', 'premium']);
-export const subscriptionStatus = pgEnum('subscription_status', ['active', 'suspended', 'cancelled']);
+export const subscriptionStatus = pgEnum('subscription_status', [
+  'active',
+  'trialing',
+  'past_due',
+  'unpaid',
+  'canceled',
+  'suspended',
+  'cancelled',
+]);
 export const cndpFilingStatus = pgEnum('cndp_filing_status', ['draft', 'submitted', 'approved']);
 export const inquirySource = pgEnum('inquiry_source', ['walk_in', 'phone', 'web', 'referral', 'facebook_ads', 'google_ads']);
 export const inquiryInterestLevel = pgEnum('inquiry_interest_level', ['low', 'medium', 'high']);
@@ -42,6 +50,7 @@ export const fiscalPeriodStatus = pgEnum('fiscal_period_status', ['open', 'close
 export const discountApprovalStatus = pgEnum('discount_approval_status', ['pending', 'approved', 'rejected']);
 export const journalStatus = pgEnum('journal_status', ['posted', 'reversed']);
 export const classCycle = pgEnum('class_cycle', ['maternelle', 'primaire', 'college', 'lycee']);
+export const academicPeriodType = pgEnum('academic_period_type', ['semester', 'trimester', 'month']);
 export const questionDifficulty = pgEnum('question_difficulty', ['facile', 'moyen', 'difficile']);
 export const admissionInterviewStatus = pgEnum('admission_interview_status', ['scheduled', 'completed', 'cancelled']);
 export const alumniDocumentStatus = pgEnum('alumni_document_status', ['active', 'superseded']);
@@ -67,11 +76,17 @@ export const tenants = pgTable('tenants', {
   isActive: boolean('is_active').default(true).notNull(),
   planTier: planTier('plan_tier').default('trial').notNull(),
   subscriptionStatus: subscriptionStatus('subscription_status').default('active').notNull(),
+  stripeCustomerId: text('stripe_customer_id'),
+  stripeSubscriptionId: text('stripe_subscription_id'),
+  stripePriceId: text('stripe_price_id'),
+  stripeCurrentPeriodEnd: timestamp('stripe_current_period_end', { mode: 'string' }),
   hasMultiBranchAddon: boolean('has_multi_branch_addon').default(false).notNull(),
   maxBranches: integer('max_branches').default(1).notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
   unique('tenants_slug_unique').on(table.slug),
+  unique('tenants_stripe_customer_id_unique').on(table.stripeCustomerId),
+  unique('tenants_stripe_subscription_id_unique').on(table.stripeSubscriptionId),
 ]);
 
 export const branches = pgTable('branches', {
@@ -230,6 +245,7 @@ export const classes = pgTable('classes', {
   branchId: uuid('branch_id'),
   name: varchar({ length: 100 }).notNull(),
   includeSemesters: boolean('include_semesters').default(false).notNull(),
+  periodType: academicPeriodType('period_type').default('semester').notNull(),
   mediumId: uuid('medium_id').notNull(),
   shiftId: uuid('shift_id'),
   streamId: uuid('stream_id'),
@@ -262,6 +278,23 @@ export const classes = pgTable('classes', {
     name: 'classes_stream_id_streams_id_fk',
   }).onDelete('set null'),
   unique('classes_tenant_id_name_medium_id_unique').on(table.tenantId, table.name, table.mediumId),
+]);
+
+export const teacherAvailability = pgTable('teacher_availability', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  teacherId: text('teacher_id').notNull(),
+  dayOfWeek: dayOfWeek('day_of_week').notNull(),
+  startTime: varchar('start_time', { length: 5 }).notNull(),
+  endTime: varchar('end_time', { length: 5 }).notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'teacher_availability_tenant_id_fk' }).onDelete('cascade'),
+  foreignKey({ columns: [table.teacherId], foreignColumns: [user.id], name: 'teacher_availability_teacher_id_fk' }).onDelete('cascade'),
+  unique('teacher_availability_teacher_day_times_unique').on(table.teacherId, table.dayOfWeek, table.startTime, table.endTime),
+  check('teacher_availability_valid_time_check', sql`${table.startTime} < ${table.endTime}`),
+  index('teacher_availability_tenant_teacher_idx').on(table.tenantId, table.teacherId),
 ]);
 
 export const classSections = pgTable('class_sections', {
@@ -2456,6 +2489,32 @@ export const studentDocuments = pgTable('student_documents', {
 // approval (see PUT /api/students/admissions), not deleted afterward.
 // ==========================================================================
 
+export const studentPhotos = pgTable('student_photos', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  studentId: text('student_id').notNull(),
+  url: text().notNull(),
+  uploadedAt: timestamp('uploaded_at', { mode: 'string' }).defaultNow().notNull(),
+  uploadedBy: text('uploaded_by'),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'student_photos_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.studentId],
+    foreignColumns: [user.id],
+    name: 'student_photos_student_id_user_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.uploadedBy],
+    foreignColumns: [user.id],
+    name: 'student_photos_uploaded_by_user_id_fk',
+  }).onDelete('set null'),
+  index('student_photos_tenant_student_idx').on(table.tenantId, table.studentId),
+]);
+
 export const applicantDocuments = pgTable('applicant_documents', {
   id: uuid().defaultRandom().primaryKey().notNull(),
   tenantId: uuid('tenant_id').notNull(),
@@ -3165,15 +3224,14 @@ export const twoFactor = pgTable('two_factor', {
   index('two_factor_secret_idx').on(table.secret),
 ]);
 
-// 2FA email-OTP delivery log. Mirror of the SMS log-only convention: the app
-// has no real email gateway, so sendOTP records the code here for audit +
-// test-provider retrieval (see migrations/0109_two_factor_otp.sql).
+// 2FA email-OTP delivery log. Stores SHA-256 hashed OTP codes for audit +
+// verification, avoiding plaintext persistence or logging.
 export const twoFactorOtps = pgTable('two_factor_otps', {
   id: uuid().defaultRandom().primaryKey().notNull(),
   userId: text('user_id').notNull(),
   tenantId: uuid('tenant_id'),
   email: varchar({ length: 255 }).notNull(),
-  otp: varchar({ length: 10 }).notNull(),
+  otp: varchar({ length: 255 }).notNull(),
   expiresAt: timestamp('expires_at', { mode: 'string' }).notNull(),
   consumedAt: timestamp('consumed_at', { mode: 'string' }),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
@@ -4203,6 +4261,30 @@ export const academicRooms = pgTable('academic_rooms', {
   unique('academic_rooms_tenant_name_unique').on(table.tenantId, table.name),
 ]);
 
+// Weekly point-in-time snapshots of the academic readiness score, captured
+// explicitly by a school admin. Backs the historical trend line on the
+// readiness dashboard (Part 4, item 6) - only the aggregate overall score is
+// stored, which is all the trend needs.
+export const academicReadinessSnapshots = pgTable('academic_readiness_snapshots', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  sessionYearId: uuid('session_year_id').notNull(),
+  overallScore: integer('overall_score').notNull(),
+  capturedAt: timestamp('captured_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'academic_readiness_snapshots_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.sessionYearId],
+    foreignColumns: [sessionYears.id],
+    name: 'academic_readiness_snapshots_session_year_id_session_years_id_fk',
+  }).onDelete('cascade'),
+  index('academic_readiness_snapshots_tenant_session_idx').on(table.tenantId, table.sessionYearId, table.capturedAt),
+]);
+
 export const cashierSessionStatus = pgEnum('cashier_session_status', ['open', 'closed', 'reconciled']);
 
 export const cashierSessions = pgTable('cashier_sessions', {
@@ -4234,6 +4316,48 @@ export const cashierSessions = pgTable('cashier_sessions', {
   index('cashier_sessions_tenant_cashier_idx').on(table.tenantId, table.cashierId),
   index('cashier_sessions_status_idx').on(table.status),
 ]);
+
+// Custom tenant_invitations table used instead of Better Auth's built-in
+// `organization` plugin: our tenants model pre-dates the plugin, uses
+// school-specific fields (planTier, subscriptionStatus, branchId, etc.),
+// and the plugin's org/member/invitation schema would require a full migration
+// of the tenants table with no incremental gain. Evaluated 2026-08 and
+// deliberately kept custom. See PLATFORM-SAAS-READINESS-PLAN.md.
+export const tenantInvitations = pgTable('tenant_invitations', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  email: text('email').notNull(),
+  role: text('role').notNull(),
+  token: text('token').notNull(),
+  status: text('status').default('pending').notNull(),
+  invitedById: text('invited_by_id'),
+  expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'string' }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'tenant_invitations_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.invitedById],
+    foreignColumns: [user.id],
+    name: 'tenant_invitations_invited_by_id_user_id_fk',
+  }).onDelete('set null'),
+  unique('tenant_invitations_token_unique').on(table.token),
+  index('tenant_invitations_tenant_id_idx').on(table.tenantId),
+  index('tenant_invitations_token_idx').on(table.token),
+  index('tenant_invitations_email_idx').on(table.email),
+]);
+
+export type TenantInvitation = typeof tenantInvitations.$inferSelect;
+export type NewTenantInvitation = typeof tenantInvitations.$inferInsert;
+
+export const processedStripeEvents = pgTable('processed_stripe_events', {
+  eventId: text('event_id').primaryKey().notNull(),
+  processedAt: timestamp('processed_at', { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+});
 
 // Student Accounting add-on exports
 export * from '@/features/finance/models/student-accounting-schema';

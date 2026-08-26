@@ -5,7 +5,7 @@
 > For plain-English product requirements, see PRD.md.
 
 ## Architecture Overview
-Pure extension of the existing SchoolOS/Lango stack: Next.js 15 App Router, TypeScript, Drizzle ORM, PostgreSQL, Better Auth, Tailwind, multi-tenant via `tenantId`. One combined migration (`0058_dropped_features_rebuild.sql`) adds all new columns/tables across all 6 feature areas; every route follows the established convention (`requireRequestContext` → `requireTenant` → `requireCapability` → Zod `.strict()` → tenant-scoped Drizzle query → `recordAudit()` → `apiErrorResponse()`). No new capability strings are introduced — every new route reuses an existing capability (`guardians.*`, `academics.manage`, `grading.*`, `admissions.*`, `students.read`) already governing the same resource domain, confirmed sufficient during research.
+Pure extension of the existing SchoolOS stack: Next.js 15 App Router, TypeScript, Drizzle ORM, PostgreSQL, Better Auth, Tailwind, multi-tenant via `tenantId`. One combined migration (`0058_dropped_features_rebuild.sql`) adds all new columns/tables across all 6 feature areas; every route follows the established convention (`requireRequestContext` → `requireTenant` → `requireCapability` → Zod `.strict()` → tenant-scoped Drizzle query → `recordAudit()` → `apiErrorResponse()`). No new capability strings are introduced — every new route reuses an existing capability (`guardians.*`, `academics.manage`, `grading.*`, `admissions.*`, `students.read`) already governing the same resource domain, confirmed sufficient during research.
 
 ## Tech Stack
 - Frontend: Next.js 15 App Router, React, Tailwind, shadcn/ui (unchanged)

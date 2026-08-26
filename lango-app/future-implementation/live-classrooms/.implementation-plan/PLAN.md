@@ -10,7 +10,7 @@ If external access is unavailable, planning and a deterministic fake adapter may
 
 ## 2. Architecture
 
-- Lango owns scheduling, authorization, roster, normalized immutable participant events, attendance summaries, recording policy and reports.
+- SchoolOS owns scheduling, authorization, roster, normalized immutable participant events, attendance summaries, recording policy and reports.
 - The provider owns media rooms and raw conferencing capabilities.
 - Use provider-neutral adapters plus capability flags; start with fake + BigBlueButton, then external-link connector.
 - Store encrypted credential references with key/version metadata. Platform profiles and tenant BYOC profiles have explicit scope.

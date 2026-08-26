@@ -39,7 +39,7 @@ Plan and build the Alumni Portal fully — real business logic, real pages, full
 
 Real decisions locked in via discovery/research/review (see DISCOVERY.md, RESEARCH.md, PLAN.md's Review Notes for full detail): same-user-row role flip to a new `alumni` value; manual per-student (or approved bulk) transition with real confirmation; old student login fully disabled and killed (including active sessions) at transition, new alumni credentials issued via the reused admission-invite pattern; real public no-login document verification with revoke-on-reissue; real staff-reviewed request queue (correction/reissue/data access/deletion) with deletion scoped to community data only; real self-contained events (not blocked on the separate unbuilt event-management addon); real per-field directory consent; real opt-in-only mentoring listing (no automated matching); real, shared, fail-closed 18+ safeguarding check.
 
-Codebase: SchoolOS/Lango, Next.js App Router, Drizzle ORM, PostgreSQL, Better Auth, multi-tenant. Plan isolated to `future-implementation/alumni-portal/.ultraplan/`.
+Codebase: SchoolOS, Next.js App Router, Drizzle ORM, PostgreSQL, Better Auth, multi-tenant. Plan isolated to `future-implementation/alumni-portal/.ultraplan/`.
 
 ---
 

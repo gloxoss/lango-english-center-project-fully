@@ -2,7 +2,7 @@
 
 > Live evidence for the Parent/Guardian Portal (P1–P11). Executed 2026-08-09
 > against the dev server on `:3002`, Postgres `schoolos-db`, tenants Atlas
-> `ca40c88e-339c-4fea-b5c4-51d5c9cc0239` and Lango `f62f31eb-1fc8-4102-9145-a5ce0bca989b`.
+> `ca40c88e-339c-4fea-b5c4-51d5c9cc0239` and SchoolOS `f62f31eb-1fc8-4102-9145-a5ce0bca989b`.
 
 ## 0. Fixture set (seed, idempotent)
 
@@ -12,7 +12,7 @@
 |---|---|---|
 | PARENT-A (`prn-prn-parent-a@placeholder.local`) | full rights on CHILD-A; attendance:false on ATD; medical:false on MED; communication:false on COM | S3–S8, S24–S40 |
 | PARENT-B | co-guardian on CHILD-A (finance:false), exclusive on CHILD-D | S12–S13 |
-| PARENT-C (Lango) | owns CHILD-LANGO | S14 cross-tenant |
+| PARENT-C (SchoolOS) | owns CHILD-SCHOOLOS | S14 cross-tenant |
 | PARENT-UNLINKED | unbound guardian, links via one-time token | S18–S22 |
 | CHILD-A | class-section pinned, invoice PRN-INV-0001 (paid 1200) + PRN-INV-0002 (pending 800) → outstanding **800**; 2 documents; 1 sms | S24, S26, S28–S29, S31, S33–S34, S36, S38 |
 | CHILD-B | finance:false, section-pinned to class B | S5, S28, S30, S32 |

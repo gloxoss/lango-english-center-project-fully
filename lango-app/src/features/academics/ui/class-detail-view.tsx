@@ -13,7 +13,7 @@ type RosterStudent = {
   matricule: string | null;
   sectionName: string;
   attendanceRate: number | null;
-  balanceDue: number;
+  balanceDue: number | null;
   average: number | null;
 };
 
@@ -100,9 +100,11 @@ export function ClassDetail360View({ id, locale }: { id: string; locale: string 
                   <td className="py-3 px-4 text-slate-600">{st.sectionName}</td>
                   <td className="py-3 px-4 font-bold text-[#2487B8]">{st.attendanceRate !== null ? `${st.attendanceRate}%` : '—'}</td>
                   <td className="py-3 px-4">
-                    {st.balanceDue > 0
-                      ? <Badge className="bg-[#FCE4E2] text-[#E5544B]">{st.balanceDue.toLocaleString('fr-FR')} MAD</Badge>
-                      : <Badge className="bg-[#DCEBF4] text-[#1B6C93]">À jour</Badge>}
+                    {st.balanceDue === null
+                      ? '—'
+                      : st.balanceDue > 0
+                        ? <Badge className="bg-[#FCE4E2] text-[#E5544B]">{st.balanceDue.toLocaleString('fr-FR')} MAD</Badge>
+                        : <Badge className="bg-[#DCEBF4] text-[#1B6C93]">À jour</Badge>}
                   </td>
                   <td className="py-3 px-4 font-extrabold text-[#16212B]">{st.average !== null ? `${st.average} /20` : '—'}</td>
                 </tr>

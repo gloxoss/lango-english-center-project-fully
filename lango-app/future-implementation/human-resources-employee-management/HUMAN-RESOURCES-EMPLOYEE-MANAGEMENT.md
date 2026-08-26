@@ -1,7 +1,7 @@
 # Human Resources & Employee Management — Future Addon
 
 **Status: planned, not started.** This document evaluates the RamomSchool
-Employee pages shown on 2026-08-01 against the real Lango/SchoolOS codebase and
+Employee pages shown on 2026-08-01 against the real SchoolOS codebase and
 defines the useful version for this product. It is not an instruction to copy
 the reference UI or its data model blindly.
 
@@ -41,9 +41,9 @@ The reference combines three different concepts in one module:
 Our implementation must keep those concepts separate. A designation must not
 grant permissions, and changing a department must not silently change access.
 
-## Where Lango is today (verified in the code)
+## Where SchoolOS is today (verified in the code)
 
-Lango already has a meaningful foundation:
+SchoolOS already has a meaningful foundation:
 
 - Staff are real tenant-scoped rows in `user`; they are not mock records.
 - Existing roles include `school_admin`, `teacher`, `accountant`,

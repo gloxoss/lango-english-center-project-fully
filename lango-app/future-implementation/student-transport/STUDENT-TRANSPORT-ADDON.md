@@ -9,7 +9,7 @@ Scope: Route Master, Vehicle Master, Stoppage, Assign Vehicle, Allocation Report
 
 ## Product decision
 
-Lango owns school transport planning, student allocations, trips, boarding, guardian experience and safety workflows. GPS ingestion/routing/maps are provider adapters, not hard-coded infrastructure.
+SchoolOS owns school transport planning, student allocations, trips, boarding, guardian experience and safety workflows. GPS ingestion/routing/maps are provider adapters, not hard-coded infrastructure.
 
 Static plans and actual operations are separate: route versions define intended stops/times; each service day creates trip instances and immutable operational events. “Current vehicle status” is a projection, never the only history.
 
@@ -88,7 +88,7 @@ Static plans and actual operations are separate: route versions define intended 
 ## Tracking architecture
 
 - Define `TrackingProvider`: provision/link device, fetch latest position, fetch bounded history, normalize webhook/event, verify signature and health.
-- Recommended first provider: separately deployed Traccar. Lango stores its own vehicle-device mapping and normalized safety/business events; Traccar remains GPS protocol/telemetry infrastructure.
+- Recommended first provider: separately deployed Traccar. SchoolOS stores its own vehicle-device mapping and normalized safety/business events; Traccar remains GPS protocol/telemetry infrastructure.
 - Use signed webhooks/polling with idempotent external event IDs, replay protection, queue/retry and dead-letter repair.
 - Map matching and ETA use a `RoutingProvider` adapter; route planning remains usable if routing/GPS is offline.
 - Positions include provider time, receive time, accuracy and source. Never pretend stale GPS is live.

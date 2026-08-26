@@ -68,15 +68,25 @@ const FULL_NAVIGATION: NavItem[] = [
     href: '/dashboard/academics',
     permission: 'academics.read',
     children: [
-      { id: 'session-years', label: 'Années scolaires', icon: 'Calendar', href: '/dashboard/academics/session-years', permission: 'academics.read' },
-      { id: 'classes', label: 'Classes', icon: 'School', href: '/dashboard/academics/classes', permission: 'academics.read' },
-      { id: 'subjects', label: 'Matières', icon: 'FileText', href: '/dashboard/academics/subjects', permission: 'academics.read' },
-      { id: 'schedule', label: 'Emploi du temps', icon: 'Clock', href: '/dashboard/academics/schedule', permission: 'academics.read' },
+      // Classes is a full CRUD console (inline homeroom-teacher/substitute/
+      // room dropdowns wired to PUT/DELETE), not a browsing view - initially
+      // missed by only reading its outer re-export wrapper instead of the
+      // real classes-client.tsx. Matches subjects/schedule below.
+      { id: 'classes', label: 'Classes', icon: 'School', href: '/dashboard/academics/classes', permission: 'academics.manage' },
+      // Subjects and the all-classes schedule builder are full CRUD consoles
+      // (add/edit/delete), not browsing views - a teacher opening either would
+      // see live-looking buttons that just 403. Schedule is also redundant
+      // for teacher: "Emploi du temps enseignant" below is the purpose-built
+      // "my schedule" view (backed by the same timetable-slots API, scoped to
+      // them). Both stay academics.manage; Classes stays academics.read since
+      // it's a genuine read-only roster/structure browser.
+      { id: 'subjects', label: 'Matières', icon: 'FileText', href: '/dashboard/academics/subjects', permission: 'academics.manage' },
+      { id: 'schedule', label: 'Emploi du temps', icon: 'Clock', href: '/dashboard/academics/schedule', permission: 'academics.manage' },
       { id: 'teacher-schedule', label: 'Emploi du temps enseignant', icon: 'CalendarClock', href: '/dashboard/academics/teacher-schedule', permission: 'academics.read' },
       { id: 'session-copy', label: 'Copie de session', icon: 'Copy', href: '/dashboard/academics/session-copy', permission: 'academics.manage' },
-      { id: 'assignments', label: 'Espace d\'affectations', icon: 'UserCheck', href: '/dashboard/academics/assignments', permission: 'academics.read' },
+      { id: 'assignments', label: 'Espace d\'affectations', icon: 'UserCheck', href: '/dashboard/academics/assignments', permission: 'academics.manage' },
       { id: 'promotions', label: 'Promotion & Réinscription', icon: 'Sparkles', href: '/dashboard/academics/promotions', permission: 'academics.manage' },
-      { id: 'readiness', label: 'Bilan de rentrée', icon: 'ShieldCheck', href: '/dashboard/academics/readiness', permission: 'academics.read' },
+      { id: 'readiness', label: 'Bilan de rentrée', icon: 'ShieldCheck', href: '/dashboard/academics/readiness', permission: 'academics.manage' },
     ],
   },
   {
@@ -90,7 +100,7 @@ const FULL_NAVIGATION: NavItem[] = [
     id: 'grading',
     label: 'Notes & évaluations',
     icon: 'Award',
-    href: '/dashboard/grading',
+    href: '/dashboard/academics/grades/entry',
     permission: 'grading.read',
   },
   {
@@ -129,7 +139,12 @@ const FULL_NAVIGATION: NavItem[] = [
     label: 'Communication',
     icon: 'MessageSquare',
     href: '/dashboard/communication',
-    permission: 'communication.read',
+    // This section is the bulk-campaign/CRM console (templates, segments,
+    // broadcast) - every page under it is communication.send-gated, so the
+    // nav item must require that too, not the broader communication.read
+    // that teacher/parent hold for their own read-only message views
+    // (parent/communication, teacher inbox) elsewhere in the app.
+    permission: 'communication.send',
   },
   {
     id: 'reports',
@@ -348,9 +363,25 @@ export async function getPortalManifest(context: RequestContext): Promise<Portal
 // once (here) and every role granted its permission lands there automatically.
 // ---------------------------------------------------------------------------
 
-/** Shared-module roles whose whole job is one module rather than a dedicated portal. */
+/**
+ * Roles that land somewhere other than the cross-module staff overview.
+ * student/parent are fully self-service: several of their granted
+ * permissions (students.read, attendance.read, grading.read, finance.read...)
+ * exist for reading their OWN/their child's data inside otherwise-staff API
+ * routes, not for opening the staff-wide admin module - so unlike guard/
+ * reception/librarian they have no `portalHome` entry in FULL_NAVIGATION,
+ * and would otherwise fall through to the generic (and, for them, empty and
+ * meaningless) staff dashboard below. teacher is the same story: /dashboard's
+ * summary API is school_admin-only, so a teacher landing there got a 403 and
+ * a crash from a downstream chart choking on the resulting empty data -
+ * /dashboard/teacher is their real, purpose-built landing page (today's
+ * schedule), not the cross-module KPI overview.
+ */
 const MODULE_HOME: Partial<Record<AppRole, string>> = {
   accountant: '/dashboard/finance',
+  parent: '/dashboard/parent',
+  student: '/dashboard/student',
+  teacher: '/dashboard/teacher',
 };
 
 export async function resolveLandingPath(context: {

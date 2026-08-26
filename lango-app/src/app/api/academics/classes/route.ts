@@ -7,13 +7,14 @@ import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { classCreateSchema, classUpdateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { classes, mediums, shifts, streams } from '@/models/Schema';
+import { classes, classSections, classTeachers, mediums, sections, shifts, streams, user } from '@/models/Schema';
 
 function toApiClass(row: typeof classes.$inferSelect) {
   return {
     id: row.id,
     name: row.name,
     includeSemesters: row.includeSemesters,
+    periodType: row.periodType,
     mediumId: row.mediumId,
     shiftId: row.shiftId,
     streamId: row.streamId,
@@ -87,22 +88,44 @@ export async function POST(request: Request) {
 
     await assertSameTenantReferences(tenantId, body);
 
-    const [inserted] = await db
-      .insert(classes)
-      .values({
+    if (body.teacherId) {
+      const [teacher] = await db.select({ id: user.id }).from(user).where(and(eq(user.id, body.teacherId), eq(user.tenantId, tenantId), eq(user.role, 'teacher'))).limit(1);
+      if (!teacher) throw new ApiError(422, 'INVALID_REFERENCE', 'L\'enseignant indiqué n\'existe pas pour cet établissement.');
+    }
+
+    const inserted = await db.transaction(async (tx) => {
+      const [createdClass] = await tx.insert(classes).values({
         tenantId,
         name: body.name,
-        includeSemesters: body.includeSemesters,
+        includeSemesters: body.periodType ? body.periodType === 'semester' : body.includeSemesters,
+        periodType: body.periodType ?? 'semester',
         mediumId: body.mediumId,
         shiftId: body.shiftId,
         streamId: body.streamId,
         cycle: body.cycle,
-      })
-      .returning();
+      }).returning();
 
-    recordAudit(context, 'create', 'class', inserted!.id);
+      const count = body.sectionCount ?? 0;
+      if (count > 0) {
+        for (let index = 0; index < count; index += 1) {
+          const suffix = String.fromCharCode(65 + index);
+          const sectionName = `${body.name} - ${suffix}`;
+          const [section] = await tx.insert(sections).values({ tenantId, name: sectionName }).onConflictDoUpdate({
+            target: [sections.tenantId, sections.name],
+            set: { name: sectionName },
+          }).returning();
+          const [classSection] = await tx.insert(classSections).values({ tenantId, classId: createdClass!.id, sectionId: section!.id, mediumId: body.mediumId }).returning();
+          if (body.teacherId) {
+            await tx.insert(classTeachers).values({ tenantId, classSectionId: classSection!.id, teacherId: body.teacherId, role: 'primary', assignedBy: context.userId });
+          }
+        }
+      }
+      return createdClass!;
+    });
 
-    return NextResponse.json({ success: true, data: toApiClass(inserted!) });
+    recordAudit(context, 'create', 'class', inserted.id, { sectionCount: body.sectionCount ?? 0, teacherId: body.teacherId ?? null });
+
+    return NextResponse.json({ success: true, data: toApiClass(inserted) });
   } catch (error) {
     return apiErrorResponse(error);
   }
@@ -122,6 +145,7 @@ export async function PUT(request: Request) {
       .set({
         name: body.name,
         includeSemesters: body.includeSemesters,
+        periodType: body.periodType,
         mediumId: body.mediumId,
         shiftId: body.shiftId,
         streamId: body.streamId,

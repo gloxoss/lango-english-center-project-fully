@@ -8,14 +8,14 @@
 
 ## 1. Context & Problem Statement
 
-In SchoolOS / Lango, academic setup constructs—such as class-subject assignments, teacher assignments, and timetable schedule slots—were historically bound directly to `classSectionId`. While `sessionYears` existed, `classSections` were treated as timeless structure entities.
+In SchoolOS, academic setup constructs—such as class-subject assignments, teacher assignments, and timetable schedule slots—were historically bound directly to `classSectionId`. While `sessionYears` existed, `classSections` were treated as timeless structure entities.
 
 This created several operational limitations for schools:
 1. **Inability to prepare next year's setup concurrently**: An administrator could not set up next year's subject hours, class teachers, or timetables while the current academic year was active without overwriting live data.
 2. **Loss of historical context**: Reassigning a teacher or altering weekly subject hours mutated existing records without preserving past session states.
 3. **Rigid capacity tracking**: Section capacity is inherently session-dependent (room availability changes per year), but capacity had no place on timeless class sections.
 
-To support seamless school year transitions, Lango requires a session-scoped academic offerings model.
+To support seamless school year transitions, SchoolOS requires a session-scoped academic offerings model.
 
 ---
 

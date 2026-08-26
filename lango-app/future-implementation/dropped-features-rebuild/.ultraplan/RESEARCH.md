@@ -22,7 +22,7 @@
 
 ## Codebase Analysis
 
-**Type:** Existing codebase (SchoolOS/Lango — Next.js App Router, Drizzle ORM, PostgreSQL, multi-tenant)
+**Type:** Existing codebase (SchoolOS — Next.js App Router, Drizzle ORM, PostgreSQL, multi-tenant)
 
 ### Findings per area (verified via direct file reads, not assumed)
 

@@ -10,7 +10,7 @@ Status: planned core Finance enhancement. Decisions are provisional pending owne
 
 The screenshot shows navigation, not a complete accounting system. The implementation below adds the minimum controls necessary for financial correctness.
 
-## Feature map against Lango
+## Feature map against SchoolOS
 
 ### Keep
 

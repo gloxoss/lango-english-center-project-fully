@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { usePermissions } from '@/hooks/use-permissions';
 import { SchedulePublishBar } from './schedule-publish-bar';
 
-type ClassSectionOption = { id: string; classId: string; className: string; sectionName: string };
+type ClassSectionOption = { id: string; classId: string; className: string; sectionName: string; periodType: 'semester' | 'trimester' | 'month' };
 type RefOption = { id: string; name: string };
 type Slot = {
   id: string;
@@ -42,6 +42,7 @@ export function ScheduleClient({ locale: _locale }: { locale?: string } = {}) {
   const [versionId, setVersionId] = useState<string>('');
   const [classSections, setClassSections] = useState<ClassSectionOption[]>([]);
   const [selectedSectionId, setSelectedSectionId] = useState('');
+  const [selectedPeriod, setSelectedPeriod] = useState('1');
   const [classSubjects, setClassSubjects] = useState<(RefOption & { subjectId: string })[]>([]);
   const [subjects, setSubjects] = useState<RefOption[]>([]);
   const [teachers, setTeachers] = useState<RefOption[]>([]);
@@ -199,6 +200,8 @@ export function ScheduleClient({ locale: _locale }: { locale?: string } = {}) {
   };
 
   const canManage = can('academics.manage');
+  const selectedPeriodType = classSections.find(s => s.id === selectedSectionId)?.periodType ?? 'semester';
+  const periodCount = selectedPeriodType === 'semester' ? 2 : selectedPeriodType === 'trimester' ? 3 : 12;
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">
@@ -234,6 +237,10 @@ export function ScheduleClient({ locale: _locale }: { locale?: string } = {}) {
             >
               <option value="">Sélectionner une classe...</option>
               {classSections.map(s => <option key={s.id} value={s.id}>{s.className} {s.sectionName}</option>)}
+            </select>
+            <label className="text-xs font-bold text-slate-500 whitespace-nowrap">Période :</label>
+            <select value={selectedPeriod} onChange={e => setSelectedPeriod(e.target.value)} className="h-9 px-3 rounded-xl border border-slate-200 text-xs font-bold bg-white text-[#16212B]">
+              {Array.from({ length: periodCount }, (_, i) => <option key={i + 1} value={String(i + 1)}>{selectedPeriodType === 'month' ? `Mois ${i + 1}` : selectedPeriodType === 'trimester' ? `Trimestre ${i + 1}` : `Semestre ${i + 1}`}</option>)}
             </select>
           </>
         )}

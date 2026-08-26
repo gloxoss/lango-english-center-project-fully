@@ -51,7 +51,7 @@ Unchanged - existing stack, existing conventions, no new dependencies needed for
 
 ## Review Notes — Section 06 Live Execution Findings (2026-08-07)
 
-All live verification was run against the real running app in the `atlas` (`c9177d8a-...`) and `lango` (`17c1db51-...`) tenants, no synthetic mocks.
+All live verification was run against the real running app in the `atlas` (`c9177d8a-...`) and `schoolos` (`17c1db51-...`) tenants, no synthetic mocks.
 
 **Confirmed fixed, live, against the original audit's exact exploits:**
 - Answer-forgery (pairing a correct option ID from a *different* question): reproduced against the pre-fix code's exact request shape → now returns `score: "0.00"` instead of a forged nonzero score.
@@ -60,7 +60,7 @@ All live verification was run against the real running app in the `atlas` (`c917
 - Full `ExamMasterService` lifecycle exercised end-to-end via real HTTP against real halls/terms/students: seat allocation correctly split 2 students across 2 capacity-1 halls (`unallocatedCount: 0`); schedule conflict detection correctly rejected an overlapping same-hall booking (`409 SCHEDULE_CONFLICT`) while accepting a non-overlapping one and a same-time booking in a different hall; marksheet grid produced real `assessmentOutcomes` rows (verified via `psql`, not just the API response); rankings endpoint returned correct rank order (18 > 12 → rank 1/2).
 
 **New bug found and fixed during the cross-tenant sweep (not in the original audit, discovered live during section-06):**
-`POST /api/academics/exam-schedules` accepted `examTermId`, `assessmentDefinitionId`, and `examHallId` with no tenant-ownership check — a Lango-tenant admin could create a real schedule row referencing Atlas's real exam term/hall/assessment-definition IDs (reproduced live: got `201` with a `tenantId: lango` row pointing at Atlas's real IDs). Similarly, `POST /api/academics/exam-terms/[id]/seat-allocation` and `POST /api/academics/exam-terms/[id]/marksheet` never validated that the `studentId`(s) in the request body belonged to the caller's tenant, which would let one tenant write real seat/grade records against another tenant's real student IDs.
+`POST /api/academics/exam-schedules` accepted `examTermId`, `assessmentDefinitionId`, and `examHallId` with no tenant-ownership check — a SchoolOS-tenant admin could create a real schedule row referencing Atlas's real exam term/hall/assessment-definition IDs (reproduced live: got `201` with a `tenantId: schoolos` row pointing at Atlas's real IDs). Similarly, `POST /api/academics/exam-terms/[id]/seat-allocation` and `POST /api/academics/exam-terms/[id]/marksheet` never validated that the `studentId`(s) in the request body belonged to the caller's tenant, which would let one tenant write real seat/grade records against another tenant's real student IDs.
 Fixed all three routes with the same pattern already used elsewhere in this codebase (`rankings`/`marksheet` routes already checked `assessmentDefinitionId` ownership) — added explicit tenant-scoped existence checks for every foreign ID before calling the service, returning `404`/`422` as appropriate. Rebuilt the `app` Docker image (real exit 0) and redeployed; re-ran the exact same cross-tenant sweep against the same real IDs and confirmed all three now correctly reject (`404`/`422`), while the legitimate same-tenant flow (Atlas admin, Atlas's own IDs) continues to work unchanged.
 
 **Final checks:**

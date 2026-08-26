@@ -1,0 +1,232 @@
+{
+  "main": {
+    "id": "d564bcb2c91bc58d",
+    "type": "split",
+    "children": [
+      {
+        "id": "02101d6bae1ecc9f",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "34e8d4c557d59471",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "left still to work om.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "left still to work om"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "5199cc7797ed27fd",
+    "type": "split",
+    "children": [
+      {
+        "id": "f7f068d9bacba598",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "ca371d6586bf051b",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "2e9a258f7c1541c6",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "799611838d844879",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "c37726c313178c61",
+    "type": "split",
+    "children": [
+      {
+        "id": "858adb48e1aebd8c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "3188947e781017fa",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "Untitled.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "d06ab6ae99c65898",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "Untitled.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "7f49f998ae829798",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "e89cf6889af6d353",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "c0f14e2bb31fc067",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Untitled.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "34e8d4c557d59471",
+  "lastOpenFiles": [
+    "AGENT-EXECUTION-PROMPTS-ROUND2.md",
+    "lango-app/src/features/academics/ui/session-copy-view.tsx.tmp.5348.6cd89d2dc51e",
+    "lango-app/src/features/academics/ui/session-copy-view.tsx.tmp.5348.0505e9519afd",
+    "lango-app/src/features/academics/ui/session-copy-view.tsx.tmp.5348.b7863731d5d9",
+    "lango-app/src/app/api/academics/class-offerings/copy/route.ts.tmp.5348.a8e29c2414d0",
+    "lango-app/src/app/api/academics/class-offerings/copy/route.ts.tmp.5348.71340b171329",
+    "lango-app/src/app/api/academics/class-offerings/copy/route.ts.tmp.5348.d35d0abb6c52",
+    "Next implementations and fixes.md",
+    "left still to work om.md",
+    "APP-STATUS-REPORT.md.tmp.5348.597749639199",
+    "APP-STATUS-REPORT.md.tmp.5348.931a853913b1",
+    "APP-STATUS-REPORT.md.tmp.5348.800ce9a095a2",
+    "lango-app/build.log",
+    "AGENT-EXECUTION-PROMPTS.md",
+    "PRODUCT-REVIEW-AND-FIXES.md",
+    "_review-part-J-transport-reports-settings.md",
+    "_review-part-H2-hr-adjacent.md",
+    "_review-part-E-events-library.md",
+    "_review-part-H1-hr-payroll-part1.md",
+    "_review-part-I-hostel.md",
+    "_review-part-F2-finance-part2.md",
+    "_review-part-F1-finance-part1.md",
+    "Pasted image 20260814231520.png",
+    "Pasted image 20260814231500.png",
+    "Pasted image 20260814231351.png",
+    "Pasted image 20260814231329.png",
+    "Pasted image 20260814231247.png",
+    "Pasted image 20260814231137.png",
+    "Pasted image 20260814231112.png",
+    "Pasted image 20260814231103.png",
+    "Pasted image 20260814231039.png",
+    "Pasted image 20260814231031.png",
+    "_review-part-A-superadmin-students-alumni.md",
+    "_review-part-B-academics.md",
+    "_review-part-C-events-requests-personnel-attendance.md",
+    "_review-part-D-documents-examinations.md",
+    "FULL-APP-AUDIT.md",
+    "lango-app/edu.docs/AUDIT-FINDINGS-AND-REMEDIATION-PLAN.md"
+  ]
+}

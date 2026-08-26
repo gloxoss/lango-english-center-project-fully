@@ -4,7 +4,7 @@
 > (`LEAD-CRM-AND-BROADCAST-MESSAGING.md`, `BULK-SMS-EMAIL-ADDENDUM.md`).
 > This file is the atomic, gate-per-phase working plan. Verified live on the
 > :3002 dev server; DB = Postgres via Docker; tenants Atlas
-> (`ca40c88e-339c-4fea-b5c4-51d5c9cc0239`) and Lango (`f62f31eb-...`).
+> (`ca40c88e-339c-4fea-b5c4-51d5c9cc0239`) and SchoolOS (`f62f31eb-...`).
 
 ## 0. Discovery outcome (what already exists)
 

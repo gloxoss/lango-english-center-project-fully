@@ -52,14 +52,33 @@ export default function SignupPage() {
     setError(null);
 
     try {
-      const res = await authClient.signUp.email({
-        email: formData.email,
-        password: formData.password,
-        name: formData.name,
+      const res = await fetch('/api/public/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          schoolName: formData.schoolName,
+          adminName: formData.name,
+          adminEmail: formData.email,
+          adminPassword: formData.password,
+        }),
       });
 
-      if (res.error) {
-        setError(res.error.message || 'Erreur lors de l\'inscription. Veuillez réessayer.');
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setError(data.error?.message || data.message || 'Erreur lors de la création de l\'établissement.');
+        return;
+      }
+
+      // Auto sign-in with newly created credentials
+      const signInRes = await authClient.signIn.email({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (signInRes.error) {
+        // Even if auto-sign-in encountered an issue, redirect to login
+        router.push(`/${locale}/login?registered=1`);
       } else {
         router.push(`/${locale}/dashboard`);
         router.refresh();

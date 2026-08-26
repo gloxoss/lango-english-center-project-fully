@@ -8,7 +8,7 @@ Verified: 2026-08-01. Re-check versions, licenses, security advisories, and prov
 - Documentation: https://docs.bigbluebutton.org/
 - License: LGPL-3.0.
 - Why: purpose-built virtual classroom with slides/whiteboard, polls, breakout rooms, chat, recordings, and learning analytics.
-- Use: primary external conferencing service and product/analytics reference. Integrate through its API; do not copy source into Lango without a license review.
+- Use: primary external conferencing service and product/analytics reference. Integrate through its API; do not copy source into SchoolOS without a license review.
 - Caveat: significant dedicated infrastructure and operations. Prove capacity, upgrades, recording storage, and monitoring in a spike.
 
 ## Alternative: LiveKit
@@ -19,8 +19,8 @@ Verified: 2026-08-01. Re-check versions, licenses, security advisories, and prov
 - Documentation: https://docs.livekit.io/
 - License: Apache-2.0 for the referenced OSS repositories; verify each component.
 - Why: excellent programmable WebRTC primitives, signed tokens, webhooks, React SDK, ingress/egress and recording.
-- Use: best option if Lango later wants a deeply custom classroom UI.
-- Caveat: Lango would need to build education workflows and analytics that BigBlueButton already has.
+- Use: best option if SchoolOS later wants a deeply custom classroom UI.
+- Caveat: SchoolOS would need to build education workflows and analytics that BigBlueButton already has.
 
 ## Alternative: Jitsi Meet
 

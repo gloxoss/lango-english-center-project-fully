@@ -66,7 +66,7 @@ export function HostelReportsView() {
     const qs = filterHostel !== 'all' ? `&hostelId=${encodeURIComponent(filterHostel)}` : '';
     const [o, a] = await Promise.all([
       api<BoardRow[]>(`/api/addons/hostel/reports/occupancy?${qs.replace('&', '')}`),
-      api<AllocationRow[]>(`/api/addons/hostel/reports/allocations?state=${allocState}${qs}`),
+      api<AllocationRow[]>(`/api/addons/hostel/reports/allocations?${allocState !== 'all' ? `state=${encodeURIComponent(allocState)}` : ''}${allocState !== 'all' && qs ? qs : qs.replace('&', '')}`),
     ]);
     if (o.ok && Array.isArray(o.data)) setBoard(o.data);
     else setError(errMessage(o));

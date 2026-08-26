@@ -132,7 +132,7 @@ export async function POST(request: Request) {
       await db.insert(smsMessages).values({
         tenantId,
         recipientPhone: normalizeMoroccanPhone(body.phone) || body.phone,
-        body: `Lango SchoolOS : activez votre compte via ce lien : /setup-account?token=${token}`,
+        body: `SchoolOS : activez votre compte via ce lien : /setup-account?token=${token}`,
         status: 'queued',
         createdById: context.userId,
       });

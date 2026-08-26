@@ -7,8 +7,8 @@ This document lists all **5 brand-new pages** built for the **Academic Managemen
 ## 1. 🔄 Session Copy Workflow
 
 - **Local App URL**: [http://localhost:3000/fr/dashboard/academics/session-copy](http://localhost:3000/fr/dashboard/academics/session-copy)
-- **App Route File**: [`src/app/[locale]/(dashboard)/dashboard/academics/session-copy/page.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/lango/lango-english-center-project-fully/lango-app/src/app/%5Blocale%5D/%28dashboard%29/dashboard/academics/session-copy/page.tsx)
-- **UI View Component**: [`src/features/academics/ui/session-copy-view.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/lango/lango-english-center-project-fully/lango-app/src/features/academics/ui/session-copy-view.tsx)
+- **App Route File**: [`src/app/[locale]/(dashboard)/dashboard/academics/session-copy/page.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/schoolos/schoolos-english-center-project-fully/schoolos-app/src/app/%5Blocale%5D/%28dashboard%29/dashboard/academics/session-copy/page.tsx)
+- **UI View Component**: [`src/features/academics/ui/session-copy-view.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/schoolos/schoolos-english-center-project-fully/schoolos-app/src/features/academics/ui/session-copy-view.tsx)
 - **API Endpoint**: `POST /api/academics/class-offerings/copy`
 
 ### Key Features
@@ -28,8 +28,8 @@ This document lists all **5 brand-new pages** built for the **Academic Managemen
 ## 2. 👩‍🏫 Teacher Assignment Workspace & Coverage Metrics
 
 - **Local App URL**: [http://localhost:3000/fr/dashboard/academics/assignments](http://localhost:3000/fr/dashboard/academics/assignments)
-- **App Route File**: [`src/app/[locale]/(dashboard)/dashboard/academics/assignments/page.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/lango/lango-english-center-project-fully/lango-app/src/app/%5Blocale%5D/%28dashboard%29/dashboard/academics/assignments/page.tsx)
-- **UI View Component**: [`src/features/academics/ui/assignment-workspace-view.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/lango/lango-english-center-project-fully/lango-app/src/features/academics/ui/assignment-workspace-view.tsx)
+- **App Route File**: [`src/app/[locale]/(dashboard)/dashboard/academics/assignments/page.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/schoolos/schoolos-english-center-project-fully/schoolos-app/src/app/%5Blocale%5D/%28dashboard%29/dashboard/academics/assignments/page.tsx)
+- **UI View Component**: [`src/features/academics/ui/assignment-workspace-view.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/schoolos/schoolos-english-center-project-fully/schoolos-app/src/features/academics/ui/assignment-workspace-view.tsx)
 - **API Endpoint**: `GET /api/academics/coverage`, `POST /api/academics/class-teachers`
 
 ### Key Features
@@ -48,8 +48,8 @@ This document lists all **5 brand-new pages** built for the **Academic Managemen
 ## 3. 🎓 Student Promotion & Rollback Wizard
 
 - **Local App URL**: [http://localhost:3000/fr/dashboard/academics/promotions](http://localhost:3000/fr/dashboard/academics/promotions)
-- **App Route File**: [`src/app/[locale]/(dashboard)/dashboard/academics/promotions/page.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/lango/lango-english-center-project-fully/lango-app/src/app/%5Blocale%5D/%28dashboard%29/dashboard/academics/promotions/page.tsx)
-- **UI View Component**: [`src/features/academics/ui/promotion-wizard-view.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/lango/lango-english-center-project-fully/lango-app/src/features/academics/ui/promotion-wizard-view.tsx)
+- **App Route File**: [`src/app/[locale]/(dashboard)/dashboard/academics/promotions/page.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/schoolos/schoolos-english-center-project-fully/schoolos-app/src/app/%5Blocale%5D/%28dashboard%29/dashboard/academics/promotions/page.tsx)
+- **UI View Component**: [`src/features/academics/ui/promotion-wizard-view.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/schoolos/schoolos-english-center-project-fully/schoolos-app/src/features/academics/ui/promotion-wizard-view.tsx)
 - **API Endpoints**: `GET /api/students/promotions/preview`, `POST /api/students/promotions`, `POST /api/academics/promotions/revert`
 
 ### Key Features
@@ -76,8 +76,8 @@ This document lists all **5 brand-new pages** built for the **Academic Managemen
 ## 4. 🏢 Room Directory & Capacity Management
 
 - **Local App URL**: [http://localhost:3000/fr/dashboard/academics/rooms](http://localhost:3000/fr/dashboard/academics/rooms)
-- **App Route File**: [`src/app/[locale]/(dashboard)/dashboard/academics/rooms/page.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/lango/lango-english-center-project-fully/lango-app/src/app/%5Blocale%5D/%28dashboard%29/dashboard/academics/rooms/page.tsx)
-- **UI View Component**: [`src/features/academics/ui/rooms-view.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/lango/lango-english-center-project-fully/lango-app/src/features/academics/ui/rooms-view.tsx)
+- **App Route File**: [`src/app/[locale]/(dashboard)/dashboard/academics/rooms/page.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/schoolos/schoolos-english-center-project-fully/schoolos-app/src/app/%5Blocale%5D/%28dashboard%29/dashboard/academics/rooms/page.tsx)
+- **UI View Component**: [`src/features/academics/ui/rooms-view.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/schoolos/schoolos-english-center-project-fully/schoolos-app/src/features/academics/ui/rooms-view.tsx)
 - **API Endpoint**: `GET /api/academics/rooms`, `POST /api/academics/rooms`
 
 ### Key Features
@@ -95,8 +95,8 @@ This document lists all **5 brand-new pages** built for the **Academic Managemen
 ## 5. 📊 Academic Readiness & CSV Export Dashboard
 
 - **Local App URL**: [http://localhost:3000/fr/dashboard/academics/readiness](http://localhost:3000/fr/dashboard/academics/readiness)
-- **App Route File**: [`src/app/[locale]/(dashboard)/dashboard/academics/readiness/page.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/lango/lango-english-center-project-fully/lango-app/src/app/%5Blocale%5D/%28dashboard%29/dashboard/academics/readiness/page.tsx)
-- **UI View Component**: [`src/features/academics/ui/academic-readiness-view.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/lango/lango-english-center-project-fully/lango-app/src/features/academics/ui/academic-readiness-view.tsx)
+- **App Route File**: [`src/app/[locale]/(dashboard)/dashboard/academics/readiness/page.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/schoolos/schoolos-english-center-project-fully/schoolos-app/src/app/%5Blocale%5D/%28dashboard%29/dashboard/academics/readiness/page.tsx)
+- **UI View Component**: [`src/features/academics/ui/academic-readiness-view.tsx`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/schoolos/schoolos-english-center-project-fully/schoolos-app/src/features/academics/ui/academic-readiness-view.tsx)
 - **API Endpoints**: `GET /api/academics/readiness`, `GET /api/academics/readiness/export`
 
 ### Key Features
@@ -120,4 +120,4 @@ This document lists all **5 brand-new pages** built for the **Academic Managemen
 ## 📝 Educational Deep-Dive Document
 
 For a full technical breakdown of the architecture, database schema relations, idempotency, and conflict-free copy algorithms, view the educational HTML tutorial document:
-- 📁 **HTML Tutorial Path**: [`edu.docs/session-copy-workflow.html`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/lango/lango-english-center-project-fully/lango-app/edu.docs/session-copy-workflow.html)
+- 📁 **HTML Tutorial Path**: [`edu.docs/session-copy-workflow.html`](file:///c:/Users/oussama/oussama/OneDrive%20-%20%E9%9B%AA%E7%8E%B2%E5%9B%A2%E9%98%9F/Documents/schoolos/schoolos-english-center-project-fully/schoolos-app/edu.docs/session-copy-workflow.html)

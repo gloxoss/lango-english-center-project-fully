@@ -8,6 +8,7 @@ import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, studentCreateSchema, studentUpdateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { reserveMatricule } from '@/libs/services/matricule';
+import { assertStudentCapacity } from '@/features/subscriptions/services/plan-limits-service';
 import { academicYears, attendance, classes, classSections, guardians, guardianStudents, invoices, payments, sections, user } from '@/models/Schema';
 import { toDbStatus, toUiStatus } from '@/models/userMapping';
 
@@ -176,6 +177,13 @@ export async function GET(request: Request) {
         const { attendance: _attendance, ...billingSafeDetail } = detail;
         return NextResponse.json({ success: true, data: billingSafeDetail });
       }
+      // teacher has students.read for roster/attendance lookups, not
+      // finance.read - the mirror image of the accountant case above:
+      // payments/balanceDue are billing-only and must not ride along.
+      if (context.role === 'teacher') {
+        const { payments: _payments, balanceDue: _balanceDue, ...academicSafeDetail } = detail;
+        return NextResponse.json({ success: true, data: academicSafeDetail });
+      }
       return NextResponse.json({ success: true, data: detail });
     }
 
@@ -272,6 +280,8 @@ export async function POST(request: Request) {
     if (body.classSectionId) {
       await assertClassSectionBelongsToTenant(tenantId, body.classSectionId);
     }
+
+    await assertStudentCapacity(tenantId, 1);
 
     const [inserted] = await db
       .insert(user)

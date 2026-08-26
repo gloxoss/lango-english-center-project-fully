@@ -28,6 +28,7 @@ import {
   FileImage,
   Loader2,
   FolderUp,
+  Star,
 } from 'lucide-react';
 import { usePermissions } from '@/hooks/use-permissions';
 
@@ -73,6 +74,57 @@ export function StudentPhotosView() {
 
   const canEdit = can('students.update');
 
+  // Gallery lightbox state (Part 2, item 2): a student holds several photos;
+  // user.photoUrl stays the single "profile" photo.
+  type GalleryPhoto = { id: string; src: string; uploadedAt: string; isProfile: boolean };
+  const [gallery, setGallery] = useState<GalleryPhoto[]>([]);
+  const [galleryLoading, setGalleryLoading] = useState(false);
+  const [activePhotoId, setActivePhotoId] = useState<string | null>(null);
+
+  async function loadGallery(studentId: string) {
+    setGalleryLoading(true);
+    try {
+      const res = await fetch(`/api/students/photos?gallery=${studentId}`);
+      const json = await res.json();
+      if (json.success) {
+        setGallery(json.data);
+        setActivePhotoId(null);
+      }
+    } catch (err) {
+      console.error('Failed loading gallery', err);
+    } finally {
+      setGalleryLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (viewingId) loadGallery(viewingId);
+  }, [viewingId]);
+
+  async function handleSetProfile(photoId: string) {
+    if (!viewingId) return;
+    setError(null);
+    try {
+      const res = await fetch('/api/students/photos', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId: viewingId, photoId }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setError(json.message || 'Impossible de définir la photo de profil.');
+        return;
+      }
+      setSuccess('Photo de profil définie.');
+      setTimeout(() => setSuccess(null), 3000);
+      await loadGallery(viewingId);
+      await loadStudents();
+    } catch (err) {
+      console.error('Set profile failed', err);
+      setError('Erreur réseau.');
+    }
+  }
+
   async function loadStudents() {
     try {
       const res = await fetch('/api/students/photos');
@@ -115,6 +167,7 @@ export function StudentPhotosView() {
       setSuccess('Photo enregistrée avec succès.');
       setTimeout(() => setSuccess(null), 4000);
       await loadStudents();
+      if (targetStudentId.current) await loadGallery(targetStudentId.current);
     } catch (err) {
       console.error('Photo upload failed', err);
       setError('Connexion impossible. Vérifiez votre réseau.');
@@ -171,6 +224,7 @@ export function StudentPhotosView() {
   const withPhoto = students.filter(s => s.photoUrl).length;
   const withoutPhoto = students.length - withPhoto;
   const viewingStudent = viewingId ? students.find(s => s.id === viewingId) ?? null : null;
+  const activePhoto = gallery.find(p => p.id === activePhotoId) ?? gallery.find(p => p.isProfile) ?? gallery[0] ?? null;
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
@@ -321,41 +375,72 @@ export function StudentPhotosView() {
         </div>
       )}
 
-      {/* SINGLE PHOTO DIALOG */}
+      {/* PHOTO GALLERY LIGHTBOX */}
       <Dialog open={viewingStudent != null} onOpenChange={(open) => { if (!open) setViewingId(null); }}>
-        <DialogContent className="max-w-md rounded-2xl">
+        <DialogContent className="max-w-lg rounded-2xl">
           {viewingStudent && (
             <>
               <DialogHeader>
                 <DialogTitle className="text-base font-extrabold text-[#16212B]">{viewingStudent.fullName}</DialogTitle>
                 <DialogDescription className="text-xs">
                   {viewingStudent.matricule ? `Matricule : ${viewingStudent.matricule}` : 'Élève'}
+                  {gallery.length > 0 ? ` · ${gallery.length} photo(s)` : ''}
                 </DialogDescription>
               </DialogHeader>
-              <div className="aspect-square w-full max-w-xs mx-auto bg-slate-50 rounded-2xl overflow-hidden flex items-center justify-center border border-slate-100">
-                {viewingStudent.photoUrl ? (
+
+              <div className="aspect-square w-full max-w-sm mx-auto bg-slate-50 rounded-2xl overflow-hidden flex items-center justify-center border border-slate-100 relative">
+                {activePhoto ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={`/api/students/photos?id=${viewingStudent.id}`} alt={viewingStudent.fullName} className="w-full h-full object-contain" />
+                  <img src={activePhoto.src} alt={viewingStudent.fullName} className="w-full h-full object-contain" />
                 ) : (
                   <div className="w-28 h-28 rounded-full bg-[#DCEBF4] text-[#0066FF] flex items-center justify-center text-3xl font-extrabold">
                     {viewingStudent.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
                   </div>
                 )}
+                {activePhoto?.isProfile && (
+                  <Badge className="absolute top-2 right-2 bg-[#DDF5EC] text-[#17A673] text-[9px] px-1.5 border-none font-bold">
+                    <Star className="w-3 h-3 mr-0.5 inline" /> Profil
+                  </Badge>
+                )}
               </div>
+
+              {gallery.length > 1 && (
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  {gallery.map(p => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setActivePhotoId(p.id)}
+                      className={`shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${activePhoto?.id === p.id ? 'border-[#0066FF]' : 'border-transparent hover:border-slate-200'}`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={p.src} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {canEdit && (
-                <DialogFooter className="pt-2">
+                <DialogFooter className="pt-2 gap-2">
                   <Button
+                    variant="outline"
                     size="sm"
                     disabled={uploadingId === viewingStudent.id}
                     onClick={() => triggerUpload(viewingStudent.id)}
-                    className="w-full gap-1.5 h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold"
+                    className="gap-1.5 h-9 text-xs rounded-xl border-slate-200"
                   >
-                    {uploadingId === viewingStudent.id ? (
-                      <>Envoi en cours…</>
-                    ) : (
-                      <><Upload className="w-3.5 h-3.5" /> {viewingStudent.photoUrl ? 'Remplacer la photo' : 'Téléverser une photo'}</>
-                    )}
+                    {uploadingId === viewingStudent.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+                    Ajouter une photo
                   </Button>
+                  {activePhoto && !activePhoto.isProfile && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleSetProfile(activePhoto.id)}
+                      className="gap-1.5 h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold"
+                    >
+                      <Star className="w-3.5 h-3.5" /> Définir comme profil
+                    </Button>
+                  )}
                 </DialogFooter>
               )}
             </>
