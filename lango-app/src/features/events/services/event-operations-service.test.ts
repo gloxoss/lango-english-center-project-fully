@@ -199,15 +199,21 @@ describe.skipIf(!hasDb)('events operations service', () => {
     const { occurrence } = await makeEvent({ title: 'Lock Proof Event', capacity: 5 });
     const order: string[] = [];
 
+    let aLockedResolve!: () => void;
+    const aLockedPromise = new Promise<void>((resolve) => {
+      aLockedResolve = resolve;
+    });
+
     const txA = db.transaction(async (tx) => {
       await tx.select().from(eventOccurrences).where(eq(eventOccurrences.id, occurrence.id)).for('update');
       order.push('A-locked');
+      aLockedResolve();
       await new Promise(resolve => setTimeout(resolve, 300));
       order.push('A-commit');
     });
 
-    // Give A a head start so it acquires the lock first.
-    await new Promise(resolve => setTimeout(resolve, 50));
+    // Wait until A has definitively acquired the FOR UPDATE lock
+    await aLockedPromise;
 
     const txB = db.transaction(async (tx) => {
       order.push('B-attempt');

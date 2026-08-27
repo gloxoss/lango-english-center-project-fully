@@ -9,6 +9,7 @@ export type SubjectGradeInput = {
   subjectName: string;
   grade: number; // 0 to 20
   coefficient: number; // > 0
+  isExempt?: boolean; // If true, subject is excused/exempted and excluded from average
 };
 
 export type MentionType =
@@ -57,6 +58,7 @@ export function getMoroccanMention(average: number): MentionType {
 /**
  * Computes the General Weighted Average (Moyenne Générale) for a list of subject grades.
  * M = sum(Grade * Coefficient) / sum(Coefficient)
+ * Exempt subjects (isExempt: true) are omitted from both numerator and denominator.
  */
 export function calculateMoroccanAverage(subjects: SubjectGradeInput[]): CalculationResult {
   if (!subjects || subjects.length === 0) {
@@ -74,6 +76,10 @@ export function calculateMoroccanAverage(subjects: SubjectGradeInput[]): Calcula
   let totalCoefficients = 0;
 
   for (const item of subjects) {
+    if (item.isExempt) {
+      continue;
+    }
+
     if (!isValidGrade(item.grade)) {
       throw new Error(`Grade non valide pour ${item.subjectName}: ${item.grade}. Doit être entre 0 et 20.`);
     }
@@ -103,7 +109,52 @@ export function calculateMoroccanAverage(subjects: SubjectGradeInput[]): Calcula
 }
 
 /**
- * Calculates class rankings from a list of student averages.
+ * Aggregates term/semester averages into an annual general average.
+ */
+export function calculateAnnualAverage(
+  terms: Array<{ termName: string; average: number; weight?: number }>,
+): CalculationResult {
+  if (!terms || terms.length === 0) {
+    return {
+      generalAverage: 0,
+      totalWeightedScore: 0,
+      totalCoefficients: 0,
+      mention: 'Insuffisant',
+      status: 'Ajourné',
+      isPassing: false,
+    };
+  }
+
+  let totalWeightedScore = 0;
+  let totalWeights = 0;
+
+  for (const t of terms) {
+    if (!isValidGrade(t.average)) {
+      throw new Error(`Moyenne de terme non valide pour ${t.termName}: ${t.average}.`);
+    }
+    const weight = t.weight && t.weight > 0 ? t.weight : 1;
+    totalWeightedScore += t.average * weight;
+    totalWeights += weight;
+  }
+
+  const rawAverage = totalWeights > 0 ? totalWeightedScore / totalWeights : 0;
+  const generalAverage = Math.round((rawAverage + Number.EPSILON) * 100) / 100;
+  const isPassing = generalAverage >= 10.0;
+  const mention = getMoroccanMention(generalAverage);
+  const status: PassStatus = isPassing ? 'Admis' : 'Ajourné';
+
+  return {
+    generalAverage,
+    totalWeightedScore: Math.round((totalWeightedScore + Number.EPSILON) * 100) / 100,
+    totalCoefficients: totalWeights,
+    mention,
+    status,
+    isPassing,
+  };
+}
+
+/**
+ * Calculates class rankings from a list of student averages, handling ties (ex-aequo).
  */
 export function calculateClassRanks(
   students: Array<{ studentId: string; generalAverage: number }>,
@@ -111,10 +162,16 @@ export function calculateClassRanks(
   const sorted = [...students].sort((a, b) => b.generalAverage - a.generalAverage);
   const totalStudents = students.length;
 
-  return sorted.map((st, index) => ({
-    studentId: st.studentId,
-    generalAverage: st.generalAverage,
-    rank: index + 1,
-    totalStudents,
-  }));
+  let currentRank = 1;
+  return sorted.map((st, index) => {
+    if (index > 0 && st.generalAverage < sorted[index - 1]!.generalAverage) {
+      currentRank = index + 1;
+    }
+    return {
+      studentId: st.studentId,
+      generalAverage: st.generalAverage,
+      rank: currentRank,
+      totalStudents,
+    };
+  });
 }

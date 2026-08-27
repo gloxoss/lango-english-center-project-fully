@@ -3,6 +3,6 @@ import { LeadPipelineView } from '@/features/crm/ui/lead-pipeline-view';
 
 export default async function LeadPipelinePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'crm.manage' });
   return <LeadPipelineView locale={locale} />;
 }

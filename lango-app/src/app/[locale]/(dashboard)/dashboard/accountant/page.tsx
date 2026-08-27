@@ -6,6 +6,6 @@ import { AccountantPortalView } from '@/features/finance/ui/accountant-portal-vi
 // authenticated role is redirected.
 export default async function AccountantPortalPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['accountant', 'school_admin'], requiredCapability: 'finance.read' });
+  await requireServerPage(locale, { requiredCapability: 'finance.read' });
   return <AccountantPortalView />;
 }

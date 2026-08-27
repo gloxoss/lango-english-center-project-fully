@@ -3,6 +3,6 @@ import { LibraryReportsClient } from '@/features/library/ui/library-reports-clie
 
 export default async function LibrarianReportsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireLibraryPage(locale, { allowedRoles: ['librarian', 'school_admin', 'super_admin'], capability: 'library.report.read' });
+  await requireLibraryPage(locale, { capability: 'library.report.read' });
   return <LibraryReportsClient />;
 }

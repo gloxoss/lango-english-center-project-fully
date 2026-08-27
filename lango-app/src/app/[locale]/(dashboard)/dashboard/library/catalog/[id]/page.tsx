@@ -3,6 +3,6 @@ import { LibraryCatalogDetailClient } from '@/features/library/ui/library-catalo
 
 export default async function LibraryCatalogDetailPage(props: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await props.params;
-  await requireLibraryPage(locale, { allowedRoles: ['school_admin', 'super_admin', 'librarian'], capability: 'library.catalog.read' });
+  await requireLibraryPage(locale, { capability: 'library.catalog.read' });
   return <LibraryCatalogDetailClient recordId={id} />;
 }

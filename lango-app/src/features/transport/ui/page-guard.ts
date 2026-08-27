@@ -7,7 +7,7 @@ import type { PermissionKey } from '@/libs/api/permissions';
 
 export async function requireTransportPage(
   locale: string,
-  options: { allowedRoles: readonly AppRole[]; requiredCapability?: PermissionKey },
+  options: { allowedRoles?: readonly AppRole[]; requiredCapability?: PermissionKey },
 ) {
   const ctx = await requireServerPage(locale, options);
   if (ctx.tenantId) {

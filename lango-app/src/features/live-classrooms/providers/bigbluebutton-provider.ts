@@ -6,7 +6,7 @@
 // Until then this adapter is gated behind LIVE_BBB_URL / LIVE_BBB_SECRET:
 // validateConfiguration returns NOT_CONFIGURED when absent, and no operation
 // ever fabricates success.
-import { createHash } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import type {
   CancelRoomInput, CreateJoinTokenInput, CreateRoomInput, LiveClassProvider,
   NormalizedWebhookEvent, ProviderConfig, ProviderOperationResult, ProviderRawEvent,
@@ -184,14 +184,22 @@ const bigbluebuttonProvider: LiveClassProvider = {
     }
   },
 
-  verifyWebhook(headers: Record<string, string | undefined>, _body: unknown, secret: string): WebhookVerification {
-    // BBB's standard webhook plugin does not sign callbacks; we only accept a
-    // documented x-bbb-signature HMAC when a (per-profile) secret is
-    // configured. Otherwise the receipt records 'unsigned' and processing
-    // refuses to trust the body. BBB stays disabled/uncertified regardless.
+  verifyWebhook(headers: Record<string, string | undefined>, body: unknown, secret: string): WebhookVerification {
+    // BBB's standard webhook plugin does not sign callbacks; the documented
+    // x-bbb-signature HMAC (per-profile secret) is the only trusted shape.
+    // The header value must MATCH the computed HMAC — presence alone proves
+    // nothing (W4 fix: it previously verified on any non-empty header).
     if (!secret) return { valid: false, reason: 'unsupported' };
     const sig = headers['x-bbb-signature'];
     if (!sig) return { valid: false, reason: 'unsigned' };
+    const expected = createHmac('sha256', secret)
+      .update(typeof body === 'string' ? body : JSON.stringify(body))
+      .digest('hex');
+    const received = Buffer.from(sig);
+    const computed = Buffer.from(expected);
+    if (received.length !== computed.length || !timingSafeEqual(received, computed)) {
+      return { valid: false, reason: 'failed' };
+    }
     return { valid: true, reason: 'verified' };
   },
 

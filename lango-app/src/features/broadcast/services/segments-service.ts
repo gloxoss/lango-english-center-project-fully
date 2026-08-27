@@ -3,6 +3,7 @@ import { db } from '@/libs/DB';
 import { communicationSegments, guardians, inquiries, user } from '@/models/Schema';
 import type { communicationRecipientKind } from '../models/broadcast-schema';
 import { ApiError } from '@/libs/api/errors';
+import { maskContact } from './reports-service';
 
 export type RecipientKind = (typeof communicationRecipientKind.enumValues)[number];
 
@@ -292,4 +293,11 @@ export async function searchRecipients(tenantId: string, kind: RecipientKind, q:
     return sel(rows);
   }
   return [];
+}
+
+/** Strip raw contact details for surfaces gated by read-only keys: segment
+ *  pickers and previews need identity (name) but must not hand out an
+ *  exportable phone/email directory (W4 fix — mirrors the campaign CSV export). */
+export function maskRecipientContacts<T extends { phone: string | null; email: string | null }>(rows: T[]): T[] {
+  return rows.map((r) => ({ ...r, phone: maskContact('phone', r.phone), email: maskContact('email', r.email) }));
 }

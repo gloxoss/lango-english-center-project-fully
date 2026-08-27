@@ -1,5 +1,5 @@
-import { and, eq, ne, sql } from 'drizzle-orm';
 import type { NextRequest } from 'next/server';
+import { and, eq, ne, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
@@ -36,7 +36,20 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
 
     const [guardian] = await db
-      .select()
+      .select({
+        id: guardians.id,
+        firstName: guardians.firstName,
+        lastName: guardians.lastName,
+        phone: guardians.phone,
+        email: guardians.email,
+        address: guardians.address,
+        occupation: guardians.occupation,
+        defaultRelation: guardians.defaultRelation,
+        userId: guardians.userId,
+        emailOptIn: guardians.emailOptIn,
+        smsOptIn: guardians.smsOptIn,
+        preferredLanguage: guardians.preferredLanguage,
+      })
       .from(guardians)
       .where(and(eq(guardians.id, id), eq(guardians.tenantId, tenantId)))
       .limit(1);

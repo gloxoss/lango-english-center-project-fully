@@ -7,6 +7,6 @@ export default async function InvoiceDetailPage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
-  await requireServerPage(locale, { allowedRoles: ['accountant', 'school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'finance.read' });
   return <InvoiceDetailView locale={locale} invoiceId={id} />;
 }

@@ -7,7 +7,7 @@ export default async function EventDetailPage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'events.read' });
 
   return <EventAdminDetailView eventId={id} locale={locale} />;
 }

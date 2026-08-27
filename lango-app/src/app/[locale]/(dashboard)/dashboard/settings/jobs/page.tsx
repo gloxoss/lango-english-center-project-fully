@@ -7,6 +7,6 @@ export default async function JobsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'settings.jobs.manage' });
   return <JobsAuditView locale={locale} />;
 }

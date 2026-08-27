@@ -7,6 +7,6 @@ export default async function MigrationReadinessPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'settings.organization.manage' });
   return <MigrationReadinessCenterView locale={locale} />;
 }

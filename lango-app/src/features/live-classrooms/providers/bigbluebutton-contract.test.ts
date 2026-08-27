@@ -3,6 +3,7 @@
 // it must fail closed (never fabricate success) while LIVE_BBB_URL / LIVE_BBB_SECRET
 // are absent, and its pure surfaces (webhook verification, event normalization,
 // capability flags) must obey the provider-neutral contract exactly.
+import { createHmac } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import bigbluebuttonProvider, { bbbCapabilities } from './bigbluebutton-provider';
 import { isProviderFailure } from './types';
@@ -67,13 +68,17 @@ describe('bigbluebutton provider (contract conformance, uncertified)', () => {
     expect(await bigbluebuttonProvider.syncEvents('schoolos-s1')).toEqual([]);
   });
 
-  it('verifyWebhook requires a per-profile secret and a signature', () => {
+  it('verifyWebhook requires a per-profile secret and a MATCHING signature', () => {
     // No configured secret → unsupported (never trust an unverifiable delivery).
     expect(bigbluebuttonProvider.verifyWebhook({}, {}, '').reason).toBe('unsupported');
     // Secret present but no signature header → unsigned.
     expect(bigbluebuttonProvider.verifyWebhook({}, {}, 'secret').reason).toBe('unsigned');
-    // Secret + signature → verified.
-    expect(bigbluebuttonProvider.verifyWebhook({ 'x-bbb-signature': 'sig' }, {}, 'secret').reason).toBe('verified');
+    // Secret + signature → verified ONLY when the value matches the HMAC
+    // (W4 fix: any non-empty header used to be accepted).
+    const body = { eventName: 'participant.join' };
+    const hmac = createHmac('sha256', 'secret').update(JSON.stringify(body)).digest('hex');
+    expect(bigbluebuttonProvider.verifyWebhook({ 'x-bbb-signature': 'sig' }, body, 'secret').reason).toBe('failed');
+    expect(bigbluebuttonProvider.verifyWebhook({ 'x-bbb-signature': hmac }, body, 'secret').reason).toBe('verified');
   });
 
   it('normalizeWebhook maps BBB event names onto the provider-neutral event types', () => {

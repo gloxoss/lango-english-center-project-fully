@@ -7,6 +7,6 @@ export default async function ScannerDevicesSettingsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'settings.attendance.manage' });
   return <ScannerDevicesView />;
 }

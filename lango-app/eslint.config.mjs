@@ -8,6 +8,7 @@ export default antfu(
     react: true,
     nextjs: true,
     typescript: true,
+    markdown: false,
 
     // Configuration preferences
     lessOpinionated: true,
@@ -32,6 +33,14 @@ export default antfu(
       '.alchemy/**/*',
       'migrations/**/*',
       'public/**/*',
+      '.ultraplan/**/*',
+      'docs/**/*',
+      'scratch/**/*',
+      '*.json',
+      '*.yml',
+      '*.yaml',
+      '*.js',
+      '**/*.md',
     ],
   },
   // --- Tailwind CSS Rules ---

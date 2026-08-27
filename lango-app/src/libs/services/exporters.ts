@@ -18,9 +18,13 @@ export type Exporter = (
   requestedBy: string,
 ) => Promise<string>;
 
-/** Quote a CSV field: double the quotes, wrap in quotes. Handles commas and newlines. */
+/** Quote and sanitize a CSV field: prefixes formula triggers (=, +, -, @, \t, \r) with ' and doubles quotes. */
 function csvCell(value: unknown): string {
-  return `"${String(value ?? '').replace(/"/g, '""')}"`;
+  let str = String(value ?? '');
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = `'${str}`;
+  }
+  return `"${str.replace(/"/g, '""')}"`;
 }
 
 export function toCsv(headers: string[], rows: unknown[][]): string {

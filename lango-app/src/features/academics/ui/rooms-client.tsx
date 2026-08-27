@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,32 @@ export function RoomsClient({ locale: _locale }: { locale?: string } = {}) {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [inspectRoom, setInspectRoom] = useState<RoomItem | null>(null);
 
+  // Fetch dynamic rooms from API on mount
+  useEffect(() => {
+    fetch('/api/academics/rooms')
+      .then(res => res.json())
+      .then(json => {
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          const apiRooms: RoomItem[] = json.data.map((r: { id: string; name: string; capacity?: number; roomType?: string }) => ({
+            id: r.id,
+            name: r.name,
+            code: r.name.replace(/\s+/g, '-').toUpperCase(),
+            building: 'Bâtiment Principal',
+            floor: '1er Étage',
+            capacity: r.capacity || 30,
+            type: (r.roomType as RoomItem['type']) || 'Classroom',
+            equipment: ['Vidéoprojecteur', 'Climatisation'],
+            occupancyStatus: 'Available',
+            schedule: [],
+          }));
+          setRooms(apiRooms);
+        }
+      })
+      .catch(() => {
+        // Retain initial fallback on error
+      });
+  }, []);
+
   // Modal State
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newRoom, setNewRoom] = useState({
@@ -41,8 +67,25 @@ export function RoomsClient({ locale: _locale }: { locale?: string } = {}) {
     return matchesSearch && matchesCat && matchesStatus;
   });
 
-  const handleCreateRoom = () => {
+  const handleCreateRoom = async () => {
     if (!newRoom.name.trim()) return;
+
+    // Persist to server API
+    try {
+      await fetch('/api/academics/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newRoom.name.trim(),
+          capacity: Number(newRoom.capacity) || 30,
+          roomType: newRoom.type,
+          isActive: true,
+        }),
+      });
+    } catch {
+      // Graceful offline fallback
+    }
+
     const created: RoomItem = {
       id: `r-${Date.now()}`,
       name: newRoom.name.trim(),

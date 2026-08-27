@@ -6,7 +6,9 @@ import { applyStocktakeAdjustments } from '@/features/library/services/library-o
 
 export async function POST(r: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { tenantId, context } = await requireLibraryContext(r, 'library.stocktake.manage');
+    // Approval-key gate: committing adjustments is the checker step, reserved
+    // to school_admin — NOT the librarian-held stocktake.manage (W4 fix).
+    const { tenantId, context } = await requireLibraryContext(r, 'library.stocktake.approve');
     const { id } = await params;
     const data = await applyStocktakeAdjustments(tenantId, context.userId, id);
     recordAudit(context, 'update', 'library_stocktake', id, { action: 'apply_adjustments', applied: data.length });

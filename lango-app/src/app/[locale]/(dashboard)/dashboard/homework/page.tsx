@@ -8,6 +8,6 @@ import { HomeworkView } from '@/features/homework/ui/homework-view';
 // any logged-in student.
 export default async function HomeworkPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['teacher', 'school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'grading.manage' });
   return <HomeworkView />;
 }

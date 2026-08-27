@@ -1,5 +1,6 @@
 import { and, count, desc, eq, gte, ilike, inArray, or } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { assertStudentCapacity } from '@/features/subscriptions/services/plan-limits-service';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
@@ -8,7 +9,6 @@ import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, studentCreateSchema, studentUpdateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { reserveMatricule } from '@/libs/services/matricule';
-import { assertStudentCapacity } from '@/features/subscriptions/services/plan-limits-service';
 import { academicYears, attendance, classes, classSections, guardians, guardianStudents, invoices, payments, sections, user } from '@/models/Schema';
 import { toDbStatus, toUiStatus } from '@/models/userMapping';
 
@@ -169,19 +169,14 @@ export async function GET(request: Request) {
       if (!detail) {
         return NextResponse.json({ success: false, message: 'Élève non trouvé' }, { status: 404 });
       }
-      // accountant has students.read for billing/collection lookups, not
-      // academic data - attendance is the one field here that crosses that
-      // line (payments/balanceDue are billing-relevant, guardians are needed
-      // for guardian routing, neither of those has an academic/medical concept).
+      // Per-role field redaction: nationalId/bloodGroup/address are admin-only PII.
+      // Accountant loses attendance (academic); teacher loses payments/balanceDue (finance).
       if (context.role === 'accountant') {
-        const { attendance: _attendance, ...billingSafeDetail } = detail;
+        const { attendance: _att, nationalId: _nid, bloodGroup: _bg, address: _addr, ...billingSafeDetail } = detail;
         return NextResponse.json({ success: true, data: billingSafeDetail });
       }
-      // teacher has students.read for roster/attendance lookups, not
-      // finance.read - the mirror image of the accountant case above:
-      // payments/balanceDue are billing-only and must not ride along.
       if (context.role === 'teacher') {
-        const { payments: _payments, balanceDue: _balanceDue, ...academicSafeDetail } = detail;
+        const { payments: _pay, balanceDue: _bal, nationalId: _nid, bloodGroup: _bg, address: _addr, ...academicSafeDetail } = detail;
         return NextResponse.json({ success: true, data: academicSafeDetail });
       }
       return NextResponse.json({ success: true, data: detail });

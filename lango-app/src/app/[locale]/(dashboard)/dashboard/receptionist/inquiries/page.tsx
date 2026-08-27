@@ -7,9 +7,6 @@ export default async function ReceptionistInquiriesPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, {
-    allowedRoles: ['receptionist', 'school_admin', 'super_admin'],
-    requiredCapability: 'reception.inquiry.manage',
-  });
+  await requireServerPage(locale, { requiredCapability: 'reception.inquiry.manage' });
   return <ReceptionInquiriesView />;
 }

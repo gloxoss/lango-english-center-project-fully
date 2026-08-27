@@ -7,9 +7,6 @@ export default async function AnalyticsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, {
-    allowedRoles: ['school_admin'],
-    requiredCapability: 'analytics.read',
-  });
+  await requireServerPage(locale, { requiredCapability: 'analytics.read' });
   return <LeadershipPortalView />;
 }

@@ -8,6 +8,6 @@ export const metadata = {
 
 export default async function InventoryTransfersPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'inventory.adjust.manage' });
   return <TransfersView />;
 }

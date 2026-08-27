@@ -1,5 +1,6 @@
 import type { RequestContext } from './context';
 import { db } from '@/libs/DB';
+import { logger } from '@/libs/logger';
 import { auditLogs } from '@/models/Schema';
 
 type AuditAction =
@@ -36,6 +37,6 @@ export function recordAudit(
       metadata,
     })
     .catch((err) => {
-      console.error('Failed to record audit log', { action, entityType, entityId, err });
+      logger.error({ err, action, entityType, entityId }, 'Failed to record audit log');
     });
 }

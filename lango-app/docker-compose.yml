@@ -52,6 +52,10 @@ services:
       STRIPE_PLATFORM_SECRET_KEY: ${STRIPE_PLATFORM_SECRET_KEY:-}
       STRIPE_PLATFORM_WEBHOOK_SECRET: ${STRIPE_PLATFORM_WEBHOOK_SECRET:-}
       STRIPE_PLATFORM_PRICE_ID: ${STRIPE_PLATFORM_PRICE_ID:-}
+      # T8/D-11: sentry.{client,server,edge}.config.ts read this and no-op if
+      # unset - safe to leave blank until an owner provisions a Sentry project.
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
       CLAMAV_HOST: clamav
       CLAMAV_PORT: "3310"
     volumes:

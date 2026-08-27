@@ -7,6 +7,6 @@ export default async function ClassesPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { requiredCapability: 'academics.read' });
+  await requireServerPage(locale, { requiredCapability: 'academics.manage' });
   return <ClassesView locale={locale} />;
 }

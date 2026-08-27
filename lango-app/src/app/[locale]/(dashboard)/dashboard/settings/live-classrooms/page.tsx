@@ -8,10 +8,7 @@ export default async function LiveClassroomsSettingsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
-  await requireLivePage(locale, {
-    allowedRoles: ['school_admin', 'super_admin'],
-    requiredCapability: 'live.providers.manage',
-  });
+  await requireServerPage(locale, { requiredCapability: 'live.providers.manage' });
+  await requireLivePage(locale, { requiredCapability: 'live.providers.manage' });
   return <ProvidersSettingsClient />;
 }

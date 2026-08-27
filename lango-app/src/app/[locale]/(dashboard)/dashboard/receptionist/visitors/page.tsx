@@ -7,9 +7,6 @@ export default async function ReceptionistVisitorsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, {
-    allowedRoles: ['receptionist', 'school_admin', 'super_admin'],
-    requiredCapability: 'reception.visitor.manage',
-  });
+  await requireServerPage(locale, { requiredCapability: 'reception.visitor.manage' });
   return <ReceptionVisitorsView />;
 }

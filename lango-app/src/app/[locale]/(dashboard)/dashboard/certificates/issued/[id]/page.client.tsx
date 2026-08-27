@@ -33,7 +33,7 @@ type Detail = {
   recipientId: string;
   serialNumber: string;
   status: 'valid' | 'replaced' | 'revoked';
-  evidenceSnapshot: unknown;
+  evidenceSnapshot?: unknown;
   issuedBy: string;
   issuedAt: string;
   definitionTitle: string;

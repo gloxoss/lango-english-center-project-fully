@@ -3,6 +3,6 @@ import { LibraryTaxonomyClient } from '@/features/library/ui/library-taxonomy-cl
 
 export default async function LibraryTaxonomyPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireLibraryPage(locale, { allowedRoles: ['librarian', 'school_admin', 'super_admin'], capability: 'library.catalog.read' });
+  await requireLibraryPage(locale, { capability: 'library.catalog.read' });
   return <LibraryTaxonomyClient />;
 }

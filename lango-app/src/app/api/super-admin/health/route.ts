@@ -1,3 +1,4 @@
+import { logger } from '@/libs/logger';
 import { eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { listAddonDefinitions } from '@/libs/api/addon-catalog';
@@ -73,7 +74,7 @@ export async function GET(request: Request) {
     } catch (err) {
       // The endpoint still answers; `database.connected` stays false and the
       // client renders the degraded state instead of throwing.
-      console.error('Health metrics query failed', err);
+      logger.error({ err }, 'Health metrics query failed');
     }
 
     return NextResponse.json({

@@ -1,3 +1,4 @@
+import { logger } from '@/libs/logger';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
         recordAudit(context, 'create', 'teacher', inserted!.id, { source: 'import', line });
         results.push({ line, status: 'inserted', id: inserted!.id });
       } catch (err) {
-        console.error('Teacher import row failed', { line, err });
+        logger.error({ err, line }, 'Teacher import row failed');
         results.push({ line, status: 'error', message: 'Échec de l\'insertion (email en doublon ou donnée invalide).' });
       }
     }

@@ -26,10 +26,20 @@ export async function GET(request: Request) {
       .where(and(...conditions))
       .orderBy(desc(issuedDocuments.issuedAt));
 
-    const data = rows.map(row => ({
-      ...row,
-      subjectName: (row.renderDataSnapshot as any)?.subjectName ?? '',
-    }));
+    const data = rows.map(row => {
+      const doc = {
+        ...row,
+        subjectName: (row.renderDataSnapshot as any)?.subjectName ?? '',
+      };
+      // teacher/receptionist can issue cards but must not read the render
+      // snapshot (DOB/NID/blood group/guardian) or the token hash off the
+      // list — those are admin-only PII.
+      if (context.role === 'teacher' || context.role === 'receptionist') {
+        const { renderDataSnapshot: _snapshot, publicTokenHash: _tokenHash, ...safe } = doc;
+        return safe;
+      }
+      return doc;
+    });
 
     return NextResponse.json({ success: true, data });
   } catch (error) {

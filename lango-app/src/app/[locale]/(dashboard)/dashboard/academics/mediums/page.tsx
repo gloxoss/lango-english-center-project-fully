@@ -7,6 +7,6 @@ export default async function MediumsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'academics.manage' });
   return <MediumsView locale={locale} />;
 }

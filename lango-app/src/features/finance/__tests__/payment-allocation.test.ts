@@ -169,7 +169,7 @@ describe.skipIf(!hasDb)('payment allocations (Phase D)', () => {
     expect(first.status).toBe(200);
     const j1 = await first.json();
     expect(j1.idempotent).toBeUndefined();
-    const receiptCountBefore = (await db.select().from(receipts)).length;
+    const receiptCountBefore = (await db.select().from(receipts).where(eq(receipts.tenantId, tenantId))).length;
 
     const second = await postPayment(body);
     expect(second.status).toBe(200);
@@ -178,7 +178,7 @@ describe.skipIf(!hasDb)('payment allocations (Phase D)', () => {
     expect(j2.data.payment.id).toBe(j1.data.payment.id);
     expect(j2.data.receipt).toBeNull();
 
-    const receiptsNow = await db.select().from(receipts);
+    const receiptsNow = await db.select().from(receipts).where(eq(receipts.tenantId, tenantId));
     expect(receiptsNow).toHaveLength(receiptCountBefore);
   });
 

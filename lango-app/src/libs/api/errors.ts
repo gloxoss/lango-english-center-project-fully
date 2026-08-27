@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
+import { logger } from '@/libs/logger';
 
 export class ApiError extends Error {
   constructor(
@@ -52,7 +53,7 @@ export function apiErrorResponse(error: unknown): NextResponse {
     }
   }
 
-  console.error('Unhandled API error', error);
+  logger.error({ err: error }, 'Unhandled API error');
   return NextResponse.json(
     {
       success: false,

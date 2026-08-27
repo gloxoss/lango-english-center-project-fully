@@ -27,6 +27,22 @@ const reviewExcuseSchema = z.object({
   { message: 'Un motif de refus est requis.', path: ['rejectionReason'] },
 );
 
+// A parent's own children, resolved server-side from the guardianStudents
+// relationship - never trust a client-supplied studentId for this role.
+async function getGuardianChildIds(tenantId: string, guardianUserId: string): Promise<string[]> {
+  const [guardian] = await db
+    .select({ id: guardians.id })
+    .from(guardians)
+    .where(and(eq(guardians.tenantId, tenantId), eq(guardians.userId, guardianUserId)))
+    .limit(1);
+  if (!guardian) return [];
+  const links = await db
+    .select({ studentId: guardianStudents.studentId })
+    .from(guardianStudents)
+    .where(and(eq(guardianStudents.tenantId, tenantId), eq(guardianStudents.guardianId, guardian.id)));
+  return links.map(l => l.studentId);
+}
+
 export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'teacher', 'student', 'parent']);
@@ -39,6 +55,22 @@ export async function GET(request: Request) {
 
     if (context.role === 'student') {
       conditions.push(eq(attendanceExcuses.studentId, context.userId));
+    } else if (context.role === 'parent') {
+      // D-13 fix: a parent must never see another family's excuses - scope
+      // strictly to their own linked children (studentIdParam, if given,
+      // must be one of them; otherwise default to all of them, not the
+      // whole tenant).
+      const childIds = await getGuardianChildIds(tenantId, context.userId);
+      if (studentIdParam) {
+        if (!childIds.includes(studentIdParam)) {
+          return NextResponse.json({ success: true, data: [] });
+        }
+        conditions.push(eq(attendanceExcuses.studentId, studentIdParam));
+      } else if (childIds.length > 0) {
+        conditions.push(inArray(attendanceExcuses.studentId, childIds));
+      } else {
+        return NextResponse.json({ success: true, data: [] });
+      }
     } else if (studentIdParam) {
       conditions.push(eq(attendanceExcuses.studentId, studentIdParam));
     }
@@ -118,8 +150,25 @@ export async function POST(request: Request) {
     const tenantId = requireTenant(context);
     const body = await parseJson(request, createExcuseSchema);
 
-    // If role is student, enforce studentId is context.userId
-    const targetStudentId = context.role === 'student' ? context.userId : body.studentId;
+    // If role is student, enforce studentId is context.userId. If role is
+    // parent, the target must be one of their own linked children (D-13:
+    // previously any parent could submit an excuse for any studentId in the
+    // tenant with zero relationship check).
+    let targetStudentId: string;
+    if (context.role === 'student') {
+      targetStudentId = context.userId;
+    } else if (context.role === 'parent') {
+      const childIds = await getGuardianChildIds(tenantId, context.userId);
+      if (!childIds.includes(body.studentId)) {
+        return NextResponse.json(
+          { success: false, error: { code: 'FORBIDDEN', message: 'Cet élève n\'est pas lié à votre compte.' } },
+          { status: 403 },
+        );
+      }
+      targetStudentId = body.studentId;
+    } else {
+      targetStudentId = body.studentId;
+    }
 
     const [inserted] = await db
       .insert(attendanceExcuses)

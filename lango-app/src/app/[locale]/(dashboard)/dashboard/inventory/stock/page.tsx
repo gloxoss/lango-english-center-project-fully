@@ -8,6 +8,6 @@ export const metadata = {
 
 export default async function InventoryStockPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'inventory.read' });
   return <StockView />;
 }

@@ -7,6 +7,6 @@ export default async function EntitlementsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'settings.read' });
   return <EntitlementsCatalogView locale={locale} />;
 }

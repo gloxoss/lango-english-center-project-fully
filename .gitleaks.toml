@@ -1,0 +1,24 @@
+# Gitleaks configuration — extends the default rule set (useDefault).
+# The allowlist below contains ONLY verified false positives, each justified
+# inline (W7, verified 2026-08-27 by inspecting every hit). A secret matching
+# default rules in ANY other path still fails the pipeline.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Verified false positives: test fixtures, idempotency keys, doc examples"
+paths = [
+  # 'whsec_test_secret_1234567890' — hardcoded Stripe webhook TEST fixture; the
+  # assertions build signatures with it locally and never contact Stripe.
+  '''lango-app/src/libs/payments/stripe-provider\.test\.ts''',
+  # 'whsec_0123456789abcdef…' — fixture asserting secret-masking behaviour.
+  '''lango-app/src/features/settings/__tests__/secrets\.test\.ts''',
+  # 'idempotencyKey: fee-0098-a-12345678' — accounting replay-test keys, not credentials.
+  '''lango-app/scripts/verify-accounting-0098\.mjs''',
+  # Design doc containing example key formats only.
+  '''lango-app/future-implementation/lead-crm-and-broadcast-messaging/BULK-SMS-EMAIL-ADDENDUM\.md''',
+  # Wave handoff notes that quote a placeholder secret from a .env repair
+  # instruction ('my-secret-key-1234567890'); .env itself is not tracked.
+  '''AGENT-HANDOFF\.md''',
+  '''AGENT-TASK-LOG\.md''',
+]

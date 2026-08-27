@@ -3,6 +3,6 @@ import { redirect } from 'next/navigation';
 
 export default async function OldEventsCalendarPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'communication.send' });
   redirect(`/${locale}/dashboard/events`);
 }

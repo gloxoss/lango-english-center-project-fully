@@ -8,6 +8,6 @@ export const metadata = {
 
 export default async function HrEmployeeProfilePage({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'hr.manage' });
   return <EmployeeProfileView employeeId={id} />;
 }

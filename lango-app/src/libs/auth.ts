@@ -9,6 +9,7 @@ import { captureSignInLoginEvent } from '@/features/settings/services/login-even
 import { scopeSignInToTenant } from '@/libs/auth/tenant-scope';
 import { listApprovedDomains } from '@/features/platform/services/domains-service';
 import { db } from '@/libs/DB';
+import { logger } from '@/libs/logger';
 import { serverEnv } from '@/libs/env/server';
 import * as schema from '@/models/Schema';
 
@@ -90,7 +91,8 @@ export const auth = betterAuth({
         sendOTP: async ({ user, otp }) => {
           const tenantId = (user as { tenantId?: string | null }).tenantId ?? null;
           if (process.env.NODE_ENV !== 'production') {
-            console.log(`[2FA OTP] user=${user.id} email=${user.email} (dispatched)`);
+            // `email` is a redacted key in the logger config (Law 09-08).
+            logger.info({ event: '2fa_otp_dispatched', userId: user.id, email: user.email });
           }
           const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
           await db

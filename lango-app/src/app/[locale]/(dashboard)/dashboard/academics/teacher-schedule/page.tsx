@@ -9,7 +9,7 @@ export default async function TeacherSchedulePage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin', 'teacher'] });
+  await requireServerPage(locale, { requiredCapability: 'academics.read' });
   const session = await auth.api.getSession({ headers: await headers() });
   const isTeacher = session?.user?.role === 'teacher';
   return <TeacherScheduleView locale={locale} isTeacher={isTeacher} />;

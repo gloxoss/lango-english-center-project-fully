@@ -11,6 +11,7 @@ import {
 } from '@/models/Schema';
 import { ApiError } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
+import { maskContact } from './reports-service';
 import type { broadcastChannel } from '../models/broadcast-schema';
 
 type Channel = (typeof broadcastChannel.enumValues)[number];
@@ -20,8 +21,9 @@ export function recipientPublic(r: typeof communicationCampaignRecipients.$infer
     id: r.id,
     recipientKind: r.recipientKind,
     contactName: r.contactName,
-    phone: r.phone,
-    email: r.email,
+    // Drill-down runs behind broadcast.read; raw contacts stay export-only.
+    phone: maskContact('phone', r.phone),
+    email: maskContact('email', r.email),
     status: r.status,
     skipReason: r.skipReason,
     createdAt: r.createdAt,

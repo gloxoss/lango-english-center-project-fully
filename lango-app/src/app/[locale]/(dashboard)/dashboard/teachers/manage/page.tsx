@@ -7,6 +7,6 @@ export default async function TeachersManagePage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'teachers.read' });
   return <TeachersManageView locale={locale} />;
 }

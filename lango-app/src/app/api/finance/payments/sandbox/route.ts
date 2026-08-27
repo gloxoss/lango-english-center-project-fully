@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     const existingPayments = await db
       .select({ amount: payments.amount })
       .from(payments)
-      .where(eq(payments.invoiceId, body.invoiceId));
+      .where(and(eq(payments.invoiceId, body.invoiceId), eq(payments.tenantId, tenantId)));
 
     const totalPaid = existingPayments.reduce((sum, p) => sum + p.amount, 0);
     const invoiceTotal = Number(invoice.netAmount);
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
         status: newStatus,
         updatedAt: new Date().toISOString(),
       })
-      .where(eq(invoices.id, body.invoiceId));
+      .where(and(eq(invoices.id, body.invoiceId), eq(invoices.tenantId, tenantId)));
 
     await recordAudit(context, 'create', 'sandbox_payment', newPayment!.id, {
       gateway: body.gateway,

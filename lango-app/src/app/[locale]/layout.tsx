@@ -1,7 +1,15 @@
+import { NextIntlClientProvider } from 'next-intl';
 import { LocaleProvider } from '@/features/marketing/context/locale-context';
 import { AppProviders } from '@/providers';
+// W9: feed the locale bundles into the render tree. Before this, next-intl was
+// installed but never wired — no provider, no messages — so /ar rendered RTL
+// with hardcoded French. Client components can now useTranslations('Namespace').
+import messagesFr from '../../../locales/fr.json';
+import messagesAr from '../../../locales/ar.json';
 import '../../../public/assets/css/fonts.css';
 import '../globals.css';
+
+const MESSAGES = { fr: messagesFr, ar: messagesAr } as const;
 
 // Cairo loads at runtime via the Google Fonts @import in globals.css (same
 // delivery as Albert Sans / Geist). It is intentionally NOT imported via
@@ -31,9 +39,11 @@ export default async function RootLocaleLayout({
     >
       <body className="min-h-screen bg-[#F8FAFC] text-slate-900 antialiased">
         <AppProviders>
-          <LocaleProvider initialLocale={validLocale}>
-            {children}
-          </LocaleProvider>
+          <NextIntlClientProvider locale={validLocale} messages={MESSAGES[validLocale]}>
+            <LocaleProvider initialLocale={validLocale}>
+              {children}
+            </LocaleProvider>
+          </NextIntlClientProvider>
         </AppProviders>
       </body>
     </html>

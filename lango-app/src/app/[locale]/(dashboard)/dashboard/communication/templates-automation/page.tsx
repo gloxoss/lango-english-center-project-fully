@@ -3,6 +3,6 @@ import { TemplatesAutomationView } from '@/features/crm/ui/templates-automation-
 
 export default async function TemplatesAutomationPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'communication.send' });
   return <TemplatesAutomationView locale={locale} />;
 }

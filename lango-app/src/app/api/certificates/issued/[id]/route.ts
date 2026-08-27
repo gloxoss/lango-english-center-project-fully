@@ -55,17 +55,24 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       ))
       .orderBy(asc(certificateEvents.createdAt));
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        ...row.certificate,
-        definitionTitle: row.definitionTitle,
-        definitionAllowedTargetType: row.definitionAllowedTargetType,
-        recipientName: row.recipientName,
-        versionNumber: row.versionNumber,
-        events,
-      },
-    });
+    const detail = {
+      ...row.certificate,
+      definitionTitle: row.definitionTitle,
+      definitionAllowedTargetType: row.definitionAllowedTargetType,
+      recipientName: row.recipientName,
+      versionNumber: row.versionNumber,
+      events,
+    };
+
+    // teacher/receptionist can issue certificates but must not read the
+    // eligibility evidence snapshot or the verification-token hash — those are
+    // admin-only (evidence holds internal notes / grading / attendance figures).
+    if (context.role === 'teacher' || context.role === 'receptionist') {
+      const { evidenceSnapshot: _evidence, verificationTokenHash: _tokenHash, ...safe } = detail;
+      return NextResponse.json({ success: true, data: safe });
+    }
+
+    return NextResponse.json({ success: true, data: detail });
   } catch (error) {
     return apiErrorResponse(error);
   }

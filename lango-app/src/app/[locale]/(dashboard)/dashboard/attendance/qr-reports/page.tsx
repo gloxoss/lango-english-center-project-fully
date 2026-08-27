@@ -12,7 +12,7 @@ export default async function QrReportsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'attendance.read' });
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-8">
       <QrReportsView />

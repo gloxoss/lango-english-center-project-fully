@@ -1,5 +1,13 @@
-import path from 'node:path';
 import type { NextConfig } from 'next';
+import path from 'node:path';
+import createNextIntlPlugin from 'next-intl/plugin';
+
+// W9: without this plugin, next-intl's build alias for the request config
+// (src/i18n/request.ts) never exists, so any server render touching
+// NextIntlClientProvider throws "Couldn't find next-intl config file" —
+// verified 2026-08-27: /fr/login, /ar/login, /en/login all 500ed with the
+// request config present but the plugin absent.
+const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {
   // Pin the Turbopack root to this project directory. Without this, Next.js's
@@ -59,4 +67,4 @@ const nextConfig: NextConfig = {
   ],
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

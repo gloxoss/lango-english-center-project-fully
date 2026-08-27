@@ -1,3 +1,4 @@
+import { logger } from '@/libs/logger';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
         recordAudit(context, 'create', 'student', inserted!.id, { source: 'import', line });
         results.push({ line, status: 'inserted', id: inserted!.id });
       } catch (err) {
-        console.error('Import row failed', { line, err });
+        logger.error({ err, line }, 'Import row failed');
         results.push({ line, status: 'error', message: 'Échec de l\'insertion (email en doublon ou donnée invalide).' });
       }
     }

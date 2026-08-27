@@ -14,7 +14,7 @@ export default async function PaymentEntryPage({
   searchParams: Promise<{ studentId?: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['accountant', 'school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'finance.manage' });
   const { studentId } = await searchParams;
   const query = studentId ? `?studentId=${encodeURIComponent(studentId)}` : '';
   redirect(`/${locale}/dashboard/finance/collection-desk${query}`);

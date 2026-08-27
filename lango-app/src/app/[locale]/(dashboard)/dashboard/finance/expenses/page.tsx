@@ -7,6 +7,6 @@ export default async function ExpensesPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['accountant', 'school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'finance.read' });
   return <ExpensesManagementView />;
 }

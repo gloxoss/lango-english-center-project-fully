@@ -8,11 +8,8 @@ import { classes, classSections, classSubjects, liveClassProviderProfiles, secti
 
 export default async function LiveClassCreatePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['teacher', 'school_admin', 'super_admin'] });
-  const ctx = await requireLivePage(locale, {
-    allowedRoles: ['school_admin', 'super_admin', 'teacher'],
-    requiredCapability: 'live.manage',
-  });
+  await requireServerPage(locale, { requiredCapability: 'live.manage' });
+  const ctx = await requireLivePage(locale, { requiredCapability: 'live.manage' });
   const tenantId = ctx.tenantId!;
 
   // A teacher may only schedule for their own assigned class sections.

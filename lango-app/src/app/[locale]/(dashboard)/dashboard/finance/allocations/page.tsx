@@ -6,6 +6,6 @@ import { FeeAllocationsView } from '@/features/finance/ui/fee-allocations-view';
 // this page; the class-billing-status screen stays at /finance/allocation.
 export default async function FeeAllocationsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'accountant'], requiredCapability: 'finance.manage' });
+  await requireServerPage(locale, { requiredCapability: 'finance.manage' });
   return <FeeAllocationsView />;
 }

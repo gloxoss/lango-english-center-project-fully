@@ -6,6 +6,6 @@ import { PaymentMethodsView } from '@/features/finance/ui/payment-methods-view';
 // reach this page.
 export default async function PaymentMethodsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'accountant'], requiredCapability: 'finance.manage' });
+  await requireServerPage(locale, { requiredCapability: 'finance.manage' });
   return <PaymentMethodsView />;
 }

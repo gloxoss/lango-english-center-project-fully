@@ -15,8 +15,10 @@ export default defineConfig<ChromaticConfig>({
   testDir: './tests',
   // Look for files with the .integ.js or .e2e.js extension
   testMatch: '*.@(integ|e2e).?(c|m)[jt]s?(x)',
-  // Timeout per test, test running locally are slower due to database connections with PGLite
-  timeout: 30 * 1000,
+  // Timeout per test. Dev-mode on-demand compilation of a dashboard page can
+  // exceed 30s on the first hit (verified 2026-08-27), so 60s locally; CI runs
+  // a production build where pages load fast.
+  timeout: 60 * 1000,
   // Fail the build on CI if you accidentally left test.only in the source code.
   forbidOnly: !!process.env.CI,
   // Reporter to use. See https://playwright.dev/docs/test-reporters
@@ -29,18 +31,26 @@ export default defineConfig<ChromaticConfig>({
 
   // Run your local dev server before starting the tests:
   // https://playwright.dev/docs/test-advanced#launching-a-development-web-server-during-the-tests
+  // W6: this used to boot a pglite-socket server via `--run '...'`, but that
+  // command never worked: pglite-socket's parseArgs rejects the split positional
+  // on Windows quoting (verified 2026-08-27 — the suite had never executed), and
+  // scripts/run-db-migrate.cjs referenced by db-server:* does not exist. The
+  // suite now uses DATABASE_URL directly: the local dev DB (docker schoolos-db,
+  // migrated + seeded) locally, and the CI job's Postgres service in CI.
   webServer: {
-    command: process.env.CI
-      ? 'pglite-server -m 100 --run \'run-s db:migrate start\''
-      : 'pglite-server -m 100 --run \'run-s db:migrate dev:next\'',
+    command: process.env.CI ? 'run-s start' : 'run-s dev:next',
     url: baseURL,
-    timeout: 60 * 1000,
+    timeout: 180 * 1000,
     reuseExistingServer: !process.env.CI,
     gracefulShutdown: { signal: 'SIGTERM', timeout: 2 * 1000 },
     env: {
       BROWSER_TO_TERMINAL_DISABLED: 'true',
       NEXT_PUBLIC_SENTRY_DISABLED: 'true',
       NEXT_PUBLIC_APP_URL: baseURL,
+      // The webServer runs on PORT (3008), but .env pins BETTER_AUTH_URL to
+      // :3000 — better-auth then rejects the sign-in POST as INVALID_ORIGIN
+      // (verified 2026-08-27). Pin it to the test server origin instead.
+      BETTER_AUTH_URL: baseURL,
       PORT,
     },
   },

@@ -16,12 +16,15 @@ import {
   Sparkles,
   Users,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { authClient } from '@/libs/auth-client';
 
 export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, tenantData?: { name: string, logoUrl: string | null } }) {
   const router = useRouter();
   const pathname = usePathname();
   const locale = pathname.match(/^\/([a-z]{2})(\/|$)/)?.[1] ?? 'fr';
+  // W9: strings extracted to locales/{en,fr,ar}.json (namespace: Auth).
+  const t = useTranslations('Auth');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -53,7 +56,7 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
       });
 
       if (res.error) {
-        setError(res.error.message || 'Identifiants incorrects. Veuillez réessayer.');
+        setError(res.error.message || t('invalidCredentials'));
       } else if ((res.data as { twoFactorRedirect?: boolean } | null)?.twoFactorRedirect) {
         const d = res.data as { twoFactorMethods?: string[] } | null;
         setNeedsTwoFactor(true);
@@ -65,7 +68,7 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
         router.refresh();
       }
     } catch (err: any) {
-      setError(err?.message || 'Connexion impossible. Vérifiez votre réseau.');
+      setError(err?.message || t('networkError'));
     } finally {
       setLoading(false);
     }
@@ -89,13 +92,13 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
           : await authClient.twoFactor.verifyBackupCode({ code, trustDevice: rememberMe });
 
       if (res.error) {
-        setError(res.error.message || 'Code invalide. Veuillez réessayer.');
+        setError(res.error.message || t('invalidCode'));
       } else {
         router.push(`/${locale}/dashboard`);
         router.refresh();
       }
     } catch (err: any) {
-      setError(err?.message || 'Vérification impossible. Vérifiez votre réseau.');
+      setError(err?.message || t('verifyNetworkError'));
     } finally {
       setLoading(false);
     }
@@ -109,13 +112,13 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
     try {
       const res = await authClient.twoFactor.sendOtp();
       if (res.error) {
-        setError(res.error.message || 'Envoi du code impossible.');
+        setError(res.error.message || t('otpSendError'));
       } else {
         setEmailOtpRequested(true);
         setEmailOtpSent(true);
       }
     } catch {
-      setError('Envoi du code impossible. Vérifiez votre réseau.');
+      setError(t('otpSendNetworkError'));
     } finally {
       setLoading(false);
     }
@@ -129,7 +132,7 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
 
   const handleForgotPassword = () => {
     if (!email) {
-      setError('Veuillez saisir votre adresse e-mail ci-dessus puis cliquer à nouveau.');
+      setError(t('forgotEmailMissing'));
       return;
     }
     setForgotSent(true);
@@ -169,7 +172,7 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
                 {tenantData?.name || 'SchoolOS'}
               </span>
               <span className="block text-[10px] font-bold text-[#2487B8] uppercase tracking-widest">
-                {tenantData ? 'Espace Établissement' : 'Plateforme Scolaire Maroc'}
+                {tenantData ? t('tenantSpace') : t('platformTagline')}
               </span>
             </div>
           </div>
@@ -177,17 +180,15 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
           <div className="max-w-xl space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E4EDFD] border border-[#C3DAFB] text-xs font-bold text-[#2487B8]">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Système de Gestion d&apos;Établissement Nouvelle Génération</span>
+              <span>{t('heroBadge')}</span>
             </div>
 
             <h1 className="text-5xl xl:text-6xl font-extrabold text-[#16212B] leading-[1.1] tracking-tight">
-              Pilotez votre école, <br />
-              <span className="text-[#0066FF]">en toute simplicité.</span>
+              {t('heroTitle')}
             </h1>
 
             <p className="text-base text-slate-600 max-w-lg leading-relaxed">
-              La plateforme complète dédiée aux centres de langues et établissements scolaires au Maroc.
-              Gestion des élèves, présences, finances et conformité CNDP F211.
+              {t('heroDescription')}
             </p>
           </div>
         </div>
@@ -208,10 +209,10 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
             </div>
             <div>
               <p className="text-xs font-extrabold text-[#16212B]">
-                +500 Établissements & Centres Scolaires
+                {t('socialProof')}
               </p>
               <p className="text-[10px] font-bold text-[#2487B8] uppercase tracking-widest flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3" /> Conforme CNDP F211 Maroc
+                <ShieldCheck className="w-3 h-3" /> {t('complianceBadge')}
               </p>
             </div>
           </div>
@@ -236,26 +237,24 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
             </div>
             <div>
               <span className="text-lg font-black text-[#16212B]">{tenantData?.name || 'SchoolOS'}</span>
-              <span className="block text-[10px] font-bold text-[#2487B8] uppercase">
-                {tenantData ? 'Espace Établissement' : 'Plateforme Éducative'}
-              </span>
+              <span className="block text-[10px] font-bold text-[#2487B8] uppercase">{tenantData ? t('tenantSpace') : t('platformTagline')}</span>
             </div>
           </div>
 
           {/* Form Header */}
           <div>
             <h2 className="text-3xl font-extrabold text-[#16212B] tracking-tight mb-2">
-              Connexion
+              {t('loginTitle')}
             </h2>
             <p className="text-xs text-slate-500 font-medium">
-              Saisissez vos identifiants pour accéder à votre espace d&apos;administration.
+              {t('loginSubtitle')}
             </p>
           </div>
 
           {/* Success Notification */}
           {forgotSent && (
             <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold">
-              Si cette adresse e-mail existe, un lien de réinitialisation vous a été envoyé.
+              {t('forgotSentNotice')}
             </div>
           )}
 
@@ -273,7 +272,7 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
                 <form onSubmit={handleVerifyTwoFactor} className="space-y-4">
                   <div className="space-y-1.5">
                     <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700">
-                      Code de vérification
+                      {t('verifyCodeLabel')}
                     </label>
                     <div className="relative">
                       <ShieldCheck className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -290,7 +289,7 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
                       />
                     </div>
                     <p className="text-[11px] text-slate-500 font-medium">
-                      Saisissez le code à 6 chiffres de votre application d&apos;authentification, ou l&apos;un de vos codes de secours.
+                      {t('verifyCodeHelp')}
                     </p>
                   </div>
 
@@ -303,12 +302,12 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
                       ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Vérification...</span>
+                            <span>{t('verifying')}</span>
                           </>
                         )
                       : (
                           <>
-                            <span>Vérifier</span>
+                            <span>{t('verifyButton')}</span>
                             <ArrowRight className="w-4 h-4" />
                           </>
                         )}
@@ -316,7 +315,7 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
 
                   {emailOtpSent && (
                     <p className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 font-semibold">
-                      Un code à 6 chiffres a été envoyé à votre adresse e-mail. Saisissez-le ci-dessus.
+                      {t('otpSentNotice')}
                     </p>
                   )}
 
@@ -327,7 +326,7 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
                       disabled={loading}
                       className="w-full text-xs font-bold text-[#0066FF] hover:text-[#0052CC] transition-colors"
                     >
-                      {loading ? 'Envoi...' : 'Recevoir un code par e-mail'}
+                      {loading ? t('sending') : t('receiveEmailCode')}
                     </button>
                   )}
 
@@ -342,7 +341,7 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
                     }}
                     className="w-full text-xs font-bold text-slate-500 hover:text-[#0066FF] transition-colors"
                   >
-                    Retour à la connexion
+                    {t('backToLogin')}
                   </button>
                 </form>
               )
@@ -353,7 +352,7 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
             {/* Email Field */}
             <div className="space-y-1.5">
               <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700">
-                Adresse e-mail
+                {t('emailLabel')}
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -371,15 +370,15 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
             {/* Password Field */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700">
-                  Mot de passe
-                </label>
+              <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700">
+                {t('passwordLabel')}
+              </label>
                 <button
                   type="button"
                   onClick={handleForgotPassword}
                   className="text-xs font-bold text-[#0066FF] hover:text-[#0052CC] transition-colors"
                 >
-                  Mot de passe oublié ?
+                  {t('forgotPassword')}
                 </button>
               </div>
               <div className="relative">
@@ -416,7 +415,7 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
                 className="w-4 h-4 rounded border-slate-300 text-[#0066FF] focus:ring-[#0066FF]"
               />
               <label htmlFor="remember" className="text-xs font-semibold text-slate-600 cursor-pointer">
-                Se souvenir de moi sur cet appareil
+                {t('rememberDevice')}
               </label>
             </div>
 
@@ -429,11 +428,11 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Connexion en cours...</span>
+                  <span>{t('signInLoading')}</span>
                 </>
               ) : (
                 <>
-                  <span>Se connecter</span>
+                  <span>{t('signInButton')}</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -444,7 +443,7 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
           <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-2.5">
             <p className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
               <Users className="w-3.5 h-3.5 text-[#0066FF]" />
-              <span>Comptes de Démo (Clic rapide)</span>
+              <span>{t('demoAccountsTitle')}</span>
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <button
@@ -452,28 +451,28 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
                 onClick={() => handleDemoFill('y.elamrani@atlas.ma', 'Admin123!')}
                 className="px-2 py-1.5 bg-white border border-slate-200 hover:border-[#0066FF] hover:text-[#0066FF] rounded-lg text-[10px] font-bold text-slate-700 transition-colors text-center truncate"
               >
-                Directeur
+                {t('demoDirector')}
               </button>
               <button
                 type="button"
                 onClick={() => handleDemoFill('admin@lango.ma', 'Admin123!')}
                 className="px-2 py-1.5 bg-white border border-slate-200 hover:border-[#0066FF] hover:text-[#0066FF] rounded-lg text-[10px] font-bold text-slate-700 transition-colors text-center truncate"
               >
-                Admin Lango
+                {t('demoAdminLango')}
               </button>
               <button
                 type="button"
                 onClick={() => handleDemoFill('fz.idrissi@atlas.ma', 'Admin123!')}
                 className="px-2 py-1.5 bg-white border border-slate-200 hover:border-[#0066FF] hover:text-[#0066FF] rounded-lg text-[10px] font-bold text-slate-700 transition-colors text-center truncate"
               >
-                Enseignante
+                {t('demoTeacher')}
               </button>
               <button
                 type="button"
                 onClick={() => handleDemoFill('superadmin@schoolos.ma', 'Admin123!')}
                 className="px-2 py-1.5 bg-white border border-slate-200 hover:border-[#0066FF] hover:text-[#0066FF] rounded-lg text-[10px] font-bold text-slate-700 transition-colors text-center truncate"
               >
-                Super Admin
+                {t('demoSuperAdmin')}
               </button>
             </div>
                   </div>
@@ -483,12 +482,12 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
           {/* Toggle to Signup */}
           <div className="pt-2 text-center border-t border-slate-100">
             <p className="text-xs text-slate-500 font-medium">
-              Nouveau centre de langues ou établissement ?{' '}
+              {t('signupPrompt')}{' '}
               <Link
                 href={`/${locale}/signup`}
                 className="font-extrabold text-[#0066FF] hover:text-[#0052CC] transition-colors underline underline-offset-4"
               >
-                Créer un compte
+                {t('createAccount')}
               </Link>
             </p>
           </div>

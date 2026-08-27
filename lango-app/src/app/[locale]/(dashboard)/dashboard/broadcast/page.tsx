@@ -8,7 +8,7 @@ export const metadata = {
 
 export default async function BroadcastPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'broadcast.read' });
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       <BroadcastOverviewView />

@@ -3,6 +3,6 @@ import { requireServerPage } from '@/libs/api/page-guard';
 
 export default async function BedBoardPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'hostel.read' });
   return <BedBoardView />;
 }

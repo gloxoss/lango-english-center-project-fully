@@ -1,3 +1,4 @@
+import { logger } from '@/libs/logger';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireCapability } from '@/libs/api/permissions';
@@ -166,7 +167,7 @@ export async function POST(request: Request) {
     ).then((results) => {
       for (const r of results) {
         if (r.status === 'rejected') {
-          console.error('Settings dual-write failed (non-fatal)', r.reason);
+          logger.error({ err: r.reason }, 'Settings dual-write failed (non-fatal)');
         }
       }
     });

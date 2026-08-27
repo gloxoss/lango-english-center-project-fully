@@ -5,6 +5,6 @@ import { FinePoliciesView } from '@/features/finance/ui/fine-policies-view';
 // the finance.manage capability may reach this page.
 export default async function FinePoliciesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'accountant'], requiredCapability: 'finance.manage' });
+  await requireServerPage(locale, { requiredCapability: 'finance.manage' });
   return <FinePoliciesView />;
 }

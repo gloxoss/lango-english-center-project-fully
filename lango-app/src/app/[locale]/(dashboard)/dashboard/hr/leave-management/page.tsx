@@ -3,6 +3,6 @@ import { requireServerPage } from '@/libs/api/page-guard';
 
 export default async function LeaveManagementPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'hr.manage' });
   return <LeaveManagementView />;
 }

@@ -5,6 +5,6 @@ import { RemindersStatementsView } from '@/features/finance/ui/reminders-stateme
 // with the finance.manage capability may reach this page.
 export default async function RemindersPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'accountant'], requiredCapability: 'finance.manage' });
+  await requireServerPage(locale, { requiredCapability: 'finance.manage' });
   return <RemindersStatementsView />;
 }

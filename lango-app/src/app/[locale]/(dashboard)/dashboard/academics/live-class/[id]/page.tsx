@@ -8,10 +8,7 @@ export default async function LiveClassDetailPage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
-  await requireServerPage(locale, { allowedRoles: ['teacher', 'school_admin', 'super_admin'] });
-  await requireLivePage(locale, {
-    allowedRoles: ['school_admin', 'super_admin', 'teacher'],
-    requiredCapability: 'live.read',
-  });
+  await requireServerPage(locale, { requiredCapability: 'live.read' });
+  await requireLivePage(locale, { requiredCapability: 'live.read' });
   return <SessionDetailClient sessionId={id} locale={locale} />;
 }

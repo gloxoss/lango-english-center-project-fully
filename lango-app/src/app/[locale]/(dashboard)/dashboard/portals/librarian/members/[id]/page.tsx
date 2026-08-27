@@ -3,6 +3,6 @@ import { LibraryMemberDetailClient } from '@/features/library/ui/library-member-
 
 export default async function LibrarianMemberDetailPage(props: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await props.params;
-  await requireLibraryPage(locale, { allowedRoles: ['school_admin', 'super_admin', 'librarian'], capability: 'library.circulation.operate' });
+  await requireLibraryPage(locale, { capability: 'library.circulation.operate' });
   return <LibraryMemberDetailClient memberId={id} />;
 }

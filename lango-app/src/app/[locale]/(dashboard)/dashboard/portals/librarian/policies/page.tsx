@@ -3,6 +3,6 @@ import { LibraryPoliciesClient } from '@/features/library/ui/library-policies-cl
 
 export default async function LibrarianPoliciesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireLibraryPage(locale, { allowedRoles: ['librarian', 'school_admin', 'super_admin'], capability: 'library.policy.manage' });
+  await requireLibraryPage(locale, { capability: 'library.policy.manage' });
   return <LibraryPoliciesClient />;
 }

@@ -1,0 +1,61 @@
+# SchoolOS Staging Environment Compose Stack
+# Isolated staging container orchestration mirroring production architecture.
+# Usage: docker compose -f docker-compose.staging.yml up -d
+
+services:
+  schoolos-staging-db:
+    image: postgres:16-alpine
+    container_name: schoolos-staging-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-schoolos_staging}
+      POSTGRES_USER: ${POSTGRES_USER:-schoolos_staging_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-staging_dev_secret_change_me}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - schoolos_staging_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-schoolos_staging_user} -d ${POSTGRES_DB:-schoolos_staging}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  schoolos-staging-migrate:
+    image: schoolos-migrate:staging
+    container_name: schoolos-staging-migrate
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-schoolos_staging_user}:${POSTGRES_PASSWORD:-staging_dev_secret_change_me}@schoolos-staging-db:5432/${POSTGRES_DB:-schoolos_staging}
+    depends_on:
+      schoolos-staging-db:
+        condition: service_healthy
+    restart: "no"
+
+  schoolos-staging-app:
+    image: schoolos-app:staging
+    container_name: schoolos-staging-app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3031
+      DATABASE_URL: postgresql://${POSTGRES_USER:-schoolos_staging_user}:${POSTGRES_PASSWORD:-staging_dev_secret_change_me}@schoolos-staging-db:5432/${POSTGRES_DB:-schoolos_staging}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-staging_better_auth_secret_minimum_32_characters}
+      BETTER_AUTH_URL: https://staging.schoolos.epioso.com
+      NEXT_PUBLIC_APP_URL: https://staging.schoolos.epioso.com
+    ports:
+      - "127.0.0.1:3031:3031"
+    depends_on:
+      schoolos-staging-migrate:
+        condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+volumes:
+  schoolos_staging_postgres_data:
+    driver: local

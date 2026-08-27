@@ -3,6 +3,6 @@ import { requireServerPage } from '@/libs/api/page-guard';
 
 export default async function GradeEntryPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['teacher', 'school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'grading.read' });
   return <GradeEntryView />;
 }

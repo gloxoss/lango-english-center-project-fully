@@ -257,6 +257,10 @@ export async function listStocktakeAdjustments(tenantId: string, stocktakeId: st
 
 export async function applyStocktakeAdjustments(tenantId: string, actorId: string, stocktakeId: string) {
   return db.transaction(async tx => {
+    // Unknown (or other-tenant) stocktake ids must 404, never a silent 200.
+    const [stocktake] = await tx.select({ id: libraryStocktakes.id }).from(libraryStocktakes)
+      .where(and(eq(libraryStocktakes.id, stocktakeId), eq(libraryStocktakes.tenantId, tenantId))).limit(1);
+    if (!stocktake) throw new ApiError(404, 'NOT_FOUND', 'Inventaire introuvable.');
     const pending = await tx.select().from(libraryStocktakeAdjustments)
       .where(and(eq(libraryStocktakeAdjustments.tenantId, tenantId), eq(libraryStocktakeAdjustments.stocktakeId, stocktakeId), isNull(libraryStocktakeAdjustments.appliedAt))).for('update');
     const now = new Date().toISOString();

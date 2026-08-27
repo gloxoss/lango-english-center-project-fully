@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { broadcastGuard } from '@/features/broadcast/api/guard';
-import { getConnection, updateConnection, deleteConnection } from '@/features/broadcast/services/connections-service';
+import { getConnection, updateConnection, deleteConnection, connectionPublic } from '@/features/broadcast/services/connections-service';
 import { recordAudit } from '@/libs/api/audit';
 import { parseJson } from '@/libs/api/validation';
 
@@ -18,7 +18,9 @@ export async function GET(request: Request, { params }: Ctx) {
   try {
     const { tenantId } = await broadcastGuard(request, 'broadcast.read');
     const { id } = await params;
-    const data = await getConnection(tenantId, id);
+    // Project through the public shape: raw rows carry configJson with
+    // (encrypted) secret keys that must never reach the browser.
+    const data = connectionPublic(await getConnection(tenantId, id));
     return NextResponse.json({ success: true, data });
   } catch (error) {
     return apiErrorResponse(error);

@@ -7,6 +7,6 @@ export default async function ReportCardGeneratorPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'cards.templates.manage' });
   return <ReportCardGeneratorView locale={locale} />;
 }

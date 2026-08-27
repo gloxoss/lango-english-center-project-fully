@@ -3,6 +3,6 @@ import CertificateDefinitionDesignerPage from './page.client';
 
 export default async function Page({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const p = await params;
-  await requireServerPage(p.locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(p.locale, { requiredCapability: 'certificates.templates.manage' });
   return <CertificateDefinitionDesignerPage params={p} />;
 }

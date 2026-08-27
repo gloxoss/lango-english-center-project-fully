@@ -1,0 +1,72 @@
+name: SchoolOS Continuous Integration & Quality Gates
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  quality-and-security:
+    name: Typecheck, Security & Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: schoolos
+          POSTGRES_USER: schoolos
+          POSTGRES_PASSWORD: local_dev_password_change_me
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://schoolos:local_dev_password_change_me@localhost:5432/schoolos
+      BETTER_AUTH_SECRET: test_secret_32_characters_minimum_length_required
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NODE_ENV: test
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Stage 1 — TypeScript Strict Compilation (0 Errors)
+        run: npx tsc --noEmit
+
+      - name: Stage 2 — Code Linting
+        run: npm run lint
+
+      - name: Stage 3 — Multi-Tenant Isolation AST Security Scanner
+        run: npx tsx scripts/check-tenant-isolation.ts
+
+      - name: Stage 4 — Database Migrations From Clean
+        run: npx drizzle-kit migrate
+
+      - name: Stage 5 — Integration & Adversarial Test Suite
+        run: npm test
+
+      - name: Stage 6 — Production Next.js Build
+        run: npx next build
+
+      - name: Stage 7 — Install Playwright Browsers & Run E2E Tests
+        run: |
+          npx playwright install --with-deps chromium
+          npm run test:e2e

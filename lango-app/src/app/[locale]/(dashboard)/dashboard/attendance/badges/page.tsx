@@ -12,7 +12,7 @@ export default async function BadgesPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'attendance.manage' });
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-8">
       <BadgeManagementView />

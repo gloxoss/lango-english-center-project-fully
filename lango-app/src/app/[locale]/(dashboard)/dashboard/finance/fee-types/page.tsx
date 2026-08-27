@@ -5,6 +5,6 @@ import { FeeTypesView } from '@/features/finance/ui/fee-types-view';
 // finance.manage capability may reach this page.
 export default async function FeeTypesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'accountant'], requiredCapability: 'finance.manage' });
+  await requireServerPage(locale, { requiredCapability: 'finance.manage' });
   return <FeeTypesView />;
 }

@@ -10,7 +10,7 @@ import type { ServerUserContext } from '@/libs/auth/server-context';
 
 export async function requireLivePage(
   locale: string,
-  opts: { allowedRoles: readonly AppRole[]; requiredCapability: PermissionKey },
+  opts: { allowedRoles?: readonly AppRole[]; requiredCapability: PermissionKey },
 ): Promise<ServerUserContext> {
   const ctx = await requireServerPage(locale, {
     allowedRoles: opts.allowedRoles,

@@ -1,3 +1,4 @@
+import { logger } from '@/libs/logger';
 import { and, eq } from 'drizzle-orm';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     try {
       await autoIssueStudentCardOnAdmission(tenantId, result.id, ctx.userId);
     } catch (error) {
-      console.error('Auto-issue student card failed for admission', id, error);
+      logger.error({ err: error, admissionId: id }, 'Auto-issue student card failed for admission');
     }
 
     return NextResponse.json({

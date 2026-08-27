@@ -7,6 +7,6 @@ export default async function MatriculesPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'students.update' });
   return <MatriculesView />;
 }

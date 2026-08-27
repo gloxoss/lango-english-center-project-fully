@@ -40,7 +40,7 @@ export type PortalManifest = {
 // Items are filtered by the user's effective permissions.
 // ---------------------------------------------------------------------------
 
-const FULL_NAVIGATION: NavItem[] = [
+export const FULL_NAVIGATION: NavItem[] = [
   {
     id: 'dashboard',
     label: 'Tableau de bord',
@@ -119,9 +119,9 @@ const FULL_NAVIGATION: NavItem[] = [
       { id: 'accounting-deposit', label: 'Nouvel encaissement', icon: 'Receipt', href: '/dashboard/finance/accounting/deposits/new', permission: 'accounting.deposit.create' },
       { id: 'accounting-expense', label: 'Nouvelle dépense', icon: 'TrendingDown', href: '/dashboard/finance/expenses/new', permission: 'accounting.expense.prepare' },
       { id: 'accounting-expense-workflow', label: 'Dépenses à traiter', icon: 'ClipboardCheck', href: '/dashboard/finance/accounting/expenses', permission: 'accounting.account.read' },
-      { id: 'fee-structures', label: 'Structures de frais', icon: 'FileText', href: '/dashboard/finance/fee-structures', permission: 'finance.read' },
-      { id: 'fee-types', label: 'Types de frais', icon: 'Copy', href: '/dashboard/finance/fee-types', permission: 'finance.read' },
-      { id: 'fine-policies', label: 'Politiques d\'amendes', icon: 'AlertTriangle', href: '/dashboard/finance/fine-policies', permission: 'finance.read' },
+      { id: 'fee-structures', label: 'Structures de frais', icon: 'FileText', href: '/dashboard/finance/fee-structures', permission: 'finance.manage' },
+      { id: 'fee-types', label: 'Types de frais', icon: 'Copy', href: '/dashboard/finance/fee-types', permission: 'finance.manage' },
+      { id: 'fine-policies', label: 'Politiques d\'amendes', icon: 'AlertTriangle', href: '/dashboard/finance/fine-policies', permission: 'finance.manage' },
       { id: 'reminders', label: 'Rappels de frais', icon: 'Bell', href: '/dashboard/finance/reminders', permission: 'finance.manage' },
       { id: 'cashier-sessions', label: 'Sessions de caisse', icon: 'Wallet', href: '/dashboard/finance/cashier-sessions', permission: 'finance.manage' },
       { id: 'payment-methods', label: 'Méthodes de paiement', icon: 'CreditCard', href: '/dashboard/settings/payment-methods', permission: 'finance.manage' },
@@ -163,8 +163,8 @@ const FULL_NAVIGATION: NavItem[] = [
       { id: 'hr-dashboard', label: 'Tableau de bord RH', icon: 'LayoutDashboard', href: '/dashboard/hr', permission: 'hr.read' },
       { id: 'hr-self-service', label: 'Mon espace RH', icon: 'User', href: '/dashboard/hr/self-service' },
       { id: 'hr-employees', label: 'Profils employés', icon: 'Users', href: '/dashboard/hr/employees', permission: 'hr.manage' },
-      { id: 'hr-salary-templates', label: 'Gabarits salariaux', icon: 'DollarSign', href: '/dashboard/hr/salary-templates', permission: 'hr.manage' },
-      { id: 'hr-payroll', label: 'Paie mensuelle', icon: 'CreditCard', href: '/dashboard/hr/payroll', permission: 'hr.manage' },
+      { id: 'hr-salary-templates', label: 'Gabarits salariaux', icon: 'DollarSign', href: '/dashboard/workforce/payroll/structures', permission: 'payroll.configure' },
+      { id: 'hr-payroll', label: 'Paie mensuelle', icon: 'CreditCard', href: '/dashboard/workforce/payroll/runs', permission: 'payroll.review' },
       { id: 'hr-leave', label: 'Congés', icon: 'CalendarOff', href: '/dashboard/hr/leave', permission: 'hr.read' },
     ],
   },
@@ -228,7 +228,7 @@ const FULL_NAVIGATION: NavItem[] = [
     icon: 'BookOpen',
     href: '/dashboard/portals/librarian',
     portalHome: true,
-    permission: 'library.catalog.read',
+    permission: 'library.report.read',
     addonId: 'library',
     children: [
       { id: 'library-home', label: 'Vue d’ensemble', icon: 'LayoutDashboard', href: '/dashboard/portals/librarian', permission: 'library.report.read' },
@@ -263,14 +263,14 @@ const FULL_NAVIGATION: NavItem[] = [
     label: 'Paramètres',
     icon: 'Settings',
     href: '/dashboard/settings',
-    permission: 'settings.read',
+    permission: 'settings.organization.manage',
     children: [
       { id: 'settings-general', label: 'Général', icon: 'Building2', href: '/dashboard/settings', permission: 'settings.organization.manage' },
       { id: 'settings-branches', label: 'Filiales', icon: 'GitBranch', href: '/dashboard/settings/branches', permission: 'settings.organization.manage' },
       { id: 'settings-users', label: 'Utilisateurs', icon: 'UserCog', href: '/dashboard/settings/users', permission: 'users.manage' },
       { id: 'settings-permissions', label: 'Permissions', icon: 'Shield', href: '/dashboard/settings/permissions', permission: 'users.permissions.manage' },
-      { id: 'settings-addons', label: 'Modules', icon: 'Puzzle', href: '/dashboard/settings/addons', permission: 'settings.read' },
-      { id: 'settings-audit', label: 'Journal d\'audit', icon: 'FileSearch', href: '/dashboard/settings/audit', permission: 'audit.read' },
+      { id: 'settings-addons', label: 'Modules', icon: 'Puzzle', href: '/dashboard/settings/entitlements', permission: 'settings.read' },
+      { id: 'settings-audit', label: 'Journal d\'audit', icon: 'FileSearch', href: '/dashboard/settings/audit-logs', permission: 'audit.read' },
     ],
   },
 ];

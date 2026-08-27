@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { hashPassword } from 'better-auth/crypto';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/libs/DB';
@@ -296,13 +297,17 @@ async function run() {
       .returning();
     const tenantId = tenantRow!.id;
 
-    // Admin / platform users referenced throughout the seed (reset wiped them with the tenant).
+    // Admin / platform / portal users referenced throughout the seed
     await tx
       .insert(user)
       .values([
         { id: 'USR-001', tenantId, name: 'Yassine El Amrani', email: 'y.elamrani@atlas.ma', phone: '+212 6 12-345678', role: 'school_admin', userStatus: 'active' },
         { id: 'USR-ACC-001', tenantId, name: 'Karim Bennani (Comptable)', email: 'accountant@atlas.ma', phone: '+212 6 61-998877', role: 'accountant', userStatus: 'active' },
         { id: 'USR-SUPER-001', tenantId: null, name: 'Super Admin Plateforme', email: 'superadmin@schoolos.ma', phone: '+212 6 00-000001', role: 'super_admin', userStatus: 'active' },
+        { id: 'USR-LIB-001', tenantId, name: 'Fatima Zahra Mansouri (Bibliothécaire)', email: 'bibliotheque@atlas.ma', phone: '+212 6 61-112233', role: 'librarian', userStatus: 'active' },
+        { id: 'USR-GUARD-001', tenantId, name: 'Hassan Chraibi (Chef de Sécurité)', email: 'securite@atlas.ma', phone: '+212 6 62-223344', role: 'guard', userStatus: 'active' },
+        { id: 'USR-RECEPT-001', tenantId, name: 'Kenza Berrada (Accueil & Réception)', email: 'accueil@atlas.ma', phone: '+212 6 63-334455', role: 'receptionist', userStatus: 'active' },
+        { id: 'USR-ALUM-001', tenantId, name: 'Mehdi Benjelloun (Ancien Élève)', email: 'ancien.eleve@atlas.ma', phone: '+212 6 64-445566', role: 'alumni', userStatus: 'active' },
       ])
       .onConflictDoNothing();
 
@@ -995,7 +1000,7 @@ async function run() {
       tenantId,
       copyId,
       memberId: memberIds[i % memberIds.length],
-      issuedById: 'USR-001',
+      issuedById: 'USR-LIB-001',
       issuedAt: isoDays(-int(3, 25)),
       dueDate: isoDays(int(5, 20)),
       returnedAt: i % 3 === 0 ? isoDays(-2) : null,
@@ -1825,14 +1830,15 @@ async function run() {
     const mentorRows = studentIds.slice(0, 6).map((sid, i) => ({ tenantId, alumnusId: sid, isActive: true, offering: pick(['Orientation universitaire', 'Coaching carrière', 'Aide aux devoirs']), contactPreference: 'email', createdAt: isoTs(-40), updatedAt: isoTs(-1) }));
     await tx.insert(alumniMentorListings).values(mentorRows);
     const alumReqStatuses = ['received', 'accepted', 'preparing', 'ready', 'taken', 'refused'] as const;
-    const alumReqRows = studentIds.slice(0, 12).map((sid, i) => {
+    const alumniUserList = ['USR-ALUM-001', ...studentIds.slice(0, 11)];
+    const alumReqRows = alumniUserList.map((sid, i) => {
       const status = alumReqStatuses[i % alumReqStatuses.length];
       const decided = status !== 'received';
       return {
         tenantId, alumnusId: sid,
         type: pick(['correction', 'reissue', 'data_access', 'deletion'] as const),
         status,
-        note: 'Demande de réédition de diplôme',
+        note: i === 0 ? 'Demande de relevé de notes et certificat de scolarité' : 'Demande de réédition de diplôme',
         relatedDocumentId: null,
         decidedBy: decided ? 'USR-001' : null,
         decidedAt: decided ? isoTs(-3) : null,
@@ -1867,38 +1873,38 @@ async function run() {
     const gShiftRows = [['Matin', '06:00', '14:00'], ['Après-midi', '14:00', '22:00'], ['Nuit', '22:00', '06:00']].map((s) => ({ tenantId, branchId, name: s[0], startTime: s[1], endTime: s[2], isActive: true, createdAt: isoTs(-90), updatedAt: isoTs(-90) }));
     const gShiftIds: string[] = [];
     for (const s of gShiftRows) { const [r] = await tx.insert(guardShifts).values(s).returning(); gShiftIds.push(r!.id); }
-    const gAssignRows = [0, 1, 2, 3].map((i) => ({ tenantId, branchId, guardUserId: teacherIds[i % 20], gateId: gateIds[i % 2], shiftId: gShiftIds[i % 3], deviceId: null, effectiveFrom: '2025-09-01T00:00:00.000Z', effectiveUntil: i % 2 === 0 ? null : '2026-12-31T00:00:00.000Z', status: 'active', createdAt: isoTs(-90), updatedAt: isoTs(-90) }));
+    const gAssignRows = [0, 1, 2, 3].map((i) => ({ tenantId, branchId, guardUserId: i === 0 ? 'USR-GUARD-001' : teacherIds[i % 20], gateId: gateIds[i % 2], shiftId: gShiftIds[i % 3], deviceId: null, effectiveFrom: '2025-09-01T00:00:00.000Z', effectiveUntil: i % 2 === 0 ? null : '2026-12-31T00:00:00.000Z', status: 'active', createdAt: isoTs(-90), updatedAt: isoTs(-90) }));
     await tx.insert(guardAssignments).values(gAssignRows);
-    const gInvRows = [0, 1, 2, 3, 4].map((i) => ({ tenantId, branchId, visitorFirstName: pick(['Ahmed', 'Samira', 'Hassan', 'Khadija', 'Rachid']), visitorLastName: 'Visiteur', visitorPhone: `+2126${String(40000000 + i).slice(0, 8)}`, visitorEmail: null, purpose: pick(['Entretien admission', 'Réunion parents', 'Livraison']), hostId: teacherIds[i % 20], expectedDate: isoTs(int(1, 10)), expectedStart: '10:00', expectedEnd: '12:00', status: i % 2 === 0 ? 'approved' : 'pending', approvedById: i % 2 === 0 ? 'USR-001' : null, approvedAt: i % 2 === 0 ? isoTs(-1) : null, createdById: 'USR-001', createdAt: isoTs(-5), updatedAt: isoTs(-1) }));
+    const gInvRows = [0, 1, 2, 3, 4].map((i) => ({ tenantId, branchId, visitorFirstName: pick(['Ahmed', 'Samira', 'Hassan', 'Khadija', 'Rachid']), visitorLastName: 'Visiteur', visitorPhone: `+2126${String(40000000 + i).slice(0, 8)}`, visitorEmail: null, purpose: pick(['Entretien admission', 'Réunion parents', 'Livraison']), hostId: teacherIds[i % 20], expectedDate: isoTs(int(1, 10)), expectedStart: '10:00', expectedEnd: '12:00', status: i % 2 === 0 ? 'approved' : 'pending', approvedById: i % 2 === 0 ? 'USR-001' : null, approvedAt: i % 2 === 0 ? isoTs(-1) : null, createdById: 'USR-RECEPT-001', createdAt: isoTs(-5), updatedAt: isoTs(-1) }));
     await tx.insert(guardVisitorInvitations).values(gInvRows);
-    const gVisitRows = [0, 1, 2].map((i) => ({ tenantId, branchId, invitationId: null, visitorFirstName: pick(['Youssef', 'Latifa', 'Brahim']), visitorLastName: 'Visiteur', visitorPhone: `+2126${String(30000000 + i).slice(0, 8)}`, visitorEmail: null, purpose: 'Rencontre administrative', hostId: null, hostName: 'Direction', passNumber: `PASS-${pad4(i + 1)}`, badgeCredentialId: null, status: i === 0 ? 'checked_in' : 'checked_out', checkInAt: i === 0 ? isoTs(-1) : isoTs(-2), checkOutAt: i === 0 ? null : isoTs(-1), checkInBy: 'USR-001', checkOutBy: i === 0 ? null : 'USR-001', gateId: gateIds[0], createdById: 'USR-001', createdAt: isoTs(-2), updatedAt: isoTs(-1) }));
+    const gVisitRows = [0, 1, 2].map((i) => ({ tenantId, branchId, invitationId: null, visitorFirstName: pick(['Youssef', 'Latifa', 'Brahim']), visitorLastName: 'Visiteur', visitorPhone: `+2126${String(30000000 + i).slice(0, 8)}`, visitorEmail: null, purpose: 'Rencontre administrative', hostId: null, hostName: 'Direction', passNumber: `PASS-${pad4(i + 1)}`, badgeCredentialId: null, status: i === 0 ? 'checked_in' : 'checked_out', checkInAt: i === 0 ? isoTs(-1) : isoTs(-2), checkOutAt: i === 0 ? null : isoTs(-1), checkInBy: 'USR-GUARD-001', checkOutBy: i === 0 ? null : 'USR-GUARD-001', gateId: gateIds[0], createdById: 'USR-GUARD-001', createdAt: isoTs(-2), updatedAt: isoTs(-1) }));
     await tx.insert(guardVisits).values(gVisitRows);
     const gAuthRows = studentIds.slice(0, 8).map((sid, i) => ({ tenantId, studentId: sid, pickupPersonId: guardianIds[i % 130], relationshipType: 'parent', authorizedFrom: '2025-09-01T00:00:00.000Z', authorizedUntil: '2026-08-31T00:00:00.000Z', reason: null, status: i % 3 === 0 ? 'cancelled' : 'active', consumedAt: null, createdById: 'USR-001', createdAt: isoTs(-80), updatedAt: isoTs(-80) }));
     const gAuthIds: string[] = [];
     for (const a of gAuthRows) { const [r] = await tx.insert(guardPickupAuthorizations).values(a).returning(); gAuthIds.push(r!.id); }
-    const gRelRows = gAuthIds.slice(0, 4).map((aid, i) => ({ tenantId, studentId: studentIds[i], authorizationId: aid, releaseMethod: 'manual', operatorId: 'USR-001', gateId: gateIds[i % 2], deviceId: null, kioskSessionId: null, idempotencyKey: `rel-${aid.slice(0, 8)}`, releasedAt: isoTs(-1), evidence: { gate: 'PORT-A' } }));
+    const gRelRows = gAuthIds.slice(0, 4).map((aid, i) => ({ tenantId, studentId: studentIds[i], authorizationId: aid, releaseMethod: 'manual', operatorId: 'USR-GUARD-001', gateId: gateIds[i % 2], deviceId: null, kioskSessionId: null, idempotencyKey: `rel-${aid.slice(0, 8)}`, releasedAt: isoTs(-1), evidence: { gate: 'PORT-A' } }));
     await tx.insert(guardReleaseEvents).values(gRelRows);
-    const gScanRows = studentIds.slice(0, 15).map((sid, i) => ({ tenantId, kioskSessionId: null, gateId: gateIds[i % 2], deviceId: null, direction: i % 2 === 0 ? 'in' : 'out', credentialId: null, subjectType: 'student', studentId: sid, visitId: null, resultStatus: i % 7 === 0 ? 'rejected' : 'accepted', rejectionReason: i % 7 === 0 ? 'NO_AUTH' : null, idempotencyKey: `gscan-${sid}-${i}`, scannedAt: isoTs(0), actorId: 'USR-001' }));
+    const gScanRows = studentIds.slice(0, 15).map((sid, i) => ({ tenantId, kioskSessionId: null, gateId: gateIds[i % 2], deviceId: null, direction: i % 2 === 0 ? 'in' : 'out', credentialId: null, subjectType: 'student', studentId: sid, visitId: null, resultStatus: i % 7 === 0 ? 'rejected' : 'accepted', rejectionReason: i % 7 === 0 ? 'NO_AUTH' : null, idempotencyKey: `gscan-${sid}-${i}`, scannedAt: isoTs(0), actorId: 'USR-GUARD-001' }));
     await tx.insert(guardGateScanEvents).values(gScanRows);
-    const gIncRows = [0, 1, 2].map((i) => ({ tenantId, branchId, gateId: gateIds[i % 2], category: pick(['acces_non_autorise', 'materiel_endommage', 'intrusion']), severity: pick(['low', 'medium', 'high']), location: 'Portail principal', description: 'Incident de sécurité signalé', reportedById: 'USR-001', occurredAt: isoTs(-3), status: i === 0 ? 'open' : 'resolved', escalatedToId: null, escalatedAt: null, resolvedById: i === 0 ? null : 'USR-001', resolvedAt: i === 0 ? null : isoTs(-1), resolutionNotes: i === 0 ? null : 'Traité', createdAt: isoTs(-3), updatedAt: isoTs(-1) }));
+    const gIncRows = [0, 1, 2].map((i) => ({ tenantId, branchId, gateId: gateIds[i % 2], category: pick(['acces_non_autorise', 'materiel_endommage', 'intrusion']), severity: pick(['low', 'medium', 'high']), location: 'Portail principal', description: 'Incident de sécurité signalé', reportedById: 'USR-GUARD-001', occurredAt: isoTs(-3), status: i === 0 ? 'open' : 'resolved', escalatedToId: null, escalatedAt: null, resolvedById: i === 0 ? null : 'USR-GUARD-001', resolvedAt: i === 0 ? null : isoTs(-1), resolutionNotes: i === 0 ? null : 'Traité', createdAt: isoTs(-3), updatedAt: isoTs(-1) }));
     const gIncIds: string[] = [];
     for (const inc of gIncRows) { const [r] = await tx.insert(guardIncidents).values(inc).returning(); gIncIds.push(r!.id); }
-    const gIncActRows = gIncIds.map((iid, i) => ({ tenantId, incidentId: iid, actionType: 'notification', notes: 'Avis transmis à la direction', actorId: 'USR-001', createdAt: isoTs(-2) }));
+    const gIncActRows = gIncIds.map((iid, i) => ({ tenantId, incidentId: iid, actionType: 'notification', notes: 'Avis transmis à la direction', actorId: 'USR-GUARD-001', createdAt: isoTs(-2) }));
     await tx.insert(guardIncidentActions).values(gIncActRows);
     await tx.insert(guardEmergencyProcedures).values([{ tenantId, branchId, title: 'Incendie', body: 'Évacuer les élèves vers la cour.', version: 1, isActive: true, updatedById: 'USR-001', createdAt: isoTs(-120), updatedAt: isoTs(-120) }, { tenantId, branchId, title: 'Alerte intrusion', body: 'Fermer les portails et alerter les autorités.', version: 1, isActive: true, updatedById: 'USR-001', createdAt: isoTs(-120), updatedAt: isoTs(-120) }]);
     await tx.insert(guardEmergencyContacts).values([{ tenantId, branchId, name: 'Police', role: 'Sécurité', phone: '19', priority: 1, isActive: true, createdAt: isoTs(-120), updatedAt: isoTs(-120) }, { tenantId, branchId, name: 'Pompiers', role: 'Secours', phone: '15', priority: 2, isActive: true, createdAt: isoTs(-120), updatedAt: isoTs(-120) }]);
     await tx.insert(guardEmergencyActivations).values([{ tenantId, activatedById: 'USR-001', activatedAt: isoTs(-4), procedureSnapshot: { title: 'Exercice incendie' }, status: 'ended', endedById: 'USR-001', endedAt: isoTs(-4), reason: 'Exercice', createdAt: isoTs(-4) }]);
-    const recRows = [0, 1, 2, 3, 4].map((i) => ({ tenantId, branchId, guestType: pick(['parent', 'visiteur', 'candidat']), guestName: `Visiteur ${i + 1}`, guestPhone: `+2126${String(20000000 + i).slice(0, 8)}`, purpose: pick(['Inscription', 'Réclamation', 'Rencontre']), hostId: teacherIds[i % 20]!, hostName: null, startAt: isoTs(int(1, 8)), endAt: isoTs(int(1, 8)), status: i % 2 === 0 ? 'completed' : 'scheduled', notes: null, version: 1, idempotencyKey: null, createdById: 'USR-001', createdAt: isoTs(-3), updatedAt: isoTs(-1) }));
+    const recRows = [0, 1, 2, 3, 4].map((i) => ({ tenantId, branchId, guestType: pick(['parent', 'visiteur', 'candidat']), guestName: `Visiteur ${i + 1}`, guestPhone: `+2126${String(20000000 + i).slice(0, 8)}`, purpose: pick(['Inscription', 'Réclamation', 'Rencontre']), hostId: teacherIds[i % 20]!, hostName: null, startAt: isoTs(int(1, 8)), endAt: isoTs(int(1, 8)), status: i % 2 === 0 ? 'completed' : 'scheduled', notes: null, version: 1, idempotencyKey: null, createdById: 'USR-RECEPT-001', createdAt: isoTs(-3), updatedAt: isoTs(-1) }));
     const recIds: string[] = [];
     for (const r of recRows) { const [rr] = await tx.insert(receptionAppointments).values(r).returning(); recIds.push(rr!.id); }
-    const recHistRows = recIds.slice(0, 4).map((rid, i) => ({ tenantId, appointmentId: rid, fromStatus: i === 0 ? null : 'scheduled', toStatus: 'completed', changedById: 'USR-001', reason: null, createdAt: isoTs(-1) }));
+    const recHistRows = recIds.slice(0, 4).map((rid, i) => ({ tenantId, appointmentId: rid, fromStatus: i === 0 ? null : 'scheduled', toStatus: 'completed', changedById: 'USR-RECEPT-001', reason: null, createdAt: isoTs(-1) }));
     await tx.insert(receptionAppointmentStatusHistory).values(recHistRows);
-    const recIdvRows = studentIds.slice(0, 6).map((sid, i) => ({ tenantId, subjectType: 'student', subjectId: sid, method: pick(['cni', 'passport', 'badge']), outcome: 'success', notes: null, verifierId: 'USR-001', performedAt: isoTs(-2) }));
+    const recIdvRows = studentIds.slice(0, 6).map((sid, i) => ({ tenantId, subjectType: 'student', subjectId: sid, method: pick(['cni', 'passport', 'badge']), outcome: 'success', notes: null, verifierId: 'USR-RECEPT-001', performedAt: isoTs(-2) }));
     await tx.insert(receptionIdentityVerifications).values(recIdvRows);
-    const handRows = [0, 1, 2].map((i) => ({ tenantId, branchId, category: pick(['maintenance', 'document', 'admin']), subjectType: null, subjectId: null, title: `Tâche réception ${i + 1}`, description: null, priority: i % 2 === 0 ? 'high' : 'normal', assignedToId: 'USR-001', deadline: isoTs(int(2, 10)), status: i === 0 ? 'open' : 'resolved', resolutionNotes: i === 0 ? null : 'Traité', acknowledgedById: i === 0 ? null : 'USR-001', acknowledgedAt: i === 0 ? null : isoTs(-1), resolvedById: i === 0 ? null : 'USR-001', resolvedAt: i === 0 ? null : isoTs(-1), idempotencyKey: null, createdById: 'USR-001', createdAt: isoTs(-3), updatedAt: isoTs(-1) }));
+    const handRows = [0, 1, 2].map((i) => ({ tenantId, branchId, category: pick(['maintenance', 'document', 'admin']), subjectType: null, subjectId: null, title: `Tâche réception ${i + 1}`, description: null, priority: i % 2 === 0 ? 'high' : 'normal', assignedToId: 'USR-RECEPT-001', deadline: isoTs(int(2, 10)), status: i === 0 ? 'open' : 'resolved', resolutionNotes: i === 0 ? null : 'Traité', acknowledgedById: i === 0 ? null : 'USR-RECEPT-001', acknowledgedAt: i === 0 ? null : isoTs(-1), resolvedById: i === 0 ? null : 'USR-RECEPT-001', resolvedAt: i === 0 ? null : isoTs(-1), idempotencyKey: null, createdById: 'USR-RECEPT-001', createdAt: isoTs(-3), updatedAt: isoTs(-1) }));
     const handIds: string[] = [];
     for (const h of handRows) { const [r] = await tx.insert(receptionHandoffs).values(h).returning(); handIds.push(r!.id); }
-    const handHistRows = handIds.map((hid, i) => ({ tenantId, handoffId: hid, fromStatus: null, toStatus: 'open', changedById: 'USR-001', reason: null, createdAt: isoTs(-3) }));
+    const handHistRows = handIds.map((hid, i) => ({ tenantId, handoffId: hid, fromStatus: null, toStatus: 'open', changedById: 'USR-RECEPT-001', reason: null, createdAt: isoTs(-3) }));
     await tx.insert(receptionHandoffStatusHistory).values(handHistRows);
     await tx.insert(tenantDomains).values([{ tenantId, domain: 'atlas.schoolos.app', domainType: 'subdomain' as const, status: 'approved' as const, verificationToken: 'vt-1', requestedAt: isoTs(-60), requestedById: 'USR-001', approvedAt: isoTs(-60), approvedById: 'USR-001', createdAt: isoTs(-60), updatedAt: isoTs(-60) }, { tenantId, domain: 'groupe-atlas.ma', domainType: 'custom' as const, status: 'pending' as const, verificationToken: 'vt-2', requestedAt: isoTs(-5), requestedById: 'USR-001', approvedAt: null, approvedById: null, createdAt: isoTs(-5), updatedAt: isoTs(-5) }]);
     await tx.insert(schoolSettings).values({ tenantId, establishmentName: 'Groupe Scolaire Atlas', city: 'Casablanca', address: '12, Avenue Mohammed V', phone: '+212522000000', email: 'contact@atlas.ma', academicYear: '2025-2026', startDate: '2025-09-01', endDate: '2026-06-30', allowOperations: true, presenceModes: ['morning', 'afternoon'], languages: ['fr', 'ar'], security: { twoFactor: true }, createdAt: isoTs(-180), updatedAt: isoTs(-1), ice: 'ICE-001234567', legalStatus: 'Privé', directorName: 'Youssef El Amrani', shortName: 'Atlas', website: 'https://atlas.ma', country: 'Maroc', rc: 'RC-12345', taxId: 'IF-123456', directorEmail: 'y.elamrani@atlas.ma', directorPhone: '+212522000001', financialContactName: 'Fatima Zahra', financialContactEmail: 'finance@atlas.ma', financialContactPhone: '+212522000002', admissionsContactName: 'Samira', admissionsContactEmail: 'admissions@atlas.ma', admissionsContactPhone: '+212522000003', localeTimezone: 'Africa/Casablanca', dateFormat: 'DD/MM/YYYY', documentHeaderStyle: 'classic', loginAccessMethod: 'username', attendanceLateGraceMinutes: 15, attendancePeriodStartTime: '08:00' });
@@ -2248,7 +2254,7 @@ async function run() {
     }));
     for (let i = 0; i < parentUserRows.length; i += 10) await tx.insert(user).values(parentUserRows.slice(i, i + 10)).onConflictDoNothing();
     const credentialUserIds = [
-      'USR-001', 'USR-ACC-001', 'USR-SUPER-001', ...teacherIds, ...demoStudentIds, ...parentUserRows.map((p) => p.id),
+      'USR-001', 'USR-ACC-001', 'USR-SUPER-001', 'USR-LIB-001', 'USR-GUARD-001', 'USR-RECEPT-001', 'USR-ALUM-001', ...teacherIds, ...demoStudentIds, ...parentUserRows.map((p) => p.id),
     ];
     for (const userId of credentialUserIds) {
       await tx

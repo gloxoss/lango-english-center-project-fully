@@ -3,6 +3,6 @@ import { requireServerPage } from '@/libs/api/page-guard';
 
 export default async function HostelDetailPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await params;
-  await requireServerPage(locale, { allowedRoles: ['school_admin', 'super_admin'] });
+  await requireServerPage(locale, { requiredCapability: 'hostel.manage' });
   return <HostelDetailView hostelId={id} />;
 }

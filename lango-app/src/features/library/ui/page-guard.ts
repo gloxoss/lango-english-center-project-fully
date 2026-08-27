@@ -4,7 +4,7 @@ import { requireServerPage } from '@/libs/api/page-guard';
 import type { AppRole } from '@/libs/api/context';
 import type { PermissionKey } from '@/libs/api/permissions';
 
-export async function requireLibraryPage(locale: string, options: { allowedRoles: readonly AppRole[]; capability?: PermissionKey }) {
+export async function requireLibraryPage(locale: string, options: { allowedRoles?: readonly AppRole[]; capability?: PermissionKey }) {
   const context = await requireServerPage(locale, { allowedRoles: options.allowedRoles, requiredCapability: options.capability });
   if (context.tenantId) { try { await requireAddon(context.tenantId, 'library'); } catch { redirect(`/${locale}/dashboard/settings/entitlements?addon=library`); } }
   return context;
