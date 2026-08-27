@@ -40,7 +40,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Restore or cache Next.js build
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             lango-app/.next/cache
@@ -55,7 +55,7 @@ jobs:
 
       - if: matrix.node-version == '24.x' && success()
         name: Cache Next.js build output
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: |
             lango-app/.next
@@ -183,7 +183,7 @@ jobs:
       # `playwright test` in CI boots the app via `run-s start` (next start),
       # which needs the build produced by the `build` job.
       - name: Restore Next.js build
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             lango-app/.next
