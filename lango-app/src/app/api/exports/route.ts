@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse } from '@/libs/api/errors';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
+import { capabilityForReportType } from '@/libs/services/exporters';
 import { parseJson } from '@/libs/api/validation';
 import { createExportJob, listExportJobs } from '@/libs/services/export-service';
 
@@ -30,6 +32,21 @@ export async function POST(request: Request) {
     const context = await requireRequestContext(request);
     const tenantId = requireTenant(context);
     const body = await parseJson(request, createExportSchema);
+
+    // Gate on the capability the report type itself requires. Previously any
+    // authenticated principal could enqueue any report: a student could export
+    // 'audit-logs' and receive the whole tenant's audit trail, even though
+    // GET /api/audit-logs is restricted to school_admin/super_admin. An
+    // undeclared report type fails closed rather than defaulting to open.
+    const capability = capabilityForReportType(body.reportType);
+    if (!capability) {
+      throw new ApiError(
+        422,
+        'UNKNOWN_REPORT_TYPE',
+        `Type d'export inconnu: ${body.reportType}.`,
+      );
+    }
+    await requireCapability(context, capability);
 
     const jobId = await createExportJob({
       tenantId,

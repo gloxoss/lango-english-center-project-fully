@@ -17,6 +17,14 @@ export async function GET(request: Request, { params }: RouteParams) {
       throw new ApiError(404, 'EXPORT_NOT_FOUND', 'Tâche d\'exportation introuvable.');
     }
 
+    // Ownership check. The lookup is tenant-scoped but was not user-scoped, so
+    // any authenticated principal could read another user's export job by id —
+    // including its resultPath download link. 404 rather than 403 so the
+    // endpoint does not confirm that someone else's job id exists.
+    if (job.requestedBy !== context.userId) {
+      throw new ApiError(404, 'EXPORT_NOT_FOUND', 'Tâche d\'exportation introuvable.');
+    }
+
     return NextResponse.json({ success: true, data: job });
   } catch (error) {
     return apiErrorResponse(error);

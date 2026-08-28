@@ -1,6 +1,7 @@
 import { desc, eq } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { auditLogs, user } from '@/models/Schema';
+import type { PermissionKey } from '@/libs/api/permissions';
 import { uploadFile } from './file-service';
 
 // ---------------------------------------------------------------------------
@@ -70,6 +71,25 @@ export const EXPORTERS: Record<string, Exporter> = {
   'audit-logs': exportAuditLogs,
 };
 
+// Capability required to enqueue each report type.
+//
+// Without this, POST /api/exports was a privilege-escalation bypass: the route
+// only required an authenticated session, so any student, parent, guard or
+// librarian could enqueue 'audit-logs' and receive a CSV of the whole tenant's
+// audit trail — actor names and every action on every entity — while
+// GET /api/audit-logs restricts the same data to school_admin/super_admin.
+//
+// Every entry in EXPORTERS must have an entry here; the exports route refuses
+// to enqueue a report type with no declared capability, so adding an exporter
+// without one fails closed rather than silently becoming world-readable.
+export const REPORT_CAPABILITIES: Record<string, PermissionKey> = {
+  'audit-logs': 'audit.read',
+};
+
 export function isKnownReportType(reportType: string): boolean {
   return Object.hasOwn(EXPORTERS, reportType);
+}
+
+export function capabilityForReportType(reportType: string): PermissionKey | null {
+  return REPORT_CAPABILITIES[reportType] ?? null;
 }

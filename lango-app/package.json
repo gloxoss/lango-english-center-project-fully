@@ -9,7 +9,7 @@
     "dev:next": "next dev",
     "dev": "next dev",
     "build:next": "next build",
-    "build-local": "run-p db-server:memory build:next --race",
+    "build-local": "npm run build:next",
     "build": "run-s db:migrate build:next",
     "start": "next start",
     "build-stats": "cross-env ANALYZE=true npm run build",
