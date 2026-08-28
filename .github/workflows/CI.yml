@@ -86,6 +86,15 @@ jobs:
         continue-on-error: true
         run: npx next typegen && npm run lint
 
+      # BLOCKING. `npm run lint` is `eslint . && tsx check-tenant-isolation.ts`,
+      # and eslint currently exits 2 — so the `&&` short-circuited and the tenant
+      # isolation check NEVER RAN in CI. The step above is also non-blocking, so
+      # even reaching it could not fail the build. Run the check on its own here,
+      # independent of eslint's exit code, so cross-tenant leaks actually gate.
+      # Verified 2026-08-27: exits 1 on an injected violation, 0 on a clean tree.
+      - name: Tenant isolation check
+        run: npm run check:isolation
+
       - name: Type checking
         run: npm run check:types
 

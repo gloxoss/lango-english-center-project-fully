@@ -1,13 +1,23 @@
 import { expect, test } from '@playwright/test';
+import { DEMO_ACCOUNTS, loginAs } from './helpers';
 
-test.describe('E2E: Student Lifecycle, Admissions, and Directory', () => {
-  test('student directory renders search, filter, and table structures', async ({ page }) => {
+// W6 hardening: originally accepted "login OR target" URL patterns, so both
+// tests passed on an anonymous redirect without rendering anything. Now signs
+// in and asserts the student directory and admissions pages actually render.
+test.describe('E2E: Student Directory and Admissions', () => {
+  test('student directory renders for a signed-in admin', async ({ page }) => {
+    await loginAs(page, DEMO_ACCOUNTS.admin);
     await page.goto('/fr/dashboard/students');
-    await expect(page).toHaveURL(/.*(\/login|\/dashboard\/students)/);
+    await expect(page).toHaveURL(/dashboard\/students$/);
+    await expect(page).not.toHaveURL(/\/login/);
+    await expect(page.getByRole('heading', { name: 'School OS' })).toBeVisible();
   });
 
-  test('student admissions wizard page loads with structured form steps', async ({ page }) => {
+  test('admissions page renders for a signed-in admin', async ({ page }) => {
+    await loginAs(page, DEMO_ACCOUNTS.admin);
     await page.goto('/fr/dashboard/students/admissions');
-    await expect(page).toHaveURL(/.*(\/login|\/students\/admissions)/);
+    await expect(page).toHaveURL(/students\/admissions/);
+    await expect(page).not.toHaveURL(/\/login/);
+    await expect(page.getByRole('heading', { name: 'School OS' })).toBeVisible();
   });
 });

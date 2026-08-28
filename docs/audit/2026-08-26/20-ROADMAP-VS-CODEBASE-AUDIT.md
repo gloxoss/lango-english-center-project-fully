@@ -22,7 +22,7 @@ D-5 defect class lives.
 | `npx tsc --noEmit` exits 0 | Ran it. Exit 0. |
 | Test count did not regress | 1814 passing vs. 1781 baseline (+33). |
 | Isolation checker works | Injected a client-bound `tenantId`; checker exited 1 naming the exact file/line/reason. Reverted; exited 0. **Both halves observed.** |
-| Isolation checker is enforced | Wired into `npm run lint` (package.json:17), which runs in CI. Not decorative. |
+| Isolation checker is enforced | ❌ **RETRACTED 2026-08-27.** It was NOT enforced. `lint` is `eslint . && tsx check-tenant-isolation.ts`; `npx eslint .` exits 2, so the `&&` short-circuited and the checker never ran in CI — and the Linter step was `continue-on-error: true` anyway. Fixed by adding a dedicated blocking "Tenant isolation check" step. |
 | CI pipeline is real | Build, lint, typecheck, deps, i18n, unit tests against a real Postgres service, Docker build. |
 | Sentry configured | All three `sentry.*.config.ts` present. |
 | i18n *routing* done | All 342 pages under `[locale]`, middleware redirects, `dir={isRTL...}` in layout. |

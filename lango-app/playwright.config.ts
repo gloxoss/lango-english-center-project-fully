@@ -16,9 +16,10 @@ export default defineConfig<ChromaticConfig>({
   // Look for files with the .integ.js or .e2e.js extension
   testMatch: '*.@(integ|e2e).?(c|m)[jt]s?(x)',
   // Timeout per test. Dev-mode on-demand compilation of a dashboard page can
-  // exceed 30s on the first hit (verified 2026-08-27), so 60s locally; CI runs
-  // a production build where pages load fast.
-  timeout: 60 * 1000,
+  // exceed 30s (verified 2026-08-27) and parallel first-hits queue behind one
+  // Turbopack compiler (verified 2026-08-28: 7 cold-page timeouts, all green
+  // once warm), so 90s locally; CI runs a production build where pages are fast.
+  timeout: 90 * 1000,
   // Fail the build on CI if you accidentally left test.only in the source code.
   forbidOnly: !!process.env.CI,
   // Reporter to use. See https://playwright.dev/docs/test-reporters
