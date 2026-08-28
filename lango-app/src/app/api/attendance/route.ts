@@ -7,7 +7,7 @@ import { resolveRegisterForSubmission } from '@/libs/api/attendance-registers';
 import { recalculateStudentAttendanceSummary } from '@/libs/api/attendance-summary';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse } from '@/libs/api/errors';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { parseJson } from '@/libs/api/validation';
@@ -101,6 +101,27 @@ export async function POST(request: Request) {
     const tenantId = requireTenant(context);
     await requireCapability(context, 'attendance.manage');
     const body = await parseJson(request, batchAttendanceSchema);
+
+    // D-16: GET scopes a teacher to their assigned sections, POST did not, so a
+    // teacher could mark attendance for any student in the tenant. Marking a
+    // student `absent` also sends an SMS to that child's guardian, so the write
+    // path reached families outside the teacher's classes. Checked before the
+    // transaction: the batch is refused whole rather than partially applied.
+    if (context.role === 'teacher') {
+      const assigned = new Set(await getTeacherClassSectionIds(tenantId, context.userId));
+      const studentIds = body.records.map(r => r.studentId);
+      const rows = await db
+        .select({ id: user.id, classSectionId: user.classSectionId })
+        .from(user)
+        .where(and(eq(user.tenantId, tenantId), inArray(user.id, studentIds)));
+
+      const known = new Set(rows.map(r => r.id));
+      const outOfScope = rows.some(r => !r.classSectionId || !assigned.has(r.classSectionId));
+      // An unknown id (other tenant, or nonexistent) is also out of scope.
+      if (outOfScope || studentIds.some(id => !known.has(id))) {
+        throw new ApiError(403, 'FORBIDDEN', 'Un ou plusieurs élèves ne font pas partie de vos classes.');
+      }
+    }
 
     const savedRecords = await db.transaction(async (tx) => {
       // Registers are keyed per (class, date, period) - only enforced when a
