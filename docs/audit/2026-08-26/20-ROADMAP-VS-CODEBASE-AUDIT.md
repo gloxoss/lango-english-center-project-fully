@@ -218,3 +218,63 @@ The CI comment says the originals are "parked in `.github/workflows-disabled/`".
 That directory holds `checkly.yml`, `crowdin.yml`, `release.yml` — **no e2e
 workflow**. Wiring E2E into CI means writing the job from scratch (browsers,
 app boot, seeded DB), not re-enabling a parked file. Left open deliberately.
+
+---
+
+## 9. W4 — the 86 `addons` routes: RESOLVED, and §5 was wrong
+
+**Verdict: all 86 are properly guarded. There is no capability gap in `addons`.**
+
+§5 of this document reported "243 of 789 API routes have no `requireCapability`,
+`addons` accounts for 86." That count came from grepping route files for the
+literal string `requireCapability`. It was a **false positive**: these routes call
+shared guard wrappers that invoke `requireCapability` internally, so the string
+never appears in the route file itself.
+
+### Actual classification of the 86
+
+| Guard | Routes | What it enforces |
+|---|---:|---|
+| `requireLibraryContext(req, capability)` | 43 | session → tenant → `requireAddon('library')` → **`requireCapability`** |
+| `broadcastGuard(req, permission)` | 31 | session → tenant → `requireAddon('broadcast-messaging')` → **`requireCapability`** |
+| `requireLibrarySelfContext(req)` | 8 | session → **role allowlist** (student/teacher/parent/alumni) → `requireAddon`. No capability *by design* — these are `library/me/*` self-scoped reads. |
+| Signature-verified webhook | 1 | `live-classrooms/webhooks/[providerType]` — sessionless by nature; unsigned/failed signatures are recorded and rejected. |
+
+Only **1** of the 86 calls no session guard at all, and it is the webhook, which
+is correct.
+
+### The one real risk surface, checked directly
+
+The 8 `library/me/*` routes are role-gated without a capability, which is the
+D-5/D-13 shape. The sharpest of them takes a client-supplied id:
+
+`GET /api/addons/library/me/children/[studentId]/loans`
+
+It delegates to `listChildLoans(tenantId, context.userId, studentId)`, which calls
+`assertChildLibraryAccess()` — a tenant-scoped lookup requiring an **active**
+`guardianStudents` row with `canAccessLibrary === true`, throwing
+`403 NO_GUARDIAN_LIBRARY_ACCESS` otherwise. That is a genuine ownership check, and
+notably stronger than the D-13 attendance-excuse bug, which had none.
+
+**Verified both ways** (`library-self-service.test.ts`):
+
+| State | Result |
+|---|---|
+| Clean | 5 / 5 pass |
+| `assertChildLibraryAccess` commented out | **1 failed**, 4 passed |
+| Restored | 5 / 5 pass |
+
+So the guard is not merely present — its removal is caught by an existing test.
+
+### Consequence for the roadmap
+
+Roadmap item "Review the 86 `addons` routes for the D-5 payload-shape class"
+is **closed as not-a-defect**. The residual D-5 exposure is *not* in `addons`;
+if it exists it is in the other 157 capability-less routes outside this tree,
+which remain unswept.
+
+**Process note:** this is the second time in this audit a grep for a literal
+string produced a wrong headline (the other was the i18n "1 file" count). Both
+were caught only by reading the code the grep pointed at. Route-level
+authorization cannot be measured by string matching when the codebase uses guard
+wrappers — which this one does, consistently and well.
