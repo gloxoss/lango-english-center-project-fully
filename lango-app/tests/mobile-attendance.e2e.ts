@@ -27,7 +27,10 @@ test.describe('E2E: Teacher Mobile Attendance Marking (375px Viewport)', () => {
     expect(bodyWidth).toBeLessThanOrEqual(windowWidth + 5);
   });
 
-  test('attendance status toggles (present, absent, late, excused) have adequate touch targets >= 44px', async ({ page }) => {
+  // Asserts 30px: passes WCAG 2.5.8 (24px min) but is BELOW the 44px Apple HIG /
+  // Material ideal. Named for what it actually checks — raising the UI to 44px is
+  // a product change, not a test change. See 19-RESPONSIVE-VIEWPORT-AUDIT.md §3.
+  test('attendance status toggles meet the 30px touch-target floor (WCAG 2.5.8, below the 44px ideal)', async ({ page }) => {
     await page.goto('/fr/dashboard/attendance');
     // The status toggles are the only buttons rendered inside table cells of
     // the marking grid (attendance-client.tsx STATUS_OPTIONS). Measuring the
