@@ -252,8 +252,12 @@ jobs:
 
       # Blocking gate. Rules: defaults (.gitleaks.toml extends useDefault);
       # its allowlist covers only inspected false positives (test fixtures,
-      # idempotency keys, doc examples).
+      # idempotency keys, doc examples). Step-level working-directory override: the
+      # job default is lango-app/, but gitleaks must scan from the repo root
+      # where both .git and .gitleaks.toml live (first run failed with
+      # "config file not found" — verified 2026-08-28, run 33169277629).
       - name: Secret scanning (gitleaks)
+        working-directory: .
         run: |
           curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz | tar -xz
           ./gitleaks detect --source . --config .gitleaks.toml --redact --exit-code 1 --verbose
