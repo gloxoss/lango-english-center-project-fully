@@ -278,3 +278,94 @@ string produced a wrong headline (the other was the i18n "1 file" count). Both
 were caught only by reading the code the grep pointed at. Route-level
 authorization cannot be measured by string matching when the codebase uses guard
 wrappers — which this one does, consistently and well.
+
+---
+
+## 10. Capability sweep of the non-`addons` routes (2026-08-28)
+
+Completes §5, which measured "243 of 789 routes have no `requireCapability`" and
+left everything outside `addons` unswept.
+
+Counting capability in **any** form (including the wrapper functions that call it
+internally), 165 of 789 routes have none. Classified by what they actually do:
+
+| Class | Count | Verdict |
+|---|--:|---|
+| Role-allowlisted (`requireRequestContext(req,[roles])` / `requireSuperAdmin`) | 73 | guarded |
+| Feature context guard (parent/teacher/student/leadership/kiosk) | 36 | guarded |
+| Legitimately public (webhooks, Better Auth, health, `public/*`, payment callback) | 18 | correct — matches the isolation checker's sessionless allowlist |
+| `/me/`-style self-scoped, no inline role check | 24 | reviewed below |
+| Remaining `addons` self-scoped | 14 | covered in §9 |
+
+### Defects found and fixed
+
+**D-14 — privilege escalation via `POST /api/exports`.** Only an authenticated
+session was required. The single registered exporter, `audit-logs`, selects every
+audit row for the tenant with no user scoping, while `GET /api/audit-logs`
+restricts that data to `school_admin`/`super_admin`. Any student, parent, guard,
+librarian or alumnus could download the school's entire audit trail as CSV.
+Fixed: report types now declare a required capability and an undeclared type is
+rejected 422, so a new exporter fails closed rather than becoming world-readable.
+
+**D-15 — IDOR on `GET /api/exports/[id]`.** Tenant-scoped but not user-scoped, so
+any authenticated user could read another user's export job and its download
+path. Fixed; returns 404 rather than 403 so ids cannot be probed.
+
+Both verified both ways in `exports-authorization.test.ts` (guards present 5/5;
+both reverted 3 failed).
+
+### Reviewed and clean (read, not merely classified)
+
+| Route | Why it is safe |
+|---|---|
+| `hr/payslips` | non-admins filtered to `userId`; admins see the tenant |
+| `hr/payslips/[id]` | tenant-scoped, then 403 unless `row.userId === ctx.userId` |
+| `hr/leave/balances` | `?userId=` is **ignored** for non-admins |
+| `hr/me/self-service-eligibility` | returns a boolean about the caller only |
+| `employee/me/payroll/[payslipId]/download` | `getPayslip` filters on `payslips.userId`, and requires an issued payslip in a locked/approved period |
+| `guardian/link/accept` | the token *is* the credential: hashed at rest, single-use, expiring, cross-tenant refused, already-claimed refused, audited |
+| `academics/online-exams/submit` | `studentId` comes from the session; the body has no student field; per-attempt deadline enforced |
+| `portal/search` | delegates to a per-entity capability-gated service (the T1/D-12 fix) |
+| 19 × `guardian/me/children/[relationshipId]/*` | all delegate to `assertRelationshipAccess` — see §11 |
+
+### Recorded, not fixed
+
+The `hr` and `payslip` routes authorize with **hardcoded role lists**
+(`['school_admin','accountant']`) rather than capabilities. That is D-1, the
+defect *generator* the original audit named: page guards drifting from the
+capability model with nothing keeping them in sync. Functionally correct today;
+changing the authorization model is a separate task.
+
+---
+
+## 11. The parent-portal IDOR boundary — and a false green in my own test
+
+19 of 20 `/api/guardian/**` routes are keyed by a client-supplied
+`[relationshipId]` (attendance, finance, results, documents, homework, meetings,
+medical excuses). All delegate to `assertRelationshipAccess`, then query by the
+`studentId` it returns. That one function is the entire boundary. **D-13 was this
+exact shape.**
+
+The resolver is sound: filters on `guardianId` **and** `tenantId`, checks
+effective dates, checks the child account is active, gates per-right, and returns
+**404 rather than 403** so a caller cannot probe which relationship ids exist.
+
+Coverage before 2026-08-28: only the two *pure* helpers were tested. The
+DB-backed ownership check had no test, and guardian route coverage was 0 of 20.
+
+**The first version of the new test was a false green.** It asserted that parent
+A could not read parent B's relationship — but B was in another tenant, so the
+*tenant* filter alone rejected it. With the `guardianId` ownership filter
+deleted, all 9 tests still passed. The inject-and-revert caught it; review had
+not. Fixed by adding a second guardian **inside the same tenant**, where only the
+ownership filter can reject the request:
+
+| State | Result |
+|---|---|
+| Clean | 10/10 pass |
+| `guardianId` ownership filter removed | **2 failed**, 8 passed |
+| Restored | 10/10 pass |
+
+Worth generalising: a cross-tenant fixture cannot test a *within-tenant*
+authorization rule. Any ownership test whose two actors differ by tenant is
+probably measuring tenant isolation instead.
