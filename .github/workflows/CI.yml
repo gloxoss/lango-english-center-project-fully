@@ -52,6 +52,13 @@ jobs:
         env:
           NEXT_PUBLIC_SENTRY_DISABLED: 'true' # Only upload Sentry source maps in deployment
           NEXT_PUBLIC_APP_URL: http://localhost:3008
+          # serverEnv (src/libs/env/server.ts) validates both vars at module
+          # load, and next build's page-data collection evaluates every route
+          # module — without them the build dies at "Failed to collect page
+          # data" (verified locally 2026-08-28, run 33170352667). The DB URL
+          # is never connected to at build time; the pool is lazy.
+          BETTER_AUTH_SECRET: ci-only-secret-32-characters-minimum-length
+          DATABASE_URL: postgresql://build:build@localhost:5432/unused
 
       - if: matrix.node-version == '24.x' && success()
         name: Cache Next.js build output
