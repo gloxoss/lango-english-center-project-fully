@@ -1,6 +1,7 @@
 'use client';
 
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 
 export type AttendanceInspectionPoint = {
@@ -10,6 +11,7 @@ export type AttendanceInspectionPoint = {
 };
 
 export function AttendanceInspectionChart({ data }: { data: AttendanceInspectionPoint[] }) {
+  const t = useTranslations('Dashboard');
   const hasData = data.some(d => d.studentRate !== null || d.employeeRate !== null);
 
   return (
@@ -17,18 +19,18 @@ export function AttendanceInspectionChart({ data }: { data: AttendanceInspection
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-2">
         <div>
           <h3 className="text-xs font-extrabold tracking-wide text-[#16212B] uppercase">
-            Inspection Présence (Weekend / Weekly Attendance Inspection)
+            {t('attendanceInspectionTitle')}
           </h3>
-          <p className="text-[11px] text-slate-400 font-medium">Comparatif d&apos;assiduité Élèves vs Personnel</p>
+          <p className="text-[11px] text-slate-400 font-medium">{t('attendanceInspectionSubtitle')}</p>
         </div>
         <div className="flex items-center gap-3 text-xs">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#0EA5C4]" />
-            <span className="text-slate-600 font-semibold text-[11px]">Élèves</span>
+            <span className="text-slate-600 font-semibold text-[11px]">{t('attendanceInspectionStudents')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#F43F5E]" />
-            <span className="text-slate-600 font-semibold text-[11px]">Personnel</span>
+            <span className="text-slate-600 font-semibold text-[11px]">{t('attendanceInspectionStaff')}</span>
           </div>
         </div>
       </div>
@@ -37,7 +39,7 @@ export function AttendanceInspectionChart({ data }: { data: AttendanceInspection
         {!hasData ? (
           <div className="flex h-[200px] items-center justify-center text-center">
             <p className="text-xs font-semibold text-slate-400">
-              Aucune donnée d&apos;inspection sur cette période.
+              {t('attendanceInspectionEmpty')}
             </p>
           </div>
         ) : (
@@ -57,8 +59,8 @@ export function AttendanceInspectionChart({ data }: { data: AttendanceInspection
                   boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
                 }}
               />
-              <Bar dataKey="studentRate" name="Élèves" fill="#0EA5C4" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="employeeRate" name="Personnel" fill="#F43F5E" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="studentRate" name={t('attendanceInspectionStudents')} fill="#0EA5C4" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="employeeRate" name={t('attendanceInspectionStaff')} fill="#F43F5E" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}

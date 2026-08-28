@@ -1,6 +1,7 @@
 'use client';
 
 import { Cake, UserCheck, Users } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 
 export type BirthdayPerson = {
@@ -17,6 +18,7 @@ export function BirthdayTrackerWidget({
   studentBirthdays?: BirthdayPerson[];
   employeeBirthdays?: BirthdayPerson[];
 }) {
+  const t = useTranslations('Dashboard');
   const totalStudentBirthdays = studentBirthdays.length;
   const totalEmployeeBirthdays = employeeBirthdays.length;
 
@@ -29,9 +31,9 @@ export function BirthdayTrackerWidget({
           </div>
           <div>
             <h3 className="text-xs font-extrabold text-[#16212B] uppercase tracking-wider">
-              Anniversaires du Jour
+              {t('birthdayTitle')}
             </h3>
-            <p className="text-[11px] text-slate-400 font-medium">Élèves & Personnel célébrant aujourd&apos;hui</p>
+            <p className="text-[11px] text-slate-400 font-medium">{t('birthdaySubtitle')}</p>
           </div>
         </div>
       </div>
@@ -42,7 +44,7 @@ export function BirthdayTrackerWidget({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-[#0EA5C4]" />
-              <span className="text-xs font-bold text-[#16212B]">Élèves (Student)</span>
+              <span className="text-xs font-bold text-[#16212B]">{t('birthdayStudentsLabel')}</span>
             </div>
             <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-[#0EA5C4]/10 text-[#0EA5C4]">
               {totalStudentBirthdays}
@@ -51,8 +53,8 @@ export function BirthdayTrackerWidget({
 
           {totalStudentBirthdays === 0 ? (
             <div className="py-2 text-center border-t border-slate-200/60">
-              <p className="text-[11px] font-semibold text-slate-400">TODAY BIRTHDAY (0)</p>
-              <p className="text-[10px] text-slate-400">Aucun anniversaire d&apos;élève aujourd&apos;hui</p>
+              <p className="text-[11px] font-semibold text-slate-400">{t('birthdayTodayBadge', { count: totalStudentBirthdays })}</p>
+              <p className="text-[10px] text-slate-400">{t('birthdayStudentEmpty')}</p>
             </div>
           ) : (
             <div className="space-y-1.5 border-t border-slate-200/60 pt-2">
@@ -73,7 +75,7 @@ export function BirthdayTrackerWidget({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <UserCheck className="w-4 h-4 text-pink-600" />
-              <span className="text-xs font-bold text-[#16212B]">Personnel & Enseignants (Employee)</span>
+              <span className="text-xs font-bold text-[#16212B]">{t('birthdayStaffLabel')}</span>
             </div>
             <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-pink-100 text-pink-700">
               {totalEmployeeBirthdays}
@@ -82,8 +84,8 @@ export function BirthdayTrackerWidget({
 
           {totalEmployeeBirthdays === 0 ? (
             <div className="py-2 text-center border-t border-slate-200/60">
-              <p className="text-[11px] font-semibold text-slate-400">TODAY BIRTHDAY (0)</p>
-              <p className="text-[10px] text-slate-400">Aucun anniversaire de personnel aujourd&apos;hui</p>
+              <p className="text-[11px] font-semibold text-slate-400">{t('birthdayTodayBadge', { count: totalEmployeeBirthdays })}</p>
+              <p className="text-[10px] text-slate-400">{t('birthdayStaffEmpty')}</p>
             </div>
           ) : (
             <div className="space-y-1.5 border-t border-slate-200/60 pt-2">

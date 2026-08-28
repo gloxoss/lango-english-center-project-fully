@@ -9,6 +9,7 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -67,6 +68,8 @@ function formatMad(amount: number): string {
 }
 
 export function DashboardView({ locale, notice }: { locale: string; notice?: string | null }) {
+  const t = useTranslations('Dashboard');
+  const tCommon = useTranslations('Common');
   const router = useRouter();
   const [pendingNav, setPendingNav] = useState<{ title: string; route: string } | null>(null);
   const [dontShowAgain, setDontShowAgain] = useState(false);
@@ -119,22 +122,22 @@ export function DashboardView({ locale, notice }: { locale: string; notice?: str
     ? [
         {
           id: 'attendance',
-          title: summary.todayAttendance ? `Présence du jour : ${summary.todayAttendance.rate}%` : 'Aucune présence pointée aujourd\'hui',
-          sub: summary.todayAttendance ? `${summary.todayAttendance.presentCount}/${summary.todayAttendance.totalMarked} élèves présents` : 'Utilisez le module Présence pour commencer',
+          title: summary.todayAttendance ? t('attendancePresent', { rate: summary.todayAttendance.rate }) : t('attendanceNo'),
+          sub: summary.todayAttendance ? t('attendanceSubPresent', { present: summary.todayAttendance.presentCount, total: summary.todayAttendance.totalMarked }) : t('attendanceSubNo'),
           icon: CheckCircle2,
           route: `/${locale}/dashboard/attendance`,
         },
         {
           id: 'overdue',
-          title: `${summary.overdueInvoicesCount} facture${summary.overdueInvoicesCount === 1 ? '' : 's'} en retard`,
-          sub: summary.overdueInvoicesCount > 0 ? 'Actions requises' : 'Aucun retard de paiement',
+          title: t('overdueTitle', { count: summary.overdueInvoicesCount }),
+          sub: summary.overdueInvoicesCount > 0 ? t('overdueSub') : t('overdueOk'),
           icon: Lock,
           route: `/${locale}/dashboard/finance/invoices`,
         },
         {
           id: 'absences',
-          title: `${summary.unjustifiedAbsencesToday} absence${summary.unjustifiedAbsencesToday === 1 ? '' : 's'} non justifiée${summary.unjustifiedAbsencesToday === 1 ? '' : 's'}`,
-          sub: 'Aujourd\'hui',
+          title: t('absencesTitle', { count: summary.unjustifiedAbsencesToday }),
+          sub: t('absencesSub'),
           icon: AlertTriangle,
           route: `/${locale}/dashboard/attendance`,
         },
@@ -147,9 +150,9 @@ export function DashboardView({ locale, notice }: { locale: string; notice?: str
         <div className="flex items-start justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 shrink-0" />
-            <span>Ce compte n&apos;a pas de fiche employé — le portail libre-service ne s&apos;applique pas.</span>
+            <span>{t('employeePortalNotice')}</span>
           </div>
-          <button onClick={() => setNoticeDismissed(true)} aria-label="Fermer" className="text-amber-600 transition hover:text-amber-900">×</button>
+          <button onClick={() => setNoticeDismissed(true)} aria-label={tCommon('close')} className="text-amber-600 transition hover:text-amber-900">×</button>
         </div>
       )}
       {/* Top Header Bar Title & Quick Actions */}
@@ -157,14 +160,14 @@ export function DashboardView({ locale, notice }: { locale: string; notice?: str
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">
-              Tableau de bord Établissement
+              {t('title')}
             </h1>
             <span className="rounded-full bg-[#0EA5C4]/10 px-3 py-1 text-xs font-bold text-[#0EA5C4] border border-[#0EA5C4]/20">
               Icon School & College Branch Dashboard
             </span>
           </div>
           <p className="mt-1 text-xs font-medium text-slate-500">
-            Aperçu analytique, finances, assiduité et calendrier de votre école.
+            {t('tagline')}
           </p>
         </div>
       </div>
@@ -222,7 +225,7 @@ export function DashboardView({ locale, notice }: { locale: string; notice?: str
         <div className="lg:col-span-4 min-h-[350px]">
           <StudentQuantityDonut
             data={summary?.studentQuantityByLevel ?? []}
-            title="Student Quantity (Par Niveau)"
+            title={t('studentQuantityTitle')}
           />
         </div>
         <div className="lg:col-span-8 min-h-[350px]">
@@ -250,17 +253,17 @@ export function DashboardView({ locale, notice }: { locale: string; notice?: str
         {/* Recent Transactions Feed */}
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="text-sm font-extrabold text-[#16212B]">Paiements récents</h3>
+            <h3 className="text-sm font-extrabold text-[#16212B]">{t('recentPayments')}</h3>
             <Link
               href={`/${locale}/dashboard/finance/invoices`}
               className="text-xs font-bold text-[#2487B8] flex items-center gap-1 hover:underline"
             >
-              Voir tout <ArrowUpRight className="w-3.5 h-3.5" />
+              {tCommon('viewAll')} <ArrowUpRight className="w-3.5 h-3.5" />
             </Link>
           </div>
           <div className="space-y-2">
             {!summary?.recentPayments || summary.recentPayments.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">Aucun paiement enregistré.</p>
+              <p className="text-xs text-slate-400 py-4 text-center">{t('noPayments')}</p>
             ) : (
               summary.recentPayments.map((p, i) => (
                 <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -278,17 +281,17 @@ export function DashboardView({ locale, notice }: { locale: string; notice?: str
         {/* At Risk Students */}
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="text-sm font-extrabold text-[#16212B]">Élèves à surveiller / Vigilance</h3>
+            <h3 className="text-sm font-extrabold text-[#16212B]">{t('atRiskTitle')}</h3>
             <Link
               href={`/${locale}/dashboard/students`}
               className="text-xs font-bold text-[#2487B8] flex items-center gap-1 hover:underline"
             >
-              Voir le répertoire <ArrowUpRight className="w-3.5 h-3.5" />
+              {t('viewDirectory')} <ArrowUpRight className="w-3.5 h-3.5" />
             </Link>
           </div>
           <div className="space-y-2">
             {!summary?.atRiskStudents || summary.atRiskStudents.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">Aucune alerte élève pour le moment.</p>
+              <p className="text-xs text-slate-400 py-4 text-center">{t('noStudentAlerts')}</p>
             ) : (
               summary.atRiskStudents.map(s => (
                 <div key={s.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -317,24 +320,24 @@ export function DashboardView({ locale, notice }: { locale: string; notice?: str
         <DialogContent className="sm:max-w-md bg-white rounded-2xl border border-slate-200 shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B]">
-              Accéder au module
+              {t('dialogTitle')}
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              Voulez-vous ouvrir {pendingNav?.title} ?
+              {t('dialogDescription', { name: pendingNav?.title ?? '' })}
             </DialogDescription>
           </DialogHeader>
           <div className="flex items-center space-x-2 py-2">
             <Checkbox id="skipConfirm" checked={dontShowAgain} onCheckedChange={c => setDontShowAgain(Boolean(c))} />
             <label htmlFor="skipConfirm" className="text-xs font-medium text-slate-600">
-              Ne plus demander confirmation
+              {t('dontAskAgain')}
             </label>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" size="sm" onClick={() => setPendingNav(null)} className="rounded-xl">
-              Annuler
+              {tCommon('cancel')}
             </Button>
             <Button size="sm" onClick={handleConfirmNav} className="rounded-xl bg-[#2487B8] hover:bg-[#1B6C93]">
-              Confirmer
+              {tCommon('confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>

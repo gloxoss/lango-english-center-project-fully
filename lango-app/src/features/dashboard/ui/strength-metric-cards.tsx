@@ -10,6 +10,7 @@ import {
   UserPlus,
   Users,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 
 export type StrengthMetricsData = {
@@ -24,35 +25,36 @@ export type StrengthMetricsData = {
 };
 
 export function StrengthMetricCards({ data }: { data: StrengthMetricsData }) {
+  const t = useTranslations('Dashboard');
   const topMetrics = [
     {
-      label: 'Personnel / Staff',
+      label: t('metricStaff'),
       count: data.totalEmployees,
-      badge: 'Total effectif',
+      badge: t('badgeTotalCount'),
       icon: UserCheck,
       iconBg: 'bg-[#DCEBF4]',
       iconColor: 'text-[#1B6C93]',
     },
     {
-      label: 'Élèves',
+      label: t('metricStudents'),
       count: data.totalStudents,
-      badge: 'Total effectif',
+      badge: t('badgeTotalCount'),
       icon: GraduationCap,
       iconBg: 'bg-[#0EA5C4]/10',
       iconColor: 'text-[#0EA5C4]',
     },
     {
-      label: 'Parents / Tuteurs',
+      label: t('metricParents'),
       count: data.totalParents,
-      badge: 'Total effectif',
+      badge: t('badgeTotalCount'),
       icon: Users,
       iconBg: 'bg-indigo-50',
       iconColor: 'text-indigo-600',
     },
     {
-      label: 'Enseignants',
+      label: t('metricTeachers'),
       count: data.totalTeachers,
-      badge: 'Total effectif',
+      badge: t('badgeTotalCount'),
       icon: Building2,
       iconBg: 'bg-slate-100',
       iconColor: 'text-slate-700',
@@ -61,33 +63,33 @@ export function StrengthMetricCards({ data }: { data: StrengthMetricsData }) {
 
   const bottomMetrics = [
     {
-      label: 'Nouvelles Inscriptions',
+      label: t('metricAdmissions'),
       count: data.admissions30Days,
-      badge: '30 derniers jours',
+      badge: t('badgeLast30Days'),
       icon: UserPlus,
       iconBg: 'bg-amber-50',
       iconColor: 'text-amber-600',
     },
     {
-      label: 'Factures / Reçus',
+      label: t('metricInvoices'),
       count: data.vouchersCount,
-      badge: 'Total émis',
+      badge: t('badgeTotalIssued'),
       icon: CreditCard,
       iconBg: 'bg-blue-50',
       iconColor: 'text-blue-600',
     },
     {
-      label: 'Classes Actives',
+      label: t('metricActiveClasses'),
       count: data.activeClassesCount,
-      badge: 'Classes gérées',
+      badge: t('badgeManagedClasses'),
       icon: CalendarCheck,
       iconBg: 'bg-emerald-50',
       iconColor: 'text-emerald-600',
     },
     {
-      label: 'Groupes & Salles',
+      label: t('metricSections'),
       count: data.totalSectionsCount,
-      badge: 'Salles d\'affectation',
+      badge: t('badgeAssignmentRooms'),
       icon: DoorOpen,
       iconBg: 'bg-purple-50',
       iconColor: 'text-purple-600',

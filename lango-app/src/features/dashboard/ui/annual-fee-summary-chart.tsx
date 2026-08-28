@@ -1,6 +1,7 @@
 'use client';
 
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 
 export type MonthlyFeePoint = {
@@ -17,6 +18,7 @@ function formatMadShort(val: number): string {
 }
 
 export function AnnualFeeSummaryChart({ data }: { data: MonthlyFeePoint[] }) {
+  const t = useTranslations('Dashboard');
   const hasData = data.some(d => d.total > 0 || d.collected > 0);
 
   return (
@@ -24,22 +26,22 @@ export function AnnualFeeSummaryChart({ data }: { data: MonthlyFeePoint[] }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-2">
         <div>
           <h3 className="text-xs font-extrabold tracking-wide text-[#16212B] uppercase">
-            Récapitulatif Annuel des Frais (Annual Fee Summary)
+            {t('annualFeeTitle')}
           </h3>
-          <p className="text-[11px] text-slate-400 font-medium">Évolution mensuelle des factures et encaissements</p>
+          <p className="text-[11px] text-slate-400 font-medium">{t('annualFeeSubtitle')}</p>
         </div>
         <div className="flex items-center gap-3 text-xs">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#E11D48]" />
-            <span className="text-slate-600 font-semibold text-[11px]">Total Facturé</span>
+            <span className="text-slate-600 font-semibold text-[11px]">{t('annualFeeTotal')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#2487B8]" />
-            <span className="text-slate-600 font-semibold text-[11px]">Collecté</span>
+            <span className="text-slate-600 font-semibold text-[11px]">{t('annualFeeCollected')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
-            <span className="text-slate-600 font-semibold text-[11px]">Reste dû</span>
+            <span className="text-slate-600 font-semibold text-[11px]">{t('incomeRemainingDue')}</span>
           </div>
         </div>
       </div>
@@ -48,7 +50,7 @@ export function AnnualFeeSummaryChart({ data }: { data: MonthlyFeePoint[] }) {
         {!hasData ? (
           <div className="flex h-[220px] items-center justify-center text-center">
             <p className="text-xs font-semibold text-slate-400">
-              Aucun suivi financier annuel disponible.
+              {t('annualFeeEmpty')}
             </p>
           </div>
         ) : (
@@ -87,9 +89,9 @@ export function AnnualFeeSummaryChart({ data }: { data: MonthlyFeePoint[] }) {
                   boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
                 }}
               />
-              <Area type="monotone" dataKey="total" name="Total Facturé" stroke="#E11D48" strokeWidth={2} fill="url(#colorTotal)" />
-              <Area type="monotone" dataKey="collected" name="Collecté" stroke="#2487B8" strokeWidth={2} fill="url(#colorCollected)" />
-              <Area type="monotone" dataKey="remaining" name="Reste dû" stroke="#F59E0B" strokeWidth={2} fill="url(#colorRemaining)" />
+              <Area type="monotone" dataKey="total" name={t('annualFeeTotal')} stroke="#E11D48" strokeWidth={2} fill="url(#colorTotal)" />
+              <Area type="monotone" dataKey="collected" name={t('annualFeeCollected')} stroke="#2487B8" strokeWidth={2} fill="url(#colorCollected)" />
+              <Area type="monotone" dataKey="remaining" name={t('incomeRemainingDue')} stroke="#F59E0B" strokeWidth={2} fill="url(#colorRemaining)" />
             </AreaChart>
           </ResponsiveContainer>
         )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { Wallet } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card } from '@/components/ui/card';
 
@@ -18,14 +19,16 @@ function formatMad(val: number): string {
 
 export function IncomeExpenseDonut({
   data,
-  monthName = 'Ce mois',
+  monthName,
 }: {
   data: IncomeExpenseData;
   monthName?: string;
 }) {
+  const t = useTranslations('Dashboard');
+  const resolvedMonth = monthName ?? t('incomeDefaultMonth');
   const chartData = [
-    { name: 'Revenus encaissés (Income)', value: Math.max(0, data.collected) },
-    { name: 'Reste à recouvrir (Remaining)', value: Math.max(0, data.remaining) },
+    { name: t('incomeCollected'), value: Math.max(0, data.collected) },
+    { name: t('incomeRemaining'), value: Math.max(0, data.remaining) },
   ];
 
   const total = data.invoiced > 0 ? data.invoiced : data.collected + data.remaining;
@@ -36,9 +39,9 @@ export function IncomeExpenseDonut({
       <div className="flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
           <h3 className="text-xs font-extrabold tracking-wide text-[#16212B] uppercase">
-            Revenus vs En Attente — {monthName}
+            {t('incomeTitle', { monthName: resolvedMonth })}
           </h3>
-          <p className="text-[11px] text-slate-400 font-medium">Répartition des encaissements mensuels</p>
+          <p className="text-[11px] text-slate-400 font-medium">{t('incomeSubtitle')}</p>
         </div>
         <div className="w-8 h-8 rounded-xl bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center">
           <Wallet className="w-4 h-4" />
@@ -78,12 +81,12 @@ export function IncomeExpenseDonut({
           </ResponsiveContainer>
         ) : (
           <div className="flex flex-col items-center justify-center text-slate-400">
-            <p className="text-xs font-semibold">Aucune facture enregistrée.</p>
+            <p className="text-xs font-semibold">{t('incomeNoInvoices')}</p>
           </div>
         )}
 
         <div className="absolute flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Facturé</span>
+          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t('incomeFactured')}</span>
           <span className="text-base font-black text-[#16212B]">{formatMad(total)}</span>
         </div>
       </div>
@@ -92,14 +95,14 @@ export function IncomeExpenseDonut({
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-[#2487B8]" />
           <div>
-            <p className="text-[10px] text-slate-400 font-medium">Encaissé</p>
+            <p className="text-[10px] text-slate-400 font-medium">{t('incomeCollectedShort')}</p>
             <p className="text-xs font-bold text-[#16212B]">{formatMad(data.collected)}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-[#F43F5E]" />
           <div>
-            <p className="text-[10px] text-slate-400 font-medium">Reste dû</p>
+            <p className="text-[10px] text-slate-400 font-medium">{t('incomeRemainingDue')}</p>
             <p className="text-xs font-bold text-[#16212B]">{formatMad(data.remaining)}</p>
           </div>
         </div>

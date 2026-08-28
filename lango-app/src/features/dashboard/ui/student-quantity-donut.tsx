@@ -2,6 +2,7 @@
 
 import { School } from 'lucide-react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 
 export type StudentDistributionItem = {
@@ -13,11 +14,13 @@ const CYCLE_COLORS = ['#2487B8', '#0EA5C4', '#F59E0B', '#8B5CF6', '#EC4899', '#1
 
 export function StudentQuantityDonut({
   data,
-  title = 'Répartition des Élèves (Student Quantity)',
+  title,
 }: {
   data: StudentDistributionItem[];
   title?: string;
 }) {
+  const t = useTranslations('Dashboard');
+  const resolvedTitle = title ?? t('studentQuantityTitle');
   const total = data.reduce((sum, item) => sum + item.count, 0);
 
   return (
@@ -25,9 +28,9 @@ export function StudentQuantityDonut({
       <div className="flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
           <h3 className="text-xs font-extrabold tracking-wide text-[#16212B] uppercase">
-            {title}
+            {resolvedTitle}
           </h3>
-          <p className="text-[11px] text-slate-400 font-medium">Distribution par classe / niveau</p>
+          <p className="text-[11px] text-slate-400 font-medium">{t('studentQuantitySubtitle')}</p>
         </div>
         <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#2487B8] flex items-center justify-center">
           <School className="w-4 h-4" />
@@ -53,7 +56,7 @@ export function StudentQuantityDonut({
                 ))}
               </Pie>
               <Tooltip
-                formatter={(val: unknown) => [`${val} Élèves`, '']}
+                formatter={(val: unknown) => [`${val} ${t('studentQuantityUnit')}`, '']}
                 contentStyle={{
                   backgroundColor: '#FFFFFF',
                   borderColor: '#E2E8F0',
@@ -67,12 +70,12 @@ export function StudentQuantityDonut({
           </ResponsiveContainer>
         ) : (
           <div className="flex flex-col items-center justify-center text-slate-400">
-            <p className="text-xs font-semibold">Aucun élève répertorié.</p>
+            <p className="text-xs font-semibold">{t('studentQuantityEmpty')}</p>
           </div>
         )}
 
         <div className="absolute flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Effectif</span>
+          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t('studentQuantityHeadcount')}</span>
           <span className="text-lg font-black text-[#16212B]">{total}</span>
         </div>
       </div>
