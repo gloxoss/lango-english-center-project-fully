@@ -369,3 +369,30 @@ ownership filter can reject the request:
 Worth generalising: a cross-tenant fixture cannot test a *within-tenant*
 authorization rule. Any ownership test whose two actors differ by tenant is
 probably measuring tenant isolation instead.
+
+---
+
+## 12. GATE 1 — every exit criterion now has evidence (2026-08-28)
+
+The roadmap's Gate 1 said "none yet met in full." Each criterion, and what was
+actually run:
+
+| Criterion | Evidence |
+|---|---|
+| `npm run test` exits **0** over **three consecutive runs** | Verified 2026-08-27 at 1815/1815 ×3. Now 1855/1855, exit 0. The blocker was a flaky unscoped receipt count, fixed by scoping it to the test tenant. |
+| `check:isolation` exits 0 on a clean tree **and has been observed failing** on injected violations | Both halves, repeatedly. Catches a client-bound `tenantId`, a bare `select` with no WHERE, a bare `delete`, and a WHERE without `tenantId` on a high-risk table. Zero false positives across 790 files. |
+| Running with the DB down **fails fast** | Observed live, not simulated: Docker Desktop crashed mid-session on 2026-08-28 and `vitest.global-setup.ts` aborted the whole run with "Database unreachable" rather than silently skipping ~75% of the suite. |
+| The parity test **fails** when a page's capability diverges from its nav permission — *"prove it by deliberately introducing a mismatch"* | Done 2026-08-28. Changed `settings/branches` from `settings.organization.manage` to `students.read`. Clean 3/3 → injected **1 failed**, 2 passed → restored 3/3. |
+| Every route reviewed is **listed**, reviewed-and-clean included | §9 enumerates all 86 `addons` routes per-route; §10 classifies all 165 non-`addons` routes and names each one read in full. |
+
+**One correction carried into this gate:** the isolation checker was cited as
+"enforced in CI" and was not — `npm run lint` is `eslint . && tsx
+check-tenant-isolation.ts`, and `eslint .` exits 2, so `&&` short-circuited and
+the checker never ran; the Linter step was `continue-on-error` regardless. Fixed
+with a dedicated blocking `Tenant isolation check` step. Gate 1 should not be
+read as met for any period before that fix landed.
+
+**Gate 1 is met.** Gate 2 (behaviour) remains the large open item: route-level
+test coverage is ~40 of 789 handlers, and the T11 "lifecycle" suite performs 41
+direct `db.insert` calls while importing a single API route — it verifies data
+shapes, not workflows.
