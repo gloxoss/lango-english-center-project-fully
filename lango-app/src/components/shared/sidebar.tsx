@@ -65,6 +65,7 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { authClient } from '@/libs/auth-client';
 import type { AppRole } from '@/libs/api/context';
 import { PortalRoleSwitcher } from './portal-role-switcher';
@@ -130,6 +131,8 @@ function manifestToNav(item: ManifestItem, locale: string): NavItem {
 
 export function Sidebar({ locale }: { locale: string }) {
   const pathname = usePathname();
+  const tNav = useTranslations('Navigation');
+  const tAuth = useTranslations('Auth');
   const { data: session } = authClient.useSession();
   const userRole = (session?.user as any)?.role || 'school_admin';
 
@@ -797,7 +800,7 @@ export function Sidebar({ locale }: { locale: string }) {
               School
               <span className="text-[#0066FF]">OS</span>
             </h1>
-            <p className="text-[11px] font-medium text-slate-400">Plateforme Multi-tenant</p>
+            <p className="text-[11px] font-medium text-slate-400">{tNav('platformTagline')}</p>
           </div>
         </div>
       </div>
@@ -810,7 +813,7 @@ export function Sidebar({ locale }: { locale: string }) {
           <div className="border-b border-slate-800 p-3">
             <Link href={`/${locale}/dashboard/portals/guard/emergency`} className="flex items-center gap-3 rounded-xl border border-[#E5544B]/50 bg-[#E5544B]/15 px-3 py-2.5 text-xs font-extrabold text-white shadow-sm transition hover:bg-[#E5544B]/25">
               <span className="flex size-7 items-center justify-center rounded-lg bg-[#E5544B] text-white"><Siren className="size-4" /></span>
-              <span>Urgence sécurité</span>
+              <span>{tNav('emergencySecurity')}</span>
               <span className="ml-auto size-2 animate-pulse rounded-full bg-[#E5544B]" />
             </Link>
           </div>
@@ -830,7 +833,7 @@ export function Sidebar({ locale }: { locale: string }) {
             >
               <span className="flex items-center gap-1.5 text-[#0066FF]">
                 <Sparkles className="size-3.5" />
-                Plateforme Super Admin
+                {tNav('superAdminPlatform')}
               </span>
               {openMenus['super-admin']
                 ? (
@@ -937,7 +940,7 @@ export function Sidebar({ locale }: { locale: string }) {
               hover:text-white
             "
           >
-            <span>Modules Établissement</span>
+            <span>{tNav('schoolModules')}</span>
             {openMenus['school-modules']
               ? (
                   <ChevronDown className="size-3.5" />
@@ -1043,7 +1046,7 @@ export function Sidebar({ locale }: { locale: string }) {
           flex items-center justify-between text-xs text-slate-300
         "
         >
-          <span>Role Actif:</span>
+          <span>{tNav('activeRole')}</span>
           <span className="
             rounded-sm border border-[#2487B8]/40 bg-[#2487B8]/20 px-2 py-0.5
             text-[11px] font-bold text-[#2487B8]
@@ -1072,7 +1075,7 @@ export function Sidebar({ locale }: { locale: string }) {
         >
           <LogOut className="size-3.5" />
           {' '}
-          Déconnexion
+          {tAuth('signOut')}
         </button>
       </div>
     </aside>

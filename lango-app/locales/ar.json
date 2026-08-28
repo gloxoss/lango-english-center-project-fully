@@ -54,7 +54,12 @@
     "leadership": "الإدارة والإشراف",
     "settings": "إعدادات المؤسسة",
     "cndp": "مطابقة CNDP F211",
-    "roles": "إدارة الصلاحيات"
+    "roles": "إدارة الصلاحيات",
+    "platformTagline": "منصة متعددة المستأجرين",
+    "emergencySecurity": "حالة أمنية طارئة",
+    "superAdminPlatform": "منصة المشرف الأعلى",
+    "schoolModules": "وحدات المؤسسة",
+    "activeRole": "الدور الحالي:"
   },
   "Roles": {
     "superadmin": "المشرف العام",

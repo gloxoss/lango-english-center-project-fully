@@ -54,7 +54,12 @@
     "leadership": "Direction & Supervision",
     "settings": "Paramètres de l'Établissement",
     "cndp": "Conformité CNDP F211",
-    "roles": "Gestion des Permissions"
+    "roles": "Gestion des Permissions",
+    "platformTagline": "Plateforme Multi-tenant",
+    "emergencySecurity": "Urgence sécurité",
+    "superAdminPlatform": "Plateforme Super Admin",
+    "schoolModules": "Modules Établissement",
+    "activeRole": "Role Actif :"
   },
   "Roles": {
     "superadmin": "Super Administrateur",

@@ -54,7 +54,12 @@
     "leadership": "Executive Leadership",
     "settings": "School Settings",
     "cndp": "CNDP F211 Compliance",
-    "roles": "Permission Management"
+    "roles": "Permission Management",
+    "platformTagline": "Multi-tenant Platform",
+    "emergencySecurity": "Security emergency",
+    "superAdminPlatform": "Super Admin Platform",
+    "schoolModules": "School Modules",
+    "activeRole": "Active role:"
   },
   "Roles": {
     "superadmin": "Super Administrator",
