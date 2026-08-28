@@ -293,7 +293,10 @@ async function run() {
     // -----------------------------------------------------------------------
     const [tenantRow] = await tx
       .insert(tenants)
-      .values({ name: 'Groupe Scolaire Atlas', slug: TENANT_SLUG })
+      // logoUrl is required by isSchoolOnboardingComplete(): without it every
+      // freshly-seeded tenant bounces its school_admin into the onboarding
+      // wizard from every dashboard route (verified 2026-08-28 in the W6 E2E).
+      .values({ name: 'Groupe Scolaire Atlas', slug: TENANT_SLUG, logoUrl: '/uploads/seed/atlas-logo.png' })
       .returning();
     const tenantId = tenantRow!.id;
 

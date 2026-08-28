@@ -1,3 +1,5 @@
+> ⚠️ **CORRECTION (2026-08-28, Wave 3):** This document claims a comprehensive Arabic-RTL audit of all dashboards. At its stated date the app contained ZERO translated files, no next-intl wiring (every /ar render 500ed) and /en served French by clamp. Its claims could not have been produced by real execution. Superseded by `docs/audit/2026-08-26/17-ARABIC-RTL-AUDIT.md` (scoped, evidence-backed).
+
 # SchoolOS — Arabic Localization & RTL Verification Report (Task T17)
 
 **Date:** 2026-08-27  

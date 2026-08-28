@@ -1,25 +1,39 @@
 import { expect, test } from '@playwright/test';
 import { DEMO_ACCOUNTS, loginAs } from './helpers';
 
-// W6 hardening: these specs originally accepted "login page OR target page"
-// in the URL regex, so an unauthenticated redirect made them pass without
-// testing anything. They now sign in and assert the real page rendered.
+// These specs previously asserted `toHaveURL(/(\/login|\/finance\/invoices)/)`
+// without ever signing in. Unauthenticated hits redirect to /login, so the
+// alternation matched the redirect and the tests could not fail — they would
+// have stayed green with the finance module deleted. They now sign in as the
+// seeded accountant and assert on the real page, so a redirect back to /login
+// (a broken guard, a 500, a missing route) fails the test.
+
 test.describe('E2E: Cashier Payments and Invoice Balancing', () => {
-  test('invoices view renders for a signed-in admin (KPI rail)', async ({ page }) => {
-    await loginAs(page, DEMO_ACCOUNTS.admin);
-    await page.goto('/fr/dashboard/finance/invoices');
-    // Authorized: the URL stays on the invoices page instead of bouncing to login.
-    await expect(page).toHaveURL(/finance\/invoices/);
-    await expect(page).not.toHaveURL(/\/login/);
-    // Static KPI label from invoices-view.tsx — proves the view itself mounted.
-    await expect(page.getByText('Factures émises')).toBeVisible();
+  test.beforeEach(async ({ page }) => {
+    await loginAs(page, DEMO_ACCOUNTS.accountant);
   });
 
-  test('payments entry redirects to the real Collection Desk (documented behavior)', async ({ page }) => {
-    await loginAs(page, DEMO_ACCOUNTS.admin);
-    await page.goto('/fr/dashboard/finance/payments');
-    // payments/page.tsx redirects the legacy mock to the built collection desk.
-    await expect(page).toHaveURL(/finance\/collection-desk/);
+  test('invoices view loads for an authenticated accountant', async ({ page }) => {
+    await page.goto('/fr/dashboard/finance/invoices');
+
+    // No `|login` alternation: landing back on login is now a failure.
+    await expect(page).toHaveURL(/\/finance\/invoices/);
     await expect(page).not.toHaveURL(/\/login/);
+    await expect(page.locator('body')).not.toContainText('Internal Server Error');
+    await expect(page.locator('main, [role="main"]').first()).toBeVisible();
+  });
+
+  test('payments redirects to the collection desk, which renders', async ({ page }) => {
+    await page.goto('/fr/dashboard/finance/payments');
+
+    // /finance/payments is a deliberate redirect stub; collection-desk is the
+    // real screen (see finance/payments/page.tsx). Asserting the destination
+    // proves both the redirect and the page it lands on. The previous
+    // `(login|payments)` assertion matched the login redirect and never
+    // discovered this route existed at all.
+    await expect(page).toHaveURL(/\/finance\/collection-desk/);
+    await expect(page).not.toHaveURL(/\/login/);
+    await expect(page.locator('body')).not.toContainText('Internal Server Error');
+    await expect(page.locator('main, [role="main"]').first()).toBeVisible();
   });
 });

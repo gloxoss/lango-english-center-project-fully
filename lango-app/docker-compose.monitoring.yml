@@ -1,0 +1,39 @@
+# W3 — self-hosted uptime monitoring (Uptime Kuma, open source, MIT).
+#
+# Run alongside the main stack:
+#   docker compose -f docker-compose.yml -f docker-compose.monitoring.yml up -d uptime-kuma
+#
+# Uptime Kuma ships email (SMTP), Slack, Telegram, Discord, webhook and ~90 other
+# notification channels built in, so the "email / phone / Slack" requirement is
+# configuration in its UI rather than code here.
+#
+# KNOWN LIMITATION — this monitor runs on the SAME host it watches. If that host
+# dies, the monitor dies with it and no alert is sent. It catches the common
+# cases (app crash, container restart loop, DB down, TLS expiry, slow responses)
+# but NOT total host loss. Accepted deliberately until the production move; at
+# that point run this compose file on the second server and point MONITOR_TARGET
+# at the production URL. That move is a config change, not a rewrite.
+
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:1.23.16
+    container_name: schoolos-uptime-kuma
+    restart: unless-stopped
+    ports:
+      # Bound to loopback: reach it over an SSH tunnel rather than exposing the
+      # dashboard publicly.
+      #   ssh -L 3001:localhost:3001 ubuntu@<vps>   then open localhost:3001
+      - "127.0.0.1:${UPTIME_KUMA_PORT:-3001}:3001"
+    volumes:
+      - uptime-kuma-data:/app/data
+      # Lets Kuma monitor sibling containers' health directly, not just HTTP.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3001 || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  uptime-kuma-data:

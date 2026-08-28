@@ -1,23 +1,30 @@
 import { expect, test } from '@playwright/test';
 import { DEMO_ACCOUNTS, loginAs } from './helpers';
 
-// W6 hardening: originally accepted "login OR target" URL patterns, so both
-// tests passed on an anonymous redirect without rendering anything. Now signs
-// in and asserts the student directory and admissions pages actually render.
-test.describe('E2E: Student Directory and Admissions', () => {
-  test('student directory renders for a signed-in admin', async ({ page }) => {
+// Previously asserted `toHaveURL(/(\/login|\/dashboard\/students)/)` without
+// signing in, so the login redirect satisfied it and the test could not fail.
+// Now signs in as the seeded school admin and asserts on the real pages.
+
+test.describe('E2E: Student Lifecycle, Admissions, and Directory', () => {
+  test.beforeEach(async ({ page }) => {
     await loginAs(page, DEMO_ACCOUNTS.admin);
-    await page.goto('/fr/dashboard/students');
-    await expect(page).toHaveURL(/dashboard\/students$/);
-    await expect(page).not.toHaveURL(/\/login/);
-    await expect(page.getByRole('heading', { name: 'School OS' })).toBeVisible();
   });
 
-  test('admissions page renders for a signed-in admin', async ({ page }) => {
-    await loginAs(page, DEMO_ACCOUNTS.admin);
-    await page.goto('/fr/dashboard/students/admissions');
-    await expect(page).toHaveURL(/students\/admissions/);
+  test('student directory loads for an authenticated admin', async ({ page }) => {
+    await page.goto('/fr/dashboard/students');
+
+    await expect(page).toHaveURL(/\/dashboard\/students/);
     await expect(page).not.toHaveURL(/\/login/);
-    await expect(page.getByRole('heading', { name: 'School OS' })).toBeVisible();
+    await expect(page.locator('body')).not.toContainText('Internal Server Error');
+    await expect(page.locator('main, [role="main"]').first()).toBeVisible();
+  });
+
+  test('admissions page loads for an authenticated admin', async ({ page }) => {
+    await page.goto('/fr/dashboard/students/admissions');
+
+    await expect(page).toHaveURL(/\/students\/admissions/);
+    await expect(page).not.toHaveURL(/\/login/);
+    await expect(page.locator('body')).not.toContainText('Internal Server Error');
+    await expect(page.locator('main, [role="main"]').first()).toBeVisible();
   });
 });

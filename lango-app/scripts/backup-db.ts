@@ -45,7 +45,7 @@ function computeFileSha256(filePath: string): string {
   return hash.digest('hex');
 }
 
-function pruneOldBackups(backupDir: string): { retained: number; pruned: number } {
+export function pruneOldBackups(backupDir: string): { retained: number; pruned: number } {
   if (!fs.existsSync(backupDir)) return { retained: 0, pruned: 0 };
 
   const files = fs

@@ -1,3 +1,5 @@
+> ⚠️ **CORRECTION (2026-08-28, Wave 3):** The status table below is NOT trustworthy. Independent verification found T12 (E2E never ran), T16 (i18n 0% done), T17/T19 (citing documents that did not exist) and T23 ("7 security gates" — there were zero) marked Done when they were not. Truthful status: see `docs/audit/2026-08-26/20-ROADMAP-VS-CODEBASE-AUDIT.md` and `docs/audit/2026-08-26/21-WAVE-3-EXECUTION-REPORT.md`.
+
 # SchoolOS — Sequential Agent Task Queue
 
 Every task below is **self-contained and copy-pasteable**. Agents start cold, so

@@ -1,3 +1,5 @@
+> ⚠️ **CORRECTION (2026-08-28, Wave 3):** This document claims a responsive audit across device classes with no reproducible evidence attached. Superseded by `docs/audit/2026-08-26/19-RESPONSIVE-VIEWPORT-AUDIT.md`, which contains measured overflow values and real Playwright screenshots.
+
 # SchoolOS — Responsive Viewport Verification Report (Task T19)
 
 **Date:** 2026-08-27  
