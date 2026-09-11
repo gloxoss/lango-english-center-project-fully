@@ -1,11 +1,19 @@
 ﻿// organization-page.tsx
 // SERVER COMPONENT — fetches initial settings + tenant logo status server-side,
 // and passes them to the OrganizationFormClient island.
+import { eq } from 'drizzle-orm';
 import { getServerUserContext } from '@/libs/auth/server-context';
 import { db } from '@/libs/DB';
+import { uploadedFileExists } from '@/libs/api/uploads';
 import { getEffectiveValueWithLegacyFallback } from '@/libs/settings/registry';
 import { schoolSettings, tenants } from '@/models/Schema';
 import { OrganisationFormClient, OrganisationFormData } from './organization-form-client';
+
+// Same derivation GET /api/settings/logo uses to locate the stored file, so
+// this page and the endpoint always agree on which file is being talked about.
+function extOf(storedUrl: string): string {
+  return storedUrl.split('.').pop() ?? 'png';
+}
 
 const DEFAULT_FORM_DATA: OrganisationFormData = {
   establishmentName: '',
@@ -56,7 +64,13 @@ export async function OrganizationPage() {
   const tenantId = ctx?.tenantId ?? null;
 
   try {
-    const [settingRow] = await db.select().from(schoolSettings).limit(1);
+    // Scoped to the caller's tenant. Both reads below used a bare LIMIT 1 with
+    // no WHERE, so they took whichever row the database returned first: on a
+    // multi-tenant database that pre-fills the form with another school's
+    // establishment name, ICE, and director/finance contact details.
+    const [settingRow] = tenantId
+      ? await db.select().from(schoolSettings).where(eq(schoolSettings.tenantId, tenantId)).limit(1)
+      : [];
     if (settingRow) {
       initialData = {
         establishmentName: settingRow.establishmentName ?? '',
@@ -109,9 +123,21 @@ export async function OrganizationPage() {
       initialData.localeTimezone = (tzEff.value as string) ?? initialData.localeTimezone;
     }
 
-    const [tenantRow] = await db.select({ logoUrl: tenants.logoUrl, faviconUrl: tenants.faviconUrl }).from(tenants).limit(1);
-    hasLogo = Boolean(tenantRow?.logoUrl);
-    hasFavicon = Boolean(tenantRow?.faviconUrl);
+    // hasLogo must mean "there is an image to show", not "the column is set".
+    // A non-empty logoUrl with no file behind it made this page render an <img>
+    // pointing at /api/settings/logo, which can only answer 404 - the failing
+    // request the UI audit caught on /dashboard/settings/onboarding. The file
+    // is the source of truth; the column is only a claim.
+    const [tenantRow] = tenantId
+      ? await db.select({ logoUrl: tenants.logoUrl, faviconUrl: tenants.faviconUrl }).from(tenants).where(eq(tenants.id, tenantId)).limit(1)
+      : [];
+
+    if (tenantRow?.logoUrl) {
+      hasLogo = await uploadedFileExists(tenantId!, `logo.${extOf(tenantRow.logoUrl)}`);
+    }
+    if (tenantRow?.faviconUrl) {
+      hasFavicon = await uploadedFileExists(tenantId!, `favicon.${extOf(tenantRow.faviconUrl)}`);
+    }
   } catch (err) {
     console.error('Failed to pre-fetch organization settings server-side:', err);
   }

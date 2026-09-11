@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { ApiError } from '@/libs/api/errors';
 
@@ -66,6 +66,22 @@ export async function saveUploadedFile(
 export async function readUploadedFile(tenantId: string, subpath: string): Promise<Buffer> {
   const fullPath = resolveTenantPath(tenantId, subpath);
   return readFile(fullPath);
+}
+
+/**
+ * Whether a stored file can actually be served. `tenants.logoUrl` is just a
+ * claim - a seeded row, an upload deleted from the volume, or a value written
+ * before the file was moved all leave it set with nothing behind it. Screens
+ * that decide whether to render an <img> need the filesystem's answer, not the
+ * column's, or they request an image the API can only 404.
+ */
+export async function uploadedFileExists(tenantId: string, subpath: string): Promise<boolean> {
+  try {
+    await stat(resolveTenantPath(tenantId, subpath));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // Moves a file already saved by saveUploadedFile to a new subpath within the
