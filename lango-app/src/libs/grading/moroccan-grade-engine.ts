@@ -45,6 +45,19 @@ export function isValidGrade(grade: number): boolean {
 }
 
 /**
+ * Converts a stored 0-100 percentage (assessment_results.final_percentage) onto
+ * the /20 scale every Moroccan average and mention is defined on.
+ *
+ * Use this at the point of reading grades out of the database. A percentage
+ * handed to calculateMoroccanAverage unchanged is rejected by isValidGrade for
+ * any score above 20 — which is most of them — so the whole class's report
+ * fails, not just the student with the high mark.
+ */
+export function percentageToTwenty(percentage: number): number {
+  return (percentage / 100) * 20;
+}
+
+/**
  * Calculates the Mention based on the Moroccan national scale.
  */
 export function getMoroccanMention(average: number): MentionType {

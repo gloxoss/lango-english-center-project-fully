@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
-import { calculateMoroccanAverage } from '@/libs/grading/moroccan-grade-engine';
+import { calculateMoroccanAverage, percentageToTwenty } from '@/libs/grading/moroccan-grade-engine';
 import { assessmentPlans, assessmentResults, assessments, attendance, classes, classSections, classSubjects, invoices, sections, user } from '@/models/Schema';
 
 // Composite class-360 roster: real attendance rate (last 30 days), real
@@ -92,7 +92,8 @@ export async function GET(request: Request) {
         continue;
       }
       const list = gradesByStudent.get(row.studentId) ?? [];
-      list.push({ title: row.title, grade: Number(row.finalPercentage) });
+      // final_percentage is 0-100; the Moroccan engine below expects /20.
+      list.push({ title: row.title, grade: percentageToTwenty(Number(row.finalPercentage)) });
       gradesByStudent.set(row.studentId, list);
     }
 

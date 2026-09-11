@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
-import { calculateClassRanks, calculateMoroccanAverage, getMoroccanMention } from '@/libs/grading/moroccan-grade-engine';
+import { calculateClassRanks, calculateMoroccanAverage, getMoroccanMention, percentageToTwenty } from '@/libs/grading/moroccan-grade-engine';
 import { assessmentPlans, assessmentResults, assessments, classes, classSections, classSubjects, subjects, user } from '@/models/Schema';
 
 // ponytail: no per-assessment/per-subject coefficient exists in the schema
@@ -60,7 +60,8 @@ export async function GET(request: Request) {
         continue;
       }
       const list = byStudent.get(row.studentId) ?? [];
-      list.push({ title: row.title, grade: Number(row.finalPercentage) });
+      // final_percentage is 0-100; the Moroccan engine below expects /20.
+      list.push({ title: row.title, grade: percentageToTwenty(Number(row.finalPercentage)) });
       byStudent.set(row.studentId, list);
     }
 

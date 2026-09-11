@@ -1,6 +1,6 @@
 import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '@/libs/DB';
-import { calculateClassRanks, calculateMoroccanAverage, getMoroccanMention } from '@/libs/grading/moroccan-grade-engine';
+import { calculateClassRanks, calculateMoroccanAverage, getMoroccanMention, percentageToTwenty } from '@/libs/grading/moroccan-grade-engine';
 import { assessmentPlans, assessmentResults, assessments, classes, classSections, classSubjects, sections, subjects, user } from '@/models/Schema';
 
 export type ReportCardSubject = {
@@ -70,7 +70,9 @@ export async function getClassReportCards(
     }
     const studentMap = bySubjectByStudent.get(row.studentId) ?? new Map();
     const entry = studentMap.get(row.subjectId) ?? { subjectName: row.subjectName, coefficient: Number(row.coefficient) || 1, scores: [] };
-    entry.scores.push(Number(row.finalPercentage));
+    // final_percentage is stored 0-100; every average and mention below is on
+    // the /20 Moroccan scale, so rescale once here rather than at each use.
+    entry.scores.push(percentageToTwenty(Number(row.finalPercentage)));
     studentMap.set(row.subjectId, entry);
     bySubjectByStudent.set(row.studentId, studentMap);
   }
