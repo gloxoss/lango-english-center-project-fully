@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import { publicBrandingUrl } from '@/libs/api/uploads';
 import { getPublicMenuItems, getPublicTheme, resolveTenantBySlug } from '@/features/website/services/website-service';
 
 // React's cache() dedupes calls with identical args within a single request,
@@ -11,7 +12,12 @@ export const resolveSite = cache(async (tenantSlug: string) => {
   }
   const theme = await getPublicTheme(tenant.id);
   const menu = theme ? await getPublicMenuItems(tenant.id) : [];
-  return { tenant, theme, menu };
+  // Resolved here, once, rather than in the header: `tenant.logoUrl` stays the
+  // raw column, and `logoUrl` is a URL the browser can actually fetch, or null
+  // when no file is behind the column. Guarding an <img> on the raw column is
+  // what produced a 404ing image for a tenant with nothing uploaded.
+  const logoUrl = await publicBrandingUrl(tenant, 'logo');
+  return { tenant, logoUrl, theme, menu };
 });
 
 export type ResolvedSite = NonNullable<Awaited<ReturnType<typeof resolveSite>>>;

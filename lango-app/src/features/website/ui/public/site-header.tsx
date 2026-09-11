@@ -17,7 +17,7 @@ function menuItemHref(item: ResolvedSite['menu'][number], locale: string, tenant
 }
 
 export function SiteHeader({ site, locale }: { site: ResolvedSite; locale: string }) {
-  const { tenant, theme, menu } = site;
+  const { tenant, logoUrl, theme, menu } = site;
   if (!theme) {
     return null;
   }
@@ -26,10 +26,10 @@ export function SiteHeader({ site, locale }: { site: ResolvedSite; locale: strin
     <header style={{ backgroundColor: theme.colorMenuBackground }} className="sticky top-0 z-40">
       <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
         <Link href={`/${locale}/${tenant.slug}`} style={{ color: theme.colorFooterText }} className="flex items-center gap-2 text-base font-extrabold shrink-0">
-          {tenant.logoUrl && (
+          {logoUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={`/api/public/website/${tenant.slug}/logo`}
+              src={logoUrl}
               alt={tenant.name}
               className="h-8 w-8 rounded-lg object-cover"
             />

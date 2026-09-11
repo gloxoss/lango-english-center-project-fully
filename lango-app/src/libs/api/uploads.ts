@@ -84,6 +84,56 @@ export async function uploadedFileExists(tenantId: string, subpath: string): Pro
   }
 }
 
+export type BrandingKind = 'logo' | 'favicon';
+
+/**
+ * The file inside the tenant's upload directory that a stored branding value
+ * points at.
+ *
+ * tenants.logoUrl holds a bare filename ('logo.png') because that is what the
+ * upload endpoint writes. Rows seeded or written before that convention settled
+ * can hold a path instead - the seed used to name '/uploads/seed/atlas-logo.png'.
+ * Neither shape is a servable URL, and only the extension is meaningful: the
+ * file itself is always stored as `${kind}.${ext}`. So the extension is read off
+ * whatever was stored and the rest is treated as a label.
+ *
+ * Deriving the key here rather than at each call site is the point: the two GET
+ * endpoints used to inline `storedUrl.split('.').pop()` and the settings page
+ * had a third copy of the same rule, which is one edit away from a page and an
+ * endpoint disagreeing about which file they mean.
+ */
+export function brandingFileKey(storedValue: string, kind: BrandingKind): string {
+  // extname, not split('.').pop(): a directory with a dot in it would confuse the
+  // latter. Lower-cased because the upload allow-list only ever produces lower.
+  const ext = path.extname(storedValue).replace(/^\./, '').toLowerCase() || 'png';
+  return `${kind}.${ext}`;
+}
+
+/**
+ * URL that serves a tenant's logo or favicon to an unauthenticated visitor, or
+ * null when there is no file to serve.
+ *
+ * Null is the important half. The column is a claim, not a fact: a seeded row,
+ * an upload deleted from the volume, or a value written before the file moved
+ * all leave it set with nothing behind it. Rendering that claim as an <img>
+ * src produces a broken image on the public login page, so callers get null and
+ * render their fallback instead. This is the unauthenticated counterpart of
+ * GET /api/settings/logo, which only serves the caller's own tenant.
+ */
+export async function publicBrandingUrl(
+  tenant: { id: string; slug: string; logoUrl?: string | null; faviconUrl?: string | null },
+  kind: BrandingKind = 'logo',
+): Promise<string | null> {
+  const stored = kind === 'favicon' ? tenant.faviconUrl : tenant.logoUrl;
+  if (!stored) {
+    return null;
+  }
+  if (!(await uploadedFileExists(tenant.id, brandingFileKey(stored, kind)))) {
+    return null;
+  }
+  return `/api/public/website/${tenant.slug}/logo${kind === 'favicon' ? '?type=favicon' : ''}`;
+}
+
 // Moves a file already saved by saveUploadedFile to a new subpath within the
 // same tenant - used to copy an applicant's uploaded documents onto the real
 // student record at admission approval.

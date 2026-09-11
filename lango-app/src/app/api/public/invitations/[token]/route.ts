@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { publicBrandingUrl } from '@/libs/api/uploads';
 import { db } from '@/libs/DB';
 import { tenantInvitations, tenants } from '@/models/Schema';
 
@@ -19,7 +20,11 @@ export async function GET(
         status: tenantInvitations.status,
         expiresAt: tenantInvitations.expiresAt,
         schoolName: tenants.name,
+        // Raw column, resolved below into something the invitee's browser can
+        // fetch. It is a bare filename, not a URL.
         schoolLogo: tenants.logoUrl,
+        tenantId: tenants.id,
+        tenantSlug: tenants.slug,
       })
       .from(tenantInvitations)
       .innerJoin(tenants, eq(tenantInvitations.tenantId, tenants.id))
@@ -37,6 +42,11 @@ export async function GET(
     const isExpired = new Date(row.expiresAt).getTime() < Date.now();
     const isValid = row.status === 'pending' && !isExpired;
 
+    const schoolLogo = await publicBrandingUrl(
+      { id: row.tenantId, slug: row.tenantSlug, logoUrl: row.schoolLogo },
+      'logo',
+    );
+
     return NextResponse.json({
       success: true,
       valid: isValid,
@@ -48,7 +58,9 @@ export async function GET(
         expiresAt: row.expiresAt,
         isExpired,
         schoolName: row.schoolName,
-        schoolLogo: row.schoolLogo,
+        // A fetchable URL, or null when nothing is uploaded - never the bare
+        // filename the column holds.
+        schoolLogo,
       },
     });
   } catch (error) {

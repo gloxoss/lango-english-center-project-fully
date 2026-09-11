@@ -4,16 +4,10 @@
 import { eq } from 'drizzle-orm';
 import { getServerUserContext } from '@/libs/auth/server-context';
 import { db } from '@/libs/DB';
-import { uploadedFileExists } from '@/libs/api/uploads';
+import { brandingFileKey, uploadedFileExists } from '@/libs/api/uploads';
 import { getEffectiveValueWithLegacyFallback } from '@/libs/settings/registry';
 import { schoolSettings, tenants } from '@/models/Schema';
 import { OrganisationFormClient, OrganisationFormData } from './organization-form-client';
-
-// Same derivation GET /api/settings/logo uses to locate the stored file, so
-// this page and the endpoint always agree on which file is being talked about.
-function extOf(storedUrl: string): string {
-  return storedUrl.split('.').pop() ?? 'png';
-}
 
 const DEFAULT_FORM_DATA: OrganisationFormData = {
   establishmentName: '',
@@ -133,10 +127,10 @@ export async function OrganizationPage() {
       : [];
 
     if (tenantRow?.logoUrl) {
-      hasLogo = await uploadedFileExists(tenantId!, `logo.${extOf(tenantRow.logoUrl)}`);
+      hasLogo = await uploadedFileExists(tenantId!, brandingFileKey(tenantRow.logoUrl, 'logo'));
     }
     if (tenantRow?.faviconUrl) {
-      hasFavicon = await uploadedFileExists(tenantId!, `favicon.${extOf(tenantRow.faviconUrl)}`);
+      hasFavicon = await uploadedFileExists(tenantId!, brandingFileKey(tenantRow.faviconUrl, 'favicon'));
     }
   } catch (err) {
     console.error('Failed to pre-fetch organization settings server-side:', err);

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { contentTypeFor, readUploadedFile } from '@/libs/api/uploads';
+import { brandingFileKey, contentTypeFor, readUploadedFile } from '@/libs/api/uploads';
 import { resolveTenantBySlug } from '@/features/website/services/website-service';
 
 // Public, unauthenticated equivalent of GET /api/settings/logo (which only
@@ -17,12 +17,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ tena
   }
 
   const tenantId = tenant.id; // resolved strictly from tenantSlug above - every read below is scoped to it
-  const fileKey = isFavicon ? 'favicon' : 'logo';
-  const ext = storedUrl.split('.').pop() ?? 'png';
+  const fileKey = brandingFileKey(storedUrl, isFavicon ? 'favicon' : 'logo');
   try {
-    const bytes = await readUploadedFile(tenantId, `${fileKey}.${ext}`);
+    const bytes = await readUploadedFile(tenantId, fileKey);
     return new NextResponse(new Uint8Array(bytes), {
-      headers: { 'Content-Type': contentTypeFor(ext), 'Cache-Control': 'public, max-age=3600' },
+      headers: { 'Content-Type': contentTypeFor(fileKey.split('.').pop() ?? 'png'), 'Cache-Control': 'public, max-age=3600' },
     });
   } catch {
     return NextResponse.json({ success: false, message: 'Logo non trouvé' }, { status: 404 });

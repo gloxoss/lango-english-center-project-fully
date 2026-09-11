@@ -296,7 +296,15 @@ async function run() {
       // logoUrl is required by isSchoolOnboardingComplete(): without it every
       // freshly-seeded tenant bounces its school_admin into the onboarding
       // wizard from every dashboard route (verified 2026-08-28 in the W6 E2E).
-      .values({ name: 'Groupe Scolaire Atlas', slug: TENANT_SLUG, logoUrl: '/uploads/seed/atlas-logo.png' })
+      //
+      // A bare filename, which is what POST /api/settings/logo stores and what
+      // every reader resolves through brandingFileKey(). It used to be
+      // '/uploads/seed/atlas-logo.png' - a path naming a file that exists
+      // nowhere. Neither value has a file behind it, so no logo renders either
+      // way; this one at least matches the column's contract. The resolvers
+      // still tolerate the old shape, because rows written before this change
+      // hold it.
+      .values({ name: 'Groupe Scolaire Atlas', slug: TENANT_SLUG, logoUrl: 'logo.png' })
       .returning();
     const tenantId = tenantRow!.id;
 

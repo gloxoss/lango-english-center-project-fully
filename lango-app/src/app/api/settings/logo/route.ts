@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { recordAudit } from '@/libs/api/audit';
-import { contentTypeFor, readUploadedFile, saveUploadedFile } from '@/libs/api/uploads';
+import { brandingFileKey, contentTypeFor, readUploadedFile, saveUploadedFile } from '@/libs/api/uploads';
 import { db } from '@/libs/DB';
 import { tenants } from '@/models/Schema';
 
@@ -30,16 +30,16 @@ export async function GET(request: Request) {
       .limit(1);
 
     const storedUrl = isFavicon ? row?.faviconUrl : row?.logoUrl;
-    const fileKey = isFavicon ? 'favicon' : 'logo';
+    const kind = isFavicon ? 'favicon' : 'logo';
 
     if (!storedUrl) {
       return NextResponse.json({ success: false, message: `${isFavicon ? 'Favicon' : 'Logo'} non trouvé` }, { status: 404 });
     }
-    const ext = storedUrl.split('.').pop() ?? 'png';
+    const fileKey = brandingFileKey(storedUrl, kind);
     try {
-      const bytes = await readUploadedFile(tenantId, `${fileKey}.${ext}`);
+      const bytes = await readUploadedFile(tenantId, fileKey);
       return new NextResponse(new Uint8Array(bytes), {
-        headers: { 'Content-Type': contentTypeFor(ext), 'Cache-Control': 'private, max-age=3600' },
+        headers: { 'Content-Type': contentTypeFor(fileKey.split('.').pop() ?? 'png'), 'Cache-Control': 'private, max-age=3600' },
       });
     } catch {
       return NextResponse.json({ success: false, message: `${isFavicon ? 'Favicon' : 'Logo'} non trouvé` }, { status: 404 });
