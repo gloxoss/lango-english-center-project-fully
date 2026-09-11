@@ -304,7 +304,21 @@ export async function getCatalogDefinitions(tenantId: string): Promise<CatalogDe
       .where(eq(settingDefinitions.tenantId, tenantId))
       .orderBy(settingDefinitions.namespace, settingDefinitions.key);
 
-    const defs = rows.map(toCatalog);
+    // Only keys the code registry still knows. syncSettingDefinitions writes
+    // code-owned keys alone, so a row outside the registry was left behind by a
+    // renamed or removed key (or by a seeder inventing one). Callers resolve an
+    // effective value per definition, and getEffectiveValue throws
+    // UNKNOWN_SETTING for such a key - one orphan row 400s the whole catalog.
+    const registryKeys = new Set(SETTINGS_REGISTRY.map(d => d.key));
+    const orphans = rows.filter(r => !registryKeys.has(r.key));
+    if (orphans.length > 0) {
+      console.warn(
+        `[settings] ignoring ${orphans.length} setting definition(s) absent from the code registry: `
+        + `${orphans.map(o => o.key).join(', ')}. They cannot be resolved or rendered; re-seed or delete them.`,
+      );
+    }
+
+    const defs = rows.filter(r => registryKeys.has(r.key)).map(toCatalog);
     // Merge any code-only keys not yet synced (e.g. before the first seed).
     const synced = new Set(defs.map(d => d.key));
     const merged = [...defs];

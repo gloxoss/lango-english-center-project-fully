@@ -2102,9 +2102,16 @@ async function run() {
     // -----------------------------------------------------------------------
     let settingDefRows = await tx.select({ id: settingDefinitions.id, key: settingDefinitions.key, label: settingDefinitions.label, namespace: settingDefinitions.namespace, scope: settingDefinitions.scope, sensitivity: settingDefinitions.sensitivity }).from(settingDefinitions).where(eq(settingDefinitions.tenantId, tenantId)).limit(3);
     if (settingDefRows.length === 0) {
+      // Keys must exist in SETTINGS_REGISTRY (src/libs/settings/registry.ts).
+      // This list used to invent 'general.schoolName' and 'general.locale' -
+      // there is no `general` namespace in the registry, so those rows had no
+      // definition to resolve against and getEffectiveValue threw
+      // UNKNOWN_SETTING, which 400'd the whole /api/settings/catalog response
+      // and blanked the settings screens. Seeded values here must map onto a
+      // real registry key.
       const seedDefs = [
-        { key: 'general.schoolName', label: 'Nom de l’établissement', namespace: 'general', scope: 'tenant', sensitivity: 'public', defaultValue: { value: 'Groupe Scolaire Atlas' } },
-        { key: 'general.locale', label: 'Langue', namespace: 'general', scope: 'tenant', sensitivity: 'public', defaultValue: { value: 'fr' } },
+        { key: 'organization.establishmentName', label: 'Nom de l’établissement', namespace: 'organization', scope: 'tenant', sensitivity: 'public', defaultValue: { value: 'Groupe Scolaire Atlas' } },
+        { key: 'localization.languages', label: 'Langues activées', namespace: 'localization', scope: 'tenant', sensitivity: 'public', defaultValue: { francais: true, arabe: true, anglais: false } },
         { key: 'finance.currency', label: 'Devise', namespace: 'finance', scope: 'tenant', sensitivity: 'public', defaultValue: { value: 'MAD' } },
       ] as const;
       const defIds: string[] = [];
@@ -2112,7 +2119,7 @@ async function run() {
       settingDefRows = seedDefs.map((d, i) => ({ id: defIds[i]!, key: d.key, label: d.label, namespace: d.namespace, scope: d.scope, sensitivity: d.sensitivity }));
     }
     await tx.insert(settingDefinitionVersions).values(settingDefRows.map((d) => ({ tenantId, definitionId: d.id, version: 1, label: d.label, description: null, namespace: d.namespace, scope: d.scope, sensitivity: d.sensitivity, defaultValue: { value: null }, requiredPermission: null, legacyField: null, actorId: 'USR-001', reason: 'Création initiale', createdAt: isoTs(-200) })));
-    await tx.insert(settingValues).values([{ tenantId, branchId: null, key: 'general.schoolName', value: { value: 'Groupe Scolaire Atlas' }, version: 1, updatedBy: 'USR-001', createdAt: isoTs(-100), updatedAt: isoTs(-100) }, { tenantId, branchId: null, key: 'general.locale', value: { value: 'fr' }, version: 1, updatedBy: 'USR-001', createdAt: isoTs(-100), updatedAt: isoTs(-100) }]);
+    await tx.insert(settingValues).values([{ tenantId, branchId: null, key: 'organization.establishmentName', value: { value: 'Groupe Scolaire Atlas' }, version: 1, updatedBy: 'USR-001', createdAt: isoTs(-100), updatedAt: isoTs(-100) }, { tenantId, branchId: null, key: 'localization.languages', value: { francais: true, arabe: true, anglais: false }, version: 1, updatedBy: 'USR-001', createdAt: isoTs(-100), updatedAt: isoTs(-100) }]);
     const nsRows: Array<[string, string, string, number, number]> = [
       ['student.matricule', 'Matricule élève', 'ATL-2526-', 4, 200],
       ['invoice.number', 'Numéro facture', 'INV-2026-', 4, 200],
