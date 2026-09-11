@@ -5,6 +5,8 @@ import {
   calculateMoroccanAverage,
   getMoroccanMention,
   isValidGrade,
+  percentageToTwenty,
+  twentyToPercentage,
 } from '../moroccan-grade-engine';
 
 describe('Moroccan K-12 Grade Engine (/20 scale) (T14)', () => {
@@ -139,5 +141,41 @@ describe('Moroccan K-12 Grade Engine (/20 scale) (T14)', () => {
     expect(annual.generalAverage).toBe(15.0);
     expect(annual.status).toBe('Admis');
     expect(annual.mention).toBe('Bien');
+  });
+
+  // The /20 scale and the 0-100 assessment_results.final_percentage column meet
+  // at exactly one boundary. These pin both directions, because a mark stored on
+  // the wrong one is not an error anywhere: it just reads back five times too
+  // small, with a mention to match.
+  describe('score scale conversion', () => {
+    it('round-trips every mark the /20 scale can express', () => {
+      for (const score of [0, 0.01, 3.4, 9.5, 10, 11, 15.75, 17, 19.99, 20]) {
+        expect(percentageToTwenty(twentyToPercentage(score))).toBeCloseTo(score, 9);
+      }
+    });
+
+    it('maps the ends of the /20 scale onto the ends of the 0-100 column', () => {
+      expect(twentyToPercentage(0)).toBe(0);
+      expect(twentyToPercentage(20)).toBe(100);
+      expect(percentageToTwenty(0)).toBe(0);
+      expect(percentageToTwenty(100)).toBe(20);
+    });
+
+    it('writes a value the numeric(5,2) column can hold exactly', () => {
+      // More than two decimals would be rounded by Postgres, and the caller would
+      // read back a different mark from the one it submitted.
+      for (const score of [0.01, 13.33, 15.55, 19.99]) {
+        const stored = twentyToPercentage(score);
+        expect(stored).toBe(Math.round(stored * 100) / 100);
+      }
+    });
+
+    it('shows why a raw /20 mark cannot be stored unchanged', () => {
+      // 17/20 written raw into the 0-100 column reads back as 3.4, turning a
+      // 'Très Bien' pupil into an 'Insuffisant' one.
+      expect(percentageToTwenty(17)).toBeCloseTo(3.4, 9);
+      expect(getMoroccanMention(percentageToTwenty(17))).toBe('Insuffisant');
+      expect(getMoroccanMention(17)).toBe('Très Bien');
+    });
   });
 });

@@ -58,6 +58,22 @@ export function percentageToTwenty(percentage: number): number {
 }
 
 /**
+ * The inverse of percentageToTwenty, for the write side.
+ *
+ * Every reader of assessment_results.final_percentage rescales it onto /20 with
+ * percentageToTwenty (class-results, classes/roster, report-card-service), so a
+ * /20 mark stored unchanged in that column comes back out divided by five: a
+ * 17/20 reads as a 3.4 average and an 'Insuffisant' mention.
+ *
+ * Rounded to 2 decimals because the column is numeric(5,2); rounding here rather
+ * than leaving it to Postgres keeps the value the caller gets back equal to the
+ * value that was stored.
+ */
+export function twentyToPercentage(score: number): number {
+  return Math.round(score * 5 * 100) / 100;
+}
+
+/**
  * Calculates the Mention based on the Moroccan national scale.
  */
 export function getMoroccanMention(average: number): MentionType {

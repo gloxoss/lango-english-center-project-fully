@@ -6,10 +6,16 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
-import { getMoroccanMention, isValidGrade } from '@/libs/grading/moroccan-grade-engine';
+import { getMoroccanMention, isValidGrade, percentageToTwenty, twentyToPercentage } from '@/libs/grading/moroccan-grade-engine';
 import { db } from '@/libs/DB';
 import { assessmentResults, user } from '@/models/Schema';
 
+// This endpoint speaks /20 on the wire: `score` is a Moroccan mark, which is
+// what the Zod bound, the mention engine and the response message all mean by
+// it. The column it writes to, assessment_results.final_percentage, is 0-100:
+// every reader rescales it with percentageToTwenty. The two scales meet here and
+// nowhere else, so both directions convert at this boundary rather than trusting
+// a caller or a reader to remember which one they hold.
 const gradeEntryItemSchema = z.object({
   studentId: z.string().min(1),
   score: z.number().min(0).max(20),
@@ -49,7 +55,13 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      data: rows,
+      data: rows.map(row => ({
+        ...row,
+        // Back onto the /20 scale this endpoint's `score` field is defined on.
+        // Null is preserved: an ungraded row is not a zero, and reporting it as
+        // one would invent a mark the teacher never entered.
+        score: row.score === null ? null : percentageToTwenty(Number(row.score)),
+      })),
       total: rows.length,
     });
   } catch (error) {
@@ -90,7 +102,7 @@ export async function POST(request: Request) {
             tenantId,
             assessmentId: body.assessmentId,
             studentId: item.studentId,
-            finalPercentage: String(item.score),
+            finalPercentage: String(twentyToPercentage(item.score)),
             gradeCode: mention,
             feedback: item.feedback || null,
           })

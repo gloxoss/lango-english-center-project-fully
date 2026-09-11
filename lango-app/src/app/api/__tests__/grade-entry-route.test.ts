@@ -118,9 +118,10 @@ describe.skipIf(!dbReachable)('POST /api/academics/assessments — grade entry',
     const byStudent = Object.fromEntries(rows.map(r => [r.studentId, r]));
     expect(byStudent[STUDENT_A]!.gradeCode).toBe('Très Bien');
     expect(byStudent[STUDENT_B]!.gradeCode).toBe('Insuffisant');
-    // Score is persisted on the /20 scale, not rescaled to a percentage.
-    expect(Number(byStudent[STUDENT_A]!.finalPercentage)).toBe(17);
-    expect(Number(byStudent[STUDENT_B]!.finalPercentage)).toBe(9.5);
+    // The column holds 0-100. Every reader rescales it with percentageToTwenty,
+    // so a /20 mark stored unchanged would read back five times too small.
+    expect(Number(byStudent[STUDENT_A]!.finalPercentage)).toBe(85);
+    expect(Number(byStudent[STUDENT_B]!.finalPercentage)).toBe(47.5);
   });
 
   it('replaces a prior grade instead of accumulating duplicate rows', async () => {
@@ -137,8 +138,38 @@ describe.skipIf(!dbReachable)('POST /api/academics/assessments — grade entry',
     // A second submission for the same student must correct the grade, not
     // leave two conflicting rows for a transcript to pick between.
     expect(rows).toHaveLength(1);
-    expect(Number(rows[0]!.finalPercentage)).toBe(11);
+    expect(Number(rows[0]!.finalPercentage)).toBe(55);
     expect(rows[0]!.gradeCode).toBe('Passable'); // 11 -> >= 10
+  });
+
+  it('hands back the /20 mark it accepted, including a perfect 20', async () => {
+    await setContext(ctx());
+    const post = await postGrades({
+      assessmentId,
+      grades: [
+        { studentId: STUDENT_A, score: 20 }, // top of the Moroccan scale
+        { studentId: STUDENT_B, score: 0 },
+      ],
+    });
+    expect(post.status).toBe(200);
+
+    const rows = await db.select().from(assessmentResults)
+      .where(and(eq(assessmentResults.tenantId, tenantId), eq(assessmentResults.assessmentId, assessmentId)));
+    const stored = Object.fromEntries(rows.map(r => [r.studentId, Number(r.finalPercentage)]));
+    // Stored as a percentage, at the ends of the column's range.
+    expect(stored[STUDENT_A]).toBe(100);
+    expect(stored[STUDENT_B]).toBe(0);
+
+    const res = await GET(new Request(`http://localhost/api/academics/assessments?assessmentId=${assessmentId}`));
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    const returned = Object.fromEntries(
+      json.data.map((r: { studentId: string; score: number | null }) => [r.studentId, r.score]),
+    );
+    // Read back on the scale it was submitted on: 20/20 is the boundary the
+    // raw-write bug turned into 4/20.
+    expect(returned[STUDENT_A]).toBe(20);
+    expect(returned[STUDENT_B]).toBe(0);
   });
 
   it('rejects a score outside the Moroccan 0-20 scale', async () => {
