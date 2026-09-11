@@ -24,6 +24,13 @@ export type NavItem = {
   addonId?: string;
   /** Marks a dedicated-portal home: a portal-confined role lands here, not the cross-module dashboard. */
   portalHome?: boolean;
+  /**
+   * Restricts the item to these roles when no capability can. A school_admin
+   * holds every key (ALL_PERMISSIONS), so `permission` alone cannot keep a
+   * guard duty-station page out of their sidebar. Undefined = every role
+   * passing `permission` sees it.
+   */
+  roles?: readonly AppRole[];
 };
 
 export type PortalManifest = {
@@ -100,7 +107,10 @@ export const FULL_NAVIGATION: NavItem[] = [
     id: 'grading',
     label: 'Notes & évaluations',
     icon: 'Award',
-    href: '/dashboard/academics/grades/entry',
+    // Lands on the read-only results page, not on grade entry: entry requires
+    // `grading.manage`, so a read-only role clicking this module was bounced off
+    // it. Entry is reached from the sidebar by those who can actually write.
+    href: '/dashboard/academics/results',
     permission: 'grading.read',
   },
   {
@@ -112,7 +122,10 @@ export const FULL_NAVIGATION: NavItem[] = [
     children: [
       { id: 'invoices', label: 'Factures', icon: 'Receipt', href: '/dashboard/finance/invoices', permission: 'finance.read' },
       { id: 'payments', label: 'Paiements', icon: 'CreditCard', href: '/dashboard/finance/payments', permission: 'finance.read' },
-      { id: 'expenses', label: 'Dépenses', icon: 'TrendingDown', href: '/dashboard/finance/expenses', permission: 'finance.read' },
+      // `finance.manage`, matching both the page guard and what
+      // /api/finance/expenses requires — with `finance.read` the page opened and
+      // every fetch on it 403'd.
+      { id: 'expenses', label: 'Dépenses', icon: 'TrendingDown', href: '/dashboard/finance/expenses', permission: 'finance.manage' },
       { id: 'accounting-accounts', label: 'Plan comptable', icon: 'BookOpen', href: '/dashboard/finance/accounting/accounts', permission: 'accounting.account.read' },
       { id: 'accounting-transactions', label: 'Grand livre', icon: 'FileText', href: '/dashboard/finance/accounting/transactions', permission: 'accounting.account.read' },
       { id: 'accounting-voucher-types', label: 'Journaux & pièces', icon: 'Settings2', href: '/dashboard/finance/accounting/voucher-types', permission: 'accounting.account.manage' },
@@ -176,10 +189,15 @@ export const FULL_NAVIGATION: NavItem[] = [
     portalHome: true,
     permission: 'guard.portal.use',
     children: [
-      { id: 'guard-home', label: 'Accueil du portail', icon: 'LayoutDashboard', href: '/dashboard/portals/guard', permission: 'guard.portal.use' },
-      { id: 'guard-scanner', label: 'Scanner (Kiosque)', icon: 'QrCode', href: '/dashboard/portals/guard/scanner', permission: 'guard.portal.use' },
-      { id: 'guard-visitors', label: 'Visiteurs', icon: 'Users', href: '/dashboard/portals/guard/visitors', permission: 'guard.visitors.manage' },
-      { id: 'guard-pickups', label: 'Sorties', icon: 'LogOut', href: '/dashboard/portals/guard/pickups', permission: 'guard.pickup.release' },
+      // The four duty-station entries are guard-only: each reads the viewer's
+      // own active shift/gate and 403s without one, and school_admin holds
+      // guard.portal.use via ALL_PERMISSIONS while never being on a shift.
+      // Incidents/Urgence/Configuration stay capability-gated - an admin can
+      // use those and they load for one.
+      { id: 'guard-home', label: 'Accueil du portail', icon: 'LayoutDashboard', href: '/dashboard/portals/guard', permission: 'guard.portal.use', roles: ['guard'] },
+      { id: 'guard-scanner', label: 'Scanner (Kiosque)', icon: 'QrCode', href: '/dashboard/portals/guard/scanner', permission: 'guard.portal.use', roles: ['guard'] },
+      { id: 'guard-visitors', label: 'Visiteurs', icon: 'Users', href: '/dashboard/portals/guard/visitors', permission: 'guard.visitors.manage', roles: ['guard'] },
+      { id: 'guard-pickups', label: 'Sorties', icon: 'LogOut', href: '/dashboard/portals/guard/pickups', permission: 'guard.pickup.release', roles: ['guard'] },
       { id: 'guard-incidents', label: 'Incidents', icon: 'AlertTriangle', href: '/dashboard/portals/guard/incidents', permission: 'guard.incidents.manage' },
       { id: 'guard-emergency', label: 'Urgence', icon: 'Siren', href: '/dashboard/portals/guard/emergency', permission: 'guard.portal.use' },
       { id: 'guard-config', label: 'Configuration', icon: 'Settings2', href: '/dashboard/portals/guard/config', permission: 'guard.gates.manage' },
@@ -286,7 +304,12 @@ const QUICK_ACTIONS: NavItem[] = [
 // Manifest builder
 // ---------------------------------------------------------------------------
 
-async function filterByPermission(
+/**
+ * Exported for tests: the role/capability filter is the thing that decides what
+ * a given role can even see, and a test that reimplements it would pass while
+ * the real one regressed.
+ */
+export async function filterByPermission(
   items: NavItem[],
   userId: string,
   tenantId: string,
@@ -300,6 +323,10 @@ async function filterByPermission(
       const allowed = await hasCapability(userId, tenantId, role, item.permission);
       if (!allowed) continue;
     }
+
+    // Role-restricted items (guard duty stations) - checked with the same
+    // role the capability lookup used, so a switched active role is honored.
+    if (item.roles && !item.roles.includes(role)) continue;
 
     // Addon-gated items show only when the tenant is entitled. A super_admin
     // (tenantId === '') has no entitlement row and is shown every addon item.
@@ -316,8 +343,19 @@ async function filterByPermission(
       if (filteredChildren.length === 0) continue;
     }
 
+    // A group whose own landing page is one of the children just dropped would
+    // send the user to a page their role cannot open. Guard: "Sécurité &
+    // Gardiens" links to the kiosk home (guard-only), but an admin keeps the
+    // group for Incidents/Urgence/Configuration. Send them to the first child
+    // they can actually reach.
+    const droppedOwnLanding = Boolean(item.children?.some(
+      child => child.href === item.href && !filteredChildren?.some(kept => kept.href === child.href),
+    ));
+    const href = droppedOwnLanding ? (filteredChildren?.[0]?.href ?? item.href) : item.href;
+
     result.push({
       ...item,
+      href,
       children: filteredChildren,
     });
   }

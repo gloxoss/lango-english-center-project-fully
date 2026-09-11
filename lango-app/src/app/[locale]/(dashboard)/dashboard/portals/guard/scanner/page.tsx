@@ -7,6 +7,8 @@ export default async function GuardScannerPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { requiredCapability: 'guard.portal.use' });
+  // Duty station: needs an active shift, so non-guard roles are redirected
+  // (same as the teacher/student/parent portals) instead of hitting the kiosk's 403.
+  await requireServerPage(locale, { allowedRoles: ['guard'], requiredCapability: 'guard.portal.use' });
   return <GuardKioskShell />;
 }

@@ -89,6 +89,14 @@ type SubMenuItem = {
   href: string;
   /** Capability key from src/libs/api/permissions.ts. Undefined = always visible. */
   permission?: string;
+  /**
+   * Roles this entry belongs to, when a capability cannot express it. A
+   * school_admin holds every capability (ALL_PERMISSIONS), so a duty-station
+   * page gated on e.g. guard.portal.use still appears for them - but the guard
+   * kiosk reads the viewer's own active shift, which no admin has. Undefined =
+   * visible to every role that passes `permission`.
+   */
+  roles?: string[];
 };
 
 type NavItem = {
@@ -97,6 +105,8 @@ type NavItem = {
   icon: React.ElementType;
   /** Capability key from src/libs/api/permissions.ts. Undefined = always visible. */
   permission?: string;
+  /** See SubMenuItem.roles. */
+  roles?: string[];
   subItems?: SubMenuItem[];
 };
 
@@ -554,10 +564,18 @@ export function Sidebar({ locale }: { locale: string }) {
       icon: ShieldCheck,
       permission: 'guard.portal.use',
       subItems: [
-        { label: 'Accueil du portail', href: `/${locale}/dashboard/portals/guard`, permission: 'guard.portal.use' },
-        { label: 'Scanner (Kiosque)', href: `/${locale}/dashboard/portals/guard/scanner`, permission: 'guard.portal.use' },
-        { label: 'Visiteurs', href: `/${locale}/dashboard/portals/guard/visitors`, permission: 'guard.visitors.manage' },
-        { label: 'Sorties', href: `/${locale}/dashboard/portals/guard/pickups`, permission: 'guard.pickup.release' },
+        // The four duty-station pages are the guard's own post: each one reads
+        // the viewer's active shift/gate assignment and returns 403
+        // NO_ACTIVE_SHIFT / NO_ACTIVE_GATE without one. Roles are listed
+        // explicitly because school_admin holds guard.portal.use and
+        // guard.visitors.manage (ALL_PERMISSIONS) but can never be on shift, so
+        // the capability test alone would keep serving them a dead kiosk.
+        // Incidents, Urgence and Configuration stay capability-gated: they are
+        // meaningful to an admin and do load for one.
+        { label: 'Accueil du portail', href: `/${locale}/dashboard/portals/guard`, permission: 'guard.portal.use', roles: ['guard'] },
+        { label: 'Scanner (Kiosque)', href: `/${locale}/dashboard/portals/guard/scanner`, permission: 'guard.portal.use', roles: ['guard'] },
+        { label: 'Visiteurs', href: `/${locale}/dashboard/portals/guard/visitors`, permission: 'guard.visitors.manage', roles: ['guard'] },
+        { label: 'Sorties', href: `/${locale}/dashboard/portals/guard/pickups`, permission: 'guard.pickup.release', roles: ['guard'] },
         { label: 'Incidents', href: `/${locale}/dashboard/portals/guard/incidents`, permission: 'guard.incidents.manage' },
         { label: 'Urgence', href: `/${locale}/dashboard/portals/guard/emergency`, permission: 'guard.portal.use' },
         { label: 'Configuration', href: `/${locale}/dashboard/portals/guard/config`, permission: 'guard.gates.manage' },
@@ -661,12 +679,28 @@ export function Sidebar({ locale }: { locale: string }) {
   // otherwise a parent like "Élèves & Profils" would show as a dead link
   // wrapping zero visible sub-pages once granular per-subitem gating narrows
   // it down further than the parent's own permission alone would.
+  const canSeeRole = (roles?: string[]) => !roles || roles.includes(effectiveRole);
+
   const visibleSchoolNavItems = schoolNavItems
-    .filter(item => canSee(item.permission))
-    .map(item => ({
-      ...item,
-      subItems: item.subItems ? item.subItems.filter(sub => canSee(sub.permission)) : undefined,
-    }))
+    .filter(item => canSee(item.permission) && canSeeRole(item.roles))
+    .map((item) => {
+      const subItems = item.subItems
+        ? item.subItems.filter(sub => canSee(sub.permission) && canSeeRole(sub.roles))
+        : undefined;
+
+      // The group label is a Link to item.href. When that landing page is one
+      // of the group's own (now hidden) children, following it would dead-end
+      // the user on a page their role cannot open, so send them to the first
+      // child they can reach instead. Guard: "Sécurité & Gardiens" links to
+      // the kiosk home, which is guard-only, but an admin still uses the
+      // group for Incidents/Urgence/Configuration.
+      const ownLandingHidden = Boolean(item.subItems?.some(
+        sub => sub.href === item.href && (!canSee(sub.permission) || !canSeeRole(sub.roles)),
+      ));
+      const href = ownLandingHidden ? (subItems?.[0]?.href ?? item.href) : item.href;
+
+      return { ...item, href, subItems };
+    })
     .filter(item => item.subItems === undefined || item.subItems.length > 0);
 
   // Self-service links for student/parent roles. These roles never hold the

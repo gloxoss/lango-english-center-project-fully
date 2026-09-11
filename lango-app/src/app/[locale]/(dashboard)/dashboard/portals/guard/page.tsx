@@ -7,6 +7,9 @@ export default async function GuardPortalPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { requiredCapability: 'guard.portal.use' });
+  // Duty station: the page reads the viewer's own active shift, so a role that
+  // can never hold one (school_admin, super_admin) is redirected like every
+  // other role portal rather than shown a kiosk that 403s on load.
+  await requireServerPage(locale, { allowedRoles: ['guard'], requiredCapability: 'guard.portal.use' });
   return <GuardHomeView />;
 }

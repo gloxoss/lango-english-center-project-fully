@@ -7,6 +7,8 @@ export default async function GuardVisitorsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { requiredCapability: 'guard.visitors.manage' });
+  // Duty station: needs an active gate, so non-guard roles are redirected
+  // (same as the teacher/student/parent portals) instead of hitting the kiosk's 403.
+  await requireServerPage(locale, { allowedRoles: ['guard'], requiredCapability: 'guard.visitors.manage' });
   return <GuardVisitorsView />;
 }
