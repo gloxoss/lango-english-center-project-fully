@@ -15,7 +15,30 @@
 
 ---
 
-## 2. Pre-Deployment Verification Gate
+## 2. One-Command Automated Deployment (Recommended)
+
+To deploy updates automatically without manual multi-step commands, run any of the following:
+
+```bash
+# Standard automated deployment (typecheck + i18n check + build + backup + migrate + restart)
+npm run deploy:vps
+# or from PowerShell:
+.\scripts\deploy-to-vps.ps1
+# or double-click / run:
+deploy-vps.bat
+
+# Auto-watch mode: continuously monitors src/, locales/, migrations/ and auto-deploys on changes
+npm run deploy:vps:watch
+# or:
+.\scripts\deploy-to-vps.ps1 -Watch
+
+# Fast deployment (skips type/i18n checks):
+npm run deploy:vps:fast
+```
+
+---
+
+## 3. Manual Pre-Deployment Verification Gate
 
 Before creating a production release, run the local quality gates:
 

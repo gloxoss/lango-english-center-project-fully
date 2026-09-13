@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { IdCard, Layers, Users, UserCheck, ClipboardList, FileCheck2, Loader2, ArrowRight, FileX2 } from 'lucide-react';
@@ -21,25 +22,26 @@ type Overview = {
   }>;
 };
 
-const TYPE_LABELS: Record<string, string> = {
-  student_id: 'Carte d\'étudiant',
-  employee_id: 'Carte d\'employé',
-  admit_card: 'Convocation d\'examen',
-};
-
-const STATUS_BADGE: Record<string, { label: string, variant: 'neutral' | 'success' | 'danger' | 'warning' }> = {
-  active: { label: 'Active', variant: 'success' },
-  revoked: { label: 'Révoquée', variant: 'danger' },
-  expired: { label: 'Expirée', variant: 'warning' },
-  replaced: { label: 'Remplacée', variant: 'neutral' },
-};
-
 export default function CardsOverviewPage() {
+  const t = useTranslations('Cards');
   const params = useParams<{ locale?: string }>();
   const locale = params?.locale ?? 'fr';
 
   const [data, setData] = useState<Overview | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const TYPE_LABELS: Record<string, string> = {
+    student_id: t('typeStudentId'),
+    employee_id: t('typeEmployeeId'),
+    admit_card: t('typeAdmitCard'),
+  };
+
+  const STATUS_BADGE: Record<string, { label: string, variant: 'neutral' | 'success' | 'danger' | 'warning' }> = {
+    active: { label: t('statusActive'), variant: 'success' },
+    revoked: { label: t('statusRevoked'), variant: 'danger' },
+    expired: { label: t('statusExpired'), variant: 'warning' },
+    replaced: { label: t('statusReplaced'), variant: 'neutral' },
+  };
 
   useEffect(() => {
     fetch('/api/cards/overview')
@@ -53,17 +55,17 @@ export default function CardsOverviewPage() {
   const jobsTotal = Object.values(data?.jobs ?? {}).reduce((a, b) => a + b, 0);
 
   const statCards = [
-    { label: 'Modèles', value: data?.templates.total ?? 0, sub: `${data?.templates.published ?? 0} publiés`, icon: Layers, tint: 'bg-blue-50 text-[#2487B8]' },
-    { label: 'Cartes actives', value: issuedActive, sub: 'documents émis valides', icon: FileCheck2, tint: 'bg-emerald-50 text-emerald-600' },
-    { label: 'Révoquées', value: issuedRevoked, sub: 'cartes invalidées', icon: FileX2, tint: 'bg-rose-50 text-rose-500' },
-    { label: 'Lots', value: jobsTotal, sub: 'émissions en lot', icon: ClipboardList, tint: 'bg-cyan-50 text-[#0EA5C4]' },
+    { label: t('statTemplates'), value: data?.templates.total ?? 0, sub: t('statTemplatesPublished', { count: data?.templates.published ?? 0 }), icon: Layers, tint: 'bg-blue-50 text-[#2487B8]' },
+    { label: t('statActiveCards'), value: issuedActive, sub: t('statActiveCardsSub'), icon: FileCheck2, tint: 'bg-emerald-50 text-emerald-600' },
+    { label: t('statRevoked'), value: issuedRevoked, sub: t('statRevokedSub'), icon: FileX2, tint: 'bg-rose-50 text-rose-500' },
+    { label: t('statJobs'), value: jobsTotal, sub: t('statJobsSub'), icon: ClipboardList, tint: 'bg-cyan-50 text-[#0EA5C4]' },
   ];
 
   const quickLinks = [
-    { label: 'Élèves', href: `/${locale}/dashboard/cards/students`, desc: 'Émettre des cartes d\'étudiant', icon: Users },
-    { label: 'Employés', href: `/${locale}/dashboard/cards/employees`, desc: 'Émettre des cartes d\'employé', icon: UserCheck },
-    { label: 'Convocations', href: `/${locale}/dashboard/cards/admit-cards`, desc: 'Cartes d\'examen par salle', icon: IdCard },
-    { label: 'Documents émis', href: `/${locale}/dashboard/cards/issued`, desc: 'Gérer, télécharger et révoquer', icon: FileCheck2 },
+    { label: t('linkStudents'), href: `/${locale}/dashboard/cards/students`, desc: t('linkStudentsDesc'), icon: Users },
+    { label: t('linkEmployees'), href: `/${locale}/dashboard/cards/employees`, desc: t('linkEmployeesDesc'), icon: UserCheck },
+    { label: t('linkAdmitCards'), href: `/${locale}/dashboard/cards/admit-cards`, desc: t('linkAdmitCardsDesc'), icon: IdCard },
+    { label: t('linkIssued'), href: `/${locale}/dashboard/cards/issued`, desc: t('linkIssuedDesc'), icon: FileCheck2 },
   ];
 
   return (
@@ -75,15 +77,15 @@ export default function CardsOverviewPage() {
             <IdCard className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Cartes & Convocations</h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Émettez, gérez et vérifiez les cartes d'étudiant, d'employé et de candidat.</p>
+            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('overviewTitle')}</h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">{t('overviewSubtitle')}</p>
           </div>
         </div>
         <Link
           href={`/${locale}/dashboard/cards/templates`}
           className="inline-flex items-center gap-1.5 h-10 bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold rounded-xl px-4 shadow-2xs"
         >
-          <Layers className="w-4 h-4" />Gérer les modèles
+          <Layers className="w-4 h-4" />{t('manageTemplates')}
         </Link>
       </div>
 
@@ -106,7 +108,7 @@ export default function CardsOverviewPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Quick links */}
         <Card className="lg:col-span-2 p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-3">
-          <h2 className="text-sm font-extrabold text-[#16212B]">Actions rapides</h2>
+          <h2 className="text-sm font-extrabold text-[#16212B]">{t('quickActions')}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {quickLinks.map(q => (
               <Link
@@ -121,7 +123,7 @@ export default function CardsOverviewPage() {
                   <p className="text-xs font-bold text-slate-700">{q.label}</p>
                   <p className="text-[10px] text-slate-400 truncate">{q.desc}</p>
                 </div>
-                <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-[#2487B8] group-hover:translate-x-0.5 transition-all" />
+                <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-[#2487B8] group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 rtl:rotate-180 transition-all" />
               </Link>
             ))}
           </div>
@@ -130,8 +132,8 @@ export default function CardsOverviewPage() {
         {/* Recent issued */}
         <Card className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs">
           <div className="flex justify-between items-center mb-3">
-            <h2 className="text-sm font-extrabold text-[#16212B]">Émissions récentes</h2>
-            <Link href={`/${locale}/dashboard/cards/issued`} className="text-[10px] font-bold text-[#2487B8] hover:underline">Tout voir</Link>
+            <h2 className="text-sm font-extrabold text-[#16212B]">{t('recentIssuances')}</h2>
+            <Link href={`/${locale}/dashboard/cards/issued`} className="text-[10px] font-bold text-[#2487B8] hover:underline">{t('viewAll')}</Link>
           </div>
           {loading ? (
             <div className="flex items-center justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-slate-300" /></div>
@@ -141,7 +143,7 @@ export default function CardsOverviewPage() {
                 <div key={doc.id} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100">
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold text-slate-700 truncate">{TYPE_LABELS[doc.type] || doc.type}</p>
-                    <p className="text-[10px] text-slate-400">{new Date(doc.issuedAt).toLocaleDateString('fr-FR')}</p>
+                    <p className="text-[10px] text-slate-400">{new Date(doc.issuedAt).toLocaleDateString(locale === 'ar' ? 'ar-EG' : locale === 'en' ? 'en-US' : 'fr-FR')}</p>
                   </div>
                   <Badge variant={STATUS_BADGE[doc.status]?.variant || 'neutral'}>
                     {STATUS_BADGE[doc.status]?.label || doc.status}
@@ -150,7 +152,7 @@ export default function CardsOverviewPage() {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-slate-400 text-center py-10">Aucune émission pour le moment.</p>
+            <p className="text-xs text-slate-400 text-center py-10">{t('noRecentIssuances')}</p>
           )}
         </Card>
       </div>

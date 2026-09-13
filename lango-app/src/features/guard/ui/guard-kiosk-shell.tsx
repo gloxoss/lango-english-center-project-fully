@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { authClient } from '@/libs/auth-client';
@@ -15,6 +16,7 @@ import { GuardScannerView } from '@/features/guard/ui/guard-scanner-view';
 export const GUARD_KIOSK_IDLE_LOCK_MS = 60_000;
 
 export function GuardKioskShell() {
+  const t = useTranslations('Guard');
   const params = useParams<{ locale: string }>();
   const locale = params?.locale ?? 'fr';
   const router = useRouter();
@@ -80,24 +82,24 @@ export function GuardKioskShell() {
             <ScanLine className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">Kiosque Gardien</h1>
+            <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('kioskTitle')}</h1>
             <p className="mt-0.5 text-xs font-medium text-slate-500">
-              Vérification des badges à l&apos;entrée/sortie — aucune donnée conservée dans ce navigateur.
+              {t('kioskSubtitle')}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           {locked || !kioskSessionId ? (
             <Badge variant="neutral" className="gap-1 px-3 py-1.5 text-xs font-bold">
-              <LockKeyhole className="h-3.5 w-3.5" /> Kiosque sécurisé
+              <LockKeyhole className="h-3.5 w-3.5" /> {t('kioskSecured')}
             </Badge>
           ) : (
             <Badge variant="success" className="gap-1 px-3 py-1.5 text-xs font-bold">
-              <ShieldCheck className="h-3.5 w-3.5" /> Session active
+              <ShieldCheck className="h-3.5 w-3.5" /> {t('activeSession')}
             </Badge>
           )}
           <Button variant="outline" size="sm" onClick={() => void handleSignOut()} className="h-9 gap-2 rounded-xl text-xs font-bold">
-            <LogOut className="h-3.5 w-3.5" /> Se déconnecter
+            <LogOut className="h-3.5 w-3.5" /> {t('signOut')}
           </Button>
         </div>
       </div>
@@ -108,10 +110,9 @@ export function GuardKioskShell() {
             <Lock className="h-9 w-9" />
           </div>
           <div className="mt-6 text-center">
-            <h2 className="text-xl font-extrabold text-[#16212B]">Kiosque verrouillé</h2>
+            <h2 className="text-xl font-extrabold text-[#16212B]">{t('kioskLocked')}</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-              La session a été verrouillée après inactivité. Pour reprendre le scan, démarrez une nouvelle session —
-              votre affectation active sera revérifiée côté serveur.
+              {t('kioskLockedDesc')}
             </p>
           </div>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -119,10 +120,10 @@ export function GuardKioskShell() {
               onClick={() => setLocked(false)}
               className="h-12 gap-2 rounded-2xl bg-[#2487B8] px-6 font-bold text-white hover:bg-[#1B6C93]"
             >
-              <ScanLine className="h-4 w-4" /> Démarrer une nouvelle session
+              <ScanLine className="h-4 w-4" /> {t('startNewSession')}
             </Button>
             <Button variant="outline" onClick={() => void handleSignOut()} className="h-12 gap-2 rounded-2xl px-6 font-bold">
-              <LogOut className="h-4 w-4" /> Se déconnecter
+              <LogOut className="h-4 w-4" /> {t('signOut')}
             </Button>
           </div>
         </div>

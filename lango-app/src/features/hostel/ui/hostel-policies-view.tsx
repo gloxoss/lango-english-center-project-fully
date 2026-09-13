@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -58,6 +59,9 @@ function BoolRow({ label, hint, checked, onChecked }: { label: string; hint?: st
 }
 
 export function HostelPoliciesView() {
+  const t = useTranslations('Hostel');
+  const tCommon = useTranslations('Common');
+
   const [data, setData] = useState<PoliciesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -109,87 +113,87 @@ export function HostelPoliciesView() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#16212B]">Politiques de l&apos;internat</h1>
-          <p className="text-sm text-slate-500">Consentement, sorties, escalades, visiteurs et conservation des données.</p>
+          <h1 className="text-2xl font-bold text-[#16212B]">{t('policiesTitle')}</h1>
+          <p className="text-sm text-slate-500">{t('policiesSubtitle')}</p>
         </div>
-        {data && <Badge className="bg-slate-100 text-slate-600">Version {data.version}</Badge>}
+        {data && <Badge className="bg-slate-100 text-slate-600">{t('policyVersion', { version: data.version })}</Badge>}
       </div>
 
       {error && <p className="flex items-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error}</p>}
-      {success && <p className="flex items-center gap-1 text-sm text-[#0b5c3a]"><AlertCircle className="h-4 w-4" /> Politiques enregistrées.</p>}
+      {success && <p className="flex items-center gap-1 text-sm text-[#0b5c3a]"><AlertCircle className="h-4 w-4" /> {t('policiesSaved')}</p>}
 
       {loading ? (
-        <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-white p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Chargement…</div>
+        <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-white p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> {tCommon('loading')}</div>
       ) : !data ? (
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-10 text-center text-sm text-slate-500">Impossible de charger les politiques.</div>
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-10 text-center text-sm text-slate-500">{t('failedToLoadPolicies')}</div>
       ) : (
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs">
-          <Section title="Consentement du tuteur">
+          <Section title={t('sectionGuardianConsent')}>
             <BoolRow
-              label="Consentement tuteur requis pour les mineurs"
-              hint="Exige l'accord du tuteur pour héberger un élève mineur."
+              label={t('guardianConsentMinors')}
+              hint={t('guardianConsentMinorsHint')}
               checked={data.policies.guardianConsentRequiredForMinors}
               onChecked={v => set('guardianConsentRequiredForMinors', v)}
             />
             <BoolRow
-              label="Consentement tuteur requis pour les sorties"
-              hint="Exige l'approbation du tuteur sur les permissions de sortie d'un mineur."
+              label={t('guardianConsentLeave')}
+              hint={t('guardianConsentLeaveHint')}
               checked={data.policies.guardianConsentRequiredForLeave}
               onChecked={v => set('guardianConsentRequiredForLeave', v)}
             />
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Âge de majorité</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('majorityAge')}</label>
                 <Input type="number" value={data.policies.majorityAge} onChange={e => set('majorityAge', Number(e.target.value))} />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Sortie max (heures)</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('leavePassMaxHours')}</label>
                 <Input type="number" value={data.policies.leavePassMaxHours} onChange={e => set('leavePassMaxHours', Number(e.target.value))} />
               </div>
             </div>
           </Section>
 
-          <Section title="Permissions de sortie">
+          <Section title={t('sectionLeavePasses')}>
             <BoolRow
-              label="Motif obligatoire"
+              label={t('leavePassRequiresReason')}
               checked={data.policies.leavePassRequiresReason}
               onChecked={v => set('leavePassRequiresReason', v)}
             />
             <BoolRow
-              label="Destination obligatoire"
+              label={t('leavePassRequiresDestination')}
               checked={data.policies.leavePassRequiresDestination}
               onChecked={v => set('leavePassRequiresDestination', v)}
             />
           </Section>
 
-          <Section title="Appel du soir & escalades">
+          <Section title={t('sectionRollCallEscalation')}>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Minutes de grâce (appel)</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('rollCallGraceMinutes')}</label>
               <Input type="number" value={data.policies.rollCallGraceMinutes} onChange={e => set('rollCallGraceMinutes', Number(e.target.value))} />
             </div>
             <div>
-              <p className="mb-1 text-sm font-medium text-slate-700">Palier d&apos;escalade après appels manqués</p>
+              <p className="mb-1 text-sm font-medium text-slate-700">{t('escalationTiersTitle')}</p>
               {data.policies.escalationTiers.map((tier, i) => (
                 <div key={tier.tier} className="mb-2 flex flex-wrap items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm">
-                  <Badge className="bg-slate-100 text-slate-600">Palier {tier.tier}</Badge>
+                  <Badge className="bg-slate-100 text-slate-600">{t('tierNumber', { tier: tier.tier })}</Badge>
                   <Select value={tier.recipient} onValueChange={v => setTier(i, { recipient: v })}>
                     <SelectTrigger className="h-8 w-44 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="warden">Intendant</SelectItem>
-                      <SelectItem value="school_admin">Admin établissement</SelectItem>
-                      <SelectItem value="guardian">Tuteur</SelectItem>
+                      <SelectItem value="warden">{t('recipientWarden')}</SelectItem>
+                      <SelectItem value="school_admin">{t('recipientSchoolAdmin')}</SelectItem>
+                      <SelectItem value="guardian">{t('recipientGuardian')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <label className="flex items-center gap-1.5 text-xs text-slate-500">
-                    après
+                    {t('afterRollCallsPrefix')}
                     <Input type="number" min={1} value={tier.afterMissingRollCalls} onChange={e => setTier(i, { afterMissingRollCalls: Number(e.target.value) })} className="h-8 w-16 text-xs" />
-                    appel(s)
+                    {t('afterRollCallsSuffix')}
                   </label>
                   <Select value={tier.channel} onValueChange={v => setTier(i, { channel: v })}>
                     <SelectTrigger className="h-8 w-28 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="log">Journal</SelectItem>
-                      <SelectItem value="sms">SMS</SelectItem>
+                      <SelectItem value="log">{t('channelLog')}</SelectItem>
+                      <SelectItem value="sms">{t('channelSms')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -197,43 +201,43 @@ export function HostelPoliciesView() {
             </div>
           </Section>
 
-          <Section title="Visiteurs & sauvegarde">
+          <Section title={t('sectionVisitorsSafeguarding')}>
             <BoolRow
-              label="Pré-approbation visiteur requise"
+              label={t('visitorPreApprovalRequired')}
               checked={data.policies.visitorPreApprovalRequired}
               onChecked={v => set('visitorPreApprovalRequired', v)}
             />
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Heures de visite (début)</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('visitorHoursStart')}</label>
                 <Input value={data.policies.visitorHoursDefault.start} onChange={e => set('visitorHoursDefault', { ...data.policies.visitorHoursDefault, start: e.target.value })} />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Heures de visite (fin)</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('visitorHoursEnd')}</label>
                 <Input value={data.policies.visitorHoursDefault.end} onChange={e => set('visitorHoursDefault', { ...data.policies.visitorHoursDefault, end: e.target.value })} />
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Lecteurs des champs sensibles (sauvegarde)</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('safeguardingReaders')}</label>
               <Input value={data.policies.safeguardingReaders.join(', ')} onChange={e => set('safeguardingReaders', e.target.value.split(',').map(s => s.trim()).filter(Boolean))} />
             </div>
           </Section>
 
-          <Section title="Finance & rétention">
+          <Section title={t('sectionFinanceRetention')}>
             <BoolRow
-              label="Émettre la charge à l'hébergement (check-in)"
-              hint="L'adapter finance émet la redevance lors du check-in."
+              label={t('emitChargeOnCheckIn')}
+              hint={t('emitChargeHint')}
               checked={data.policies.emitChargeOnCheckIn}
               onChecked={v => set('emitChargeOnCheckIn', v)}
             />
             <BoolRow
-              label="Départ d'urgence malgré échec finance"
-              hint="Un échec de facturation ne bloque jamais le départ."
+              label={t('allowEmergencyDeparture')}
+              hint={t('allowEmergencyDepartureHint')}
               checked={data.policies.allowEmergencyDepartureOnFinanceFailure}
               onChecked={v => set('allowEmergencyDepartureOnFinanceFailure', v)}
             />
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Conservation des données (mois)</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('retentionMonths')}</label>
               <Input type="number" value={data.policies.retentionMonths} onChange={e => set('retentionMonths', Number(e.target.value))} />
             </div>
           </Section>
@@ -242,7 +246,7 @@ export function HostelPoliciesView() {
 
       <div className="flex justify-end">
         <Button onClick={save} disabled={saving || !data}>
-          {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Enregistrer
+          {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} {t('btnSave')}
         </Button>
       </div>
     </div>

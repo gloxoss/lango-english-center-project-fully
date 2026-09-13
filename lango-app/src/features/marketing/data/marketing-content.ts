@@ -9,7 +9,7 @@ import {
   FooterContent,
 } from '../model/types';
 
-export type Locale = 'fr' | 'ar';
+export type Locale = 'fr' | 'ar' | 'en';
 
 // ─── HERO CONTENT DICTIONARY ──────────────────────────────────────────────────
 export const HERO_CONTENT_I18N: Record<Locale, HeroContent> = {
@@ -43,6 +43,22 @@ export const HERO_CONTENT_I18N: Record<Locale, HeroContent> = {
       { id: 'logo-4', name: 'إعدادية أنفة الرباط', logoUrl: '/assets/images/68a70127369f354d650b5176_Fake_Logo_4.svg' },
       { id: 'logo-5', name: 'ثانوية المنزه الخاصة', logoUrl: '/assets/images/68a701274df0addd226bdf2e_Fake_Logo_5.svg' },
       { id: 'logo-6', name: 'أكاديمية مراكش التربوية', logoUrl: '/assets/images/68a70127c70239b918860830_Fake_Logo_6.svg' },
+    ],
+  },
+  en: {
+    title: "The Operating System for Schools in Morocco",
+    subtitle: "More time for what matters. Manage your students, attendance, grades, and finances on a seamless, automated platform 100% compliant with CNDP Law 09-08.",
+    primaryCtaText: "Join Priority Access Waitlist",
+    secondaryCtaText: "Explore Modules",
+    heroCardMainUrl: "/assets/images/68a5a0547b3405bb7da6391a_Hero_UI_Card.png",
+    heroCardSecondaryUrl: "/assets/images/68a5a0543502c2d385a6dc2e_Hero_UI_Card_2.png",
+    tickerLogos: [
+      { id: 'logo-1', name: 'Atlas School Group', logoUrl: '/assets/images/68a70127ff28015ac9fee3f8_Fake_Logo_1.svg' },
+      { id: 'logo-2', name: 'Al Amal Casablanca School', logoUrl: '/assets/images/68a7012708a760adb36255e0_Fake_Logo_2.svg' },
+      { id: 'logo-3', name: 'SchoolOS Institute', logoUrl: '/assets/images/68a701274180c858df689f8b_Fake_Logo_3.svg' },
+      { id: 'logo-4', name: 'Anfa College Rabat', logoUrl: '/assets/images/68a70127369f354d650b5176_Fake_Logo_4.svg' },
+      { id: 'logo-5', name: 'El Menzeh High School', logoUrl: '/assets/images/68a701274df0addd226bdf2e_Fake_Logo_5.svg' },
+      { id: 'logo-6', name: 'Marrakech Academy', logoUrl: '/assets/images/68a70127c70239b918860830_Fake_Logo_6.svg' },
     ],
   },
 };
@@ -81,6 +97,23 @@ export const PROCESS_STEPS_I18N: Record<Locale, ProcessStep[]> = {
       stepNumber: '03',
       title: 'كشوف النقاط /20 ومتابعة مالية',
       description: "أنشئ كشوف النقاط المطابقة للمقاييس الوطنية بالمغرب وتابع نسبة استخلاص الواجبات المدرسية في الوقت الفعلي.",
+    },
+  ],
+  en: [
+    {
+      stepNumber: '01',
+      title: 'Instant Import & Setup',
+      description: "Import your existing Excel spreadsheets in 2 minutes and configure your academic hierarchy without cumbersome training.",
+    },
+    {
+      stepNumber: '02',
+      title: 'Daily Management & Automated SMS',
+      description: "QR kiosk scan, attendance tracking, and instant SMS alerts to guardians from the very first minute of an absence.",
+    },
+    {
+      stepNumber: '03',
+      title: '/20 Report Cards & Financial Dashboards',
+      description: "Generate official Moroccan /20 grade cards and monitor fee collection ratios in real time.",
     },
   ],
 };
@@ -144,6 +177,36 @@ export const FEATURE_TABS_I18N: Record<Locale, FeatureTab[]> = {
       tag: 'إدارة الأقسام والرسوم',
       title: 'مصممة لنمو مؤسستك والمتابعة المالية الشاملة',
       description: 'أضف أقساماً جديدة بسهولة، تابع المداخيل، أدِر تخفيضات الإخوة وأصدر وصولات استلام رسمية.',
+      imageUrl: '/assets/images/68a4af74b2e4e34cd6835eb4_Invite.png',
+    },
+  ],
+  en: [
+    {
+      id: 'tab-1',
+      tag: 'School Portal',
+      title: 'Centralized access for leadership, educators, and administration',
+      description: 'Securely share timetables, student files, grades, and absence justifications in one integrated platform.',
+      imageUrl: '/assets/images/68a4af7ed724eae76593679d_Dashboard-2.avif',
+    },
+    {
+      id: 'tab-2',
+      tag: 'Grades & Report Cards /20',
+      title: 'Grade average calculation adhering to Ministry standards',
+      description: 'Comprehensive support for subject coefficients, trimesters/semesters, and automated report card issuance.',
+      imageUrl: '/assets/images/68a4af6379634f53e60e3f1b_Revenue_Card.png',
+    },
+    {
+      id: 'tab-3',
+      tag: 'Automated SMS Alerts',
+      title: 'Autonomous Moroccan SMS gateway for absences and notices',
+      description: 'The system automatically notifies parents via SMS (+212) on unexcused absences or payment reminders.',
+      imageUrl: '/assets/images/68a4af8269dc1ef2ce14b1f9_Welcome_Card.png',
+    },
+    {
+      id: 'tab-4',
+      tag: 'Groups & Fee Management',
+      title: 'Built for the growth and financial clarity of your school',
+      description: 'Easily add new classes, track tuition receipts, manage sibling discounts, and print compliant vouchers.',
       imageUrl: '/assets/images/68a4af74b2e4e34cd6835eb4_Invite.png',
     },
   ],
@@ -286,6 +349,64 @@ export const PRICING_TIERS_I18N: Record<Locale, PricingTier[]> = {
       isMain: false,
     },
   ],
+  en: [
+    {
+      id: 1,
+      menuTitle: 'Basic Plan',
+      menuSubtitle: 'Small institutions',
+      planName: 'Basic',
+      price: '299',
+      currency: 'MAD',
+      period: '/ month',
+      description: 'Designed for small schools and language centers starting their digital transformation.',
+      features: [
+        'Management up to 200 students',
+        'Attendance & SMS absence alerts (+212)',
+        'Automatic /20 report cards',
+        'Standard email support',
+        'Strategic onboarding guide',
+      ],
+      isMain: false,
+    },
+    {
+      id: 2,
+      menuTitle: 'Standard Plan',
+      menuSubtitle: 'Most popular',
+      planName: 'Standard',
+      price: '699',
+      currency: 'MAD',
+      period: '/ month',
+      description: 'Designed for growing institutions requiring comprehensive and automated tooling.',
+      features: [
+        'Up to 500 students',
+        'Advanced analytics dashboard',
+        'Priority multi-class SMS alerts',
+        'Quarterly strategic reviews',
+        'Team access (up to 10 users)',
+        'CNDP Data Protection Compliance Guaranteed',
+      ],
+      isMain: true,
+    },
+    {
+      id: 3,
+      menuTitle: 'Premium Plan',
+      menuSubtitle: 'Large campuses',
+      planName: 'Premium',
+      price: '1299',
+      currency: 'MAD',
+      period: '/ month',
+      description: 'For large educational institutions requiring deep operational insights and dedicated guidance.',
+      features: [
+        'Unlimited students',
+        'Dedicated success manager in Casablanca',
+        'Custom KPIs & financial reporting',
+        'Monthly performance reviews',
+        'Unlimited team access + white labeling',
+        'Private server & custom deployment',
+      ],
+      isMain: false,
+    },
+  ],
 };
 
 // ─── FAQ ITEMS DICTIONARY ─────────────────────────────────────────────────────
@@ -344,6 +465,33 @@ export const FAQ_ITEMS_I18N: Record<Locale, FaqItem[]> = {
       answer: "بالتأكيد. يمكن لمستشارينا تنظيم عرض توضيحي عبر الفيديو أو مباشرة بمقر مؤسستكم بالدار البيضاء، الرباط والمدن المجاورة.",
     },
   ],
+  en: [
+    {
+      id: 'faq-1',
+      question: 'What types of institutions do you support in Morocco?',
+      answer: 'We support private schools (Preschool, Primary, Middle School, High School), language centers, and vocational training institutes in Casablanca, Rabat, Marrakech, and across the Kingdom.',
+    },
+    {
+      id: 'faq-2',
+      question: 'How long does it take to migrate our existing Excel data?',
+      answer: 'Our team handles importing your students, guardians, and teachers in under 24 hours. No tedious manual re-entry required.',
+    },
+    {
+      id: 'faq-3',
+      question: 'Is SchoolOS compliant with Moroccan CNDP Law 09-08 on data privacy?',
+      answer: 'Yes. All school and family records are stored and processed in strict compliance with Law 09-08 featuring end-to-end encryption and CNDP authorizations.',
+    },
+    {
+      id: 'faq-4',
+      question: 'How does real-time SMS absence notification to parents work?',
+      answer: 'Whenever a teacher or staff member marks an absence, the SMS gateway instantly alerts parents on their phone via (+212) numbers in real time.',
+    },
+    {
+      id: 'faq-5',
+      question: 'Do you offer an on-site personalized demonstration?',
+      answer: 'Absolutely. Our consultants can schedule a demo via video call or directly on-site at your school in Casablanca, Rabat, and surrounding areas.',
+    },
+  ],
 };
 
 // ─── CONTACT CONTENT DICTIONARY ───────────────────────────────────────────────
@@ -374,6 +522,20 @@ export const CONTACT_CONTENT_I18N: Record<Locale, ContactContent> = {
       { src: '/assets/images/68a71d7fa80bb87671d03416_Dreamy_Portrait_of_a_Young_Woman.avif', alt: 'المديرة السيدة بناني' },
       { src: '/assets/images/68a71d7fa80bb87671d03408_Contemplative_Woman_in_Vibrant_Fashion.avif', alt: 'المشرفة التربوية' },
       { src: '/assets/images/68a71d7f400136be769bc9dc_Modern_Portrait_Gradient.avif', alt: 'مؤسس المعهد' },
+    ],
+  },
+  en: {
+    title: 'Prepare your school for SchoolOS',
+    subtitle: 'SchoolOS is coming soon. Join the priority pilot access list to experience the platform and help us tailor it to your school’s exact needs.',
+    phone: '+212 522 123 456',
+    email: 'contact@schoolos.ma',
+    ratingText: 'Pilot program in preparation',
+    ratingSubtext: 'Built specifically for private schools in Morocco',
+    profiles: [
+      { src: '/assets/images/68a71d7fa79008ec6716ac73_Modern_man_portrait_.avif', alt: 'Principal Mr. El Amrani' },
+      { src: '/assets/images/68a71d7fa80bb87671d03416_Dreamy_Portrait_of_a_Young_Woman.avif', alt: 'Headmistress Mrs. Bennani' },
+      { src: '/assets/images/68a71d7fa80bb87671d03408_Contemplative_Woman_in_Vibrant_Fashion.avif', alt: 'Academic Coordinator' },
+      { src: '/assets/images/68a71d7f400136be769bc9dc_Modern_Portrait_Gradient.avif', alt: 'Institute Founder' },
     ],
   },
 };
@@ -410,6 +572,22 @@ export const FOOTER_CONTENT_I18N: Record<Locale, FooterContent> = {
       { label: 'الأسعار', href: '#pricing' },
       { label: 'الأسئلة الشائعة', href: '#faq' },
       { label: 'فضاء المؤسسة', href: '/dashboard' },
+    ],
+  },
+  en: {
+    newsletterTitle: 'Subscribe to our newsletter',
+    newsletterButtonText: 'Subscribe',
+    contactEmail: 'contact@schoolos.ma',
+    designedByText: 'Designed for SchoolOS Morocco',
+    poweredByText: 'Powered by SchoolOS Engine',
+    navLinks: [
+      { label: 'Home', href: '#' },
+      { label: 'Process', href: '#process' },
+      { label: 'Features', href: '#features' },
+      { label: 'Integrations', href: '#integration' },
+      { label: 'Pricing', href: '#pricing' },
+      { label: 'FAQ', href: '#faq' },
+      { label: 'School Portal', href: '/dashboard' },
     ],
   },
 };

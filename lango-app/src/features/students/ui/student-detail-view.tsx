@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -52,30 +53,38 @@ type StudentDetail = {
 
 type DocumentStatus = { documentType: string; uploaded: boolean; uploadedAt: string | null };
 
-const DOCUMENT_LABELS: Record<string, string> = {
-  photo: 'Photo d\'identité',
-  birth_certificate: 'Acte de naissance',
-  school_certificate: 'Certificat de scolarité',
-  guardian_cni: 'CNI du tuteur',
-  bulletin: 'Bulletins scolaires',
+const DOC_KEY_MAP: Record<string, string> = {
+  photo: 'docPhoto',
+  birth_certificate: 'docBirthCert',
+  school_certificate: 'docSchoolCert',
+  guardian_cni: 'docGuardianCni',
+  bulletin: 'docReportCards',
 };
 
-const MOTHER_TONGUE_LABELS: Record<string, string> = {
-  arabic: 'Arabe', french: 'Français', tamazight: 'Tamazight', english: 'Anglais', other: 'Autre',
+const MOTHER_TONGUE_KEY_MAP: Record<string, string> = {
+  arabic: 'langArabic',
+  french: 'langFrench',
+  tamazight: 'langTamazight',
+  english: 'langEnglish',
+  other: 'langOther',
 };
 
-const TABS = [
-  { id: 'profil', label: 'Profil' },
-  { id: 'documents', label: 'Documents' },
-  { id: 'tuteurs', label: 'Tuteurs' },
-  { id: 'academique', label: 'Académique' },
-  { id: 'finance', label: 'Finance' },
-] as const;
-type TabId = typeof TABS[number]['id'];
+type TabId = 'profil' | 'documents' | 'tuteurs' | 'academique' | 'finance';
 
 export function StudentDetailView({ id, locale }: { id: string; locale: string }) {
   const router = useRouter();
+  const t = useTranslations('Students');
+  const tCommon = useTranslations('Common');
+  const tGuardians = useTranslations('Guardians');
   const { can } = usePermissions();
+
+  const tabs: { id: TabId; label: string }[] = [
+    { id: 'profil', label: t('tabProfile') },
+    { id: 'documents', label: t('tabDocuments') },
+    { id: 'tuteurs', label: t('tabGuardians') },
+    { id: 'academique', label: t('tabAcademic') },
+    { id: 'finance', label: t('tabFinance') },
+  ];
   const [student, setStudent] = useState<StudentDetail | null>(null);
   const [documents, setDocuments] = useState<DocumentStatus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,13 +117,13 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
       const res = await fetch(`/api/students/alumni/${id}/documents`, { method: 'POST', body: formData });
       const json = await res.json();
       if (!json.success) {
-        setIssueDocError(json.error?.message || json.message || 'Échec de l\'émission.');
+        setIssueDocError(json.error?.message || json.message || t('errIssuingFailed'));
         return;
       }
       setNewDocFile(null);
       loadAlumniDocs();
     } catch {
-      setIssueDocError('Connexion impossible.');
+      setIssueDocError(tCommon('error'));
     } finally {
       setIssuingDoc(false);
     }
@@ -127,13 +136,13 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
       const res = await fetch(`/api/students/${id}/transition-to-alumni`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
       const json = await res.json();
       if (!json.success) {
-        setTransitionError(json.error?.message || json.message || 'Échec de la transition.');
+        setTransitionError(json.error?.message || json.message || t('errTransitionFailed'));
         return;
       }
       setTransitionResult({ tempPassword: json.data.tempPassword ?? null, loginAccessDeliveryStatus: json.data.loginAccessDeliveryStatus ?? null });
       setStudent(prev => (prev ? { ...prev, role: 'alumni' } : prev));
     } catch {
-      setTransitionError('Connexion impossible.');
+      setTransitionError(tCommon('error'));
     } finally {
       setTransitioning(false);
     }
@@ -162,15 +171,15 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
         if (studentJson.success) {
           setStudent(studentJson.data);
         } else {
-          setError(studentJson.message ?? 'Élève introuvable.');
+          setError(studentJson.message ?? t('emptyRosterFound'));
         }
         if (docsJson.success) {
           setDocuments(docsJson.data);
         }
       })
-      .catch(() => setError('Impossible de charger les données.'))
+      .catch(() => setError(tCommon('error')))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, t, tCommon]);
 
   useEffect(() => {
     if (student?.role === 'alumni') {
@@ -190,7 +199,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
   if (error || !student) {
     return (
       <div className="max-w-lg mx-auto mt-12 p-6 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-sm font-semibold">
-        {error ?? 'Élève introuvable.'}
+        {error ?? t('emptyRosterFound')}
       </div>
     );
   }
@@ -204,8 +213,8 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
         onClick={() => router.push(`/${locale}/dashboard/students`)}
         className="flex items-center gap-2 text-xs text-slate-500 hover:text-[#1B6C93] font-semibold transition-colors w-fit"
       >
-        <ArrowLeft className="w-4 h-4" />
-        Retour au répertoire
+        <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
+        {t('backToDirectory')}
       </button>
 
       <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
@@ -222,7 +231,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
             <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{student.fullName}</h1>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2 text-xs text-slate-500">
               <span className="font-mono">{student.matricule ?? '—'}</span>
-              <span>{student.className ?? 'Non assigné'}</span>
+              <span>{student.className ?? t('unassigned')}</span>
               {student.phone && <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-[#2487B8]" />{student.phone}</span>}
               {student.email && <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5 text-[#2487B8]" />{student.email}</span>}
             </div>
@@ -232,34 +241,34 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
               {student.status}
             </Badge>
             {student.role === 'alumni' && (
-              <Badge className="bg-[#DCEBF4] text-[#1B6C93] border-none text-[10px]">Ancien(ne) élève</Badge>
+              <Badge className="bg-[#DCEBF4] text-[#1B6C93] border-none text-[10px]">{t('alumniBadge')}</Badge>
             )}
             {can('cards.issue') && student.role === 'student' && (
               <Button size="sm" onClick={() => setIssueCardOpen(true)} className="h-8 rounded-full text-xs gap-1.5">
                 <IdCard className="w-3.5 h-3.5" />
-                Émettre une carte
+                {t('issueCard')}
               </Button>
             )}
             {can('admissions.manage') && student.role === 'student' && (
               <Button size="sm" variant="outline" onClick={() => setShowTransitionDialog(true)} className="h-8 rounded-full text-xs gap-1.5">
                 <GraduationCap className="w-3.5 h-3.5" />
-                Marquer comme ancien(ne) élève
+                {t('markAsAlumni')}
               </Button>
             )}
             {can('admissions.manage') && student.role === 'alumni' && (
               <Button size="sm" variant="outline" disabled={reinstating} onClick={handleReinstate} className="h-8 rounded-full text-xs gap-1.5">
                 <Undo2 className="w-3.5 h-3.5" />
-                {reinstating ? 'Réintégration...' : 'Réintégrer comme élève'}
+                {reinstating ? t('reintegrating') : t('reintegrateAsStudent')}
               </Button>
             )}
           </div>
         </div>
         {transitionResult && (
           <div className="mt-4 p-3.5 bg-[#DDF5EC] border border-[#17A673]/30 rounded-xl text-xs font-semibold text-[#17A673] space-y-1">
-            <p>Transition réussie vers le statut Ancien(ne) élève.</p>
-            {transitionResult.tempPassword && <p>Mot de passe temporaire (à communiquer, affiché une seule fois) : <span className="font-mono">{transitionResult.tempPassword}</span></p>}
-            {transitionResult.loginAccessDeliveryStatus === 'no_phone' && <p className="text-amber-700">Aucun téléphone enregistré — le lien d&apos;invitation n&apos;a pas pu être envoyé.</p>}
-            {transitionResult.loginAccessDeliveryStatus === 'sent' && <p>Lien d&apos;invitation envoyé (SMS).</p>}
+            <p>{t('transitionSuccess')}</p>
+            {transitionResult.tempPassword && <p>{t('tempPasswordNotice', { password: transitionResult.tempPassword })}</p>}
+            {transitionResult.loginAccessDeliveryStatus === 'no_phone' && <p className="text-amber-700">{t('noPhoneNotice')}</p>}
+            {transitionResult.loginAccessDeliveryStatus === 'sent' && <p>{t('inviteSentSms')}</p>}
           </div>
         )}
       </Card>
@@ -269,31 +278,30 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-amber-500" />
-              Confirmer la transition
+              {t('confirmTransitionTitle')}
             </DialogTitle>
           </DialogHeader>
           <p className="text-xs text-slate-600 mt-2">
-            Le compte élève de <strong>{student.fullName}</strong> sera immédiatement désactivé — connexion et session actuelles coupées.
-            Un nouveau compte Ancien(ne) élève sera créé avec ses propres identifiants réels.
+            {t('confirmTransitionDesc', { name: student.fullName })}
           </p>
           {transitionError && <p className="text-xs font-semibold text-rose-600 mt-2">{transitionError}</p>}
           <DialogFooter className="gap-2 mt-4">
             <Button variant="outline" onClick={() => setShowTransitionDialog(false)} className="rounded-full text-xs h-9">
-              Annuler
+              {tCommon('cancel')}
             </Button>
             <Button
               disabled={transitioning}
               onClick={async () => { await handleTransition(); setShowTransitionDialog(false); }}
               className="rounded-full text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white border-0"
             >
-              {transitioning ? 'Transition en cours...' : 'Confirmer la transition'}
+              {transitioning ? t('transitionInProgress') : t('confirmTransitionBtn')}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit overflow-x-auto">
-        {TABS.filter(tab => tab.id !== 'finance' || can('finance.read')).map(tab => (
+        {tabs.filter(tab => tab.id !== 'finance' || can('finance.read')).map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -308,14 +316,14 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
         <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[
-              { icon: Calendar, label: 'Date de naissance', value: student.dateOfBirth },
-              { icon: User, label: 'Genre', value: student.gender === 'male' ? 'Homme' : student.gender === 'female' ? 'Femme' : student.gender === 'other' ? 'Autre' : null },
-              { icon: Globe, label: 'Nationalité', value: student.nationality },
-              { icon: Globe, label: 'Langue maternelle', value: student.motherTongue ? (MOTHER_TONGUE_LABELS[student.motherTongue] ?? student.motherTongue) : null },
-              { icon: MapPin, label: 'Ville', value: student.city },
-              { icon: Droplet, label: 'Groupe sanguin', value: student.bloodGroup },
-              { icon: Calendar, label: 'Année scolaire', value: student.academicYearName },
-              { icon: MapPin, label: 'Adresse', value: student.address, full: true },
+              { icon: Calendar, label: t('fieldBirthDate'), value: student.dateOfBirth },
+              { icon: User, label: t('fieldGender'), value: student.gender === 'male' ? t('genderMale') : student.gender === 'female' ? t('genderFemale') : student.gender === 'other' ? t('genderOther') : null },
+              { icon: Globe, label: t('fieldNationality'), value: student.nationality },
+              { icon: Globe, label: t('fieldMotherTongue'), value: student.motherTongue ? (MOTHER_TONGUE_KEY_MAP[student.motherTongue] ? t(MOTHER_TONGUE_KEY_MAP[student.motherTongue] as any) : student.motherTongue) : null },
+              { icon: MapPin, label: t('fieldCity'), value: student.city },
+              { icon: Droplet, label: t('fieldBloodGroup'), value: student.bloodGroup },
+              { icon: Calendar, label: t('fieldAcademicYear'), value: student.academicYearName },
+              { icon: MapPin, label: t('fieldAddress'), value: student.address, full: true },
             ].map(f => f.value
               ? (
                   <div key={f.label} className={f.full ? 'sm:col-span-2 lg:col-span-3' : ''}>
@@ -331,7 +339,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
           {can('students.update') && (
             <Button variant="outline" size="sm" className="h-9 rounded-full text-xs gap-1.5">
               <Pencil className="w-3.5 h-3.5" />
-              Modifier
+              {t('modify')}
             </Button>
           )}
         </Card>
@@ -346,23 +354,23 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                   {doc.uploaded ? <CheckCircle2 className="size-4 text-[#17A673]" /> : <FileText className="size-4 text-slate-400" />}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-[#16212B]">{DOCUMENT_LABELS[doc.documentType] ?? doc.documentType}</p>
-                  <p className="text-[10px] text-slate-400">{doc.uploaded ? `Téléversé le ${doc.uploadedAt?.slice(0, 10)}` : 'Non fourni'}</p>
+                  <p className="text-xs font-bold text-[#16212B]">{DOC_KEY_MAP[doc.documentType] ? t(DOC_KEY_MAP[doc.documentType] as any) : doc.documentType}</p>
+                  <p className="text-[10px] text-slate-400">{doc.uploaded ? t('uploadedOn', { date: doc.uploadedAt?.slice(0, 10) ?? '' }) : t('notProvided')}</p>
                 </div>
               </div>
             ))}
-            {documents.length === 0 && <p className="text-xs text-slate-400 col-span-full text-center py-8">Aucun document enregistré.</p>}
+            {documents.length === 0 && <p className="text-xs text-slate-400 col-span-full text-center py-8">{t('noDocumentsRecorded')}</p>}
           </div>
         </Card>
       )}
 
       {activeTab === 'documents' && student.role === 'alumni' && can('admissions.manage') && (
         <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-          <h3 className="text-sm font-extrabold text-[#16212B]">Documents Ancien(ne) élève (avec code de vérification réel)</h3>
+          <h3 className="text-sm font-extrabold text-[#16212B]">{t('alumniDocsTitle')}</h3>
           <div className="space-y-2">
-            {alumniDocs === null && <p className="text-xs text-slate-400">Chargement...</p>}
+            {alumniDocs === null && <p className="text-xs text-slate-400">{tCommon('loading')}</p>}
             {alumniDocs !== null && alumniDocs.filter(d => d.status === 'active').length === 0 && (
-              <p className="text-xs text-slate-400">Aucun document délivré pour le moment.</p>
+              <p className="text-xs text-slate-400">{t('noAlumniDocs')}</p>
             )}
             {alumniDocs?.filter(d => d.status === 'active').map(doc => (
               <div key={doc.id} className="p-3 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between gap-3">
@@ -376,13 +384,13 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
           </div>
           <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
             <select value={newDocType} onChange={e => setNewDocType(e.target.value)} className="h-9 rounded-xl border border-slate-200 px-3 text-xs">
-              <option value="transcript">Relevé de notes</option>
-              <option value="certificate">Certificat</option>
-              <option value="attestation">Attestation</option>
+              <option value="transcript">{t('docTypeTranscript')}</option>
+              <option value="certificate">{t('docTypeCertificate')}</option>
+              <option value="attestation">{t('docTypeAttestation')}</option>
             </select>
             <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setNewDocFile(e.target.files?.[0] ?? null)} className="text-xs flex-1" />
             <Button size="sm" disabled={!newDocFile || issuingDoc} onClick={handleIssueDocument} className="h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold">
-              {issuingDoc ? 'Émission...' : 'Émettre'}
+              {issuingDoc ? t('issuingBtn') : t('issueBtn')}
             </Button>
           </div>
           {issueDocError && <p className="text-xs font-semibold text-rose-600">{issueDocError}</p>}
@@ -394,7 +402,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
           {student.guardians.length === 0 && (
             <Card className="p-12 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col items-center justify-center gap-3 text-center">
               <Users className="w-10 h-10 text-slate-200" />
-              <p className="text-sm font-bold text-slate-400">Aucun tuteur lié</p>
+              <p className="text-sm font-bold text-slate-400">{t('noGuardiansLinked')}</p>
             </Card>
           )}
           {student.guardians.map(g => (
@@ -409,7 +417,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                 </div>
               </div>
               <Link href={`/${locale}/dashboard/students/parents/${g.id}`} className="flex items-center gap-1 text-xs font-bold text-[#2487B8] hover:underline">
-                Voir le profil
+                {tGuardians('viewFullProfile')}
                 <ExternalLink className="w-3.5 h-3.5" />
               </Link>
             </Card>
@@ -423,7 +431,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
             ? (
                 <>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-extrabold text-[#16212B]">Assiduité (30 derniers jours)</h3>
+                    <h3 className="text-sm font-extrabold text-[#16212B]">{t('attendanceLast30Days')}</h3>
                     <Badge className="bg-[#DCEBF4] text-[#1B6C93] border-none font-extrabold">
                       {student.attendance.rate !== null ? `${student.attendance.rate}%` : '—'}
                     </Badge>
@@ -438,11 +446,11 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                         </span>
                       </div>
                     ))}
-                    {student.attendance.last30Days.length === 0 && <p className="text-xs text-slate-400 text-center py-8">Aucune présence enregistrée.</p>}
+                    {student.attendance.last30Days.length === 0 && <p className="text-xs text-slate-400 text-center py-8">{tCommon('empty')}</p>}
                   </div>
                 </>
               )
-            : <p className="text-xs text-slate-400 text-center py-8">Données d&apos;assiduité non disponibles pour ce rôle.</p>}
+            : <p className="text-xs text-slate-400 text-center py-8">{tCommon('empty')}</p>}
         </Card>
       )}
 
@@ -452,23 +460,23 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                    <p className="text-xs font-bold text-slate-400">Total payé</p>
-                    <p className="text-xl font-extrabold text-[#16212B]">{totalPaid.toLocaleString('fr-FR')} MAD</p>
+                    <p className="text-xs font-bold text-slate-400">{t('totalPaid')}</p>
+                    <p className="text-xl font-extrabold text-[#16212B]">{totalPaid.toLocaleString(locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR')} {tCommon('currency')}</p>
                   </Card>
                   <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                    <p className="text-xs font-bold text-slate-400">Solde dû</p>
+                    <p className="text-xs font-bold text-slate-400">{t('balanceDue')}</p>
                     <p className={`text-xl font-extrabold ${student.balanceDue > 0 ? 'text-rose-600' : 'text-[#17A673]'}`}>
-                      {student.balanceDue.toLocaleString('fr-FR')} MAD
+                      {student.balanceDue.toLocaleString(locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR')} {tCommon('currency')}
                     </p>
                   </Card>
                 </div>
                 <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full text-start text-xs">
                     <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
                       <tr>
-                        <th className="py-3 px-4">Date</th>
-                        <th className="py-3 px-4">Méthode</th>
-                        <th className="py-3 px-4 text-right">Montant</th>
+                        <th className="py-3 px-4">{tCommon('date')}</th>
+                        <th className="py-3 px-4">{t('methodHeader')}</th>
+                        <th className="py-3 px-4 text-end">{tCommon('total')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -476,22 +484,22 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                         <tr key={p.id}>
                           <td className="py-2.5 px-4 text-slate-500">{p.paymentDate.slice(0, 10)}</td>
                           <td className="py-2.5 px-4 text-slate-600">{p.paymentMethod}</td>
-                          <td className="py-2.5 px-4 text-right font-bold text-[#16212B]">{Number(p.amount).toLocaleString('fr-FR')} MAD</td>
+                          <td className="py-2.5 px-4 text-end font-bold text-[#16212B]">{Number(p.amount).toLocaleString(locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR')} {tCommon('currency')}</td>
                         </tr>
                       ))}
                       {student.payments.length === 0 && (
-                        <tr><td colSpan={3} className="py-8 text-center text-slate-400">Aucun paiement enregistré.</td></tr>
+                        <tr><td colSpan={3} className="py-8 text-center text-slate-400">{tCommon('empty')}</td></tr>
                       )}
                     </tbody>
                   </table>
                 </Card>
                 <Link href={`/${locale}/dashboard/finance/invoices?studentId=${student.id}`} className="flex items-center gap-1.5 text-xs font-bold text-[#2487B8] hover:underline w-fit">
                   <Wallet className="w-3.5 h-3.5" />
-                  Voir les factures de cet élève
+                  {t('viewStudentInvoices')}
                 </Link>
               </div>
             )
-          : <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs"><p className="text-xs text-slate-400 text-center py-8">Données financières non disponibles pour ce rôle.</p></Card>
+          : <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs"><p className="text-xs text-slate-400 text-center py-8">{tCommon('empty')}</p></Card>
       )}
 
       <IssueCardDialog
@@ -500,7 +508,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
         subjectType="student"
         templateType="student_id"
         subjectId={student.id}
-        subjectLabel="Élève"
+        subjectLabel={t('student')}
         subjectName={student.fullName}
       />
     </div>

@@ -1,442 +1,520 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Card } from '@/components/ui/card';
+import { AlertCircle, Loader2, Plus, Receipt, Search, Wallet, UploadCloud, CheckCircle2, X, FileText } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from '@/components/ui/dialog';
-import {
-  Plus, Upload, Check, Download, Paperclip, FileText, CheckCircle2, Clock, AlertCircle, TrendingUp, Search
-} from 'lucide-react';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
-type ExpenseStatus = 'En attente' | 'À valider' | 'Approuvée' | 'Remboursée';
+const CATEGORIES = ['salary', 'rent', 'utilities', 'supplies', 'marketing', 'other'] as const;
 
-type ExpenseRequest = {
+type Category = (typeof CATEGORIES)[number];
+
+type Expense = {
   id: string;
-  date: string;
-  ref: string;
-  category: string;
-  supplier: string;
-  amount: number;
-  attachmentsCount: number;
-  status: ExpenseStatus;
+  category: Category | string;
+  amount: string | number;
+  expenseDate: string;
+  description: string | null;
+  receiptUrl: string | null;
+  recordedById: string | null;
 };
 
-const INITIAL_EXPENSE_REQUESTS: ExpenseRequest[] = [
-  { id: '1', date: '30/05/2025', ref: 'DEP-2025-0109', category: 'Fournitures de bureau', supplier: 'Marjane Marketplace', amount: 1250.00, attachmentsCount: 2, status: 'En attente' },
-  { id: '2', date: '29/05/2025', ref: 'DEP-2025-0108', category: 'Maintenance', supplier: 'Techno Clim', amount: 4800.00, attachmentsCount: 3, status: 'En attente' },
-  { id: '3', date: '29/05/2025', ref: 'DEP-2025-0107', category: 'Transport scolaire', supplier: 'STS Transport', amount: 8750.00, attachmentsCount: 1, status: 'À valider' },
-  { id: '4', date: '28/05/2025', ref: 'DEP-2025-0106', category: 'Fournitures scolaires', supplier: 'Librairie Papeterie Najah', amount: 3640.00, attachmentsCount: 1, status: 'Approuvée' },
-  { id: '5', date: '28/05/2025', ref: 'DEP-2025-0105', category: 'Services généraux', supplier: 'Lydec (Électricité)', amount: 2125.75, attachmentsCount: 1, status: 'Approuvée' },
-  { id: '6', date: '27/05/2025', ref: 'DEP-2025-0104', category: 'Pédagogie', supplier: 'Edukash', amount: 6900.00, attachmentsCount: 1, status: 'Approuvée' },
-  { id: '7', date: '27/05/2025', ref: 'DEP-2025-0103', category: 'Entretien & nettoyage', supplier: 'Maroc Clean', amount: 1950.00, attachmentsCount: 1, status: 'Remboursée' },
-];
+const EMPTY_FORM = {
+  category: 'supplies' as Category,
+  amount: '',
+  expenseDate: new Date().toISOString().slice(0, 10),
+  description: '',
+  receiptUrl: '',
+};
 
-const ACCOUNTING_PIECES = [
-  { date: '30/05/2025', type: 'Facture', ref: 'FACT-2025-1458', supplier: 'Marjane Marketplace', amount: 1250.00, status: 'En attente' as ExpenseStatus },
-  { date: '29/05/2025', type: 'Facture', ref: 'FACT-2025-1457', supplier: 'Techno Clim', amount: 4800.00, status: 'En attente' as ExpenseStatus },
-  { date: '29/05/2025', type: 'Facture', ref: 'FACT-2025-1456', supplier: 'STS Transport', amount: 8750.00, status: 'À valider' as ExpenseStatus },
-  { date: '28/05/2025', type: 'Facture', ref: 'FACT-2025-1455', supplier: 'Librairie Papeterie Najah', amount: 3640.00, status: 'Approuvée' as ExpenseStatus },
-  { date: '28/05/2025', type: 'Facture', ref: 'FACT-2025-1454', supplier: 'Lydec (Électricité)', amount: 2125.75, status: 'Approuvée' as ExpenseStatus },
-];
+const money = new Intl.NumberFormat('fr-MA', { maximumFractionDigits: 2 });
 
-const CASH_DEPOSITS = [
-  { date: '30/05/2025 10:15', label: 'Frais de scolarité – Mai', by: 'Khadija B.', amount: 9250.00 },
-  { date: '30/05/2025 09:42', label: 'Frais d\'inscription', by: 'Khadija B.', amount: 3700.00 },
-  { date: '29/05/2025 16:35', label: 'Activités parascolaires', by: 'Khadija B.', amount: 2100.00 },
-];
+export function ExpensesManagementView({ locale: _locale }: { locale?: string } = {}) {
+  const t = useTranslations('Finance');
+  const tCommon = useTranslations('Common');
 
-const BANK_DEPOSITS = [
-  { date: '29/05/2025', bank: 'BMCE – Compte Courant', ref: 'DEP-2025-0058', amount: 27500.00 },
-  { date: '27/05/2025', bank: 'Attijariwafa Bank', ref: 'DEP-2025-0057', amount: 15800.00 },
-  { date: '26/05/2025', bank: 'BMCE – Compte Courant', ref: 'DEP-2025-0056', amount: 12400.00 },
-];
-
-const CATEGORY_BREAKDOWN = [
-  { name: 'Transport scolaire', amount: 21770.00, pct: 34.7, color: 'bg-blue-600' },
-  { name: 'Pédagogie', amount: 13800.00, pct: 22.0, color: 'bg-emerald-500' },
-  { name: 'Maintenance', amount: 9600.00, pct: 15.3, color: 'bg-teal-400' },
-  { name: 'Fournitures scolaires', amount: 7890.00, pct: 12.6, color: 'bg-amber-400' },
-  { name: 'Fournitures de bureau', amount: 5020.50, pct: 8.0, color: 'bg-[#2487B8]' },
-  { name: 'Autres', amount: 2700.00, pct: 4.3, color: 'bg-slate-300' },
-];
-
-function getStatusBadge(status: ExpenseStatus) {
-  switch (status) {
-    case 'En attente': return 'bg-amber-100 text-amber-700 hover:bg-amber-100';
-    case 'À valider': return 'bg-[#DCEBF4] text-[#1B6C93] hover:bg-[#DCEBF4]';
-    case 'Approuvée': return 'bg-[#DDF5EC] text-[#17A673] hover:bg-[#DDF5EC]';
-    case 'Remboursée': return 'bg-purple-100 text-purple-700 hover:bg-purple-100';
-  }
-}
-
-export function ExpensesView({ locale: _locale }: { locale?: string }) {
-  const [requests, setRequests] = useState<ExpenseRequest[]>(INITIAL_EXPENSE_REQUESTS);
-  const [selectedReqId, setSelectedReqId] = useState<string>('1');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('Tous les status');
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
-
-  const [newExpense, setNewExpense] = useState({
-    supplier: '',
-    category: 'Fournitures de bureau',
-    amount: 1000,
-  });
-
-  const filteredRequests = useMemo(() => {
-    return requests.filter((r) => {
-      const matchesSearch = r.supplier.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.ref.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.category.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === 'Tous les status' || r.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  }, [requests, searchQuery, statusFilter]);
-
-  const activeReq = useMemo(() => {
-    return requests.find((r) => r.id === selectedReqId) || requests[0]!;
-  }, [requests, selectedReqId]);
-
-  const handleCreateExpense = () => {
-    if (!newExpense.supplier.trim()) return;
-    const created: ExpenseRequest = {
-      id: `dep-${Date.now()}`,
-      date: 'Aujourd\'hui',
-      ref: `DEP-2025-0${requests.length + 110}`,
-      category: newExpense.category,
-      supplier: newExpense.supplier.trim(),
-      amount: newExpense.amount || 1000,
-      attachmentsCount: 1,
-      status: 'En attente',
-    };
-    setRequests((prev) => [created, ...prev]);
-    setSelectedReqId(created.id);
-    setNewExpense({ supplier: '', category: 'Fournitures de bureau', amount: 1000 });
-    setIsAddModalOpen(false);
-    setFeedbackMsg(`Nouvelle dépense "${created.ref}" créée avec succès !`);
-    setTimeout(() => setFeedbackMsg(null), 4000);
+  const categoryLabels: Record<Category, string> = {
+    salary: t('categorySalary'),
+    rent: t('categoryRent'),
+    utilities: t('categoryUtilities'),
+    supplies: t('categorySupplies'),
+    marketing: t('categoryMarketing'),
+    other: t('categoryOther'),
   };
 
-  const handleValidateActive = () => {
-    setRequests((prev) =>
-      prev.map((r) => (r.id === activeReq.id ? { ...r, status: 'Approuvée' as ExpenseStatus } : r))
-    );
-    setFeedbackMsg(`Dépense "${activeReq.ref}" validée et approuvée !`);
-    setTimeout(() => setFeedbackMsg(null), 4000);
+  const [rows, setRows] = useState<Expense[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch('/api/finance/expenses?pageSize=100');
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        throw new Error(json?.error?.message ?? t('recordExpenseError'));
+      }
+
+      setRows(json.data as Expense[]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('recordExpenseError'));
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const filtered = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    return rows.filter((r) => {
+      const matchesCategory = categoryFilter === 'all' || r.category === categoryFilter;
+      const matchesSearch = !needle
+        || (r.description ?? '').toLowerCase().includes(needle)
+        || String(r.category).toLowerCase().includes(needle);
+      return matchesCategory && matchesSearch;
+    });
+  }, [rows, search, categoryFilter]);
+
+  const total = useMemo(
+    () => filtered.reduce((sum, r) => sum + Number(r.amount ?? 0), 0),
+    [filtered],
+  );
+
+  const breakdown = useMemo(() => {
+    const byCategory = new Map<string, number>();
+    for (const r of filtered) {
+      byCategory.set(String(r.category), (byCategory.get(String(r.category)) ?? 0) + Number(r.amount ?? 0));
+    }
+    return [...byCategory.entries()].sort((a, b) => b[1] - a[1]);
+  }, [filtered]);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingReceipt(true);
+    setSaveError(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/finance/expenses/receipt', {
+        method: 'POST',
+        body: formData,
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.success) {
+        throw new Error(json?.error?.message ?? t('receiptUploadError'));
+      }
+      setForm(prev => ({ ...prev, receiptUrl: json.data.url }));
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : t('receiptUploadError'));
+    } finally {
+      setUploadingReceipt(false);
+    }
+  };
+
+  const create = async () => {
+    if (saving) {
+      return;
+    }
+
+    const amount = Number(form.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setSaveError(t('expenseAmountPositiveError'));
+      return;
+    }
+    if (!form.description.trim()) {
+      setSaveError(t('expenseDescriptionRequiredError'));
+      return;
+    }
+
+    setSaving(true);
+    setSaveError(null);
+
+    try {
+      const res = await fetch('/api/finance/expenses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: form.category,
+          amount,
+          expenseDate: form.expenseDate,
+          description: form.description.trim(),
+          ...(form.receiptUrl.trim() ? { receiptUrl: form.receiptUrl.trim() } : {}),
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok || !json.success) {
+        throw new Error(json?.error?.message ?? t('recordExpenseError'));
+      }
+
+      setIsAddOpen(false);
+      setForm(EMPTY_FORM);
+      await load();
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : t('recordExpenseError'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <div className="space-y-6 max-w-[1800px] mx-auto">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="mx-auto max-w-[1400px] space-y-5">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Dépôts, dépenses &amp; pièces comptables</h1>
-          <p className="text-xs text-slate-500 mt-1">Suivez les dépôts, validez les dépenses et centralisez les justificatifs.</p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('expensesTitle')}</h1>
+          <p className="mt-1 text-xs text-slate-500">
+            {t('expensesSubtitle')}
+          </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button
-            onClick={() => setIsAddModalOpen(true)}
-            size="sm"
-            className="h-9 text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5 font-bold shadow-sm"
-          >
-            <Plus className="w-3.5 h-3.5" /> Nouvelle dépense
-          </Button>
-          <Button
-            onClick={handleValidateActive}
-            size="sm"
-            className="h-9 text-xs rounded-xl bg-[#17A673] hover:bg-[#138A5F] text-white gap-1.5 font-bold shadow-sm"
-          >
-            <Check className="w-3.5 h-3.5" /> Valider la sélection
-          </Button>
-        </div>
+        <Button
+          size="sm"
+          onClick={() => setIsAddOpen(true)}
+          className="h-10 gap-2 rounded-xl bg-[#2487B8] px-4 text-xs font-bold text-white hover:bg-[#1B6C93]"
+        >
+          <Plus className="size-4" />
+          {t('recordExpenseBtn')}
+        </Button>
       </div>
 
-      {feedbackMsg && (
-        <div className="p-3 bg-[#DDF5EC] border border-[#17A673]/30 rounded-2xl text-xs font-bold text-[#17A673] flex items-center gap-2 animate-in fade-in">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
-          <span>{feedbackMsg}</span>
+      {error && (
+        <div className="flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-bold text-red-700">
+          <AlertCircle className="size-4 shrink-0" />
+          <span>{error}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => void load()}
+            className="ms-auto h-7 text-xs font-bold text-red-700"
+          >
+            {tCommon('retry')}
+          </Button>
         </div>
       )}
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#DDF5EC] shrink-0 flex items-center justify-center text-[#17A673]">
-            <TrendingUp className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-slate-400">Dépôts du jour</p>
-            <p className="text-xl font-extrabold text-[#16212B]">18 450,00 MAD</p>
-            <p className="text-[10px] font-semibold text-slate-500">3 opérations</p>
-          </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Card className="space-y-1 rounded-2xl border border-slate-200/80 p-4">
+          <p className="text-xs font-bold text-slate-500">{t('totalDisplayedCard')}</p>
+          <p className="text-2xl font-extrabold text-[#16212B] tabular-nums">
+            {money.format(total)}
+            {' '}
+            {tCommon('currency')}
+          </p>
+          <p className="text-[10px] text-slate-400">
+            {t('expensesCountCard', { count: filtered.length })}
+          </p>
         </Card>
-
-        <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#DCEBF4] shrink-0 flex items-center justify-center text-[#1B6C93]">
-            <FileText className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-slate-400">Dépenses totales</p>
-            <p className="text-xl font-extrabold text-[#16212B]">{requests.length} demandes</p>
-            <p className="text-[10px] font-semibold text-[#17A673]">Suivi centralisé</p>
-          </div>
+        <Card className="space-y-1 rounded-2xl border border-slate-200/80 p-4">
+          <p className="text-xs font-bold text-slate-500">{t('mainCostCenterCard')}</p>
+          <p className="truncate text-sm font-extrabold text-[#2487B8]">
+            {breakdown[0] ? (categoryLabels[breakdown[0][0] as Category] ?? breakdown[0][0]) : '—'}
+          </p>
+          <p className="text-[10px] text-slate-400">
+            {breakdown[0] ? `${money.format(breakdown[0][1])} ${tCommon('currency')}` : t('noExpensesCard')}
+          </p>
         </Card>
-
-        <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-100 shrink-0 flex items-center justify-center text-amber-700">
-            <Clock className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-slate-400">En attente</p>
-            <p className="text-xl font-extrabold text-[#16212B]">{requests.filter(r => r.status === 'En attente').length}</p>
-            <p className="text-[10px] font-bold text-amber-600">À valider</p>
-          </div>
-        </Card>
-
-        <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#DDF5EC] shrink-0 flex items-center justify-center text-[#17A673]">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-slate-400">Approuvées</p>
-            <p className="text-xl font-extrabold text-[#16212B]">{requests.filter(r => r.status === 'Approuvée').length}</p>
-            <p className="text-[10px] font-semibold text-[#17A673]">Dépenses validées</p>
-          </div>
+        <Card className="space-y-1 rounded-2xl border border-slate-200/80 p-4">
+          <p className="text-xs font-bold text-slate-500">{t('concernedCategoriesCard')}</p>
+          <p className="text-2xl font-extrabold text-[#16212B] tabular-nums">{breakdown.length}</p>
+          <p className="text-[10px] text-slate-400">{t('distinctCategoriesSub')}</p>
         </Card>
       </div>
 
-      {/* Main Grid: 3 Columns */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        {/* Left Column (3 cols): Cash & Bank Deposits */}
-        <div className="xl:col-span-3 space-y-4">
-          <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs font-extrabold text-[#16212B]">Derniers dépôts en caisse</h2>
-            </div>
-            <div className="space-y-3">
-              {CASH_DEPOSITS.map((item, idx) => (
-                <div key={idx} className="flex items-start justify-between pb-2 border-b border-slate-100 last:border-none last:pb-0">
-                  <div>
-                    <p className="text-[10px] font-medium text-slate-400">{item.date}</p>
-                    <p className="text-xs font-bold text-[#16212B]">{item.label}</p>
-                    <p className="text-[10px] text-slate-500 font-medium">Reçu par : {item.by}</p>
-                  </div>
-                  <span className="text-xs font-extrabold text-[#17A673]">{item.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD</span>
-                </div>
-              ))}
-            </div>
-          </Card>
+      <Card className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 p-3 sm:flex-row sm:items-center">
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="h-9 w-full rounded-xl text-xs sm:w-56">
+            <SelectValue placeholder={t('allCategoriesOption')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t('allCategoriesOption')}</SelectItem>
+            {CATEGORIES.map(c => <SelectItem key={c} value={c}>{categoryLabels[c]}</SelectItem>)}
+          </SelectContent>
+        </Select>
 
-          <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs font-extrabold text-[#16212B]">Derniers dépôts bancaires</h2>
-            </div>
-            <div className="space-y-3">
-              {BANK_DEPOSITS.map((item, idx) => (
-                <div key={idx} className="flex items-start justify-between pb-2 border-b border-slate-100 last:border-none last:pb-0">
-                  <div>
-                    <p className="text-[10px] font-medium text-slate-400">{item.date}</p>
-                    <p className="text-xs font-bold text-[#16212B]">{item.bank}</p>
-                    <p className="text-[10px] text-slate-400 font-mono">Réf. : {item.ref}</p>
-                  </div>
-                  <span className="text-xs font-extrabold text-[#17A673]">{item.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD</span>
-                </div>
-              ))}
-            </div>
-          </Card>
+        <div className="relative w-full sm:ms-auto sm:w-64">
+          <Search className="absolute top-1/2 start-3 size-4 -translate-y-1/2 text-slate-400" />
+          <Input
+            placeholder={t('searchExpensePlaceholder')}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="h-9 rounded-xl border-none bg-slate-50 ps-9 text-xs"
+          />
         </div>
+      </Card>
 
-        {/* Center Column (6 cols): Expense Requests & Accounting Pieces */}
-        <div className="xl:col-span-6 space-y-4">
-          <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-              <h2 className="text-xs font-extrabold text-[#16212B]">Demandes de dépenses</h2>
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <Input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Rechercher..."
-                    className="pl-8 h-8 text-[11px] bg-slate-50 border-slate-200 rounded-xl w-36"
-                  />
+      {loading && (
+        <div className="flex items-center justify-center gap-2 py-16 text-xs font-bold text-slate-400">
+          <Loader2 className="size-4 animate-spin" />
+          <span>{t('loadingExpenses')}</span>
+        </div>
+      )}
+
+      {!loading && rows.length === 0 && !error && (
+        <Card className="space-y-2 rounded-2xl border border-dashed border-slate-300 p-10 text-center">
+          <Wallet className="mx-auto size-8 text-slate-300" />
+          <p className="text-sm font-extrabold text-[#16212B]">{t('noExpensesRecordedTitle')}</p>
+          <p className="text-xs text-slate-500">
+            {t('noExpensesRecordedSubtitle')}
+          </p>
+        </Card>
+      )}
+
+      {!loading && rows.length > 0 && (
+        <Card className="overflow-hidden rounded-2xl border border-slate-200/80 p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-start text-xs">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase">
+                  <th className="w-28 px-3 py-2.5 text-start">{t('dateCol')}</th>
+                  <th className="w-40 px-3 py-2.5 text-start">{t('categoryCol')}</th>
+                  <th className="px-3 py-2.5 text-start">{t('descriptionCol')}</th>
+                  <th className="w-32 px-3 py-2.5 text-end">{t('amountCol')}</th>
+                  <th className="w-24 px-3 py-2.5 text-start">{t('receiptCol')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filtered.map(r => (
+                  <tr key={r.id} className="hover:bg-slate-50/50">
+                    <td className="px-3 py-2 text-slate-500 tabular-nums">{r.expenseDate}</td>
+                    <td className="px-3 py-2">
+                      <Badge className="border-none bg-slate-100 text-[10px] font-bold text-slate-700">
+                        {categoryLabels[r.category as Category] ?? r.category}
+                      </Badge>
+                    </td>
+                    <td className="px-3 py-2 font-bold text-[#16212B]">{r.description ?? '—'}</td>
+                    <td className="px-3 py-2 text-end font-extrabold text-[#16212B] tabular-nums">
+                      {money.format(Number(r.amount ?? 0))}
+                    </td>
+                    <td className="px-3 py-2">
+                      {r.receiptUrl
+                        ? (
+                            <a
+                              href={r.receiptUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-1 font-bold text-[#2487B8] hover:underline"
+                            >
+                              <Receipt className="size-3.5" />
+                              {t('viewReceiptBtn')}
+                            </a>
+                          )
+                        : <span className="text-[10px] text-slate-300">—</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {filtered.length === 0 && (
+            <p className="py-10 text-center text-xs font-bold text-slate-400">
+              {t('noExpensesMatchFilters')}
+            </p>
+          )}
+        </Card>
+      )}
+
+      {breakdown.length > 0 && (
+        <Card className="space-y-3 rounded-2xl border border-slate-200/80 p-4">
+          <h2 className="text-xs font-extrabold text-[#16212B]">{t('breakdownByCategoryTitle')}</h2>
+          <div className="space-y-2">
+            {breakdown.map(([category, amount]) => {
+              const share = total === 0 ? 0 : Math.round((amount / total) * 100);
+              return (
+                <div key={category} className="flex items-center gap-3 text-xs">
+                  <span className="w-44 shrink-0 font-bold text-slate-600">
+                    {categoryLabels[category as Category] ?? category}
+                  </span>
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                    <div className="h-full rounded-full bg-[#2487B8]" style={{ width: `${share}%` }} />
+                  </div>
+                  <span className="w-32 shrink-0 text-end text-slate-500 tabular-nums">
+                    {money.format(amount)}
+                    {' '}
+                    ·
+                    {share}
+                    %
+                  </span>
                 </div>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="text-[11px] font-bold text-slate-600 bg-slate-50 border border-slate-200 rounded-xl px-2 h-8"
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
+      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <DialogContent className="max-w-md rounded-2xl bg-white p-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-extrabold text-[#16212B]">
+              <Wallet className="size-5 text-[#2487B8]" />
+              {t('recordExpenseBtn')}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="my-3 space-y-3 text-xs">
+            {saveError && (
+              <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 font-bold text-red-700">
+                {saveError}
+              </p>
+            )}
+
+            <div>
+              <label className="mb-1 block font-bold text-slate-700" htmlFor="exp-category">{t('categoryRequiredLabel')}</label>
+              <Select value={form.category} onValueChange={v => setForm({ ...form, category: v as Category })}>
+                <SelectTrigger
+                  id="exp-category"
+                  className="h-9 rounded-xl text-xs"
                 >
-                  <option>Tous les status</option>
-                  <option>En attente</option>
-                  <option>À valider</option>
-                  <option>Approuvée</option>
-                </select>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map(c => <SelectItem key={c} value={c}>{categoryLabels[c]}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block font-bold text-slate-700" htmlFor="exp-amount">{t('amountMadRequiredLabel')}</label>
+                <Input
+                  id="exp-amount"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.amount}
+                  onChange={e => setForm({ ...form, amount: e.target.value })}
+                  className="h-9 rounded-xl text-xs"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block font-bold text-slate-700" htmlFor="exp-date">{t('dateRequiredLabel')}</label>
+                <Input
+                  id="exp-date"
+                  type="date"
+                  value={form.expenseDate}
+                  onChange={e => setForm({ ...form, expenseDate: e.target.value })}
+                  className="h-9 rounded-xl text-xs"
+                />
               </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-100 text-[10px] font-extrabold text-slate-400 uppercase">
-                    <th className="pb-2">Date</th>
-                    <th className="pb-2">Référence</th>
-                    <th className="pb-2">Catégorie</th>
-                    <th className="pb-2">Fournisseur</th>
-                    <th className="pb-2 text-right">Montant</th>
-                    <th className="pb-2 text-right">Statut</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-xs font-medium">
-                  {filteredRequests.map((req) => (
-                    <tr
-                      key={req.id}
-                      onClick={() => setSelectedReqId(req.id)}
-                      className={`cursor-pointer transition-colors ${selectedReqId === req.id ? 'bg-[#DCEBF4]/40 font-bold' : 'hover:bg-slate-50/80'}`}
+            <div>
+              <label className="mb-1 block font-bold text-slate-700" htmlFor="exp-desc">{t('descriptionRequiredLabel')}</label>
+              <Input
+                id="exp-desc"
+                placeholder={t('descriptionPlaceholder')}
+                value={form.description}
+                onChange={e => setForm({ ...form, description: e.target.value })}
+                className="h-9 rounded-xl text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block font-bold text-slate-700" htmlFor="exp-receipt">{t('uploadReceiptLabel')}</label>
+              {form.receiptUrl ? (
+                <div className="flex items-center justify-between p-2.5 bg-blue-50 border border-blue-200 rounded-xl">
+                  <div className="flex items-center gap-2 text-xs text-blue-900 font-medium truncate">
+                    <FileText className="size-4 text-[#2487B8] shrink-0" />
+                    <span className="truncate">{t('receiptUploaded')}</span>
+                    <a
+                      href={form.receiptUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11px] text-[#2487B8] hover:underline font-bold shrink-0"
                     >
-                      <td className="py-2.5 text-slate-500 text-[11px] whitespace-nowrap">{req.date}</td>
-                      <td className="py-2.5 font-mono text-[11px] font-bold text-slate-700">{req.ref}</td>
-                      <td className="py-2.5 text-[11px] text-slate-600">{req.category}</td>
-                      <td className="py-2.5 font-bold text-[#16212B]">{req.supplier}</td>
-                      <td className="py-2.5 text-right font-extrabold text-[#16212B] whitespace-nowrap">{req.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD</td>
-                      <td className="py-2.5 text-right">
-                        <Badge className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border-none ${getStatusBadge(req.status)}`}>
-                          {req.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-
-          <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs font-extrabold text-[#16212B]">Dernières pièces comptables</h2>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-100 text-[10px] font-extrabold text-slate-400 uppercase">
-                    <th className="pb-2">Date</th>
-                    <th className="pb-2">Type</th>
-                    <th className="pb-2">Référence</th>
-                    <th className="pb-2">Fournisseur</th>
-                    <th className="pb-2 text-right">Montant (MAD)</th>
-                    <th className="pb-2 text-right">Statut</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-xs font-medium">
-                  {ACCOUNTING_PIECES.map((piece, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/80">
-                      <td className="py-2 text-slate-500 text-[11px]">{piece.date}</td>
-                      <td className="py-2 font-semibold text-slate-600 text-[11px]">{piece.type}</td>
-                      <td className="py-2 font-mono text-[11px] font-bold text-[#2487B8]">{piece.ref}</td>
-                      <td className="py-2 font-bold text-[#16212B]">{piece.supplier}</td>
-                      <td className="py-2 text-right font-extrabold text-[#16212B]">{piece.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}</td>
-                      <td className="py-2 text-right">
-                        <Badge className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border-none ${getStatusBadge(piece.status)}`}>
-                          {piece.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </div>
-
-        {/* Right Column (3 cols): Selected Document Inspector */}
-        <div className="xl:col-span-3 space-y-4">
-          <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-4">
-            <h2 className="text-xs font-extrabold text-[#16212B]">Détail de la dépense</h2>
-
-            {activeReq ? (
-              <>
-                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-                  <div className="w-9 h-9 rounded-lg bg-rose-100 flex items-center justify-center text-rose-600 shrink-0">
-                    <FileText className="w-5 h-5" />
+                      ({t('viewReceiptBtn')})
+                    </a>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-[#2487B8] truncate">{activeReq.ref}</p>
-                    <p className="text-[10px] text-slate-500 font-medium truncate">{activeReq.supplier}</p>
-                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setForm({ ...form, receiptUrl: '' })}
+                    className="h-6 w-6 p-0 text-slate-400 hover:text-red-600 rounded-full"
+                    title={t('removeReceipt')}
+                    aria-label={t('removeReceipt')}
+                  >
+                    <X className="size-3.5" />
+                  </Button>
                 </div>
-
-                <div className="space-y-2 text-xs border-b border-slate-100 pb-3">
-                  <div className="flex justify-between"><span className="text-slate-500">Catégorie</span><span className="font-bold text-[#16212B]">{activeReq.category}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">Date du document</span><span className="font-bold text-[#16212B]">{activeReq.date}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">Montant TTC</span><span className="font-extrabold text-[#16212B]">{activeReq.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">Statut</span><span className="font-bold text-emerald-700">{activeReq.status}</span></div>
+              ) : (
+                <div className="space-y-2">
+                  <label className={`flex flex-col items-center justify-center border-2 border-dashed border-slate-200 hover:border-[#2487B8] rounded-xl p-3 cursor-pointer transition-colors bg-slate-50/50 ${uploadingReceipt ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                      {uploadingReceipt ? (
+                        <Loader2 className="size-4 animate-spin text-[#2487B8]" />
+                      ) : (
+                        <UploadCloud className="size-4 text-[#2487B8]" />
+                      )}
+                      <span>{uploadingReceipt ? t('uploadingReceipt') : t('uploadReceiptLabel')}</span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 mt-0.5">PDF, PNG, JPG (max. 8 Mo)</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,application/pdf"
+                      disabled={uploadingReceipt}
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  <Input
+                    id="exp-receipt"
+                    placeholder={t('receiptUrlPlaceholder')}
+                    value={form.receiptUrl}
+                    onChange={e => setForm({ ...form, receiptUrl: e.target.value })}
+                    className="h-8 rounded-xl text-xs bg-white text-slate-500"
+                  />
                 </div>
-
-                <Button
-                  onClick={handleValidateActive}
-                  className="w-full h-9 text-xs font-bold rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white flex items-center justify-center gap-1.5"
-                >
-                  <Check className="w-3.5 h-3.5" /> Approuver la dépense
-                </Button>
-              </>
-            ) : (
-              <p className="text-xs text-slate-400">Aucune dépense sélectionnée.</p>
-            )}
-          </Card>
-        </div>
-      </div>
-
-      {/* Add Expense Modal */}
-      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent className="max-w-md bg-white rounded-2xl p-6">
-          <DialogHeader>
-            <DialogTitle className="text-base font-extrabold text-[#16212B]">Créer une nouvelle demande de dépense</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 text-xs pt-2">
-            <div>
-              <label className="font-bold text-slate-700 block mb-1">Fournisseur / Beneficiaire *</label>
-              <Input
-                placeholder="ex: Marjane / Papeterie Central"
-                value={newExpense.supplier}
-                onChange={(e) => setNewExpense({ ...newExpense, supplier: e.target.value })}
-                className="h-9 text-xs rounded-xl"
-              />
-            </div>
-            <div>
-              <label className="font-bold text-slate-700 block mb-1">Catégorie</label>
-              <select
-                value={newExpense.category}
-                onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
-                className="w-full h-9 text-xs rounded-xl border border-slate-200 px-3 font-medium bg-white"
-              >
-                <option>Fournitures de bureau</option>
-                <option>Maintenance</option>
-                <option>Transport scolaire</option>
-                <option>Fournitures scolaires</option>
-                <option>Pédagogie</option>
-              </select>
-            </div>
-            <div>
-              <label className="font-bold text-slate-700 block mb-1">Montant TTC (MAD)</label>
-              <Input
-                type="number"
-                placeholder="1000"
-                value={newExpense.amount}
-                onChange={(e) => setNewExpense({ ...newExpense, amount: Number(e.target.value) || 0 })}
-                className="h-9 text-xs rounded-xl"
-              />
+              )}
             </div>
           </div>
-          <DialogFooter className="gap-2 pt-4">
-            <Button variant="outline" onClick={() => setIsAddModalOpen(false)} className="rounded-xl text-xs h-9">
-              Annuler
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsAddOpen(false)}
+              className="h-9 rounded-xl text-xs"
+            >
+              {tCommon('cancel')}
             </Button>
-            <Button onClick={handleCreateExpense} className="rounded-xl text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold">
-              Enregistrer la dépense
+            <Button
+              onClick={() => void create()}
+              disabled={saving}
+              className="h-9 gap-2 rounded-xl bg-[#2487B8] text-xs font-bold text-white hover:bg-[#1B6C93]"
+            >
+              {saving && <Loader2 className="size-3.5 animate-spin" />}
+              {tCommon('save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -444,6 +522,3 @@ export function ExpensesView({ locale: _locale }: { locale?: string }) {
     </div>
   );
 }
-
-export const ExpensesManagementView = ExpensesView;
-

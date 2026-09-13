@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +35,6 @@ import {
   MessageSquareWarning,
   X,
   Loader2,
-  UserCheck,
 } from 'lucide-react';
 
 type RequestRow = {
@@ -64,17 +65,6 @@ type Definition = {
   status: string;
 };
 
-const STATUS_BADGE: Record<string, { label: string, variant: 'neutral' | 'info' | 'success' | 'danger' | 'warning' }> = {
-  draft: { label: 'Brouillon', variant: 'warning' },
-  submitted: { label: 'Soumise', variant: 'info' },
-  under_review: { label: 'En révision', variant: 'warning' },
-  changes_requested: { label: 'Modifs demandées', variant: 'warning' },
-  approved: { label: 'Approuvée', variant: 'success' },
-  issued: { label: 'Émise', variant: 'success' },
-  rejected: { label: 'Rejetée', variant: 'danger' },
-  cancelled: { label: 'Annulée', variant: 'neutral' },
-};
-
 // Direct (no-reason) actions per status, and actions that need a reason.
 const DIRECT_ACTIONS: Record<string, string[]> = {
   draft: ['submit', 'cancel'],
@@ -87,15 +77,6 @@ const DIRECT_ACTIONS: Record<string, string[]> = {
   cancelled: [],
 };
 
-const ACTION_LABELS: Record<string, string> = {
-  submit: 'Soumettre',
-  review: 'Examiner',
-  approve: 'Approuver',
-  reject: 'Rejeter',
-  request_changes: 'Demander modifs',
-  cancel: 'Annuler',
-};
-
 const ACTION_ICONS: Record<string, any> = {
   submit: Send,
   review: Eye,
@@ -106,6 +87,10 @@ const ACTION_ICONS: Record<string, any> = {
 };
 
 export default function CertificatesRequestsPage() {
+  const params = useParams<{ locale?: string }>();
+  const locale = params?.locale ?? 'fr';
+  const t = useTranslations('Certificates');
+
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,6 +110,48 @@ export default function CertificatesRequestsPage() {
   const [reasonAction, setReasonAction] = useState<{ id: string; action: string } | null>(null);
   const [reason, setReason] = useState('');
   const [reasonSubmitting, setReasonSubmitting] = useState(false);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'draft':
+        return { label: t('statusDraft'), variant: 'warning' as const };
+      case 'submitted':
+        return { label: t('statusSubmitted'), variant: 'info' as const };
+      case 'under_review':
+        return { label: t('statusUnderReview'), variant: 'warning' as const };
+      case 'changes_requested':
+        return { label: t('statusChangesRequested'), variant: 'warning' as const };
+      case 'approved':
+        return { label: t('statusApproved'), variant: 'success' as const };
+      case 'issued':
+        return { label: t('statusIssued'), variant: 'success' as const };
+      case 'rejected':
+        return { label: t('statusRejected'), variant: 'danger' as const };
+      case 'cancelled':
+        return { label: t('statusCancelled'), variant: 'neutral' as const };
+      default:
+        return { label: status, variant: 'neutral' as const };
+    }
+  };
+
+  const getActionLabel = (action: string) => {
+    switch (action) {
+      case 'submit':
+        return t('actionSubmit');
+      case 'review':
+        return t('actionReview');
+      case 'approve':
+        return t('actionApprove');
+      case 'reject':
+        return t('actionReject');
+      case 'request_changes':
+        return t('actionRequestChanges');
+      case 'cancel':
+        return t('actionCancel');
+      default:
+        return action;
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -213,7 +240,7 @@ export default function CertificatesRequestsPage() {
       });
       const json = await res.json();
       if (!json.success) {
-        setCreateError(json.message || json.error?.message || 'Erreur lors de la création.');
+        setCreateError(json.message || json.error?.message || t('errorCreateRequest'));
         return;
       }
       setIsCreateOpen(false);
@@ -233,7 +260,7 @@ export default function CertificatesRequestsPage() {
       });
       const json = await res.json();
       if (!json.success) {
-        alert(json.message || json.error?.message || 'Erreur lors de l\'action.');
+        alert(json.message || json.error?.message || t('errorRunAction'));
       }
       setReasonAction(null);
       setReason('');
@@ -264,12 +291,12 @@ export default function CertificatesRequestsPage() {
             <PenLine className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Demandes & Approbations</h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Circuit de validation quatre yeux pour les émissions de certificats.</p>
+            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('requestsTitle')}</h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">{t('requestsSubtitle')}</p>
           </div>
         </div>
         <Button onClick={openCreate} className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl shadow-2xs gap-1.5 px-4 cursor-pointer">
-          <Plus className="w-4 h-4" /><span>Nouvelle demande</span>
+          <Plus className="w-4 h-4" /><span>{t('btnNewRequest')}</span>
         </Button>
       </div>
 
@@ -277,28 +304,28 @@ export default function CertificatesRequestsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('statTotal')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{requests.length}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2487B8] flex items-center justify-center"><PenLine className="w-5 h-5" /></div>
         </Card>
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">À traiter</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('statPendingReview')}</span>
             <h3 className="text-2xl font-extrabold text-amber-600 mt-1">{awaitingReview}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><Eye className="w-5 h-5" /></div>
         </Card>
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Approuvées</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('statApproved')}</span>
             <h3 className="text-2xl font-extrabold text-[#17A673] mt-1">{counts.approved ?? 0}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><CheckCircle2 className="w-5 h-5" /></div>
         </Card>
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Rejetées</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('statRejected')}</span>
             <h3 className="text-2xl font-extrabold text-rose-600 mt-1">{counts.rejected ?? 0}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center"><XCircle className="w-5 h-5" /></div>
@@ -309,63 +336,64 @@ export default function CertificatesRequestsPage() {
       <Card className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-4">
         <div className="flex flex-wrap gap-3 items-center">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48 h-9 text-xs"><SelectValue placeholder="Tous les statuts" /></SelectTrigger>
+            <SelectTrigger className="w-48 h-9 text-xs"><SelectValue placeholder={t('filterAllStatuses')} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all" className="text-xs">Tous les statuts</SelectItem>
-              <SelectItem value="draft" className="text-xs">Brouillon</SelectItem>
-              <SelectItem value="submitted" className="text-xs">Soumise</SelectItem>
-              <SelectItem value="under_review" className="text-xs">En révision</SelectItem>
-              <SelectItem value="approved" className="text-xs">Approuvée</SelectItem>
-              <SelectItem value="rejected" className="text-xs">Rejetée</SelectItem>
-              <SelectItem value="issued" className="text-xs">Émise</SelectItem>
-              <SelectItem value="cancelled" className="text-xs">Annulée</SelectItem>
+              <SelectItem value="all" className="text-xs">{t('filterAllStatuses')}</SelectItem>
+              <SelectItem value="draft" className="text-xs">{t('statusDraft')}</SelectItem>
+              <SelectItem value="submitted" className="text-xs">{t('statusSubmitted')}</SelectItem>
+              <SelectItem value="under_review" className="text-xs">{t('statusUnderReview')}</SelectItem>
+              <SelectItem value="approved" className="text-xs">{t('statusApproved')}</SelectItem>
+              <SelectItem value="rejected" className="text-xs">{t('statusRejected')}</SelectItem>
+              <SelectItem value="issued" className="text-xs">{t('statusIssued')}</SelectItem>
+              <SelectItem value="cancelled" className="text-xs">{t('statusCancelled')}</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="sm" className="h-9 rounded-lg text-xs font-medium cursor-pointer" onClick={load}>
-            <RefreshCw className="w-3.5 h-3.5 mr-1.5" />Actualiser
+            <RefreshCw className="w-3.5 h-3.5 me-1.5" />{t('btnRefresh')}
           </Button>
         </div>
 
         <div className="rounded-xl border border-slate-100 overflow-hidden">
           <table className="w-full text-xs">
             <thead>
-              <tr className="bg-slate-50/50 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                <th className="p-3 pl-4">Définition</th>
-                <th className="p-3">Bénéficiaire</th>
-                <th className="p-3">Demandeur</th>
-                <th className="p-3">Statut</th>
-                <th className="p-3">Créée le</th>
-                <th className="p-3 text-right pr-4">Actions</th>
+              <tr className="bg-slate-50/50 text-start text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                <th className="p-3 ps-4 text-start">{t('thDefinition')}</th>
+                <th className="p-3 text-start">{t('thRecipient')}</th>
+                <th className="p-3 text-start">{t('thRequester')}</th>
+                <th className="p-3 text-start">{t('thStatus')}</th>
+                <th className="p-3 text-start">{t('thCreatedAt')}</th>
+                <th className="p-3 text-end pe-4">{t('thActions')}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} className="p-8 text-center text-slate-400">Chargement...</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-slate-400">{t('tableLoading')}</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} className="p-8 text-center text-slate-400">Aucune demande trouvée.</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-slate-400">{t('tableNoRequests')}</td></tr>
               ) : (
                 filtered.map(r => {
                   const actions = DIRECT_ACTIONS[r.status] ?? [];
+                  const sBadge = getStatusBadge(r.status);
                   return (
                     <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                      <td className="p-3 pl-4 font-semibold text-slate-700">{r.definitionTitle}</td>
+                      <td className="p-3 ps-4 font-semibold text-slate-700">{r.definitionTitle}</td>
                       <td className="p-3 text-slate-600">{nameById.get(r.recipientId) ?? r.recipientId}</td>
                       <td className="p-3 text-slate-500">{r.requesterName ?? '—'}</td>
                       <td className="p-3">
-                        <Badge variant={STATUS_BADGE[r.status]?.variant || 'neutral'}>
-                          {STATUS_BADGE[r.status]?.label || r.status}
+                        <Badge variant={sBadge.variant}>
+                          {sBadge.label}
                         </Badge>
                       </td>
-                      <td className="p-3 text-slate-500">{new Date(r.createdAt).toLocaleDateString('fr-FR')}</td>
-                      <td className="p-3 pr-4 text-right space-x-1.5 whitespace-nowrap">
+                      <td className="p-3 text-slate-500">{new Date(r.createdAt).toLocaleDateString(locale === 'ar' ? 'ar-EG' : locale === 'fr' ? 'fr-FR' : 'en-US')}</td>
+                      <td className="p-3 pe-4 text-end space-x-1.5 rtl:space-x-reverse whitespace-nowrap">
                         {actions.includes('reject') && (
                           <Button variant="outline" size="sm" className="h-8 rounded-lg text-xs font-medium cursor-pointer text-rose-600 border-rose-200 hover:bg-rose-50" onClick={() => { setReasonAction({ id: r.id, action: 'reject' }); setReason(''); }}>
-                            <XCircle className="w-3.5 h-3.5 mr-1.5" />Rejeter
+                            <XCircle className="w-3.5 h-3.5 me-1.5" />{t('actionReject')}
                           </Button>
                         )}
                         {actions.includes('request_changes') && (
                           <Button variant="outline" size="sm" className="h-8 rounded-lg text-xs font-medium cursor-pointer text-amber-600 border-amber-200 hover:bg-amber-50" onClick={() => { setReasonAction({ id: r.id, action: 'request_changes' }); setReason(''); }}>
-                            <MessageSquareWarning className="w-3.5 h-3.5 mr-1.5" />Modifs
+                            <MessageSquareWarning className="w-3.5 h-3.5 me-1.5" />{t('actionRequestChanges')}
                           </Button>
                         )}
                         {actions.filter(a => !['reject', 'request_changes'].includes(a)).map(a => {
@@ -379,8 +407,8 @@ export default function CertificatesRequestsPage() {
                               onClick={() => runAction(r.id, a)}
                               disabled={actingId === r.id}
                             >
-                              {actingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Icon className="w-3.5 h-3.5 mr-1.5" />}
-                              {ACTION_LABELS[a]}
+                              {actingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin me-1.5" /> : <Icon className="w-3.5 h-3.5 me-1.5" />}
+                              {getActionLabel(a)}
                             </Button>
                           );
                         })}
@@ -397,18 +425,18 @@ export default function CertificatesRequestsPage() {
       {/* Create request dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="sm:max-w-[540px]">
-          <DialogHeader>
-            <DialogTitle>Nouvelle demande de certificat</DialogTitle>
-            <DialogDescription>La demande suivra le circuit de validation avant émission.</DialogDescription>
+          <DialogHeader className="text-start">
+            <DialogTitle>{t('dialogNewRequestTitle')}</DialogTitle>
+            <DialogDescription>{t('dialogNewRequestDesc')}</DialogDescription>
           </DialogHeader>
-          <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+          <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto pe-1 text-start">
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-700">Définition</Label>
+              <Label className="text-xs font-bold text-slate-700">{t('labelDefinition')}</Label>
               <Select value={selectedDefinitionId} onValueChange={selectDefinition}>
-                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Choisir une définition" /></SelectTrigger>
+                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder={t('placeholderChooseDefinition')} /></SelectTrigger>
                 <SelectContent>
                   {definitions.length === 0 ? (
-                    <p className="px-3 py-2 text-xs text-slate-400">Aucune définition disponible.</p>
+                    <p className="px-3 py-2 text-xs text-slate-400">{t('noDefinitionsAvailable')}</p>
                   ) : (
                     definitions.map(d => (
                       <SelectItem key={d.id} value={d.id} className="text-xs">{d.title}</SelectItem>
@@ -420,20 +448,20 @@ export default function CertificatesRequestsPage() {
 
             <div className="space-y-2">
               <Label className="text-xs font-bold text-slate-700">
-                Bénéficiaire — {selectedType === 'student' ? 'Élèves' : 'Employés'}
+                {t('labelRecipientDash')} {selectedType === 'student' ? t('targetStudents') : t('targetEmployees')}
               </Label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
                   value={recipientSearch}
                   onChange={e => setRecipientSearch(e.target.value)}
-                  placeholder="Rechercher par nom..."
-                  className="pl-9 h-9 text-xs rounded-xl"
+                  placeholder={t('searchRecipientByName')}
+                  className="ps-9 h-9 text-xs rounded-xl"
                 />
               </div>
               <div className="border border-slate-100 rounded-xl max-h-48 overflow-y-auto">
                 {typeRecipients.length === 0 ? (
-                  <p className="p-4 text-xs text-slate-400 text-center">Aucun bénéficiaire trouvé.</p>
+                  <p className="p-4 text-xs text-slate-400 text-center">{t('noRecipientsFound')}</p>
                 ) : (
                   typeRecipients.map(r => (
                     <label
@@ -449,7 +477,7 @@ export default function CertificatesRequestsPage() {
                       />
                       <span className="text-xs font-medium text-slate-700">{r.name}</span>
                       {r.role !== 'student' && <span className="text-[10px] text-slate-400">{r.role}</span>}
-                      {(r.matricule || r.employeeId) && <span className="text-[10px] text-slate-400 ml-auto font-mono">{r.matricule || r.employeeId}</span>}
+                      {(r.matricule || r.employeeId) && <span className="text-[10px] text-slate-400 ms-auto font-mono">{r.matricule || r.employeeId}</span>}
                     </label>
                   ))
                 )}
@@ -457,7 +485,7 @@ export default function CertificatesRequestsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-700">Notes (optionnelles)</Label>
+              <Label className="text-xs font-bold text-slate-700">{t('labelNotesOptional')}</Label>
               <textarea
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
@@ -468,11 +496,11 @@ export default function CertificatesRequestsPage() {
             </div>
             {createError && <p className="text-xs font-semibold text-rose-600">{createError}</p>}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="text-xs h-9 cursor-pointer">Annuler</Button>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="text-xs h-9 cursor-pointer">{t('btnCancel')}</Button>
             <Button className="bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs h-9 font-bold gap-1.5 px-4 cursor-pointer" onClick={handleCreate} disabled={creating || !selectedDefinitionId || !selectedRecipientId}>
               {creating && <Loader2 className="w-4 h-4 animate-spin" />}
-              {creating ? 'Création...' : 'Créer la demande'}
+              {creating ? t('btnCreating') : t('btnCreateRequest')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -481,34 +509,34 @@ export default function CertificatesRequestsPage() {
       {/* Reason dialog (reject / request_changes) */}
       <Dialog open={reasonAction !== null} onOpenChange={(o) => { if (!o && !reasonSubmitting) setReasonAction(null); }}>
         <DialogContent className="sm:max-w-[440px]">
-          <DialogHeader>
-            <DialogTitle>{reasonAction?.action === 'reject' ? 'Rejeter la demande' : 'Demander des modifications'}</DialogTitle>
+          <DialogHeader className="text-start">
+            <DialogTitle>{reasonAction?.action === 'reject' ? t('dialogRejectTitle') : t('dialogChangesTitle')}</DialogTitle>
             <DialogDescription>
               {reasonAction?.action === 'reject'
-                ? 'La demande sera rejetée et l\'émission bloquée.'
-                : 'La demande reviendra au demandeur pour correction.'}
+                ? t('dialogRejectDesc')
+                : t('dialogChangesDesc')}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-2 space-y-2">
-            <Label className="text-xs font-bold text-slate-700">Motif (requis)</Label>
+          <div className="py-2 space-y-2 text-start">
+            <Label className="text-xs font-bold text-slate-700">{t('labelReasonRequired')}</Label>
             <textarea
               value={reason}
               onChange={e => setReason(e.target.value)}
               rows={3}
               maxLength={2000}
-              placeholder="Précisez le motif..."
+              placeholder={t('placeholderSpecifyReason')}
               className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 outline-none focus:border-[#2487B8]"
             />
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setReasonAction(null)} className="text-xs h-9 cursor-pointer" disabled={reasonSubmitting}>Annuler</Button>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setReasonAction(null)} className="text-xs h-9 cursor-pointer" disabled={reasonSubmitting}>{t('btnCancel')}</Button>
             <Button
               className={`text-xs h-9 font-bold gap-1.5 px-4 cursor-pointer ${reasonAction?.action === 'reject' ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-amber-600 hover:bg-amber-700 text-white'}`}
               onClick={submitReason}
               disabled={reasonSubmitting || !reason.trim()}
             >
               {reasonSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {reasonSubmitting ? 'Envoi...' : 'Confirmer'}
+              {reasonSubmitting ? t('btnSending') : t('btnConfirm')}
             </Button>
           </DialogFooter>
         </DialogContent>

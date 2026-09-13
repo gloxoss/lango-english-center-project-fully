@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +27,12 @@ type ModalState =
 
 const PAGE_SIZE = 20;
 
-export function SectionsView({ locale: _locale }: { locale: string }) {
+export function SectionsView({ locale: _locale }: { locale?: string } = {}) {
+  const activeLocale = useLocale();
+  const currentLocale = _locale || activeLocale;
+  const t = useTranslations('Academics');
+  const tCommon = useTranslations('Common');
+
   const [items, setItems] = useState<Section[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -49,12 +55,12 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
       setItems(json.data ?? []);
       setTotal(json.total ?? 0);
     } catch (e) {
-      setError('Impossible de charger les sections académiques.');
+      setError(t('loadSectionsError'));
       console.error(e);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { fetchSections(page); }, [fetchSections, page]);
 
@@ -64,7 +70,7 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
   const closeModal = () => setModal({ mode: 'closed' });
 
   const handleSave = async () => {
-    if (!formName.trim()) { setFormError('Le nom est requis.'); return; }
+    if (!formName.trim()) { setFormError(t('sectionNameRequired')); return; }
     setSaving(true);
     setFormError(null);
     try {
@@ -82,7 +88,7 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
       closeModal();
       fetchSections(page);
     } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : 'Erreur lors de la sauvegarde.');
+      setFormError(e instanceof Error ? e.message : tCommon('error'));
     } finally {
       setSaving(false);
     }
@@ -100,7 +106,7 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
       setPage(newPage);
       fetchSections(newPage);
     } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : 'Erreur lors de la suppression.');
+      setFormError(e instanceof Error ? e.message : tCommon('error'));
     } finally {
       setSaving(false);
     }
@@ -117,18 +123,18 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200/80">
         <div>
           <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight">
-            Sections académiques
+            {t('sectionsPageTitle')}
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            Organisation des sections et groupes de classes
+            {t('sectionsPageSubtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-3.5 h-3.5 absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input
-              placeholder="Rechercher une section…"
-              className="pl-9 h-9 text-xs rounded-xl w-[220px] border-slate-200"
+              placeholder={t('searchSectionPlaceholder')}
+              className="ps-9 h-9 text-xs rounded-xl w-[220px] border-slate-200"
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
@@ -138,7 +144,7 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
             onClick={openCreate}
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Ajouter une section</span>
+            <span>{t('addSection')}</span>
           </Button>
         </div>
       </div>
@@ -150,7 +156,7 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
             <Layers className="w-5 h-5 text-[#2487B8]" />
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-500">Sections actives</p>
+            <p className="text-xs font-bold text-slate-500">{t('activeSections')}</p>
             <p className="text-2xl font-extrabold text-[#0F172A] tracking-tight">
               {loading ? '—' : total}
             </p>
@@ -161,13 +167,13 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
       {/* Table */}
       <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
         <h3 className="text-base font-extrabold text-[#0F172A] mb-3">
-          Liste des sections
+          {t('sectionsListTitle')}
         </h3>
 
         {loading && (
           <div className="flex items-center justify-center py-12 gap-2 text-slate-400">
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-xs">Chargement…</span>
+            <span className="text-xs">{tCommon('loading')}</span>
           </div>
         )}
 
@@ -178,18 +184,18 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
         {!loading && !error && (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left rtl:text-right text-xs">
                 <thead className="bg-[#F8FAFC] text-slate-500 font-semibold border-b border-slate-200">
                   <tr>
-                    <th className="py-3 px-3">Nom de la section</th>
-                    <th className="py-3 px-3">Actions</th>
+                    <th className="py-3 px-3">{t('colSectionName')}</th>
+                    <th className="py-3 px-3">{t('colActions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
                   {filtered.length === 0 && (
                     <tr>
                       <td colSpan={2} className="py-10 text-center text-slate-400 text-xs">
-                        {search ? 'Aucun résultat pour cette recherche.' : 'Aucune section configurée. Cliquez sur « Ajouter » pour commencer.'}
+                        {search ? t('noSectionsSearch') : t('noSectionsConfigured')}
                       </td>
                     </tr>
                   )}
@@ -206,14 +212,14 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
                           <button
                             onClick={() => openEdit(s)}
                             className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
-                            title="Modifier"
+                            title={tCommon('edit')}
                           >
                             <Pencil className="w-3.5 h-3.5 text-slate-400" />
                           </button>
                           <button
                             onClick={() => openDelete(s)}
                             className="p-1.5 rounded-lg hover:bg-red-50 transition-colors"
-                            title="Supprimer"
+                            title={tCommon('delete')}
                           >
                             <Trash2 className="w-3.5 h-3.5 text-red-400" />
                           </button>
@@ -228,7 +234,7 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
             {/* Pagination */}
             <div className="flex items-center justify-between pt-3 border-t border-slate-100 mt-3">
               <p className="text-[11px] text-slate-400 font-medium">
-                {total} section{total !== 1 ? 's' : ''} au total
+                {t('totalSectionsCount', { total })}
               </p>
               <div className="flex items-center gap-1">
                 <button
@@ -236,7 +242,7 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
                   onClick={() => setPage(p => p - 1)}
                   className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40"
                 >
-                  <ChevronLeft className="w-3.5 h-3.5 text-slate-400" />
+                  <ChevronLeft className="w-3.5 h-3.5 text-slate-400 rtl:rotate-180" />
                 </button>
                 <span className="px-2.5 py-1 rounded-lg bg-[#2487B8] text-white text-[11px] font-bold">
                   {page}
@@ -246,7 +252,7 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
                   onClick={() => setPage(p => p + 1)}
                   className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40"
                 >
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 rtl:rotate-180" />
                 </button>
               </div>
             </div>
@@ -260,7 +266,7 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 mx-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-extrabold text-[#0F172A]">
-                {modal.mode === 'create' ? 'Ajouter une section' : 'Modifier la section'}
+                {modal.mode === 'create' ? t('addSectionModalTitle') : t('editSectionModalTitle')}
               </h2>
               <button onClick={closeModal} className="p-1.5 rounded-lg hover:bg-slate-100">
                 <X className="w-4 h-4 text-slate-400" />
@@ -269,10 +275,10 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Nom de la section <span className="text-red-500">*</span>
+                  {t('sectionNameLabel')} <span className="text-red-500">*</span>
                 </label>
                 <Input
-                  placeholder="ex: Section A, Section B, Section Tronc Commun…"
+                  placeholder={t('sectionNamePlaceholder')}
                   className="h-9 text-xs rounded-xl"
                   value={formName}
                   onChange={e => setFormName(e.target.value)}
@@ -285,7 +291,7 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
               </div>
               <div className="flex gap-2 justify-end pt-2">
                 <Button variant="outline" onClick={closeModal} className="text-xs h-9 rounded-xl" disabled={saving}>
-                  Annuler
+                  {tCommon('cancel')}
                 </Button>
                 <Button
                   onClick={handleSave}
@@ -293,7 +299,7 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
                   className="bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs h-9 rounded-xl gap-2"
                 >
                   {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  {modal.mode === 'create' ? 'Ajouter' : 'Enregistrer'}
+                  {modal.mode === 'create' ? tCommon('add') : tCommon('save')}
                 </Button>
               </div>
             </div>
@@ -310,9 +316,9 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
                 <Trash2 className="w-5 h-5 text-red-600" />
               </div>
               <div>
-                <h2 className="text-base font-extrabold text-[#0F172A]">Supprimer la section</h2>
+                <h2 className="text-base font-extrabold text-[#0F172A]">{t('deleteSectionTitle')}</h2>
                 <p className="text-xs text-slate-500 mt-1">
-                  Supprimer <strong>{modal.section.name}</strong> ? Cette action est irréversible. Si cette section contient des classes, elle ne peut pas être supprimée.
+                  {t('deleteSectionWarning', { name: modal.section.name })}
                 </p>
               </div>
             </div>
@@ -321,7 +327,7 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
             )}
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={closeModal} className="text-xs h-9 rounded-xl" disabled={saving}>
-                Annuler
+                {tCommon('cancel')}
               </Button>
               <Button
                 onClick={handleDelete}
@@ -329,7 +335,7 @@ export function SectionsView({ locale: _locale }: { locale: string }) {
                 className="bg-red-600 hover:bg-red-700 text-white text-xs h-9 rounded-xl gap-2"
               >
                 {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                Supprimer
+                {tCommon('delete')}
               </Button>
             </div>
           </div>

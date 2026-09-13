@@ -1,8 +1,8 @@
 import { and, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { examTerms } from '@/features/assessment/models/assessment-schema';
 import { ExamMasterService } from '@/features/assessment/services/exam-master-service';
+import { requireExamTermStage } from '@/features/assessment/services/exam-term-guard';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
@@ -25,12 +25,16 @@ export async function POST(
     const context = await requireRequestContext(request, ['school_admin', 'teacher']);
     const tenantId = requireTenant(context);
     await requireCapability(context, 'grading.manage');
-    const body = await parseJson(request, seatAllocationSchema);
+    // Checked before the body is parsed: an operation the term's stage forbids
+    // is refused outright, rather than first reporting which field was malformed
+    // in a request that was never going to be allowed.
+    //
+    // Seating may only be (re)generated while the term is being scheduled:
+    // regenerating deletes and rebuilds every allocation, so allowing it later
+    // would move a candidate to a different desk mid-exam.
+    await requireExamTermStage(tenantId, id, 'allocate_seats');
 
-    const [term] = await db.select({ id: examTerms.id }).from(examTerms).where(and(eq(examTerms.id, id), eq(examTerms.tenantId, tenantId))).limit(1);
-    if (!term) {
-      throw new ApiError(404, 'NOT_FOUND', 'Session d\'examen introuvable.');
-    }
+    const body = await parseJson(request, seatAllocationSchema);
 
     const validStudents = await db.select({ id: user.id }).from(user).where(and(inArray(user.id, body.studentIds), eq(user.tenantId, tenantId)));
     if (validStudents.length !== new Set(body.studentIds).size) {

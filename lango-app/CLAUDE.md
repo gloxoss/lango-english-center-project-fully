@@ -25,6 +25,28 @@ When building or refactoring any module (Students, Teachers, Academics, Attendan
 - **Never CD**: Execute commands in working directory without changing directories.
 - **Async Tasks**: Launch background tasks and wait for system completion notifications.
 
+### Blocking gates (run these, don't assume)
+- `npm run check:isolation` — static tenant-isolation check on API routes.
+- `npm run check:types` — `tsc --noEmit`.
+- `npm run check:ui` — **UI-reality ratchet.** Four defect classes no unit test can
+  see, because each sits between a working API and the user: controls with no
+  handler, client screens rendering invented records without fetching, dashboard
+  pages no nav entry reaches, and exported components nothing imports.
+  Counts may only go **down**; baselines in `scripts/ui-reality-baseline.json`.
+  Fix something, lower the baseline. Raising one means shipping a dead button, a
+  fake screen or an unreachable page — do it deliberately and say so in the PR.
+- `npm run test` — the suite. Requires a reachable Postgres.
+
+**A passing API test does not mean the feature works.** The grading path had a
+working API, a working Moroccan grade engine and passing route tests while
+`/academics/grades/entry` served a hardcoded exam paper with pre-filled answers.
+Open the screen as the role that uses it before calling anything done.
+
+**Nav permission must equal the page's own guard.** A nav entry whose `permission`
+differs from its page's `requireServerPage` capability bounces the user to the
+public marketing site. `src/libs/api/__tests__/nav-page-guard-parity.test.ts`
+enforces this and has caught three such mismatches.
+
 ---
 
 ## 3. Module Index

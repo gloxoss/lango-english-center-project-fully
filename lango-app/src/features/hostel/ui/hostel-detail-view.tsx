@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -47,10 +48,23 @@ type ZoneRow = {
   status: string;
 };
 
-const GENDER_LABELS: Record<string, string> = { mixed: 'Mixte', male_only: 'Garçons', female_only: 'Filles' };
-const ZONE_TYPE_LABELS: Record<string, string> = { building: 'Bâtiment', floor: 'Étage', wing: 'Aile', zone: 'Zone' };
-
 export function HostelDetailView({ hostelId }: { hostelId: string }) {
+  const t = useTranslations('Hostel');
+  const tCommon = useTranslations('Common');
+
+  const GENDER_LABELS: Record<string, string> = {
+    mixed: t('genderMixed'),
+    male_only: t('genderMaleOnly'),
+    female_only: t('genderFemaleOnly'),
+  };
+
+  const ZONE_TYPE_LABELS: Record<string, string> = {
+    building: t('zoneBuilding'),
+    floor: t('zoneFloor'),
+    wing: t('zoneWing'),
+    zone: t('zoneZone'),
+  };
+
   const [hostel, setHostel] = useState<Hostel | null>(null);
   const [board, setBoard] = useState<HostelBoard[]>([]);
   const [zones, setZones] = useState<ZoneRow[]>([]);
@@ -80,58 +94,62 @@ export function HostelDetailView({ hostelId }: { hostelId: string }) {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div>
-        <Link href="/dashboard/hostel/hostels" className="mb-1 inline-block text-sm text-[#2487B8] hover:underline">← Résidences</Link>
-        <h1 className="text-2xl font-bold text-[#16212B]">{hostel?.name ?? 'Chargement…'}</h1>
+        <Link href="/dashboard/hostel/hostels" className="mb-1 inline-block text-sm text-[#2487B8] hover:underline">
+          {t('backToHostels')}
+        </Link>
+        <h1 className="text-2xl font-bold text-[#16212B]">{hostel?.name ?? tCommon('loading')}</h1>
         <p className="text-sm text-slate-500">{hostel?.code}</p>
       </div>
 
       {error && <p className="flex items-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error}</p>}
 
       {loading ? (
-        <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-white p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Chargement…</div>
+        <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-white p-10 text-sm text-slate-500">
+          <Loader2 className="h-4 w-4 animate-spin" /> {tCommon('loading')}
+        </div>
       ) : hostel ? (
         <>
           <div className="grid gap-4 sm:grid-cols-3">
             <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#D1F5E8] text-[#16212B]"><BedDouble className="h-5 w-5" /></div>
-                <div><p className="text-sm text-slate-500">Lits occupés</p><p className="text-2xl font-bold text-[#16212B]">{occupancy?.occupiedBeds ?? 0} <span className="text-sm font-normal text-slate-400">/ {occupancy?.usableBeds ?? 0}</span></p></div>
+                <div><p className="text-sm text-slate-500">{t('occupiedBeds')}</p><p className="text-2xl font-bold text-[#16212B]">{occupancy?.occupiedBeds ?? 0} <span className="text-sm font-normal text-slate-400">/ {occupancy?.usableBeds ?? 0}</span></p></div>
               </div>
             </Card>
             <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-[#16212B]"><Users className="h-5 w-5" /></div>
-                <div><p className="text-sm text-slate-500">Réservés</p><p className="text-2xl font-bold text-[#16212B]">{occupancy?.reservedBeds ?? 0}</p></div>
+                <div><p className="text-sm text-slate-500">{t('stateReserved')}</p><p className="text-2xl font-bold text-[#16212B]">{occupancy?.reservedBeds ?? 0}</p></div>
               </div>
             </Card>
             <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-[#16212B]"><BedDouble className="h-5 w-5" /></div>
-                <div><p className="text-sm text-slate-500">Lits libres</p><p className="text-2xl font-bold text-[#16212B]">{free}</p></div>
+                <div><p className="text-sm text-slate-500">{t('availableBeds')}</p><p className="text-2xl font-bold text-[#16212B]">{free}</p></div>
               </div>
             </Card>
           </div>
 
           <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-semibold text-[#16212B]">Informations</h2>
+              <h2 className="font-semibold text-[#16212B]">{tCommon('details')}</h2>
               <Badge className={hostel.status === 'active' ? 'bg-[#D1F5E8] text-[#0b5c3a]' : 'bg-slate-100 text-slate-500'}>
-                {hostel.status === 'active' ? 'Actif' : hostel.status === 'inactive' ? 'Inactif' : 'Archivé'}
+                {hostel.status === 'active' ? t('statusActive') : hostel.status === 'inactive' ? t('statusInactive') : t('statusArchived')}
               </Badge>
             </div>
             <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
-              <div className="flex items-center gap-2"><Building2 className="h-4 w-4 text-slate-400" /><span className="text-slate-600">Politique de genre :</span><span className="font-medium text-[#16212B]">{GENDER_LABELS[hostel.genderPolicy] ?? hostel.genderPolicy}</span></div>
-              <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-slate-400" /><span className="text-slate-600">Âge :</span><span className="font-medium text-[#16212B]">{hostel.ageMin ?? '—'} – {hostel.ageMax ?? '—'} ans</span></div>
-              {hostel.address && <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-slate-400" /><span className="text-slate-600">Adresse :</span><span className="font-medium text-[#16212B]">{hostel.address}</span></div>}
-              {hostel.phone && <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-slate-400" /><span className="text-slate-600">Téléphone :</span><span className="font-medium text-[#16212B]">{hostel.phone}</span></div>}
-              {hostel.email && <div className="flex items-center gap-2"><Building2 className="h-4 w-4 text-slate-400" /><span className="text-slate-600">Email :</span><span className="font-medium text-[#16212B]">{hostel.email}</span></div>}
+              <div className="flex items-center gap-2"><Building2 className="h-4 w-4 text-slate-400" /><span className="text-slate-600">{t('genderPolicy')} :</span><span className="font-medium text-[#16212B]">{GENDER_LABELS[hostel.genderPolicy] ?? hostel.genderPolicy}</span></div>
+              <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-slate-400" /><span className="text-slate-600">{t('ageMin')} / {t('ageMax')} :</span><span className="font-medium text-[#16212B]">{hostel.ageMin ?? '—'} – {hostel.ageMax ?? '—'}</span></div>
+              {hostel.address && <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-slate-400" /><span className="text-slate-600">{t('address')} :</span><span className="font-medium text-[#16212B]">{hostel.address}</span></div>}
+              {hostel.phone && <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-slate-400" /><span className="text-slate-600">{t('phone')} :</span><span className="font-medium text-[#16212B]">{hostel.phone}</span></div>}
+              {hostel.email && <div className="flex items-center gap-2"><Building2 className="h-4 w-4 text-slate-400" /><span className="text-slate-600">{t('email')} :</span><span className="font-medium text-[#16212B]">{hostel.email}</span></div>}
               {hostel.emergencyContactName && (
-                <div className="flex items-center gap-2"><ShieldAlert className="h-4 w-4 text-slate-400" /><span className="text-slate-600">Urgence :</span><span className="font-medium text-[#16212B]">{hostel.emergencyContactName} · {hostel.emergencyContactPhone ?? ''}</span></div>
+                <div className="flex items-center gap-2"><ShieldAlert className="h-4 w-4 text-slate-400" /><span className="text-slate-600">{t('emergencyContactName')} :</span><span className="font-medium text-[#16212B]">{hostel.emergencyContactName} · {hostel.emergencyContactPhone ?? ''}</span></div>
               )}
             </dl>
             {occupancy && (
               <div className="mt-4">
-                <div className="mb-1 flex justify-between text-xs text-slate-500"><span>Taux d&apos;occupation</span><span className="font-semibold text-[#16212B]">{Math.round(occupancy.occupancyRate * 100)}%</span></div>
+                <div className="mb-1 flex justify-between text-xs text-slate-500"><span>{t('occupancyRate')}</span><span className="font-semibold text-[#16212B]">{Math.round(occupancy.occupancyRate * 100)}%</span></div>
                 <Progress value={occupancy.occupancyRate * 100} className="h-2" />
               </div>
             )}
@@ -139,11 +157,11 @@ export function HostelDetailView({ hostelId }: { hostelId: string }) {
 
           <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
             <div className="flex items-center justify-between border-b border-slate-100 p-4">
-              <h2 className="font-semibold text-[#16212B]">Zones ({zones.length})</h2>
-              <Link href="/dashboard/hostel/zones" className="text-sm font-medium text-[#2487B8] hover:underline">Gérer →</Link>
+              <h2 className="font-semibold text-[#16212B]">{t('zones')} ({zones.length})</h2>
+              <Link href="/dashboard/hostel/zones" className="text-sm font-medium text-[#2487B8] hover:underline">{tCommon('viewAll')} →</Link>
             </div>
             <div className="divide-y divide-slate-100">
-              {zones.length === 0 && <div className="p-6 text-center text-sm text-slate-500">Aucune zone.</div>}
+              {zones.length === 0 && <div className="p-6 text-center text-sm text-slate-500">{t('noZones')}</div>}
               {zones.map(z => (
                 <div key={z.id} className="flex items-center justify-between gap-4 p-4">
                   <div className="flex items-center gap-3">
@@ -152,13 +170,13 @@ export function HostelDetailView({ hostelId }: { hostelId: string }) {
                       <p className="text-sm font-semibold text-[#16212B]">{z.name}</p>
                       <p className="text-xs text-slate-500">
                         {ZONE_TYPE_LABELS[z.zoneType] ?? z.zoneType}
-                        {z.curfewTime ? ` · couvre-feu ${z.curfewTime}` : ''}
-                        {z.rollCallTime ? ` · appel ${z.rollCallTime}` : ''}
+                        {z.curfewTime ? ` · ${t('curfewTime')} ${z.curfewTime}` : ''}
+                        {z.rollCallTime ? ` · ${t('rollCallTime')} ${z.rollCallTime}` : ''}
                       </p>
                     </div>
                   </div>
                   <Badge className={z.status === 'active' ? 'bg-[#D1F5E8] text-[#0b5c3a]' : 'bg-slate-100 text-slate-500'}>
-                    {z.status === 'active' ? 'Actif' : 'Archivé'}
+                    {z.status === 'active' ? t('statusActive') : t('statusArchived')}
                   </Badge>
                 </div>
               ))}
@@ -167,15 +185,15 @@ export function HostelDetailView({ hostelId }: { hostelId: string }) {
 
           <div className="flex gap-3">
             <Link href={`/dashboard/hostel?hostelId=${hostelId}`}>
-              <Button variant="outline">Ce soir</Button>
+              <Button variant="outline">{t('tonightTitle')}</Button>
             </Link>
             <Link href={`/dashboard/hostel/roll-call?hostelId=${hostelId}`}>
-              <Button variant="outline">Appel du soir</Button>
+              <Button variant="outline">{t('eveningRollCall')}</Button>
             </Link>
           </div>
         </>
       ) : (
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-10 text-center text-sm text-slate-500">Résidence introuvable.</div>
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-10 text-center text-sm text-slate-500">{t('noHostelsFound')}</div>
       )}
     </div>
   );

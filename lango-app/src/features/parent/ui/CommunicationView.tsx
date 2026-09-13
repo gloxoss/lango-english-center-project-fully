@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { Megaphone, MessageSquareText, CalendarClock, AlertTriangle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { ParentPageShell, type ParentPageShellContext } from './ParentPageShell';
 
 type Announcement = {
@@ -28,13 +29,14 @@ type Meeting = {
   status: string;
 };
 
-const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString('fr-FR') : '—');
+const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : '—');
 
 export function CommunicationView() {
+  const tParent = useTranslations('Parent');
   return (
     <ParentPageShell
-      title="Communication"
-      subtitle="Annonces, messages et rendez-vous de votre enfant."
+      title={tParent('communicationTitle')}
+      subtitle={tParent('communicationSubtitle')}
       icon={<Megaphone className="w-6 h-6" />}
     >
       <CommunicationContent />
@@ -43,6 +45,7 @@ export function CommunicationView() {
 }
 
 function CommunicationContent({ relationshipId, loading: shellLoading }: Partial<ParentPageShellContext>) {
+  const tParent = useTranslations('Parent');
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
@@ -63,14 +66,14 @@ function CommunicationContent({ relationshipId, loading: shellLoading }: Partial
       if (meet.success) setMeetings(meet.data as Meeting[]);
       if (msg.success) setMessages(msg.data as Message[]);
       if (!ann.success || !meet.success || !msg.success) {
-        setError('Une partie des données est indisponible.');
+        setError(tParent('partialDataUnavailable'));
       }
     } catch {
-      setError('Impossible de se connecter au serveur.');
+      setError(tParent('errorConnect'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tParent]);
 
   useEffect(() => {
     if (relationshipId) load(relationshipId);
@@ -92,10 +95,10 @@ function CommunicationContent({ relationshipId, loading: shellLoading }: Partial
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
               <Megaphone className="w-4 h-4 text-[#0066FF]" />
-              <h2 className="font-semibold text-slate-900">Annonces</h2>
+              <h2 className="font-semibold text-slate-900">{tParent('announcementsTitle')}</h2>
             </div>
             {announcements.length === 0 ? (
-              <p className="px-5 py-8 text-sm text-slate-500">Aucune annonce pour le moment.</p>
+              <p className="px-5 py-8 text-sm text-slate-500">{tParent('noAnnouncements')}</p>
             ) : (
               <div className="divide-y divide-slate-100">
                 {announcements.map((a) => (
@@ -112,17 +115,17 @@ function CommunicationContent({ relationshipId, loading: shellLoading }: Partial
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
               <MessageSquareText className="w-4 h-4 text-[#0066FF]" />
-              <h2 className="font-semibold text-slate-900">Messages</h2>
+              <h2 className="font-semibold text-slate-900">{tParent('messagesTitle')}</h2>
             </div>
             {messages.length === 0 ? (
-              <p className="px-5 py-8 text-sm text-slate-500">Aucun message pour le moment.</p>
+              <p className="px-5 py-8 text-sm text-slate-500">{tParent('noMessages')}</p>
             ) : (
               <div className="divide-y divide-slate-100">
                 {messages.map((m) => (
                   <div key={m.id} className="px-5 py-4">
                     <p className="text-sm text-slate-700">{m.body ?? '—'}</p>
                     <div className="mt-1 text-xs text-slate-400">
-                      Statut : {m.status} · {fmt(m.sentAt ?? m.createdAt)}
+                      {tParent('statusLabel')} : {m.status} · {fmt(m.sentAt ?? m.createdAt)}
                     </div>
                   </div>
                 ))}
@@ -133,18 +136,18 @@ function CommunicationContent({ relationshipId, loading: shellLoading }: Partial
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm lg:col-span-2">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
               <CalendarClock className="w-4 h-4 text-[#0066FF]" />
-              <h2 className="font-semibold text-slate-900">Créneaux de rendez-vous parents</h2>
+              <h2 className="font-semibold text-slate-900">{tParent('parentMeetingSlots')}</h2>
             </div>
             {meetings.length === 0 ? (
-              <p className="px-5 py-8 text-sm text-slate-500">Aucun créneau disponible actuellement.</p>
+              <p className="px-5 py-8 text-sm text-slate-500">{tParent('noSlotsAvailable')}</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50 text-slate-500 text-left">
+                  <thead className="bg-slate-50 text-slate-500 text-start">
                     <tr>
-                      <th className="px-5 py-3 font-medium">Début</th>
-                      <th className="px-5 py-3 font-medium">Fin</th>
-                      <th className="px-5 py-3 font-medium">Statut</th>
+                      <th className="px-5 py-3 font-medium">{tParent('startTime')}</th>
+                      <th className="px-5 py-3 font-medium">{tParent('endTime')}</th>
+                      <th className="px-5 py-3 font-medium">{tParent('statusLabel')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">

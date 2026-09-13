@@ -8,5 +8,5 @@ export default async function SuperAdminSubscriptionsListPage({
 }) {
   const { locale } = await params;
   await requireServerPage(locale, { allowedRoles: ['super_admin'] });
-  return <SuperAdminSubscriptionsListView />;
+  return <SuperAdminSubscriptionsListView locale={locale} />;
 }

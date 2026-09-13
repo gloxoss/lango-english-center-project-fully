@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,19 +29,22 @@ type ApiInvoiceDetail = {
   guardian: { firstName: string; lastName: string; phone: string | null; email: string | null; relationshipType: string } | null;
 };
 
-const STATUS_LABELS: Record<ApiInvoiceDetail['status'], string> = {
-  paid: 'Payée',
-  partial: 'Partiellement payée',
-  pending: 'En attente',
-  overdue: 'En retard',
-  cancelled: 'Annulée',
-};
-
-function formatMad(amount: number): string {
-  return `${amount.toLocaleString('fr-FR')} MAD`;
-}
-
 export function InvoiceDetailView({ locale, invoiceId }: { locale: string; invoiceId: string }) {
+  const t = useTranslations('Finance');
+  const tCommon = useTranslations('Common');
+  const tStatus = useTranslations('Status');
+
+  const dateLocale = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR';
+  const formatMad = (amount: number): string => `${amount.toLocaleString(dateLocale)} MAD`;
+
+  const statusLabels: Record<ApiInvoiceDetail['status'], string> = {
+    paid: tStatus('paid'),
+    partial: tStatus('partial'),
+    pending: tStatus('pending'),
+    overdue: tStatus('overdue'),
+    cancelled: tStatus('cancelled'),
+  };
+
   const [invoice, setInvoice] = useState<ApiInvoiceDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,22 +57,22 @@ export function InvoiceDetailView({ locale, invoiceId }: { locale: string; invoi
         const res = await fetch(`/api/finance/invoices?id=${invoiceId}`);
         const json = await res.json();
         if (!res.ok || !json.success) {
-          setError(json.message || 'Facture introuvable.');
+          setError(json.message || t('invoiceNotFound'));
           return;
         }
         setInvoice(json.data);
       } catch (err) {
         console.error('Failed loading invoice detail', err);
-        setError('Connexion impossible. Vérifiez votre réseau.');
+        setError(t('invoiceNotFound'));
       } finally {
         setLoading(false);
       }
     }
     load();
-  }, [invoiceId]);
+  }, [invoiceId, t]);
 
   if (loading) {
-    return <div className="max-w-[1600px] mx-auto text-sm text-slate-500">Chargement...</div>;
+    return <div className="max-w-[1600px] mx-auto text-sm text-slate-500">{tCommon('loading')}</div>;
   }
 
   if (error || !invoice) {
@@ -76,7 +80,7 @@ export function InvoiceDetailView({ locale, invoiceId }: { locale: string; invoi
       <div className="max-w-[1600px] mx-auto space-y-4">
         <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2.5 text-rose-700 text-xs font-semibold">
           <AlertCircle className="w-4 h-4 shrink-0" />
-          <span>{error ?? 'Facture introuvable.'}</span>
+          <span>{error ?? t('invoiceNotFound')}</span>
         </div>
       </div>
     );
@@ -90,15 +94,15 @@ export function InvoiceDetailView({ locale, invoiceId }: { locale: string; invoi
       {/* Breadcrumb */}
       <div className="flex items-center justify-between gap-2 print:hidden">
         <div className="flex items-center gap-2 text-xs text-slate-500">
-          <Link href={`/${locale}/dashboard/finance/invoices`} className="hover:text-[#2487B8]">Finances</Link>
+          <Link href={`/${locale}/dashboard/finance/invoices`} className="hover:text-[#2487B8]">{t('financeBreadcrumb')}</Link>
           <span>/</span>
-          <span>Factures</span>
+          <span>{t('invoicesBreadcrumb')}</span>
           <span>/</span>
           <span className="font-bold text-[#16212B]">{invoice.invoiceNumber}</span>
         </div>
         <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2 h-9 rounded-full px-4 text-xs">
           <Printer className="w-3.5 h-3.5" />
-          <span>Imprimer / PDF</span>
+          <span>{t('printPdfBtn')}</span>
         </Button>
       </div>
 
@@ -106,7 +110,7 @@ export function InvoiceDetailView({ locale, invoiceId }: { locale: string; invoi
       <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
         <div className="flex flex-wrap items-center justify-between gap-6 text-xs">
           <div>
-            <h1 className="text-xl font-extrabold text-[#16212B]">Détail de la facture</h1>
+            <h1 className="text-xl font-extrabold text-[#16212B]">{t('invoiceDetailTitle')}</h1>
             <p className="font-bold text-slate-500 font-mono mt-1">{invoice.invoiceNumber}</p>
           </div>
 
@@ -117,18 +121,18 @@ export function InvoiceDetailView({ locale, invoiceId }: { locale: string; invoi
               </div>
               <div>
                 <p className="font-bold text-[#16212B]">{invoice.studentName}</p>
-                <p className="text-[11px] text-slate-400">{invoice.className ?? 'Non classé'}</p>
+                <p className="text-[11px] text-slate-400">{invoice.className ?? t('unassignedClass')}</p>
               </div>
             </div>
 
             <div>
-              <p className="text-[10px] text-slate-400 font-bold uppercase">Date d&apos;émission</p>
-              <p className="font-bold text-[#16212B]">{new Date(`${invoice.issueDate}T00:00:00`).toLocaleDateString('fr-FR')}</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase">{t('issueDateLabel')}</p>
+              <p className="font-bold text-[#16212B]">{new Date(`${invoice.issueDate}T00:00:00`).toLocaleDateString(dateLocale)}</p>
             </div>
 
             <div>
-              <p className="text-[10px] text-slate-400 font-bold uppercase">Date d&apos;échéance</p>
-              <p className="font-bold text-[#16212B]">{new Date(`${invoice.dueDate}T00:00:00`).toLocaleDateString('fr-FR')}</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase">{t('dueDateLabel')}</p>
+              <p className="font-bold text-[#16212B]">{new Date(`${invoice.dueDate}T00:00:00`).toLocaleDateString(dateLocale)}</p>
             </div>
           </div>
 
@@ -138,7 +142,7 @@ export function InvoiceDetailView({ locale, invoiceId }: { locale: string; invoi
                 : 'bg-[#FCF0DC] text-[#E8A33D] px-3 py-1 text-xs'
           }
           >
-            {STATUS_LABELS[invoice.status]}
+            {statusLabels[invoice.status]}
           </Badge>
         </div>
       </Card>
@@ -148,39 +152,39 @@ export function InvoiceDetailView({ locale, invoiceId }: { locale: string; invoi
         <div className="lg:col-span-2 space-y-6">
           {/* Line Items */}
           <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-            <div className="p-4 border-b border-slate-100 font-extrabold text-xs text-[#16212B]">Détails de la facture</div>
+            <div className="p-4 border-b border-slate-100 font-extrabold text-xs text-[#16212B]">{t('lineItemsTitle')}</div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-start text-xs">
                 <thead className="bg-[#F6F9FC] text-slate-500 font-semibold border-b border-slate-200/80">
                   <tr>
-                    <th className="py-3 px-4">Description</th>
-                    <th className="py-3 px-4 text-right">Montant</th>
+                    <th className="py-3 px-4">{t('descriptionCol')}</th>
+                    <th className="py-3 px-4 text-end">{t('amount')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
                   {invoice.items.length === 0 && (
                     <tr>
-                      <td className="py-3 px-4 font-bold text-[#16212B]">{invoice.note ?? 'Frais de scolarité'}</td>
-                      <td className="py-3 px-4 text-right font-extrabold text-[#16212B]">{formatMad(invoice.amount)}</td>
+                      <td className="py-3 px-4 font-bold text-[#16212B]">{invoice.note ?? t('defaultTuitionItem')}</td>
+                      <td className="py-3 px-4 text-end font-extrabold text-[#16212B]">{formatMad(invoice.amount)}</td>
                     </tr>
                   )}
                   {invoice.items.map(item => (
                     <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="py-3 px-4 font-bold text-[#16212B]">{item.description}</td>
-                      <td className="py-3 px-4 text-right font-extrabold text-[#16212B]">{formatMad(item.amount)}</td>
+                      <td className="py-3 px-4 text-end font-extrabold text-[#16212B]">{formatMad(item.amount)}</td>
                     </tr>
                   ))}
                   {invoice.discountAmount > 0 && (
                     <tr>
-                      <td className="py-3 px-4 font-bold text-emerald-700">Remise</td>
-                      <td className="py-3 px-4 text-right font-extrabold text-emerald-700">-{formatMad(invoice.discountAmount)}</td>
+                      <td className="py-3 px-4 font-bold text-emerald-700">{t('discountLabel')}</td>
+                      <td className="py-3 px-4 text-end font-extrabold text-emerald-700">-{formatMad(invoice.discountAmount)}</td>
                     </tr>
                   )}
                 </tbody>
                 <tfoot className="bg-[#F6F9FC] border-t border-slate-200/80 font-extrabold text-xs text-[#16212B]">
                   <tr>
-                    <td className="py-3.5 px-4 text-right">Total</td>
-                    <td className="py-3.5 px-4 text-right text-[#2487B8] text-sm">{formatMad(invoice.netAmount)}</td>
+                    <td className="py-3.5 px-4 text-end">{t('totalLabel')}</td>
+                    <td className="py-3.5 px-4 text-end text-[#2487B8] text-sm">{formatMad(invoice.netAmount)}</td>
                   </tr>
                 </tfoot>
               </table>
@@ -189,35 +193,35 @@ export function InvoiceDetailView({ locale, invoiceId }: { locale: string; invoi
 
           {/* Payment History */}
           <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-            <div className="p-4 border-b border-slate-100 font-extrabold text-xs text-[#16212B]">Historique des paiements</div>
+            <div className="p-4 border-b border-slate-100 font-extrabold text-xs text-[#16212B]">{t('paymentHistoryTitle')}</div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-start text-xs">
                 <thead className="bg-[#F6F9FC] text-slate-500 font-semibold border-b border-slate-200/80">
                   <tr>
-                    <th className="py-3 px-4">Date</th>
-                    <th className="py-3 px-4">Référence</th>
-                    <th className="py-3 px-4">Méthode</th>
-                    <th className="py-3 px-4 text-right">Montant</th>
+                    <th className="py-3 px-4">{tCommon('date')}</th>
+                    <th className="py-3 px-4">{t('referenceCol')}</th>
+                    <th className="py-3 px-4">{t('refundMethodLabel')}</th>
+                    <th className="py-3 px-4 text-end">{t('amount')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
                   {invoice.payments.length === 0 && (
-                    <tr><td colSpan={4} className="py-6 px-4 text-center text-slate-400">Aucun paiement enregistré.</td></tr>
+                    <tr><td colSpan={4} className="py-6 px-4 text-center text-slate-400">{t('noPaymentsRecorded')}</td></tr>
                   )}
                   {invoice.payments.map(pm => (
                     <tr key={pm.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3 px-4 text-slate-600">{new Date(pm.paymentDate).toLocaleString('fr-FR')}</td>
+                      <td className="py-3 px-4 text-slate-600">{new Date(pm.paymentDate).toLocaleString(dateLocale)}</td>
                       <td className="py-3 px-4 font-mono font-bold text-slate-700">{pm.referenceId ?? '—'}</td>
                       <td className="py-3 px-4 text-slate-600">{pm.paymentMethod}</td>
-                      <td className="py-3 px-4 text-right font-extrabold text-[#16212B]">{formatMad(pm.amount)}</td>
+                      <td className="py-3 px-4 text-end font-extrabold text-[#16212B]">{formatMad(pm.amount)}</td>
                     </tr>
                   ))}
                 </tbody>
                 {invoice.payments.length > 0 && (
                   <tfoot className="bg-[#F6F9FC] border-t border-slate-200/80 font-extrabold text-xs">
                     <tr>
-                      <td colSpan={3} className="py-3.5 px-4 text-right text-[#16212B]">Total payé</td>
-                      <td className="py-3.5 px-4 text-right text-emerald-600 text-sm font-bold">{formatMad(totalPaid)}</td>
+                      <td colSpan={3} className="py-3.5 px-4 text-end text-[#16212B]">{t('totalPaidLabel')}</td>
+                      <td className="py-3.5 px-4 text-end text-emerald-600 text-sm font-bold">{formatMad(totalPaid)}</td>
                     </tr>
                   </tfoot>
                 )}
@@ -229,18 +233,18 @@ export function InvoiceDetailView({ locale, invoiceId }: { locale: string; invoi
         {/* Right Section */}
         <div className="space-y-6 text-xs">
           <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-            <h3 className="text-sm font-extrabold text-[#16212B]">Récapitulatif</h3>
+            <h3 className="text-sm font-extrabold text-[#16212B]">{t('summaryTitle')}</h3>
             <div className="space-y-2 font-semibold">
               <div className="flex justify-between text-slate-600">
-                <span>Total de la facture</span>
+                <span>{t('invoiceTotalLabel')}</span>
                 <span className="font-bold text-[#16212B]">{formatMad(invoice.netAmount)}</span>
               </div>
               <div className="flex justify-between text-slate-600">
-                <span>Montant payé</span>
+                <span>{t('paidAmountLabel')}</span>
                 <span className="font-bold text-emerald-600">{formatMad(invoice.paidAmount)}</span>
               </div>
               <div className="pt-3 border-t border-slate-100 flex justify-between text-base font-extrabold">
-                <span className="text-[#16212B]">Solde restant</span>
+                <span className="text-[#16212B]">{t('remainingBalanceLabel')}</span>
                 <span className="text-rose-600">{formatMad(balance)}</span>
               </div>
             </div>
@@ -249,7 +253,7 @@ export function InvoiceDetailView({ locale, invoiceId }: { locale: string; invoi
               <Link href={`/${locale}/dashboard/finance/payments/new?studentId=${invoice.studentId}`}>
                 <Button variant="primary" size="md" className="w-full gap-2 rounded-xl">
                   <CreditCard className="w-4 h-4" />
-                  <span>Enregistrer un paiement</span>
+                  <span>{t('recordPaymentBtn')}</span>
                 </Button>
               </Link>
             )}
@@ -257,7 +261,7 @@ export function InvoiceDetailView({ locale, invoiceId }: { locale: string; invoi
 
           {invoice.guardian && (
             <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Informations du parent</h3>
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('parentInfoTitle')}</h3>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center font-bold text-sm">
                   {invoice.guardian.firstName[0]}{invoice.guardian.lastName[0]}

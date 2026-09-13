@@ -4,5 +4,10 @@ import { requireServerPage } from '@/libs/api/page-guard';
 export default async function ResidentMePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   await requireServerPage(locale, { allowedRoles: ['student'] });
-  return <ResidentMeView />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <ResidentMeView />
+    </main>
+  );
 }

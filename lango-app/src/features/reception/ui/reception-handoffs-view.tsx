@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -18,20 +19,20 @@ import {
 } from 'lucide-react';
 import { PortalStateView } from '@/components/shared/portal-state';
 import {
-  api, fmtDateTime, HANDOFF_PRIORITY_LABELS, HANDOFF_STATUS_LABELS, type Handoff,
+  api,
+  fmtDateTime,
+  CATEGORY_KEYS,
+  HANDOFF_PRIORITY_KEYS,
+  HANDOFF_STATUS_KEYS,
+  type Handoff,
 } from './reception-api';
 
 type Staff = { id: string; name: string; role: string };
 
-const CATEGORY_LABELS: Record<string, string> = {
-  admissions: 'Admissions',
-  finance: 'Finance',
-  teacher: 'Enseignant',
-  admin: 'Administration',
-  security: 'Sécurité',
-};
-
 export function ReceptionHandoffsView() {
+  const t = useTranslations('Reception');
+  const locale = useLocale();
+
   const [data, setData] = useState<Handoff[]>([]);
   const [total, setTotal] = useState(0);
   const [status, setStatus] = useState('all');
@@ -55,9 +56,9 @@ export function ReceptionHandoffsView() {
       setData(res.data);
       setTotal(res.total ?? 0);
     } else {
-      setError(res.error?.message ?? 'Chargement impossible.');
+      setError(res.error?.message ?? t('errorLoad'));
     }
-  }, [status, assignedToMe]);
+  }, [status, assignedToMe, t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -65,10 +66,10 @@ export function ReceptionHandoffsView() {
     setActionMsg(null);
     const res = await api(`/api/reception/handoffs/${id}/${action}`, { method: 'POST', body });
     if (!res.ok) {
-      setActionMsg(res.error?.message ?? 'Action impossible.');
+      setActionMsg(res.error?.message ?? t('actionFailed'));
       return;
     }
-    setActionMsg('Action effectuée.');
+    setActionMsg(t('actionSuccess'));
     load();
   };
 
@@ -79,20 +80,20 @@ export function ReceptionHandoffsView() {
 
   if (loading && data.length === 0) return <PortalStateView state="loading" />;
   if (error && data.length === 0) {
-    return <PortalStateView state="error" action={<Button size="sm" variant="outline" onClick={load}>Réessayer</Button>} />;
+    return <PortalStateView state="error" action={<Button size="sm" variant="outline" onClick={load}>{t('retry')}</Button>} />;
   }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">Transferts &amp; tâches</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('handoffsTitle')}</h1>
           <p className="mt-0.5 text-xs font-medium text-slate-500">
-            Coordonner une demande vers Admissions, Finance, un enseignant, l&apos;administration ou la sécurité.
+            {t('handoffsSubtitle')}
           </p>
         </div>
         <Button size="sm" onClick={openCreate} className="gap-1.5 bg-[#2487B8] hover:bg-[#1B6C93] text-white">
-          <Plus className="h-4 w-4" /> Nouvelle tâche
+          <Plus className="h-4 w-4" /> {t('btnNewHandoff')}
         </Button>
       </div>
 
@@ -101,15 +102,15 @@ export function ReceptionHandoffsView() {
       <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
         <div className="mb-4 flex flex-wrap items-end gap-3">
           <div className="space-y-1.5">
-            <Label htmlFor="hf-status">Statut</Label>
+            <Label htmlFor="hf-status">{t('filterStatus')}</Label>
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger id="hf-status" className="w-44" aria-label="Filtrer par statut"><SelectValue placeholder="Statut" /></SelectTrigger>
+              <SelectTrigger id="hf-status" className="w-44" aria-label={t('filterStatus')}><SelectValue placeholder={t('filterStatus')} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
-                <SelectItem value="open">Ouvertes</SelectItem>
-                <SelectItem value="acknowledged">Prise en charge</SelectItem>
-                <SelectItem value="resolved">Résolues</SelectItem>
-                <SelectItem value="cancelled">Annulées</SelectItem>
+                <SelectItem value="all">{t('filterStatusAll')}</SelectItem>
+                <SelectItem value="open">{t('statusOpen')}</SelectItem>
+                <SelectItem value="acknowledged">{t('statusAcknowledged')}</SelectItem>
+                <SelectItem value="resolved">{t('statusResolved')}</SelectItem>
+                <SelectItem value="cancelled">{t('statusCancelled')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -119,60 +120,69 @@ export function ReceptionHandoffsView() {
             onClick={() => setAssignedToMe((v) => !v)}
             className="gap-1.5"
           >
-            <UserCheck className="h-3.5 w-3.5" /> Mes tâches
+            <UserCheck className="h-3.5 w-3.5" /> {t('btnMyTasks')}
           </Button>
-          <span className="ml-auto text-xs text-slate-400">{total} tâches</span>
+          <span className="ml-auto text-xs text-slate-400">{t('totalHandoffsCount', { count: total })}</span>
         </div>
 
         {data.length === 0 ? (
-          <p className="py-8 text-center text-sm text-slate-400">Aucune tâche pour cette sélection.</p>
+          <p className="py-8 text-center text-sm text-slate-400">{t('noHandoffsFound')}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
-                  <th className="py-2 pr-3 font-bold">Tâche</th>
-                  <th className="py-2 pr-3 font-bold">Catégorie</th>
-                  <th className="py-2 pr-3 font-bold">Assignée à</th>
-                  <th className="py-2 pr-3 font-bold">Priorité</th>
-                  <th className="py-2 pr-3 font-bold">Échéance</th>
-                  <th className="py-2 pr-3 font-bold">Statut</th>
-                  <th className="py-2 font-bold text-right">Actions</th>
+                <tr className="border-b border-slate-200 text-left rtl:text-right text-xs uppercase tracking-wide text-slate-400">
+                  <th className="py-2 pr-3 rtl:pr-0 rtl:pl-3 font-bold">{t('colTitle')}</th>
+                  <th className="py-2 pr-3 rtl:pr-0 rtl:pl-3 font-bold">{t('colCategory')}</th>
+                  <th className="py-2 pr-3 rtl:pr-0 rtl:pl-3 font-bold">{t('colAssignedTo')}</th>
+                  <th className="py-2 pr-3 rtl:pr-0 rtl:pl-3 font-bold">{t('colPriority')}</th>
+                  <th className="py-2 pr-3 rtl:pr-0 rtl:pl-3 font-bold">{t('colDeadline')}</th>
+                  <th className="py-2 pr-3 rtl:pr-0 rtl:pl-3 font-bold">{t('colStatus')}</th>
+                  <th className="py-2 font-bold text-right rtl:text-left">{t('colActions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {data.map((h) => (
                   <tr key={h.id} className="align-top">
-                    <td className="py-2.5 pr-3">
+                    <td className="py-2.5 pr-3 rtl:pr-0 rtl:pl-3">
                       <p className="font-semibold text-[#16212B]">{h.title}</p>
                       {h.description ? <p className="max-w-xs text-xs text-slate-500">{h.description}</p> : null}
                     </td>
-                    <td className="py-2.5 pr-3 text-slate-600">{CATEGORY_LABELS[h.category] ?? h.category}</td>
-                    <td className="py-2.5 pr-3 text-slate-600">{h.assignedToName ?? '—'}</td>
-                    <td className="py-2.5 pr-3">
+                    <td className="py-2.5 pr-3 rtl:pr-0 rtl:pl-3 text-slate-600">
+                      {CATEGORY_KEYS[h.category] ? t(CATEGORY_KEYS[h.category] as any) : h.category}
+                    </td>
+                    <td className="py-2.5 pr-3 rtl:pr-0 rtl:pl-3 text-slate-600">{h.assignedToName ?? '—'}</td>
+                    <td className="py-2.5 pr-3 rtl:pr-0 rtl:pl-3">
                       <Badge className={h.priority === 'urgent' || h.priority === 'high' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-500'}>
-                        {HANDOFF_PRIORITY_LABELS[h.priority] ?? h.priority}
+                        {HANDOFF_PRIORITY_KEYS[h.priority] ? t(HANDOFF_PRIORITY_KEYS[h.priority] as any) : h.priority}
                       </Badge>
                     </td>
-                    <td className="py-2.5 pr-3 font-mono text-xs text-slate-500">{h.deadline ? fmtDateTime(h.deadline) : '—'}</td>
-                    <td className="py-2.5 pr-3">
-                      <Badge className="bg-[#DCEBF4] text-[#1B6C93]">{HANDOFF_STATUS_LABELS[h.status] ?? h.status}</Badge>
+                    <td className="py-2.5 pr-3 rtl:pr-0 rtl:pl-3 font-mono text-xs text-slate-500">{h.deadline ? fmtDateTime(h.deadline, locale) : '—'}</td>
+                    <td className="py-2.5 pr-3 rtl:pr-0 rtl:pl-3">
+                      <Badge className="bg-[#DCEBF4] text-[#1B6C93]">
+                        {HANDOFF_STATUS_KEYS[h.status] ? t(HANDOFF_STATUS_KEYS[h.status] as any) : h.status}
+                      </Badge>
                     </td>
-                    <td className="py-2.5 text-right">
-                      <div className="flex flex-wrap justify-end gap-1">
+                    <td className="py-2.5 text-right rtl:text-left">
+                      <div className="flex flex-wrap justify-end rtl:justify-start gap-1">
                         {h.status === 'open' && (
                           <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => act(h.id, 'acknowledge')}>
-                            <UserCheck className="h-3 w-3" /> Prendre en charge
+                            <UserCheck className="h-3 w-3" /> {t('btnAcknowledge')}
                           </Button>
                         )}
                         {(h.status === 'open' || h.status === 'acknowledged') && (
                           <Button size="sm" variant="outline" className="h-7 text-[11px] text-emerald-700" onClick={() => setResolving(h)}>
-                            <CheckCircle2 className="h-3 w-3" /> Résoudre
+                            <CheckCircle2 className="h-3 w-3" /> {t('btnResolve')}
                           </Button>
                         )}
                         {h.status === 'open' && (
-                          <Button size="sm" variant="outline" className="h-7 text-[11px] text-rose-600" onClick={() => act(h.id, 'cancel', { reason: 'Annulation à la réception' })}>
-                            <XCircle className="h-3 w-3" /> Annuler
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-[11px] text-rose-600"
+                            onClick={() => act(h.id, 'cancel', { reason: t('cancelReasonReception') })}
+                          >
+                            <XCircle className="h-3 w-3" /> {t('btnCancel')}
                           </Button>
                         )}
                       </div>
@@ -212,6 +222,8 @@ function CreateHandoffDialog({ open, onOpenChange, staff, onCreated }: {
   staff: Staff[];
   onCreated: () => void;
 }) {
+  const t = useTranslations('Reception');
+
   const [form, setForm] = useState({
     category: 'admin', title: '', description: '', priority: 'medium',
     assignedToId: '', deadline: '', subjectType: '', subjectId: '',
@@ -233,7 +245,7 @@ function CreateHandoffDialog({ open, onOpenChange, staff, onCreated }: {
 
   const submit = async () => {
     if (!form.title.trim()) {
-      setError('Le titre est obligatoire.');
+      setError(t('errTitleRequired'));
       return;
     }
     setSubmitting(true);
@@ -254,94 +266,94 @@ function CreateHandoffDialog({ open, onOpenChange, staff, onCreated }: {
     });
     setSubmitting(false);
     if (res.ok) onCreated();
-    else setError(res.error?.message ?? 'Création impossible.');
+    else setError(res.error?.message ?? t('actionFailed'));
   };
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!submitting) onOpenChange(v); }}>
       <DialogContent className="sm:max-w-lg" aria-describedby="handoff-dialog-desc">
         <DialogHeader>
-          <DialogTitle>Nouvelle tâche</DialogTitle>
+          <DialogTitle>{t('newHandoffTitle')}</DialogTitle>
           <DialogDescription id="handoff-dialog-desc">
-            Transmettre une demande de coordination. La tâche n&apos;exécute pas l&apos;action du service destinataire.
+            {t('newHandoffDesc')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="hf-title">Titre *</Label>
-            <Input id="hf-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex. Relancer l'inscription du prospect…" />
+            <Label htmlFor="hf-title">{t('labelTitle')}</Label>
+            <Input id="hf-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder={t('phHandoffTitle')} />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="hf-cat">Catégorie *</Label>
+              <Label htmlFor="hf-cat">{t('labelCategory')}</Label>
               <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                <SelectTrigger id="hf-cat" aria-label="Catégorie de la tâche"><SelectValue placeholder="Catégorie" /></SelectTrigger>
+                <SelectTrigger id="hf-cat" aria-label={t('labelCategory')}><SelectValue placeholder={t('labelCategory')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="admissions">Admissions</SelectItem>
-                  <SelectItem value="finance">Finance</SelectItem>
-                  <SelectItem value="teacher">Enseignant</SelectItem>
-                  <SelectItem value="admin">Administration</SelectItem>
-                  <SelectItem value="security">Sécurité</SelectItem>
+                  <SelectItem value="admissions">{t('catAdmissions')}</SelectItem>
+                  <SelectItem value="finance">{t('catFinance')}</SelectItem>
+                  <SelectItem value="teacher">{t('catTeacher')}</SelectItem>
+                  <SelectItem value="admin">{t('catAdmin')}</SelectItem>
+                  <SelectItem value="security">{t('catSecurity')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="hf-prio">Priorité</Label>
+              <Label htmlFor="hf-prio">{t('labelPriority')}</Label>
               <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
-                <SelectTrigger id="hf-prio" aria-label="Priorité de la tâche"><SelectValue placeholder="Priorité" /></SelectTrigger>
+                <SelectTrigger id="hf-prio" aria-label={t('labelPriority')}><SelectValue placeholder={t('labelPriority')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="low">Basse</SelectItem>
-                  <SelectItem value="medium">Moyenne</SelectItem>
-                  <SelectItem value="high">Haute</SelectItem>
-                  <SelectItem value="urgent">Urgente</SelectItem>
+                  <SelectItem value="low">{t('priorityLow')}</SelectItem>
+                  <SelectItem value="medium">{t('priorityMedium')}</SelectItem>
+                  <SelectItem value="high">{t('priorityHigh')}</SelectItem>
+                  <SelectItem value="urgent">{t('priorityUrgent')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="hf-desc">Description</Label>
-            <Textarea id="hf-desc" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Contexte de la demande…" />
+            <Label htmlFor="hf-desc">{t('labelDescription')}</Label>
+            <Textarea id="hf-desc" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder={t('phHandoffDesc')} />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="hf-assign">Assignée à</Label>
+              <Label htmlFor="hf-assign">{t('labelAssignedStaff')}</Label>
               <Select value={form.assignedToId} onValueChange={(v) => setForm({ ...form, assignedToId: v })}>
-                <SelectTrigger id="hf-assign" aria-label="Personne assignée"><SelectValue placeholder="Membre du personnel" /></SelectTrigger>
+                <SelectTrigger id="hf-assign" aria-label={t('labelAssignedStaff')}><SelectValue placeholder={t('phStaffMember')} /></SelectTrigger>
                 <SelectContent>
                   {staff.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="hf-deadline">Échéance</Label>
+              <Label htmlFor="hf-deadline">{t('labelDeadlineDate')}</Label>
               <Input id="hf-deadline" type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="hf-subject-type">Type d&apos;objet</Label>
+              <Label htmlFor="hf-subject-type">{t('labelSubjectType')}</Label>
               <Select value={form.subjectType} onValueChange={(v) => setForm({ ...form, subjectType: v })}>
-                <SelectTrigger id="hf-subject-type" aria-label="Type d'objet lié"><SelectValue placeholder="Objet lié" /></SelectTrigger>
+                <SelectTrigger id="hf-subject-type" aria-label={t('labelSubjectType')}><SelectValue placeholder={t('labelSubjectType')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Aucun</SelectItem>
-                  <SelectItem value="student">Élève</SelectItem>
-                  <SelectItem value="guardian">Parent</SelectItem>
-                  <SelectItem value="visitor">Visiteur</SelectItem>
-                  <SelectItem value="appointment">Rendez-vous</SelectItem>
-                  <SelectItem value="inquiry">Demande</SelectItem>
+                  <SelectItem value="">{t('optNone')}</SelectItem>
+                  <SelectItem value="student">{t('typeStudent')}</SelectItem>
+                  <SelectItem value="guardian">{t('typeGuardian')}</SelectItem>
+                  <SelectItem value="visitor">{t('typeVisitor')}</SelectItem>
+                  <SelectItem value="appointment">{t('typeAppointment')}</SelectItem>
+                  <SelectItem value="inquiry">{t('typeInquiry')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="hf-subject-id">Référence objet</Label>
-              <Input id="hf-subject-id" value={form.subjectId} onChange={(e) => setForm({ ...form, subjectId: e.target.value })} placeholder="Identifiant / matricule" />
+              <Label htmlFor="hf-subject-id">{t('labelSubjectId')}</Label>
+              <Input id="hf-subject-id" value={form.subjectId} onChange={(e) => setForm({ ...form, subjectId: e.target.value })} placeholder={t('phSubjectId')} />
             </div>
           </div>
           {error && <p className="flex items-center gap-1 text-sm text-rose-600" role="alert"><AlertCircle className="h-4 w-4" />{error}</p>}
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>Annuler</Button>
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>{t('btnCancel')}</Button>
             <Button onClick={submit} disabled={submitting}>
-              {submitting ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <ListTodo className="mr-1 h-4 w-4" />} Créer
+              {submitting ? <Loader2 className="mr-1 h-4 w-4 animate-spin rtl:mr-0 rtl:ml-1" /> : <ListTodo className="mr-1 h-4 w-4 rtl:mr-0 rtl:ml-1" />} {t('btnCreate')}
             </Button>
           </div>
         </div>
@@ -355,6 +367,8 @@ function ResolveHandoffDialog({ handoff, onClose, onDone }: {
   onClose: () => void;
   onDone: () => void;
 }) {
+  const t = useTranslations('Reception');
+
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -374,26 +388,26 @@ function ResolveHandoffDialog({ handoff, onClose, onDone }: {
     });
     setSubmitting(false);
     if (res.ok) onDone();
-    else setError(res.error?.message ?? 'Résolution impossible.');
+    else setError(res.error?.message ?? t('actionFailed'));
   };
 
   return (
     <Dialog open onOpenChange={(v) => { if (!v && !submitting) onClose(); }}>
       <DialogContent className="sm:max-w-lg" aria-describedby="resolve-desc">
         <DialogHeader>
-          <DialogTitle>Résoudre · {handoff.title}</DialogTitle>
-          <DialogDescription id="resolve-desc">Indiquer le résultat de la prise en charge.</DialogDescription>
+          <DialogTitle>{t('resolveHandoffTitle', { title: handoff.title })}</DialogTitle>
+          <DialogDescription id="resolve-desc">{t('resolveHandoffDesc')}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="rsv-notes">Notes de résolution *</Label>
-            <Textarea id="rsv-notes" rows={4} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Détail du traitement effectué…" />
+            <Label htmlFor="rsv-notes">{t('labelResolutionNotes')}</Label>
+            <Textarea id="rsv-notes" rows={4} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t('phResolutionNotes')} />
           </div>
           {error && <p className="text-sm text-rose-600" role="alert">{error}</p>}
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose} disabled={submitting}>Fermer</Button>
+            <Button variant="outline" onClick={onClose} disabled={submitting}>{t('btnClose')}</Button>
             <Button onClick={submit} disabled={submitting || notes.trim().length === 0}>
-              {submitting ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-1 h-4 w-4" />} Résoudre
+              {submitting ? <Loader2 className="mr-1 h-4 w-4 animate-spin rtl:mr-0 rtl:ml-1" /> : <CheckCircle2 className="mr-1 h-4 w-4 rtl:mr-0 rtl:ml-1" />} {t('btnResolve')}
             </Button>
           </div>
         </div>

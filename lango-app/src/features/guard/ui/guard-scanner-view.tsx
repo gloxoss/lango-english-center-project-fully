@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -78,6 +79,9 @@ export function GuardScannerView({
   onSessionChange: (id: string | null) => void;
   onForceLock: () => Promise<void>;
 }) {
+  const t = useTranslations('Guard');
+  const tCommon = useTranslations('Common');
+
   const [gate, setGate] = useState<GateInfo | null>(null);
   const [shift, setShift] = useState<ShiftInfo | null>(null);
   const [deviceId, setDeviceId] = useState<string | null>(null);
@@ -117,11 +121,11 @@ export function GuardScannerView({
         const dirs: ScanDirection[] = res.data.gate.direction === 'both' ? ['entry', 'exit'] : [res.data.gate.direction];
         setDirection(dirs[0] ?? 'entry');
       } else {
-        setMetaError(res.error?.message ?? 'Aucun portail actif pour ce gardien.');
+        setMetaError(res.error?.message ?? t('noActiveGate'));
       }
       setMetaLoading(false);
-    })().catch(() => { setMetaLoading(false); setMetaError('Chargement impossible.'); });
-  }, []);
+    })().catch(() => { setMetaLoading(false); setMetaError(tCommon('loading')); });
+  }, [t, tCommon]);
 
   // Keep focus on input for physical scanners.
   useEffect(() => {
@@ -144,7 +148,7 @@ export function GuardScannerView({
       setFeedback(null);
       onSessionChange(res.data.id);
     } else {
-      setError(res.error?.message ?? 'Impossible de démarrer la session.');
+      setError(res.error?.message ?? tCommon('error'));
     }
   };
 
@@ -188,20 +192,20 @@ export function GuardScannerView({
       if (res.ok && resultStatus === 'accepted') {
         setFeedback({
           kind: 'accepted',
-          displayName: person?.displayName ?? 'Accès autorisé',
+          displayName: person?.displayName ?? t('accessGranted'),
           message: context === 'student_pickup'
-            ? 'Sortie élève autorisée (bon de retrait actif)'
+            ? t('studentPickupAuthorized')
             : context === 'student_entry'
-              ? 'Entrée élève validée'
+              ? t('studentEntryValidated')
               : context === 'staff'
-                ? 'Accès personnel validé'
-                : 'Accès validé',
+                ? t('staffAccessValidated')
+                : t('accessValidated'),
         });
       } else if (res.ok && resultStatus === 'already_processed') {
-        setFeedback({ kind: 'already_processed', displayName: 'Déjà traité', message: 'Ce badge a déjà été scanné.' });
+        setFeedback({ kind: 'already_processed', displayName: t('alreadyProcessed'), message: t('badgeAlreadyScanned') });
       } else {
         // Uniform minimal-failure response (see /api/gate/credentials/verify).
-        setFeedback({ kind: 'rejected', displayName: 'Accès refusé', message: 'Badge non reconnu.' });
+        setFeedback({ kind: 'rejected', displayName: t('accessDenied'), message: t('badgeUnrecognized') });
       }
 
       setRecent(prev => [
@@ -216,7 +220,7 @@ export function GuardScannerView({
         ...prev,
       ].slice(0, 50));
     } catch {
-      setFeedback({ kind: 'rejected', displayName: 'Erreur réseau', message: 'Impossible de contacter le serveur.' });
+      setFeedback({ kind: 'rejected', displayName: tCommon('error'), message: t('networkErrorMsg') });
     } finally {
       setScanning(false);
     }
@@ -232,11 +236,11 @@ export function GuardScannerView({
       {/* Shift / gate summary bar */}
       <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
         {metaLoading ? (
-          <p className="text-xs text-slate-500">Chargement de l&apos;affectation…</p>
+          <p className="text-xs text-slate-500">{t('loadingAssignment')}</p>
         ) : metaError || !gate ? (
           <div className="flex items-center gap-2 text-sm text-rose-600">
             <AlertCircle className="h-4 w-4" />
-            <span className="font-bold">{metaError ?? 'Aucun portail actif.'}</span>
+            <span className="font-bold">{metaError ?? t('noActiveGate')}</span>
           </div>
         ) : (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -245,12 +249,12 @@ export function GuardScannerView({
                 {gate.gateName} <span className="font-mono text-xs text-slate-400">{gate.gateCode}</span>
               </p>
               <p className="text-xs text-slate-500">
-                {shift ? `${shift.name} · ${shift.startTime} → ${shift.endTime}` : 'Aucun quart associé'}
-                {deviceId ? ' · Scanner affecté' : ''}
+                {shift ? t('associatedShift', { name: shift.name, start: shift.startTime, end: shift.endTime }) : t('noAssociatedShift')}
+                {deviceId ? t('deviceAssigned') : ''}
               </p>
             </div>
             <Badge className="bg-[#DCEBF4] text-[#1B6C93]">
-              {gate.direction === 'both' ? 'Entrée & sortie' : gate.direction === 'entry' ? 'Entrée' : 'Sortie'}
+              {gate.direction === 'both' ? t('dirBoth') : gate.direction === 'entry' ? t('dirEntry') : t('dirExit')}
             </Badge>
           </div>
         )}
@@ -262,27 +266,27 @@ export function GuardScannerView({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="text-xs text-slate-500">
               <p className="font-extrabold text-[#16212B] flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-emerald-600" /> Session active — verrouillage après 60 s d&apos;inactivité
+                <ShieldCheck className="h-4 w-4 text-emerald-600" /> {t('activeSessionTimeout')}
               </p>
               <p className="font-mono text-[11px] mt-0.5">{kioskSessionId.slice(0, 8)}…</p>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" onClick={() => void onForceLock()} className="h-9 text-xs rounded-xl">
-                Verrouiller
+                {t('btnLock')}
               </Button>
               <Button
                 onClick={() => void endSession()}
                 className="h-9 gap-2 text-xs rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold"
               >
-                <Square className="h-3.5 w-3.5" /> Terminer la session
+                <Square className="h-3.5 w-3.5" /> {t('btnEndSession')}
               </Button>
             </div>
           </div>
         ) : (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="text-xs text-slate-500">
-              <p className="font-extrabold text-[#16212B]">Aucune session en cours</p>
-              <p className="mt-0.5">Démarrez une session pour scanner les badges sur ce portail.</p>
+              <p className="font-extrabold text-[#16212B]">{t('noOngoingSession')}</p>
+              <p className="mt-0.5">{t('startSessionPrompt')}</p>
             </div>
             <Button
               onClick={() => void startSession()}
@@ -290,7 +294,7 @@ export function GuardScannerView({
               className="h-10 gap-2 rounded-xl px-5 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold"
             >
               <Play className="h-3.5 w-3.5" />
-              {starting ? 'Démarrage…' : 'Démarrer la session'}
+              {starting ? t('starting') : t('btnStartSession')}
             </Button>
           </div>
         )}
@@ -306,12 +310,12 @@ export function GuardScannerView({
             </div>
             <div>
               <h2 className="text-lg font-extrabold text-slate-800">
-                {kioskSessionId ? 'Prêt à Scanner' : 'Session requise'}
+                {kioskSessionId ? t('readyToScan') : t('sessionRequired')}
               </h2>
               <p className="mx-auto mt-1 max-w-xs text-xs text-slate-500">
                 {kioskSessionId
-                  ? 'Présentez le badge QR devant la caméra ou utilisez une douchette USB.'
-                  : 'Démarrez une session pour activer le scan sur ce portail.'}
+                  ? t('scanInstructionActive')
+                  : t('scanInstructionInactive')}
               </p>
             </div>
           </div>
@@ -329,7 +333,7 @@ export function GuardScannerView({
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Entrée
+                {t('entryBtn')}
               </Button>
               <Button
                 type="button"
@@ -341,7 +345,7 @@ export function GuardScannerView({
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Sortie
+                {t('exitBtn')}
               </Button>
             </div>
           )}
@@ -355,7 +359,7 @@ export function GuardScannerView({
                 disabled={!kioskSessionId || scanning}
                 value={rawTokenInput}
                 onChange={e => setRawTokenInput(e.target.value)}
-                placeholder="En attente de scan..."
+                placeholder={t('waitingForScan')}
                 className="h-12 rounded-xl border-slate-200 bg-slate-50 text-center font-mono text-sm opacity-50 transition-opacity focus:bg-white focus:opacity-100 focus:ring-2 focus:ring-[#2487B8] disabled:cursor-not-allowed"
                 autoFocus
               />
@@ -367,7 +371,7 @@ export function GuardScannerView({
               {feedback.kind === 'accepted' ? (
                 <div className="flex items-center justify-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 animate-in zoom-in-95 duration-200">
                   <CheckCircle2 className="h-8 w-8 shrink-0 text-emerald-600" />
-                  <div className="text-left">
+                  <div className="text-start">
                     <p className="font-extrabold text-emerald-800">{feedback.displayName}</p>
                     <p className="text-xs font-bold text-emerald-600/80">{feedback.message}</p>
                   </div>
@@ -375,7 +379,7 @@ export function GuardScannerView({
               ) : feedback.kind === 'already_processed' ? (
                 <div className="flex items-center justify-center gap-3 rounded-2xl border border-sky-200 bg-sky-50 p-4 animate-in zoom-in-95 duration-200">
                   <AlertCircle className="h-8 w-8 shrink-0 text-sky-600" />
-                  <div className="text-left">
+                  <div className="text-start">
                     <p className="font-extrabold text-sky-800">{feedback.displayName}</p>
                     <p className="text-xs font-bold text-sky-600/80">{feedback.message}</p>
                   </div>
@@ -383,7 +387,7 @@ export function GuardScannerView({
               ) : (
                 <div className="flex items-center justify-center gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 animate-in zoom-in-95 duration-200">
                   <XCircle className="h-8 w-8 shrink-0 text-rose-600" />
-                  <div className="text-left">
+                  <div className="text-start">
                     <p className="font-extrabold text-rose-800">{feedback.displayName}</p>
                     <p className="text-xs font-bold text-rose-600/80">{feedback.message}</p>
                   </div>
@@ -397,25 +401,25 @@ export function GuardScannerView({
         <Card className="flex max-h-[600px] flex-col rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs">
           <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-4">
             <h3 className="flex items-center gap-2 text-sm font-extrabold text-slate-800">
-              <History className="h-4 w-4 text-slate-400" /> Flux de la session
+              <History className="h-4 w-4 text-slate-400" /> {t('sessionFeed')}
             </h3>
             <Badge variant={kioskSessionId ? 'success' : 'neutral'} className="font-mono text-[10px]">
-              {recent.length} scans
+              {t('scansCount', { count: recent.length })}
             </Badge>
           </div>
 
           <div className="mb-4 grid grid-cols-3 gap-3">
             <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-center">
               <p className="text-xl font-extrabold text-emerald-700">{acceptedCount}</p>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-600/80">Acceptés</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-600/80">{t('statAccepted')}</p>
             </div>
             <div className="rounded-xl border border-sky-100 bg-sky-50 p-3 text-center">
               <p className="text-xl font-extrabold text-sky-700">{processedCount}</p>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-sky-600/80">Déjà traités</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-sky-600/80">{t('statAlreadyProcessed')}</p>
             </div>
             <div className="rounded-xl border border-rose-100 bg-rose-50 p-3 text-center">
               <p className="text-xl font-extrabold text-rose-700">{rejectedCount}</p>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-rose-600/80">Refusés</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-rose-600/80">{t('statRejected')}</p>
             </div>
           </div>
 
@@ -443,7 +447,7 @@ export function GuardScannerView({
                   >
                     {scan.resultStatus === 'rejected' ? <XCircle className="h-4 w-4" /> : <User className="h-4 w-4" />}
                   </div>
-                  <div>
+                  <div className="text-start">
                     <p className={`text-xs font-extrabold ${
                       scan.resultStatus === 'accepted'
                         ? 'text-emerald-900'
@@ -451,7 +455,7 @@ export function GuardScannerView({
                           ? 'text-sky-900'
                           : 'text-rose-900'
                     }`}>
-                      {scan.displayName ?? (scan.resultStatus === 'accepted' ? 'Accès autorisé' : 'Badge inconnu')}
+                      {scan.displayName ?? (scan.resultStatus === 'accepted' ? t('accessGranted') : t('badgeUnknown'))}
                     </p>
                     <p className={`text-[10px] font-bold ${
                       scan.resultStatus === 'accepted'
@@ -461,13 +465,13 @@ export function GuardScannerView({
                           : 'text-rose-600/70'
                     }`}>
                       {scan.resultStatus === 'accepted'
-                        ? scan.context === 'student_pickup' ? 'Sortie élève' : scan.context === 'student_entry' ? 'Entrée élève' : scan.context === 'staff' ? 'Personnel' : 'Accès'
-                        : scan.resultStatus === 'already_processed' ? 'Déjà traité' : 'Badge non reconnu'}
+                        ? scan.context === 'student_pickup' ? t('contextStudentPickup') : scan.context === 'student_entry' ? t('contextStudentEntry') : scan.context === 'staff' ? t('contextStaff') : t('contextAccess')
+                        : scan.resultStatus === 'already_processed' ? t('alreadyProcessed') : t('badgeUnrecognized')}
                     </p>
                   </div>
                 </div>
                 <div className="text-[10px] font-mono text-slate-400">
-                  {scan.direction === 'entry' ? '↑' : '↓'} {scan.at.toLocaleTimeString('fr-FR')}
+                  {scan.direction === 'entry' ? '↑' : '↓'} {scan.at.toLocaleTimeString()}
                 </div>
               </div>
             ))}
@@ -476,7 +480,7 @@ export function GuardScannerView({
               <div className="flex h-full flex-col items-center justify-center space-y-2 pt-12 text-slate-400">
                 <ScanLine className="h-8 w-8 opacity-20" />
                 <p className="text-xs font-medium">
-                  {kioskSessionId ? 'Aucun scan dans cette session.' : 'Démarrez une session pour voir le flux.'}
+                  {kioskSessionId ? t('noScansInSession') : t('startSessionToSeeFeed')}
                 </p>
               </div>
             )}

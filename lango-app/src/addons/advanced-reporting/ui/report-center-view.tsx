@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import type { ReportCatalogItem } from '../types/reporting-types';
 import { CatalogCard } from './components/catalog-card';
 import { ReportingNav } from './components/reporting-nav';
@@ -8,22 +9,23 @@ import { Input } from '@/components/ui/input';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Search, Filter, Sparkles, Star } from 'lucide-react';
 
-const DOMAIN_LABELS: Record<string, string> = {
-  all: 'Tous les domaines',
-  favorites: 'Mes Favoris',
-  Student: 'Élèves',
-  Attendance: 'Présences',
-  Fees: 'Frais & Scolarité',
-  Financial: 'Comptabilité',
-  Examination: 'Examens',
-  HR: 'Ressources Humaines',
-  Inventory: 'Stocks',
-};
-
 export function ReportCenterView({ initialCatalog }: { initialCatalog: ReportCatalogItem[] }) {
+  const t = useTranslations('Reports');
   const [search, setSearch] = useState('');
   const [selectedDomain, setSelectedDomain] = useState<string>('all');
   const [favoriteKeys, setFavoriteKeys] = useState<Set<string>>(new Set());
+
+  const domainLabels: Record<string, string> = {
+    all: t('domainAll'),
+    favorites: t('domainFavorites'),
+    Student: t('domainStudent'),
+    Attendance: t('domainAttendance'),
+    Fees: t('domainFees'),
+    Financial: t('domainFinancial'),
+    Examination: t('domainExamination'),
+    HR: t('domainHR'),
+    Inventory: t('domainInventory'),
+  };
 
   // Fetch favorites on load
   useEffect(() => {
@@ -65,9 +67,18 @@ export function ReportCenterView({ initialCatalog }: { initialCatalog: ReportCat
 
   const filteredCatalog = useMemo(() => {
     return initialCatalog.filter((report) => {
+      const repKey = `rep_${report.key.replace(/\./g, '_')}`;
+      let locTitle = '';
+      let locDesc = '';
+      try {
+        locTitle = t(`${repKey}_title` as any) || '';
+        locDesc = t(`${repKey}_desc` as any) || '';
+      } catch {}
       const matchesSearch =
         report.title.toLowerCase().includes(search.toLowerCase()) ||
-        report.description.toLowerCase().includes(search.toLowerCase());
+        report.description.toLowerCase().includes(search.toLowerCase()) ||
+        locTitle.toLowerCase().includes(search.toLowerCase()) ||
+        locDesc.toLowerCase().includes(search.toLowerCase());
 
       let matchesDomain = true;
       if (selectedDomain === 'favorites') {
@@ -92,10 +103,10 @@ export function ReportCenterView({ initialCatalog }: { initialCatalog: ReportCat
           </div>
           <div>
             <h2 className="text-sm font-bold text-[#16212B]">
-              Analytics Curées & Confidentialité Rapprochée
+              {t('bannerTitle')}
             </h2>
             <p className="text-xs text-slate-600">
-              27 rapports types pré-compilés. Vos données confidentielles (identifiants, salaires restrictifs) sont masquées conformément aux normes CNDP.
+              {t('bannerDescription')}
             </p>
           </div>
         </div>
@@ -107,7 +118,7 @@ export function ReportCenterView({ initialCatalog }: { initialCatalog: ReportCat
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <Input
             type="text"
-            placeholder="Rechercher par nom de rapport ou mot-clé..."
+            placeholder={t('searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 text-xs rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white h-10 font-medium text-slate-800"
@@ -127,7 +138,7 @@ export function ReportCenterView({ initialCatalog }: { initialCatalog: ReportCat
               }`}
             >
               {dom === 'favorites' && <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />}
-              <span>{DOMAIN_LABELS[dom] || dom}</span>
+              <span>{domainLabels[dom] || dom}</span>
             </button>
           ))}
         </div>

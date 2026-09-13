@@ -96,20 +96,88 @@ export type Visitor = {
   createdAt: string;
 };
 
-export function fmtDateTime(iso: string | null | undefined): string {
+export function fmtDateTime(iso: string | null | undefined, locale = 'fr'): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const resolved = locale.startsWith('ar') ? 'ar-MA' : locale.startsWith('en') ? 'en-US' : 'fr-FR';
+  return d.toLocaleString(resolved, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-export function fmtTime(iso: string | null | undefined): string {
+export function fmtTime(iso: string | null | undefined, locale = 'fr'): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const resolved = locale.startsWith('ar') ? 'ar-MA' : locale.startsWith('en') ? 'en-US' : 'fr-FR';
+  return d.toLocaleTimeString(resolved, { hour: '2-digit', minute: '2-digit' });
 }
 
+export const APPOINTMENT_STATUS_KEYS: Record<string, string> = {
+  scheduled: 'statusScheduled',
+  checked_in: 'statusCheckedIn',
+  completed: 'statusCompleted',
+  cancelled: 'statusCancelled',
+  no_show: 'statusNoShow',
+};
+
+export const VISITOR_STATUS_KEYS: Record<string, string> = {
+  invited: 'statusInvited',
+  pending: 'statusPending',
+  approved: 'statusApproved',
+  checked_in: 'statusCheckedInVisitor',
+  checked_out: 'statusCheckedOut',
+};
+
+export const INQUIRY_STATUS_KEYS: Record<string, string> = {
+  new: 'statusNew',
+  contacted: 'statusContacted',
+  qualified: 'statusQualified',
+  converted: 'statusConverted',
+  lost: 'statusLost',
+};
+
+export const HANDOFF_STATUS_KEYS: Record<string, string> = {
+  open: 'statusOpen',
+  acknowledged: 'statusAcknowledged',
+  resolved: 'statusResolved',
+  cancelled: 'statusCancelled',
+};
+
+export const HANDOFF_PRIORITY_KEYS: Record<string, string> = {
+  low: 'priorityLow',
+  medium: 'priorityMedium',
+  high: 'priorityHigh',
+  urgent: 'priorityUrgent',
+};
+
+export const CATEGORY_KEYS: Record<string, string> = {
+  admissions: 'catAdmissions',
+  finance: 'catFinance',
+  teacher: 'catTeacher',
+  admin: 'catAdmin',
+  security: 'catSecurity',
+};
+
+export const SOURCE_KEYS: Record<string, string> = {
+  walk_in: 'sourceWalkIn',
+  phone: 'sourcePhone',
+  web: 'sourceWeb',
+  referral: 'sourceReferral',
+};
+
+export const INTEREST_KEYS: Record<string, string> = {
+  high: 'interestHigh',
+  medium: 'interestMedium',
+  low: 'interestLow',
+};
+
+export const TYPE_KEYS: Record<string, string> = {
+  student: 'typeStudent',
+  guardian: 'typeGuardian',
+  parent: 'typeParent',
+};
+
+// Backward-compatible fallback maps (French defaults)
 export const APPOINTMENT_STATUS_LABELS: Record<string, string> = {
   scheduled: 'Planifié',
   checked_in: 'Pointé',
@@ -131,3 +199,4 @@ export const HANDOFF_PRIORITY_LABELS: Record<string, string> = {
   high: 'Haute',
   urgent: 'Urgente',
 };
+

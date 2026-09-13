@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -15,7 +15,7 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  AlertCircle, KeyRound, Loader2, LogIn, RotateCcw, UserRoundX, Users,
+  AlertCircle, KeyRound, Loader2, LogIn, RotateCcw, UserRoundX,
 } from 'lucide-react';
 import {
   EMPLOYMENT_STATUS_LABELS, EMPLOYMENT_STATUS_STYLES,
@@ -26,11 +26,6 @@ type ApiErrorShape = { code?: string; message?: string };
 
 type CandidateRow = { id: string; name: string; email: string; role: string };
 type AccessData = { employees: EmployeeRow[]; candidates: CandidateRow[] };
-
-const ROLE_LABELS: Record<string, string> = {
-  super_admin: 'Super Admin', school_admin: 'Admin', teacher: 'Enseignant', accountant: 'Comptable',
-  student: 'Élève', alumni: 'Ancien(ne) élève', parent: 'Tuteur', receptionist: 'Réceptionniste', guard: 'Gardien',
-};
 
 type Filter = 'all' | 'linked' | 'unlinked' | 'offboarded';
 
@@ -51,6 +46,8 @@ async function api<T>(url: string, init?: RequestInit): Promise<{ ok: boolean; s
 type Action = 'link' | 'offboard' | 'reactivate' | null;
 
 export function AccessLifecycleView() {
+  const t = useTranslations('HR');
+  const tCommon = useTranslations('Common');
   const router = useRouter();
   const [data, setData] = useState<AccessData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,14 +61,40 @@ export function AccessLifecycleView() {
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  const getRoleLabel = useCallback((role: string) => {
+    switch (role) {
+      case 'super_admin': return t('roleSuperAdmin');
+      case 'school_admin': return t('roleSchoolAdmin');
+      case 'teacher': return t('roleTeacher');
+      case 'accountant': return t('roleAccountant');
+      case 'student': return t('roleStudent');
+      case 'alumni': return t('roleAlumni');
+      case 'parent': return t('roleParent');
+      case 'receptionist': return t('roleReceptionist');
+      case 'guard': return t('roleGuard');
+      default: return role;
+    }
+  }, [t]);
+
+  const getStatusLabel = useCallback((status: string) => {
+    switch (status) {
+      case 'active': return t('statusActive');
+      case 'probation': return t('statusProbation');
+      case 'on_leave': return t('statusOnLeave');
+      case 'offboarded': return t('statusOffboarded');
+      case 'archived': return t('statusArchived');
+      default: return EMPLOYMENT_STATUS_LABELS[status as EmploymentStatus] ?? status;
+    }
+  }, [t]);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     const res = await api<AccessData>('/api/hr/access');
     if (res.ok && res.data) setData(res.data);
-    else setError(res.error?.message ?? 'Impossible de charger les accès.');
+    else setError(res.error?.message ?? t('accessErrorLoad'));
     setLoading(false);
-  }, []);
+  }, [t]);
 
   useEffect(() => { load().catch(() => {}); }, [load]);
 
@@ -90,7 +113,7 @@ export function AccessLifecycleView() {
     let res: { ok: boolean; error?: ApiErrorShape };
     if (action === 'link') {
       if (!candidateId) {
-        setActionError('Choisissez un compte à lier.');
+        setActionError(t('accessErrorSelectAccount'));
         setBusy(false);
         return;
       }
@@ -111,7 +134,7 @@ export function AccessLifecycleView() {
       setAction(null);
       await load();
     } else {
-      setActionError(res.error?.message ?? 'Opération impossible.');
+      setActionError(res.error?.message ?? t('accessErrorOperation'));
     }
   };
 
@@ -134,20 +157,22 @@ export function AccessLifecycleView() {
   }, [data, filter]);
 
   const kpis: Array<{ label: string; value: number; cls?: string }> = [
-    { label: 'Effectif', value: counts.total },
-    { label: 'Avec compte', value: counts.linked, cls: 'text-[#0b5c3a]' },
-    { label: 'Sans compte', value: counts.unlinked, cls: 'text-amber-600' },
-    { label: 'Désactivés', value: counts.offboarded, cls: 'text-red-600' },
+    { label: t('kpiTotalHeadcount'), value: counts.total },
+    { label: t('filterWithAccount'), value: counts.linked, cls: 'text-[#0b5c3a]' },
+    { label: t('filterWithoutAccount'), value: counts.unlinked, cls: 'text-amber-600' },
+    { label: t('statusOffboarded'), value: counts.offboarded, cls: 'text-red-600' },
   ];
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#16212B]">Accès & Sorties</h1>
-          <p className="mt-1 text-sm text-slate-500">Cycle de vie des comptes employés : liaison, désactivation et réactivation.</p>
+          <h1 className="text-2xl font-bold text-[#16212B]">{t('accessTitle')}</h1>
+          <p className="mt-1 text-sm text-slate-500">{t('accessSubtitle')}</p>
         </div>
-        <Button variant="outline" onClick={() => router.push('/dashboard/hr/employees/new')}><LogIn className="mr-2 h-4 w-4" /> Nouvel employé</Button>
+        <Button variant="outline" onClick={() => router.push('/dashboard/hr/employees/new')}>
+          <LogIn className="me-2 h-4 w-4 rtl:rotate-180" /> {t('btnNewEmployee')}
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -164,72 +189,72 @@ export function AccessLifecycleView() {
           <Select value={filter} onValueChange={v => setFilter(v as Filter)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
-              <SelectItem value="linked">Avec compte</SelectItem>
-              <SelectItem value="unlinked">Sans compte</SelectItem>
-              <SelectItem value="offboarded">Désactivés</SelectItem>
+              <SelectItem value="all">{tCommon('all')}</SelectItem>
+              <SelectItem value="linked">{t('filterWithAccount')}</SelectItem>
+              <SelectItem value="unlinked">{t('filterWithoutAccount')}</SelectItem>
+              <SelectItem value="offboarded">{t('statusOffboarded')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <p className="text-sm text-slate-500">{rows.length} employé(s)</p>
+        <p className="text-sm text-slate-500">{t('accessFilterCount', { count: rows.length })}</p>
       </div>
 
       <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
         {loading ? (
-          <p className="flex items-center gap-2 p-6 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Chargement…</p>
+          <p className="flex items-center gap-2 p-6 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> {tCommon('loading')}</p>
         ) : error ? (
           <p className="flex items-center gap-1 p-6 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error}</p>
         ) : rows.length === 0 ? (
-          <p className="p-6 text-center text-sm text-slate-500">Aucun employé dans ce filtre.</p>
+          <p className="p-6 text-center text-sm text-slate-500">{t('accessEmptyFilter')}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-100 text-left text-xs uppercase tracking-wide text-slate-400">
-                  <th className="py-2 pr-4 font-medium">Employé</th>
-                  <th className="py-2 pr-4 font-medium">Statut</th>
-                  <th className="py-2 pr-4 font-medium">Compte</th>
-                  <th className="py-2 text-right font-medium">Actions</th>
+                <tr className="border-b border-slate-100 text-start text-xs uppercase tracking-wide text-slate-400">
+                  <th className="py-2 pe-4 text-start font-medium">{t('colEmployee')}</th>
+                  <th className="py-2 pe-4 text-start font-medium">{tCommon('status')}</th>
+                  <th className="py-2 pe-4 text-start font-medium">{t('colAccount')}</th>
+                  <th className="py-2 text-end font-medium">{tCommon('actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map(emp => (
                   <tr key={emp.id} className="border-b border-slate-50 hover:bg-slate-50/60">
-                    <td className="py-3 pr-4">
-                      <button className="text-left" onClick={() => router.push(`/dashboard/hr/employees/${emp.id}`)}>
+                    <td className="py-3 pe-4 text-start">
+                      <button className="text-start" onClick={() => router.push(`/dashboard/hr/employees/${emp.id}`)}>
                         <p className="font-medium text-[#16212B]">{emp.displayName}</p>
                         <p className="font-mono text-xs text-slate-400">{emp.employeeId || '—'}</p>
                       </button>
                     </td>
-                    <td className="py-3 pr-4">
+                    <td className="py-3 pe-4 text-start">
                       <Badge className={EMPLOYMENT_STATUS_STYLES[emp.employmentStatus]}>
-                        {EMPLOYMENT_STATUS_LABELS[emp.employmentStatus as EmploymentStatus]}
+                        {getStatusLabel(emp.employmentStatus)}
                       </Badge>
                     </td>
-                    <td className="py-3 pr-4">
+                    <td className="py-3 pe-4 text-start">
                       {emp.userId ? (
                         <div>
-                          <span className="flex items-center gap-1 text-[#0b5c3a]"><KeyRound className="h-3.5 w-3.5" /> Lié</span>
+                          <span className="flex items-center gap-1 text-[#0b5c3a]"><KeyRound className="h-3.5 w-3.5" /> {t('linkedAccount')}</span>
                           <p className="mt-0.5 truncate text-xs text-slate-500">{emp.accountEmail || emp.accountName}</p>
                         </div>
                       ) : (
-                        <span className="text-amber-600">Sans compte</span>
+                        <span className="text-amber-600">{t('unlinkedAccount')}</span>
                       )}
                     </td>
-                    <td className="py-3 text-right">
+                    <td className="py-3 text-end">
                       <div className="flex items-center justify-end gap-2">
                         {!emp.userId && emp.employmentStatus !== 'offboarded' && (
                           <Button size="sm" variant="outline" onClick={() => openAction('link', emp)}>
-                            <KeyRound className="mr-1.5 h-3.5 w-3.5" /> Lier un compte
+                            <KeyRound className="me-1.5 h-3.5 w-3.5" /> {t('btnLinkAccount')}
                           </Button>
                         )}
                         {emp.employmentStatus === 'offboarded' ? (
                           <Button size="sm" variant="outline" className="text-[#0b5c3a]" onClick={() => openAction('reactivate', emp)}>
-                            <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Réactiver
+                            <RotateCcw className="me-1.5 h-3.5 w-3.5" /> {t('btnReactivate')}
                           </Button>
                         ) : (
                           <Button size="sm" variant="outline" className="text-red-600" onClick={() => openAction('offboard', emp)}>
-                            <UserRoundX className="mr-1.5 h-3.5 w-3.5" /> Désactiver
+                            <UserRoundX className="me-1.5 h-3.5 w-3.5" /> {t('btnOffboard')}
                           </Button>
                         )}
                       </div>
@@ -246,44 +271,42 @@ export function AccessLifecycleView() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {action === 'link' && 'Lier un compte utilisateur'}
-              {action === 'offboard' && `Désactiver ${target?.displayName ?? ''}`}
-              {action === 'reactivate' && `Réactiver ${target?.displayName ?? ''}`}
+              {action === 'link' && t('accessDialogLinkTitle')}
+              {action === 'offboard' && `${t('btnOffboard')} : ${target?.displayName ?? ''}`}
+              {action === 'reactivate' && `${t('btnReactivate')} : ${target?.displayName ?? ''}`}
             </DialogTitle>
           </DialogHeader>
 
           {action === 'link' && (
-            <div className="space-y-3">
+            <div className="space-y-3 text-start">
               <p className="text-sm text-slate-500">
-                Associez un compte existant (non lié) à ce dossier employé. Cette liaison est définitive.
+                {t('accessDialogLinkDesc')}
               </p>
               <div>
-                <Label className="mb-1 block text-sm font-medium text-slate-700">Compte utilisateur</Label>
+                <Label className="mb-1 block text-sm font-medium text-slate-700">{t('accessSelectUserAccount')}</Label>
                 <Select value={candidateId} onValueChange={setCandidateId}>
-                  <SelectTrigger><SelectValue placeholder="Choisir un compte" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('accessSelectPlaceholder')} /></SelectTrigger>
                   <SelectContent>
                     {(data?.candidates ?? []).map(c => (
                       <SelectItem key={c.id} value={c.id}>
-                        {c.name} — {c.email} ({ROLE_LABELS[c.role] ?? c.role})
+                        {c.name} — {c.email} ({getRoleLabel(c.role)})
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 {(data?.candidates ?? []).length === 0 && (
-                  <p className="mt-2 text-xs text-amber-600">Aucun compte non lié disponible dans cet établissement.</p>
+                  <p className="mt-2 text-xs text-amber-600">{t('accessNoUnlinkedAccounts')}</p>
                 )}
               </div>
             </div>
           )}
 
           {action !== 'link' && (
-            <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Motif (facultatif)</Label>
-              <Textarea value={reason} onChange={e => setReason(e.target.value)} rows={3} placeholder="Raison de la sortie / de la réactivation…" />
+            <div className="text-start">
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('accessReasonOptional')}</Label>
+              <Textarea value={reason} onChange={e => setReason(e.target.value)} rows={3} placeholder={t('accessReasonPlaceholder')} />
               <p className="mt-2 text-xs text-slate-500">
-                {action === 'offboard'
-                  ? 'La sortie désactive l\'accès au compte lié tout en conservant l\'historique (paie, congés, documents).'
-                  : 'La réactivation rétablit le statut actif et réactive l\'accès du compte lié.'}
+                {action === 'offboard' ? t('accessOffboardDesc') : t('accessReactivateDesc')}
               </p>
             </div>
           )}
@@ -292,13 +315,13 @@ export function AccessLifecycleView() {
             <p className="flex items-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{actionError}</p>
           )}
 
-          <DialogFooter>
-            <Button variant="outline" disabled={busy} onClick={() => setAction(null)}>Annuler</Button>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" disabled={busy} onClick={() => setAction(null)}>{tCommon('cancel')}</Button>
             <Button onClick={submit} disabled={busy}>
-              {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {action === 'link' && 'Lier le compte'}
-              {action === 'offboard' && 'Confirmer la sortie'}
-              {action === 'reactivate' && 'Confirmer la réactivation'}
+              {busy && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+              {action === 'link' && t('btnLinkAccount')}
+              {action === 'offboard' && t('accessConfirmOffboard')}
+              {action === 'reactivate' && t('accessConfirmReactivate')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ type Row = {
   id: string; name: string; code: string; categoryId: string | null;
   purchaseUnitId: string | null; saleUnitId: string | null; unitRatio: string;
   purchasePrice: number | null; salePrice: number | null; remarks: string | null; isActive: boolean;
+  reorderPoint: number | null; reorderQuantity: number | null;
   stockByStore: StockByStore[]; totalStock: string; marginWarning: boolean;
 };
 
@@ -36,13 +38,20 @@ async function api<T>(url: string, init?: RequestInit): Promise<{ ok: boolean; s
     const json = await res.json().catch(() => ({}));
     return { ok: res.ok, status: res.status, ...json };
   } catch {
-    return { ok: false, status: 0, error: { code: 'NETWORK_ERROR', message: 'Impossible de joindre le serveur.' } };
+    return { ok: false, status: 0, error: { code: 'NETWORK_ERROR', message: 'Network error.' } };
   }
 }
 
-const fmtPrice = (v: number | null) => (v === null || v === undefined ? '—' : `${v.toLocaleString('fr-FR')} DH`);
+export function ProductsView({ locale: initialLocale }: { locale?: string } = {}) {
+  const currentLocale = useLocale();
+  const locale = initialLocale || currentLocale;
+  const t = useTranslations('Inventory');
+  const tCommon = useTranslations('Common');
 
-export function ProductsView() {
+  const dateLocale = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR';
+  const fmtPrice = (v: number | null) =>
+    (v === null || v === undefined ? '—' : `${v.toLocaleString(dateLocale, { minimumFractionDigits: 2 })} ${tCommon('currency')}`);
+
   const [rows, setRows] = useState<Row[]>([]);
   const [categories, setCategories] = useState<CategoryRef[]>([]);
   const [units, setUnits] = useState<UnitRef[]>([]);
@@ -57,7 +66,7 @@ export function ProductsView() {
 
   const [form, setForm] = useState({
     name: '', code: '', categoryId: '', purchaseUnitId: '', saleUnitId: '',
-    unitRatio: '1', purchasePrice: '', salePrice: '', remarks: '',
+    unitRatio: '1', purchasePrice: '', salePrice: '', reorderPoint: '', reorderQuantity: '', remarks: '',
   });
 
   const load = useCallback(async () => {
@@ -69,9 +78,9 @@ export function ProductsView() {
     if (search.trim()) qs.set('search', search.trim());
     const res = await api<Row[]>(`/api/addons/inventory/products?${qs.toString()}`);
     if (res.ok && Array.isArray(res.data)) setRows(res.data);
-    else setError(res.error?.message ?? 'Chargement impossible.');
+    else setError(res.error?.message ?? tCommon('networkError'));
     setLoading(false);
-  }, [search, categoryFilter, showArchived]);
+  }, [search, categoryFilter, showArchived, tCommon]);
 
   const loadRefs = useCallback(async () => {
     const [catRes, unitRes] = await Promise.all([
@@ -96,7 +105,7 @@ export function ProductsView() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', code: '', categoryId: '', purchaseUnitId: '', saleUnitId: '', unitRatio: '1', purchasePrice: '', salePrice: '', remarks: '' });
+    setForm({ name: '', code: '', categoryId: '', purchaseUnitId: '', saleUnitId: '', unitRatio: '1', purchasePrice: '', salePrice: '', reorderPoint: '', reorderQuantity: '', remarks: '' });
     setModalOpen(true);
   };
 
@@ -107,6 +116,8 @@ export function ProductsView() {
       saleUnitId: row.saleUnitId ?? '', unitRatio: row.unitRatio || '1',
       purchasePrice: row.purchasePrice === null || row.purchasePrice === undefined ? '' : String(row.purchasePrice),
       salePrice: row.salePrice === null || row.salePrice === undefined ? '' : String(row.salePrice),
+      reorderPoint: row.reorderPoint === null || row.reorderPoint === undefined ? '' : String(row.reorderPoint),
+      reorderQuantity: row.reorderQuantity === null || row.reorderQuantity === undefined ? '' : String(row.reorderQuantity),
       remarks: row.remarks ?? '',
     });
     setModalOpen(true);
@@ -125,6 +136,8 @@ export function ProductsView() {
       unitRatio: form.unitRatio.trim() || '1',
       purchasePrice: form.purchasePrice.trim() === '' ? null : Number(form.purchasePrice),
       salePrice: form.salePrice.trim() === '' ? null : Number(form.salePrice),
+      reorderPoint: form.reorderPoint.trim() === '' ? null : Number(form.reorderPoint),
+      reorderQuantity: form.reorderQuantity.trim() === '' ? null : Number(form.reorderQuantity),
       remarks: form.remarks.trim() || null,
     };
     const res = editing
@@ -135,7 +148,7 @@ export function ProductsView() {
       setModalOpen(false);
       await load();
     } else {
-      setError(res.error?.message ?? 'Enregistrement impossible.');
+      setError(res.error?.message ?? tCommon('networkError'));
     }
   };
 
@@ -143,43 +156,43 @@ export function ProductsView() {
     setError(null);
     const res = await api(`/api/addons/inventory/products/${row.id}`, { method: 'DELETE' });
     if (res.ok) await load();
-    else setError(res.error?.message ?? 'Archivage impossible.');
+    else setError(res.error?.message ?? tCommon('networkError'));
   };
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#16212B]">Produits</h1>
-          <p className="text-sm text-slate-500">Catalogue des produits : le stock ne vit que dans le journal (voir Stock).</p>
+          <h1 className="text-2xl font-bold text-[#16212B]">{t('productsTitle')}</h1>
+          <p className="text-sm text-slate-500">{t('productsSubtitle')}</p>
         </div>
-        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" /> Nouveau produit</Button>
+        <Button onClick={openCreate}><Plus className="me-2 h-4 w-4" /> {t('newProductBtn')}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#D1F5E8] text-[#16212B]"><Package className="h-5 w-5" /></div>
-            <div><p className="text-sm text-slate-500">Produits</p><p className="text-2xl font-bold text-[#16212B]">{rows.length}</p></div>
+            <div><p className="text-sm text-slate-500">{t('productsCount')}</p><p className="text-2xl font-bold text-[#16212B]">{rows.length}</p></div>
           </div>
         </Card>
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-[#16212B]"><Box className="h-5 w-5" /></div>
-            <div><p className="text-sm text-slate-500">Stock total (unités)</p><p className="text-2xl font-bold text-[#16212B]">{totalStockMilli}</p></div>
+            <div><p className="text-sm text-slate-500">{t('totalStockUnits')}</p><p className="text-2xl font-bold text-[#16212B]">{totalStockMilli}</p></div>
           </div>
         </Card>
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-[#16212B]"><TriangleAlert className="h-5 w-5" /></div>
             <div className="flex flex-col gap-1">
-              <p className="text-sm text-slate-500">Ruptures</p>
+              <p className="text-sm text-slate-500">{t('lowStockAlerts')}</p>
               <button
                 type="button"
                 onClick={() => setShowArchived(v => !v)}
-                className="text-left text-sm font-semibold text-[#2487B8] hover:underline"
+                className="text-start text-sm font-semibold text-[#2487B8] hover:underline"
               >
-                {showArchived ? 'Voir actifs' : `Voir archivés (${lowStock})`}
+                {showArchived ? t('viewActive') : t('outOfStockCount', { count: lowStock })}
               </button>
             </div>
           </div>
@@ -190,18 +203,18 @@ export function ProductsView() {
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 p-4">
           <div className="flex flex-1 flex-wrap items-center gap-3">
             <div className="relative w-full max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Rechercher un produit…"
-                className="pl-9"
+                placeholder={t('searchProductsPlaceholder')}
+                className="ps-9"
               />
             </div>
             <Select value={categoryFilter || 'all'} onValueChange={v => setCategoryFilter(v === 'all' ? '' : v)}>
-              <SelectTrigger className="w-52"><SelectValue placeholder="Toutes les catégories" /></SelectTrigger>
+              <SelectTrigger className="w-52"><SelectValue placeholder={t('allCategories')} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Toutes les catégories</SelectItem>
+                <SelectItem value="all">{t('allCategories')}</SelectItem>
                 {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -211,9 +224,9 @@ export function ProductsView() {
 
         <div className="divide-y divide-slate-100">
           {loading ? (
-            <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Chargement…</div>
+            <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> {tCommon('loading')}</div>
           ) : rows.length === 0 ? (
-            <div className="p-10 text-center text-sm text-slate-500">Aucun produit trouvé.</div>
+            <div className="p-10 text-center text-sm text-slate-500">{t('noProductsFound')}</div>
           ) : (
             rows.map(row => (
               <div key={row.id} className="flex items-center justify-between gap-4 p-4">
@@ -223,7 +236,7 @@ export function ProductsView() {
                     <p className="flex items-center gap-2 font-semibold text-[#16212B]">
                       {row.name}
                       {row.marginWarning && (
-                        <Badge variant="warning" className="gap-1"><TriangleAlert className="h-3 w-3" />Marge</Badge>
+                        <Badge variant="warning" className="gap-1"><TriangleAlert className="h-3 w-3" />{t('marginWarningBadge')}</Badge>
                       )}
                     </p>
                     <p className="text-xs text-slate-500">
@@ -231,19 +244,19 @@ export function ProductsView() {
                       {row.purchaseUnitId && row.saleUnitId && ` · ${unitName(row.purchaseUnitId)} → ${unitName(row.saleUnitId)}`}
                     </p>
                     <p className="text-xs text-slate-400">
-                      Achat {fmtPrice(row.purchasePrice)} · Vente {fmtPrice(row.salePrice)}
+                      {t('purchasePricePrefix', { price: fmtPrice(row.purchasePrice) })} · {t('salePricePrefix', { price: fmtPrice(row.salePrice) })}
                     </p>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <div className="flex items-center gap-2">
                     <Badge variant={Number(row.totalStock || 0) > 0 ? 'info' : 'neutral'}>
-                      Stock total : {row.totalStock || '0'}
+                      {t('totalStockBadge', { stock: row.totalStock || '0' })}
                     </Badge>
-                    <Badge variant={row.isActive ? 'success' : 'neutral'}>{row.isActive ? 'Actif' : 'Archivé'}</Badge>
+                    <Badge variant={row.isActive ? 'success' : 'neutral'}>{row.isActive ? tCommon('active') : t('archived')}</Badge>
                   </div>
                   {row.stockByStore.length > 0 && (
-                    <p className="max-w-md truncate text-right text-xs text-slate-400">
+                    <p className="max-w-md truncate text-end text-xs text-slate-400">
                       {row.stockByStore.map(b => `${b.storeName}: ${b.quantity}`).join(' · ')}
                     </p>
                   )}
@@ -262,74 +275,86 @@ export function ProductsView() {
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{editing ? 'Modifier le produit' : 'Nouveau produit'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editing ? t('editProductTitle') : t('createProductTitle')}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Nom *</label>
-                <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ex : Ramettes A4 80g" />
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('productNameLabel')} *</label>
+                <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder={t('productNamePlaceholder')} />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Code *</label>
-                <Input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} placeholder="Ex : PRD-001" />
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('productCodeLabel')} *</label>
+                <Input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} placeholder={t('productCodePlaceholder')} />
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Catégorie</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('categoryLabel')}</label>
               <Select value={form.categoryId || 'none'} onValueChange={v => setForm({ ...form, categoryId: v === 'none' ? '' : v })}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('selectCategory')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Aucune</SelectItem>
+                  <SelectItem value="none">{t('noneOption')}</SelectItem>
                   {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Unité d&apos;achat</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('purchaseUnitLabel')}</label>
                 <Select value={form.purchaseUnitId || 'none'} onValueChange={v => setForm({ ...form, purchaseUnitId: v === 'none' ? '' : v })}>
                   <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Aucune</SelectItem>
+                    <SelectItem value="none">{t('noneOption')}</SelectItem>
                     {units.map(u => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Unité de vente</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('saleUnitLabel')}</label>
                 <Select value={form.saleUnitId || 'none'} onValueChange={v => setForm({ ...form, saleUnitId: v === 'none' ? '' : v })}>
                   <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Aucune</SelectItem>
+                    <SelectItem value="none">{t('noneOption')}</SelectItem>
                     {units.map(u => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Ratio (vte/achat)</label>
-                <Input value={form.unitRatio} onChange={e => setForm({ ...form, unitRatio: e.target.value })} placeholder="Ex : 1" />
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('unitRatioLabel')}</label>
+                <Input value={form.unitRatio} onChange={e => setForm({ ...form, unitRatio: e.target.value })} placeholder={t('unitRatioPlaceholder')} />
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Prix d&apos;achat (DH)</label>
-                <Input type="number" min={0} step="0.01" value={form.purchasePrice} onChange={e => setForm({ ...form, purchasePrice: e.target.value })} placeholder="Ex : 45.00" />
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('purchasePriceLabel')} ({tCommon('currency')})</label>
+                <Input type="number" min={0} step="0.01" value={form.purchasePrice} onChange={e => setForm({ ...form, purchasePrice: e.target.value })} placeholder={t('purchasePricePlaceholder')} />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Prix de vente (DH)</label>
-                <Input type="number" min={0} step="0.01" value={form.salePrice} onChange={e => setForm({ ...form, salePrice: e.target.value })} placeholder="Ex : 60.00" />
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('salePriceLabel')} ({tCommon('currency')})</label>
+                <Input type="number" min={0} step="0.01" value={form.salePrice} onChange={e => setForm({ ...form, salePrice: e.target.value })} placeholder={t('salePricePlaceholder')} />
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('reorderPointLabel')}</label>
+                <Input type="number" min={0} step="0.001" value={form.reorderPoint} onChange={e => setForm({ ...form, reorderPoint: e.target.value })} placeholder={t('reorderPointPlaceholder')} />
+                <p className="mt-1 text-[11px] text-slate-500">{t('reorderPointHint')}</p>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('reorderQtyLabel')}</label>
+                <Input type="number" min={0} step="0.001" value={form.reorderQuantity} onChange={e => setForm({ ...form, reorderQuantity: e.target.value })} placeholder={t('reorderQtyPlaceholder')} />
+                <p className="mt-1 text-[11px] text-slate-500">{t('reorderQtyHint')}</p>
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Remarques</label>
-              <Textarea value={form.remarks} onChange={e => setForm({ ...form, remarks: e.target.value })} rows={2} />
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('remarksLabel')}</label>
+              <Textarea value={form.remarks} onChange={e => setForm({ ...form, remarks: e.target.value })} rows={2} placeholder={t('remarksPlaceholder')} />
             </div>
             {error && <p className="flex items-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error}</p>}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>{tCommon('cancel')}</Button>
             <Button onClick={save} disabled={saving || !form.name.trim() || !form.code.trim()}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Enregistrer
+              {saving && <Loader2 className="me-2 h-4 w-4 animate-spin" />} {tCommon('save')}
             </Button>
           </DialogFooter>
         </DialogContent>

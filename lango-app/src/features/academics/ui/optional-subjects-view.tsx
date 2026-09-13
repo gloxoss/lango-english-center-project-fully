@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,9 @@ type ApiStudent = { id: string; fullName: string };
 type ApiChoice = { id: string; studentId: string; studentName: string; subjectId: string };
 
 export function OptionalSubjectsView() {
+  const t = useTranslations('Academics');
+  const tc = useTranslations('Common');
+
   const [classes, setClasses] = useState<ApiClass[]>([]);
   const [subjects, setSubjects] = useState<ApiSubject[]>([]);
   const [groups, setGroups] = useState<ApiElectiveGroup[]>([]);
@@ -86,7 +90,7 @@ export function OptionalSubjectsView() {
 
   async function handleCreateGroup() {
     if (!newGroup.classId || !newGroup.name || newGroup.subjectIds.length < 2) {
-      setError('Classe, nom et au moins 2 matières sont requis.');
+      setError(t('electiveGroupValidation'));
       return;
     }
     setSaving(true);
@@ -104,7 +108,7 @@ export function OptionalSubjectsView() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.message || 'Échec de la création.');
+        setError(json.message || t('electiveCreationFailed'));
         return;
       }
       setSuccess(json.message);
@@ -113,7 +117,7 @@ export function OptionalSubjectsView() {
       await loadGroups();
     } catch (err) {
       console.error('Elective group create failed', err);
-      setError('Connexion impossible. Vérifiez votre réseau.');
+      setError(t('electiveGroupNetworkError'));
     } finally {
       setSaving(false);
     }
@@ -141,7 +145,7 @@ export function OptionalSubjectsView() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.message || 'Échec de l\'affectation.');
+        setError(json.message || t('electiveAssignFailed'));
         return;
       }
       setAssignStudentId('');
@@ -153,7 +157,7 @@ export function OptionalSubjectsView() {
       }
     } catch (err) {
       console.error('Choice assign failed', err);
-      setError('Connexion impossible. Vérifiez votre réseau.');
+      setError(t('electiveGroupNetworkError'));
     }
   }
 
@@ -162,11 +166,11 @@ export function OptionalSubjectsView() {
       <div className="flex-1 space-y-6 min-w-0">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Matières optionnelles</h1>
-            <p className="text-xs text-slate-500 mt-1">Groupes de choix et affectation des élèves</p>
+            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('optionalSubjectsTitle')}</h1>
+            <p className="text-xs text-slate-500 mt-1">{t('optionalSubjectsSubtitle')}</p>
           </div>
           <Button variant="primary" size="sm" className="gap-2 h-10 rounded-full px-4 text-xs" onClick={() => setIsAddOpen(true)}>
-            <Plus className="w-4 h-4" /> Nouveau groupe
+            <Plus className="w-4 h-4" /> {t('newElectiveGroup')}
           </Button>
         </div>
 
@@ -184,7 +188,7 @@ export function OptionalSubjectsView() {
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {groups.length === 0 && <p className="text-xs text-slate-400">Aucun groupe de matières optionnelles.</p>}
+          {groups.length === 0 && <p className="text-xs text-slate-400">{t('noElectiveGroups')}</p>}
           {groups.map(group => (
             <Card
               key={group.id}
@@ -197,7 +201,12 @@ export function OptionalSubjectsView() {
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <p className="text-[10px] text-slate-400 mt-1">{classes.find(c => c.id === group.classId)?.name ?? '—'} • max {group.maxChoices} choix</p>
+              <p className="text-[10px] text-slate-400 mt-1">
+                {t('maxChoicesDesc', {
+                  className: classes.find(c => c.id === group.classId)?.name ?? '—',
+                  maxChoices: group.maxChoices,
+                })}
+              </p>
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {group.subjects.map(s => <Badge key={s.id} variant="neutral" className="text-[10px]">{s.name}</Badge>)}
               </div>
@@ -208,34 +217,36 @@ export function OptionalSubjectsView() {
         {selectedGroup && (
           <Card className="bg-white rounded-2xl shadow-2xs border border-slate-200/80 overflow-hidden">
             <div className="p-4 border-b border-slate-100 flex flex-wrap items-center gap-2 justify-between">
-              <h3 className="text-sm font-bold text-[#16212B]">Choix des élèves — {selectedGroup.name}</h3>
+              <h3 className="text-sm font-bold text-[#16212B]">
+                {t('studentChoicesHeader', { groupName: selectedGroup.name })}
+              </h3>
               <div className="flex items-center gap-2">
                 <Select value={assignStudentId} onValueChange={setAssignStudentId}>
-                  <SelectTrigger className="w-[160px] h-9 text-xs rounded-full"><SelectValue placeholder="Élève" /></SelectTrigger>
+                  <SelectTrigger className="w-[160px] h-9 text-xs rounded-full"><SelectValue placeholder={t('selectStudentPlaceholder')} /></SelectTrigger>
                   <SelectContent>
                     {roster.map(s => <SelectItem key={s.id} value={s.id}>{s.fullName}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Select value={assignSubjectId} onValueChange={setAssignSubjectId}>
-                  <SelectTrigger className="w-[140px] h-9 text-xs rounded-full"><SelectValue placeholder="Matière" /></SelectTrigger>
+                  <SelectTrigger className="w-[140px] h-9 text-xs rounded-full"><SelectValue placeholder={t('selectSubjectPlaceholder')} /></SelectTrigger>
                   <SelectContent>
                     {selectedGroup.subjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <Button size="sm" className="h-9 rounded-full text-xs" onClick={handleAssignChoice}>Affecter</Button>
+                <Button size="sm" className="h-9 rounded-full text-xs" onClick={handleAssignChoice}>{t('btnAssign')}</Button>
               </div>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left rtl:text-right text-xs">
                 <thead className="bg-[#F6F9FC] text-slate-500 font-semibold border-b border-slate-200/80">
                   <tr>
-                    <th className="py-3 px-4">Élève</th>
-                    <th className="py-3 px-4">Matière choisie</th>
+                    <th className="py-3 px-4">{t('colStudent')}</th>
+                    <th className="py-3 px-4">{t('colChosenSubject')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
                   {choices.length === 0 && (
-                    <tr><td colSpan={2} className="py-6 px-4 text-center text-slate-400">Aucun choix enregistré.</td></tr>
+                    <tr><td colSpan={2} className="py-6 px-4 text-center text-slate-400">{t('noChoicesRecorded')}</td></tr>
                   )}
                   {choices.map(c => (
                     <tr key={c.id}>
@@ -253,28 +264,28 @@ export function OptionalSubjectsView() {
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="max-w-md bg-white rounded-2xl p-6">
           <DialogHeader>
-            <DialogTitle className="text-lg font-extrabold text-[#16212B]">Nouveau groupe de matières optionnelles</DialogTitle>
+            <DialogTitle className="text-lg font-extrabold text-[#16212B]">{t('newElectiveGroupModalTitle')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 my-2 text-xs">
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Nom du groupe *</label>
-              <Input value={newGroup.name} onChange={e => setNewGroup({ ...newGroup, name: e.target.value })} placeholder="Ex. Options 2ème Bac" className="h-9 text-xs rounded-xl" />
+              <label className="font-bold text-slate-700 block mb-1">{t('groupNameLabel')} *</label>
+              <Input value={newGroup.name} onChange={e => setNewGroup({ ...newGroup, name: e.target.value })} placeholder={t('groupNamePlaceholder')} className="h-9 text-xs rounded-xl" />
             </div>
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Classe *</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('classSelectLabel')} *</label>
               <Select value={newGroup.classId} onValueChange={v => setNewGroup({ ...newGroup, classId: v })}>
-                <SelectTrigger className="h-9 text-xs rounded-xl"><SelectValue placeholder="Sélectionnez une classe" /></SelectTrigger>
+                <SelectTrigger className="h-9 text-xs rounded-xl"><SelectValue placeholder={t('selectClassPlaceholder')} /></SelectTrigger>
                 <SelectContent>
                   {classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Nombre de choix max</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('maxChoicesLabel')}</label>
               <Input type="number" min="1" max="10" value={newGroup.maxChoices} onChange={e => setNewGroup({ ...newGroup, maxChoices: e.target.value })} className="h-9 text-xs rounded-xl" />
             </div>
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Matières (min. 2) *</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('minSubjectsLabel')} *</label>
               <div className="flex flex-wrap gap-1.5">
                 {subjects.map(s => (
                   <button
@@ -290,11 +301,14 @@ export function OptionalSubjectsView() {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIsAddOpen(false)} className="rounded-full text-xs h-9">Annuler</Button>
-            <Button variant="primary" disabled={saving} onClick={handleCreateGroup} className="rounded-full text-xs h-9 bg-[#0066FF] text-white">{saving ? 'Création...' : 'Créer'}</Button>
+            <Button variant="outline" onClick={() => setIsAddOpen(false)} className="rounded-full text-xs h-9">{tc('cancel')}</Button>
+            <Button variant="primary" disabled={saving} onClick={handleCreateGroup} className="rounded-full text-xs h-9 bg-[#0066FF] text-white">
+              {saving ? t('btnCreatingElective') : t('btnCreateElective')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
+

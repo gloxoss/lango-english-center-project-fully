@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -40,20 +41,22 @@ type Overview = {
 function fmtDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
-
-function directionLabel(d: string): string {
-  if (d === 'entry') return 'Entrée';
-  if (d === 'exit') return 'Sortie';
-  return 'Entrée & sortie';
+  return d.toLocaleString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 export function GuardHomeView() {
+  const t = useTranslations('Guard');
+  const tCommon = useTranslations('Common');
   const [overview, setOverview] = useState<Overview | null>(null);
   const [incidents, setIncidents] = useState<Array<{ id: string; severity: string; status: string; category: string; description: string }>>([]);
   const [emergencyActive, setEmergencyActive] = useState<{ active: boolean; acknowledged: boolean }>({ active: false, acknowledged: false });
   const [error, setError] = useState<string | null>(null);
+
+  const directionLabel = (d: string): string => {
+    if (d === 'entry') return t('dirEntry');
+    if (d === 'exit') return t('dirExit');
+    return t('dirBoth');
+  };
 
   const load = useCallback(async () => {
     setError(null);
@@ -63,10 +66,10 @@ export function GuardHomeView() {
       api<{ procedures: unknown[]; contacts: unknown[]; emergency: { active: boolean; acknowledged: boolean } }>('/api/guard/emergency/procedures'),
     ]);
     if (ov.ok && ov.data) setOverview(ov.data);
-    else if (ov.error) setError(ov.error.message ?? 'Chargement impossible.');
+    else if (ov.error) setError(ov.error.message ?? tCommon('loading'));
     if (inc.ok && Array.isArray(inc.data)) setIncidents(inc.data);
     if (emg.ok && emg.data) setEmergencyActive(emg.data.emergency);
-  }, []);
+  }, [tCommon]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -77,18 +80,18 @@ export function GuardHomeView() {
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">Accueil du portail</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('portalHome')}</h1>
           <p className="mt-0.5 text-xs font-medium text-slate-500">
             {overview
-              ? `${overview.shift.shift?.name ?? 'Quart actif'} · ${overview.shift.gate?.gateName ?? ''} · ${directionLabel(overview.shift.gate?.direction ?? 'both')}`
-              : error ?? 'Chargement…'}
+              ? `${overview.shift.shift?.name ?? t('activeShift')} · ${overview.shift.gate?.gateName ?? ''} · ${directionLabel(overview.shift.gate?.direction ?? 'both')}`
+              : error ?? tCommon('loading')}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {emergencyActive.active && (
-            <Badge className="animate-pulse bg-rose-600 text-white"><AlertTriangle className="mr-1 h-3.5 w-3.5" /> URGENCE ACTIVE</Badge>
+            <Badge className="animate-pulse bg-rose-600 text-white"><AlertTriangle className="mr-1 h-3.5 w-3.5" /> {t('activeEmergencyBadge')}</Badge>
           )}
-          <Badge className="bg-[#DCEBF4] text-[#1B6C93]"><DoorOpen className="mr-1 h-3.5 w-3.5" /> Sécurité</Badge>
+          <Badge className="bg-[#DCEBF4] text-[#1B6C93]"><DoorOpen className="mr-1 h-3.5 w-3.5" /> {t('catSecurity')}</Badge>
         </div>
       </div>
 
@@ -98,29 +101,29 @@ export function GuardHomeView() {
         <Link href="/dashboard/portals/guard/scanner">
           <Card className="group h-full rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs transition hover:border-[#1B6C93]/40 hover:shadow-md">
             <QrCode className="h-8 w-8 text-[#1B6C93]" />
-            <p className="mt-3 font-extrabold text-[#16212B]">Scanner</p>
-            <p className="mt-0.5 text-xs text-slate-500">Vérifier un badge entrée/sortie</p>
+            <p className="mt-3 font-extrabold text-[#16212B]">{t('scannerTitle')}</p>
+            <p className="mt-0.5 text-xs text-slate-500">{t('scanBadgeCard')}</p>
           </Card>
         </Link>
         <Link href="/dashboard/portals/guard/visitors">
           <Card className="group h-full rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs transition hover:border-[#1B6C93]/40 hover:shadow-md">
             <Users className="h-8 w-8 text-[#1B6C93]" />
-            <p className="mt-3 font-extrabold text-[#16212B]">Visiteurs</p>
-            <p className="mt-0.5 text-xs text-slate-500">Pointage entrée/sortie, pass, invitations</p>
+            <p className="mt-3 font-extrabold text-[#16212B]">{t('visitorsTitle')}</p>
+            <p className="mt-0.5 text-xs text-slate-500">{t('visitorsCardDesc')}</p>
           </Card>
         </Link>
         <Link href="/dashboard/portals/guard/pickups">
           <Card className="group h-full rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs transition hover:border-[#1B6C93]/40 hover:shadow-md">
             <LogOut className="h-8 w-8 text-[#1B6C93]" />
-            <p className="mt-3 font-extrabold text-[#16212B]">Sorties</p>
-            <p className="mt-0.5 text-xs text-slate-500">Remise des élèves autorisée</p>
+            <p className="mt-3 font-extrabold text-[#16212B]">{t('pickupsTitle')}</p>
+            <p className="mt-0.5 text-xs text-slate-500">{t('pickupsCardDesc')}</p>
           </Card>
         </Link>
         <Link href="/dashboard/portals/guard/incidents">
           <Card className="group h-full rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs transition hover:border-[#1B6C93]/40 hover:shadow-md">
             <ShieldAlert className="h-8 w-8 text-[#1B6C93]" />
-            <p className="mt-3 font-extrabold text-[#16212B]">Incidents</p>
-            <p className="mt-0.5 text-xs text-slate-500">Signaler et suivre les incidents</p>
+            <p className="mt-3 font-extrabold text-[#16212B]">{t('incidentsTitle')}</p>
+            <p className="mt-0.5 text-xs text-slate-500">{t('incidentsCardDesc')}</p>
           </Card>
         </Link>
       </div>
@@ -128,49 +131,49 @@ export function GuardHomeView() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center justify-between">
-            <h2 className="flex items-center gap-2 font-extrabold text-[#16212B]"><Clock className="h-4 w-4 text-[#1B6C93]" /> Attendus aujourd&apos;hui</h2>
+            <h2 className="flex items-center gap-2 font-extrabold text-[#16212B]"><Clock className="h-4 w-4 text-[#1B6C93]" /> {t('expectedToday')}</h2>
             <span className="text-xs text-slate-400">{(overview?.expected.visitors.length ?? 0) + (overview?.expected.pickups.length ?? 0)}</span>
           </div>
 
-          <p className="mt-4 text-xs font-bold uppercase tracking-wide text-slate-400">Visiteurs attendus</p>
+          <p className="mt-4 text-xs font-bold uppercase tracking-wide text-slate-400">{t('expectedVisitors')}</p>
           {overview?.expected.visitors.length ? (
             <div className="mt-2 divide-y divide-slate-100">
               {overview.expected.visitors.map(v => (
                 <div key={v.id} className="flex items-center justify-between gap-3 py-2.5">
                   <div className="min-w-0">
                     <p className="font-semibold text-[#16212B]">{v.visitorFirstName} {v.visitorLastName}</p>
-                    <p className="truncate text-xs text-slate-500">{v.purpose}{v.hostName ? ` · hôte ${v.hostName}` : ''}</p>
+                    <p className="truncate text-xs text-slate-500">{v.purpose}{v.hostName ? ` · ${t('hostLabel', { name: v.hostName })}` : ''}</p>
                   </div>
                   <span className="shrink-0 font-mono text-xs text-slate-400">{v.expectedStart}–{v.expectedEnd}</span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="mt-2 text-sm text-slate-400">Aucun visiteur attendu aujourd&apos;hui.</p>
+            <p className="mt-2 text-sm text-slate-400">{t('noExpectedVisitors')}</p>
           )}
 
-          <p className="mt-5 text-xs font-bold uppercase tracking-wide text-slate-400">Sorties autorisées en cours</p>
+          <p className="mt-5 text-xs font-bold uppercase tracking-wide text-slate-400">{t('activePickups')}</p>
           {overview?.expected.pickups.length ? (
             <div className="mt-2 divide-y divide-slate-100">
               {overview.expected.pickups.map(p => (
                 <div key={p.id} className="flex items-center justify-between gap-3 py-2.5">
                   <div className="min-w-0">
-                    <p className="font-semibold text-[#16212B]">{p.studentName ?? 'Élève'}</p>
+                    <p className="font-semibold text-[#16212B]">{p.studentName ?? t('student')}</p>
                     {p.matricule && <p className="font-mono text-xs text-slate-400">{p.matricule}</p>}
                   </div>
-                  <span className="shrink-0 text-xs text-slate-500">{p.relationshipType} · jusqu&apos;à {fmtDate(p.authorizedUntil)}</span>
+                  <span className="shrink-0 text-xs text-slate-500">{p.relationshipType} · {t('untilDate', { date: fmtDate(p.authorizedUntil) })}</span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="mt-2 text-sm text-slate-400">Aucune sortie autorisée active.</p>
+            <p className="mt-2 text-sm text-slate-400">{t('noActivePickups')}</p>
           )}
         </Card>
 
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-          <h2 className="flex items-center gap-2 font-extrabold text-[#16212B]"><AlertTriangle className="h-4 w-4 text-[#1B6C93]" /> Incidents récents</h2>
+          <h2 className="flex items-center gap-2 font-extrabold text-[#16212B]"><AlertTriangle className="h-4 w-4 text-[#1B6C93]" /> {t('recentIncidents')}</h2>
           {openIncidents.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-400">Aucun incident ouvert.</p>
+            <p className="mt-4 text-sm text-slate-400">{t('noOpenIncidents')}</p>
           ) : (
             <div className="mt-3 space-y-3">
               {openIncidents.slice(0, 5).map(i => (
@@ -190,20 +193,20 @@ export function GuardHomeView() {
 
           <div className="mt-5 flex flex-wrap gap-2">
             <Button asChild size="sm" variant="outline">
-              <Link href="/dashboard/portals/guard/incidents">Voir les incidents</Link>
+              <Link href="/dashboard/portals/guard/incidents">{t('viewIncidents')}</Link>
             </Button>
             <Button asChild size="sm" variant="outline">
-              <Link href="/dashboard/portals/guard/emergency">Procédures d&apos;urgence</Link>
+              <Link href="/dashboard/portals/guard/emergency">{t('emergencyProcedures')}</Link>
             </Button>
           </div>
 
           <div className="mt-4 rounded-xl border border-slate-200/80 bg-slate-50 p-3">
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Poste &amp; quart</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{t('stationAndShift')}</p>
             {overview && (
               <div className="mt-2 space-y-1 text-sm text-slate-600">
-                <p><UserRound className="mr-1 inline h-3.5 w-3.5 text-slate-400" /> Portail : {overview.shift.gate?.gateName ?? '—'} ({overview.shift.gate?.gateCode ?? '—'})</p>
-                <p><Clock className="mr-1 inline h-3.5 w-3.5 text-slate-400" /> Quart : {overview.shift.shift?.name ?? '—'} ({overview.shift.shift?.startTime ?? '—'}–{overview.shift.shift?.endTime ?? '—'})</p>
-                <p><DoorOpen className="mr-1 inline h-3.5 w-3.5 text-slate-400" /> Appareil : {overview.shift.assignment.deviceId ?? '—'}</p>
+                <p><UserRound className="mr-1 inline h-3.5 w-3.5 text-slate-400" /> {t('gateLabel')} : {overview.shift.gate?.gateName ?? '—'} ({overview.shift.gate?.gateCode ?? '—'})</p>
+                <p><Clock className="mr-1 inline h-3.5 w-3.5 text-slate-400" /> {t('shiftLabel')} : {overview.shift.shift?.name ?? '—'} ({overview.shift.shift?.startTime ?? '—'}–{overview.shift.shift?.endTime ?? '—'})</p>
+                <p><DoorOpen className="mr-1 inline h-3.5 w-3.5 text-slate-400" /> {t('deviceLabel')} : {overview.shift.assignment.deviceId ?? '—'}</p>
               </div>
             )}
           </div>

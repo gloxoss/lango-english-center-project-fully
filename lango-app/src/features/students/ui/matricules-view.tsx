@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,8 @@ import { usePermissions } from '@/hooks/use-permissions';
 type ApiStudent = { id: string; fullName: string; className: string | null; matricule: string | null };
 
 export function MatriculesView() {
+  const t = useTranslations('Students');
+  const tCommon = useTranslations('Common');
   const { role } = usePermissions();
   const [students, setStudents] = useState<ApiStudent[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -72,8 +75,8 @@ export function MatriculesView() {
     <div className="flex gap-6 max-w-[1600px] mx-auto">
       <div className="flex-1 space-y-6 min-w-0">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Matricules des élèves</h1>
-          <p className="text-xs text-slate-500 mt-1">Consultez les matricules attribués et générez le prochain identifiant</p>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('matriculesTitle')}</h1>
+          <p className="text-xs text-slate-500 mt-1">{t('matriculesSubtitle')}</p>
         </div>
 
         {/* 3 Top Stat Cards */}
@@ -83,9 +86,9 @@ export function MatriculesView() {
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400">Total élèves</p>
+              <p className="text-[10px] font-bold text-slate-400">{t('totalStudents')}</p>
               <p className="text-xl font-extrabold text-[#16212B]">{students.length}</p>
-              <p className="text-[10px] font-semibold text-[#17A673]">Inscrits dans le système</p>
+              <p className="text-[10px] font-semibold text-[#17A673]">{t('enrolledInSystem')}</p>
             </div>
           </Card>
 
@@ -94,9 +97,9 @@ export function MatriculesView() {
               <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400">Matricules attribués</p>
+              <p className="text-[10px] font-bold text-slate-400">{t('matriculesAssigned')}</p>
               <p className="text-xl font-extrabold text-[#16212B]">{assignedCount}</p>
-              <p className="text-[10px] font-semibold text-[#17A673]">Identifiants valides</p>
+              <p className="text-[10px] font-semibold text-[#17A673]">{t('validIdentifiers')}</p>
             </div>
           </Card>
 
@@ -105,9 +108,9 @@ export function MatriculesView() {
               <Hash className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400">Matricules manquants</p>
+              <p className="text-[10px] font-bold text-slate-400">{t('matriculesMissing')}</p>
               <p className="text-xl font-extrabold text-[#16212B]">{missingCount}</p>
-              <p className="text-[10px] font-semibold text-amber-700">À attribuer</p>
+              <p className="text-[10px] font-semibold text-amber-700">{t('toAssign')}</p>
             </div>
           </Card>
         </div>
@@ -124,14 +127,14 @@ export function MatriculesView() {
           <div className="relative min-w-[240px] flex-1">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input
-              placeholder="Rechercher par nom ou matricule..."
+              placeholder={t('searchByNameOrMatricule')}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="pl-10 h-10 text-xs bg-slate-50 border-none rounded-xl"
             />
           </div>
           {missingCount > 0 && (
-            <Badge className="bg-[#FCF0DC] text-[#E8A33D] text-[10px] px-2.5 py-1 font-bold border-none">{missingCount} sans matricule</Badge>
+            <Badge className="bg-[#FCF0DC] text-[#E8A33D] text-[10px] px-2.5 py-1 font-bold border-none">{t('unassignedBadge', { count: missingCount })}</Badge>
           )}
         </div>
 
@@ -141,14 +144,14 @@ export function MatriculesView() {
             <table className="w-full text-left text-xs">
               <thead className="bg-[#F6F9FC] text-slate-500 font-semibold border-b border-slate-200/80">
                 <tr>
-                  <th className="py-3 px-4">Nom élève</th>
-                  <th className="py-3 px-4">Classe</th>
-                  <th className="py-3 px-4">Matricule</th>
+                  <th className="py-3 px-4">{t('studentNameCol')}</th>
+                  <th className="py-3 px-4">{t('classCol')}</th>
+                  <th className="py-3 px-4">{t('matriculeCol')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
                 {!loading && filtered.length === 0 && (
-                  <tr><td colSpan={3} className="py-8 px-4 text-center text-slate-400">Aucun élève trouvé.</td></tr>
+                  <tr><td colSpan={3} className="py-8 px-4 text-center text-slate-400">{t('noStudentsFound')}</td></tr>
                 )}
                 {filtered.map(s => (
                   <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
@@ -164,7 +167,7 @@ export function MatriculesView() {
                     <td className="py-3.5 px-4">
                       {s.matricule
                         ? <span className="font-mono text-[#2487B8] font-bold">{s.matricule}</span>
-                        : <Badge className="bg-[#FCF0DC] text-[#E8A33D] text-[10px] px-2 py-0.5 font-bold border-none">Manquant</Badge>}
+                        : <Badge className="bg-[#FCF0DC] text-[#E8A33D] text-[10px] px-2 py-0.5 font-bold border-none">{t('missingMatriculeBadge')}</Badge>}
                     </td>
                   </tr>
                 ))}
@@ -172,7 +175,7 @@ export function MatriculesView() {
             </table>
             <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
               <div className="flex items-center gap-2">
-                <span>Afficher</span>
+                <span>{t('showing')}</span>
                 <select
                   className="border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-[#16212B]"
                   value={pageSize}
@@ -183,7 +186,7 @@ export function MatriculesView() {
                   <option value={50}>50</option>
                   <option value={100}>100</option>
                 </select>
-                <span>sur {total} élève{total > 1 ? 's' : ''}</span>
+                <span>{t('outOfTotal', { total })}</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -192,16 +195,16 @@ export function MatriculesView() {
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   className="px-2 py-1 rounded-lg border border-slate-200 font-bold text-[#16212B] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50"
                 >
-                  Précédent
+                  {tCommon('previous')}
                 </button>
-                <span>Page {page} / {Math.max(1, Math.ceil(total / pageSize))}</span>
+                <span>{t('pageOf', { page, total: Math.max(1, Math.ceil(total / pageSize)) })}</span>
                 <button
                   type="button"
                   disabled={page >= Math.ceil(total / pageSize)}
                   onClick={() => setPage(p => p + 1)}
                   className="px-2 py-1 rounded-lg border border-slate-200 font-bold text-[#16212B] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50"
                 >
-                  Suivant
+                  {tCommon('next')}
                 </button>
               </div>
             </div>
@@ -213,17 +216,17 @@ export function MatriculesView() {
       {role === 'school_admin' && (
         <div className="w-[300px] shrink-0 space-y-4 hidden xl:block sticky top-6 self-start max-h-[calc(100vh-3rem)] overflow-y-auto">
           <Card className="p-5 bg-white rounded-2xl shadow-2xs border border-slate-200/80 space-y-3">
-            <h3 className="text-sm font-extrabold text-[#16212B]">Générer le prochain matricule</h3>
-            <p className="text-[11px] text-slate-500">Aperçu du prochain numéro de la série (format STD-{new Date().getFullYear()}-####). Réservez-le uniquement lorsque vous êtes prêt — l&apos;aperçu ne consomme aucun numéro.</p>
+            <h3 className="text-sm font-extrabold text-[#16212B]">{t('generateNextMatricule')}</h3>
+            <p className="text-[11px] text-slate-500">{t('previewNextMatricule')}</p>
             {nextMatricule && (
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
-                <p className="text-[10px] text-slate-400 font-bold uppercase">{reserved ? 'Réservé' : 'Aperçu'}</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase">{reserved ? t('reservedBadge') : t('previewBadge')}</p>
                 <p className="text-lg font-extrabold font-mono text-[#2487B8]">{nextMatricule}</p>
               </div>
             )}
             <Button className="w-full gap-2 h-10 rounded-xl text-xs bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold" disabled={generating} onClick={handleReserveNext}>
               <Wand2 className="w-4 h-4" />
-              <span>{generating ? 'Réservation...' : 'Réserver ce matricule'}</span>
+              <span>{generating ? t('reserving') : t('reserveMatricule')}</span>
             </Button>
           </Card>
         </div>

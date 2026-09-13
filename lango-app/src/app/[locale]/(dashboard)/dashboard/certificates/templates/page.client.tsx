@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,15 +34,10 @@ type Template = {
   createdAt: string;
 };
 
-const STATUS_BADGE: Record<string, { label: string, variant: 'neutral' | 'success' | 'warning' }> = {
-  active: { label: 'Actif', variant: 'success' },
-  draft: { label: 'Brouillon', variant: 'warning' },
-  archived: { label: 'Archivé', variant: 'neutral' },
-};
-
 export default function CertificatesTemplatesPage() {
   const params = useParams<{ locale?: string }>();
   const locale = params?.locale ?? 'fr';
+  const t = useTranslations('Certificates');
 
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +52,19 @@ export default function CertificatesTemplatesPage() {
 
   const [archiveTarget, setArchiveTarget] = useState<Template | null>(null);
   const [archiving, setArchiving] = useState(false);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'active':
+        return { label: t('statusActive'), variant: 'success' as const };
+      case 'draft':
+        return { label: t('statusDraft'), variant: 'warning' as const };
+      case 'archived':
+        return { label: t('statusArchived'), variant: 'neutral' as const };
+      default:
+        return { label: status, variant: 'neutral' as const };
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -89,7 +98,7 @@ export default function CertificatesTemplatesPage() {
       });
       const json = await res.json();
       if (!json.success) {
-        setCreateError(json.message || json.error?.message || 'Erreur lors de la création.');
+        setCreateError(json.message || json.error?.message || t('errorCreateTemplate'));
         return;
       }
       setIsCreateOpen(false);
@@ -106,7 +115,7 @@ export default function CertificatesTemplatesPage() {
       const res = await fetch(`/api/certificates/templates/${archiveTarget.id}`, { method: 'DELETE' });
       const json = await res.json();
       if (!json.success) {
-        alert(json.message || json.error?.message || 'Erreur lors de l\'archivage');
+        alert(json.message || json.error?.message || t('errorArchiveTemplate'));
       }
       setArchiveTarget(null);
       await load();
@@ -126,12 +135,12 @@ export default function CertificatesTemplatesPage() {
             <Layers className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Modèles de certificats</h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Modèles visuels réutilisables, conçus avec l'éditeur de documents.</p>
+            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('templatesTitle')}</h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">{t('templatesSubtitle')}</p>
           </div>
         </div>
         <Button onClick={() => { setName(''); setDescription(''); setCreateError(null); setIsCreateOpen(true); }} className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl shadow-2xs gap-1.5 px-4 cursor-pointer">
-          <Plus className="w-4 h-4" /><span>Nouveau modèle</span>
+          <Plus className="w-4 h-4" /><span>{t('btnNewTemplate')}</span>
         </Button>
       </div>
 
@@ -139,21 +148,21 @@ export default function CertificatesTemplatesPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('statTotal')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{templates.length}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2487B8] flex items-center justify-center"><Layers className="w-5 h-5" /></div>
         </Card>
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Actifs</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('statActive')}</span>
             <h3 className="text-2xl font-extrabold text-[#17A673] mt-1">{activeCount}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><Layers className="w-5 h-5" /></div>
         </Card>
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Brouillons</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('statDrafts')}</span>
             <h3 className="text-2xl font-extrabold text-[#0EA5C4] mt-1">{templates.filter(t => t.status === 'draft').length}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-cyan-50 text-[#0EA5C4] flex items-center justify-center"><Layers className="w-5 h-5" /></div>
@@ -164,67 +173,70 @@ export default function CertificatesTemplatesPage() {
       <Card className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-4">
         <div className="flex flex-wrap gap-3 items-center">
           <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input placeholder="Rechercher un modèle..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9 text-xs rounded-xl" />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input placeholder={t('searchTemplatesPlaceholder')} value={search} onChange={e => setSearch(e.target.value)} className="ps-9 h-9 text-xs rounded-xl" />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40 h-9 text-xs"><SelectValue placeholder="Tous les statuts" /></SelectTrigger>
+            <SelectTrigger className="w-40 h-9 text-xs"><SelectValue placeholder={t('filterAllStatuses')} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all" className="text-xs">Tous les statuts</SelectItem>
-              <SelectItem value="active" className="text-xs">Actif</SelectItem>
-              <SelectItem value="draft" className="text-xs">Brouillon</SelectItem>
-              <SelectItem value="archived" className="text-xs">Archivé</SelectItem>
+              <SelectItem value="all" className="text-xs">{t('filterAllStatuses')}</SelectItem>
+              <SelectItem value="active" className="text-xs">{t('statusActive')}</SelectItem>
+              <SelectItem value="draft" className="text-xs">{t('statusDraft')}</SelectItem>
+              <SelectItem value="archived" className="text-xs">{t('statusArchived')}</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="sm" className="h-9 rounded-lg text-xs font-medium cursor-pointer" onClick={load}>
-            <RefreshCw className="w-3.5 h-3.5 mr-1.5" />Actualiser
+            <RefreshCw className="w-3.5 h-3.5 me-1.5" />{t('btnRefresh')}
           </Button>
         </div>
 
         <div className="rounded-xl border border-slate-100 overflow-hidden">
           <table className="w-full text-xs">
             <thead>
-              <tr className="bg-slate-50/50 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                <th className="p-3 pl-4">Nom</th>
-                <th className="p-3">Statut</th>
-                <th className="p-3">Description</th>
-                <th className="p-3">Créé le</th>
-                <th className="p-3 text-right pr-4">Actions</th>
+              <tr className="bg-slate-50/50 text-start text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                <th className="p-3 ps-4 text-start">{t('thName')}</th>
+                <th className="p-3 text-start">{t('thStatus')}</th>
+                <th className="p-3 text-start">{t('thDescription')}</th>
+                <th className="p-3 text-start">{t('thCreatedAt')}</th>
+                <th className="p-3 text-end pe-4">{t('thActions')}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={5} className="p-8 text-center text-slate-400">Chargement...</td></tr>
+                <tr><td colSpan={5} className="p-8 text-center text-slate-400">{t('tableLoading')}</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={5} className="p-8 text-center text-slate-400">Aucun modèle trouvé.</td></tr>
+                <tr><td colSpan={5} className="p-8 text-center text-slate-400">{t('tableNoTemplates')}</td></tr>
               ) : (
-                filtered.map(t => (
-                  <tr key={t.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                    <td className="p-3 pl-4 font-semibold text-slate-700">{t.name}</td>
-                    <td className="p-3">
-                      <Badge variant={STATUS_BADGE[t.status]?.variant || 'neutral'}>
-                        {STATUS_BADGE[t.status]?.label || t.status}
-                      </Badge>
-                    </td>
-                    <td className="p-3 text-slate-500 max-w-[260px] truncate">{t.description || '-'}</td>
-                    <td className="p-3 text-slate-500">{new Date(t.createdAt).toLocaleDateString('fr-FR')}</td>
-                    <td className="p-3 pr-4 text-right space-x-1.5 whitespace-nowrap">
-                      {t.status !== 'archived' && (
-                        <>
-                          <Link
-                            href={`/${locale}/dashboard/certificates/templates/${t.id}/edit`}
-                            className="inline-flex items-center justify-center h-8 px-3 rounded-lg text-xs font-medium border border-slate-200 hover:bg-slate-50 text-slate-600 cursor-pointer"
-                          >
-                            <PenLine className="w-3.5 h-3.5 mr-1.5" />Concevoir
-                          </Link>
-                          <Button variant="outline" size="sm" className="h-8 rounded-lg text-xs font-medium cursor-pointer text-rose-600 border-rose-200 hover:bg-rose-50" onClick={() => setArchiveTarget(t)}>
-                            <Archive className="w-3.5 h-3.5 mr-1.5" />Archiver
-                          </Button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                filtered.map(tItem => {
+                  const sBadge = getStatusBadge(tItem.status);
+                  return (
+                    <tr key={tItem.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                      <td className="p-3 ps-4 font-semibold text-slate-700">{tItem.name}</td>
+                      <td className="p-3">
+                        <Badge variant={sBadge.variant}>
+                          {sBadge.label}
+                        </Badge>
+                      </td>
+                      <td className="p-3 text-slate-500 max-w-[260px] truncate">{tItem.description || '-'}</td>
+                      <td className="p-3 text-slate-500">{new Date(tItem.createdAt).toLocaleDateString(locale === 'ar' ? 'ar-EG' : locale === 'fr' ? 'fr-FR' : 'en-US')}</td>
+                      <td className="p-3 pe-4 text-end space-x-1.5 rtl:space-x-reverse whitespace-nowrap">
+                        {tItem.status !== 'archived' && (
+                          <>
+                            <Link
+                              href={`/${locale}/dashboard/certificates/templates/${tItem.id}/edit`}
+                              className="inline-flex items-center justify-center h-8 px-3 rounded-lg text-xs font-medium border border-slate-200 hover:bg-slate-50 text-slate-600 cursor-pointer"
+                            >
+                              <PenLine className="w-3.5 h-3.5 me-1.5" />{t('btnDesign')}
+                            </Link>
+                            <Button variant="outline" size="sm" className="h-8 rounded-lg text-xs font-medium cursor-pointer text-rose-600 border-rose-200 hover:bg-rose-50" onClick={() => setArchiveTarget(tItem)}>
+                              <Archive className="w-3.5 h-3.5 me-1.5" />{t('btnArchive')}
+                            </Button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -234,17 +246,17 @@ export default function CertificatesTemplatesPage() {
       {/* Create dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="sm:max-w-[480px]">
-          <DialogHeader>
-            <DialogTitle>Nouveau modèle de certificat</DialogTitle>
-            <DialogDescription>Le modèle visuel pourra être réutilisé comme base de conception.</DialogDescription>
+          <DialogHeader className="text-start">
+            <DialogTitle>{t('dialogNewTemplateTitle')}</DialogTitle>
+            <DialogDescription>{t('dialogNewTemplateDesc')}</DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
-            <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-700">Nom</Label>
-              <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex : Diplôme de fin d'année" className="h-9 text-xs rounded-xl" />
+            <div className="space-y-2 text-start">
+              <Label className="text-xs font-bold text-slate-700">{t('labelName')}</Label>
+              <Input value={name} onChange={e => setName(e.target.value)} placeholder={t('placeholderTemplateName')} className="h-9 text-xs rounded-xl" />
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-700">Description (optionnelle)</Label>
+            <div className="space-y-2 text-start">
+              <Label className="text-xs font-bold text-slate-700">{t('labelDescOptional')}</Label>
               <textarea
                 value={description}
                 onChange={e => setDescription(e.target.value)}
@@ -255,11 +267,11 @@ export default function CertificatesTemplatesPage() {
             </div>
             {createError && <p className="text-xs font-semibold text-rose-600">{createError}</p>}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="text-xs h-9 cursor-pointer">Annuler</Button>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="text-xs h-9 cursor-pointer">{t('btnCancel')}</Button>
             <Button className="bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs h-9 font-bold gap-1.5 px-4 cursor-pointer" onClick={handleCreate} disabled={creating || !name.trim()}>
               {creating && <Loader2 className="w-4 h-4 animate-spin" />}
-              {creating ? 'Création...' : 'Créer'}
+              {creating ? t('btnCreating') : t('btnCreate')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -268,15 +280,15 @@ export default function CertificatesTemplatesPage() {
       {/* Archive dialog */}
       <Dialog open={archiveTarget !== null} onOpenChange={(o) => { if (!o && !archiving) setArchiveTarget(null); }}>
         <DialogContent className="sm:max-w-[440px]">
-          <DialogHeader>
-            <DialogTitle>Archiver le modèle</DialogTitle>
-            <DialogDescription>« {archiveTarget?.name} » ne sera plus proposé à la conception.</DialogDescription>
+          <DialogHeader className="text-start">
+            <DialogTitle>{t('dialogArchiveTemplateTitle')}</DialogTitle>
+            <DialogDescription>{t('dialogArchiveTemplateDesc', { name: archiveTarget?.name ?? '' })}</DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setArchiveTarget(null)} className="text-xs h-9 cursor-pointer" disabled={archiving}>Annuler</Button>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setArchiveTarget(null)} className="text-xs h-9 cursor-pointer" disabled={archiving}>{t('btnCancel')}</Button>
             <Button className="bg-rose-600 hover:bg-rose-700 text-white text-xs h-9 font-bold gap-1.5 px-4 cursor-pointer" onClick={handleArchive} disabled={archiving}>
               {archiving && <Loader2 className="w-4 h-4 animate-spin" />}
-              {archiving ? 'Archivage...' : 'Archiver'}
+              {archiving ? t('btnArchiving') : t('btnArchive')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,8 @@ type ReportCard = {
 };
 
 export function ReportCardGeneratorView({ locale }: { locale: string }) {
+  const t = useTranslations('Grading');
+  const tCommon = useTranslations('Common');
   const [classSections, setClassSections] = useState<ClassSectionOption[]>([]);
   const [classSectionId, setClassSectionId] = useState<string>('');
   const [students, setStudents] = useState<StudentOption[]>([]);
@@ -168,8 +171,8 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Générer les bulletins</h1>
-          <p className="text-xs text-slate-500 mt-1">Bulletin réel, calculé à partir des notes saisies (moyenne marocaine /20, coefficients appliqués).</p>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('generateReportCardsTitle')}</h1>
+          <p className="text-xs text-slate-500 mt-1">{t('generateReportCardsSubtitle')}</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -181,7 +184,7 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
             disabled={batchLoading || !classSectionId}
           >
             {batchLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Layers className="w-3.5 h-3.5" />}
-            <span>{batchLoading ? 'Génération...' : 'Générer tous les bulletins'}</span>
+            <span>{batchLoading ? t('generating') : t('generateAllReportCards')}</span>
           </Button>
           <Button
             variant="outline"
@@ -191,7 +194,7 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
             disabled={issueLoading || !studentId}
           >
             {issueLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-            <span>{issueLoading ? 'Génération...' : 'Télécharger PDF'}</span>
+            <span>{issueLoading ? t('generating') : t('downloadPdf')}</span>
           </Button>
           <Button
             variant="outline"
@@ -201,11 +204,11 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
             disabled={batchIssueLoading || !classSectionId}
           >
             {batchIssueLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Layers className="w-3.5 h-3.5" />}
-            <span>{batchIssueLoading ? 'Génération...' : 'Générer les PDF (classe)'}</span>
+            <span>{batchIssueLoading ? t('generating') : t('generatePdfsClass')}</span>
           </Button>
           <Button variant="outline" size="sm" className="gap-2 h-9 text-xs rounded-xl" onClick={() => window.print()}>
             <Printer className="w-3.5 h-3.5" />
-            <span>Imprimer / PDF</span>
+            <span>{t('printPdf')}</span>
           </Button>
         </div>
       </div>
@@ -213,13 +216,13 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
           <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">1. Sélection</h3>
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('stepSelection')}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-600">Classe</label>
+                <label className="text-[11px] font-bold text-slate-600">{t('classLabel')}</label>
                 <Select value={classSectionId} onValueChange={setClassSectionId}>
                   <SelectTrigger className="w-full rounded-xl h-9 bg-white">
-                    <SelectValue placeholder="Choisir une classe" />
+                    <SelectValue placeholder={t('chooseClass')} />
                   </SelectTrigger>
                   <SelectContent>
                     {classSections.map(cs => (
@@ -230,10 +233,10 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-600">Élève</label>
+                <label className="text-[11px] font-bold text-slate-600">{t('studentLabel')}</label>
                 <Select value={studentId} onValueChange={setStudentId}>
                   <SelectTrigger className="w-full rounded-xl h-9 bg-white">
-                    <SelectValue placeholder="Choisir un élève" />
+                    <SelectValue placeholder={t('chooseStudent')} />
                   </SelectTrigger>
                   <SelectContent>
                     {students.map(s => (
@@ -246,22 +249,22 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
           </Card>
 
           <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">2. Statut</h3>
-            {loading && <p className="text-xs text-slate-500">Chargement...</p>}
-            {!loading && !card && !batchCards && <p className="text-xs text-slate-500">Aucune note enregistrée pour cet élève.</p>}
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{t('stepStatus')}</h3>
+            {loading && <p className="text-xs text-slate-500">{t('loading')}</p>}
+            {!loading && !card && !batchCards && <p className="text-xs text-slate-500">{t('noGradesForStudent')}</p>}
             {!loading && card && !batchCards && (
               <p className="text-xs font-bold text-[#16212B]">
-                {card.subjects.length} matière(s) notée(s) · Moyenne générale {card.generalAverage.toFixed(2)}/20
+                {t('studentGradesSummary', { subjects: card.subjects.length, average: card.generalAverage.toFixed(2) })}
               </p>
             )}
             {batchCards && (
               <p className="text-xs font-bold text-[#16212B]">
-                {batchCards.length} bulletin(s) généré(s) pour la classe sélectionnée.
+                {t('batchGeneratedSummary', { count: batchCards.length })}
               </p>
             )}
             {batchIssueResult && (
               <p className="text-xs font-bold text-[#16212B]">
-                {batchIssueResult.count} bulletin(s) PDF émis (storable, vérifiable).
+                {t('batchIssuedPdfSummary', { count: batchIssueResult.count })}
               </p>
             )}
           </Card>
@@ -269,14 +272,14 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
 
         <div className="space-y-4" id="report-cards-print">
           {batchCards
-            ? batchCards.map(c => <ReportCardSheet key={c.student.id} card={c} />)
+            ? batchCards.map(c => <ReportCardSheet key={c.student.id} card={c} t={t} />)
             : card
-              ? <ReportCardSheet card={card} />
+              ? <ReportCardSheet card={card} t={t} />
               : (
                   <Card className="p-8 bg-white rounded-2xl border border-slate-200/80 shadow-md flex items-center justify-center text-xs text-slate-400 min-h-[300px]">
                     <div className="text-center space-y-2">
                       <Eye className="w-6 h-6 mx-auto" />
-                      <p>Sélectionnez un élève avec des notes, ou générez toute la classe.</p>
+                      <p>{t('emptySelectionDesc')}</p>
                     </div>
                   </Card>
                 )}
@@ -286,7 +289,7 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
   );
 }
 
-function ReportCardSheet({ card }: { card: ReportCard }) {
+function ReportCardSheet({ card, t }: { card: ReportCard; t: ReturnType<typeof useTranslations<'Grading'>> }) {
   return (
     <Card className="p-8 bg-white rounded-2xl border border-slate-200/80 shadow-md space-y-6 text-xs report-card-page">
       <div className="flex items-center justify-between border-b border-slate-100 pb-4">
@@ -295,28 +298,28 @@ function ReportCardSheet({ card }: { card: ReportCard }) {
             S
           </div>
           <div>
-            <h2 className="font-extrabold text-base text-[#16212B]">Bulletin scolaire</h2>
-            <p className="text-[10px] text-slate-400">Barème national marocain sur 20</p>
+            <h2 className="font-extrabold text-base text-[#16212B]">{t('schoolReportCard')}</h2>
+            <p className="text-[10px] text-slate-400">{t('nationalMoroccanScale')}</p>
           </div>
         </div>
-        {card.mention && <Badge className="bg-[#DCEBF4] text-[#1B6C93]">{card.mention}</Badge>}
+        {card.mention && <Badge className="bg-[#DCEBF4] text-[#1B6C93]">{t('mentionBadge', { mention: card.mention })}</Badge>}
       </div>
 
       <div className="grid grid-cols-4 gap-3 p-3 bg-slate-50 rounded-xl text-center">
         <div>
-          <p className="text-[10px] text-slate-400 font-bold">Élève</p>
+          <p className="text-[10px] text-slate-400 font-bold">{t('studentLabel')}</p>
           <p className="font-bold text-[#16212B]">{card.student.name}</p>
         </div>
         <div>
-          <p className="text-[10px] text-slate-400 font-bold">Classe</p>
+          <p className="text-[10px] text-slate-400 font-bold">{t('classLabel')}</p>
           <p className="font-bold text-[#16212B]">{card.student.className ?? '—'}</p>
         </div>
         <div>
-          <p className="text-[10px] text-slate-400 font-bold">Matricule</p>
+          <p className="text-[10px] text-slate-400 font-bold">{t('matricule')}</p>
           <p className="font-bold text-slate-600 font-mono">{card.student.matricule ?? '—'}</p>
         </div>
         <div>
-          <p className="text-[10px] text-slate-400 font-bold">Classement</p>
+          <p className="text-[10px] text-slate-400 font-bold">{t('ranking')}</p>
           <p className="font-extrabold text-[#2487B8]">{card.rank ? `${card.rank} / ${card.classSize}` : '—'}</p>
         </div>
       </div>
@@ -325,16 +328,16 @@ function ReportCardSheet({ card }: { card: ReportCard }) {
         <table className="w-full text-center text-xs">
           <thead className="bg-[#F6F9FC] text-slate-500 font-bold border-b border-slate-200">
             <tr>
-              <th className="py-2 text-left px-2">Matières</th>
-              <th className="py-2 px-2">Coef</th>
-              <th className="py-2 px-2">Évaluations</th>
-              <th className="py-2 px-2">Moyenne</th>
+              <th className="py-2 text-start px-2">{t('subjectsHeader')}</th>
+              <th className="py-2 px-2">{t('coefficientHeader')}</th>
+              <th className="py-2 px-2">{t('assessmentsCountHeader')}</th>
+              <th className="py-2 px-2">{t('averageHeaderCol')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 font-medium">
             {card.subjects.map(s => (
               <tr key={s.subjectId}>
-                <td className="py-2 text-left px-2 font-bold text-[#16212B]">{s.subjectName}</td>
+                <td className="py-2 text-start px-2 font-bold text-[#16212B]">{s.subjectName}</td>
                 <td className="py-2 px-2 text-slate-500">{s.coefficient}</td>
                 <td className="py-2 px-2">{s.assessmentCount}</td>
                 <td className="py-2 px-2 font-bold text-[#2487B8]">{s.average.toFixed(2)}</td>
@@ -346,10 +349,10 @@ function ReportCardSheet({ card }: { card: ReportCard }) {
 
       <div className="p-4 bg-slate-50 rounded-xl flex justify-between items-center">
         <div>
-          <p className="text-[10px] text-slate-400 font-bold">Moyenne générale</p>
+          <p className="text-[10px] text-slate-400 font-bold">{t('average')}</p>
           <p className="text-xl font-extrabold text-[#2487B8]">{card.generalAverage.toFixed(2)} /20</p>
         </div>
-        {card.mention && <Badge className="bg-[#DCEBF4] text-[#1B6C93] text-xs px-3 py-1">Mention {card.mention}</Badge>}
+        {card.mention && <Badge className="bg-[#DCEBF4] text-[#1B6C93] text-xs px-3 py-1">{t('mentionBadge', { mention: card.mention })}</Badge>}
       </div>
     </Card>
   );

@@ -3,13 +3,11 @@
 import {
   AlertCircle,
   CheckCircle2,
-  FileText,
-  Filter,
   PlusCircle,
-  Receipt,
   RefreshCw,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface ExpenseItem {
   id: string;
@@ -23,6 +21,9 @@ interface ExpenseItem {
 }
 
 export default function OfficeAccountingPage() {
+  const t = useTranslations('Finance');
+  const tCommon = useTranslations('Common');
+
   const [data, setData] = useState<{ summary: { totalAmount: number; count: number }; expenses: ExpenseItem[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -37,6 +38,25 @@ export default function OfficeAccountingPage() {
   const [description, setDescription] = useState('');
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
 
+  const getCategoryLabel = (cat: string) => {
+    switch (cat) {
+      case 'supplies':
+        return t('catSupplies');
+      case 'utilities':
+        return t('catUtilities');
+      case 'rent':
+        return t('catRent');
+      case 'salary':
+        return t('catSalary');
+      case 'marketing':
+        return t('catMarketing');
+      case 'other':
+        return t('catOther');
+      default:
+        return cat;
+    }
+  };
+
   const fetchExpenses = async () => {
     setLoading(true);
     setError(null);
@@ -47,10 +67,10 @@ export default function OfficeAccountingPage() {
         const rows = (json.data || []).map((row: any) => ({ ...row, amount: Number(row.amount), recordedByName: null }));
         setData({ summary: { totalAmount: rows.reduce((sum: number, row: ExpenseItem) => sum + row.amount, 0), count: rows.length }, expenses: rows });
       } else {
-        setError(json.error?.message || 'Erreur lors du chargement des dépenses.');
+        setError(json.error?.message || t('exportExpensesError'));
       }
     } catch (err: any) {
-      setError(err.message || 'Erreur réseau.');
+      setError(err.message || tCommon('error'));
     } finally {
       setLoading(false);
     }
@@ -72,7 +92,7 @@ export default function OfficeAccountingPage() {
         upload.append('file', receiptFile);
         const uploadRes = await fetch('/api/finance/expenses/receipt', { method: 'POST', body: upload });
         const uploadJson = await uploadRes.json();
-        if (!uploadJson.success) throw new Error(uploadJson.error?.message || 'Échec du téléversement du justificatif.');
+        if (!uploadJson.success) throw new Error(uploadJson.error?.message || t('uploadReceiptFailed'));
         receiptUrl = uploadJson.data.url;
       }
       const res = await fetch('/api/finance/expenses', {
@@ -88,17 +108,17 @@ export default function OfficeAccountingPage() {
       });
       const json = await res.json();
       if (json.success) {
-        setSuccessMsg(json.glPosted ? 'Dépense enregistrée et comptabilisée dans le grand livre.' : 'Dépense enregistrée; la liaison GL sera créée dès que les comptes par défaut seront configurés.');
+        setSuccessMsg(json.glPosted ? t('expenseCreatedGl') : t('expenseCreatedNoGl'));
         setShowModal(false);
         setAmount('');
         setDescription('');
         setReceiptFile(null);
         fetchExpenses();
       } else {
-        setError(json.error?.message || 'Impossible d\'enregistrer la dépense.');
+        setError(json.error?.message || t('recordExpenseError'));
       }
     } catch (err: any) {
-      setError(err.message || 'Erreur réseau.');
+      setError(err.message || tCommon('error'));
     } finally {
       setActionLoading(false);
     }
@@ -110,10 +130,10 @@ export default function OfficeAccountingPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Dépenses & Grand Livre
+            {t('officeExpensesTitle')}
           </h1>
           <p className="text-sm text-slate-500">
-            Chaque dépense alimente le registre financier officiel et tente une comptabilisation automatique en partie double.
+            {t('officeExpensesSubtitle')}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -123,14 +143,14 @@ export default function OfficeAccountingPage() {
             className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
           >
             <RefreshCw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Actualiser
+            {tCommon('refresh')}
           </button>
           <button
             onClick={() => setShowModal(true)}
             className="flex items-center gap-2 rounded-lg bg-[#0066FF] px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#0052CC]"
           >
             <PlusCircle className="size-4" />
-            Saisir une Dépense
+            {t('recordExpenseBtn')}
           </button>
         </div>
       </div>
@@ -152,14 +172,14 @@ export default function OfficeAccountingPage() {
       {/* Summary Row */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Dépenses Enregistrées</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('totalRecordedExpenses')}</span>
           <div className="mt-2 text-2xl font-extrabold text-slate-900">
-            {loading ? '...' : `${(data?.summary.totalAmount || 0).toLocaleString('fr-FR')} MAD`}
+            {loading ? '...' : `${(data?.summary.totalAmount || 0).toLocaleString()} ${tCommon('currency')}`}
           </div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Nombre d'Écritures</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('entriesCount')}</span>
           <div className="mt-2 text-2xl font-extrabold text-[#0066FF]">
             {loading ? '...' : (data?.summary.count || 0)}
           </div>
@@ -168,24 +188,24 @@ export default function OfficeAccountingPage() {
 
       {/* Expense Journal Table */}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
-        <table className="w-full text-left text-xs">
+        <table className="w-full text-start text-xs">
           <thead className="border-b border-slate-200 bg-slate-50 font-bold uppercase text-slate-500">
             <tr>
-              <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3">Catégorie</th>
-              <th className="px-4 py-3">Description</th>
-              <th className="px-4 py-3">Montant</th>
-              <th className="px-4 py-3">Enregistré Par</th>
+              <th className="px-4 py-3 text-start">{tCommon('date')}</th>
+              <th className="px-4 py-3 text-start">{t('tableCategory')}</th>
+              <th className="px-4 py-3 text-start">{tCommon('description')}</th>
+              <th className="px-4 py-3 text-start">{tCommon('amount')}</th>
+              <th className="px-4 py-3 text-start">{t('tableRecordedBy')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
             {loading ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-slate-500">Chargement des dépenses...</td>
+                <td colSpan={5} className="p-8 text-center text-slate-500">{t('loadingExpenses')}</td>
               </tr>
             ) : data?.expenses.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-slate-500">Aucune dépense enregistrée.</td>
+                <td colSpan={5} className="p-8 text-center text-slate-500">{t('noExpensesRecorded')}</td>
               </tr>
             ) : (
               data?.expenses.map(item => (
@@ -193,12 +213,12 @@ export default function OfficeAccountingPage() {
                   <td className="px-4 py-3 font-bold text-slate-900">{item.expenseDate}</td>
                   <td className="px-4 py-3">
                     <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-700 uppercase">
-                      {item.category}
+                      {getCategoryLabel(item.category)}
                     </span>
                   </td>
                   <td className="px-4 py-3">{item.description}</td>
-                  <td className="px-4 py-3 font-extrabold text-red-700">-{item.amount} MAD</td>
-                  <td className="px-4 py-3 text-slate-500">{item.recordedByName || 'Système'}</td>
+                  <td className="px-4 py-3 font-extrabold text-red-700">-{item.amount} {tCommon('currency')}</td>
+                  <td className="px-4 py-3 text-slate-500">{item.recordedByName || tCommon('system')}</td>
                 </tr>
               ))
             )}
@@ -210,28 +230,28 @@ export default function OfficeAccountingPage() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-bold text-slate-900">Nouvelle Dépense Bureau</h3>
-            <p className="mt-1 text-xs text-slate-500">Saisissez les détails de l'écriture comptable.</p>
+            <h3 className="text-lg font-bold text-slate-900">{t('newOfficeExpenseTitle')}</h3>
+            <p className="mt-1 text-xs text-slate-500">{t('newOfficeExpenseSubtitle')}</p>
 
             <form onSubmit={handleCreateExpense} className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700">Catégorie</label>
+                <label className="block text-xs font-bold text-slate-700">{t('tableCategory')}</label>
                 <select
                   value={category}
                   onChange={e => setCategory(e.target.value as any)}
                   className="mt-1 w-full rounded-lg border border-slate-200 p-2.5 text-sm text-slate-900 focus:border-[#0066FF] focus:outline-hidden"
                 >
-                  <option value="supplies">Fournitures & Matériel</option>
-                  <option value="utilities">Eau, Électricité & Telecom</option>
-                  <option value="rent">Loyer & Charges Locatives</option>
-                  <option value="salary">Salaires & Vacations</option>
-                  <option value="marketing">Marketing & Communication</option>
-                  <option value="other">Autre Dépense</option>
+                  <option value="supplies">{t('catSupplies')}</option>
+                  <option value="utilities">{t('catUtilities')}</option>
+                  <option value="rent">{t('catRent')}</option>
+                  <option value="salary">{t('catSalary')}</option>
+                  <option value="marketing">{t('catMarketing')}</option>
+                  <option value="other">{t('catOther')}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700">Montant (MAD)</label>
+                <label className="block text-xs font-bold text-slate-700">{tCommon('amount')} ({tCommon('currency')})</label>
                 <input
                   type="number"
                   min="0.01"
@@ -245,7 +265,7 @@ export default function OfficeAccountingPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700">Date d'opération</label>
+                <label className="block text-xs font-bold text-slate-700">{t('operationDateLabel')}</label>
                 <input
                   type="date"
                   required
@@ -256,23 +276,23 @@ export default function OfficeAccountingPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700">Description / Libellé</label>
+                <label className="block text-xs font-bold text-slate-700">{t('descriptionOrLabel')}</label>
                 <textarea
                   rows={2}
                   required
                   value={description}
                   onChange={e => setDescription(e.target.value)}
-                  placeholder="Détail du paiement ou pièce justificative..."
+                  placeholder={t('descriptionPlaceholder')}
                   className="mt-1 w-full rounded-lg border border-slate-200 p-2 text-xs text-slate-900 focus:border-[#0066FF] focus:outline-hidden"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700">Justificatif (PDF, JPG ou PNG)</label>
+                <label className="block text-xs font-bold text-slate-700">{t('receiptFileLabel')}</label>
                 <input type="file" accept="application/pdf,image/jpeg,image/png" onChange={e => setReceiptFile(e.target.files?.[0] || null)} className="mt-1 w-full text-xs text-slate-600" />
               </div>
 
-              <p className="text-[11px] text-slate-500">La dépense sera transmise automatiquement au grand livre via les comptes comptables par défaut.</p>
+              <p className="text-[11px] text-slate-500">{t('glNotice')}</p>
 
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button
@@ -280,14 +300,14 @@ export default function OfficeAccountingPage() {
                   onClick={() => setShowModal(false)}
                   className="rounded-lg px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
                 >
-                  Annuler
+                  {tCommon('cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading}
                   className="rounded-lg bg-[#0066FF] px-5 py-2 text-xs font-bold text-white hover:bg-[#0052CC]"
                 >
-                  {actionLoading ? 'Enregistrement...' : 'Enregistrer'}
+                  {actionLoading ? t('savingBtn') : t('saveBtn')}
                 </button>
               </div>
             </form>

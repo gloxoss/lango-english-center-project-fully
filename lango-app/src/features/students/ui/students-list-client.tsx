@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,9 +20,10 @@ import {
 import {
   Users, UserPlus, Download, Filter, Search,
   Wallet, CheckCircle2, AlertTriangle, ChevronLeft, ChevronRight,
-  Pencil, Trash2,
+  Pencil, Trash2, Eye, CreditCard,
 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { usePermissions } from '@/hooks/use-permissions';
 import { exportToCsv } from '@/libs/csv-export';
 import { StudentItem } from '../data/students-list-config';
@@ -93,6 +93,9 @@ function toStudent(st: StudentItem): Student {
 const DEFAULT_PAGE_SIZE = 10;
 
 export function StudentsListClient({ locale }: { locale?: string } = {}) {
+  const t = useTranslations('Students');
+  const tCommon = useTranslations('Common');
+  const tStatus = useTranslations('Status');
   const { can } = usePermissions();
   const [students, setStudents] = useState<StudentItem[]>([]);
   const [selectedId, setSelectedId] = useState<string>('');
@@ -243,8 +246,8 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
         {/* Page Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Répertoire des élèves</h1>
-            <p className="text-xs text-slate-500 mt-1">Gestion interactive des profils scolaires & CRUD dynamique</p>
+            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('directory')}</h1>
+            <p className="text-xs text-slate-500 mt-1">{t('subtitle')}</p>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -253,12 +256,12 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
               onClick={() => exportToCsv(filteredStudents, 'eleves-repertoire')}
               className="gap-2 h-10 rounded-full px-4 text-xs font-bold border-slate-200"
             >
-              <Download className="w-4 h-4" /> Exporter
+              <Download className="w-4 h-4" /> {tCommon('export')}
             </Button>
             {can('students.create') && (
               <Button asChild size="sm" className="gap-2 h-10 rounded-full px-4 text-xs font-bold bg-[#2487B8] hover:bg-[#1B6C93] text-white shadow-2xs">
                 <Link href={`/${locale || 'fr'}/dashboard/students/add`}>
-                  <UserPlus className="w-4 h-4" /> + Inscrire un élève
+                  <UserPlus className="w-4 h-4" /> + {t('enrollStudent')}
                 </Link>
               </Button>
             )}
@@ -268,10 +271,10 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
         {/* Top KPIs Banner */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: 'Élèves actifs', value: students.filter(s => s.status === 'Actif').length, sub: 'Sur cet établissement', color: 'text-[#2487B8]', icon: Users, iconBg: 'bg-[#DCEBF4]', iconColor: 'text-[#1B6C93]' },
-            { label: 'Inscriptions', value: total, sub: 'Total répertorié', color: 'text-emerald-600', icon: CheckCircle2, iconBg: 'bg-[#D1F5E8]', iconColor: 'text-[#17A673]' },
-            { label: 'Sans classe assignée', value: students.filter(s => !s.classSection).length, sub: 'À placer', color: 'text-amber-600', icon: AlertTriangle, iconBg: 'bg-[#FCF0DC]', iconColor: 'text-[#E8A33D]' },
-            { label: 'Paiements en retard', value: students.filter(s => s.financialStatus !== 'À jour').length, sub: 'Suivi des impayés', color: 'text-rose-600', icon: Wallet, iconBg: 'bg-[#FCE4E2]', iconColor: 'text-[#E5544B]' },
+            { label: t('activeCount'), value: students.filter(s => s.status === 'Actif').length, sub: t('activeCountSub'), color: 'text-[#2487B8]', icon: Users, iconBg: 'bg-[#DCEBF4]', iconColor: 'text-[#1B6C93]' },
+            { label: t('totalCount'), value: total, sub: t('totalCountSub'), color: 'text-emerald-600', icon: CheckCircle2, iconBg: 'bg-[#D1F5E8]', iconColor: 'text-[#17A673]' },
+            { label: t('unassignedCount'), value: students.filter(s => !s.classSection).length, sub: t('unassignedCountSub'), color: 'text-amber-600', icon: AlertTriangle, iconBg: 'bg-[#FCF0DC]', iconColor: 'text-[#E8A33D]' },
+            { label: t('overdueCount'), value: students.filter(s => s.financialStatus !== 'À jour').length, sub: t('overdueCountSub'), color: 'text-rose-600', icon: Wallet, iconBg: 'bg-[#FCE4E2]', iconColor: 'text-[#E5544B]' },
           ].map((kpi, i) => (
             <Card key={i} className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
               <div className="space-y-1">
@@ -289,21 +292,21 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
         {/* Filter and Search Toolbar */}
         <div className="bg-white p-3 rounded-2xl shadow-2xs border border-slate-200/80 flex items-center gap-3 flex-wrap">
           <div className="relative min-w-[220px] flex-1">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-4 h-4 absolute start-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              placeholder="Rechercher par nom, matricule, classe..."
-              className="pl-10 h-10 text-xs bg-slate-50 border-none rounded-full"
+              placeholder={t('searchPlaceholder')}
+              className="ps-10 h-10 text-xs bg-slate-50 border-none rounded-full text-start"
             />
           </div>
 
           <Select value={levelFilter} onValueChange={setLevelFilter}>
             <SelectTrigger className="w-auto min-w-[130px] rounded-full h-10 bg-white border-slate-200/80 text-xs font-semibold">
-              <SelectValue placeholder="Niveau : Tous" />
+              <SelectValue placeholder={t('levelFilterPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Niveau : Tous</SelectItem>
+              <SelectItem value="all">{t('levelFilterPlaceholder')}</SelectItem>
               <SelectItem value="2nde">2nde</SelectItem>
               <SelectItem value="1ère">1ère</SelectItem>
               <SelectItem value="3ème">3ème</SelectItem>
@@ -313,13 +316,13 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-auto min-w-[130px] rounded-full h-10 bg-white border-slate-200/80 text-xs font-semibold">
-              <SelectValue placeholder="Statut : Tous" />
+              <SelectValue placeholder={t('statusFilterPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Statut : Tous</SelectItem>
-              <SelectItem value="Actif">Actif</SelectItem>
-              <SelectItem value="En attente">En attente</SelectItem>
-              <SelectItem value="Inactif">Inactif</SelectItem>
+              <SelectItem value="all">{t('statusFilterPlaceholder')}</SelectItem>
+              <SelectItem value="Actif">{tStatus('active')}</SelectItem>
+              <SelectItem value="En attente">{tStatus('pending')}</SelectItem>
+              <SelectItem value="Inactif">{tStatus('inactive')}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -329,7 +332,7 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
             onClick={() => { setSearch(''); setLevelFilter('all'); setStatusFilter('all'); }}
             className="h-10 rounded-full px-4 gap-1.5 text-xs font-bold border-slate-200"
           >
-            <Filter className="w-3.5 h-3.5" /> Réinitialiser
+            <Filter className="w-3.5 h-3.5" /> {tCommon('reset')}
           </Button>
         </div>
 
@@ -338,14 +341,12 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
           <Table>
             <TableHeader className="bg-[#F6F9FC]">
               <TableRow>
-                <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">Élève</TableHead>
-                <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">Niveau / Classe</TableHead>
-                <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">Tuteur Légal</TableHead>
-                <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">Statut Financier</TableHead>
-                <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">Statut</TableHead>
-                {(can('students.update') || can('students.delete')) && (
-                  <TableHead className="text-xs font-bold text-slate-600 h-10 px-4 text-right">Actions</TableHead>
-                )}
+                <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">{t('student')}</TableHead>
+                <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">{t('levelClass')}</TableHead>
+                <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">{t('legalGuardian')}</TableHead>
+                <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">{t('financialStatus')}</TableHead>
+                <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">{tCommon('status')}</TableHead>
+                <TableHead className="text-xs font-bold text-slate-600 h-10 px-4 text-end">{tCommon('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -381,34 +382,58 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                       {st.status}
                     </Badge>
                   </TableCell>
-                  {(can('students.update') || can('students.delete')) && (
-                    <TableCell className="text-xs text-slate-700 p-3.5">
-                      <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                        {can('students.update') && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openEditModal(toStudent(st))}
-                            className="h-8 w-8 p-0 text-blue-700 hover:bg-blue-50 rounded-lg"
-                            aria-label={`Modifier ${st.name}`}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                        )}
-                        {can('students.delete') && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openDeleteModal(toStudent(st))}
-                            className="h-8 w-8 p-0 text-rose-600 hover:bg-rose-50 rounded-lg"
-                            aria-label={`Supprimer ${st.name}`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  )}
+                  <TableCell className="text-xs text-slate-700 p-3.5">
+                    <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        asChild
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-slate-600 hover:text-blue-700 hover:bg-slate-100 rounded-lg"
+                        aria-label={`${t('viewFullProfile')} - ${st.name}`}
+                        title={t('viewFullProfile')}
+                      >
+                        <Link href={`/${locale || 'fr'}/dashboard/students/${st.id}`}>
+                          <Eye className="w-4 h-4" />
+                        </Link>
+                      </Button>
+                      <Button
+                        asChild
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-slate-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg"
+                        aria-label={`Carte scolaire - ${st.name}`}
+                        title="Carte scolaire"
+                      >
+                        <Link href={`/${locale || 'fr'}/dashboard/cards/students`}>
+                          <CreditCard className="w-4 h-4" />
+                        </Link>
+                      </Button>
+                      {can('students.update') && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditModal(toStudent(st))}
+                          className="h-8 w-8 p-0 text-blue-700 hover:bg-blue-50 rounded-lg"
+                          aria-label={`Modifier ${st.name}`}
+                          title={tCommon('edit')}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {can('students.delete') && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openDeleteModal(toStudent(st))}
+                          className="h-8 w-8 p-0 text-rose-600 hover:bg-rose-50 rounded-lg"
+                          aria-label={`Supprimer ${st.name}`}
+                          title={tCommon('delete')}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -417,13 +442,13 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
 
         {/* Pagination */}
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-slate-500">Page {page} / {totalPages} · {total} élève(s)</span>
+          <span className="text-xs font-semibold text-slate-500">Page {page} / {totalPages} · {total}</span>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="h-9 rounded-xl px-3 text-xs font-bold" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
-              <ChevronLeft className="w-4 h-4" /> Précédent
+              <ChevronLeft className="w-4 h-4 rtl:rotate-180" /> {tCommon('previous')}
             </Button>
             <Button variant="outline" size="sm" className="h-9 rounded-xl px-3 text-xs font-bold" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
-              Suivant <ChevronRight className="w-4 h-4" />
+              {tCommon('next')} <ChevronRight className="w-4 h-4 rtl:rotate-180" />
             </Button>
           </div>
         </div>
@@ -434,7 +459,7 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
         <div className="w-[340px] shrink-0 space-y-4 hidden xl:block sticky top-6 self-start max-h-[calc(100vh-3rem)] overflow-y-auto">
           <Card className="p-5 bg-white rounded-2xl shadow-2xs border border-slate-200/80 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-extrabold text-[#16212B]">Profil Élève</h3>
+              <h3 className="text-sm font-extrabold text-[#16212B]">{t('studentProfile')}</h3>
               <Badge className="bg-[#DDF5EC] text-[#17A673] text-[9px] px-2 border-none">
                 {activeStudent.status}
               </Badge>
@@ -457,20 +482,20 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
               href={`/${locale || 'fr'}/dashboard/students/${activeStudent.id}`}
               className="flex items-center justify-center gap-1.5 h-9 rounded-full bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold transition-colors"
             >
-              Voir le profil complet
+              {t('viewFullProfile')}
             </Link>
 
             <div className="space-y-2 text-xs border-t border-slate-100 pt-3">
               <div className="flex justify-between">
-                <span className="text-slate-500">Tuteur Légal</span>
+                <span className="text-slate-500">{t('legalGuardian')}</span>
                 <span className="font-bold text-[#16212B]">{activeStudent.guardianName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Téléphone</span>
+                <span className="text-slate-500">{t('phone')}</span>
                 <span className="font-mono text-[#16212B] font-bold">{activeStudent.guardianPhone}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Statut Financier</span>
+                <span className="text-slate-500">{t('financialStatus')}</span>
                 <span className="font-bold text-[#1B6C93]">{activeStudent.financialStatus}</span>
               </div>
             </div>
@@ -484,7 +509,7 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                     onClick={() => openEditModal({ id: activeStudent.id, fullName: activeStudent.name, level: activeStudent.gradeLevel, className: activeStudent.classSection, guardianName: activeStudent.guardianName, phone: activeStudent.guardianPhone, status: activeStudent.status, paymentStatus: activeStudent.financialStatus })}
                     className="flex-1 text-xs font-bold h-9 rounded-full border-blue-200 text-blue-700 hover:bg-blue-50"
                   >
-                    Modifier
+                    {tCommon('edit')}
                   </Button>
                 )}
                 {can('students.delete') && (
@@ -494,7 +519,7 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                     onClick={() => openDeleteModal({ id: activeStudent.id, fullName: activeStudent.name, level: activeStudent.gradeLevel, className: activeStudent.classSection, guardianName: activeStudent.guardianName, phone: activeStudent.guardianPhone, status: activeStudent.status, paymentStatus: activeStudent.financialStatus })}
                     className="flex-1 text-xs font-bold h-9 rounded-full border-rose-200 text-rose-600 hover:bg-rose-50"
                   >
-                    Supprimer
+                    {tCommon('delete')}
                   </Button>
                 )}
               </div>
@@ -507,11 +532,11 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="max-w-md bg-white rounded-2xl p-6">
           <DialogHeader>
-            <DialogTitle className="text-lg font-extrabold text-[#16212B]">Ajouter un nouvel élève</DialogTitle>
+            <DialogTitle className="text-lg font-extrabold text-[#16212B]">{t('addStudent')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 my-2 text-xs">
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Nom complet *</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('fullName')} *</label>
               <Input
                 value={formStudent.fullName || ''}
                 onChange={e => setFormStudent({ ...formStudent, fullName: e.target.value })}
@@ -521,7 +546,7 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Niveau *</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('level')} *</label>
                 <Input
                   value={formStudent.level || ''}
                   onChange={e => setFormStudent({ ...formStudent, level: e.target.value })}
@@ -530,7 +555,7 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                 />
               </div>
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Classe *</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('classSection')} *</label>
                 <Input
                   value={formStudent.className || ''}
                   onChange={e => setFormStudent({ ...formStudent, className: e.target.value })}
@@ -540,7 +565,7 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
               </div>
             </div>
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Tuteur Légal *</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('legalGuardian')} *</label>
               <Input
                 value={formStudent.guardianName || ''}
                 onChange={e => setFormStudent({ ...formStudent, guardianName: e.target.value })}
@@ -549,7 +574,7 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
               />
             </div>
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Téléphone *</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('phone')} *</label>
               <Input
                 value={formStudent.phone || ''}
                 onChange={e => setFormStudent({ ...formStudent, phone: e.target.value })}
@@ -559,38 +584,38 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Statut</label>
+                <label className="font-bold text-slate-700 block mb-1">{tCommon('status')}</label>
                 <Select
                   value={formStudent.status || 'Actif'}
                   onValueChange={v => setFormStudent({ ...formStudent, status: v as Student['status'] })}
                 >
                   <SelectTrigger className="h-9 text-xs rounded-xl"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Actif">Actif</SelectItem>
-                    <SelectItem value="En attente">En attente</SelectItem>
-                    <SelectItem value="Inactif">Inactif</SelectItem>
+                    <SelectItem value="Actif">{tStatus('active')}</SelectItem>
+                    <SelectItem value="En attente">{tStatus('pending')}</SelectItem>
+                    <SelectItem value="Inactif">{tStatus('inactive')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Paiement</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('financialStatus')}</label>
                 <Select
                   value={formStudent.paymentStatus || 'À jour'}
                   onValueChange={v => setFormStudent({ ...formStudent, paymentStatus: v as Student['paymentStatus'] })}
                 >
                   <SelectTrigger className="h-9 text-xs rounded-xl"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="À jour">À jour</SelectItem>
-                    <SelectItem value="En retard">En retard</SelectItem>
-                    <SelectItem value="Impayé">Impayé</SelectItem>
+                    <SelectItem value="À jour">{t('statusUpToDate')}</SelectItem>
+                    <SelectItem value="En retard">{t('statusOverdue')}</SelectItem>
+                    <SelectItem value="Impayé">{t('statusUnpaid')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIsAddOpen(false)} className="rounded-full text-xs h-9">Annuler</Button>
-            <Button onClick={handleCreateStudent} className="rounded-full text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold">Enregistrer</Button>
+            <Button variant="outline" onClick={() => setIsAddOpen(false)} className="rounded-full text-xs h-9">{tCommon('cancel')}</Button>
+            <Button onClick={handleCreateStudent} className="rounded-full text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold">{tCommon('save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -599,11 +624,11 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="max-w-md bg-white rounded-2xl p-6">
           <DialogHeader>
-            <DialogTitle className="text-lg font-extrabold text-[#16212B]">Modifier l&apos;élève</DialogTitle>
+            <DialogTitle className="text-lg font-extrabold text-[#16212B]">{t('editStudent')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 my-2 text-xs">
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Nom complet</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('fullName')}</label>
               <Input
                 value={formStudent.fullName || ''}
                 onChange={e => setFormStudent({ ...formStudent, fullName: e.target.value })}
@@ -612,7 +637,7 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Niveau</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('level')}</label>
                 <Input
                   value={formStudent.level || ''}
                   onChange={e => setFormStudent({ ...formStudent, level: e.target.value })}
@@ -620,7 +645,7 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                 />
               </div>
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Classe</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('classSection')}</label>
                 <Input
                   value={formStudent.className || ''}
                   onChange={e => setFormStudent({ ...formStudent, className: e.target.value })}
@@ -629,7 +654,7 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
               </div>
             </div>
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Tuteur Légal</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('legalGuardian')}</label>
               <Input
                 value={formStudent.guardianName || ''}
                 onChange={e => setFormStudent({ ...formStudent, guardianName: e.target.value })}
@@ -637,7 +662,7 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
               />
             </div>
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Téléphone</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('phone')}</label>
               <Input
                 value={formStudent.phone || ''}
                 onChange={e => setFormStudent({ ...formStudent, phone: e.target.value })}
@@ -646,8 +671,8 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIsEditOpen(false)} className="rounded-full text-xs h-9">Annuler</Button>
-            <Button onClick={handleEditStudent} className="rounded-full text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold">Mettre à jour</Button>
+            <Button variant="outline" onClick={() => setIsEditOpen(false)} className="rounded-full text-xs h-9">{tCommon('cancel')}</Button>
+            <Button onClick={handleEditStudent} className="rounded-full text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold">{tCommon('save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -656,14 +681,14 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent className="max-w-sm bg-white rounded-2xl p-6">
           <DialogHeader>
-            <DialogTitle className="text-base font-extrabold text-[#16212B]">Confirmer la suppression</DialogTitle>
+            <DialogTitle className="text-base font-extrabold text-[#16212B]">{t('deleteConfirmTitle')}</DialogTitle>
           </DialogHeader>
           <p className="text-xs text-slate-600 my-2">
-            Êtes-vous sûr de vouloir supprimer l&apos;élève <strong className="text-rose-600">{studentToDelete?.fullName}</strong> ? Cette action est irréversible.
+            {t('deleteConfirmMessage')}
           </p>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIsDeleteOpen(false)} className="rounded-full text-xs h-9">Annuler</Button>
-            <Button onClick={handleDeleteStudent} className="rounded-full text-xs h-9 bg-rose-600 text-white hover:bg-rose-700 border-none">Supprimer</Button>
+            <Button variant="outline" onClick={() => setIsDeleteOpen(false)} className="rounded-full text-xs h-9">{tCommon('cancel')}</Button>
+            <Button onClick={handleDeleteStudent} className="rounded-full text-xs h-9 bg-rose-600 text-white hover:bg-rose-700 border-none">{tCommon('delete')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

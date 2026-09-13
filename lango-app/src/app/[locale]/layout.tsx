@@ -6,10 +6,12 @@ import { AppProviders } from '@/providers';
 // with hardcoded French. Client components can now useTranslations('Namespace').
 import messagesFr from '../../../locales/fr.json';
 import messagesAr from '../../../locales/ar.json';
+import messagesEn from '../../../locales/en.json';
 import '../../../public/assets/css/fonts.css';
 import '../globals.css';
 
-const MESSAGES = { fr: messagesFr, ar: messagesAr } as const;
+const MESSAGES = { fr: messagesFr, ar: messagesAr, en: messagesEn } as const;
+type AppLocale = keyof typeof MESSAGES;
 
 // Cairo loads at runtime via the Google Fonts @import in globals.css (same
 // delivery as Albert Sans / Geist). It is intentionally NOT imported via
@@ -29,7 +31,7 @@ export default async function RootLocaleLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const validLocale = (locale === 'ar' ? 'ar' : 'fr') as 'fr' | 'ar';
+  const validLocale: AppLocale = (locale === 'ar' ? 'ar' : locale === 'en' ? 'en' : 'fr');
   const isRTL = validLocale === 'ar';
 
   return (

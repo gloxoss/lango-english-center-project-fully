@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,13 +35,17 @@ async function api(path: string, init?: RequestInit): Promise<any> {
   return json;
 }
 
-function statusBadge(status: string) {
-  if (status === 'matched') return <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#DDF5EC] text-[#17A673]">Rapproché</span>;
-  if (status === 'partial') return <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">Partiel</span>;
-  return <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500">Non rapproché</span>;
+function StatusBadge({ status }: { status: string }) {
+  const t = useTranslations('Finance');
+  if (status === 'matched') return <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#DDF5EC] text-[#17A673]">{t('statusMatched')}</span>;
+  if (status === 'partial') return <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{t('statusPartial')}</span>;
+  return <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500">{t('statusUnmatched')}</span>;
 }
 
 function ReconciliationDetail({ id, onBack, onChanged }: { id: string; onBack: () => void; onChanged: () => void }) {
+  const t = useTranslations('Finance');
+  const tCommon = useTranslations('Common');
+
   const [detail, setDetail] = useState<Detail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'lines' | 'matches' | 'fee' | 'close'>('lines');
@@ -96,12 +101,12 @@ function ReconciliationDetail({ id, onBack, onChanged }: { id: string; onBack: (
 
   useEffect(() => { void loadAccounts(); }, [loadAccounts]);
 
-  const loadJournal = useCallback(async (accountId: string, statementDate: string) => {
-    if (!accountId) { setJournalLines([]); return; }
+  const loadJournal = useCallback(async (accId: string, statementDate: string) => {
+    if (!accId) { setJournalLines([]); return; }
     setJournalLoading(true);
     try {
       const from = `${new Date(statementDate).getFullYear()}-01-01`;
-      const json = await api(`/api/finance/accounting/statements/drill-down?accountId=${accountId}&from=${from}&to=${statementDate}&limit=500`);
+      const json = await api(`/api/finance/accounting/statements/drill-down?accountId=${accId}&from=${from}&to=${statementDate}&limit=500`);
       setJournalLines(json.data);
     } catch (e) {
       setJournalLines([]);
@@ -210,8 +215,8 @@ function ReconciliationDetail({ id, onBack, onChanged }: { id: string; onBack: (
   const handleClose = () => {
     const rec = detail?.reconciliation;
     if (!rec) return;
-    const variance = Number(rec.statementBalance) - Number(rec.reconciledBalance);
-    if (variance !== 0 && closeReason.trim().length < 3) {
+    const varDiff = Number(rec.statementBalance) - Number(rec.reconciledBalance);
+    if (varDiff !== 0 && closeReason.trim().length < 3) {
       setFlash({ ok: false, text: 'Un motif d’écart (≥ 3 caractères) est requis pour clôturer un rapprochement déséquilibré.' });
       return;
     }
@@ -241,19 +246,15 @@ function ReconciliationDetail({ id, onBack, onChanged }: { id: string; onBack: (
   const unmatchedCount = detail?.lines.filter(l => l.status === 'unmatched' || l.status === 'partial').length ?? 0;
   const offsetAccounts = useMemo(() => accounts.filter(a => (fee.kind === 'fee' ? a.accountType === 'expense' : a.accountType === 'revenue')), [accounts, fee.kind]);
 
-  const accountLabel = (id: string) => {
-    const a = accounts.find(x => x.id === id);
-    return a ? `${a.code} · ${a.name}` : '—';
-  };
-  const statementLineLabel = (id: string) => {
-    const l = detail?.lines.find(x => x.id === id);
-    return l ? `${l.lineDate} — ${l.description}` : id.slice(0, 8);
+  const statementLineLabel = (lineId: string) => {
+    const l = detail?.lines.find(x => x.id === lineId);
+    return l ? `${l.lineDate} — ${l.description}` : lineId.slice(0, 8);
   };
 
   if (!detail) {
     return (
       <Card className="p-8 text-center text-sm text-slate-500">
-        {error ?? 'Chargement du rapprochement…'}
+        {error ?? tCommon('loading')}
       </Card>
     );
   }
@@ -263,22 +264,22 @@ function ReconciliationDetail({ id, onBack, onChanged }: { id: string; onBack: (
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" onClick={onBack} className="h-8 gap-1 text-xs">
-            <ArrowLeft className="w-3.5 h-3.5" /> Retour
+            <ArrowLeft className="w-3.5 h-3.5 rtl:rotate-180" /> {tCommon('back')}
           </Button>
           <div>
-            <h2 className="text-lg font-extrabold text-[#16212B] tracking-tight">Rapprochement du {reconciliation?.statementDate}</h2>
+            <h2 className="text-lg font-extrabold text-[#16212B] tracking-tight">{t('reconciliationDetailTitle', { date: reconciliation?.statementDate ?? '' })}</h2>
             <p className="text-xs text-slate-500">
-              Relevé : {money(reconciliation?.statementBalance)} MAD · Comptable : {money(reconciliation?.reconciledBalance)} MAD ·
-              Écart : <span className={variance === 0 ? 'text-[#17A673] font-bold' : 'text-[#E5544B] font-bold'}>{money(variance)} MAD</span>
-              {closed ? ' · Clôturé' : ` · ${unmatchedCount} ligne(s) en attente`}
+              {t('statementLabel')} : {money(reconciliation?.statementBalance)} {tCommon('currency')} · {t('ledgerLabel')} : {money(reconciliation?.reconciledBalance)} {tCommon('currency')} ·{' '}
+              {t('varianceLabel')} : <span className={variance === 0 ? 'text-[#17A673] font-bold' : 'text-[#E5544B] font-bold'}>{money(variance)} {tCommon('currency')}</span>
+              {closed ? ` · ${t('closedStatus')}` : ` · ${t('pendingLinesSub', { count: unmatchedCount })}`}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           {reconciliation && (
             closed
-              ? <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#DDF5EC] text-[#17A673]">Clôturé</span>
-              : <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#DCEBF4] text-[#1B6C93]">En cours</span>
+              ? <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#DDF5EC] text-[#17A673]">{t('closedStatus')}</span>
+              : <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#DCEBF4] text-[#1B6C93]">{t('inProgressStatus')}</span>
           )}
         </div>
       </div>
@@ -291,7 +292,7 @@ function ReconciliationDetail({ id, onBack, onChanged }: { id: string; onBack: (
       )}
 
       <div className="flex flex-wrap items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 text-xs font-semibold">
-        {([['lines', 'Lignes du relevé'], ['matches', 'Correspondances'], ['fee', 'Frais & intérêts'], ['close', 'Clôture']] as const).map(([key, label]) => (
+        {([['lines', t('tabStatementLines')], ['matches', t('tabMatches')], ['fee', t('tabFeeInterest')], ['close', t('tabClose')]] as const).map(([key, label]) => (
           <button
             key={key}
             onClick={() => setTab(key)}
@@ -305,25 +306,25 @@ function ReconciliationDetail({ id, onBack, onChanged }: { id: string; onBack: (
       {tab === 'lines' && (
         <div className="space-y-4">
           <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2"><FileUp className="w-4 h-4" /> Importer le relevé bancaire</h3>
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2"><FileUp className="w-4 h-4" /> {t('importStatementTitle')}</h3>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <input
                 type="file"
                 accept=".csv,text/csv,text/plain"
                 disabled={importing || closed}
                 onChange={e => setFile(e.target.files?.[0] ?? null)}
-                className="text-xs text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-[#DCEBF4] file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-[#1B6C93]"
+                className="text-xs text-slate-600 file:me-3 file:rounded-xl file:border-0 file:bg-[#DCEBF4] file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-[#1B6C93]"
               />
               <Button size="sm" disabled={!file || importing || closed} onClick={handleImport} className="h-8 gap-1 text-xs bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold rounded-xl">
-                <FileUp className="w-3.5 h-3.5" /> {importing ? 'Import…' : 'Importer'}
+                <FileUp className="w-3.5 h-3.5" /> {importing ? t('importingBtn') : t('importBtn')}
               </Button>
-              <span className="text-[11px] text-slate-400">CSV : en-têtes <code className="text-[#1B6C93]">date, description, debit, credit</code> (référence optionnelle).</span>
+              <span className="text-[11px] text-slate-400">{t('csvFormatHint')}</span>
             </div>
             {detail.imports.length > 0 && (() => {
               const last = detail.imports[0]!;
               return (
                 <p className="mt-2 text-[11px] text-slate-500">
-                  Dernier import : <span className="font-bold text-slate-700">{last.filename}</span> · {last.rowsImported} ligne(s) · empreinte {last.contentFingerprint.slice(0, 10)}…
+                  {t('lastImportInfo', { filename: last.filename, count: last.rowsImported, fingerprint: last.contentFingerprint.slice(0, 10) })}
                 </p>
               );
             })()}
@@ -332,19 +333,19 @@ function ReconciliationDetail({ id, onBack, onChanged }: { id: string; onBack: (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             <Card className="p-0 bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
               <div className="p-3 border-b border-slate-200/80 flex items-center justify-between">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Lignes du relevé ({detail.lines.length})</h3>
-                {selectedLineId && <span className="text-[11px] font-bold text-[#1B6C93]">Sélectionnée</span>}
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('statementLinesCountTitle', { count: detail.lines.length })}</h3>
+                {selectedLineId && <span className="text-[11px] font-bold text-[#1B6C93]">{t('selectedBadge')}</span>}
               </div>
               <div className="overflow-x-auto max-h-[420px] overflow-y-auto">
-                <table className="w-full text-left text-xs">
+                <table className="w-full text-start text-xs">
                   <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80 sticky top-0">
                     <tr>
                       <th className="py-2.5 px-3"><input type="checkbox" checked={mergeIds.size > 0} onChange={() => setMergeIds(new Set(detail.lines.filter(l => l.status !== 'matched').map(l => l.id)))} className="accent-[#2487B8]" /></th>
-                      <th className="py-2.5 px-3">Date</th>
-                      <th className="py-2.5 px-3">Libellé</th>
-                      <th className="py-2.5 px-3 text-right">Débit</th>
-                      <th className="py-2.5 px-3 text-right">Crédit</th>
-                      <th className="py-2.5 px-3">Statut</th>
+                      <th className="py-2.5 px-3 text-start">{t('dateCol')}</th>
+                      <th className="py-2.5 px-3 text-start">{t('statementDescriptionCol')}</th>
+                      <th className="py-2.5 px-3 text-end">{t('debitCol')}</th>
+                      <th className="py-2.5 px-3 text-end">{t('creditCol')}</th>
+                      <th className="py-2.5 px-3 text-start">{tCommon('status')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -371,14 +372,14 @@ function ReconciliationDetail({ id, onBack, onChanged }: { id: string; onBack: (
                         <td className="py-2.5 px-3 text-slate-500 whitespace-nowrap">{l.lineDate}</td>
                         <td className="py-2.5 px-3 font-medium text-[#16212B]">
                           {l.description}
-                          {l.reference && <span className="ml-1 text-slate-400 text-[10px]">· {l.reference}</span>}
+                          {l.reference && <span className="ms-1 text-slate-400 text-[10px]">· {l.reference}</span>}
                         </td>
-                        <td className="py-2.5 px-3 text-right font-extrabold text-[#16212B]">{money(l.debitAmount)}</td>
-                        <td className="py-2.5 px-3 text-right font-extrabold text-[#16212B]">{money(l.creditAmount)}</td>
-                        <td className="py-2.5 px-3">{statusBadge(l.status)}</td>
+                        <td className="py-2.5 px-3 text-end font-extrabold text-[#16212B]">{money(l.debitAmount)}</td>
+                        <td className="py-2.5 px-3 text-end font-extrabold text-[#16212B]">{money(l.creditAmount)}</td>
+                        <td className="py-2.5 px-3"><StatusBadge status={l.status} /></td>
                       </tr>
                     ))}
-                    {detail.lines.length === 0 && <tr><td colSpan={6} className="py-8 text-center text-slate-400">Aucune ligne importée. Importez un relevé CSV.</td></tr>}
+                    {detail.lines.length === 0 && <tr><td colSpan={6} className="py-8 text-center text-slate-400">{t('noImportedLines')}</td></tr>}
                   </tbody>
                 </table>
               </div>
@@ -386,9 +387,9 @@ function ReconciliationDetail({ id, onBack, onChanged }: { id: string; onBack: (
 
             <div className="space-y-4">
               <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Landmark className="w-4 h-4" /> Grand livre bancaire</h3>
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Landmark className="w-4 h-4" /> {t('bankLedgerTitle')}</h3>
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-600 text-xs">Compte d’actif bancaire</label>
+                  <label className="font-bold text-slate-600 text-xs">{t('bankAssetAccountLabel')}</label>
                   <select
                     value={assetAccountId}
                     onChange={e => setAssetAccountId(e.target.value)}
@@ -398,9 +399,9 @@ function ReconciliationDetail({ id, onBack, onChanged }: { id: string; onBack: (
                   </select>
                 </div>
                 <div className="overflow-x-auto max-h-[280px] overflow-y-auto border border-slate-100 rounded-xl">
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full text-start text-xs">
                     <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80 sticky top-0">
-                      <tr><th className="py-2 px-3">Pièce</th><th className="py-2 px-3">Date</th><th className="py-2 px-3">Libellé</th><th className="py-2 px-3 text-right">Débit</th><th className="py-2 px-3 text-right">Crédit</th></tr>
+                      <tr><th className="py-2 px-3 text-start">{t('voucherCol')}</th><th className="py-2 px-3 text-start">{t('dateCol')}</th><th className="py-2 px-3 text-start">{t('statementDescriptionCol')}</th><th className="py-2 px-3 text-end">{t('debitCol')}</th><th className="py-2 px-3 text-end">{t('creditCol')}</th></tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {journalLines.map(jl => (
@@ -412,52 +413,52 @@ function ReconciliationDetail({ id, onBack, onChanged }: { id: string; onBack: (
                           <td className="py-2 px-3 font-bold text-[#16212B] whitespace-nowrap">{jl.entryNumber}</td>
                           <td className="py-2 px-3 text-slate-500 whitespace-nowrap">{jl.entryDate}</td>
                           <td className="py-2 px-3 font-medium text-[#16212B]">{jl.description}</td>
-                          <td className="py-2 px-3 text-right font-extrabold text-[#16212B]">{money(jl.debit)}</td>
-                          <td className="py-2 px-3 text-right font-extrabold text-[#16212B]">{money(jl.credit)}</td>
+                          <td className="py-2 px-3 text-end font-extrabold text-[#16212B]">{money(jl.debit)}</td>
+                          <td className="py-2 px-3 text-end font-extrabold text-[#16212B]">{money(jl.credit)}</td>
                         </tr>
                       ))}
-                      {journalLoading && <tr><td colSpan={5} className="py-6 text-center text-slate-400">Chargement du grand livre…</td></tr>}
-                      {!journalLoading && journalLines.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-slate-400">Aucune écriture sur la période.</td></tr>}
+                      {journalLoading && <tr><td colSpan={5} className="py-6 text-center text-slate-400">{t('loadingLedger')}</td></tr>}
+                      {!journalLoading && journalLines.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-slate-400">{t('noLedgerEntries')}</td></tr>}
                     </tbody>
                   </table>
                 </div>
               </Card>
 
               <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Rapprocher</h3>
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('reconcileTitle')}</h3>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <Input type="number" placeholder="Montant partiel (facultatif)" value={matchAmount} onChange={e => setMatchAmount(e.target.value)} disabled={closed} className="h-8 rounded-xl text-xs" />
+                  <Input type="number" placeholder={t('partialAmountOptionalPlaceholder')} value={matchAmount} onChange={e => setMatchAmount(e.target.value)} disabled={closed} className="h-8 rounded-xl text-xs" />
                   <Button size="sm" disabled={!selectedLineId || !selectedJournalId || busy || closed} onClick={handleMatch} className="h-8 gap-1 text-xs bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold rounded-xl">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Rapprocher la sélection
+                    <CheckCircle2 className="w-3.5 h-3.5" /> {t('reconcileSelectionBtn')}
                   </Button>
                 </div>
-                <p className="text-[11px] text-slate-400">Une ligne de relevé + une écriture du grand livre sélectionnées. Sans montant, la ligne est rapprochée pour son montant total.</p>
+                <p className="text-[11px] text-slate-400">{t('reconcileSelectionHelp')}</p>
 
                 <div className="border-t border-slate-100 pt-3">
-                  <h4 className="text-[11px] font-bold text-slate-500 mb-2 flex items-center gap-1"><Split className="w-3.5 h-3.5" /> Découper la ligne sélectionnée</h4>
+                  <h4 className="text-[11px] font-bold text-slate-500 mb-2 flex items-center gap-1"><Split className="w-3.5 h-3.5" /> {t('splitSelectedLineTitle')}</h4>
                   {splitParts.map((part, i) => (
                     <div key={i} className="flex gap-2 mb-2">
                       <select value={part.journalLineId} onChange={e => setSplitParts(parts => parts.map((p, j) => j === i ? { ...p, journalLineId: e.target.value } : p))} disabled={closed} className="flex-1 h-8 rounded-xl border border-slate-200 bg-white px-2 text-xs font-medium">
-                        <option value="">Écriture…</option>
+                        <option value="">{t('selectEntryPlaceholder')}</option>
                         {journalLines.map(jl => <option key={jl.id} value={jl.id}>{jl.entryNumber} · {money(jl.debit)}/{money(jl.credit)}</option>)}
                       </select>
-                      <Input type="number" placeholder="Montant" value={part.amount} onChange={e => setSplitParts(parts => parts.map((p, j) => j === i ? { ...p, amount: e.target.value } : p))} disabled={closed} className="h-8 w-28 rounded-xl text-xs" />
+                      <Input type="number" placeholder={t('amountCol')} value={part.amount} onChange={e => setSplitParts(parts => parts.map((p, j) => j === i ? { ...p, amount: e.target.value } : p))} disabled={closed} className="h-8 w-28 rounded-xl text-xs" />
                       {splitParts.length > 2 && (
                         <Button variant="ghost" size="sm" onClick={() => setSplitParts(parts => parts.filter((_, j) => j !== i))} className="h-8 w-8 p-0 text-slate-400 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></Button>
                       )}
                     </div>
                   ))}
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" disabled={closed} onClick={() => setSplitParts(parts => [...parts, { journalLineId: '', amount: '' }])} className="h-8 text-xs rounded-xl">+ Ajouter une part</Button>
-                    <Button size="sm" disabled={!selectedLineId || splitParts.filter(p => p.journalLineId && p.amount).length < 2 || busy || closed} onClick={handleSplit} className="h-8 text-xs rounded-xl bg-[#16212B] hover:bg-slate-800 text-white font-bold">Valider le découpage</Button>
+                    <Button variant="outline" size="sm" disabled={closed} onClick={() => setSplitParts(parts => [...parts, { journalLineId: '', amount: '' }])} className="h-8 text-xs rounded-xl">{t('addSplitPartBtn')}</Button>
+                    <Button size="sm" disabled={!selectedLineId || splitParts.filter(p => p.journalLineId && p.amount).length < 2 || busy || closed} onClick={handleSplit} className="h-8 text-xs rounded-xl bg-[#16212B] hover:bg-slate-800 text-white font-bold">{t('validateSplitBtn')}</Button>
                   </div>
                 </div>
 
                 <div className="border-t border-slate-100 pt-3">
-                  <h4 className="text-[11px] font-bold text-slate-500 mb-2">Fusionner des lignes sur une écriture</h4>
+                  <h4 className="text-[11px] font-bold text-slate-500 mb-2">{t('mergeLinesTitle')}</h4>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] text-slate-500">Cochez ≥ 2 lignes de relevé, puis une écriture du grand livre.</span>
-                    <Button size="sm" disabled={mergeIds.size < 2 || !selectedJournalId || busy || closed} onClick={handleMerge} className="h-8 text-xs rounded-xl bg-[#16212B] hover:bg-slate-800 text-white font-bold">Fusionner ({mergeIds.size})</Button>
+                    <span className="text-[11px] text-slate-500">{t('mergeLinesHelp')}</span>
+                    <Button size="sm" disabled={mergeIds.size < 2 || !selectedJournalId || busy || closed} onClick={handleMerge} className="h-8 text-xs rounded-xl bg-[#16212B] hover:bg-slate-800 text-white font-bold">{t('mergeSelectedBtn', { count: mergeIds.size })}</Button>
                   </div>
                 </div>
               </Card>
@@ -469,28 +470,28 @@ function ReconciliationDetail({ id, onBack, onChanged }: { id: string; onBack: (
       {tab === 'matches' && (
         <Card className="p-0 bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
           <div className="p-3 border-b border-slate-200/80">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Correspondances ({detail.matches.length})</h3>
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('matchesCountTitle', { count: detail.matches.length })}</h3>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-start text-xs">
               <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
-                <tr><th className="py-3 px-4">Ligne de relevé</th><th className="py-3 px-4">Écriture du grand livre</th><th className="py-3 px-4 text-right">Montant rapproché</th><th className="py-3 px-4">Date</th><th className="py-3 px-4"></th></tr>
+                <tr><th className="py-3 px-4 text-start">{t('statementDescriptionCol')}</th><th className="py-3 px-4 text-start">{t('bankLedgerTitle')}</th><th className="py-3 px-4 text-end">{t('matchedAmountCol')}</th><th className="py-3 px-4 text-start">{t('dateCol')}</th><th className="py-3 px-4"></th></tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {detail.matches.map(m => (
                   <tr key={m.id} className="hover:bg-slate-50/80 transition font-medium">
                     <td className="py-3 px-4 text-[#16212B]">{statementLineLabel(m.statementLineId)}</td>
-                    <td className="py-3 px-4 text-slate-500">Écriture {m.journalLineId.slice(0, 8)}…</td>
-                    <td className="py-3 px-4 text-right font-extrabold text-[#16212B]">{money(m.matchedAmount)} MAD</td>
+                    <td className="py-3 px-4 text-slate-500">{t('voucherCol')} {m.journalLineId.slice(0, 8)}…</td>
+                    <td className="py-3 px-4 text-end font-extrabold text-[#16212B]">{money(m.matchedAmount)} {tCommon('currency')}</td>
                     <td className="py-3 px-4 text-slate-400 whitespace-nowrap">{m.createdAt?.slice(0, 10)}</td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3 px-4 text-end">
                       <Button variant="ghost" size="sm" disabled={busy || closed} onClick={() => handleUnmatch(m)} className="h-7 px-2 text-xs text-slate-400 hover:text-red-500 gap-1">
-                        <X className="w-3 h-3" /> Annuler
+                        <X className="w-3 h-3" /> {tCommon('cancel')}
                       </Button>
                     </td>
                   </tr>
                 ))}
-                {detail.matches.length === 0 && <tr><td colSpan={5} className="py-8 text-center text-slate-400">Aucune correspondance établie.</td></tr>}
+                {detail.matches.length === 0 && <tr><td colSpan={5} className="py-8 text-center text-slate-400">{t('noMatchesEstablished')}</td></tr>}
               </tbody>
             </table>
           </div>
@@ -500,67 +501,67 @@ function ReconciliationDetail({ id, onBack, onChanged }: { id: string; onBack: (
       {tab === 'fee' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Comptabiliser frais / intérêts bancaires</h3>
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('recordFeeInterestTitle')}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div className="space-y-1 sm:col-span-2">
-                <label className="font-bold text-slate-600">Type</label>
+                <label className="font-bold text-slate-600">{t('feeKindLabel')}</label>
                 <select value={fee.kind} onChange={e => setFee({ ...fee, kind: e.target.value })} disabled={closed} className="w-full h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium">
-                  <option value="fee">Frais bancaires (charge)</option>
-                  <option value="interest">Intérêts créditeurs (produit)</option>
+                  <option value="fee">{t('feeKindExpense')}</option>
+                  <option value="interest">{t('feeKindRevenue')}</option>
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="font-bold text-slate-600">Montant (MAD)</label>
+                <label className="font-bold text-slate-600">{t('amountCol')} ({tCommon('currency')})</label>
                 <Input type="number" value={fee.amount} onChange={e => setFee({ ...fee, amount: e.target.value })} disabled={closed} className="h-9 rounded-xl text-xs" />
               </div>
               <div className="space-y-1">
-                <label className="font-bold text-slate-600">Date d’écriture</label>
+                <label className="font-bold text-slate-600">{t('dateCol')}</label>
                 <Input type="date" value={fee.entryDate} onChange={e => setFee({ ...fee, entryDate: e.target.value })} disabled={closed} className="h-9 rounded-xl text-xs" />
               </div>
               <div className="space-y-1 sm:col-span-2">
-                <label className="font-bold text-slate-600">Compte bancaire (actif)</label>
+                <label className="font-bold text-slate-600">{t('bankAssetAccountLabel')}</label>
                 <select value={assetAccountId} onChange={e => setAssetAccountId(e.target.value)} disabled={closed} className="w-full h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium">
                   {accounts.map(a => <option key={a.id} value={a.id}>{a.code} · {a.name}</option>)}
                 </select>
               </div>
               <div className="space-y-1 sm:col-span-2">
-                <label className="font-bold text-slate-600">Compte de contrepartie ({fee.kind === 'fee' ? 'charge' : 'produit'})</label>
+                <label className="font-bold text-slate-600">{t('offsetAccountLabel')}</label>
                 <select value={fee.offsetId} onChange={e => setFee({ ...fee, offsetId: e.target.value })} disabled={closed} className="w-full h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium">
-                  <option value="">Choisir un compte…</option>
+                  <option value="">{t('chooseAccountPlaceholder')}</option>
                   {offsetAccounts.map(a => <option key={a.id} value={a.id}>{a.code} · {a.name}</option>)}
                 </select>
               </div>
               <div className="space-y-1 sm:col-span-2">
-                <label className="font-bold text-slate-600">Libellé</label>
-                <Input value={fee.description} onChange={e => setFee({ ...fee, description: e.target.value })} disabled={closed} placeholder="Frais de tenue de compte août" className="h-9 rounded-xl text-xs" />
+                <label className="font-bold text-slate-600">{t('descriptionLabel')}</label>
+                <Input value={fee.description} onChange={e => setFee({ ...fee, description: e.target.value })} disabled={closed} placeholder={t('descriptionPlaceholder')} className="h-9 rounded-xl text-xs" />
               </div>
               <div className="space-y-1">
-                <label className="font-bold text-slate-600">Journal</label>
+                <label className="font-bold text-slate-600">{t('voucherCol')}</label>
                 <Input value={fee.journalCode} onChange={e => setFee({ ...fee, journalCode: e.target.value })} disabled={closed} placeholder="GEN" className="h-9 rounded-xl text-xs" />
               </div>
               <div className="space-y-1">
-                <label className="font-bold text-slate-600">Type de pièce</label>
+                <label className="font-bold text-slate-600">{t('voucherTypePlaceholder')}</label>
                 <Input value={fee.voucherTypeCode} onChange={e => setFee({ ...fee, voucherTypeCode: e.target.value })} disabled={closed} placeholder="OD" className="h-9 rounded-xl text-xs" />
               </div>
               <div className="space-y-1 sm:col-span-2">
-                <label className="font-bold text-slate-600">Clé d’idempotence (≥ 8 caractères)</label>
+                <label className="font-bold text-slate-600">{t('idempotencyKeyLabel')}</label>
                 <Input value={fee.idempotencyKey} onChange={e => setFee({ ...fee, idempotencyKey: e.target.value })} disabled={closed} placeholder={`recon-${id.slice(0, 8)}-${fee.kind}-001`} className="h-9 rounded-xl text-xs font-mono" />
               </div>
             </div>
             <Button size="sm" disabled={busy || closed} onClick={handleFeeInterest} className="h-9 gap-1 text-xs bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold rounded-xl">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Comptabiliser {fee.kind === 'fee' ? 'les frais' : 'les intérêts'}
+              <CheckCircle2 className="w-3.5 h-3.5" /> {fee.kind === 'fee' ? t('recordFeeBtn') : t('recordInterestBtn')}
             </Button>
-            <p className="text-[11px] text-slate-400">Écriture passée via le service de comptabilisation central : immuable, idempotente et numérotée.</p>
+            <p className="text-[11px] text-slate-400">{t('reconcileSelectionHelp')}</p>
           </Card>
 
           <Card className="p-0 bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
             <div className="p-3 border-b border-slate-200/80">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Journal des événements</h3>
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('eventLogTitle')}</h3>
             </div>
             <div className="overflow-x-auto max-h-[380px] overflow-y-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-start text-xs">
                 <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80 sticky top-0">
-                  <tr><th className="py-2.5 px-4">Date</th><th className="py-2.5 px-4">Événement</th><th className="py-2.5 px-4">Raison / détail</th></tr>
+                  <tr><th className="py-2.5 px-4 text-start">{t('dateCol')}</th><th className="py-2.5 px-4 text-start">{t('eventCol')}</th><th className="py-2.5 px-4 text-start">{t('reasonDetailCol')}</th></tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {detail.events.map(ev => (
@@ -570,7 +571,7 @@ function ReconciliationDetail({ id, onBack, onChanged }: { id: string; onBack: (
                       <td className="py-2.5 px-4 text-slate-500">{ev.reason ?? (ev.metadata ? JSON.stringify(ev.metadata) : '')}</td>
                     </tr>
                   ))}
-                  {detail.events.length === 0 && <tr><td colSpan={3} className="py-8 text-center text-slate-400">Aucun événement.</td></tr>}
+                  {detail.events.length === 0 && <tr><td colSpan={3} className="py-8 text-center text-slate-400">{t('noEventsFound')}</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -580,36 +581,36 @@ function ReconciliationDetail({ id, onBack, onChanged }: { id: string; onBack: (
 
       {tab === 'close' && (
         <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Clôture signée</h3>
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('signedCloseTitle')}</h3>
           <div className="flex flex-wrap items-center gap-4 text-xs">
             <div>
-              <p className="text-slate-400 font-bold">Solde relevé</p>
-              <p className="text-lg font-extrabold text-[#16212B]">{money(reconciliation?.statementBalance)} MAD</p>
+              <p className="text-slate-400 font-bold">{t('statementBalanceLabel')}</p>
+              <p className="text-lg font-extrabold text-[#16212B]">{money(reconciliation?.statementBalance)} {tCommon('currency')}</p>
             </div>
             <div>
-              <p className="text-slate-400 font-bold">Solde rapproché</p>
-              <p className="text-lg font-extrabold text-[#16212B]">{money(reconciliation?.reconciledBalance)} MAD</p>
+              <p className="text-slate-400 font-bold">{t('reconciledBalanceLabel')}</p>
+              <p className="text-lg font-extrabold text-[#16212B]">{money(reconciliation?.reconciledBalance)} {tCommon('currency')}</p>
             </div>
             <div>
-              <p className="text-slate-400 font-bold">Écart</p>
-              <p className={`text-lg font-extrabold ${variance === 0 ? 'text-[#17A673]' : 'text-[#E5544B]'}`}>{money(variance)} MAD</p>
+              <p className="text-slate-400 font-bold">{t('varianceLabel')}</p>
+              <p className={`text-lg font-extrabold ${variance === 0 ? 'text-[#17A673]' : 'text-[#E5544B]'}`}>{money(variance)} {tCommon('currency')}</p>
             </div>
-            <div className="ml-auto">
+            <div className="ms-auto">
               <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${closed ? 'bg-[#DDF5EC] text-[#17A673]' : 'bg-amber-100 text-amber-700'}`}>
-                {closed ? 'Clôturé' : `${unmatchedCount} ligne(s) non rapprochée(s)`}
+                {closed ? t('closedStatus') : t('unmatchedLinesCountBadge', { count: unmatchedCount })}
               </span>
             </div>
           </div>
           {!closed && (
             <>
               <div className="space-y-1">
-                <label className="font-bold text-slate-600 text-xs">Motif d’écart (requis si le rapprochement n’est pas équilibré)</label>
+                <label className="font-bold text-slate-600 text-xs">{t('varianceReasonRequiredLabel')}</label>
                 <Input value={closeReason} onChange={e => setCloseReason(e.target.value)} placeholder="Ex. : chèques en circulation, frais non encore imputés…" className="h-9 rounded-xl text-xs" />
               </div>
               <Button size="sm" disabled={closing || busy || closed} onClick={handleClose} className="h-9 gap-1 text-xs bg-[#16212B] hover:bg-slate-800 text-white font-bold rounded-xl">
-                <ShieldCheck className="w-3.5 h-3.5" /> {closing ? 'Clôture…' : 'Clôturer le rapprochement'}
+                <ShieldCheck className="w-3.5 h-3.5" /> {closing ? t('closingBtn') : t('closeReconciliationBtn')}
               </Button>
-              <p className="text-[11px] text-slate-400">Après clôture, toute modification du relevé, des correspondances ou des événements est rejetée par la base de données.</p>
+              <p className="text-[11px] text-slate-400">{t('postCloseWarning')}</p>
             </>
           )}
         </Card>
@@ -619,6 +620,9 @@ function ReconciliationDetail({ id, onBack, onChanged }: { id: string; onBack: (
 }
 
 export function BankReconciliationView({ locale: _locale }: { locale?: string } = {}) {
+  const t = useTranslations('Finance');
+  const tCommon = useTranslations('Common');
+
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [accountId, setAccountId] = useState('');
   const [reconciliations, setReconciliations] = useState<Reconciliation[]>([]);
@@ -643,8 +647,8 @@ export function BankReconciliationView({ locale: _locale }: { locale?: string } 
       .catch(() => {});
   }, []);
 
-  const loadReconciliations = (id: string) => {
-    fetch(`/api/finance/bank-reconciliation?bankAccountId=${id}`)
+  const loadReconciliations = (accId: string) => {
+    fetch(`/api/finance/bank-reconciliation?bankAccountId=${accId}`)
       .then(res => (res.ok ? res.json() : null))
       .then((json) => {
         if (json?.success) {
@@ -675,7 +679,7 @@ export function BankReconciliationView({ locale: _locale }: { locale?: string } 
         setStatementDate('');
         setStatementBalance('');
         setReconciledBalance('');
-        setFeedbackMsg('Rapprochement bancaire enregistré avec succès !');
+        setFeedbackMsg(t('reconciliationSavedSuccess'));
         setTimeout(() => setFeedbackMsg(null), 4000);
         loadReconciliations(accountId);
       }
@@ -705,12 +709,12 @@ export function BankReconciliationView({ locale: _locale }: { locale?: string } 
     <div className="space-y-6 max-w-[1600px] mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Rapprochement bancaire</h1>
-          <p className="text-xs text-slate-500 mt-1">Importez le relevé, rapprochez chaque ligne avec le grand livre, imputez frais et intérêts, puis clôturez.</p>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('bankReconciliationTitle')}</h1>
+          <p className="text-xs text-slate-500 mt-1">{t('bankReconciliationSubtitle')}</p>
         </div>
         {selectedAccount && (
           <Button size="sm" variant="outline" onClick={() => loadReconciliations(accountId)} className="h-8 gap-1 text-xs rounded-xl">
-            <RefreshCw className="w-3.5 h-3.5" /> Actualiser
+            <RefreshCw className="w-3.5 h-3.5" /> {tCommon('refresh')}
           </Button>
         )}
       </div>
@@ -729,9 +733,9 @@ export function BankReconciliationView({ locale: _locale }: { locale?: string } 
             <Banknote className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-slate-400">Comptes Bancaires</p>
+            <p className="text-[10px] font-bold text-slate-400">{t('bankAccountsTitle')}</p>
             <p className="text-xl font-extrabold text-[#16212B]">{accounts.length}</p>
-            <p className="text-[10px] font-semibold text-[#17A673]">Actifs de trésorerie</p>
+            <p className="text-[10px] font-semibold text-[#17A673]">{t('statusActive')}</p>
           </div>
         </Card>
 
@@ -740,9 +744,9 @@ export function BankReconciliationView({ locale: _locale }: { locale?: string } 
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-slate-400">Rapprochements</p>
+            <p className="text-[10px] font-bold text-slate-400">{t('bankReconciliationTitle')}</p>
             <p className="text-xl font-extrabold text-[#16212B]">{reconciliations.length}</p>
-            <p className="text-[10px] font-semibold text-[#17A673]">{openCount} en cours</p>
+            <p className="text-[10px] font-semibold text-[#17A673]">{openCount} {t('inProgressStatus')}</p>
           </div>
         </Card>
 
@@ -751,23 +755,23 @@ export function BankReconciliationView({ locale: _locale }: { locale?: string } 
             <Scale className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-slate-400">Cycle complet</p>
-            <p className="text-xl font-extrabold text-[#16212B]">Import → Rapprochement → Clôture</p>
-            <p className="text-[10px] font-semibold text-[#17A673]">Signé et immuable</p>
+            <p className="text-[10px] font-bold text-slate-400">{t('signedCloseTitle')}</p>
+            <p className="text-xl font-extrabold text-[#16212B]">Import → Match → Close</p>
+            <p className="text-[10px] font-semibold text-[#17A673]">{t('closedStatus')}</p>
           </div>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Comptes bancaires</h3>
-          {accounts.length === 0 && <p className="text-xs text-slate-500">Aucun compte bancaire configuré.</p>}
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('bankAccountsTitle')}</h3>
+          {accounts.length === 0 && <p className="text-xs text-slate-500">{t('noBankAccountsConfigured')}</p>}
           {accounts.map(a => (
             <button
               type="button"
               key={a.id}
               onClick={() => setAccountId(a.id)}
-              className={`w-full text-left p-3 rounded-xl text-xs flex items-center gap-2 ${accountId === a.id ? 'bg-[#DCEBF4]/40 border border-[#2487B8]/30' : 'bg-slate-50 border border-transparent'}`}
+              className={`w-full text-start p-3 rounded-xl text-xs flex items-center gap-2 ${accountId === a.id ? 'bg-[#DCEBF4]/40 border border-[#2487B8]/30' : 'bg-slate-50 border border-transparent'}`}
             >
               <Banknote className="w-4 h-4 text-[#2487B8] shrink-0" />
               <div>
@@ -780,19 +784,19 @@ export function BankReconciliationView({ locale: _locale }: { locale?: string } 
 
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3 lg:col-span-2">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            Nouveau rapprochement{selectedAccount ? ` — ${selectedAccount.bankName}` : ''}
+            {t('newReconciliationTitle')}{selectedAccount ? ` — ${selectedAccount.bankName}` : ''}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Date du relevé</label>
+              <label className="font-bold text-slate-600">{t('statementDateLabel')}</label>
               <Input type="date" value={statementDate} onChange={e => setStatementDate(e.target.value)} className="h-9 rounded-xl" />
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Solde relevé (MAD)</label>
+              <label className="font-bold text-slate-600">{t('statementBalanceMadLabel')}</label>
               <Input type="number" value={statementBalance} onChange={e => setStatementBalance(e.target.value)} className="h-9 rounded-xl" />
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Solde comptable (MAD)</label>
+              <label className="font-bold text-slate-600">{t('ledgerBalanceMadLabel')}</label>
               <Input type="number" value={reconciledBalance} onChange={e => setReconciledBalance(e.target.value)} className="h-9 rounded-xl" />
             </div>
           </div>
@@ -803,29 +807,29 @@ export function BankReconciliationView({ locale: _locale }: { locale?: string } 
             className="h-9 rounded-xl px-4 gap-2 bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold shadow-sm"
           >
             <CheckCircle2 className="w-4 h-4" />
-            Enregistrer le rapprochement
+            {t('recordReconciliationBtn')}
           </Button>
         </Card>
       </div>
 
       <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
         <div className="p-3 border-b border-slate-200/80">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Rapprochements — cliquez une ligne pour ouvrir le cycle complet</h3>
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('reconciliationsTableInstruction')}</h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-start text-xs">
             <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
               <tr>
-                <th className="py-3.5 px-4">Date relevé</th>
-                <th className="py-3.5 px-4 text-right">Solde relevé</th>
-                <th className="py-3.5 px-4 text-right">Solde comptable</th>
-                <th className="py-3.5 px-4 text-right">Écart</th>
-                <th className="py-3.5 px-4 text-right">Statut</th>
+                <th className="py-3.5 px-4 text-start">{t('statementDateLabel')}</th>
+                <th className="py-3.5 px-4 text-end">{t('statementBalanceLabel')}</th>
+                <th className="py-3.5 px-4 text-end">{t('reconciledBalanceLabel')}</th>
+                <th className="py-3.5 px-4 text-end">{t('varianceLabel')}</th>
+                <th className="py-3.5 px-4 text-end">{tCommon('status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {reconciliations.length === 0 && (
-                <tr><td colSpan={5} className="py-8 text-center text-slate-400">Aucun rapprochement enregistré pour ce compte.</td></tr>
+                <tr><td colSpan={5} className="py-8 text-center text-slate-400">{t('noReconciliationsForAccount')}</td></tr>
               )}
               {reconciliations.map((r) => {
                 const gap = Number(r.statementBalance) - Number(r.reconciledBalance);
@@ -837,12 +841,12 @@ export function BankReconciliationView({ locale: _locale }: { locale?: string } 
                     className="hover:bg-[#DCEBF4]/20 transition font-medium cursor-pointer"
                   >
                     <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">{r.statementDate}</td>
-                    <td className="py-3.5 px-4 text-right font-extrabold text-[#16212B]">{Number(r.statementBalance).toLocaleString('fr-FR')} MAD</td>
-                    <td className="py-3.5 px-4 text-right font-extrabold text-[#16212B]">{Number(r.reconciledBalance).toLocaleString('fr-FR')} MAD</td>
-                    <td className={`py-3.5 px-4 text-right font-bold ${gap === 0 ? 'text-[#17A673]' : 'text-[#E5544B]'}`}>{gap.toLocaleString('fr-FR')} MAD</td>
-                    <td className="py-3.5 px-4 text-right">
+                    <td className="py-3.5 px-4 text-end font-extrabold text-[#16212B]">{Number(r.statementBalance).toLocaleString('fr-FR')} {tCommon('currency')}</td>
+                    <td className="py-3.5 px-4 text-end font-extrabold text-[#16212B]">{Number(r.reconciledBalance).toLocaleString('fr-FR')} {tCommon('currency')}</td>
+                    <td className={`py-3.5 px-4 text-end font-bold ${gap === 0 ? 'text-[#17A673]' : 'text-[#E5544B]'}`}>{gap.toLocaleString('fr-FR')} {tCommon('currency')}</td>
+                    <td className="py-3.5 px-4 text-end">
                       <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${isClosed ? 'bg-[#DDF5EC] text-[#17A673]' : 'bg-[#DCEBF4] text-[#1B6C93]'}`}>
-                        {isClosed ? 'Clôturé' : 'En cours'}
+                        {isClosed ? t('closedStatus') : t('inProgressStatus')}
                       </span>
                     </td>
                   </tr>

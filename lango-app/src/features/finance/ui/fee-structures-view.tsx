@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -49,17 +50,18 @@ type StructForm = {
 };
 
 const emptyStructForm = (): StructForm => ({ name: '', description: '', amount: '', academicTermId: '', branchId: '', isActive: true });
-
 const emptyComponent = (): ComponentRow => ({ name: '', amount: '', recurrence: 'once', taxable: false, mandatory: true, dueOffsetDays: 0 });
 
-const recurrenceLabel: Record<Recurrence, string> = { once: 'Une fois', term: 'Par trimestre', yearly: 'Annuel' };
+export function FeeStructuresView({ locale: _locale }: { locale?: string } = {}) {
+  const t = useTranslations('Finance');
+  const tCommon = useTranslations('Common');
 
-// Fee structures — tenant-scoped feeStructures (Fees Group screen). Each
-// structure can be scoped to an academic term + branch, and carries immutable
-// versioned snapshots of its fee components (recurrence / tax / due offset).
-// Structure create/edit is a school_admin action (POST/PUT require that role);
-// version authoring is open to accountants too.
-export function FeeStructuresView() {
+  const recurrenceLabel: Record<Recurrence, string> = {
+    once: t('recurrenceOnce'),
+    term: t('recurrenceTerm'),
+    yearly: t('recurrenceYearly'),
+  };
+
   const { role } = usePermissions();
   const canManage = role === 'school_admin' || role === 'accountant';
   const canEditStructure = role === 'school_admin';
@@ -152,10 +154,10 @@ export function FeeStructuresView() {
         setShowStructureForm(false);
         load();
       } else {
-        setStructError(json.message ?? json.error?.message ?? "Échec de l'enregistrement.");
+        setStructError(json.message ?? json.error?.message ?? t('saveFailed'));
       }
-    } catch (err) {
-      setStructError("Erreur réseau lors de l'enregistrement.");
+    } catch (_err) {
+      setStructError(t('networkErrorSaving'));
     } finally {
       setSaving(false);
     }
@@ -217,12 +219,12 @@ export function FeeStructuresView() {
   const filtered = structures.filter(fs => `${fs.name} ${fs.description ?? ''}`.toLowerCase().includes(search.toLowerCase()));
 
   const termLabel = (id: string | null) => {
-    const t = terms.find(t => t.id === id);
-    return t ? t.name : '—';
+    const termItem = terms.find(item => item.id === id);
+    return termItem ? termItem.name : '—';
   };
 
   const branchLabel = (id: string | null) => {
-    const b = branches.find(b => b.id === id);
+    const b = branches.find(item => item.id === id);
     return b ? `${b.code ?? ''} ${b.name}`.trim() : '—';
   };
 
@@ -230,95 +232,100 @@ export function FeeStructuresView() {
     <div className="space-y-6 max-w-[1200px] mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Structures de frais</h1>
-          <p className="text-xs text-slate-500 mt-1">{structures.length} structure(s) réelle(s) — les versions publiées sont immuables.</p>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('feeStructuresTitle')}</h1>
+          <p className="text-xs text-slate-500 mt-1">{t('feeStructuresSubtitle', { count: structures.length })}</p>
         </div>
         {canEditStructure && (
-          <Button size="sm" onClick={openCreateStructure} className="h-9 text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5">
+          <Button size="sm" onClick={openCreateStructure} className="h-9 text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5 font-bold shadow-sm">
             <Plus className="w-3.5 h-3.5" />
-            Nouvelle structure
+            {t('newFeeStructureBtn')}
           </Button>
         )}
       </div>
 
       <Card className="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
         <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <Input placeholder="Rechercher une structure..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9 text-xs rounded-xl bg-slate-50 border-none" />
+          <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Input
+            placeholder={t('searchFeeStructurePlaceholder')}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="ps-9 h-9 text-xs rounded-xl bg-slate-50 border-none"
+          />
         </div>
       </Card>
 
       {canEditStructure && showStructureForm && (
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-          <h3 className="text-xs font-extrabold text-[#16212B]">{editingStructure ? 'Modifier la structure de frais' : 'Nouvelle structure de frais'}</h3>
+          <h3 className="text-xs font-extrabold text-[#16212B]">{editingStructure ? t('editFeeStructureTitle') : t('newFeeStructureTitle')}</h3>
           {structError && <p className="text-[11px] font-bold text-rose-600">{structError}</p>}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Nom</label>
+              <label className="font-bold text-slate-600">{t('nameLabel')}</label>
               <Input value={structForm.name} onChange={e => setStructForm({ ...structForm, name: e.target.value })} className="h-9 rounded-xl" />
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Montant</label>
+              <label className="font-bold text-slate-600">{t('amountLabel')}</label>
               <Input type="number" step="0.01" min="0" placeholder="ex. 1500" value={structForm.amount} onChange={e => setStructForm({ ...structForm, amount: e.target.value })} className="h-9 rounded-xl" />
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Description (optionnel)</label>
+              <label className="font-bold text-slate-600">{t('descriptionOptionalLabel')}</label>
               <Input value={structForm.description} onChange={e => setStructForm({ ...structForm, description: e.target.value })} className="h-9 rounded-xl" />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Trimestre (optionnel)</label>
-              <select value={structForm.academicTermId} onChange={e => setStructForm({ ...structForm, academicTermId: e.target.value })} className="h-9 w-full rounded-xl border border-slate-200 px-3">
-                <option value="">— Tous —</option>
-                {terms.map(t => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
+              <label className="font-bold text-slate-600">{t('academicTermOptionalLabel')}</label>
+              <select value={structForm.academicTermId} onChange={e => setStructForm({ ...structForm, academicTermId: e.target.value })} className="h-9 w-full rounded-xl border border-slate-200 px-3 bg-white">
+                <option value="">{t('allTermsOption')}</option>
+                {terms.map(item => (
+                  <option key={item.id} value={item.id}>{item.name}</option>
                 ))}
               </select>
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Branche (optionnel)</label>
-              <select value={structForm.branchId} onChange={e => setStructForm({ ...structForm, branchId: e.target.value })} className="h-9 w-full rounded-xl border border-slate-200 px-3">
-                <option value="">— Toutes —</option>
+              <label className="font-bold text-slate-600">{t('branchOptionalLabel')}</label>
+              <select value={structForm.branchId} onChange={e => setStructForm({ ...structForm, branchId: e.target.value })} className="h-9 w-full rounded-xl border border-slate-200 px-3 bg-white">
+                <option value="">{t('allBranchesOption')}</option>
                 {branches.map(b => (
                   <option key={b.id} value={b.id}>{b.code ? `${b.code} — ` : ''}{b.name}</option>
                 ))}
               </select>
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Statut</label>
-              <select value={structForm.isActive ? 'yes' : 'no'} onChange={e => setStructForm({ ...structForm, isActive: e.target.value === 'yes' })} className="h-9 w-full rounded-xl border border-slate-200 px-3">
-                <option value="yes">Active</option>
-                <option value="no">Inactive</option>
+              <label className="font-bold text-slate-600">{tCommon('status')}</label>
+              <select value={structForm.isActive ? 'yes' : 'no'} onChange={e => setStructForm({ ...structForm, isActive: e.target.value === 'yes' })} className="h-9 w-full rounded-xl border border-slate-200 px-3 bg-white">
+                <option value="yes">{t('statusActive')}</option>
+                <option value="no">{t('statusInactive')}</option>
               </select>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Button size="sm" disabled={saving} onClick={handleSaveStructure} className="h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold">
-              {saving ? 'Enregistrement...' : 'Enregistrer'}
+              {saving ? tCommon('loading') : tCommon('save')}
             </Button>
             <Button size="sm" variant="outline" onClick={() => setShowStructureForm(false)} className="h-9 rounded-xl text-xs font-bold">
-              Annuler
+              {tCommon('cancel')}
             </Button>
           </div>
         </Card>
       )}
 
       <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-        <table className="w-full text-left text-xs">
+        <table className="w-full text-start text-xs">
           <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
             <tr>
-              <th className="py-3.5 px-4">Nom</th>
-              <th className="py-3.5 px-4">Description</th>
-              <th className="py-3.5 px-4">Portée</th>
-              <th className="py-3.5 px-4 text-right">Montant</th>
-              <th className="py-3.5 px-4 text-center">Statut</th>
+              <th className="py-3.5 px-4 text-start">{t('nameLabel')}</th>
+              <th className="py-3.5 px-4 text-start">{t('descriptionLabel')}</th>
+              <th className="py-3.5 px-4 text-start">{t('scopeCol')}</th>
+              <th className="py-3.5 px-4 text-end">{t('amountCol')}</th>
+              <th className="py-3.5 px-4 text-center">{tCommon('status')}</th>
               <th className="py-3.5 px-4" />
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {!loading && filtered.length === 0 && (
-              <tr><td colSpan={6} className="py-8 text-center text-slate-400">Aucune structure de frais configurée.</td></tr>
+              <tr><td colSpan={6} className="py-8 text-center text-slate-400">{t('noFeeStructuresConfigured')}</td></tr>
             )}
             {filtered.map(fs => (
               <tr key={fs.id} className="hover:bg-slate-50/80 transition font-medium">
@@ -331,22 +338,22 @@ export function FeeStructuresView() {
                     {!fs.academicTermId && !fs.branchId && <span className="text-slate-400">—</span>}
                   </div>
                 </td>
-                <td className="py-3.5 px-4 text-right font-extrabold text-[#16212B]">{Number(fs.amount).toLocaleString('fr-FR')} MAD</td>
+                <td className="py-3.5 px-4 text-end font-extrabold text-[#16212B]">{Number(fs.amount).toLocaleString('fr-FR')} {tCommon('currency')}</td>
                 <td className="py-3.5 px-4 text-center">
                   <Badge className={`text-[10px] border-none font-bold ${fs.isActive ? 'bg-[#DDF5EC] text-[#17A673]' : 'bg-slate-100 text-slate-500'}`}>
-                    {fs.isActive ? 'Actif' : 'Inactif'}
+                    {fs.isActive ? t('statusActive') : t('statusInactive')}
                   </Badge>
                 </td>
                 <td className="py-3.5 px-4">
                   <div className="flex items-center justify-end gap-1">
                     {canEditStructure && (
-                      <button onClick={() => openEditStructure(fs)} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#2487B8]" title="Modifier">
+                      <button onClick={() => openEditStructure(fs)} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#2487B8]" title={tCommon('edit')}>
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
                     )}
                     <button onClick={() => openVersions(fs)} className="inline-flex items-center gap-1 p-1.5 rounded-lg text-[#2487B8] hover:bg-[#2487B8]/10 text-[11px] font-bold">
-                      <History className="w-3.5 h-3.5" />
-                      Versions
+                      <History className="w-3.5 h-3.5 rtl:rotate-180" />
+                      {t('versionsBtn')}
                     </button>
                   </div>
                 </td>
@@ -360,14 +367,14 @@ export function FeeStructuresView() {
         <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
             <div>
-              <h3 className="text-sm font-extrabold text-[#16212B]">Versions — {selected.name}</h3>
-              <p className="text-[10px] text-slate-400 mt-0.5">Snapshots immuables des composants de frais.</p>
+              <h3 className="text-sm font-extrabold text-[#16212B]">{t('versionsTitle', { name: selected.name })}</h3>
+              <p className="text-[10px] text-slate-400 mt-0.5">{t('versionsSubtitle')}</p>
             </div>
             <div className="flex items-center gap-2">
               {canManage && (
-                <Button size="sm" onClick={() => { setShowVersionForm(v => !v); if (!showVersionForm) resetVersionForm(); }} className="h-9 text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5">
+                <Button size="sm" onClick={() => { setShowVersionForm(v => !v); if (!showVersionForm) resetVersionForm(); }} className="h-9 text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5 font-bold">
                   <Plus className="w-3.5 h-3.5" />
-                  Nouvelle version
+                  {t('newVersionBtn')}
                 </Button>
               )}
               <button onClick={closeVersions} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">
@@ -380,36 +387,36 @@ export function FeeStructuresView() {
             <div className="p-5 border-b border-slate-100 space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-600">Début d&apos;effet</label>
+                  <label className="font-bold text-slate-600">{t('effectiveFromLabel')}</label>
                   <Input type="date" value={effectiveFrom} onChange={e => setEffectiveFrom(e.target.value)} className="h-9 rounded-xl" />
                 </div>
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-600">Publier immédiatement</label>
-                  <select value={publish ? 'yes' : 'no'} onChange={e => setPublish(e.target.value === 'yes')} className="h-9 w-full rounded-xl border border-slate-200 px-3">
-                    <option value="no">Brouillon</option>
-                    <option value="yes">Publier</option>
+                  <label className="font-bold text-slate-600">{t('publishImmediatelyLabel')}</label>
+                  <select value={publish ? 'yes' : 'no'} onChange={e => setPublish(e.target.value === 'yes')} className="h-9 w-full rounded-xl border border-slate-200 px-3 bg-white">
+                    <option value="no">{t('statusDraft')}</option>
+                    <option value="yes">{t('statusPublish')}</option>
                   </select>
                 </div>
               </div>
               <div className="space-y-2">
                 {components.map((c, i) => (
                   <div key={i} className="grid grid-cols-1 sm:grid-cols-[1fr_110px_150px_110px_70px_90px_32px] gap-2 items-center text-xs">
-                    <Input placeholder="Nom du composant (ex. Scolarité)" value={c.name} onChange={e => updateComponent(i, { name: e.target.value })} className="h-9 rounded-xl" />
-                    <Input type="number" placeholder="Montant" value={c.amount} onChange={e => updateComponent(i, { amount: e.target.value })} className="h-9 rounded-xl" />
-                    <select value={c.recurrence} onChange={e => updateComponent(i, { recurrence: e.target.value as Recurrence })} className="h-9 w-full rounded-xl border border-slate-200 px-3">
-                      <option value="once">Une fois</option>
-                      <option value="term">Par trimestre</option>
-                      <option value="yearly">Annuel</option>
+                    <Input placeholder={t('componentNamePlaceholder')} value={c.name} onChange={e => updateComponent(i, { name: e.target.value })} className="h-9 rounded-xl" />
+                    <Input type="number" placeholder={t('amountPlaceholder')} value={c.amount} onChange={e => updateComponent(i, { amount: e.target.value })} className="h-9 rounded-xl" />
+                    <select value={c.recurrence} onChange={e => updateComponent(i, { recurrence: e.target.value as Recurrence })} className="h-9 w-full rounded-xl border border-slate-200 px-3 bg-white">
+                      <option value="once">{recurrenceLabel.once}</option>
+                      <option value="term">{recurrenceLabel.term}</option>
+                      <option value="yearly">{recurrenceLabel.yearly}</option>
                     </select>
-                    <select value={c.mandatory ? 'yes' : 'no'} onChange={e => updateComponent(i, { mandatory: e.target.value === 'yes' })} className="h-9 w-full rounded-xl border border-slate-200 px-3">
-                      <option value="yes">Obligatoire</option>
-                      <option value="no">Optionnel</option>
+                    <select value={c.mandatory ? 'yes' : 'no'} onChange={e => updateComponent(i, { mandatory: e.target.value === 'yes' })} className="h-9 w-full rounded-xl border border-slate-200 px-3 bg-white">
+                      <option value="yes">{t('mandatoryOption')}</option>
+                      <option value="no">{t('optionalOption')}</option>
                     </select>
                     <label className="flex items-center justify-center gap-1.5 font-bold text-slate-600 cursor-pointer">
-                      <input type="checkbox" checked={c.taxable} onChange={e => updateComponent(i, { taxable: e.target.checked })} className="rounded" />
-                      TVA
+                      <input type="checkbox" checked={c.taxable} onChange={e => updateComponent(i, { taxable: e.target.checked })} className="rounded accent-[#2487B8]" />
+                      {t('vatLabel')}
                     </label>
-                    <Input type="number" min="0" max="3650" placeholder="Éch. (j)" title="Décalage d'échéance en jours" value={c.dueOffsetDays} onChange={e => updateComponent(i, { dueOffsetDays: Number(e.target.value) || 0 })} className="h-9 rounded-xl" />
+                    <Input type="number" min="0" max="3650" placeholder={t('dueOffsetDaysLabel')} title={t('dueOffsetDaysLabel')} value={c.dueOffsetDays} onChange={e => updateComponent(i, { dueOffsetDays: Number(e.target.value) || 0 })} className="h-9 rounded-xl" />
                     <button onClick={() => removeComponent(i)} className="p-1.5 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600">
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -419,48 +426,48 @@ export function FeeStructuresView() {
               <div className="flex items-center gap-2">
                 <Button size="sm" variant="outline" onClick={() => setComponents([...components, emptyComponent()])} className="h-9 rounded-xl text-xs font-bold gap-1">
                   <Plus className="w-3.5 h-3.5" />
-                  Ajouter un composant
+                  {t('addComponentBtn')}
                 </Button>
                 <Button size="sm" disabled={saving} onClick={handleCreateVersion} className="h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold gap-1">
                   {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  Créer la version
+                  {t('createVersionBtn')}
                 </Button>
               </div>
             </div>
           )}
 
           <div className="divide-y divide-slate-100">
-            {versionsLoading && <div className="p-6 text-center text-xs text-slate-400">Chargement des versions...</div>}
+            {versionsLoading && <div className="p-6 text-center text-xs text-slate-400">{t('loadingVersions')}</div>}
             {!versionsLoading && versions.length === 0 && (
-              <div className="p-6 text-center text-xs text-slate-400">Aucune version créée pour cette structure.</div>
+              <div className="p-6 text-center text-xs text-slate-400">{t('noVersionsFound')}</div>
             )}
             {versions.map(v => (
               <div key={v.id} className="px-5 py-3.5 flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-extrabold text-[#16212B]">Version {v.versionNumber}</span>
+                    <span className="text-xs font-extrabold text-[#16212B]">{t('versionNumberLabel', { versionNumber: v.versionNumber })}</span>
                     <Badge className={`text-[10px] border-none font-bold ${v.status === 'published' ? 'bg-[#DDF5EC] text-[#17A673]' : 'bg-amber-100 text-amber-700'}`}>
-                      {v.status === 'published' ? 'Publiée' : 'Brouillon'}
+                      {v.status === 'published' ? t('statusPublished') : t('statusDraft')}
                     </Badge>
-                    {v.effectiveFrom && <span className="text-[10px] text-slate-400">Effet {v.effectiveFrom}</span>}
+                    {v.effectiveFrom && <span className="text-[10px] text-slate-400">{t('effectiveFromBadge', { date: v.effectiveFrom })}</span>}
                   </div>
                   {v.componentsSnapshot && v.componentsSnapshot.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {v.componentsSnapshot.map((c, i) => (
                         <span key={i} className="inline-flex items-center gap-1 rounded-lg bg-slate-50 border border-slate-200 px-2 py-1 text-[10px] font-bold text-slate-600">
                           {c.name}
-                          <span className="text-[#2487B8]">{Number(c.amount).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD</span>
-                          {c.mandatory !== false && <span className="text-slate-400 font-medium">· oblig.</span>}
-                          {c.recurrence === 'term' && <span className="text-slate-400">· trim.</span>}
-                          {c.recurrence === 'yearly' && <span className="text-slate-400">· annuel</span>}
-                          {c.taxable && <span className="text-[#B45309]">· TVA</span>}
-                          {typeof c.dueOffsetDays === 'number' && c.dueOffsetDays > 0 && <span className="text-slate-400">· éch. +{c.dueOffsetDays} j</span>}
+                          <span className="text-[#2487B8]">{Number(c.amount).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} {tCommon('currency')}</span>
+                          {c.mandatory !== false && <span className="text-slate-400 font-medium">· {t('mandatoryBadge')}</span>}
+                          {c.recurrence === 'term' && <span className="text-slate-400">· {t('termBadge')}</span>}
+                          {c.recurrence === 'yearly' && <span className="text-slate-400">· {t('yearlyBadge')}</span>}
+                          {c.taxable && <span className="text-[#B45309]">· {t('vatLabel')}</span>}
+                          {typeof c.dueOffsetDays === 'number' && c.dueOffsetDays > 0 && <span className="text-slate-400">· {t('dueOffsetDaysBadge', { days: c.dueOffsetDays })}</span>}
                         </span>
                       ))}
                     </div>
                   )}
                 </div>
-                {v.publishedAt && <span className="text-[10px] text-slate-400 shrink-0">Publiée le {new Date(v.publishedAt).toLocaleDateString('fr-FR')}</span>}
+                {v.publishedAt && <span className="text-[10px] text-slate-400 shrink-0">{t('publishedOnDate', { date: new Date(v.publishedAt).toLocaleDateString() })}</span>}
               </div>
             ))}
           </div>

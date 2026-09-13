@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -56,13 +57,6 @@ type LeavePassDetail = LeavePassRow & {
   returned: { returnedAt: string; note: string | null } | null;
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: 'En attente',
-  approved: 'Approuvée',
-  denied: 'Refusée',
-  returned: 'Retourné',
-};
-
 const STATUS_BADGE: Record<string, string> = {
   pending: 'bg-amber-100 text-amber-700',
   approved: 'bg-[#D1F5E8] text-[#0b5c3a]',
@@ -78,6 +72,16 @@ function toLocalInput(iso: string): string {
 }
 
 export function LeavePassesView() {
+  const t = useTranslations('Hostel');
+  const tCommon = useTranslations('Common');
+
+  const STATUS_LABELS: Record<string, string> = {
+    pending: t('passPending'),
+    approved: t('passApproved'),
+    denied: t('passDenied'),
+    returned: t('passReturned'),
+  };
+
   const [rows, setRows] = useState<LeavePassRow[]>([]);
   const [allocations, setAllocations] = useState<AllocationRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -189,21 +193,21 @@ export function LeavePassesView() {
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#16212B]">Permissions de sortie</h1>
-          <p className="text-sm text-slate-500">Autorisations de sortie des résidents, approbations et retours.</p>
+          <h1 className="text-2xl font-bold text-[#16212B]">{t('leavePassesTitle')}</h1>
+          <p className="text-sm text-slate-500">{t('leavePassesSubtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <Select value={filterStatus} onValueChange={v => setFilterStatus(v)}>
             <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous les statuts</SelectItem>
-              <SelectItem value="pending">En attente</SelectItem>
-              <SelectItem value="approved">Approuvées</SelectItem>
-              <SelectItem value="denied">Refusées</SelectItem>
-              <SelectItem value="returned">Retournées</SelectItem>
+              <SelectItem value="all">{tCommon('all')}</SelectItem>
+              <SelectItem value="pending">{t('passPending')}</SelectItem>
+              <SelectItem value="approved">{t('passApproved')}</SelectItem>
+              <SelectItem value="denied">{t('passDenied')}</SelectItem>
+              <SelectItem value="returned">{t('passReturned')}</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={openCreate} disabled={allocations.length === 0}><Plus className="mr-2 h-4 w-4" /> Nouvelle permission</Button>
+          <Button onClick={openCreate} disabled={allocations.length === 0}><Plus className="mr-2 h-4 w-4" /> {t('btnNewLeavePass')}</Button>
         </div>
       </div>
 
@@ -212,29 +216,29 @@ export function LeavePassesView() {
       <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
         <div className="divide-y divide-slate-100">
           {loading ? (
-            <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Chargement…</div>
+            <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> {tCommon('loading')}</div>
           ) : rows.length === 0 ? (
             <div className="p-10 text-center text-sm text-slate-500">
-              {allocations.length === 0 ? 'Aucun résident enregistré (affectations check-in requis).' : 'Aucune permission de sortie.'}
+              {allocations.length === 0 ? t('noResidentsTonight') : t('noResidentsMatch')}
             </div>
           ) : (
             rows.map(row => (
               <div key={row.id}>
                 <div className="flex items-center justify-between gap-4 p-4">
-                  <button className="flex flex-1 items-center gap-3 text-left" onClick={() => toggleExpand(row.id)}>
+                  <button className="flex flex-1 items-center gap-3 text-start" onClick={() => toggleExpand(row.id)}>
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><DoorOpen className="h-5 w-5" /></div>
                     <div>
-                      <p className="font-semibold text-[#16212B]">{row.studentName ?? 'Élève inconnu'}</p>
+                      <p className="font-semibold text-[#16212B]">{row.studentName ?? t('unknownStudent')}</p>
                       <p className="text-xs text-slate-500">
                         {row.roomCode} · {row.bedCode}
                         {row.destination ? ` → ${row.destination}` : ''}
-                        {' · '}Départ {new Date(row.startDateTime).toLocaleString('fr-MA')}
-                        {' · '}Retour prévu {new Date(row.expectedReturnAt).toLocaleString('fr-MA')}
+                        {' · '}{new Date(row.startDateTime).toLocaleDateString()}
+                        {' · '}{new Date(row.expectedReturnAt).toLocaleDateString()}
                       </p>
                     </div>
                   </button>
                   <div className="flex items-center gap-2">
-                    {row.guardianApprovalRequired && <Badge className="bg-slate-100 text-slate-500">Tuteur requis</Badge>}
+                    {row.guardianApprovalRequired && <Badge className="bg-slate-100 text-slate-500">{t('guardianConsent')}</Badge>}
                     <Badge className={STATUS_BADGE[row.status]}>{STATUS_LABELS[row.status]}</Badge>
                     {row.status === 'pending' && (
                       <>
@@ -243,7 +247,7 @@ export function LeavePassesView() {
                       </>
                     )}
                     {row.status === 'approved' && (
-                      <Button size="sm" onClick={() => recordReturn(row.id)}>Enregistrer le retour</Button>
+                      <Button size="sm" onClick={() => recordReturn(row.id)}>{t('btnRecordReturn')}</Button>
                     )}
                   </div>
                 </div>
@@ -251,33 +255,33 @@ export function LeavePassesView() {
                 {expandedId === row.id && (
                   <div className="border-t border-slate-100 bg-slate-50/60 px-4 py-3">
                     {!detail ? (
-                      <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Chargement…</div>
+                      <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> {tCommon('loading')}</div>
                     ) : (
                       <div className="grid gap-3 text-sm sm:grid-cols-2">
                         <div>
-                          <p className="mb-1 text-xs font-semibold text-slate-500">Motif</p>
+                          <p className="mb-1 text-xs font-semibold text-slate-500">{t('reason')}</p>
                           <p className="text-[#16212B]">{detail.reason ?? '—'}</p>
                         </div>
                         <div>
-                          <p className="mb-1 text-xs font-semibold text-slate-500">Approbations</p>
-                          {detail.approvals.length === 0 && <p className="text-slate-500">Aucune approbation enregistrée.</p>}
+                          <p className="mb-1 text-xs font-semibold text-slate-500">{t('guardianConsent')}</p>
+                          {detail.approvals.length === 0 && <p className="text-slate-500">—</p>}
                           <ul className="space-y-1">
                             {detail.approvals.map(a => (
                               <li key={a.id} className="text-slate-600">
-                                {a.approverRole === 'warden' ? 'Surveillant' : a.approverRole === 'guardian' ? 'Tuteur' : 'Admin'} — {a.decision}
+                                {a.approverRole} — {a.decision}
                                 {a.reason ? ` (${a.reason})` : ''}
                               </li>
                             ))}
                           </ul>
                         </div>
                         <div>
-                          <p className="mb-1 text-xs font-semibold text-slate-500">Destination</p>
+                          <p className="mb-1 text-xs font-semibold text-slate-500">{t('destination')}</p>
                           <p className="text-[#16212B]">{detail.destination ?? '—'}</p>
                         </div>
                         <div>
-                          <p className="mb-1 text-xs font-semibold text-slate-500">Retour enregistré</p>
+                          <p className="mb-1 text-xs font-semibold text-slate-500">{t('expectedReturn')}</p>
                           <p className="text-[#16212B]">
-                            {detail.returned ? `${new Date(detail.returned.returnedAt).toLocaleString('fr-MA')}${detail.returned.note ? ` — ${detail.returned.note}` : ''}` : '—'}
+                            {detail.returned ? `${new Date(detail.returned.returnedAt).toLocaleString()}${detail.returned.note ? ` — ${detail.returned.note}` : ''}` : '—'}
                           </p>
                         </div>
                       </div>
@@ -293,11 +297,11 @@ export function LeavePassesView() {
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Nouvelle permission de sortie</DialogTitle>
+            <DialogTitle>{t('btnNewLeavePass')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Résident *</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('residentsTonight')}</label>
               <Select value={form.allocationId} onValueChange={v => setForm({ ...form, allocationId: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -307,29 +311,29 @@ export function LeavePassesView() {
               </Select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Destination</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('destination')}</label>
               <Input value={form.destination} onChange={e => setForm({ ...form, destination: e.target.value })} placeholder="Ex : Maison, Casablanca" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Départ *</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('effectiveStartDate')}</label>
                 <Input type="datetime-local" value={form.startDateTime} onChange={e => setForm({ ...form, startDateTime: e.target.value })} />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Retour prévu *</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('expectedReturn')}</label>
                 <Input type="datetime-local" value={form.expectedReturnAt} onChange={e => setForm({ ...form, expectedReturnAt: e.target.value })} />
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Motif</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('reason')}</label>
               <Textarea value={form.reason} onChange={e => setForm({ ...form, reason: e.target.value })} rows={2} />
             </div>
             {error && <p className="flex items-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error}</p>}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>{tCommon('cancel')}</Button>
             <Button onClick={save} disabled={saving || !form.allocationId || !form.startDateTime || !form.expectedReturnAt}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Enregistrer
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} {tCommon('save')}
             </Button>
           </DialogFooter>
         </DialogContent>

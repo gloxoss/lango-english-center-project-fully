@@ -10,6 +10,14 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {
+  // Audit builds go somewhere of their own. scripts/audit-ui-browser.mjs serves
+  // a production build with `next start`, and it must own that directory: a
+  // concurrent `next build` rewrites the chunk names under a running server, so
+  // every script the served HTML references starts 404ing and the audit reports
+  // a broken page that is really a half-written build directory. Verified
+  // 2026-09-11 — that is exactly how it failed the first time. Default is
+  // unchanged; only the audit sets NEXT_DIST_DIR.
+  distDir: process.env.NEXT_DIST_DIR ?? '.next',
   // Pin the Turbopack root to this project directory. Without this, Next.js's
   // workspace-root auto-detection walks up from cwd and picks up a stray
   // package-lock.json/package.json that live at C:\Users\oussama (outside
@@ -25,19 +33,23 @@ const nextConfig: NextConfig = {
     root: path.join(__dirname),
   },
   output: 'standalone', // Required by the Dockerfile runner stage
-  // pdfkit resolves its built-in font metrics (.afm files) via __dirname at
-  // runtime. Turbopack's server bundling rewrites __dirname to a virtual
-  // build-time root, which breaks that lookup (ENOENT at a nonexistent
-  // /ROOT/... path) even when the real files are present on disk.
-  // serverExternalPackages tells Next.js to require() pdfkit natively
-  // instead of bundling it, preserving its real filesystem resolution.
-  // future-implementation/advanced-reporting remediation, section-10
-  // (found via live verification - neither tsc nor a dev-mode run surfaces
-  // this, since dev mode doesn't bundle server routes through Turbopack the
-  // same way the standalone production build does).
-  serverExternalPackages: ['pdfkit'],
+  // takumi-pdf ships its renderer as a WebAssembly module loaded through a
+  // bundler-specific entry. Turbopack cannot resolve that loader
+  // ("Can't resolve './takumi_pdf_wasm_bg.js'"), and the failure is not confined
+  // to the exporter: it breaks the dev server's module graph, so unrelated pages
+  // start returning 500 — the login page included.
+  // Externalising it makes Next require() the package natively and load the .wasm
+  // from disk itself, which is what its Node entry already does.
+  //
+  // This replaced the same treatment for pdfkit, which needed it for a different
+  // reason: pdfkit resolved its built-in .afm font metrics via __dirname, and
+  // Turbopack rewrote __dirname to a virtual build-time root. pdfkit is gone now
+  // (takumi renders those reports, and unlike Helvetica it can render Arabic).
+  serverExternalPackages: ['takumi-pdf', '@takumi-rs/helpers'],
   outputFileTracingIncludes: {
-    '/api/addons/reporting/**': ['./node_modules/pdfkit/js/data/**'],
+    // The .wasm binary and the fonts the exporter embeds must ship with the
+    // standalone build; neither is reachable by static import analysis.
+    '/api/addons/reporting/**': ['./node_modules/takumi-pdf/pkg/**', './public/fonts/**'],
   },
   devIndicators: {
     position: 'bottom-right',

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +10,9 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { CheckCircle2, AlertCircle, Copy } from 'lucide-react';
 
 export function SuperAdminSchoolsCreateView({ locale }: { locale: string }) {
+  const t = useTranslations('SuperAdmin');
+  const tCommon = useTranslations('Common');
+
   const [name, setName] = useState('');
   const [adminName, setAdminName] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
@@ -17,9 +21,16 @@ export function SuperAdminSchoolsCreateView({ locale }: { locale: string }) {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ tempPassword: string; adminEmail: string } | null>(null);
 
+  const planLabels: Record<'trial' | 'basic' | 'standard' | 'premium', string> = {
+    trial: locale === 'ar' ? 'تجريبي' : locale === 'en' ? 'Trial' : 'Essai',
+    basic: locale === 'ar' ? 'أساسي' : locale === 'en' ? 'Basic' : 'Basique',
+    standard: locale === 'ar' ? 'قياسي' : 'Standard',
+    premium: locale === 'ar' ? 'مميز' : 'Premium',
+  };
+
   async function handleCreate() {
     if (!name || !adminName || !adminEmail) {
-      setError('Nom de l\'école, nom et email de l\'administrateur sont requis.');
+      setError(t('createSchoolValidation'));
       return;
     }
     setSaving(true);
@@ -32,13 +43,13 @@ export function SuperAdminSchoolsCreateView({ locale }: { locale: string }) {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.message || 'Échec de la création.');
+        setError(json.message || tCommon('error'));
         return;
       }
       setResult({ tempPassword: json.data.tempPassword, adminEmail: json.data.adminEmail });
     } catch (err) {
       console.error('School create failed', err);
-      setError('Connexion impossible. Vérifiez votre réseau.');
+      setError(tCommon('error'));
     } finally {
       setSaving(false);
     }
@@ -50,26 +61,26 @@ export function SuperAdminSchoolsCreateView({ locale }: { locale: string }) {
         <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-4">
           <div className="flex items-center gap-2 text-emerald-700 font-bold">
             <CheckCircle2 className="w-5 h-5" />
-            <span>École créée avec succès</span>
+            <span>{t('schoolCreatedSuccess')}</span>
           </div>
           <p className="text-xs text-slate-600">
-            Communiquez ces identifiants à l&apos;administrateur — le mot de passe temporaire ne sera plus affiché ensuite.
+            {t('shareCredentialsNotice')}
           </p>
           <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-2 font-mono text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-slate-500">Email</span>
+              <span className="text-slate-500">{locale === 'ar' ? 'البريد الإلكتروني' : 'Email'}</span>
               <span className="font-bold text-[#16212B]">{result.adminEmail}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-500">Mot de passe temporaire</span>
+              <span className="text-slate-500">{t('tempPassword')}</span>
               <span className="font-bold text-[#16212B] flex items-center gap-1.5">
                 {result.tempPassword}
-                <button onClick={() => navigator.clipboard.writeText(result.tempPassword)} title="Copier"><Copy className="w-3.5 h-3.5 text-slate-400 hover:text-slate-700" /></button>
+                <button onClick={() => navigator.clipboard.writeText(result.tempPassword)} title={tCommon('copy')}><Copy className="w-3.5 h-3.5 text-slate-400 hover:text-slate-700" /></button>
               </span>
             </div>
           </div>
           <Link href={`/${locale}/dashboard/super-admin/schools`}>
-            <Button variant="primary" className="w-full">Retour à la liste des écoles</Button>
+            <Button variant="primary" className="w-full">{t('backToSchools')}</Button>
           </Link>
         </div>
       </div>
@@ -79,8 +90,8 @@ export function SuperAdminSchoolsCreateView({ locale }: { locale: string }) {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div className="pb-3 border-b border-slate-200/80">
-        <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight">Créer une école</h1>
-        <p className="text-xs text-slate-500 font-medium mt-1">Provisionner un nouveau tenant et son premier administrateur.</p>
+        <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight">{t('createSchoolTitle')}</h1>
+        <p className="text-xs text-slate-500 font-medium mt-1">{t('createSchoolSubtitle')}</p>
       </div>
 
       {error && (
@@ -91,39 +102,39 @@ export function SuperAdminSchoolsCreateView({ locale }: { locale: string }) {
       )}
 
       <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-        <h3 className="text-base font-extrabold text-[#0F172A]">Informations générales</h3>
+        <h3 className="text-base font-extrabold text-[#0F172A]">{t('generalInfo')}</h3>
         <div>
-          <label className="text-xs font-bold text-slate-700">Nom de l&apos;école *</label>
+          <label className="text-xs font-bold text-slate-700">{t('schoolNameField')}</label>
           <Input value={name} onChange={e => setName(e.target.value)} className="mt-1 text-xs" />
         </div>
         <div>
-          <label className="text-xs font-bold text-slate-700">Plan tarifaire</label>
+          <label className="text-xs font-bold text-slate-700">{t('pricingPlanField')}</label>
           <Select value={planTier} onValueChange={v => setPlanTier(v as typeof planTier)}>
-            <SelectTrigger className="mt-1 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="mt-1 text-xs"><SelectValue placeholder={planLabels[planTier]}>{planLabels[planTier]}</SelectValue></SelectTrigger>
             <SelectContent>
-              <SelectItem value="trial">Essai</SelectItem>
-              <SelectItem value="basic">Basique</SelectItem>
-              <SelectItem value="standard">Standard</SelectItem>
-              <SelectItem value="premium">Premium</SelectItem>
+              <SelectItem value="trial">{planLabels.trial}</SelectItem>
+              <SelectItem value="basic">{planLabels.basic}</SelectItem>
+              <SelectItem value="standard">{planLabels.standard}</SelectItem>
+              <SelectItem value="premium">{planLabels.premium}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        <h3 className="text-base font-extrabold text-[#0F172A] pt-4 border-t border-slate-100">Administrateur principal</h3>
+        <h3 className="text-base font-extrabold text-[#0F172A] pt-4 border-t border-slate-100">{t('primaryAdmin')}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-bold text-slate-700">Nom complet *</label>
+            <label className="text-xs font-bold text-slate-700">{t('fullNameField')}</label>
             <Input value={adminName} onChange={e => setAdminName(e.target.value)} className="mt-1 text-xs" />
           </div>
           <div>
-            <label className="text-xs font-bold text-slate-700">Email *</label>
+            <label className="text-xs font-bold text-slate-700">{t('emailField')}</label>
             <Input type="email" value={adminEmail} onChange={e => setAdminEmail(e.target.value)} className="mt-1 text-xs" />
           </div>
         </div>
 
         <div className="pt-4 flex justify-end">
           <Button disabled={saving} onClick={handleCreate} className="bg-[#0066FF] text-white gap-2 text-xs font-bold px-6 h-10 rounded-xl">
-            {saving ? 'Création...' : 'Créer l\'école'}
+            {saving ? t('creatingSchool') : t('createSchoolButton')}
           </Button>
         </div>
       </Card>

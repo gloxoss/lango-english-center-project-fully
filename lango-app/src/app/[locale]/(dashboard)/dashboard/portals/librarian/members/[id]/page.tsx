@@ -4,5 +4,10 @@ import { LibraryMemberDetailClient } from '@/features/library/ui/library-member-
 export default async function LibrarianMemberDetailPage(props: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await props.params;
   await requireLibraryPage(locale, { capability: 'library.circulation.operate' });
-  return <LibraryMemberDetailClient memberId={id} />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <LibraryMemberDetailClient memberId={id} />
+    </main>
+  );
 }

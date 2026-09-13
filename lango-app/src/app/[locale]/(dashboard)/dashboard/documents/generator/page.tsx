@@ -8,5 +8,9 @@ export default async function ReportCardGeneratorPage({
 }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'cards.templates.manage' });
-  return <ReportCardGeneratorView locale={locale} />;
+  return (
+    <main dir={locale === 'ar' ? 'rtl' : 'ltr'} lang={locale}>
+      <ReportCardGeneratorView locale={locale} />
+    </main>
+  );
 }

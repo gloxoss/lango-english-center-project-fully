@@ -4,5 +4,10 @@ import { LibraryReportsClient } from '@/features/library/ui/library-reports-clie
 export default async function LibrarianReportsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   await requireLibraryPage(locale, { capability: 'library.report.read' });
-  return <LibraryReportsClient />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <LibraryReportsClient />
+    </main>
+  );
 }

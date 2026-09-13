@@ -4,5 +4,10 @@ import { LibrarySelfServiceClient } from '@/features/library/ui/library-self-ser
 export default async function LibrarySelfServicePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   await requireLibrarySelfPage(locale);
-  return <LibrarySelfServiceClient />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <LibrarySelfServiceClient />
+    </main>
+  );
 }

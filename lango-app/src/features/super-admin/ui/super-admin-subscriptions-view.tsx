@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { DataTable, Column } from '@/components/shared/data-table';
 import { ShieldCheck, AlertCircle, Layers, RefreshCw, CheckCircle2, Save, PlusCircle, Loader2 } from 'lucide-react';
@@ -27,7 +28,6 @@ type PlanLimit = { planTier: string; label: string; maxStudents: number | null; 
 type PlanDraft = { label: string; maxStudents: string; maxStorageMb: string };
 
 const TIERS = ['trial', 'basic', 'standard', 'premium'] as const;
-const PLAN_LABELS: Record<(typeof TIERS)[number], string> = { trial: 'Essai', basic: 'Basique', standard: 'Standard', premium: 'Premium' };
 
 function draftFromLimit(limit: PlanLimit): PlanDraft {
   return {
@@ -38,6 +38,17 @@ function draftFromLimit(limit: PlanLimit): PlanDraft {
 }
 
 export function SuperAdminSubscriptionsView() {
+  const t = useTranslations('SuperAdmin');
+  const tCommon = useTranslations('Common');
+  const locale = useLocale();
+
+  const planLabels: Record<(typeof TIERS)[number], string> = {
+    trial: locale === 'ar' ? 'تجريبي' : locale === 'en' ? 'Trial' : 'Essai',
+    basic: locale === 'ar' ? 'أساسي' : locale === 'en' ? 'Basic' : 'Basique',
+    standard: locale === 'ar' ? 'قياسي' : 'Standard',
+    premium: locale === 'ar' ? 'مميز' : 'Premium',
+  };
+
   const [data, setData] = useState<ApiData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +71,7 @@ export function SuperAdminSubscriptionsView() {
     fetch('/api/super-admin/subscriptions')
       .then(r => r.json())
       .then((json) => { if (json.success) setData(json.data); else setError(json.message || 'Erreur.'); })
-      .catch(() => setError('Connexion impossible.'))
+      .catch(() => setError(tCommon('error')))
       .finally(() => setLoading(false));
 
     fetch('/api/super-admin/plan-limits')
@@ -75,8 +86,8 @@ export function SuperAdminSubscriptionsView() {
           setLimitError(json.message || 'Impossible de charger les limites.');
         }
       })
-      .catch(() => setLimitError('Connexion impossible.'));
-  }, []);
+      .catch(() => setLimitError(tCommon('error')));
+  }, [tCommon]);
 
   async function saveLimit(tier: (typeof TIERS)[number]) {
     const draft = drafts[tier];
@@ -97,13 +108,13 @@ export function SuperAdminSubscriptionsView() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setLimitError(json.message || 'Échec de l\'enregistrement.');
+        setLimitError(json.message || tCommon('error'));
         return;
       }
       setLimits(prev => (prev ?? []).map(l => (l.planTier === tier ? json.data : l)));
-      setLimitSuccess(`Limites du plan ${PLAN_LABELS[tier] ?? tier} enregistrées.`);
+      setLimitSuccess(tCommon('success'));
     } catch {
-      setLimitError('Connexion impossible.');
+      setLimitError(tCommon('error'));
     } finally {
       setSavingTier(null);
     }
@@ -138,15 +149,15 @@ export function SuperAdminSubscriptionsView() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setAddonError(json.error?.message || json.message || 'Échec de la création.');
+        setAddonError(json.error?.message || json.message || tCommon('error'));
         return;
       }
-      setAddonSuccess(`Module « ${json.data.name} » ajouté au catalogue.`);
+      setAddonSuccess(tCommon('success'));
       setAddonForm({ id: '', name: '', description: '', enabled: false, requires: '' });
       setAddonOpen(false);
       refreshCatalog();
     } catch {
-      setAddonError('Connexion impossible.');
+      setAddonError(tCommon('error'));
     } finally {
       setAddonSubmitting(false);
     }
@@ -158,7 +169,7 @@ export function SuperAdminSubscriptionsView() {
 
   const columns: Column<CatalogAddon>[] = [
     {
-      key: 'name', header: 'Module',
+      key: 'name', header: t('moduleCol'),
       cell: a => (
         <div>
           <p className="text-xs font-bold text-[#0F172A]">{a.name}</p>
@@ -166,31 +177,31 @@ export function SuperAdminSubscriptionsView() {
         </div>
       ),
     },
-    { key: 'description', header: 'Description', cell: a => <span className="text-xs text-slate-500">{a.description}</span> },
-    { key: 'requires', header: 'Prérequis', cell: a => <span className="text-xs text-slate-500">{a.requires.length ? a.requires.join(', ') : '—'}</span> },
+    { key: 'description', header: t('descCol'), cell: a => <span className="text-xs text-slate-500">{a.description}</span> },
+    { key: 'requires', header: t('requiresCol'), cell: a => <span className="text-xs text-slate-500">{a.requires.length ? a.requires.join(', ') : '—'}</span> },
     {
-      key: 'built', header: 'Statut',
+      key: 'built', header: t('statusCol'),
       cell: a => (
         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${a.built ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-          {a.built ? 'Construit' : 'À venir'}
+          {a.built ? t('statusColBuilt') : t('statusColUpcoming')}
         </span>
       ),
     },
   ];
 
   const kpis = [
-    { label: 'Total écoles', value: summary?.total ?? 0, cls: 'text-[#0F172A]' },
-    { label: 'Licences actives', value: (summary?.active ?? 0) + (summary?.expiring ?? 0), cls: 'text-emerald-600' },
-    { label: 'Expirées / sans licence', value: (summary?.expired ?? 0) + (summary?.none ?? 0), cls: 'text-rose-600' },
-    { label: 'Demandes en attente', value: summary?.pendingPayments ?? 0, cls: 'text-amber-600' },
+    { label: t('totalSchoolsStat'), value: summary?.total ?? 0, cls: 'text-[#0F172A]' },
+    { label: t('activeLicensesStat'), value: (summary?.active ?? 0) + (summary?.expiring ?? 0), cls: 'text-emerald-600' },
+    { label: t('expiredLicensesStat'), value: (summary?.expired ?? 0) + (summary?.none ?? 0), cls: 'text-rose-600' },
+    { label: t('pendingRequestsStat'), value: summary?.pendingPayments ?? 0, cls: 'text-amber-600' },
   ];
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200/80">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight">Plans & Modules</h1>
-          <p className="text-xs text-slate-500 font-medium mt-1">Catalogue des offres tarifaires et des modules de la plateforme.</p>
+          <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight">{t('plansAndModulesTitle')}</h1>
+          <p className="text-xs text-slate-500 font-medium mt-1">{t('plansAndModulesSubtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -202,11 +213,11 @@ export function SuperAdminSubscriptionsView() {
             }}
             className="h-8 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5"
           >
-            <PlusCircle className="w-3.5 h-3.5" /> Nouveau module
+            <PlusCircle className="w-3.5 h-3.5" /> +
           </Button>
           {error && (
             <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="h-8 text-xs rounded-xl border-slate-200 gap-1.5">
-              <RefreshCw className="w-3.5 h-3.5" /> Réessayer
+              <RefreshCw className="w-3.5 h-3.5" /> {tCommon('refresh')}
             </Button>
           )}
         </div>
@@ -231,9 +242,9 @@ export function SuperAdminSubscriptionsView() {
       {/* Plan-tier capacity limits (editable) */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-4 space-y-4">
         <div className="pb-3 border-b border-slate-100">
-          <h3 className="text-sm font-extrabold text-[#0F172A]">Limites par plan</h3>
+          <h3 className="text-sm font-extrabold text-[#0F172A]">{t('planLimitsTitle')}</h3>
           <p className="text-xs text-slate-400 mt-0.5">
-            Capacités appliquées à chaque formule. Laissez un champ vide pour « illimité ».
+            {t('planLimitsSubtitle')}
           </p>
         </div>
 
@@ -252,15 +263,15 @@ export function SuperAdminSubscriptionsView() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {TIERS.map(tier => {
-            const draft = drafts[tier] ?? { label: PLAN_LABELS[tier]!, maxStudents: '', maxStorageMb: '' };
+            const draft = drafts[tier] ?? { label: planLabels[tier]!, maxStudents: '', maxStorageMb: '' };
             return (
               <Card key={tier} className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-extrabold text-[#0F172A]">{PLAN_LABELS[tier]}</span>
-                  <span className="text-xs font-extrabold text-[#0066FF]">{planCounts[tier] ?? 0} école(s)</span>
+                  <span className="text-sm font-extrabold text-[#0F172A]">{planLabels[tier]}</span>
+                  <span className="text-xs font-extrabold text-[#0066FF]">{t('schoolsCountBadge', { count: planCounts[tier] ?? 0 })}</span>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 block mb-1">Libellé</label>
+                  <label className="text-[10px] font-bold text-slate-500 block mb-1">{t('planLabelField')}</label>
                   <Input
                     value={draft.label}
                     onChange={e => setDrafts(prev => ({ ...prev, [tier]: { ...draft, label: e.target.value } }))}
@@ -268,22 +279,22 @@ export function SuperAdminSubscriptionsView() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 block mb-1">Élèves max</label>
+                  <label className="text-[10px] font-bold text-slate-500 block mb-1">{t('maxStudentsField')}</label>
                   <Input
                     type="number"
                     min={0}
-                    placeholder="Illimité"
+                    placeholder={t('unlimited')}
                     value={draft.maxStudents}
                     onChange={e => setDrafts(prev => ({ ...prev, [tier]: { ...draft, maxStudents: e.target.value } }))}
                     className="h-8 text-xs"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 block mb-1">Stockage max (Mo)</label>
+                  <label className="text-[10px] font-bold text-slate-500 block mb-1">{t('maxStorageField')}</label>
                   <Input
                     type="number"
                     min={0}
-                    placeholder="Illimité"
+                    placeholder={t('unlimited')}
                     value={draft.maxStorageMb}
                     onChange={e => setDrafts(prev => ({ ...prev, [tier]: { ...draft, maxStorageMb: e.target.value } }))}
                     className="h-8 text-xs"
@@ -296,7 +307,7 @@ export function SuperAdminSubscriptionsView() {
                   onClick={() => saveLimit(tier)}
                   className="w-full h-8 text-xs rounded-lg gap-1.5"
                 >
-                  <Save className="w-3.5 h-3.5" /> {savingTier === tier ? 'Enregistrement…' : 'Enregistrer'}
+                  <Save className="w-3.5 h-3.5" /> {savingTier === tier ? '...' : tCommon('save')}
                 </Button>
               </Card>
             );
@@ -306,9 +317,9 @@ export function SuperAdminSubscriptionsView() {
 
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-4 space-y-4">
         <div className="pb-3 border-b border-slate-100">
-          <h3 className="text-sm font-extrabold text-[#0F172A]">Catalogue des modules</h3>
+          <h3 className="text-sm font-extrabold text-[#0F172A]">{t('moduleCatalogTitle')}</h3>
           <p className="text-xs text-slate-400 mt-0.5">
-            Activation par école dans <span className="font-mono">Gestion Abonnements</span> — un module n&apos;est visible pour un établissement que s&apos;il y est activé.
+            {t('moduleCatalogSubtitle')}
           </p>
         </div>
 
@@ -329,8 +340,8 @@ export function SuperAdminSubscriptionsView() {
           data={data?.catalog ?? []}
           columns={columns}
           isLoading={loading}
-          emptyTitle="Aucun module"
-          emptyDescription="Le catalogue est vide."
+          emptyTitle={tCommon('empty')}
+          emptyDescription={tCommon('empty')}
           defaultPageSize={10}
         />
       </div>
@@ -340,7 +351,7 @@ export function SuperAdminSubscriptionsView() {
         <DialogContent className="max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#0F172A]">
-              Nouveau module
+              {t('moduleCol')}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={submitAddon} className="space-y-4 py-2">
@@ -408,7 +419,7 @@ export function SuperAdminSubscriptionsView() {
                 onClick={() => setAddonOpen(false)}
                 className="h-9 text-xs rounded-xl border-slate-200"
               >
-                Annuler
+                {tCommon('cancel')}
               </Button>
               <Button
                 type="submit"
@@ -417,7 +428,7 @@ export function SuperAdminSubscriptionsView() {
                 className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5"
               >
                 {addonSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                Créer le module
+                {tCommon('save')}
               </Button>
             </DialogFooter>
           </form>

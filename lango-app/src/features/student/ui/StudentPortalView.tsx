@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   AlertTriangle,
   Bell,
@@ -67,12 +68,34 @@ async function getJson<T>(url: string): Promise<T | null> {
 }
 
 export function StudentPortalView() {
+  const tStudent = useTranslations('Student');
+  const tCommon = useTranslations('Common');
+  const tStatus = useTranslations('Status');
+
   const [home, setHome] = useState<HomeData | null>(null);
   const [timetable, setTimetable] = useState<TimetableData | null>(null);
   const [subjectsData, setSubjectsData] = useState<SubjectsData | null>(null);
   const [attendanceData, setAttendanceData] = useState<AttendanceData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'today' | 'timetable' | 'subjects' | 'attendance'>('today');
+
+  const getDayLabel = (day: string) => {
+    const key = day.toLowerCase();
+    try {
+      return tStudent(key as any);
+    } catch {
+      return DAY_LABELS[key] ?? day;
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    const key = status.toLowerCase();
+    try {
+      return tStatus(key as any);
+    } catch {
+      return STATUS_LABELS[key] ?? status;
+    }
+  };
 
   const load = useCallback(async () => {
     setError(null);
@@ -83,14 +106,14 @@ export function StudentPortalView() {
       getJson<AttendanceData>('/api/student/me/attendance'),
     ]);
     if (!h) {
-      setError('Impossible de charger vos données.');
+      setError(tStudent('errorLoad'));
       return;
     }
     setHome(h);
     setTimetable(t);
     setSubjectsData(s);
     setAttendanceData(a);
-  }, []);
+  }, [tStudent]);
 
   useEffect(() => {
     load();
@@ -106,9 +129,10 @@ export function StudentPortalView() {
         <button
           type="button"
           onClick={() => load()}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition"
+          aria-label={tCommon('refresh')}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition cursor-pointer"
         >
-          <RefreshCw className="w-4 h-4" /> Actualiser
+          <RefreshCw className="w-4 h-4" /> {tCommon('refresh')}
         </button>
       </div>
     );
@@ -122,32 +146,34 @@ export function StudentPortalView() {
     );
   }
 
-  const { profile, placement, today, subjects, announcements, attendance: att, widgets } = home;
+  const { profile, placement, today, announcements, attendance: att, widgets } = home;
 
   const tabs = [
-    { key: 'today' as const, label: 'Aujourd’hui', icon: Clock },
-    { key: 'timetable' as const, label: 'Emploi du temps', icon: Calendar },
-    { key: 'subjects' as const, label: 'Mes matières', icon: BookOpen },
-    { key: 'attendance' as const, label: 'Mes présences', icon: CheckCircle2 },
+    { key: 'today' as const, label: tStudent('today'), icon: Clock },
+    { key: 'timetable' as const, label: tStudent('timetable'), icon: Calendar },
+    { key: 'subjects' as const, label: tStudent('mySubjects'), icon: BookOpen },
+    { key: 'attendance' as const, label: tStudent('myAttendance'), icon: CheckCircle2 },
   ];
+
+  const studentName = profile?.name ?? tStudent('studentDefault');
+  const placementText = placement ? ` — ${placement.name}${placement.medium ? ` (${placement.medium})` : ''}` : '';
 
   return (
     <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Espace Élève</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{tStudent('portalTitle')}</h1>
           <p className="text-sm text-slate-500">
-            {profile?.name ?? 'Élève'}
-            {placement ? ` — ${placement.name}${placement.medium ? ` (${placement.medium})` : ''}` : ''} : votre journée, vos matières et vos présences au même endroit.
+            {tStudent('portalSubtitle', { name: `${studentName}${placementText}` })}
           </p>
         </div>
         <button
           type="button"
           onClick={() => load()}
-          aria-label="Actualiser"
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition"
+          aria-label={tCommon('refresh')}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition cursor-pointer"
         >
-          <RefreshCw className="w-4 h-4" /> Actualiser
+          <RefreshCw className="w-4 h-4" /> {tCommon('refresh')}
         </button>
       </div>
 
@@ -159,7 +185,7 @@ export function StudentPortalView() {
           </div>
           <div>
             <p className="text-2xl font-extrabold text-slate-900">{widgets.classesToday}</p>
-            <p className="text-xs font-semibold text-slate-500">séance(s) aujourd’hui</p>
+            <p className="text-xs font-semibold text-slate-500">{tStudent('classesToday')}</p>
           </div>
         </div>
         <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center gap-3">
@@ -168,7 +194,7 @@ export function StudentPortalView() {
           </div>
           <div>
             <p className="text-2xl font-extrabold text-slate-900">{widgets.mySubjects}</p>
-            <p className="text-xs font-semibold text-slate-500">matière(s) au programme</p>
+            <p className="text-xs font-semibold text-slate-500">{tStudent('subjectsProgram')}</p>
           </div>
         </div>
         <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center gap-3">
@@ -177,7 +203,7 @@ export function StudentPortalView() {
           </div>
           <div>
             <p className="text-2xl font-extrabold text-slate-900">{att.total}</p>
-            <p className="text-xs font-semibold text-slate-500">pointage(s) enregistré(s)</p>
+            <p className="text-xs font-semibold text-slate-500">{tStudent('attendancePoints')}</p>
           </div>
         </div>
       </div>
@@ -190,9 +216,12 @@ export function StudentPortalView() {
           </div>
           <div>
             <p className="text-sm font-semibold text-slate-800">
-              Aujourd’hui : <span className={STATUS_COLORS[home.todayStatus] ?? 'text-slate-600'}>{STATUS_LABELS[home.todayStatus] ?? home.todayStatus}</span>
+              {tStudent('todayStatusLabel')}{' '}
+              <span className={STATUS_COLORS[home.todayStatus] ?? 'text-slate-600'}>
+                {getStatusLabel(home.todayStatus)}
+              </span>
             </p>
-            <p className="text-xs text-slate-500">Votre dernier pointage du jour.</p>
+            <p className="text-xs text-slate-500">{tStudent('todayStatusSub')}</p>
           </div>
         </div>
       )}
@@ -219,10 +248,10 @@ export function StudentPortalView() {
           <div className="xl:col-span-2 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
               <Clock className="w-4 h-4 text-[#0066FF]" />
-              <h2 className="font-semibold text-slate-900">Séances du jour</h2>
+              <h2 className="font-semibold text-slate-900">{tStudent('todaySessions')}</h2>
             </div>
             {today.length === 0 ? (
-              <p className="px-5 py-8 text-sm text-slate-500">Aucune séance prévue aujourd’hui.</p>
+              <p className="px-5 py-8 text-sm text-slate-500">{tStudent('noSessionsToday')}</p>
             ) : (
               <div className="divide-y divide-slate-100">
                 {today.map((s, i) => (
@@ -230,7 +259,7 @@ export function StudentPortalView() {
                     <div className="flex items-center gap-3">
                       <span className="font-mono text-xs font-bold text-[#0066FF]">{s.startTime}–{s.endTime}</span>
                       <div>
-                        <p className="text-sm font-semibold text-slate-800">{s.teacher ?? 'Enseignant'}</p>
+                        <p className="text-sm font-semibold text-slate-800">{s.teacher ?? tStudent('teacherDefault')}</p>
                         <p className="text-xs text-slate-500">{s.room ?? '—'}</p>
                       </div>
                     </div>
@@ -245,10 +274,10 @@ export function StudentPortalView() {
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
                 <Megaphone className="w-4 h-4 text-[#0066FF]" />
-                <h2 className="font-semibold text-slate-900">Annonces</h2>
+                <h2 className="font-semibold text-slate-900">{tStudent('announcements')}</h2>
               </div>
               {announcements.length === 0 ? (
-                <p className="px-5 py-6 text-sm text-slate-500">Aucune annonce publiée.</p>
+                <p className="px-5 py-6 text-sm text-slate-500">{tStudent('noAnnouncements')}</p>
               ) : (
                 <div className="divide-y divide-slate-100">
                   {announcements.map((a) => (
@@ -264,10 +293,10 @@ export function StudentPortalView() {
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
                 <School className="w-4 h-4 text-[#0066FF]" />
-                <h2 className="font-semibold text-slate-900">Ma classe</h2>
+                <h2 className="font-semibold text-slate-900">{tStudent('myClass')}</h2>
               </div>
               <div className="px-5 py-3">
-                <p className="text-sm font-semibold text-slate-800">{placement?.name ?? 'Non assigné(e)'}</p>
+                <p className="text-sm font-semibold text-slate-800">{placement?.name ?? tStudent('unassigned')}</p>
                 <p className="text-xs text-slate-500">{placement?.medium ?? '—'}</p>
               </div>
             </div>
@@ -280,7 +309,7 @@ export function StudentPortalView() {
           {(timetable?.days ?? []).map((d) => (
             <div key={d.day} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
               <div className="px-5 py-3 border-b border-slate-100">
-                <h2 className="font-semibold text-slate-900">{DAY_LABELS[d.day] ?? d.day}</h2>
+                <h2 className="font-semibold text-slate-900">{getDayLabel(d.day)}</h2>
               </div>
               {d.slots.length === 0 ? (
                 <p className="px-5 py-6 text-sm text-slate-400">—</p>
@@ -289,7 +318,7 @@ export function StudentPortalView() {
                   {d.slots.map((s, i) => (
                     <div key={i} className="px-5 py-3 flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-slate-800">{s.teacher ?? 'Enseignant'}</p>
+                        <p className="text-sm font-semibold text-slate-800">{s.teacher ?? tStudent('teacherDefault')}</p>
                         <p className="text-xs text-slate-500">{s.room ?? '—'}</p>
                       </div>
                       <span className="font-mono text-xs font-bold text-slate-600">{s.startTime}</span>
@@ -306,10 +335,10 @@ export function StudentPortalView() {
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-[#0066FF]" />
-            <h2 className="font-semibold text-slate-900">Matières au programme</h2>
+            <h2 className="font-semibold text-slate-900">{tStudent('subjectsCurriculum')}</h2>
           </div>
           {(subjectsData?.subjects ?? []).length === 0 ? (
-            <p className="px-5 py-8 text-sm text-slate-500">Aucune matière assignée à votre classe.</p>
+            <p className="px-5 py-8 text-sm text-slate-500">{tStudent('noSubjectsAssigned')}</p>
           ) : (
             <div className="divide-y divide-slate-100">
               {(subjectsData?.subjects ?? []).map((s, i) => (
@@ -331,22 +360,22 @@ export function StudentPortalView() {
           <div className="xl:col-span-2 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-[#0066FF]" />
-              <h2 className="font-semibold text-slate-900">Historique de présence</h2>
+              <h2 className="font-semibold text-slate-900">{tStudent('attendanceHistory')}</h2>
             </div>
             {(attendanceData?.records ?? []).length === 0 ? (
-              <p className="px-5 py-8 text-sm text-slate-500">Aucun pointage enregistré.</p>
+              <p className="px-5 py-8 text-sm text-slate-500">{tStudent('noAttendanceRecorded')}</p>
             ) : (
               <div className="max-h-96 overflow-y-auto divide-y divide-slate-100">
                 {(attendanceData?.records ?? []).map((r, i) => (
                   <div key={i} className="px-5 py-3 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-semibold text-slate-800">{r.date}</span>
-                      {r.period > 1 && <span className="text-xs text-slate-400">période {r.period}</span>}
+                      {r.period > 1 && <span className="text-xs text-slate-400">{tStudent('periodNumber', { period: r.period })}</span>}
                     </div>
                     <div className="flex items-center gap-2">
                       {r.note && <span className="text-xs text-slate-400 italic">{r.note}</span>}
                       <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLORS[r.status] ?? 'text-slate-600 bg-slate-100'}`}>
-                        {STATUS_LABELS[r.status] ?? r.status}
+                        {getStatusLabel(r.status)}
                       </span>
                     </div>
                   </div>
@@ -358,12 +387,12 @@ export function StudentPortalView() {
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden self-start">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
               <Bell className="w-4 h-4 text-[#0066FF]" />
-              <h2 className="font-semibold text-slate-900">Résumé</h2>
+              <h2 className="font-semibold text-slate-900">{tStudent('summary')}</h2>
             </div>
             <div className="divide-y divide-slate-100">
               {(['present', 'absent', 'late', 'excused'] as const).map((k) => (
                 <div key={k} className="px-5 py-3 flex items-center justify-between">
-                  <span className="text-sm text-slate-600">{STATUS_LABELS[k]}</span>
+                  <span className="text-sm text-slate-600">{getStatusLabel(k)}</span>
                   <span className="text-sm font-bold text-slate-800">{attendanceData?.summary?.[k] ?? 0}</span>
                 </div>
               ))}

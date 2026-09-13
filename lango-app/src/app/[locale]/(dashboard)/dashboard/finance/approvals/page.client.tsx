@@ -9,6 +9,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { usePermissions } from '@/hooks/use-permissions';
 
 type ItemType = 'expense' | 'credit_note' | 'refund';
@@ -22,12 +23,6 @@ interface PendingItem {
   initiatedBy: string;
 }
 
-const TYPE_LABEL: Record<ItemType, string> = {
-  expense: 'Dépense',
-  credit_note: 'Note de crédit',
-  refund: 'Remboursement',
-};
-
 const TYPE_BADGE: Record<ItemType, string> = {
   expense: 'bg-purple-100 text-purple-800',
   credit_note: 'bg-blue-100 text-blue-800',
@@ -35,12 +30,28 @@ const TYPE_BADGE: Record<ItemType, string> = {
 };
 
 export default function ApprovalsPage() {
+  const t = useTranslations('Finance');
+  const tCommon = useTranslations('Common');
   const { can } = usePermissions();
+
   const [items, setItems] = useState<PendingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  const getTypeLabel = (type: ItemType): string => {
+    switch (type) {
+      case 'expense':
+        return t('typeExpense');
+      case 'credit_note':
+        return t('typeCreditNote');
+      case 'refund':
+        return t('typeRefund');
+      default:
+        return type;
+    }
+  };
 
   const fetchApprovals = async () => {
     setLoading(true);
@@ -49,21 +60,36 @@ export default function ApprovalsPage() {
       const res = await fetch('/api/accountant/me/approvals');
       const json = await res.json();
       if (json.success) {
-        const expenseItems: PendingItem[] = json.data.pendingExpenses.map((e: any) => ({
-          id: e.id, type: 'expense' as const, date: e.expenseDate, description: `${e.category} — ${e.description}`, amount: Number(e.amount), initiatedBy: e.recordedByName || 'Système',
+        const expenseItems: PendingItem[] = (json.data.pendingExpenses || []).map((e: any) => ({
+          id: e.id,
+          type: 'expense' as const,
+          date: e.expenseDate,
+          description: `${e.category} — ${e.description}`,
+          amount: Number(e.amount),
+          initiatedBy: e.recordedByName || tCommon('system'),
         }));
-        const creditNoteItems: PendingItem[] = json.data.pendingCreditNotes.map((c: any) => ({
-          id: c.id, type: 'credit_note' as const, date: c.createdAt, description: `${c.creditNoteNumber} — ${c.reason}`, amount: Number(c.amount), initiatedBy: c.studentName || '—',
+        const creditNoteItems: PendingItem[] = (json.data.pendingCreditNotes || []).map((c: any) => ({
+          id: c.id,
+          type: 'credit_note' as const,
+          date: c.createdAt,
+          description: `${c.creditNoteNumber} — ${c.reason}`,
+          amount: Number(c.amount),
+          initiatedBy: c.studentName || '—',
         }));
-        const refundItems: PendingItem[] = json.data.pendingRefunds.map((r: any) => ({
-          id: r.id, type: 'refund' as const, date: r.createdAt, description: `${r.refundNumber} — ${r.reason}`, amount: Number(r.amount), initiatedBy: r.studentName || '—',
+        const refundItems: PendingItem[] = (json.data.pendingRefunds || []).map((r: any) => ({
+          id: r.id,
+          type: 'refund' as const,
+          date: r.createdAt,
+          description: `${r.refundNumber} — ${r.reason}`,
+          amount: Number(r.amount),
+          initiatedBy: r.studentName || '—',
         }));
         setItems([...expenseItems, ...creditNoteItems, ...refundItems].sort((a, b) => b.date.localeCompare(a.date)));
       } else {
-        setError(json.error?.message || 'Erreur lors du chargement des approbations.');
+        setError(json.error?.message || t('approvalsLoadError'));
       }
     } catch (err: any) {
-      setError(err.message || 'Erreur réseau.');
+      setError(err.message || tCommon('error'));
     } finally {
       setLoading(false);
     }
@@ -89,13 +115,13 @@ export default function ApprovalsPage() {
       });
       const json = await res.json();
       if (json.success) {
-        setSuccessMsg(`Demande ${action === 'approve' ? 'approuvée' : 'rejetée'} avec succès.`);
+        setSuccessMsg(action === 'approve' ? t('approvalsSuccessApprove') : t('approvalsSuccessReject'));
         fetchApprovals();
       } else {
-        setError(json.error?.message || 'Impossible de traiter l\'approbation.');
+        setError(json.error?.message || t('approvalsProcessError'));
       }
     } catch (err: any) {
-      setError(err.message || 'Erreur réseau.');
+      setError(err.message || tCommon('error'));
     } finally {
       setActionLoading(false);
     }
@@ -107,10 +133,10 @@ export default function ApprovalsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Centre d'Approbation Financière
+            {t('approvalsTitle')}
           </h1>
           <p className="text-sm text-slate-500">
-            Validation maker-checker des demandes d'avoirs, remises exceptionnelles et dépenses.
+            {t('approvalsSubtitle')}
           </p>
         </div>
         <button
@@ -119,7 +145,7 @@ export default function ApprovalsPage() {
           className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
         >
           <RefreshCw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} />
-          Actualiser
+          {tCommon('refresh')}
         </button>
       </div>
 
@@ -140,29 +166,29 @@ export default function ApprovalsPage() {
       {/* Pending Items Table */}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
         <div className="border-b border-slate-200 bg-slate-50 p-4 font-bold text-slate-800 text-sm flex items-center justify-between">
-          <span>Demandes en Attente de Validation ({items.length})</span>
+          <span>{t('approvalsPendingHeader', { count: items.length })}</span>
           <ShieldAlert className="size-4 text-amber-600" />
         </div>
 
-        <table className="w-full text-left text-xs">
+        <table className="w-full text-start text-xs">
           <thead className="border-b border-slate-200 bg-slate-50/50 font-bold uppercase text-slate-500">
             <tr>
-              <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3">Type</th>
-              <th className="px-4 py-3">Description</th>
-              <th className="px-4 py-3">Montant</th>
-              <th className="px-4 py-3">Initié Par</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+              <th className="px-4 py-3 text-start">{tCommon('date')}</th>
+              <th className="px-4 py-3 text-start">{tCommon('type')}</th>
+              <th className="px-4 py-3 text-start">{tCommon('description')}</th>
+              <th className="px-4 py-3 text-start">{tCommon('amount')}</th>
+              <th className="px-4 py-3 text-start">{t('approvalsInitiatedBy')}</th>
+              <th className="px-4 py-3 text-end">{tCommon('actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
             {loading ? (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-slate-500">Chargement des demandes...</td>
+                <td colSpan={6} className="p-8 text-center text-slate-500">{t('approvalsLoading')}</td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-slate-500">Aucune demande en attente d'approbation.</td>
+                <td colSpan={6} className="p-8 text-center text-slate-500">{t('approvalsNoPending')}</td>
               </tr>
             ) : (
               items.map(item => (
@@ -170,13 +196,13 @@ export default function ApprovalsPage() {
                   <td className="px-4 py-3 font-bold text-slate-900">{item.date.slice(0, 10)}</td>
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase ${TYPE_BADGE[item.type]}`}>
-                      {TYPE_LABEL[item.type]}
+                      {getTypeLabel(item.type)}
                     </span>
                   </td>
                   <td className="px-4 py-3">{item.description}</td>
-                  <td className="px-4 py-3 font-extrabold text-slate-900">{item.amount} MAD</td>
+                  <td className="px-4 py-3 font-extrabold text-slate-900">{item.amount} {tCommon('currency')}</td>
                   <td className="px-4 py-3 text-slate-500">{item.initiatedBy}</td>
-                  <td className="px-4 py-3 text-right space-x-2">
+                  <td className="px-4 py-3 text-end space-x-2 rtl:space-x-reverse">
                     {can('finance.approve')
                       ? (
                         <>
@@ -186,7 +212,7 @@ export default function ApprovalsPage() {
                             className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-3 py-1 text-xs font-bold text-white hover:bg-emerald-700"
                           >
                             <CheckCircle2 className="size-3" />
-                            Approuver
+                            {t('approvalsApprove')}
                           </button>
                           <button
                             onClick={() => handleAction(item.id, item.type, 'reject')}
@@ -194,12 +220,12 @@ export default function ApprovalsPage() {
                             className="inline-flex items-center gap-1 rounded-md bg-red-100 px-3 py-1 text-xs font-bold text-red-700 hover:bg-red-200"
                           >
                             <XCircle className="size-3" />
-                            Rejeter
+                            {t('approvalsReject')}
                           </button>
                         </>
                         )
                       : (
-                        <span className="text-[11px] font-semibold text-slate-400">En attente d&apos;un administrateur</span>
+                        <span className="text-[11px] font-semibold text-slate-400">{t('approvalsAwaitingAdmin')}</span>
                         )}
                   </td>
                 </tr>

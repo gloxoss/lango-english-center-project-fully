@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, Clock } from 'lucide-react';
@@ -21,23 +22,11 @@ type Slot = {
   roomLabel: string | null;
 };
 
-const DAYS: { value: string; label: string }[] = [
-  { value: 'monday', label: 'Lundi' },
-  { value: 'tuesday', label: 'Mardi' },
-  { value: 'wednesday', label: 'Mercredi' },
-  { value: 'thursday', label: 'Jeudi' },
-  { value: 'friday', label: 'Vendredi' },
-  { value: 'saturday', label: 'Samedi' },
-];
-
-// ponytail: the previous mock rendered a fixed drag-and-drop-looking grid of
-// invented slots for one hardcoded class. The real timetable system
-// (classScheduleSlots + timetableVersions + conflict validation) is already
-// built and versioned - this wires a real, simpler list-by-day view against
-// it instead of recreating a drag-grid, since the real backend's draft/
-// published/conflict workflow is what actually matters here.
 export function ScheduleClient({ locale: _locale }: { locale?: string } = {}) {
+  const t = useTranslations('Academics');
+  const tCommon = useTranslations('Common');
   const { can } = usePermissions();
+
   const [sessionYearId, setSessionYearId] = useState<string | null>(null);
   const [versionId, setVersionId] = useState<string>('');
   const [classSections, setClassSections] = useState<ClassSectionOption[]>([]);
@@ -48,8 +37,6 @@ export function ScheduleClient({ locale: _locale }: { locale?: string } = {}) {
   const [teachers, setTeachers] = useState<RefOption[]>([]);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(false);
-  // ponytail: teacher/room views reuse the same real day-list rendering below,
-  // just fed a differently-filtered slots array - no new grid needed.
   const [viewMode, setViewMode] = useState<'class' | 'teacher' | 'room'>('class');
   const [selectedTeacherId, setSelectedTeacherId] = useState('');
   const [allSlots, setAllSlots] = useState<Slot[]>([]);
@@ -57,6 +44,15 @@ export function ScheduleClient({ locale: _locale }: { locale?: string } = {}) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ classSubjectId: '', teacherId: '', dayOfWeek: 'monday', startTime: '08:00', endTime: '09:00', roomLabel: '' });
   const [saving, setSaving] = useState(false);
+
+  const daysList = useMemo(() => [
+    { value: 'monday', label: t('dayMonday') },
+    { value: 'tuesday', label: t('dayTuesday') },
+    { value: 'wednesday', label: t('dayWednesday') },
+    { value: 'thursday', label: t('dayThursday') },
+    { value: 'friday', label: t('dayFriday') },
+    { value: 'saturday', label: t('daySaturday') },
+  ], [t]);
 
   useEffect(() => {
     fetch('/api/academics/session-years?pageSize=50')
@@ -132,9 +128,6 @@ export function ScheduleClient({ locale: _locale }: { locale?: string } = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTeacherId, versionId, viewMode]);
 
-  // Room mode fetches every real slot once (no classSectionId/teacherId filter),
-  // then derives the real distinct room list and filters client-side - avoids a
-  // round-trip per room and naturally surfaces slots with no roomLabel set.
   useEffect(() => {
     if (viewMode !== 'room') {
       return;
@@ -182,13 +175,13 @@ export function ScheduleClient({ locale: _locale }: { locale?: string } = {}) {
       });
       const json = await res.json();
       if (!json.success) {
-        toast.error(json.error?.message || json.message || 'Échec de la création du créneau.');
+        toast.error(json.error?.message || json.message || t('slotCreateFailed'));
         return;
       }
       setShowForm(false);
       loadSlots();
     } catch {
-      toast.error('Connexion impossible.');
+      toast.error(t('networkError'));
     } finally {
       setSaving(false);
     }
@@ -204,10 +197,10 @@ export function ScheduleClient({ locale: _locale }: { locale?: string } = {}) {
   const periodCount = selectedPeriodType === 'semester' ? 2 : selectedPeriodType === 'trimester' ? 3 : 12;
 
   return (
-    <div className="space-y-6 max-w-[1400px] mx-auto">
+    <div className="space-y-6 max-w-[1400px] mx-auto text-start">
       <div>
-        <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Emploi du temps</h1>
-        <p className="text-xs text-slate-500 mt-1">Créneaux réels par classe, avec versions brouillon/publiée et détection de conflits.</p>
+        <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('scheduleRealTitle')}</h1>
+        <p className="text-xs text-slate-500 mt-1">{t('scheduleRealSubtitle')}</p>
       </div>
 
       {sessionYearId && (
@@ -222,59 +215,63 @@ export function ScheduleClient({ locale: _locale }: { locale?: string } = {}) {
               onClick={() => setViewMode(mode)}
               className={`h-8 px-3 rounded-lg text-xs font-bold transition-colors ${viewMode === mode ? 'bg-[#2487B8] text-white' : 'text-slate-500 hover:text-[#16212B]'}`}
             >
-              {mode === 'class' ? 'Classe' : mode === 'teacher' ? 'Enseignant' : 'Salle'}
+              {mode === 'class' ? t('viewModeClass') : mode === 'teacher' ? t('viewModeTeacher') : t('viewModeRoom')}
             </button>
           ))}
         </div>
 
         {viewMode === 'class' && (
           <>
-            <label className="text-xs font-bold text-slate-500 whitespace-nowrap">Classe :</label>
+            <label className="text-xs font-bold text-slate-500 whitespace-nowrap">{t('viewModeClass')} :</label>
             <select
               value={selectedSectionId}
               onChange={e => setSelectedSectionId(e.target.value)}
               className="h-9 px-3 rounded-xl border border-slate-200 text-xs font-bold bg-white text-[#16212B]"
             >
-              <option value="">Sélectionner une classe...</option>
+              <option value="">{t('classSelectPrompt')}</option>
               {classSections.map(s => <option key={s.id} value={s.id}>{s.className} {s.sectionName}</option>)}
             </select>
-            <label className="text-xs font-bold text-slate-500 whitespace-nowrap">Période :</label>
+            <label className="text-xs font-bold text-slate-500 whitespace-nowrap">{t('periodLabel')} :</label>
             <select value={selectedPeriod} onChange={e => setSelectedPeriod(e.target.value)} className="h-9 px-3 rounded-xl border border-slate-200 text-xs font-bold bg-white text-[#16212B]">
-              {Array.from({ length: periodCount }, (_, i) => <option key={i + 1} value={String(i + 1)}>{selectedPeriodType === 'month' ? `Mois ${i + 1}` : selectedPeriodType === 'trimester' ? `Trimestre ${i + 1}` : `Semestre ${i + 1}`}</option>)}
+              {Array.from({ length: periodCount }, (_, i) => (
+                <option key={i + 1} value={String(i + 1)}>
+                  {selectedPeriodType === 'month' ? t('periodMonth', { num: i + 1 }) : selectedPeriodType === 'trimester' ? t('periodTrimester', { num: i + 1 }) : t('periodSemester', { num: i + 1 })}
+                </option>
+              ))}
             </select>
           </>
         )}
         {viewMode === 'teacher' && (
           <>
-            <label className="text-xs font-bold text-slate-500 whitespace-nowrap">Enseignant :</label>
+            <label className="text-xs font-bold text-slate-500 whitespace-nowrap">{t('viewModeTeacher')} :</label>
             <select
               value={selectedTeacherId}
               onChange={e => setSelectedTeacherId(e.target.value)}
               className="h-9 px-3 rounded-xl border border-slate-200 text-xs font-bold bg-white text-[#16212B]"
             >
-              <option value="">Sélectionner un enseignant...</option>
-              {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              <option value="">{t('teacherSelectPrompt')}</option>
+              {teachers.map(tOption => <option key={tOption.id} value={tOption.id}>{tOption.name}</option>)}
             </select>
           </>
         )}
         {viewMode === 'room' && (
           <>
-            <label className="text-xs font-bold text-slate-500 whitespace-nowrap">Salle :</label>
+            <label className="text-xs font-bold text-slate-500 whitespace-nowrap">{t('viewModeRoom')} :</label>
             <select
               value={selectedRoomLabel}
               onChange={e => setSelectedRoomLabel(e.target.value)}
               className="h-9 px-3 rounded-xl border border-slate-200 text-xs font-bold bg-white text-[#16212B]"
             >
-              <option value="">Sélectionner une salle...</option>
-              {roomOptions.map(r => <option key={r} value={r}>{r === '__unassigned__' ? 'Salle non assignée' : r}</option>)}
+              <option value="">{t('roomSelectPrompt')}</option>
+              {roomOptions.map(r => <option key={r} value={r}>{r === '__unassigned__' ? t('slotUnassignedRoom') : r}</option>)}
             </select>
           </>
         )}
 
         {canManage && viewMode === 'class' && selectedSectionId && (
-          <Button size="sm" onClick={() => setShowForm(v => !v)} className="h-9 text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5 ml-auto">
+          <Button size="sm" onClick={() => setShowForm(v => !v)} className="h-9 text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5 ms-auto">
             <Plus className="w-3.5 h-3.5" />
-            Ajouter un créneau
+            {t('btnAddSlot')}
           </Button>
         )}
       </Card>
@@ -283,44 +280,44 @@ export function ScheduleClient({ locale: _locale }: { locale?: string } = {}) {
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
             <div className="space-y-1 lg:col-span-2">
-              <label className="font-bold text-slate-600">Matière</label>
+              <label className="font-bold text-slate-600">{t('subject')}</label>
               <select value={form.classSubjectId} onChange={e => setForm({ ...form, classSubjectId: e.target.value })} className="h-9 w-full rounded-xl border border-slate-200 px-3">
-                <option value="">Sélectionner...</option>
+                <option value="">{tCommon('filter')}...</option>
                 {classSubjects.map(cs => <option key={cs.id} value={cs.id}>{subjects.find(s => s.id === cs.subjectId)?.name ?? cs.id}</option>)}
               </select>
             </div>
             <div className="space-y-1 lg:col-span-2">
-              <label className="font-bold text-slate-600">Enseignant</label>
+              <label className="font-bold text-slate-600">{t('teacher')}</label>
               <select value={form.teacherId} onChange={e => setForm({ ...form, teacherId: e.target.value })} className="h-9 w-full rounded-xl border border-slate-200 px-3">
-                <option value="">Sélectionner...</option>
-                {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                <option value="">{tCommon('filter')}...</option>
+                {teachers.map(tOption => <option key={tOption.id} value={tOption.id}>{tOption.name}</option>)}
               </select>
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Jour</label>
+              <label className="font-bold text-slate-600">{t('colDay')}</label>
               <select value={form.dayOfWeek} onChange={e => setForm({ ...form, dayOfWeek: e.target.value })} className="h-9 w-full rounded-xl border border-slate-200 px-3">
-                {DAYS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                {daysList.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
               </select>
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Salle</label>
+              <label className="font-bold text-slate-600">{t('room')}</label>
               <input value={form.roomLabel} onChange={e => setForm({ ...form, roomLabel: e.target.value })} className="h-9 w-full rounded-xl border border-slate-200 px-3" />
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Début</label>
+              <label className="font-bold text-slate-600">{t('slotStartTime')}</label>
               <input type="time" value={form.startTime} onChange={e => setForm({ ...form, startTime: e.target.value })} className="h-9 w-full rounded-xl border border-slate-200 px-3" />
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Fin</label>
+              <label className="font-bold text-slate-600">{t('slotEndTime')}</label>
               <input type="time" value={form.endTime} onChange={e => setForm({ ...form, endTime: e.target.value })} className="h-9 w-full rounded-xl border border-slate-200 px-3" />
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Button size="sm" disabled={saving} onClick={handleCreate} className="h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold">
-              {saving ? 'Enregistrement...' : 'Ajouter'}
+              {saving ? t('saving') : tCommon('add')}
             </Button>
             <Button size="sm" variant="outline" onClick={() => setShowForm(false)} className="h-9 rounded-xl text-xs font-bold">
-              Annuler
+              {tCommon('cancel')}
             </Button>
           </div>
         </Card>
@@ -331,21 +328,21 @@ export function ScheduleClient({ locale: _locale }: { locale?: string } = {}) {
             <Card className="p-12 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col items-center justify-center gap-3 text-center">
               <Clock className="w-10 h-10 text-slate-200" />
               <p className="text-sm font-bold text-slate-400">
-                {viewMode === 'class' && 'Sélectionnez une classe pour voir son emploi du temps.'}
-                {viewMode === 'teacher' && 'Sélectionnez un enseignant pour voir son emploi du temps.'}
-                {viewMode === 'room' && 'Sélectionnez une salle pour voir son occupation.'}
+                {viewMode === 'class' && t('classPromptEmpty')}
+                {viewMode === 'teacher' && t('teacherPromptEmpty')}
+                {viewMode === 'room' && t('roomPromptEmpty')}
               </p>
             </Card>
           )
         : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {DAYS.map((day) => {
+              {daysList.map((day) => {
                 const daySlots = slots.filter(s => s.dayOfWeek === day.value).sort((a, b) => a.startTime.localeCompare(b.startTime));
                 return (
                   <Card key={day.value} className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-2">
                     <h3 className="text-xs font-extrabold text-[#16212B]">{day.label}</h3>
-                    {loading && <p className="text-[10px] text-slate-400">Chargement...</p>}
-                    {!loading && daySlots.length === 0 && <p className="text-[10px] text-slate-400">Aucun créneau.</p>}
+                    {loading && <p className="text-[10px] text-slate-400">{tCommon('loading')}...</p>}
+                    {!loading && daySlots.length === 0 && <p className="text-[10px] text-slate-400">{t('noSlots')}</p>}
                     {daySlots.map(slot => (
                       <div key={slot.id} className="p-2.5 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between gap-2">
                         <div className="min-w-0">

@@ -1,12 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ReportingNav } from './components/reporting-nav';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { DataTable, Column } from '@/components/shared/data-table';
 import { HardDrive, Calendar, AlertOctagon, Activity, CheckCircle2 } from 'lucide-react';
 
 export function ReportingAdminView() {
+  const t = useTranslations('Reports');
+  const tCommon = useTranslations('Common');
+
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -31,7 +35,7 @@ export function ReportingAdminView() {
   const projectionColumns: Column<any>[] = [
     {
       key: 'projectionName',
-      header: 'Modèle de Projection (Read View)',
+      header: t('colProjectionModel'),
       cell: (row) => (
         <div className="font-bold text-[#16212B] flex items-center gap-2">
           <Activity className="h-3.5 w-3.5 text-[#2487B8]" />
@@ -41,12 +45,12 @@ export function ReportingAdminView() {
     },
     {
       key: 'rowCount',
-      header: 'Lignes Enregistrées',
+      header: t('colRecordedRows'),
       cell: (row) => <span className="font-semibold text-slate-700">{row.rowCount.toLocaleString()}</span>,
     },
     {
       key: 'lastWatermark',
-      header: 'Dernier Fil d\'Eau (Watermark)',
+      header: t('colLastWatermark'),
       cell: (row) => (
         <div className="flex items-center gap-1.5 text-xs text-slate-500">
           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
@@ -69,7 +73,7 @@ export function ReportingAdminView() {
         <Card className="hover:border-slate-300 transition-all rounded-2xl">
           <CardHeader className="flex-row items-center justify-between border-b-0 pb-1">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Stockage Utilisé
+              {t('usedStorage')}
             </span>
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#E4EDFD] text-[#2487B8]">
               <HardDrive className="h-4 w-4" />
@@ -86,7 +90,7 @@ export function ReportingAdminView() {
               />
             </div>
             <span className="text-[10px] text-slate-400 font-semibold mt-1 block">
-              {storagePercentage}% de la capacité quota consommée
+              {t('storageQuotaConsumed', { pct: storagePercentage })}
             </span>
           </CardContent>
         </Card>
@@ -94,7 +98,7 @@ export function ReportingAdminView() {
         <Card className="hover:border-slate-300 transition-all rounded-2xl">
           <CardHeader className="flex-row items-center justify-between border-b-0 pb-1">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Planifications Actives
+              {t('activeSchedules')}
             </span>
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
               <Calendar className="h-4 w-4" />
@@ -105,7 +109,7 @@ export function ReportingAdminView() {
               {data?.activeSchedulesCount || 0}
             </div>
             <span className="text-[10px] text-emerald-600 font-bold mt-1 inline-block bg-emerald-50 px-2 py-0.5 rounded-md">
-              Service Cron Actif
+              {t('cronServiceActive')}
             </span>
           </CardContent>
         </Card>
@@ -113,7 +117,7 @@ export function ReportingAdminView() {
         <Card className="hover:border-slate-300 transition-all rounded-2xl">
           <CardHeader className="flex-row items-center justify-between border-b-0 pb-1">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Exécutions Échouées
+              {t('failedRuns')}
             </span>
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 text-[#E5544B]">
               <AlertOctagon className="h-4 w-4" />
@@ -124,7 +128,7 @@ export function ReportingAdminView() {
               {data?.failedRunsCount || 0}
             </div>
             <span className="text-[10px] text-slate-400 font-semibold mt-1 block">
-              Zéro anomalie système détectée
+              {t('zeroAnomalies')}
             </span>
           </CardContent>
         </Card>
@@ -134,10 +138,10 @@ export function ReportingAdminView() {
       <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
         <div>
           <h3 className="text-base font-bold text-[#16212B]">
-            Fraîcheur des Projections Analytical & Fil d'Eau (Watermark)
+            {t('watermarkTitle')}
           </h3>
           <p className="text-xs text-slate-500">
-            Surveillance en temps réel des index de lecture et tables matérialisées du sous-système analytique.
+            {t('watermarkSubtitle')}
           </p>
         </div>
 
@@ -145,8 +149,8 @@ export function ReportingAdminView() {
           data={data?.projections || []}
           columns={projectionColumns}
           isLoading={loading}
-          emptyTitle="Aucune projection enregistrée"
-          emptyDescription="Les modèles de lecture apparaîtront dès la première matérialisation de données."
+          emptyTitle={tCommon('empty')}
+          emptyDescription={tCommon('empty')}
         />
       </div>
     </div>

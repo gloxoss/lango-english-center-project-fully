@@ -8,5 +8,10 @@ export default async function ReceptionistHandoffsPage({
 }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'reception.handoff.manage' });
-  return <ReceptionHandoffsView />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <ReceptionHandoffsView />
+    </main>
+  );
 }

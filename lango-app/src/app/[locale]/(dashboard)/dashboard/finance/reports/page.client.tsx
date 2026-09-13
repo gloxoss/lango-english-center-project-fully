@@ -8,6 +8,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 type PaymentRow = { paymentDate: string; invoiceNumber: string; studentName: string; amount: number; paymentMethod: string; referenceId: string | null };
 type ExpenseRow = { expenseDate: string; category: string; amount: string; description: string | null };
@@ -22,7 +23,7 @@ function toCsv(headers: string[], rows: (string | number)[][]): string {
 }
 
 function downloadCsv(filename: string, csv: string) {
-  const blob = new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -50,19 +51,20 @@ async function fetchAllPages<T>(url: string): Promise<T[]> {
   return all;
 }
 
-const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
-  salary: 'Salaires',
-  rent: 'Loyer',
-  utilities: 'Charges',
-  supplies: 'Fournitures',
-  marketing: 'Marketing',
-  other: 'Autre',
-};
-
 export default function ReportsPage() {
+  const t = useTranslations('Finance');
   const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7));
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const expenseCategoryLabels: Record<string, string> = {
+    salary: t('categorySalary'),
+    rent: t('categoryRent'),
+    utilities: t('categoryUtilities'),
+    supplies: t('categorySupplies'),
+    marketing: t('categoryMarketing'),
+    other: t('categoryOther'),
+  };
 
   async function exportEncaissements() {
     setLoading('encaissements');
@@ -71,12 +73,12 @@ export default function ReportsPage() {
       const rows = await fetchAllPages<PaymentRow>('/api/finance/payments');
       const inPeriod = rows.filter(r => r.paymentDate.startsWith(period));
       const csv = toCsv(
-        ['Date', 'N° Facture', 'Élève', 'Montant (MAD)', 'Méthode', 'Référence'],
+        [t('csvDate'), t('csvInvoiceNum'), t('csvStudent'), t('csvAmount'), t('csvMethod'), t('csvReference')],
         inPeriod.map(r => [r.paymentDate, r.invoiceNumber, r.studentName, r.amount, r.paymentMethod, r.referenceId ?? '']),
       );
       downloadCsv(`journal-encaissements-${period}.csv`, csv);
     } catch {
-      setError('Échec de la génération du journal des encaissements.');
+      setError(t('exportReceiptsError'));
     } finally {
       setLoading(null);
     }
@@ -89,12 +91,12 @@ export default function ReportsPage() {
       const rows = await fetchAllPages<ExpenseRow>('/api/finance/expenses');
       const inPeriod = rows.filter(r => r.expenseDate.startsWith(period));
       const csv = toCsv(
-        ['Date', 'Catégorie', 'Montant (MAD)', 'Description'],
-        inPeriod.map(r => [r.expenseDate, EXPENSE_CATEGORY_LABELS[r.category] ?? r.category, r.amount, r.description ?? '']),
+        [t('csvDate'), t('csvCategory'), t('csvAmount'), t('csvDescription')],
+        inPeriod.map(r => [r.expenseDate, expenseCategoryLabels[r.category] ?? r.category, r.amount, r.description ?? '']),
       );
       downloadCsv(`depenses-${period}.csv`, csv);
     } catch {
-      setError('Échec de la génération du bilan des dépenses.');
+      setError(t('exportExpensesError'));
     } finally {
       setLoading(null);
     }
@@ -110,16 +112,16 @@ export default function ReportsPage() {
         .filter(r => r.status !== 'paid' && r.status !== 'cancelled' && r.netAmount - r.paidAmount > 0)
         .map((r) => {
           const daysLate = Math.floor((today.getTime() - new Date(r.dueDate).getTime()) / 86_400_000);
-          const bucket = daysLate <= 0 ? 'Non échue' : daysLate <= 30 ? '1-30 jours' : daysLate <= 60 ? '31-60 jours' : daysLate <= 90 ? '61-90 jours' : '90+ jours';
+          const bucket = daysLate <= 0 ? t('bucketNotDue') : daysLate <= 30 ? t('bucket1to30') : daysLate <= 60 ? t('bucket31to60') : daysLate <= 90 ? t('bucket61to90') : t('bucket90Plus');
           return [r.invoiceNumber, r.studentName, [r.className, r.sectionName].filter(Boolean).join(' '), r.dueDate, Math.max(0, daysLate), (r.netAmount - r.paidAmount).toFixed(2), bucket];
         });
       const csv = toCsv(
-        ['N° Facture', 'Élève', 'Classe', 'Échéance', 'Jours de retard', 'Solde (MAD)', 'Tranche'],
+        [t('csvInvoiceNum'), t('csvStudent'), t('csvClass'), t('csvDueDate'), t('csvOverdueDays'), t('csvBalance'), t('csvBracket')],
         outstanding,
       );
       downloadCsv(`anciennete-creances-${today.toISOString().slice(0, 10)}.csv`, csv);
     } catch {
-      setError('Échec de la génération de la balance âgée.');
+      setError(t('exportAgingError'));
     } finally {
       setLoading(null);
     }
@@ -131,14 +133,14 @@ export default function ReportsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Rapports & Exports Comptables
+            {t('accountingReportsTitle')}
           </h1>
-          <p className="text-sm text-slate-500">
-            Exports réels des encaissements, dépenses et créances de cet établissement.
+          <p className="mt-1 text-sm text-slate-500">
+            {t('accountingReportsSubtitle')}
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <label className="text-xs font-bold text-slate-700">Période:</label>
+          <label className="text-xs font-bold text-slate-700">{t('periodLabel')}</label>
           <input
             type="month"
             value={period}
@@ -159,9 +161,9 @@ export default function ReportsPage() {
             <div className="flex size-10 items-center justify-center rounded-xl bg-blue-50 text-[#0066FF]">
               <FileSpreadsheet className="size-5" />
             </div>
-            <h3 className="mt-4 font-bold text-slate-900">Journal des Encaissements</h3>
+            <h3 className="mt-4 font-bold text-slate-900">{t('receiptsJournalCardTitle')}</h3>
             <p className="mt-1 text-xs text-slate-500">
-              Détail chronologique des règlements scolarité reçus pour la période sélectionnée.
+              {t('receiptsJournalCardDesc')}
             </p>
           </div>
           <button
@@ -170,7 +172,7 @@ export default function ReportsPage() {
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-50"
           >
             {loading === 'encaissements' ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
-            Télécharger CSV
+            {t('downloadCsv')}
           </button>
         </div>
 
@@ -179,9 +181,9 @@ export default function ReportsPage() {
             <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
               <FileText className="size-5" />
             </div>
-            <h3 className="mt-4 font-bold text-slate-900">Bilan des Dépenses D&apos;Exploitation</h3>
+            <h3 className="mt-4 font-bold text-slate-900">{t('operatingExpensesCardTitle')}</h3>
             <p className="mt-1 text-xs text-slate-500">
-              Dépenses enregistrées par catégorie pour la période sélectionnée.
+              {t('operatingExpensesCardDesc')}
             </p>
           </div>
           <button
@@ -190,7 +192,7 @@ export default function ReportsPage() {
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-50"
           >
             {loading === 'depenses' ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
-            Télécharger CSV
+            {t('downloadCsv')}
           </button>
         </div>
 
@@ -199,9 +201,9 @@ export default function ReportsPage() {
             <div className="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
               <BarChart3 className="size-5" />
             </div>
-            <h3 className="mt-4 font-bold text-slate-900">État de l&apos;Ancienneté des Créances</h3>
+            <h3 className="mt-4 font-bold text-slate-900">{t('agingReportCardTitle')}</h3>
             <p className="mt-1 text-xs text-slate-500">
-              Factures impayées à ce jour, réparties par tranche de retard.
+              {t('agingReportCardDesc')}
             </p>
           </div>
           <button
@@ -210,7 +212,7 @@ export default function ReportsPage() {
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-50"
           >
             {loading === 'ancienneté' ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
-            Télécharger CSV
+            {t('downloadCsv')}
           </button>
         </div>
       </div>

@@ -1,12 +1,12 @@
+import type { RequestContext } from '@/libs/api/context';
 // Purchasing service: create (ordered, no stock effect), receive (idempotent —
 // posts receipt movements and creates one expenses row atomically), list with
 // filters, detail with lines, reverse (v1: ordered→reversed only).
 // Money math is exact cents (BigInt); quantities are scaled-int millis.
 import { and, desc, eq, gte, inArray, sql } from 'drizzle-orm';
-import { db } from '@/libs/DB';
-import { ApiError } from '@/libs/api/errors';
 import { recordAudit } from '@/libs/api/audit';
-import type { RequestContext } from '@/libs/api/context';
+import { ApiError } from '@/libs/api/errors';
+import { db } from '@/libs/DB';
 import { tryPostExpenseGLEntry } from '@/libs/finance/gl-auto-post';
 import { centsToMoney, moneyToCents } from '@/libs/finance/money';
 import {
@@ -20,6 +20,7 @@ import {
 import { qtyToMilli } from './inventory-math';
 import { reserveInventoryNumber } from './inventory-sequence';
 import { isIdempotencyViolation, postStockMovements } from './inventory-transactions';
+import { decideReorder, DEFAULT_REORDER_THRESHOLD } from './reorder-policy';
 
 export type PurchaseLineInput = { productId: string; qtyInPurchaseUnit: string; unitCost: number };
 export type PurchaseInput = {
@@ -36,12 +37,16 @@ export type PurchaseInput = {
 const THOUSAND = BigInt(1000);
 
 async function verifyProducts(tenantId: string, productIds: string[]): Promise<Map<string, string>> {
-  if (productIds.length === 0) return new Map();
+  if (productIds.length === 0) {
+    return new Map();
+  }
   const rows = await db.select({ id: inventoryProducts.id, unitRatio: inventoryProducts.unitRatio })
     .from(inventoryProducts)
     .where(and(eq(inventoryProducts.tenantId, tenantId), inArray(inventoryProducts.id, productIds)));
   const found = new Map<string, string>();
-  for (const r of rows) found.set(r.id, r.unitRatio);
+  for (const r of rows) {
+    found.set(r.id, r.unitRatio);
+  }
   return found;
 }
 
@@ -66,11 +71,21 @@ export async function listPurchases(
   opts: { supplierId?: string | null; storeId?: string | null; status?: string | null; from?: string | null; to?: string | null } = {},
 ) {
   const conditions = [eq(inventoryPurchases.tenantId, tenantId)];
-  if (opts.supplierId) conditions.push(eq(inventoryPurchases.supplierId, opts.supplierId));
-  if (opts.storeId) conditions.push(eq(inventoryPurchases.storeId, opts.storeId));
-  if (opts.status) conditions.push(eq(inventoryPurchases.status, opts.status as any));
-  if (opts.from) conditions.push(gte(inventoryPurchases.orderDate, opts.from));
-  if (opts.to) conditions.push(sql`${inventoryPurchases.orderDate} <= ${opts.to}`);
+  if (opts.supplierId) {
+    conditions.push(eq(inventoryPurchases.supplierId, opts.supplierId));
+  }
+  if (opts.storeId) {
+    conditions.push(eq(inventoryPurchases.storeId, opts.storeId));
+  }
+  if (opts.status) {
+    conditions.push(eq(inventoryPurchases.status, opts.status as any));
+  }
+  if (opts.from) {
+    conditions.push(gte(inventoryPurchases.orderDate, opts.from));
+  }
+  if (opts.to) {
+    conditions.push(sql`${inventoryPurchases.orderDate} <= ${opts.to}`);
+  }
 
   return db.select({
     id: inventoryPurchases.id,
@@ -126,7 +141,9 @@ export async function getPurchase(tenantId: string, id: string) {
     .innerJoin(inventoryStores, eq(inventoryStores.id, inventoryPurchases.storeId))
     .where(and(eq(inventoryPurchases.id, id), eq(inventoryPurchases.tenantId, tenantId)))
     .limit(1);
-  if (!row) return null;
+  if (!row) {
+    return null;
+  }
 
   const lines = await db.select({
     id: inventoryPurchaseLines.id,
@@ -155,14 +172,14 @@ export async function createPurchase(context: RequestContext, tenantId: string, 
   if (input.paidAmount != null && input.paidAmount < 0) {
     throw new ApiError(422, 'INVALID_AMOUNT', 'Le montant payé ne peut pas être négatif.');
   }
-  const products = await verifyProducts(tenantId, input.lines.map((l) => l.productId));
+  const products = await verifyProducts(tenantId, input.lines.map(l => l.productId));
   for (const l of input.lines) {
     if (!products.has(l.productId)) {
       throw new ApiError(422, 'INVALID_REF', 'Un produit de la commande est introuvable dans cet établissement.');
     }
   }
 
-  const lineTotals = input.lines.map((l) => lineTotalCents(l.qtyInPurchaseUnit, l.unitCost));
+  const lineTotals = input.lines.map(l => lineTotalCents(l.qtyInPurchaseUnit, l.unitCost));
   const netCents = lineTotals.reduce((acc, c) => acc + c, BigInt(0));
   const netAmount = Number(centsToMoney(netCents));
 
@@ -187,7 +204,9 @@ export async function createPurchase(context: RequestContext, tenantId: string, 
       recordedById: context.userId,
       notes: input.notes ?? null,
     }).returning();
-    if (!purchase) throw new ApiError(500, 'INSERT_FAILED', 'Échec de l\'enregistrement de la commande.');
+    if (!purchase) {
+      throw new ApiError(500, 'INSERT_FAILED', 'Échec de l\'enregistrement de la commande.');
+    }
 
     const lineRows = input.lines.map((l, i) => ({
       tenantId,
@@ -211,8 +230,12 @@ export async function createPurchase(context: RequestContext, tenantId: string, 
 
 export async function receivePurchase(context: RequestContext, tenantId: string, id: string) {
   const existing = await getPurchase(tenantId, id);
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Commande introuvable dans cet établissement.');
-  if (existing.status === 'received') return existing;
+  if (!existing) {
+    throw new ApiError(404, 'NOT_FOUND', 'Commande introuvable dans cet établissement.');
+  }
+  if (existing.status === 'received') {
+    return existing;
+  }
   if (existing.status === 'reversed') {
     throw new ApiError(409, 'ALREADY_REVERSED', 'Cette commande a été annulée.');
   }
@@ -227,7 +250,9 @@ export async function receivePurchase(context: RequestContext, tenantId: string,
       if (!doc || doc.status === 'reversed') {
         throw new ApiError(409, 'ALREADY_REVERSED', 'Cette commande a été annulée.');
       }
-      if (doc.status === 'received') return;
+      if (doc.status === 'received') {
+        return;
+      }
 
       const lines = await tx.select({
         productId: inventoryPurchaseLines.productId,
@@ -259,7 +284,9 @@ export async function receivePurchase(context: RequestContext, tenantId: string,
         description: `Achat N° ${existing.purchaseNumber} — ${existing.supplierName}`,
         recordedById: context.userId,
       }).returning();
-      if (!expense) throw new ApiError(500, 'INSERT_FAILED', 'Échec de la création de la dépense.');
+      if (!expense) {
+        throw new ApiError(500, 'INSERT_FAILED', 'Échec de la création de la dépense.');
+      }
 
       await tx.update(inventoryPurchases)
         .set({ status: 'received', receivedAt: new Date().toISOString(), expenseId: expense.id, updatedAt: sql`now()` })
@@ -269,13 +296,17 @@ export async function receivePurchase(context: RequestContext, tenantId: string,
   } catch (err) {
     if (isIdempotencyViolation(err)) {
       const current = await getPurchase(tenantId, id);
-      if (current?.status === 'received') return current;
+      if (current?.status === 'received') {
+        return current;
+      }
     }
     throw err;
   }
 
   const fresh = await getPurchase(tenantId, id);
-  if (!fresh) throw new ApiError(500, 'UPDATE_FAILED', 'Échec de la réception de la commande.');
+  if (!fresh) {
+    throw new ApiError(500, 'UPDATE_FAILED', 'Échec de la réception de la commande.');
+  }
   recordAudit(context, 'update', 'inventory_purchase', id, { action: 'receive', expenseId: fresh.expenseId });
   // Fail-open GL — never block the receipt on CoA/fiscal-period config.
   await tryPostExpenseGLEntry({
@@ -295,8 +326,12 @@ export async function receivePurchase(context: RequestContext, tenantId: string,
 
 export async function reversePurchase(context: RequestContext, tenantId: string, id: string) {
   const existing = await getPurchase(tenantId, id);
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Commande introuvable dans cet établissement.');
-  if (existing.status === 'reversed') return existing;
+  if (!existing) {
+    throw new ApiError(404, 'NOT_FOUND', 'Commande introuvable dans cet établissement.');
+  }
+  if (existing.status === 'reversed') {
+    return existing;
+  }
   if (existing.status === 'received') {
     throw new ApiError(409, 'NOT_REVERSIBLE', 'L\'annulation d\'une commande réceptionnée est différée. Annulez la réception manuellement.');
   }
@@ -304,7 +339,9 @@ export async function reversePurchase(context: RequestContext, tenantId: string,
     .set({ status: 'reversed', updatedAt: sql`now()` })
     .where(and(eq(inventoryPurchases.id, id), eq(inventoryPurchases.tenantId, tenantId)))
     .returning();
-  if (!row) throw new ApiError(500, 'UPDATE_FAILED', 'Échec de l\'annulation de la commande.');
+  if (!row) {
+    throw new ApiError(500, 'UPDATE_FAILED', 'Échec de l\'annulation de la commande.');
+  }
   recordAudit(context, 'update', 'inventory_purchase', id, { action: 'reverse' });
   return getPurchase(tenantId, id);
 }
@@ -319,6 +356,11 @@ export type ReorderSuggestionItem = {
   productCode: string;
   currentStock: number;
   reorderThreshold: number;
+  /**
+   * Whether reorderThreshold came from this product's own reorder point or from
+   * the tenant-wide fallback, so the UI can flag products nobody has tuned.
+   */
+  reorderThresholdSource: 'product' | 'tenant-default';
   suggestedQuantity: number;
   unitCost: number;
   estimatedTotal: number;
@@ -329,7 +371,8 @@ export type ReorderSuggestionItem = {
 };
 
 export async function getReorderSuggestions(tenantId: string, opts: { storeId?: string | null; threshold?: number } = {}) {
-  const threshold = opts.threshold ?? 5;
+  // Tenant-wide fallback only — each product's own reorder point wins when set.
+  const threshold = opts.threshold ?? DEFAULT_REORDER_THRESHOLD;
   const [products, suppliers, stores] = await Promise.all([
     db.select({
       id: inventoryProducts.id,
@@ -337,6 +380,8 @@ export async function getReorderSuggestions(tenantId: string, opts: { storeId?: 
       code: inventoryProducts.code,
       purchasePrice: inventoryProducts.purchasePrice,
       unitRatio: inventoryProducts.unitRatio,
+      reorderPoint: inventoryProducts.reorderPoint,
+      reorderQuantity: inventoryProducts.reorderQuantity,
     })
       .from(inventoryProducts)
       .where(and(eq(inventoryProducts.tenantId, tenantId), eq(inventoryProducts.isActive, true))),
@@ -349,20 +394,20 @@ export async function getReorderSuggestions(tenantId: string, opts: { storeId?: 
   ]);
 
   const defaultSupplier = suppliers[0] ?? null;
-  const defaultStore = (opts.storeId ? stores.find((s) => s.id === opts.storeId) : stores[0]) ?? null;
+  const defaultStore = (opts.storeId ? stores.find(s => s.id === opts.storeId) : stores[0]) ?? null;
 
   // Query actual stock balances across products
-  const productIds = products.map((p) => p.id);
+  const productIds = products.map(p => p.id);
   const balances = productIds.length > 0
     ? await db.select({
-      productId: inventoryPurchaseLines.productId,
-      supplierId: inventoryPurchases.supplierId,
-    })
-      .from(inventoryPurchaseLines)
-      .innerJoin(inventoryPurchases, eq(inventoryPurchases.id, inventoryPurchaseLines.purchaseId))
-      .where(and(eq(inventoryPurchaseLines.tenantId, tenantId), inArray(inventoryPurchaseLines.productId, productIds)))
-      .orderBy(desc(inventoryPurchases.orderDate))
-      .limit(100)
+        productId: inventoryPurchaseLines.productId,
+        supplierId: inventoryPurchases.supplierId,
+      })
+        .from(inventoryPurchaseLines)
+        .innerJoin(inventoryPurchases, eq(inventoryPurchases.id, inventoryPurchaseLines.purchaseId))
+        .where(and(eq(inventoryPurchaseLines.tenantId, tenantId), inArray(inventoryPurchaseLines.productId, productIds)))
+        .orderBy(desc(inventoryPurchases.orderDate))
+        .limit(100)
     : [];
 
   const recentSupplierMap = new Map<string, string>();
@@ -375,12 +420,12 @@ export async function getReorderSuggestions(tenantId: string, opts: { storeId?: 
   // Load balances from catalog service helper logic
   const stockRows = productIds.length > 0
     ? await db.select({
-      productId: sql<string>`product_id`,
-      totalStock: sql<number>`COALESCE(SUM(CAST(quantity AS numeric)), 0)`,
-    })
-      .from(sql`inventory_stock_balances`)
-      .where(and(eq(sql`tenant_id`, tenantId), inArray(sql`product_id`, productIds)))
-      .groupBy(sql`product_id`)
+        productId: sql<string>`product_id`,
+        totalStock: sql<number>`COALESCE(SUM(CAST(quantity AS numeric)), 0)`,
+      })
+        .from(sql`inventory_stock_balances`)
+        .where(and(eq(sql`tenant_id`, tenantId), inArray(sql`product_id`, productIds)))
+        .groupBy(sql`product_id`)
     : [];
 
   const stockMap = new Map<string, number>();
@@ -391,20 +436,23 @@ export async function getReorderSuggestions(tenantId: string, opts: { storeId?: 
   const suggestions: ReorderSuggestionItem[] = [];
   for (const p of products) {
     const currentStock = stockMap.get(p.id) ?? 0;
-    if (currentStock <= threshold) {
-      const suggestedQty = Math.max(10, Math.ceil(25 - currentStock));
-      const unitCost = p.purchasePrice ? Number(p.purchasePrice) : 50;
+    const decision = decideReorder(currentStock, p, threshold);
+
+    if (decision.shouldReorder) {
+      const suggestedQty = decision.suggestedQuantity;
+      const unitCost = p.purchasePrice ? Number(p.purchasePrice) : 0;
       const estimatedTotal = suggestedQty * unitCost;
 
       const matchedSupplierId = recentSupplierMap.get(p.id) || defaultSupplier?.id || null;
-      const matchedSupplier = suppliers.find((s) => s.id === matchedSupplierId) || defaultSupplier;
+      const matchedSupplier = suppliers.find(s => s.id === matchedSupplierId) || defaultSupplier;
 
       suggestions.push({
         productId: p.id,
         productName: p.name,
         productCode: p.code,
         currentStock,
-        reorderThreshold: threshold,
+        reorderThreshold: decision.reorderPoint,
+        reorderThresholdSource: decision.reorderPointSource,
         suggestedQuantity: suggestedQty,
         unitCost,
         estimatedTotal,
@@ -442,7 +490,9 @@ export async function generateDraftPurchaseOrders(
   const today = new Date().toISOString().slice(0, 10);
 
   for (const order of orders) {
-    if (!order.supplierId || !order.storeId || order.lines.length === 0) continue;
+    if (!order.supplierId || !order.storeId || order.lines.length === 0) {
+      continue;
+    }
     const po = await createPurchase(context, tenantId, {
       supplierId: order.supplierId,
       storeId: order.storeId,
@@ -458,4 +508,3 @@ export async function generateDraftPurchaseOrders(
     purchases: createdPurchases,
   };
 }
-

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,18 +27,36 @@ type ApiConflict = {
   suggestions?: ApiSuggestion[];
 };
 
-const DAY_LABELS: Record<string, string> = {
-  monday: 'Lundi', tuesday: 'Mardi', wednesday: 'Mercredi', thursday: 'Jeudi', friday: 'Vendredi', saturday: 'Samedi', sunday: 'Dimanche',
-};
-
 const TYPE_ICON: Record<ApiConflict['type'], typeof User> = { teacher: User, room: DoorOpen, class_section: Users };
-const TYPE_LABEL: Record<ApiConflict['type'], string> = { teacher: 'Enseignant', room: 'Salle', class_section: 'Classe' };
 
 export function ConflictsView({ locale }: { locale: string }) {
+  const t = useTranslations('Academics');
+
   const [conflicts, setConflicts] = useState<ApiConflict[]>([]);
   const [loading, setLoading] = useState(true);
   const [applyingId, setApplyingId] = useState<string | null>(null);
   const [applyState, setApplyState] = useState<{ id: string; ok: boolean; message: string } | null>(null);
+
+  const getDayLabel = (day: string) => {
+    switch (day.toLowerCase()) {
+      case 'monday': return t('dayMonday');
+      case 'tuesday': return t('dayTuesday');
+      case 'wednesday': return t('dayWednesday');
+      case 'thursday': return t('dayThursday');
+      case 'friday': return t('dayFriday');
+      case 'saturday': return t('daySaturday');
+      case 'sunday': return t('daySunday');
+      default: return day;
+    }
+  };
+
+  const getTypeLabel = (type: ApiConflict['type']) => {
+    switch (type) {
+      case 'teacher': return t('typeTeacher');
+      case 'room': return t('typeRoom');
+      case 'class_section': return t('typeClassSection');
+    }
+  };
 
   const loadConflicts = () => {
     setLoading(true);
@@ -56,8 +75,6 @@ export function ConflictsView({ locale }: { locale: string }) {
     loadConflicts();
   }, []);
 
-  // Applies a suggestion through the shared slot PUT endpoint (school_admin +
-  // academics.manage, enforced server-side), then refreshes the conflict list.
   const handleApply = async (s: ApiSuggestion) => {
     setApplyingId(s.id);
     setApplyState(null);
@@ -76,13 +93,13 @@ export function ConflictsView({ locale }: { locale: string }) {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setApplyState({ id: s.id, ok: false, message: json?.message ?? 'Échec de l\'application de la suggestion.' });
+        setApplyState({ id: s.id, ok: false, message: json?.message ?? t('suggestionFailed') });
         return;
       }
-      setApplyState({ id: s.id, ok: true, message: 'Suggestion appliquée.' });
+      setApplyState({ id: s.id, ok: true, message: t('suggestionApplied') });
       loadConflicts();
     } catch {
-      setApplyState({ id: s.id, ok: false, message: 'Erreur réseau lors de l\'application.' });
+      setApplyState({ id: s.id, ok: false, message: t('networkErrorApply') });
     } finally {
       setApplyingId(null);
     }
@@ -92,19 +109,19 @@ export function ConflictsView({ locale }: { locale: string }) {
     <div className="space-y-6 max-w-[1600px] mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Conflits d&apos;emploi du temps</h1>
-          <p className="text-xs text-slate-500 mt-1">Double-réservations réelles détectées sur les créneaux enregistrés (enseignant, salle, classe).</p>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('conflictsPageTitle')}</h1>
+          <p className="text-xs text-slate-500 mt-1">{t('conflictsPageSubtitle')}</p>
         </div>
         <Badge className={conflicts.length > 0 ? 'bg-[#FCE4E2] text-[#E5544B]' : 'bg-[#D1F5E8] text-[#17A673]'}>
-          {conflicts.length} conflit(s)
+          {t('conflictsBadge', { count: conflicts.length })}
         </Badge>
       </div>
 
       {!loading && conflicts.length === 0 && (
         <Card className="p-12 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col items-center justify-center text-center gap-3">
           <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-          <p className="text-sm font-bold text-slate-600">Aucun conflit détecté</p>
-          <p className="text-xs text-slate-400 max-w-sm">Tous les créneaux de l&apos;emploi du temps sont cohérents.</p>
+          <p className="text-sm font-bold text-slate-600">{t('noConflictsDetected')}</p>
+          <p className="text-xs text-slate-400 max-w-sm">{t('allSlotsConsistent')}</p>
         </Card>
       )}
 
@@ -121,9 +138,9 @@ export function ConflictsView({ locale }: { locale: string }) {
                   <div className="flex items-center gap-2">
                     <Badge className="bg-rose-100 text-rose-800 text-[10px] gap-1">
                       <Icon className="w-3 h-3" />
-                      {TYPE_LABEL[c.type]}
+                      {getTypeLabel(c.type)}
                     </Badge>
-                    <span className="text-[11px] font-bold text-slate-500">{DAY_LABELS[c.dayOfWeek] ?? c.dayOfWeek}</span>
+                    <span className="text-[11px] font-bold text-slate-500">{getDayLabel(c.dayOfWeek)}</span>
                   </div>
                   <p className="text-xs font-bold text-[#16212B]">{c.detail}</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
@@ -142,21 +159,23 @@ export function ConflictsView({ locale }: { locale: string }) {
                         <Wand2 className="w-4 h-4 text-[#0066FF] mt-0.5 shrink-0" />
                         <div className="flex-1 space-y-2">
                           <p className="text-[11px] font-extrabold text-[#0066FF]">
-                            {c.suggestions.length > 1 ? `Suggestions automatiques (${c.suggestions.length})` : 'Suggestion automatique'}
+                            {c.suggestions.length > 1
+                              ? t('autoSuggestionsMultiple', { count: c.suggestions.length })
+                              : t('autoSuggestionSingle')}
                           </p>
                           {c.suggestions.map((s) => (
                             <div key={s.id} className="p-2.5 bg-white/70 border border-[#D3E3FF] rounded-lg space-y-1.5">
                               <p className="text-[11px] text-slate-600">{s.detail}</p>
                               <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-700">
                                 <span className="line-through text-slate-400">{s.from.startTime}–{s.from.endTime}</span>
-                                <ArrowRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                <ArrowRight className="w-3.5 h-3.5 text-slate-400 shrink-0 rtl:rotate-180" />
                                 <span>{s.to.startTime}–{s.to.endTime}</span>
                               </div>
                               {s.kind === 'room' && (
                                 <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-700">
-                                  <span className="line-through text-slate-400">Salle {s.from.roomLabel ?? '—'}</span>
-                                  <ArrowRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                  <span>Salle {s.to.roomLabel ?? '—'}</span>
+                                  <span className="line-through text-slate-400">{t('roomPrefix', { label: s.from.roomLabel ?? '—' })}</span>
+                                  <ArrowRight className="w-3.5 h-3.5 text-slate-400 shrink-0 rtl:rotate-180" />
+                                  <span>{t('roomPrefix', { label: s.to.roomLabel ?? '—' })}</span>
                                 </div>
                               )}
                               <div className="flex items-center gap-2 pt-1">
@@ -168,7 +187,7 @@ export function ConflictsView({ locale }: { locale: string }) {
                                   {applyingId === s.id
                                     ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                     : <CheckCircle2 className="w-3.5 h-3.5" />}
-                                  Appliquer
+                                  {t('btnApply')}
                                 </Button>
                                 {applyState?.id === s.id && (
                                   <span className={`text-[11px] font-bold ${applyState.ok ? 'text-emerald-600' : 'text-rose-600'}`}>{applyState.message}</span>
@@ -181,7 +200,7 @@ export function ConflictsView({ locale }: { locale: string }) {
                     </div>
                   )}
                   <Link href={`/${locale}/dashboard/academics/schedule`} className="text-[11px] font-bold text-[#0066FF] hover:underline inline-block pt-1">
-                    Résoudre dans l&apos;emploi du temps →
+                    {t('resolveInSchedule')}
                   </Link>
                 </div>
               </div>
@@ -192,3 +211,4 @@ export function ConflictsView({ locale }: { locale: string }) {
     </div>
   );
 }
+

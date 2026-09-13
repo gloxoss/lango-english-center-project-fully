@@ -208,7 +208,7 @@ function assertNotOverlapViolation(err: unknown): void {
   // `.cause` — the SQLSTATE lives there, not on the wrapper.
   const cause = (err as { cause?: { code?: string } })?.cause;
   const code = (err as { code?: string })?.code ?? cause?.code;
-  if (code === '23P01') {
+  if (code === '23P01' || code === '40P01') {
     throw new ApiError(409, 'LIVE_SESSION_CONFLICT', 'Conflit d\'horaire : un enseignant ou une classe est déjà réservé sur ce créneau.');
   }
 }

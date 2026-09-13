@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -13,6 +14,8 @@ type AlumniRow = { id: string; name: string; email: string | null; alumniTransit
 // Real staff-side alumni admin overview (future-implementation/alumni-portal),
 // replacing the removed fake mock-data portals/alumni page.
 export function AlumniAdminView({ locale }: { locale?: string } = {}) {
+  const t = useTranslations('Students');
+  const tCommon = useTranslations('Common');
   const [rows, setRows] = useState<AlumniRow[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -29,13 +32,13 @@ export function AlumniAdminView({ locale }: { locale?: string } = {}) {
     <div className="space-y-6 max-w-[1200px] mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Anciens élèves</h1>
-          <p className="text-xs text-slate-500 mt-1">{rows.length} ancien(ne)(s) élève(s) réel(le)s pour cet établissement.</p>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('alumniTitle')}</h1>
+          <p className="text-xs text-slate-500 mt-1">{rows.length} {t('alumniSubtitle')}</p>
         </div>
         <Link href={`/${locale || 'fr'}/dashboard/students/alumni-transition`}>
           <Button size="sm" className="h-9 text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5">
             <GraduationCap className="w-3.5 h-3.5" />
-            Transition en masse
+            {t('massTransition')}
           </Button>
         </Link>
       </div>
@@ -43,7 +46,7 @@ export function AlumniAdminView({ locale }: { locale?: string } = {}) {
       <Card className="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <Input placeholder="Rechercher un(e) ancien(ne) élève..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9 text-xs rounded-xl bg-slate-50 border-none" />
+          <Input placeholder={t('searchAlumniPlaceholder')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9 text-xs rounded-xl bg-slate-50 border-none" />
         </div>
       </Card>
 
@@ -51,10 +54,10 @@ export function AlumniAdminView({ locale }: { locale?: string } = {}) {
         <table className="w-full text-left text-xs">
           <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
             <tr>
-              <th className="py-3.5 px-4">Nom</th>
-              <th className="py-3.5 px-4">Promotion</th>
-              <th className="py-3.5 px-4">Transition</th>
-              <th className="py-3.5 px-4">Annuaire</th>
+              <th className="py-3.5 px-4">{t('studentNameCol')}</th>
+              <th className="py-3.5 px-4">{t('cohortCol')}</th>
+              <th className="py-3.5 px-4">{t('transitionDateCol')}</th>
+              <th className="py-3.5 px-4">{t('directoryCol')}</th>
               <th className="py-3.5 px-4" />
             </tr>
           </thead>
@@ -63,7 +66,7 @@ export function AlumniAdminView({ locale }: { locale?: string } = {}) {
               <tr>
                 <td colSpan={5} className="py-12 text-center">
                   <Users className="w-8 h-8 text-slate-200 mx-auto mb-2" />
-                  <p className="text-slate-400">Aucun ancien élève pour le moment.</p>
+                  <p className="text-slate-400">{t('noAlumniFound')}</p>
                 </td>
               </tr>
             )}
@@ -74,12 +77,12 @@ export function AlumniAdminView({ locale }: { locale?: string } = {}) {
                 <td className="py-3 px-4 text-slate-400">{r.alumniTransitionedAt?.slice(0, 10) ?? '—'}</td>
                 <td className="py-3 px-4">
                   <Badge className={r.directoryOptIn ? 'bg-[#DDF5EC] text-[#17A673] border-none text-[10px]' : 'bg-slate-100 text-slate-500 border-none text-[10px]'}>
-                    {r.directoryOptIn ? 'Opt-in' : 'Privé'}
+                    {r.directoryOptIn ? t('optInBadge') : t('privateBadge')}
                   </Badge>
                 </td>
                 <td className="py-3 px-4 text-right">
                   <Link href={`/${locale || 'fr'}/dashboard/students/${r.id}`} className="text-[#2487B8] font-bold hover:underline">
-                    Voir le profil
+                    {tCommon('view')}
                   </Link>
                 </td>
               </tr>

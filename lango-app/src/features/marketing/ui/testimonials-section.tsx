@@ -4,7 +4,7 @@ import React, { useRef } from 'react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useLocale } from '../context/locale-context';
+import { useLocale, Locale } from '../context/locale-context';
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
@@ -49,6 +49,26 @@ const TESTIMONIALS_I18N = {
       photo: 'https://cdn.prod.website-files.com/68a413987ca3efce6f38ee67/68a71d7f400136be769bc9dc_Modern%20Portrait%20Gradient.avif',
     },
   ],
+  en: [
+    {
+      quote: 'SchoolOS allowed us to completely eliminate paperwork. Parents receive absence alerts instantly on their phones.',
+      author: 'Khadija El Mansouri',
+      role: 'Academic Director — GS Anfa',
+      photo: 'https://cdn.prod.website-files.com/68a413987ca3efce6f38ee67/68a71d7fa80bb87671d03408_Contemplative%20Woman%20in%20Vibrant%20Fashion.avif',
+    },
+    {
+      quote: 'Working with SchoolOS has been a joy. The platform is responsive, fast, and tailored to Moroccan academic requirements.',
+      author: 'Youssef Bennani',
+      role: 'Founder — L’Écolier School Casablanca',
+      photo: 'https://cdn.prod.website-files.com/68a413987ca3efce6f38ee67/68a71d7fa80bb87671d03416_Dreamy%20Portrait%20of%20a%20Young%20Woman.avif',
+    },
+    {
+      quote: 'From the first week, we saved countless hours computing term averages and printing accurate /20 report cards.',
+      author: 'Amine Berrada',
+      role: 'General Director — Al Atlas Academy Marrakech',
+      photo: 'https://cdn.prod.website-files.com/68a413987ca3efce6f38ee67/68a71d7f400136be769bc9dc_Modern%20Portrait%20Gradient.avif',
+    },
+  ],
 };
 
 const QuoteSvg = () => (
@@ -59,7 +79,7 @@ const QuoteSvg = () => (
 
 export const TestimonialsSection: React.FC = () => {
   const { locale } = useLocale();
-  const testimonials = TESTIMONIALS_I18N[locale] || TESTIMONIALS_I18N.fr;
+  const testimonials = TESTIMONIALS_I18N[locale] ?? TESTIMONIALS_I18N.fr;
   const isAr = locale === 'ar';
 
   const sectionRef = useRef<HTMLElement>(null);

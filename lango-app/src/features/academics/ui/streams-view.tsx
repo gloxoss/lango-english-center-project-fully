@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,12 +23,8 @@ import {
   Search,
   Trash2,
   X,
-  BookOpen,
-  Sparkles,
-  ShieldCheck,
   Award,
-  Layers,
-  HelpCircle,
+  ShieldCheck,
 } from 'lucide-react';
 
 type SubjectCoeff = {
@@ -70,14 +67,19 @@ const OFFICIAL_MASSAR_BAC_CODES = [
   { code: 'OTHER', label: 'Autre / Personnalisé' },
 ];
 
-const CYCLE_LABELS: Record<string, { label: string; className: string }> = {
-  lycee: { label: 'Lycée (Qualifiant)', className: 'bg-blue-50 text-[#0066FF] border-blue-200' },
-  college: { label: 'Collège', className: 'bg-purple-50 text-purple-700 border-purple-200' },
-  primaire: { label: 'Primaire', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  all: { label: 'Tous cycles', className: 'bg-slate-100 text-slate-600 border-slate-200' },
-};
+export function StreamsView({ locale: _locale }: { locale?: string } = {}) {
+  const activeLocale = useLocale();
+  const currentLocale = _locale || activeLocale;
+  const t = useTranslations('Academics');
+  const tCommon = useTranslations('Common');
 
-export function StreamsView({ locale: _locale }: { locale?: string }) {
+  const cycleLabels: Record<string, { label: string; className: string }> = {
+    lycee: { label: t('cycleLyceeLabel'), className: 'bg-blue-50 text-[#0066FF] border-blue-200' },
+    college: { label: t('cycleCollegeLabel'), className: 'bg-purple-50 text-purple-700 border-purple-200' },
+    primaire: { label: t('cyclePrimaireLabel'), className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    all: { label: t('cycleAllLabel'), className: 'bg-slate-100 text-slate-600 border-slate-200' },
+  };
+
   const [items, setItems] = useState<Stream[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -88,7 +90,7 @@ export function StreamsView({ locale: _locale }: { locale?: string }) {
   const [modal, setModal] = useState<ModalState>({ mode: 'closed' });
   const [saving, setSaving] = useState(false);
 
-  // Form states (§6.6)
+  // Form states
   const [formName, setFormName] = useState('');
   const [formBacCode, setFormBacCode] = useState('SM_A');
   const [formCycle, setFormCycle] = useState<'lycee' | 'college' | 'primaire' | 'all'>('lycee');
@@ -97,9 +99,9 @@ export function StreamsView({ locale: _locale }: { locale?: string }) {
     { subjectName: 'Physique-Chimie', coefficient: 5 },
     { subjectName: 'Sciences de la Vie et de la Terre', coefficient: 3 },
     { subjectName: 'Philosophie', coefficient: 2 },
-    { subjectName: 'Langue Française', coefficient: 4 },
-    { subjectName: 'Langue Arabe', coefficient: 2 },
-    { subjectName: 'Langue Anglaise', coefficient: 2 },
+    { subjectName: 'Français', coefficient: 4 },
+    { subjectName: 'Arabe', coefficient: 2 },
+    { subjectName: 'Anglais', coefficient: 2 },
   ]);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -114,12 +116,12 @@ export function StreamsView({ locale: _locale }: { locale?: string }) {
       setItems(json.data ?? []);
       setTotal(json.total ?? 0);
     } catch (e) {
-      setError('Impossible de charger les filières académiques.');
+      setError(t('loadStreamsError'));
       console.error(e);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { fetchStreams(page); }, [fetchStreams, page]);
 
@@ -168,7 +170,7 @@ export function StreamsView({ locale: _locale }: { locale?: string }) {
   };
 
   const handleSave = async () => {
-    if (!formName.trim()) { setFormError('Le nom est requis.'); return; }
+    if (!formName.trim()) { setFormError(t('streamNameRequired')); return; }
     setSaving(true);
     setFormError(null);
     try {
@@ -198,7 +200,7 @@ export function StreamsView({ locale: _locale }: { locale?: string }) {
       closeModal();
       fetchStreams(page);
     } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : 'Erreur lors de la sauvegarde.');
+      setFormError(e instanceof Error ? e.message : tCommon('error'));
     } finally {
       setSaving(false);
     }
@@ -216,7 +218,7 @@ export function StreamsView({ locale: _locale }: { locale?: string }) {
       setPage(newPage);
       fetchStreams(newPage);
     } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : 'Erreur lors de la suppression.');
+      setFormError(e instanceof Error ? e.message : tCommon('error'));
     } finally {
       setSaving(false);
     }
@@ -238,18 +240,18 @@ export function StreamsView({ locale: _locale }: { locale?: string }) {
         <div>
           <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight flex items-center gap-2.5">
             <GitBranch className="w-6 h-6 text-[#0066FF]" />
-            Filières Académiques &amp; Séries Bac
+            {t('streamsPageTitle')}
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            Structure des filières nationales Massar (Sciences Maths, PC, SVT, Économie…), coefficients officiels et restrictions de cycles.
+            {t('streamsPageSubtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-3.5 h-3.5 absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input
-              placeholder="Rechercher une filière…"
-              className="pl-9 h-9 text-xs rounded-xl w-[220px] border-slate-200"
+              placeholder={t('searchStreamPlaceholder')}
+              className="ps-9 h-9 text-xs rounded-xl w-[220px] border-slate-200"
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
@@ -259,17 +261,17 @@ export function StreamsView({ locale: _locale }: { locale?: string }) {
             onChange={e => setSelectedCycle(e.target.value)}
             className="h-9 px-3 text-xs rounded-xl border border-slate-200 bg-white font-medium text-slate-700"
           >
-            <option value="all">Tous les cycles</option>
-            <option value="lycee">Lycée uniquement</option>
-            <option value="college">Collège uniquement</option>
-            <option value="primaire">Primaire</option>
+            <option value="all">{t('filterAllCycles')}</option>
+            <option value="lycee">{t('filterLyceeOnly')}</option>
+            <option value="college">{t('filterCollegeOnly')}</option>
+            <option value="primaire">{t('filterPrimaireOnly')}</option>
           </select>
           <Button
             className="bg-[#0066FF] hover:bg-[#0052CC] text-white gap-2 text-xs font-bold h-9 rounded-xl shadow-xs"
             onClick={openCreate}
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Ajouter une filière</span>
+            <span>{t('addStream')}</span>
           </Button>
         </div>
       </div>
@@ -278,7 +280,7 @@ export function StreamsView({ locale: _locale }: { locale?: string }) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-slate-400">Filières Enregistrées</p>
+            <p className="text-xs font-bold text-slate-400">{t('registeredStreams')}</p>
             <p className="text-2xl font-extrabold text-[#16212B] tracking-tight">{loading ? '—' : total}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0066FF] flex items-center justify-center font-bold">
@@ -287,7 +289,7 @@ export function StreamsView({ locale: _locale }: { locale?: string }) {
         </Card>
         <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-slate-400">Filières Baccalauréat</p>
+            <p className="text-xs font-bold text-slate-400">{t('bacStreams')}</p>
             <p className="text-2xl font-extrabold text-purple-700 tracking-tight">
               {items.filter(i => (i.cycleRestriction || 'lycee') === 'lycee').length}
             </p>
@@ -298,7 +300,7 @@ export function StreamsView({ locale: _locale }: { locale?: string }) {
         </Card>
         <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-slate-400">Conformité MEN Massar</p>
+            <p className="text-xs font-bold text-slate-400">{t('massarCompliance')}</p>
             <p className="text-2xl font-extrabold text-[#17A673] tracking-tight">100%</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#17A673] flex items-center justify-center font-bold">
@@ -310,13 +312,13 @@ export function StreamsView({ locale: _locale }: { locale?: string }) {
       {/* Table */}
       <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden space-y-4">
         <h3 className="text-base font-extrabold text-[#16212B]">
-          Catalogue des Filières &amp; Coefficients
+          {t('streamsCatalogTitle')}
         </h3>
 
         {loading && (
           <div className="flex items-center justify-center py-12 gap-2 text-slate-400">
             <Loader2 className="w-4 h-4 animate-spin text-[#0066FF]" />
-            <span className="text-xs">Chargement des filières…</span>
+            <span className="text-xs">{tCommon('loading')}</span>
           </div>
         )}
 
@@ -327,26 +329,26 @@ export function StreamsView({ locale: _locale }: { locale?: string }) {
         {!loading && !error && (
           <>
             <div className="overflow-x-auto rounded-xl border border-slate-200">
-              <table className="w-full text-left text-xs border-collapse">
+              <table className="w-full text-left rtl:text-right text-xs border-collapse">
                 <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] border-b border-slate-200">
                   <tr>
-                    <th className="py-3 px-4">Filière / Spécialité</th>
-                    <th className="py-3 px-4">Code Massar (Bac)</th>
-                    <th className="py-3 px-4">Cycle Autorisé</th>
-                    <th className="py-3 px-4">Matières &amp; Coefficients</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                    <th className="py-3 px-4">{t('colStreamSpecialty')}</th>
+                    <th className="py-3 px-4">{t('colMassarCode')}</th>
+                    <th className="py-3 px-4">{t('colAuthorizedCycle')}</th>
+                    <th className="py-3 px-4">{t('colSubjectsCoeffs')}</th>
+                    <th className="py-3 px-4 text-right rtl:text-left">{t('colActions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
                   {filtered.length === 0 && (
                     <tr>
                       <td colSpan={5} className="py-10 text-center text-slate-400 text-xs">
-                        {search ? 'Aucun résultat pour cette recherche.' : 'Aucune filière configurée. Cliquez sur « Ajouter » pour commencer.'}
+                        {search ? t('noStreamsSearch') : t('noStreamsConfigured')}
                       </td>
                     </tr>
                   )}
                   {filtered.map(s => {
-                    const cycleInfo = CYCLE_LABELS[s.cycleRestriction || 'lycee'] || CYCLE_LABELS.all!;
+                    const cycleInfo = cycleLabels[s.cycleRestriction || 'lycee'] || cycleLabels.all!;
                     return (
                       <tr key={s.id} className="hover:bg-slate-50/60 transition-colors">
                         <td className="py-3 px-4">
@@ -372,20 +374,23 @@ export function StreamsView({ locale: _locale }: { locale?: string }) {
                         <td className="py-3 px-4 text-slate-600">
                           {s.subjects && s.subjects.length > 0 ? (
                             <span className="text-[11px] font-medium text-slate-600">
-                              {s.subjects.length} matière(s) (Total Coeff: {s.subjects.reduce((sum, sub) => sum + sub.coefficient, 0)})
+                              {t('streamSubjectsCoeffSummary', {
+                                count: s.subjects.length,
+                                total: s.subjects.reduce((sum, sub) => sum + sub.coefficient, 0),
+                              })}
                             </span>
                           ) : (
-                            <span className="text-slate-400 text-[11px]">Coefficients standards</span>
+                            <span className="text-slate-400 text-[11px]">{t('standardCoefficients')}</span>
                           )}
                         </td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1">
+                        <td className="py-3 px-4 text-right rtl:text-left">
+                          <div className="flex items-center justify-end rtl:justify-start gap-1">
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => openEdit(s)}
                               className="h-8 w-8 p-0 text-slate-500 hover:text-slate-900"
-                              title="Modifier"
+                              title={tCommon('edit')}
                             >
                               <Pencil className="w-3.5 h-3.5" />
                             </Button>
@@ -394,7 +399,7 @@ export function StreamsView({ locale: _locale }: { locale?: string }) {
                               size="sm"
                               onClick={() => openDelete(s)}
                               className="h-8 w-8 p-0 text-rose-500 hover:text-rose-700 hover:bg-rose-50"
-                              title="Supprimer"
+                              title={tCommon('delete')}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </Button>
@@ -410,7 +415,7 @@ export function StreamsView({ locale: _locale }: { locale?: string }) {
             {/* Pagination */}
             <div className="flex items-center justify-between pt-2">
               <p className="text-[11px] text-slate-400 font-medium">
-                {total} filière{total !== 1 ? 's' : ''} au total
+                {t('totalStreamsCount', { total })}
               </p>
               <div className="flex items-center gap-1">
                 <Button
@@ -420,7 +425,7 @@ export function StreamsView({ locale: _locale }: { locale?: string }) {
                   onClick={() => setPage(p => p - 1)}
                   className="h-8 text-xs rounded-xl"
                 >
-                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <ChevronLeft className="w-3.5 h-3.5 rtl:rotate-180" />
                 </Button>
                 <span className="px-3 py-1.5 rounded-xl bg-[#0066FF] text-white text-xs font-bold">
                   {page}
@@ -432,7 +437,7 @@ export function StreamsView({ locale: _locale }: { locale?: string }) {
                   onClick={() => setPage(p => p + 1)}
                   className="h-8 text-xs rounded-xl"
                 >
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180" />
                 </Button>
               </div>
             </div>
@@ -440,162 +445,173 @@ export function StreamsView({ locale: _locale }: { locale?: string }) {
         )}
       </Card>
 
-      {/* CREATE / EDIT MODAL (§6.6) */}
+      {/* CREATE / EDIT MODAL */}
       {(modal.mode === 'create' || modal.mode === 'edit') && (
         <Dialog open onOpenChange={closeModal}>
           <DialogContent className="max-w-xl rounded-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
                 <GitBranch className="w-4 h-4 text-[#0066FF]" />
-                {modal.mode === 'create' ? 'Ajouter une filière académique' : 'Modifier la filière'}
+                {modal.mode === 'create' ? t('addStreamModalTitle') : t('editStreamModalTitle')}
               </DialogTitle>
             </DialogHeader>
 
-            <div className="space-y-4 py-2 text-xs">
+            <div className="space-y-4 my-2">
+              {formError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-semibold">
+                  {formError}
+                </div>
+              )}
+
+              {/* Name */}
               <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Nom de la filière *
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  {t('streamNameLabel')} <span className="text-red-500">*</span>
                 </label>
                 <Input
-                  placeholder="ex : Sciences Mathématiques A, Sciences Physiques…"
-                  className="h-9 text-xs rounded-xl border-slate-200"
                   value={formName}
                   onChange={e => setFormName(e.target.value)}
+                  placeholder={t('streamNamePlaceholder')}
+                  className="h-9 text-xs rounded-xl"
                   autoFocus
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Massar Bac Code & Cycle */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">
-                    Code Officiel Massar MEN (Bac)
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    {t('massarBacRefLabel')}
                   </label>
                   <select
                     value={formBacCode}
                     onChange={e => setFormBacCode(e.target.value)}
-                    className="w-full h-9 px-3 text-xs rounded-xl border border-slate-200 bg-white font-medium"
+                    className="w-full h-9 px-3 text-xs rounded-xl border border-slate-200 bg-white font-medium text-slate-700"
                   >
                     {OFFICIAL_MASSAR_BAC_CODES.map(c => (
                       <option key={c.code} value={c.code}>{c.label}</option>
                     ))}
                   </select>
                 </div>
-
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">
-                    Cycle d&apos;enseignement autorisé (§6.6)
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    {t('cycleRestrictionLabel')}
                   </label>
                   <select
                     value={formCycle}
-                    onChange={(e: any) => setFormCycle(e.target.value)}
-                    className="w-full h-9 px-3 text-xs rounded-xl border border-slate-200 bg-white font-medium"
+                    onChange={e => setFormCycle(e.target.value as 'lycee' | 'college' | 'primaire' | 'all')}
+                    className="w-full h-9 px-3 text-xs rounded-xl border border-slate-200 bg-white font-medium text-slate-700"
                   >
-                    <option value="lycee">Lycée (Qualifiant)</option>
-                    <option value="college">Collège</option>
-                    <option value="primaire">Primaire</option>
-                    <option value="all">Tous cycles</option>
+                    <option value="lycee">{t('cycleLyceeLabel')}</option>
+                    <option value="college">{t('cycleCollegeLabel')}</option>
+                    <option value="primaire">{t('cyclePrimaireLabel')}</option>
+                    <option value="all">{t('cycleAllLabel')}</option>
                   </select>
                 </div>
               </div>
 
-              {/* Linked subjects and coefficients */}
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <div className="flex items-center justify-between">
-                  <label className="font-bold text-slate-700 flex items-center gap-1.5">
-                    <BookOpen className="w-3.5 h-3.5 text-[#0066FF]" />
-                    Matières principales &amp; Coefficients
-                  </label>
+              {/* Subject Coefficients Builder */}
+              <div className="pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800">{t('subjectsCoeffsBuilderTitle')}</h4>
+                    <p className="text-[11px] text-slate-400">{t('subjectsCoeffsBuilderDesc')}</p>
+                  </div>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={addSubjectLine}
-                    className="h-7 text-[11px] rounded-lg font-bold gap-1"
+                    className="h-8 text-xs rounded-xl gap-1.5"
                   >
-                    <Plus className="w-3 h-3" /> Ajouter matière
+                    <Plus className="w-3.5 h-3.5" />
+                    {t('addSubjectCoeffBtn')}
                   </Button>
                 </div>
 
-                <div className="max-h-48 overflow-y-auto space-y-1.5 p-2 rounded-xl border border-slate-200 bg-slate-50">
+                <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
                   {formSubjects.map((sub, idx) => (
-                    <div key={idx} className="flex items-center gap-2 bg-white p-1.5 rounded-lg border border-slate-100">
+                    <div key={idx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200/70">
                       <Input
                         value={sub.subjectName}
                         onChange={e => updateSubjectLine(idx, { subjectName: e.target.value })}
-                        placeholder="Nom de la matière"
-                        className="h-8 text-xs rounded-lg flex-1"
+                        placeholder={t('subjectNamePlaceholder')}
+                        className="h-8 text-xs rounded-lg bg-white flex-1"
                       />
-                      <div className="flex items-center gap-1">
-                        <span className="text-[10px] font-bold text-slate-400">Coeff :</span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">{t('subjectCoeffColValue')}</span>
                         <Input
                           type="number"
                           min={1}
                           max={20}
                           value={sub.coefficient}
                           onChange={e => updateSubjectLine(idx, { coefficient: Number(e.target.value) || 1 })}
-                          className="h-8 w-16 text-xs rounded-lg font-bold text-center"
+                          className="h-8 w-16 text-xs rounded-lg bg-white text-center font-bold font-mono"
                         />
                       </div>
-                      <Button
+                      <button
                         type="button"
-                        variant="ghost"
-                        size="sm"
                         onClick={() => removeSubjectLine(idx)}
-                        className="h-7 w-7 p-0 text-slate-400 hover:text-rose-600"
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                       >
-                        <X className="w-3.5 h-3.5" />
-                      </Button>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   ))}
                 </div>
               </div>
-
-              {formError && (
-                <p className="text-[11px] text-rose-600 font-bold">{formError}</p>
-              )}
             </div>
 
-            <DialogFooter className="pt-2">
-              <Button variant="outline" onClick={closeModal} className="h-9 text-xs rounded-xl border-slate-200" disabled={saving}>
-                Annuler
+            <DialogFooter className="gap-2 pt-2">
+              <Button variant="outline" onClick={closeModal} className="rounded-xl text-xs h-9" disabled={saving}>
+                {tCommon('cancel')}
               </Button>
               <Button
                 onClick={handleSave}
-                disabled={saving || !formName.trim()}
-                className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5"
+                disabled={saving}
+                className="rounded-xl text-xs h-9 bg-[#0066FF] hover:bg-[#0052CC] text-white gap-2"
               >
                 {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                {modal.mode === 'create' ? 'Créer la filière' : 'Enregistrer'}
+                {modal.mode === 'create' ? tCommon('add') : tCommon('save')}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
 
-      {/* DELETE MODAL */}
+      {/* Delete Confirmation Modal */}
       {modal.mode === 'delete' && (
         <Dialog open onOpenChange={closeModal}>
           <DialogContent className="max-w-md rounded-2xl">
-            <DialogHeader>
-              <DialogTitle className="text-base font-extrabold text-[#16212B]">
-                Supprimer la filière
-              </DialogTitle>
-            </DialogHeader>
-            <p className="text-xs text-slate-600 py-2">
-              Êtes-vous sûr de vouloir supprimer la filière <strong>{modal.stream.name}</strong> ? Cette action est irréversible.
-            </p>
-            {formError && <p className="text-xs text-rose-600 font-bold">{formError}</p>}
-            <DialogFooter className="pt-2">
-              <Button variant="outline" onClick={closeModal} className="h-9 text-xs rounded-xl border-slate-200">
-                Annuler
+            <div className="flex items-start gap-3 my-2">
+              <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center flex-shrink-0">
+                <Trash2 className="w-5 h-5 text-rose-600" />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-extrabold text-[#16212B]">
+                  {t('deleteStreamTitle')}
+                </DialogTitle>
+                <p className="text-xs text-slate-500 mt-1">
+                  {t('deleteStreamWarning', { name: modal.stream.name })}
+                </p>
+              </div>
+            </div>
+
+            {formError && (
+              <p className="text-[11px] text-rose-600 mb-2 font-medium">{formError}</p>
+            )}
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={closeModal} className="rounded-xl text-xs h-9" disabled={saving}>
+                {tCommon('cancel')}
               </Button>
               <Button
                 onClick={handleDelete}
                 disabled={saving}
-                className="h-9 text-xs rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold gap-1.5"
+                className="bg-rose-600 hover:bg-rose-700 text-white text-xs h-9 rounded-xl gap-2"
               >
                 {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                Confirmer la suppression
+                {tCommon('delete')}
               </Button>
             </DialogFooter>
           </DialogContent>

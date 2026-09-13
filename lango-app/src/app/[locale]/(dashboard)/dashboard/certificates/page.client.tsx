@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollText, Layers, PenLine, FileCheck2, ClipboardList, Users, UserCheck, Loader2, ArrowRight } from 'lucide-react';
@@ -27,15 +28,10 @@ type Overview = {
   }>;
 };
 
-const ISSUED_STATUS_BADGE: Record<string, { label: string, variant: 'neutral' | 'success' | 'danger' | 'warning' }> = {
-  valid: { label: 'Valide', variant: 'success' },
-  revoked: { label: 'Révoqué', variant: 'danger' },
-  replaced: { label: 'Remplacé', variant: 'neutral' },
-};
-
 export default function CertificatesOverviewPage() {
   const params = useParams<{ locale?: string }>();
   const locale = params?.locale ?? 'fr';
+  const t = useTranslations('Certificates');
 
   const [data, setData] = useState<Overview | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,20 +43,33 @@ export default function CertificatesOverviewPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'valid':
+        return { label: t('statusValid'), variant: 'success' as const };
+      case 'revoked':
+        return { label: t('statusRevoked'), variant: 'danger' as const };
+      case 'replaced':
+        return { label: t('statusReplaced'), variant: 'neutral' as const };
+      default:
+        return { label: status, variant: 'neutral' as const };
+    }
+  };
+
   const jobsTotal = Object.values(data?.jobsByStatus ?? {}).reduce((a, b) => a + b, 0);
 
   const statCards = [
-    { label: 'Définitions', value: data?.definitions ?? 0, sub: 'types de certificats', icon: ScrollText, tint: 'bg-blue-50 text-[#2487B8]' },
-    { label: 'Modèles', value: data?.templates ?? 0, sub: `${data?.activeSignatories ?? 0} signataires actifs`, icon: Layers, tint: 'bg-indigo-50 text-indigo-600' },
-    { label: 'Certificats émis', value: data?.issuedTotal ?? 0, sub: `${data?.issuedByStatus?.valid ?? 0} valides`, icon: FileCheck2, tint: 'bg-emerald-50 text-emerald-600' },
-    { label: 'Demandes à traiter', value: data?.awaitingReview ?? 0, sub: 'soumission ou révision', icon: ClipboardList, tint: 'bg-amber-50 text-amber-600' },
+    { label: t('statDefinitions'), value: data?.definitions ?? 0, sub: t('statDefinitionsSub'), icon: ScrollText, tint: 'bg-blue-50 text-[#2487B8]' },
+    { label: t('statTemplates'), value: data?.templates ?? 0, sub: t('statTemplatesSub', { count: data?.activeSignatories ?? 0 }), icon: Layers, tint: 'bg-indigo-50 text-indigo-600' },
+    { label: t('statIssuedCertificates'), value: data?.issuedTotal ?? 0, sub: t('statIssuedValidSub', { count: data?.issuedByStatus?.valid ?? 0 }), icon: FileCheck2, tint: 'bg-emerald-50 text-emerald-600' },
+    { label: t('statAwaitingReview'), value: data?.awaitingReview ?? 0, sub: t('statAwaitingReviewSub'), icon: ClipboardList, tint: 'bg-amber-50 text-amber-600' },
   ];
 
   const quickLinks = [
-    { label: 'Émettre — Élèves', href: `/${locale}/dashboard/certificates/issue/students`, desc: 'Certificats pour les élèves', icon: Users },
-    { label: 'Émettre — Employés', href: `/${locale}/dashboard/certificates/issue/employees`, desc: 'Certificats pour le personnel', icon: UserCheck },
-    { label: 'Demandes & Approbations', href: `/${locale}/dashboard/certificates/requests`, desc: 'Circuit de validation quatre yeux', icon: PenLine },
-    { label: 'Émissions en lot', href: `/${locale}/dashboard/certificates/jobs`, desc: `Lots de certificats (${jobsTotal})`, icon: ClipboardList },
+    { label: t('linkIssueStudents'), href: `/${locale}/dashboard/certificates/issue/students`, desc: t('linkIssueStudentsDesc'), icon: Users },
+    { label: t('linkIssueEmployees'), href: `/${locale}/dashboard/certificates/issue/employees`, desc: t('linkIssueEmployeesDesc'), icon: UserCheck },
+    { label: t('linkRequests'), href: `/${locale}/dashboard/certificates/requests`, desc: t('linkRequestsDesc'), icon: PenLine },
+    { label: t('linkJobs'), href: `/${locale}/dashboard/certificates/jobs`, desc: t('linkJobsDesc', { count: jobsTotal }), icon: ClipboardList },
   ];
 
   return (
@@ -72,15 +81,15 @@ export default function CertificatesOverviewPage() {
             <ScrollText className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Certificats</h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Émettez, validez et vérifiez les certificats d'élèves et d'employés.</p>
+            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('overviewTitle')}</h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">{t('overviewSubtitle')}</p>
           </div>
         </div>
         <Link
           href={`/${locale}/dashboard/certificates/definitions`}
           className="inline-flex items-center gap-1.5 h-10 bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold rounded-xl px-4 shadow-2xs"
         >
-          <ScrollText className="w-4 h-4" />Gérer les définitions
+          <ScrollText className="w-4 h-4" />{t('manageDefinitions')}
         </Link>
       </div>
 
@@ -103,7 +112,7 @@ export default function CertificatesOverviewPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Quick links */}
         <Card className="lg:col-span-2 p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-3">
-          <h2 className="text-sm font-extrabold text-[#16212B]">Actions rapides</h2>
+          <h2 className="text-sm font-extrabold text-[#16212B]">{t('quickActions')}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {quickLinks.map(q => (
               <Link
@@ -114,11 +123,11 @@ export default function CertificatesOverviewPage() {
                 <div className="w-10 h-10 rounded-xl bg-[#2487B8]/10 text-[#2487B8] flex items-center justify-center shrink-0">
                   <q.icon className="w-5 h-5" />
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 text-start">
                   <p className="text-xs font-bold text-slate-700">{q.label}</p>
                   <p className="text-[10px] text-slate-400 truncate">{q.desc}</p>
                 </div>
-                <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-[#2487B8] group-hover:translate-x-0.5 transition-all" />
+                <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-[#2487B8] group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5 transition-all" />
               </Link>
             ))}
           </div>
@@ -127,27 +136,30 @@ export default function CertificatesOverviewPage() {
         {/* Recent issued */}
         <Card className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs">
           <div className="flex justify-between items-center mb-3">
-            <h2 className="text-sm font-extrabold text-[#16212B]">Certificats récents</h2>
-            <Link href={`/${locale}/dashboard/certificates/issued`} className="text-[10px] font-bold text-[#2487B8] hover:underline">Tout voir</Link>
+            <h2 className="text-sm font-extrabold text-[#16212B]">{t('recentCertificates')}</h2>
+            <Link href={`/${locale}/dashboard/certificates/issued`} className="text-[10px] font-bold text-[#2487B8] hover:underline">{t('viewAll')}</Link>
           </div>
           {loading ? (
             <div className="flex items-center justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-slate-300" /></div>
           ) : data && data.recent.length > 0 ? (
             <div className="space-y-2.5">
-              {data.recent.map(doc => (
-                <div key={doc.id} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-700 truncate">{doc.definitionTitle}</p>
-                    <p className="text-[10px] text-slate-400 truncate">{doc.recipientName ?? '—'} • {doc.serialNumber}</p>
+              {data.recent.map(doc => {
+                const badge = getStatusBadge(doc.status);
+                return (
+                  <div key={doc.id} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100">
+                    <div className="flex-1 min-w-0 text-start">
+                      <p className="text-xs font-bold text-slate-700 truncate">{doc.definitionTitle}</p>
+                      <p className="text-[10px] text-slate-400 truncate">{doc.recipientName ?? '—'} • {doc.serialNumber}</p>
+                    </div>
+                    <Badge variant={badge.variant}>
+                      {badge.label}
+                    </Badge>
                   </div>
-                  <Badge variant={ISSUED_STATUS_BADGE[doc.status]?.variant || 'neutral'}>
-                    {ISSUED_STATUS_BADGE[doc.status]?.label || doc.status}
-                  </Badge>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
-            <p className="text-xs text-slate-400 text-center py-10">Aucun certificat émis pour le moment.</p>
+            <p className="text-xs text-slate-400 text-center py-10">{t('noCertificatesIssued')}</p>
           )}
         </Card>
       </div>

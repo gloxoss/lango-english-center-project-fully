@@ -1,5 +1,4 @@
-/* eslint-disable jsonc/sort-keys */
-{
+/* eslint-disable jsonc/sort-keys */{
   "compilerOptions": {
     // ======================================================================
     // Language & Environment
@@ -83,7 +82,8 @@
   // Files to include/exclude from the project
   "exclude": [
     "node_modules",
-    "src/scripts/seed-full.ts"
+    "src/scripts/seed-full.ts",
+    "future-implementation/_archived-ui"
   ],
   "include": [
     "next-env.d.ts",
@@ -91,6 +91,8 @@
     "**/*.tsx",
     ".storybook/**/*.ts",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    ".next-audit/types/**/*.ts",
+    ".next-audit/dev/types/**/*.ts"
   ]
 }

@@ -1,20 +1,19 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
-  Calendar, Clock, AlertTriangle, CheckCircle2, User, Building2,
-  Copy, Printer, Plus, Sparkles, Layers, SlidersHorizontal,
-  ChevronRight, Trash2, ArrowRight, BookOpen, ShieldCheck, Check,
-  RefreshCw, Users, AlertCircle, Info, Edit3, Grid, Filter
+  Calendar, AlertTriangle, User, Building2,
+  Copy, Printer, Plus, Sparkles,
+  Trash2, Grid
 } from 'lucide-react';
 import { ScheduleClient } from './schedule-client';
 
 type ClassSectionOption = { id: string; classId: string; className: string; sectionName: string };
-type RefOption = { id: string; name: string };
 type Slot = {
   id: string;
   classSectionId: string;
@@ -29,26 +28,6 @@ type Slot = {
   hasConflict?: boolean;
   conflictDetails?: string;
 };
-
-const DAYS = [
-  { value: 'monday', label: 'Lundi' },
-  { value: 'tuesday', label: 'Mardi' },
-  { value: 'wednesday', label: 'Mercredi' },
-  { value: 'thursday', label: 'Jeudi' },
-  { value: 'friday', label: 'Vendredi' },
-  { value: 'saturday', label: 'Samedi' },
-];
-
-const TIME_SLOTS = [
-  '08:30 - 09:30',
-  '09:30 - 10:30',
-  '10:30 - 11:30',
-  '11:30 - 12:30',
-  '14:30 - 15:30',
-  '15:30 - 16:30',
-  '16:30 - 17:30',
-  '17:30 - 18:30',
-];
 
 const DEFAULT_SUBJECTS = [
   { id: 'sub-math', name: 'Mathématiques', color: 'border-blue-500 bg-blue-50 text-blue-700', coef: 7 },
@@ -92,6 +71,9 @@ const INITIAL_DEMO_SLOTS: Slot[] = [
 ];
 
 export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
+  const t = useTranslations('Academics');
+  const tCommon = useTranslations('Common');
+
   const [activeTab, setActiveTab] = useState<'standard' | 'variation-a' | 'variation-b' | 'variation-c'>('variation-a');
 
   // Live and mock data states
@@ -99,7 +81,7 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
   const [selectedSectionId, setSelectedSectionId] = useState<string>('cs-1');
   const [slots, setSlots] = useState<Slot[]>(INITIAL_DEMO_SLOTS);
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('t-1');
-  const [selectedRoomLabel, setSelectedRoomLabel] = useState<string>('Salle 101');
+  const [_selectedRoomLabel, _setSelectedRoomLabel] = useState<string>('Salle 101');
 
   // Quick Slot Form state
   const [showQuickForm, setShowQuickForm] = useState(false);
@@ -113,6 +95,15 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
   // Replication Modal state
   const [showCloneModal, setShowCloneModal] = useState(false);
   const [cloneSuccess, setCloneSuccess] = useState(false);
+
+  const daysList = useMemo(() => [
+    { value: 'monday', label: t('dayMonday') },
+    { value: 'tuesday', label: t('dayTuesday') },
+    { value: 'wednesday', label: t('dayWednesday') },
+    { value: 'thursday', label: t('dayThursday') },
+    { value: 'friday', label: t('dayFriday') },
+    { value: 'saturday', label: t('daySaturday') },
+  ], [t]);
 
   useEffect(() => {
     fetch('/api/academics/class-sections?pageSize=200')
@@ -141,9 +132,9 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
       id: `slot-${Date.now()}`,
       classSectionId: selectedSectionId,
       classSubjectId: newSubjectId,
-      subjectName: subjectObj?.name || 'Matière',
+      subjectName: subjectObj?.name || t('subject'),
       teacherId: newTeacherId,
-      teacherName: teacherObj?.name || 'Enseignant',
+      teacherName: teacherObj?.name || t('teacher'),
       dayOfWeek: newDay,
       startTime: newTimeStart,
       endTime: newTimeEnd,
@@ -164,22 +155,22 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
   }, [slots]);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16">
+    <div className="space-y-6 max-w-7xl mx-auto pb-16 text-start">
       {/* Playground Header & Variation Switcher Bar */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-sm">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#0EA5C4]/15 text-[#0EA5C4] border border-[#0EA5C4]/30">
-                <Sparkles className="w-3.5 h-3.5" /> Design Exploration (Bucket 5 - §6.10)
+                <Sparkles className="w-3.5 h-3.5" /> {t('designExplorationBadge')}
               </span>
-              <span className="text-xs font-semibold text-slate-400">Interactif · 3 Variations</span>
+              <span className="text-xs font-semibold text-slate-400">{t('interactiveVariations')}</span>
             </div>
             <h1 className="text-xl font-bold text-[#16212B] mt-1.5 tracking-tight">
-              Générateur & Constructeur d&apos;Emplois du Temps
+              {t('scheduleBuilderTitle')}
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Comparez les 3 approches de planification : Grille Globale, Inspecteur Enseignant/Salle, et Grille Compacte Marocaine.
+              {t('scheduleBuilderSubtitle')}
             </p>
           </div>
 
@@ -194,7 +185,7 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
               }`}
             >
               <Grid className="w-3.5 h-3.5" />
-              <span>Var. A : Grille & Détecteur de Conflits</span>
+              <span>{t('tabVarA')}</span>
             </button>
             <button
               onClick={() => setActiveTab('variation-b')}
@@ -205,7 +196,7 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
               }`}
             >
               <User className="w-3.5 h-3.5" />
-              <span>Var. B : Inspecteur Enseignants / Salles</span>
+              <span>{t('tabVarB')}</span>
             </button>
             <button
               onClick={() => setActiveTab('variation-c')}
@@ -216,7 +207,7 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
               }`}
             >
               <Printer className="w-3.5 h-3.5" />
-              <span>Var. C : Grille Marocaine & Duplication</span>
+              <span>{t('tabVarC')}</span>
             </button>
             <button
               onClick={() => setActiveTab('standard')}
@@ -226,7 +217,7 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              <span>Vue Standard</span>
+              <span>{t('tabStandard')}</span>
             </button>
           </div>
         </div>
@@ -238,11 +229,11 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
           {/* Top Filter and Controls */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
             <div className="flex items-center gap-3 w-full sm:w-auto">
-              <div className="w-10 h-10 rounded-xl bg-[#2487B8]/10 text-[#2487B8] flex items-center justify-center font-bold">
+              <div className="w-10 h-10 rounded-xl bg-[#2487B8]/10 text-[#2487B8] flex items-center justify-center font-bold shrink-0">
                 <Calendar className="w-5 h-5" />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Classe sélectionnée</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{t('selectedClassLabel')}</label>
                 <select
                   value={selectedSectionId}
                   onChange={e => setSelectedSectionId(e.target.value)}
@@ -259,7 +250,7 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
               {activeConflicts.length > 0 && (
                 <Badge className="bg-rose-500/15 text-rose-700 border-rose-500/30 text-xs px-2.5 py-1 gap-1.5 font-bold animate-pulse">
                   <AlertTriangle className="w-3.5 h-3.5" />
-                  {activeConflicts.length} Conflit Détecté
+                  {t('conflictsDetected', { count: activeConflicts.length })}
                 </Badge>
               )}
 
@@ -267,7 +258,7 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
                 onClick={() => setShowQuickForm(true)}
                 className="h-9 px-3.5 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold gap-1.5 shadow-xs"
               >
-                <Plus className="w-4 h-4" /> Ajouter un Créneau
+                <Plus className="w-4 h-4" /> {t('btnAddSlot')}
               </Button>
             </div>
           </div>
@@ -278,7 +269,7 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
               <div className="flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold text-sm">Alerte de collision d&apos;emploi du temps</h4>
+                  <h4 className="font-bold text-sm">{t('timetableCollisionAlert')}</h4>
                   <p className="text-rose-700 mt-0.5">
                     {activeConflicts[0]!.conflictDetails}
                   </p>
@@ -292,7 +283,7 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
                 }}
                 className="h-8 text-xs font-bold border-rose-300 text-rose-700 bg-white hover:bg-rose-100"
               >
-                Résoudre automatiquement (Changer de salle)
+                {t('btnAutoResolveRoom')}
               </Button>
             </div>
           )}
@@ -302,16 +293,16 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
             <table className="w-full border-collapse text-xs">
               <thead>
                 <tr className="bg-slate-50/90 border-b border-slate-200">
-                  <th className="p-3.5 text-left font-bold text-slate-500 w-28 border-r border-slate-200">Jour</th>
-                  <th className="p-3.5 text-center font-bold text-slate-700 border-r border-slate-200">08:30 - 10:30</th>
-                  <th className="p-3.5 text-center font-bold text-slate-700 border-r border-slate-200">10:30 - 12:30</th>
-                  <th className="p-3.5 text-center font-bold text-slate-400 bg-slate-100/50 w-20 border-r border-slate-200">Pause</th>
-                  <th className="p-3.5 text-center font-bold text-slate-700 border-r border-slate-200">14:30 - 16:30</th>
+                  <th className="p-3.5 text-start font-bold text-slate-500 w-28 border-e border-slate-200">{t('colDay')}</th>
+                  <th className="p-3.5 text-center font-bold text-slate-700 border-e border-slate-200">08:30 - 10:30</th>
+                  <th className="p-3.5 text-center font-bold text-slate-700 border-e border-slate-200">10:30 - 12:30</th>
+                  <th className="p-3.5 text-center font-bold text-slate-400 bg-slate-100/50 w-20 border-e border-slate-200">{t('colBreak')}</th>
+                  <th className="p-3.5 text-center font-bold text-slate-700 border-e border-slate-200">14:30 - 16:30</th>
                   <th className="p-3.5 text-center font-bold text-slate-700">16:30 - 18:30</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {DAYS.map(day => {
+                {daysList.map(day => {
                   const daySlots = slots.filter(s => s.dayOfWeek === day.value);
                   const morning1 = daySlots.find(s => s.startTime === '08:30');
                   const morning2 = daySlots.find(s => s.startTime === '10:30');
@@ -352,11 +343,11 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
 
                         <div className="flex items-center justify-between text-[9px] pt-1 border-t border-current/10">
                           <span className="flex items-center gap-1 font-mono font-semibold">
-                            <Building2 className="w-2.5 h-2.5" /> {slot.roomLabel || 'Salle non assignée'}
+                            <Building2 className="w-2.5 h-2.5" /> {slot.roomLabel || t('slotUnassignedRoom')}
                           </span>
                           {slot.hasConflict && (
                             <span className="text-[9px] font-bold text-rose-700 bg-white px-1.5 py-0.5 rounded border border-rose-300">
-                              Conflit
+                              {t('slotConflictTag')}
                             </span>
                           )}
                         </div>
@@ -366,15 +357,15 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
 
                   return (
                     <tr key={day.value} className="hover:bg-slate-50/50">
-                      <td className="p-3.5 font-bold text-slate-700 border-r border-slate-200 bg-slate-50/40">
+                      <td className="p-3.5 font-bold text-slate-700 border-e border-slate-200 bg-slate-50/40">
                         {day.label}
                       </td>
-                      <td className="p-2 border-r border-slate-200">{renderSlotCell(morning1)}</td>
-                      <td className="p-2 border-r border-slate-200">{renderSlotCell(morning2)}</td>
-                      <td className="p-2 text-center text-[10px] text-slate-400 bg-slate-100/30 border-r border-slate-200">
-                        Déjeuner
+                      <td className="p-2 border-e border-slate-200">{renderSlotCell(morning1)}</td>
+                      <td className="p-2 border-e border-slate-200">{renderSlotCell(morning2)}</td>
+                      <td className="p-2 text-center text-[10px] text-slate-400 bg-slate-100/30 border-e border-slate-200">
+                        {t('lunchBreak')}
                       </td>
-                      <td className="p-2 border-r border-slate-200">{renderSlotCell(afternoon1)}</td>
+                      <td className="p-2 border-e border-slate-200">{renderSlotCell(afternoon1)}</td>
                       <td className="p-2">{renderSlotCell(afternoon2)}</td>
                     </tr>
                   );
@@ -386,15 +377,15 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
           {/* Quick Add Slot Modal */}
           {showQuickForm && (
             <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-              <Card className="w-full max-w-md bg-white rounded-2xl p-6 shadow-xl space-y-4 animate-in fade-in zoom-in-95">
+              <Card className="w-full max-w-md bg-white rounded-2xl p-6 shadow-xl space-y-4 animate-in fade-in zoom-in-95 text-start">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <h3 className="font-bold text-sm text-[#16212B]">Ajouter un Créneau de Cours</h3>
+                  <h3 className="font-bold text-sm text-[#16212B]">{t('quickAddSlotTitle')}</h3>
                   <button onClick={() => setShowQuickForm(false)} className="text-slate-400 hover:text-slate-700 text-sm">✕</button>
                 </div>
 
                 <div className="space-y-3 text-xs">
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Matière</label>
+                    <label className="font-bold text-slate-700 block mb-1">{t('subject')}</label>
                     <select
                       value={newSubjectId}
                       onChange={e => setNewSubjectId(e.target.value)}
@@ -407,31 +398,31 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
                   </div>
 
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Enseignant</label>
+                    <label className="font-bold text-slate-700 block mb-1">{t('teacher')}</label>
                     <select
                       value={newTeacherId}
                       onChange={e => setNewTeacherId(e.target.value)}
                       className="w-full h-9 rounded-xl border border-slate-200 px-3 text-xs"
                     >
-                      {DEFAULT_TEACHERS.map(t => (
-                        <option key={t.id} value={t.id}>{t.name} ({t.assignedHours}h/{t.maxHours}h)</option>
+                      {DEFAULT_TEACHERS.map(tOption => (
+                        <option key={tOption.id} value={tOption.id}>{tOption.name} ({tOption.assignedHours}h/{tOption.maxHours}h)</option>
                       ))}
                     </select>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="font-bold text-slate-700 block mb-1">Jour</label>
+                      <label className="font-bold text-slate-700 block mb-1">{t('colDay')}</label>
                       <select
                         value={newDay}
                         onChange={e => setNewDay(e.target.value)}
                         className="w-full h-9 rounded-xl border border-slate-200 px-3 text-xs"
                       >
-                        {DAYS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                        {daysList.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="font-bold text-slate-700 block mb-1">Salle</label>
+                      <label className="font-bold text-slate-700 block mb-1">{t('room')}</label>
                       <select
                         value={newRoom}
                         onChange={e => setNewRoom(e.target.value)}
@@ -444,11 +435,11 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="font-bold text-slate-700 block mb-1">Début</label>
+                      <label className="font-bold text-slate-700 block mb-1">{t('slotStartTime')}</label>
                       <Input value={newTimeStart} onChange={e => setNewTimeStart(e.target.value)} className="h-9 text-xs rounded-xl" />
                     </div>
                     <div>
-                      <label className="font-bold text-slate-700 block mb-1">Fin</label>
+                      <label className="font-bold text-slate-700 block mb-1">{t('slotEndTime')}</label>
                       <Input value={newTimeEnd} onChange={e => setNewTimeEnd(e.target.value)} className="h-9 text-xs rounded-xl" />
                     </div>
                   </div>
@@ -456,10 +447,10 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
 
                 <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                   <Button variant="outline" size="sm" onClick={() => setShowQuickForm(false)} className="text-xs rounded-xl">
-                    Annuler
+                    {tCommon('cancel')}
                   </Button>
                   <Button size="sm" onClick={handleAddSlot} className="text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold">
-                    Enregistrer le Créneau
+                    {t('btnSaveSlot')}
                   </Button>
                 </div>
               </Card>
@@ -477,20 +468,20 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
               <Card className="p-5 bg-white rounded-2xl border border-slate-200/90 shadow-2xs space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <h3 className="text-xs font-bold text-[#16212B] uppercase tracking-wider flex items-center gap-1.5">
-                    <User className="w-4 h-4 text-[#2487B8]" /> Charge Enseignants
+                    <User className="w-4 h-4 text-[#2487B8]" /> {t('teacherWorkloadTitle')}
                   </h3>
-                  <Badge variant="neutral" className="text-[10px]">Temps Réel</Badge>
+                  <Badge variant="neutral" className="text-[10px]">{t('realtimeBadge')}</Badge>
                 </div>
 
                 <div className="space-y-2.5">
-                  {DEFAULT_TEACHERS.map(t => {
-                    const isSelected = selectedTeacherId === t.id;
-                    const percent = Math.round((t.assignedHours / t.maxHours) * 100);
+                  {DEFAULT_TEACHERS.map(tTeacher => {
+                    const isSelected = selectedTeacherId === tTeacher.id;
+                    const percent = Math.round((tTeacher.assignedHours / tTeacher.maxHours) * 100);
 
                     return (
                       <div
-                        key={t.id}
-                        onClick={() => setSelectedTeacherId(t.id)}
+                        key={tTeacher.id}
+                        onClick={() => setSelectedTeacherId(tTeacher.id)}
                         className={`p-3 rounded-xl border cursor-pointer transition-all ${
                           isSelected
                             ? 'border-[#2487B8] bg-[#2487B8]/5 ring-1 ring-[#2487B8]'
@@ -499,10 +490,10 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
                       >
                         <div className="flex justify-between items-center text-xs">
                           <div>
-                            <p className="font-bold text-[#16212B]">{t.name}</p>
-                            <p className="text-[10px] text-slate-500">{t.subject}</p>
+                            <p className="font-bold text-[#16212B]">{tTeacher.name}</p>
+                            <p className="text-[10px] text-slate-500">{tTeacher.subject}</p>
                           </div>
-                          <span className="font-bold font-mono text-slate-700">{t.assignedHours}h / {t.maxHours}h</span>
+                          <span className="font-bold font-mono text-slate-700">{tTeacher.assignedHours}h / {tTeacher.maxHours}h</span>
                         </div>
 
                         <div className="w-full h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
@@ -524,17 +515,19 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div>
                     <h3 className="text-sm font-bold text-[#16212B]">
-                      Planning Hebdomadaire : {DEFAULT_TEACHERS.find(t => t.id === selectedTeacherId)?.name}
+                      {t('weeklyScheduleTitle', { name: DEFAULT_TEACHERS.find(teacherObj => teacherObj.id === selectedTeacherId)?.name || '' })}
                     </h3>
-                    <p className="text-xs text-slate-500">Matière : {DEFAULT_TEACHERS.find(t => t.id === selectedTeacherId)?.subject}</p>
+                    <p className="text-xs text-slate-500">
+                      {t('subjectLabel', { subject: DEFAULT_TEACHERS.find(teacherObj => teacherObj.id === selectedTeacherId)?.subject || '' })}
+                    </p>
                   </div>
                   <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30 text-xs">
-                    Disponibilité OK
+                    {t('availabilityOk')}
                   </Badge>
                 </div>
 
                 <div className="space-y-3">
-                  {DAYS.slice(0, 5).map(d => {
+                  {daysList.slice(0, 5).map(d => {
                     const teacherSlots = slots.filter(s => s.teacherId === selectedTeacherId && s.dayOfWeek === d.value);
 
                     return (
@@ -551,7 +544,7 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
                               </div>
                             ))
                           ) : (
-                            <span className="text-xs text-slate-400 italic">Aucun cours assigné — Libre pour surveillance ou soutien</span>
+                            <span className="text-xs text-slate-400 italic">{t('noCourseAssigned')}</span>
                           )}
                         </div>
                       </div>
@@ -571,10 +564,10 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-3 border-b border-slate-100">
               <div>
                 <h3 className="text-sm font-bold text-[#16212B]">
-                  Emploi du Temps Officiel Marocain — Format Compact d&apos;Établissement
+                  {t('moroccanGridTitle')}
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Prêt pour l&apos;impression A4 et la réplication en masse vers les autres groupes de niveau.
+                  {t('moroccanGridSubtitle')}
                 </p>
               </div>
 
@@ -586,14 +579,14 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
                   className="h-8 text-xs font-semibold border-slate-200 gap-1.5"
                 >
                   <Copy className="w-3.5 h-3.5 text-[#2487B8]" />
-                  Dupliquer vers d&apos;autres groupes
+                  {t('btnDuplicateOtherGroups')}
                 </Button>
                 <Button
                   size="sm"
                   onClick={() => window.print()}
                   className="h-8 text-xs font-bold bg-[#16212B] hover:bg-slate-800 text-white gap-1.5 rounded-xl"
                 >
-                  <Printer className="w-3.5 h-3.5" /> Imprimer / Exporter PDF
+                  <Printer className="w-3.5 h-3.5" /> {t('btnPrintPdf')}
                 </Button>
               </div>
             </div>
@@ -601,52 +594,49 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
             {/* Moroccan Compact Grid */}
             <div className="border border-slate-200 rounded-xl overflow-hidden text-xs">
               <div className="bg-[#16212B] text-white p-3 flex justify-between items-center">
-                <span className="font-bold uppercase tracking-wider">Groupe Scolaire Atlas — Année Scolaire 2025-2026</span>
+                <span className="font-bold uppercase tracking-wider">Groupe Scolaire Atlas — 2025-2026</span>
                 <span className="font-mono bg-white/20 px-2 py-0.5 rounded text-[10px]">1ère Année Bac Sciences Ex - Groupe A</span>
               </div>
 
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="bg-slate-100 border-b border-slate-200 text-slate-700">
-                    <th className="p-2.5 text-left font-bold border-r border-slate-200 w-24">Séance</th>
-                    <th className="p-2.5 text-center font-bold border-r border-slate-200">Lundi</th>
-                    <th className="p-2.5 text-center font-bold border-r border-slate-200">Mardi</th>
-                    <th className="p-2.5 text-center font-bold border-r border-slate-200">Mercredi</th>
-                    <th className="p-2.5 text-center font-bold border-r border-slate-200">Jeudi</th>
-                    <th className="p-2.5 text-center font-bold border-r border-slate-200">Vendredi</th>
-                    <th className="p-2.5 text-center font-bold">Samedi</th>
+                    <th className="p-2.5 text-start font-bold border-e border-slate-200 w-24">{t('colSession')}</th>
+                    {daysList.map(d => (
+                      <th key={d.value} className="p-2.5 text-center font-bold border-e border-slate-200 last:border-e-0">{d.label}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   <tr className="bg-white">
-                    <td className="p-2.5 font-bold text-slate-600 bg-slate-50 border-r border-slate-200">08:30 - 10:30</td>
-                    <td className="p-2 text-center border-r border-slate-200">Maths (Pr. El Amrani)</td>
-                    <td className="p-2 text-center border-r border-slate-200">Anglais (Pr. Berrada)</td>
-                    <td className="p-2 text-center border-r border-slate-200">Arabe (Pr. Alami)</td>
-                    <td className="p-2 text-center border-r border-slate-200">Maths (Pr. El Amrani)</td>
-                    <td className="p-2 text-center border-r border-slate-200">Physique (Pr. Bennani)</td>
+                    <td className="p-2.5 font-bold text-slate-600 bg-slate-50 border-e border-slate-200">08:30 - 10:30</td>
+                    <td className="p-2 text-center border-e border-slate-200">Maths (Pr. El Amrani)</td>
+                    <td className="p-2 text-center border-e border-slate-200">Anglais (Pr. Berrada)</td>
+                    <td className="p-2 text-center border-e border-slate-200">Arabe (Pr. Alami)</td>
+                    <td className="p-2 text-center border-e border-slate-200">Maths (Pr. El Amrani)</td>
+                    <td className="p-2 text-center border-e border-slate-200">Physique (Pr. Bennani)</td>
                     <td className="p-2 text-center">EPS (Coach Zaki)</td>
                   </tr>
                   <tr className="bg-slate-50/40">
-                    <td className="p-2.5 font-bold text-slate-600 bg-slate-50 border-r border-slate-200">10:30 - 12:30</td>
-                    <td className="p-2 text-center border-r border-slate-200">Français (Pr. Mansouri)</td>
-                    <td className="p-2 text-center border-r border-slate-200">SVT (Pr. Tazi)</td>
-                    <td className="p-2 text-center border-r border-slate-200">Philo (Pr. Idrissi)</td>
-                    <td className="p-2 text-center border-r border-slate-200">Français (Pr. Mansouri)</td>
-                    <td className="p-2 text-center border-r border-slate-200">SVT (Pr. Tazi)</td>
-                    <td className="p-2 text-center text-slate-400 italic">Libre</td>
+                    <td className="p-2.5 font-bold text-slate-600 bg-slate-50 border-e border-slate-200">10:30 - 12:30</td>
+                    <td className="p-2 text-center border-e border-slate-200">Français (Pr. Mansouri)</td>
+                    <td className="p-2 text-center border-e border-slate-200">SVT (Pr. Tazi)</td>
+                    <td className="p-2 text-center border-e border-slate-200">Philo (Pr. Idrissi)</td>
+                    <td className="p-2 text-center border-e border-slate-200">Français (Pr. Mansouri)</td>
+                    <td className="p-2 text-center border-e border-slate-200">SVT (Pr. Tazi)</td>
+                    <td className="p-2 text-center text-slate-400 italic">{t('free')}</td>
                   </tr>
                   <tr className="bg-slate-100/70 text-slate-400 text-center text-[10px]">
-                    <td colSpan={7} className="py-1">Pause Déjeuner & Prière (12:30 - 14:30)</td>
+                    <td colSpan={7} className="py-1">{t('lunchPrayerBreak')}</td>
                   </tr>
                   <tr className="bg-white">
-                    <td className="p-2.5 font-bold text-slate-600 bg-slate-50 border-r border-slate-200">14:30 - 16:30</td>
-                    <td className="p-2 text-center border-r border-slate-200">Physique (Pr. Bennani)</td>
-                    <td className="p-2 text-center border-r border-slate-200">Hist-Géo (Pr. Kadiri)</td>
-                    <td className="p-2 text-center border-r border-slate-200 text-slate-400 italic">Après-midi libre</td>
-                    <td className="p-2 text-center border-r border-slate-200">Maths (Pr. El Amrani)</td>
-                    <td className="p-2 text-center border-r border-slate-200">Anglais (Pr. Berrada)</td>
-                    <td className="p-2 text-center text-slate-400 italic">Week-end</td>
+                    <td className="p-2.5 font-bold text-slate-600 bg-slate-50 border-e border-slate-200">14:30 - 16:30</td>
+                    <td className="p-2 text-center border-e border-slate-200">Physique (Pr. Bennani)</td>
+                    <td className="p-2 text-center border-e border-slate-200">Hist-Géo (Pr. Kadiri)</td>
+                    <td className="p-2 text-center border-e border-slate-200 text-slate-400 italic">{t('afternoonFree')}</td>
+                    <td className="p-2 text-center border-e border-slate-200">Maths (Pr. El Amrani)</td>
+                    <td className="p-2 text-center border-e border-slate-200">Anglais (Pr. Berrada)</td>
+                    <td className="p-2 text-center text-slate-400 italic">{t('weekend')}</td>
                   </tr>
                 </tbody>
               </table>
@@ -656,14 +646,14 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
           {/* Batch Replication Modal */}
           {showCloneModal && (
             <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-              <Card className="w-full max-w-md bg-white rounded-2xl p-6 shadow-xl space-y-4">
+              <Card className="w-full max-w-md bg-white rounded-2xl p-6 shadow-xl space-y-4 text-start">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <h3 className="font-bold text-sm text-[#16212B]">Duplication en Masse de la Grille</h3>
+                  <h3 className="font-bold text-sm text-[#16212B]">{t('duplicateModalTitle')}</h3>
                   <button onClick={() => setShowCloneModal(false)} className="text-slate-400 hover:text-slate-700">✕</button>
                 </div>
 
                 <p className="text-xs text-slate-600">
-                  Sélectionnez les groupes cibles pour dupliquer l&apos;emploi du temps de <strong>1ère Bac - Groupe A</strong> en ajustant automatiquement les enseignants disponibles :
+                  {t('duplicateModalDesc', { source: '1ère Bac - Groupe A' })}
                 </p>
 
                 <div className="space-y-2 text-xs">
@@ -677,7 +667,7 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
 
                 <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                   <Button variant="outline" size="sm" onClick={() => setShowCloneModal(false)} className="text-xs rounded-xl">
-                    Annuler
+                    {tCommon('cancel')}
                   </Button>
                   <Button
                     size="sm"
@@ -687,7 +677,7 @@ export function SchedulePlayground({ locale = 'fr' }: { locale?: string }) {
                     }}
                     className="text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold"
                   >
-                    {cloneSuccess ? 'Duplication Réussie !' : 'Confirmer la Duplication'}
+                    {cloneSuccess ? t('duplicateSuccess') : t('btnConfirmDuplicate')}
                   </Button>
                 </div>
               </Card>

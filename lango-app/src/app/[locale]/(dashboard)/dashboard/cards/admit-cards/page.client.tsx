@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -67,6 +68,7 @@ type ClassSectionOption = {
 };
 
 export default function CardsAdmitCardsPage() {
+  const t = useTranslations('Cards');
   const params = useParams<{ locale?: string }>();
 
   const [seats, setSeats] = useState<Seat[]>([]);
@@ -109,15 +111,15 @@ export default function CardsAdmitCardsPage() {
 
       if (tpl.success && Array.isArray(tpl.data)) {
         const versions: TemplateVersionOption[] = [];
-        for (const t of tpl.data) {
-          const vRes = await fetch(`/api/cards/templates/${t.id}/versions`).then(r => r.json()).catch(() => ({}));
+        for (const tplItem of tpl.data) {
+          const vRes = await fetch(`/api/cards/templates/${tplItem.id}/versions`).then(r => r.json()).catch(() => ({}));
           if (vRes.success && Array.isArray(vRes.data)) {
             for (const v of vRes.data) {
               if (v.publishedById) {
                 versions.push({
                   id: v.id,
-                  templateId: t.id,
-                  templateName: t.name,
+                  templateId: tplItem.id,
+                  templateName: tplItem.name,
                   versionNumber: v.versionNumber,
                 });
               }
@@ -171,8 +173,6 @@ export default function CardsAdmitCardsPage() {
     setSelectedSeatIds(updated);
   };
 
-  // Additive pre-select: choosing a class/section marks the seats of every
-  // student in that class, merged with whatever is already checked.
   const handleClassSectionSelect = async (classSectionId: string) => {
     setSelectedClassSectionId(classSectionId);
     if (classSectionId === 'all') return;
@@ -188,7 +188,7 @@ export default function CardsAdmitCardsPage() {
         return next;
       });
     } catch {
-      // A failed bulk pre-select should not block the rest of the page.
+      // Ignore preselection failure
     }
   };
 
@@ -210,16 +210,16 @@ export default function CardsAdmitCardsPage() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setErrorBanner(json.error?.message || json.message || 'Échec de l\'émission des convocations.');
+        setErrorBanner(json.error?.message || json.message || t('bulkAdmitJobFailed'));
         return;
       }
-      setSuccessBanner(`Tâche d'émission groupée créée pour ${targetIds.length} convocation(s).`);
+      setSuccessBanner(t('bulkAdmitJobSuccess', { count: targetIds.length }));
       setBulkModalOpen(false);
       setSelectedSeatIds({});
       setTimeout(() => setSuccessBanner(null), 5000);
       load();
     } catch {
-      setErrorBanner('Connexion au serveur impossible.');
+      setErrorBanner(t('serverConnectionError'));
     } finally {
       setBulkIssuing(false);
     }
@@ -236,9 +236,9 @@ export default function CardsAdmitCardsPage() {
             <IdCard className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Convocations d&apos;examen</h1>
+            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('admitCardsTitle')}</h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Émettez individuellement ou en lot les cartes de convocation pour les candidats aux examens.
+              {t('admitCardsSubtitle')}
             </p>
           </div>
         </div>
@@ -247,10 +247,10 @@ export default function CardsAdmitCardsPage() {
           {selectedCount > 0 && (
             <Button
               onClick={() => setBulkModalOpen(true)}
-              className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5 shadow-xs"
+              className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5 shadow-xs cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              Émettre en lot ({selectedCount} convocations)
+              {t('btnBulkIssueAdmit', { count: selectedCount })}
             </Button>
           )}
         </div>
@@ -262,7 +262,7 @@ export default function CardsAdmitCardsPage() {
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{successBanner}</span>
           </div>
-          <button onClick={() => setSuccessBanner(null)} className="text-emerald-600 hover:text-emerald-800">Fermer</button>
+          <button onClick={() => setSuccessBanner(null)} className="text-emerald-600 hover:text-emerald-800 cursor-pointer">{t('btnClose')}</button>
         </div>
       )}
 
@@ -277,21 +277,21 @@ export default function CardsAdmitCardsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Places allouées</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('kpiAllocatedSeats')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{seats.length}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0066FF] flex items-center justify-center"><CalendarDays className="w-5 h-5" /></div>
         </Card>
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Convocations actives</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('kpiActiveAdmitCards')}</span>
             <h3 className="text-2xl font-extrabold text-[#17A673] mt-1">{withActiveCard}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><IdCard className="w-5 h-5" /></div>
         </Card>
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Sessions d'Examen</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('kpiExamSessions')}</span>
             <h3 className="text-2xl font-extrabold text-amber-700 mt-1">{terms.length}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><CalendarDays className="w-5 h-5" /></div>
@@ -303,31 +303,31 @@ export default function CardsAdmitCardsPage() {
         <div className="flex flex-wrap gap-3 items-center justify-between">
           <div className="flex items-center gap-3 flex-wrap flex-1">
             <div className="relative w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
-                placeholder="Rechercher élève, n° candidat, salle..."
+                placeholder={t('searchAdmitPlaceholder')}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="pl-9 h-9 text-xs rounded-xl border-slate-200"
+                className="ps-9 h-9 text-xs rounded-xl border-slate-200"
               />
             </div>
             <Select value={termFilter} onValueChange={setTermFilter}>
               <SelectTrigger className="w-56 h-9 text-xs rounded-xl border-slate-200 bg-white">
-                <SelectValue placeholder="Toutes les sessions" />
+                <SelectValue placeholder={t('allTermsPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all" className="text-xs">Toutes les sessions ({terms.length})</SelectItem>
-                {terms.map(t => (
-                  <SelectItem key={t.id} value={t.id} className="text-xs">{t.name}</SelectItem>
+                <SelectItem value="all" className="text-xs">{t('allTerms', { count: terms.length })}</SelectItem>
+                {terms.map(item => (
+                  <SelectItem key={item.id} value={item.id} className="text-xs">{item.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Select value={selectedClassSectionId} onValueChange={handleClassSectionSelect}>
               <SelectTrigger className="w-56 h-9 text-xs rounded-xl border-slate-200 bg-white">
-                <SelectValue placeholder="Pré-sélectionner une classe" />
+                <SelectValue placeholder={t('preselectClassPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all" className="text-xs">Toutes les classes</SelectItem>
+                <SelectItem value="all" className="text-xs">{t('allClassesOption')}</SelectItem>
                 {classSections.map(cs => (
                   <SelectItem key={cs.id} value={cs.id} className="text-xs">
                     {`${cs.className} ${cs.sectionName}`.trim()}
@@ -337,42 +337,42 @@ export default function CardsAdmitCardsPage() {
             </Select>
           </div>
 
-          <Button variant="outline" size="sm" className="h-9 rounded-xl text-xs font-bold gap-1.5" onClick={load}>
-            <RefreshCw className="w-3.5 h-3.5" /> Actualiser
+          <Button variant="outline" size="sm" className="h-9 rounded-xl text-xs font-bold gap-1.5 cursor-pointer" onClick={load}>
+            <RefreshCw className="w-3.5 h-3.5" /> {t('btnRefresh')}
           </Button>
         </div>
 
         <div className="rounded-xl border border-slate-100 overflow-hidden">
           <table className="w-full text-xs">
             <thead>
-              <tr className="bg-slate-50/70 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">
-                <th className="p-3 pl-4 w-10">
+              <tr className="bg-slate-50/70 text-start text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">
+                <th className="p-3 ps-4 w-10 text-start">
                   <input
                     type="checkbox"
                     checked={filtered.length > 0 && filtered.every(s => selectedSeatIds[s.id])}
                     onChange={(e) => handleToggleSelectAll(e.target.checked)}
                   />
                 </th>
-                <th className="p-3">Candidat</th>
-                <th className="p-3">N° candidat</th>
-                <th className="p-3">Session</th>
-                <th className="p-3">Salle / Bureau</th>
-                <th className="p-3">Statut</th>
-                <th className="p-3 text-right pr-4">Actions</th>
+                <th className="p-3 text-start">{t('thCandidate')}</th>
+                <th className="p-3 text-start">{t('thCandidateNumber')}</th>
+                <th className="p-3 text-start">{t('thSession')}</th>
+                <th className="p-3 text-start">{t('thHallDesk')}</th>
+                <th className="p-3 text-start">{t('thStatus')}</th>
+                <th className="p-3 text-end pe-4">{t('thActions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
               {loading ? (
-                <tr><td colSpan={7} className="p-8 text-center text-slate-400">Chargement des places d&apos;examen...</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-slate-400">{t('loadingSeats')}</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={7} className="p-8 text-center text-slate-400">Aucune place d&apos;examen trouvée.</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-slate-400">{t('noSeatsFound')}</td></tr>
               ) : (
                 filtered.map(seat => {
                   const cardStatus = statusBySeat.get(seat.id);
                   const isSelected = Boolean(selectedSeatIds[seat.id]);
                   return (
                     <tr key={seat.id} className={`hover:bg-slate-50/60 transition-colors ${isSelected ? 'bg-blue-50/30' : ''}`}>
-                      <td className="p-3 pl-4">
+                      <td className="p-3 ps-4">
                         <input
                           type="checkbox"
                           checked={isSelected}
@@ -392,20 +392,20 @@ export default function CardsAdmitCardsPage() {
                       <td className="p-3">
                         {cardStatus ? (
                           <Badge variant={cardStatus === 'active' ? 'success' : cardStatus === 'revoked' ? 'danger' : 'warning'}>
-                            {cardStatus === 'active' ? 'Active' : cardStatus === 'revoked' ? 'Révoquée' : 'Expirée'}
+                            {cardStatus === 'active' ? t('statusActive') : cardStatus === 'revoked' ? t('statusRevoked') : t('statusExpired')}
                           </Badge>
                         ) : (
-                          <Badge variant="neutral">Aucune</Badge>
+                          <Badge variant="neutral">{t('statusNone')}</Badge>
                         )}
                       </td>
-                      <td className="p-3 pr-4 text-right">
+                      <td className="p-3 pe-4 text-end">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-8 rounded-lg text-xs font-bold"
+                          className="h-8 rounded-lg text-xs font-bold cursor-pointer"
                           onClick={() => setDialog(seat)}
                         >
-                          <IdCard className="w-3.5 h-3.5 mr-1" /> Émettre
+                          <IdCard className="w-3.5 h-3.5 me-1" /> {t('btnIssue')}
                         </Button>
                       </td>
                     </tr>
@@ -424,7 +424,7 @@ export default function CardsAdmitCardsPage() {
         subjectType="exam_candidate"
         templateType="admit_card"
         subjectId={dialog?.id ?? ''}
-        subjectLabel="Candidat"
+        subjectLabel={t('subjectCandidateLabel')}
         subjectName={dialog ? `${dialog.studentName} (${dialog.candidateNumber})` : ''}
       />
 
@@ -434,17 +434,17 @@ export default function CardsAdmitCardsPage() {
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-[#0066FF]" />
-              Émission groupée de convocations d&apos;examen
+              {t('bulkAdmitModalTitle')}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-2 text-xs">
             <p className="text-slate-600">
-              Vous allez générer les convocations officielles pour <strong>{selectedCount} candidat(s) sélectionné(s)</strong>.
+              {t('bulkAdmitModalDesc', { count: selectedCount })}
             </p>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Modèle de convocation publié *</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('publishedAdmitTemplate')}</label>
               <select
                 value={selectedVersionId}
                 onChange={e => setSelectedVersionId(e.target.value)}
@@ -452,27 +452,27 @@ export default function CardsAdmitCardsPage() {
               >
                 {templateVersions.map(v => (
                   <option key={v.id} value={v.id}>
-                    {v.templateName} (Version {v.versionNumber})
+                    {v.templateName} ({t('versionLabel', { version: v.versionNumber, status: t('statusPublished') })})
                   </option>
                 ))}
               </select>
               {templateVersions.length === 0 && (
-                <p className="text-[11px] text-amber-600 mt-1">Aucune version publiée trouvée pour les convocations.</p>
+                <p className="text-[11px] text-amber-600 mt-1">{t('noPublishedAdmitFound')}</p>
               )}
             </div>
           </div>
 
           <DialogFooter className="pt-2">
-            <Button variant="outline" onClick={() => setBulkModalOpen(false)} className="h-9 text-xs rounded-xl border-slate-200">
-              Annuler
+            <Button variant="outline" onClick={() => setBulkModalOpen(false)} className="h-9 text-xs rounded-xl border-slate-200 cursor-pointer">
+              {t('btnCancel')}
             </Button>
             <Button
               onClick={handleBulkIssueSubmit}
               disabled={bulkIssuing || !selectedVersionId || selectedCount === 0}
-              className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5"
+              className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5 cursor-pointer"
             >
               {bulkIssuing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Layers className="w-3.5 h-3.5" />}
-              Lancer l&apos;émission ({selectedCount})
+              {t('btnLaunchIssuance', { count: selectedCount })}
             </Button>
           </DialogFooter>
         </DialogContent>

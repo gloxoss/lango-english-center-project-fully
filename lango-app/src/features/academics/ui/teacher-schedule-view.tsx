@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
@@ -21,12 +22,10 @@ type Slot = {
   teacherName: string;
 };
 
-const DAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-const DAY_LABELS: Record<string, string> = {
-  monday: 'Lundi', tuesday: 'Mardi', wednesday: 'Mercredi', thursday: 'Jeudi', friday: 'Vendredi', saturday: 'Samedi', sunday: 'Dimanche',
-};
+const DAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
 
 export function TeacherScheduleView({ locale: _locale, isTeacher }: { locale: string; isTeacher: boolean }) {
+  const t = useTranslations('Teachers');
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [teacherId, setTeacherId] = useState('');
   const [slots, setSlots] = useState<Slot[]>([]);
@@ -90,18 +89,18 @@ export function TeacherScheduleView({ locale: _locale, isTeacher }: { locale: st
     <div className="space-y-6 max-w-[1600px] mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Emploi du temps enseignant</h1>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('scheduleTitle')}</h1>
           <p className="text-xs text-slate-500 mt-1">
-            {isTeacher ? 'Votre emploi du temps publié.' : 'Projection en lecture seule de l\'emploi du temps publié pour l\'enseignant sélectionné.'}
+            {isTeacher ? t('scheduleSubtitleTeacher') : t('scheduleSubtitleAdmin')}
           </p>
         </div>
         {!isTeacher && (
           <Select value={teacherId} onValueChange={setTeacherId}>
             <SelectTrigger className="w-full sm:w-64 h-9 rounded-xl bg-white border-slate-200 text-xs">
-              <SelectValue placeholder="Sélectionnez un enseignant" />
+              <SelectValue placeholder={t('selectTeacherPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
-              {teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+              {teachers.map(teacher => <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>)}
             </SelectContent>
           </Select>
         )}
@@ -110,15 +109,16 @@ export function TeacherScheduleView({ locale: _locale, isTeacher }: { locale: st
       {(isTeacher || teacherId) && !loading && (
         <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs inline-flex items-center gap-2 text-xs">
           <Clock className="w-4 h-4 text-[#2487B8]" />
-          <span className="font-bold text-[#16212B]">{totalHours}h</span>
-          <span className="text-slate-500">de cours par semaine, {slots.length} créneau(x)</span>
+          <span className="font-bold text-[#16212B]">
+            {t('weeklyHoursBadge', { hours: totalHours, count: slots.length })}
+          </span>
         </Card>
       )}
 
       {!isTeacher && !teacherId && (
         <Card className="p-12 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col items-center justify-center text-center gap-2">
           <CalendarDays className="w-8 h-8 text-slate-300" />
-          <p className="text-sm font-bold text-slate-500">Sélectionnez un enseignant pour afficher son emploi du temps.</p>
+          <p className="text-sm font-bold text-slate-500">{t('selectTeacherEmpty')}</p>
         </Card>
       )}
 
@@ -128,8 +128,8 @@ export function TeacherScheduleView({ locale: _locale, isTeacher }: { locale: st
             const daySlots = byDay.get(day) ?? [];
             return (
               <Card key={day} className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-2.5">
-                <h3 className="text-xs font-extrabold text-[#16212B]">{DAY_LABELS[day]}</h3>
-                {daySlots.length === 0 && <p className="text-[11px] text-slate-400">Aucun cours</p>}
+                <h3 className="text-xs font-extrabold text-[#16212B]">{t(day)}</h3>
+                {daySlots.length === 0 && <p className="text-[11px] text-slate-400">{t('noClass')}</p>}
                 {daySlots.map(slot => (
                   <div key={slot.id} className="p-2.5 bg-slate-50 rounded-xl space-y-1">
                     <div className="flex items-center justify-between">

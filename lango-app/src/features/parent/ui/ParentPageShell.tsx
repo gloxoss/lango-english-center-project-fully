@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { ChildContextSwitcher } from '@/components/parent/ChildContextSwitcher';
 import { useParentChildContext } from './use-parent-child-context';
 
@@ -26,6 +27,7 @@ type ParentPageShellProps = {
 // cloneElement, so the view's own hooks live on a real child fiber and its local
 // state survives shell re-renders.
 export function ParentPageShell({ title, subtitle, icon, children }: ParentPageShellProps) {
+  const tParent = useTranslations('Parent');
   const { data, loading, error, switchTo, reload } = useParentChildContext();
 
   const activeId = data?.activeChild?.relationshipId ?? null;
@@ -53,11 +55,11 @@ export function ParentPageShell({ title, subtitle, icon, children }: ParentPageS
             type="button"
             onClick={() => reload(activeId ?? undefined)}
             disabled={loading}
-            aria-label="Actualiser"
+            aria-label={tParent('refresh')}
             className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Actualiser
+            {tParent('refresh')}
           </button>
         </div>
       </div>
@@ -74,10 +76,9 @@ export function ParentPageShell({ title, subtitle, icon, children }: ParentPageS
           <div className="w-14 h-14 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
             <AlertTriangle className="w-7 h-7" />
           </div>
-          <h2 className="mt-4 text-lg font-semibold text-slate-900">Aucun enfant lié</h2>
+          <h2 className="mt-4 text-lg font-semibold text-slate-900">{tParent('noChildrenLinkedTitle')}</h2>
           <p className="mt-1 text-sm text-slate-500 max-w-md mx-auto">
-            Votre compte n'est relié à aucun enfant pour le moment. Contactez l'établissement
-            pour activer le lien.
+            {tParent('noChildrenLinkedDesc')}
           </p>
         </div>
       )}

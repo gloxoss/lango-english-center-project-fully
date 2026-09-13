@@ -1,10 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
-  AlertCircle, BedDouble, CalendarDays, DoorOpen, Loader2, UserX, Users,
+  AlertCircle, BedDouble, CalendarDays, Loader2, UserX, Users,
 } from 'lucide-react';
 import { api, errMessage } from './api';
 
@@ -39,23 +40,26 @@ type GuardianChild = {
 
 type GuardianProjection = { children: GuardianChild[] };
 
-const ROLL_CALL_LABELS: Record<string, string> = {
-  present: 'Présent',
-  approved_leave: 'Sortie autorisée',
-  late: 'En retard',
-  missing: 'Absent',
-  sick: 'Malade',
-  excused: 'Excusé',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  pending: 'En attente',
-  approved: 'Approuvée',
-  denied: 'Refusée',
-  returned: 'Retourné',
-};
-
 export function GuardianMeView() {
+  const t = useTranslations('Hostel');
+  const tCommon = useTranslations('Common');
+
+  const ROLL_CALL_LABELS: Record<string, string> = {
+    present: t('statusPresent'),
+    approved_leave: t('statusApprovedLeave'),
+    late: t('statusLate'),
+    missing: t('statusMissing'),
+    sick: t('statusSick'),
+    excused: t('statusExcused'),
+  };
+
+  const STATUS_LABELS: Record<string, string> = {
+    pending: t('passPending'),
+    approved: t('passApproved'),
+    denied: t('passDenied'),
+    returned: t('passReturned'),
+  };
+
   const [data, setData] = useState<GuardianProjection | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,21 +78,21 @@ export function GuardianMeView() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#16212B]">Espace tuteur</h1>
-        <p className="text-sm text-slate-500">Suivi de l&apos;hébergement de vos enfants à l&apos;internat.</p>
+        <h1 className="text-2xl font-bold text-[#16212B]">{t('guardianPortalTitle')}</h1>
+        <p className="text-sm text-slate-500">{t('guardianPortalSubtitle')}</p>
       </div>
 
       {error && <p className="flex items-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error}</p>}
 
       {loading ? (
-        <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-white p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Chargement…</div>
+        <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-white p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> {tCommon('loading')}</div>
       ) : !data ? (
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-10 text-center text-sm text-slate-500">Impossible de charger vos enfants.</div>
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-10 text-center text-sm text-slate-500">{t('guardianLoadError')}</div>
       ) : data.children.length === 0 ? (
         <div className="rounded-2xl border border-slate-200/80 bg-white p-10 text-center">
           <Users className="mx-auto mb-3 h-10 w-10 text-slate-300" />
-          <p className="font-semibold text-[#16212B]">Aucun enfant lié</p>
-          <p className="mt-1 text-sm text-slate-500">Aucun enfant n&apos;est associé à votre profil tuteur.</p>
+          <p className="font-semibold text-[#16212B]">{t('noLinkedChildren')}</p>
+          <p className="mt-1 text-sm text-slate-500">{t('noChildrenInHostel')}</p>
         </div>
       ) : (
         data.children.map(child => (
@@ -100,13 +104,13 @@ export function GuardianMeView() {
                 </div>
                 <div>
                   <p className="font-bold text-[#16212B]">{child.studentName}</p>
-                  <p className="text-xs text-slate-500">{child.enrolled ? 'Hébergé' : 'Non hébergé'}</p>
+                  <p className="text-xs text-slate-500">{child.enrolled ? t('statusEnrolled') : t('statusNotEnrolled')}</p>
                 </div>
               </div>
               {child.tonight && (
                 <div className="flex items-center gap-2">
-                  {child.tonight.onLeaveTonight && <Badge className="bg-[#D1F5E8] text-[#0b5c3a]">Sortie ce soir</Badge>}
-                  {child.tonight.overdueReturn && <Badge className="bg-red-100 text-red-700">Retour en retard</Badge>}
+                  {child.tonight.onLeaveTonight && <Badge className="bg-[#D1F5E8] text-[#0b5c3a]">{t('leaveTonight')}</Badge>}
+                  {child.tonight.overdueReturn && <Badge className="bg-red-100 text-red-700">{t('overdueReturn')}</Badge>}
                   {child.tonight.rollCallStatus && (
                     <Badge className="bg-slate-100 text-slate-600">{ROLL_CALL_LABELS[child.tonight.rollCallStatus] ?? child.tonight.rollCallStatus}</Badge>
                   )}
@@ -117,7 +121,7 @@ export function GuardianMeView() {
             <div className="grid gap-4 p-5 sm:grid-cols-2">
               {child.stay ? (
                 <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Hébergement</p>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{t('accommodationSection')}</p>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2"><BedDouble className="h-4 w-4 text-slate-400" /><span className="font-medium text-[#16212B]">{child.stay.hostel.name}</span></div>
                     <p className="pl-6 text-slate-600">{child.stay.roomCode} · {child.stay.bedCode}</p>
@@ -126,19 +130,19 @@ export function GuardianMeView() {
                 </div>
               ) : (
                 <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500">
-                  <UserX className="h-4 w-4" /> Non hébergé actuellement
+                  <UserX className="h-4 w-4" /> {t('notCurrentlyAccommodated')}
                 </div>
               )}
 
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Permissions de sortie ({child.leavePasses?.length ?? 0})</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{t('childLeavePassesCount', { count: child.leavePasses?.length ?? 0 })}</p>
                 <div className="space-y-2">
-                  {(child.leavePasses ?? []).length === 0 && <p className="text-sm text-slate-500">Aucune.</p>}
+                  {(child.leavePasses ?? []).length === 0 && <p className="text-sm text-slate-500">{t('noPassesFound')}</p>}
                   {(child.leavePasses ?? []).map(p => (
                     <div key={p.id} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm">
                       <div className="flex items-center gap-2">
                         <CalendarDays className="h-4 w-4 text-slate-400" />
-                        <span className="text-slate-600">{new Date(p.startDateTime).toLocaleString('fr-MA')} → {new Date(p.expectedReturnAt).toLocaleString('fr-MA')}</span>
+                        <span className="text-slate-600">{new Date(p.startDateTime).toLocaleString()} → {new Date(p.expectedReturnAt).toLocaleString()}</span>
                       </div>
                       <Badge className={p.status === 'approved' ? 'bg-[#D1F5E8] text-[#0b5c3a]' : p.status === 'denied' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}>
                         {STATUS_LABELS[p.status] ?? p.status}

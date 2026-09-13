@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { AlertTriangle, Plus, RefreshCw, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -118,6 +119,9 @@ function AuthorityForm({ scopes, authorities, onCreated }: { scopes: ScopeRow[];
 }
 
 export function LeadershipAdminClient() {
+  const t = useTranslations('Leadership');
+  const tCommon = useTranslations('Common');
+
   const [scopes, setScopes] = useState<ScopeRow[]>([]);
   const [authorities, setAuthorities] = useState<AuthorityRow[]>([]);
   const [users, setUsers] = useState<UserOption[]>([]);
@@ -127,12 +131,12 @@ export function LeadershipAdminClient() {
   const [loading, setLoading] = useState(true);
 
   const loadScopes = useCallback(async () => {
-    try { const r = await fetch('/api/leadership/admin/scopes', { cache: 'no-store' }); const j = await r.json(); if (j.success) setScopes(j.data); else setError(j.error?.message ?? 'Impossible de charger les périmètres.'); } catch { setError('Erreur réseau.'); }
-  }, []);
+    try { const r = await fetch('/api/leadership/admin/scopes', { cache: 'no-store' }); const j = await r.json(); if (j.success) setScopes(j.data); else setError(j.error?.message ?? tCommon('error')); } catch { setError(tCommon('error')); }
+  }, [tCommon]);
 
   const loadAuthorities = useCallback(async () => {
-    try { const r = await fetch('/api/leadership/admin/authorities', { cache: 'no-store' }); const j = await r.json(); if (j.success) setAuthorities(j.data); else setError(j.error?.message ?? 'Impossible de charger les autorités.'); } catch { setError('Erreur réseau.'); }
-  }, []);
+    try { const r = await fetch('/api/leadership/admin/authorities', { cache: 'no-store' }); const j = await r.json(); if (j.success) setAuthorities(j.data); else setError(j.error?.message ?? tCommon('error')); } catch { setError(tCommon('error')); }
+  }, [tCommon]);
 
   const load = useCallback(async () => {
     setLoading(true); setError(null);
@@ -157,24 +161,24 @@ export function LeadershipAdminClient() {
   const scopeTarget = (s: ScopeRow) => s.scopeType === 'branch' ? (s.branchName ?? '—') : s.scopeType === 'department' ? (s.departmentName ?? '—') : null;
 
   return <div className="space-y-6">
-    <div className="flex items-center justify-between"><div><h1 className="text-2xl font-extrabold text-[#16212B]">Administration de la direction</h1><p className="mt-1 text-sm text-slate-500">Attribuez des périmètres et autorités d'approbation aux responsables.</p></div><Button variant="outline" onClick={() => void load()} disabled={loading}><RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />Actualiser</Button></div>
+    <div className="flex items-center justify-between"><div><h1 className="text-2xl font-extrabold text-[#16212B]">{t('adminTitle')}</h1><p className="mt-1 text-sm text-slate-500">{t('adminSubtitle')}</p></div><Button variant="outline" onClick={() => void load()} disabled={loading}><RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />{tCommon('refresh')}</Button></div>
 
     {error ? <Card className="p-10 text-center"><AlertTriangle className="mx-auto mb-3 h-8 w-8 text-amber-500" /><p className="font-medium">{error}</p></Card> : <Tabs defaultValue="scopes">
-      <TabsList><TabsTrigger value="scopes">Périmètres</TabsTrigger><TabsTrigger value="authorities">Autorités</TabsTrigger></TabsList>
+      <TabsList><TabsTrigger value="scopes">{t('tabPerimeters')}</TabsTrigger><TabsTrigger value="authorities">{t('tabAuthorities')}</TabsTrigger></TabsList>
 
       <TabsContent value="scopes" className="space-y-4">
         <div className="flex justify-end"><ScopeForm users={users} branches={branches} departments={departments} onCreated={() => void load()} /></div>
         <Card className="p-2">
-          {loading ? <div className="py-12 text-center text-sm text-slate-500">Chargement…</div> : scopes.length === 0 ? <div className="py-12 text-center"><ShieldCheck className="mx-auto mb-3 h-8 w-8 text-slate-300" /><p className="font-medium">Aucun périmètre défini.</p></div> :
-            <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b text-slate-500"><th className="p-3">Responsable</th><th className="p-3">Périmètre</th><th className="p-3">Cible</th><th className="p-3">Validité</th><th className="p-3">Statut</th></tr></thead><tbody>{scopes.map(s => <tr key={s.id} className="border-b last:border-0"><td className="p-3 font-medium">{s.userName}</td><td className="p-3">{scopeBadge(s)}</td><td className="p-3">{scopeTarget(s) ?? "Tout l'établissement"}</td><td className="p-3 text-slate-600">{dateLabel(s.startsOn)}{s.endsOn ? ` → ${dateLabel(s.endsOn)}` : ' → illimité'}</td><td className="p-3"><Badge variant={s.status === 'active' ? 'success' : 'neutral'}>{s.status}</Badge></td></tr>)}</tbody></table></div>}
+          {loading ? <div className="py-12 text-center text-sm text-slate-500">{tCommon('loading')}</div> : scopes.length === 0 ? <div className="py-12 text-center"><ShieldCheck className="mx-auto mb-3 h-8 w-8 text-slate-300" /><p className="font-medium">{tCommon('empty')}</p></div> :
+            <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b text-slate-500"><th className="p-3">{t('colLeader')}</th><th className="p-3">{t('colPerimeter')}</th><th className="p-3">{t('colTarget')}</th><th className="p-3">{t('colValidity')}</th><th className="p-3">{tCommon('status')}</th></tr></thead><tbody>{scopes.map(s => <tr key={s.id} className="border-b last:border-0"><td className="p-3 font-medium">{s.userName}</td><td className="p-3">{scopeBadge(s)}</td><td className="p-3">{scopeTarget(s) ?? "Tout l'établissement"}</td><td className="p-3 text-slate-600">{dateLabel(s.startsOn)}{s.endsOn ? ` → ${dateLabel(s.endsOn)}` : ' → illimité'}</td><td className="p-3"><Badge variant={s.status === 'active' ? 'success' : 'neutral'}>{s.status}</Badge></td></tr>)}</tbody></table></div>}
         </Card>
       </TabsContent>
 
       <TabsContent value="authorities" className="space-y-4">
         <div className="flex justify-end"><AuthorityForm scopes={scopes} authorities={authorities} onCreated={() => void load()} /></div>
         <Card className="p-2">
-          {loading ? <div className="py-12 text-center text-sm text-slate-500">Chargement…</div> : authorities.length === 0 ? <div className="py-12 text-center"><ShieldCheck className="mx-auto mb-3 h-8 w-8 text-slate-300" /><p className="font-medium">Aucune autorité définie.</p></div> :
-            <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b text-slate-500"><th className="p-3">Responsable</th><th className="p-3">Domaine</th><th className="p-3">Action</th><th className="p-3">Plafond</th><th className="p-3">Validité</th><th className="p-3">Statut</th></tr></thead><tbody>{authorities.map(a => <tr key={a.id} className="border-b last:border-0"><td className="p-3 font-medium">{a.userName}</td><td className="p-3"><Badge variant="neutral">{DOMAIN_LABELS[a.domain] ?? a.domain}</Badge></td><td className="p-3">{a.action}</td><td className="p-3">{a.maxAmount != null ? money(a.maxAmount) : '—'}</td><td className="p-3 text-slate-600">{dateLabel(a.startsOn)}{a.endsOn ? ` → ${dateLabel(a.endsOn)}` : ' → illimité'}</td><td className="p-3"><Badge variant={a.status === 'active' ? 'success' : 'neutral'}>{a.status}</Badge></td></tr>)}</tbody></table></div>}
+          {loading ? <div className="py-12 text-center text-sm text-slate-500">{tCommon('loading')}</div> : authorities.length === 0 ? <div className="py-12 text-center"><ShieldCheck className="mx-auto mb-3 h-8 w-8 text-slate-300" /><p className="font-medium">{tCommon('empty')}</p></div> :
+            <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b text-slate-500"><th className="p-3">{t('colLeader')}</th><th className="p-3">Domaine</th><th className="p-3">{tCommon('actions')}</th><th className="p-3">Plafond</th><th className="p-3">{t('colValidity')}</th><th className="p-3">{tCommon('status')}</th></tr></thead><tbody>{authorities.map(a => <tr key={a.id} className="border-b last:border-0"><td className="p-3 font-medium">{a.userName}</td><td className="p-3"><Badge variant="neutral">{DOMAIN_LABELS[a.domain] ?? a.domain}</Badge></td><td className="p-3">{a.action}</td><td className="p-3">{a.maxAmount != null ? money(a.maxAmount) : '—'}</td><td className="p-3 text-slate-600">{dateLabel(a.startsOn)}{a.endsOn ? ` → ${dateLabel(a.endsOn)}` : ' → illimité'}</td><td className="p-3"><Badge variant={a.status === 'active' ? 'success' : 'neutral'}>{a.status}</Badge></td></tr>)}</tbody></table></div>}
         </Card>
       </TabsContent>
     </Tabs>}

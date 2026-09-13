@@ -8,5 +8,10 @@ export default async function GuardEmergencyPage({
 }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'guard.portal.use' });
-  return <GuardEmergencyView />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <GuardEmergencyView />
+    </main>
+  );
 }

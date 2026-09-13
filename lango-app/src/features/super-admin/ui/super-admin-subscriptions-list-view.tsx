@@ -1,11 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { DataTable, Column } from '@/components/shared/data-table';
 import { AlertCircle, Search, RefreshCw, CheckCircle2, ShieldCheck, KeyRound } from 'lucide-react';
@@ -30,24 +31,12 @@ type DetailData = {
   addons: DetailAddon[];
 };
 
-const PLAN_LABELS: Record<string, string> = { trial: 'Essai', basic: 'Basique', standard: 'Standard', premium: 'Premium' };
-const LIC_STATUS: Record<string, { label: string; cls: string }> = {
-  active: { label: 'Active', cls: 'bg-[#DDF5EC] text-[#17A673]' },
-  expiring: { label: 'Expire bientôt', cls: 'bg-amber-50 text-amber-700' },
-  expired: { label: 'Expirée', cls: 'bg-rose-50 text-rose-700' },
-  suspended: { label: 'Suspendue', cls: 'bg-amber-50 text-amber-700' },
-  cancelled: { label: 'Annulée', cls: 'bg-rose-50 text-rose-700' },
-  none: { label: 'Sans licence', cls: 'bg-slate-100 text-slate-600' },
-};
-const PAY_STATUS_LABELS: Record<string, string> = { pending: 'En attente', paid: 'Payé', rejected: 'Refusé' };
-const METHOD_LABELS: Record<string, string> = { cash: 'Espèces', bank_transfer: 'Virement', card: 'Carte' };
-const NO_LICENSE_STATUS = { label: 'Sans licence', cls: 'bg-slate-100 text-slate-600' };
+export function SuperAdminSubscriptionsListView({ locale: propLocale }: { locale?: string }) {
+  const t = useTranslations('SuperAdmin');
+  const tCommon = useTranslations('Common');
+  const hookLocale = useLocale();
+  const locale = propLocale || hookLocale || 'fr';
 
-const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString('fr-FR') : '—');
-const fmtAmount = (n: string | number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD', maximumFractionDigits: 2 }).format(Number(n));
-
-export function SuperAdminSubscriptionsListView() {
   const [data, setData] = useState<ListData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,20 +53,60 @@ export function SuperAdminSubscriptionsListView() {
   const [issueMonths, setIssueMonths] = useState(12);
   const [confirmRevoke, setConfirmRevoke] = useState(false);
 
+  const planLabels: Record<string, string> = {
+    trial: locale === 'ar' ? 'تجريبي' : locale === 'en' ? 'Trial' : 'Essai',
+    basic: locale === 'ar' ? 'أساسي' : locale === 'en' ? 'Basic' : 'Basique',
+    standard: locale === 'ar' ? 'قياسي' : 'Standard',
+    premium: locale === 'ar' ? 'مميز' : 'Premium',
+  };
+
+  const licStatus: Record<string, { label: string; cls: string }> = {
+    active: { label: t('tabActiveLicenses'), cls: 'bg-[#DDF5EC] text-[#17A673]' },
+    expiring: { label: t('tabExpiringLicenses'), cls: 'bg-amber-50 text-amber-700' },
+    expired: { label: t('tabExpiredLicenses'), cls: 'bg-rose-50 text-rose-700' },
+    suspended: { label: t('tabSuspendedLicenses'), cls: 'bg-amber-50 text-amber-700' },
+    cancelled: { label: t('tabCancelledLicenses'), cls: 'bg-rose-50 text-rose-700' },
+    none: { label: t('tabNoLicenses'), cls: 'bg-slate-100 text-slate-600' },
+  };
+
+  const noLicenseStatus = { label: t('tabNoLicenses'), cls: 'bg-slate-100 text-slate-600' };
+
+  const payStatusLabels: Record<string, string> = {
+    pending: locale === 'ar' ? 'قيد الانتظار' : locale === 'en' ? 'Pending' : 'En attente',
+    paid: locale === 'ar' ? 'مدفوع' : locale === 'en' ? 'Paid' : 'Payé',
+    rejected: locale === 'ar' ? 'مرفوض' : locale === 'en' ? 'Rejected' : 'Refusé',
+  };
+
+  const methodLabels: Record<string, string> = {
+    cash: t('paymentMethodCash'),
+    bank_transfer: t('paymentMethodBank'),
+    card: t('paymentMethodCard'),
+  };
+
+  const fmtDate = (d?: string | null) =>
+    d ? new Date(d).toLocaleDateString(locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR') : '—';
+
+  const fmtAmount = (n: string | number) =>
+    new Intl.NumberFormat(locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR', {
+      style: 'currency',
+      currency: 'MAD',
+      maximumFractionDigits: 2,
+    }).format(Number(n));
+
   const loadList = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch('/api/super-admin/subscriptions');
       const json = await res.json();
-      if (!res.ok || !json.success) throw new Error(json.message || 'Erreur.');
+      if (!res.ok || !json.success) throw new Error(json.message || tCommon('error'));
       setData(json.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Connexion impossible.');
+      setError(err instanceof Error ? err.message : tCommon('error'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tCommon]);
 
   useEffect(() => { void loadList(); }, [loadList]);
 
@@ -88,14 +117,14 @@ export function SuperAdminSubscriptionsListView() {
     try {
       const res = await fetch(`/api/super-admin/subscriptions/${schoolId}`);
       const json = await res.json();
-      if (!res.ok || !json.success) throw new Error(json.message || 'Erreur.');
+      if (!res.ok || !json.success) throw new Error(json.message || tCommon('error'));
       setDetail(json.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Connexion impossible.');
+      setError(err instanceof Error ? err.message : tCommon('error'));
     } finally {
       setDetailLoading(false);
     }
-  }, []);
+  }, [tCommon]);
 
   function openDetail(schoolId: string) {
     setDetailSchoolId(schoolId);
@@ -117,12 +146,12 @@ export function SuperAdminSubscriptionsListView() {
         body: JSON.stringify({ id: schoolId, ...patch }),
       });
       const json = await res.json();
-      if (!res.ok || !json.success) throw new Error(json.message || 'Échec de la mise à jour.');
-      flash('École mise à jour.');
+      if (!res.ok || !json.success) throw new Error(json.message || tCommon('error'));
+      flash(tCommon('success'));
       await loadDetail(schoolId);
       await loadList();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Connexion impossible.');
+      setError(err instanceof Error ? err.message : tCommon('error'));
     } finally {
       setBusy(false);
     }
@@ -143,12 +172,12 @@ export function SuperAdminSubscriptionsListView() {
         body: JSON.stringify(body),
       });
       const json = await res.json();
-      if (!res.ok || !json.success) throw new Error(json.message || 'Échec de l\'opération.');
-      flash(action === 'issue' ? 'Licence émise.' : action === 'extend' ? 'Licence prolongée.' : 'Licence révoquée.');
+      if (!res.ok || !json.success) throw new Error(json.message || tCommon('error'));
+      flash(tCommon('success'));
       await loadDetail(schoolId);
       await loadList();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Connexion impossible.');
+      setError(err instanceof Error ? err.message : tCommon('error'));
     } finally {
       setBusy(false);
     }
@@ -163,11 +192,11 @@ export function SuperAdminSubscriptionsListView() {
         ? await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId: schoolId, addonId, isEnabled: true }) })
         : await fetch(url, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId: schoolId, addonId }) });
       const json = await res.json();
-      if (!res.ok || !json.success) throw new Error(json.message || 'Échec du basculement du module.');
-      flash(enable ? 'Module activé.' : 'Module désactivé.');
+      if (!res.ok || !json.success) throw new Error(json.message || tCommon('error'));
+      flash(tCommon('success'));
       await loadDetail(schoolId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Connexion impossible.');
+      setError(err instanceof Error ? err.message : tCommon('error'));
     } finally {
       setBusy(false);
     }
@@ -183,12 +212,12 @@ export function SuperAdminSubscriptionsListView() {
         body: JSON.stringify({ approved, amount: approved ? Number(amount ?? 0) : undefined }),
       });
       const json = await res.json();
-      if (!res.ok || !json.success) throw new Error(json.message || 'Échec de la décision.');
-      flash(approved ? 'Demande approuvée — licence prolongée.' : 'Demande refusée.');
+      if (!res.ok || !json.success) throw new Error(json.message || tCommon('error'));
+      flash(tCommon('success'));
       await loadList();
       if (detailSchoolId === schoolId) await loadDetail(schoolId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Connexion impossible.');
+      setError(err instanceof Error ? err.message : tCommon('error'));
     } finally {
       setBusy(false);
     }
@@ -206,64 +235,64 @@ export function SuperAdminSubscriptionsListView() {
     .map(s => ({ school: s, count: s.pendingPaymentsCount }));
 
   const statusFilters = [
-    { id: 'all', label: 'Tous' },
-    { id: 'active', label: 'Actives' },
-    { id: 'expiring', label: 'Expire bientôt' },
-    { id: 'expired', label: 'Expirées' },
-    { id: 'suspended', label: 'Suspendues' },
-    { id: 'cancelled', label: 'Annulées' },
-    { id: 'none', label: 'Sans licence' },
+    { id: 'all', label: t('tabAll') },
+    { id: 'active', label: t('tabActiveLicenses') },
+    { id: 'expiring', label: t('tabExpiringLicenses') },
+    { id: 'expired', label: t('tabExpiredLicenses') },
+    { id: 'suspended', label: t('tabSuspendedLicenses') },
+    { id: 'cancelled', label: t('tabCancelledLicenses') },
+    { id: 'none', label: t('tabNoLicenses') },
   ];
 
   const columns: Column<SchoolRow>[] = [
     {
-      key: 'school', header: 'École',
+      key: 'school', header: t('schoolCol'),
       cell: s => (
-        <button onClick={() => openDetail(s.id)} className="text-left group">
+        <button onClick={() => openDetail(s.id)} className="text-left rtl:text-right group">
           <p className="text-xs font-bold text-[#0F172A] group-hover:text-[#0066FF]">{s.name}</p>
           <p className="text-[10px] text-slate-400 font-mono">{s.slug}</p>
         </button>
       ),
     },
-    { key: 'plan', header: 'Plan', cell: s => <span className="text-xs font-bold text-[#0F172A]">{PLAN_LABELS[s.planTier] ?? s.planTier}</span> },
+    { key: 'plan', header: t('planCol'), cell: s => <span className="text-xs font-bold text-[#0F172A]">{planLabels[s.planTier] ?? s.planTier}</span> },
     {
-      key: 'status', header: 'Statut licence',
+      key: 'status', header: t('licenseStatusCol'),
       cell: s => {
-        const st = LIC_STATUS[s.licenseStatus] ?? NO_LICENSE_STATUS;
+        const st = licStatus[s.licenseStatus] ?? noLicenseStatus;
         return <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${st.cls}`}>{st.label}</span>;
       },
     },
-    { key: 'expiry', header: 'Expiration', cell: s => <span className="text-xs text-slate-500">{fmtDate(s.license?.expiresAt)}</span> },
-    { key: 'key', header: 'Clé', cell: s => <span className="text-[10px] font-mono text-slate-400">{s.license?.licenseKey ?? '—'}</span> },
+    { key: 'expiry', header: t('expirationCol'), cell: s => <span className="text-xs text-slate-500">{fmtDate(s.license?.expiresAt)}</span> },
+    { key: 'key', header: t('licenseKeyCol'), cell: s => <span className="text-[10px] font-mono text-slate-400">{s.license?.licenseKey ?? '—'}</span> },
     {
-      key: 'pending', header: 'Demandes',
+      key: 'pending', header: t('pendingRequestsCol'),
       cell: s => s.pendingPaymentsCount > 0
         ? <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold">{s.pendingPaymentsCount}</span>
         : <span className="text-xs text-slate-400">—</span>,
     },
     {
-      key: 'actions', header: 'Actions',
+      key: 'actions', header: tCommon('actions'),
       cell: s => (
         <Button size="sm" variant="outline" onClick={() => openDetail(s.id)} className="h-7 text-[11px] font-bold rounded-lg border-slate-200 gap-1">
-          <KeyRound className="w-3 h-3 text-[#0066FF]" /> Gérer
+          <KeyRound className="w-3 h-3 text-[#0066FF]" /> {t('actionManage')}
         </Button>
       ),
     },
   ];
 
   const kpis = [
-    { label: 'Total écoles', value: summary?.total ?? 0, cls: 'text-[#0F172A]' },
-    { label: 'Licences actives', value: (summary?.active ?? 0) + (summary?.expiring ?? 0), cls: 'text-emerald-600' },
-    { label: 'Expirent bientôt', value: summary?.expiring ?? 0, cls: 'text-amber-600' },
-    { label: 'Expirées / sans licence', value: (summary?.expired ?? 0) + (summary?.none ?? 0), cls: 'text-rose-600' },
+    { label: t('totalSchoolsStat'), value: summary?.total ?? 0, cls: 'text-[#0F172A]' },
+    { label: t('activeLicensesStat'), value: (summary?.active ?? 0) + (summary?.expiring ?? 0), cls: 'text-emerald-600' },
+    { label: t('expiringSoonStat'), value: summary?.expiring ?? 0, cls: 'text-amber-600' },
+    { label: t('expiredOrNoneStat'), value: (summary?.expired ?? 0) + (summary?.none ?? 0), cls: 'text-rose-600' },
   ];
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200/80">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight">Gestion des Abonnements</h1>
-          <p className="text-xs text-slate-500 font-medium mt-1">Émettez, prolongez ou révoquez les licences et validez les demandes de renouvellement.</p>
+          <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight">{t('subscriptionsManagementTitle')}</h1>
+          <p className="text-xs text-slate-500 font-medium mt-1">{t('subscriptionsManagementSubtitle')}</p>
         </div>
       </div>
 
@@ -295,7 +324,7 @@ export function SuperAdminSubscriptionsListView() {
         <Card className="p-4 bg-white rounded-2xl border border-amber-200/80 shadow-2xs space-y-3">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-amber-600" />
-            <h3 className="text-sm font-extrabold text-[#0F172A]">Demandes de renouvellement en attente</h3>
+            <h3 className="text-sm font-extrabold text-[#0F172A]">{t('pendingRenewalsTitle')}</h3>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">{summary?.pendingPayments ?? 0}</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -303,10 +332,10 @@ export function SuperAdminSubscriptionsListView() {
               <div key={school.id} className="p-3 rounded-xl border border-slate-200/80 bg-slate-50/60 space-y-2">
                 <div>
                   <p className="text-xs font-bold text-[#0F172A]">{school.name}</p>
-                  <p className="text-[10px] text-slate-400">{school.pendingPaymentsCount} demande(s) • {fmtDate(school.license?.expiresAt)}</p>
+                  <p className="text-[10px] text-slate-400">{school.pendingPaymentsCount} • {fmtDate(school.license?.expiresAt)}</p>
                 </div>
                 <Button size="sm" variant="outline" onClick={() => openDetail(school.id)} className="h-7 text-[11px] font-bold rounded-lg border-slate-200">
-                  Traiter
+                  {t('actionProcess')}
                 </Button>
               </div>
             ))}
@@ -318,8 +347,13 @@ export function SuperAdminSubscriptionsListView() {
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-4 space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div className="relative w-full sm:max-w-xs">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input placeholder="Rechercher une école..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9 text-xs bg-slate-50 border-none rounded-xl" />
+            <Search className="w-4 h-4 absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Input
+              placeholder={t('searchSchool')}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-9 rtl:pl-3 rtl:pr-9 h-9 text-xs bg-slate-50 border-none rounded-xl"
+            />
           </div>
           <div className="flex flex-wrap gap-1.5">
             {statusFilters.map(f => (
@@ -338,8 +372,8 @@ export function SuperAdminSubscriptionsListView() {
           data={filtered}
           columns={columns}
           isLoading={loading}
-          emptyTitle="Aucune école trouvée"
-          emptyDescription="Aucune école ne correspond à vos critères."
+          emptyTitle={t('emptySchoolsTitle')}
+          emptyDescription={t('emptySchoolsDesc')}
           defaultPageSize={10}
         />
       </div>
@@ -350,10 +384,10 @@ export function SuperAdminSubscriptionsListView() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-[#0066FF]" />
-              {detail?.tenant.name ?? 'École'}
+              {detail?.tenant.name ?? t('schoolCol')}
             </DialogTitle>
             <DialogDescription>
-              {detail ? `${detail.tenant.slug} • ${PLAN_LABELS[detail.tenant.planTier] ?? detail.tenant.planTier} • ${detail.license?.licenseKey ?? 'Aucune licence'}` : ''}
+              {detail ? `${detail.tenant.slug} • ${planLabels[detail.tenant.planTier] ?? detail.tenant.planTier} • ${detail.license?.licenseKey ?? t('noLicense')}` : ''}
             </DialogDescription>
           </DialogHeader>
 
@@ -367,72 +401,76 @@ export function SuperAdminSubscriptionsListView() {
               {/* License management */}
               <div className="rounded-2xl border border-slate-200/80 p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-extrabold text-[#0F172A]">Licence</h4>
+                  <h4 className="text-sm font-extrabold text-[#0F172A]">{t('licenseHeading')}</h4>
                   {detail.license && (() => {
-                    const st = LIC_STATUS[detail.licenseStatus] ?? NO_LICENSE_STATUS;
+                    const st = licStatus[detail.licenseStatus] ?? noLicenseStatus;
                     return (
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${st.cls}`}>{st.label}</span>
                     );
                   })()}
                 </div>
                 <div className="flex items-center gap-2">
-                  <p className="text-xs text-slate-400 font-bold shrink-0">Type de licence</p>
+                  <p className="text-xs text-slate-400 font-bold shrink-0">{t('licenseType')}</p>
                   <Select value={detail.tenant.planTier} onValueChange={v => void updateSchool(detail.tenant.id, { planTier: v })} disabled={busy}>
-                    <SelectTrigger className="h-8 text-xs w-40 rounded-lg border-slate-200"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-8 text-xs w-40 rounded-lg border-slate-200">
+                      <SelectValue placeholder={planLabels[detail.tenant.planTier]}>{planLabels[detail.tenant.planTier]}</SelectValue>
+                    </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="trial">Essai</SelectItem>
-                      <SelectItem value="basic">Basique</SelectItem>
-                      <SelectItem value="standard">Standard</SelectItem>
-                      <SelectItem value="premium">Premium</SelectItem>
+                      <SelectItem value="trial">{planLabels.trial}</SelectItem>
+                      <SelectItem value="basic">{planLabels.basic}</SelectItem>
+                      <SelectItem value="standard">{planLabels.standard}</SelectItem>
+                      <SelectItem value="premium">{planLabels.premium}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 {detail.license ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-                    <div><p className="text-slate-400 font-bold">Clé</p><p className="font-mono text-[#0F172A] font-semibold mt-0.5 break-all">{detail.license.licenseKey}</p></div>
-                    <div><p className="text-slate-400 font-bold">Émise le</p><p className="text-[#0F172A] font-semibold mt-0.5">{fmtDate(detail.license.issuedAt)}</p></div>
-                    <div><p className="text-slate-400 font-bold">Expire le</p><p className="text-[#0F172A] font-semibold mt-0.5">{fmtDate(detail.license.expiresAt)}</p></div>
+                    <div><p className="text-slate-400 font-bold">{t('licenseKeyCol')}</p><p className="font-mono text-[#0F172A] font-semibold mt-0.5 break-all">{detail.license.licenseKey}</p></div>
+                    <div><p className="text-slate-400 font-bold">{t('issuedOn')}</p><p className="text-[#0F172A] font-semibold mt-0.5">{fmtDate(detail.license.issuedAt)}</p></div>
+                    <div><p className="text-slate-400 font-bold">{t('expiresOn')}</p><p className="text-[#0F172A] font-semibold mt-0.5">{fmtDate(detail.license.expiresAt)}</p></div>
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-500">Aucune licence émise pour cet établissement.</p>
+                  <p className="text-xs text-slate-500">{t('noLicenseIssuedNotice')}</p>
                 )}
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   {!detail.license && (
                     <>
                       <Select value={String(issueMonths)} onValueChange={v => setIssueMonths(Number(v))}>
-                        <SelectTrigger className="h-8 text-xs w-32 rounded-lg border-slate-200"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-8 text-xs w-32 rounded-lg border-slate-200">
+                          <SelectValue placeholder={t('monthsCount', { count: issueMonths })}>{t('monthsCount', { count: issueMonths })}</SelectValue>
+                        </SelectTrigger>
                         <SelectContent>
-                          {[6, 12, 24, 36].map(m => <SelectItem key={m} value={String(m)}>{m} mois</SelectItem>)}
+                          {[6, 12, 24, 36].map(m => <SelectItem key={m} value={String(m)}>{t('monthsCount', { count: m })}</SelectItem>)}
                         </SelectContent>
                       </Select>
                       <Button size="sm" disabled={busy} onClick={() => void licenseAction('issue', detail.tenant.id, issueMonths)} className="h-8 text-xs font-bold rounded-lg bg-[#0066FF] hover:bg-[#0052CC] text-white">
-                        Émettre la licence
+                        {t('issueLicenseBtn')}
                       </Button>
                     </>
                   )}
                   {detail.license && detail.license.status === 'active' && (
                     <Button size="sm" variant="outline" disabled={busy} onClick={() => void licenseAction('extend', detail.tenant.id, 12)} className="h-8 text-xs font-bold rounded-lg border-slate-200">
-                      Prolonger de 12 mois
+                      {t('extend12MonthsBtn')}
                     </Button>
                   )}
                   {detail.license && detail.license.status === 'cancelled' && (
                     <Button size="sm" disabled={busy} onClick={() => void licenseAction('extend', detail.tenant.id, 12)} className="h-8 text-xs font-bold rounded-lg bg-[#17A673] hover:bg-[#128a5f] text-white">
-                      Réactiver (+12 mois)
+                      {t('reactivateLicenseBtn')}
                     </Button>
                   )}
                   {detail.license && detail.license.status !== 'cancelled' && (
                     confirmRevoke ? (
                       <>
                         <Button size="sm" disabled={busy} onClick={() => { void licenseAction('revoke', detail.tenant.id); setConfirmRevoke(false); }} className="h-8 text-xs font-bold rounded-lg bg-rose-600 hover:bg-rose-700 text-white">
-                          Confirmer la révocation
+                          {t('confirmRevokeBtn')}
                         </Button>
                         <Button size="sm" variant="outline" disabled={busy} onClick={() => setConfirmRevoke(false)} className="h-8 text-xs font-bold rounded-lg border-slate-200">
-                          Annuler
+                          {tCommon('cancel')}
                         </Button>
                       </>
                     ) : (
                       <Button size="sm" variant="outline" disabled={busy} onClick={() => setConfirmRevoke(true)} className="h-8 text-xs font-bold rounded-lg border-rose-200 text-rose-600">
-                        Révoquer
+                        {t('revokeLicenseBtn')}
                       </Button>
                     )
                   )}
@@ -441,12 +479,12 @@ export function SuperAdminSubscriptionsListView() {
 
               {/* Addon toggles */}
               <div className="rounded-2xl border border-slate-200/80 p-4 space-y-2">
-                <h4 className="text-sm font-extrabold text-[#0F172A]">Activation des modules</h4>
-                <p className="text-xs text-slate-400">Un module activé devient immédiatement disponible pour les utilisateurs de l&apos;école.</p>
+                <h4 className="text-sm font-extrabold text-[#0F172A]">{t('modulesActivationTitle')}</h4>
+                <p className="text-xs text-slate-400">{t('modulesActivationSubtitle')}</p>
                 <div className="space-y-1.5">
                   {detail.addons.map(a => (
                     <div key={a.addonId} className="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0">
-                      <div className="flex-1 pr-3">
+                      <div className="flex-1 pr-3 rtl:pr-0 rtl:pl-3">
                         <p className="text-xs font-bold text-[#0F172A]">{a.name}</p>
                         <p className="text-[10px] text-slate-400">{a.description}</p>
                       </div>
@@ -463,33 +501,33 @@ export function SuperAdminSubscriptionsListView() {
 
               {/* Payment history */}
               <div className="rounded-2xl border border-slate-200/80 p-4 space-y-2">
-                <h4 className="text-sm font-extrabold text-[#0F172A]">Historique des paiements</h4>
+                <h4 className="text-sm font-extrabold text-[#0F172A]">{t('paymentHistoryTitle')}</h4>
                 {detail.payments.length === 0 ? (
-                  <p className="text-xs text-slate-500">Aucun paiement enregistré.</p>
+                  <p className="text-xs text-slate-500">{t('noPaymentsRecorded')}</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="text-left text-slate-400 font-bold border-b border-slate-100">
-                          <th className="py-1.5 pr-3">Date</th>
-                          <th className="py-1.5 pr-3">Plan</th>
-                          <th className="py-1.5 pr-3">Mois</th>
-                          <th className="py-1.5 pr-3">Montant</th>
-                          <th className="py-1.5 pr-3">Méthode</th>
-                          <th className="py-1.5">Statut</th>
+                        <tr className="text-left rtl:text-right text-slate-400 font-bold border-b border-slate-100">
+                          <th className="py-1.5 pr-3 rtl:pr-0 rtl:pl-3">{tCommon('date')}</th>
+                          <th className="py-1.5 pr-3 rtl:pr-0 rtl:pl-3">{t('planCol')}</th>
+                          <th className="py-1.5 pr-3 rtl:pr-0 rtl:pl-3">{locale === 'ar' ? 'الأشهر' : 'Mois'}</th>
+                          <th className="py-1.5 pr-3 rtl:pr-0 rtl:pl-3">{locale === 'ar' ? 'المبلغ' : 'Montant'}</th>
+                          <th className="py-1.5 pr-3 rtl:pr-0 rtl:pl-3">{locale === 'ar' ? 'الطريقة' : 'Méthode'}</th>
+                          <th className="py-1.5">{tCommon('status')}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50">
                         {detail.payments.map(p => (
                           <tr key={p.id}>
-                            <td className="py-1.5 pr-3 text-slate-500">{fmtDate(p.purchasedAt ?? p.createdAt)}</td>
-                            <td className="py-1.5 pr-3 font-bold text-[#0F172A]">{PLAN_LABELS[p.planTier] ?? p.planTier}</td>
-                            <td className="py-1.5 pr-3 text-slate-500">{p.requestedMonths ? `${p.requestedMonths} mois` : '—'}</td>
-                            <td className="py-1.5 pr-3 font-bold text-[#0F172A]">{fmtAmount(p.amount)}</td>
-                            <td className="py-1.5 pr-3 text-slate-500">{METHOD_LABELS[p.method] ?? p.method}</td>
+                            <td className="py-1.5 pr-3 rtl:pr-0 rtl:pl-3 text-slate-500">{fmtDate(p.purchasedAt ?? p.createdAt)}</td>
+                            <td className="py-1.5 pr-3 rtl:pr-0 rtl:pl-3 font-bold text-[#0F172A]">{planLabels[p.planTier] ?? p.planTier}</td>
+                            <td className="py-1.5 pr-3 rtl:pr-0 rtl:pl-3 text-slate-500">{p.requestedMonths ? t('monthsCount', { count: p.requestedMonths }) : '—'}</td>
+                            <td className="py-1.5 pr-3 rtl:pr-0 rtl:pl-3 font-bold text-[#0F172A]">{fmtAmount(p.amount)}</td>
+                            <td className="py-1.5 pr-3 rtl:pr-0 rtl:pl-3 text-slate-500">{methodLabels[p.method] ?? p.method}</td>
                             <td className="py-1.5">
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${p.status === 'paid' ? 'bg-[#DDF5EC] text-[#17A673]' : p.status === 'rejected' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-700'}`}>
-                                {PAY_STATUS_LABELS[p.status] ?? p.status}
+                                {payStatusLabels[p.status] ?? p.status}
                               </span>
                             </td>
                           </tr>
@@ -503,22 +541,22 @@ export function SuperAdminSubscriptionsListView() {
                     {detail.payments.filter(p => p.status === 'pending').map(p => (
                       <div key={p.id} className="flex flex-wrap items-center gap-2 rounded-xl bg-amber-50/60 border border-amber-200/60 p-2.5">
                         <span className="text-xs font-bold text-amber-800 flex-1">
-                          Demande de renouvellement — {p.requestedMonths ?? 1} mois ({fmtDate(p.createdAt)})
+                          {t('renewalRequestLabel', { months: p.requestedMonths ?? 1, date: fmtDate(p.createdAt) })}
                         </span>
                         <Input
                           type="number"
                           min={0}
                           step="0.01"
-                          placeholder="Montant MAD"
+                          placeholder={t('amountMadPlaceholder')}
                           value={pendingAmounts[p.id] ?? ''}
                           onChange={e => setPendingAmounts(prev => ({ ...prev, [p.id]: e.target.value }))}
                           className="h-8 w-32 text-xs rounded-lg bg-white border-slate-200"
                         />
                         <Button size="sm" disabled={busy} onClick={() => void decidePayment(detail.tenant.id, p.id, true, pendingAmounts[p.id])} className="h-8 text-xs font-bold rounded-lg bg-[#0066FF] hover:bg-[#0052CC] text-white">
-                          Approuver
+                          {t('approveBtn')}
                         </Button>
                         <Button size="sm" variant="outline" disabled={busy} onClick={() => void decidePayment(detail.tenant.id, p.id, false)} className="h-8 text-xs font-bold rounded-lg border-slate-200">
-                          Refuser
+                          {t('rejectBtn')}
                         </Button>
                       </div>
                     ))}
@@ -527,7 +565,7 @@ export function SuperAdminSubscriptionsListView() {
               </div>
             </div>
           ) : (
-            <p className="text-xs text-slate-500">Impossible de charger les détails.</p>
+            <p className="text-xs text-slate-500">{tCommon('error')}</p>
           )}
         </DialogContent>
       </Dialog>

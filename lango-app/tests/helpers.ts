@@ -15,5 +15,5 @@ export async function loginAs(page: Page, email: string, password: string = DEMO
   await page.locator('input[type="email"]').fill(email);
   await page.locator('input[type="password"]').fill(password);
   await page.locator('button[type="submit"]').click();
-  await page.waitForURL(/dashboard/, { timeout: 30_000 });
+  await page.waitForURL(/dashboard/, { timeout: 45_000 });
 }

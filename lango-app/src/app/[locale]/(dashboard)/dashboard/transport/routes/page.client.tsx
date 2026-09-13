@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Navigation, Plus, Search, Filter, Edit2, Trash2, ArrowRight, Sun, Moon, Clock, X } from 'lucide-react';
+import { Navigation, Plus, Search, Filter, Edit2, Trash2, Sun, Moon, Clock, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface TransportRoute {
   id: string;
@@ -13,6 +14,9 @@ interface TransportRoute {
 }
 
 export default function RoutesPage() {
+  const t = useTranslations('Transport');
+  const tc = useTranslations('Common');
+
   const [routes, setRoutes] = useState<TransportRoute[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -33,7 +37,7 @@ export default function RoutesPage() {
       const res = await fetch('/api/transport/routes');
       const data = await res.json();
       if (data.success) {
-        setRoutes(data.data);
+        setRoutes(data.data || []);
       }
     } catch (err) {
       console.error(err);
@@ -87,25 +91,25 @@ export default function RoutesPage() {
         setIsModalOpen(false);
         fetchRoutes();
       } else {
-        alert(data.error?.message || 'Erreur lors de l\'enregistrement');
+        alert(data.error?.message || t('errorSave'));
       }
     } catch (err) {
-      alert('Erreur serveur');
+      alert(t('serverError'));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Voulez-vous supprimer cet itinéraire ?')) return;
+    if (!confirm(t('confirmDeleteRoute'))) return;
     try {
       const res = await fetch(`/api/transport/routes/${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
         fetchRoutes();
       } else {
-        alert(data.error?.message || 'Erreur lors de la suppression');
+        alert(data.error?.message || t('errorDelete'));
       }
     } catch (err) {
-      alert('Erreur serveur');
+      alert(t('serverError'));
     }
   };
 
@@ -119,11 +123,23 @@ export default function RoutesPage() {
   const getDirectionBadge = (dir: string) => {
     switch (dir) {
       case 'morning_pickup':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200"><Sun className="w-3 h-3" /> Ramassage Matin</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+            <Sun className="w-3 h-3" /> {t('morningPickup')}
+          </span>
+        );
       case 'afternoon_dropoff':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200"><Moon className="w-3 h-3" /> Retour Après-Midi</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+            <Moon className="w-3 h-3" /> {t('afternoonDropoff')}
+          </span>
+        );
       default:
-        return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-sky-50 text-sky-700 border border-sky-200"><Clock className="w-3 h-3" /> Circuit Spécial</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-sky-50 text-sky-700 border border-sky-200">
+            <Clock className="w-3 h-3" /> {t('specialCircuit')}
+          </span>
+        );
     }
   };
 
@@ -133,10 +149,10 @@ export default function RoutesPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <Navigation className="w-7 h-7 text-[#0066FF]" />
-            Circuits & Lignes de Transport
+            {t('circuitsTitle')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Définition des itinéraires de ramassage du matin et de dépose de l'après-midi.
+            {t('circuitsSubtitle')}
           </p>
         </div>
         <button
@@ -144,7 +160,7 @@ export default function RoutesPage() {
           className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-[#0066FF] rounded-lg hover:bg-blue-600 shadow-sm transition"
         >
           <Plus className="w-4 h-4" />
-          Créer un Itinéraire
+          {t('createRoute')}
         </button>
       </div>
 
@@ -154,7 +170,7 @@ export default function RoutesPage() {
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Rechercher par code ou nom de ligne..."
+            placeholder={t('searchRoutePlaceholder')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0066FF]/20 focus:border-[#0066FF]"
@@ -167,9 +183,9 @@ export default function RoutesPage() {
             onChange={e => setDirectionFilter(e.target.value)}
             className="w-full sm:w-auto border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0066FF]/20"
           >
-            <option value="all">Toutes les directions</option>
-            <option value="morning_pickup">Ramassage Matin</option>
-            <option value="afternoon_dropoff">Dépose Après-Midi</option>
+            <option value="all">{t('allDirections')}</option>
+            <option value="morning_pickup">{t('morningPickup')}</option>
+            <option value="afternoon_dropoff">{t('afternoonDropoff')}</option>
           </select>
         </div>
       </div>
@@ -180,21 +196,21 @@ export default function RoutesPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                <th className="p-4">Code</th>
-                <th className="p-4">Nom du Circuit</th>
-                <th className="p-4">Sens de Service</th>
-                <th className="p-4">Statut</th>
-                <th className="p-4 text-right">Actions</th>
+                <th className="p-4">{t('routeCode')}</th>
+                <th className="p-4">{t('routeName')}</th>
+                <th className="p-4">{t('serviceDirection')}</th>
+                <th className="p-4">{tc('status')}</th>
+                <th className="p-4 text-right">{tc('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-500">Chargement des itinéraires...</td>
+                  <td colSpan={5} className="p-8 text-center text-slate-500">{t('loadingRoutes')}</td>
                 </tr>
               ) : filteredRoutes.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-500">Aucun itinéraire trouvé.</td>
+                  <td colSpan={5} className="p-8 text-center text-slate-500">{t('noRoutesFound')}</td>
                 </tr>
               ) : (
                 filteredRoutes.map(route => (
@@ -206,7 +222,7 @@ export default function RoutesPage() {
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
                         route.status === 'active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600'
                       }`}>
-                        {route.status === 'active' ? 'Actif' : 'Suspendu'}
+                        {route.status === 'active' ? t('active') : t('inactive')}
                       </span>
                     </td>
                     <td className="p-4 text-right space-x-2">
@@ -237,7 +253,7 @@ export default function RoutesPage() {
           <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl space-y-4">
             <div className="flex justify-between items-center border-b pb-3">
               <h3 className="font-bold text-slate-900">
-                {editingRoute ? 'Modifier l\'Itinéraire' : 'Nouveau Circuit de Transport'}
+                {editingRoute ? t('editRoute') : t('createRoute')}
               </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
@@ -246,7 +262,7 @@ export default function RoutesPage() {
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Code Circuit</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">{t('routeCode')}</label>
                 <input
                   type="text"
                   required
@@ -257,7 +273,7 @@ export default function RoutesPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Nom de la Ligne</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">{t('routeName')}</label>
                 <input
                   type="text"
                   required
@@ -269,28 +285,26 @@ export default function RoutesPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Sens de Service</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">{t('serviceDirection')}</label>
                 <select
                   value={formData.serviceDirection}
                   onChange={e => setFormData({ ...formData, serviceDirection: e.target.value })}
                   className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#0066FF]/20"
                 >
-                  <option value="morning_pickup">Ramassage Matin</option>
-                  <option value="afternoon_dropoff">Dépose Après-Midi</option>
-                  <option value="midday_pickup">Ramassage Midi</option>
-                  <option value="midday_dropoff">Dépose Midi</option>
+                  <option value="morning_pickup">{t('morningPickup')}</option>
+                  <option value="afternoon_dropoff">{t('afternoonDropoff')}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Statut</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">{tc('status')}</label>
                 <select
                   value={formData.status}
                   onChange={e => setFormData({ ...formData, status: e.target.value })}
                   className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#0066FF]/20"
                 >
-                  <option value="active">Actif</option>
-                  <option value="inactive">Inactif</option>
+                  <option value="active">{t('active')}</option>
+                  <option value="inactive">{t('inactive')}</option>
                 </select>
               </div>
 
@@ -300,13 +314,13 @@ export default function RoutesPage() {
                   onClick={() => setIsModalOpen(false)}
                   className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200"
                 >
-                  Annuler
+                  {tc('cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 text-sm font-semibold text-white bg-[#0066FF] rounded-lg hover:bg-blue-600 shadow-sm"
                 >
-                  Enregistrer
+                  {tc('save')}
                 </button>
               </div>
             </form>

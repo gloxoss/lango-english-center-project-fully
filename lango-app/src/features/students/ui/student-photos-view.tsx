@@ -31,6 +31,7 @@ import {
   Star,
 } from 'lucide-react';
 import { usePermissions } from '@/hooks/use-permissions';
+import { useTranslations } from 'next-intl';
 
 type ApiStudentPhoto = {
   id: string;
@@ -48,6 +49,8 @@ function Initials({ fullName }: { fullName: string }) {
 }
 
 export function StudentPhotosView() {
+  const t = useTranslations('Students');
+  const tCommon = useTranslations('Common');
   const { can } = usePermissions();
   const [students, setStudents] = useState<ApiStudentPhoto[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -112,16 +115,16 @@ export function StudentPhotosView() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.message || 'Impossible de définir la photo de profil.');
+        setError(json.message || t('setProfileFailed'));
         return;
       }
-      setSuccess('Photo de profil définie.');
+      setSuccess(t('profileSetSuccess'));
       setTimeout(() => setSuccess(null), 3000);
       await loadGallery(viewingId);
       await loadStudents();
     } catch (err) {
       console.error('Set profile failed', err);
-      setError('Erreur réseau.');
+      setError(t('bulkNetworkError'));
     }
   }
 
@@ -161,16 +164,16 @@ export function StudentPhotosView() {
       const res = await fetch('/api/students/photos', { method: 'POST', body: formData });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.message || 'Échec du téléversement.');
+        setError(json.message || t('uploadFailed'));
         return;
       }
-      setSuccess('Photo enregistrée avec succès.');
+      setSuccess(t('photoSavedSuccess'));
       setTimeout(() => setSuccess(null), 4000);
       await loadStudents();
       if (targetStudentId.current) await loadGallery(targetStudentId.current);
     } catch (err) {
       console.error('Photo upload failed', err);
-      setError('Connexion impossible. Vérifiez votre réseau.');
+      setError(t('connectionError'));
     } finally {
       setUploadingId(null);
       if (fileInputRef.current) {
@@ -204,14 +207,14 @@ export function StudentPhotosView() {
       const json = await res.json();
       if (json.success && json.data) {
         setBulkResult(json.data);
-        setSuccess(`${json.data.matchedCount} photo(s) mise(s) à jour avec succès.`);
+        setSuccess(t('bulkUploadSuccess', { count: json.data.matchedCount }));
         setTimeout(() => setSuccess(null), 5000);
         await loadStudents();
       } else {
-        setError(json.error?.message || json.message || 'Échec du téléversement groupé.');
+        setError(json.error?.message || json.message || t('bulkUploadFailed'));
       }
     } catch {
-      setError('Erreur réseau lors du téléversement groupé.');
+      setError(t('bulkNetworkError'));
     } finally {
       setBulkUploading(false);
     }
@@ -233,9 +236,9 @@ export function StudentPhotosView() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Galerie Photo des Élèves</h1>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('photosTitle')}</h1>
           <p className="text-xs text-slate-500 mt-1">
-            Gestion du trombinoscope et téléversement groupé automatique par matricule (ex : ETU-2025-0042.jpg).
+            {t('photosSubtitle')}
           </p>
         </div>
 
@@ -250,7 +253,7 @@ export function StudentPhotosView() {
               className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5 shadow-xs"
             >
               <FolderUp className="w-4 h-4" />
-              Téléversement groupé (§2.7)
+              {t('bulkUploadBtn')}
             </Button>
           )}
 
@@ -261,7 +264,7 @@ export function StudentPhotosView() {
               onClick={() => setView('grid')}
               className={`h-7 px-2.5 text-xs rounded-lg ${view === 'grid' ? '' : 'text-slate-500'}`}
             >
-              <LayoutGrid className="w-3.5 h-3.5" /> Grille
+              <LayoutGrid className="w-3.5 h-3.5" /> {t('viewGrid')}
             </Button>
             <Button
               variant={view === 'list' ? 'primary' : 'ghost'}
@@ -269,7 +272,7 @@ export function StudentPhotosView() {
               onClick={() => setView('list')}
               className={`h-7 px-2.5 text-xs rounded-lg ${view === 'list' ? '' : 'text-slate-500'}`}
             >
-              <List className="w-3.5 h-3.5" /> Liste
+              <List className="w-3.5 h-3.5" /> {t('viewList')}
             </Button>
           </div>
         </div>
@@ -291,22 +294,22 @@ export function StudentPhotosView() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-          <div><p className="text-xs font-bold text-slate-400">Total Élèves</p><p className="text-2xl font-extrabold text-[#16212B]">{students.length}</p></div>
+          <div><p className="text-xs font-bold text-slate-400">{t('totalStudents')}</p><p className="text-2xl font-extrabold text-[#16212B]">{students.length}</p></div>
           <div className="w-10 h-10 rounded-xl bg-[#DCEBF4] text-[#0066FF] flex items-center justify-center font-bold"><Users className="w-5 h-5" /></div>
         </Card>
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-          <div><p className="text-xs font-bold text-slate-400">Avec Photo</p><p className="text-2xl font-extrabold text-[#17A673]">{withPhoto}</p></div>
+          <div><p className="text-xs font-bold text-slate-400">{t('withPhoto')}</p><p className="text-2xl font-extrabold text-[#17A673]">{withPhoto}</p></div>
           <div className="w-10 h-10 rounded-xl bg-[#DDF5EC] text-[#17A673] flex items-center justify-center font-bold"><Camera className="w-5 h-5" /></div>
         </Card>
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-          <div><p className="text-xs font-bold text-slate-400">Sans Photo</p><p className="text-2xl font-extrabold text-amber-700">{withoutPhoto}</p></div>
+          <div><p className="text-xs font-bold text-slate-400">{t('withoutPhoto')}</p><p className="text-2xl font-extrabold text-amber-700">{withoutPhoto}</p></div>
           <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold"><UserX className="w-5 h-5" /></div>
         </Card>
       </div>
 
       <div className="relative max-w-sm">
         <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-        <Input placeholder="Rechercher par nom ou matricule..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9 h-9 text-xs rounded-xl bg-white border-slate-200" />
+        <Input placeholder={t('searchByNameOrMatricule')} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9 h-9 text-xs rounded-xl bg-white border-slate-200" />
       </div>
 
       {/* Grid vs List View */}
@@ -327,11 +330,11 @@ export function StudentPhotosView() {
                   <Initials fullName={s.fullName} />
                 )}
                 {uploadingId === s.id && (
-                  <div className="absolute inset-0 bg-white/80 flex items-center justify-center text-[10px] font-bold text-[#0066FF]">Envoi...</div>
+                  <div className="absolute inset-0 bg-white/80 flex items-center justify-center text-[10px] font-bold text-[#0066FF]">{t('uploading')}</div>
                 )}
                 <div className="absolute top-1.5 left-1.5">
                   <Badge className={s.photoUrl ? 'bg-[#DDF5EC] text-[#17A673] text-[9px] px-1.5 border-none font-bold' : 'bg-slate-100 text-slate-500 text-[9px] px-1.5 border-none font-bold'}>
-                    {s.photoUrl ? 'Photo' : 'Aucune'}
+                    {s.photoUrl ? t('photoBadge') : t('noPhoto')}
                   </Badge>
                 </div>
               </div>
@@ -341,7 +344,7 @@ export function StudentPhotosView() {
               </div>
             </button>
           ))}
-          {filtered.length === 0 && <p className="text-xs text-slate-400 col-span-full text-center py-8">Aucun élève trouvé.</p>}
+          {filtered.length === 0 && <p className="text-xs text-slate-400 col-span-full text-center py-8">{t('noStudentsFound')}</p>}
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs divide-y divide-slate-100 overflow-hidden">
@@ -367,11 +370,11 @@ export function StudentPhotosView() {
                 <p className="text-[10px] text-slate-400 font-mono">{s.matricule ?? s.id.slice(0, 8)}</p>
               </div>
               <Badge className={s.photoUrl ? 'bg-[#DDF5EC] text-[#17A673] text-[9px] px-1.5 border-none font-bold' : 'bg-slate-100 text-slate-500 text-[9px] px-1.5 border-none font-bold'}>
-                {s.photoUrl ? 'Photo' : 'Aucune'}
+                {s.photoUrl ? t('photoBadge') : t('noPhoto')}
               </Badge>
             </button>
           ))}
-          {filtered.length === 0 && <p className="text-xs text-slate-400 text-center py-8">Aucun élève trouvé.</p>}
+          {filtered.length === 0 && <p className="text-xs text-slate-400 text-center py-8">{t('noStudentsFound')}</p>}
         </div>
       )}
 
@@ -383,8 +386,8 @@ export function StudentPhotosView() {
               <DialogHeader>
                 <DialogTitle className="text-base font-extrabold text-[#16212B]">{viewingStudent.fullName}</DialogTitle>
                 <DialogDescription className="text-xs">
-                  {viewingStudent.matricule ? `Matricule : ${viewingStudent.matricule}` : 'Élève'}
-                  {gallery.length > 0 ? ` · ${gallery.length} photo(s)` : ''}
+                  {viewingStudent.matricule ? `${t('matriculeLabel')} : ${viewingStudent.matricule}` : t('studentLabel')}
+                  {gallery.length > 0 ? ` · ${gallery.length} ${t('photosCountLabel')}` : ''}
                 </DialogDescription>
               </DialogHeader>
 
@@ -399,7 +402,7 @@ export function StudentPhotosView() {
                 )}
                 {activePhoto?.isProfile && (
                   <Badge className="absolute top-2 right-2 bg-[#DDF5EC] text-[#17A673] text-[9px] px-1.5 border-none font-bold">
-                    <Star className="w-3 h-3 mr-0.5 inline" /> Profil
+                    <Star className="w-3 h-3 mr-0.5 inline" /> {t('profileBadge')}
                   </Badge>
                 )}
               </div>
@@ -430,7 +433,7 @@ export function StudentPhotosView() {
                     className="gap-1.5 h-9 text-xs rounded-xl border-slate-200"
                   >
                     {uploadingId === viewingStudent.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
-                    Ajouter une photo
+                    {t('addPhoto')}
                   </Button>
                   {activePhoto && !activePhoto.isProfile && (
                     <Button
@@ -438,7 +441,7 @@ export function StudentPhotosView() {
                       onClick={() => handleSetProfile(activePhoto.id)}
                       className="gap-1.5 h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold"
                     >
-                      <Star className="w-3.5 h-3.5" /> Définir comme profil
+                      <Star className="w-3.5 h-3.5" /> {t('setAsProfile')}
                     </Button>
                   )}
                 </DialogFooter>
@@ -454,18 +457,18 @@ export function StudentPhotosView() {
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
               <FolderUp className="w-5 h-5 text-[#0066FF]" />
-              Téléversement Groupé de Photos Élèves
+              {t('bulkModalTitle')}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-2 text-xs">
             <p className="text-slate-600">
-              Sélectionnez un dossier ou un ensemble d&apos;images. L&apos;assistant associera automatiquement chaque fichier à l&apos;élève correspondant en comparant le nom du fichier avec :
+              {t('bulkModalDesc')}
             </p>
             <ul className="list-disc list-inside space-y-1 text-slate-500 pl-2 text-[11px]">
-              <li><strong>Le matricule</strong> : ex. <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">ETU-2025-0042.jpg</code></li>
-              <li><strong>Le nom complet</strong> : ex. <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">Yasmine_Benjelloun.png</code></li>
-              <li><strong>L&apos;identifiant UUID</strong> : ex. <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d.jpg</code></li>
+              <li><strong>{t('bulkMatchMatricule')}</strong> : ex. <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">ETU-2025-0042.jpg</code></li>
+              <li><strong>{t('bulkMatchName')}</strong> : ex. <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">Yasmine_Benjelloun.png</code></li>
+              <li><strong>{t('bulkMatchUuid')}</strong> : ex. <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d.jpg</code></li>
             </ul>
 
             <div className="p-6 border-2 border-dashed border-slate-200 rounded-2xl text-center bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
@@ -480,10 +483,10 @@ export function StudentPhotosView() {
               <FileImage className="w-10 h-10 text-[#0066FF] mx-auto mb-2" />
               <p className="font-bold text-[#16212B]">
                 {bulkFiles.length > 0
-                  ? `${bulkFiles.length} fichier(s) sélectionné(s)`
-                  : 'Cliquez pour sélectionner les photos'}
+                  ? t('bulkFilesSelected', { count: bulkFiles.length })
+                  : t('bulkClickSelect')}
               </p>
-              <p className="text-[11px] text-slate-400 mt-1">Formats acceptés : JPG, PNG (5 Mo max par photo)</p>
+              <p className="text-[11px] text-slate-400 mt-1">{t('bulkAcceptedFormats')}</p>
               <Button
                 type="button"
                 variant="outline"
@@ -491,21 +494,21 @@ export function StudentPhotosView() {
                 onClick={() => bulkFileInputRef.current?.click()}
                 className="mt-3 h-8 text-xs rounded-xl border-slate-200 bg-white font-bold"
               >
-                Parcourir les fichiers
+                {t('bulkBrowse')}
               </Button>
             </div>
 
             {bulkResult && (
               <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
                 <div className="flex items-center justify-between font-bold">
-                  <span className="text-emerald-700">{bulkResult.matchedCount} photo(s) associées</span>
+                  <span className="text-emerald-700">{t('bulkPhotosMatched', { count: bulkResult.matchedCount })}</span>
                   {bulkResult.unmatchedCount > 0 && (
-                    <span className="text-amber-700">{bulkResult.unmatchedCount} non associée(s)</span>
+                    <span className="text-amber-700">{t('bulkPhotosUnmatched', { count: bulkResult.unmatchedCount })}</span>
                   )}
                 </div>
                 {bulkResult.unmatched.length > 0 && (
                   <p className="text-[10px] text-slate-500 truncate">
-                    Non reconnus : {bulkResult.unmatched.slice(0, 5).join(', ')}
+                    {t('bulkUnrecognized', { list: bulkResult.unmatched.slice(0, 5).join(', ') })}
                   </p>
                 )}
               </div>
@@ -514,7 +517,7 @@ export function StudentPhotosView() {
 
           <DialogFooter className="pt-2">
             <Button variant="outline" onClick={() => setBulkModalOpen(false)} className="h-9 text-xs rounded-xl border-slate-200">
-              Fermer
+              {t('bulkClose')}
             </Button>
             <Button
               onClick={handleBulkUploadSubmit}
@@ -522,7 +525,7 @@ export function StudentPhotosView() {
               className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5 shadow-xs"
             >
               {bulkUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-              Lancer l&apos;association ({bulkFiles.length})
+              {t('bulkStartAssociation', { count: bulkFiles.length })}
             </Button>
           </DialogFooter>
         </DialogContent>

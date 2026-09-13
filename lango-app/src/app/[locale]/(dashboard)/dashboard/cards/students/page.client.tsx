@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -58,6 +59,7 @@ type TemplateVersionOption = {
 const PAGE_SIZE = 100;
 
 export default function CardsStudentsPage() {
+  const t = useTranslations('Cards');
   const params = useParams<{ locale?: string }>();
 
   const [students, setStudents] = useState<Student[]>([]);
@@ -104,15 +106,15 @@ export default function CardsStudentsPage() {
       if (tpl.success && Array.isArray(tpl.data)) {
         // Fetch published versions for each template
         const versions: TemplateVersionOption[] = [];
-        for (const t of tpl.data) {
-          const vRes = await fetch(`/api/cards/templates/${t.id}/versions`).then(r => r.json()).catch(() => ({}));
+        for (const tplItem of tpl.data) {
+          const vRes = await fetch(`/api/cards/templates/${tplItem.id}/versions`).then(r => r.json()).catch(() => ({}));
           if (vRes.success && Array.isArray(vRes.data)) {
             for (const v of vRes.data) {
               if (v.publishedById) {
                 versions.push({
                   id: v.id,
-                  templateId: t.id,
-                  templateName: t.name,
+                  templateId: tplItem.id,
+                  templateName: tplItem.name,
                   versionNumber: v.versionNumber,
                 });
               }
@@ -172,16 +174,16 @@ export default function CardsStudentsPage() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setErrorBanner(json.error?.message || json.message || 'Échec de l\'émission en lot.');
+        setErrorBanner(json.error?.message || json.message || t('bulkJobFailed'));
         return;
       }
-      setSuccessBanner(`Tâche d'émission en lot créée pour ${targetIds.length} élève(s).`);
+      setSuccessBanner(t('bulkJobSuccess', { count: targetIds.length }));
       setBulkModalOpen(false);
       setSelectedStudentIds({});
       setTimeout(() => setSuccessBanner(null), 5000);
       load();
     } catch {
-      setErrorBanner('Connexion au serveur impossible.');
+      setErrorBanner(t('serverConnectionError'));
     } finally {
       setBulkIssuing(false);
     }
@@ -199,9 +201,9 @@ export default function CardsStudentsPage() {
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Cartes d&apos;étudiant &amp; Badges</h1>
+            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('studentsCardsTitle')}</h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Émettez individuellement ou par cohorte de classe les cartes scolaires cryptographiques.
+              {t('studentsCardsSubtitle')}
             </p>
           </div>
         </div>
@@ -213,7 +215,7 @@ export default function CardsStudentsPage() {
               className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5 shadow-xs"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              Émettre en lot ({selectedCount} sélectionnés)
+              {t('btnBulkIssue', { count: selectedCount })}
             </Button>
           )}
         </div>
@@ -225,7 +227,7 @@ export default function CardsStudentsPage() {
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{successBanner}</span>
           </div>
-          <button onClick={() => setSuccessBanner(null)} className="text-emerald-600 hover:text-emerald-800">Fermer</button>
+          <button onClick={() => setSuccessBanner(null)} className="text-emerald-600 hover:text-emerald-800 cursor-pointer">{t('btnClose')}</button>
         </div>
       )}
 
@@ -240,21 +242,21 @@ export default function CardsStudentsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Élèves Enregistrés</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('kpiRegisteredStudents')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{total}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0066FF] flex items-center justify-center"><Users className="w-5 h-5" /></div>
         </Card>
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Cartes Actives</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('kpiActiveCards')}</span>
             <h3 className="text-2xl font-extrabold text-[#17A673] mt-1">{withActiveCard}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><IdCard className="w-5 h-5" /></div>
         </Card>
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Sans Carte Émise</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('kpiWithoutCard')}</span>
             <h3 className="text-2xl font-extrabold text-amber-700 mt-1">{students.length - withActiveCard}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><IdCard className="w-5 h-5" /></div>
@@ -266,12 +268,12 @@ export default function CardsStudentsPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-wrap flex-1">
             <div className="relative w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
-                placeholder="Rechercher par nom ou matricule..."
+                placeholder={t('searchStudentPlaceholder')}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="pl-9 h-9 text-xs rounded-xl border-slate-200"
+                className="ps-9 h-9 text-xs rounded-xl border-slate-200"
               />
             </div>
 
@@ -281,7 +283,7 @@ export default function CardsStudentsPage() {
               onChange={e => setSelectedClass(e.target.value)}
               className="h-9 px-3 text-xs rounded-xl border border-slate-200 bg-white font-medium text-slate-700"
             >
-              <option value="all">Toutes les classes ({sections.length})</option>
+              <option value="all">{t('allClasses', { count: sections.length })}</option>
               {sections.map(sec => (
                 <option key={sec.id} value={`${sec.className} ${sec.sectionName}`}>
                   {sec.className} — {sec.sectionName}
@@ -290,41 +292,41 @@ export default function CardsStudentsPage() {
             </select>
           </div>
 
-          <Button variant="outline" size="sm" className="h-9 rounded-xl text-xs font-bold gap-1.5" onClick={load}>
-            <RefreshCw className="w-3.5 h-3.5" /> Actualiser
+          <Button variant="outline" size="sm" className="h-9 rounded-xl text-xs font-bold gap-1.5 cursor-pointer" onClick={load}>
+            <RefreshCw className="w-3.5 h-3.5" /> {t('btnRefresh')}
           </Button>
         </div>
 
         <div className="rounded-xl border border-slate-100 overflow-hidden">
           <table className="w-full text-xs">
             <thead>
-              <tr className="bg-slate-50/70 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">
-                <th className="p-3 pl-4 w-10">
+              <tr className="bg-slate-50/70 text-start text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">
+                <th className="p-3 ps-4 w-10 text-start">
                   <input
                     type="checkbox"
                     checked={filtered.length > 0 && filtered.every(s => selectedStudentIds[s.id])}
                     onChange={(e) => handleToggleSelectAll(e.target.checked)}
                   />
                 </th>
-                <th className="p-3">Élève</th>
-                <th className="p-3">Matricule</th>
-                <th className="p-3">Classe</th>
-                <th className="p-3">Statut carte</th>
-                <th className="p-3 text-right pr-4">Actions</th>
+                <th className="p-3 text-start">{t('thStudent')}</th>
+                <th className="p-3 text-start">{t('thMatricule')}</th>
+                <th className="p-3 text-start">{t('thClass')}</th>
+                <th className="p-3 text-start">{t('thCardStatus')}</th>
+                <th className="p-3 text-end pe-4">{t('thActions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
               {loading ? (
-                <tr><td colSpan={6} className="p-8 text-center text-slate-400">Chargement des élèves...</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-slate-400">{t('loadingStudents')}</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} className="p-8 text-center text-slate-400">Aucun élève trouvé pour ces filtres.</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-slate-400">{t('noStudentsFound')}</td></tr>
               ) : (
                 filtered.map(s => {
                   const cardStatus = statusByStudent.get(s.id);
                   const isSelected = Boolean(selectedStudentIds[s.id]);
                   return (
                     <tr key={s.id} className={`hover:bg-slate-50/60 transition-colors ${isSelected ? 'bg-blue-50/30' : ''}`}>
-                      <td className="p-3 pl-4">
+                      <td className="p-3 ps-4">
                         <input
                           type="checkbox"
                           checked={isSelected}
@@ -337,20 +339,20 @@ export default function CardsStudentsPage() {
                       <td className="p-3">
                         {cardStatus ? (
                           <Badge variant={cardStatus === 'active' ? 'success' : cardStatus === 'revoked' ? 'danger' : 'warning'}>
-                            {cardStatus === 'active' ? 'Active' : cardStatus === 'revoked' ? 'Révoquée' : 'Expirée'}
+                            {cardStatus === 'active' ? t('statusActive') : cardStatus === 'revoked' ? t('statusRevoked') : t('statusExpired')}
                           </Badge>
                         ) : (
-                          <Badge variant="neutral">Aucune</Badge>
+                          <Badge variant="neutral">{t('statusNone')}</Badge>
                         )}
                       </td>
-                      <td className="p-3 pr-4 text-right">
+                      <td className="p-3 pe-4 text-end">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-8 rounded-lg text-xs font-bold"
+                          className="h-8 rounded-lg text-xs font-bold cursor-pointer"
                           onClick={() => setDialog(s)}
                         >
-                          <IdCard className="w-3.5 h-3.5 mr-1" /> Émettre
+                          <IdCard className="w-3.5 h-3.5 me-1" /> {t('btnIssue')}
                         </Button>
                       </td>
                     </tr>
@@ -362,13 +364,13 @@ export default function CardsStudentsPage() {
         </div>
 
         <div className="flex items-center justify-between pt-2">
-          <span className="text-xs font-semibold text-slate-500">Page {page} / {totalPages} · {total} élève(s)</span>
+          <span className="text-xs font-semibold text-slate-500">{t('paginationStudents', { page, totalPages, total })}</span>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="h-9 rounded-xl px-3 text-xs font-bold" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
-              <ChevronLeft className="w-4 h-4" /> Précédent
+            <Button variant="outline" size="sm" className="h-9 rounded-xl px-3 text-xs font-bold cursor-pointer" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+              <ChevronLeft className="w-4 h-4 rtl:rotate-180" /> {t('btnPrevious')}
             </Button>
-            <Button variant="outline" size="sm" className="h-9 rounded-xl px-3 text-xs font-bold" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
-              Suivant <ChevronRight className="w-4 h-4" />
+            <Button variant="outline" size="sm" className="h-9 rounded-xl px-3 text-xs font-bold cursor-pointer" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+              {t('btnNext')} <ChevronRight className="w-4 h-4 rtl:rotate-180" />
             </Button>
           </div>
         </div>
@@ -381,7 +383,7 @@ export default function CardsStudentsPage() {
         subjectType="student"
         templateType="student_id"
         subjectId={dialog?.id ?? ''}
-        subjectLabel="Élève"
+        subjectLabel={t('subjectStudentLabel')}
         subjectName={dialog?.fullName ?? ''}
       />
 
@@ -391,17 +393,17 @@ export default function CardsStudentsPage() {
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-[#0066FF]" />
-              Émission groupée de cartes d&apos;étudiant
+              {t('bulkIssueStudentTitle')}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-2 text-xs">
             <p className="text-slate-600">
-              Vous vous apprêtez à émettre les cartes pour <strong>{selectedCount} élève(s) sélectionné(s)</strong>.
+              {t('bulkIssueStudentDesc', { count: selectedCount })}
             </p>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Modèle de carte publié *</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('publishedCardTemplate')}</label>
               <select
                 value={selectedVersionId}
                 onChange={e => setSelectedVersionId(e.target.value)}
@@ -409,27 +411,27 @@ export default function CardsStudentsPage() {
               >
                 {templateVersions.map(v => (
                   <option key={v.id} value={v.id}>
-                    {v.templateName} (Version {v.versionNumber})
+                    {v.templateName} ({t('versionLabel', { version: v.versionNumber, status: t('statusPublished') })})
                   </option>
                 ))}
               </select>
               {templateVersions.length === 0 && (
-                <p className="text-[11px] text-amber-600 mt-1">Aucune version publiée trouvée pour les cartes d&apos;étudiant.</p>
+                <p className="text-[11px] text-amber-600 mt-1">{t('noPublishedVersionFound')}</p>
               )}
             </div>
           </div>
 
           <DialogFooter className="pt-2">
-            <Button variant="outline" onClick={() => setBulkModalOpen(false)} className="h-9 text-xs rounded-xl border-slate-200">
-              Annuler
+            <Button variant="outline" onClick={() => setBulkModalOpen(false)} className="h-9 text-xs rounded-xl border-slate-200 cursor-pointer">
+              {t('btnCancel')}
             </Button>
             <Button
               onClick={handleBulkIssueSubmit}
               disabled={bulkIssuing || !selectedVersionId || selectedCount === 0}
-              className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5"
+              className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5 cursor-pointer"
             >
               {bulkIssuing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Layers className="w-3.5 h-3.5" />}
-              Lancer l&apos;émission ({selectedCount})
+              {t('btnLaunchIssuance', { count: selectedCount })}
             </Button>
           </DialogFooter>
         </DialogContent>

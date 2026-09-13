@@ -10,6 +10,7 @@ import {
   CheckSquare, Square, Sparkles, Layers, SlidersHorizontal, ArrowLeftRight,
   RotateCcw, ShieldCheck, Check, AlertTriangle, Filter, Award, ChevronRight
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { PromotionsView } from './promotions-view';
 
 type ApiStudent = {
@@ -42,6 +43,8 @@ const DEFAULT_DEMO_STUDENTS: ApiStudent[] = [
 ];
 
 export function PromotionsPlayground({ locale = 'fr' }: { locale?: string }) {
+  const t = useTranslations('Students');
+  const tCommon = useTranslations('Common');
   const [activeTab, setActiveTab] = useState<'standard' | 'variation-a' | 'variation-b' | 'variation-c'>('variation-a');
 
   const [classSections, setClassSections] = useState<ApiClassSection[]>([]);
@@ -96,7 +99,7 @@ export function PromotionsPlayground({ locale = 'fr' }: { locale?: string }) {
   const handleBatchPromote = () => {
     setSaving(true);
     setTimeout(() => {
-      setSuccess(`${selectedIds.size} élèves ont été promus avec succès dans la classe cible.`);
+      setSuccess(t('promotedCountSuccess', { count: selectedIds.size }));
       setSaving(false);
     }, 800);
   };
@@ -118,10 +121,10 @@ export function PromotionsPlayground({ locale = 'fr' }: { locale?: string }) {
               <span className="text-xs font-semibold text-slate-400">Interactif · 3 Variations</span>
             </div>
             <h1 className="text-xl font-bold text-[#16212B] mt-1.5 tracking-tight">
-              Assistant de Passage & Réinscription Annuelle
+              {t('promotionsTitle')}
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Comparez les modèles de passage : Assistant par Étape, Espace Bi-Colonne, et Centre de Transition Annuelle.
+              {t('promotionsSubtitle')}
             </p>
           </div>
 
@@ -136,7 +139,7 @@ export function PromotionsPlayground({ locale = 'fr' }: { locale?: string }) {
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
-              <span>Var. A : Assistant Guidé (3 Étapes)</span>
+              <span>{t('promoVarAStep')}</span>
             </button>
             <button
               onClick={() => setActiveTab('variation-b')}
@@ -147,7 +150,7 @@ export function PromotionsPlayground({ locale = 'fr' }: { locale?: string }) {
               }`}
             >
               <ArrowLeftRight className="w-3.5 h-3.5" />
-              <span>Var. B : Espace Bi-Colonne</span>
+              <span>{t('promoVarBColumn')}</span>
             </button>
             <button
               onClick={() => setActiveTab('variation-c')}
@@ -158,7 +161,7 @@ export function PromotionsPlayground({ locale = 'fr' }: { locale?: string }) {
               }`}
             >
               <Award className="w-3.5 h-3.5" />
-              <span>Var. C : Command Center Annuel</span>
+              <span>{t('promoVarCCommand')}</span>
             </button>
             <button
               onClick={() => setActiveTab('standard')}
@@ -168,7 +171,7 @@ export function PromotionsPlayground({ locale = 'fr' }: { locale?: string }) {
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              <span>Vue Standard</span>
+              <span>{t('promoStandardView')}</span>
             </button>
           </div>
         </div>
@@ -180,7 +183,7 @@ export function PromotionsPlayground({ locale = 'fr' }: { locale?: string }) {
             <CheckCircle2 className="w-5 h-5 shrink-0" />
             <span>{success}</span>
           </div>
-          <Button size="sm" variant="outline" onClick={() => setSuccess(null)} className="h-7 text-xs bg-white">Fermer</Button>
+          <Button size="sm" variant="outline" onClick={() => setSuccess(null)} className="h-7 text-xs bg-white">{tCommon('close')}</Button>
         </div>
       )}
 
@@ -199,7 +202,7 @@ export function PromotionsPlayground({ locale = 'fr' }: { locale?: string }) {
                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
                   wizardStep === 1 ? 'bg-[#2487B8] text-white' : 'bg-slate-200 text-slate-600'
                 }`}>1</div>
-                <span className="text-xs text-[#16212B] truncate">1. Classe d&apos;Origine</span>
+                <span className="text-xs text-[#16212B] truncate">{t('step1OriginClass')}</span>
               </div>
 
               <div
@@ -211,7 +214,7 @@ export function PromotionsPlayground({ locale = 'fr' }: { locale?: string }) {
                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
                   wizardStep === 2 ? 'bg-[#2487B8] text-white' : 'bg-slate-200 text-slate-600'
                 }`}>2</div>
-                <span className="text-xs text-[#16212B] truncate">2. Décision Pédagogique</span>
+                <span className="text-xs text-[#16212B] truncate">{t('step2Pedagogical')}</span>
               </div>
 
               <div
@@ -223,14 +226,14 @@ export function PromotionsPlayground({ locale = 'fr' }: { locale?: string }) {
                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
                   wizardStep === 3 ? 'bg-[#2487B8] text-white' : 'bg-slate-200 text-slate-600'
                 }`}>3</div>
-                <span className="text-xs text-[#16212B] truncate">3. Destination & Quotas</span>
+                <span className="text-xs text-[#16212B] truncate">{t('step3Quotas')}</span>
               </div>
             </div>
           </Card>
 
           {wizardStep === 1 && (
             <Card className="p-6 bg-white rounded-2xl border border-slate-200/90 shadow-2xs space-y-4">
-              <h3 className="font-bold text-sm text-[#16212B]">Sélectionnez la classe source à traiter</h3>
+              <h3 className="font-bold text-sm text-[#16212B]">{t('selectSourceClassPrompt')}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {classSections.map(cs => (
                   <div
@@ -241,7 +244,7 @@ export function PromotionsPlayground({ locale = 'fr' }: { locale?: string }) {
                     }`}
                   >
                     <p className="font-bold text-xs text-[#16212B]">{cs.className}</p>
-                    <p className="text-[10px] text-slate-500">{cs.sectionName} · {cs.enrolled || 24} élèves inscrits</p>
+                    <p className="text-[10px] text-slate-500">{cs.sectionName} · {t('enrolledStudentsCount', { count: cs.enrolled || 24 })}</p>
                   </div>
                 ))}
               </div>

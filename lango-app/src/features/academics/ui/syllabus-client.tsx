@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +17,9 @@ import {
 import { Resource, Chapter, MOCK_CHAPTERS } from '../data/syllabus-config';
 
 export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
+  const t = useTranslations('Academics');
+  const tCommon = useTranslations('Common');
+
   const [selectedSubject, setSelectedSubject] = useState('Mathématiques - 2BAC-A');
   const [chapters, setChapters] = useState<Chapter[]>(MOCK_CHAPTERS);
   const [search, setSearch] = useState('');
@@ -83,12 +87,12 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
   };
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
+    <div className="space-y-6 max-w-[1600px] mx-auto text-start">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Progression Pédagogique & Ressources de Cours</h1>
-          <p className="text-xs text-slate-500 mt-1">Gestion du programme scolaire par chapitre, ressources téléchargeables et supports pédagogiques.</p>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('syllabusTitle')}</h1>
+          <p className="text-xs text-slate-500 mt-1">{t('syllabusSubtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <Button
@@ -98,7 +102,7 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
             className="h-10 rounded-xl px-4 gap-2 border-slate-200 text-xs font-bold"
           >
             <Upload className="w-4 h-4 text-slate-600" />
-            <span>Déposer une ressource</span>
+            <span>{t('btnUploadResource')}</span>
           </Button>
           <Button
             size="sm"
@@ -106,7 +110,7 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
             className="h-10 rounded-xl px-4 gap-2 bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold shadow-2xs"
           >
             <Plus className="w-4 h-4" />
-            <span>Ajouter un chapitre</span>
+            <span>{t('btnAddChapter')}</span>
           </Button>
         </div>
       </div>
@@ -115,7 +119,7 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
       <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="text-xs font-bold text-slate-500">Matière / Programme:</span>
+            <span className="text-xs font-bold text-slate-500">{t('subjectProgramLabel')}</span>
             <select
               value={selectedSubject}
               onChange={e => setSelectedSubject(e.target.value)}
@@ -128,11 +132,11 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
           </div>
 
           <div className="flex items-center gap-4 text-xs">
-            <span className="text-slate-500 font-bold">Avancement Annuel:</span>
+            <span className="text-slate-500 font-bold">{t('annualProgressLabel')}</span>
             <div className="w-48 bg-slate-100 h-2.5 rounded-full overflow-hidden">
               <div className="bg-[#2487B8] h-full transition-all" style={{ width: `${progressPct}%` }} />
             </div>
-            <strong className="text-[#2487B8]">{progressPct}% complété ({completedCount}/{chapters.length} chapitres)</strong>
+            <strong className="text-[#2487B8]">{t('progressCompleted', { pct: progressPct, completed: completedCount, total: chapters.length })}</strong>
           </div>
         </div>
       </Card>
@@ -140,20 +144,20 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
       {/* Search & Resource Filter Toolbar */}
       <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center justify-between gap-3">
         <div className="relative w-full sm:w-64">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <Input
-            placeholder="Filtrer chapitre ou document..."
+            placeholder={t('searchChapterPlaceholder')}
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-9 h-9 text-xs rounded-xl bg-slate-50 border-none"
+            className="ps-9 h-9 text-xs rounded-xl bg-slate-50 border-none"
           />
         </div>
         <div className="flex items-center gap-1">
           {[
-            { id: 'all', label: 'Tous' },
-            { id: 'pdf', label: '📄 PDFs' },
-            { id: 'video', label: '🎥 Vidéos' },
-            { id: 'link', label: '🔗 Liens' },
+            { id: 'all', label: tCommon('all') },
+            { id: 'pdf', label: t('filterPdfs') },
+            { id: 'video', label: t('filterVideos') },
+            { id: 'link', label: t('filterLinks') },
           ].map(f => (
             <button
               key={f.id}
@@ -182,7 +186,7 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
                 </div>
                 <div>
                   <h3 className="text-sm font-extrabold text-[#16212B]">{chap.title}</h3>
-                  <p className="text-[10px] text-slate-400">Volume horaire: {chap.hoursAllocated}h d&apos;enseignement • {chap.resources.length} fichiers joints</p>
+                  <p className="text-[10px] text-slate-400">{t('chapterHoursAllocated', { hours: chap.hoursAllocated, count: chap.resources.length })}</p>
                 </div>
               </div>
 
@@ -192,9 +196,9 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Completed">Terminé ✔</SelectItem>
-                    <SelectItem value="In Progress">En Cours ⏳</SelectItem>
-                    <SelectItem value="Upcoming">À Venir 📅</SelectItem>
+                    <SelectItem value="Completed">{t('statusCompleted')}</SelectItem>
+                    <SelectItem value="In Progress">{t('statusInProgress')}</SelectItem>
+                    <SelectItem value="Upcoming">{t('statusUpcoming')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -202,9 +206,9 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
 
             {/* Resources list */}
             <div className="pt-2 border-t border-slate-100 space-y-2">
-              <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Fichiers & Supports d&apos;Apprentissage ({chap.resources.length})</p>
+              <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t('learningFilesHeader', { count: chap.resources.length })}</p>
               {chap.resources.length === 0 ? (
-                <p className="text-xs text-slate-400 italic">Aucune ressource jointe pour ce chapitre.</p>
+                <p className="text-xs text-slate-400 italic">{t('noResourcesForChapter')}</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
                   {chap.resources.map((res, i) => (
@@ -227,19 +231,19 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
 
       {/* Ajouter un Chapitre Modal Dialog */}
       <Dialog open={isAddChapterOpen} onOpenChange={setIsAddChapterOpen}>
-        <DialogContent className="max-w-md bg-white rounded-2xl p-6">
+        <DialogContent className="max-w-md bg-white rounded-2xl p-6 text-start">
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-[#2487B8]" />
-              Ajouter un chapitre au programme
+              {t('addChapterModalTitle')}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-3 my-3 text-xs">
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Titre du chapitre *</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('chapterTitleLabel')}</label>
               <Input
-                placeholder="Ex. Chapitre 4 : Calcul Intégral"
+                placeholder={t('chapterTitlePlaceholder')}
                 value={newChapter.title}
                 onChange={e => setNewChapter({ ...newChapter, title: e.target.value })}
                 className="h-9 text-xs rounded-xl"
@@ -248,7 +252,7 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Volume horaire (h) *</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('chapterHoursLabel')}</label>
                 <Input
                   type="number"
                   value={newChapter.hoursAllocated}
@@ -258,15 +262,15 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Statut initial *</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('initialStatusLabel')}</label>
                 <Select value={newChapter.status} onValueChange={val => setNewChapter({ ...newChapter, status: val as Chapter['status'] })}>
                   <SelectTrigger className="h-9 text-xs rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Upcoming">À Venir</SelectItem>
-                    <SelectItem value="In Progress">En Cours</SelectItem>
-                    <SelectItem value="Completed">Terminé</SelectItem>
+                    <SelectItem value="Upcoming">{t('statusUpcoming')}</SelectItem>
+                    <SelectItem value="In Progress">{t('statusInProgress')}</SelectItem>
+                    <SelectItem value="Completed">{t('statusCompleted')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -275,10 +279,10 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
 
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setIsAddChapterOpen(false)} className="rounded-xl text-xs h-9">
-              Annuler
+              {tCommon('cancel')}
             </Button>
             <Button onClick={handleCreateChapter} className="rounded-xl text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold">
-              Créer le chapitre
+              {t('btnCreateChapter')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -286,17 +290,17 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
 
       {/* Déposer une Ressource Modal Dialog */}
       <Dialog open={isUploadResourceOpen} onOpenChange={setIsUploadResourceOpen}>
-        <DialogContent className="max-w-md bg-white rounded-2xl p-6">
+        <DialogContent className="max-w-md bg-white rounded-2xl p-6 text-start">
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
               <Upload className="w-5 h-5 text-[#2487B8]" />
-              Déposer un support pédagogique
+              {t('uploadResourceModalTitle')}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-3 my-3 text-xs">
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Chapitre cible *</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('targetChapterLabel')}</label>
               <Select value={newResource.chapterId} onValueChange={val => setNewResource({ ...newResource, chapterId: val })}>
                 <SelectTrigger className="h-9 text-xs rounded-xl">
                   <SelectValue />
@@ -304,7 +308,7 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
                 <SelectContent>
                   {chapters.map(c => (
                     <SelectItem key={c.id} value={c.id}>
-                      Chapitre {c.number}: {c.title.slice(0, 35)}...
+                      {t('targetChapterOption', { number: c.number, title: c.title.slice(0, 35) })}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -312,9 +316,9 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Nom du fichier *</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('fileNameLabel')}</label>
               <Input
-                placeholder="Ex. Fiche_TP_Integrales.pdf"
+                placeholder={t('fileNamePlaceholder')}
                 value={newResource.name}
                 onChange={e => setNewResource({ ...newResource, name: e.target.value })}
                 className="h-9 text-xs rounded-xl"
@@ -323,21 +327,21 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Type de document *</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('docTypeLabel')}</label>
                 <Select value={newResource.type} onValueChange={val => setNewResource({ ...newResource, type: val as Resource['type'] })}>
                   <SelectTrigger className="h-9 text-xs rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pdf">Document PDF</SelectItem>
-                    <SelectItem value="video">Vidéo d&apos;explication</SelectItem>
-                    <SelectItem value="link">Lien externe / Drive</SelectItem>
+                    <SelectItem value="pdf">{t('docTypePdf')}</SelectItem>
+                    <SelectItem value="video">{t('docTypeVideo')}</SelectItem>
+                    <SelectItem value="link">{t('docTypeLink')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Taille estimée</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('estimatedSizeLabel')}</label>
                 <Input
                   value={newResource.size}
                   onChange={e => setNewResource({ ...newResource, size: e.target.value })}
@@ -349,10 +353,10 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
 
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setIsUploadResourceOpen(false)} className="rounded-xl text-xs h-9">
-              Annuler
+              {tCommon('cancel')}
             </Button>
             <Button onClick={handleAddResource} className="rounded-xl text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold">
-              Ajouter le fichier
+              {t('btnAddFile')}
             </Button>
           </DialogFooter>
         </DialogContent>

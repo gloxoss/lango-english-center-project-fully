@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Search, Plus, Trash2, Pencil, ArrowRight, ChevronDown, ChevronUp, UserCog } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { usePermissions } from '@/hooks/use-permissions';
+import { useTranslations } from 'next-intl';
 import { SectionCombobox } from './section-combobox';
 
 type ClassRow = { id: string; name: string; includeSemesters: boolean; periodType: 'semester' | 'trimester' | 'month'; mediumId: string; shiftId: string | null; streamId: string | null; cycle: string | null; schoolId: string };
@@ -47,6 +48,8 @@ type SectionRow = {
 // d'enseignement" have no real schema concept at all - dropped rather than
 // invented, same policy applied throughout this app.
 export function ClassesClient({ locale }: { locale?: string } = {}) {
+  const t = useTranslations('Academics');
+  const tCommon = useTranslations('Common');
   const { can } = usePermissions();
   const [classes, setClasses] = useState<ClassRow[]>([]);
   const [mediums, setMediums] = useState<RefOption[]>([]);
@@ -227,17 +230,24 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
   const rankedTeachers = [...teachers].sort((a, b) => Number(isTeacherAvailable(b.id)) - Number(isTeacherAvailable(a.id)));
   const attachSection = async (classId: string) => { const sectionId = sectionChoice[classId]; if (!sectionId) return; await fetch('/api/academics/class-sections', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ classId, sectionId }) }); setSectionChoice(p => ({ ...p, [classId]: '' })); loadSections(classId); };
 
+  const cycleLabels: Record<string, string> = {
+    maternelle: t('cycleMaternelle'),
+    primaire: t('cyclePrimaire'),
+    college: t('cycleCollege'),
+    lycee: t('cycleLycee'),
+  };
+
   return (
     <div className="space-y-6 max-w-[1200px] mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Classes</h1>
-          <p className="text-xs text-slate-500 mt-1">{classes.length} classe(s) réelle(s) pour cet établissement.</p>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('classesTitle')}</h1>
+          <p className="text-xs text-slate-500 mt-1">{t('classCountSubtitle', { count: classes.length })}</p>
         </div>
         {canManage && (
           <Button size="sm" onClick={openCreate} className="h-9 text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5">
             <Plus className="w-3.5 h-3.5" />
-            Nouvelle classe
+            {t('newClass')}
           </Button>
         )}
       </div>
@@ -245,7 +255,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
       <Card className="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <Input placeholder="Rechercher une classe..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9 text-xs rounded-xl bg-slate-50 border-none" />
+          <Input placeholder={t('searchClassPlaceholder')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9 text-xs rounded-xl bg-slate-50 border-none" />
         </div>
       </Card>
 
@@ -282,7 +292,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
               <label className="font-bold text-slate-600">Cycle (optionnel)</label>
               <select value={form.cycle} onChange={e => setForm({ ...form, cycle: e.target.value })} className="h-9 w-full rounded-xl border border-slate-200 px-3">
                 <option value="">Aucun</option>
-                {CYCLE_OPTIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                {CYCLE_OPTIONS.map(c => <option key={c.value} value={c.value}>{cycleLabels[c.value] || c.label}</option>)}
               </select>
             </div>
             <div className="space-y-1">
@@ -298,10 +308,10 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
           </div>
           <div className="flex items-center gap-2">
             <Button size="sm" disabled={saving} onClick={handleSave} className="h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold">
-              {saving ? 'Enregistrement...' : 'Enregistrer'}
+              {saving ? tCommon('loading') : tCommon('save')}
             </Button>
             <Button size="sm" variant="outline" onClick={() => setShowForm(false)} className="h-9 rounded-xl text-xs font-bold">
-              Annuler
+              {tCommon('cancel')}
             </Button>
           </div>
         </Card>
@@ -311,18 +321,18 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
         <table className="w-full text-left text-xs">
           <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
             <tr>
-              <th className="py-3.5 px-4">Classe</th>
-              <th className="py-3.5 px-4">Médium</th>
-              <th className="py-3.5 px-4">Shift</th>
-              <th className="py-3.5 px-4">Filière</th>
-              <th className="py-3.5 px-4">Cycle</th>
-              <th className="py-3.5 px-4">Période (§6.5)</th>
+              <th className="py-3.5 px-4">{t('classCol')}</th>
+              <th className="py-3.5 px-4">{t('mediumCol')}</th>
+              <th className="py-3.5 px-4">{t('shiftCol')}</th>
+              <th className="py-3.5 px-4">{t('streamCol')}</th>
+              <th className="py-3.5 px-4">{t('cycleCol')}</th>
+              <th className="py-3.5 px-4">{t('periodCol')}</th>
               <th className="py-3.5 px-4" />
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {!loading && filtered.length === 0 && (
-              <tr><td colSpan={7} className="py-8 text-center text-slate-400">Aucune classe configurée.</td></tr>
+              <tr><td colSpan={7} className="py-8 text-center text-slate-400">{t('noClassesConfigured')}</td></tr>
             )}
             {filtered.map(cls => (
               <Fragment key={cls.id}>
@@ -331,10 +341,10 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                 <td className="py-3.5 px-4 text-slate-600">{nameOf(mediums, cls.mediumId) ?? '—'}</td>
                 <td className="py-3.5 px-4 text-slate-600">{nameOf(shifts, cls.shiftId) ?? '—'}</td>
                 <td className="py-3.5 px-4 text-slate-600">{nameOf(streams, cls.streamId) ?? '—'}</td>
-                <td className="py-3.5 px-4 text-slate-600">{CYCLE_OPTIONS.find(c => c.value === cls.cycle)?.label ?? '—'}</td>
+                <td className="py-3.5 px-4 text-slate-600">{(cls.cycle && cycleLabels[cls.cycle]) || '—'}</td>
                 <td className="py-3.5 px-4">
                   <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-[#0066FF] border border-blue-200/60">
-                    {cls.periodType === 'trimester' ? 'Trimestriel' : cls.periodType === 'month' ? 'Mensuel' : 'Semestriel'}
+                    {cls.periodType === 'trimester' ? t('periodTrimester') : cls.periodType === 'month' ? t('periodMonth') : t('periodSemester')}
                   </span>
                 </td>
                 <td className="py-3.5 px-4">
@@ -361,9 +371,9 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
               {expandedClassId === cls.id && (
                 <tr>
                   <td colSpan={7} className="bg-slate-50/60 px-4 py-3">
-                    {canManage && <div className="mb-3 flex max-w-md items-end gap-2"><div className="flex-1"><SectionCombobox sections={allSections} value={sectionChoice[cls.id] || ''} onChange={id => setSectionChoice(p => ({ ...p, [cls.id]: id }))} onCreated={s => setAllSections(p => [...p, s])} /></div><Button size="sm" onClick={() => attachSection(cls.id)} disabled={!sectionChoice[cls.id]} className="bg-[#2487B8] hover:bg-[#1B6C93]">Lier</Button></div>}
-                    {!sectionsByClass[cls.id] && <p className="text-[11px] text-slate-400">Chargement des sections...</p>}
-                    {sectionsByClass[cls.id]?.length === 0 && <p className="text-[11px] text-slate-400">Aucune section pour cette classe.</p>}
+                    {canManage && <div className="mb-3 flex max-w-md items-end gap-2"><div className="flex-1"><SectionCombobox sections={allSections} value={sectionChoice[cls.id] || ''} onChange={id => setSectionChoice(p => ({ ...p, [cls.id]: id }))} onCreated={s => setAllSections(p => [...p, s])} /></div><Button size="sm" onClick={() => attachSection(cls.id)} disabled={!sectionChoice[cls.id]} className="bg-[#2487B8] hover:bg-[#1B6C93]">{t('linkBtn')}</Button></div>}
+                    {!sectionsByClass[cls.id] && <p className="text-[11px] text-slate-400">{t('loadingSections')}</p>}
+                    {sectionsByClass[cls.id]?.length === 0 && <p className="text-[11px] text-slate-400">{t('noSectionsForClass')}</p>}
                     {(sectionsByClass[cls.id]?.length ?? 0) > 0 && (
                       <div className="space-y-2">
                         {sectionsByClass[cls.id]!.map(sec => (

@@ -4,5 +4,10 @@ import { FormIntakeView } from '@/features/crm/ui/form-intake-view';
 export default async function FormIntakePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'communication.send' });
-  return <FormIntakeView locale={locale} />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <FormIntakeView locale={locale} />
+    </main>
+  );
 }

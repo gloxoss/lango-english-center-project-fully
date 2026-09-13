@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -10,7 +11,7 @@ import {
 } from 'lucide-react';
 import { PortalStateView } from '@/components/shared/portal-state';
 import {
-  api, fmtTime, APPOINTMENT_STATUS_LABELS, type Appointment, type Handoff, type Visitor,
+  api, fmtTime, APPOINTMENT_STATUS_KEYS, APPOINTMENT_STATUS_LABELS, type Appointment, type Handoff, type Visitor,
 } from './reception-api';
 import { ReceptionInquiryDialog } from './reception-inquiry-dialog';
 import { ReceptionLookupPanel } from './reception-lookup-panel';
@@ -24,7 +25,10 @@ type HomeData = {
   asOf: string;
 };
 
-export function ReceptionHomeView() {
+export function ReceptionHomeView({ locale = 'fr' }: { locale?: string } = {}) {
+  const t = useTranslations('Reception');
+  const tCommon = useTranslations('Common');
+
   const [home, setHome] = useState<HomeData | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [visitors, setVisitors] = useState<Visitor[]>([]);
@@ -46,11 +50,11 @@ export function ReceptionHomeView() {
     ]);
     setLoading(false);
     if (h.ok && h.data) setHome(h.data);
-    else if (h.error) setError(h.error.message ?? 'Chargement impossible.');
+    else if (h.error) setError(h.error.message ?? t('errorLoad'));
     if (a.ok && Array.isArray(a.data)) setAppointments(a.data);
     if (v.ok && Array.isArray(v.data)) setVisitors(v.data);
     if (ho.ok && Array.isArray(ho.data)) setHandoffs(ho.data);
-  }, []);
+  }, [t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -58,7 +62,7 @@ export function ReceptionHomeView() {
     setActionError(null);
     const res = await api(`/api/reception/appointments/${id}/${action}`, { method: 'POST', body: {} });
     if (!res.ok) {
-      setActionError(res.error?.message ?? 'Action impossible.');
+      setActionError(res.error?.message ?? t('actionFailed'));
       return;
     }
     const today = new Date().toISOString().split('T')[0];
@@ -72,31 +76,31 @@ export function ReceptionHomeView() {
     return <PortalStateView state="loading" />;
   }
   if (error && !home) {
-    return <PortalStateView state="error" action={<Button size="sm" variant="outline" onClick={load}>Réessayer</Button>} />;
+    return <PortalStateView state="error" action={<Button size="sm" variant="outline" onClick={load}>{t('retry')}</Button>} />;
   }
 
   const kpis = [
-    { label: 'Demandes ouvertes', value: home?.openInquiriesCount ?? 0, icon: ClipboardList, href: '/dashboard/receptionist/inquiries' },
-    { label: 'Visiteurs du jour', value: home?.todayVisitsCount ?? 0, icon: Users, href: '/dashboard/receptionist/visitors' },
-    { label: 'RDV aujourd’hui', value: home?.todayAppointmentsCount ?? 0, icon: CalendarCheck2, href: '/dashboard/receptionist/appointments' },
-    { label: 'Tâches ouvertes', value: home?.openHandoffsCount ?? 0, icon: LogOut, href: '/dashboard/receptionist/handoffs' },
+    { label: t('kpiOpenInquiries'), value: home?.openInquiriesCount ?? 0, icon: ClipboardList, href: '/dashboard/receptionist/inquiries' },
+    { label: t('kpiTodayVisits'), value: home?.todayVisitsCount ?? 0, icon: Users, href: '/dashboard/receptionist/visitors' },
+    { label: t('kpiTodayAppointments'), value: home?.todayAppointmentsCount ?? 0, icon: CalendarCheck2, href: '/dashboard/receptionist/appointments' },
+    { label: t('kpiOpenHandoffs'), value: home?.openHandoffsCount ?? 0, icon: LogOut, href: '/dashboard/receptionist/handoffs' },
   ];
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">Portail accueil</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('title')}</h1>
           <p className="mt-0.5 text-xs font-medium text-slate-500">
-            Front office : renseignements, visiteurs, rendez-vous et transferts.
+            {t('subtitle')}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" onClick={() => setInquiryOpen(true)} className="gap-1.5 bg-[#2487B8] hover:bg-[#1B6C93] text-white">
-            <MailPlus className="h-4 w-4" /> Nouvelle demande
+            <MailPlus className="h-4 w-4" /> {t('btnNewInquiry')}
           </Button>
           <Button size="sm" asChild variant="outline" className="gap-1.5">
-            <Link href="/dashboard/receptionist/appointments"><CalendarPlus className="h-4 w-4" /> Rendez-vous</Link>
+            <Link href="/dashboard/receptionist/appointments"><CalendarPlus className="h-4 w-4" /> {t('btnAppointments')}</Link>
           </Button>
         </div>
       </div>
@@ -123,42 +127,46 @@ export function ReceptionHomeView() {
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs lg:col-span-2">
           <div className="flex items-center justify-between">
-            <h2 className="flex items-center gap-2 font-extrabold text-[#16212B]"><CalendarCheck2 className="h-4 w-4 text-[#1B6C93]" /> Rendez-vous d&apos;aujourd&apos;hui</h2>
-            <Button asChild variant="ghost" size="sm"><Link href="/dashboard/receptionist/appointments">Tout voir</Link></Button>
+            <h2 className="flex items-center gap-2 font-extrabold text-[#16212B]"><CalendarCheck2 className="h-4 w-4 text-[#1B6C93]" /> {t('todayAppointmentsTitle')}</h2>
+            <Button asChild variant="ghost" size="sm"><Link href="/dashboard/receptionist/appointments">{t('btnViewAll')}</Link></Button>
           </div>
           {appointments.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-400">Aucun rendez-vous aujourd&apos;hui.</p>
+            <p className="mt-4 text-sm text-slate-400">{t('noAppointmentsToday')}</p>
           ) : (
             <div className="mt-3 divide-y divide-slate-100">
-              {appointments.map((a) => (
-                <div key={a.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
-                  <div className="min-w-0">
-                    <p className="font-semibold text-[#16212B]">{a.guestName}</p>
-                    <p className="truncate text-xs text-slate-500">{a.purpose}{a.hostName ? ` · hôte ${a.hostName}` : ''}</p>
+              {appointments.map((a) => {
+                const statusKey = APPOINTMENT_STATUS_KEYS[a.status];
+                const statusLabel = statusKey ? t(statusKey as any) : (APPOINTMENT_STATUS_LABELS[a.status] ?? a.status);
+                return (
+                  <div key={a.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-[#16212B]">{a.guestName}</p>
+                      <p className="truncate text-xs text-slate-500">{a.purpose}{a.hostName ? ` · ${a.hostName}` : ''}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs text-slate-400">{fmtTime(a.startAt, locale)}</span>
+                      <Badge className="bg-[#DCEBF4] text-[#1B6C93]">{statusLabel}</Badge>
+                      {a.status === 'scheduled' && (
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => appointmentAction(a.id, 'check-in')}>{t('btnCheckIn')}</Button>
+                          <Button size="sm" variant="outline" className="h-7 text-[11px] text-rose-600" onClick={() => appointmentAction(a.id, 'cancel')}>{t('btnCancel')}</Button>
+                        </div>
+                      )}
+                      {a.status === 'checked_in' && (
+                        <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => appointmentAction(a.id, 'complete')}>{t('btnComplete')}</Button>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs text-slate-400">{fmtTime(a.startAt)}</span>
-                    <Badge className="bg-[#DCEBF4] text-[#1B6C93]">{APPOINTMENT_STATUS_LABELS[a.status] ?? a.status}</Badge>
-                    {a.status === 'scheduled' && (
-                      <div className="flex gap-1">
-                        <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => appointmentAction(a.id, 'check-in')}>Pointer</Button>
-                        <Button size="sm" variant="outline" className="h-7 text-[11px] text-rose-600" onClick={() => appointmentAction(a.id, 'cancel')}>Annuler</Button>
-                      </div>
-                    )}
-                    {a.status === 'checked_in' && (
-                      <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => appointmentAction(a.id, 'complete')}>Clôturer</Button>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </Card>
 
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-          <h2 className="flex items-center gap-2 font-extrabold text-[#16212B]"><Users className="h-4 w-4 text-[#1B6C93]" /> Visiteurs présents</h2>
+          <h2 className="flex items-center gap-2 font-extrabold text-[#16212B]"><Users className="h-4 w-4 text-[#1B6C93]" /> {t('checkedInVisitorsTitle')}</h2>
           {visitors.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-400">Aucun visiteur sur site.</p>
+            <p className="mt-4 text-sm text-slate-400">{t('noVisitorsOnSite')}</p>
           ) : (
             <ul className="mt-3 divide-y divide-slate-100">
               {visitors.slice(0, 5).map((v) => (
@@ -168,21 +176,21 @@ export function ReceptionHomeView() {
                     <p className="truncate text-xs text-slate-500">{v.purpose}</p>
                   </div>
                   <Link href={`/dashboard/receptionist/visitors#visit-${v.id}`} className="text-[11px] font-bold text-[#2487B8] hover:underline">
-                    Sortie →
+                    {t('checkoutAction')}
                   </Link>
                 </li>
               ))}
             </ul>
           )}
           <div className="mt-4">
-            <Button asChild size="sm" variant="outline" className="w-full gap-1.5"><Link href="/dashboard/receptionist/visitors"><UserPlus className="h-3.5 w-3.5" /> Gérer les visiteurs</Link></Button>
+            <Button asChild size="sm" variant="outline" className="w-full gap-1.5"><Link href="/dashboard/receptionist/visitors"><UserPlus className="h-3.5 w-3.5" /> {t('btnManageVisitors')}</Link></Button>
           </div>
         </Card>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-          <h2 className="flex items-center gap-2 font-extrabold text-[#16212B]"><PhoneCall className="h-4 w-4 text-[#1B6C93]" /> Renseignements &amp; accueil</h2>
+          <h2 className="flex items-center gap-2 font-extrabold text-[#16212B]"><PhoneCall className="h-4 w-4 text-[#1B6C93]" /> {t('lookupTitle')}</h2>
           <div className="mt-3">
             <ReceptionLookupPanel />
           </div>
@@ -190,11 +198,11 @@ export function ReceptionHomeView() {
 
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center justify-between">
-            <h2 className="flex items-center gap-2 font-extrabold text-[#16212B]"><ClipboardList className="h-4 w-4 text-[#1B6C93]" /> Transferts ouverts</h2>
-            <Button asChild variant="ghost" size="sm"><Link href="/dashboard/receptionist/handoffs">Tout voir</Link></Button>
+            <h2 className="flex items-center gap-2 font-extrabold text-[#16212B]"><ClipboardList className="h-4 w-4 text-[#1B6C93]" /> {t('openHandoffsTitle')}</h2>
+            <Button asChild variant="ghost" size="sm"><Link href="/dashboard/receptionist/handoffs">{t('btnViewAll')}</Link></Button>
           </div>
           {handoffs.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-400">Aucun transfert en cours.</p>
+            <p className="mt-4 text-sm text-slate-400">{t('noHandoffsInProgress')}</p>
           ) : (
             <ul className="mt-3 divide-y divide-slate-100">
               {handoffs.slice(0, 5).map((h) => (

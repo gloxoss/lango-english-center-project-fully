@@ -20,5 +20,10 @@ export default async function HrSelfServicePage({ params }: { params: Promise<{ 
     // landing page can explain why instead of dropping the user silently.
     redirect(`/${locale}/dashboard?notice=employee_portal_unavailable`);
   }
-  return <EmployeePortalView />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <EmployeePortalView />
+    </main>
+  );
 }

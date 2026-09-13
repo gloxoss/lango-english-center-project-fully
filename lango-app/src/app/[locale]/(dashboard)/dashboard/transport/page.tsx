@@ -5,5 +5,10 @@ export default async function TransportOverviewPage({ params }: { params: Promis
   const { locale } = await params;
   await requireTransportPage(locale, { requiredCapability: 'transport.read',
   });
-  return <TransportOverviewView />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <TransportOverviewView />
+    </main>
+  );
 }

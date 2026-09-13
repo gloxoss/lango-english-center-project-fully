@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -60,19 +61,6 @@ type Invitation = {
   createdAt: string;
 };
 
-function statusBadge(status: string) {
-  switch (status) {
-    case 'approved': return <Badge className="bg-[#D1F5E8] text-[#0b5c3a]">Approuvé</Badge>;
-    case 'checked_in': return <Badge className="bg-[#DCEBF4] text-[#1B6C93]">Pointé entrée</Badge>;
-    case 'checked_out': return <Badge className="bg-slate-100 text-slate-600">Sorti</Badge>;
-    case 'pending': return <Badge className="bg-amber-50 text-amber-700">En attente</Badge>;
-    case 'invited': return <Badge className="bg-amber-50 text-amber-700">Invité</Badge>;
-    case 'rejected': return <Badge className="bg-rose-50 text-rose-700">Refusé</Badge>;
-    case 'cancelled': return <Badge className="bg-slate-100 text-slate-500">Annulé</Badge>;
-    default: return <Badge className="bg-slate-100 text-slate-600">{status}</Badge>;
-  }
-}
-
 function toDateInput(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
@@ -81,6 +69,9 @@ function toDateInput(iso: string): string {
 }
 
 export function GuardVisitorsView() {
+  const t = useTranslations('Guard');
+  const tCommon = useTranslations('Common');
+
   const [tab, setTab] = useState<'visits' | 'invitations'>('visits');
   const [error, setError] = useState<string | null>(null);
 
@@ -97,6 +88,19 @@ export function GuardVisitorsView() {
 
   const [passDialog, setPassDialog] = useState<{ visitId: string; rawToken: string } | null>(null);
 
+  const statusBadge = (status: string) => {
+    switch (status) {
+      case 'approved': return <Badge className="bg-[#D1F5E8] text-[#0b5c3a]">{t('statusApproved')}</Badge>;
+      case 'checked_in': return <Badge className="bg-[#DCEBF4] text-[#1B6C93]">{t('statusCheckedIn')}</Badge>;
+      case 'checked_out': return <Badge className="bg-slate-100 text-slate-600">{t('statusCheckedOut')}</Badge>;
+      case 'pending': return <Badge className="bg-amber-50 text-amber-700">{t('statusPending')}</Badge>;
+      case 'invited': return <Badge className="bg-amber-50 text-amber-700">{t('statusInvited')}</Badge>;
+      case 'rejected': return <Badge className="bg-rose-50 text-rose-700">{t('statusRejected')}</Badge>;
+      case 'cancelled': return <Badge className="bg-slate-100 text-slate-500">{t('statusCancelled')}</Badge>;
+      default: return <Badge className="bg-slate-100 text-slate-600">{status}</Badge>;
+    }
+  };
+
   const loadGate = useCallback(async () => {
     const res = await api<{ gate: { id: string; gateName: string } }>('/api/guard/me/gate');
     if (res.ok && res.data?.gate) {
@@ -104,9 +108,9 @@ export function GuardVisitorsView() {
       setGateError(null);
     } else {
       setGate(null);
-      setGateError(res.error?.message ?? 'Aucun portail actif.');
+      setGateError(res.error?.message ?? t('noActiveGate'));
     }
-  }, []);
+  }, [t]);
 
   const loadVisits = useCallback(async () => {
     const params = new URLSearchParams();
@@ -152,7 +156,7 @@ export function GuardVisitorsView() {
       setCreateForm({ visitorFirstName: '', visitorLastName: '', visitorPhone: '', purpose: '', approved: true });
       await loadVisits();
     } else {
-      setError(res.error?.message ?? 'Enregistrement impossible.');
+      setError(res.error?.message ?? tCommon('error'));
     }
   };
 
@@ -164,7 +168,7 @@ export function GuardVisitorsView() {
       body: JSON.stringify({ gateId: gate.id, idempotencyKey: crypto.randomUUID() }),
     });
     if (res.ok) await loadVisits();
-    else setError(res.error?.message ?? 'Pointage d\'entrée impossible.');
+    else setError(res.error?.message ?? tCommon('error'));
   };
 
   const checkOut = async (v: Visit) => {
@@ -175,7 +179,7 @@ export function GuardVisitorsView() {
       body: JSON.stringify({ gateId: gate.id, idempotencyKey: crypto.randomUUID() }),
     });
     if (res.ok) await loadVisits();
-    else setError(res.error?.message ?? 'Pointage de sortie impossible.');
+    else setError(res.error?.message ?? tCommon('error'));
   };
 
   const issuePass = async (v: Visit) => {
@@ -185,7 +189,7 @@ export function GuardVisitorsView() {
       setPassDialog({ visitId: v.id, rawToken: res.data.rawToken });
       await loadVisits();
     } else {
-      setError(res.error?.message ?? 'Émission du pass impossible.');
+      setError(res.error?.message ?? tCommon('error'));
     }
   };
 
@@ -193,36 +197,34 @@ export function GuardVisitorsView() {
     setError(null);
     const res = await api(`/api/guard/visitor-invitations/${inv.id}/${decision}`, { method: 'POST' });
     if (res.ok) await loadInvitations();
-    else setError(res.error?.message ?? 'Décision impossible.');
+    else setError(res.error?.message ?? tCommon('error'));
   };
-
-  const gateAware = gate || gateError;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">Visiteurs</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('visitorsTitle')}</h1>
           <p className="mt-0.5 text-xs font-medium text-slate-500">
-            Pointage entrée/sortie, émission des pass et invitations.
-            {gate ? ` · Portail : ${gate.gateName}` : gateError ? ` · ${gateError}` : ' · Chargement du portail…'}
+            {t('visitorsSubtitle')}
+            {gate ? ` · ${t('gateLabel')} : ${gate.gateName}` : gateError ? ` · ${gateError}` : ` · ${t('loadingGate')}`}
           </p>
         </div>
-        <Badge className="bg-[#DCEBF4] text-[#1B6C93]"><DoorOpen className="mr-1 h-3.5 w-3.5" /> Visiteurs &amp; pass</Badge>
+        <Badge className="bg-[#DCEBF4] text-[#1B6C93]"><DoorOpen className="mr-1 h-3.5 w-3.5" /> {t('visitorsBadge')}</Badge>
       </div>
 
       {error && <p className="flex items-center gap-1 text-sm text-rose-600"><AlertCircle className="h-4 w-4" />{error}</p>}
-      {!gate && !gateError && <p className="text-xs text-slate-500">Chargement du portail…</p>}
+      {!gate && !gateError && <p className="text-xs text-slate-500">{t('loadingGate')}</p>}
 
       <div className="flex gap-2">
         <button
           onClick={() => setTab('visits')}
           className={`rounded-xl px-4 py-2 text-sm font-bold ${tab === 'visits' ? 'bg-[#16212B] text-white' : 'bg-white text-slate-600 border border-slate-200'}`}
-        >Visites</button>
+        >{t('tabVisits')}</button>
         <button
           onClick={() => setTab('invitations')}
           className={`rounded-xl px-4 py-2 text-sm font-bold ${tab === 'invitations' ? 'bg-[#16212B] text-white' : 'bg-white text-slate-600 border border-slate-200'}`}
-        >Invitations ({invitations.length})</button>
+        >{t('tabInvitations', { count: invitations.length })}</button>
       </div>
 
       {tab === 'visits' && (
@@ -234,28 +236,28 @@ export function GuardVisitorsView() {
                 <Input
                   value={q}
                   onChange={e => setQ(e.target.value)}
-                  placeholder="Rechercher (nom, pass, téléphone — 3 caractères min)"
+                  placeholder={t('searchVisitorPlaceholder')}
                   className="pl-9"
                 />
               </div>
               <Select value={statusFilter || undefined} onValueChange={v => setStatusFilter(v)}>
-                <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="Tous les statuts" /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder={t('allStatuses')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="approved">Approuvé</SelectItem>
-                  <SelectItem value="checked_in">Pointé entrée</SelectItem>
-                  <SelectItem value="checked_out">Sorti</SelectItem>
-                  <SelectItem value="pending">En attente</SelectItem>
+                  <SelectItem value="approved">{t('statusApproved')}</SelectItem>
+                  <SelectItem value="checked_in">{t('statusCheckedIn')}</SelectItem>
+                  <SelectItem value="checked_out">{t('statusCheckedOut')}</SelectItem>
+                  <SelectItem value="pending">{t('statusPending')}</SelectItem>
                 </SelectContent>
               </Select>
               <Button onClick={() => { setCreateForm({ visitorFirstName: '', visitorLastName: '', visitorPhone: '', purpose: '', approved: true }); }}>
-                <UserPlus className="mr-2 h-4 w-4" /> Visiteur sans rendez-vous
+                <UserPlus className="mr-2 h-4 w-4" /> {t('btnWalkInVisitor')}
               </Button>
             </div>
           </Card>
 
           <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
             {visits.length === 0 ? (
-              <div className="p-10 text-center text-sm text-slate-500">Aucune visite.</div>
+              <div className="p-10 text-center text-sm text-slate-500">{t('noVisits')}</div>
             ) : (
               <div className="divide-y divide-slate-100">
                 {visits.map(v => (
@@ -263,25 +265,25 @@ export function GuardVisitorsView() {
                     <div className="min-w-0">
                       <p className="font-semibold text-[#16212B]">
                         {v.visitorFirstName} {v.visitorLastName}
-                        {v.passNumber && <span className="ml-2 font-mono text-xs text-slate-400">Pass {v.passNumber}</span>}
+                        {v.passNumber && <span className="ml-2 font-mono text-xs text-slate-400">{t('passLabel', { number: v.passNumber })}</span>}
                       </p>
                       <p className="truncate text-xs text-slate-500">
-                        {v.purpose}{v.hostName ? ` · reçu par ${v.hostName}` : ''}{v.visitorPhone ? ` · ${v.visitorPhone}` : ''}
+                        {v.purpose}{v.hostName ? ` · ${t('hostedBy', { name: v.hostName })}` : ''}{v.visitorPhone ? ` · ${v.visitorPhone}` : ''}
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       {statusBadge(v.status)}
                       {v.status === 'approved' && !v.hasPass && (
-                        <Button size="sm" onClick={() => void issuePass(v)}><QrCode className="mr-1.5 h-3.5 w-3.5" /> Émettre le pass</Button>
+                        <Button size="sm" onClick={() => void issuePass(v)}><QrCode className="mr-1.5 h-3.5 w-3.5" /> {t('btnIssuePass')}</Button>
                       )}
                       {(v.status === 'approved') && (
                         <Button size="sm" variant="outline" disabled={!gate} onClick={() => void checkIn(v)}>
-                          <LogIn className="mr-1.5 h-3.5 w-3.5" /> Entrée
+                          <LogIn className="mr-1.5 h-3.5 w-3.5" /> {t('btnCheckIn')}
                         </Button>
                       )}
                       {v.status === 'checked_in' && (
                         <Button size="sm" variant="outline" disabled={!gate} onClick={() => void checkOut(v)}>
-                          <LogOut className="mr-1.5 h-3.5 w-3.5" /> Sortie
+                          <LogOut className="mr-1.5 h-3.5 w-3.5" /> {t('btnCheckOut')}
                         </Button>
                       )}
                     </div>
@@ -296,7 +298,7 @@ export function GuardVisitorsView() {
       {tab === 'invitations' && (
         <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
           {invitations.length === 0 ? (
-            <div className="p-10 text-center text-sm text-slate-500">Aucune invitation.</div>
+            <div className="p-10 text-center text-sm text-slate-500">{t('noInvitations')}</div>
           ) : (
             <div className="divide-y divide-slate-100">
               {invitations.map(inv => (
@@ -309,7 +311,7 @@ export function GuardVisitorsView() {
                       </span>
                     </p>
                     <p className="truncate text-xs text-slate-500">
-                      {inv.purpose}{inv.hostName ? ` · hôte : ${inv.hostName}` : ''}
+                      {inv.purpose}{inv.hostName ? ` · ${t('hostLabel', { name: inv.hostName })}` : ''}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
@@ -317,9 +319,9 @@ export function GuardVisitorsView() {
                     {inv.status === 'invited' && (
                       <>
                         <Button size="sm" onClick={() => void decideInvitation(inv, 'approve')}>
-                          <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Approuver
+                          <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> {t('btnApprove')}
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => void decideInvitation(inv, 'reject')}>Refuser</Button>
+                        <Button size="sm" variant="outline" onClick={() => void decideInvitation(inv, 'reject')}>{t('btnReject')}</Button>
                       </>
                     )}
                   </div>
@@ -332,25 +334,25 @@ export function GuardVisitorsView() {
 
       <Dialog open={creating} onOpenChange={setCreating}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Visiteur sans rendez-vous</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('dialogWalkInTitle')}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="mb-1 block text-sm font-medium text-slate-700">Prénom *</Label>
+                <Label className="mb-1 block text-sm font-medium text-slate-700">{t('firstName')}</Label>
                 <Input value={createForm.visitorFirstName} onChange={e => setCreateForm({ ...createForm, visitorFirstName: e.target.value })} />
               </div>
               <div>
-                <Label className="mb-1 block text-sm font-medium text-slate-700">Nom *</Label>
+                <Label className="mb-1 block text-sm font-medium text-slate-700">{t('lastName')}</Label>
                 <Input value={createForm.visitorLastName} onChange={e => setCreateForm({ ...createForm, visitorLastName: e.target.value })} />
               </div>
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Téléphone</Label>
-              <Input value={createForm.visitorPhone} onChange={e => setCreateForm({ ...createForm, visitorPhone: e.target.value })} placeholder="Optionnel" />
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('phone')}</Label>
+              <Input value={createForm.visitorPhone} onChange={e => setCreateForm({ ...createForm, visitorPhone: e.target.value })} placeholder={t('locationPlaceholder')} />
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Motif *</Label>
-              <Input value={createForm.purpose} onChange={e => setCreateForm({ ...createForm, purpose: e.target.value })} placeholder="Ex : entretien, livraison…" />
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('purpose')}</Label>
+              <Input value={createForm.purpose} onChange={e => setCreateForm({ ...createForm, purpose: e.target.value })} placeholder={t('purposePlaceholder')} />
             </div>
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <input
@@ -359,16 +361,16 @@ export function GuardVisitorsView() {
                 onChange={e => setCreateForm({ ...createForm, approved: e.target.checked })}
                 className="h-4 w-4 accent-[#1B6C93]"
               />
-              Approuver immédiatement (permet d&apos;émettre un pass)
+              {t('approveImmediately')}
             </label>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreating(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setCreating(false)}>{tCommon('cancel')}</Button>
             <Button
               onClick={() => void createVisit()}
               disabled={!createForm.visitorFirstName.trim() || !createForm.purpose.trim()}
             >
-              {creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />} Enregistrer
+              {creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />} {t('btnRegister')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -376,17 +378,17 @@ export function GuardVisitorsView() {
 
       <Dialog open={passDialog !== null} onOpenChange={o => { if (!o) setPassDialog(null); }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Pass visiteur émis</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('dialogPassIssuedTitle')}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-slate-500">
-              Scannez ou saisissez ce jeton pour la carte du visiteur. Il n&apos;est affiché qu&apos;une seule fois — copiez-le pour générer le QR.
+              {t('passIssuedDesc')}
             </p>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <p className="break-all select-all font-mono text-xs text-[#16212B]">{passDialog?.rawToken}</p>
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={() => setPassDialog(null)}>Fermer</Button>
+            <Button onClick={() => setPassDialog(null)}>{tCommon('close')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +12,6 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  EMPLOYMENT_STATUS_LABELS, EMPLOYMENT_TYPE_LABELS, CONTRACT_TYPE_LABELS,
   type BranchOption, type DepartmentRow, type DesignationRow, type EmployeeRow,
   type EmploymentStatus, type EmploymentType, type ContractType,
 } from '@/features/hr/model/types';
@@ -34,11 +34,13 @@ async function api<T>(url: string, init?: RequestInit): Promise<{ ok: boolean; s
 
 type Step = 'identity' | 'employment' | 'sensitive';
 
-const EMPLOYMENT_TYPES = Object.keys(EMPLOYMENT_TYPE_LABELS) as EmploymentType[];
-const CONTRACT_TYPES = Object.keys(CONTRACT_TYPE_LABELS) as ContractType[];
-
 export function EmployeeWizardView() {
   const router = useRouter();
+  const params = useParams<{ locale?: string }>();
+  const locale = params?.locale ?? 'fr';
+  const t = useTranslations('HR');
+  const tCommon = useTranslations('Common');
+
   const [step, setStep] = useState<Step>('identity');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,6 +110,35 @@ export function EmployeeWizardView() {
     else if (step === 'sensitive') setStep('employment');
   };
 
+  const getTypeLabel = (tp: EmploymentType) => {
+    switch (tp) {
+      case 'permanent': return t('typePermanent');
+      case 'fixed_term': return t('typeFixedTerm');
+      case 'part_time': return t('typePartTime');
+      case 'contractor': return t('typeContractor');
+      case 'internship': return t('typeInternship');
+      case 'substitute': return t('typeSubstitute');
+      default: return tp;
+    }
+  };
+
+  const getContractLabel = (ct: ContractType) => {
+    switch (ct) {
+      case 'cdi': return t('contractCdi');
+      case 'cdd': return t('contractCdd');
+      case 'vacation': return t('contractVacation');
+      default: return ct;
+    }
+  };
+
+  const getStatusLabel = (st: EmploymentStatus) => {
+    switch (st) {
+      case 'active': return t('statusActive');
+      case 'probation': return t('statusProbation');
+      default: return st;
+    }
+  };
+
   const submit = async () => {
     setSaving(true);
     setError(null);
@@ -136,27 +167,30 @@ export function EmployeeWizardView() {
     const res = await api<EmployeeRow>('/api/hr/employees', { method: 'POST', body: JSON.stringify(body) });
     setSaving(false);
     if (res.ok && res.data?.id) {
-      router.push(`/dashboard/hr/employees/${res.data.id}`);
+      router.push(`/${locale}/dashboard/hr/employees/${res.data.id}`);
     } else {
-      setError(res.error?.message ?? 'Enregistrement impossible.');
+      setError(res.error?.message ?? tCommon('error'));
     }
   };
 
   const steps: Array<{ key: Step; label: string }> = [
-    { key: 'identity', label: 'Identité' },
-    { key: 'employment', label: 'Emploi' },
-    { key: 'sensitive', label: 'Données sensibles' },
+    { key: 'identity', label: t('stepIdentity') },
+    { key: 'employment', label: t('stepEmployment') },
+    { key: 'sensitive', label: t('stepSensitive') },
   ];
+
+  const employmentTypes: EmploymentType[] = ['permanent', 'fixed_term', 'part_time', 'contractor', 'internship', 'substitute'];
+  const contractTypes: ContractType[] = ['cdi', 'cdd', 'vacation'];
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard/hr/employees')}>
+        <Button variant="ghost" size="icon" onClick={() => router.push(`/${locale}/dashboard/hr/employees`)} className="cursor-pointer">
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-[#16212B]">Nouvel employé</h1>
-          <p className="text-sm text-slate-500">Créez un dossier personnel. Le compte utilisateur peut être lié ultérieurement.</p>
+          <h1 className="text-2xl font-bold text-[#16212B]">{t('wizardTitle')}</h1>
+          <p className="text-sm text-slate-500">{t('wizardSubtitle')}</p>
         </div>
       </div>
 
@@ -166,7 +200,7 @@ export function EmployeeWizardView() {
             key={s.key}
             type="button"
             onClick={() => stepValid[s.key] && setStep(s.key)}
-            className={`flex-1 rounded-xl border px-3 py-2 text-sm font-medium transition-colors ${
+            className={`flex-1 rounded-xl border px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
               step === s.key ? 'border-[#0066FF] bg-[#0066FF]/5 text-[#0066FF]' : 'border-slate-200 text-slate-500'
             }`}
           >
@@ -179,24 +213,24 @@ export function EmployeeWizardView() {
         {step === 'identity' && (
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-1">
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Prénom *</Label>
-              <Input value={form.firstName} onChange={e => set('firstName')(e.target.value)} placeholder="Ex : Salma" />
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('firstName')} *</Label>
+              <Input value={form.firstName} onChange={e => set('firstName')(e.target.value)} />
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Nom</Label>
-              <Input value={form.lastName} onChange={e => set('lastName')(e.target.value)} placeholder="Ex : Benali" />
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('lastName')}</Label>
+              <Input value={form.lastName} onChange={e => set('lastName')(e.target.value)} />
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Email</Label>
-              <Input type="email" value={form.email} onChange={e => set('email')(e.target.value)} placeholder="prenom.nom@etablissement.ma" />
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('email')}</Label>
+              <Input type="email" value={form.email} onChange={e => set('email')(e.target.value)} />
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Téléphone</Label>
-              <Input value={form.phone} onChange={e => set('phone')(e.target.value)} placeholder="+212 6 00 00 00 00" />
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('phone')}</Label>
+              <Input value={form.phone} onChange={e => set('phone')(e.target.value)} />
             </div>
             <div className="sm:col-span-2">
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Matricule (optionnel)</Label>
-              <Input value={form.employeeId} onChange={e => set('employeeId')(e.target.value)} placeholder="Laissé vide = généré automatiquement" />
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('employeeId')}</Label>
+              <Input value={form.employeeId} onChange={e => set('employeeId')(e.target.value)} />
             </div>
           </div>
         )}
@@ -204,71 +238,71 @@ export function EmployeeWizardView() {
         {step === 'employment' && (
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Type de contrat</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('colType')}</Label>
               <Select value={form.employmentType} onValueChange={set('employmentType')}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {EMPLOYMENT_TYPES.map(t => <SelectItem key={t} value={t}>{EMPLOYMENT_TYPE_LABELS[t]}</SelectItem>)}
+                  {employmentTypes.map(typeItem => <SelectItem key={typeItem} value={typeItem}>{getTypeLabel(typeItem)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Statut</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('colStatus')}</Label>
               <Select value={form.employmentStatus} onValueChange={set('employmentStatus')}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(EMPLOYMENT_STATUS_LABELS) as EmploymentStatus[])
-                    .filter(s => s === 'active' || s === 'probation')
-                    .map(s => <SelectItem key={s} value={s}>{EMPLOYMENT_STATUS_LABELS[s]}</SelectItem>)}
+                  {(['active', 'probation'] as EmploymentStatus[]).map(statusItem => (
+                    <SelectItem key={statusItem} value={statusItem}>{getStatusLabel(statusItem)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Date d&apos;embauche</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('hireDate')}</Label>
               <Input type="date" value={form.hireDate} onChange={e => set('hireDate')(e.target.value)} />
             </div>
             <div>
               <Label className="mb-1 block text-sm font-medium text-slate-700">Succursale</Label>
               <Select value={form.branchId} onValueChange={set('branchId')}>
-                <SelectTrigger><SelectValue placeholder="Aucune" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
                   {branches.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Département</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('department')}</Label>
               <Select value={form.departmentId} onValueChange={set('departmentId')}>
-                <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
                   {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Poste</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('designation')}</Label>
               <Select value={form.designationId} onValueChange={set('designationId')}>
-                <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
                   {designations.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Responsable hiérarchique</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('manager')}</Label>
               <Select value={form.managerEmployeeId} onValueChange={set('managerEmployeeId')}>
-                <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
                   {managerOptions.map(e => <SelectItem key={e.id} value={e.id}>{e.displayName}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Heures hebdomadaires</Label>
-              <Input type="number" min={0} max={168} value={form.workloadHours} onChange={e => set('workloadHours')(e.target.value)} placeholder="Ex : 35" />
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('workload')}</Label>
+              <Input type="number" min={0} max={168} value={form.workloadHours} onChange={e => set('workloadHours')(e.target.value)} />
             </div>
-            <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Personnes à charge</Label>
+            <div className="sm:col-span-2">
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('dependants')}</Label>
               <Input type="number" min={0} max={20} value={form.dependantsCount} onChange={e => set('dependantsCount')(e.target.value)} />
             </div>
           </div>
@@ -277,58 +311,54 @@ export function EmployeeWizardView() {
         {step === 'sensitive' && (
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">N° CNSS</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('cnss')}</Label>
               <Input value={form.cnssNumber} onChange={e => set('cnssNumber')(e.target.value)} />
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">N° AMO</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('amo')}</Label>
               <Input value={form.amoNumber} onChange={e => set('amoNumber')(e.target.value)} />
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">RIB bancaire</Label>
-              <Input value={form.bankRib} onChange={e => set('bankRib')(e.target.value)} placeholder="xx xxx xxx xxx xxxxxxxx xx" />
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('rib')}</Label>
+              <Input value={form.bankRib} onChange={e => set('bankRib')(e.target.value)} />
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Type de contrat</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('colType')}</Label>
               <Select value={form.contractType} onValueChange={set('contractType')}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {CONTRACT_TYPES.map(t => <SelectItem key={t} value={t}>{CONTRACT_TYPE_LABELS[t]}</SelectItem>)}
+                  {contractTypes.map(c => <SelectItem key={c} value={c}>{getContractLabel(c)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">CIN</Label>
-              <Input value={form.nationalId} onChange={e => set('nationalId')(e.target.value)} placeholder="Ex : AB123456" />
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('nationalId')}</Label>
+              <Input value={form.nationalId} onChange={e => set('nationalId')(e.target.value)} />
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Salaire mensuel (MAD)</Label>
-              <Input value={form.salary} onChange={e => set('salary')(e.target.value)} placeholder="Ex : 8500.00" />
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('salary')}</Label>
+              <Input value={form.salary} onChange={e => set('salary')(e.target.value)} />
             </div>
-            <p className="flex items-start gap-2 text-xs text-slate-500 sm:col-span-2">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              Ces données ne sont visibles que par les profils disposant de la permission de lecture des données sensibles.
-            </p>
           </div>
         )}
 
         {error && (
           <p className="mt-4 flex items-center gap-1 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-            <AlertCircle className="h-4 w-4" />{error}
+            <AlertCircle className="h-4 w-4 shrink-0" />{error}
           </p>
         )}
 
         <div className="mt-6 flex items-center justify-between">
-          <Button variant="outline" onClick={back} disabled={step === 'identity'}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Retour
+          <Button variant="outline" onClick={back} disabled={step === 'identity'} className="cursor-pointer">
+            <ArrowLeft className="me-2 h-4 w-4" /> {t('btnPrevious')}
           </Button>
           {step === 'sensitive' ? (
-            <Button onClick={submit} disabled={saving}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} <Save className="mr-2 h-4 w-4" /> Enregistrer
+            <Button onClick={submit} disabled={saving} className="cursor-pointer">
+              {saving && <Loader2 className="me-2 h-4 w-4 animate-spin" />} <Save className="me-2 h-4 w-4" /> {t('btnSaveEmployee')}
             </Button>
           ) : (
-            <Button onClick={next} disabled={!stepValid[step]}>
-              Suivant <ArrowRight className="ml-2 h-4 w-4" />
+            <Button onClick={next} disabled={!stepValid[step]} className="cursor-pointer">
+              {t('btnNext')} <ArrowRight className="ms-2 h-4 w-4" />
             </Button>
           )}
         </div>

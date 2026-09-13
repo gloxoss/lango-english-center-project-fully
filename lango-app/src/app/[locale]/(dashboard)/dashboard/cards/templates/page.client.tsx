@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,22 +33,24 @@ interface Template {
   createdAt: string;
 }
 
-const TYPE_LABELS: Record<string, string> = {
-  student_id: 'Carte d\'étudiant',
-  employee_id: 'Carte d\'employé',
-  admit_card: 'Convocation d\'examen',
-};
-
-const STATUS_BADGE: Record<string, { label: string, variant: 'neutral' | 'info' | 'success' | 'danger' | 'warning' | 'signal' }> = {
-  draft: { label: 'Brouillon', variant: 'neutral' },
-  published: { label: 'Publié', variant: 'success' },
-  archived: { label: 'Archivé', variant: 'warning' },
-};
-
 export default function TemplatesLibraryPage() {
+  const t = useTranslations('Cards');
   const router = useRouter();
   const params = useParams<{ locale?: string }>();
   const locale = params?.locale ?? 'fr';
+
+  const TYPE_LABELS: Record<string, string> = {
+    student_id: t('typeStudentId'),
+    employee_id: t('typeEmployeeId'),
+    admit_card: t('typeAdmitCard'),
+  };
+
+  const STATUS_BADGE: Record<string, { label: string, variant: 'neutral' | 'info' | 'success' | 'danger' | 'warning' | 'signal' }> = {
+    draft: { label: t('statusDraft'), variant: 'neutral' },
+    published: { label: t('statusPublished'), variant: 'success' },
+    archived: { label: t('statusArchived'), variant: 'warning' },
+  };
+
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -81,18 +84,18 @@ export default function TemplatesLibraryPage() {
         // navigate to designer
         router.push(`/${locale}/dashboard/cards/templates/${data.data.template.id}/edit`);
       } else {
-        alert(data.message || 'Erreur lors de la création');
+        alert(data.message || t('errorCreateTemplate'));
       }
     } finally {
       setCreating(false);
     }
   };
 
-  const filtered = templates.filter(t => t.name.toLowerCase().includes(search.toLowerCase()));
+  const filtered = templates.filter(tItem => tItem.name.toLowerCase().includes(search.toLowerCase()));
 
-  const studentCount = templates.filter(t => t.type === 'student_id').length;
-  const admitCount = templates.filter(t => t.type === 'admit_card').length;
-  const publishedCount = templates.filter(t => t.status === 'published').length;
+  const studentCount = templates.filter(tItem => tItem.type === 'student_id').length;
+  const admitCount = templates.filter(tItem => tItem.type === 'admit_card').length;
+  const publishedCount = templates.filter(tItem => tItem.status === 'published').length;
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
@@ -103,15 +106,15 @@ export default function TemplatesLibraryPage() {
             <IdCard className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Modèles de Cartes</h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Gérez les modèles de cartes d'étudiants, d'employés et convocations.</p>
+            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('templatesTitle')}</h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">{t('templatesSubtitle')}</p>
           </div>
         </div>
         <Button 
           onClick={() => setIsCreateOpen(true)}
           className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl shadow-2xs gap-1.5 px-4 cursor-pointer"
         >
-          <Plus className="w-4 h-4" /><span>Nouveau Modèle</span>
+          <Plus className="w-4 h-4" /><span>{t('newTemplate')}</span>
         </Button>
       </div>
 
@@ -119,7 +122,7 @@ export default function TemplatesLibraryPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Modèles</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('kpiTotalTemplates')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{templates.length}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2487B8] flex items-center justify-center shrink-0">
@@ -129,7 +132,7 @@ export default function TemplatesLibraryPage() {
         
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Cartes Étudiant</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('kpiStudentCards')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{studentCount}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
@@ -139,7 +142,7 @@ export default function TemplatesLibraryPage() {
 
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Convocations</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('kpiAdmitCards')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{admitCount}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
@@ -149,7 +152,7 @@ export default function TemplatesLibraryPage() {
 
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Modèles Publiés</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('kpiPublishedTemplates')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{publishedCount}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
@@ -162,12 +165,12 @@ export default function TemplatesLibraryPage() {
       <Card className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-4">
         <div className="flex justify-between items-center">
           <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input 
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Rechercher un modèle..." 
-              className="pl-9 h-9 text-xs rounded-xl"
+              placeholder={t('searchTemplatePlaceholder')} 
+              className="ps-9 h-9 text-xs rounded-xl"
             />
           </div>
         </div>
@@ -175,49 +178,49 @@ export default function TemplatesLibraryPage() {
         <div className="rounded-xl border border-slate-100 overflow-hidden">
           <table className="w-full text-xs">
             <thead>
-              <tr className="bg-slate-50/50 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                <th className="p-3 pl-4">Nom du modèle</th>
-                <th className="p-3">Type</th>
-                <th className="p-3">Statut</th>
-                <th className="p-3">Défaut</th>
-                <th className="p-3">Créé le</th>
-                <th className="p-3 text-right pr-4">Actions</th>
+              <tr className="bg-slate-50/50 text-start text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                <th className="p-3 ps-4 text-start">{t('thTemplateName')}</th>
+                <th className="p-3 text-start">{t('thType')}</th>
+                <th className="p-3 text-start">{t('thStatus')}</th>
+                <th className="p-3 text-start">{t('thDefault')}</th>
+                <th className="p-3 text-start">{t('thCreatedAt')}</th>
+                <th className="p-3 text-end pe-4">{t('thActions')}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-400">Chargement...</td>
+                  <td colSpan={6} className="p-8 text-center text-slate-400">{t('loadingTemplates')}</td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-400">Aucun modèle trouvé.</td>
+                  <td colSpan={6} className="p-8 text-center text-slate-400">{t('noTemplatesFound')}</td>
                 </tr>
               ) : (
-                filtered.map(t => (
-                  <tr key={t.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                    <td className="p-3 pl-4 font-semibold text-slate-700">{t.name}</td>
-                    <td className="p-3 text-slate-600">{TYPE_LABELS[t.type] || t.type}</td>
+                filtered.map(tItem => (
+                  <tr key={tItem.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                    <td className="p-3 ps-4 font-semibold text-slate-700">{tItem.name}</td>
+                    <td className="p-3 text-slate-600">{TYPE_LABELS[tItem.type] || tItem.type}</td>
                     <td className="p-3">
-                      <Badge variant={STATUS_BADGE[t.status]?.variant || 'neutral'}>
-                        {STATUS_BADGE[t.status]?.label || t.status}
+                      <Badge variant={STATUS_BADGE[tItem.status]?.variant || 'neutral'}>
+                        {STATUS_BADGE[tItem.status]?.label || tItem.status}
                       </Badge>
                     </td>
                     <td className="p-3">
-                      {t.isDefault && <Badge variant="info">Défaut</Badge>}
+                      {tItem.isDefault && <Badge variant="info">{t('badgeDefault')}</Badge>}
                     </td>
                     <td className="p-3 text-slate-500">
-                      {new Date(t.createdAt).toLocaleDateString('fr-FR')}
+                      {new Date(tItem.createdAt).toLocaleDateString(locale === 'ar' ? 'ar-EG' : locale === 'en' ? 'en-US' : 'fr-FR')}
                     </td>
-                    <td className="p-3 pr-4 text-right">
+                    <td className="p-3 pe-4 text-end">
                       <Button 
                         variant="outline"
                         size="sm"
                         className="h-8 rounded-lg text-xs font-medium cursor-pointer"
-                        onClick={() => router.push(`/${locale}/dashboard/cards/templates/${t.id}/edit`)}
+                        onClick={() => router.push(`/${locale}/dashboard/cards/templates/${tItem.id}/edit`)}
                       >
-                        <PenTool className="w-3.5 h-3.5 mr-1.5" />
-                        Éditer
+                        <PenTool className="w-3.5 h-3.5 me-1.5" />
+                        {t('btnEdit')}
                       </Button>
                     </td>
                   </tr>
@@ -232,41 +235,41 @@ export default function TemplatesLibraryPage() {
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Nouveau Modèle</DialogTitle>
+            <DialogTitle>{t('dialogNewTemplate')}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-xs font-bold text-slate-700">Nom du modèle</Label>
+              <Label htmlFor="name" className="text-xs font-bold text-slate-700">{t('dialogTemplateName')}</Label>
               <Input
                 id="name"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                placeholder="Ex: Carte Étudiant 2026"
+                placeholder={t('dialogTemplateNamePlaceholder')}
                 className="text-xs h-9"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="type" className="text-xs font-bold text-slate-700">Type de document</Label>
+              <Label htmlFor="type" className="text-xs font-bold text-slate-700">{t('dialogDocType')}</Label>
               <Select value={newType} onValueChange={setNewType}>
                 <SelectTrigger className="h-9 text-xs">
-                  <SelectValue placeholder="Sélectionnez un type" />
+                  <SelectValue placeholder={t('dialogSelectType')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="student_id" className="text-xs">Carte d'étudiant</SelectItem>
-                  <SelectItem value="employee_id" className="text-xs">Carte d'employé</SelectItem>
-                  <SelectItem value="admit_card" className="text-xs">Convocation d'examen</SelectItem>
+                  <SelectItem value="student_id" className="text-xs">{t('typeStudentId')}</SelectItem>
+                  <SelectItem value="employee_id" className="text-xs">{t('typeEmployeeId')}</SelectItem>
+                  <SelectItem value="admit_card" className="text-xs">{t('typeAdmitCard')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="text-xs h-9 cursor-pointer">Annuler</Button>
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="text-xs h-9 cursor-pointer">{t('btnCancel')}</Button>
             <Button 
               className="bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs h-9 font-bold shadow-2xs gap-1.5 px-4 cursor-pointer" 
               onClick={handleCreate} 
               disabled={creating || !newName}
             >
-              {creating ? 'Création...' : 'Créer le modèle'}
+              {creating ? t('btnCreating') : t('btnCreateTemplate')}
             </Button>
           </DialogFooter>
         </DialogContent>

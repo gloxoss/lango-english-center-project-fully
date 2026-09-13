@@ -967,6 +967,41 @@
       "when": 1789400029000,
       "tag": "0136_hash_two_factor_otp",
       "breakpoints": true
+    },
+    {
+      "idx": 138,
+      "version": "7",
+      "when": 1789400030000,
+      "tag": "0137_two_factor_lockout",
+      "breakpoints": true
+    },
+    {
+      "idx": 139,
+      "version": "7",
+      "when": 1789400031000,
+      "tag": "0138_academic_rooms_registry",
+      "breakpoints": true
+    },
+    {
+      "idx": 140,
+      "version": "7",
+      "when": 1789400032000,
+      "tag": "0139_inventory_reorder_points",
+      "breakpoints": true
+    },
+    {
+      "idx": 141,
+      "version": "7",
+      "when": 1789400033000,
+      "tag": "0140_report_run_heartbeat",
+      "breakpoints": true
+    },
+    {
+      "idx": 142,
+      "version": "7",
+      "when": 1789400034000,
+      "tag": "0141_filiere_structure",
+      "breakpoints": true
     }
   ]
 }

@@ -1,3 +1,5 @@
+import type { ExportFormat, ReportPreviewResult } from '../types/reporting-types';
+import type { RunSnapshot } from './stuck-run-policy';
 import crypto from 'node:crypto';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/libs/DB';
@@ -9,7 +11,6 @@ import { HRAdapter } from '../adapters/hr-adapter';
 import { InventoryAdapter } from '../adapters/inventory-adapter';
 import { StudentAdapter } from '../adapters/student-adapter';
 import { reportArtifacts, reportRuns } from '../models/reporting-schema';
-import type { ExportFormat, ReportPreviewResult } from '../types/reporting-types';
 import { CatalogService } from './catalog-service';
 import { CsvExporter } from './exporters/csv-exporter';
 import { ExcelExporter } from './exporters/excel-exporter';
@@ -17,9 +18,18 @@ import { PdfExporter } from './exporters/pdf-exporter';
 import { checkReportReadiness } from './readiness-checker';
 import { ReportNotReadyError } from './report-not-ready-error';
 import { saveGeneratedFile } from './report-storage';
+import { planSweep } from './stuck-run-policy';
 
 const PREVIEW_ROW_LIMIT = 50;
 const EXPORT_ROW_LIMIT = 50_000;
+
+// How often a running report tells the world it is still alive. Comfortably
+// shorter than HEARTBEAT_TIMEOUT_MS so a healthy run is never swept.
+const HEARTBEAT_INTERVAL_MS = 30 * 1000;
+
+// Upper bound on one sweep, so a backlog of thousands cannot turn recovery into
+// a single enormous transaction.
+const SWEEP_BATCH_LIMIT = 500;
 
 // Real key-to-adapter routing (future-implementation/advanced-reporting
 // remediation, section-04) - every catalog key maps to its real adapter
@@ -116,12 +126,33 @@ export class RunEngine {
   private static async executeRunInBackground(runId: string, tenantId: string, reportKey: string, parameters: Record<string, any>, format: ExportFormat, requesterId: string) {
     const startTime = Date.now();
 
-    try {
-      await db
-        .update(reportRuns)
-        .set({ status: 'running' })
-        .where(eq(reportRuns.id, runId));
+    const startedAt = new Date().toISOString();
+    await db
+      .update(reportRuns)
+      .set({
+        status: 'running',
+        startedAt,
+        heartbeatAt: startedAt,
+        attempts: sql`${reportRuns.attempts} + 1`,
+      })
+      .where(eq(reportRuns.id, runId));
 
+    // A run that dies mid-flight leaves no trace except a heartbeat that stops,
+    // so it is the recovery sweep's only reliable signal. unref() keeps the timer
+    // from holding the process open on its own.
+    const heartbeat = setInterval(() => {
+      void db
+        .update(reportRuns)
+        .set({ heartbeatAt: new Date().toISOString() })
+        .where(eq(reportRuns.id, runId))
+        .catch(() => {
+          // A missed beat is not worth failing the report over; the sweep's
+          // timeout is many beats wide.
+        });
+    }, HEARTBEAT_INTERVAL_MS);
+    heartbeat.unref?.();
+
+    try {
       const definition = CatalogService.getDefinitionByKey(reportKey);
       if (!definition) {
         throw new Error(`Report definition ${reportKey} missing`);
@@ -177,6 +208,10 @@ export class RunEngine {
           finishedAt: new Date().toISOString(),
         })
         .where(eq(reportRuns.id, runId));
+    } finally {
+      // Stopped on success and on failure alike. A timer left running would keep
+      // writing heartbeats for a finished run and hold the process open.
+      clearInterval(heartbeat);
     }
   }
 
@@ -209,29 +244,88 @@ export class RunEngine {
   }
 
   /**
-   * Recovers stuck report runs (e.g. after server restart or timeout) (§21.1).
-   * Any run stuck in 'running' or 'queued' for > 15 minutes is transitioned to 'failed'.
+   * Recovers report runs whose process died — a deploy, a crash, an OOM kill
+   * (§21.1).
+   *
+   * Staleness is judged from the heartbeat, not from `created_at`: the old
+   * created_at rule killed healthy long-running reports and healthy
+   * long-queued ones, while missing a run that died in its first second.
+   *
+   * A dead run under the attempt cap is requeued rather than failed, so a deploy
+   * landing mid-report costs the user nothing. Past the cap it fails, because a
+   * report that crashes the worker will crash it again.
+   *
+   * Pass no tenantId to sweep every tenant — that is the scheduled-sweep case,
+   * and it is why this method is exempt from the usual tenant-scoping rule.
    */
-  static async recoverStuckRuns(tenantId?: string, maxAgeMinutes = 15): Promise<number> {
-    const cutoff = new Date(Date.now() - maxAgeMinutes * 60 * 1000).toISOString();
-    const conditions = [
-      inArray(reportRuns.status, ['running', 'queued']),
-      sql`${reportRuns.createdAt} < ${cutoff}`,
-    ];
+  static async recoverStuckRuns(tenantId?: string): Promise<{ requeued: number; failed: number; inspected: number }> {
+    const conditions = [inArray(reportRuns.status, ['running', 'queued'])];
     if (tenantId) {
       conditions.push(eq(reportRuns.tenantId, tenantId));
     }
 
-    const updated = await db
-      .update(reportRuns)
-      .set({
-        status: 'failed',
-        errorMessage: 'Exécution interrompue (délai d\'exécution dépassé ou redémarrage du serveur).',
-        finishedAt: new Date().toISOString(),
+    const candidates = await db
+      .select({
+        id: reportRuns.id,
+        status: reportRuns.status,
+        createdAt: reportRuns.createdAt,
+        startedAt: reportRuns.startedAt,
+        heartbeatAt: reportRuns.heartbeatAt,
+        attempts: reportRuns.attempts,
       })
+      .from(reportRuns)
       .where(and(...conditions))
-      .returning({ id: reportRuns.id });
+      .limit(SWEEP_BATCH_LIMIT);
 
-    return updated.length;
+    if (candidates.length === 0) {
+      return { requeued: 0, failed: 0, inspected: 0 };
+    }
+
+    // One instant for the whole batch, so two runs with identical heartbeats are
+    // never judged differently.
+    const plan = planSweep(candidates as RunSnapshot[], new Date());
+
+    if (plan.requeue.length > 0) {
+      await db
+        .update(reportRuns)
+        .set({
+          status: 'queued',
+          // Cleared so the requeued run is not immediately judged stale again by
+          // the heartbeat of the process that died.
+          startedAt: null,
+          heartbeatAt: null,
+          errorMessage: 'Exécution interrompue puis remise en file d\'attente.',
+        })
+        .where(inArray(reportRuns.id, plan.requeue));
+    }
+
+    // Grouped by message so each distinct reason is one statement rather than one
+    // per run.
+    const byMessage = new Map<string, string[]>();
+    for (const item of plan.fail) {
+      const ids = byMessage.get(item.message);
+      if (ids) {
+        ids.push(item.id);
+      } else {
+        byMessage.set(item.message, [item.id]);
+      }
+    }
+
+    for (const [message, ids] of byMessage) {
+      await db
+        .update(reportRuns)
+        .set({
+          status: 'failed',
+          errorMessage: message,
+          finishedAt: new Date().toISOString(),
+        })
+        .where(inArray(reportRuns.id, ids));
+    }
+
+    return {
+      requeued: plan.requeue.length,
+      failed: plan.fail.length,
+      inspected: candidates.length,
+    };
   }
 }

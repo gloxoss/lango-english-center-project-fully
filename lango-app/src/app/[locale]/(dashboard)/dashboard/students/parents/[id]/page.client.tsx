@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,16 +51,16 @@ type GuardianDetail = {
 type PaymentEntry = { type: 'invoice' | 'payment'; id: string; studentId: string; studentName: string; amount: number; status: string; date: string };
 type ActivityEntry = { action: string; entityType: string; actorId: string; createdAt: string };
 
-const TABS = [
-  { id: 'children', label: 'Enfants liés' },
-  { id: 'info', label: 'Informations' },
-  { id: 'payments', label: 'Paiements' },
-  { id: 'activity', label: 'Activité' },
-] as const;
+type TabId = 'children' | 'info' | 'payments' | 'activity';
 
-type TabId = typeof TABS[number]['id'];
-
-function RelationBadge({ type }: { type: string }) {
+function RelationBadge({ type, t }: { type: string; t: (key: string) => string }) {
+  const relationLabels: Record<string, string> = {
+    Parent: t('relParent'),
+    Père: t('relFather'),
+    Mère: t('relMother'),
+    Tuteur: t('relGuardian'),
+    'Grand-parent': t('relGrandparent'),
+  };
   const map: Record<string, string> = {
     Parent: 'bg-[#DCEBF4] text-[#1B6C93]',
     Père: 'bg-[#DCEBF4] text-[#1B6C93]',
@@ -67,10 +68,11 @@ function RelationBadge({ type }: { type: string }) {
     Tuteur: 'bg-amber-100 text-amber-700',
     'Grand-parent': 'bg-emerald-100 text-emerald-700',
   };
+  const label = relationLabels[type] ?? type;
   const cls = map[type] ?? 'bg-slate-100 text-slate-600';
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${cls}`}>
-      {type}
+      {label}
     </span>
   );
 }
@@ -79,7 +81,9 @@ export default function GuardianDetailPage() {
   const params = useParams();
   const router = useRouter();
   const guardianId = typeof params.id === 'string' ? params.id : '';
-  const locale = typeof params.locale === 'string' ? params.locale : 'fr';
+  const currentLocale = useLocale();
+  const locale = typeof params.locale === 'string' ? params.locale : currentLocale;
+  const t = useTranslations('Guardians');
   const { can } = usePermissions();
 
   const [guardian, setGuardian] = useState<GuardianDetail | null>(null);
@@ -101,6 +105,13 @@ export default function GuardianDetailPage() {
   const [payments, setPayments] = useState<PaymentEntry[] | null>(null);
   const [activity, setActivity] = useState<ActivityEntry[] | null>(null);
 
+  const tabs: { id: TabId; label: string }[] = [
+    { id: 'children', label: t('tabLinkedChildren') },
+    { id: 'info', label: t('tabInformation') },
+    { id: 'payments', label: t('tabPayments') },
+    { id: 'activity', label: t('tabActivity') },
+  ];
+
   useEffect(() => {
     if (!guardianId) return;
     setLoading(true);
@@ -121,12 +132,12 @@ export default function GuardianDetailPage() {
             preferredLanguage: json.data.preferredLanguage,
           });
         } else {
-          setError(json.message ?? 'Tuteur introuvable.');
+          setError(json.message ?? t('guardianNotFound'));
         }
       })
-      .catch(err => { console.error(err); setError('Impossible de charger les données.'); })
+      .catch(err => { console.error(err); setError(t('loadError')); })
       .finally(() => setLoading(false));
-  }, [guardianId]);
+  }, [guardianId, t]);
 
   async function handleSave() {
     setSaving(true);
@@ -149,14 +160,14 @@ export default function GuardianDetailPage() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setSaveError(json.message ?? 'Impossible de sauvegarder.');
+        setSaveError(json.message ?? t('saveError'));
         return;
       }
       setGuardian(prev => prev ? { ...prev, ...json.data } : null);
       setEditMode(false);
     } catch (err) {
       console.error(err);
-      setSaveError('Connexion impossible.');
+      setSaveError(t('connectionError'));
     } finally {
       setSaving(false);
     }
@@ -171,7 +182,7 @@ export default function GuardianDetailPage() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.message ?? 'Impossible de délier.');
+        setError(json.message ?? t('unlinkError'));
         return;
       }
       setGuardian(prev => prev
@@ -181,7 +192,7 @@ export default function GuardianDetailPage() {
       setUnlinkTarget(null);
     } catch (err) {
       console.error(err);
-      setError('Connexion impossible.');
+      setError(t('connectionError'));
     } finally {
       setUnlinking(false);
     }
@@ -195,8 +206,7 @@ export default function GuardianDetailPage() {
     if (activeTab === 'activity' && activity === null) {
       fetch(`/api/students/parents/${guardianId}/activity`).then(r => r.json()).then(j => j?.success && setActivity(j.data));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, guardianId]);
+  }, [activeTab, guardianId, payments, activity]);
 
   async function handleLinkFieldChange(student: LinkedStudent, patch: { emergencyPriority?: number | null; canPickup?: boolean }) {
     setGuardian(prev => prev
@@ -221,7 +231,7 @@ export default function GuardianDetailPage() {
     return (
       <div className="max-w-lg mx-auto mt-12 p-6 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-sm font-semibold flex items-center gap-3">
         <AlertCircle className="w-5 h-5 shrink-0" />
-        <span>{error ?? 'Tuteur introuvable.'}</span>
+        <span>{error ?? t('guardianNotFound')}</span>
       </div>
     );
   }
@@ -237,8 +247,8 @@ export default function GuardianDetailPage() {
           onClick={() => router.push(`/${locale}/dashboard/students/parents`)}
           className="flex items-center gap-2 text-xs text-slate-500 hover:text-[#1B6C93] font-semibold transition-colors w-fit"
         >
-          <ArrowLeft className="w-4 h-4" />
-          Retour aux tuteurs
+          <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
+          {t('backToGuardians')}
         </button>
       </div>
 
@@ -274,7 +284,7 @@ export default function GuardianDetailPage() {
           <div className="flex gap-2 shrink-0">
             <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" />
-              {guardian.linkedStudents.length} enfant{guardian.linkedStudents.length > 1 ? 's' : ''}
+              {t('childrenBadge', { count: guardian.linkedStudents.length })}
             </span>
           </div>
         </div>
@@ -282,7 +292,7 @@ export default function GuardianDetailPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
-        {TABS.filter(tab => tab.id !== 'payments' || can('finance.read')).map(tab => (
+        {tabs.filter(tab => tab.id !== 'payments' || can('finance.read')).map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -303,8 +313,8 @@ export default function GuardianDetailPage() {
           {guardian.linkedStudents.length === 0 && (
             <Card className="p-12 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col items-center justify-center gap-3 text-center">
               <Users className="w-10 h-10 text-slate-200" />
-              <p className="text-sm font-bold text-slate-400">Aucun enfant lié</p>
-              <p className="text-xs text-slate-300">Liez un élève depuis le profil de l'élève.</p>
+              <p className="text-sm font-bold text-slate-400">{t('noLinkedChildren')}</p>
+              <p className="text-xs text-slate-300">{t('linkStudentHint')}</p>
             </Card>
           )}
           {guardian.linkedStudents.map(student => (
@@ -325,23 +335,23 @@ export default function GuardianDetailPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-                  <RelationBadge type={student.relationshipType} />
+                  <RelationBadge type={student.relationshipType} t={t} />
                   {student.isPrimaryContact && (
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
                       <Star className="w-3 h-3" />
-                      Principal
+                      {t('badgePrimary')}
                     </span>
                   )}
                   {student.isEmergencyContact && (
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full">
                       <ShieldCheck className="w-3 h-3" />
-                      Urgence
+                      {t('badgeEmergency')}
                     </span>
                   )}
                   <button
                     onClick={() => setUnlinkTarget(student)}
                     className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:bg-rose-100 hover:text-rose-600 transition-colors"
-                    title="Délier"
+                    title={t('unlinkAction')}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -356,10 +366,10 @@ export default function GuardianDetailPage() {
                     onChange={e => handleLinkFieldChange(student, { canPickup: e.target.checked })}
                     className="rounded border-slate-300"
                   />
-                  Autorisé(e) à récupérer l'élève
+                  {t('authorizedToPickup')}
                 </label>
                 <label className="flex items-center gap-1.5 font-semibold text-slate-600">
-                  Priorité contact d'urgence :
+                  {t('emergencyPriorityLabel')}
                   <input
                     type="number"
                     min={1}
@@ -371,8 +381,8 @@ export default function GuardianDetailPage() {
                 </label>
                 {student.coGuardians.length > 0 && (
                   <span className="text-slate-400">
-                    Co-tuteur{student.coGuardians.length > 1 ? 's' : ''}
-                    {' : '}
+                    {t('coGuardiansLabel')}
+                    {' '}
                     {student.coGuardians.map(g => g.name).join(', ')}
                   </span>
                 )}
@@ -386,11 +396,11 @@ export default function GuardianDetailPage() {
       {activeTab === 'info' && (
         <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-5">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-extrabold text-[#16212B]">Informations personnelles</h3>
+            <h3 className="text-sm font-extrabold text-[#16212B]">{t('personalInfoTitle')}</h3>
             {!editMode && (
               <Button variant="outline" size="sm" onClick={() => setEditMode(true)} className="h-8 rounded-full text-xs gap-1.5">
                 <Pencil className="w-3.5 h-3.5" />
-                Modifier
+                {t('btnEdit')}
               </Button>
             )}
           </div>
@@ -406,11 +416,11 @@ export default function GuardianDetailPage() {
             ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
-                  { label: 'Prénom', key: 'firstName' as const },
-                  { label: 'Nom', key: 'lastName' as const },
-                  { label: 'Email', key: 'email' as const },
-                  { label: 'Téléphone', key: 'phone' as const },
-                  { label: 'Profession', key: 'occupation' as const },
+                  { label: t('firstName'), key: 'firstName' as const },
+                  { label: t('lastName'), key: 'lastName' as const },
+                  { label: t('email'), key: 'email' as const },
+                  { label: t('phone'), key: 'phone' as const },
+                  { label: t('occupationField'), key: 'occupation' as const },
                 ].map(f => (
                   <div key={f.key} className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">{f.label}</label>
@@ -422,7 +432,7 @@ export default function GuardianDetailPage() {
                   </div>
                 ))}
                 <div className="sm:col-span-2 space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Adresse</label>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">{t('addressField')}</label>
                   <textarea
                     rows={2}
                     value={(editFields.address as string) ?? ''}
@@ -431,7 +441,7 @@ export default function GuardianDetailPage() {
                   />
                 </div>
                 <div className="sm:col-span-2 space-y-2">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Préférences de communication</label>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">{t('communicationPreferences')}</label>
                   <div className="flex flex-wrap items-center gap-4 text-xs">
                     <label className="flex items-center gap-1.5 font-semibold text-slate-600">
                       <input
@@ -440,7 +450,7 @@ export default function GuardianDetailPage() {
                         onChange={e => setEditFields(prev => ({ ...prev, emailOptIn: e.target.checked }))}
                         className="rounded border-slate-300"
                       />
-                      Recevoir des emails
+                      {t('receiveEmails')}
                     </label>
                     <label className="flex items-center gap-1.5 font-semibold text-slate-600">
                       <input
@@ -449,26 +459,26 @@ export default function GuardianDetailPage() {
                         onChange={e => setEditFields(prev => ({ ...prev, smsOptIn: e.target.checked }))}
                         className="rounded border-slate-300"
                       />
-                      Recevoir des SMS
+                      {t('receiveSms')}
                     </label>
                     <select
                       value={editFields.preferredLanguage ?? ''}
                       onChange={e => setEditFields(prev => ({ ...prev, preferredLanguage: e.target.value }))}
                       className="h-8 px-2 rounded-lg border border-slate-200 text-xs"
                     >
-                      <option value="">Langue préférée...</option>
-                      <option value="fr">Français</option>
-                      <option value="ar">Arabe</option>
-                      <option value="en">Anglais</option>
+                      <option value="">{t('preferredLanguagePlaceholder')}</option>
+                      <option value="fr">{t('frenchLang')}</option>
+                      <option value="ar">{t('arabicLang')}</option>
+                      <option value="en">{t('englishLang')}</option>
                     </select>
                   </div>
                 </div>
                 <div className="sm:col-span-2 flex justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => { setEditMode(false); setSaveError(null); }} className="rounded-full text-xs h-9">
-                    Annuler
+                    {t('btnCancel')}
                   </Button>
                   <Button disabled={saving} onClick={handleSave} className="rounded-full text-xs h-9 bg-[#0066FF] text-white border-0">
-                    {saving ? 'Enregistrement...' : 'Enregistrer'}
+                    {saving ? t('btnSaving') : t('btnSave')}
                   </Button>
                 </div>
               </div>
@@ -476,12 +486,12 @@ export default function GuardianDetailPage() {
             : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {[
-                  { icon: User, label: 'Prénom', value: guardian.firstName },
-                  { icon: User, label: 'Nom', value: guardian.lastName },
-                  { icon: Mail, label: 'Email', value: guardian.email },
-                  { icon: Phone, label: 'Téléphone', value: guardian.phone },
-                  { icon: Briefcase, label: 'Profession', value: guardian.occupation },
-                  { icon: MapPin, label: 'Adresse', value: guardian.address, full: true },
+                  { icon: User, label: t('firstName'), value: guardian.firstName },
+                  { icon: User, label: t('lastName'), value: guardian.lastName },
+                  { icon: Mail, label: t('email'), value: guardian.email },
+                  { icon: Phone, label: t('phone'), value: guardian.phone },
+                  { icon: Briefcase, label: t('occupationField'), value: guardian.occupation },
+                  { icon: MapPin, label: t('addressField'), value: guardian.address, full: true },
                 ].map(f => (
                   f.value
                     ? (
@@ -496,10 +506,10 @@ export default function GuardianDetailPage() {
                     : null
                 ))}
                 <div className="sm:col-span-2">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Préférences de communication</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{t('communicationPreferences')}</label>
                   <p className="text-sm font-semibold text-[#16212B] mt-0.5">
-                    {[guardian.emailOptIn && 'Email', guardian.smsOptIn && 'SMS'].filter(Boolean).join(' · ') || 'Aucune'}
-                    {guardian.preferredLanguage && ` · Langue : ${guardian.preferredLanguage.toUpperCase()}`}
+                    {[guardian.emailOptIn && (locale === 'ar' ? 'البريد الإلكتروني' : 'Email'), guardian.smsOptIn && 'SMS'].filter(Boolean).join(' · ') || t('langNone')}
+                    {guardian.preferredLanguage && ` · ${t('langPrefix')} ${guardian.preferredLanguage === 'fr' ? t('frenchLang') : guardian.preferredLanguage === 'ar' ? t('arabicLang') : guardian.preferredLanguage === 'en' ? t('englishLang') : guardian.preferredLanguage.toUpperCase()}`}
                   </p>
                 </div>
               </div>
@@ -507,7 +517,7 @@ export default function GuardianDetailPage() {
         </Card>
       )}
 
-      {/* Tab: Payments (real household payment history, aggregated across every linked student) */}
+      {/* Tab: Payments */}
       {activeTab === 'payments' && (
         <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
           {payments === null && (
@@ -518,28 +528,28 @@ export default function GuardianDetailPage() {
           {payments !== null && payments.length === 0 && (
             <div className="p-12 flex flex-col items-center justify-center gap-3 text-center">
               <Wallet className="w-10 h-10 text-slate-200" />
-              <p className="text-sm font-bold text-slate-400">Aucun paiement enregistré</p>
+              <p className="text-sm font-bold text-slate-400">{t('noPaymentsRecorded')}</p>
             </div>
           )}
           {payments !== null && payments.length > 0 && (
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left rtl:text-right text-xs">
               <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
                 <tr>
-                  <th className="py-2.5 px-4">Type</th>
-                  <th className="py-2.5 px-4">Élève</th>
-                  <th className="py-2.5 px-4">Montant</th>
-                  <th className="py-2.5 px-4">Statut</th>
-                  <th className="py-2.5 px-4">Date</th>
+                  <th className="py-2.5 px-4">{t('colType')}</th>
+                  <th className="py-2.5 px-4">{t('colStudent')}</th>
+                  <th className="py-2.5 px-4">{t('colAmount')}</th>
+                  <th className="py-2.5 px-4">{t('colStatus')}</th>
+                  <th className="py-2.5 px-4">{t('colDate')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {payments.map(p => (
                   <tr key={`${p.type}-${p.id}`}>
-                    <td className="py-2.5 px-4 font-bold text-[#16212B]">{p.type === 'invoice' ? 'Facture' : 'Paiement'}</td>
+                    <td className="py-2.5 px-4 font-bold text-[#16212B]">{p.type === 'invoice' ? t('invoiceType') : t('paymentType')}</td>
                     <td className="py-2.5 px-4 text-slate-600">{p.studentName}</td>
-                    <td className="py-2.5 px-4 font-mono">{p.amount.toLocaleString('fr-MA')} MAD</td>
+                    <td className="py-2.5 px-4 font-mono">{p.amount.toLocaleString(locale === 'ar' ? 'ar-MA' : 'fr-MA')} MAD</td>
                     <td className="py-2.5 px-4 text-slate-500">{p.status}</td>
-                    <td className="py-2.5 px-4 text-slate-400">{new Date(p.date).toLocaleDateString('fr-FR')}</td>
+                    <td className="py-2.5 px-4 text-slate-400">{new Date(p.date).toLocaleDateString(locale === 'ar' ? 'ar-MA' : 'fr-FR')}</td>
                   </tr>
                 ))}
               </tbody>
@@ -548,7 +558,7 @@ export default function GuardianDetailPage() {
         </Card>
       )}
 
-      {/* Tab: Activity (reuses the real auditLogs table, no fabricated columns) */}
+      {/* Tab: Activity */}
       {activeTab === 'activity' && (
         <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
           {activity === null && (
@@ -559,7 +569,7 @@ export default function GuardianDetailPage() {
           {activity !== null && activity.length === 0 && (
             <div className="p-12 flex flex-col items-center justify-center gap-3 text-center">
               <Clock className="w-10 h-10 text-slate-200" />
-              <p className="text-sm font-bold text-slate-400">Aucune activité récente</p>
+              <p className="text-sm font-bold text-slate-400">{t('noRecentActivity')}</p>
             </div>
           )}
           {activity !== null && activity.length > 0 && (
@@ -569,7 +579,7 @@ export default function GuardianDetailPage() {
                   <KeyRound className="w-3.5 h-3.5 text-slate-300 shrink-0" />
                   <span className="font-bold text-[#16212B]">{a.action}</span>
                   <span className="text-slate-400">{a.entityType}</span>
-                  <span className="text-slate-400 ml-auto">{new Date(a.createdAt).toLocaleString('fr-FR')}</span>
+                  <span className="text-slate-400 ms-auto">{new Date(a.createdAt).toLocaleString(locale === 'ar' ? 'ar-MA' : 'fr-FR')}</span>
                 </div>
               ))}
             </div>
@@ -581,22 +591,21 @@ export default function GuardianDetailPage() {
       <Dialog open={!!unlinkTarget} onOpenChange={open => !open && setUnlinkTarget(null)}>
         <DialogContent className="max-w-sm bg-white rounded-2xl p-6">
           <DialogHeader>
-            <DialogTitle className="text-base font-extrabold text-[#16212B]">Délier l'élève</DialogTitle>
+            <DialogTitle className="text-base font-extrabold text-[#16212B]">{t('unlinkDialogTitle')}</DialogTitle>
           </DialogHeader>
           <p className="text-xs text-slate-600 mt-2">
-            Vous allez délier <strong>{unlinkTarget?.studentName}</strong> de ce tuteur.
-            Cette action peut être annulée en recréant le lien depuis le profil de l'élève.
+            {t('unlinkDialogDesc', { name: unlinkTarget?.studentName ?? '' })}
           </p>
           <DialogFooter className="gap-2 mt-4">
             <Button variant="outline" onClick={() => setUnlinkTarget(null)} className="rounded-full text-xs h-9">
-              Annuler
+              {t('btnCancel')}
             </Button>
             <Button
               disabled={unlinking}
               onClick={handleUnlink}
               className="rounded-full text-xs h-9 bg-rose-600 hover:bg-rose-700 text-white border-0"
             >
-              {unlinking ? 'Suppression...' : 'Délier'}
+              {unlinking ? t('btnUnlinking') : t('btnUnlink')}
             </Button>
           </DialogFooter>
         </DialogContent>

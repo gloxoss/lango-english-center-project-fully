@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { MapPin, Plus, Search, Filter, Edit2, Trash2, Globe, Navigation, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface Stop {
   id: string;
@@ -15,6 +16,9 @@ interface Stop {
 }
 
 export default function StopsPage() {
+  const t = useTranslations('Transport');
+  const tc = useTranslations('Common');
+
   const [stops, setStops] = useState<Stop[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -84,16 +88,10 @@ export default function StopsPage() {
       const url = editingStop ? `/api/transport/stops/${editingStop.id}` : '/api/transport/stops';
       const method = editingStop ? 'PUT' : 'POST';
 
-      const payload = {
-        ...formData,
-        latitude: formData.latitude ? parseFloat(formData.latitude) : null,
-        longitude: formData.longitude ? parseFloat(formData.longitude) : null,
-      };
-
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(formData),
       });
 
       const data = await res.json();
@@ -101,25 +99,25 @@ export default function StopsPage() {
         setIsModalOpen(false);
         fetchStops();
       } else {
-        alert(data.error?.message || 'Erreur lors de l\'enregistrement');
+        alert(data.error?.message || t('serverError'));
       }
     } catch (err) {
-      alert('Erreur serveur');
+      alert(t('serverError'));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Voulez-vous supprimer cet arrêt ?')) return;
+    if (!confirm(t('confirmDeleteStop'))) return;
     try {
       const res = await fetch(`/api/transport/stops/${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
         fetchStops();
       } else {
-        alert(data.error?.message || 'Erreur lors de la suppression');
+        alert(data.error?.message || t('serverError'));
       }
     } catch (err) {
-      alert('Erreur serveur');
+      alert(t('serverError'));
     }
   };
 
@@ -137,10 +135,10 @@ export default function StopsPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <MapPin className="w-7 h-7 text-[#0066FF]" />
-            Arrêts & Points de Ramassage
+            {t('stopsTitle')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Répertoire géolocalisé des arrêts de transport et stations d'embarquement.
+            {t('stopsSubtitle')}
           </p>
         </div>
         <button
@@ -148,20 +146,20 @@ export default function StopsPage() {
           className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-[#0066FF] rounded-lg hover:bg-blue-600 shadow-sm transition"
         >
           <Plus className="w-4 h-4" />
-          Ajouter un Arrêt
+          {t('addStop')}
         </button>
       </div>
 
       {/* Search & Filter */}
       <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-4 border border-slate-200 rounded-xl shadow-xs">
         <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Rechercher par code, nom ou adresse..."
+            placeholder={t('searchStopPlaceholder')}
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0066FF]/20 focus:border-[#0066FF]"
+            className="w-full pl-9 rtl:pl-4 rtl:pr-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0066FF]/20 focus:border-[#0066FF]"
           />
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -171,9 +169,9 @@ export default function StopsPage() {
             onChange={e => setStatusFilter(e.target.value)}
             className="w-full sm:w-auto border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0066FF]/20"
           >
-            <option value="all">Tous les statuts</option>
-            <option value="active">Actif</option>
-            <option value="inactive">Inactif</option>
+            <option value="all">{t('allStatuses')}</option>
+            <option value="active">{t('active')}</option>
+            <option value="inactive">{t('inactive')}</option>
           </select>
         </div>
       </div>
@@ -181,25 +179,25 @@ export default function StopsPage() {
       {/* Table */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left rtl:text-right border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                <th className="p-4">Code</th>
-                <th className="p-4">Nom de l'Arrêt</th>
-                <th className="p-4">Adresse</th>
-                <th className="p-4">Coordonnées GPS</th>
-                <th className="p-4">Statut</th>
-                <th className="p-4 text-right">Actions</th>
+                <th className="p-4">{t('stopCodeHeader')}</th>
+                <th className="p-4">{t('stopNameHeader')}</th>
+                <th className="p-4">{t('addressHeader')}</th>
+                <th className="p-4">{t('gpsCoordinatesHeader')}</th>
+                <th className="p-4">{t('status')}</th>
+                <th className="p-4 text-right rtl:text-left">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-500">Chargement des arrêts...</td>
+                  <td colSpan={6} className="p-8 text-center text-slate-500">{t('loadingStops')}</td>
                 </tr>
               ) : filteredStops.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-500">Aucun arrêt trouvé.</td>
+                  <td colSpan={6} className="p-8 text-center text-slate-500">{t('noStopsFound')}</td>
                 </tr>
               ) : (
                 filteredStops.map(stop => (
@@ -208,16 +206,16 @@ export default function StopsPage() {
                     <td className="p-4 font-medium text-slate-800">{stop.stopName}</td>
                     <td className="p-4 text-slate-600">{stop.address || '-'}</td>
                     <td className="p-4 text-xs font-mono text-slate-500">
-                      {stop.latitude && stop.longitude ? `${stop.latitude}, ${stop.longitude}` : 'Non renseigné'}
+                      {stop.latitude && stop.longitude ? `${stop.latitude}, ${stop.longitude}` : t('notSpecified')}
                     </td>
                     <td className="p-4">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
                         stop.status === 'active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600'
                       }`}>
-                        {stop.status === 'active' ? 'Actif' : 'Inactif'}
+                        {stop.status === 'active' ? t('active') : t('inactive')}
                       </span>
                     </td>
-                    <td className="p-4 text-right space-x-2">
+                    <td className="p-4 text-right rtl:text-left space-x-2 rtl:space-x-reverse">
                       <button
                         onClick={() => openEditModal(stop)}
                         className="p-1.5 text-slate-600 hover:text-[#0066FF] hover:bg-slate-100 rounded-lg transition"
@@ -245,7 +243,7 @@ export default function StopsPage() {
           <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl space-y-4">
             <div className="flex justify-between items-center border-b pb-3">
               <h3 className="font-bold text-slate-900">
-                {editingStop ? 'Modifier l\'Arrêt' : 'Nouveau Point de Ramassage'}
+                {editingStop ? t('editStop') : t('addStop')}
               </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
@@ -254,7 +252,7 @@ export default function StopsPage() {
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Code Arrêt</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">{t('stopCodeLabel')} *</label>
                 <input
                   type="text"
                   required
@@ -265,7 +263,7 @@ export default function StopsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Nom de l'Arrêt</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">{t('stopNameLabel')} *</label>
                 <input
                   type="text"
                   required
@@ -277,7 +275,7 @@ export default function StopsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Adresse</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">{t('addressLabel')}</label>
                 <input
                   type="text"
                   placeholder="Avenue ou repère géographique"
@@ -289,7 +287,7 @@ export default function StopsPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Latitude</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">{t('latitudeLabel')}</label>
                   <input
                     type="number"
                     step="any"
@@ -300,7 +298,7 @@ export default function StopsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Longitude</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">{t('longitudeLabel')}</label>
                   <input
                     type="number"
                     step="any"
@@ -313,14 +311,14 @@ export default function StopsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Statut</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">{t('status')}</label>
                 <select
                   value={formData.status}
                   onChange={e => setFormData({ ...formData, status: e.target.value })}
                   className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#0066FF]/20"
                 >
-                  <option value="active">Actif</option>
-                  <option value="inactive">Inactif</option>
+                  <option value="active">{t('active')}</option>
+                  <option value="inactive">{t('inactive')}</option>
                 </select>
               </div>
 
@@ -330,13 +328,13 @@ export default function StopsPage() {
                   onClick={() => setIsModalOpen(false)}
                   className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200"
                 >
-                  Annuler
+                  {t('cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 text-sm font-semibold text-white bg-[#0066FF] rounded-lg hover:bg-blue-600 shadow-sm"
                 >
-                  Enregistrer
+                  {t('saveStop')}
                 </button>
               </div>
             </form>

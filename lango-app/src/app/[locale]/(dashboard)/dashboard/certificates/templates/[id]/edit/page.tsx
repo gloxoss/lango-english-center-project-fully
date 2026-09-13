@@ -4,5 +4,10 @@ import CertificateTemplateDesignerPage from './page.client';
 export default async function Page({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const p = await params;
   await requireServerPage(p.locale, { requiredCapability: 'certificates.templates.manage' });
-  return <CertificateTemplateDesignerPage params={p} />;
+  const isRtl = p.locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={p.locale}>
+      <CertificateTemplateDesignerPage params={p} />
+    </main>
+  );
 }

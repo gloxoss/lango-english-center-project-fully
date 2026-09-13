@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import { Globe, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
+import { useTranslations } from 'next-intl';
 
 type DomainRecord = {
   domain: {
@@ -25,7 +26,9 @@ type DomainRecord = {
   };
 };
 
-export function SuperAdminDomainsView({ locale }: { locale: string }) {
+export function SuperAdminDomainsView({ locale: _locale }: { locale: string }) {
+  const t = useTranslations('SuperAdmin');
+  const tCommon = useTranslations('Common');
   const [domains, setDomains] = useState<DomainRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,10 +44,10 @@ export function SuperAdminDomainsView({ locale }: { locale: string }) {
       if (json.success) {
         setDomains(json.data);
       } else {
-        toast.error(json.error?.message || 'Erreur lors du chargement des domaines');
+        toast.error(json.error?.message || tCommon('error'));
       }
     } catch (e) {
-      toast.error('Erreur réseau');
+      toast.error(tCommon('error'));
     } finally {
       setLoading(false);
     }
@@ -59,21 +62,21 @@ export function SuperAdminDomainsView({ locale }: { locale: string }) {
       });
       const json = await res.json();
       if (json.success) {
-        toast.success(`Domaine ${status === 'approved' ? 'approuvé' : 'rejeté'}`);
+        toast.success(status === 'approved' ? t('domainApproved') : t('domainRejected'));
         fetchDomains();
       } else {
-        toast.error(json.error?.message || 'Erreur lors de la mise à jour');
+        toast.error(json.error?.message || tCommon('error'));
       }
     } catch (e) {
-      toast.error('Erreur réseau');
+      toast.error(tCommon('error'));
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending': return <Badge variant="warning" className="bg-yellow-50 text-yellow-700 border-yellow-200"><Clock className="mr-1 size-3" /> En attente</Badge>;
-      case 'approved': return <Badge variant="success" className="bg-green-50 text-green-700 border-green-200"><CheckCircle2 className="mr-1 size-3" /> Approuvé</Badge>;
-      case 'rejected': return <Badge variant="danger" className="bg-red-50 text-red-700 border-red-200"><XCircle className="mr-1 size-3" /> Rejeté</Badge>;
+      case 'pending': return <Badge variant="warning" className="bg-yellow-50 text-yellow-700 border-yellow-200"><Clock className="mr-1 size-3" /> {t('statusPending')}</Badge>;
+      case 'approved': return <Badge variant="success" className="bg-green-50 text-green-700 border-green-200"><CheckCircle2 className="mr-1 size-3" /> {t('statusApproved')}</Badge>;
+      case 'rejected': return <Badge variant="danger" className="bg-red-50 text-red-700 border-red-200"><XCircle className="mr-1 size-3" /> {t('statusRejected')}</Badge>;
       default: return <Badge variant="neutral">{status}</Badge>;
     }
   };
@@ -81,36 +84,36 @@ export function SuperAdminDomainsView({ locale }: { locale: string }) {
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Domaines Personnalisés</h1>
-        <p className="text-sm text-slate-500 mt-1">Gérez les demandes de sous-domaines et domaines personnalisés des écoles.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t('domainsTitle')}</h1>
+        <p className="text-sm text-slate-500 mt-1">{t('domainsSubtitle')}</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Globe className="size-5 text-slate-400" />
-            Demandes de domaines
+            {t('domainRequests')}
           </CardTitle>
           <CardDescription>
-            Toutes les demandes de domaines par les écoles.
+            {t('domainRequestsDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="py-8 text-center text-sm text-slate-500">Chargement...</div>
+            <div className="py-8 text-center text-sm text-slate-500">{tCommon('loading')}</div>
           ) : domains.length === 0 ? (
-            <div className="py-8 text-center text-sm text-slate-500">Aucune demande trouvée.</div>
+            <div className="py-8 text-center text-sm text-slate-500">{tCommon('empty')}</div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Domaine</TableHead>
-                    <TableHead>École</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t('domainCol')}</TableHead>
+                    <TableHead>{t('schoolCol')}</TableHead>
+                    <TableHead>{t('typeCol')}</TableHead>
+                    <TableHead>{t('statusCol')}</TableHead>
+                    <TableHead>{t('dateCol')}</TableHead>
+                    <TableHead className="text-right">{t('actionsCol')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -125,7 +128,7 @@ export function SuperAdminDomainsView({ locale }: { locale: string }) {
                       </TableCell>
                       <TableCell>
                         <Badge variant="neutral" className="capitalize">
-                          {record.domain.domainType}
+                          {record.domain.domainType === 'subdomain' ? t('typeSubdomain') : t('typeCustom')}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -138,10 +141,10 @@ export function SuperAdminDomainsView({ locale }: { locale: string }) {
                         {record.domain.status === 'pending' && (
                           <div className="flex justify-end gap-2">
                             <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => updateStatus(record.domain.id, 'rejected')}>
-                              Rejeter
+                              {t('reject')}
                             </Button>
                             <Button size="sm" className="bg-[#0066FF] hover:bg-[#0066FF]/90" onClick={() => updateStatus(record.domain.id, 'approved')}>
-                              Approuver
+                              {t('approve')}
                             </Button>
                           </div>
                         )}

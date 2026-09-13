@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,9 +33,11 @@ function Kpi({ icon, label, value, href, accent }: { icon: React.ReactNode; labe
   );
 }
 
-export function BroadcastOverviewView() {
+export function BroadcastOverviewView({ locale: initialLocale }: { locale?: string } = {}) {
   const params = useParams<{ locale?: string }>();
-  const locale = params?.locale ?? '';
+  const locale = initialLocale || params?.locale || 'fr';
+  const t = useTranslations('Broadcast');
+  const tCommon = useTranslations('Common');
   const [data, setData] = useState<{ connections: number; segments: number; templates: number; campaigns: Campaign[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<ApiErrorShape | null>(null);
@@ -91,67 +94,92 @@ export function BroadcastOverviewView() {
 
   const recent = [...data.campaigns].sort((a, b) => (b.createdAt < a.createdAt ? -1 : 1)).slice(0, 6);
 
+  const getCampaignStatusLabel = (status: string) => {
+    switch (status) {
+      case 'draft': return t('statusDraft');
+      case 'pending_approval': return t('statusPendingApproval');
+      case 'scheduled': return t('statusScheduled');
+      case 'queued': return t('statusQueued');
+      case 'sending': return t('statusSending');
+      case 'completed': return t('statusCompleted');
+      case 'failed': return t('statusFailed');
+      case 'cancelled': return t('statusCancelled');
+      default: return status;
+    }
+  };
+
+  const getChannelLabel = (channel: string) => {
+    switch (channel) {
+      case 'sms': return t('channelSms');
+      case 'email': return t('channelEmail');
+      case 'whatsapp': return t('channelWhatsapp');
+      case 'telegram': return t('channelTelegram');
+      case 'messenger': return t('channelMessenger');
+      default: return channel;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#16212B]">Diffusion & communication</h1>
-          <p className="text-sm text-slate-500">Campagnes, audiences, modèles et automations.</p>
+          <h1 className="text-2xl font-bold text-[#16212B]">{t('title')}</h1>
+          <p className="text-sm text-slate-500">{t('subtitle')}</p>
         </div>
-        <Button variant="outline" onClick={load}><RefreshCw className="mr-2 h-4 w-4" /> Actualiser</Button>
+        <Button variant="outline" onClick={load}><RefreshCw className="mr-2 h-4 w-4" /> {t('refresh')}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Kpi href={`/${locale}/dashboard/broadcast/connections`} icon={<Cable className="h-5 w-5" />} label="Connexions" value={fmtCount(data.connections)} />
-        <Kpi href={`/${locale}/dashboard/broadcast/segments`} icon={<Users className="h-5 w-5" />} label="Segments" value={fmtCount(data.segments)} />
-        <Kpi href={`/${locale}/dashboard/broadcast/templates`} icon={<FileText className="h-5 w-5" />} label="Modèles" value={fmtCount(data.templates)} />
-        <Kpi href={`/${locale}/dashboard/broadcast/campaigns`} icon={<Megaphone className="h-5 w-5" />} label="Campagnes" value={fmtCount(data.campaigns.length)} accent />
+        <Kpi href={`/${locale}/dashboard/broadcast/connections`} icon={<Cable className="h-5 w-5" />} label={t('kpiActiveConnections')} value={fmtCount(data.connections, locale)} />
+        <Kpi href={`/${locale}/dashboard/broadcast/segments`} icon={<Users className="h-5 w-5" />} label={t('kpiAudienceSegments')} value={fmtCount(data.segments, locale)} />
+        <Kpi href={`/${locale}/dashboard/broadcast/templates`} icon={<FileText className="h-5 w-5" />} label={t('kpiSavedTemplates')} value={fmtCount(data.templates, locale)} />
+        <Kpi href={`/${locale}/dashboard/broadcast/campaigns`} icon={<Megaphone className="h-5 w-5" />} label={t('kpiCampaignsCreated')} value={fmtCount(data.campaigns.length, locale)} accent />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-          <p className="text-sm text-slate-500">Envois total</p>
-          <p className="text-2xl font-bold text-[#16212B]">{fmtCount(sentTotal)}</p>
+          <p className="text-sm text-slate-500">{t('totalSent')}</p>
+          <p className="text-2xl font-bold text-[#16212B]">{fmtCount(sentTotal, locale)}</p>
         </Card>
         <Card className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-5 shadow-2xs">
-          <p className="text-sm text-emerald-700">Délivrés</p>
-          <p className="text-2xl font-bold text-emerald-700">{fmtCount(deliveredTotal)}</p>
+          <p className="text-sm text-emerald-700">{t('delivered')}</p>
+          <p className="text-2xl font-bold text-emerald-700">{fmtCount(deliveredTotal, locale)}</p>
         </Card>
         <Card className="rounded-2xl border border-amber-100 bg-amber-50/40 p-5 shadow-2xs">
-          <p className="text-sm text-amber-700">En cours / planifiées</p>
-          <p className="text-2xl font-bold text-amber-700">{fmtCount(active.length)}</p>
+          <p className="text-sm text-amber-700">{t('activeScheduled')}</p>
+          <p className="text-2xl font-bold text-amber-700">{fmtCount(active.length, locale)}</p>
         </Card>
       </div>
 
       <div>
-        <h2 className="mb-2 text-lg font-semibold text-[#16212B]">Campagnes récentes</h2>
+        <h2 className="mb-2 text-lg font-semibold text-[#16212B]">{t('recentCampaignsTitle')}</h2>
         <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+            <thead className="bg-slate-50 text-start text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th className="px-4 py-3">Nom</th>
-                <th className="px-4 py-3">Canal</th>
-                <th className="px-4 py-3">Statut</th>
-                <th className="px-4 py-3">Ciblés</th>
-                <th className="px-4 py-3">Envoyés</th>
-                <th className="px-4 py-3">Délivrés</th>
+                <th className="px-4 py-3 text-start">{t('colName')}</th>
+                <th className="px-4 py-3 text-start">{t('colChannel')}</th>
+                <th className="px-4 py-3 text-start">{t('colStatus')}</th>
+                <th className="px-4 py-3 text-start">{t('targeted')}</th>
+                <th className="px-4 py-3 text-start">{t('colSent')}</th>
+                <th className="px-4 py-3 text-start">{t('colDelivered')}</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {recent.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">Aucune campagne pour l’instant.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">{t('noCampaignsYet')}</td></tr>
               )}
               {recent.map((c) => (
                 <tr key={c.id} className="hover:bg-slate-50/60">
-                  <td className="px-4 py-3 font-medium text-[#16212B]">{c.name}</td>
-                  <td className="px-4 py-3"><Badge className={`border ${CHANNEL_BADGE[c.channel]}`}>{CHANNEL_LABELS[c.channel]}</Badge></td>
-                  <td className="px-4 py-3"><Badge className={`border ${CAMPAIGN_STATUS_BADGE[c.status]}`}>{CAMPAIGN_STATUS_LABELS[c.status] ?? c.status}</Badge></td>
-                  <td className="px-4 py-3">{fmtCount(c.targetedCount)}</td>
-                  <td className="px-4 py-3">{fmtCount(c.sentCount)}</td>
-                  <td className="px-4 py-3 text-emerald-700">{fmtCount(c.deliveredCount)}</td>
-                  <td className="px-4 py-3 text-right">
-                    <Link href={`/${locale}/dashboard/broadcast/campaigns/${c.id}`}><Button variant="outline" size="sm">Détail</Button></Link>
+                  <td className="px-4 py-3 font-medium text-[#16212B] text-start">{c.name}</td>
+                  <td className="px-4 py-3 text-start"><Badge className={`border ${CHANNEL_BADGE[c.channel]}`}>{getChannelLabel(c.channel)}</Badge></td>
+                  <td className="px-4 py-3 text-start"><Badge className={`border ${CAMPAIGN_STATUS_BADGE[c.status]}`}>{getCampaignStatusLabel(c.status)}</Badge></td>
+                  <td className="px-4 py-3 text-start">{fmtCount(c.targetedCount, locale)}</td>
+                  <td className="px-4 py-3 text-start">{fmtCount(c.sentCount, locale)}</td>
+                  <td className="px-4 py-3 text-start text-emerald-700">{fmtCount(c.deliveredCount, locale)}</td>
+                  <td className="px-4 py-3 text-end">
+                    <Link href={`/${locale}/dashboard/broadcast/campaigns/${c.id}`}><Button variant="outline" size="sm">{t('details')}</Button></Link>
                   </td>
                 </tr>
               ))}
@@ -161,7 +189,7 @@ export function BroadcastOverviewView() {
       </div>
 
       <div className="flex items-center gap-2 text-xs text-emerald-700">
-        <CheckCircle2 className="h-4 w-4" /> Diffusion simulée : aucun SMS/e-mail réel envoyé (fournisseur de test).
+        <CheckCircle2 className="h-4 w-4" /> {t('simulationNotice')}
       </div>
     </div>
   );

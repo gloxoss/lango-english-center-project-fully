@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -56,7 +57,10 @@ interface PreviewItem {
   subjectTeachers: PreviewSubjectTeacher[];
 }
 
-export function SessionCopyView({ locale }: { locale: string }) {
+export function SessionCopyView({ locale: _locale }: { locale: string }) {
+  const t = useTranslations('Academics');
+  const tc = useTranslations('Common');
+
   const [sessions, setSessions] = useState<SessionYear[]>([]);
   const [sourceSessionId, setSourceSessionId] = useState<string>('');
   const [targetSessionId, setTargetSessionId] = useState<string>('');
@@ -88,7 +92,7 @@ export function SessionCopyView({ locale }: { locale: string }) {
           }
         }
       })
-      .catch(() => setError('Impossible de charger la liste des sessions académiques.'))
+      .catch(() => setError(t('loadSessionsError')))
       .finally(() => setLoading(false));
   };
 
@@ -113,16 +117,16 @@ export function SessionCopyView({ locale }: { locale: string }) {
       if (data.success) {
         loadSessions();
       } else {
-        setError(data.error?.message || 'Erreur lors de la création de la session suivante.');
+        setError(data.error?.message || 'Erreur');
       }
     } catch {
-      setError('Erreur réseau lors de la création de la session.');
+      setError('Erreur réseau');
     }
   };
 
   const handlePreview = async () => {
     if (!sourceSessionId || !targetSessionId) {
-      setError('Veuillez sélectionner la session source et la session cible.');
+      setError(t('selectSourceTargetError'));
       return;
     }
     setError(null);
@@ -149,10 +153,10 @@ export function SessionCopyView({ locale }: { locale: string }) {
         setEditingJson(false);
         setJsonError(null);
       } else {
-        setError(data.error?.message || 'Erreur lors de la génération de l\'aperçu.');
+        setError(data.error?.message || 'Erreur');
       }
     } catch {
-      setError('Erreur réseau lors de la génération de l\'aperçu.');
+      setError('Erreur réseau');
     } finally {
       setPreviewing(false);
     }
@@ -170,13 +174,13 @@ export function SessionCopyView({ locale }: { locale: string }) {
         }
       }
       if (ids.size === 0) {
-        setJsonError('Aucune offre valide (sourceOfferingId) trouvée dans le JSON.');
+        setJsonError('Aucune offre valide trouvée dans le JSON.');
         return;
       }
       setSelectedOfferingIds(ids);
       setEditingJson(false);
     } catch {
-      setJsonError('JSON invalide. Corrigez la syntaxe avant d\'appliquer.');
+      setJsonError('JSON invalide.');
     }
   };
 
@@ -226,10 +230,10 @@ export function SessionCopyView({ locale }: { locale: string }) {
         setPreviewItems([]);
         setSelectedOfferingIds(new Set());
       } else {
-        setError(data.error?.message || 'Erreur lors de la confirmation de la copie.');
+        setError(data.error?.message || 'Erreur');
       }
     } catch {
-      setError('Erreur réseau lors de la confirmation de la copie.');
+      setError('Erreur réseau');
     } finally {
       setCommitting(false);
     }
@@ -241,10 +245,10 @@ export function SessionCopyView({ locale }: { locale: string }) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">
-            Copie de Configuration Académique
+            {t('sessionCopyTitle')}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Dupliquez les offres de classes, matières et enseignants d'une session vers une autre en toute sécurité.
+            {t('sessionCopySubtitle')}
           </p>
         </div>
       </div>
@@ -259,31 +263,31 @@ export function SessionCopyView({ locale }: { locale: string }) {
       {commitSuccess && (
         <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-          La configuration académique a été copiée avec succès dans la session cible.
+          {t('copySuccessDesc')}
         </div>
       )}
 
       {/* Session Pickers Card */}
       <Card className="rounded-2xl border border-slate-200/80 shadow-sm bg-white">
         <CardHeader>
-          <CardTitle className="text-base font-bold text-[#16212B]">Sélection des Sessions</CardTitle>
+          <CardTitle className="text-base font-bold text-[#16212B]">{t('sessionsSelectionTitle')}</CardTitle>
           <CardDescription className="text-xs text-slate-500">
-            Choisissez la session d'origine dont la structure sera copiée et la session de destination.
+            {t('sessionsSelectionDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
             {/* Source Session */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-700">Session Source (Origine)</label>
+              <label className="text-xs font-semibold text-slate-700">{t('sourceSessionLabel')}</label>
               <Select value={sourceSessionId} onValueChange={setSourceSessionId} disabled={loading || previewing}>
                 <SelectTrigger className="rounded-xl h-10 border-slate-200">
-                  <SelectValue placeholder="Sélectionner la session source" />
+                  <SelectValue placeholder="—" />
                 </SelectTrigger>
                 <SelectContent>
                   {sessions.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
-                      {s.name} {s.isDefault ? '(Actuelle par défaut)' : ''}
+                      {s.name} {s.isDefault ? t('defaultActiveSuffix') : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -292,10 +296,10 @@ export function SessionCopyView({ locale }: { locale: string }) {
 
             {/* Target Session */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-700">Session Cible (Destination)</label>
+              <label className="text-xs font-semibold text-slate-700">{t('targetSessionLabel')}</label>
               <Select value={targetSessionId} onValueChange={setTargetSessionId} disabled={loading || previewing}>
                 <SelectTrigger className="rounded-xl h-10 border-slate-200">
-                  <SelectValue placeholder="Sélectionner la session cible" />
+                  <SelectValue placeholder="—" />
                 </SelectTrigger>
                 <SelectContent>
                   {sessions
@@ -309,7 +313,7 @@ export function SessionCopyView({ locale }: { locale: string }) {
               </Select>
               {sessions.filter((s) => s.id !== sourceSessionId).length === 0 && (
                 <div className="pt-1 flex items-center gap-2">
-                  <span className="text-xs text-amber-600 font-medium">Aucune session cible trouvée.</span>
+                  <span className="text-xs text-amber-600 font-medium">Aucune session cible.</span>
                   <Button
                     type="button"
                     variant="outline"
@@ -317,7 +321,7 @@ export function SessionCopyView({ locale }: { locale: string }) {
                     onClick={handleCreateNextSession}
                     className="h-7 text-xs rounded-lg text-[#2487B8] border-[#2487B8] hover:bg-sky-50"
                   >
-                    + Créer Session 2026-2027
+                    + {t('btnCreateSession')}
                   </Button>
                 </div>
               )}
@@ -331,7 +335,7 @@ export function SessionCopyView({ locale }: { locale: string }) {
               className="gap-2 h-9 text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93]"
             >
               <Copy className="w-4 h-4" />
-              {previewing ? 'Génération de l\'aperçu...' : 'Aperçu de la copie'}
+              {previewing ? t('btnPreviewing') : t('btnGeneratePreview')}
             </Button>
           </div>
         </CardContent>
@@ -344,13 +348,13 @@ export function SessionCopyView({ locale }: { locale: string }) {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-base font-bold text-[#16212B] flex items-center gap-2">
-                  Résumé de l'Aperçu
+                  {t('previewSummaryTitle')}
                   <Badge variant="neutral" className="text-xs border-[#2487B8] text-[#2487B8]">
-                    {preview.sourceSessionName} <ArrowRight className="w-3 h-3 inline mx-1" /> {preview.targetSessionName}
+                    {preview.sourceSessionName} <ArrowRight className="w-3 h-3 inline mx-1 rtl:rotate-180" /> {preview.targetSessionName}
                   </Badge>
                 </CardTitle>
                 <CardDescription className="text-xs text-slate-500 mt-1">
-                  Vérifiez les éléments qui seront créés dans la session cible avant de confirmer.
+                  {t('sessionCopySubtitle')}
                 </CardDescription>
               </div>
             </div>
@@ -364,12 +368,12 @@ export function SessionCopyView({ locale }: { locale: string }) {
                   </div>
                   <div>
                     <p className="text-2xl font-extrabold text-[#16212B]">{preview.offeringsToCreateCount}</p>
-                    <p className="text-xs text-slate-500">Offres de classes à créer</p>
+                    <p className="text-xs text-slate-500">{t('offeringsToCreate')}</p>
                   </div>
                 </div>
                 {preview.offeringsSkippedCount > 0 && (
                   <p className="text-[11px] text-amber-600 mt-2 font-medium">
-                    {preview.offeringsSkippedCount} offres existent déjà (ignorées)
+                    {preview.offeringsSkippedCount} {t('offeringsSkipped')}
                   </p>
                 )}
               </div>
@@ -381,7 +385,7 @@ export function SessionCopyView({ locale }: { locale: string }) {
                   </div>
                   <div>
                     <p className="text-2xl font-extrabold text-[#16212B]">{preview.classSubjectsToCreateCount}</p>
-                    <p className="text-xs text-slate-500">Matières assignées</p>
+                    <p className="text-xs text-slate-500">{t('classSubjectsToCreate')}</p>
                   </div>
                 </div>
               </div>
@@ -393,7 +397,7 @@ export function SessionCopyView({ locale }: { locale: string }) {
                   </div>
                   <div>
                     <p className="text-2xl font-extrabold text-[#16212B]">{preview.classTeachersToCreateCount}</p>
-                    <p className="text-xs text-slate-500">Enseignants titulaires</p>
+                    <p className="text-xs text-slate-500">{t('classTeachersToCreate')}</p>
                   </div>
                 </div>
               </div>
@@ -405,7 +409,7 @@ export function SessionCopyView({ locale }: { locale: string }) {
                   </div>
                   <div>
                     <p className="text-2xl font-extrabold text-[#16212B]">{preview.subjectTeachersToCreateCount}</p>
-                    <p className="text-xs text-slate-500">Affectations enseignants-matières</p>
+                    <p className="text-xs text-slate-500">{t('subjectTeacherAssignments')}</p>
                   </div>
                 </div>
               </div>
@@ -416,7 +420,7 @@ export function SessionCopyView({ locale }: { locale: string }) {
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold text-[#16212B] flex items-center gap-2">
                     <Layers className="w-4 h-4 text-[#0066FF]" />
-                    Aperçu détaillé — {selectedOfferingIds.size}/{previewItems.length} offre(s) sélectionnée(s)
+                    {t('detailedPreviewTitle', { selected: selectedOfferingIds.size, total: previewItems.length })}
                   </h3>
                   <div className="flex gap-2">
                     <Button
@@ -426,7 +430,7 @@ export function SessionCopyView({ locale }: { locale: string }) {
                       onClick={selectAllOfferings}
                       className="h-7 text-xs rounded-lg"
                     >
-                      Tout sélectionner
+                      {t('btnSelectAll')}
                     </Button>
                     <Button
                       type="button"
@@ -435,7 +439,7 @@ export function SessionCopyView({ locale }: { locale: string }) {
                       onClick={selectNoOfferings}
                       className="h-7 text-xs rounded-lg"
                     >
-                      Tout désélectionner
+                      {t('btnDeselectAll')}
                     </Button>
                   </div>
                 </div>
@@ -465,23 +469,23 @@ export function SessionCopyView({ locale }: { locale: string }) {
                             </span>
                             {item.capacity != null && (
                               <Badge variant="neutral" className="text-[11px]">
-                                {item.capacity} places
+                                {t('placesCount', { capacity: item.capacity })}
                               </Badge>
                             )}
                             {item.willCreate ? (
                               <Badge variant="neutral" className="text-[11px] bg-emerald-50 text-emerald-700 border-emerald-200">
-                                Nouvelle
+                                {t('badgeNewOffering')}
                               </Badge>
                             ) : (
                               <Badge variant="neutral" className="text-[11px] bg-amber-50 text-amber-700 border-amber-200">
-                                Existe déjà
+                                {t('badgeAlreadyExists')}
                               </Badge>
                             )}
                           </div>
                           <div className="text-xs text-slate-500 mt-1 flex flex-wrap gap-x-4 gap-y-1">
-                            <span>{item.classSubjects.length} matière(s)</span>
-                            <span>{item.classTeachers.length} enseignant(s) titulaire(s)</span>
-                            <span>{item.subjectTeachers.length} affectation(s) matière</span>
+                            <span>{t('subjectsCount', { count: item.classSubjects.length })}</span>
+                            <span>{t('teachersCount', { count: item.classTeachers.length })}</span>
+                            <span>{t('assignmentsCount', { count: item.subjectTeachers.length })}</span>
                           </div>
                           {item.classSubjects.length > 0 && (
                             <p className="text-[11px] text-slate-400 mt-1 truncate">
@@ -508,7 +512,7 @@ export function SessionCopyView({ locale }: { locale: string }) {
                       }}
                       className="text-xs font-bold text-[#0066FF] hover:underline"
                     >
-                      {editingJson ? 'Appliquer le JSON' : 'Éditer le JSON de l\'aperçu'}
+                      {editingJson ? t('btnApplyJson') : t('btnEditJson')}
                     </button>
                     {editingJson && (
                       <button
@@ -516,7 +520,7 @@ export function SessionCopyView({ locale }: { locale: string }) {
                         onClick={() => { setEditingJson(false); setJsonError(null); }}
                         className="text-xs text-slate-500 hover:underline"
                       >
-                        Annuler
+                        {tc('cancel')}
                       </button>
                     )}
                   </div>
@@ -534,7 +538,7 @@ export function SessionCopyView({ locale }: { locale: string }) {
                     </pre>
                   )}
                   <p className="text-[11px] text-slate-400">
-                    Modifiez le tableau « items » (ajoutez ou retirez des offres) puis « Appliquer le JSON » pour mettre à jour la sélection qui sera copiée.
+                    {t('jsonInstruction')}
                   </p>
                 </div>
               </div>
@@ -542,7 +546,7 @@ export function SessionCopyView({ locale }: { locale: string }) {
 
             <div className="flex items-center justify-between pt-4 border-t border-slate-200">
               <p className="text-xs text-slate-500">
-                {selectedOfferingIds.size} offre(s) seront copiées. Cette opération est transactionnelle et n'affectera pas la session source.
+                {t('transactionalNotice', { count: selectedOfferingIds.size })}
               </p>
               <div className="flex gap-3">
                 <Button
@@ -551,7 +555,7 @@ export function SessionCopyView({ locale }: { locale: string }) {
                   disabled={committing}
                   className="h-9 text-xs rounded-xl"
                 >
-                  Annuler
+                  {tc('cancel')}
                 </Button>
                 <Button
                   onClick={handleCommit}
@@ -559,7 +563,7 @@ export function SessionCopyView({ locale }: { locale: string }) {
                   className="gap-2 h-9 text-xs rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  {committing ? 'Copie en cours...' : 'Confirmer la copie'}
+                  {committing ? t('btnCopying') : t('btnConfirmCopyAction')}
                 </Button>
               </div>
             </div>
@@ -569,3 +573,4 @@ export function SessionCopyView({ locale }: { locale: string }) {
     </div>
   );
 }
+

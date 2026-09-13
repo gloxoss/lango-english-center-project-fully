@@ -8,5 +8,10 @@ export default async function GuardConfigPage({
 }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'guard.gates.manage' });
-  return <GuardConfigView />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <GuardConfigView />
+    </main>
+  );
 }

@@ -8,5 +8,10 @@ export default async function GuardIncidentsPage({
 }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'guard.incidents.manage' });
-  return <GuardIncidentsView />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <GuardIncidentsView />
+    </main>
+  );
 }

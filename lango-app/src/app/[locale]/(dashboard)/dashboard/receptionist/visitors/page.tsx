@@ -8,5 +8,10 @@ export default async function ReceptionistVisitorsPage({
 }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'reception.visitor.manage' });
-  return <ReceptionVisitorsView />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <ReceptionVisitorsView />
+    </main>
+  );
 }

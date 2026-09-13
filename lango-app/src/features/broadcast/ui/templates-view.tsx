@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import {
   Loader2, Plus, RefreshCw, FileText, AlertCircle, X, ChevronDown, ChevronUp, CheckCircle2, Send,
 } from 'lucide-react';
-import { api, CHANNEL_LABELS, CHANNEL_BADGE, TEMPLATE_STATUS_LABELS, fmtDate, isAddonNotActivated, type ApiErrorShape } from './broadcast-ui';
+import { api, CHANNEL_BADGE, fmtDate, isAddonNotActivated, type ApiErrorShape } from './broadcast-ui';
 
 type TemplateVersion = {
   id: string;
@@ -37,6 +39,11 @@ const CHANNELS = ['sms', 'email', 'whatsapp', 'telegram', 'messenger'];
 const CATEGORIES = ['general', 'announcement', 'reminder', 'event', 'invoice', 'other'];
 
 export function TemplatesView() {
+  const t = useTranslations('Broadcast');
+  const tCommon = useTranslations('Common');
+  const params = useParams<{ locale?: string }>();
+  const locale = params?.locale ?? 'fr';
+
   const [rows, setRows] = useState<Template[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<ApiErrorShape | null>(null);
@@ -53,46 +60,77 @@ export function TemplatesView() {
   const [newVersions, setNewVersions] = useState<Record<string, { subject: string; bodyText: string }>>({});
   const [published, setPublished] = useState<Record<string, boolean>>({});
 
+  const getChannelLabel = (ch: string) => {
+    switch (ch) {
+      case 'sms': return t('channelSms');
+      case 'email': return t('channelEmail');
+      case 'whatsapp': return t('channelWhatsapp');
+      case 'telegram': return t('channelTelegram');
+      case 'messenger': return t('channelMessenger');
+      default: return ch;
+    }
+  };
+
+  const getCategoryLabel = (cat: string) => {
+    switch (cat) {
+      case 'general': return t('catGeneral');
+      case 'announcement': return t('catAnnouncement');
+      case 'reminder': return t('catReminder');
+      case 'event': return t('catEvent');
+      case 'invoice': return t('catInvoice');
+      default: return t('catOther');
+    }
+  };
+
+  const getVersionStatusLabel = (st: string) => {
+    switch (st) {
+      case 'draft': return t('tplStatusDraft');
+      case 'published': return t('tplStatusPublished');
+      case 'archived': return t('tplStatusArchived');
+      default: return st;
+    }
+  };
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     const res = await api<Template[]>('/api/addons/broadcast/templates');
     if (res.ok && res.data) setRows(res.data);
-    else setError(res.error ?? { message: 'Impossible de charger les modèles.' });
+    else setError(res.error ?? { message: t('addonNotActivated') });
     setLoading(false);
-  }, []);
+  }, [t]);
 
   useEffect(() => { load(); }, [load]);
 
-  const toggleExpand = async (t: Template) => {
-    if (expanded[t.id]?.loaded) {
-      setExpanded((prev) => ({ ...prev, [t.id]: { ...(prev[t.id] ?? { versions: [] as TemplateVersion[] }), loaded: false } }));
+  const toggleExpand = async (tObj: Template) => {
+    if (expanded[tObj.id]?.loaded) {
+      setExpanded((prev) => ({ ...prev, [tObj.id]: { ...(prev[tObj.id] ?? { versions: [] as TemplateVersion[] }), loaded: false } }));
       return;
     }
-    const res = await api<TemplateVersion[]>(`/api/addons/broadcast/templates/${t.id}/versions`);
+    const res = await api<TemplateVersion[]>(`/api/addons/broadcast/templates/${tObj.id}/versions`);
     if (res.ok && res.data) {
-      setExpanded((prev) => ({ ...prev, [t.id]: { versions: res.data ?? [], loaded: true } }));
+      setExpanded((prev) => ({ ...prev, [tObj.id]: { versions: res.data ?? [], loaded: true } }));
     }
   };
 
-  const addVersion = async (t: Template) => {
-    const v = newVersions[t.id];
+  const addVersion = async (tObj: Template) => {
+    const v = newVersions[tObj.id];
     if (!v || !v.bodyText.trim()) return;
-    const res = await api<TemplateVersion>(`/api/addons/broadcast/templates/${t.id}/versions`, {
+    const res = await api<TemplateVersion>(`/api/addons/broadcast/templates/${tObj.id}/versions`, {
       method: 'POST', body: JSON.stringify({ subject: v.subject, bodyText: v.bodyText }),
     });
     if (res.ok) {
-      setNewVersions((prev) => ({ ...prev, [t.id]: { subject: '', bodyText: '' } }));
-      await toggleExpand(t);
+      setNewVersions((prev) => ({ ...prev, [tObj.id]: { subject: '', bodyText: '' } }));
+      await toggleExpand(tObj);
       load();
     }
   };
 
-  const publish = async (t: Template, versionId: string) => {
-    const res = await api<{ status: string }>(`/api/addons/broadcast/templates/${t.id}/versions/${versionId}/publish`, { method: 'POST' });
+  const publish = async (tObj: Template, versionId: string) => {
+    const res = await api<{ status: string }>(`/api/addons/broadcast/templates/${tObj.id}/versions/${versionId}/publish`, { method: 'POST' });
     if (res.ok) {
       setPublished((prev) => ({ ...prev, [versionId]: true }));
-      await toggleExpand(t);
+      await toggleExpand(tObj);
       load();
     }
   };
@@ -110,107 +148,107 @@ export function TemplatesView() {
       setName(''); setChannel('sms'); setCategory('general'); setSubject(''); setBodyText('');
       load();
     } else {
-      setFormError(res.error?.message ?? 'Création impossible.');
+      setFormError(res.error?.message ?? t('addonNotActivated'));
     }
   };
 
   if (loading) {
-    return <div className="flex items-center gap-2 py-20 text-slate-500"><Loader2 className="h-5 w-5 animate-spin" /> Chargement des modèles…</div>;
+    return <div className="flex items-center gap-2 py-20 text-slate-500"><Loader2 className="h-5 w-5 animate-spin" /> {tCommon('loading')}</div>;
   }
 
   if (error && !rows) {
     if (isAddonNotActivated(error)) {
       return (
         <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-700">
-          <AlertCircle className="h-5 w-5 shrink-0" /> {error.message ?? 'Module non activé.'}
+          <AlertCircle className="h-5 w-5 shrink-0" /> {error.message ?? t('addonNotActivated')}
         </div>
       );
     }
     return (
       <div className="flex items-center gap-2 py-20 text-rose-600">
-        <AlertCircle className="h-5 w-5" /> {error.message ?? 'Erreur inconnue.'}
-        <Button variant="outline" size="sm" onClick={load}><RefreshCw className="mr-1 h-4 w-4" />Réessayer</Button>
+        <AlertCircle className="h-5 w-5" /> {error.message ?? tCommon('error')}
+        <Button variant="outline" size="sm" onClick={load} className="cursor-pointer"><RefreshCw className="me-1 h-4 w-4" />{tCommon('retry')}</Button>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#16212B]">Modèles de messages</h1>
-          <p className="text-sm text-slate-500">Versions versionnées ; publiez la version immuable utilisée par les campagnes.</p>
+          <h1 className="text-2xl font-bold text-[#16212B]">{t('templatesTitle')}</h1>
+          <p className="text-sm text-slate-500">{t('templatesSubtitle')}</p>
         </div>
-        <Button onClick={() => setShowForm((v) => !v)}><Plus className="mr-2 h-4 w-4" /> Nouveau modèle</Button>
+        <Button onClick={() => setShowForm((v) => !v)} className="cursor-pointer"><Plus className="me-2 h-4 w-4" /> {t('btnNewTemplate')}</Button>
       </div>
 
       {showForm && (
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-semibold text-[#16212B]">Nouveau modèle</h2>
-            <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}><X className="h-4 w-4" /></Button>
+            <h2 className="font-semibold text-[#16212B]">{t('btnNewTemplate')}</h2>
+            <Button variant="ghost" size="sm" onClick={() => setShowForm(false)} className="cursor-pointer"><X className="h-4 w-4" /></Button>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label>Nom</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex. : Rappel de rentrée" />
+              <Label>{t('colName')}</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div>
-              <Label>Canal</Label>
-              <select value={channel} onChange={(e) => setChannel(e.target.value)} className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm">
-                {CHANNELS.map((c) => <option key={c} value={c}>{CHANNEL_LABELS[c]}</option>)}
+              <Label>{t('colChannel')}</Label>
+              <select value={channel} onChange={(e) => setChannel(e.target.value)} className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm cursor-pointer">
+                {CHANNELS.map((c) => <option key={c} value={c}>{getChannelLabel(c)}</option>)}
               </select>
             </div>
             <div>
-              <Label>Catégorie</Label>
-              <select value={category} onChange={(e) => setCategory(e.target.value)} className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm">
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              <Label>{t('templateCategory')}</Label>
+              <select value={category} onChange={(e) => setCategory(e.target.value)} className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm cursor-pointer">
+                {CATEGORIES.map((c) => <option key={c} value={c}>{getCategoryLabel(c)}</option>)}
               </select>
             </div>
             <div>
-              <Label>Objet (e-mail)</Label>
+              <Label>{t('emailSubject')}</Label>
               <Input value={subject} onChange={(e) => setSubject(e.target.value)} />
             </div>
             <div className="sm:col-span-2">
-              <Label>Contenu</Label>
-              <Textarea value={bodyText} onChange={(e) => setBodyText(e.target.value)} rows={3} placeholder="Bonjour {{firstName}}, …" />
-              <p className="mt-1 text-xs text-slate-400">Variables auto-détectées avec la syntaxe <code>{'{{nom}}'}</code>.</p>
+              <Label>{t('templateBody')}</Label>
+              <Textarea value={bodyText} onChange={(e) => setBodyText(e.target.value)} rows={3} />
+              <p className="mt-1 text-xs text-slate-400">{t('variablesHelp')}</p>
             </div>
           </div>
           {formError && <p className="mt-3 text-sm text-rose-600">{formError}</p>}
           <div className="mt-4 flex gap-2">
-            <Button onClick={submit} disabled={saving || !name.trim() || !bodyText.trim()}>
-              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />} Créer
+            <Button onClick={submit} disabled={saving || !name.trim() || !bodyText.trim()} className="cursor-pointer">
+              {saving ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : <FileText className="me-2 h-4 w-4" />} {t('btnCreate')}
             </Button>
-            <Button variant="outline" onClick={() => setShowForm(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setShowForm(false)} className="cursor-pointer">{t('btnCancel')}</Button>
           </div>
         </Card>
       )}
 
       {(!rows || rows.length === 0) ? (
         <Card className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">
-          Aucun modèle. Créez un modèle pour l’utiliser dans une campagne.
+          {t('noTemplates')}
         </Card>
       ) : (
         <div className="space-y-3">
-          {rows.map((t) => {
-            const ex = expanded[t.id];
+          {rows.map((item) => {
+            const ex = expanded[item.id];
             return (
-              <Card key={t.id} className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-                <div className="flex items-center justify-between">
+              <Card key={item.id} className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D1F5E8] text-[#16212B]"><FileText className="h-5 w-5" /></div>
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#D1F5E8] text-[#16212B]"><FileText className="h-5 w-5" /></div>
                     <div>
-                      <p className="font-semibold text-[#16212B]">{t.name}</p>
-                      <p className="text-xs text-slate-500">{t.category} · modifié le {fmtDate(t.updatedAt)}</p>
+                      <p className="font-semibold text-[#16212B]">{item.name}</p>
+                      <p className="text-xs text-slate-500">{getCategoryLabel(item.category)} · {fmtDate(item.updatedAt, locale)}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className={`border ${CHANNEL_BADGE[t.channel]}`}>{CHANNEL_LABELS[t.channel]}</Badge>
-                    <Badge className={`border ${t.latestVersion?.status === 'published' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
-                      {t.latestVersion ? `${TEMPLATE_STATUS_LABELS[t.latestVersion.status] ?? t.latestVersion.status} v${t.latestVersion.version}` : 'Sans version'}
+                    <Badge className={`border ${CHANNEL_BADGE[item.channel]}`}>{getChannelLabel(item.channel)}</Badge>
+                    <Badge className={`border ${item.latestVersion?.status === 'published' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
+                      {item.latestVersion ? `${getVersionStatusLabel(item.latestVersion.status)} v${item.latestVersion.version}` : t('noVersion')}
                     </Badge>
-                    <Button variant="ghost" size="sm" onClick={() => toggleExpand(t)}>
+                    <Button variant="ghost" size="sm" onClick={() => toggleExpand(item)} className="cursor-pointer">
                       {ex?.loaded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                     </Button>
                   </div>
@@ -218,18 +256,18 @@ export function TemplatesView() {
 
                 {ex?.loaded && (
                   <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
-                    {ex.versions.length === 0 && <p className="text-sm text-slate-400">Aucune version.</p>}
+                    {ex.versions.length === 0 && <p className="text-sm text-slate-400">{t('noVersion')}</p>}
                     {ex.versions.map((v) => (
                       <div key={v.id} className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 text-xs text-slate-500">
                             <span className="font-semibold text-[#16212B]">v{v.version}</span>
-                            <Badge className={`border ${v.status === 'published' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-600'}`}>{TEMPLATE_STATUS_LABELS[v.status] ?? v.status}</Badge>
+                            <Badge className={`border ${v.status === 'published' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-600'}`}>{getVersionStatusLabel(v.status)}</Badge>
                             {v.subject && <span>· {v.subject}</span>}
                           </div>
                           {v.status === 'draft' && (
-                            <Button size="sm" onClick={() => publish(t, v.id)} disabled={published[v.id]}>
-                              {published[v.id] ? <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> : <Send className="mr-1 h-3.5 w-3.5" />} Publier
+                            <Button size="sm" onClick={() => publish(item, v.id)} disabled={published[v.id]} className="cursor-pointer">
+                              {published[v.id] ? <CheckCircle2 className="me-1 h-3.5 w-3.5" /> : <Send className="me-1 h-3.5 w-3.5" />} {t('publish')}
                             </Button>
                           )}
                         </div>
@@ -241,14 +279,13 @@ export function TemplatesView() {
                     ))}
                     <div className="flex items-end gap-2">
                       <div className="flex-1">
-                        <Label>Ajouter une version</Label>
+                        <Label>{t('addVersion')}</Label>
                         <Input
-                          value={newVersions[t.id]?.bodyText ?? ''}
-                          onChange={(e) => setNewVersions((prev) => ({ ...prev, [t.id]: { subject: prev[t.id]?.subject ?? '', bodyText: e.target.value } }))}
-                          placeholder="Contenu de la nouvelle version…"
+                          value={newVersions[item.id]?.bodyText ?? ''}
+                          onChange={(e) => setNewVersions((prev) => ({ ...prev, [item.id]: { subject: prev[item.id]?.subject ?? '', bodyText: e.target.value } }))}
                         />
                       </div>
-                      <Button variant="outline" onClick={() => addVersion(t)} disabled={!newVersions[t.id]?.bodyText?.trim()}>+ Version</Button>
+                      <Button variant="outline" onClick={() => addVersion(item)} disabled={!newVersions[item.id]?.bodyText?.trim()} className="cursor-pointer">{t('addVersion')}</Button>
                     </div>
                   </div>
                 )}

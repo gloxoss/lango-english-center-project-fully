@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -69,21 +70,31 @@ function Sparkline({ points }: { points: number[] }) {
   );
 }
 
-const CHECK_DEEP_LINKS: Record<string, { href: string; label: string }> = {
-  class_offerings: { href: '/dashboard/academics/classes', label: 'Gérer les offres de classes & sections' },
-  primary_teachers: { href: '/dashboard/academics/class-section-teachers', label: 'Affecter les titulaires manquants' },
-  subject_teachers: { href: '/dashboard/academics/assignments', label: 'Affecter les enseignants aux matières' },
-  timetable_published: { href: '/dashboard/academics/schedule', label: 'Générer & publier l\'emploi du temps' },
-  rooms_allocated: { href: '/dashboard/academics/rooms', label: 'Affecter les salles de cours' },
-  student_placements: { href: '/dashboard/students', label: 'Affecter les élèves aux sections' },
-};
-
 export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {}) {
+  const t = useTranslations('Academics');
+  const tc = useTranslations('Common');
   const { role } = usePermissions();
+
   const [data, setData] = useState<ReadinessData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [capturing, setCapturing] = useState(false);
+
+  const checkDeepLinks = useMemo<Record<string, { href: string; label: string }>>(() => ({
+    class_offerings: { href: '/dashboard/academics/classes', label: t('dlManageClassOfferings') },
+    primary_teachers: { href: '/dashboard/academics/class-section-teachers', label: t('dlAssignMissingHomerooms') },
+    subject_teachers: { href: '/dashboard/academics/assignments', label: t('dlAssignSubjectTeachers') },
+    timetable_published: { href: '/dashboard/academics/schedule', label: t('dlGeneratePublishTimetable') },
+    rooms_allocated: { href: '/dashboard/academics/rooms', label: t('dlAllocateClassrooms') },
+    student_placements: { href: '/dashboard/students', label: t('dlAssignStudentsSections') },
+  }), [t]);
+
+  const getStatusLabel = (status: string) => {
+    if (status === 'conforme') return t('statusConforme');
+    if (status === 'attention') return t('statusAttention');
+    if (status === 'critique') return t('statusCritique');
+    return status;
+  };
 
   const fetchReadiness = async () => {
     setLoading(true);
@@ -93,9 +104,9 @@ export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {
       const json = await res.json();
       if (json.success && json.data) {
         const checksWithLinks = (json.data.checks || []).map((c: ReadinessCheck) => {
-          const dl = CHECK_DEEP_LINKS[c.id];
+          const dl = checkDeepLinks[c.id];
           const href = dl?.href ?? '/dashboard/academics/classes';
-          const label = dl?.label ?? 'Examiner les éléments';
+          const label = dl?.label ?? t('dlExamineElements');
           return {
             ...c,
             deepLink: `/${locale}${href}`,
@@ -110,11 +121,11 @@ export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {
         });
       } else {
         setData(null);
-        setError('Impossible de charger le bilan de préparation académique.');
+        setError(t('loadReadinessError'));
       }
     } catch {
       setData(null);
-      setError('Impossible de charger le bilan de préparation académique.');
+      setError(t('loadReadinessError'));
     } finally {
       setLoading(false);
     }
@@ -137,7 +148,7 @@ export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {
 
   useEffect(() => {
     fetchReadiness();
-  }, []);
+  }, [checkDeepLinks]);
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
@@ -146,10 +157,10 @@ export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {
         <div>
           <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight flex items-center gap-2.5">
             <ShieldCheck className="w-6 h-6 text-[#0066FF]" />
-            Bilan de Rentrée &amp; Préparation Académique
+            {t('readinessPageTitle')}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Supervision temps réel de la conformité de rentrée avec exploration directe des blocages (§6.16).
+            {t('readinessPageSubtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2.5">
@@ -162,7 +173,7 @@ export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {
               className="h-9 text-xs rounded-xl gap-1.5 border-slate-200 bg-white font-bold"
             >
               <Camera className="w-3.5 h-3.5 text-[#2487B8]" />
-              {capturing ? 'Capture...' : 'Capturer un instantané'}
+              {capturing ? t('capturingSnapshot') : t('captureSnapshot')}
             </Button>
           )}
           <Button
@@ -173,7 +184,7 @@ export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {
             className="h-9 text-xs rounded-xl gap-1.5 border-slate-200 bg-white font-bold"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Actualiser
+            {tc('refresh')}
           </Button>
           <Button
             size="sm"
@@ -182,7 +193,7 @@ export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {
           >
             <a href="/api/academics/readiness/export" download>
               <Download className="w-3.5 h-3.5" />
-              Exporter le Rapport (CSV)
+              {t('exportCsvReport')}
             </a>
           </Button>
         </div>
@@ -204,7 +215,7 @@ export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-extrabold text-[#16212B]">Score Global de Préparation Académique</h2>
+                <h2 className="text-lg font-extrabold text-[#16212B]">{t('overallReadinessScore')}</h2>
                 {typeof data?.weeklyTrendDelta === 'number' && (
                   <Badge
                     className={`border-none font-bold text-[10px] gap-1 ${
@@ -220,25 +231,25 @@ export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {
                     ) : data.weeklyTrendDelta < 0 ? (
                       <TrendingDown className="w-3 h-3" />
                     ) : null}
-                    {data.weeklyTrendDelta > 0 ? '+' : ''}{data.weeklyTrendDelta}% cette semaine
+                    {t('thisWeek', { delta: (data.weeklyTrendDelta > 0 ? `+${data.weeklyTrendDelta}` : `${data.weeklyTrendDelta}`) })}
                   </Badge>
                 )}
               </div>
               <p className="text-xs text-slate-500 mt-1 max-w-lg">
-                Progression mesurée semaine après semaine. Cliquez sur chaque carte ci-dessous pour corriger directement les points non conformes.
+                {t('weeklyProgressDesc')}
               </p>
             </div>
           </div>
           <div className="w-full sm:w-72 space-y-2">
             <div className="flex justify-between text-xs font-bold text-slate-700">
-              <span>Indice de complétude</span>
+              <span>{t('completenessIndex')}</span>
               <span className="text-[#0066FF] font-mono">{data?.overallScore ?? 0} / 100</span>
             </div>
             <Progress value={data?.overallScore ?? 0} className="h-3 rounded-full bg-slate-100" />
             {data?.trend && data.trend.length >= 2 && (
               <div className="pt-1">
                 <Sparkline points={data.trend.map(t => t.score)} />
-                <p className="text-[10px] text-slate-400 mt-1">Historique des instantanés (les plus récents à droite)</p>
+                <p className="text-[10px] text-slate-400 mt-1">{t('snapshotHistory')}</p>
               </div>
             )}
           </div>
@@ -254,14 +265,14 @@ export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {
                 <CardTitle className="text-sm font-extrabold text-[#16212B]">{check.title}</CardTitle>
                 <Badge
                   variant={check.status === 'conforme' ? 'success' : check.status === 'attention' ? 'warning' : 'danger'}
-                  className="text-[10px] font-bold capitalize"
+                  className="text-[10px] font-bold"
                 >
-                  {check.status}
+                  {getStatusLabel(check.status)}
                 </Badge>
               </CardHeader>
               <CardContent className="p-4 pt-0 space-y-3">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-500 mt-2">
-                  <span>Conformité</span>
+                  <span>{t('compliance')}</span>
                   <span className="font-mono text-slate-700">{check.score}%</span>
                 </div>
                 <Progress value={check.score} className="h-2 rounded-full bg-slate-100" />
@@ -280,8 +291,8 @@ export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {
                     size="sm"
                     className="w-full h-8 text-xs rounded-xl border-slate-200 text-[#0066FF] hover:bg-blue-50 font-bold justify-between group"
                   >
-                    <span>{check.deepLinkLabel || 'Résoudre'}</span>
-                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                    <span>{check.deepLinkLabel || t('btnResolve')}</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 rtl:rotate-180 transition-transform" />
                   </Button>
                 </Link>
               </div>
@@ -292,3 +303,4 @@ export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {
     </div>
   );
 }
+

@@ -7,7 +7,7 @@ import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { classSubjectCreateSchema, classSubjectUpdateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { assessmentPlans, classes, classScheduleSlots, classSubjects, semesters, subjectTeachers, subjects } from '@/models/Schema';
+import { assessmentPlans, classes, classScheduleSlots, classSubjects, semesters, subjects, subjectTeachers } from '@/models/Schema';
 
 function toApiClassSubject(row: typeof classSubjects.$inferSelect) {
   return {
@@ -77,31 +77,41 @@ export async function GET(request: Request) {
     const offeringId = searchParams.get('offeringId');
 
     const conditions = [eq(classSubjects.tenantId, tenantId)];
-    if (classId) conditions.push(eq(classSubjects.classId, classId));
-    if (offeringId) conditions.push(eq(classSubjects.offeringId, offeringId));
+    if (classId) {
+      conditions.push(eq(classSubjects.classId, classId));
+    }
+    if (offeringId) {
+      conditions.push(eq(classSubjects.offeringId, offeringId));
+    }
 
     const where = and(...conditions);
 
+    // `className`/`subjectName` are joined in for pickers: a row a user has to
+    // choose between cannot be identified by its uuid alone.
+    const projection = {
+      id: classSubjects.id,
+      classId: classSubjects.classId,
+      subjectId: classSubjects.subjectId,
+      type: classSubjects.type,
+      semesterId: classSubjects.semesterId,
+      offeringId: classSubjects.offeringId,
+      weeklyMinutes: classSubjects.weeklyMinutes,
+      displayOrder: classSubjects.displayOrder,
+      coefficient: classSubjects.coefficient,
+      passThreshold: classSubjects.passThreshold,
+      isActive: classSubjects.isActive,
+      curriculumLabel: classSubjects.curriculumLabel,
+      tenantId: classSubjects.tenantId,
+      subjectName: subjects.name,
+      className: classes.name,
+    };
+
     const [rows, totalRows] = await Promise.all([
       db
-        .select({
-          id: classSubjects.id,
-          classId: classSubjects.classId,
-          subjectId: classSubjects.subjectId,
-          type: classSubjects.type,
-          semesterId: classSubjects.semesterId,
-          offeringId: classSubjects.offeringId,
-          weeklyMinutes: classSubjects.weeklyMinutes,
-          displayOrder: classSubjects.displayOrder,
-          coefficient: classSubjects.coefficient,
-          passThreshold: classSubjects.passThreshold,
-          isActive: classSubjects.isActive,
-          curriculumLabel: classSubjects.curriculumLabel,
-          tenantId: classSubjects.tenantId,
-          subjectName: subjects.name,
-        })
+        .select(projection)
         .from(classSubjects)
         .leftJoin(subjects, eq(classSubjects.subjectId, subjects.id))
+        .leftJoin(classes, eq(classSubjects.classId, classes.id))
         .where(where)
         .orderBy(classSubjects.displayOrder)
         .limit(pagination.limit)
@@ -111,7 +121,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      data: rows.map((r) => ({ ...toApiClassSubject(r as any), subjectName: r.subjectName })),
+      data: rows.map(r => ({ ...toApiClassSubject(r as any), subjectName: r.subjectName, className: r.className })),
       total: totalRows[0]?.total ?? 0,
       page: pagination.page,
       pageSize: pagination.pageSize,
@@ -185,13 +195,27 @@ export async function PUT(request: Request) {
       semesterId,
       updatedAt: new Date().toISOString(),
     };
-    if (body.offeringId !== undefined) updatePayload.offeringId = body.offeringId;
-    if (body.weeklyMinutes !== undefined) updatePayload.weeklyMinutes = body.weeklyMinutes;
-    if (body.displayOrder !== undefined) updatePayload.displayOrder = body.displayOrder;
-    if (body.coefficient !== undefined) updatePayload.coefficient = body.coefficient ? body.coefficient.toString() : '1.00';
-    if (body.passThreshold !== undefined) updatePayload.passThreshold = body.passThreshold ? body.passThreshold.toString() : null;
-    if (body.isActive !== undefined) updatePayload.isActive = body.isActive;
-    if (body.curriculumLabel !== undefined) updatePayload.curriculumLabel = body.curriculumLabel;
+    if (body.offeringId !== undefined) {
+      updatePayload.offeringId = body.offeringId;
+    }
+    if (body.weeklyMinutes !== undefined) {
+      updatePayload.weeklyMinutes = body.weeklyMinutes;
+    }
+    if (body.displayOrder !== undefined) {
+      updatePayload.displayOrder = body.displayOrder;
+    }
+    if (body.coefficient !== undefined) {
+      updatePayload.coefficient = body.coefficient ? body.coefficient.toString() : '1.00';
+    }
+    if (body.passThreshold !== undefined) {
+      updatePayload.passThreshold = body.passThreshold ? body.passThreshold.toString() : null;
+    }
+    if (body.isActive !== undefined) {
+      updatePayload.isActive = body.isActive;
+    }
+    if (body.curriculumLabel !== undefined) {
+      updatePayload.curriculumLabel = body.curriculumLabel;
+    }
 
     const [updated] = await db
       .update(classSubjects)

@@ -8,5 +8,10 @@ export default async function ReceptionistAppointmentsPage({
 }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'reception.appointment.manage' });
-  return <ReceptionAppointmentsView />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <ReceptionAppointmentsView />
+    </main>
+  );
 }

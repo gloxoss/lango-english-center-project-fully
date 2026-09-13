@@ -4,5 +4,10 @@ import { requireServerPage } from '@/libs/api/page-guard';
 export default async function WorkforceSalaryAdvancesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'payroll.advances.manage' });
-  return <SalaryAdvancesView />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <SalaryAdvancesView />
+    </main>
+  );
 }

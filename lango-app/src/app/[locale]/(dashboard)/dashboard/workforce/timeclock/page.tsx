@@ -13,9 +13,10 @@ export default async function TimeClockPage({
 }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'payroll.review' });
+  const isRtl = locale === 'ar';
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale} className="mx-auto max-w-4xl px-4 py-8">
       <TimeClockKiosk />
-    </div>
+    </main>
   );
 }

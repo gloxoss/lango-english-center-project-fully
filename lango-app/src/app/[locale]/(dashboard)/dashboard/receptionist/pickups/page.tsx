@@ -11,5 +11,10 @@ export default async function ReceptionistPickupsPage({
   // behind reception.pickup.release (default-deny) — the view renders a graceful
   // forbidden state. Explicit authorization grants open the path.
   await requireServerPage(locale, { requiredCapability: 'reception.portal.use' });
-  return <ReceptionPickupsView />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <ReceptionPickupsView />
+    </main>
+  );
 }

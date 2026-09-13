@@ -1,0 +1,16 @@
+{
+  "_README": "Ratchet baselines for scripts/check-ui-reality.ts. Each count may only go DOWN. Lower a number when you fix something, so the gain is locked in. Raising one is allowed but must be deliberate and explained in the PR - it means shipping a control that does nothing, a screen with invented data, a page nobody can reach, or dead code.",
+  "_measured": "2026-09-11, after the grading-path and expenses rebuild.",
+
+  "deadControls": 57,
+  "_deadControls": "A <Button>/<button> with no onClick, submit, link or trigger parent. Was 121 before the grading/results/expenses rebuild and the _archived-ui move. Largest remaining clusters: leadership-portal-view, class-subjects-client, homework-submission-client.",
+
+  "mockScreens": 1,
+  "_mockScreens": "The one remaining is src/features/attendance/ui/attendance-scanner-playground.tsx (DEFAULT_DEMO_SCANS) - an intentional demo sandbox, kept visible rather than exempted by filename so a real mock cannot hide behind a -playground suffix. Any increase is a genuine regression.",
+
+  "unlinkedPages": 34,
+  "_unlinkedPages": "Static dashboard pages no sidebar or portal-manifest entry points at. Was 71 before the academics/grading nav entries were added. Remaining clusters: communication (9), portals/librarian (9), finance (5). Two are reached from a parent screen by design - academics/assessment/marksheet (opened from the grade-entry picker) and academics/live-class/new.",
+
+  "orphanedComponents": 7,
+  "_orphanedComponents": "Exported components nothing in src imports. Was 14; seven mock/duplicate screens were moved to future-implementation/_archived-ui. The remaining seven are small prop-driven building blocks, not fake screens."
+}

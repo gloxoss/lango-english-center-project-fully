@@ -8,5 +8,5 @@ export default async function SuperAdminSupportPage({
 }) {
   const { locale } = await params;
   await requireServerPage(locale, { allowedRoles: ['super_admin'] });
-  return <SuperAdminSupportView />;
+  return <SuperAdminSupportView locale={locale} />;
 }

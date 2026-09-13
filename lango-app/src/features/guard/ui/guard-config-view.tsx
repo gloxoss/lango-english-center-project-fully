@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -14,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  AlertCircle, Archive, Clock, DoorOpen, Loader2, Pencil, Plus, ShieldCheck, Trash2,
+  AlertCircle, Archive, DoorOpen, Loader2, Pencil, Plus, ShieldCheck, Trash2,
 } from 'lucide-react';
 
 type ApiErrorShape = { code?: string; message?: string };
@@ -51,16 +52,6 @@ async function api<T>(url: string, init?: RequestInit): Promise<{ ok: boolean; s
   }
 }
 
-function statusBadge(status: string) {
-  switch (status) {
-    case 'active': return <Badge className="bg-[#D1F5E8] text-[#0b5c3a]">Actif</Badge>;
-    case 'scheduled': return <Badge className="bg-[#DCEBF4] text-[#1B6C93]">Planifié</Badge>;
-    case 'expired': return <Badge className="bg-slate-100 text-slate-500">Expiré</Badge>;
-    case 'cancelled': return <Badge className="bg-slate-100 text-slate-500">Annulé</Badge>;
-    default: return <Badge className="bg-slate-100 text-slate-600">{status}</Badge>;
-  }
-}
-
 function toLocalInput(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
@@ -76,6 +67,7 @@ function toDisplay(iso: string | null): string {
 }
 
 export function GuardConfigView() {
+  const t = useTranslations('Guard');
   const [tab, setTab] = useState<Tab>('gates');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -124,22 +116,22 @@ export function GuardConfigView() {
   }, [loadAssignments]);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="mx-auto max-w-6xl space-y-6 text-start">
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#16212B]">Sécurité &amp; Gardiens</h1>
-          <p className="text-sm text-slate-500">Configuration des portails, quarts et affectations.</p>
+          <h1 className="text-2xl font-bold text-[#16212B]">{t('configTitle')}</h1>
+          <p className="mt-0.5 text-sm text-slate-500">{t('configSubtitle')}</p>
         </div>
-        <Badge className="bg-[#DCEBF4] text-[#1B6C93]"><ShieldCheck className="mr-1 h-3.5 w-3.5" /> Accès réservé aux administrateurs</Badge>
+        <Badge className="bg-[#DCEBF4] text-[#1B6C93]"><ShieldCheck className="me-1 h-3.5 w-3.5" /> {t('adminOnlyBadge')}</Badge>
       </div>
 
       {error && <p className="flex items-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error}</p>}
 
       <Tabs value={tab} onValueChange={v => setTab(v as Tab)}>
         <TabsList>
-          <TabsTrigger value="gates">Portails</TabsTrigger>
-          <TabsTrigger value="shifts">Quarts</TabsTrigger>
-          <TabsTrigger value="assignments">Affectations</TabsTrigger>
+          <TabsTrigger value="gates">{t('tabGates')}</TabsTrigger>
+          <TabsTrigger value="shifts">{t('tabShifts')}</TabsTrigger>
+          <TabsTrigger value="assignments">{t('tabAssignments')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="gates">
@@ -187,6 +179,8 @@ function GatesTab({ gates, branches, onChanged, onError }: {
   onChanged: () => Promise<void>;
   onError: (msg: string | null) => void;
 }) {
+  const t = useTranslations('Guard');
+  const tCommon = useTranslations('Common');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Gate | null>(null);
   const [saving, setSaving] = useState(false);
@@ -237,17 +231,17 @@ function GatesTab({ gates, branches, onChanged, onError }: {
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between">
-        <p className="text-sm text-slate-500">{gates.filter(g => g.isActive).length} portail(s) actif(s)</p>
-        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" /> Nouveau portail</Button>
+      <div className="mb-4 flex items-center justify-between text-start">
+        <p className="text-sm text-slate-500">{t('activeGatesCount', { count: gates.filter(g => g.isActive).length })}</p>
+        <Button onClick={openCreate}><Plus className="me-2 h-4 w-4" /> {t('btnNewGate')}</Button>
       </div>
       <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
         <div className="divide-y divide-slate-100">
           {gates.length === 0 ? (
-            <div className="p-10 text-center text-sm text-slate-500">Aucun portail configuré.</div>
+            <div className="p-10 text-center text-sm text-slate-500">{t('noGates')}</div>
           ) : (
             gates.map(g => (
-              <div key={g.id} className="flex items-center justify-between gap-4 p-4">
+              <div key={g.id} className="flex items-center justify-between gap-4 p-4 text-start">
                 <div className="flex items-center gap-3">
                   <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${g.isActive ? 'bg-[#DCEBF4] text-[#1B6C93]' : 'bg-slate-100 text-slate-500'}`}>
                     <DoorOpen className="h-5 w-5" />
@@ -255,13 +249,13 @@ function GatesTab({ gates, branches, onChanged, onError }: {
                   <div>
                     <p className="font-semibold text-[#16212B]">{g.gateName} <span className="font-mono text-xs text-slate-400">{g.gateCode}</span></p>
                     <p className="text-xs text-slate-500">
-                      {branchName(g.branchId)} · {g.direction === 'both' ? 'Entrée & sortie' : g.direction === 'entry' ? 'Entrée' : 'Sortie'}
+                      {branchName(g.branchId)} · {g.direction === 'both' ? t('dirBoth') : g.direction === 'entry' ? t('dirEntry') : t('dirExit')}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <Badge className={g.isActive ? 'bg-[#D1F5E8] text-[#0b5c3a]' : 'bg-slate-100 text-slate-500'}>
-                    {g.isActive ? 'Actif' : 'Archivé'}
+                    {g.isActive ? t('statusActive') : t('statusArchived')}
                   </Badge>
                   <Button variant="ghost" size="icon" onClick={() => openEdit(g)}><Pencil className="h-4 w-4" /></Button>
                   {g.isActive && (
@@ -277,23 +271,23 @@ function GatesTab({ gates, branches, onChanged, onError }: {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? 'Modifier le portail' : 'Nouveau portail'}</DialogTitle>
+            <DialogTitle>{editing ? t('dialogGateTitleEdit') : t('dialogGateTitleNew')}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 text-start">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="mb-1 block text-sm font-medium text-slate-700">Code *</Label>
+                <Label className="mb-1 block text-sm font-medium text-slate-700">{t('gateCode')}</Label>
                 <Input value={form.gateCode} onChange={e => setForm({ ...form, gateCode: e.target.value })} placeholder="Ex : ENTREE-A" />
               </div>
               <div>
-                <Label className="mb-1 block text-sm font-medium text-slate-700">Nom *</Label>
+                <Label className="mb-1 block text-sm font-medium text-slate-700">{t('gateName')}</Label>
                 <Input value={form.gateName} onChange={e => setForm({ ...form, gateName: e.target.value })} placeholder="Ex : Portail principal" />
               </div>
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Branche</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('branch')}</Label>
               <Select value={form.branchId || undefined} onValueChange={v => setForm({ ...form, branchId: v })}>
-                <SelectTrigger><SelectValue placeholder="Toutes branches" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('allBranches')} /></SelectTrigger>
                 <SelectContent>
                   {branches.map(b => (
                     <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
@@ -302,21 +296,21 @@ function GatesTab({ gates, branches, onChanged, onError }: {
               </Select>
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Direction</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('direction')}</Label>
               <Select value={form.direction} onValueChange={v => setForm({ ...form, direction: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="both">Entrée &amp; sortie</SelectItem>
-                  <SelectItem value="entry">Entrée</SelectItem>
-                  <SelectItem value="exit">Sortie</SelectItem>
+                  <SelectItem value="both">{t('dirBoth')}</SelectItem>
+                  <SelectItem value="entry">{t('dirEntry')}</SelectItem>
+                  <SelectItem value="exit">{t('dirExit')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setOpen(false)}>{tCommon('cancel')}</Button>
             <Button onClick={save} disabled={saving || !form.gateCode.trim() || !form.gateName.trim()}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Enregistrer
+              {saving && <Loader2 className="me-2 h-4 w-4 animate-spin" />} {tCommon('save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -335,6 +329,8 @@ function ShiftsTab({ shifts, branches, onChanged, onError }: {
   onChanged: () => Promise<void>;
   onError: (msg: string | null) => void;
 }) {
+  const t = useTranslations('Guard');
+  const tCommon = useTranslations('Common');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Shift | null>(null);
   const [saving, setSaving] = useState(false);
@@ -353,10 +349,15 @@ function ShiftsTab({ shifts, branches, onChanged, onError }: {
   };
 
   const save = async () => {
-    if (!form.name.trim()) return;
+    if (!form.name.trim() || !form.startTime || !form.endTime) return;
     setSaving(true);
     onError(null);
-    const body = { name: form.name.trim(), branchId: form.branchId || null, startTime: form.startTime, endTime: form.endTime };
+    const body = {
+      name: form.name.trim(),
+      branchId: form.branchId || null,
+      startTime: form.startTime,
+      endTime: form.endTime,
+    };
     const res = editing
       ? await api(`/api/guard/shifts/${editing.id}`, { method: 'PATCH', body: JSON.stringify(body) })
       : await api('/api/guard/shifts', { method: 'POST', body: JSON.stringify(body) });
@@ -380,29 +381,26 @@ function ShiftsTab({ shifts, branches, onChanged, onError }: {
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between">
-        <p className="text-sm text-slate-500">{shifts.filter(s => s.isActive).length} quart(s) actif(s)</p>
-        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" /> Nouveau quart</Button>
+      <div className="mb-4 flex items-center justify-between text-start">
+        <p className="text-sm text-slate-500">{t('activeShiftsCount', { count: shifts.filter(s => s.isActive).length })}</p>
+        <Button onClick={openCreate}><Plus className="me-2 h-4 w-4" /> {t('btnNewShift')}</Button>
       </div>
       <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
         <div className="divide-y divide-slate-100">
           {shifts.length === 0 ? (
-            <div className="p-10 text-center text-sm text-slate-500">Aucun quart configuré.</div>
+            <div className="p-10 text-center text-sm text-slate-500">{t('noShifts')}</div>
           ) : (
             shifts.map(s => (
-              <div key={s.id} className="flex items-center justify-between gap-4 p-4">
-                <div className="flex items-center gap-3">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${s.isActive ? 'bg-[#DCEBF4] text-[#1B6C93]' : 'bg-slate-100 text-slate-500'}`}>
-                    <Clock className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-[#16212B]">{s.name}</p>
-                    <p className="text-xs text-slate-500">{s.startTime} → {s.endTime} · {branchName(s.branchId)}</p>
-                  </div>
+              <div key={s.id} className="flex items-center justify-between gap-4 p-4 text-start">
+                <div>
+                  <p className="font-semibold text-[#16212B]">{s.name}</p>
+                  <p className="text-xs text-slate-500">
+                    {branchName(s.branchId)} · <span className="font-mono">{s.startTime} – {s.endTime}</span>
+                  </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <Badge className={s.isActive ? 'bg-[#D1F5E8] text-[#0b5c3a]' : 'bg-slate-100 text-slate-500'}>
-                    {s.isActive ? 'Actif' : 'Archivé'}
+                    {s.isActive ? t('statusActive') : t('statusArchived')}
                   </Badge>
                   <Button variant="ghost" size="icon" onClick={() => openEdit(s)}><Pencil className="h-4 w-4" /></Button>
                   {s.isActive && (
@@ -418,27 +416,17 @@ function ShiftsTab({ shifts, branches, onChanged, onError }: {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? 'Modifier le quart' : 'Nouveau quart'}</DialogTitle>
+            <DialogTitle>{editing ? t('dialogShiftTitleEdit') : t('dialogShiftTitleNew')}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 text-start">
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Nom *</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('shiftName')}</Label>
               <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ex : Matin" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="mb-1 block text-sm font-medium text-slate-700">Début (HH:MM) *</Label>
-                <Input type="time" value={form.startTime} onChange={e => setForm({ ...form, startTime: e.target.value })} />
-              </div>
-              <div>
-                <Label className="mb-1 block text-sm font-medium text-slate-700">Fin (HH:MM) *</Label>
-                <Input type="time" value={form.endTime} onChange={e => setForm({ ...form, endTime: e.target.value })} />
-              </div>
-            </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Branche</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('branch')}</Label>
               <Select value={form.branchId || undefined} onValueChange={v => setForm({ ...form, branchId: v })}>
-                <SelectTrigger><SelectValue placeholder="Toutes branches" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('allBranches')} /></SelectTrigger>
                 <SelectContent>
                   {branches.map(b => (
                     <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
@@ -446,11 +434,21 @@ function ShiftsTab({ shifts, branches, onChanged, onError }: {
                 </SelectContent>
               </Select>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="mb-1 block text-sm font-medium text-slate-700">{t('startTime')}</Label>
+                <Input type="time" value={form.startTime} onChange={e => setForm({ ...form, startTime: e.target.value })} />
+              </div>
+              <div>
+                <Label className="mb-1 block text-sm font-medium text-slate-700">{t('endTime')}</Label>
+                <Input type="time" value={form.endTime} onChange={e => setForm({ ...form, endTime: e.target.value })} />
+              </div>
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setOpen(false)}>{tCommon('cancel')}</Button>
             <Button onClick={save} disabled={saving || !form.name.trim()}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Enregistrer
+              {saving && <Loader2 className="me-2 h-4 w-4 animate-spin" />} {tCommon('save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -473,6 +471,8 @@ function AssignmentsTab({ assignments, gates, shifts, guards, devices, loading, 
   onChanged: () => Promise<void>;
   onError: (msg: string | null) => void;
 }) {
+  const t = useTranslations('Guard');
+  const tCommon = useTranslations('Common');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Assignment | null>(null);
   const [saving, setSaving] = useState(false);
@@ -480,6 +480,16 @@ function AssignmentsTab({ assignments, gates, shifts, guards, devices, loading, 
     guardUserId: '', gateId: '', shiftId: '', deviceId: '',
     effectiveFrom: '', effectiveUntil: '',
   });
+
+  const statusBadge = (status: string) => {
+    switch (status) {
+      case 'active': return <Badge className="bg-[#D1F5E8] text-[#0b5c3a]">{t('statusActive')}</Badge>;
+      case 'scheduled': return <Badge className="bg-[#DCEBF4] text-[#1B6C93]">{t('stOpen')}</Badge>;
+      case 'expired': return <Badge className="bg-slate-100 text-slate-500">{t('statusArchived')}</Badge>;
+      case 'cancelled': return <Badge className="bg-slate-100 text-slate-500">{t('stClosed')}</Badge>;
+      default: return <Badge className="bg-slate-100 text-slate-600">{status}</Badge>;
+    }
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -536,21 +546,21 @@ function AssignmentsTab({ assignments, gates, shifts, guards, devices, loading, 
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between text-start">
         <p className="text-sm text-slate-500">
-          {assignments.length} affectation(s) · gardien actif si <span className="font-mono text-xs">active</span> et dans la fenêtre
+          {t('assignmentsCountHint', { count: assignments.length })}
         </p>
-        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" /> Nouvelle affectation</Button>
+        <Button onClick={openCreate}><Plus className="me-2 h-4 w-4" /> {t('btnNewAssignment')}</Button>
       </div>
       <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
         {loading ? (
-          <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Chargement…</div>
+          <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> {tCommon('loading')}</div>
         ) : assignments.length === 0 ? (
-          <div className="p-10 text-center text-sm text-slate-500">Aucune affectation.</div>
+          <div className="p-10 text-center text-sm text-slate-500">{t('noAssignments')}</div>
         ) : (
           <div className="divide-y divide-slate-100">
             {assignments.map(a => (
-              <div key={a.id} className="flex items-center justify-between gap-4 p-4">
+              <div key={a.id} className="flex items-center justify-between gap-4 p-4 text-start">
                 <div className="min-w-0">
                   <p className="truncate font-semibold text-[#16212B]">{a.guardName ?? a.guardUserId}</p>
                   <p className="truncate text-xs text-slate-500">
@@ -559,7 +569,7 @@ function AssignmentsTab({ assignments, gates, shifts, guards, devices, loading, 
                     {a.deviceLabel ? ` · ${a.deviceLabel}` : ''}
                   </p>
                   <p className="text-xs text-slate-400">
-                    {toDisplay(a.effectiveFrom)} → {a.effectiveUntil ? toDisplay(a.effectiveUntil) : 'sans fin'}
+                    {toDisplay(a.effectiveFrom)} → {a.effectiveUntil ? toDisplay(a.effectiveUntil) : t('noEndDate')}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
@@ -580,15 +590,15 @@ function AssignmentsTab({ assignments, gates, shifts, guards, devices, loading, 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? 'Modifier l\'affectation' : 'Nouvelle affectation'}</DialogTitle>
+            <DialogTitle>{editing ? t('dialogAssignmentTitleEdit') : t('dialogAssignmentTitleNew')}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 text-start">
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Gardien *</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('guardUser')}</Label>
               <Select value={form.guardUserId || undefined} onValueChange={v => setForm({ ...form, guardUserId: v })}>
-                <SelectTrigger><SelectValue placeholder="Choisir un gardien" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('selectGuard')} /></SelectTrigger>
                 <SelectContent>
-                  {guards.length === 0 && <div className="px-3 py-2 text-xs text-slate-500">Aucun compte gardien actif. Créez-le dans Utilisateurs.</div>}
+                  {guards.length === 0 && <div className="px-3 py-2 text-xs text-slate-500">{t('noGuards')}</div>}
                   {guards.map(g => (
                     <SelectItem key={g.id} value={g.id}>{g.fullName}</SelectItem>
                   ))}
@@ -597,9 +607,9 @@ function AssignmentsTab({ assignments, gates, shifts, guards, devices, loading, 
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="mb-1 block text-sm font-medium text-slate-700">Portail *</Label>
+                <Label className="mb-1 block text-sm font-medium text-slate-700">{t('gate')}</Label>
                 <Select value={form.gateId || undefined} onValueChange={v => setForm({ ...form, gateId: v })}>
-                  <SelectTrigger><SelectValue placeholder="Portail" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('selectGate')} /></SelectTrigger>
                   <SelectContent>
                     {activeGates.map(g => (
                       <SelectItem key={g.id} value={g.id}>{g.gateName} ({g.gateCode})</SelectItem>
@@ -608,9 +618,9 @@ function AssignmentsTab({ assignments, gates, shifts, guards, devices, loading, 
                 </Select>
               </div>
               <div>
-                <Label className="mb-1 block text-sm font-medium text-slate-700">Quart *</Label>
+                <Label className="mb-1 block text-sm font-medium text-slate-700">{t('shift')}</Label>
                 <Select value={form.shiftId || undefined} onValueChange={v => setForm({ ...form, shiftId: v })}>
-                  <SelectTrigger><SelectValue placeholder="Quart" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('selectShift')} /></SelectTrigger>
                   <SelectContent>
                     {activeShifts.map(s => (
                       <SelectItem key={s.id} value={s.id}>{s.name} ({s.startTime}–{s.endTime})</SelectItem>
@@ -620,10 +630,11 @@ function AssignmentsTab({ assignments, gates, shifts, guards, devices, loading, 
               </div>
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Scanner (optionnel)</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('scannerDevice')}</Label>
               <Select value={form.deviceId || undefined} onValueChange={v => setForm({ ...form, deviceId: v })}>
-                <SelectTrigger><SelectValue placeholder="Aucun scanner" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('selectDevice')} /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="__none__">{t('noDevice')}</SelectItem>
                   {devices.filter(d => !d.isDisabled).map(d => (
                     <SelectItem key={d.id} value={d.id}>{d.deviceLabel}</SelectItem>
                   ))}
@@ -632,20 +643,19 @@ function AssignmentsTab({ assignments, gates, shifts, guards, devices, loading, 
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="mb-1 block text-sm font-medium text-slate-700">Début d'effet *</Label>
+                <Label className="mb-1 block text-sm font-medium text-slate-700">{t('effectiveFrom')}</Label>
                 <Input type="datetime-local" value={form.effectiveFrom} onChange={e => setForm({ ...form, effectiveFrom: e.target.value })} />
               </div>
               <div>
-                <Label className="mb-1 block text-sm font-medium text-slate-700">Fin d'effet</Label>
+                <Label className="mb-1 block text-sm font-medium text-slate-700">{t('effectiveUntil')}</Label>
                 <Input type="datetime-local" value={form.effectiveUntil} onChange={e => setForm({ ...form, effectiveUntil: e.target.value })} />
               </div>
             </div>
-            <p className="text-xs text-slate-400">La fin est optionnelle : sans fin, l&apos;affectation reste valide indéfiniment.</p>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setOpen(false)}>{tCommon('cancel')}</Button>
             <Button onClick={save} disabled={saving || !form.guardUserId || !form.gateId || !form.shiftId || !form.effectiveFrom}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Enregistrer
+              {saving && <Loader2 className="me-2 h-4 w-4 animate-spin" />} {tCommon('save')}
             </Button>
           </DialogFooter>
         </DialogContent>

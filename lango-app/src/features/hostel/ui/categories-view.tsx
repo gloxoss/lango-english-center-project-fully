@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,12 +29,6 @@ type CategoryRow = {
   status: 'active' | 'archived';
 };
 
-const GENDER_LABELS: Record<string, string> = {
-  mixed: 'Mixte',
-  male_only: 'Garçons',
-  female_only: 'Filles',
-};
-
 const emptyForm = {
   name: '',
   code: '',
@@ -47,6 +42,15 @@ const emptyForm = {
 };
 
 export function CategoriesView() {
+  const t = useTranslations('Hostel');
+  const tCommon = useTranslations('Common');
+
+  const GENDER_LABELS: Record<string, string> = {
+    mixed: t('genderMixed'),
+    male_only: t('genderMaleOnly'),
+    female_only: t('genderFemaleOnly'),
+  };
+
   const [rows, setRows] = useState<CategoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -123,29 +127,29 @@ export function CategoriesView() {
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#16212B]">Catégories de chambres</h1>
-          <p className="text-sm text-slate-500">Catégories, politique de genre, capacité et tarifs de référence.</p>
+          <h1 className="text-2xl font-bold text-[#16212B]">{t('categoriesTitle')}</h1>
+          <p className="text-sm text-slate-500">{t('categoriesSubtitle')}</p>
         </div>
-        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" /> Nouvelle catégorie</Button>
+        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" /> {t('btnNewCategory')}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#D1F5E8] text-[#16212B]"><BedDouble className="h-5 w-5" /></div>
-            <div><p className="text-sm text-slate-500">Catégories</p><p className="text-2xl font-bold text-[#16212B]">{rows.length}</p></div>
+            <div><p className="text-sm text-slate-500">{t('categoriesTitle')}</p><p className="text-2xl font-bold text-[#16212B]">{rows.length}</p></div>
           </div>
         </Card>
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-[#16212B]"><BedDouble className="h-5 w-5" /></div>
-            <div><p className="text-sm text-slate-500">Catégories actives</p><p className="text-2xl font-bold text-[#16212B]">{rows.filter(r => r.status === 'active').length}</p></div>
+            <div><p className="text-sm text-slate-500">{t('statusActive')}</p><p className="text-2xl font-bold text-[#16212B]">{rows.filter(r => r.status === 'active').length}</p></div>
           </div>
         </Card>
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-[#16212B]"><BedDouble className="h-5 w-5" /></div>
-            <div><p className="text-sm text-slate-500">Accessibles PMR</p><p className="text-2xl font-bold text-[#16212B]">{rows.filter(r => r.isAccessible).length}</p></div>
+            <div><p className="text-sm text-slate-500">{t('isAccessible')}</p><p className="text-2xl font-bold text-[#16212B]">{rows.filter(r => r.isAccessible).length}</p></div>
           </div>
         </Card>
       </div>
@@ -154,16 +158,16 @@ export function CategoriesView() {
         <div className="flex items-center justify-between gap-4 border-b border-slate-100 p-4">
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher une catégorie…" className="pl-9" />
+            <Input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('searchResidentPlaceholder')} className="pl-9" />
           </div>
           {error && <p className="flex items-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error}</p>}
         </div>
 
         <div className="divide-y divide-slate-100">
           {loading ? (
-            <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Chargement…</div>
+            <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> {tCommon('loading')}</div>
           ) : filtered.length === 0 ? (
-            <div className="p-10 text-center text-sm text-slate-500">Aucune catégorie trouvée.</div>
+            <div className="p-10 text-center text-sm text-slate-500">{t('noCategories')}</div>
           ) : (
             filtered.map(row => (
               <div key={row.id} className="flex items-center justify-between gap-4 p-4">
@@ -173,15 +177,15 @@ export function CategoriesView() {
                     <p className="font-semibold text-[#16212B]">{row.name}</p>
                     <p className="text-xs text-slate-500">
                       {row.code} · {GENDER_LABELS[row.eligibleGenderPolicy] ?? row.eligibleGenderPolicy}
-                      {row.defaultCapacity ? ` · capacité ${row.defaultCapacity}` : ''}
-                      {row.isAccessible ? ' · PMR' : ''}
+                      {row.defaultCapacity ? ` · ${t('defaultCapacity')}: ${row.defaultCapacity}` : ''}
+                      {row.isAccessible ? ` · ${t('accessibleBadge')}` : ''}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <p className="text-sm font-semibold text-[#16212B]">{Number(row.baseCharge).toLocaleString('fr-MA', { style: 'currency', currency: 'MAD', maximumFractionDigits: 0 })}</p>
+                  <p className="text-sm font-semibold text-[#16212B]">{Number(row.baseCharge).toLocaleString()} MAD</p>
                   <Badge className={row.status === 'active' ? 'bg-[#D1F5E8] text-[#0b5c3a]' : 'bg-slate-100 text-slate-500'}>
-                    {row.status === 'active' ? 'Actif' : 'Archivé'}
+                    {row.status === 'active' ? t('statusActive') : t('statusArchived')}
                   </Badge>
                   <Button variant="ghost" size="icon" onClick={() => openEdit(row)}><Pencil className="h-4 w-4" /></Button>
                 </div>
@@ -194,70 +198,70 @@ export function CategoriesView() {
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? `Modifier ${editing.name}` : 'Nouvelle catégorie'}</DialogTitle>
+            <DialogTitle>{editing ? t('dialogHostelTitleEdit', { name: editing.name }) : t('btnNewCategory')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Nom *</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('hostelName')}</label>
                 <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ex : Standard" />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Code *</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('hostelCode')}</label>
                 <Input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} placeholder="Ex : STD" />
               </div>
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Capacité par défaut</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('defaultCapacity')}</label>
                 <Input type="number" value={form.defaultCapacity} onChange={e => setForm({ ...form, defaultCapacity: e.target.value })} />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Priorité</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('priority')}</label>
                 <Input type="number" value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })} />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Politique de genre</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('genderPolicy')}</label>
                 <Select value={form.eligibleGenderPolicy} onValueChange={v => setForm({ ...form, eligibleGenderPolicy: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="mixed">Mixte</SelectItem>
-                    <SelectItem value="male_only">Garçons</SelectItem>
-                    <SelectItem value="female_only">Filles</SelectItem>
+                    <SelectItem value="mixed">{t('genderMixed')}</SelectItem>
+                    <SelectItem value="male_only">{t('genderMaleOnly')}</SelectItem>
+                    <SelectItem value="female_only">{t('genderFemaleOnly')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Tarif base (MAD)</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('baseCharge')}</label>
                 <Input value={form.baseCharge} onChange={e => setForm({ ...form, baseCharge: e.target.value })} />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Caution (MAD)</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('depositAmount')}</label>
                 <Input value={form.depositAmount} onChange={e => setForm({ ...form, depositAmount: e.target.value })} />
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Checkbox id="accessible" checked={form.isAccessible} onCheckedChange={(v) => setForm({ ...form, isAccessible: v === true })} />
-              <label htmlFor="accessible" className="text-sm text-slate-700">Chambre accessible (PMR)</label>
+              <label htmlFor="accessible" className="text-sm text-slate-700">{t('isAccessible')}</label>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Statut</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{tCommon('status')}</label>
               <Select value={form.status} onValueChange={v => setForm({ ...form, status: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Actif</SelectItem>
-                  <SelectItem value="archived">Archivé</SelectItem>
+                  <SelectItem value="active">{t('statusActive')}</SelectItem>
+                  <SelectItem value="archived">{t('statusArchived')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {error && <p className="flex items-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error}</p>}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>{tCommon('cancel')}</Button>
             <Button onClick={save} disabled={saving || !form.name.trim() || !form.code.trim()}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Enregistrer
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} {tCommon('save')}
             </Button>
           </DialogFooter>
         </DialogContent>

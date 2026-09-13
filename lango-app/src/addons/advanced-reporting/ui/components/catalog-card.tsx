@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import type { ReportCatalogItem } from '../../types/reporting-types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,16 +30,6 @@ const DOMAIN_ICONS: Record<string, any> = {
   Inventory: Package,
 };
 
-const DOMAIN_LABELS: Record<string, string> = {
-  Student: 'Élèves',
-  Attendance: 'Présences',
-  Fees: 'Frais & Scolarité',
-  Financial: 'Comptabilité',
-  Examination: 'Examens',
-  HR: 'Ressources Humaines',
-  Inventory: 'Stocks & Inventaire',
-};
-
 const DOMAIN_COLORS: Record<string, string> = {
   Student: 'bg-blue-50 text-[#2487B8] border-blue-200',
   Attendance: 'bg-emerald-50 text-emerald-600 border-emerald-200',
@@ -57,10 +49,27 @@ export function CatalogCard({
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
 }) {
+  const t = useTranslations('Reports');
+  const pathname = usePathname();
+  const localeMatch = pathname.match(/^\/([a-z]{2})(\/|$)/);
+  const locale = localeMatch ? localeMatch[1] : 'fr';
+
   const isReady = report.readiness.isReady;
   const DomainIcon = DOMAIN_ICONS[report.domain] || FileSpreadsheet;
-  const colorClass = DOMAIN_COLORS[report.domain] || 'bg-slate-100 text-slate-700 border-slate-200';
-  const domainLabel = DOMAIN_LABELS[report.domain] || report.domain;
+  const safeT = (key: string, fallback: string) => {
+    try {
+      const res = t(key as any);
+      return res || fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const domainLabel = safeT(`domain${report.domain}`, report.domain);
+  const colorClass = DOMAIN_COLORS[report.domain] || 'bg-blue-50 text-[#2487B8] border-blue-200';
+  const repKey = `rep_${report.key.replace(/\./g, '_')}`;
+  const title = safeT(`${repKey}_title`, report.title);
+  const description = safeT(`${repKey}_desc`, report.description);
 
   return (
     <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xs hover:shadow-md hover:border-[#2487B8]/50 transition-all duration-200 group">
@@ -82,7 +91,7 @@ export function CatalogCard({
                 type="button"
                 onClick={onToggleFavorite}
                 className="p-1 text-slate-300 hover:text-amber-400 transition-colors"
-                title={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                title={isFavorite ? t('removeFavorite') : t('addFavorite')}
               >
                 <Star className={`h-4 w-4 ${isFavorite ? 'text-amber-400 fill-amber-400' : ''}`} />
               </button>
@@ -91,12 +100,12 @@ export function CatalogCard({
             {isReady ? (
               <Badge variant="success" className="gap-1 font-bold text-[11px] px-2.5 py-0.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#2487B8]" />
-                Prêt
+                {t('ready')}
               </Badge>
             ) : (
               <Badge variant="warning" className="gap-1 font-bold text-[11px] px-2.5 py-0.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                Non activé
+                {t('notReady')}
               </Badge>
             )}
           </div>
@@ -105,10 +114,10 @@ export function CatalogCard({
         {/* Title Block (Row 2 - Full Width, No Truncation) */}
         <div>
           <h3 className="text-base font-extrabold text-[#16212B] tracking-tight leading-snug group-hover:text-[#2487B8] transition-colors">
-            {report.title}
+            {title}
           </h3>
           <p className="mt-1.5 text-xs text-slate-500 font-medium leading-relaxed line-clamp-2 min-h-[36px]">
-            {report.description}
+            {description}
           </p>
         </div>
       </div>
@@ -128,15 +137,15 @@ export function CatalogCard({
 
         {isReady ? (
           <Button asChild size="sm" variant="default" className="rounded-xl shadow-2xs font-bold gap-1.5 px-4 h-9">
-            <Link href={`/dashboard/reports/${report.key}`}>
-              <span>Ouvrir</span>
-              <ArrowRight className="h-3.5 w-3.5" />
+            <Link href={`/${locale}/dashboard/reports/${report.key}`}>
+              <span>{t('openReport')}</span>
+              <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
             </Link>
           </Button>
         ) : (
           <Button size="sm" variant="ghost" disabled className="gap-1.5 text-slate-400 font-medium h-9 rounded-xl">
             <Lock className="h-3.5 w-3.5" />
-            <span>Indisponible</span>
+            <span>{t('unavailable')}</span>
           </Button>
         )}
       </div>

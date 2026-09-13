@@ -24,6 +24,7 @@ import {
   Users,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -72,12 +73,6 @@ type TeacherDetail = {
   assignedClassDetails?: ClassDetail[];
 };
 
-const DOC_LABELS: Record<'contract' | 'cin' | 'diploma', string> = {
-  contract: 'Contrat de travail',
-  cin: 'CIN',
-  diploma: 'Diplôme',
-};
-
 function formatMAD(value: string | null | undefined): string {
   if (value == null || value === '') return '—';
   const n = Number(value);
@@ -90,19 +85,6 @@ function formatDate(value: string | null | undefined): string {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return value;
   return d.toLocaleDateString('fr-FR');
-}
-
-function statusBadge(status: string) {
-  if (status === 'Actif' || status === 'active') {
-    return <Badge className="border-none bg-[#D1F5E8] px-2 py-0.5 text-[10px] text-[#17A673]">Actif</Badge>;
-  }
-  if (status === 'Congé' || status === 'leave') {
-    return <Badge className="border-none bg-[#DCEBF4] px-2 py-0.5 text-[10px] text-[#1B6C93]">En congé</Badge>;
-  }
-  if (status === 'Incomplet') {
-    return <Badge className="border-none bg-[#FCF0DC] px-2 py-0.5 text-[10px] text-[#E8A33D]">Incomplet</Badge>;
-  }
-  return <Badge className="border-none bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">{status || 'Inactif'}</Badge>;
 }
 
 function Field({ icon: Icon, label, value }: { icon: typeof Mail; label: string; value: string | null | undefined }) {
@@ -118,11 +100,34 @@ function Field({ icon: Icon, label, value }: { icon: typeof Mail; label: string;
 }
 
 export function TeacherAdminDetailView({ id, locale }: { id: string; locale: string }) {
+  const t = useTranslations('Teachers');
+  const tCommon = useTranslations('Common');
+  const tStatus = useTranslations('Status');
+
   const [data, setData] = useState<TeacherDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [uploading, setUploading] = useState<'contract' | 'cin' | 'diploma' | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const docLabels: Record<'contract' | 'cin' | 'diploma', string> = {
+    contract: t('docContract'),
+    cin: t('docCin'),
+    diploma: t('docDiploma'),
+  };
+
+  const renderStatusBadge = (status: string) => {
+    if (status === 'Actif' || status === 'active') {
+      return <Badge className="border-none bg-[#D1F5E8] px-2 py-0.5 text-[10px] text-[#17A673]">{tStatus('active')}</Badge>;
+    }
+    if (status === 'Congé' || status === 'leave') {
+      return <Badge className="border-none bg-[#DCEBF4] px-2 py-0.5 text-[10px] text-[#1B6C93]">{t('statusOnLeave')}</Badge>;
+    }
+    if (status === 'Incomplet') {
+      return <Badge className="border-none bg-[#FCF0DC] px-2 py-0.5 text-[10px] text-[#E8A33D]">{t('statusIncomplete')}</Badge>;
+    }
+    return <Badge className="border-none bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">{status === 'inactive' ? tStatus('inactive') : (status || t('statusInactive'))}</Badge>;
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -139,11 +144,11 @@ export function TeacherAdminDetailView({ id, locale }: { id: string; locale: str
         setNotFound(true);
       }
     } catch {
-      setError('Impossible de charger la fiche enseignant.');
+      setError(t('errLoadTeacher'));
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     load();
@@ -160,11 +165,11 @@ export function TeacherAdminDetailView({ id, locale }: { id: string; locale: str
       const res = await fetch('/api/teachers/documents', { method: 'POST', body: form });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        throw new Error(json.message || 'Échec de l\'envoi.');
+        throw new Error(json.message || t('errDocUpload'));
       }
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Échec de l\'envoi.');
+      setError(e instanceof Error ? e.message : t('errDocUpload'));
     } finally {
       setUploading(null);
     }
@@ -181,10 +186,10 @@ export function TeacherAdminDetailView({ id, locale }: { id: string; locale: str
   if (notFound || !data) {
     return (
       <div className="mx-auto max-w-2xl space-y-4 py-16 text-center">
-        <p className="text-lg font-extrabold text-[#16212B]">Enseignant introuvable</p>
-        <p className="text-sm text-slate-500">Cette fiche n&apos;existe pas ou n&apos;appartient pas à cet établissement.</p>
+        <p className="text-lg font-extrabold text-[#16212B]">{t('teacherNotFoundTitle')}</p>
+        <p className="text-sm text-slate-500">{t('teacherNotFoundDesc')}</p>
         <Button asChild variant="outline" className="rounded-full">
-          <Link href={`/${locale}/dashboard/teachers/manage`}>Retour à l&apos;annuaire</Link>
+          <Link href={`/${locale}/dashboard/teachers/manage`}>{t('backToDirectory')}</Link>
         </Button>
       </div>
     );
@@ -204,8 +209,8 @@ export function TeacherAdminDetailView({ id, locale }: { id: string; locale: str
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button asChild variant="ghost" size="icon" className="rounded-full">
-            <Link href={`/${locale}/dashboard/teachers/manage`} aria-label="Retour">
-              <ArrowLeft className="size-4" />
+            <Link href={`/${locale}/dashboard/teachers/manage`} aria-label={tCommon('back')}>
+              <ArrowLeft className="size-4 rtl:rotate-180" />
             </Link>
           </Button>
           <Avatar className="size-14">
@@ -215,15 +220,15 @@ export function TeacherAdminDetailView({ id, locale }: { id: string; locale: str
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{data.name}</h1>
-              {statusBadge(data.status)}
+              {renderStatusBadge(data.status)}
             </div>
-            <p className="mt-0.5 text-xs font-semibold text-slate-500">{data.specialization || 'Personnel pédagogique'}</p>
-            <p className="mt-0.5 font-mono text-[11px] text-slate-400">Matricule : {data.employeeId || '—'}</p>
+            <p className="mt-0.5 text-xs font-semibold text-slate-500">{data.specialization || t('teachingStaffFallback')}</p>
+            <p className="mt-0.5 font-mono text-[11px] text-slate-400">{t('matriculeLabel', { id: data.employeeId || '—' })}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Badge className="border-none bg-[#DCEBF4] px-2.5 py-1 text-[11px] text-[#1B6C93]">
-            <Clock className="mr-1 inline size-3" /> {data.workloadHours ?? 0}h / semaine
+            <Clock className="me-1 inline size-3" /> {t('hoursPerWeek', { hours: data.workloadHours ?? 0 })}
           </Badge>
         </div>
       </div>
@@ -231,10 +236,10 @@ export function TeacherAdminDetailView({ id, locale }: { id: string; locale: str
       {/* KPI strip */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {[
-          { label: 'Classes', value: data.assignedClassDetails?.length ?? data.assignedClasses.length, icon: Users, color: 'text-emerald-600', bg: 'bg-[#D1F5E8]', fg: 'text-[#17A673]' },
-          { label: 'Matières', value: data.subjects?.length ?? 0, icon: BookOpen, color: 'text-blue-600', bg: 'bg-[#DCEBF4]', fg: 'text-[#1B6C93]' },
-          { label: 'Élèves', value: (data.assignedClassDetails ?? []).reduce((s, c) => s + c.studentCount, 0), icon: Users, color: 'text-amber-600', bg: 'bg-[#FCF0DC]', fg: 'text-[#E8A33D]' },
-          { label: 'Salaire mensuel', value: formatMAD(data.salary), icon: Banknote, color: 'text-rose-600', bg: 'bg-[#FCE4E2]', fg: 'text-[#E5544B]', mono: true },
+          { label: t('kpiClasses'), value: data.assignedClassDetails?.length ?? data.assignedClasses.length, icon: Users, bg: 'bg-[#D1F5E8]', fg: 'text-[#17A673]' },
+          { label: t('kpiSubjects'), value: data.subjects?.length ?? 0, icon: BookOpen, bg: 'bg-[#DCEBF4]', fg: 'text-[#1B6C93]' },
+          { label: t('kpiStudents'), value: (data.assignedClassDetails ?? []).reduce((s, c) => s + c.studentCount, 0), icon: Users, bg: 'bg-[#FCF0DC]', fg: 'text-[#E8A33D]' },
+          { label: t('kpiMonthlySalary'), value: formatMAD(data.salary), icon: Banknote, bg: 'bg-[#FCE4E2]', fg: 'text-[#E5544B]', mono: true },
         ].map((kpi, i) => (
           <Card key={i} className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
             <div className="space-y-1">
@@ -254,62 +259,62 @@ export function TeacherAdminDetailView({ id, locale }: { id: string; locale: str
           <Card className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
             <div className="flex items-center gap-2">
               <IdCard className="size-4 text-[#0066FF]" />
-              <h2 className="text-sm font-extrabold text-[#16212B]">Contact & identité</h2>
+              <h2 className="text-sm font-extrabold text-[#16212B]">{t('contactAndIdentity')}</h2>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field icon={Mail} label="Email" value={data.email} />
-              <Field icon={Phone} label="Téléphone" value={data.phone} />
-              <Field icon={MapPin} label="Adresse" value={data.address} />
-              <Field icon={MapPin} label="Ville" value={data.city} />
-              <Field icon={Fingerprint} label="CIN" value={data.nationalId} />
-              <Field icon={Calendar} label="Date de naissance" value={formatDate(data.dateOfBirth)} />
-              <Field icon={User} label="Genre" value={data.gender ? (data.gender === 'female' ? 'Femme' : data.gender === 'male' ? 'Homme' : 'Autre') : null} />
-              <Field icon={CalendarClock} label="Dernière connexion" value={data.lastLogin ? new Date(data.lastLogin).toLocaleString('fr-FR') : null} />
+              <Field icon={Mail} label={t('email')} value={data.email} />
+              <Field icon={Phone} label={t('phone')} value={data.phone} />
+              <Field icon={MapPin} label={t('address')} value={data.address} />
+              <Field icon={MapPin} label={t('city')} value={data.city} />
+              <Field icon={Fingerprint} label={t('cin')} value={data.nationalId} />
+              <Field icon={Calendar} label={t('dateOfBirth')} value={formatDate(data.dateOfBirth)} />
+              <Field icon={User} label={t('gender')} value={data.gender ? (data.gender === 'female' ? t('genderFemale') : data.gender === 'male' ? t('genderMale') : t('genderOther')) : null} />
+              <Field icon={CalendarClock} label={t('lastLogin')} value={data.lastLogin ? new Date(data.lastLogin).toLocaleString('fr-FR') : null} />
             </div>
           </Card>
 
           <Card className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
             <div className="flex items-center gap-2">
               <Briefcase className="size-4 text-[#0066FF]" />
-              <h2 className="text-sm font-extrabold text-[#16212B]">Emploi & contrat</h2>
+              <h2 className="text-sm font-extrabold text-[#16212B]">{t('employmentAndContract')}</h2>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field icon={Calendar} label="Date d'embauche" value={formatDate(data.hireDate)} />
-              <Field icon={ShieldCheck} label="Qualification" value={data.qualification} />
-              <Field icon={BookOpen} label="Cycle" value={data.cycle} />
-              <Field icon={Banknote} label="Salaire" value={formatMAD(data.salary)} />
-              <Field icon={Briefcase} label="Type de contrat" value={data.employment?.contractType?.toUpperCase() ?? '—'} />
-              <Field icon={Briefcase} label="Type d'emploi" value={data.employment?.employmentType ?? '—'} />
-              <Field icon={CalendarClock} label="Début de contrat" value={formatDate(data.employment?.contractStartDate)} />
-              <Field icon={CalendarClock} label="Fin de contrat" value={formatDate(data.employment?.contractEndDate)} />
-              <Field icon={ShieldCheck} label="CNSS" value={data.employment?.cnssNumber} />
-              <Field icon={ShieldCheck} label="AMO" value={data.employment?.amoNumber} />
-              <Field icon={CreditCard} label="RIB" value={data.employment?.bankRib} />
+              <Field icon={Calendar} label={t('hireDate')} value={formatDate(data.hireDate)} />
+              <Field icon={ShieldCheck} label={t('qualification')} value={data.qualification} />
+              <Field icon={BookOpen} label={t('cycle')} value={data.cycle} />
+              <Field icon={Banknote} label={t('salary')} value={formatMAD(data.salary)} />
+              <Field icon={Briefcase} label={t('contractType')} value={data.employment?.contractType?.toUpperCase() ?? '—'} />
+              <Field icon={Briefcase} label={t('employmentType')} value={data.employment?.employmentType ?? '—'} />
+              <Field icon={CalendarClock} label={t('contractStart')} value={formatDate(data.employment?.contractStartDate)} />
+              <Field icon={CalendarClock} label={t('contractEnd')} value={formatDate(data.employment?.contractEndDate)} />
+              <Field icon={ShieldCheck} label={t('cnss')} value={data.employment?.cnssNumber} />
+              <Field icon={ShieldCheck} label={t('amo')} value={data.employment?.amoNumber} />
+              <Field icon={CreditCard} label={t('bankRib')} value={data.employment?.bankRib} />
             </div>
           </Card>
 
           <Card className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
             <div className="flex items-center gap-2">
               <Users className="size-4 text-[#0066FF]" />
-              <h2 className="text-sm font-extrabold text-[#16212B]">Classes & matières</h2>
+              <h2 className="text-sm font-extrabold text-[#16212B]">{t('classesAndSubjects')}</h2>
             </div>
             {(data.assignedClassDetails?.length ?? 0) > 0 ? (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {data.assignedClassDetails!.map((c) => (
                   <div key={c.classSectionId} className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5">
                     <span className="text-xs font-bold text-[#16212B]">{c.label}</span>
-                    <Badge className="border-none bg-white px-2 py-0.5 text-[10px] text-slate-600">{c.studentCount} élèves</Badge>
+                    <Badge className="border-none bg-white px-2 py-0.5 text-[10px] text-slate-600">{c.studentCount} {t('kpiStudents')}</Badge>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-slate-400">Aucune affectation de classe enregistrée.</p>
+              <p className="text-xs text-slate-400">{t('noClassAssigned')}</p>
             )}
             <div className="flex flex-wrap gap-1.5">
               {(data.subjects ?? []).map((s) => (
                 <Badge key={s} className="border-none bg-slate-100 px-2 py-0.5 text-[10px] text-slate-700">{s}</Badge>
               ))}
-              {!data.subjects?.length && <span className="text-xs text-slate-400">Aucune matière enregistrée.</span>}
+              {!data.subjects?.length && <span className="text-xs text-slate-400">{t('noSubjectsRegistered')}</span>}
             </div>
           </Card>
         </div>
@@ -318,9 +323,9 @@ export function TeacherAdminDetailView({ id, locale }: { id: string; locale: str
         <Card className="h-fit space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-2">
             <FileText className="size-4 text-[#0066FF]" />
-            <h2 className="text-sm font-extrabold text-[#16212B]">Documents de conformité</h2>
+            <h2 className="text-sm font-extrabold text-[#16212B]">{t('complianceDocs')}</h2>
           </div>
-          <p className="text-[10px] text-slate-400">Contrat de travail, CIN et diplôme — téléverser et consulter les pièces.</p>
+          <p className="text-[10px] text-slate-400">{t('complianceDocsDesc')}</p>
           <div className="space-y-2.5">
             {(['contract', 'cin', 'diploma'] as const).map((type) => {
               const provided = data.documents?.[type] ?? false;
@@ -329,18 +334,18 @@ export function TeacherAdminDetailView({ id, locale }: { id: string; locale: str
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <FileText className="size-3.5 text-slate-400" />
-                      <span className="text-xs font-bold text-[#16212B]">{DOC_LABELS[type]}</span>
+                      <span className="text-xs font-bold text-[#16212B]">{docLabels[type]}</span>
                     </div>
                     {provided ? (
-                      <Badge className="border-none bg-[#D1F5E8] px-1.5 py-0 text-[9px] text-[#17A673]">Fourni</Badge>
+                      <Badge className="border-none bg-[#D1F5E8] px-1.5 py-0 text-[9px] text-[#17A673]">{t('docProvided')}</Badge>
                     ) : (
-                      <Badge className="border-none bg-[#FCE4E2] px-1.5 py-0 text-[9px] text-[#E5544B]">Manquant</Badge>
+                      <Badge className="border-none bg-[#FCE4E2] px-1.5 py-0 text-[9px] text-[#E5544B]">{t('docMissing')}</Badge>
                     )}
                   </div>
                   <div className="mt-2.5 flex items-center gap-2">
                     <label className="flex h-8 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white text-[10px] font-bold text-slate-600 hover:bg-slate-50">
                       {uploading === type ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
-                      {uploading === type ? 'Envoi…' : provided ? 'Remplacer' : 'Téléverser'}
+                      {uploading === type ? t('docUploading') : provided ? t('docReplace') : t('docUpload')}
                       <input
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png"
@@ -359,7 +364,7 @@ export function TeacherAdminDetailView({ id, locale }: { id: string; locale: str
                         rel="noreferrer"
                         className="flex h-8 items-center justify-center gap-1 rounded-full bg-[#0066FF] px-3 text-[10px] font-bold text-white hover:bg-[#0052CC]"
                       >
-                        <Download className="size-3.5" /> Voir
+                        <Download className="size-3.5" /> {t('docView')}
                       </a>
                     )}
                   </div>

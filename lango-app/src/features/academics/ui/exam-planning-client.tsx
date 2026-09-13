@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,8 @@ import {
 } from '../data/exam-planning-config';
 
 export function ExamPlanningClient({ locale: _locale }: { locale?: string } = {}) {
+  const t = useTranslations('Grading');
+  const tCommon = useTranslations('Common');
   const [exams, setExams] = useState<ExamSession[]>(MOCK_EXAMS);
   const [selectedExamId, setSelectedExamId] = useState<string>('1');
   const [search, setSearch] = useState('');
@@ -71,13 +74,13 @@ export function ExamPlanningClient({ locale: _locale }: { locale?: string } = {}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Planification des Examens & Logistique des Épreuves</h1>
-          <p className="text-xs text-slate-500 mt-1">Organisation des sessions d&apos;examens, affectation des surveillants et génération des plans de table.</p>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('examPlanningTitle')}</h1>
+          <p className="text-xs text-slate-500 mt-1">{t('examPlanningSubtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" className="h-10 rounded-xl px-4 gap-2 border-slate-200 text-xs font-bold">
             <Download className="w-4 h-4 text-slate-600" />
-            <span>Imprimer les plans de table</span>
+            <span>{t('printSeatingPlans')}</span>
           </Button>
           <Button
             size="sm"
@@ -85,7 +88,7 @@ export function ExamPlanningClient({ locale: _locale }: { locale?: string } = {}
             className="h-10 rounded-xl px-4 gap-2 bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold shadow-2xs"
           >
             <Plus className="w-4 h-4" />
-            <span>Programmer une épreuve</span>
+            <span>{t('scheduleExam')}</span>
           </Button>
         </div>
       </div>
@@ -93,21 +96,21 @@ export function ExamPlanningClient({ locale: _locale }: { locale?: string } = {}
       {/* Top 3 KPI Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-1">
-          <p className="text-xs font-bold text-slate-500">Total Épreuves Programmées</p>
-          <p className="text-2xl font-extrabold text-[#16212B]">{exams.length} Sessions</p>
-          <p className="text-[10px] text-slate-400">Période du 15 au 25 juin 2026</p>
+          <p className="text-xs font-bold text-slate-500">{t('totalExamsScheduled')}</p>
+          <p className="text-2xl font-extrabold text-[#16212B]">{t('sessionsCount', { count: exams.length })}</p>
+          <p className="text-[10px] text-slate-400">{t('examPeriodNotice')}</p>
         </Card>
         <Card className="p-4 bg-white rounded-2xl border border-blue-200/60 bg-blue-50/20 shadow-2xs space-y-1">
-          <p className="text-xs font-bold text-[#1B6C93]">Candidats Convoqués</p>
+          <p className="text-xs font-bold text-[#1B6C93]">{t('candidatesCalled')}</p>
           <p className="text-2xl font-extrabold text-[#2487B8]">
-            {exams.reduce((acc, e) => acc + e.totalCandidates, 0)} Élèves
+            {t('candidatesCountVal', { count: exams.reduce((acc, e) => acc + e.totalCandidates, 0) })}
           </p>
-          <p className="text-[10px] text-slate-400">Répartis sur 4 amphis & labos</p>
+          <p className="text-[10px] text-slate-400">{t('distributedAcrossHalls')}</p>
         </Card>
         <Card className="p-4 bg-white rounded-2xl border border-emerald-200/60 bg-emerald-50/20 shadow-2xs space-y-1">
-          <p className="text-xs font-bold text-[#17A673]">Surveillants Mobilisés</p>
-          <p className="text-2xl font-extrabold text-[#17A673]">24 Enseignants</p>
-          <p className="text-[10px] text-slate-400">Planning de garde validé</p>
+          <p className="text-xs font-bold text-[#17A673]">{t('invigilatorsMobilized')}</p>
+          <p className="text-2xl font-extrabold text-[#17A673]">{t('teachersCountVal', { count: 24 })}</p>
+          <p className="text-[10px] text-slate-400">{t('supervisionScheduleValidated')}</p>
         </Card>
       </div>
 
@@ -117,25 +120,25 @@ export function ExamPlanningClient({ locale: _locale }: { locale?: string } = {}
         <div className="lg:col-span-7 space-y-3">
           <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center justify-between gap-3">
             <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <Input
-                placeholder="Rechercher par épreuve ou salle..."
+                placeholder={t('searchExam')}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="pl-9 h-9 text-xs rounded-xl bg-slate-50 border-none"
+                className="ps-9 h-9 text-xs rounded-xl bg-slate-50 border-none text-start"
               />
             </div>
             <div className="flex items-center gap-1">
               {[
-                { id: 'all', label: 'Toutes' },
-                { id: 'Scheduled', label: 'Programmées' },
-                { id: 'In Progress', label: 'En cours' },
-                { id: 'Completed', label: 'Terminées' },
+                { id: 'all', label: t('tabAll') },
+                { id: 'Scheduled', label: t('filterScheduled') },
+                { id: 'In Progress', label: t('filterInProgress') },
+                { id: 'Completed', label: t('filterCompleted') },
               ].map(f => (
                 <button
                   key={f.id}
                   onClick={() => setFilterStatus(f.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                     filterStatus === f.id ? 'bg-[#2487B8] text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
@@ -161,7 +164,7 @@ export function ExamPlanningClient({ locale: _locale }: { locale?: string } = {}
                       {exam.className}
                     </span>
                     <span className="text-[10px] font-bold text-[#17A673] bg-[#DDF5EC] px-2.5 py-1 rounded-full">
-                      ✔ {exam.status === 'Scheduled' ? 'Programmé' : exam.status}
+                      ✔ {exam.status === 'Scheduled' ? t('filterScheduled') : exam.status}
                     </span>
                   </div>
 
@@ -178,7 +181,7 @@ export function ExamPlanningClient({ locale: _locale }: { locale?: string } = {}
                       <Building2 className="w-3.5 h-3.5 text-slate-400" /> {exam.room}
                     </span>
                     <span className="font-extrabold text-[#16212B]">
-                      {exam.totalCandidates} / {exam.maxCapacity} Candidats
+                      {exam.totalCandidates} / {exam.maxCapacity} {t('candidatesCalled')}
                     </span>
                   </div>
                 </Card>
@@ -192,7 +195,7 @@ export function ExamPlanningClient({ locale: _locale }: { locale?: string } = {}
           {selectedExam && (
             <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
               <div className="border-b border-slate-100 pb-3">
-                <span className="text-[10px] font-extrabold text-[#2487B8] uppercase tracking-wider">Fiche de Session d&apos;Examen</span>
+                <span className="text-[10px] font-extrabold text-[#2487B8] uppercase tracking-wider">{t('examSessionSheet')}</span>
                 <h2 className="text-base font-extrabold text-[#16212B]">{selectedExam.subject}</h2>
                 <p className="text-xs text-slate-400 mt-0.5">{selectedExam.className} • {selectedExam.date} ({selectedExam.time})</p>
               </div>
@@ -200,18 +203,18 @@ export function ExamPlanningClient({ locale: _locale }: { locale?: string } = {}
               {/* Room & Capacity info box */}
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div className="p-3 bg-slate-50 rounded-xl space-y-0.5">
-                  <span className="text-[10px] text-slate-400 font-bold">Local affecté</span>
+                  <span className="text-[10px] text-slate-400 font-bold">{t('assignedHall')}</span>
                   <p className="font-extrabold text-[#16212B]">{selectedExam.room}</p>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-xl space-y-0.5">
-                  <span className="text-[10px] text-slate-400 font-bold">Capacité retenue</span>
-                  <p className="font-extrabold text-[#2487B8]">{selectedExam.totalCandidates} / {selectedExam.maxCapacity} places</p>
+                  <span className="text-[10px] text-slate-400 font-bold">{t('hallCapacity')}</span>
+                  <p className="font-extrabold text-[#2487B8]">{t('reservedCapacity', { total: selectedExam.totalCandidates, max: selectedExam.maxCapacity })}</p>
                 </div>
               </div>
 
               {/* Invigilators 36px Avatars */}
               <div className="space-y-2">
-                <h3 className="text-xs font-extrabold text-[#16212B] uppercase tracking-wider text-[10px]">Surveillants Désignés</h3>
+                <h3 className="text-xs font-extrabold text-[#16212B] uppercase tracking-wider text-[10px]">{t('designatedInvigilators')}</h3>
                 <div className="space-y-1.5">
                   {selectedExam.invigilators.map((inv, i) => (
                     <div key={i} className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs">
@@ -229,7 +232,7 @@ export function ExamPlanningClient({ locale: _locale }: { locale?: string } = {}
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-extrabold text-[#16212B] uppercase tracking-wider text-[10px] flex items-center gap-1.5">
                     <Grid className="w-3.5 h-3.5 text-[#2487B8]" />
-                    Aperçu Plan de Table ({selectedExam.seatingGrid.length} tables)
+                    {t('seatingPlanPreview', { count: selectedExam.seatingGrid.length })}
                   </h3>
                 </div>
 
@@ -246,7 +249,7 @@ export function ExamPlanningClient({ locale: _locale }: { locale?: string } = {}
                           {deskItem.desk}
                         </span>
                         <span className={`text-[9px] font-bold ${deskItem.isOccupied ? 'text-[#17A673]' : 'text-slate-400'}`}>
-                          {deskItem.isOccupied ? 'Occupé' : 'Libre'}
+                          {deskItem.isOccupied ? t('deskOccupied') : t('deskFree')}
                         </span>
                       </div>
                       <p className="font-bold text-[#16212B] text-[11px] truncate">{deskItem.studentName}</p>
@@ -259,7 +262,7 @@ export function ExamPlanningClient({ locale: _locale }: { locale?: string } = {}
               <div className="pt-2">
                 <Button size="sm" className="w-full h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold gap-1.5">
                   <Download className="w-4 h-4" />
-                  Imprimer feuille d&apos;émargement officielle
+                  {t('printAttendanceSheet')}
                 </Button>
               </div>
             </Card>
@@ -273,13 +276,13 @@ export function ExamPlanningClient({ locale: _locale }: { locale?: string } = {}
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
               <Calendar className="w-5 h-5 text-[#2487B8]" />
-              Programmer une nouvelle épreuve
+              {t('scheduleExamModalTitle')}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-3 my-3 text-xs">
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Intitulé de l&apos;épreuve *</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('examSubject')}</label>
               <Input
                 placeholder="Ex. Épreuve Blanche : Mathématiques"
                 value={newExam.subject}
@@ -290,7 +293,7 @@ export function ExamPlanningClient({ locale: _locale }: { locale?: string } = {}
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Classe / Section *</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('targetClass')}</label>
                 <Select value={newExam.className} onValueChange={val => setNewExam({ ...newExam, className: val })}>
                   <SelectTrigger className="h-9 text-xs rounded-xl">
                     <SelectValue />
@@ -304,7 +307,7 @@ export function ExamPlanningClient({ locale: _locale }: { locale?: string } = {}
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Date *</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('examDate')}</label>
                 <Input
                   value={newExam.date}
                   onChange={e => setNewExam({ ...newExam, date: e.target.value })}
@@ -315,7 +318,7 @@ export function ExamPlanningClient({ locale: _locale }: { locale?: string } = {}
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Horaires *</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('examTime')}</label>
                 <Input
                   value={newExam.time}
                   onChange={e => setNewExam({ ...newExam, time: e.target.value })}
@@ -324,7 +327,7 @@ export function ExamPlanningClient({ locale: _locale }: { locale?: string } = {}
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Local / Salle *</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('examHall')}</label>
                 <Input
                   value={newExam.room}
                   onChange={e => setNewExam({ ...newExam, room: e.target.value })}
@@ -334,7 +337,7 @@ export function ExamPlanningClient({ locale: _locale }: { locale?: string } = {}
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Surveillant Principal *</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('invigilator')}</label>
               <Input
                 value={newExam.invigilatorName}
                 onChange={e => setNewExam({ ...newExam, invigilatorName: e.target.value })}
@@ -345,10 +348,10 @@ export function ExamPlanningClient({ locale: _locale }: { locale?: string } = {}
 
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setIsAddOpen(false)} className="rounded-xl text-xs h-9">
-              Annuler
+              {tCommon('cancel')}
             </Button>
             <Button onClick={handleCreateExam} className="rounded-xl text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold">
-              Valider la programmation
+              {t('confirmScheduleAction')}
             </Button>
           </DialogFooter>
         </DialogContent>

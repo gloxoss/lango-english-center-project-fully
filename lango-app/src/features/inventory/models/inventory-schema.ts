@@ -133,6 +133,13 @@ export const inventoryProducts = pgTable('inventory_products', {
   unitRatio: numeric('unit_ratio', { precision: 14, scale: 3 }).default('1').notNull(), // sale-units per purchase-unit
   purchasePrice: numeric('purchase_price', { precision: 14, scale: 2, mode: 'number' }),
   salePrice: numeric('sale_price', { precision: 14, scale: 2, mode: 'number' }),
+  // Reorder policy, per product and in sale units (the unit stock is counted in).
+  // NULL means "no policy set", which is distinct from 0 ("only reorder when
+  // it hits empty") — so the suggestion engine can fall back to the tenant-wide
+  // threshold for products nobody has tuned yet, without treating a deliberate
+  // 0 as unset.
+  reorderPoint: numeric('reorder_point', { precision: 14, scale: 3, mode: 'number' }),
+  reorderQuantity: numeric('reorder_quantity', { precision: 14, scale: 3, mode: 'number' }),
   remarks: text('remarks'),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),

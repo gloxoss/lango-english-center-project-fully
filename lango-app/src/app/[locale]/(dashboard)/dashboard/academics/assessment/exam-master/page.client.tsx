@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
-import { getMoroccanMention, type MentionType } from '@/libs/grading/moroccan-grade-engine';
+import {
+  canPerform,
+  type ExamTermAction,
+  type ExamTermStage,
+  STAGE_LABELS,
+} from '@/features/assessment/services/exam-term-workflow';
+import { getMoroccanMention } from '@/libs/grading/moroccan-grade-engine';
 import {
   GraduationCap,
   Calendar,
@@ -19,7 +26,6 @@ import {
   ShieldCheck,
   Search,
   Save,
-  Grid,
   FileSpreadsheet,
   Check,
   ChevronsUpDown,
@@ -27,9 +33,6 @@ import {
   ArrowLeft,
   Sparkles,
   RotateCcw,
-  TrendingUp,
-  Percent,
-  Award,
   AlertCircle,
   HelpCircle,
 } from 'lucide-react';
@@ -38,6 +41,15 @@ type ExamTerm = { id: string; name: string; code: string; startDate: string; end
 type ExamHall = { id: string; name: string; code: string; capacity: number };
 type ExamSchedule = { id: string; examTermId: string; assessmentDefinitionId: string; examHallId: string | null; startTime: string; endTime: string; status: string };
 type StudentRow = { id: string; fullName: string; matricule: string };
+type StageInfo = {
+  stage: ExamTermStage;
+  stageLabel: string;
+  stages: { stage: ExamTermStage; label: string }[];
+  nextStage: ExamTermStage | null;
+  canAdvance: boolean;
+  blockedReason: string | null;
+  blockedCode: string | null;
+};
 type MarkRow = { studentId: string; matricule: string; name: string; rawScore: string; status: 'graded' | 'absent' | 'exempted' | 'withheld'; grade?: string };
 type AssessmentDefinition = { id: string; title: string };
 
@@ -47,6 +59,7 @@ function EpreuveCombobox({ definitions, value, onChange, placeholder }: {
   onChange: (id: string) => void;
   placeholder: string;
 }) {
+  const t = useTranslations('Grading');
   const [open, setOpen] = useState(false);
   const selected = definitions.find(d => d.id === value);
   return (
@@ -56,7 +69,7 @@ function EpreuveCombobox({ definitions, value, onChange, placeholder }: {
           type="button"
           role="combobox"
           aria-expanded={open}
-          className="w-full flex items-center justify-between gap-2 h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-[#16212B] hover:bg-slate-50"
+          className="w-full flex items-center justify-between gap-2 h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-[#16212B] hover:bg-slate-50 text-start"
         >
           <span className="truncate">{selected ? selected.title : placeholder}</span>
           <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-slate-400" />
@@ -64,9 +77,9 @@ function EpreuveCombobox({ definitions, value, onChange, placeholder }: {
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="start">
         <Command>
-          <CommandInput placeholder="Rechercher une épreuve..." />
+          <CommandInput placeholder={t('searchEpreuvePlaceholder')} />
           <CommandList>
-            <CommandEmpty>Aucune épreuve trouvée.</CommandEmpty>
+            <CommandEmpty>{t('noEpreuveFound')}</CommandEmpty>
             <CommandGroup>
               {definitions.map(d => (
                 <CommandItem
@@ -74,7 +87,7 @@ function EpreuveCombobox({ definitions, value, onChange, placeholder }: {
                   value={d.title}
                   onSelect={() => { onChange(d.id); setOpen(false); }}
                 >
-                  <Check className={cn('mr-2 h-4 w-4', value === d.id ? 'opacity-100' : 'opacity-0')} />
+                  <Check className={cn('me-2 h-4 w-4', value === d.id ? 'opacity-100' : 'opacity-0')} />
                   <span className="truncate">{d.title}</span>
                 </CommandItem>
               ))}
@@ -87,6 +100,10 @@ function EpreuveCombobox({ definitions, value, onChange, placeholder }: {
 }
 
 export default function ExamMasterPage() {
+  const t = useTranslations('Grading');
+  const tCommon = useTranslations('Common');
+  const tStatus = useTranslations('Status');
+
   // Sequential 3-step flow (§10.1): 1. seats -> 2. schedules -> 3. marksheet
   const [activeTab, setActiveTab] = useState<'seats' | 'schedules' | 'marksheet'>('seats');
 
@@ -109,6 +126,11 @@ export default function ExamMasterPage() {
 
   // Bulk fill popover state
   const [defaultGradeValue, setDefaultGradeValue] = useState('10');
+
+  // Workflow stage of the selected term.
+  const [stage, setStage] = useState<StageInfo | null>(null);
+  const [advancing, setAdvancing] = useState(false);
+  const [stageError, setStageError] = useState('');
 
   const [scheduleStart, setScheduleStart] = useState('');
   const [scheduleEnd, setScheduleEnd] = useState('');
@@ -156,6 +178,20 @@ export default function ExamMasterPage() {
     loadPhysicalRooms();
   }, []);
 
+  const loadStage = (termId: string) =>
+    fetch(`/api/academics/exam-terms/${termId}/stage`)
+      .then(r => r.json())
+      .then(j => setStage(j.success ? (j.data as StageInfo) : null))
+      .catch(() => setStage(null));
+
+  useEffect(() => {
+    if (!selectedTermId) {
+      setStage(null);
+      return;
+    }
+    void loadStage(selectedTermId);
+  }, [selectedTermId]);
+
   useEffect(() => {
     if (students.length > 0 && marks.length === 0) {
       setMarks(students.map(s => ({ studentId: s.id, matricule: s.matricule, name: s.fullName, rawScore: '', status: 'graded' })));
@@ -169,14 +205,53 @@ export default function ExamMasterPage() {
     }
   }, [terms, selectedTermId]);
 
-  // Live Mention Computation using Moroccan Educational Scale (/20)
+  const advanceStage = async () => {
+    if (!selectedTermId || !stage?.nextStage || advancing) return;
+    setAdvancing(true);
+    setStageError('');
+    const res = await fetch(`/api/academics/exam-terms/${selectedTermId}/stage`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage: stage.nextStage }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.success) {
+      setStageError(json?.error?.message ?? tCommon('error'));
+    }
+    await loadStage(selectedTermId);
+    setAdvancing(false);
+  };
+
+  const rollBackStage = async () => {
+    if (!selectedTermId || !stage || advancing) return;
+    const order = stage.stages.map(s => s.stage);
+    const previous = order[order.indexOf(stage.stage) - 1];
+    if (!previous) return;
+    setAdvancing(true);
+    setStageError('');
+    const res = await fetch(`/api/academics/exam-terms/${selectedTermId}/stage`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage: previous }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.success) {
+      setStageError(json?.error?.message ?? tCommon('error'));
+    }
+    await loadStage(selectedTermId);
+    setAdvancing(false);
+  };
+
+  const stepLocked = (action: ExamTermAction): boolean =>
+    stage !== null && !canPerform(stage.stage, action);
+
   const computeMention = (scoreStr: string, status: MarkRow['status']): string => {
-    if (status === 'absent') return 'Absent';
-    if (status === 'exempted') return 'Exempté';
-    if (status === 'withheld') return 'Note Retenue';
+    if (status === 'absent') return t('statusAbsent');
+    if (status === 'exempted') return t('statusExempted');
+    if (status === 'withheld') return t('statusWithheld');
     if (!scoreStr.trim()) return '-';
     const num = Number.parseFloat(scoreStr);
-    if (Number.isNaN(num) || num < 0 || num > 20) return 'Invalide';
+    if (Number.isNaN(num) || num < 0 || num > 20) return tCommon('error');
     return getMoroccanMention(num);
   };
 
@@ -204,7 +279,6 @@ export default function ExamMasterPage() {
     setMarks(updated);
   };
 
-  // Keyboard navigation handler (§10.4)
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, filteredIndex: number, totalFiltered: number) => {
     if (e.key === 'Enter' || e.key === 'ArrowDown') {
       e.preventDefault();
@@ -219,7 +293,6 @@ export default function ExamMasterPage() {
     }
   };
 
-  // Bulk Actions (§10.4)
   const handleBulkFillEmpty = () => {
     const defaultVal = Number.parseFloat(defaultGradeValue);
     if (Number.isNaN(defaultVal) || defaultVal < 0 || defaultVal > 20) return;
@@ -259,7 +332,7 @@ export default function ExamMasterPage() {
 
   const handleSaveMarks = async () => {
     if (!assessmentDefinitionId.trim()) {
-      setSaveError('Veuillez sélectionner une épreuve.');
+      setSaveError(t('chooseAssessmentToGradePlaceholder'));
       return;
     }
     setSaving(true);
@@ -279,7 +352,7 @@ export default function ExamMasterPage() {
       });
       const json = await res.json();
       if (!json.success) {
-        setSaveError(json.error?.message || 'Échec de l\'enregistrement.');
+        setSaveError(json.error?.message || t('errSaveMarks'));
         return;
       }
       setSavedSuccess(true);
@@ -311,7 +384,7 @@ export default function ExamMasterPage() {
 
   const handleCreateSchedule = async () => {
     if (!selectedTermId || !scheduleDefId || !scheduleStart || !scheduleEnd) {
-      setScheduleError('Session, épreuve, heure de début et heure de fin sont requis.');
+      setScheduleError(t('scheduleErrorRequired'));
       return;
     }
     setScheduleError('');
@@ -328,7 +401,7 @@ export default function ExamMasterPage() {
     });
     const json = await res.json();
     if (!json.success) {
-      setScheduleError(json.error?.message || 'Échec de la planification.');
+      setScheduleError(json.error?.message || tCommon('error'));
       return;
     }
     loadSchedules();
@@ -389,28 +462,28 @@ export default function ExamMasterPage() {
 
   const getMentionBadge = (gradeStr: string | undefined, status: MarkRow['status']) => {
     if (status === 'absent') {
-      return <Badge className="bg-rose-100 text-rose-700 border-none font-bold text-[10px]">Absent</Badge>;
+      return <Badge className="bg-rose-100 text-rose-700 border-none font-bold text-[10px]">{t('statusAbsent')}</Badge>;
     }
     if (status === 'exempted') {
-      return <Badge className="bg-slate-100 text-slate-600 border-none font-bold text-[10px]">Exempté</Badge>;
+      return <Badge className="bg-slate-100 text-slate-600 border-none font-bold text-[10px]">{t('statusExempted')}</Badge>;
     }
     if (status === 'withheld') {
-      return <Badge className="bg-orange-100 text-orange-700 border-none font-bold text-[10px]">Note Retenue</Badge>;
+      return <Badge className="bg-orange-100 text-orange-700 border-none font-bold text-[10px]">{t('statusWithheld')}</Badge>;
     }
     if (!gradeStr || gradeStr === '-') {
       return <span className="text-slate-400 text-xs font-mono">—</span>;
     }
     switch (gradeStr) {
       case 'Très Bien':
-        return <Badge className="bg-emerald-100 text-emerald-700 border-none font-bold text-[10px]">Très Bien (≥ 16)</Badge>;
+        return <Badge className="bg-emerald-100 text-emerald-700 border-none font-bold text-[10px]">{t('mentionTresBien')} (≥ 16)</Badge>;
       case 'Bien':
-        return <Badge className="bg-blue-100 text-blue-700 border-none font-bold text-[10px]">Bien (14-16)</Badge>;
+        return <Badge className="bg-blue-100 text-blue-700 border-none font-bold text-[10px]">{t('mentionBien')} (14-16)</Badge>;
       case 'Assez Bien':
-        return <Badge className="bg-purple-100 text-purple-700 border-none font-bold text-[10px]">Assez Bien (12-14)</Badge>;
+        return <Badge className="bg-purple-100 text-purple-700 border-none font-bold text-[10px]">{t('mentionAssezBien')} (12-14)</Badge>;
       case 'Passable':
-        return <Badge className="bg-amber-100 text-amber-700 border-none font-bold text-[10px]">Passable (10-12)</Badge>;
+        return <Badge className="bg-amber-100 text-amber-700 border-none font-bold text-[10px]">{t('mentionPassable')} (10-12)</Badge>;
       case 'Insuffisant':
-        return <Badge className="bg-rose-100 text-rose-700 border-none font-bold text-[10px]">Insuffisant (&lt; 10)</Badge>;
+        return <Badge className="bg-rose-100 text-rose-700 border-none font-bold text-[10px]">{t('mentionInsuffisant')} (&lt; 10)</Badge>;
       default:
         return <Badge variant="neutral" className="font-bold text-[10px]">{gradeStr}</Badge>;
     }
@@ -425,16 +498,16 @@ export default function ExamMasterPage() {
             <GraduationCap className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Exam Master & Saisie des Notes</h1>
+            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('examMasterTitle')}</h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Processus séquentiel : Configuration des salles &rarr; Calendrier des épreuves &rarr; Grille de notation rapide au clavier avec calcul automatique des mentions.
+              {t('examMasterSubtitle')}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <Badge variant="success" className="font-bold gap-1 px-3 py-1.5 text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Échelle Nationale /20 Active</span>
+            <span>{t('scale20Active')}</span>
           </Badge>
         </div>
       </div>
@@ -443,8 +516,8 @@ export default function ExamMasterPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Sessions d'Examen</span>
-            <h3 className="text-xl font-extrabold text-[#16212B] mt-1">{terms.length} Session(s)</h3>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('kpiExamSessions')}</span>
+            <h3 className="text-xl font-extrabold text-[#16212B] mt-1">{t('kpiSessionsCount', { count: terms.length })}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0066FF] flex items-center justify-center shrink-0">
             <Calendar className="w-5 h-5" />
@@ -452,8 +525,8 @@ export default function ExamMasterPage() {
         </Card>
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Salles & Capacités</span>
-            <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{halls.length} Salles ({totalHallCapacity} pl.)</h3>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('kpiHallsCapacity')}</span>
+            <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{t('kpiHallsCountWithSeats', { halls: halls.length, seats: totalHallCapacity })}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
             <Building className="w-5 h-5" />
@@ -461,8 +534,8 @@ export default function ExamMasterPage() {
         </Card>
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Épreuves Planifiées</span>
-            <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{schedules.length} Planification(s)</h3>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('kpiPlannedExams')}</span>
+            <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{t('kpiSchedulesCount', { count: schedules.length })}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
             <FileSpreadsheet className="w-5 h-5" />
@@ -470,8 +543,8 @@ export default function ExamMasterPage() {
         </Card>
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Élèves Inscrits</span>
-            <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{students.length} Candidats</h3>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('kpiRegisteredCandidates')}</span>
+            <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{t('kpiCandidatesCount', { count: students.length })}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
             <Users className="w-5 h-5" />
@@ -479,14 +552,84 @@ export default function ExamMasterPage() {
         </Card>
       </div>
 
+      {/* Workflow stage of the selected term */}
+      {stage && (
+        <div className="p-4 rounded-2xl border border-slate-200/80 bg-white shadow-2xs space-y-3">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              {stage.stages.map((s, i) => {
+                const current = s.stage === stage.stage;
+                const done = i < stage.stages.findIndex(x => x.stage === stage.stage);
+                return (
+                  <div key={s.stage} className="flex items-center gap-2">
+                    <span className={`px-2.5 py-1 rounded-xl text-[11px] font-extrabold ${
+                      current
+                        ? 'bg-[#0066FF] text-white'
+                        : done ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'
+                    }`}
+                    >
+                      {s.label}
+                    </span>
+                    {i < stage.stages.length - 1 && <ArrowRight className="w-3 h-3 text-slate-300 rtl:rotate-180" />}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {stage.stage !== 'setup' && stage.stage !== 'closed' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={advancing}
+                  onClick={() => void rollBackStage()}
+                  className="h-9 rounded-xl text-xs font-bold gap-1.5"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 rtl:rotate-180" />
+                  {t('rollbackStageAction')}
+                </Button>
+              )}
+              {stage.nextStage && (
+                <Button
+                  size="sm"
+                  disabled={advancing || !stage.canAdvance}
+                  onClick={() => void advanceStage()}
+                  title={stage.blockedReason ?? undefined}
+                  className="h-9 rounded-xl text-xs font-bold gap-1.5 bg-[#0066FF] hover:bg-[#0052CC] text-white cursor-pointer"
+                >
+                  {t('advanceToStageAction', { stage: STAGE_LABELS[stage.nextStage] })}
+                  <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {!stage.canAdvance && stage.blockedReason && (
+            <p className="flex items-start gap-1.5 text-[11px] font-bold text-amber-700">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-px" />
+              <span>{stage.blockedReason}</span>
+            </p>
+          )}
+
+          {stageError && (
+            <p className="flex items-start gap-1.5 text-[11px] font-bold text-rose-700">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-px" />
+              <span>{stageError}</span>
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Sequential Step Indicator Bar (§10.1) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <button
           type="button"
           onClick={() => setActiveTab('seats')}
-          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-3.5 ${
+          disabled={stepLocked('manage_halls')}
+          title={stepLocked('manage_halls') ? t('stageUnavailableNotice', { stage: stage?.stageLabel ?? '' }) : undefined}
+          className={`p-4 rounded-2xl border text-start transition-all cursor-pointer flex items-center gap-3.5 disabled:cursor-not-allowed disabled:opacity-50 ${
             activeTab === 'seats'
-              ? 'bg-white border-[#0066FF] shadow-sm ring-2 ring-[#0066FF]/20'
+              ? 'bg-white border-[#0066FF] shadow-xs ring-2 ring-[#0066FF]/20'
               : 'bg-slate-50 border-slate-200 hover:bg-white text-slate-600'
           }`}
         >
@@ -497,19 +640,21 @@ export default function ExamMasterPage() {
           </div>
           <div>
             <div className="text-xs font-bold text-[#16212B] flex items-center gap-1.5">
-              1. Sessions & Salles
-              {terms.length > 0 && halls.length > 0 && <Badge className="bg-emerald-100 text-emerald-700 border-none text-[9px]">Prêt</Badge>}
+              {t('step1Title')}
+              {terms.length > 0 && halls.length > 0 && <Badge className="bg-emerald-100 text-emerald-700 border-none text-[9px]">{t('step1Ready')}</Badge>}
             </div>
-            <p className="text-[11px] text-slate-400">Création des sessions, salles et places</p>
+            <p className="text-[11px] text-slate-400">{t('step1Desc')}</p>
           </div>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('schedules')}
-          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-3.5 ${
+          disabled={stepLocked('schedule_exam')}
+          title={stepLocked('schedule_exam') ? t('stageUnavailableNotice', { stage: stage?.stageLabel ?? '' }) : undefined}
+          className={`p-4 rounded-2xl border text-start transition-all cursor-pointer flex items-center gap-3.5 disabled:cursor-not-allowed disabled:opacity-50 ${
             activeTab === 'schedules'
-              ? 'bg-white border-[#0066FF] shadow-sm ring-2 ring-[#0066FF]/20'
+              ? 'bg-white border-[#0066FF] shadow-xs ring-2 ring-[#0066FF]/20'
               : 'bg-slate-50 border-slate-200 hover:bg-white text-slate-600'
           }`}
         >
@@ -520,19 +665,21 @@ export default function ExamMasterPage() {
           </div>
           <div>
             <div className="text-xs font-bold text-[#16212B] flex items-center gap-1.5">
-              2. Planification des Épreuves
-              {schedules.length > 0 && <Badge className="bg-emerald-100 text-emerald-700 border-none text-[9px]">{schedules.length} fixée(s)</Badge>}
+              {t('step2Title')}
+              {schedules.length > 0 && <Badge className="bg-emerald-100 text-emerald-700 border-none text-[9px]">{t('step2FixedCount', { count: schedules.length })}</Badge>}
             </div>
-            <p className="text-[11px] text-slate-400">Attribution des créneaux et épreuves</p>
+            <p className="text-[11px] text-slate-400">{t('step2Desc')}</p>
           </div>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('marksheet')}
-          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-3.5 ${
+          disabled={stepLocked('enter_marks')}
+          title={stepLocked('enter_marks') ? t('stageUnavailableNotice', { stage: stage?.stageLabel ?? '' }) : undefined}
+          className={`p-4 rounded-2xl border text-start transition-all cursor-pointer flex items-center gap-3.5 disabled:cursor-not-allowed disabled:opacity-50 ${
             activeTab === 'marksheet'
-              ? 'bg-white border-[#0066FF] shadow-sm ring-2 ring-[#0066FF]/20'
+              ? 'bg-white border-[#0066FF] shadow-xs ring-2 ring-[#0066FF]/20'
               : 'bg-slate-50 border-slate-200 hover:bg-white text-slate-600'
           }`}
         >
@@ -543,10 +690,10 @@ export default function ExamMasterPage() {
           </div>
           <div>
             <div className="text-xs font-bold text-[#16212B] flex items-center gap-1.5">
-              3. Grille de Saisie des Notes
-              <Badge className="bg-[#0066FF]/10 text-[#0066FF] border-none text-[9px]">Saisie Rapide</Badge>
+              {t('step3Title')}
+              <Badge className="bg-[#0066FF]/10 text-[#0066FF] border-none text-[9px]">{t('step3BadgeFast')}</Badge>
             </div>
-            <p className="text-[11px] text-slate-400">Navigation clavier &amp; mentions en direct</p>
+            <p className="text-[11px] text-slate-400">{t('step3Desc')}</p>
           </div>
         </button>
       </div>
@@ -558,23 +705,23 @@ export default function ExamMasterPage() {
             <Card className="p-5 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-3">
               <h2 className="text-sm font-extrabold text-[#16212B] flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-[#0066FF]" />
-                Créer une Session d'Examen
+                {t('createSessionTitle')}
               </h2>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <Input placeholder="Nom (ex: Semestre 1 - Examen Final)" value={newTermName} onChange={e => setNewTermName(e.target.value)} className="rounded-xl h-9 col-span-2" />
-                <Input placeholder="Code (ex: S1-2026)" value={newTermCode} onChange={e => setNewTermCode(e.target.value)} className="rounded-xl h-9 col-span-2" />
+                <Input placeholder={t('sessionNamePlaceholder')} value={newTermName} onChange={e => setNewTermName(e.target.value)} className="rounded-xl h-9 col-span-2 text-start" />
+                <Input placeholder={t('sessionCodePlaceholder')} value={newTermCode} onChange={e => setNewTermCode(e.target.value)} className="rounded-xl h-9 col-span-2 text-start" />
                 <div>
-                  <label className="text-[10px] text-slate-500 font-bold block mb-1">Date Début</label>
+                  <label className="text-[10px] text-slate-500 font-bold block mb-1">{t('startDateLabel')}</label>
                   <Input type="date" value={newTermStart} onChange={e => setNewTermStart(e.target.value)} className="rounded-xl h-9" />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-500 font-bold block mb-1">Date Fin</label>
+                  <label className="text-[10px] text-slate-500 font-bold block mb-1">{t('endDateLabel')}</label>
                   <Input type="date" value={newTermEnd} onChange={e => setNewTermEnd(e.target.value)} className="rounded-xl h-9" />
                 </div>
               </div>
-              <Button onClick={handleCreateTerm} size="sm" className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs rounded-xl gap-1.5">
+              <Button onClick={handleCreateTerm} size="sm" className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs rounded-xl gap-1.5 cursor-pointer">
                 <Plus className="w-3.5 h-3.5" />
-                <span>Créer la Session</span>
+                <span>{t('createSessionBtn')}</span>
               </Button>
             </Card>
 
@@ -582,15 +729,15 @@ export default function ExamMasterPage() {
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-extrabold text-[#16212B] flex items-center gap-2">
                   <Building className="w-4 h-4 text-[#0066FF]" />
-                  Créer une Salle d'Examen
+                  {t('createHallTitle')}
                 </h2>
-                <Badge variant="neutral" className="text-[9px] font-bold">Registre Établissement</Badge>
+                <Badge variant="neutral" className="text-[9px] font-bold">{t('institutionRegisterBadge')}</Badge>
               </div>
 
               {physicalRooms.length > 0 && (
                 <div>
                   <label className="text-[10px] text-slate-500 font-bold block mb-1">
-                    Importer depuis les salles de l&apos;établissement (§10.5)
+                    {t('importFromPhysicalRooms')}
                   </label>
                   <select
                     onChange={(e) => {
@@ -603,10 +750,10 @@ export default function ExamMasterPage() {
                     }}
                     className="w-full h-9 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50 font-medium text-slate-700"
                   >
-                    <option value="">-- Choisir une salle physique existante --</option>
+                    <option value="">{t('choosePhysicalRoomOption')}</option>
                     {physicalRooms.map(r => (
                       <option key={r.id} value={r.id}>
-                        {r.name} {r.capacity ? `(Capacité: ${r.capacity} places)` : ''} {r.roomType ? `· ${r.roomType}` : ''}
+                        {r.name} {r.capacity ? `(${r.capacity} pl.)` : ''} {r.roomType ? `· ${r.roomType}` : ''}
                       </option>
                     ))}
                   </select>
@@ -614,33 +761,33 @@ export default function ExamMasterPage() {
               )}
 
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <Input placeholder="Nom de Salle (ex: Amphithéâtre Ibn Battouta)" value={newHallName} onChange={e => setNewHallName(e.target.value)} className="rounded-xl h-9" />
-                <Input placeholder="Code Salle (ex: AMPHI-B)" value={newHallCode} onChange={e => setNewHallCode(e.target.value)} className="rounded-xl h-9" />
+                <Input placeholder={t('hallNamePlaceholder')} value={newHallName} onChange={e => setNewHallName(e.target.value)} className="rounded-xl h-9 text-start" />
+                <Input placeholder={t('hallCodePlaceholder')} value={newHallCode} onChange={e => setNewHallCode(e.target.value)} className="rounded-xl h-9 text-start" />
                 <div className="col-span-2">
-                  <label className="text-[10px] text-slate-500 font-bold block mb-1">Capacité assise</label>
-                  <Input type="number" placeholder="Capacité" value={newHallCapacity} onChange={e => setNewHallCapacity(e.target.value)} className="rounded-xl h-9" />
+                  <label className="text-[10px] text-slate-500 font-bold block mb-1">{t('seatingCapacityLabel')}</label>
+                  <Input type="number" placeholder={t('seatingCapacityLabel')} value={newHallCapacity} onChange={e => setNewHallCapacity(e.target.value)} className="rounded-xl h-9 text-start" />
                 </div>
               </div>
-              <Button onClick={handleCreateHall} size="sm" className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs rounded-xl gap-1.5">
+              <Button onClick={handleCreateHall} size="sm" className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs rounded-xl gap-1.5 cursor-pointer">
                 <Plus className="w-3.5 h-3.5" />
-                <span>Créer la Salle</span>
+                <span>{t('createHallBtn')}</span>
               </Button>
             </Card>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="p-5 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-4">
-              <h2 className="text-sm font-extrabold text-[#16212B]">Attribution Automatique des Places</h2>
+              <h2 className="text-sm font-extrabold text-[#16212B]">{t('autoSeatAllocationTitle')}</h2>
               <div className="space-y-3 text-xs">
                 <div>
-                  <label className="font-bold text-slate-700">Sélectionner la Session</label>
+                  <label className="font-bold text-slate-700">{t('selectSessionLabel')}</label>
                   <select value={selectedTermId} onChange={e => setSelectedTermId(e.target.value)} className="mt-1 w-full p-2.5 rounded-xl border border-slate-200 font-medium bg-white">
-                    <option value="">-- Choisir une session --</option>
-                    {terms.map(t => <option key={t.id} value={t.id}>{t.name} ({t.code})</option>)}
+                    <option value="">{t('chooseSessionOption')}</option>
+                    {terms.map(tRow => <option key={tRow.id} value={tRow.id}>{tRow.name} ({tRow.code})</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700">Salles à inclure</label>
+                  <label className="font-bold text-slate-700">{t('hallsToIncludeLabel')}</label>
                   <div className="mt-1 space-y-1.5 max-h-48 overflow-y-auto p-2 border border-slate-200 rounded-xl bg-slate-50">
                     {halls.map(h => (
                       <label key={h.id} className="flex items-center gap-2 p-1.5 hover:bg-white rounded-lg cursor-pointer">
@@ -653,43 +800,46 @@ export default function ExamMasterPage() {
                           className="rounded text-[#0066FF]"
                         />
                         <span className="font-medium text-slate-800">{h.name}</span>
-                        <Badge variant="neutral" className="text-[10px] ml-auto">{h.capacity} places</Badge>
+                        <Badge variant="neutral" className="text-[10px] ms-auto">{h.capacity} pl.</Badge>
                       </label>
                     ))}
-                    {halls.length === 0 && <p className="text-slate-400 text-xs py-2 text-center">Aucune salle disponible</p>}
+                    {halls.length === 0 && <p className="text-slate-400 text-xs py-2 text-center">{t('noHallsAvailable')}</p>}
                   </div>
                 </div>
                 <Button
                   onClick={handleAllocateSeats}
                   disabled={allocating || !selectedTermId || selectedHallIds.length === 0}
-                  className="w-full bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold rounded-xl shadow-2xs mt-2"
+                  className="w-full bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold rounded-xl shadow-2xs mt-2 cursor-pointer"
                 >
-                  {allocating ? 'Attribution en cours...' : 'Distribuer les places'}
+                  {allocating ? t('distributingSeats') : t('distributeSeatsBtn')}
                 </Button>
               </div>
             </Card>
 
             <Card className="p-5 rounded-2xl border border-slate-200 bg-white shadow-2xs lg:col-span-2 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-extrabold text-[#16212B]">Salles Configuréess ({halls.length})</h2>
-                <Badge variant="success" className="font-bold bg-emerald-50 text-emerald-700">{totalHallCapacity} Places Disponibles</Badge>
+                <h2 className="text-sm font-extrabold text-[#16212B]">{t('configuredHallsTitle', { count: halls.length })}</h2>
+                <Badge variant="success" className="font-bold bg-emerald-50 text-emerald-700">{t('availableSeatsBadge', { count: totalHallCapacity })}</Badge>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {halls.map(h => (
                   <div key={h.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-1">
                     <div className="flex items-center justify-between">
                       <h4 className="font-bold text-[#16212B] text-xs">{h.name}</h4>
-                      <Badge className="bg-blue-50 text-[#0066FF] border-blue-200 text-[10px]">{h.capacity} places</Badge>
+                      <Badge className="bg-blue-50 text-[#0066FF] border-blue-200 text-[10px]">{h.capacity} pl.</Badge>
                     </div>
-                    <p className="text-[11px] text-slate-400 font-mono">Code: {h.code}</p>
+                    <p className="text-[11px] text-slate-400 font-mono">{t('codeLabelPrefix', { code: h.code })}</p>
                   </div>
                 ))}
-                {halls.length === 0 && <p className="text-xs text-slate-400 col-span-2 py-6 text-center">Aucune salle créée pour le moment.</p>}
+                {halls.length === 0 && <p className="text-xs text-slate-400 col-span-2 py-6 text-center">{t('noHallsCreatedYet')}</p>}
               </div>
               {allocationResult && (
                 <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-bold flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>{allocationResult.allocatedCount} candidat(s) réparti(s) avec succès. {allocationResult.unallocatedCount > 0 && `${allocationResult.unallocatedCount} non attribué(s) (capacité insuffisante).`}</span>
+                  <span>
+                    {t('allocationSuccessNotice', { allocated: allocationResult.allocatedCount })}{' '}
+                    {allocationResult.unallocatedCount > 0 && t('unallocatedWarningNotice', { unallocated: allocationResult.unallocatedCount })}
+                  </span>
                 </div>
               )}
             </Card>
@@ -698,10 +848,10 @@ export default function ExamMasterPage() {
           <div className="flex justify-end pt-2">
             <Button
               onClick={() => setActiveTab('schedules')}
-              className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs rounded-xl gap-2"
+              className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs rounded-xl gap-2 cursor-pointer"
             >
-              <span>Passer à l'Étape 2 : Planification</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>{t('goToStep2Btn')}</span>
+              <ArrowRight className="w-4 h-4 rtl:rotate-180" />
             </Button>
           </div>
         </div>
@@ -713,59 +863,59 @@ export default function ExamMasterPage() {
           <Card className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-4">
             <h2 className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
               <Calendar className="w-4 h-4 text-[#0066FF]" />
-              Planifier une Épreuve
+              {t('scheduleExamTitle')}
             </h2>
             {scheduleError && <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-xl">{scheduleError}</div>}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
               <div>
-                <label className="text-[10px] text-slate-500 font-bold block mb-1">Session d'Examen</label>
+                <label className="text-[10px] text-slate-500 font-bold block mb-1">{t('kpiExamSessions')}</label>
                 <select value={selectedTermId} onChange={e => setSelectedTermId(e.target.value)} className="w-full p-2 rounded-xl border border-slate-200 font-medium bg-white h-9">
-                  <option value="">Sélectionner une session</option>
-                  {terms.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  <option value="">{t('chooseSessionOption')}</option>
+                  {terms.map(tRow => <option key={tRow.id} value={tRow.id}>{tRow.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-[10px] text-slate-500 font-bold block mb-1">Épreuve</label>
+                <label className="text-[10px] text-slate-500 font-bold block mb-1">{t('selectedAssessmentToGrade')}</label>
                 <EpreuveCombobox
                   definitions={definitions}
                   value={scheduleDefId}
                   onChange={setScheduleDefId}
-                  placeholder="Sélectionner épreuve..."
+                  placeholder={t('chooseAssessmentToGradePlaceholder')}
                 />
               </div>
               <div>
-                <label className="text-[10px] text-slate-500 font-bold block mb-1">Salle (Optionnel)</label>
+                <label className="text-[10px] text-slate-500 font-bold block mb-1">{t('createHallTitle')}</label>
                 <select value={scheduleHallId} onChange={e => setScheduleHallId(e.target.value)} className="w-full p-2 rounded-xl border border-slate-200 font-medium bg-white h-9">
-                  <option value="">Toutes / Non assignée</option>
+                  <option value="">{t('allOrUnassignedHall')}</option>
                   {halls.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-[10px] text-slate-500 font-bold block mb-1">Début Épreuve</label>
+                <label className="text-[10px] text-slate-500 font-bold block mb-1">{t('startExamLabel')}</label>
                 <Input type="datetime-local" value={scheduleStart} onChange={e => setScheduleStart(e.target.value)} className="rounded-xl h-9" />
               </div>
               <div>
-                <label className="text-[10px] text-slate-500 font-bold block mb-1">Fin Épreuve</label>
+                <label className="text-[10px] text-slate-500 font-bold block mb-1">{t('endExamLabel')}</label>
                 <Input type="datetime-local" value={scheduleEnd} onChange={e => setScheduleEnd(e.target.value)} className="rounded-xl h-9" />
               </div>
             </div>
-            <Button onClick={handleCreateSchedule} className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs rounded-xl gap-1.5">
+            <Button onClick={handleCreateSchedule} className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs rounded-xl gap-1.5 cursor-pointer">
               <Plus className="w-3.5 h-3.5" />
-              <span>Valider le Créneau</span>
+              <span>{t('validateTimeslotBtn')}</span>
             </Button>
           </Card>
 
           <Card className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-4">
-            <h2 className="text-base font-extrabold text-[#16212B]">Planning des Épreuves Fixées ({schedules.length})</h2>
+            <h2 className="text-base font-extrabold text-[#16212B]">{t('scheduledExamsPlanningTitle', { count: schedules.length })}</h2>
             <div className="space-y-3">
               {schedules.map(s => (
                 <div key={s.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center justify-between text-xs">
-                  <div className="space-y-1">
+                  <div className="space-y-1 text-start">
                     <Badge variant="info" className="text-[10px] bg-blue-50 text-[#0066FF] border-blue-200">
-                      {new Date(s.startTime).toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} - {new Date(s.endTime).toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(s.startTime).toLocaleString(undefined, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} - {new Date(s.endTime).toLocaleString(undefined, { hour: '2-digit', minute: '2-digit' })}
                     </Badge>
                     <p className="text-xs font-bold text-slate-800">
-                      Épreuve : {definitions.find(d => d.id === s.assessmentDefinitionId)?.title ?? s.assessmentDefinitionId}
+                      {definitions.find(d => d.id === s.assessmentDefinitionId)?.title ?? s.assessmentDefinitionId}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -776,16 +926,18 @@ export default function ExamMasterPage() {
                         setAssessmentDefinitionId(s.assessmentDefinitionId);
                         setActiveTab('marksheet');
                       }}
-                      className="h-8 text-xs rounded-xl border-slate-200 bg-white text-[#0066FF] hover:bg-blue-50 font-bold gap-1"
+                      className="h-8 text-xs rounded-xl border-slate-200 bg-white text-[#0066FF] hover:bg-blue-50 font-bold gap-1 cursor-pointer"
                     >
                       <FileSpreadsheet className="w-3.5 h-3.5" />
-                      Saisir les notes
+                      {t('enterMarksActionBtn')}
                     </Button>
-                    <Badge variant={s.status === 'published' ? 'success' : 'info'} className="font-bold">{s.status}</Badge>
+                    <Badge variant={s.status === 'published' ? 'success' : 'info'} className="font-bold">
+                      {s.status === 'published' ? tStatus('published') : s.status}
+                    </Badge>
                   </div>
                 </div>
               ))}
-              {schedules.length === 0 && <p className="text-xs text-slate-400 py-6 text-center">Aucune épreuve planifiée pour le moment.</p>}
+              {schedules.length === 0 && <p className="text-xs text-slate-400 py-6 text-center">{t('noExamScheduledYet')}</p>}
             </div>
           </Card>
 
@@ -793,17 +945,17 @@ export default function ExamMasterPage() {
             <Button
               variant="outline"
               onClick={() => setActiveTab('seats')}
-              className="border-slate-200 text-xs rounded-xl gap-2"
+              className="border-slate-200 text-xs rounded-xl gap-2 cursor-pointer"
             >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Retour : Salles &amp; Sessions</span>
+              <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
+              <span>{t('backToStep1Btn')}</span>
             </Button>
             <Button
               onClick={() => setActiveTab('marksheet')}
-              className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs rounded-xl gap-2"
+              className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs rounded-xl gap-2 cursor-pointer"
             >
-              <span>Passer à l'Étape 3 : Grille de Notation</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>{t('goToStep3Btn')}</span>
+              <ArrowRight className="w-4 h-4 rtl:rotate-180" />
             </Button>
           </div>
         </div>
@@ -815,26 +967,26 @@ export default function ExamMasterPage() {
           {/* Header & Definition Selector */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div className="flex-1 max-w-md">
-              <label className="text-xs font-bold text-slate-700 block mb-1">Épreuve sélectionnée pour notation</label>
+              <label className="text-xs font-bold text-slate-700 block mb-1">{t('selectedAssessmentToGrade')}</label>
               <EpreuveCombobox
                 definitions={definitions}
                 value={assessmentDefinitionId}
                 onChange={setAssessmentDefinitionId}
-                placeholder="Choisir l'épreuve à noter..."
+                placeholder={t('chooseAssessmentToGradePlaceholder')}
               />
               <p className="text-[11px] text-slate-400 mt-1">
-                La grille ci-dessous calcule automatiquement les mentions marocaines et permet la navigation rapide au clavier (Flèches Haut/Bas, Entrée).
+                {t('marksheetKeyboardHint')}
               </p>
             </div>
             <div className="flex items-center gap-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
                   type="text"
-                  placeholder="Rechercher élève ou matricule..."
+                  placeholder={t('searchStudentOrMatriculePlaceholder')}
                   value={searchRoster}
                   onChange={e => setSearchRoster(e.target.value)}
-                  className="pl-9 text-xs rounded-xl h-9 w-64 border-slate-200"
+                  className="ps-9 text-xs rounded-xl h-9 w-64 border-slate-200 text-start"
                 />
               </div>
               <Button
@@ -843,7 +995,7 @@ export default function ExamMasterPage() {
                 className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs rounded-xl shadow-2xs gap-1.5 px-4 cursor-pointer"
               >
                 <Save className="w-4 h-4" />
-                <span>{saving ? 'Enregistrement...' : 'Enregistrer la Grille'}</span>
+                <span>{saving ? t('savingMarksheet') : t('saveMarksheetBtn')}</span>
               </Button>
             </div>
           </div>
@@ -851,27 +1003,27 @@ export default function ExamMasterPage() {
           {/* Real-time KPI Bar on the current Marksheet */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
             <div className="space-y-0.5">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Moyenne Classe</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase">{t('classAverageKpi')}</span>
               <div className="text-base font-extrabold text-[#0066FF] font-mono">{averageScore} /20</div>
             </div>
             <div className="space-y-0.5">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Taux de Réussite</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase">{t('passRateKpi')}</span>
               <div className="text-base font-extrabold text-emerald-600 font-mono">{passRate}% (≥10/20)</div>
             </div>
             <div className="space-y-0.5">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Note Maximale</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase">{t('maxScoreKpi')}</span>
               <div className="text-base font-extrabold text-slate-800 font-mono">{maxScore} /20</div>
             </div>
             <div className="space-y-0.5">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Note Minimale</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase">{t('minScoreKpi')}</span>
               <div className="text-base font-extrabold text-slate-800 font-mono">{minScore} /20</div>
             </div>
             <div className="space-y-0.5">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Élèves Notés</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase">{t('gradedStudentsKpi')}</span>
               <div className="text-base font-extrabold text-slate-700 font-mono">{gradedScores.length} / {marks.length}</div>
             </div>
             <div className="space-y-0.5">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Absences</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase">{t('absencesCountKpi')}</span>
               <div className="text-base font-extrabold text-rose-600 font-mono">{absentCount}</div>
             </div>
           </div>
@@ -881,7 +1033,7 @@ export default function ExamMasterPage() {
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-bold text-[#16212B] flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-[#0066FF]" />
-                Remplissage groupé :
+                {t('bulkFillGroup')}
               </span>
               <div className="flex items-center gap-1.5">
                 <Input
@@ -898,9 +1050,9 @@ export default function ExamMasterPage() {
                   variant="outline"
                   size="sm"
                   onClick={handleBulkFillEmpty}
-                  className="h-8 text-xs rounded-lg border-blue-200 bg-white text-[#0066FF] hover:bg-blue-50 font-bold"
+                  className="h-8 text-xs rounded-lg border-blue-200 bg-white text-[#0066FF] hover:bg-blue-50 font-bold cursor-pointer"
                 >
-                  Appliquer aux cases vides
+                  {t('applyToEmptyCasesBtn')}
                 </Button>
               </div>
             </div>
@@ -910,26 +1062,26 @@ export default function ExamMasterPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => handleBulkSetStatus('graded')}
-                className="h-8 text-xs rounded-lg border-slate-200 bg-white text-slate-700 hover:bg-slate-100 font-medium"
+                className="h-8 text-xs rounded-lg border-slate-200 bg-white text-slate-700 hover:bg-slate-100 font-medium cursor-pointer"
               >
-                Tous Présents
+                {t('allPresentBtn')}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handleBulkSetStatus('absent')}
-                className="h-8 text-xs rounded-lg border-slate-200 bg-white text-rose-600 hover:bg-rose-50 font-medium"
+                className="h-8 text-xs rounded-lg border-slate-200 bg-white text-rose-600 hover:bg-rose-50 font-medium cursor-pointer"
               >
-                Tous Absents
+                {t('allAbsentBtn')}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleClearAllScores}
-                className="h-8 text-xs rounded-lg border-slate-200 bg-white text-slate-500 hover:bg-slate-100 font-medium gap-1"
+                className="h-8 text-xs rounded-lg border-slate-200 bg-white text-slate-500 hover:bg-slate-100 font-medium gap-1 cursor-pointer"
               >
                 <RotateCcw className="w-3 h-3" />
-                Effacer les notes
+                {t('clearAllScoresBtn')}
               </Button>
             </div>
           </div>
@@ -944,20 +1096,20 @@ export default function ExamMasterPage() {
           {savedSuccess && (
             <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-xl flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Grille de notes enregistrée et synchronisée avec succès dans le Grand Livre Central !</span>
+              <span>{t('marksheetSavedSuccess')}</span>
             </div>
           )}
 
           {/* Marksheet Table */}
           <div className="overflow-x-auto rounded-xl border border-slate-200">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-start text-xs">
               <thead className="bg-slate-50 border-b border-slate-200 font-extrabold text-[#16212B]">
                 <tr>
-                  <th className="p-3.5 w-32">Matricule</th>
-                  <th className="p-3.5">Candidat / Élève</th>
-                  <th className="p-3.5 w-44">Statut de Présence</th>
-                  <th className="p-3.5 w-36">Note sur 20</th>
-                  <th className="p-3.5 w-48">Mention Automatique (Maroc)</th>
+                  <th className="p-3.5 w-32 text-start">{t('matriculeCol')}</th>
+                  <th className="p-3.5 text-start">{t('candidateStudentCol')}</th>
+                  <th className="p-3.5 w-44 text-start">{t('attendanceStatusCol')}</th>
+                  <th className="p-3.5 w-36 text-start">{t('scoreOutOf20Col')}</th>
+                  <th className="p-3.5 w-48 text-start">{t('autoMentionMoroccoCol')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -980,10 +1132,10 @@ export default function ExamMasterPage() {
                           onChange={e => handleStatusChange(globalIdx, e.target.value as MarkRow['status'])}
                           className="p-1.5 text-xs rounded-lg border border-slate-200 font-medium bg-white w-full"
                         >
-                          <option value="graded">Présent (Noté)</option>
-                          <option value="absent">Absent</option>
-                          <option value="exempted">Exempté</option>
-                          <option value="withheld">Note Retenue</option>
+                          <option value="graded">{t('presentGradedOption')}</option>
+                          <option value="absent">{t('absentOption')}</option>
+                          <option value="exempted">{t('exemptedOption')}</option>
+                          <option value="withheld">{t('withheldOption')}</option>
                         </select>
                       </td>
                       <td className="p-3.5">
@@ -995,11 +1147,11 @@ export default function ExamMasterPage() {
                           max="20"
                           disabled={row.status !== 'graded'}
                           value={row.rawScore}
-                          placeholder={row.status === 'graded' ? 'ex: 15.5' : '—'}
+                          placeholder={row.status === 'graded' ? '15.5' : '—'}
                           onChange={e => handleScoreChange(globalIdx, e.target.value)}
                           onKeyDown={e => handleKeyDown(e, filteredIdx, filteredRoster.length)}
                           onFocus={e => e.target.select()}
-                          className="w-28 text-xs font-extrabold rounded-lg border-slate-200 text-[#0066FF] font-mono focus:ring-2 focus:ring-[#0066FF]"
+                          className="w-28 text-xs font-extrabold rounded-lg border-slate-200 text-[#0066FF] font-mono focus:ring-2 focus:ring-[#0066FF] text-start"
                         />
                       </td>
                       <td className="p-3.5">
@@ -1011,7 +1163,7 @@ export default function ExamMasterPage() {
                 {filteredRoster.length === 0 && (
                   <tr>
                     <td colSpan={5} className="p-8 text-center text-slate-400 font-semibold">
-                      Aucun élève chargé pour cette session.
+                      {t('noStudentsLoadedForSession')}
                     </td>
                   </tr>
                 )}
@@ -1022,7 +1174,7 @@ export default function ExamMasterPage() {
           <div className="flex items-center justify-between pt-2">
             <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
               <HelpCircle className="w-3.5 h-3.5" />
-              <span>Astuce de saisie : utilisez <strong>Entrée</strong> ou <strong>Flèche Bas</strong> pour passer à l'élève suivant sans utiliser la souris.</span>
+              <span>{t('keyboardTipFooter')}</span>
             </div>
             <Button
               onClick={handleSaveMarks}
@@ -1030,7 +1182,7 @@ export default function ExamMasterPage() {
               className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs rounded-xl shadow-2xs gap-1.5 px-4 cursor-pointer"
             >
               <Save className="w-4 h-4" />
-              <span>{saving ? 'Enregistrement...' : 'Enregistrer la Grille'}</span>
+              <span>{saving ? t('savingMarksheet') : t('saveMarksheetBtn')}</span>
             </Button>
           </div>
         </Card>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -52,9 +53,6 @@ type EditForm = {
   guardianEmail: string;
 };
 
-const STATUS_LABEL: Record<Applicant['status'], string> = {
-  applied: 'Reçue', in_review: 'En revue', approved: 'Approuvée', rejected: 'Rejetée',
-};
 const STATUS_BADGE: Record<Applicant['status'], string> = {
   applied: 'bg-amber-100 text-amber-700', in_review: 'bg-[#DCEBF4] text-[#1B6C93]',
   approved: 'bg-[#DDF5EC] text-[#17A673]', rejected: 'bg-rose-100 text-rose-600',
@@ -66,7 +64,19 @@ const STATUS_BADGE: Record<Applicant['status'], string> = {
 // GET/PATCH/PUT /api/students/admissions approval flow (matricule/guardian-
 // link/login-access generation).
 export function AdmissionRequestsClient({ locale: _locale }: { locale?: string } = {}) {
+  const t = useTranslations('Students');
+  const tCommon = useTranslations('Common');
   const { can } = usePermissions();
+
+  const getStatusLabel = (status: Applicant['status']) => {
+    switch (status) {
+      case 'applied': return t('applicantReceived');
+      case 'in_review': return t('applicantInReview');
+      case 'approved': return t('applicantApproved');
+      case 'rejected': return t('applicantRejected');
+    }
+  };
+
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [classSections, setClassSections] = useState<ClassSectionOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -197,7 +207,7 @@ export function AdmissionRequestsClient({ locale: _locale }: { locale?: string }
       });
       const json = await res.json();
       if (!json.success) {
-        setError(json.error?.message || json.message || 'Échec de la décision.');
+        setError(json.error?.message || json.message || t('errDecisionFailed'));
         return;
       }
       if (status === 'approved') {
@@ -205,7 +215,7 @@ export function AdmissionRequestsClient({ locale: _locale }: { locale?: string }
       }
       load();
     } catch {
-      setError('Connexion impossible.');
+      setError(tCommon('error'));
     } finally {
       setDeciding(false);
     }
@@ -258,13 +268,13 @@ export function AdmissionRequestsClient({ locale: _locale }: { locale?: string }
       });
       const json = await res.json();
       if (!json.success) {
-        setError(json.error?.message || json.message || 'Échec de la mise à jour.');
+        setError(json.error?.message || json.message || t('errUpdateFailed'));
         return;
       }
       setEditOpen(false);
       load();
     } catch {
-      setError('Connexion impossible.');
+      setError(tCommon('error'));
     } finally {
       setSaving(false);
     }
@@ -277,12 +287,12 @@ export function AdmissionRequestsClient({ locale: _locale }: { locale?: string }
     <div className="space-y-6 max-w-[1600px] mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Demandes d&apos;admission</h1>
-          <p className="text-xs text-slate-500 mt-1">{filtered.length} demande(s) réelle(s) {statusFilter === 'pending' ? 'en attente' : 'au total'}.</p>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('admissionsTitle')}</h1>
+          <p className="text-xs text-slate-500 mt-1">{filtered.length} {statusFilter === 'pending' ? t('pendingFilter') : t('allFilter')}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setStatusFilter('pending')} className={`h-9 px-3 rounded-xl text-xs font-bold ${statusFilter === 'pending' ? 'bg-[#2487B8] text-white' : 'bg-white border border-slate-200 text-slate-600'}`}>En attente</button>
-          <button onClick={() => setStatusFilter('all')} className={`h-9 px-3 rounded-xl text-xs font-bold ${statusFilter === 'all' ? 'bg-[#2487B8] text-white' : 'bg-white border border-slate-200 text-slate-600'}`}>Toutes</button>
+          <button onClick={() => setStatusFilter('pending')} className={`h-9 px-3 rounded-xl text-xs font-bold ${statusFilter === 'pending' ? 'bg-[#2487B8] text-white' : 'bg-white border border-slate-200 text-slate-600'}`}>{t('pendingFilter')}</button>
+          <button onClick={() => setStatusFilter('all')} className={`h-9 px-3 rounded-xl text-xs font-bold ${statusFilter === 'all' ? 'bg-[#2487B8] text-white' : 'bg-white border border-slate-200 text-slate-600'}`}>{t('allFilter')}</button>
         </div>
       </div>
 
@@ -290,25 +300,25 @@ export function AdmissionRequestsClient({ locale: _locale }: { locale?: string }
         <div className="lg:col-span-4 space-y-3">
           <Card className="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
             <div className="relative">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <Input placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9 text-xs rounded-xl bg-slate-50 border-none" />
+              <Search className="w-3.5 h-3.5 absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Input placeholder={tCommon('search')} value={search} onChange={e => setSearch(e.target.value)} className="ps-9 h-9 text-xs rounded-xl bg-slate-50 border-none text-start" />
             </div>
           </Card>
           <div className="space-y-2 max-h-[70vh] overflow-y-auto">
             {!loading && filtered.length === 0 && (
               <Card className="p-8 bg-white rounded-2xl border border-slate-200/80 shadow-2xs text-center">
-                <p className="text-xs text-slate-400">Aucune demande.</p>
+                <p className="text-xs text-slate-400">{t('noAdmissions')}</p>
               </Card>
             )}
             {filtered.map(a => (
               <button
                 key={a.id}
                 onClick={() => { setSelectedId(a.id); setDecisionResult(null); setError(null); }}
-                className={`w-full text-left p-3 rounded-2xl border transition ${(activeCandidate?.id === a.id) ? 'border-[#2487B8] bg-[#DCEBF4]/20' : 'border-slate-200/80 bg-white hover:border-slate-300'}`}
+                className={`w-full text-start p-3 rounded-2xl border transition ${(activeCandidate?.id === a.id) ? 'border-[#2487B8] bg-[#DCEBF4]/20' : 'border-slate-200/80 bg-white hover:border-slate-300'}`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs font-extrabold text-[#16212B] truncate">{a.firstName} {a.lastName}</p>
-                  <Badge className={`${STATUS_BADGE[a.status]} border-none text-[9px] font-bold shrink-0`}>{STATUS_LABEL[a.status]}</Badge>
+                  <Badge className={`${STATUS_BADGE[a.status]} border-none text-[9px] font-bold shrink-0`}>{getStatusLabel(a.status)}</Badge>
                 </div>
                 <p className="text-[10px] text-slate-400 mt-0.5">{a.email}</p>
               </button>
@@ -321,7 +331,7 @@ export function AdmissionRequestsClient({ locale: _locale }: { locale?: string }
             ? (
                 <Card className="p-12 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col items-center justify-center gap-3 text-center">
                   <Eye className="w-10 h-10 text-slate-200" />
-                  <p className="text-sm font-bold text-slate-400">Sélectionnez une demande pour voir le dossier complet.</p>
+                  <p className="text-sm font-bold text-slate-400">{t('selectRequestToView')}</p>
                 </Card>
               )
             : (
@@ -334,25 +344,25 @@ export function AdmissionRequestsClient({ locale: _locale }: { locale?: string }
                     <div className="flex items-center gap-2">
                       {canEdit && (
                         <Button variant="outline" size="sm" onClick={openEdit} className="h-8 rounded-xl text-[11px] font-bold gap-1.5">
-                          <Pencil className="w-3.5 h-3.5" /> Modifier
+                          <Pencil className="w-3.5 h-3.5" /> {t('modify')}
                         </Button>
                       )}
-                      <Badge className={`${STATUS_BADGE[activeCandidate.status]} border-none text-[10px] font-bold`}>{STATUS_LABEL[activeCandidate.status]}</Badge>
+                      <Badge className={`${STATUS_BADGE[activeCandidate.status]} border-none text-[10px] font-bold`}>{getStatusLabel(activeCandidate.status)}</Badge>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                     {[
                       ['Email', activeCandidate.email],
-                      ['Téléphone', activeCandidate.phone],
-                      ['Date de naissance', activeCandidate.dateOfBirth],
-                      ['Genre', activeCandidate.gender === 'male' ? 'Homme' : activeCandidate.gender === 'female' ? 'Femme' : activeCandidate.gender],
-                      ['Nationalité', activeCandidate.nationality],
-                      ['Ville', activeCandidate.city],
-                      ['Langue maternelle', activeCandidate.motherTongue],
-                      ['Groupe sanguin', activeCandidate.bloodGroup],
-                      ['Tuteur', activeCandidate.guardianName],
-                      ['Téléphone tuteur', activeCandidate.guardianPhone],
+                      [t('phone'), activeCandidate.phone],
+                      [t('fieldBirthDate'), activeCandidate.dateOfBirth],
+                      [t('fieldGender'), activeCandidate.gender === 'male' ? t('genderMale') : activeCandidate.gender === 'female' ? t('genderFemale') : activeCandidate.gender === 'other' ? t('genderOther') : activeCandidate.gender],
+                      [t('fieldNationality'), activeCandidate.nationality],
+                      [t('fieldCity'), activeCandidate.city],
+                      [t('fieldMotherTongue'), activeCandidate.motherTongue],
+                      [t('fieldBloodGroup'), activeCandidate.bloodGroup],
+                      [t('guardian'), activeCandidate.guardianName],
+                      [t('guardianPhone'), activeCandidate.guardianPhone],
                     ].filter(([, v]) => v).map(([label, value]) => (
                       <div key={label}>
                         <p className="text-[10px] font-bold text-slate-400 uppercase">{label}</p>
@@ -365,7 +375,7 @@ export function AdmissionRequestsClient({ locale: _locale }: { locale?: string }
                     <div>
                       <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">Entretien</p>
                       {interview === undefined
-                        ? <p className="text-[11px] text-slate-400">Chargement...</p>
+                        ? <p className="text-[11px] text-slate-400">{tCommon('loading')}</p>
                         : (
                             <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
                               <Input
@@ -397,7 +407,7 @@ export function AdmissionRequestsClient({ locale: _locale }: { locale?: string }
                     <div>
                       <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">Notes internes (équipe uniquement)</p>
                       <div className="space-y-1.5 max-h-40 overflow-y-auto mb-2">
-                        {comments === null && <p className="text-[11px] text-slate-400">Chargement...</p>}
+                        {comments === null && <p className="text-[11px] text-slate-400">{tCommon('loading')}</p>}
                         {comments !== null && comments.length === 0 && <p className="text-[11px] text-slate-400">Aucune note pour le moment</p>}
                         {comments?.map(c => (
                           <div key={c.id} className="p-2 rounded-lg bg-slate-50 text-[11px]">
@@ -407,9 +417,9 @@ export function AdmissionRequestsClient({ locale: _locale }: { locale?: string }
                         ))}
                       </div>
                       <div className="flex items-center gap-2">
-                        <Input value={newComment} onChange={e => setNewComment(e.target.value)} placeholder="Ajouter une note..." className="h-8 rounded-lg text-xs flex-1" />
+                        <Input value={newComment} onChange={e => setNewComment(e.target.value)} placeholder={t('addNotePlaceholder')} className="h-8 rounded-lg text-xs flex-1" />
                         <Button size="sm" disabled={!newComment.trim()} onClick={addComment} className="h-8 rounded-lg bg-[#2487B8] hover:bg-[#1B6C93] text-white text-[11px] font-bold">
-                          Ajouter
+                          {tCommon('add')}
                         </Button>
                       </div>
                     </div>
@@ -440,10 +450,10 @@ export function AdmissionRequestsClient({ locale: _locale }: { locale?: string }
 
                   {decisionResult && (
                     <div className="p-3 bg-[#DDF5EC] border border-[#17A673]/30 rounded-xl text-xs font-semibold text-[#17A673] space-y-1">
-                      <p>Élève inscrit avec succès.</p>
-                      {decisionResult.tempPassword && <p>Mot de passe temporaire (à communiquer, affiché une seule fois) : <span className="font-mono">{decisionResult.tempPassword}</span></p>}
-                      {decisionResult.loginAccessDeliveryStatus === 'no_guardian_phone' && <p className="text-amber-700">Aucun téléphone tuteur — le lien d&apos;invitation n&apos;a pas pu être envoyé.</p>}
-                      {decisionResult.loginAccessDeliveryStatus === 'sent' && <p>Lien d&apos;invitation envoyé (SMS).</p>}
+                      <p>{t('studentEnrolledSuccess')}</p>
+                      {decisionResult.tempPassword && <p>{t('tempPasswordNotice', { password: decisionResult.tempPassword })}</p>}
+                      {decisionResult.loginAccessDeliveryStatus === 'no_guardian_phone' && <p className="text-amber-700">{t('noPhoneNotice')}</p>}
+                      {decisionResult.loginAccessDeliveryStatus === 'sent' && <p>{t('inviteSentSms')}</p>}
                     </div>
                   )}
 
@@ -452,21 +462,21 @@ export function AdmissionRequestsClient({ locale: _locale }: { locale?: string }
                       <div className="flex items-center gap-3">
                         <label className="text-[10px] font-bold text-slate-500 whitespace-nowrap">Classe (optionnel) :</label>
                         <select value={classSectionId} onChange={e => setClassSectionId(e.target.value)} className="h-9 px-3 rounded-xl border border-slate-200 text-xs bg-white">
-                          <option value="">Non assigné</option>
+                          <option value="">{t('unassigned')}</option>
                           {classSections.map(cs => <option key={cs.id} value={cs.id}>{cs.className} {cs.sectionName}</option>)}
                         </select>
                       </div>
                       <div className="flex items-center gap-2">
                         <Button disabled={deciding} onClick={() => decide('approved')} className="h-9 rounded-xl bg-[#17A673] hover:bg-[#149063] text-white text-xs font-bold gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Approuver
+                          <CheckCircle2 className="w-3.5 h-3.5" /> {t('applicantApproved')}
                         </Button>
                         {activeCandidate.status === 'applied' && (
                           <Button disabled={deciding} variant="outline" onClick={() => decide('in_review')} className="h-9 rounded-xl text-xs font-bold gap-1.5">
-                            <Clock className="w-3.5 h-3.5" /> Mettre en revue
+                            <Clock className="w-3.5 h-3.5" /> {t('applicantInReview')}
                           </Button>
                         )}
                         <Button disabled={deciding} variant="outline" onClick={() => decide('rejected')} className="h-9 rounded-xl border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold gap-1.5">
-                          <XCircle className="w-3.5 h-3.5" /> Rejeter
+                          <XCircle className="w-3.5 h-3.5" /> {t('applicantRejected')}
                         </Button>
                       </div>
                     </div>
@@ -479,7 +489,7 @@ export function AdmissionRequestsClient({ locale: _locale }: { locale?: string }
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Modifier la demande</DialogTitle>
+            <DialogTitle>{t('editRequest')}</DialogTitle>
             <DialogDescription>
               Mettez à jour les informations du candidat. Les modifications restent possibles tant qu&apos;aucune décision (approuvée / rejetée) n&apos;a été prise.
             </DialogDescription>
@@ -547,9 +557,9 @@ export function AdmissionRequestsClient({ locale: _locale }: { locale?: string }
           )}
           {error && <p className="text-xs font-semibold text-rose-600">{error}</p>}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditOpen(false)} className="h-9 rounded-xl text-xs font-bold">Annuler</Button>
+            <Button variant="outline" onClick={() => setEditOpen(false)} className="h-9 rounded-xl text-xs font-bold">{tCommon('cancel')}</Button>
             <Button disabled={saving} onClick={saveEdit} className="h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold">
-              {saving ? 'Enregistrement...' : 'Enregistrer'}
+              {saving ? tCommon('loading') : tCommon('save')}
             </Button>
           </DialogFooter>
         </DialogContent>

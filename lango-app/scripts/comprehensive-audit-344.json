@@ -1,0 +1,2754 @@
+[
+  {
+    "filePath": "src/app/page.tsx",
+    "route": "/",
+    "browserUrl": "http://localhost:3111/fr",
+    "role": "Public / Prospective Client",
+    "category": "SchoolOS SaaS Landing & Home",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(alumni-portal)/alumni/directory/page.tsx",
+    "route": "/[locale]/(alumni-portal)/alumni/directory",
+    "browserUrl": "http://localhost:3111/fr/alumni/directory",
+    "role": "Alumni / Community Officer",
+    "category": "Alumni Community Network",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(alumni-portal)/alumni/events/page.tsx",
+    "route": "/[locale]/(alumni-portal)/alumni/events",
+    "browserUrl": "http://localhost:3111/fr/alumni/events",
+    "role": "Alumni / Community Officer",
+    "category": "Alumni Community Network",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(alumni-portal)/alumni/mentoring/page.tsx",
+    "route": "/[locale]/(alumni-portal)/alumni/mentoring",
+    "browserUrl": "http://localhost:3111/fr/alumni/mentoring",
+    "role": "Alumni / Community Officer",
+    "category": "Alumni Community Network",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(alumni-portal)/alumni/page.tsx",
+    "route": "/[locale]/(alumni-portal)/alumni",
+    "browserUrl": "http://localhost:3111/fr/alumni",
+    "role": "Alumni / Community Officer",
+    "category": "Alumni Community Network",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(alumni-portal)/alumni/profile/page.tsx",
+    "route": "/[locale]/(alumni-portal)/alumni/profile",
+    "browserUrl": "http://localhost:3111/fr/alumni/profile",
+    "role": "Alumni / Community Officer",
+    "category": "Alumni Community Network",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(alumni-portal)/alumni/records/page.tsx",
+    "route": "/[locale]/(alumni-portal)/alumni/records",
+    "browserUrl": "http://localhost:3111/fr/alumni/records",
+    "role": "Alumni / Community Officer",
+    "category": "Alumni Community Network",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(alumni-portal)/alumni/requests/page.tsx",
+    "route": "/[locale]/(alumni-portal)/alumni/requests",
+    "browserUrl": "http://localhost:3111/fr/alumni/requests",
+    "role": "Alumni / Community Officer",
+    "category": "Alumni Community Network",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(auth)/invitations/[token]/page.tsx",
+    "route": "/[locale]/(auth)/invitations/[token]",
+    "browserUrl": "http://localhost:3111/fr/invitations/[token]",
+    "role": "All Users (Public / Staff / Families)",
+    "category": "Authentication & Access Control",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(auth)/login/page.tsx",
+    "route": "/[locale]/(auth)/login",
+    "browserUrl": "http://localhost:3111/fr/login",
+    "role": "All Users (Public / Staff / Families)",
+    "category": "Authentication & Access Control",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(auth)/signup/page.tsx",
+    "route": "/[locale]/(auth)/signup",
+    "browserUrl": "http://localhost:3111/fr/signup",
+    "role": "All Users (Public / Staff / Families)",
+    "category": "Authentication & Access Control",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/assessment/exam-master/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/assessment/exam-master",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/assessment/exam-master",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/assessment/homework/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/assessment/homework",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/assessment/homework",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/assessment/marksheet/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/assessment/marksheet",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/assessment/marksheet",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/assessment/online-exams/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/assessment/online-exams",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/assessment/online-exams",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/assignments/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/assignments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/assignments",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/calendar/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/calendar",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/calendar",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/class-section-teachers/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/class-section-teachers",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/class-section-teachers",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/class-subjects/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/class-subjects",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/class-subjects",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/classes/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/classes",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/classes",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/classes/[id]/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/classes/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/classes/[id]",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/conflicts/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/conflicts",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/conflicts",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/evaluations/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/evaluations",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/evaluations",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/exams/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/exams",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/exams",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/grades/entry/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/grades/entry",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/grades/entry",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/grading/policies/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/grading/policies",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/grading/policies",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/live-class/new/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/live-class/new",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/live-class/new",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/live-class/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/live-class",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/live-class",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/live-class/[id]/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/live-class/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/live-class/[id]",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/live-class-reports/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/live-class-reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/live-class-reports",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/mediums/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/mediums",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/mediums",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/optional-subjects/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/optional-subjects",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/optional-subjects",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/promotions/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/promotions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/promotions",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/question-bank/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/question-bank",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/question-bank",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/readiness/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/readiness",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/readiness",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/results/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/results",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/results",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/rooms/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/rooms",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/rooms",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/schedule/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/schedule",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/schedule",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/sections/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/sections",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/sections",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/semesters/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/semesters",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/semesters",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/session-copy/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/session-copy",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/session-copy",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/shifts/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/shifts",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/shifts",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/streams/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/streams",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/streams",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/subjects/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/subjects",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/subjects",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/syllabus/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/syllabus",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/syllabus",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/teacher-availability/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/teacher-availability",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/teacher-availability",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/teacher-schedule/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/academics/teacher-schedule",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/teacher-schedule",
+    "role": "Academic Director / Registrar",
+    "category": "Academics, Scheduling & Classes",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/accountant/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/accountant",
+    "browserUrl": "http://localhost:3111/fr/dashboard/accountant",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/analytics/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/analytics",
+    "browserUrl": "http://localhost:3111/fr/dashboard/analytics",
+    "role": "School Director / Leadership",
+    "category": "Decision Intelligence & Reports",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/attendance/audit/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/attendance/audit",
+    "browserUrl": "http://localhost:3111/fr/dashboard/attendance/audit",
+    "role": "Prefect of Studies / Teacher",
+    "category": "Attendance & QR Timekeeping",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/attendance/badges/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/attendance/badges",
+    "browserUrl": "http://localhost:3111/fr/dashboard/attendance/badges",
+    "role": "Prefect of Studies / Teacher",
+    "category": "Attendance & QR Timekeeping",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/attendance/excuses/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/attendance/excuses",
+    "browserUrl": "http://localhost:3111/fr/dashboard/attendance/excuses",
+    "role": "Prefect of Studies / Teacher",
+    "category": "Attendance & QR Timekeeping",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/attendance/flags/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/attendance/flags",
+    "browserUrl": "http://localhost:3111/fr/dashboard/attendance/flags",
+    "role": "Prefect of Studies / Teacher",
+    "category": "Attendance & QR Timekeeping",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/attendance/flags/[id]/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/attendance/flags/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/attendance/flags/[id]",
+    "role": "Prefect of Studies / Teacher",
+    "category": "Attendance & QR Timekeeping",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/attendance/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/attendance",
+    "browserUrl": "http://localhost:3111/fr/dashboard/attendance",
+    "role": "Prefect of Studies / Teacher",
+    "category": "Attendance & QR Timekeeping",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/attendance/qr-reports/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/attendance/qr-reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/attendance/qr-reports",
+    "role": "Prefect of Studies / Teacher",
+    "category": "Attendance & QR Timekeeping",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/attendance/scanner/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/attendance/scanner",
+    "browserUrl": "http://localhost:3111/fr/dashboard/attendance/scanner",
+    "role": "Prefect of Studies / Teacher",
+    "category": "Attendance & QR Timekeeping",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/broadcast/automations/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/broadcast/automations",
+    "browserUrl": "http://localhost:3111/fr/dashboard/broadcast/automations",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/broadcast/campaigns/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/broadcast/campaigns",
+    "browserUrl": "http://localhost:3111/fr/dashboard/broadcast/campaigns",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/broadcast/campaigns/[id]/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/broadcast/campaigns/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/broadcast/campaigns/[id]",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/broadcast/connections/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/broadcast/connections",
+    "browserUrl": "http://localhost:3111/fr/dashboard/broadcast/connections",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/broadcast/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/broadcast",
+    "browserUrl": "http://localhost:3111/fr/dashboard/broadcast",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/broadcast/reports/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/broadcast/reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/broadcast/reports",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/broadcast/segments/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/broadcast/segments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/broadcast/segments",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/broadcast/templates/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/broadcast/templates",
+    "browserUrl": "http://localhost:3111/fr/dashboard/broadcast/templates",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/cards/admit-cards/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/cards/admit-cards",
+    "browserUrl": "http://localhost:3111/fr/dashboard/cards/admit-cards",
+    "role": "Identity & Cards Officer",
+    "category": "Student & Staff ID Cards",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/cards/employees/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/cards/employees",
+    "browserUrl": "http://localhost:3111/fr/dashboard/cards/employees",
+    "role": "Identity & Cards Officer",
+    "category": "Student & Staff ID Cards",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/cards/issued/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/cards/issued",
+    "browserUrl": "http://localhost:3111/fr/dashboard/cards/issued",
+    "role": "Identity & Cards Officer",
+    "category": "Student & Staff ID Cards",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/cards/jobs/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/cards/jobs",
+    "browserUrl": "http://localhost:3111/fr/dashboard/cards/jobs",
+    "role": "Identity & Cards Officer",
+    "category": "Student & Staff ID Cards",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/cards/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/cards",
+    "browserUrl": "http://localhost:3111/fr/dashboard/cards",
+    "role": "Identity & Cards Officer",
+    "category": "Student & Staff ID Cards",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/cards/students/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/cards/students",
+    "browserUrl": "http://localhost:3111/fr/dashboard/cards/students",
+    "role": "Identity & Cards Officer",
+    "category": "Student & Staff ID Cards",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/cards/templates/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/cards/templates",
+    "browserUrl": "http://localhost:3111/fr/dashboard/cards/templates",
+    "role": "Identity & Cards Officer",
+    "category": "Student & Staff ID Cards",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/cards/templates/[id]/edit/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/cards/templates/[id]/edit",
+    "browserUrl": "http://localhost:3111/fr/dashboard/cards/templates/[id]/edit",
+    "role": "Identity & Cards Officer",
+    "category": "Student & Staff ID Cards",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/definitions/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/certificates/definitions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/definitions",
+    "role": "Registrar / Academic Secretariat",
+    "category": "Certificates & Official Attestations",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/definitions/[id]/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/certificates/definitions/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/definitions/[id]",
+    "role": "Registrar / Academic Secretariat",
+    "category": "Certificates & Official Attestations",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/issue/employees/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/certificates/issue/employees",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/issue/employees",
+    "role": "Registrar / Academic Secretariat",
+    "category": "Certificates & Official Attestations",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/issue/students/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/certificates/issue/students",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/issue/students",
+    "role": "Registrar / Academic Secretariat",
+    "category": "Certificates & Official Attestations",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/issued/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/certificates/issued",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/issued",
+    "role": "Registrar / Academic Secretariat",
+    "category": "Certificates & Official Attestations",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/issued/[id]/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/certificates/issued/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/issued/[id]",
+    "role": "Registrar / Academic Secretariat",
+    "category": "Certificates & Official Attestations",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/jobs/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/certificates/jobs",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/jobs",
+    "role": "Registrar / Academic Secretariat",
+    "category": "Certificates & Official Attestations",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/certificates",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates",
+    "role": "Registrar / Academic Secretariat",
+    "category": "Certificates & Official Attestations",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/requests/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/certificates/requests",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/requests",
+    "role": "Registrar / Academic Secretariat",
+    "category": "Certificates & Official Attestations",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/settings/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/certificates/settings",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/settings",
+    "role": "Registrar / Academic Secretariat",
+    "category": "Certificates & Official Attestations",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/templates/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/certificates/templates",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/templates",
+    "role": "Registrar / Academic Secretariat",
+    "category": "Certificates & Official Attestations",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/templates/[id]/edit/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/certificates/templates/[id]/edit",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/templates/[id]/edit",
+    "role": "Registrar / Academic Secretariat",
+    "category": "Certificates & Official Attestations",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/broadcast/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/communication/broadcast",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/broadcast",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/campaign-composer/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/communication/campaign-composer",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/campaign-composer",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/crm/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/communication/crm",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/crm",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/delivery-reports/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/communication/delivery-reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/delivery-reports",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/events/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/communication/events",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/events",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/forms/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/communication/forms",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/forms",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/leads/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/communication/leads",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/leads",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/milestones/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/communication/milestones",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/milestones",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/communication",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/reminders/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/communication/reminders",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/reminders",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/segments/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/communication/segments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/segments",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/templates/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/communication/templates",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/templates",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/templates-automation/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/communication/templates-automation",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/templates-automation",
+    "role": "Communications Officer / Admin",
+    "category": "Communication, SMS & Broadcast",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/content/library/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/content/library",
+    "browserUrl": "http://localhost:3111/fr/dashboard/content/library",
+    "role": "Pedagogical Resource Manager",
+    "category": "Pedagogical Content Library",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/content/types/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/content/types",
+    "browserUrl": "http://localhost:3111/fr/dashboard/content/types",
+    "role": "Pedagogical Resource Manager",
+    "category": "Pedagogical Content Library",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/documents/generator/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/documents/generator",
+    "browserUrl": "http://localhost:3111/fr/dashboard/documents/generator",
+    "role": "Administrative Secretary",
+    "category": "Official Document Generator",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/events/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/events",
+    "browserUrl": "http://localhost:3111/fr/dashboard/events",
+    "role": "Events Coordinator / Staff",
+    "category": "School Calendar & Events",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/events/[id]/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/events/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/events/[id]",
+    "role": "Events Coordinator / Staff",
+    "category": "School Calendar & Events",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/accounts/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/accounting/accounts",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/accounting/accounts",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/deposits/new/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/accounting/deposits/new",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/accounting/deposits/new",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/expenses/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/accounting/expenses",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/accounting/expenses",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/periods/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/accounting/periods",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/accounting/periods",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/statements/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/accounting/statements",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/accounting/statements",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/student-accounting/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/accounting/student-accounting",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/accounting/student-accounting",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/transactions/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/accounting/transactions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/accounting/transactions",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/voucher-types/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/accounting/voucher-types",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/accounting/voucher-types",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/allocation/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/allocation",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/allocation",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/allocations/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/allocations",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/allocations",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/approvals/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/approvals",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/approvals",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/bank-reconciliation/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/bank-reconciliation",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/bank-reconciliation",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/cashier-sessions/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/cashier-sessions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/cashier-sessions",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/chart-of-accounts/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/chart-of-accounts",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/chart-of-accounts",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/collection-desk/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/collection-desk",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/collection-desk",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/credit-notes/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/credit-notes",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/credit-notes",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/expenses/new/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/expenses/new",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/expenses/new",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/expenses/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/expenses",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/expenses",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/fee-assignments/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/fee-assignments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/fee-assignments",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/fee-structures/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/fee-structures",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/fee-structures",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/fee-types/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/fee-types",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/fee-types",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/fine-policies/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/fine-policies",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/fine-policies",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/invoices/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/invoices",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/invoices",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/invoices/[id]/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/invoices/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/invoices/[id]",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/journal/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/journal",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/journal",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/office-accounting/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/office-accounting",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/office-accounting",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/online-payments/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/online-payments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/online-payments",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/payments/new/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/payments/new",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/payments/new",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/payments/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/payments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/payments",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/receipts/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/receipts",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/receipts",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/receivables/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/receivables",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/receivables",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/reconciliation/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/reconciliation",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/reconciliation",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/refunds/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/refunds",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/refunds",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/reminders/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/reminders",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/reminders",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/reports/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/reports",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/statements/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/finance/statements",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/statements",
+    "role": "Accountant / Financial Officer",
+    "category": "Finance, Tuition & General Ledger",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/homework/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/homework",
+    "browserUrl": "http://localhost:3111/fr/dashboard/homework",
+    "role": "Teacher / Exam Controller",
+    "category": "Grades, Exams & Homework",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/homework/submissions/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/homework/submissions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/homework/submissions",
+    "role": "Teacher / Exam Controller",
+    "category": "Grades, Exams & Homework",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/allocations/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hostel/allocations",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/allocations",
+    "role": "Hostel Warden / Boarding Supervisor",
+    "category": "Boarding & Dormitory (Internat)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/allocations/[id]/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hostel/allocations/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/allocations/[id]",
+    "role": "Hostel Warden / Boarding Supervisor",
+    "category": "Boarding & Dormitory (Internat)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/applications/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hostel/applications",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/applications",
+    "role": "Hostel Warden / Boarding Supervisor",
+    "category": "Boarding & Dormitory (Internat)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/board/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hostel/board",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/board",
+    "role": "Hostel Warden / Boarding Supervisor",
+    "category": "Boarding & Dormitory (Internat)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/categories/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hostel/categories",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/categories",
+    "role": "Hostel Warden / Boarding Supervisor",
+    "category": "Boarding & Dormitory (Internat)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/guardian/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hostel/guardian",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/guardian",
+    "role": "Hostel Warden / Boarding Supervisor",
+    "category": "Boarding & Dormitory (Internat)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/hostels/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hostel/hostels",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/hostels",
+    "role": "Hostel Warden / Boarding Supervisor",
+    "category": "Boarding & Dormitory (Internat)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/hostels/[id]/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hostel/hostels/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/hostels/[id]",
+    "role": "Hostel Warden / Boarding Supervisor",
+    "category": "Boarding & Dormitory (Internat)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/leave-passes/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hostel/leave-passes",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/leave-passes",
+    "role": "Hostel Warden / Boarding Supervisor",
+    "category": "Boarding & Dormitory (Internat)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/me/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hostel/me",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/me",
+    "role": "Hostel Warden / Boarding Supervisor",
+    "category": "Boarding & Dormitory (Internat)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hostel",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel",
+    "role": "Hostel Warden / Boarding Supervisor",
+    "category": "Boarding & Dormitory (Internat)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/policies/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hostel/policies",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/policies",
+    "role": "Hostel Warden / Boarding Supervisor",
+    "category": "Boarding & Dormitory (Internat)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/reports/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hostel/reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/reports",
+    "role": "Hostel Warden / Boarding Supervisor",
+    "category": "Boarding & Dormitory (Internat)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/roll-call/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hostel/roll-call",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/roll-call",
+    "role": "Hostel Warden / Boarding Supervisor",
+    "category": "Boarding & Dormitory (Internat)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/rooms/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hostel/rooms",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/rooms",
+    "role": "Hostel Warden / Boarding Supervisor",
+    "category": "Boarding & Dormitory (Internat)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/zones/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hostel/zones",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/zones",
+    "role": "Hostel Warden / Boarding Supervisor",
+    "category": "Boarding & Dormitory (Internat)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/access/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hr/access",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/access",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/advances/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hr/advances",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/advances",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/awards/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hr/awards",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/awards",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/departments/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hr/departments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/departments",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/designations/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hr/designations",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/designations",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/employees/new/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hr/employees/new",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/employees/new",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/employees/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hr/employees",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/employees",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/employees/[id]/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hr/employees/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/employees/[id]",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/leave/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hr/leave",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/leave",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/leave-management/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hr/leave-management",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/leave-management",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/overview/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hr/overview",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/overview",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hr",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/salary-advances/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hr/salary-advances",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/salary-advances",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/self-service/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/hr/self-service",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/self-service",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/adjustments/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/inventory/adjustments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/adjustments",
+    "role": "Storekeeper / Inventory Manager",
+    "category": "Inventory & Supply Logistics",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/categories/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/inventory/categories",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/categories",
+    "role": "Storekeeper / Inventory Manager",
+    "category": "Inventory & Supply Logistics",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/issues/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/inventory/issues",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/issues",
+    "role": "Storekeeper / Inventory Manager",
+    "category": "Inventory & Supply Logistics",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/overview/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/inventory/overview",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/overview",
+    "role": "Storekeeper / Inventory Manager",
+    "category": "Inventory & Supply Logistics",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/inventory",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory",
+    "role": "Storekeeper / Inventory Manager",
+    "category": "Inventory & Supply Logistics",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/products/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/inventory/products",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/products",
+    "role": "Storekeeper / Inventory Manager",
+    "category": "Inventory & Supply Logistics",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/purchases/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/inventory/purchases",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/purchases",
+    "role": "Storekeeper / Inventory Manager",
+    "category": "Inventory & Supply Logistics",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/sales/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/inventory/sales",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/sales",
+    "role": "Storekeeper / Inventory Manager",
+    "category": "Inventory & Supply Logistics",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/stock/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/inventory/stock",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/stock",
+    "role": "Storekeeper / Inventory Manager",
+    "category": "Inventory & Supply Logistics",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/stores/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/inventory/stores",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/stores",
+    "role": "Storekeeper / Inventory Manager",
+    "category": "Inventory & Supply Logistics",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/suppliers/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/inventory/suppliers",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/suppliers",
+    "role": "Storekeeper / Inventory Manager",
+    "category": "Inventory & Supply Logistics",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/transfers/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/inventory/transfers",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/transfers",
+    "role": "Storekeeper / Inventory Manager",
+    "category": "Inventory & Supply Logistics",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/units/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/inventory/units",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/units",
+    "role": "Storekeeper / Inventory Manager",
+    "category": "Inventory & Supply Logistics",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/library/catalog/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/library/catalog",
+    "browserUrl": "http://localhost:3111/fr/dashboard/library/catalog",
+    "role": "Librarian / Media Specialist",
+    "category": "School Library & Media Center",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/library/catalog/[id]/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/library/catalog/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/library/catalog/[id]",
+    "role": "Librarian / Media Specialist",
+    "category": "School Library & Media Center",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/library/categories/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/library/categories",
+    "browserUrl": "http://localhost:3111/fr/dashboard/library/categories",
+    "role": "Librarian / Media Specialist",
+    "category": "School Library & Media Center",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/library/me/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/library/me",
+    "browserUrl": "http://localhost:3111/fr/dashboard/library/me",
+    "role": "Librarian / Media Specialist",
+    "category": "School Library & Media Center",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/library/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/library",
+    "browserUrl": "http://localhost:3111/fr/dashboard/library",
+    "role": "Librarian / Media Specialist",
+    "category": "School Library & Media Center",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard",
+    "browserUrl": "http://localhost:3111/fr/dashboard",
+    "role": "School Administrator",
+    "category": "School Administration & Hubs",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/parent/attendance/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/parent/attendance",
+    "browserUrl": "http://localhost:3111/fr/dashboard/parent/attendance",
+    "role": "Parent / Guardian",
+    "category": "Parent & Family Portal",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/parent/communication/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/parent/communication",
+    "browserUrl": "http://localhost:3111/fr/dashboard/parent/communication",
+    "role": "Parent / Guardian",
+    "category": "Parent & Family Portal",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/parent/finance/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/parent/finance",
+    "browserUrl": "http://localhost:3111/fr/dashboard/parent/finance",
+    "role": "Parent / Guardian",
+    "category": "Parent & Family Portal",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/parent/live-classes/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/parent/live-classes",
+    "browserUrl": "http://localhost:3111/fr/dashboard/parent/live-classes",
+    "role": "Parent / Guardian",
+    "category": "Parent & Family Portal",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/parent/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/parent",
+    "browserUrl": "http://localhost:3111/fr/dashboard/parent",
+    "role": "Parent / Guardian",
+    "category": "Parent & Family Portal",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/parent/requests/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/parent/requests",
+    "browserUrl": "http://localhost:3111/fr/dashboard/parent/requests",
+    "role": "Parent / Guardian",
+    "category": "Parent & Family Portal",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/parent/settings/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/parent/settings",
+    "browserUrl": "http://localhost:3111/fr/dashboard/parent/settings",
+    "role": "Parent / Guardian",
+    "category": "Parent & Family Portal",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/guard/config/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/guard/config",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/guard/config",
+    "role": "Gate Security Officer / Guard",
+    "category": "Campus Security & Gate Control",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/guard/emergency/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/guard/emergency",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/guard/emergency",
+    "role": "Gate Security Officer / Guard",
+    "category": "Campus Security & Gate Control",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/guard/incidents/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/guard/incidents",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/guard/incidents",
+    "role": "Gate Security Officer / Guard",
+    "category": "Campus Security & Gate Control",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/guard/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/guard",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/guard",
+    "role": "Gate Security Officer / Guard",
+    "category": "Campus Security & Gate Control",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/guard/pickups/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/guard/pickups",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/guard/pickups",
+    "role": "Gate Security Officer / Guard",
+    "category": "Campus Security & Gate Control",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/guard/scanner/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/guard/scanner",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/guard/scanner",
+    "role": "Gate Security Officer / Guard",
+    "category": "Campus Security & Gate Control",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/guard/visitors/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/guard/visitors",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/guard/visitors",
+    "role": "Gate Security Officer / Guard",
+    "category": "Campus Security & Gate Control",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/leadership/admin/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/leadership/admin",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/leadership/admin",
+    "role": "Executive Director / Principal",
+    "category": "Executive Leadership & Exceptions",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/leadership/approvals/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/leadership/approvals",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/leadership/approvals",
+    "role": "Executive Director / Principal",
+    "category": "Executive Leadership & Exceptions",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/leadership/exceptions/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/leadership/exceptions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/leadership/exceptions",
+    "role": "Executive Director / Principal",
+    "category": "Executive Leadership & Exceptions",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/leadership/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/leadership",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/leadership",
+    "role": "Executive Director / Principal",
+    "category": "Executive Leadership & Exceptions",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/charges/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/librarian/charges",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/charges",
+    "role": "Librarian / Media Specialist",
+    "category": "School Library & Media Center",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/copies/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/librarian/copies",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/copies",
+    "role": "Librarian / Media Specialist",
+    "category": "School Library & Media Center",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/desk/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/librarian/desk",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/desk",
+    "role": "Librarian / Media Specialist",
+    "category": "School Library & Media Center",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/holds/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/librarian/holds",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/holds",
+    "role": "Librarian / Media Specialist",
+    "category": "School Library & Media Center",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/members/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/librarian/members",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/members",
+    "role": "Librarian / Media Specialist",
+    "category": "School Library & Media Center",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/members/[id]/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/librarian/members/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/members/[id]",
+    "role": "Librarian / Media Specialist",
+    "category": "School Library & Media Center",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/librarian",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian",
+    "role": "Librarian / Media Specialist",
+    "category": "School Library & Media Center",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/policies/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/librarian/policies",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/policies",
+    "role": "Librarian / Media Specialist",
+    "category": "School Library & Media Center",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/reports/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/librarian/reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/reports",
+    "role": "Librarian / Media Specialist",
+    "category": "School Library & Media Center",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/stocktake/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/librarian/stocktake",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/stocktake",
+    "role": "Librarian / Media Specialist",
+    "category": "School Library & Media Center",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/transfers/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/portals/librarian/transfers",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/transfers",
+    "role": "Librarian / Media Specialist",
+    "category": "School Library & Media Center",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/receptionist/appointments/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/receptionist/appointments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/receptionist/appointments",
+    "role": "Front Desk Receptionist",
+    "category": "Front Desk & Visitor Management",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/receptionist/handoffs/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/receptionist/handoffs",
+    "browserUrl": "http://localhost:3111/fr/dashboard/receptionist/handoffs",
+    "role": "Front Desk Receptionist",
+    "category": "Front Desk & Visitor Management",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/receptionist/inquiries/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/receptionist/inquiries",
+    "browserUrl": "http://localhost:3111/fr/dashboard/receptionist/inquiries",
+    "role": "Front Desk Receptionist",
+    "category": "Front Desk & Visitor Management",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/receptionist/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/receptionist",
+    "browserUrl": "http://localhost:3111/fr/dashboard/receptionist",
+    "role": "Front Desk Receptionist",
+    "category": "Front Desk & Visitor Management",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/receptionist/pickups/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/receptionist/pickups",
+    "browserUrl": "http://localhost:3111/fr/dashboard/receptionist/pickups",
+    "role": "Front Desk Receptionist",
+    "category": "Front Desk & Visitor Management",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/receptionist/visitors/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/receptionist/visitors",
+    "browserUrl": "http://localhost:3111/fr/dashboard/receptionist/visitors",
+    "role": "Front Desk Receptionist",
+    "category": "Front Desk & Visitor Management",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/reports/admin/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/reports/admin",
+    "browserUrl": "http://localhost:3111/fr/dashboard/reports/admin",
+    "role": "School Director / Leadership",
+    "category": "Decision Intelligence & Reports",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/reports/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/reports",
+    "role": "School Director / Leadership",
+    "category": "Decision Intelligence & Reports",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/reports/runs/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/reports/runs",
+    "browserUrl": "http://localhost:3111/fr/dashboard/reports/runs",
+    "role": "School Director / Leadership",
+    "category": "Decision Intelligence & Reports",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/reports/schedules/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/reports/schedules",
+    "browserUrl": "http://localhost:3111/fr/dashboard/reports/schedules",
+    "role": "School Director / Leadership",
+    "category": "Decision Intelligence & Reports",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/reports/[key]/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/reports/[key]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/reports/[key]",
+    "role": "School Director / Leadership",
+    "category": "Decision Intelligence & Reports",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/access-reset/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/access-reset",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/access-reset",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/accounting-defaults/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/accounting-defaults",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/accounting-defaults",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/attendance/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/attendance",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/attendance",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/audit-logs/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/audit-logs",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/audit-logs",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/branches/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/branches",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/branches",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/cndp/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/cndp",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/cndp",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/custom-fields/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/custom-fields",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/custom-fields",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/domain/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/domain",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/domain",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/drafts/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/drafts",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/drafts",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/entitlements/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/entitlements",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/entitlements",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/exports/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/exports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/exports",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/jobs/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/jobs",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/jobs",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/live-classrooms/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/live-classrooms",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/live-classrooms",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/migration/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/migration",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/migration",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/notifications/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/notifications",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/notifications",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/numbering/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/numbering",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/numbering",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/onboarding/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/onboarding",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/onboarding",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/payment-methods/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/payment-methods",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/payment-methods",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/permissions/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/permissions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/permissions",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/policies/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/policies",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/policies",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/providers/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/providers",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/providers",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/scanner-devices/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/scanner-devices",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/scanner-devices",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/scheduled-jobs/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/scheduled-jobs",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/scheduled-jobs",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/security/2fa/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/security/2fa",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/security/2fa",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/security/login-events/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/security/login-events",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/security/login-events",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/security/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/security",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/security",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/staff/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/staff",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/staff",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/subscription/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/subscription",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/subscription",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/translations/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/translations",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/translations",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/users/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/users",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/users",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/values/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/values",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/values",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/website/menu/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/website/menu",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/website/menu",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/website/news/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/website/news",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/website/news",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/website/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/website",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/website",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/website/pages/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/settings/website/pages",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/website/pages",
+    "role": "System / School Administrator",
+    "category": "School Settings & System Config",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/student/live-classes/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/student/live-classes",
+    "browserUrl": "http://localhost:3111/fr/dashboard/student/live-classes",
+    "role": "Student / Élève",
+    "category": "Student Portal & E-Learning",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/student/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/student",
+    "browserUrl": "http://localhost:3111/fr/dashboard/student",
+    "role": "Student / Élève",
+    "category": "Student Portal & E-Learning",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/add/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/students/add",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/add",
+    "role": "Student / Élève",
+    "category": "Student Portal & E-Learning",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/admissions/new/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/students/admissions/new",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/admissions/new",
+    "role": "Student / Élève",
+    "category": "Student Portal & E-Learning",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/admissions/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/students/admissions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/admissions",
+    "role": "Student / Élève",
+    "category": "Student Portal & E-Learning",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/alumni/events/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/students/alumni/events",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/alumni/events",
+    "role": "Alumni / Community Officer",
+    "category": "Alumni Community Network",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/alumni/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/students/alumni",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/alumni",
+    "role": "Alumni / Community Officer",
+    "category": "Alumni Community Network",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/alumni/requests/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/students/alumni/requests",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/alumni/requests",
+    "role": "Alumni / Community Officer",
+    "category": "Alumni Community Network",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/alumni-transition/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/students/alumni-transition",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/alumni-transition",
+    "role": "Alumni / Community Officer",
+    "category": "Alumni Community Network",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/import/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/students/import",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/import",
+    "role": "Student / Élève",
+    "category": "Student Portal & E-Learning",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/matricules/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/students/matricules",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/matricules",
+    "role": "Student / Élève",
+    "category": "Student Portal & E-Learning",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/students",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students",
+    "role": "Student / Élève",
+    "category": "Student Portal & E-Learning",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/parents/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/students/parents",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/parents",
+    "role": "Student / Élève",
+    "category": "Student Portal & E-Learning",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/parents/[id]/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/students/parents/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/parents/[id]",
+    "role": "Student / Élève",
+    "category": "Student Portal & E-Learning",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/photos/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/students/photos",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/photos",
+    "role": "Student / Élève",
+    "category": "Student Portal & E-Learning",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/promotions/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/students/promotions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/promotions",
+    "role": "Student / Élève",
+    "category": "Student Portal & E-Learning",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/transfers/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/students/transfers",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/transfers",
+    "role": "Student / Élève",
+    "category": "Student Portal & E-Learning",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/[id]/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/students/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/[id]",
+    "role": "Student / Élève",
+    "category": "Student Portal & E-Learning",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/domains/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/super-admin/domains",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/domains",
+    "role": "Super Admin (Multi-Tenant)",
+    "category": "Platform Management (Super Admin)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/super-admin",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin",
+    "role": "Super Admin (Multi-Tenant)",
+    "category": "Platform Management (Super Admin)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/reports/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/super-admin/reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/reports",
+    "role": "Super Admin (Multi-Tenant)",
+    "category": "Platform Management (Super Admin)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/schools/create/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/super-admin/schools/create",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/schools/create",
+    "role": "Super Admin (Multi-Tenant)",
+    "category": "Platform Management (Super Admin)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/schools/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/super-admin/schools",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/schools",
+    "role": "Super Admin (Multi-Tenant)",
+    "category": "Platform Management (Super Admin)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/schools/[id]/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/super-admin/schools/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/schools/[id]",
+    "role": "Super Admin (Multi-Tenant)",
+    "category": "Platform Management (Super Admin)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/settings/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/super-admin/settings",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/settings",
+    "role": "Super Admin (Multi-Tenant)",
+    "category": "Platform Management (Super Admin)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/sms/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/super-admin/sms",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/sms",
+    "role": "Super Admin (Multi-Tenant)",
+    "category": "Platform Management (Super Admin)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/subscriptions/list/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/super-admin/subscriptions/list",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/subscriptions/list",
+    "role": "Super Admin (Multi-Tenant)",
+    "category": "Platform Management (Super Admin)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/subscriptions/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/super-admin/subscriptions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/subscriptions",
+    "role": "Super Admin (Multi-Tenant)",
+    "category": "Platform Management (Super Admin)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/support/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/super-admin/support",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/support",
+    "role": "Super Admin (Multi-Tenant)",
+    "category": "Platform Management (Super Admin)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/waitlist/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/super-admin/waitlist",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/waitlist",
+    "role": "Super Admin (Multi-Tenant)",
+    "category": "Platform Management (Super Admin)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/teacher/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/teacher",
+    "browserUrl": "http://localhost:3111/fr/dashboard/teacher",
+    "role": "Teacher / Faculty",
+    "category": "Teacher Workspace & Classroom",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/teachers/bulk-import/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/teachers/bulk-import",
+    "browserUrl": "http://localhost:3111/fr/dashboard/teachers/bulk-import",
+    "role": "Teacher / Faculty",
+    "category": "Teacher Workspace & Classroom",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/teachers/manage/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/teachers/manage",
+    "browserUrl": "http://localhost:3111/fr/dashboard/teachers/manage",
+    "role": "Teacher / Faculty",
+    "category": "Teacher Workspace & Classroom",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/teachers/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/teachers",
+    "browserUrl": "http://localhost:3111/fr/dashboard/teachers",
+    "role": "Teacher / Faculty",
+    "category": "Teacher Workspace & Classroom",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/teachers/[id]/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/teachers/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/teachers/[id]",
+    "role": "Teacher / Faculty",
+    "category": "Teacher Workspace & Classroom",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/allocations/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/transport/allocations",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/allocations",
+    "role": "Transport / Fleet Coordinator",
+    "category": "School Transport & Fleet",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/boarding/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/transport/boarding",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/boarding",
+    "role": "Transport / Fleet Coordinator",
+    "category": "School Transport & Fleet",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/drivers/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/transport/drivers",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/drivers",
+    "role": "Transport / Fleet Coordinator",
+    "category": "School Transport & Fleet",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/guardian/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/transport/guardian",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/guardian",
+    "role": "Transport / Fleet Coordinator",
+    "category": "School Transport & Fleet",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/incidents/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/transport/incidents",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/incidents",
+    "role": "Transport / Fleet Coordinator",
+    "category": "School Transport & Fleet",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/transport",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport",
+    "role": "Transport / Fleet Coordinator",
+    "category": "School Transport & Fleet",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/policies/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/transport/policies",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/policies",
+    "role": "Transport / Fleet Coordinator",
+    "category": "School Transport & Fleet",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/reports/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/transport/reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/reports",
+    "role": "Transport / Fleet Coordinator",
+    "category": "School Transport & Fleet",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/routes/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/transport/routes",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/routes",
+    "role": "Transport / Fleet Coordinator",
+    "category": "School Transport & Fleet",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/stops/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/transport/stops",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/stops",
+    "role": "Transport / Fleet Coordinator",
+    "category": "School Transport & Fleet",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/student/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/transport/student",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/student",
+    "role": "Transport / Fleet Coordinator",
+    "category": "School Transport & Fleet",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/trips/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/transport/trips",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/trips",
+    "role": "Transport / Fleet Coordinator",
+    "category": "School Transport & Fleet",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/vehicles/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/transport/vehicles",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/vehicles",
+    "role": "Transport / Fleet Coordinator",
+    "category": "School Transport & Fleet",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/advances/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/workforce/advances",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/advances",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/awards/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/workforce/awards",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/awards",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/leave/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/workforce/leave",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/leave",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/workforce",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/adjustments/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/workforce/payroll/adjustments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/adjustments",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/assignments/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/workforce/payroll/assignments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/assignments",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/components/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/workforce/payroll/components",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/components",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/payments/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/workforce/payroll/payments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/payments",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/payslips/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/workforce/payroll/payslips",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/payslips",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/regulations/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/workforce/payroll/regulations",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/regulations",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/runs/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/workforce/payroll/runs",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/runs",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/runs/[id]/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/workforce/payroll/runs/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/runs/[id]",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/settings/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/workforce/payroll/settings",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/settings",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/structures/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/workforce/payroll/structures",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/structures",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/timeclock/page.tsx",
+    "route": "/[locale]/(dashboard)/dashboard/workforce/timeclock",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/timeclock",
+    "role": "HR & Payroll Director",
+    "category": "Human Resources & Workforce Payroll",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(marketing)/page.tsx",
+    "route": "/[locale]/(marketing)",
+    "browserUrl": "http://localhost:3111/fr",
+    "role": "Public / Prospective Client",
+    "category": "SchoolOS SaaS Landing & Home",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(school-site)/[tenantSlug]/about/page.tsx",
+    "route": "/[locale]/(school-site)/[tenantSlug]/about",
+    "browserUrl": "http://localhost:3111/fr/atlas-academy/about",
+    "role": "Public / Prospective Families",
+    "category": "Public School Website (CMS)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(school-site)/[tenantSlug]/contact/page.tsx",
+    "route": "/[locale]/(school-site)/[tenantSlug]/contact",
+    "browserUrl": "http://localhost:3111/fr/atlas-academy/contact",
+    "role": "Public / Prospective Families",
+    "category": "Public School Website (CMS)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(school-site)/[tenantSlug]/events/page.tsx",
+    "route": "/[locale]/(school-site)/[tenantSlug]/events",
+    "browserUrl": "http://localhost:3111/fr/atlas-academy/events",
+    "role": "Public / Prospective Families",
+    "category": "Public School Website (CMS)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(school-site)/[tenantSlug]/faq/page.tsx",
+    "route": "/[locale]/(school-site)/[tenantSlug]/faq",
+    "browserUrl": "http://localhost:3111/fr/atlas-academy/faq",
+    "role": "Public / Prospective Families",
+    "category": "Public School Website (CMS)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(school-site)/[tenantSlug]/gallery/page.tsx",
+    "route": "/[locale]/(school-site)/[tenantSlug]/gallery",
+    "browserUrl": "http://localhost:3111/fr/atlas-academy/gallery",
+    "role": "Public / Prospective Families",
+    "category": "Public School Website (CMS)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(school-site)/[tenantSlug]/news/page.tsx",
+    "route": "/[locale]/(school-site)/[tenantSlug]/news",
+    "browserUrl": "http://localhost:3111/fr/atlas-academy/news",
+    "role": "Public / Prospective Families",
+    "category": "Public School Website (CMS)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(school-site)/[tenantSlug]/news/[slug]/page.tsx",
+    "route": "/[locale]/(school-site)/[tenantSlug]/news/[slug]",
+    "browserUrl": "http://localhost:3111/fr/atlas-academy/news/[slug]",
+    "role": "Public / Prospective Families",
+    "category": "Public School Website (CMS)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(school-site)/[tenantSlug]/page.tsx",
+    "route": "/[locale]/(school-site)/[tenantSlug]",
+    "browserUrl": "http://localhost:3111/fr/atlas-academy",
+    "role": "Public / Prospective Families",
+    "category": "Public School Website (CMS)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/(school-site)/[tenantSlug]/services/page.tsx",
+    "route": "/[locale]/(school-site)/[tenantSlug]/services",
+    "browserUrl": "http://localhost:3111/fr/atlas-academy/services",
+    "role": "Public / Prospective Families",
+    "category": "Public School Website (CMS)",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/verify/card/[token]/page.tsx",
+    "route": "/[locale]/verify/card/[token]",
+    "browserUrl": "http://localhost:3111/fr/verify/card/[token]",
+    "role": "Public / Employer / Authority",
+    "category": "Public Document Verification",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/verify/certificate/[token]/page.tsx",
+    "route": "/[locale]/verify/certificate/[token]",
+    "browserUrl": "http://localhost:3111/fr/verify/certificate/[token]",
+    "role": "Public / Employer / Authority",
+    "category": "Public Document Verification",
+    "status": "DONE"
+  },
+  {
+    "filePath": "src/app/[locale]/verify-document/page.tsx",
+    "route": "/[locale]/verify-document",
+    "browserUrl": "http://localhost:3111/fr/verify-document",
+    "role": "Public / Employer / Authority",
+    "category": "Public Document Verification",
+    "status": "DONE"
+  }
+]

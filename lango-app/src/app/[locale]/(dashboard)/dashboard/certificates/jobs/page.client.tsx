@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -71,19 +73,11 @@ interface Recipient {
   role: string;
 }
 
-const JOB_STATUS_BADGE: Record<string, { label: string, variant: 'info' | 'signal' | 'success' | 'danger' }> = {
-  pending: { label: 'En attente', variant: 'info' },
-  processing: { label: 'En cours', variant: 'signal' },
-  completed: { label: 'Terminé', variant: 'success' },
-};
-
-const ITEM_STATUS_BADGE: Record<string, { label: string, variant: 'neutral' | 'success' | 'danger' }> = {
-  pending: { label: 'En attente', variant: 'neutral' },
-  success: { label: 'Réussi', variant: 'success' },
-  failed: { label: 'Échec', variant: 'danger' },
-};
-
 export default function CertificatesJobsPage() {
+  const params = useParams<{ locale?: string }>();
+  const locale = params?.locale ?? 'fr';
+  const t = useTranslations('Certificates');
+
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -103,6 +97,32 @@ export default function CertificatesJobsPage() {
   const [detailLoading, setDetailLoading] = useState(false);
 
   const [processingId, setProcessingId] = useState<string | null>(null);
+
+  const getJobStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return { label: t('statusPending'), variant: 'info' as const };
+      case 'processing':
+        return { label: t('statusProcessing'), variant: 'signal' as const };
+      case 'completed':
+        return { label: t('statusCompleted'), variant: 'success' as const };
+      default:
+        return { label: status, variant: 'info' as const };
+    }
+  };
+
+  const getItemStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return { label: t('statusPending'), variant: 'neutral' as const };
+      case 'success':
+        return { label: t('statusSuccess'), variant: 'success' as const };
+      case 'failed':
+        return { label: t('statusFailed'), variant: 'danger' as const };
+      default:
+        return { label: status, variant: 'neutral' as const };
+    }
+  };
 
   const load = () => fetch('/api/certificates/jobs')
     .then(r => r.json())
@@ -178,7 +198,7 @@ export default function CertificatesJobsPage() {
         setIsCreateOpen(false);
         await load();
       } else {
-        alert(data.message || 'Erreur lors de la création du lot');
+        alert(data.message || t('errorCreateJob'));
       }
     } finally {
       setCreating(false);
@@ -190,7 +210,7 @@ export default function CertificatesJobsPage() {
     try {
       const res = await fetch(`/api/certificates/jobs/${jobId}/process`, { method: 'POST' });
       const data = await res.json();
-      if (!data.success) alert(data.message || 'Erreur lors du traitement');
+      if (!data.success) alert(data.message || t('errorProcessJob'));
       await load();
       if (detailJobId === jobId) openDetail(jobId);
     } finally {
@@ -223,12 +243,12 @@ export default function CertificatesJobsPage() {
             <Layers className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Émissions en lot</h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Générez des certificats pour plusieurs bénéficiaires en une seule opération.</p>
+            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('batchIssuanceTitle')}</h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">{t('batchIssuanceSubtitle')}</p>
           </div>
         </div>
         <Button onClick={openCreate} className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl shadow-2xs gap-1.5 px-4 cursor-pointer">
-          <Plus className="w-4 h-4" /><span>Nouveau Lot</span>
+          <Plus className="w-4 h-4" /><span>{t('btnNewJob')}</span>
         </Button>
       </div>
 
@@ -236,28 +256,28 @@ export default function CertificatesJobsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Lots</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('statTotalBatches')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{jobs.length}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2487B8] flex items-center justify-center shrink-0"><Layers className="w-5 h-5" /></div>
         </Card>
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Bénéficiaires</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('statRecipients')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{totalRecipients}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0"><Users className="w-5 h-5" /></div>
         </Card>
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Terminés</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('statCompleted')}</span>
             <h3 className="text-2xl font-extrabold text-[#17A673] mt-1">{completedCount}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0"><CheckCircle2 className="w-5 h-5" /></div>
         </Card>
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">En cours</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('statInProgress')}</span>
             <h3 className="text-2xl font-extrabold text-[#0EA5C4] mt-1">{inProgressCount}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-cyan-50 text-[#0EA5C4] flex items-center justify-center shrink-0"><Zap className="w-5 h-5" /></div>
@@ -267,67 +287,70 @@ export default function CertificatesJobsPage() {
       {/* Jobs table */}
       <Card className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-4">
         <div className="flex justify-between items-center">
-          <p className="text-xs text-slate-400 font-medium">{jobs.length} lot(s) d'émission</p>
+          <p className="text-xs text-slate-400 font-medium">{t('batchCount', { count: jobs.length })}</p>
           <Button variant="outline" size="sm" className="h-8 rounded-lg text-xs font-medium cursor-pointer" onClick={() => load()}>
-            <RefreshCw className="w-3.5 h-3.5 mr-1.5" />Actualiser
+            <RefreshCw className="w-3.5 h-3.5 me-1.5" />{t('btnRefresh')}
           </Button>
         </div>
 
         <div className="rounded-xl border border-slate-100 overflow-hidden">
           <table className="w-full text-xs">
             <thead>
-              <tr className="bg-slate-50/50 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                <th className="p-3 pl-4">Définition</th>
-                <th className="p-3">Statut</th>
-                <th className="p-3">Total</th>
-                <th className="p-3">Réussis</th>
-                <th className="p-3">Échecs</th>
-                <th className="p-3">Créé le</th>
-                <th className="p-3 text-right pr-4">Actions</th>
+              <tr className="bg-slate-50/50 text-start text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                <th className="p-3 ps-4 text-start">{t('thDefinition')}</th>
+                <th className="p-3 text-start">{t('thStatus')}</th>
+                <th className="p-3 text-start">{t('thTotal')}</th>
+                <th className="p-3 text-start">{t('thSuccessCount')}</th>
+                <th className="p-3 text-start">{t('thFailedCount')}</th>
+                <th className="p-3 text-start">{t('thCreatedAt')}</th>
+                <th className="p-3 text-end pe-4">{t('thActions')}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} className="p-8 text-center text-slate-400">Chargement...</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-slate-400">{t('tableLoading')}</td></tr>
               ) : jobs.length === 0 ? (
-                <tr><td colSpan={7} className="p-8 text-center text-slate-400">Aucun lot pour le moment.</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-slate-400">{t('noJobsForNow')}</td></tr>
               ) : (
-                jobs.map(job => (
-                  <tr key={job.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                    <td className="p-3 pl-4 font-semibold text-slate-700">{job.definitionTitle}</td>
-                    <td className="p-3">
-                      <Badge variant={JOB_STATUS_BADGE[job.status]?.variant || 'info'}>
-                        {JOB_STATUS_BADGE[job.status]?.label || job.status}
-                      </Badge>
-                    </td>
-                    <td className="p-3 text-slate-600">{job.totalCount}</td>
-                    <td className="p-3 text-emerald-600 font-semibold">{job.successCount}</td>
-                    <td className="p-3 text-rose-600 font-semibold">{job.errorCount}</td>
-                    <td className="p-3 text-slate-500">{new Date(job.createdAt).toLocaleDateString('fr-FR')}</td>
-                    <td className="p-3 pr-4 text-right space-x-1.5">
-                      {job.status !== 'completed' && (
+                jobs.map(job => {
+                  const sBadge = getJobStatusBadge(job.status);
+                  return (
+                    <tr key={job.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                      <td className="p-3 ps-4 font-semibold text-slate-700">{job.definitionTitle}</td>
+                      <td className="p-3">
+                        <Badge variant={sBadge.variant}>
+                          {sBadge.label}
+                        </Badge>
+                      </td>
+                      <td className="p-3 text-slate-600">{job.totalCount}</td>
+                      <td className="p-3 text-emerald-600 font-semibold">{job.successCount}</td>
+                      <td className="p-3 text-rose-600 font-semibold">{job.errorCount}</td>
+                      <td className="p-3 text-slate-500">{new Date(job.createdAt).toLocaleDateString(locale === 'ar' ? 'ar-EG' : locale === 'fr' ? 'fr-FR' : 'en-US')}</td>
+                      <td className="p-3 pe-4 text-end space-x-1.5 rtl:space-x-reverse">
+                        {job.status !== 'completed' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 rounded-lg text-xs font-medium cursor-pointer"
+                            onClick={() => handleProcess(job.id)}
+                            disabled={processingId === job.id}
+                          >
+                            {processingId === job.id ? <Loader2 className="w-3.5 h-3.5 animate-spin me-1.5" /> : <Zap className="w-3.5 h-3.5 me-1.5" />}
+                            {t('btnProcess')}
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
                           className="h-8 rounded-lg text-xs font-medium cursor-pointer"
-                          onClick={() => handleProcess(job.id)}
-                          disabled={processingId === job.id}
+                          onClick={() => openDetail(job.id)}
                         >
-                          {processingId === job.id ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Zap className="w-3.5 h-3.5 mr-1.5" />}
-                          Traiter
+                          <Eye className="w-3.5 h-3.5 me-1.5" />{t('btnDetail')}
                         </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 rounded-lg text-xs font-medium cursor-pointer"
-                        onClick={() => openDetail(job.id)}
-                      >
-                        <Eye className="w-3.5 h-3.5 mr-1.5" />Détail
-                      </Button>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -337,24 +360,24 @@ export default function CertificatesJobsPage() {
       {/* Create job dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="sm:max-w-[560px]">
-          <DialogHeader>
-            <DialogTitle>Nouveau lot d'émission</DialogTitle>
-            <DialogDescription>Sélectionnez une définition publiée et les bénéficiaires.</DialogDescription>
+          <DialogHeader className="text-start">
+            <DialogTitle>{t('dialogNewJobTitle')}</DialogTitle>
+            <DialogDescription>{t('dialogNewJobDesc')}</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-1">
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pe-1 text-start">
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-700">Définition</Label>
+              <Label className="text-xs font-bold text-slate-700">{t('labelDefinition')}</Label>
               <Select value={selectedDefinitionId} onValueChange={selectDefinition}>
                 <SelectTrigger className="h-9 text-xs">
-                  <SelectValue placeholder="Choisir une définition" />
+                  <SelectValue placeholder={t('placeholderChooseDefinition')} />
                 </SelectTrigger>
                 <SelectContent>
                   {definitions.length === 0 ? (
-                    <p className="px-3 py-2 text-xs text-slate-400">Aucune définition.</p>
+                    <p className="px-3 py-2 text-xs text-slate-400">{t('noDefinitions')}</p>
                   ) : (
                     definitions.map(d => (
                       <SelectItem key={d.id} value={d.id} className="text-xs">
-                        {d.title} — {d.allowedTargetType === 'student' ? 'Élèves' : 'Employés'}
+                        {d.title} — {d.allowedTargetType === 'student' ? t('targetStudents') : t('targetEmployees')}
                       </SelectItem>
                     ))
                   )}
@@ -362,7 +385,7 @@ export default function CertificatesJobsPage() {
               </Select>
               {selectedDefinitionId && !publishedVersionId && (
                 <p className="text-[11px] font-semibold text-amber-600">
-                  Cette définition n'a pas de version publiée (active). Publiez-la depuis « Définitions » avant de l'émettre.
+                  {t('noPublishedVersionWarning')}
                 </p>
               )}
             </div>
@@ -370,20 +393,20 @@ export default function CertificatesJobsPage() {
             {selectedType === 'student' ? (
               <div className="space-y-2">
                 <Label className="text-xs font-bold text-slate-700">
-                  Élèves ({selectedRecipientIds.length} sélectionné{selectedRecipientIds.length > 1 ? 's' : ''})
+                  {t('selectedStudentsCount', { count: selectedRecipientIds.length })}
                 </Label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <Input
                     value={recipientSearch}
                     onChange={e => setRecipientSearch(e.target.value)}
-                    placeholder="Rechercher par nom ou matricule..."
-                    className="pl-9 h-9 text-xs rounded-xl"
+                    placeholder={t('searchStudentsPlaceholder')}
+                    className="ps-9 h-9 text-xs rounded-xl"
                   />
                 </div>
                 <div className="border border-slate-100 rounded-xl max-h-52 overflow-y-auto">
                   {filteredRecipients.length === 0 ? (
-                    <p className="p-4 text-xs text-slate-400 text-center">Aucun élève trouvé.</p>
+                    <p className="p-4 text-xs text-slate-400 text-center">{t('noStudentsFound')}</p>
                   ) : (
                     filteredRecipients.map(r => (
                       <label
@@ -397,7 +420,7 @@ export default function CertificatesJobsPage() {
                           className="w-4 h-4 accent-[#2487B8]"
                         />
                         <span className="text-xs font-medium text-slate-700">{r.name}</span>
-                        {r.matricule && <span className="text-[10px] text-slate-400 ml-auto">{r.matricule}</span>}
+                        {r.matricule && <span className="text-[10px] text-slate-400 ms-auto">{r.matricule}</span>}
                       </label>
                     ))
                   )}
@@ -405,28 +428,28 @@ export default function CertificatesJobsPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                <Label className="text-xs font-bold text-slate-700">Identifiants employés</Label>
+                <Label className="text-xs font-bold text-slate-700">{t('labelStaffIds')}</Label>
                 <textarea
                   value={customRecipientIds}
                   onChange={e => setCustomRecipientIds(e.target.value)}
-                  placeholder="Un identifiant (USR-xxx) par ligne"
+                  placeholder={t('placeholderStaffIds')}
                   rows={4}
                   className="w-full h-24 px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 outline-none focus:border-[#2487B8]"
                 />
                 {finalRecipientIds.length > 0 && (
-                  <p className="text-[11px] font-semibold text-slate-500">{finalRecipientIds.length} identifiant(s) saisi(s)</p>
+                  <p className="text-[11px] font-semibold text-slate-500">{t('staffIdsCount', { count: finalRecipientIds.length })}</p>
                 )}
               </div>
             )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="text-xs h-9 cursor-pointer">Annuler</Button>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="text-xs h-9 cursor-pointer">{t('btnCancel')}</Button>
             <Button
               className="bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs h-9 font-bold shadow-2xs gap-1.5 px-4 cursor-pointer"
               onClick={handleCreate}
               disabled={creating || !publishedVersionId || finalRecipientIds.length === 0}
             >
-              {creating ? 'Création...' : 'Créer le lot'}
+              {creating ? t('btnCreating') : t('btnCreateJob')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -435,45 +458,48 @@ export default function CertificatesJobsPage() {
       {/* Job detail dialog */}
       <Dialog open={detailJobId !== null} onOpenChange={(open) => { if (!open) setDetailJobId(null); }}>
         <DialogContent className="sm:max-w-[560px]">
-          <DialogHeader>
-            <DialogTitle>Détail du lot</DialogTitle>
+          <DialogHeader className="text-start">
+            <DialogTitle>{t('dialogJobDetailTitle')}</DialogTitle>
           </DialogHeader>
-          <div className="py-4 max-h-[60vh] overflow-y-auto pr-1">
+          <div className="py-4 max-h-[60vh] overflow-y-auto pe-1 text-start">
             {detailLoading ? (
-              <p className="text-xs text-slate-400 text-center py-8">Chargement...</p>
+              <p className="text-xs text-slate-400 text-center py-8">{t('tableLoading')}</p>
             ) : detailItems.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-8">Aucun élément.</p>
+              <p className="text-xs text-slate-400 text-center py-8">{t('noItems')}</p>
             ) : (
               <div className="rounded-xl border border-slate-100 overflow-hidden">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="bg-slate-50/50 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                      <th className="p-2.5 pl-3">Bénéficiaire</th>
-                      <th className="p-2.5">Statut</th>
-                      <th className="p-2.5">N° série</th>
-                      <th className="p-2.5">Erreur</th>
+                    <tr className="bg-slate-50/50 text-start text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                      <th className="p-2.5 ps-3 text-start">{t('thRecipient')}</th>
+                      <th className="p-2.5 text-start">{t('thStatus')}</th>
+                      <th className="p-2.5 text-start">{t('thSerial')}</th>
+                      <th className="p-2.5 text-start">{t('thError')}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {detailItems.map(item => (
-                      <tr key={item.id} className="border-b border-slate-50 last:border-0">
-                        <td className="p-2.5 pl-3 text-slate-600">{item.recipientName ?? item.recipientId}</td>
-                        <td className="p-2.5">
-                          <Badge variant={ITEM_STATUS_BADGE[item.status]?.variant || 'neutral'}>
-                            {ITEM_STATUS_BADGE[item.status]?.label || item.status}
-                          </Badge>
-                        </td>
-                        <td className="p-2.5 font-mono text-[11px] text-slate-500">{item.serialNumber ?? '-'}</td>
-                        <td className="p-2.5 text-rose-600 text-[11px] max-w-[160px] truncate">{item.errorReason || '-'}</td>
-                      </tr>
-                    ))}
+                    {detailItems.map(item => {
+                      const sBadge = getItemStatusBadge(item.status);
+                      return (
+                        <tr key={item.id} className="border-b border-slate-50 last:border-0">
+                          <td className="p-2.5 ps-3 text-slate-600">{item.recipientName ?? item.recipientId}</td>
+                          <td className="p-2.5">
+                            <Badge variant={sBadge.variant}>
+                              {sBadge.label}
+                            </Badge>
+                          </td>
+                          <td className="p-2.5 font-mono text-[11px] text-slate-500">{item.serialNumber ?? '-'}</td>
+                          <td className="p-2.5 text-rose-600 text-[11px] max-w-[160px] truncate">{item.errorReason || '-'}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDetailJobId(null)} className="text-xs h-9 cursor-pointer">Fermer</Button>
+            <Button variant="outline" onClick={() => setDetailJobId(null)} className="text-xs h-9 cursor-pointer">{t('btnClose')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -3,6 +3,7 @@
 import { ArrowUpRight, Building2, Globe, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { AnnualFeeSummaryChart, type MonthlyFeePoint } from '@/features/dashboard/ui/annual-fee-summary-chart';
 import { AttendanceInspectionChart, type AttendanceInspectionPoint } from '@/features/dashboard/ui/attendance-inspection-chart';
@@ -37,21 +38,25 @@ type ExpiringLicenseAlert = { id: string; name: string; slug: string; licenseSta
 type AlertsData = { subscriptionIssues: SubscriptionAlert[]; expiringLicenses: ExpiringLicenseAlert[] };
 
 export function SuperAdminDashboardView({ locale }: { locale: string }) {
+  const t = useTranslations('SuperAdmin');
+  const tCommon = useTranslations('Common');
   const [summary, setSummary] = useState<SuperAdminSummaryData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [alerts, setAlerts] = useState<AlertsData | null>(null);
+
+  const intlLocale = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR';
 
   useEffect(() => {
     fetch('/api/super-admin/summary')
       .then(r => r.json())
       .then((json) => {
         if (json.success) setSummary(json.data);
-        else setError(json.message || 'Erreur lors du chargement de la synthèse.');
+        else setError(json.message || tCommon('error'));
       })
       .catch(err => {
         console.error('Failed loading super-admin summary', err);
-        setError('Connexion au serveur impossible.');
+        setError(tCommon('error'));
       });
 
     fetch('/api/addons/events/calendar')
@@ -67,7 +72,7 @@ export function SuperAdminDashboardView({ locale }: { locale: string }) {
         if (json.success) setAlerts(json.data);
       })
       .catch(err => console.error('Failed loading super-admin alerts', err));
-  }, []);
+  }, [tCommon]);
 
   const schools = summary?.schools ?? [];
   const subscriptionIssues = alerts?.subscriptionIssues ?? [];
@@ -82,14 +87,14 @@ export function SuperAdminDashboardView({ locale }: { locale: string }) {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight">
-              Tableau de bord Plateforme (All Branch Dashboard)
+              {t('platformDashboardTitle')}
             </h1>
             <span className="rounded-full bg-blue-100 text-blue-700 font-extrabold text-xs px-3 py-1 border border-blue-200 flex items-center gap-1.5">
-              <Globe className="w-3.5 h-3.5" /> Super Admin Global
+              <Globe className="w-3.5 h-3.5" /> {t('superAdminGlobal')}
             </span>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            Vue d&apos;ensemble consolidée de tous les établissements clients sur SchoolOS.
+            {t('platformDashboardSubtitle')}
           </p>
         </div>
       </div>
@@ -105,7 +110,7 @@ export function SuperAdminDashboardView({ locale }: { locale: string }) {
         <Card className="p-5 bg-white rounded-2xl border border-amber-200/80 shadow-2xs space-y-4">
           <div className="flex items-center gap-2">
             <ShieldAlert className="w-5 h-5 text-amber-600" />
-            <h2 className="text-sm font-extrabold text-[#0F172A]">Alertes & Supervision</h2>
+            <h2 className="text-sm font-extrabold text-[#0F172A]">{t('alertsSupervision')}</h2>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
               {subscriptionIssues.length + expiringLicenses.length}
             </span>
@@ -117,21 +122,21 @@ export function SuperAdminDashboardView({ locale }: { locale: string }) {
               className="p-4 rounded-xl border border-amber-200/70 bg-amber-50/50 hover:bg-amber-50 transition-colors"
             >
               <p className="text-2xl font-extrabold text-amber-700">{suspendedCount}</p>
-              <p className="text-xs font-bold text-slate-600 mt-0.5">Abonnements suspendus</p>
+              <p className="text-xs font-bold text-slate-600 mt-0.5">{t('suspendedSubscriptions')}</p>
             </Link>
             <Link
               href={`/${locale}/dashboard/super-admin/schools?status=cancelled`}
               className="p-4 rounded-xl border border-rose-200/70 bg-rose-50/50 hover:bg-rose-50 transition-colors"
             >
               <p className="text-2xl font-extrabold text-rose-600">{cancelledCount}</p>
-              <p className="text-xs font-bold text-slate-600 mt-0.5">Abonnements annulés</p>
+              <p className="text-xs font-bold text-slate-600 mt-0.5">{t('cancelledSubscriptions')}</p>
             </Link>
             <Link
               href={`/${locale}/dashboard/super-admin/subscriptions/list`}
               className="p-4 rounded-xl border border-blue-200/70 bg-blue-50/50 hover:bg-blue-50 transition-colors"
             >
               <p className="text-2xl font-extrabold text-[#0066FF]">{expiringLicenses.length}</p>
-              <p className="text-xs font-bold text-slate-600 mt-0.5">Licences expirant / expirées</p>
+              <p className="text-xs font-bold text-slate-600 mt-0.5">{t('expiringLicenses')}</p>
             </Link>
           </div>
 
@@ -144,7 +149,7 @@ export function SuperAdminDashboardView({ locale }: { locale: string }) {
               >
                 <span className="text-xs font-bold text-[#0F172A]">{s.name}</span>
                 <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${s.subscriptionStatus === 'suspended' ? 'bg-amber-100 text-amber-700' : s.subscriptionStatus === 'cancelled' ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-600'}`}>
-                  {s.subscriptionStatus === 'suspended' ? 'Suspendu' : s.subscriptionStatus === 'cancelled' ? 'Annulé' : 'Désactivée'}
+                  {s.subscriptionStatus === 'suspended' ? t('suspended') : s.subscriptionStatus === 'cancelled' ? t('cancelled') : t('deactivated')}
                 </span>
               </Link>
             ))}
@@ -156,13 +161,13 @@ export function SuperAdminDashboardView({ locale }: { locale: string }) {
               >
                 <span className="text-xs font-bold text-[#0F172A]">{l.name}</span>
                 <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${l.licenseStatus === 'expired' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'}`}>
-                  {l.licenseStatus === 'expired' ? 'Licence expirée' : `Expire le ${l.expiresAt ? new Date(l.expiresAt).toLocaleDateString('fr-FR') : '—'}`}
+                  {l.licenseStatus === 'expired' ? t('licenseExpired') : t('expiresOn', { date: l.expiresAt ? new Date(l.expiresAt).toLocaleDateString(intlLocale) : '—' })}
                 </span>
               </Link>
             ))}
             {subscriptionIssues.length + expiringLicenses.length > 8 && (
               <Link href={`/${locale}/dashboard/super-admin/subscriptions/list`} className="block text-center text-xs font-bold text-[#0066FF] hover:underline pt-1">
-                Voir toutes les alertes ({subscriptionIssues.length + expiringLicenses.length}) <ArrowUpRight className="w-3 h-3 inline" />
+                {t('viewAllAlerts', { count: subscriptionIssues.length + expiringLicenses.length })} <ArrowUpRight className="w-3 h-3 inline rtl:rotate-180" />
               </Link>
             )}
           </div>
@@ -188,7 +193,7 @@ export function SuperAdminDashboardView({ locale }: { locale: string }) {
         <div className="lg:col-span-4 min-h-[360px]">
           <IncomeExpenseDonut
             data={summary?.globalIncomeVsExpense ?? { collected: 0, remaining: 0, invoiced: 0 }}
-            monthName="Toutes Écoles"
+            monthName={t('allSchools')}
           />
         </div>
         <div className="lg:col-span-8 min-h-[360px]">
@@ -201,7 +206,7 @@ export function SuperAdminDashboardView({ locale }: { locale: string }) {
         <div className="lg:col-span-4 min-h-[350px]">
           <StudentQuantityDonut
             data={summary?.studentQuantityByBranch ?? []}
-            title="Student Quantity (Par Établissement)"
+            title={t('studentQuantityByBranch')}
           />
         </div>
         <div className="lg:col-span-8 min-h-[350px]">
@@ -224,13 +229,13 @@ export function SuperAdminDashboardView({ locale }: { locale: string }) {
       {/* Client Schools Overview Table */}
       <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h3 className="text-sm font-extrabold text-[#0F172A]">Écoles Clients Récentes</h3>
+          <h3 className="text-sm font-extrabold text-[#0F172A]">{t('recentClientSchools')}</h3>
           <Link href={`/${locale}/dashboard/super-admin/schools`} className="text-xs font-bold text-[#0066FF] flex items-center gap-1 hover:underline">
-            Gérer toutes les écoles ({schools.length}) <ArrowUpRight className="w-3.5 h-3.5" />
+            {t('manageAllSchools', { count: schools.length })} <ArrowUpRight className="w-3.5 h-3.5 rtl:rotate-180" />
           </Link>
         </div>
         <div className="space-y-2">
-          {schools.length === 0 && <p className="text-xs text-slate-400">Aucune école pour le moment.</p>}
+          {schools.length === 0 && <p className="text-xs text-slate-400">{t('noSchoolsYet')}</p>}
           {schools.slice(0, 6).map(s => (
             <Link key={s.id} href={`/${locale}/dashboard/super-admin/schools/${s.id}`} className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100 hover:bg-slate-100 transition-colors">
               <div className="flex items-center gap-3">
@@ -239,13 +244,13 @@ export function SuperAdminDashboardView({ locale }: { locale: string }) {
                 </div>
                 <div>
                   <p className="text-xs font-bold text-[#0F172A]">{s.name}</p>
-                  <p className="text-[10px] font-semibold text-slate-400">Formule: {s.planTier.toUpperCase()}</p>
+                  <p className="text-[10px] font-semibold text-slate-400">{t('planTierLabel', { tier: s.planTier.toUpperCase() })}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-xs font-semibold text-slate-500">{s.userCount} utilisateurs</span>
+                <span className="text-xs font-semibold text-slate-500">{t('usersCount', { count: s.userCount })}</span>
                 <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${s.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                  {s.isActive ? 'Actif' : 'Inactif'}
+                  {s.isActive ? t('active') : t('inactive')}
                 </span>
               </div>
             </Link>

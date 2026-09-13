@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { LocaleSwitcher } from './locale-switcher';
 import { HeaderCampusSwitcher } from './header-campus-switcher';
 import {
@@ -33,6 +34,10 @@ type SearchResponse = { students: SearchResult[]; teachers: SearchResult[]; invo
 
 export function Header({ locale }: { locale: string }) {
   const router = useRouter();
+  const tCommon = useTranslations('Common');
+  const tAuth = useTranslations('Auth');
+  const tNav = useTranslations('Navigation');
+  const tRoles = useTranslations('Roles');
   const { available: drawerAvailable, open: drawerOpen, setOpen: setDrawerOpen } = useSidebarDrawer();
   const { data: session } = authClient.useSession();
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -147,7 +152,7 @@ export function Header({ locale }: { locale: string }) {
             onChange={(e) => { setSearchTerm(e.target.value); setSearchOpen(true); }}
             onFocus={() => setSearchOpen(true)}
             onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
-            placeholder="Rechercher élèves, enseignants, factures..."
+            placeholder={tCommon('search')}
             className="w-full bg-[#EDF3F8]/50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs text-[#16212B] placeholder-slate-400 focus:outline-none focus:border-[#2487B8] focus:bg-white transition-all shadow-2xs"
           />
         </div>
@@ -155,25 +160,25 @@ export function Header({ locale }: { locale: string }) {
         {searchOpen && searchResults && (
           <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-80 overflow-y-auto">
             {searchResults.students.length === 0 && searchResults.teachers.length === 0 && searchResults.invoices.length === 0 ? (
-              <div className="p-3 text-center text-xs text-slate-500 font-medium">Aucun résultat.</div>
+              <div className="p-3 text-center text-xs text-slate-500 font-medium">{tCommon('empty')}</div>
             ) : (
               <>
                 {searchResults.students.map(s => (
                   <Link key={`s-${s.id}`} href={`/${locale}/dashboard/students?id=${s.id}`} className="block px-3 py-2 hover:bg-slate-50 text-xs">
                     <span className="font-bold text-[#16212B]">{s.name}</span>
-                    <span className="text-slate-400 ml-2">Élève</span>
+                    <span className="text-slate-400 ml-2">{(tRoles as any).has('student') ? tRoles('student') : 'Élève'}</span>
                   </Link>
                 ))}
                 {searchResults.teachers.map(t => (
                   <Link key={`t-${t.id}`} href={`/${locale}/dashboard/teachers/manage?id=${t.id}`} className="block px-3 py-2 hover:bg-slate-50 text-xs">
                     <span className="font-bold text-[#16212B]">{t.name}</span>
-                    <span className="text-slate-400 ml-2">Enseignant</span>
+                    <span className="text-slate-400 ml-2">{(tRoles as any).has('teacher') ? tRoles('teacher') : 'Enseignant'}</span>
                   </Link>
                 ))}
                 {searchResults.invoices.map(i => (
                   <Link key={`i-${i.id}`} href={`/${locale}/dashboard/finance/invoices?id=${i.id}`} className="block px-3 py-2 hover:bg-slate-50 text-xs">
                     <span className="font-bold text-[#16212B]">{i.invoiceNumber}</span>
-                    <span className="text-slate-400 ml-2">Facture</span>
+                    <span className="text-slate-400 ml-2">{(tNav as any).has('invoices') ? tNav('invoices') : 'Facture'}</span>
                   </Link>
                 ))}
               </>
@@ -192,7 +197,7 @@ export function Header({ locale }: { locale: string }) {
         {/* CNDP Compliance Status Badge per BRAND.md */}
         <div className="hidden md:flex items-center gap-1.5 bg-[#E4EDFD] text-[#2487B8] border border-[#C3DAFB] px-3 py-1 rounded-full text-[11px] font-bold">
           <ShieldCheck className="w-3.5 h-3.5 text-[#2487B8]" />
-          <span>Conforme CNDP F211</span>
+          <span>{(tNav as any).has('cndp') ? tNav('cndp') : 'Conforme CNDP F211'}</span>
         </div>
 
         {/* Notifications Dropdown Menu */}
@@ -207,17 +212,17 @@ export function Header({ locale }: { locale: string }) {
             <div className="p-3 bg-[#EDF3F8]/80 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Bell className="w-4 h-4 text-[#2487B8]" />
-                <span className="text-xs font-bold text-[#16212B]">Notifications</span>
+                <span className="text-xs font-bold text-[#16212B]">{(tNav as any).has('communication') ? tNav('communication') : 'Notifications'}</span>
               </div>
               <span className="text-[10px] font-bold text-white bg-[#E5544B] px-1.5 py-0.5 rounded-full">
-                {unreadCount} {unreadCount > 1 ? 'Annonces' : 'Annonce'}
+                {unreadCount}
               </span>
             </div>
 
             <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
               {unreadList.length === 0 ? (
                 <div className="p-4 text-center text-xs text-slate-500 font-medium">
-                  Aucune nouvelle annonce non lue.
+                  {tCommon('empty')}
                 </div>
               ) : (
                 unreadList.map((item) => (
@@ -230,7 +235,7 @@ export function Header({ locale }: { locale: string }) {
                         <span className="text-xs font-bold text-[#16212B] truncate max-w-[200px]">
                           {item.title}
                         </span>
-                        <span className="text-[10px] text-slate-400 font-medium">Annonce</span>
+                        <span className="text-[10px] text-slate-400 font-medium">{(tNav as any).has('communication') ? tNav('communication') : 'Annonce'}</span>
                       </div>
                     </Link>
                   </DropdownMenuItem>
@@ -264,7 +269,7 @@ export function Header({ locale }: { locale: string }) {
               <p className="text-[10px] text-slate-500 font-medium">{userEmail}</p>
               <div className="mt-1.5 inline-flex items-center gap-1 bg-[#DCEBF4] text-[#1B6C93] px-2 py-0.5 rounded-md text-[10px] font-bold capitalize">
                 <Lock className="w-3 h-3" />
-                <span>{displayRole.replace('_', ' ')}</span>
+                <span>{(tRoles as any).has(displayRole) ? tRoles(displayRole) : displayRole.replace('_', ' ')}</span>
               </div>
             </div>
 
@@ -273,13 +278,13 @@ export function Header({ locale }: { locale: string }) {
             <DropdownMenuItem asChild>
               <Link href={`/${locale}/dashboard/settings`} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold hover:bg-slate-50 cursor-pointer">
                 <User className="w-4 h-4 text-[#2487B8]" />
-                <span>Profil & Paramètres</span>
+                <span>{(tNav as any).has('settings') ? tNav('settings') : 'Profil & Paramètres'}</span>
               </Link>
             </DropdownMenuItem>
 
             <DropdownMenuItem onClick={handleSignOut} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-[#E5544B] focus:text-[#E5544B] focus:bg-[#FCE4E2]/60 cursor-pointer">
               <LogOut className="w-4 h-4" />
-              <span>Déconnexion</span>
+              <span>{tAuth('signOut')}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

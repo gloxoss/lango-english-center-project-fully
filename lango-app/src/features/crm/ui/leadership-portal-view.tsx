@@ -5,6 +5,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { usePathname } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -54,17 +56,6 @@ type AnalyticsData = {
   period: { from: string; to: string };
 };
 
-const nf = new Intl.NumberFormat('fr-FR');
-const money = (n: number) => nf.format(Math.round(n));
-const pctLabel = (v: number | null, digits = 1) => (v == null ? '—' : `${v.toFixed(digits)}%`);
-const monthShort = (m: string) => new Date(`${m}-01`).toLocaleDateString('fr-FR', { month: 'short' });
-
-function compactMAD(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} M`;
-  if (n >= 1_000) return `${(n / 1_000).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} k`;
-  return money(n);
-}
-
 const riskColor: Record<RiskItem['level'], string> = {
   Critique: 'bg-rose-100 text-rose-700',
   Importante: 'bg-amber-100 text-amber-700',
@@ -105,41 +96,67 @@ function PortalSkeleton() {
 }
 
 export function LeadershipPortalView() {
+  const t = useTranslations('Leadership');
+  const tCommon = useTranslations('Common');
+  const pathname = usePathname();
+  const localeMatch = pathname.match(/^\/([a-z]{2})(\/|$)/);
+  const locale = localeMatch ? localeMatch[1] : 'fr';
+
+  const intlLocale = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR';
+  const nf = new Intl.NumberFormat(intlLocale);
+  const money = (n: number) => nf.format(Math.round(n));
+  const pctLabel = (v: number | null, digits = 1) => (v == null ? '—' : `${v.toFixed(digits)}%`);
+  const monthShort = (m: string) => {
+    try {
+      return new Date(`${m}-01`).toLocaleDateString(intlLocale, { month: 'short' });
+    } catch {
+      return m;
+    }
+  };
+
+  const compactMAD = (n: number): string => {
+    if (n >= 1_000_000) return `${(n / 1_000_000).toLocaleString(intlLocale, { maximumFractionDigits: 2 })} M`;
+    if (n >= 1_000) return `${(n / 1_000).toLocaleString(intlLocale, { maximumFractionDigits: 1 })} k`;
+    return money(n);
+  };
+
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [range, setRange] = useState('6mo');
 
-  const load = useCallback(async (selectedRange: string) => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/leadership/me/home?range=${selectedRange}`, { cache: 'no-store' });
+      const res = await fetch(`/api/analytics?range=${range}`);
       const json = await res.json();
-      if (res.ok && json.data) setData(json.data);
-      else setError(json?.error?.message ?? 'Impossible de charger les données.');
+      if (json.success && json.data) {
+        setData(json.data);
+      } else {
+        setError(json.error?.message || json.message || tCommon('error'));
+      }
     } catch {
-      setError('Erreur réseau lors du chargement.');
+      setError(tCommon('error'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [range, tCommon]);
 
-  useEffect(() => { void load(range); }, [load, range]);
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-  if (loading && !data) return <PortalSkeleton />;
+  if (loading) return <PortalSkeleton />;
 
-  if (error && !data) {
+  if (error) {
     return (
-      <div className="max-w-[1800px] mx-auto">
-        <Card className="p-10 text-center rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-          <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-3" />
-          <h2 className="text-sm font-extrabold text-[#16212B]">Impossible de charger le portail direction</h2>
-          <p className="text-xs text-slate-500 mt-1">{error}</p>
-          <Button onClick={() => void load(range)} className="mt-4 h-9 text-xs rounded-xl gap-1.5" size="sm">
-            <RefreshCw className="w-3.5 h-3.5" /> Réessayer
-          </Button>
-        </Card>
+      <div className="max-w-[1800px] mx-auto p-6 bg-white rounded-2xl border border-rose-200 text-center space-y-3">
+        <AlertTriangle className="w-8 h-8 text-rose-500 mx-auto" />
+        <p className="text-sm font-bold text-[#16212B]">{error}</p>
+        <Button onClick={loadData} variant="outline" size="sm" className="gap-2 rounded-xl border-slate-200 text-xs font-bold">
+          <RefreshCw className="w-3.5 h-3.5" /> {tCommon('refresh')}
+        </Button>
       </div>
     );
   }
@@ -153,8 +170,8 @@ export function LeadershipPortalView() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Portail direction</h1>
-          <p className="text-xs text-slate-500 mt-1">Suivez la performance stratégique de votre établissement et pilotez les priorités institutionnelles.</p>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('portalTitle')}</h1>
+          <p className="text-xs text-slate-500 mt-1">{t('portalSubtitle')}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <select
@@ -162,15 +179,15 @@ export function LeadershipPortalView() {
             onChange={(e) => setRange(e.target.value)}
             className="h-9 text-xs rounded-xl border border-slate-200 bg-white px-3 font-bold text-[#16212B]"
           >
-            <option value="6mo">6 derniers mois</option>
-            <option value="30d">30 derniers jours</option>
+            <option value="6mo">{t('last6Months')}</option>
+            <option value="30d">{t('last30Days')}</option>
           </select>
           <span className="h-9 flex items-center text-[11px] font-semibold text-slate-500 bg-white border border-slate-200 rounded-xl px-3 gap-1.5">
             <Calendar className="w-3.5 h-3.5" />
             {data.period.from} — {data.period.to}
           </span>
           <Button variant="outline" size="sm" className="h-9 text-xs rounded-xl border-slate-200 bg-white gap-1.5 font-bold text-[#16212B]">
-            <Download className="w-3.5 h-3.5" /> Exporter
+            <Download className="w-3.5 h-3.5" /> {t('export')}
           </Button>
         </div>
       </div>
@@ -182,9 +199,9 @@ export function LeadershipPortalView() {
             <Users className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-[9px] font-bold text-slate-400">Élèves inscrits</p>
+            <p className="text-[9px] font-bold text-slate-400">{t('enrolledStudents')}</p>
             <p className="text-base font-extrabold text-[#16212B]">{nf.format(data.totalStudents)}</p>
-            <p className="text-[9px] font-semibold text-[#17A673]">{data.studentsThisMonth} nouveau(x) ce mois-ci</p>
+            <p className="text-[9px] font-semibold text-[#17A673]">{t('newThisMonth', { count: data.studentsThisMonth })}</p>
           </div>
         </Card>
 
@@ -193,9 +210,9 @@ export function LeadershipPortalView() {
             <CheckCircle2 className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-[9px] font-bold text-slate-400">Taux de présence</p>
+            <p className="text-[9px] font-bold text-slate-400">{t('attendanceRate')}</p>
             <p className="text-base font-extrabold text-[#16212B]">{pctLabel(data.attendanceRate30d)}</p>
-            <p className="text-[9px] font-semibold text-slate-500">30 derniers jours</p>
+            <p className="text-[9px] font-semibold text-slate-500">{t('last30DaysSubtitle')}</p>
           </div>
         </Card>
 
@@ -204,7 +221,7 @@ export function LeadershipPortalView() {
             <DollarSign className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-[9px] font-bold text-slate-400">Recouvrement frais</p>
+            <p className="text-[9px] font-bold text-slate-400">{t('feeCollection')}</p>
             <p className="text-base font-extrabold text-[#16212B]">{pctLabel(data.finance.collectionRate)}</p>
             <p className="text-[9px] font-semibold text-slate-500">{money(data.finance.collectedTotal)} MAD / {money(data.finance.invoicedTotal)}</p>
           </div>
@@ -215,12 +232,12 @@ export function LeadershipPortalView() {
             <BookOpen className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-[9px] font-bold text-slate-400">Moyenne générale</p>
+            <p className="text-[9px] font-bold text-slate-400">{t('generalAverage')}</p>
             <p className="text-base font-extrabold text-[#16212B]">
               {data.averageGrade != null ? `${data.averageGrade.toFixed(1)}%` : '—'}
             </p>
             <p className="text-[9px] font-semibold text-slate-500">
-              {data.averageGrade != null ? 'Résultats d\'évaluations' : 'Données insuffisantes'}
+              {data.averageGrade != null ? t('evaluationResults') : t('insufficientData')}
             </p>
           </div>
         </Card>
@@ -230,10 +247,10 @@ export function LeadershipPortalView() {
             <AlertTriangle className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-[9px] font-bold text-slate-400">Alertes non résolues</p>
+            <p className="text-[9px] font-bold text-slate-400">{t('unresolvedAlerts')}</p>
             <p className="text-base font-extrabold text-[#16212B]">{data.alerts.total}</p>
             <p className="text-[9px] font-semibold text-rose-600 font-bold">
-              {data.alerts.criticalCount} critiques • {data.alerts.importantCount} imp.
+              {t('alertsSummary', { critical: data.alerts.criticalCount, important: data.alerts.importantCount })}
             </p>
           </div>
         </Card>
@@ -243,10 +260,10 @@ export function LeadershipPortalView() {
             <ShieldCheck className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-[9px] font-bold text-slate-400">Présence personnel</p>
+            <p className="text-[9px] font-bold text-slate-400">{t('staffAttendance')}</p>
             <p className="text-base font-extrabold text-[#16212B]">{pctLabel(data.staffPresenceRate)}</p>
             <p className="text-[9px] font-semibold text-slate-500">
-              {data.staffPresenceRate != null ? `${data.totalStaff} employés` : 'Données insuffisantes'}
+              {data.staffPresenceRate != null ? t('employeesCount', { count: data.totalStaff }) : t('insufficientData')}
             </p>
           </div>
         </Card>
@@ -258,19 +275,19 @@ export function LeadershipPortalView() {
         <div className="xl:col-span-5 space-y-4">
           <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs font-extrabold text-[#16212B]">Aperçu des performances de l&apos;institution</h2>
+              <h2 className="text-xs font-extrabold text-[#16212B]">{t('institutionPerformance')}</h2>
               {hasIgp && data.igpDelta != null ? (
                 <Badge className={`border-none text-[10px] font-bold ${data.igpDelta >= 0 ? 'bg-[#DDF5EC] text-[#17A673]' : 'bg-rose-100 text-rose-700'}`}>
-                  {data.igpDelta >= 0 ? `▲ +${data.igpDelta} pts` : `▼ ${data.igpDelta} pts`} vs mois précédent
+                  {data.igpDelta >= 0 ? `▲ +${data.igpDelta} pts` : `▼ ${data.igpDelta} pts`} {t('vsPreviousMonth')}
                 </Badge>
               ) : (
-                <Badge className="bg-slate-100 text-slate-500 border-none text-[10px] font-bold">Indice dérivé des données réelles</Badge>
+                <Badge className="bg-slate-100 text-slate-500 border-none text-[10px] font-bold">{t('derivedIndexBadge')}</Badge>
               )}
             </div>
 
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-extrabold text-[#16212B]">{hasIgp ? data.igpLatest : '—'}</span>
-              <span className="text-xs font-bold text-slate-400">/ 100 (IGP sur 100)</span>
+              <span className="text-xs font-bold text-slate-400">{t('igpScale')}</span>
             </div>
 
             {hasIgp ? (
@@ -288,7 +305,7 @@ export function LeadershipPortalView() {
             ) : (
               <div className="py-8 text-center text-xs text-slate-500">
                 <Info className="w-5 h-5 mx-auto mb-1 text-slate-300" />
-                Aucune activité mesurable sur la période — l&apos;indice sera calculé dès les premières données.
+                {t('noActivityIgp')}
               </div>
             )}
           </Card>
@@ -298,14 +315,14 @@ export function LeadershipPortalView() {
         <div className="xl:col-span-4 space-y-4">
           <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs font-extrabold text-[#16212B]">Performance académique</h2>
+              <h2 className="text-xs font-extrabold text-[#16212B]">{t('academicPerformance')}</h2>
             </div>
 
             {data.averageGrade != null ? (
               <div className="space-y-3 text-xs">
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-[#16212B] text-[11px]">Moyenne générale (toutes évaluations)</span>
+                    <span className="font-bold text-[#16212B] text-[11px]">{t('allEvaluationsAverage')}</span>
                     <span className="font-bold text-[#2487B8] text-[11px]">{data.averageGrade.toFixed(1)}%</span>
                   </div>
                   <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -313,18 +330,18 @@ export function LeadershipPortalView() {
                   </div>
                 </div>
                 <p className="text-[10px] text-slate-500 font-medium">
-                  Le détail par niveau (Primaire / Collège / Lycée) sera disponible dès la saisie des résultats.
+                  {t('levelDetailNote')}
                 </p>
               </div>
             ) : (
               <div className="py-8 text-center text-xs text-slate-500">
                 <BookOpen className="w-5 h-5 mx-auto mb-1 text-slate-300" />
-                Aucun résultat d&apos;évaluation enregistré pour le moment.
+                {t('noEvaluationResults')}
               </div>
             )}
 
             <button className="text-xs font-extrabold text-[#2487B8] hover:underline w-full text-center pt-1">
-              Voir le rapport académique complet →
+              {t('viewFullAcademicReport')}
             </button>
           </Card>
         </div>
@@ -332,7 +349,7 @@ export function LeadershipPortalView() {
         {/* Insights clés */}
         <div className="xl:col-span-3 space-y-4">
           <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
-            <h2 className="text-xs font-extrabold text-[#16212B]">Insights clés</h2>
+            <h2 className="text-xs font-extrabold text-[#16212B]">{t('keyInsights')}</h2>
 
             {data.insights.length > 0 ? (
               <div className="space-y-2">
@@ -349,12 +366,12 @@ export function LeadershipPortalView() {
             ) : (
               <div className="py-8 text-center text-xs text-slate-500">
                 <Info className="w-5 h-5 mx-auto mb-1 text-slate-300" />
-                Les insights s&apos;activeront avec l&apos;activité de l&apos;établissement (présence, recouvrement, alertes).
+                {t('noInsightsYet')}
               </div>
             )}
 
             <button className="text-xs font-extrabold text-[#2487B8] hover:underline w-full text-center pt-1">
-              Voir tous les insights →
+              {t('viewAllInsights')}
             </button>
           </Card>
         </div>
@@ -366,27 +383,27 @@ export function LeadershipPortalView() {
         <div className="xl:col-span-4 space-y-4">
           <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs font-extrabold text-[#16212B]">Aperçu financier</h2>
-              <button className="text-[11px] font-bold text-[#2487B8] hover:underline">Voir le tableau de bord financier</button>
+              <h2 className="text-xs font-extrabold text-[#16212B]">{t('financialOverview')}</h2>
+              <button className="text-[11px] font-bold text-[#2487B8] hover:underline">{t('viewFinancialDashboard')}</button>
             </div>
 
             <div className="flex items-center gap-4 py-2">
               <div className="relative w-24 h-24 rounded-full border-8 border-[#2487B8] flex flex-col items-center justify-center text-center shrink-0">
                 <span className="text-xs font-extrabold text-[#16212B]">{compactMAD(data.finance.invoicedTotal)}</span>
-                <span className="text-[8px] font-bold text-slate-400 uppercase">MAD Objectif</span>
+                <span className="text-[8px] font-bold text-slate-400 uppercase">{t('targetMad')}</span>
               </div>
 
               <div className="space-y-1.5 text-xs flex-1">
                 <div className="flex justify-between text-[11px]">
-                  <span className="text-slate-500 font-medium">Recouvré</span>
+                  <span className="text-slate-500 font-medium">{t('collectedLabel')}</span>
                   <span className="font-bold text-[#16212B]">{money(data.finance.collectedTotal)} MAD ({pctLabel(data.finance.collectionRate)})</span>
                 </div>
                 <div className="flex justify-between text-[11px]">
-                  <span className="text-slate-500 font-medium">À recouvrir</span>
+                  <span className="text-slate-500 font-medium">{t('toCollectLabel')}</span>
                   <span className="font-bold text-[#16212B]">{money(data.finance.outstandingTotal)} MAD</span>
                 </div>
                 <div className="flex justify-between text-[11px]">
-                  <span className="text-slate-500 font-medium">Réductions &amp; remises</span>
+                  <span className="text-slate-500 font-medium">{t('discountsLabel')}</span>
                   <span className="font-bold text-slate-400">{money(data.finance.discountsTotal)} MAD</span>
                 </div>
               </div>
@@ -398,9 +415,9 @@ export function LeadershipPortalView() {
         <div className="xl:col-span-4 space-y-4">
           <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs font-extrabold text-[#16212B]">Risques &amp; alertes</h2>
+              <h2 className="text-xs font-extrabold text-[#16212B]">{t('risksAndAlerts')}</h2>
               <Badge className="bg-rose-100 text-rose-700 border-none font-bold text-[10px]">
-                {data.alerts.total} {data.alerts.total === 1 ? 'alerte' : 'alertes'}
+                {t('alertsCount', { count: data.alerts.total })}
               </Badge>
             </div>
 
@@ -417,7 +434,7 @@ export function LeadershipPortalView() {
             </div>
 
             <button className="text-xs font-extrabold text-[#2487B8] hover:underline w-full text-center pt-1">
-              Voir le registre des risques →
+              {t('viewRiskRegistry')}
             </button>
           </Card>
         </div>
@@ -426,29 +443,29 @@ export function LeadershipPortalView() {
         <div className="xl:col-span-4 space-y-4">
           <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs font-extrabold text-[#16212B]">Aperçu du personnel</h2>
-              <span className="text-[10px] font-bold text-slate-500">Données réelles</span>
+              <h2 className="text-xs font-extrabold text-[#16212B]">{t('staffOverview')}</h2>
+              <span className="text-[10px] font-bold text-slate-500">{t('realData')}</span>
             </div>
 
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
               <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80">
-                <span className="text-[9px] font-bold text-slate-400 uppercase block">Total employés</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase block">{t('totalEmployeesLabel')}</span>
                 <span className="text-base font-extrabold text-[#16212B]">{data.totalStaff}</span>
               </div>
 
               <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80">
-                <span className="text-[9px] font-bold text-slate-400 uppercase block">Présence moy.</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase block">{t('avgAttendanceLabel')}</span>
                 <span className="text-base font-extrabold text-[#17A673]">{pctLabel(data.staffPresenceRate)}</span>
               </div>
 
               <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80">
-                <span className="text-[9px] font-bold text-slate-400 uppercase block">Enseignants</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase block">{t('teachersLabel')}</span>
                 <span className="text-base font-extrabold text-[#2487B8]">{data.totalTeachers}</span>
               </div>
             </div>
 
             <button className="text-xs font-extrabold text-[#2487B8] hover:underline w-full text-center pt-1">
-              Voir le tableau de bord RH →
+              {t('viewHrDashboard')}
             </button>
           </Card>
         </div>
@@ -460,8 +477,8 @@ export function LeadershipPortalView() {
         <div className="xl:col-span-4 space-y-4">
           <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs font-extrabold text-[#16212B]">Réunions à venir</h2>
-              <button className="text-[11px] font-bold text-[#2487B8] hover:underline">Voir le calendrier</button>
+              <h2 className="text-xs font-extrabold text-[#16212B]">{t('upcomingMeetings')}</h2>
+              <button className="text-[11px] font-bold text-[#2487B8] hover:underline">{t('viewCalendar')}</button>
             </div>
 
             {data.meetings.length > 0 ? (
@@ -473,14 +490,14 @@ export function LeadershipPortalView() {
                       <Badge className={`text-[9px] font-bold border-none ${meetingStatusColor(m.status)}`}>{m.status}</Badge>
                     </div>
                     <p className="font-bold text-[#16212B] text-[11px]">{m.title}</p>
-                    <p className="text-[10px] text-slate-500 font-medium">Responsable : {m.owner}</p>
+                    <p className="text-[10px] text-slate-500 font-medium">{t('meetingResponsible', { owner: m.owner })}</p>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="py-8 text-center text-xs text-slate-500">
                 <Calendar className="w-5 h-5 mx-auto mb-1 text-slate-300" />
-                Aucun rendez-vous parent à venir.
+                {t('noUpcomingMeetings')}
               </div>
             )}
           </Card>
@@ -490,9 +507,9 @@ export function LeadershipPortalView() {
         <div className="xl:col-span-4 space-y-4">
           <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs font-extrabold text-[#16212B]">Annonces institutionnelles</h2>
+              <h2 className="text-xs font-extrabold text-[#16212B]">{t('institutionalAnnouncements')}</h2>
               <Button size="sm" className="h-7 text-[10px] bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold rounded-lg gap-1">
-                <Plus className="w-3 h-3" /> Nouvelle annonce
+                <Plus className="w-3 h-3" /> {t('newAnnouncement')}
               </Button>
             </div>
 
@@ -505,14 +522,14 @@ export function LeadershipPortalView() {
                       <span className="text-[9px] text-slate-400 shrink-0">{a.date}</span>
                     </div>
                     <p className="text-[10px] text-slate-500 font-medium line-clamp-2">{a.body}</p>
-                    <p className="text-[9px] text-slate-400 font-semibold">Publiée par {a.author}</p>
+                    <p className="text-[9px] text-slate-400 font-semibold">{t('publishedBy', { author: a.author })}</p>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="py-8 text-center text-xs text-slate-500">
                 <Info className="w-5 h-5 mx-auto mb-1 text-slate-300" />
-                Aucune annonce publiée pour le moment.
+                {t('noAnnouncementsYet')}
               </div>
             )}
           </Card>
@@ -522,8 +539,8 @@ export function LeadershipPortalView() {
         <div className="xl:col-span-4 space-y-4">
           <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs font-extrabold text-[#16212B]">Actions prioritaires</h2>
-              <button className="text-[11px] font-bold text-[#2487B8] hover:underline">Voir toutes les actions</button>
+              <h2 className="text-xs font-extrabold text-[#16212B]">{t('priorityActionsTitle')}</h2>
+              <button className="text-[11px] font-bold text-[#2487B8] hover:underline">{t('viewAllActions')}</button>
             </div>
 
             <div className="space-y-2 text-xs">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
@@ -15,14 +16,17 @@ type AllocationStudent = {
   status: string;
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  paid: 'Facturé (payé)',
-  partial: 'Facturé (partiel)',
-  pending: 'Facturé (en attente)',
-  not_invoiced: 'Non facturé',
-};
-
 export function FeeAllocationView({ locale: _locale }: { locale?: string } = {}) {
+  const t = useTranslations('Finance');
+  const tCommon = useTranslations('Common');
+
+  const statusLabel: Record<string, string> = {
+    paid: t('statusBilledPaid'),
+    partial: t('statusBilledPartial'),
+    pending: t('statusBilledPending'),
+    not_invoiced: t('statusNotInvoiced'),
+  };
+
   const [classes, setClasses] = useState<ClassOption[]>([]);
   const [classId, setClassId] = useState('');
   const [feeStructureName, setFeeStructureName] = useState<string | null>(null);
@@ -68,30 +72,30 @@ export function FeeAllocationView({ locale: _locale }: { locale?: string } = {})
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
       <div>
-        <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Affectation des frais par classe</h1>
+        <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('feeAllocationTitle')}</h1>
         <p className="text-xs text-slate-500 mt-1">
-          {feeStructureName ? `Structure tarifaire assignée : ${feeStructureName}` : 'Aucune structure tarifaire assignée à cette classe.'}
+          {feeStructureName ? t('assignedStructure', { name: feeStructureName }) : t('noAssignedStructure')}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-1">
-          <p className="text-xs font-bold text-slate-400">Élèves dans la classe</p>
+          <p className="text-xs font-bold text-slate-400">{t('studentsInClass')}</p>
           <p className="text-2xl font-extrabold text-[#16212B]">{filtered.length}</p>
         </Card>
         <Card className="p-4 bg-white rounded-2xl border border-blue-200/60 bg-blue-50/20 shadow-2xs space-y-1">
-          <p className="text-xs font-bold text-[#1B6C93]">Net total (réel)</p>
+          <p className="text-xs font-bold text-[#1B6C93]">{t('totalNetReal')}</p>
           <p className="text-2xl font-extrabold text-[#16212B]">{totalNet.toLocaleString('fr-FR')} MAD</p>
         </Card>
         <Card className="p-4 bg-white rounded-2xl border border-emerald-200/60 bg-emerald-50/20 shadow-2xs space-y-1">
-          <p className="text-xs font-bold text-[#17A673]">Réductions appliquées (réel)</p>
+          <p className="text-xs font-bold text-[#17A673]">{t('appliedDiscountsReal')}</p>
           <p className="text-2xl font-extrabold text-[#17A673]">{totalDiscount.toLocaleString('fr-FR')} MAD</p>
         </Card>
       </div>
 
       <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Classe :</span>
+          <span className="text-xs font-bold text-slate-500 whitespace-nowrap">{t('classLabel')} :</span>
           <select
             value={classId}
             onChange={e => setClassId(e.target.value)}
@@ -102,34 +106,34 @@ export function FeeAllocationView({ locale: _locale }: { locale?: string } = {})
         </div>
 
         <div className="relative w-full sm:w-64">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <Input
-            placeholder="Rechercher élève..."
+            placeholder={t('searchStudentClassPlaceholder')}
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-9 h-9 text-xs rounded-xl bg-slate-50 border-none"
+            className="ps-9 h-9 text-xs rounded-xl bg-slate-50 border-none"
           />
         </div>
       </Card>
 
       <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-start text-xs">
             <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
               <tr>
-                <th className="py-3.5 px-4">Élève</th>
-                <th className="py-3.5 px-4">Montant</th>
-                <th className="py-3.5 px-4">Réduction</th>
-                <th className="py-3.5 px-4">Net</th>
-                <th className="py-3.5 px-4 text-right">Statut</th>
+                <th className="py-3.5 px-4">{t('student')}</th>
+                <th className="py-3.5 px-4">{t('amount')}</th>
+                <th className="py-3.5 px-4">{t('discountCol')}</th>
+                <th className="py-3.5 px-4">{t('netCol')}</th>
+                <th className="py-3.5 px-4 text-end">{tCommon('status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
               {loading && (
-                <tr><td colSpan={5} className="py-8 text-center text-slate-400">Chargement...</td></tr>
+                <tr><td colSpan={5} className="py-8 text-center text-slate-400">{tCommon('loading')}</td></tr>
               )}
               {!loading && filtered.length === 0 && (
-                <tr><td colSpan={5} className="py-8 text-center text-slate-400">Aucune structure tarifaire assignée, ou aucun élève.</td></tr>
+                <tr><td colSpan={5} className="py-8 text-center text-slate-400">{t('noAllocationStudents')}</td></tr>
               )}
               {filtered.map(item => (
                 <tr key={item.studentId} className="hover:bg-slate-50/80 transition">
@@ -137,9 +141,9 @@ export function FeeAllocationView({ locale: _locale }: { locale?: string } = {})
                   <td className="py-3.5 px-4 text-slate-500">{item.baseAmount.toLocaleString('fr-FR')} MAD</td>
                   <td className="py-3.5 px-4 font-bold text-[#17A673]">{item.discountAmount > 0 ? `-${item.discountAmount.toLocaleString('fr-FR')} MAD` : '—'}</td>
                   <td className="py-3.5 px-4 font-extrabold text-[#16212B]">{item.netAmount.toLocaleString('fr-FR')} MAD</td>
-                  <td className="py-3.5 px-4 text-right">
+                  <td className="py-3.5 px-4 text-end">
                     <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${item.status === 'not_invoiced' ? 'bg-slate-100 text-slate-600' : 'bg-[#DDF5EC] text-[#17A673]'}`}>
-                      {STATUS_LABEL[item.status] ?? item.status}
+                      {statusLabel[item.status] ?? item.status}
                     </span>
                   </td>
                 </tr>

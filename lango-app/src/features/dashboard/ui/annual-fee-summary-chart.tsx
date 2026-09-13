@@ -71,7 +71,34 @@ export function AnnualFeeSummaryChart({ data }: { data: MonthlyFeePoint[] }) {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
+              <XAxis
+                dataKey="month"
+                tickFormatter={(val: string) => {
+                  const map: Record<string, string> = {
+                    Jan: 'month_Jan',
+                    'Fév': 'month_Feb',
+                    Mar: 'month_Mar',
+                    Avr: 'month_Apr',
+                    Mai: 'month_May',
+                    Juin: 'month_Jun',
+                    Juil: 'month_Jul',
+                    'Août': 'month_Aug',
+                    Sep: 'month_Sep',
+                    Oct: 'month_Oct',
+                    Nov: 'month_Nov',
+                    'Déc': 'month_Dec',
+                  };
+                  const k = map[val] ?? `month_${val}`;
+                  try {
+                    return t(k as any);
+                  } catch {
+                    return val;
+                  }
+                }}
+                tick={{ fontSize: 11, fill: '#94A3B8' }}
+                axisLine={false}
+                tickLine={false}
+              />
               <YAxis
                 tickFormatter={val => formatMadShort(Number(val))}
                 tick={{ fontSize: 11, fill: '#94A3B8' }}
@@ -79,7 +106,7 @@ export function AnnualFeeSummaryChart({ data }: { data: MonthlyFeePoint[] }) {
                 tickLine={false}
               />
               <Tooltip
-                formatter={(val: unknown) => [`${Math.round(Number(val)).toLocaleString('fr-FR')} MAD`, '']}
+                formatter={(val: unknown) => [`${Math.round(Number(val)).toLocaleString()} MAD`, '']}
                 contentStyle={{
                   backgroundColor: '#FFFFFF',
                   borderColor: '#E2E8F0',

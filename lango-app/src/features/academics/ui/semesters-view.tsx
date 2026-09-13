@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,14 +31,14 @@ type ModalState =
   | { mode: 'edit'; semester: Semester }
   | { mode: 'delete'; semester: Semester };
 
-const MONTH_NAMES = [
-  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-];
-
 const PAGE_SIZE = 20;
 
-export function SemestersView({ locale: _locale }: { locale: string }) {
+export function SemestersView({ locale: _locale }: { locale?: string } = {}) {
+  const activeLocale = useLocale();
+  const currentLocale = _locale || activeLocale;
+  const t = useTranslations('Academics');
+  const tCommon = useTranslations('Common');
+
   const [items, setItems] = useState<Semester[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -51,6 +52,16 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
   const [formEndMonth, setFormEndMonth] = useState('1');
   const [formError, setFormError] = useState<string | null>(null);
 
+  const getMonthName = useCallback((monthNum: number) => {
+    try {
+      const d = new Date(2026, (monthNum - 1) % 12, 1);
+      const loc = currentLocale === 'ar' ? 'ar-MA' : currentLocale === 'en' ? 'en-US' : 'fr-FR';
+      return new Intl.DateTimeFormat(loc, { month: 'long' }).format(d);
+    } catch {
+      return String(monthNum);
+    }
+  }, [currentLocale]);
+
   const fetchSemesters = useCallback(async (pg: number) => {
     setLoading(true);
     setError(null);
@@ -62,12 +73,12 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
       setItems(json.data ?? []);
       setTotal(json.total ?? 0);
     } catch (e) {
-      setError('Impossible de charger les semestres / trimesters.');
+      setError(t('loadSemestersError'));
       console.error(e);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { fetchSemesters(page); }, [fetchSemesters, page]);
 
@@ -89,11 +100,11 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
   const closeModal = () => setModal({ mode: 'closed' });
 
   const handleSave = async () => {
-    if (!formName.trim()) { setFormError('Le nom est requis.'); return; }
+    if (!formName.trim()) { setFormError(t('semesterNameRequired')); return; }
     const startM = parseInt(formStartMonth, 10);
     const endM = parseInt(formEndMonth, 10);
-    if (isNaN(startM) || startM < 1 || startM > 12) { setFormError('Mois de début invalide (1-12).'); return; }
-    if (isNaN(endM) || endM < 1 || endM > 12) { setFormError('Mois de fin invalide (1-12).'); return; }
+    if (isNaN(startM) || startM < 1 || startM > 12) { setFormError(t('startMonthInvalid')); return; }
+    if (isNaN(endM) || endM < 1 || endM > 12) { setFormError(t('endMonthInvalid')); return; }
 
     setSaving(true);
     setFormError(null);
@@ -121,7 +132,7 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
       closeModal();
       fetchSemesters(page);
     } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : 'Erreur lors de la sauvegarde.');
+      setFormError(e instanceof Error ? e.message : tCommon('error'));
     } finally {
       setSaving(false);
     }
@@ -139,7 +150,7 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
       setPage(newPage);
       fetchSemesters(newPage);
     } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : 'Erreur lors de la suppression.');
+      setFormError(e instanceof Error ? e.message : tCommon('error'));
     } finally {
       setSaving(false);
     }
@@ -156,18 +167,18 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200/80">
         <div>
           <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight">
-            Semestres & Triblocs Académiques
+            {t('semestersPageTitle')}
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            Découpage des périodes académiques et mois de début / fin
+            {t('semestersPageSubtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-3.5 h-3.5 absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input
-              placeholder="Rechercher un semestre…"
-              className="pl-9 h-9 text-xs rounded-xl w-[220px] border-slate-200"
+              placeholder={t('searchSemesterPlaceholder')}
+              className="ps-9 h-9 text-xs rounded-xl w-[220px] border-slate-200"
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
@@ -177,7 +188,7 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
             onClick={openCreate}
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Ajouter un semestre</span>
+            <span>{t('addSemester')}</span>
           </Button>
         </div>
       </div>
@@ -189,7 +200,7 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
             <Calendar className="w-5 h-5 text-[#2487B8]" />
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-500">Semestres configurés</p>
+            <p className="text-xs font-bold text-slate-500">{t('configuredSemesters')}</p>
             <p className="text-2xl font-extrabold text-[#0F172A] tracking-tight">
               {loading ? '—' : total}
             </p>
@@ -200,13 +211,13 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
       {/* Table */}
       <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
         <h3 className="text-base font-extrabold text-[#0F172A] mb-3">
-          Liste des semestres
+          {t('semestersListTitle')}
         </h3>
 
         {loading && (
           <div className="flex items-center justify-center py-12 gap-2 text-slate-400">
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-xs">Chargement…</span>
+            <span className="text-xs">{tCommon('loading')}</span>
           </div>
         )}
 
@@ -217,19 +228,19 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
         {!loading && !error && (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left rtl:text-right text-xs">
                 <thead className="bg-[#F8FAFC] text-slate-500 font-semibold border-b border-slate-200">
                   <tr>
-                    <th className="py-3 px-3">Nom du semestre</th>
-                    <th className="py-3 px-3">Période (Mois)</th>
-                    <th className="py-3 px-3">Actions</th>
+                    <th className="py-3 px-3">{t('colSemesterName')}</th>
+                    <th className="py-3 px-3">{t('colPeriodMonths')}</th>
+                    <th className="py-3 px-3">{t('colActions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
                   {filtered.length === 0 && (
                     <tr>
                       <td colSpan={3} className="py-10 text-center text-slate-400 text-xs">
-                        {search ? 'Aucun résultat pour cette recherche.' : 'Aucun semestre configuré. Cliquez sur « Ajouter » pour commencer.'}
+                        {search ? t('noSemestersSearch') : t('noSemestersConfigured')}
                       </td>
                     </tr>
                   )}
@@ -242,21 +253,21 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
                         </div>
                       </td>
                       <td className="py-3 px-3 text-slate-600 whitespace-nowrap font-medium">
-                        {MONTH_NAMES[(s.startMonth - 1) % 12]} → {MONTH_NAMES[(s.endMonth - 1) % 12]}
+                        {getMonthName(s.startMonth)} → {getMonthName(s.endMonth)}
                       </td>
                       <td className="py-3 px-3 whitespace-nowrap">
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => openEdit(s)}
                             className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
-                            title="Modifier"
+                            title={tCommon('edit')}
                           >
                             <Pencil className="w-3.5 h-3.5 text-slate-400" />
                           </button>
                           <button
                             onClick={() => openDelete(s)}
                             className="p-1.5 rounded-lg hover:bg-red-50 transition-colors"
-                            title="Supprimer"
+                            title={tCommon('delete')}
                           >
                             <Trash2 className="w-3.5 h-3.5 text-red-400" />
                           </button>
@@ -271,7 +282,7 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
             {/* Pagination */}
             <div className="flex items-center justify-between pt-3 border-t border-slate-100 mt-3">
               <p className="text-[11px] text-slate-400 font-medium">
-                {total} semestre{total !== 1 ? 's' : ''} au total
+                {t('totalSemestersCount', { total })}
               </p>
               <div className="flex items-center gap-1">
                 <button
@@ -279,7 +290,7 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
                   onClick={() => setPage(p => p - 1)}
                   className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40"
                 >
-                  <ChevronLeft className="w-3.5 h-3.5 text-slate-400" />
+                  <ChevronLeft className="w-3.5 h-3.5 text-slate-400 rtl:rotate-180" />
                 </button>
                 <span className="px-2.5 py-1 rounded-lg bg-[#2487B8] text-white text-[11px] font-bold">
                   {page}
@@ -289,7 +300,7 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
                   onClick={() => setPage(p => p + 1)}
                   className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40"
                 >
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 rtl:rotate-180" />
                 </button>
               </div>
             </div>
@@ -303,7 +314,7 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 mx-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-extrabold text-[#0F172A]">
-                {modal.mode === 'create' ? 'Ajouter un semestre' : 'Modifier le semestre'}
+                {modal.mode === 'create' ? t('addSemesterModalTitle') : t('editSemesterModalTitle')}
               </h2>
               <button onClick={closeModal} className="p-1.5 rounded-lg hover:bg-slate-100">
                 <X className="w-4 h-4 text-slate-400" />
@@ -312,10 +323,10 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Nom du semestre <span className="text-red-500">*</span>
+                  {t('semesterNameLabel')} <span className="text-red-500">*</span>
                 </label>
                 <Input
-                  placeholder="ex: Semestre 1, Semestre 2, Trimester 1…"
+                  placeholder={t('semesterNamePlaceholder')}
                   className="h-9 text-xs rounded-xl"
                   value={formName}
                   onChange={e => setFormName(e.target.value)}
@@ -326,32 +337,32 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Mois de début (1-12)
+                    {t('startMonthLabel')}
                   </label>
                   <select
                     className="w-full h-9 text-xs rounded-xl border border-slate-200 px-3 bg-white text-[#0F172A] font-medium"
                     value={formStartMonth}
                     onChange={e => setFormStartMonth(e.target.value)}
                   >
-                    {MONTH_NAMES.map((m, i) => (
-                      <option key={i + 1} value={i + 1}>
-                        {i + 1} - {m}
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                      <option key={m} value={String(m)}>
+                        {getMonthName(m)} ({m})
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Mois de fin (1-12)
+                    {t('endMonthLabel')}
                   </label>
                   <select
                     className="w-full h-9 text-xs rounded-xl border border-slate-200 px-3 bg-white text-[#0F172A] font-medium"
                     value={formEndMonth}
                     onChange={e => setFormEndMonth(e.target.value)}
                   >
-                    {MONTH_NAMES.map((m, i) => (
-                      <option key={i + 1} value={i + 1}>
-                        {i + 1} - {m}
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                      <option key={m} value={String(m)}>
+                        {getMonthName(m)} ({m})
                       </option>
                     ))}
                   </select>
@@ -364,7 +375,7 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
 
               <div className="flex gap-2 justify-end pt-2">
                 <Button variant="outline" onClick={closeModal} className="text-xs h-9 rounded-xl" disabled={saving}>
-                  Annuler
+                  {tCommon('cancel')}
                 </Button>
                 <Button
                   onClick={handleSave}
@@ -372,7 +383,7 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
                   className="bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs h-9 rounded-xl gap-2"
                 >
                   {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  {modal.mode === 'create' ? 'Ajouter' : 'Enregistrer'}
+                  {modal.mode === 'create' ? tCommon('add') : tCommon('save')}
                 </Button>
               </div>
             </div>
@@ -389,9 +400,9 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
                 <Trash2 className="w-5 h-5 text-red-600" />
               </div>
               <div>
-                <h2 className="text-base font-extrabold text-[#0F172A]">Supprimer le semestre</h2>
+                <h2 className="text-base font-extrabold text-[#0F172A]">{t('deleteSemesterTitle')}</h2>
                 <p className="text-xs text-slate-500 mt-1">
-                  Supprimer <strong>{modal.semester.name}</strong> ? Cette action est irréversible.
+                  {t('deleteSemesterWarning', { name: modal.semester.name })}
                 </p>
               </div>
             </div>
@@ -400,7 +411,7 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
             )}
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={closeModal} className="text-xs h-9 rounded-xl" disabled={saving}>
-                Annuler
+                {tCommon('cancel')}
               </Button>
               <Button
                 onClick={handleDelete}
@@ -408,7 +419,7 @@ export function SemestersView({ locale: _locale }: { locale: string }) {
                 className="bg-red-600 hover:bg-red-700 text-white text-xs h-9 rounded-xl gap-2"
               >
                 {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                Supprimer
+                {tCommon('delete')}
               </Button>
             </div>
           </div>

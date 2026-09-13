@@ -1,0 +1,1128 @@
+# SchoolOS AI Agent Ground Truth & Operational Rules
+
+> **MANDATORY FOR ALL AI AGENTS**: Read this document first. This repository is **SchoolOS**, a multi-tenant Moroccan school management platform. All logic, database tables, and API routes are strictly regulated by the rules below.
+
+# SchoolOS Ground Truth & System Knowledge Graph
+
+**Generated:** 2026-09-12T14:03:39.557Z  
+**Scope:** Complete Moroccan School Management & Multi-Tenant Platform Architecture  
+**Ground Truth Stats:**
+- **Total Graph Nodes:** 2083
+- **Total Architectural Edges:** 1211
+- **Database Tables:** 420
+- **API Endpoints:** 794
+- **Dashboard & Portal Pages:** 344
+- **Core Subsystems:** 16
+
+---
+
+## 🏛️ 1. Architecture & Security Invariants
+
+### 1.1 Multi-Tenant Isolation
+- **Row-Level Tenancy**: All institutional data resides in a single PostgreSQL database partitioned by `tenant_id` (`tenants.id`).
+- **Enforcement Pipeline**:
+  ```
+  requireRequestContext(req, [roles]) -> requireTenant(ctx) -> requireCapability(ctx, 'perm.sub') -> Zod .strict() -> tenant-scoped Drizzle query -> recordAudit() -> apiErrorResponse()
+  ```
+- **Database Safety Invariant**: Every query mutating or selecting tenant records **must include** `eq(table.tenantId, ctx.tenantId)`. Cross-tenant leaks are strictly audited via `scripts/check-tenant-isolation.ts`.
+
+### 1.2 Moroccan Regulatory & Legal Compliance
+- **Law 09-08 (CNDP Data Privacy)**: 
+  - All audit trails recorded with user, tenant, timestamp, and redacting sensitive PII.
+  - Strict guardian consent flags required before student data/photos can be processed or published.
+- **Moroccan Grading Standards**:
+  - Grades evaluated strictly on the official national **/20 grading scale**.
+  - Coefficients (`coefficient`) attached to subjects per Filière/Branch.
+  - Exam term lifecycle: `draft -> open -> locked -> published`.
+- **Moroccan Payroll & Tax Engine**:
+  - CNSS calculation with statutory ceiling.
+  - AMO health insurance mandatory withholding.
+  - Impôt sur le Revenu (IR) progressive bracket deduction with Moroccan family deductions.
+  - Moroccan bank export format for salary transfers.
+- **Telecom & SMS Compliance**:
+  - GSM-7 7-bit character encoding optimization for Moroccan telcos (Maroc Telecom, Inwi, Orange).
+  - Explicit STOP/opt-out consent handling.
+
+### 1.3 Production Deployment & Hosting Invariants
+- **Host**: Production VPS `43.157.17.129` (`https://schoolos.epioso.com`).
+- **RAM Constraint**: Host has 1,935 MB RAM shared across 5 services.
+- **Strict Rule**: **NEVER run `npm run build` or build Docker images on the host.** Images must be built locally via Docker Desktop for `--platform linux/amd64` and deployed using `npm run deploy:vps` or `deploy-vps.bat`.
+
+---
+
+## 🧩 2. Core Subsystems Ground Truth
+
+### 2.1 ACADEMICS Subsystem
+**Description:** Academic years, filières, classes, subjects, rooms registry, and timetable solver  
+- **Registered Pages (37):**  
+  - `/dashboard/academics/assessment/exam-master`
+  - `/dashboard/academics/assessment/homework`
+  - `/dashboard/academics/assessment/marksheet`
+  - `/dashboard/academics/assessment/online-exams`
+  - `/dashboard/academics/assignments`
+  - `/dashboard/academics/calendar`
+  - `/dashboard/academics/class-section-teachers`
+  - `/dashboard/academics/class-subjects`
+  - `/dashboard/academics/classes`
+  - `/dashboard/academics/classes/[id]`
+  - `/dashboard/academics/conflicts`
+  - `/dashboard/academics/evaluations`
+  - `/dashboard/academics/exams`
+  - `/dashboard/academics/grades/entry`
+  - `/dashboard/academics/grading/policies`
+  - `/dashboard/academics/live-class/new`
+  - `/dashboard/academics/live-class`
+  - `/dashboard/academics/live-class/[id]`
+  - `/dashboard/academics/live-class-reports`
+  - `/dashboard/academics/mediums`
+  - `/dashboard/academics/optional-subjects`
+  - `/dashboard/academics`
+  - `/dashboard/academics/promotions`
+  - `/dashboard/academics/question-bank`
+  - `/dashboard/academics/readiness`
+  - `/dashboard/academics/results`
+  - `/dashboard/academics/rooms`
+  - `/dashboard/academics/schedule`
+  - `/dashboard/academics/sections`
+  - `/dashboard/academics/semesters`
+  - `/dashboard/academics/session-copy`
+  - `/dashboard/academics/shifts`
+  - `/dashboard/academics/streams`
+  - `/dashboard/academics/subjects`
+  - `/dashboard/academics/syllabus`
+  - `/dashboard/academics/teacher-availability`
+  - `/dashboard/academics/teacher-schedule`
+- **API Routes (68):**  
+  - `GET /api/academics/academic-years`
+  - `GET /api/academics/assessment-definitions`
+  - `GET|POST /api/academics/assessment-plans`
+  - `GET|POST /api/academics/assessment-sessions`
+  - `GET|POST /api/academics/assessments`
+  - `POST /api/academics/assignments/grade`
+  - `GET|POST /api/academics/assignments`
+  - `POST /api/academics/assignments/submit`
+  - `POST /api/academics/class-offerings/copy`
+  - `GET|POST|PUT|DELETE /api/academics/class-offerings`
+  - `GET /api/academics/class-results`
+  - `GET|POST|PUT|DELETE /api/academics/class-sections`
+  - `PUT|DELETE /api/academics/class-sections/[id]/homeroom-teacher`
+  - `GET|POST|PUT|DELETE /api/academics/class-subjects`
+  - `GET|POST|DELETE /api/academics/class-teachers`
+  - `GET /api/academics/classes/roster`
+  - `GET|POST|PUT|DELETE /api/academics/classes`
+  - `GET /api/academics/coverage`
+  - `GET|POST|DELETE /api/academics/elective-choices`
+  - `GET|POST|DELETE /api/academics/elective-groups`
+  - `GET|POST /api/academics/exam-halls`
+  - `GET|POST /api/academics/exam-schedules`
+  - `GET|POST /api/academics/exam-terms`
+  - `GET|POST /api/academics/exam-terms/[id]/marksheet`
+  - `GET /api/academics/exam-terms/[id]/rankings`
+  - `POST /api/academics/exam-terms/[id]/seat-allocation`
+  - `GET|PUT /api/academics/exam-terms/[id]/stage`
+  - `GET|POST /api/academics/grade-entry`
+  - `GET|POST /api/academics/homework`
+  - `GET|POST /api/academics/homework/upload`
+  - `GET /api/academics/homework/[id]/attempts`
+  - `POST /api/academics/homework/[id]/grade`
+  - `POST /api/academics/homework/[id]/submit`
+  - `GET|POST|PUT|DELETE /api/academics/mediums`
+  - `POST /api/academics/meeting-slots/book`
+  - `GET|POST /api/academics/meeting-slots`
+  - `GET|POST /api/academics/online-exams`
+  - `POST /api/academics/online-exams/submit`
+  - `GET|POST /api/academics/online-exams/[examId]/questions`
+  - `PUT|DELETE /api/academics/online-exams/[examId]/questions/[questionId]`
+  - `POST /api/academics/online-exams/[examId]/variants`
+  - `POST /api/academics/promotions/capacity-check`
+  - `POST /api/academics/promotions/revert`
+  - `GET|POST|PUT|DELETE /api/academics/question-bank`
+  - `POST /api/academics/question-bank/[id]/copy-into-exam`
+  - `GET /api/academics/readiness/export`
+  - `GET /api/academics/readiness`
+  - `POST /api/academics/readiness/snapshots`
+  - `GET /api/academics/room-utilization`
+  - `GET|POST|PUT|DELETE /api/academics/rooms`
+  - `GET|POST|PUT|DELETE /api/academics/sections`
+  - `GET|POST|PUT|DELETE /api/academics/semesters`
+  - `GET|POST|PUT|DELETE /api/academics/session-years`
+  - `GET|POST|PUT|DELETE /api/academics/shifts`
+  - `GET|PUT /api/academics/streams/coefficients`
+  - `GET|POST|PUT|DELETE /api/academics/streams`
+  - `GET|POST|DELETE /api/academics/subject-teachers`
+  - `GET|POST|PUT|DELETE /api/academics/subjects`
+  - `GET|POST|DELETE /api/academics/teacher-availability`
+  - `GET|POST /api/academics/teacher-question-bank`
+  - `PUT|DELETE /api/academics/teacher-question-bank/[id]`
+  - `POST /api/academics/timetable-conflicts/resolve`
+  - `GET /api/academics/timetable-conflicts`
+  - `POST /api/academics/timetable-slots/copy`
+  - `GET|POST|PUT|DELETE /api/academics/timetable-slots`
+  - `POST /api/academics/timetable-versions/generate`
+  - `POST /api/academics/timetable-versions/publish`
+  - `GET|POST /api/academics/timetable-versions`
+- **Core Database Tables (0):**  
+  - Utilizes shared schema tables
+- **Key Services:** `assignment-workspace-view`, `academic-calendar-view`, `class-section-teachers-view`, `class-subjects-view`, `classes-view`, `class-detail-view`, `conflicts-view`, `evaluations-view`, `exam-planning-view`, `grade-entry-view`, `mediums-view`, `optional-subjects-view`, `promotion-wizard-view`, `question-bank-view`, `academic-readiness-view`, `class-results-view`, `rooms-view`, `schedule-view`, `sections-view`, `semesters-view`, `session-copy-view`, `shifts-view`, `streams-view`, `subjects-view`, `syllabus-view`, `teacher-availability-client`, `teacher-schedule-view`, `report-card-generator-view`, `filiere-structure`, `report-card-document-service`, `report-card-service`, `room-registry`
+
+---
+### 2.2 ASSESSMENT Subsystem
+**Description:** Exam terms, grading sessions, Moroccan /20 grade engine, coefficients, and marksheet grid  
+- **Registered Pages (0):**  
+  - None directly mapped
+- **API Routes (1):**  
+  - `GET|POST /api/finance/fine-assessments`
+- **Core Database Tables (24):**  
+  - `assessment_criteria`
+  - `assessment_plans`
+  - `assessment_plan_criteria`
+  - `assessment_results`
+  - `assessment_result_details`
+  - `assessments`
+  - `assessment_definitions`
+  - `assessment_audiences`
+  - `assessment_outcomes`
+  - `assessment_outcome_revisions`
+  - `homework_details`
+  - `homework_attempts`
+  - `homework_attempt_files`
+  - `homework_rubrics`
+  - `homework_rubric_criteria`
+  - `exam_terms`
+  - `exam_halls`
+  - `exam_seats`
+  - `exam_schedules`
+  - `exam_supervisors`
+  - `marksheet_templates`
+  - `result_publications`
+  - `teacher_question_bank_items`
+  - `fine_assessments`
+- **Key Services:** `marksheet-grid-view`, `assessment-policies-view`, `exam-master-service`, `exam-term-facts`, `exam-term-guard`, `exam-term-workflow`, `homework-service`, `marksheet-access`, `marksheet-grid`, `marksheet-roster`, `outcome-service`, `teacher-question-bank-service`
+
+---
+### 2.3 STUDENTS Subsystem
+**Description:** Student admission, student directory, Excel bulk import, matricules generation, promotions, and transfers  
+- **Registered Pages (18):**  
+  - `/dashboard/cards/students`
+  - `/dashboard/certificates/issue/students`
+  - `/dashboard/students/add`
+  - `/dashboard/students/admissions/new`
+  - `/dashboard/students/admissions`
+  - `/dashboard/students/alumni/events`
+  - `/dashboard/students/alumni`
+  - `/dashboard/students/alumni/requests`
+  - `/dashboard/students/alumni-transition`
+  - `/dashboard/students/import`
+  - `/dashboard/students/matricules`
+  - `/dashboard/students`
+  - `/dashboard/students/parents`
+  - `/dashboard/students/parents/[id]`
+  - `/dashboard/students/photos`
+  - `/dashboard/students/promotions`
+  - `/dashboard/students/transfers`
+  - `/dashboard/students/[id]`
+- **API Routes (39):**  
+  - `GET /api/guard/students/search`
+  - `GET /api/guard/students/[id]/pickups`
+  - `GET /api/reception/pickups/students`
+  - `GET /api/reception/pickups/students/[id]/pickups`
+  - `GET|POST /api/students/admissions/documents`
+  - `GET|POST|PUT|PATCH /api/students/admissions`
+  - `PATCH /api/students/admissions/[id]/checklist`
+  - `GET|POST /api/students/admissions/[id]/comments`
+  - `POST /api/students/admissions/[id]/convert`
+  - `GET|PUT /api/students/admissions/[id]/interview`
+  - `PATCH /api/students/admissions/[id]/stage`
+  - `GET|POST|PUT|DELETE /api/students/alumni/events`
+  - `GET /api/students/alumni/requests`
+  - `PATCH /api/students/alumni/requests/[id]/status`
+  - `GET /api/students/alumni`
+  - `GET|POST /api/students/alumni/[id]/documents`
+  - `POST /api/students/bulk-transition-to-alumni`
+  - `GET|POST /api/students/documents`
+  - `POST /api/students/import`
+  - `GET|POST /api/students/matricules`
+  - `POST|DELETE|PATCH /api/students/parents/link`
+  - `GET|POST|PUT|DELETE /api/students/parents`
+  - `GET /api/students/parents/[id]/activity`
+  - `GET /api/students/parents/[id]/payments`
+  - `GET|PATCH /api/students/parents/[id]`
+  - `GET|POST|PUT /api/students/photos`
+  - `GET|POST /api/students/placements`
+  - `GET /api/students/promotions/preview`
+  - `GET|POST /api/students/promotions`
+  - `POST /api/students/report-card/issue`
+  - `GET /api/students/report-card`
+  - `GET /api/students/report-card/templates`
+  - `GET|POST|PUT|DELETE /api/students`
+  - `GET /api/students/transfer-stats`
+  - `GET|POST /api/students/transfers`
+  - `POST /api/students/[id]/regenerate-access`
+  - `POST /api/students/[id]/reinstate-from-alumni`
+  - `POST /api/students/[id]/transfer`
+  - `POST /api/students/[id]/transition-to-alumni`
+- **Core Database Tables (1):**  
+  - `guardian_students`
+- **Key Services:** `student-admission-view`, `admission-requests-view`, `alumni-events-view`, `alumni-admin-view`, `alumni-requests-view`, `bulk-alumni-transition-view`, `excel-import-view`, `matricules-view`, `students-list-view`, `parents-guardians-view`, `student-photos-view`, `promotions-playground`, `student-transfers-view`, `student-detail-view`
+
+---
+### 2.4 PARENT Subsystem
+**Description:** Parent guardian portal, linked children, fee payment, attendance timeline, and excuse requests  
+- **Registered Pages (7):**  
+  - `/dashboard/parent/attendance`
+  - `/dashboard/parent/communication`
+  - `/dashboard/parent/finance`
+  - `/dashboard/parent/live-classes`
+  - `/dashboard/parent`
+  - `/dashboard/parent/requests`
+  - `/dashboard/parent/settings`
+- **API Routes (0):**  
+  - Handled via composite APIs
+- **Core Database Tables (2):**  
+  - `parent_guardian_link_tokens`
+  - `parent_requests`
+- **Key Services:** `AttendanceView`, `CommunicationView`, `FinanceView`, `ParentHomeView`, `RequestsView`, `SettingsView`, `relationship-resolver`
+
+---
+### 2.5 FINANCE Subsystem
+**Description:** Tuition fee structures, cashier invoicing, online CMI/Stripe payments, expense vouchers, and accounting journals  
+- **Registered Pages (37):**  
+  - `/dashboard/finance/accounting/accounts`
+  - `/dashboard/finance/accounting/deposits/new`
+  - `/dashboard/finance/accounting/expenses`
+  - `/dashboard/finance/accounting/periods`
+  - `/dashboard/finance/accounting/statements`
+  - `/dashboard/finance/accounting/student-accounting`
+  - `/dashboard/finance/accounting/transactions`
+  - `/dashboard/finance/accounting/voucher-types`
+  - `/dashboard/finance/allocation`
+  - `/dashboard/finance/allocations`
+  - `/dashboard/finance/approvals`
+  - `/dashboard/finance/bank-reconciliation`
+  - `/dashboard/finance/cashier-sessions`
+  - `/dashboard/finance/chart-of-accounts`
+  - `/dashboard/finance/collection-desk`
+  - `/dashboard/finance/credit-notes`
+  - `/dashboard/finance/expenses/new`
+  - `/dashboard/finance/expenses`
+  - `/dashboard/finance/fee-assignments`
+  - `/dashboard/finance/fee-structures`
+  - `/dashboard/finance/fee-types`
+  - `/dashboard/finance/fine-policies`
+  - `/dashboard/finance/invoices`
+  - `/dashboard/finance/invoices/[id]`
+  - `/dashboard/finance/journal`
+  - `/dashboard/finance/office-accounting`
+  - `/dashboard/finance/online-payments`
+  - `/dashboard/finance`
+  - `/dashboard/finance/payments/new`
+  - `/dashboard/finance/payments`
+  - `/dashboard/finance/receipts`
+  - `/dashboard/finance/receivables`
+  - `/dashboard/finance/reconciliation`
+  - `/dashboard/finance/refunds`
+  - `/dashboard/finance/reminders`
+  - `/dashboard/finance/reports`
+  - `/dashboard/finance/statements`
+- **API Routes (86):**  
+  - `GET|POST|PATCH /api/finance/accounting/accounts`
+  - `GET|POST /api/finance/accounting/deposits`
+  - `GET|POST /api/finance/accounting/expenses`
+  - `POST /api/finance/accounting/expenses/[id]/approve`
+  - `POST /api/finance/accounting/expenses/[id]/post`
+  - `POST /api/finance/accounting/expenses/[id]/reject`
+  - `POST /api/finance/accounting/expenses/[id]/submit`
+  - `POST /api/finance/accounting/journal-entries`
+  - `GET|POST /api/finance/accounting/journals`
+  - `GET|POST /api/finance/accounting/periods`
+  - `POST /api/finance/accounting/periods/[id]/close`
+  - `POST /api/finance/accounting/periods/[id]/reopen`
+  - `GET /api/finance/accounting/periods/[id]/reopen-requests`
+  - `POST /api/finance/accounting/periods/[id]/reopen-requests/[requestId]/decide`
+  - `GET /api/finance/accounting/statements/drill-down`
+  - `GET /api/finance/accounting/statements/[type]`
+  - `GET /api/finance/accounting/student-accounting/exceptions`
+  - `POST /api/finance/accounting/student-accounting/exceptions/[id]`
+  - `GET|POST /api/finance/accounting/student-accounting/mappings`
+  - `DELETE /api/finance/accounting/student-accounting/mappings/[id]`
+  - `POST /api/finance/accounting/student-accounting/post`
+  - `GET /api/finance/accounting/student-accounting/reconcile`
+  - `GET /api/finance/accounting/transactions`
+  - `POST /api/finance/accounting/transactions/[id]/reverse`
+  - `GET /api/finance/accounting/transactions/[id]`
+  - `GET /api/finance/accounting/trial-balance`
+  - `GET|POST /api/finance/accounting/voucher-types`
+  - `GET|POST /api/finance/allocations`
+  - `GET|POST /api/finance/bank-reconciliation`
+  - `POST /api/finance/bank-reconciliation/[id]/close`
+  - `POST /api/finance/bank-reconciliation/[id]/fee-interest`
+  - `POST /api/finance/bank-reconciliation/[id]/import`
+  - `POST /api/finance/bank-reconciliation/[id]/match`
+  - `POST /api/finance/bank-reconciliation/[id]/matches`
+  - `POST /api/finance/bank-reconciliation/[id]/matches/unmatch`
+  - `POST /api/finance/bank-reconciliation/[id]/merge`
+  - `GET /api/finance/bank-reconciliation/[id]`
+  - `POST /api/finance/bank-reconciliation/[id]/split`
+  - `GET /api/finance/cashier-sessions`
+  - `POST /api/finance/cashier-sessions/[id]/close`
+  - `POST /api/finance/cashier-sessions/[id]/reconcile`
+  - `GET|POST /api/finance/chart-of-accounts`
+  - `GET|POST|PATCH /api/finance/credit-notes`
+  - `GET /api/finance/credits`
+  - `GET|POST /api/finance/expenses/receipt`
+  - `GET|POST|PUT|DELETE /api/finance/expenses`
+  - `POST /api/finance/exports/journal/push`
+  - `GET /api/finance/exports/journal`
+  - `GET /api/finance/fee-allocation`
+  - `POST /api/finance/fee-allocations/preview`
+  - `GET /api/finance/fee-allocations`
+  - `PUT /api/finance/fee-allocations/[id]/approve`
+  - `PUT /api/finance/fee-allocations/[id]/cancel`
+  - `GET /api/finance/fee-allocations/[id]`
+  - `POST /api/finance/fee-allocations/[id]/run`
+  - `GET|POST|DELETE /api/finance/fee-assignments`
+  - `GET /api/finance/fee-structure-versions`
+  - `GET|POST|PUT|DELETE /api/finance/fee-structures`
+  - `GET|POST /api/finance/fee-structures/[id]/versions`
+  - `GET|POST|PUT /api/finance/fee-types`
+  - `GET|POST|PUT /api/finance/fine-policies`
+  - `POST /api/finance/fine-runs`
+  - `POST /api/finance/fiscal-periods/close`
+  - `GET /api/finance/invoice-events`
+  - `GET|POST /api/finance/invoices`
+  - `PUT /api/finance/invoices/[id]/cancel`
+  - `POST /api/finance/invoices/[id]/credit`
+  - `PUT /api/finance/invoices/[id]/issue`
+  - `GET|POST /api/finance/journals`
+  - `GET|POST|PUT /api/finance/payment-methods`
+  - `GET|PATCH /api/finance/payment-reversals`
+  - `POST /api/finance/payments/online/callback`
+  - `POST /api/finance/payments/online`
+  - `GET|POST /api/finance/payments`
+  - `POST /api/finance/payments/sandbox`
+  - `POST /api/finance/payments/[id]/reverse`
+  - `GET /api/finance/receipts`
+  - `GET /api/finance/receipts/[id]`
+  - `GET|POST|PATCH /api/finance/refunds`
+  - `GET|POST|PUT /api/finance/reminder-rules`
+  - `GET|POST /api/finance/reminder-runs`
+  - `GET|POST /api/finance/reminders`
+  - `GET /api/finance/reports`
+  - `GET /api/finance/statements`
+  - `GET /api/guardian/me/children/[relationshipId]/finance`
+  - `GET /api/guardian/me/finance`
+- **Core Database Tables (13):**  
+  - `fine_policies`
+  - `invoice_events`
+  - `payment_reversals`
+  - `student_credits`
+  - `cashier_closings`
+  - `finance_reminder_rules`
+  - `finance_reminder_runs`
+  - `payment_method_configurations`
+  - `payment_gateway_sessions`
+  - `fee_structure_versions`
+  - `fee_allocation_runs`
+  - `fee_allocation_targets`
+  - `receipts`
+- **Key Services:** `accountant-portal-view`, `chart-of-accounts-view`, `fee-allocation-view`, `fee-allocations-view`, `bank-reconciliation-view`, `cashier-sessions-view`, `credit-notes-view`, `expenses-view`, `fee-assignments-view`, `fee-structures-view`, `fee-types-view`, `fine-policies-view`, `invoices-view`, `invoice-detail-view`, `journal-explorer-view`, `online-payments-view`, `receipts-view`, `refunds-view`, `reminders-statements-view`, `statements-view`, `payment-methods-view`
+
+---
+### 2.6 HR Subsystem
+**Description:** Employee profiles, designations, contracts, departments, and credential lifecycle  
+- **Registered Pages (14):**  
+  - `/dashboard/hr/access`
+  - `/dashboard/hr/advances`
+  - `/dashboard/hr/awards`
+  - `/dashboard/hr/departments`
+  - `/dashboard/hr/designations`
+  - `/dashboard/hr/employees/new`
+  - `/dashboard/hr/employees`
+  - `/dashboard/hr/employees/[id]`
+  - `/dashboard/hr/leave`
+  - `/dashboard/hr/leave-management`
+  - `/dashboard/hr/overview`
+  - `/dashboard/hr`
+  - `/dashboard/hr/salary-advances`
+  - `/dashboard/hr/self-service`
+- **API Routes (31):**  
+  - `GET /api/hr/access`
+  - `GET|POST /api/hr/departments`
+  - `DELETE|PATCH /api/hr/departments/[id]`
+  - `GET|POST /api/hr/designations`
+  - `DELETE|PATCH /api/hr/designations/[id]`
+  - `GET|POST /api/hr/employee-profiles`
+  - `GET|POST /api/hr/employees`
+  - `GET|POST /api/hr/employees/[id]/documents`
+  - `GET|PATCH /api/hr/employees/[id]/documents/[documentId]`
+  - `GET /api/hr/employees/[id]/history`
+  - `POST /api/hr/employees/[id]/link-account`
+  - `POST /api/hr/employees/[id]/offboard`
+  - `GET /api/hr/employees/[id]/payroll-attendance`
+  - `POST /api/hr/employees/[id]/reactivate`
+  - `GET|PATCH /api/hr/employees/[id]`
+  - `GET /api/hr/export`
+  - `GET /api/hr/leave/balances`
+  - `GET|POST /api/hr/leave/categories`
+  - `GET|POST /api/hr/leave/requests`
+  - `PATCH /api/hr/leave/requests/[id]`
+  - `GET /api/hr/me/self-service-eligibility`
+  - `GET /api/hr/overview`
+  - `GET|POST /api/hr/payroll/periods`
+  - `POST /api/hr/payroll/periods/[id]/calculate`
+  - `GET /api/hr/payroll/periods/[id]/lines`
+  - `POST /api/hr/payroll/periods/[id]/lock`
+  - `GET /api/hr/payslips`
+  - `GET /api/hr/payslips/[id]`
+  - `GET|PATCH /api/hr/profile-edit-requests`
+  - `GET|POST /api/hr/salary-assignments`
+  - `GET|POST /api/hr/salary-templates`
+- **Core Database Tables (9):**  
+  - `departments`
+  - `designations`
+  - `employee_documents`
+  - `employee_employment_events`
+  - `employee_invitations`
+  - `salary_advances`
+  - `salary_advance_transactions`
+  - `employee_awards`
+  - `employee_profile_edit_requests`
+- **Key Services:** `access-lifecycle-view`, `departments-view`, `designations-view`, `employee-wizard-view`, `personnel-playground`, `employee-profile-view`, `hr-overview-view`, `employee-portal-view`, `documents-service`, `employee-context`, `employee-id`, `employees-service`, `leave-requests`, `offboarding-service`, `organizations-service`, `payslips`, `profile-edit-requests`
+
+---
+### 2.7 WORKFORCE Subsystem
+**Description:** Time-clock attendance kiosk, overtime, salary advances, Moroccan CNSS/AMO/IR payroll engine, maker-checker payslips  
+- **Registered Pages (15):**  
+  - `/dashboard/workforce/advances`
+  - `/dashboard/workforce/awards`
+  - `/dashboard/workforce/leave`
+  - `/dashboard/workforce`
+  - `/dashboard/workforce/payroll/adjustments`
+  - `/dashboard/workforce/payroll/assignments`
+  - `/dashboard/workforce/payroll/components`
+  - `/dashboard/workforce/payroll/payments`
+  - `/dashboard/workforce/payroll/payslips`
+  - `/dashboard/workforce/payroll/regulations`
+  - `/dashboard/workforce/payroll/runs`
+  - `/dashboard/workforce/payroll/runs/[id]`
+  - `/dashboard/workforce/payroll/settings`
+  - `/dashboard/workforce/payroll/structures`
+  - `/dashboard/workforce/timeclock`
+- **API Routes (11):**  
+  - `GET|PATCH /api/workforce/advances`
+  - `GET|POST /api/workforce/awards`
+  - `GET|POST /api/workforce/payroll/config`
+  - `POST /api/workforce/payroll/config/[resource]/[id]/action`
+  - `GET|POST /api/workforce/payroll/payments`
+  - `POST /api/workforce/payroll/payments/[id]/action`
+  - `GET /api/workforce/payroll/payslips`
+  - `GET|POST /api/workforce/payroll/runs`
+  - `POST /api/workforce/payroll/runs/[id]/action`
+  - `GET /api/workforce/payroll/runs/[id]`
+  - `GET|POST /api/workforce/punches`
+- **Core Database Tables (21):**  
+  - `workforce_punch_events`
+  - `payroll_regulation_packs`
+  - `payroll_regulation_versions`
+  - `payroll_settings_versions`
+  - `salary_component_versions`
+  - `salary_structure_versions`
+  - `salary_structure_components`
+  - `employee_payroll_profiles`
+  - `payroll_adjustments`
+  - `payroll_result_lines`
+  - `payroll_calculation_traces`
+  - `payroll_postings`
+  - `payroll_posting_lines`
+  - `salary_payment_batches`
+  - `salary_payments`
+  - `employee_leave_policies`
+  - `employee_leave_policy_assignments`
+  - `employee_leave_balance_transactions`
+  - `salary_advance_policies`
+  - `salary_advance_repayment_schedules`
+  - `award_definitions`
+- **Key Services:** `salary-advances-view`, `awards-recognition-view`, `leave-management-client`, `leave-management-view`, `awards-recognition-client`, `payroll-workspace`, `time-clock-kiosk`, `expression-engine`, `ma-regulation-adapter`, `payroll-engine`, `payroll-posting`, `payroll-runs`
+
+---
+### 2.8 GUARD Subsystem
+**Description:** Campus gate security kiosk, QR badge scanner, visitor passes, student pickup authorization, and emergency lockouts  
+- **Registered Pages (9):**  
+  - `/dashboard/hostel/guardian`
+  - `/dashboard/portals/guard/config`
+  - `/dashboard/portals/guard/emergency`
+  - `/dashboard/portals/guard/incidents`
+  - `/dashboard/portals/guard`
+  - `/dashboard/portals/guard/pickups`
+  - `/dashboard/portals/guard/scanner`
+  - `/dashboard/portals/guard/visitors`
+  - `/dashboard/transport/guardian`
+- **API Routes (53):**  
+  - `GET /api/addons/hostel/guardian/me`
+  - `GET|POST /api/guard/assignments`
+  - `DELETE|PATCH /api/guard/assignments/[id]`
+  - `POST /api/guard/emergency/activate`
+  - `GET /api/guard/emergency/procedures`
+  - `POST /api/guard/emergency/[activationId]/acknowledge`
+  - `POST /api/guard/emergency/[activationId]/end`
+  - `GET|POST /api/guard/gates`
+  - `DELETE|PATCH /api/guard/gates/[id]`
+  - `GET|POST /api/guard/incidents`
+  - `GET|POST /api/guard/incidents/[id]/actions`
+  - `GET|POST /api/guard/incidents/[id]/attachments`
+  - `DELETE /api/guard/incidents/[id]/attachments/[attachmentId]`
+  - `PATCH /api/guard/incidents/[id]`
+  - `POST /api/guard/kiosk-sessions`
+  - `POST /api/guard/kiosk-sessions/[id]/close`
+  - `POST /api/guard/kiosk-sessions/[id]/lock`
+  - `GET /api/guard/me/expected`
+  - `GET /api/guard/me/gate`
+  - `GET /api/guard/me/incidents`
+  - `GET /api/guard/me/shift`
+  - `GET|POST /api/guard/pickup-authorizations`
+  - `POST /api/guard/pickup-authorizations/[id]/cancel`
+  - `POST /api/guard/pickups/release`
+  - `GET /api/guard/scans`
+  - `GET|POST /api/guard/shifts`
+  - `DELETE|PATCH /api/guard/shifts/[id]`
+  - `GET|POST /api/guard/visitor-invitations`
+  - `POST /api/guard/visitor-invitations/[id]/approve`
+  - `POST /api/guard/visitor-invitations/[id]/reject`
+  - `GET|POST /api/guard/visits`
+  - `POST /api/guard/visits/[id]/check-in`
+  - `POST /api/guard/visits/[id]/check-out`
+  - `POST /api/guard/visits/[id]/pass`
+  - `POST /api/guardian/link/accept`
+  - `POST /api/guardian/link/start`
+  - `GET /api/guardian/me/children`
+  - `GET /api/guardian/me/children/[relationshipId]/announcements`
+  - `GET /api/guardian/me/children/[relationshipId]/attendance`
+  - `GET /api/guardian/me/children/[relationshipId]/documents`
+  - `GET|POST /api/guardian/me/children/[relationshipId]/excuses`
+  - `GET|POST /api/guardian/me/children/[relationshipId]/excuses/[excuseId]/document`
+  - `GET /api/guardian/me/children/[relationshipId]/homework`
+  - `GET /api/guardian/me/children/[relationshipId]/meetings`
+  - `GET /api/guardian/me/children/[relationshipId]/overview`
+  - `GET|POST /api/guardian/me/children/[relationshipId]/requests`
+  - `GET /api/guardian/me/children/[relationshipId]/results`
+  - `GET /api/guardian/me/children/[relationshipId]`
+  - `GET /api/guardian/me/home`
+  - `GET /api/guardian/me/messages`
+  - `GET|PATCH /api/guardian/me/preferences`
+  - `GET /api/guardian/me`
+  - `GET /api/transport/self-service/guardian`
+- **Core Database Tables (17):**  
+  - `guardians`
+  - `guard_gates`
+  - `guard_shifts`
+  - `guard_assignments`
+  - `guard_kiosk_sessions`
+  - `guard_visitor_invitations`
+  - `guard_visits`
+  - `guard_pickup_authorizations`
+  - `guard_release_events`
+  - `guard_gate_scan_events`
+  - `guard_incidents`
+  - `guard_incident_actions`
+  - `guard_incident_attachments`
+  - `guard_emergency_procedures`
+  - `guard_emergency_contacts`
+  - `guard_emergency_activations`
+  - `guard_emergency_acknowledgements`
+- **Key Services:** `page-guard`, `guardian-me-view`, `page-guard`, `guard-config-view`, `guard-emergency-view`, `guard-incidents-view`, `guard-home-view`, `guard-pickups-view`, `guard-kiosk-shell`, `guard-visitors-view`, `page-guard`, `credential-adapter`, `emergency-service`, `gates-service`, `handoffs`, `home-service`, `incidents-service`, `kiosk-service`, `release-service`, `visitors-service`
+
+---
+### 2.9 HOSTEL Subsystem
+**Description:** Residential hostels, wings, room categories, bed occupancy board, roll-call attendance, and leave passes  
+- **Registered Pages (15):**  
+  - `/dashboard/hostel/allocations`
+  - `/dashboard/hostel/allocations/[id]`
+  - `/dashboard/hostel/applications`
+  - `/dashboard/hostel/board`
+  - `/dashboard/hostel/categories`
+  - `/dashboard/hostel/hostels`
+  - `/dashboard/hostel/hostels/[id]`
+  - `/dashboard/hostel/leave-passes`
+  - `/dashboard/hostel/me`
+  - `/dashboard/hostel`
+  - `/dashboard/hostel/policies`
+  - `/dashboard/hostel/reports`
+  - `/dashboard/hostel/roll-call`
+  - `/dashboard/hostel/rooms`
+  - `/dashboard/hostel/zones`
+- **API Routes (41):**  
+  - `POST /api/addons/hostel/allocations/bulk/commit`
+  - `POST /api/addons/hostel/allocations/bulk/preview`
+  - `POST /api/addons/hostel/allocations/commit`
+  - `POST /api/addons/hostel/allocations/preview`
+  - `GET /api/addons/hostel/allocations`
+  - `POST /api/addons/hostel/allocations/[id]/check-in`
+  - `POST /api/addons/hostel/allocations/[id]/check-out`
+  - `GET /api/addons/hostel/allocations/[id]/events`
+  - `GET /api/addons/hostel/allocations/[id]`
+  - `POST /api/addons/hostel/allocations/[id]/transfer`
+  - `GET|POST /api/addons/hostel/applications`
+  - `POST /api/addons/hostel/applications/[id]/decision`
+  - `GET|PATCH /api/addons/hostel/applications/[id]`
+  - `GET|POST /api/addons/hostel/beds`
+  - `PATCH /api/addons/hostel/beds/[id]`
+  - `PATCH /api/addons/hostel/beds/[id]/status`
+  - `GET /api/addons/hostel/board`
+  - `GET|POST /api/addons/hostel/categories`
+  - `PATCH /api/addons/hostel/categories/[id]`
+  - `GET /api/addons/hostel/escalations`
+  - `POST /api/addons/hostel/escalations/run`
+  - `POST /api/addons/hostel/escalations/[id]/acknowledge`
+  - `GET|POST /api/addons/hostel/hostels`
+  - `GET|PATCH /api/addons/hostel/hostels/[id]`
+  - `GET|POST /api/addons/hostel/leave-passes`
+  - `POST /api/addons/hostel/leave-passes/[id]/return`
+  - `GET|PATCH /api/addons/hostel/leave-passes/[id]`
+  - `GET|PATCH /api/addons/hostel/policies`
+  - `GET /api/addons/hostel/reports/allocations`
+  - `GET /api/addons/hostel/reports/occupancy`
+  - `GET|POST /api/addons/hostel/resident/me/leave-requests`
+  - `GET /api/addons/hostel/resident/me`
+  - `GET|POST /api/addons/hostel/roll-calls`
+  - `POST /api/addons/hostel/roll-calls/[id]/close`
+  - `POST /api/addons/hostel/roll-calls/[id]/entries`
+  - `GET /api/addons/hostel/roll-calls/[id]`
+  - `GET|POST /api/addons/hostel/rooms`
+  - `PATCH /api/addons/hostel/rooms/[id]`
+  - `GET /api/addons/hostel/tonight`
+  - `GET|POST /api/addons/hostel/zones`
+  - `PATCH /api/addons/hostel/zones/[id]`
+- **Core Database Tables (16):**  
+  - `hostel_policies`
+  - `hostels`
+  - `hostel_zones`
+  - `hostel_room_categories`
+  - `hostel_rooms`
+  - `hostel_beds`
+  - `hostel_applications`
+  - `hostel_allocations`
+  - `hostel_allocation_events`
+  - `hostel_roll_calls`
+  - `hostel_roll_call_entries`
+  - `hostel_leave_passes`
+  - `hostel_leave_pass_approvals`
+  - `hostel_leave_pass_returns`
+  - `hostel_escalations`
+  - `hostel_charge_links`
+- **Key Services:** `allocation-workspace-view`, `allocation-detail-view`, `bed-board-view`, `categories-view`, `hostels-view`, `hostel-detail-view`, `leave-passes-view`, `resident-me-view`, `tonight-view`, `hostel-policies-view`, `hostel-reports-view`, `roll-call-view`, `rooms-beds-view`, `zones-view`, `allocation-service`, `eligibility-service`, `escalations-service`, `inventory-service`, `leave-passes-service`, `policies-service`, `projections-service`, `roll-call-service`, `tonight-service`
+
+---
+### 2.10 BROADCAST Subsystem
+**Description:** SMS/WhatsApp messaging gateway, GSM-7 encoding, segmented audiences, and consent compliance  
+- **Registered Pages (9):**  
+  - `/dashboard/broadcast/automations`
+  - `/dashboard/broadcast/campaigns`
+  - `/dashboard/broadcast/campaigns/[id]`
+  - `/dashboard/broadcast/connections`
+  - `/dashboard/broadcast`
+  - `/dashboard/broadcast/reports`
+  - `/dashboard/broadcast/segments`
+  - `/dashboard/broadcast/templates`
+  - `/dashboard/communication/broadcast`
+- **API Routes (31):**  
+  - `GET|POST /api/addons/broadcast/automations`
+  - `GET /api/addons/broadcast/automations/runs/[runId]/recipients`
+  - `GET|PUT|DELETE /api/addons/broadcast/automations/[id]`
+  - `GET /api/addons/broadcast/automations/[id]/runs`
+  - `POST /api/addons/broadcast/automations/[id]/test`
+  - `POST /api/addons/broadcast/automations/[id]/toggle`
+  - `GET|POST /api/addons/broadcast/campaigns`
+  - `POST /api/addons/broadcast/campaigns/[id]/approve`
+  - `POST /api/addons/broadcast/campaigns/[id]/cancel`
+  - `GET /api/addons/broadcast/campaigns/[id]/export`
+  - `POST /api/addons/broadcast/campaigns/[id]/preview`
+  - `GET /api/addons/broadcast/campaigns/[id]/recipients`
+  - `GET /api/addons/broadcast/campaigns/[id]/report`
+  - `GET|PUT|DELETE /api/addons/broadcast/campaigns/[id]`
+  - `POST /api/addons/broadcast/campaigns/[id]/schedule`
+  - `GET|POST /api/addons/broadcast/connections`
+  - `GET|PUT|DELETE /api/addons/broadcast/connections/[id]`
+  - `POST /api/addons/broadcast/connections/[id]/test`
+  - `GET|POST /api/addons/broadcast/consents`
+  - `GET /api/addons/broadcast/deliveries/[id]/events`
+  - `POST /api/addons/broadcast/deliveries/[id]/retry`
+  - `GET|POST|PUT /api/addons/broadcast/segments`
+  - `POST /api/addons/broadcast/segments/[id]/preview`
+  - `GET|PUT|DELETE /api/addons/broadcast/segments/[id]`
+  - `GET|POST /api/addons/broadcast/suppressions`
+  - `DELETE /api/addons/broadcast/suppressions/[id]`
+  - `GET|POST /api/addons/broadcast/templates`
+  - `GET|DELETE /api/addons/broadcast/templates/[id]`
+  - `GET|POST /api/addons/broadcast/templates/[id]/versions`
+  - `POST /api/addons/broadcast/templates/[id]/versions/[versionId]/publish`
+  - `POST /api/addons/broadcast/worker/process`
+- **Core Database Tables (13):**  
+  - `communication_connections`
+  - `communication_consents`
+  - `communication_suppressions`
+  - `communication_segments`
+  - `communication_templates`
+  - `communication_template_versions`
+  - `communication_campaigns`
+  - `communication_campaign_recipients`
+  - `communication_deliveries`
+  - `communication_delivery_events`
+  - `communication_automations`
+  - `communication_automation_runs`
+  - `communication_automation_recipients`
+- **Key Services:** `automations-view`, `campaigns-view`, `campaign-detail-view`, `connections-view`, `broadcast-overview-view`, `reports-view`, `segments-view`, `templates-view`, `broadcast-send-view`, `automations-service`, `campaigns-service`, `connections-service`, `consent-service`, `deliveries-service`, `outbox-worker`, `reports-service`, `segments-service`, `sms-delivery`, `sms-encoding`, `template-render`, `templates-service`
+
+---
+### 2.11 LIBRARY Subsystem
+**Description:** Library book catalog, barcode tracking, member borrowing, fines, and return tracking  
+- **Registered Pages (6):**  
+  - `/dashboard/content/library`
+  - `/dashboard/library/catalog`
+  - `/dashboard/library/catalog/[id]`
+  - `/dashboard/library/categories`
+  - `/dashboard/library/me`
+  - `/dashboard/library`
+- **API Routes (52):**  
+  - `GET|POST /api/addons/library/catalog/categories`
+  - `PUT|DELETE /api/addons/library/catalog/categories/[id]`
+  - `GET|POST /api/addons/library/catalog/contributors`
+  - `PUT|DELETE /api/addons/library/catalog/contributors/[id]`
+  - `GET|POST /api/addons/library/catalog/publishers`
+  - `PUT|DELETE /api/addons/library/catalog/publishers/[id]`
+  - `GET|POST /api/addons/library/catalog`
+  - `GET|POST /api/addons/library/catalog/subjects`
+  - `PUT|DELETE /api/addons/library/catalog/subjects/[id]`
+  - `PUT /api/addons/library/catalog/[id]/contributors`
+  - `GET|PUT|DELETE /api/addons/library/catalog/[id]`
+  - `PUT /api/addons/library/catalog/[id]/subjects`
+  - `GET /api/addons/library/charges`
+  - `POST /api/addons/library/charges/[id]/post`
+  - `POST /api/addons/library/charges/[id]/waive`
+  - `POST /api/addons/library/circulation/issue`
+  - `GET /api/addons/library/circulation/loans`
+  - `POST /api/addons/library/circulation/renew`
+  - `POST /api/addons/library/circulation/return`
+  - `GET|POST /api/addons/library/closures`
+  - `DELETE /api/addons/library/closures/[id]`
+  - `GET /api/addons/library/copies/export`
+  - `POST /api/addons/library/copies/import`
+  - `GET|POST /api/addons/library/copies`
+  - `GET|PUT|DELETE /api/addons/library/copies/[id]`
+  - `POST /api/addons/library/editions`
+  - `GET|PUT|DELETE /api/addons/library/editions/[id]`
+  - `GET|POST /api/addons/library/holds`
+  - `POST /api/addons/library/holds/[id]/cancel`
+  - `GET /api/addons/library/me/charges`
+  - `GET /api/addons/library/me/children`
+  - `GET /api/addons/library/me/children/[studentId]/loans`
+  - `GET /api/addons/library/me/history`
+  - `GET|POST /api/addons/library/me/holds`
+  - `GET /api/addons/library/me/home`
+  - `GET /api/addons/library/me/loans`
+  - `POST /api/addons/library/me/renew`
+  - `GET|POST /api/addons/library/members`
+  - `GET /api/addons/library/members/[id]`
+  - `GET|POST /api/addons/library/policies`
+  - `PUT|DELETE /api/addons/library/policies/[id]`
+  - `GET /api/addons/library/reports/circulation`
+  - `GET /api/addons/library/reports/inventory`
+  - `GET /api/addons/library/reports/overdue`
+  - `GET /api/addons/library/reports/overview`
+  - `GET|POST /api/addons/library/stocktakes`
+  - `POST /api/addons/library/stocktakes/[id]/adjustments/apply`
+  - `GET /api/addons/library/stocktakes/[id]/adjustments`
+  - `POST /api/addons/library/stocktakes/[id]/close`
+  - `POST /api/addons/library/stocktakes/[id]/observations`
+  - `GET|POST /api/addons/library/transfers`
+  - `POST /api/addons/library/transfers/[id]/transition`
+- **Core Database Tables (24):**  
+  - `library_bibliographic_records`
+  - `library_contributors`
+  - `library_record_contributors`
+  - `library_publishers`
+  - `library_categories`
+  - `library_subjects`
+  - `library_record_subjects`
+  - `library_editions`
+  - `library_copies`
+  - `library_members`
+  - `library_loan_policies`
+  - `library_closure_calendar`
+  - `library_loans`
+  - `library_loan_events`
+  - `library_holds`
+  - `library_hold_events`
+  - `library_transfers`
+  - `library_transfer_events`
+  - `library_stocktakes`
+  - `library_stocktake_observations`
+  - `library_stocktake_adjustments`
+  - `library_charges`
+  - `library_charge_adjustments`
+  - `library_notifications`
+- **Key Services:** `library-catalog-view`, `library-accounting-adapter`, `library-catalog-service`, `library-copies-csv`, `library-operations-service`, `library-service`
+
+---
+### 2.12 RECEPTION Subsystem
+**Description:** Front desk visitor registry, incoming telephone call logs, and postal dispatch  
+- **Registered Pages (6):**  
+  - `/dashboard/receptionist/appointments`
+  - `/dashboard/receptionist/handoffs`
+  - `/dashboard/receptionist/inquiries`
+  - `/dashboard/receptionist`
+  - `/dashboard/receptionist/pickups`
+  - `/dashboard/receptionist/visitors`
+- **API Routes (25):**  
+  - `GET|POST /api/reception/appointments`
+  - `POST /api/reception/appointments/[id]/cancel`
+  - `POST /api/reception/appointments/[id]/check-in`
+  - `POST /api/reception/appointments/[id]/complete`
+  - `POST /api/reception/appointments/[id]/no-show`
+  - `POST /api/reception/appointments/[id]/reschedule`
+  - `GET /api/reception/appointments/[id]`
+  - `GET /api/reception/gates`
+  - `GET|POST /api/reception/handoffs`
+  - `POST /api/reception/handoffs/[id]/acknowledge`
+  - `POST /api/reception/handoffs/[id]/cancel`
+  - `POST /api/reception/handoffs/[id]/resolve`
+  - `GET|POST /api/reception/inquiries`
+  - `POST /api/reception/inquiries/[id]/follow-ups`
+  - `GET /api/reception/lookup`
+  - `GET /api/reception/me/home`
+  - `GET|POST /api/reception/pickups/authorizations`
+  - `POST /api/reception/pickups/authorizations/[id]/cancel`
+  - `POST /api/reception/pickups/release`
+  - `GET /api/reception/staff`
+  - `POST /api/reception/verifications`
+  - `GET|POST /api/reception/visitors`
+  - `POST /api/reception/visitors/[id]/check-in`
+  - `POST /api/reception/visitors/[id]/check-out`
+  - `POST /api/reception/visitors/[id]/pass`
+- **Core Database Tables (5):**  
+  - `reception_appointments`
+  - `reception_appointment_status_history`
+  - `reception_identity_verifications`
+  - `reception_handoffs`
+  - `reception_handoff_status_history`
+- **Key Services:** `reception-appointments-view`, `reception-handoffs-view`, `reception-inquiries-view`, `reception-home-view`, `reception-pickups-view`, `reception-visitors-view`, `appointments-service`, `handoffs-service`, `home-service`, `identity-service`, `lookup-service`, `notifications-service`
+
+---
+### 2.13 DOCUMENTS Subsystem
+**Description:** Document Studio, WYSIWYG certificate template designer, barcode verification, and student ID cards  
+- **Registered Pages (1):**  
+  - `/dashboard/documents/generator`
+- **API Routes (4):**  
+  - `GET /api/employee/me/documents`
+  - `GET /api/employee/me/documents/[documentId]/download`
+  - `POST /api/public/alumni-documents/verify`
+  - `GET|POST /api/teachers/documents`
+- **Core Database Tables (6):**  
+  - `alumni_documents`
+  - `student_documents`
+  - `applicant_documents`
+  - `accounting_documents`
+  - `issued_documents`
+  - `transport_vehicle_documents`
+- **Key Services:** Built-in Drizzle repositories
+
+---
+### 2.14 TRANSPORT Subsystem
+**Description:** School bus fleet, drivers, routes, stop waypoints, GPS tracking, and parent pickup self-service  
+- **Registered Pages (12):**  
+  - `/dashboard/transport/allocations`
+  - `/dashboard/transport/boarding`
+  - `/dashboard/transport/drivers`
+  - `/dashboard/transport/incidents`
+  - `/dashboard/transport`
+  - `/dashboard/transport/policies`
+  - `/dashboard/transport/reports`
+  - `/dashboard/transport/routes`
+  - `/dashboard/transport/stops`
+  - `/dashboard/transport/student`
+  - `/dashboard/transport/trips`
+  - `/dashboard/transport/vehicles`
+- **API Routes (19):**  
+  - `GET|POST /api/transport/allocations`
+  - `GET|PUT|DELETE /api/transport/allocations/[id]`
+  - `GET /api/transport/drivers`
+  - `GET|POST /api/transport/incidents`
+  - `GET|PUT /api/transport/policies`
+  - `GET /api/transport/reports/export`
+  - `GET /api/transport/reports/overview`
+  - `GET|POST /api/transport/rider-events`
+  - `GET|POST /api/transport/routes`
+  - `GET|PUT|DELETE /api/transport/routes/[id]`
+  - `GET /api/transport/self-service/student`
+  - `GET|POST /api/transport/stops`
+  - `GET|PUT|DELETE /api/transport/stops/[id]`
+  - `GET|POST /api/transport/trips`
+  - `POST /api/transport/trips/[id]/complete`
+  - `GET /api/transport/trips/[id]/roster`
+  - `POST /api/transport/trips/[id]/start`
+  - `GET|POST /api/transport/vehicles`
+  - `GET|PUT|DELETE /api/transport/vehicles/[id]`
+- **Core Database Tables (14):**  
+  - `transport_vehicles`
+  - `transport_stops`
+  - `transport_routes`
+  - `transport_route_versions`
+  - `transport_route_stops`
+  - `transport_crew_assignments`
+  - `transport_student_allocations`
+  - `transport_trips`
+  - `transport_trip_roster_snapshots`
+  - `transport_rider_events`
+  - `transport_incidents`
+  - `transport_incident_actions`
+  - `transport_fare_links`
+  - `transport_policies`
+- **Key Services:** `transport-service`
+
+---
+### 2.15 INVENTORY Subsystem
+**Description:** School supplies stock, suppliers, purchase orders, reorder point alerts, and inventory issue requests  
+- **Registered Pages (13):**  
+  - `/dashboard/inventory/adjustments`
+  - `/dashboard/inventory/categories`
+  - `/dashboard/inventory/issues`
+  - `/dashboard/inventory/overview`
+  - `/dashboard/inventory`
+  - `/dashboard/inventory/products`
+  - `/dashboard/inventory/purchases`
+  - `/dashboard/inventory/sales`
+  - `/dashboard/inventory/stock`
+  - `/dashboard/inventory/stores`
+  - `/dashboard/inventory/suppliers`
+  - `/dashboard/inventory/transfers`
+  - `/dashboard/inventory/units`
+- **API Routes (32):**  
+  - `GET|POST /api/addons/inventory/adjustments`
+  - `GET /api/addons/inventory/adjustments/[id]`
+  - `GET|POST /api/addons/inventory/categories`
+  - `DELETE|PATCH /api/addons/inventory/categories/[id]`
+  - `GET /api/addons/inventory/export`
+  - `GET|POST /api/addons/inventory/issues`
+  - `POST /api/addons/inventory/issues/[id]/return`
+  - `GET /api/addons/inventory/issues/[id]`
+  - `GET /api/addons/inventory/movements`
+  - `GET /api/addons/inventory/overview`
+  - `GET|POST /api/addons/inventory/products`
+  - `GET|DELETE|PATCH /api/addons/inventory/products/[id]`
+  - `GET|POST /api/addons/inventory/purchases`
+  - `GET|POST /api/addons/inventory/purchases/suggestions`
+  - `POST /api/addons/inventory/purchases/[id]/receive`
+  - `POST /api/addons/inventory/purchases/[id]/reverse`
+  - `GET /api/addons/inventory/purchases/[id]`
+  - `GET|POST /api/addons/inventory/sales`
+  - `POST /api/addons/inventory/sales/[id]/reverse`
+  - `GET /api/addons/inventory/sales/[id]`
+  - `POST /api/addons/inventory/stock/reconcile`
+  - `GET /api/addons/inventory/stock`
+  - `GET|POST /api/addons/inventory/stores`
+  - `DELETE|PATCH /api/addons/inventory/stores/[id]`
+  - `GET|POST /api/addons/inventory/suppliers`
+  - `DELETE|PATCH /api/addons/inventory/suppliers/[id]`
+  - `GET|POST /api/addons/inventory/transfers`
+  - `POST /api/addons/inventory/transfers/[id]/cancel`
+  - `POST /api/addons/inventory/transfers/[id]/complete`
+  - `GET /api/addons/inventory/transfers/[id]`
+  - `GET|POST /api/addons/inventory/units`
+  - `DELETE|PATCH /api/addons/inventory/units/[id]`
+- **Core Database Tables (17):**  
+  - `inventory_categories`
+  - `inventory_units`
+  - `inventory_stores`
+  - `inventory_suppliers`
+  - `inventory_products`
+  - `inventory_purchases`
+  - `inventory_purchase_lines`
+  - `inventory_sales`
+  - `inventory_sale_lines`
+  - `inventory_issues`
+  - `inventory_issue_lines`
+  - `inventory_adjustments`
+  - `inventory_adjustment_lines`
+  - `inventory_transfers`
+  - `inventory_transfer_lines`
+  - `inventory_stock_movements`
+  - `inventory_stock_balances`
+- **Key Services:** `adjustments-view`, `categories-view`, `issues-view`, `overview-view`, `products-view`, `purchases-view`, `sales-view`, `stock-view`, `stores-view`, `suppliers-view`, `transfers-view`, `units-view`, `adjustments-service`, `catalog-service`, `inventory-math`, `inventory-sequence`, `inventory-transactions`, `issues-service`, `overview-service`, `purchases-service`, `reconcile-service`, `reorder-policy`, `sales-service`, `transfers-service`
+
+---
+### 2.16 SUPER-ADMIN Subsystem
+**Description:** Multi-tenant school management, domain bindings, feature entitlements, licensing, and system telemetry  
+- **Registered Pages (12):**  
+  - `/dashboard/super-admin/domains`
+  - `/dashboard/super-admin`
+  - `/dashboard/super-admin/reports`
+  - `/dashboard/super-admin/schools/create`
+  - `/dashboard/super-admin/schools`
+  - `/dashboard/super-admin/schools/[id]`
+  - `/dashboard/super-admin/settings`
+  - `/dashboard/super-admin/sms`
+  - `/dashboard/super-admin/subscriptions/list`
+  - `/dashboard/super-admin/subscriptions`
+  - `/dashboard/super-admin/support`
+  - `/dashboard/super-admin/waitlist`
+- **API Routes (21):**  
+  - `POST /api/super-admin/addon-definitions`
+  - `GET /api/super-admin/alerts`
+  - `GET /api/super-admin/domains`
+  - `PATCH /api/super-admin/domains/[id]`
+  - `GET|POST|DELETE /api/super-admin/entitlements`
+  - `GET /api/super-admin/health`
+  - `GET|PUT /api/super-admin/plan-limits`
+  - `GET /api/super-admin/reports`
+  - `POST /api/super-admin/schools/anonymize`
+  - `POST /api/super-admin/schools/backup`
+  - `GET|POST|PUT /api/super-admin/schools`
+  - `GET|PATCH /api/super-admin/schools/[id]/branches`
+  - `GET|POST /api/super-admin/sms`
+  - `GET /api/super-admin/subscriptions`
+  - `POST /api/super-admin/subscriptions/[schoolId]/license`
+  - `POST /api/super-admin/subscriptions/[schoolId]/payments/[paymentId]/decision`
+  - `GET /api/super-admin/subscriptions/[schoolId]`
+  - `GET /api/super-admin/summary`
+  - `GET|POST /api/super-admin/support`
+  - `POST /api/super-admin/waitlist/convert`
+  - `GET|PUT /api/super-admin/waitlist`
+- **Core Database Tables (0):**  
+  - Utilizes shared schema tables
+- **Key Services:** `super-admin-domains-view`, `super-admin-dashboard-view`, `super-admin-reports-view`, `super-admin-schools-create-view`, `super-admin-schools-view`, `super-admin-school-detail-view`, `super-admin-settings-view`, `super-admin-sms-view`, `super-admin-subscriptions-list-view`, `super-admin-subscriptions-view`, `super-admin-support-view`, `super-admin-waitlist-view`
+
+---
+
+## 🔍 3. Role & Capability Matrix
+
+| Role | Default Access | Portal Route | Primary Capabilities |
+| :--- | :--- | :--- | :--- |
+| **super_admin** | Global Platform | `/dashboard/super-admin` | Multi-tenant school creation, domain routing, subscription management, license keys |
+| **school_admin** | Full School Scope | `/dashboard` | Complete institutional management, settings, academic calendar, staff, and finance |
+| **teacher** | Assigned Classes | `/dashboard/portals/teacher` | Timetable, class rosters, attendance marking, /20 grade entry, homework |
+| **student** | Enrolled Student | `/dashboard/portals/student` | My timetable, attendance history, term report cards, live classrooms |
+| **parent** | Linked Children | `/dashboard/portals/parent` | Child overview, tuition fee payment, daily attendance, excuse submission |
+| **guard** | Gate Station | `/dashboard/portals/guard` | Badge scanner kiosk, student pickups, visitor passes, emergency lockouts |
+| **accountant** | Finance & Cashier | `/dashboard/finance` | Fee structures, invoices, fee collection desk, expense vouchers, Moroccan accounting export |
+| **librarian** | School Library | `/dashboard/library` | Catalog search, barcode issuing, borrowing tracking, overdue fee management |
+| **receptionist** | Front Desk | `/dashboard/reception` | Visitor check-in, phone call logs, mail dispatch, admission inquiries |
+
+---
+
+## ⚡ 4. How Any Agent Can Query This Knowledge Graph
+
+You can instantly query this knowledge graph from the command line using the query engine:
+
+```bash
+# Query any keyword, module, or concept
+npx tsx scripts/graph-query.ts "hostel"
+
+# Query specific subsystem
+npx tsx scripts/graph-query.ts "payroll"
+
+# Find paths between two concepts
+npx tsx scripts/graph-query.ts path "guard" "attendance"
+
+# Summary overview
+npx tsx scripts/graph-query.ts stats
+```
+

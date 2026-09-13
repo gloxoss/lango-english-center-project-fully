@@ -21,9 +21,9 @@ export class CsvExporter {
    */
   static generateCsv(columns: ColumnDefinition[], data: Record<string, any>[]): string {
     const headers = columns.map(c => this.escapeCsvCell(c.label)).join(',');
-    const rows = data.map(row => {
+    const rows = data.map((row) => {
       return columns
-        .map(c => {
+        .map((c) => {
           const rawVal = row[c.key];
           const sanitized = this.sanitizeValue(rawVal);
           return this.escapeCsvCell(sanitized);

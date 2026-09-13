@@ -1,5 +1,11 @@
+import type { ClassCycle } from '@/features/academics/services/filiere-structure';
 import { and, count, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import {
+
+  cycleAllowsFiliere,
+  filiereIsAssignable,
+} from '@/features/academics/services/filiere-structure';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
@@ -26,7 +32,7 @@ function toApiClass(row: typeof classes.$inferSelect) {
 // A client-sent mediumId/shiftId/streamId belonging to a different tenant must
 // never silently succeed (it would let tenant A read/link tenant B's reference
 // data) or leak a raw FK-violation error - reject it explicitly, up front.
-async function assertSameTenantReferences(tenantId: string, refs: { mediumId?: string; shiftId?: string | null; streamId?: string | null }) {
+async function assertSameTenantReferences(tenantId: string, refs: { mediumId?: string; shiftId?: string | null; streamId?: string | null; cycle?: string | null }) {
   if (refs.mediumId) {
     const [row] = await db.select({ id: mediums.id }).from(mediums).where(and(eq(mediums.id, refs.mediumId), eq(mediums.tenantId, tenantId))).limit(1);
     if (!row) {
@@ -40,9 +46,26 @@ async function assertSameTenantReferences(tenantId: string, refs: { mediumId?: s
     }
   }
   if (refs.streamId) {
-    const [row] = await db.select({ id: streams.id }).from(streams).where(and(eq(streams.id, refs.streamId), eq(streams.tenantId, tenantId))).limit(1);
+    const [row] = await db
+      .select({ id: streams.id, cycle: streams.cycle, isActive: streams.isActive })
+      .from(streams)
+      .where(and(eq(streams.id, refs.streamId), eq(streams.tenantId, tenantId)))
+      .limit(1);
     if (!row) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'La filière indiquée n\'existe pas pour cet établissement.');
+    }
+
+    // A filière belongs to one cycle: "Sciences Maths" is a lycée filière and
+    // must not land on a collège class, where its coefficients would compute a
+    // moyenne against subjects those students do not take.
+    const assignable = filiereIsAssignable(row);
+    if (!assignable.allowed) {
+      throw new ApiError(422, assignable.code, assignable.message);
+    }
+
+    const cycleCheck = cycleAllowsFiliere(row.cycle, (refs.cycle ?? null) as ClassCycle | null);
+    if (!cycleCheck.allowed) {
+      throw new ApiError(422, cycleCheck.code, cycleCheck.message);
     }
   }
 }
@@ -90,7 +113,9 @@ export async function POST(request: Request) {
 
     if (body.teacherId) {
       const [teacher] = await db.select({ id: user.id }).from(user).where(and(eq(user.id, body.teacherId), eq(user.tenantId, tenantId), eq(user.role, 'teacher'))).limit(1);
-      if (!teacher) throw new ApiError(422, 'INVALID_REFERENCE', 'L\'enseignant indiqué n\'existe pas pour cet établissement.');
+      if (!teacher) {
+        throw new ApiError(422, 'INVALID_REFERENCE', 'L\'enseignant indiqué n\'existe pas pour cet établissement.');
+      }
     }
 
     const inserted = await db.transaction(async (tx) => {

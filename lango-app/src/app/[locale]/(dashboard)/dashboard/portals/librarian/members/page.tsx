@@ -4,5 +4,10 @@ import { LibraryMembersClient } from '@/features/library/ui/library-members-clie
 export default async function LibrarianMembersPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   await requireLibraryPage(locale, { capability: 'library.circulation.operate' });
-  return <LibraryMembersClient />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <LibraryMembersClient />
+    </main>
+  );
 }

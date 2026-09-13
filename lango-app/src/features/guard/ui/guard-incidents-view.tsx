@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -45,34 +46,8 @@ type Incident = {
 type Action = { id: string; actionType: string; notes: string | null; createdAt: string; actorName: string | null };
 type Attachment = { id: string; originalName: string; mimeType: string; fileSize: number; createdAt: string };
 
-const CATEGORY_LABELS: Record<string, string> = {
-  comportement: 'Comportement', objet_perdu: 'Objet perdu', acces: 'Accès', securite: 'Sécurité', medical: 'Médical', autre: 'Autre',
-};
-const SEVERITY_LABELS: Record<string, string> = { low: 'Faible', medium: 'Moyen', high: 'Élevé', critical: 'Critique' };
-const STATUS_LABELS: Record<string, string> = {
-  open: 'Ouvert', in_progress: 'En cours', escalated: 'Escaladé', resolved: 'Résolu', closed: 'Clos',
-};
-
-function severityBadge(severity: string) {
-  const map: Record<string, string> = {
-    low: 'bg-slate-100 text-slate-600',
-    medium: 'bg-amber-50 text-amber-700',
-    high: 'bg-orange-50 text-orange-700',
-    critical: 'bg-rose-50 text-rose-700',
-  };
-  return <Badge className={map[severity] ?? 'bg-slate-100 text-slate-600'}>{SEVERITY_LABELS[severity] ?? severity}</Badge>;
-}
-
-function statusBadge(status: string) {
-  const map: Record<string, string> = {
-    open: 'bg-[#DCEBF4] text-[#1B6C93]',
-    in_progress: 'bg-amber-50 text-amber-700',
-    escalated: 'bg-orange-50 text-orange-700',
-    resolved: 'bg-[#D1F5E8] text-[#0b5c3a]',
-    closed: 'bg-slate-100 text-slate-500',
-  };
-  return <Badge className={map[status] ?? 'bg-slate-100 text-slate-600'}>{STATUS_LABELS[status] ?? status}</Badge>;
-}
+const CATEGORY_KEYS = ['comportement', 'objet_perdu', 'acces', 'securite', 'medical', 'autre'] as const;
+const SEVERITY_KEYS = ['low', 'medium', 'high', 'critical'] as const;
 
 function fmtDateTime(iso: string): string {
   const d = new Date(iso);
@@ -87,6 +62,8 @@ function fmtBytes(n: number): string {
 }
 
 export function GuardIncidentsView() {
+  const t = useTranslations('Guard');
+  const tCommon = useTranslations('Common');
   const [statusFilter, setStatusFilter] = useState('');
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -104,6 +81,60 @@ export function GuardIncidentsView() {
   const [uploading, setUploading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const getCategoryLabel = useCallback((category: string) => {
+    switch (category) {
+      case 'comportement': return t('catBehavior');
+      case 'objet_perdu': return t('catLostItem');
+      case 'acces': return t('catAccess');
+      case 'securite': return t('catSecurity');
+      case 'medical': return t('catMedical');
+      case 'autre': return t('catOther');
+      default: return category;
+    }
+  }, [t]);
+
+  const getSeverityLabel = useCallback((severity: string) => {
+    switch (severity) {
+      case 'low': return t('sevLow');
+      case 'medium': return t('sevMedium');
+      case 'high': return t('sevHigh');
+      case 'critical': return t('sevCritical');
+      default: return severity;
+    }
+  }, [t]);
+
+  const getStatusLabel = useCallback((status: string) => {
+    switch (status) {
+      case 'open': return t('stOpen');
+      case 'in_progress': return t('stInProgress');
+      case 'escalated': return t('stEscalated');
+      case 'resolved': return t('stResolved');
+      case 'closed': return t('stClosed');
+      default: return status;
+    }
+  }, [t]);
+
+  const severityBadge = (severity: string) => {
+    const map: Record<string, string> = {
+      low: 'bg-slate-100 text-slate-600',
+      medium: 'bg-amber-50 text-amber-700',
+      high: 'bg-orange-50 text-orange-700',
+      critical: 'bg-rose-50 text-rose-700',
+    };
+    return <Badge className={map[severity] ?? 'bg-slate-100 text-slate-600'}>{getSeverityLabel(severity)}</Badge>;
+  };
+
+  const statusBadge = (status: string) => {
+    const map: Record<string, string> = {
+      open: 'bg-[#DCEBF4] text-[#1B6C93]',
+      in_progress: 'bg-amber-50 text-amber-700',
+      escalated: 'bg-orange-50 text-orange-700',
+      resolved: 'bg-[#D1F5E8] text-[#0b5c3a]',
+      closed: 'bg-slate-100 text-slate-500',
+    };
+    return <Badge className={map[status] ?? 'bg-slate-100 text-slate-600'}>{getStatusLabel(status)}</Badge>;
+  };
 
   const load = useCallback(async () => {
     setError(null);
@@ -195,46 +226,46 @@ export function GuardIncidentsView() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6 text-start">
       <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">Incidents</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('incidentsTitle')}</h1>
           <p className="mt-0.5 text-xs font-medium text-slate-500">
-            Signaler, suivre et escalader les incidents de sécurité.
+            {t('incidentsSubtitle')}
           </p>
         </div>
-        <Badge className="bg-[#DCEBF4] text-[#1B6C93]"><ShieldAlert className="mr-1 h-3.5 w-3.5" /> Journal</Badge>
+        <Badge className="bg-[#DCEBF4] text-[#1B6C93]"><ShieldAlert className="me-1 h-3.5 w-3.5" /> {t('journalBadge')}</Badge>
       </div>
 
       {error && <p className="flex items-center gap-1 text-sm text-rose-600"><AlertCircle className="h-4 w-4" />{error}</p>}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <Select value={statusFilter || undefined} onValueChange={v => setStatusFilter(v)}>
-          <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="Tous les statuts" /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder={t('allStatuses')} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="open">Ouvert</SelectItem>
-            <SelectItem value="in_progress">En cours</SelectItem>
-            <SelectItem value="escalated">Escaladé</SelectItem>
-            <SelectItem value="resolved">Résolu</SelectItem>
-            <SelectItem value="closed">Clos</SelectItem>
+            <SelectItem value="open">{t('stOpen')}</SelectItem>
+            <SelectItem value="in_progress">{t('stInProgress')}</SelectItem>
+            <SelectItem value="escalated">{t('stEscalated')}</SelectItem>
+            <SelectItem value="resolved">{t('stResolved')}</SelectItem>
+            <SelectItem value="closed">{t('stClosed')}</SelectItem>
           </SelectContent>
         </Select>
         <Button onClick={() => { setCreateForm({ category: 'acces', severity: 'medium', location: '', description: '' }); setCreating(true); }}>
-          <Plus className="mr-2 h-4 w-4" /> Signaler un incident
+          <Plus className="me-2 h-4 w-4" /> {t('btnReportIncident')}
         </Button>
       </div>
 
       <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
         {incidents.length === 0 ? (
-          <div className="p-10 text-center text-sm text-slate-500">Aucun incident.</div>
+          <div className="p-10 text-center text-sm text-slate-500">{t('noIncidents')}</div>
         ) : (
           <div className="divide-y divide-slate-100">
             {incidents.map(i => (
               <div key={i.id} className="flex flex-col gap-3 p-4">
-                <button onClick={() => void openDetail(i.id)} className="flex w-full items-center justify-between gap-3 text-left">
+                <button onClick={() => void openDetail(i.id)} className="flex w-full items-center justify-between gap-3 text-start">
                   <div className="min-w-0">
                     <p className="flex flex-wrap items-center gap-2 font-semibold text-[#16212B]">
-                      {CATEGORY_LABELS[i.category] ?? i.category}
+                      {getCategoryLabel(i.category)}
                       {severityBadge(i.severity)}
                       {statusBadge(i.status)}
                     </p>
@@ -246,19 +277,19 @@ export function GuardIncidentsView() {
                 </button>
 
                 {openId === i.id && (
-                  <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-4">
+                  <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-4 text-start">
                     <p className="whitespace-pre-wrap text-sm text-slate-700">{i.description}</p>
-                    <p className="mt-2 text-xs text-slate-400">Signalé par {i.reporterName ?? '—'}</p>
+                    <p className="mt-2 text-xs text-slate-400">{t('reportedBy', { name: i.reporterName ?? '—' })}</p>
                     {i.resolutionNotes && (
                       <p className="mt-3 rounded-lg border border-emerald-200 bg-[#D1F5E8]/40 p-3 text-xs text-[#0b5c3a]">
-                        <strong>Notes de résolution :</strong> {i.resolutionNotes}
+                        <strong>{t('resolutionNotes')} :</strong> {i.resolutionNotes}
                       </p>
                     )}
 
                     <div className="mt-4">
-                      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Suivi</p>
+                      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{t('auditFollowup')}</p>
                       {actions.length === 0 ? (
-                        <p className="mt-1 text-xs text-slate-400">Aucune action.</p>
+                        <p className="mt-1 text-xs text-slate-400">{t('noActions')}</p>
                       ) : (
                         <ul className="mt-2 space-y-2">
                           {actions.map(a => (
@@ -277,9 +308,9 @@ export function GuardIncidentsView() {
                     </div>
 
                     <div className="mt-4">
-                      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Pièces jointes</p>
+                      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{t('attachments')}</p>
                       {attachments.length === 0 ? (
-                        <p className="mt-1 text-xs text-slate-400">Aucune pièce jointe.</p>
+                        <p className="mt-1 text-xs text-slate-400">{t('noAttachments')}</p>
                       ) : (
                         <ul className="mt-2 space-y-1.5">
                           {attachments.map(at => (
@@ -301,21 +332,21 @@ export function GuardIncidentsView() {
                           onChange={e => { const f = e.target.files?.[0]; if (f) void uploadAttachment(f); e.target.value = ''; }}
                         />
                         <Button size="sm" variant="outline" disabled={uploading} onClick={() => fileRef.current?.click()}>
-                          {uploading ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <FileUp className="mr-1.5 h-3.5 w-3.5" />} Joindre un fichier
+                          {uploading ? <Loader2 className="me-1.5 h-3.5 w-3.5 animate-spin" /> : <FileUp className="me-1.5 h-3.5 w-3.5" />} {t('attachFile')}
                         </Button>
                       </div>
                     </div>
 
                     <div className="mt-4 flex flex-wrap items-end gap-2">
                       <div className="min-w-0 flex-1">
-                        <Label className="mb-1 block text-xs font-medium text-slate-600">Note / résolution</Label>
-                        <Input value={actionNotes} onChange={e => setActionNotes(e.target.value)} placeholder="Note interne…" />
+                        <Label className="mb-1 block text-xs font-medium text-slate-600">{t('noteOrResolution')}</Label>
+                        <Input value={actionNotes} onChange={e => setActionNotes(e.target.value)} placeholder={t('notePlaceholder')} />
                       </div>
-                      <Button size="sm" variant="outline" onClick={() => void addAction('note')}>Ajouter une note</Button>
-                      {i.status !== 'escalated' && <Button size="sm" variant="outline" onClick={() => void addAction('escalate')}>Escalader</Button>}
-                      {i.status !== 'resolved' && <Button size="sm" variant="outline" onClick={() => void addAction('resolve')}>Résoudre</Button>}
-                      {i.status !== 'closed' && <Button size="sm" variant="outline" onClick={() => void addAction('close')}>Clore</Button>}
-                      {i.status === 'closed' && <Button size="sm" variant="outline" onClick={() => void addAction('reopen')}>Réouvrir</Button>}
+                      <Button size="sm" variant="outline" onClick={() => void addAction('note')}>{t('btnAddNote')}</Button>
+                      {i.status !== 'escalated' && <Button size="sm" variant="outline" onClick={() => void addAction('escalate')}>{t('btnEscalate')}</Button>}
+                      {i.status !== 'resolved' && <Button size="sm" variant="outline" onClick={() => void addAction('resolve')}>{t('btnResolve')}</Button>}
+                      {i.status !== 'closed' && <Button size="sm" variant="outline" onClick={() => void addAction('close')}>{t('btnClose')}</Button>}
+                      {i.status === 'closed' && <Button size="sm" variant="outline" onClick={() => void addAction('reopen')}>{t('btnReopen')}</Button>}
                     </div>
                     {detailError && <p className="mt-2 flex items-center gap-1 text-xs text-rose-600"><AlertCircle className="h-3.5 w-3.5" />{detailError}</p>}
                   </div>
@@ -328,47 +359,47 @@ export function GuardIncidentsView() {
 
       <Dialog open={creating} onOpenChange={setCreating}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Signaler un incident</DialogTitle></DialogHeader>
-          <div className="space-y-4">
+          <DialogHeader><DialogTitle>{t('dialogReportTitle')}</DialogTitle></DialogHeader>
+          <div className="space-y-4 text-start">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="mb-1 block text-sm font-medium text-slate-700">Catégorie</Label>
+                <Label className="mb-1 block text-sm font-medium text-slate-700">{t('category')}</Label>
                 <Select value={createForm.category} onValueChange={v => setCreateForm({ ...createForm, category: v })}>
                   <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {Object.entries(CATEGORY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                    {CATEGORY_KEYS.map(k => <SelectItem key={k} value={k}>{getCategoryLabel(k)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label className="mb-1 block text-sm font-medium text-slate-700">Sévérité</Label>
+                <Label className="mb-1 block text-sm font-medium text-slate-700">{t('severity')}</Label>
                 <Select value={createForm.severity} onValueChange={v => setCreateForm({ ...createForm, severity: v })}>
                   <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {Object.entries(SEVERITY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                    {SEVERITY_KEYS.map(k => <SelectItem key={k} value={k}>{getSeverityLabel(k)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Lieu</Label>
-              <Input value={createForm.location} onChange={e => setCreateForm({ ...createForm, location: e.target.value })} placeholder="Optionnel" />
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('location')}</Label>
+              <Input value={createForm.location} onChange={e => setCreateForm({ ...createForm, location: e.target.value })} placeholder={t('locationPlaceholder')} />
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Description *</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('description')}</Label>
               <textarea
                 value={createForm.description}
                 onChange={e => setCreateForm({ ...createForm, description: e.target.value })}
                 rows={4}
                 className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2487B8]/40"
-                placeholder="Décrivez l'incident…"
+                placeholder={t('descriptionPlaceholder')}
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreating(false)}>Annuler</Button>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setCreating(false)}>{tCommon('cancel')}</Button>
             <Button onClick={() => void create()} disabled={saving || !createForm.description.trim()}>
-              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <AlertTriangle className="mr-2 h-4 w-4" />} Signaler
+              {saving ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : <AlertTriangle className="me-2 h-4 w-4" />} {t('btnSubmitReport')}
             </Button>
           </DialogFooter>
         </DialogContent>

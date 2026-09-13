@@ -11,6 +11,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -36,6 +37,8 @@ type ScannerDevice = {
 };
 
 export function ScannerDevicesView() {
+  const t = useTranslations('Attendance');
+  const tCommon = useTranslations('Common');
   const [devices, setDevices] = useState<ScannerDevice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,12 +60,12 @@ export function ScannerDevicesView() {
       const res = await fetch('/api/scanner-devices');
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.error?.message || 'Erreur lors du chargement des dispositifs.');
+        setError(json.error?.message || t('loadDevicesError'));
         return;
       }
       setDevices(json.data || []);
     } catch {
-      setError('Impossible de se connecter au serveur.');
+      setError(t('serverConnectionError'));
     } finally {
       setLoading(false);
     }
@@ -85,14 +88,14 @@ export function ScannerDevicesView() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.error?.message || 'Erreur lors de l\'appairage.');
+        setError(json.error?.message || t('pairingError'));
         return;
       }
       setPairedSecret(json.data);
       setDeviceLabel('');
       await fetchDevices();
     } catch {
-      setError('Erreur réseau lors de l\'appairage.');
+      setError(t('pairingNetworkError'));
     } finally {
       setSubmitting(false);
     }
@@ -127,13 +130,13 @@ export function ScannerDevicesView() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.error?.message || 'Erreur lors du renommage.');
+        setError(json.error?.message || t('renameError'));
         return;
       }
       setRenaming(null);
       await fetchDevices();
     } catch {
-      setError('Erreur réseau.');
+      setError(t('serverConnectionError'));
     } finally {
       setSavingRename(false);
     }
@@ -149,12 +152,12 @@ export function ScannerDevicesView() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.error?.message || 'Erreur lors de la mise à jour.');
+        setError(json.error?.message || t('updateError'));
         return;
       }
       await fetchDevices();
     } catch {
-      setError('Erreur réseau.');
+      setError(t('serverConnectionError'));
     }
   };
 
@@ -165,9 +168,9 @@ export function ScannerDevicesView() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Dispositifs de Scan</h1>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('devicesTitle')}</h1>
           <p className="text-xs text-slate-500 mt-1">
-            Appairez les douchettes USB / scanners qui serviront au kiosque de présence.
+            {t('devicesSubtitle')}
           </p>
         </div>
 
@@ -179,7 +182,7 @@ export function ScannerDevicesView() {
             className="gap-2 h-9 text-xs rounded-xl text-slate-500"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            Actualiser
+            {tCommon('refresh')}
           </Button>
           <Button
             size="sm"
@@ -187,7 +190,7 @@ export function ScannerDevicesView() {
             className="gap-2 h-9 text-xs rounded-xl px-4 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold"
           >
             <Plus className="w-4 h-4" />
-            Appairer un dispositif
+            {t('pairDeviceBtn')}
           </Button>
         </div>
       </div>
@@ -203,10 +206,10 @@ export function ScannerDevicesView() {
       {/* Stat card */}
       <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between max-w-sm">
         <div className="space-y-1">
-          <p className="text-xs font-bold text-slate-400">Dispositifs actifs</p>
+          <p className="text-xs font-bold text-slate-400">{t('activeDevicesLabel')}</p>
           <p className="text-2xl font-extrabold text-[#16212B]">{activeCount}</p>
           <p className="text-[11px] font-bold text-[#2487B8]">
-            {devices.length > 0 ? `${devices.length} appairé${devices.length > 1 ? 's' : ''} au total` : 'Aucun dispositif'}
+            {devices.length > 0 ? t('pairedTotalCount', { count: devices.length }) : t('noDevicesLabel')}
           </p>
         </div>
         <div className="w-10 h-10 rounded-full bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center">
@@ -220,29 +223,29 @@ export function ScannerDevicesView() {
           <div className="p-12 text-center">
             <div className="inline-flex items-center gap-2 text-xs text-slate-400 font-semibold">
               <div className="w-4 h-4 border-2 border-slate-300 border-t-[#2487B8] rounded-full animate-spin" />
-              Chargement des dispositifs...
+              {t('loadingDevices')}
             </div>
           </div>
         ) : devices.length === 0 ? (
           <div className="p-6">
             <EmptyState
               icon={MonitorSmartphone}
-              title="Aucun dispositif appairé"
-              description="Appairez un scanner pour l'associer à une session de kiosque de présence."
-              actionLabel="+ Appairer un dispositif"
+              title={t('emptyDevicesTitle')}
+              description={t('emptyDevicesDesc')}
+              actionLabel={t('pairDeviceBtn')}
               onAction={() => setPairOpen(true)}
             />
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-start text-xs">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/50">
-                  <th className="py-3 px-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Dispositif</th>
-                  <th className="py-3 px-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Statut</th>
-                  <th className="py-3 px-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Appairé le</th>
-                  <th className="py-3 px-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Dernière activité</th>
-                  <th className="py-3 px-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-right">Actions</th>
+                  <th className="py-3 px-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-start">{t('colDevice')}</th>
+                  <th className="py-3 px-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-start">{t('colStatus')}</th>
+                  <th className="py-3 px-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-start">{t('colPairedAt')}</th>
+                  <th className="py-3 px-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-start">{t('colLastSeen')}</th>
+                  <th className="py-3 px-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-end">{t('colActions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -262,21 +265,21 @@ export function ScannerDevicesView() {
                     <td className="py-3.5 px-4">
                       {d.isDisabled ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-                          Désactivé
+                          {t('deviceStatusDisabled')}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                          <CheckCircle2 className="w-3 h-3" /> Actif
+                          <CheckCircle2 className="w-3 h-3" /> {t('deviceStatusActive')}
                         </span>
                       )}
                     </td>
                     <td className="py-3.5 px-4 text-slate-600 font-medium">
-                      {new Date(d.pairedAt).toLocaleString('fr-FR')}
+                      {new Date(d.pairedAt).toLocaleString()}
                     </td>
                     <td className="py-3.5 px-4 text-slate-600 font-medium">
-                      {d.lastSeenAt ? new Date(d.lastSeenAt).toLocaleString('fr-FR') : '—'}
+                      {d.lastSeenAt ? new Date(d.lastSeenAt).toLocaleString() : '—'}
                     </td>
-                    <td className="py-3.5 px-4 text-right">
+                    <td className="py-3.5 px-4 text-end">
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
                           variant="ghost"
@@ -286,7 +289,7 @@ export function ScannerDevicesView() {
                             setRenameValue(d.deviceLabel);
                           }}
                           className="h-8 w-8 p-0 text-slate-500 hover:text-[#2487B8] hover:bg-[#DCEBF4] rounded-lg"
-                          title="Renommer"
+                          title={t('renameDeviceBtn')}
                         >
                           <KeyRound className="w-3.5 h-3.5" />
                         </Button>
@@ -299,7 +302,7 @@ export function ScannerDevicesView() {
                               ? 'text-emerald-600 hover:bg-emerald-50'
                               : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
                           }`}
-                          title={d.isDisabled ? 'Réactiver' : 'Désactiver'}
+                          title={d.isDisabled ? t('enableDeviceBtn') : t('disableDeviceBtn')}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
@@ -321,9 +324,9 @@ export function ScannerDevicesView() {
           {pairedSecret ? (
             <>
               <DialogHeader>
-                <DialogTitle>Dispositif appairé</DialogTitle>
+                <DialogTitle>{t('devicePairedTitle')}</DialogTitle>
                 <DialogDescription>
-                  Copiez cette clé secrète maintenant — elle ne sera plus jamais affichée.
+                  {t('deviceSecretNotice')}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-3">
@@ -338,11 +341,11 @@ export function ScannerDevicesView() {
                     className="h-8 shrink-0 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg"
                   >
                     <Copy className="w-3.5 h-3.5" />
-                    {copied ? 'Copié' : 'Copier'}
+                    {copied ? t('copied') : t('copy')}
                   </Button>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  {pairedSecret.device.deviceLabel} — utilisez cette clé lors de la configuration du matériel.
+                  {t('pairedHardwareNotice', { device: pairedSecret.device.deviceLabel })}
                 </p>
               </div>
               <DialogFooter>
@@ -350,23 +353,23 @@ export function ScannerDevicesView() {
                   onClick={closePairDialog}
                   className="bg-[#2487B8] hover:bg-[#1B6C93] text-white rounded-xl text-xs font-bold h-10"
                 >
-                  Terminé
+                  {t('doneBtn')}
                 </Button>
               </DialogFooter>
             </>
           ) : (
             <form onSubmit={handlePair}>
               <DialogHeader>
-                <DialogTitle>Appairer un dispositif de scan</DialogTitle>
+                <DialogTitle>{t('pairDeviceModalTitle')}</DialogTitle>
                 <DialogDescription>
-                  Nommez le scanner (ex: Douchette Entrée B). Une clé secrète sera générée.
+                  {t('pairDeviceModalDesc')}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-1.5 mt-4">
-                <Label className="text-xs font-bold text-slate-700">Nom du dispositif <span className="text-rose-500">*</span></Label>
+                <Label className="text-xs font-bold text-slate-700">{t('deviceNameLabel')} <span className="text-rose-500">*</span></Label>
                 <Input
                   required
-                  placeholder="Ex: Douchette Entrée B"
+                  placeholder={t('deviceNamePlaceholder')}
                   value={deviceLabel}
                   onChange={e => setDeviceLabel(e.target.value)}
                   className="h-10 rounded-xl border-slate-200 bg-slate-50 text-xs focus:bg-white"
@@ -380,14 +383,14 @@ export function ScannerDevicesView() {
                   onClick={closePairDialog}
                   className="rounded-xl text-xs font-bold h-10"
                 >
-                  Annuler
+                  {tCommon('cancel')}
                 </Button>
                 <Button
                   type="submit"
                   disabled={submitting}
                   className="bg-[#2487B8] hover:bg-[#1B6C93] text-white rounded-xl text-xs font-bold h-10"
                 >
-                  {submitting ? 'Appairage...' : 'Appairer'}
+                  {submitting ? t('pairingText') : t('pairBtn')}
                 </Button>
               </DialogFooter>
             </form>
@@ -400,13 +403,13 @@ export function ScannerDevicesView() {
         <DialogContent>
           <form onSubmit={handleRename}>
             <DialogHeader>
-              <DialogTitle>Renommer le dispositif</DialogTitle>
+              <DialogTitle>{t('renameDeviceModalTitle')}</DialogTitle>
               <DialogDescription>
-                Mettez à jour le libellé de ce scanner.
+                {t('renameDeviceModalDesc')}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-1.5 mt-4">
-              <Label className="text-xs font-bold text-slate-700">Nom du dispositif</Label>
+              <Label className="text-xs font-bold text-slate-700">{t('deviceNameLabel')}</Label>
               <Input
                 required
                 value={renameValue}
@@ -422,14 +425,14 @@ export function ScannerDevicesView() {
                 onClick={() => setRenaming(null)}
                 className="rounded-xl text-xs font-bold h-10"
               >
-                Annuler
+                {tCommon('cancel')}
               </Button>
               <Button
                 type="submit"
                 disabled={savingRename}
                 className="bg-[#2487B8] hover:bg-[#1B6C93] text-white rounded-xl text-xs font-bold h-10"
               >
-                {savingRename ? 'Enregistrement...' : 'Enregistrer'}
+                {savingRename ? t('savingText') : tCommon('save')}
               </Button>
             </DialogFooter>
           </form>

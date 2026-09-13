@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -56,20 +57,6 @@ type AllocationRow = {
 
 type PreviewResult = { bedId: string; studentId: string; eligible: boolean; reasons: string[] };
 
-const STATE_LABELS: Record<string, string> = {
-  reserved: 'Réservé',
-  checked_in: 'Présent',
-  checked_out: 'Sorti',
-  cancelled: 'Annulé',
-};
-
-const DECISION_LABELS: Record<string, string> = {
-  approved: 'Approuvée',
-  denied: 'Refusée',
-  waitlisted: 'Liste d\'attente',
-  withdrawn: 'Retirée',
-};
-
 const emptyAppForm = {
   studentId: '',
   requestedStartDate: '',
@@ -88,6 +75,23 @@ const emptyAllocForm = {
 };
 
 export function AllocationWorkspaceView() {
+  const t = useTranslations('Hostel');
+  const tCommon = useTranslations('Common');
+
+  const STATE_LABELS: Record<string, string> = {
+    reserved: t('stateReserved'),
+    checked_in: t('stateCheckedIn'),
+    checked_out: t('stateCheckedOut'),
+    cancelled: t('stateCancelled'),
+  };
+
+  const DECISION_LABELS: Record<string, string> = {
+    approved: t('passApproved'),
+    denied: t('passDenied'),
+    waitlisted: t('decisionWaitlisted'),
+    withdrawn: t('decisionWithdrawn'),
+  };
+
   const [applications, setApplications] = useState<ApplicationRow[]>([]);
   const [allocations, setAllocations] = useState<AllocationRow[]>([]);
   const [students, setStudents] = useState<StudentRow[]>([]);
@@ -231,7 +235,7 @@ export function AllocationWorkspaceView() {
       const [studentId, bedId, startDate, endDate] = l.split('|').map(s => s.trim());
       return { studentId, bedId, startDate, endDate };
     }).filter(r => r.studentId && r.bedId && r.startDate && r.endDate);
-    if (rows.length === 0) { setError('Chaque ligne doit suivre: élève|lit|début|fin'); return; }
+    if (rows.length === 0) { setError(t('bulkLineFormatError')); return; }
     setBulkBusy(true);
     setError(null);
     const res = await api<PreviewResult[]>('/api/addons/hostel/allocations/bulk/preview', {
@@ -268,16 +272,16 @@ export function AllocationWorkspaceView() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#16212B]">Espace d&apos;affectations</h1>
-        <p className="text-sm text-slate-500">Demandes d&apos;internat, affectations aux lits et engagement en lot.</p>
+        <h1 className="text-2xl font-bold text-[#16212B]">{t('workspaceTitle')}</h1>
+        <p className="text-sm text-slate-500">{t('workspaceSubtitle')}</p>
       </div>
 
       {error && <p className="flex items-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error}</p>}
 
       <Tabs defaultValue="applications">
         <TabsList>
-          <TabsTrigger value="applications"><ClipboardList className="mr-2 h-4 w-4" /> Applications</TabsTrigger>
-          <TabsTrigger value="allocations"><BedDouble className="mr-2 h-4 w-4" /> Affectations</TabsTrigger>
+          <TabsTrigger value="applications"><ClipboardList className="mr-2 h-4 w-4" /> {t('tabApplications')}</TabsTrigger>
+          <TabsTrigger value="allocations"><BedDouble className="mr-2 h-4 w-4" /> {t('tabAllocations')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="applications" className="space-y-4">
@@ -286,22 +290,22 @@ export function AllocationWorkspaceView() {
               <Select value={appDecisionFilter} onValueChange={v => setAppDecisionFilter(v)}>
                 <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous les statuts</SelectItem>
-                  <SelectItem value="approved">Approuvées</SelectItem>
-                  <SelectItem value="denied">Refusées</SelectItem>
-                  <SelectItem value="waitlisted">Liste d&apos;attente</SelectItem>
+                  <SelectItem value="all">{t('filterAllDecisions')}</SelectItem>
+                  <SelectItem value="approved">{t('passApproved')}</SelectItem>
+                  <SelectItem value="denied">{t('passDenied')}</SelectItem>
+                  <SelectItem value="waitlisted">{t('decisionWaitlisted')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={() => { setAppForm(emptyAppForm); setAppModal(true); }}><Plus className="mr-2 h-4 w-4" /> Nouvelle demande</Button>
+            <Button onClick={() => { setAppForm(emptyAppForm); setAppModal(true); }}><Plus className="mr-2 h-4 w-4" /> {t('btnNewApplication')}</Button>
           </div>
 
           <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
             <div className="divide-y divide-slate-100">
               {loading ? (
-                <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Chargement…</div>
+                <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> {tCommon('loading')}</div>
               ) : applications.length === 0 ? (
-                <div className="p-10 text-center text-sm text-slate-500">Aucune demande d&apos;internat.</div>
+                <div className="p-10 text-center text-sm text-slate-500">{t('noApplicationsFound')}</div>
               ) : (
                 applications.map(app => (
                   <div key={app.id} className="flex flex-wrap items-center justify-between gap-4 p-4">
@@ -311,19 +315,19 @@ export function AllocationWorkspaceView() {
                         <p className="font-semibold text-[#16212B]">{app.studentName ?? app.studentId}</p>
                         <p className="text-xs text-slate-500">
                           {app.requestedStartDate} → {app.requestedEndDate}
-                          {app.guardianConsentStatus === 'approved' ? ' · consentement OK' : app.guardianConsentStatus === 'required' ? ' · consentement requis' : ''}
+                          {app.guardianConsentStatus === 'approved' ? ` · ${t('consentOkBadge')}` : app.guardianConsentStatus === 'required' ? ` · ${t('consentRequiredBadge')}` : ''}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge className={app.decision === 'approved' ? 'bg-[#D1F5E8] text-[#0b5c3a]' : app.decision === 'denied' ? 'bg-red-100 text-red-700' : app.decision ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}>
-                        {app.decision ? DECISION_LABELS[app.decision] ?? app.decision : 'En attente'}
+                        {app.decision ? DECISION_LABELS[app.decision] ?? app.decision : t('passPending')}
                       </Badge>
                       {!app.decision && (
                         <>
                           <Button size="sm" variant="outline" className="h-8 px-2 text-green-700" onClick={() => decideApplication(app.id, 'approved')}><CheckCircle2 className="h-4 w-4" /></Button>
                           <Button size="sm" variant="outline" className="h-8 px-2 text-red-700" onClick={() => decideApplication(app.id, 'denied')}><XCircle className="h-4 w-4" /></Button>
-                          <Button size="sm" variant="outline" className="h-8 px-2 text-amber-700" onClick={() => decideApplication(app.id, 'waitlisted')}>Attente</Button>
+                          <Button size="sm" variant="outline" className="h-8 px-2 text-amber-700" onClick={() => decideApplication(app.id, 'waitlisted')}>{t('decisionWaitlisted')}</Button>
                         </>
                       )}
                     </div>
@@ -339,24 +343,24 @@ export function AllocationWorkspaceView() {
             <Select value={allocStateFilter} onValueChange={v => setAllocStateFilter(v)}>
               <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les états</SelectItem>
-                <SelectItem value="reserved">Réservé</SelectItem>
-                <SelectItem value="checked_in">Présent</SelectItem>
-                <SelectItem value="checked_out">Sorti</SelectItem>
-                <SelectItem value="cancelled">Annulé</SelectItem>
+                <SelectItem value="all">{t('filterAllStates')}</SelectItem>
+                <SelectItem value="reserved">{t('stateReserved')}</SelectItem>
+                <SelectItem value="checked_in">{t('stateCheckedIn')}</SelectItem>
+                <SelectItem value="checked_out">{t('stateCheckedOut')}</SelectItem>
+                <SelectItem value="cancelled">{t('stateCancelled')}</SelectItem>
               </SelectContent>
             </Select>
             <Button onClick={() => { setAllocForm(emptyAllocForm); setPreview(null); setAllocModal(true); }}>
-              <Plus className="mr-2 h-4 w-4" /> Nouvelle affectation
+              <Plus className="mr-2 h-4 w-4" /> {t('btnNewAllocation')}
             </Button>
           </div>
 
           <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
             <div className="divide-y divide-slate-100">
               {loading ? (
-                <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Chargement…</div>
+                <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> {tCommon('loading')}</div>
               ) : allocations.length === 0 ? (
-                <div className="p-10 text-center text-sm text-slate-500">Aucune affectation.</div>
+                <div className="p-10 text-center text-sm text-slate-500">{t('noAllocationsFound')}</div>
               ) : (
                 allocations.map(row => (
                   <div key={row.id} className="flex flex-wrap items-center justify-between gap-4 p-4">
@@ -380,27 +384,27 @@ export function AllocationWorkspaceView() {
 
           <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
             <div className="border-b border-slate-100 p-4">
-              <h2 className="font-semibold text-[#16212B]">Affectation en lot</h2>
-              <p className="text-xs text-slate-500">Une ligne par affectation : élève|lit|date-début|date-fin</p>
+              <h2 className="font-semibold text-[#16212B]">{t('bulkAllocationTitle')}</h2>
+              <p className="text-xs text-slate-500">{t('bulkAllocationSubtitle')}</p>
             </div>
             <div className="space-y-3 p-4">
               <Textarea
                 value={bulkText}
                 onChange={e => setBulkText(e.target.value)}
                 rows={5}
-                placeholder="STU-123|BED-456|2026-09-01|2027-06-30"
+                placeholder={t('bulkPlaceholder')}
               />
               <div className="flex items-center gap-3">
                 <Button variant="outline" onClick={previewBulk} disabled={bulkBusy || !bulkText.trim()}>
-                  {bulkBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Prévisualiser
+                  {bulkBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} {t('btnPreviewBulk')}
                 </Button>
-                <Button onClick={commitBulk} disabled={bulkBusy || !bulkText.trim()}>Engager en lot</Button>
+                <Button onClick={commitBulk} disabled={bulkBusy || !bulkText.trim()}>{t('btnCommitBulk')}</Button>
               </div>
               {bulkPreview && (
                 <div className="space-y-1">
                   {bulkPreview.map((p, i) => (
                     <div key={i} className={`rounded-lg px-3 py-2 text-sm ${p.eligible ? 'bg-[#D1F5E8]/40 text-[#0b5c3a]' : 'bg-red-50 text-red-700'}`}>
-                      <span className="font-medium">{p.studentId}</span> → <span>{p.bedId}</span> : {p.eligible ? 'Éligible' : p.reasons.join(' ; ')}
+                      <span className="font-medium">{p.studentId}</span> → <span>{p.bedId}</span> : {p.eligible ? t('eligibleSuccess') : p.reasons.join(' ; ')}
                     </div>
                   ))}
                 </div>
@@ -412,15 +416,15 @@ export function AllocationWorkspaceView() {
 
       <Dialog open={appModal} onOpenChange={setAppModal}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Nouvelle demande d&apos;internat</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('dialogNewApplication')}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Élève *</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('student')} *</label>
               {studentsError ? (
-                <Input value={appForm.studentId} onChange={e => setAppForm({ ...appForm, studentId: e.target.value })} placeholder="ID de l'élève (rôle sans students.read)" />
+                <Input value={appForm.studentId} onChange={e => setAppForm({ ...appForm, studentId: e.target.value })} placeholder={t('studentIdFallback')} />
               ) : (
                 <Select value={appForm.studentId} onValueChange={v => setAppForm({ ...appForm, studentId: v })}>
-                  <SelectTrigger><SelectValue placeholder="Choisir un élève" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('selectStudentPlaceholder')} /></SelectTrigger>
                   <SelectContent>
                     {students.map(s => <SelectItem key={s.id} value={s.id}>{s.fullName}{s.matricule ? ` (${s.matricule})` : ''}</SelectItem>)}
                   </SelectContent>
@@ -429,36 +433,36 @@ export function AllocationWorkspaceView() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Début souhaité *</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('requestedStart')}</label>
                 <Input type="date" value={appForm.requestedStartDate} onChange={e => setAppForm({ ...appForm, requestedStartDate: e.target.value })} />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Fin souhaitée *</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('requestedEnd')}</label>
                 <Input type="date" value={appForm.requestedEndDate} onChange={e => setAppForm({ ...appForm, requestedEndDate: e.target.value })} />
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Consentement tuteur</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('guardianConsentStatus')}</label>
               <Select value={appForm.guardianConsentStatus} onValueChange={v => setAppForm({ ...appForm, guardianConsentStatus: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="not_required">Non requis</SelectItem>
-                  <SelectItem value="required">Requis</SelectItem>
-                  <SelectItem value="approved">Approuvé</SelectItem>
-                  <SelectItem value="denied">Refusé</SelectItem>
+                  <SelectItem value="not_required">{t('consentNotRequired')}</SelectItem>
+                  <SelectItem value="required">{t('consentPending')}</SelectItem>
+                  <SelectItem value="approved">{t('consentApproved')}</SelectItem>
+                  <SelectItem value="denied">{t('consentDenied')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Motif prioritaire</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('priorityReason')}</label>
               <Textarea value={appForm.priorityReason} onChange={e => setAppForm({ ...appForm, priorityReason: e.target.value })} rows={2} />
             </div>
             {error && <p className="flex items-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error}</p>}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAppModal(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setAppModal(false)}>{t('btnCancel')}</Button>
             <Button onClick={saveApplication} disabled={saving || !appForm.studentId || !appForm.requestedStartDate || !appForm.requestedEndDate}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Enregistrer
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} {t('btnSave')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -466,15 +470,15 @@ export function AllocationWorkspaceView() {
 
       <Dialog open={allocModal} onOpenChange={setAllocModal}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Nouvelle affectation</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('btnNewAllocation')}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Élève *</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('student')} *</label>
               {studentsError ? (
-                <Input value={allocForm.studentId} onChange={e => setAllocForm({ ...allocForm, studentId: e.target.value })} placeholder="ID de l'élève" />
+                <Input value={allocForm.studentId} onChange={e => setAllocForm({ ...allocForm, studentId: e.target.value })} placeholder={t('studentIdFallback')} />
               ) : (
                 <Select value={allocForm.studentId} onValueChange={v => setAllocForm({ ...allocForm, studentId: v })}>
-                  <SelectTrigger><SelectValue placeholder="Choisir un élève" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('selectStudentPlaceholder')} /></SelectTrigger>
                   <SelectContent>
                     {students.map(s => <SelectItem key={s.id} value={s.id}>{s.fullName}{s.matricule ? ` (${s.matricule})` : ''}</SelectItem>)}
                   </SelectContent>
@@ -482,9 +486,9 @@ export function AllocationWorkspaceView() {
               )}
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Lit *</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('bed')} *</label>
               <Select value={allocForm.bedId} onValueChange={v => setAllocForm({ ...allocForm, bedId: v })}>
-                <SelectTrigger><SelectValue placeholder="Choisir un lit" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('selectBedPlaceholder')} /></SelectTrigger>
                 <SelectContent>
                   {beds.map(b => {
                     const room = roomByBed.get(b.id);
@@ -495,34 +499,34 @@ export function AllocationWorkspaceView() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Début *</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('effectiveStartDate')}</label>
                 <Input type="date" value={allocForm.effectiveStartDate} onChange={e => setAllocForm({ ...allocForm, effectiveStartDate: e.target.value })} />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Fin *</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('effectiveEndDate')}</label>
                 <Input type="date" value={allocForm.effectiveEndDate} onChange={e => setAllocForm({ ...allocForm, effectiveEndDate: e.target.value })} />
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Notes</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('notes')}</label>
               <Input value={allocForm.notes} onChange={e => setAllocForm({ ...allocForm, notes: e.target.value })} />
             </div>
             <Button variant="outline" onClick={runPreview} disabled={previewing || !allocForm.studentId || !allocForm.bedId || !allocForm.effectiveStartDate || !allocForm.effectiveEndDate} className="w-full">
-              {previewing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Vérifier l&apos;éligibilité
+              {previewing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} {t('btnPreviewEligibility')}
             </Button>
             {preview && (
               <div className={`rounded-xl px-3 py-2 text-sm ${preview.eligible ? 'bg-[#D1F5E8]/40 text-[#0b5c3a]' : 'bg-red-50 text-red-700'}`}>
                 {preview.eligible
-                  ? 'Éligible — vous pouvez engager l\'affectation.'
+                  ? t('eligibleSuccess')
                   : preview.reasons.join(' ; ')}
               </div>
             )}
             {error && <p className="flex items-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error}</p>}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAllocModal(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setAllocModal(false)}>{t('btnCancel')}</Button>
             <Button onClick={commitAllocation} disabled={saving || !allocForm.studentId || !allocForm.bedId || !allocForm.effectiveStartDate || !allocForm.effectiveEndDate || (preview !== null && !preview.eligible)}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Engager
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} {t('btnCommit')}
             </Button>
           </DialogFooter>
         </DialogContent>

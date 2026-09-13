@@ -8,5 +8,10 @@ export default async function ReceptionistInquiriesPage({
 }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'reception.inquiry.manage' });
-  return <ReceptionInquiriesView />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <ReceptionInquiriesView />
+    </main>
+  );
 }

@@ -1,0 +1,2066 @@
+[
+  {
+    "filePath": "src/app/page.tsx",
+    "cleanRoute": "/",
+    "browserUrl": "http://localhost:3111/fr",
+    "component": "GlobalRootPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(alumni-portal)/alumni/directory/page.tsx",
+    "cleanRoute": "/alumni/directory",
+    "browserUrl": "http://localhost:3111/fr/alumni/directory",
+    "component": "AlumniDirectoryPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(alumni-portal)/alumni/events/page.tsx",
+    "cleanRoute": "/alumni/events",
+    "browserUrl": "http://localhost:3111/fr/alumni/events",
+    "component": "AlumniEventsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(alumni-portal)/alumni/mentoring/page.tsx",
+    "cleanRoute": "/alumni/mentoring",
+    "browserUrl": "http://localhost:3111/fr/alumni/mentoring",
+    "component": "AlumniMentoringPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(alumni-portal)/alumni/page.tsx",
+    "cleanRoute": "/alumni",
+    "browserUrl": "http://localhost:3111/fr/alumni",
+    "component": "AlumniHomePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(alumni-portal)/alumni/profile/page.tsx",
+    "cleanRoute": "/alumni/profile",
+    "browserUrl": "http://localhost:3111/fr/alumni/profile",
+    "component": "AlumniProfilePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(alumni-portal)/alumni/records/page.tsx",
+    "cleanRoute": "/alumni/records",
+    "browserUrl": "http://localhost:3111/fr/alumni/records",
+    "component": "AlumniRecordsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(alumni-portal)/alumni/requests/page.tsx",
+    "cleanRoute": "/alumni/requests",
+    "browserUrl": "http://localhost:3111/fr/alumni/requests",
+    "component": "AlumniRequestsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(auth)/invitations/[token]/page.tsx",
+    "cleanRoute": "/invitations/[token]",
+    "browserUrl": "http://localhost:3111/fr/invitations/demo-token",
+    "component": "AcceptInvitePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(auth)/login/page.tsx",
+    "cleanRoute": "/login",
+    "browserUrl": "http://localhost:3111/fr/login",
+    "component": "LoginPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(auth)/signup/page.tsx",
+    "cleanRoute": "/signup",
+    "browserUrl": "http://localhost:3111/fr/signup",
+    "component": "SignupPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/assessment/exam-master/page.tsx",
+    "cleanRoute": "/dashboard/academics/assessment/exam-master",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/assessment/exam-master",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/assessment/homework/page.tsx",
+    "cleanRoute": "/dashboard/academics/assessment/homework",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/assessment/homework",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/assessment/marksheet/page.tsx",
+    "cleanRoute": "/dashboard/academics/assessment/marksheet",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/assessment/marksheet",
+    "component": "MarksheetPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/assessment/online-exams/page.tsx",
+    "cleanRoute": "/dashboard/academics/assessment/online-exams",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/assessment/online-exams",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/assignments/page.tsx",
+    "cleanRoute": "/dashboard/academics/assignments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/assignments",
+    "component": "AssignmentsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/calendar/page.tsx",
+    "cleanRoute": "/dashboard/academics/calendar",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/calendar",
+    "component": "AcademicCalendarPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/class-section-teachers/page.tsx",
+    "cleanRoute": "/dashboard/academics/class-section-teachers",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/class-section-teachers",
+    "component": "ClassSectionTeachersPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/class-subjects/page.tsx",
+    "cleanRoute": "/dashboard/academics/class-subjects",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/class-subjects",
+    "component": "ClassSubjectsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/classes/page.tsx",
+    "cleanRoute": "/dashboard/academics/classes",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/classes",
+    "component": "ClassesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/classes/[id]/page.tsx",
+    "cleanRoute": "/dashboard/academics/classes/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/classes/1",
+    "component": "ClassDetailPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/conflicts/page.tsx",
+    "cleanRoute": "/dashboard/academics/conflicts",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/conflicts",
+    "component": "ScheduleConflictsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/evaluations/page.tsx",
+    "cleanRoute": "/dashboard/academics/evaluations",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/evaluations",
+    "component": "EvaluationsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/exams/page.tsx",
+    "cleanRoute": "/dashboard/academics/exams",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/exams",
+    "component": "ExamPlanningPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/grades/entry/page.tsx",
+    "cleanRoute": "/dashboard/academics/grades/entry",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/grades/entry",
+    "component": "GradeEntryPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/grading/policies/page.tsx",
+    "cleanRoute": "/dashboard/academics/grading/policies",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/grading/policies",
+    "component": "AssessmentPoliciesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/live-class/new/page.tsx",
+    "cleanRoute": "/dashboard/academics/live-class/new",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/live-class/new",
+    "component": "LiveClassCreatePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/live-class/page.tsx",
+    "cleanRoute": "/dashboard/academics/live-class",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/live-class",
+    "component": "LiveClassesManagementPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/live-class/[id]/page.tsx",
+    "cleanRoute": "/dashboard/academics/live-class/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/live-class/1",
+    "component": "LiveClassDetailPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/live-class-reports/page.tsx",
+    "cleanRoute": "/dashboard/academics/live-class-reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/live-class-reports",
+    "component": "LiveClassReportsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/mediums/page.tsx",
+    "cleanRoute": "/dashboard/academics/mediums",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/mediums",
+    "component": "MediumsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/optional-subjects/page.tsx",
+    "cleanRoute": "/dashboard/academics/optional-subjects",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/optional-subjects",
+    "component": "OptionalSubjectsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/page.tsx",
+    "cleanRoute": "/dashboard/academics",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics",
+    "component": "AcademicsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/promotions/page.tsx",
+    "cleanRoute": "/dashboard/academics/promotions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/promotions",
+    "component": "PromotionsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/question-bank/page.tsx",
+    "cleanRoute": "/dashboard/academics/question-bank",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/question-bank",
+    "component": "QuestionBankPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/readiness/page.tsx",
+    "cleanRoute": "/dashboard/academics/readiness",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/readiness",
+    "component": "ReadinessPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/results/page.tsx",
+    "cleanRoute": "/dashboard/academics/results",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/results",
+    "component": "ClassResultsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/rooms/page.tsx",
+    "cleanRoute": "/dashboard/academics/rooms",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/rooms",
+    "component": "RoomsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/schedule/page.tsx",
+    "cleanRoute": "/dashboard/academics/schedule",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/schedule",
+    "component": "SchedulePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/sections/page.tsx",
+    "cleanRoute": "/dashboard/academics/sections",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/sections",
+    "component": "SectionsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/semesters/page.tsx",
+    "cleanRoute": "/dashboard/academics/semesters",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/semesters",
+    "component": "SemestersPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/session-copy/page.tsx",
+    "cleanRoute": "/dashboard/academics/session-copy",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/session-copy",
+    "component": "SessionCopyPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/shifts/page.tsx",
+    "cleanRoute": "/dashboard/academics/shifts",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/shifts",
+    "component": "ShiftsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/streams/page.tsx",
+    "cleanRoute": "/dashboard/academics/streams",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/streams",
+    "component": "StreamsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/subjects/page.tsx",
+    "cleanRoute": "/dashboard/academics/subjects",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/subjects",
+    "component": "SubjectsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/syllabus/page.tsx",
+    "cleanRoute": "/dashboard/academics/syllabus",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/syllabus",
+    "component": "SyllabusPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/teacher-availability/page.tsx",
+    "cleanRoute": "/dashboard/academics/teacher-availability",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/teacher-availability",
+    "component": "TeacherAvailabilityPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/academics/teacher-schedule/page.tsx",
+    "cleanRoute": "/dashboard/academics/teacher-schedule",
+    "browserUrl": "http://localhost:3111/fr/dashboard/academics/teacher-schedule",
+    "component": "TeacherSchedulePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/accountant/page.tsx",
+    "cleanRoute": "/dashboard/accountant",
+    "browserUrl": "http://localhost:3111/fr/dashboard/accountant",
+    "component": "AccountantPortalPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/analytics/page.tsx",
+    "cleanRoute": "/dashboard/analytics",
+    "browserUrl": "http://localhost:3111/fr/dashboard/analytics",
+    "component": "AnalyticsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/attendance/audit/page.tsx",
+    "cleanRoute": "/dashboard/attendance/audit",
+    "browserUrl": "http://localhost:3111/fr/dashboard/attendance/audit",
+    "component": "AttendanceAuditPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/attendance/badges/page.tsx",
+    "cleanRoute": "/dashboard/attendance/badges",
+    "browserUrl": "http://localhost:3111/fr/dashboard/attendance/badges",
+    "component": "BadgesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/attendance/excuses/page.tsx",
+    "cleanRoute": "/dashboard/attendance/excuses",
+    "browserUrl": "http://localhost:3111/fr/dashboard/attendance/excuses",
+    "component": "AttendanceExcusesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/attendance/flags/page.tsx",
+    "cleanRoute": "/dashboard/attendance/flags",
+    "browserUrl": "http://localhost:3111/fr/dashboard/attendance/flags",
+    "component": "AttendanceFlagsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/attendance/flags/[id]/page.tsx",
+    "cleanRoute": "/dashboard/attendance/flags/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/attendance/flags/1",
+    "component": "AttendanceFlagDetailPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/attendance/page.tsx",
+    "cleanRoute": "/dashboard/attendance",
+    "browserUrl": "http://localhost:3111/fr/dashboard/attendance",
+    "component": "AttendancePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/attendance/qr-reports/page.tsx",
+    "cleanRoute": "/dashboard/attendance/qr-reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/attendance/qr-reports",
+    "component": "QrReportsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/attendance/scanner/page.tsx",
+    "cleanRoute": "/dashboard/attendance/scanner",
+    "browserUrl": "http://localhost:3111/fr/dashboard/attendance/scanner",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/broadcast/automations/page.tsx",
+    "cleanRoute": "/dashboard/broadcast/automations",
+    "browserUrl": "http://localhost:3111/fr/dashboard/broadcast/automations",
+    "component": "BroadcastAutomationsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/broadcast/campaigns/page.tsx",
+    "cleanRoute": "/dashboard/broadcast/campaigns",
+    "browserUrl": "http://localhost:3111/fr/dashboard/broadcast/campaigns",
+    "component": "BroadcastCampaignsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/broadcast/campaigns/[id]/page.tsx",
+    "cleanRoute": "/dashboard/broadcast/campaigns/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/broadcast/campaigns/1",
+    "component": "BroadcastCampaignDetailPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/broadcast/connections/page.tsx",
+    "cleanRoute": "/dashboard/broadcast/connections",
+    "browserUrl": "http://localhost:3111/fr/dashboard/broadcast/connections",
+    "component": "BroadcastConnectionsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/broadcast/page.tsx",
+    "cleanRoute": "/dashboard/broadcast",
+    "browserUrl": "http://localhost:3111/fr/dashboard/broadcast",
+    "component": "BroadcastPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/broadcast/reports/page.tsx",
+    "cleanRoute": "/dashboard/broadcast/reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/broadcast/reports",
+    "component": "BroadcastReportsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/broadcast/segments/page.tsx",
+    "cleanRoute": "/dashboard/broadcast/segments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/broadcast/segments",
+    "component": "BroadcastSegmentsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/broadcast/templates/page.tsx",
+    "cleanRoute": "/dashboard/broadcast/templates",
+    "browserUrl": "http://localhost:3111/fr/dashboard/broadcast/templates",
+    "component": "BroadcastTemplatesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/cards/admit-cards/page.tsx",
+    "cleanRoute": "/dashboard/cards/admit-cards",
+    "browserUrl": "http://localhost:3111/fr/dashboard/cards/admit-cards",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/cards/employees/page.tsx",
+    "cleanRoute": "/dashboard/cards/employees",
+    "browserUrl": "http://localhost:3111/fr/dashboard/cards/employees",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/cards/issued/page.tsx",
+    "cleanRoute": "/dashboard/cards/issued",
+    "browserUrl": "http://localhost:3111/fr/dashboard/cards/issued",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/cards/jobs/page.tsx",
+    "cleanRoute": "/dashboard/cards/jobs",
+    "browserUrl": "http://localhost:3111/fr/dashboard/cards/jobs",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/cards/page.tsx",
+    "cleanRoute": "/dashboard/cards",
+    "browserUrl": "http://localhost:3111/fr/dashboard/cards",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/cards/students/page.tsx",
+    "cleanRoute": "/dashboard/cards/students",
+    "browserUrl": "http://localhost:3111/fr/dashboard/cards/students",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/cards/templates/page.tsx",
+    "cleanRoute": "/dashboard/cards/templates",
+    "browserUrl": "http://localhost:3111/fr/dashboard/cards/templates",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/cards/templates/[id]/edit/page.tsx",
+    "cleanRoute": "/dashboard/cards/templates/[id]/edit",
+    "browserUrl": "http://localhost:3111/fr/dashboard/cards/templates/1/edit",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/definitions/page.tsx",
+    "cleanRoute": "/dashboard/certificates/definitions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/definitions",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/definitions/[id]/page.tsx",
+    "cleanRoute": "/dashboard/certificates/definitions/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/definitions/1",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/issue/employees/page.tsx",
+    "cleanRoute": "/dashboard/certificates/issue/employees",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/issue/employees",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/issue/students/page.tsx",
+    "cleanRoute": "/dashboard/certificates/issue/students",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/issue/students",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/issued/page.tsx",
+    "cleanRoute": "/dashboard/certificates/issued",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/issued",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/issued/[id]/page.tsx",
+    "cleanRoute": "/dashboard/certificates/issued/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/issued/1",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/jobs/page.tsx",
+    "cleanRoute": "/dashboard/certificates/jobs",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/jobs",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/page.tsx",
+    "cleanRoute": "/dashboard/certificates",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/requests/page.tsx",
+    "cleanRoute": "/dashboard/certificates/requests",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/requests",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/settings/page.tsx",
+    "cleanRoute": "/dashboard/certificates/settings",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/settings",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/templates/page.tsx",
+    "cleanRoute": "/dashboard/certificates/templates",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/templates",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/certificates/templates/[id]/edit/page.tsx",
+    "cleanRoute": "/dashboard/certificates/templates/[id]/edit",
+    "browserUrl": "http://localhost:3111/fr/dashboard/certificates/templates/1/edit",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/broadcast/page.tsx",
+    "cleanRoute": "/dashboard/communication/broadcast",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/broadcast",
+    "component": "BroadcastPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/campaign-composer/page.tsx",
+    "cleanRoute": "/dashboard/communication/campaign-composer",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/campaign-composer",
+    "component": "CampaignComposerPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/crm/page.tsx",
+    "cleanRoute": "/dashboard/communication/crm",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/crm",
+    "component": "CrmPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/delivery-reports/page.tsx",
+    "cleanRoute": "/dashboard/communication/delivery-reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/delivery-reports",
+    "component": "DeliveryReportsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/events/page.tsx",
+    "cleanRoute": "/dashboard/communication/events",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/events",
+    "component": "OldEventsCalendarPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/forms/page.tsx",
+    "cleanRoute": "/dashboard/communication/forms",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/forms",
+    "component": "FormIntakePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/leads/page.tsx",
+    "cleanRoute": "/dashboard/communication/leads",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/leads",
+    "component": "LeadPipelinePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/milestones/page.tsx",
+    "cleanRoute": "/dashboard/communication/milestones",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/milestones",
+    "component": "MilestoneTriggersPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/page.tsx",
+    "cleanRoute": "/dashboard/communication",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication",
+    "component": "CommunicationPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/reminders/page.tsx",
+    "cleanRoute": "/dashboard/communication/reminders",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/reminders",
+    "component": "SmsRemindersPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/segments/page.tsx",
+    "cleanRoute": "/dashboard/communication/segments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/segments",
+    "component": "AudienceSegmentsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/templates/page.tsx",
+    "cleanRoute": "/dashboard/communication/templates",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/templates",
+    "component": "SmsTemplatesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/communication/templates-automation/page.tsx",
+    "cleanRoute": "/dashboard/communication/templates-automation",
+    "browserUrl": "http://localhost:3111/fr/dashboard/communication/templates-automation",
+    "component": "TemplatesAutomationPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/content/library/page.tsx",
+    "cleanRoute": "/dashboard/content/library",
+    "browserUrl": "http://localhost:3111/fr/dashboard/content/library",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/content/types/page.tsx",
+    "cleanRoute": "/dashboard/content/types",
+    "browserUrl": "http://localhost:3111/fr/dashboard/content/types",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/documents/generator/page.tsx",
+    "cleanRoute": "/dashboard/documents/generator",
+    "browserUrl": "http://localhost:3111/fr/dashboard/documents/generator",
+    "component": "ReportCardGeneratorPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/events/page.tsx",
+    "cleanRoute": "/dashboard/events",
+    "browserUrl": "http://localhost:3111/fr/dashboard/events",
+    "component": "EventsCalendarPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/events/[id]/page.tsx",
+    "cleanRoute": "/dashboard/events/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/events/1",
+    "component": "EventDetailPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/accounts/page.tsx",
+    "cleanRoute": "/dashboard/finance/accounting/accounts",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/accounting/accounts",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/deposits/new/page.tsx",
+    "cleanRoute": "/dashboard/finance/accounting/deposits/new",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/accounting/deposits/new",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/expenses/page.tsx",
+    "cleanRoute": "/dashboard/finance/accounting/expenses",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/accounting/expenses",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/periods/page.tsx",
+    "cleanRoute": "/dashboard/finance/accounting/periods",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/accounting/periods",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/statements/page.tsx",
+    "cleanRoute": "/dashboard/finance/accounting/statements",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/accounting/statements",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/student-accounting/page.tsx",
+    "cleanRoute": "/dashboard/finance/accounting/student-accounting",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/accounting/student-accounting",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/transactions/page.tsx",
+    "cleanRoute": "/dashboard/finance/accounting/transactions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/accounting/transactions",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/voucher-types/page.tsx",
+    "cleanRoute": "/dashboard/finance/accounting/voucher-types",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/accounting/voucher-types",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/allocation/page.tsx",
+    "cleanRoute": "/dashboard/finance/allocation",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/allocation",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/allocations/page.tsx",
+    "cleanRoute": "/dashboard/finance/allocations",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/allocations",
+    "component": "FeeAllocationsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/approvals/page.tsx",
+    "cleanRoute": "/dashboard/finance/approvals",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/approvals",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/bank-reconciliation/page.tsx",
+    "cleanRoute": "/dashboard/finance/bank-reconciliation",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/bank-reconciliation",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/cashier-sessions/page.tsx",
+    "cleanRoute": "/dashboard/finance/cashier-sessions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/cashier-sessions",
+    "component": "CashierSessionsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/chart-of-accounts/page.tsx",
+    "cleanRoute": "/dashboard/finance/chart-of-accounts",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/chart-of-accounts",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/collection-desk/page.tsx",
+    "cleanRoute": "/dashboard/finance/collection-desk",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/collection-desk",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/credit-notes/page.tsx",
+    "cleanRoute": "/dashboard/finance/credit-notes",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/credit-notes",
+    "component": "CreditNotesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/expenses/new/page.tsx",
+    "cleanRoute": "/dashboard/finance/expenses/new",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/expenses/new",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/expenses/page.tsx",
+    "cleanRoute": "/dashboard/finance/expenses",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/expenses",
+    "component": "ExpensesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/fee-assignments/page.tsx",
+    "cleanRoute": "/dashboard/finance/fee-assignments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/fee-assignments",
+    "component": "FeeAssignmentsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/fee-structures/page.tsx",
+    "cleanRoute": "/dashboard/finance/fee-structures",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/fee-structures",
+    "component": "FeeStructuresPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/fee-types/page.tsx",
+    "cleanRoute": "/dashboard/finance/fee-types",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/fee-types",
+    "component": "FeeTypesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/fine-policies/page.tsx",
+    "cleanRoute": "/dashboard/finance/fine-policies",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/fine-policies",
+    "component": "FinePoliciesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/invoices/page.tsx",
+    "cleanRoute": "/dashboard/finance/invoices",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/invoices",
+    "component": "InvoicesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/invoices/[id]/page.tsx",
+    "cleanRoute": "/dashboard/finance/invoices/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/invoices/1",
+    "component": "InvoiceDetailPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/journal/page.tsx",
+    "cleanRoute": "/dashboard/finance/journal",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/journal",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/office-accounting/page.tsx",
+    "cleanRoute": "/dashboard/finance/office-accounting",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/office-accounting",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/online-payments/page.tsx",
+    "cleanRoute": "/dashboard/finance/online-payments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/online-payments",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/page.tsx",
+    "cleanRoute": "/dashboard/finance",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/payments/new/page.tsx",
+    "cleanRoute": "/dashboard/finance/payments/new",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/payments/new",
+    "component": "PaymentEntryPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/payments/page.tsx",
+    "cleanRoute": "/dashboard/finance/payments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/payments",
+    "component": "PaymentEntryPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/receipts/page.tsx",
+    "cleanRoute": "/dashboard/finance/receipts",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/receipts",
+    "component": "ReceiptsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/receivables/page.tsx",
+    "cleanRoute": "/dashboard/finance/receivables",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/receivables",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/reconciliation/page.tsx",
+    "cleanRoute": "/dashboard/finance/reconciliation",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/reconciliation",
+    "component": "ReconciliationPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/refunds/page.tsx",
+    "cleanRoute": "/dashboard/finance/refunds",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/refunds",
+    "component": "RefundsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/reminders/page.tsx",
+    "cleanRoute": "/dashboard/finance/reminders",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/reminders",
+    "component": "RemindersPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/reports/page.tsx",
+    "cleanRoute": "/dashboard/finance/reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/reports",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/finance/statements/page.tsx",
+    "cleanRoute": "/dashboard/finance/statements",
+    "browserUrl": "http://localhost:3111/fr/dashboard/finance/statements",
+    "component": "StatementsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/homework/page.tsx",
+    "cleanRoute": "/dashboard/homework",
+    "browserUrl": "http://localhost:3111/fr/dashboard/homework",
+    "component": "HomeworkPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/homework/submissions/page.tsx",
+    "cleanRoute": "/dashboard/homework/submissions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/homework/submissions",
+    "component": "HomeworkSubmissionsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/allocations/page.tsx",
+    "cleanRoute": "/dashboard/hostel/allocations",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/allocations",
+    "component": "HostelAllocationsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/allocations/[id]/page.tsx",
+    "cleanRoute": "/dashboard/hostel/allocations/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/allocations/1",
+    "component": "AllocationDetailPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/applications/page.tsx",
+    "cleanRoute": "/dashboard/hostel/applications",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/applications",
+    "component": "HostelApplicationsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/board/page.tsx",
+    "cleanRoute": "/dashboard/hostel/board",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/board",
+    "component": "BedBoardPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/categories/page.tsx",
+    "cleanRoute": "/dashboard/hostel/categories",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/categories",
+    "component": "CategoriesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/guardian/page.tsx",
+    "cleanRoute": "/dashboard/hostel/guardian",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/guardian",
+    "component": "GuardianMePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/hostels/page.tsx",
+    "cleanRoute": "/dashboard/hostel/hostels",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/hostels",
+    "component": "HostelsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/hostels/[id]/page.tsx",
+    "cleanRoute": "/dashboard/hostel/hostels/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/hostels/1",
+    "component": "HostelDetailPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/leave-passes/page.tsx",
+    "cleanRoute": "/dashboard/hostel/leave-passes",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/leave-passes",
+    "component": "LeavePassesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/me/page.tsx",
+    "cleanRoute": "/dashboard/hostel/me",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/me",
+    "component": "ResidentMePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/page.tsx",
+    "cleanRoute": "/dashboard/hostel",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel",
+    "component": "HostelDashboardPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/policies/page.tsx",
+    "cleanRoute": "/dashboard/hostel/policies",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/policies",
+    "component": "HostelPoliciesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/reports/page.tsx",
+    "cleanRoute": "/dashboard/hostel/reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/reports",
+    "component": "HostelReportsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/roll-call/page.tsx",
+    "cleanRoute": "/dashboard/hostel/roll-call",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/roll-call",
+    "component": "RollCallPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/rooms/page.tsx",
+    "cleanRoute": "/dashboard/hostel/rooms",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/rooms",
+    "component": "RoomsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hostel/zones/page.tsx",
+    "cleanRoute": "/dashboard/hostel/zones",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hostel/zones",
+    "component": "ZonesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/access/page.tsx",
+    "cleanRoute": "/dashboard/hr/access",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/access",
+    "component": "HrAccessPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/advances/page.tsx",
+    "cleanRoute": "/dashboard/hr/advances",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/advances",
+    "component": "HrAdvancesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/awards/page.tsx",
+    "cleanRoute": "/dashboard/hr/awards",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/awards",
+    "component": "AwardsRecognitionPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/departments/page.tsx",
+    "cleanRoute": "/dashboard/hr/departments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/departments",
+    "component": "HrDepartmentsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/designations/page.tsx",
+    "cleanRoute": "/dashboard/hr/designations",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/designations",
+    "component": "HrDesignationsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/employees/new/page.tsx",
+    "cleanRoute": "/dashboard/hr/employees/new",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/employees/new",
+    "component": "HrEmployeeNewPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/employees/page.tsx",
+    "cleanRoute": "/dashboard/hr/employees",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/employees",
+    "component": "HrEmployeesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/employees/[id]/page.tsx",
+    "cleanRoute": "/dashboard/hr/employees/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/employees/1",
+    "component": "HrEmployeeProfilePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/leave/page.tsx",
+    "cleanRoute": "/dashboard/hr/leave",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/leave",
+    "component": "HrLeavePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/leave-management/page.tsx",
+    "cleanRoute": "/dashboard/hr/leave-management",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/leave-management",
+    "component": "LeaveManagementPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/overview/page.tsx",
+    "cleanRoute": "/dashboard/hr/overview",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/overview",
+    "component": "HrOverviewPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/page.tsx",
+    "cleanRoute": "/dashboard/hr",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr",
+    "component": "HrPortalPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/salary-advances/page.tsx",
+    "cleanRoute": "/dashboard/hr/salary-advances",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/salary-advances",
+    "component": "SalaryAdvancesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/hr/self-service/page.tsx",
+    "cleanRoute": "/dashboard/hr/self-service",
+    "browserUrl": "http://localhost:3111/fr/dashboard/hr/self-service",
+    "component": "HrSelfServicePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/adjustments/page.tsx",
+    "cleanRoute": "/dashboard/inventory/adjustments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/adjustments",
+    "component": "InventoryAdjustmentsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/categories/page.tsx",
+    "cleanRoute": "/dashboard/inventory/categories",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/categories",
+    "component": "InventoryCategoriesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/issues/page.tsx",
+    "cleanRoute": "/dashboard/inventory/issues",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/issues",
+    "component": "InventoryIssuesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/overview/page.tsx",
+    "cleanRoute": "/dashboard/inventory/overview",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/overview",
+    "component": "InventoryOverviewPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/page.tsx",
+    "cleanRoute": "/dashboard/inventory",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory",
+    "component": "InventoryRootPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/products/page.tsx",
+    "cleanRoute": "/dashboard/inventory/products",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/products",
+    "component": "InventoryProductsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/purchases/page.tsx",
+    "cleanRoute": "/dashboard/inventory/purchases",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/purchases",
+    "component": "InventoryPurchasesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/sales/page.tsx",
+    "cleanRoute": "/dashboard/inventory/sales",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/sales",
+    "component": "InventorySalesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/stock/page.tsx",
+    "cleanRoute": "/dashboard/inventory/stock",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/stock",
+    "component": "InventoryStockPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/stores/page.tsx",
+    "cleanRoute": "/dashboard/inventory/stores",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/stores",
+    "component": "InventoryStoresPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/suppliers/page.tsx",
+    "cleanRoute": "/dashboard/inventory/suppliers",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/suppliers",
+    "component": "InventorySuppliersPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/transfers/page.tsx",
+    "cleanRoute": "/dashboard/inventory/transfers",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/transfers",
+    "component": "InventoryTransfersPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/inventory/units/page.tsx",
+    "cleanRoute": "/dashboard/inventory/units",
+    "browserUrl": "http://localhost:3111/fr/dashboard/inventory/units",
+    "component": "InventoryUnitsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/library/catalog/page.tsx",
+    "cleanRoute": "/dashboard/library/catalog",
+    "browserUrl": "http://localhost:3111/fr/dashboard/library/catalog",
+    "component": "LibraryCatalogPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/library/catalog/[id]/page.tsx",
+    "cleanRoute": "/dashboard/library/catalog/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/library/catalog/1",
+    "component": "LibraryCatalogDetailPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/library/categories/page.tsx",
+    "cleanRoute": "/dashboard/library/categories",
+    "browserUrl": "http://localhost:3111/fr/dashboard/library/categories",
+    "component": "LibraryTaxonomyPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/library/me/page.tsx",
+    "cleanRoute": "/dashboard/library/me",
+    "browserUrl": "http://localhost:3111/fr/dashboard/library/me",
+    "component": "LibrarySelfServicePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/library/page.tsx",
+    "cleanRoute": "/dashboard/library",
+    "browserUrl": "http://localhost:3111/fr/dashboard/library",
+    "component": "LibraryPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/page.tsx",
+    "cleanRoute": "/dashboard",
+    "browserUrl": "http://localhost:3111/fr/dashboard",
+    "component": "DashboardPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/parent/attendance/page.tsx",
+    "cleanRoute": "/dashboard/parent/attendance",
+    "browserUrl": "http://localhost:3111/fr/dashboard/parent/attendance",
+    "component": "ParentAttendancePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/parent/communication/page.tsx",
+    "cleanRoute": "/dashboard/parent/communication",
+    "browserUrl": "http://localhost:3111/fr/dashboard/parent/communication",
+    "component": "ParentCommunicationPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/parent/finance/page.tsx",
+    "cleanRoute": "/dashboard/parent/finance",
+    "browserUrl": "http://localhost:3111/fr/dashboard/parent/finance",
+    "component": "ParentFinancePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/parent/live-classes/page.tsx",
+    "cleanRoute": "/dashboard/parent/live-classes",
+    "browserUrl": "http://localhost:3111/fr/dashboard/parent/live-classes",
+    "component": "ParentLiveClassesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/parent/page.tsx",
+    "cleanRoute": "/dashboard/parent",
+    "browserUrl": "http://localhost:3111/fr/dashboard/parent",
+    "component": "ParentPortalPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/parent/requests/page.tsx",
+    "cleanRoute": "/dashboard/parent/requests",
+    "browserUrl": "http://localhost:3111/fr/dashboard/parent/requests",
+    "component": "ParentRequestsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/parent/settings/page.tsx",
+    "cleanRoute": "/dashboard/parent/settings",
+    "browserUrl": "http://localhost:3111/fr/dashboard/parent/settings",
+    "component": "ParentSettingsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/guard/config/page.tsx",
+    "cleanRoute": "/dashboard/portals/guard/config",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/guard/config",
+    "component": "GuardConfigPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/guard/emergency/page.tsx",
+    "cleanRoute": "/dashboard/portals/guard/emergency",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/guard/emergency",
+    "component": "GuardEmergencyPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/guard/incidents/page.tsx",
+    "cleanRoute": "/dashboard/portals/guard/incidents",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/guard/incidents",
+    "component": "GuardIncidentsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/guard/page.tsx",
+    "cleanRoute": "/dashboard/portals/guard",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/guard",
+    "component": "GuardPortalPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/guard/pickups/page.tsx",
+    "cleanRoute": "/dashboard/portals/guard/pickups",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/guard/pickups",
+    "component": "GuardPickupsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/guard/scanner/page.tsx",
+    "cleanRoute": "/dashboard/portals/guard/scanner",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/guard/scanner",
+    "component": "GuardScannerPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/guard/visitors/page.tsx",
+    "cleanRoute": "/dashboard/portals/guard/visitors",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/guard/visitors",
+    "component": "GuardVisitorsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/leadership/admin/page.tsx",
+    "cleanRoute": "/dashboard/portals/leadership/admin",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/leadership/admin",
+    "component": "LeadershipAdminPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/leadership/approvals/page.tsx",
+    "cleanRoute": "/dashboard/portals/leadership/approvals",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/leadership/approvals",
+    "component": "LeadershipApprovalsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/leadership/exceptions/page.tsx",
+    "cleanRoute": "/dashboard/portals/leadership/exceptions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/leadership/exceptions",
+    "component": "LeadershipExceptionsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/leadership/page.tsx",
+    "cleanRoute": "/dashboard/portals/leadership",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/leadership",
+    "component": "LeadershipPortalPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/charges/page.tsx",
+    "cleanRoute": "/dashboard/portals/librarian/charges",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/charges",
+    "component": "LibrarianChargesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/copies/page.tsx",
+    "cleanRoute": "/dashboard/portals/librarian/copies",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/copies",
+    "component": "LibrarianCopiesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/desk/page.tsx",
+    "cleanRoute": "/dashboard/portals/librarian/desk",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/desk",
+    "component": "LibrarianDeskPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/holds/page.tsx",
+    "cleanRoute": "/dashboard/portals/librarian/holds",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/holds",
+    "component": "LibrarianHoldsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/members/page.tsx",
+    "cleanRoute": "/dashboard/portals/librarian/members",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/members",
+    "component": "LibrarianMembersPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/members/[id]/page.tsx",
+    "cleanRoute": "/dashboard/portals/librarian/members/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/members/1",
+    "component": "LibrarianMemberDetailPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/page.tsx",
+    "cleanRoute": "/dashboard/portals/librarian",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian",
+    "component": "LibrarianPortalPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/policies/page.tsx",
+    "cleanRoute": "/dashboard/portals/librarian/policies",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/policies",
+    "component": "LibrarianPoliciesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/reports/page.tsx",
+    "cleanRoute": "/dashboard/portals/librarian/reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/reports",
+    "component": "LibrarianReportsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/stocktake/page.tsx",
+    "cleanRoute": "/dashboard/portals/librarian/stocktake",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/stocktake",
+    "component": "LibrarianStocktakePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/transfers/page.tsx",
+    "cleanRoute": "/dashboard/portals/librarian/transfers",
+    "browserUrl": "http://localhost:3111/fr/dashboard/portals/librarian/transfers",
+    "component": "LibrarianTransfersPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/receptionist/appointments/page.tsx",
+    "cleanRoute": "/dashboard/receptionist/appointments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/receptionist/appointments",
+    "component": "ReceptionistAppointmentsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/receptionist/handoffs/page.tsx",
+    "cleanRoute": "/dashboard/receptionist/handoffs",
+    "browserUrl": "http://localhost:3111/fr/dashboard/receptionist/handoffs",
+    "component": "ReceptionistHandoffsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/receptionist/inquiries/page.tsx",
+    "cleanRoute": "/dashboard/receptionist/inquiries",
+    "browserUrl": "http://localhost:3111/fr/dashboard/receptionist/inquiries",
+    "component": "ReceptionistInquiriesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/receptionist/page.tsx",
+    "cleanRoute": "/dashboard/receptionist",
+    "browserUrl": "http://localhost:3111/fr/dashboard/receptionist",
+    "component": "ReceptionistHomePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/receptionist/pickups/page.tsx",
+    "cleanRoute": "/dashboard/receptionist/pickups",
+    "browserUrl": "http://localhost:3111/fr/dashboard/receptionist/pickups",
+    "component": "ReceptionistPickupsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/receptionist/visitors/page.tsx",
+    "cleanRoute": "/dashboard/receptionist/visitors",
+    "browserUrl": "http://localhost:3111/fr/dashboard/receptionist/visitors",
+    "component": "ReceptionistVisitorsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/reports/admin/page.tsx",
+    "cleanRoute": "/dashboard/reports/admin",
+    "browserUrl": "http://localhost:3111/fr/dashboard/reports/admin",
+    "component": "ReportingAdminPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/reports/page.tsx",
+    "cleanRoute": "/dashboard/reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/reports",
+    "component": "ReportsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/reports/runs/page.tsx",
+    "cleanRoute": "/dashboard/reports/runs",
+    "browserUrl": "http://localhost:3111/fr/dashboard/reports/runs",
+    "component": "MyRunsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/reports/schedules/page.tsx",
+    "cleanRoute": "/dashboard/reports/schedules",
+    "browserUrl": "http://localhost:3111/fr/dashboard/reports/schedules",
+    "component": "SchedulesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/reports/[key]/page.tsx",
+    "cleanRoute": "/dashboard/reports/[key]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/reports/student.credentials",
+    "component": "ReportPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/access-reset/page.tsx",
+    "cleanRoute": "/dashboard/settings/access-reset",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/access-reset",
+    "component": "AccessResetPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/accounting-defaults/page.tsx",
+    "cleanRoute": "/dashboard/settings/accounting-defaults",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/accounting-defaults",
+    "component": "AccountingDefaultsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/attendance/page.tsx",
+    "cleanRoute": "/dashboard/settings/attendance",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/attendance",
+    "component": "AttendanceSettingsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/audit-logs/page.tsx",
+    "cleanRoute": "/dashboard/settings/audit-logs",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/audit-logs",
+    "component": "AuditLogsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/branches/page.tsx",
+    "cleanRoute": "/dashboard/settings/branches",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/branches",
+    "component": "SettingsBranchesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/cndp/page.tsx",
+    "cleanRoute": "/dashboard/settings/cndp",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/cndp",
+    "component": "CndpSettingsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/custom-fields/page.tsx",
+    "cleanRoute": "/dashboard/settings/custom-fields",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/custom-fields",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/domain/page.tsx",
+    "cleanRoute": "/dashboard/settings/domain",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/domain",
+    "component": "SchoolAdminDomainsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/drafts/page.tsx",
+    "cleanRoute": "/dashboard/settings/drafts",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/drafts",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/entitlements/page.tsx",
+    "cleanRoute": "/dashboard/settings/entitlements",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/entitlements",
+    "component": "EntitlementsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/exports/page.tsx",
+    "cleanRoute": "/dashboard/settings/exports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/exports",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/jobs/page.tsx",
+    "cleanRoute": "/dashboard/settings/jobs",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/jobs",
+    "component": "JobsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/live-classrooms/page.tsx",
+    "cleanRoute": "/dashboard/settings/live-classrooms",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/live-classrooms",
+    "component": "LiveClassroomsSettingsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/migration/page.tsx",
+    "cleanRoute": "/dashboard/settings/migration",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/migration",
+    "component": "MigrationReadinessPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/notifications/page.tsx",
+    "cleanRoute": "/dashboard/settings/notifications",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/notifications",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/numbering/page.tsx",
+    "cleanRoute": "/dashboard/settings/numbering",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/numbering",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/onboarding/page.tsx",
+    "cleanRoute": "/dashboard/settings/onboarding",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/onboarding",
+    "component": "SchoolOnboardingPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/page.tsx",
+    "cleanRoute": "/dashboard/settings",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings",
+    "component": "SettingsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/payment-methods/page.tsx",
+    "cleanRoute": "/dashboard/settings/payment-methods",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/payment-methods",
+    "component": "PaymentMethodsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/permissions/page.tsx",
+    "cleanRoute": "/dashboard/settings/permissions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/permissions",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/policies/page.tsx",
+    "cleanRoute": "/dashboard/settings/policies",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/policies",
+    "component": "PoliciesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/providers/page.tsx",
+    "cleanRoute": "/dashboard/settings/providers",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/providers",
+    "component": "ProvidersPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/scanner-devices/page.tsx",
+    "cleanRoute": "/dashboard/settings/scanner-devices",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/scanner-devices",
+    "component": "ScannerDevicesSettingsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/scheduled-jobs/page.tsx",
+    "cleanRoute": "/dashboard/settings/scheduled-jobs",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/scheduled-jobs",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/security/2fa/page.tsx",
+    "cleanRoute": "/dashboard/settings/security/2fa",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/security/2fa",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/security/login-events/page.tsx",
+    "cleanRoute": "/dashboard/settings/security/login-events",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/security/login-events",
+    "component": "LoginEventsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/security/page.tsx",
+    "cleanRoute": "/dashboard/settings/security",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/security",
+    "component": "SecurityPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/staff/page.tsx",
+    "cleanRoute": "/dashboard/settings/staff",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/staff",
+    "component": "StaffManagementPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/subscription/page.tsx",
+    "cleanRoute": "/dashboard/settings/subscription",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/subscription",
+    "component": "SubscriptionPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/translations/page.tsx",
+    "cleanRoute": "/dashboard/settings/translations",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/translations",
+    "component": "TranslationsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/users/page.tsx",
+    "cleanRoute": "/dashboard/settings/users",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/users",
+    "component": "UsersPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/values/page.tsx",
+    "cleanRoute": "/dashboard/settings/values",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/values",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/website/menu/page.tsx",
+    "cleanRoute": "/dashboard/settings/website/menu",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/website/menu",
+    "component": "WebsiteMenuSettingsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/website/news/page.tsx",
+    "cleanRoute": "/dashboard/settings/website/news",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/website/news",
+    "component": "WebsiteNewsSettingsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/website/page.tsx",
+    "cleanRoute": "/dashboard/settings/website",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/website",
+    "component": "WebsiteThemeSettingsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/settings/website/pages/page.tsx",
+    "cleanRoute": "/dashboard/settings/website/pages",
+    "browserUrl": "http://localhost:3111/fr/dashboard/settings/website/pages",
+    "component": "WebsitePagesSettingsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/student/live-classes/page.tsx",
+    "cleanRoute": "/dashboard/student/live-classes",
+    "browserUrl": "http://localhost:3111/fr/dashboard/student/live-classes",
+    "component": "StudentLiveClassesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/student/page.tsx",
+    "cleanRoute": "/dashboard/student",
+    "browserUrl": "http://localhost:3111/fr/dashboard/student",
+    "component": "StudentPortalPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/add/page.tsx",
+    "cleanRoute": "/dashboard/students/add",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/add",
+    "component": "AddStudentPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/admissions/new/page.tsx",
+    "cleanRoute": "/dashboard/students/admissions/new",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/admissions/new",
+    "component": "AdmissionNewPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/admissions/page.tsx",
+    "cleanRoute": "/dashboard/students/admissions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/admissions",
+    "component": "AdmissionRequestsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/alumni/events/page.tsx",
+    "cleanRoute": "/dashboard/students/alumni/events",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/alumni/events",
+    "component": "AlumniEventsAdminPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/alumni/page.tsx",
+    "cleanRoute": "/dashboard/students/alumni",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/alumni",
+    "component": "AlumniAdminPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/alumni/requests/page.tsx",
+    "cleanRoute": "/dashboard/students/alumni/requests",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/alumni/requests",
+    "component": "AlumniRequestsAdminPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/alumni-transition/page.tsx",
+    "cleanRoute": "/dashboard/students/alumni-transition",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/alumni-transition",
+    "component": "AlumniTransitionPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/import/page.tsx",
+    "cleanRoute": "/dashboard/students/import",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/import",
+    "component": "StudentImportPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/matricules/page.tsx",
+    "cleanRoute": "/dashboard/students/matricules",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/matricules",
+    "component": "MatriculesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/page.tsx",
+    "cleanRoute": "/dashboard/students",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students",
+    "component": "StudentDirectoryPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/parents/page.tsx",
+    "cleanRoute": "/dashboard/students/parents",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/parents",
+    "component": "ParentsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/parents/[id]/page.tsx",
+    "cleanRoute": "/dashboard/students/parents/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/parents/1",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/photos/page.tsx",
+    "cleanRoute": "/dashboard/students/photos",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/photos",
+    "component": "PhotosPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/promotions/page.tsx",
+    "cleanRoute": "/dashboard/students/promotions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/promotions",
+    "component": "PromotionsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/transfers/page.tsx",
+    "cleanRoute": "/dashboard/students/transfers",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/transfers",
+    "component": "TransfersPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/students/[id]/page.tsx",
+    "cleanRoute": "/dashboard/students/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/students/1",
+    "component": "StudentProfilePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/domains/page.tsx",
+    "cleanRoute": "/dashboard/super-admin/domains",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/domains",
+    "component": "SuperAdminDomainsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/page.tsx",
+    "cleanRoute": "/dashboard/super-admin",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin",
+    "component": "SuperAdminDashboardPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/reports/page.tsx",
+    "cleanRoute": "/dashboard/super-admin/reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/reports",
+    "component": "SuperAdminReportsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/schools/create/page.tsx",
+    "cleanRoute": "/dashboard/super-admin/schools/create",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/schools/create",
+    "component": "SuperAdminSchoolsCreatePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/schools/page.tsx",
+    "cleanRoute": "/dashboard/super-admin/schools",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/schools",
+    "component": "SuperAdminSchoolsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/schools/[id]/page.tsx",
+    "cleanRoute": "/dashboard/super-admin/schools/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/schools/af418686-2aff-4e47-a944-e4284f2f4c33",
+    "component": "SuperAdminSchoolDetailPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/settings/page.tsx",
+    "cleanRoute": "/dashboard/super-admin/settings",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/settings",
+    "component": "SuperAdminSettingsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/sms/page.tsx",
+    "cleanRoute": "/dashboard/super-admin/sms",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/sms",
+    "component": "SuperAdminSmsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/subscriptions/list/page.tsx",
+    "cleanRoute": "/dashboard/super-admin/subscriptions/list",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/subscriptions/list",
+    "component": "SuperAdminSubscriptionsListPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/subscriptions/page.tsx",
+    "cleanRoute": "/dashboard/super-admin/subscriptions",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/subscriptions",
+    "component": "SuperAdminSubscriptionsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/support/page.tsx",
+    "cleanRoute": "/dashboard/super-admin/support",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/support",
+    "component": "SuperAdminSupportPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/super-admin/waitlist/page.tsx",
+    "cleanRoute": "/dashboard/super-admin/waitlist",
+    "browserUrl": "http://localhost:3111/fr/dashboard/super-admin/waitlist",
+    "component": "SuperAdminWaitlistPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/teacher/page.tsx",
+    "cleanRoute": "/dashboard/teacher",
+    "browserUrl": "http://localhost:3111/fr/dashboard/teacher",
+    "component": "TeacherPortalPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/teachers/bulk-import/page.tsx",
+    "cleanRoute": "/dashboard/teachers/bulk-import",
+    "browserUrl": "http://localhost:3111/fr/dashboard/teachers/bulk-import",
+    "component": "TeachersBulkImportPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/teachers/manage/page.tsx",
+    "cleanRoute": "/dashboard/teachers/manage",
+    "browserUrl": "http://localhost:3111/fr/dashboard/teachers/manage",
+    "component": "TeachersManagePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/teachers/page.tsx",
+    "cleanRoute": "/dashboard/teachers",
+    "browserUrl": "http://localhost:3111/fr/dashboard/teachers",
+    "component": "TeachersPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/teachers/[id]/page.tsx",
+    "cleanRoute": "/dashboard/teachers/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/teachers/1",
+    "component": "TeacherProfilePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/allocations/page.tsx",
+    "cleanRoute": "/dashboard/transport/allocations",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/allocations",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/boarding/page.tsx",
+    "cleanRoute": "/dashboard/transport/boarding",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/boarding",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/drivers/page.tsx",
+    "cleanRoute": "/dashboard/transport/drivers",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/drivers",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/guardian/page.tsx",
+    "cleanRoute": "/dashboard/transport/guardian",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/guardian",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/incidents/page.tsx",
+    "cleanRoute": "/dashboard/transport/incidents",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/incidents",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/page.tsx",
+    "cleanRoute": "/dashboard/transport",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport",
+    "component": "TransportOverviewPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/policies/page.tsx",
+    "cleanRoute": "/dashboard/transport/policies",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/policies",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/reports/page.tsx",
+    "cleanRoute": "/dashboard/transport/reports",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/reports",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/routes/page.tsx",
+    "cleanRoute": "/dashboard/transport/routes",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/routes",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/stops/page.tsx",
+    "cleanRoute": "/dashboard/transport/stops",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/stops",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/student/page.tsx",
+    "cleanRoute": "/dashboard/transport/student",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/student",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/trips/page.tsx",
+    "cleanRoute": "/dashboard/transport/trips",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/trips",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/transport/vehicles/page.tsx",
+    "cleanRoute": "/dashboard/transport/vehicles",
+    "browserUrl": "http://localhost:3111/fr/dashboard/transport/vehicles",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/advances/page.tsx",
+    "cleanRoute": "/dashboard/workforce/advances",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/advances",
+    "component": "WorkforceSalaryAdvancesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/awards/page.tsx",
+    "cleanRoute": "/dashboard/workforce/awards",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/awards",
+    "component": "WorkforceAwardsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/leave/page.tsx",
+    "cleanRoute": "/dashboard/workforce/leave",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/leave",
+    "component": "WorkforceLeavePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/page.tsx",
+    "cleanRoute": "/dashboard/workforce",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/adjustments/page.tsx",
+    "cleanRoute": "/dashboard/workforce/payroll/adjustments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/adjustments",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/assignments/page.tsx",
+    "cleanRoute": "/dashboard/workforce/payroll/assignments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/assignments",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/components/page.tsx",
+    "cleanRoute": "/dashboard/workforce/payroll/components",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/components",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/payments/page.tsx",
+    "cleanRoute": "/dashboard/workforce/payroll/payments",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/payments",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/payslips/page.tsx",
+    "cleanRoute": "/dashboard/workforce/payroll/payslips",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/payslips",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/regulations/page.tsx",
+    "cleanRoute": "/dashboard/workforce/payroll/regulations",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/regulations",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/runs/page.tsx",
+    "cleanRoute": "/dashboard/workforce/payroll/runs",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/runs",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/runs/[id]/page.tsx",
+    "cleanRoute": "/dashboard/workforce/payroll/runs/[id]",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/runs/1",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/settings/page.tsx",
+    "cleanRoute": "/dashboard/workforce/payroll/settings",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/settings",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/structures/page.tsx",
+    "cleanRoute": "/dashboard/workforce/payroll/structures",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/payroll/structures",
+    "component": "Page"
+  },
+  {
+    "filePath": "src/app/[locale]/(dashboard)/dashboard/workforce/timeclock/page.tsx",
+    "cleanRoute": "/dashboard/workforce/timeclock",
+    "browserUrl": "http://localhost:3111/fr/dashboard/workforce/timeclock",
+    "component": "TimeClockPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(marketing)/page.tsx",
+    "cleanRoute": "/",
+    "browserUrl": "http://localhost:3111/fr",
+    "component": "MarketingPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(school-site)/[tenantSlug]/about/page.tsx",
+    "cleanRoute": "/[tenantSlug]/about",
+    "browserUrl": "http://localhost:3111/fr/atlas-academy/about",
+    "component": "SchoolAboutPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(school-site)/[tenantSlug]/contact/page.tsx",
+    "cleanRoute": "/[tenantSlug]/contact",
+    "browserUrl": "http://localhost:3111/fr/atlas-academy/contact",
+    "component": "SchoolContactPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(school-site)/[tenantSlug]/events/page.tsx",
+    "cleanRoute": "/[tenantSlug]/events",
+    "browserUrl": "http://localhost:3111/fr/atlas-academy/events",
+    "component": "SchoolEventsPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(school-site)/[tenantSlug]/faq/page.tsx",
+    "cleanRoute": "/[tenantSlug]/faq",
+    "browserUrl": "http://localhost:3111/fr/atlas-academy/faq",
+    "component": "SchoolFaqPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(school-site)/[tenantSlug]/gallery/page.tsx",
+    "cleanRoute": "/[tenantSlug]/gallery",
+    "browserUrl": "http://localhost:3111/fr/atlas-academy/gallery",
+    "component": "SchoolGalleryPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(school-site)/[tenantSlug]/news/page.tsx",
+    "cleanRoute": "/[tenantSlug]/news",
+    "browserUrl": "http://localhost:3111/fr/atlas-academy/news",
+    "component": "SchoolNewsListPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(school-site)/[tenantSlug]/news/[slug]/page.tsx",
+    "cleanRoute": "/[tenantSlug]/news/[slug]",
+    "browserUrl": "http://localhost:3111/fr/atlas-academy/news/rentree-scolaire-2026",
+    "component": "SchoolNewsDetailPage"
+  },
+  {
+    "filePath": "src/app/[locale]/(school-site)/[tenantSlug]/page.tsx",
+    "cleanRoute": "/[tenantSlug]",
+    "browserUrl": "http://localhost:3111/fr/atlas-academy",
+    "component": "SchoolHomePage"
+  },
+  {
+    "filePath": "src/app/[locale]/(school-site)/[tenantSlug]/services/page.tsx",
+    "cleanRoute": "/[tenantSlug]/services",
+    "browserUrl": "http://localhost:3111/fr/atlas-academy/services",
+    "component": "SchoolServicesPage"
+  },
+  {
+    "filePath": "src/app/[locale]/verify/card/[token]/page.tsx",
+    "cleanRoute": "/verify/card/[token]",
+    "browserUrl": "http://localhost:3111/fr/verify/card/demo-token",
+    "component": "VerifyCardPage"
+  },
+  {
+    "filePath": "src/app/[locale]/verify/certificate/[token]/page.tsx",
+    "cleanRoute": "/verify/certificate/[token]",
+    "browserUrl": "http://localhost:3111/fr/verify/certificate/demo-token",
+    "component": "VerifyCertificatePage"
+  },
+  {
+    "filePath": "src/app/[locale]/verify-document/page.tsx",
+    "cleanRoute": "/verify-document",
+    "browserUrl": "http://localhost:3111/fr/verify-document",
+    "component": "VerifyDocumentPage"
+  }
+]

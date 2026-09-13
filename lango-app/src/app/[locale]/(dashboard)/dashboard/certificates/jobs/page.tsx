@@ -4,5 +4,10 @@ import CertificatesJobsPage from './page.client';
 export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'certificates.issue' });
-  return <CertificatesJobsPage />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <CertificatesJobsPage />
+    </main>
+  );
 }

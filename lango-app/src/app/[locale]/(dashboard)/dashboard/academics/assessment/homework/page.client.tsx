@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -73,6 +74,9 @@ interface TeacherBankItem {
 }
 
 export default function HomeworkPage() {
+  const t = useTranslations('Grading');
+  const tCommon = useTranslations('Common');
+
   const [homeworks, setHomeworks] = useState<HomeworkItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -118,7 +122,7 @@ export default function HomeworkPage() {
       const res = await fetch('/api/academics/homework');
       const json = await res.json();
       if (!res.ok) {
-        setError(json?.error?.message || 'Impossible de charger les devoirs.');
+        setError(json?.error?.message || t('errLoadAssessments'));
         setHomeworks([]);
       } else if (json.success && Array.isArray(json.data)) {
         const apiItems: HomeworkItem[] = json.data.map((item: any) => ({
@@ -150,12 +154,12 @@ export default function HomeworkPage() {
         setHomeworks([]);
       }
     } catch {
-      setError('Impossible de charger les devoirs.');
+      setError(t('errLoadAssessments'));
       setHomeworks([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadHomeworks();
@@ -182,7 +186,7 @@ export default function HomeworkPage() {
 
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        setError(json?.error?.message || 'Échec de la création du devoir.');
+        setError(json?.error?.message || tCommon('error'));
         return;
       }
 
@@ -194,7 +198,7 @@ export default function HomeworkPage() {
       setNewCloseAt('');
       await loadHomeworks();
     } catch {
-      setError('Échec de la création du devoir.');
+      setError(tCommon('error'));
     } finally {
       setSubmittingCreate(false);
     }
@@ -210,7 +214,7 @@ export default function HomeworkPage() {
         setBankItems(json.data);
       }
     } catch {
-      // bank is a convenience aid — swallow transient failures
+      // bank is a convenience aid
     } finally {
       setBankLoading(false);
     }
@@ -227,7 +231,7 @@ export default function HomeworkPage() {
           title: bankNewTitle.trim(),
           content: bankNewContent.trim() || undefined,
           tags: bankNewTags.trim()
-            ? bankNewTags.split(',').map((t) => t.trim()).filter(Boolean)
+            ? bankNewTags.split(',').map((itemTag) => itemTag.trim()).filter(Boolean)
             : undefined,
         }),
       });
@@ -238,7 +242,7 @@ export default function HomeworkPage() {
         await loadBank();
       }
     } catch {
-      // swallow — bank is a convenience aid
+      // bank is a convenience aid
     } finally {
       setBankSaving(false);
     }
@@ -249,7 +253,7 @@ export default function HomeworkPage() {
       const res = await fetch(`/api/academics/teacher-question-bank/${itemId}`, { method: 'DELETE' });
       if (res.ok) setBankItems((prev) => prev.filter((i) => i.id !== itemId));
     } catch {
-      // swallow — bank is a convenience aid
+      // bank is a convenience aid
     }
   };
 
@@ -264,7 +268,6 @@ export default function HomeworkPage() {
       (i.content || '').toLowerCase().includes(bankSearch.toLowerCase()),
   );
 
-  // Open the correction inbox for a homework and load its attempt roster.
   const openCorrection = async (hw: HomeworkItem) => {
     setCorrectionHw(hw);
     setAttempts([]);
@@ -287,7 +290,6 @@ export default function HomeworkPage() {
     }
   };
 
-  // Teacher Grade Attempt Handler
   const handleGradeSubmit = async () => {
     if (!selectedAttempt) return;
     setGrading(true);
@@ -304,7 +306,7 @@ export default function HomeworkPage() {
 
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        setError(json?.error?.message || 'Échec de l\'enregistrement de la note.');
+        setError(json?.error?.message || tCommon('error'));
         return;
       }
 
@@ -319,7 +321,7 @@ export default function HomeworkPage() {
       setFeedback('');
       await loadHomeworks();
     } catch {
-      setError('Échec de l\'enregistrement de la note.');
+      setError(tCommon('error'));
     } finally {
       setGrading(false);
     }
@@ -353,10 +355,10 @@ export default function HomeworkPage() {
           </div>
           <div>
             <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">
-              Devoirs &amp; Évaluations Continues
+              {t('homeworkHubTitle')}
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Création, consignes et correction des devoirs — données réelles.
+              {t('homeworkHubSubtitle')}
             </p>
           </div>
         </div>
@@ -364,17 +366,17 @@ export default function HomeworkPage() {
         <div className="flex items-center gap-3">
           <Badge variant="success" className="font-bold gap-1 px-3 py-1.5 text-xs">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Grand Livre Sync Enregistré</span>
+            <span>{t('ledgerSyncBadge')}</span>
           </Badge>
           <Button
             onClick={() => {
               setShowCreateModal(true);
               loadBank();
             }}
-            className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold rounded-xl shadow-2xs gap-2 shrink-0"
+            className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold rounded-xl shadow-2xs gap-2 shrink-0 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>+ Créer un Devoir</span>
+            <span>{t('createHomeworkBtn')}</span>
           </Button>
         </div>
       </div>
@@ -383,9 +385,9 @@ export default function HomeworkPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Devoirs</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('totalHomeworksKpi')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{homeworks.length}</h3>
-            <p className="text-[11px] text-emerald-600 font-semibold mt-1">Liste réelle du tenant</p>
+            <p className="text-[11px] text-emerald-600 font-semibold mt-1">{t('realTenantList')}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2487B8] flex items-center justify-center shrink-0">
             <FileText className="w-5 h-5" />
@@ -394,9 +396,9 @@ export default function HomeworkPage() {
 
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">En Attente de Correction</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('pendingCorrectionKpi')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{pendingCorrection}</h3>
-            <p className="text-[11px] text-amber-600 font-semibold mt-1">Rendus à corriger</p>
+            <p className="text-[11px] text-amber-600 font-semibold mt-1">{t('copiesToGradeSub')}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
             <Clock className="w-5 h-5" />
@@ -405,9 +407,9 @@ export default function HomeworkPage() {
 
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Devoirs Corrigés</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('gradedHomeworksKpi')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{totalGraded}</h3>
-            <p className="text-[11px] text-emerald-600 font-semibold mt-1">Notes enregistrées au registre</p>
+            <p className="text-[11px] text-emerald-600 font-semibold mt-1">{t('gradesRecordedInRegister')}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
             <Award className="w-5 h-5" />
@@ -416,9 +418,9 @@ export default function HomeworkPage() {
 
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Taux de Correction</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('correctionRateKpi')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{correctionRate}%</h3>
-            <p className="text-[11px] text-slate-500 font-semibold mt-1">{totalGraded}/{totalSubmitted} copies corrigées</p>
+            <p className="text-[11px] text-slate-500 font-semibold mt-1">{t('copiesGradedRatio', { graded: totalGraded, total: totalSubmitted })}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
             <CheckCircle2 className="w-5 h-5" />
@@ -429,18 +431,18 @@ export default function HomeworkPage() {
       {/* Search & Tabs */}
       <div className="flex flex-col gap-4 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs lg:flex-row lg:items-center lg:justify-between">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <Input
             type="text"
-            placeholder="Rechercher par titre ou consigne..."
+            placeholder={t('searchHomeworkPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 text-xs rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white h-10 font-medium text-slate-800"
+            className="ps-9 text-xs rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white h-10 font-medium text-slate-800 text-start"
           />
         </div>
 
         <div className="flex items-center gap-1.5 overflow-x-auto">
-          <Filter className="h-3.5 w-3.5 text-slate-400 shrink-0 mr-1" />
+          <Filter className="h-3.5 w-3.5 text-slate-400 shrink-0 me-1" />
           {(['all', 'pending', 'submitted', 'graded'] as const).map((tab) => (
             <button
               key={tab}
@@ -452,12 +454,12 @@ export default function HomeworkPage() {
               }`}
             >
               {tab === 'all'
-                ? 'Tous les devoirs'
+                ? t('tabAllHomeworks')
                 : tab === 'pending'
-                ? 'Non remis'
+                ? t('tabNotSubmitted')
                 : tab === 'submitted'
-                ? 'En attente correction'
-                : 'Corrigés'}
+                ? t('tabPendingCorrection')
+                : t('tabGraded')}
             </button>
           ))}
         </div>
@@ -467,7 +469,7 @@ export default function HomeworkPage() {
       {loading ? (
         <div className="flex items-center justify-center py-16 text-xs font-semibold text-slate-500 gap-2">
           <Loader2 className="w-4 h-4 animate-spin" />
-          Chargement des devoirs...
+          {t('loadingHomeworks')}
         </div>
       ) : error ? (
         <Card className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs text-center">
@@ -478,9 +480,9 @@ export default function HomeworkPage() {
           <div className="w-14 h-14 rounded-2xl bg-blue-50 text-[#2487B8] flex items-center justify-center mx-auto">
             <BookOpen className="w-7 h-7" />
           </div>
-          <h3 className="text-base font-extrabold text-[#16212B]">Aucun devoir pour le moment</h3>
+          <h3 className="text-base font-extrabold text-[#16212B]">{t('noHomeworksYet')}</h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            Créez votre premier devoir, les élèves le verront et pourront le rendre depuis leur espace.
+            {t('noHomeworksYetDesc')}
           </p>
         </Card>
       ) : (
@@ -497,31 +499,31 @@ export default function HomeworkPage() {
                 <div className="space-y-3.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="px-2.5 py-1 bg-blue-50 text-[#2487B8] text-[10px] font-bold uppercase tracking-wider rounded-lg border border-blue-100">
-                      Devoir
+                      {t('badgeHomework')}
                     </span>
 
                     {hasSubmissions ? (
                       allGraded ? (
                         <Badge variant="success" className="font-bold text-[11px] px-2.5 py-0.5">
-                          {hw.gradedCount} corrigé(s)
+                          {t('badgeGradedCount', { count: hw.gradedCount ?? 0 })}
                         </Badge>
                       ) : (
                         <Badge variant="warning" className="font-bold text-[11px] px-2.5 py-0.5">
-                          {hw.submittedCount} rendu(s) · {hw.gradedCount} corrigé(s)
+                          {t('badgeSubmittedAndGraded', { submitted: hw.submittedCount ?? 0, graded: hw.gradedCount ?? 0 })}
                         </Badge>
                       )
                     ) : (
                       <Badge variant="warning" className="font-bold text-[11px] px-2.5 py-0.5">
-                        Non remis
+                        {t('tabNotSubmitted')}
                       </Badge>
                     )}
                   </div>
 
                   <div>
-                    <h3 className="text-base font-extrabold text-[#16212B] tracking-tight group-hover:text-[#2487B8] transition-colors leading-snug">
+                    <h3 className="text-base font-extrabold text-[#16212B] tracking-tight group-hover:text-[#2487B8] transition-colors leading-snug text-start">
                       {hw.title}
                     </h3>
-                    <p className="mt-1.5 text-xs text-slate-600 font-medium leading-relaxed line-clamp-2">
+                    <p className="mt-1.5 text-xs text-slate-600 font-medium leading-relaxed line-clamp-2 text-start">
                       {hw.instructions || hw.description}
                     </p>
                   </div>
@@ -529,7 +531,7 @@ export default function HomeworkPage() {
                   {hw.linkedResources && hw.linkedResources.length > 0 && (
                     <div className="flex items-center gap-2 pt-1 text-[11px] font-semibold text-slate-500">
                       <FileText className="w-3.5 h-3.5 text-[#2487B8]" />
-                      {hw.linkedResources.length} document(s) joint(s)
+                      {t('attachedDocsCount', { count: hw.linkedResources.length })}
                     </div>
                   )}
                 </div>
@@ -537,17 +539,17 @@ export default function HomeworkPage() {
                 <div className="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between gap-2">
                   <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 text-[#2487B8]" />
-                    {hw.closeAt ? new Date(hw.closeAt).toLocaleDateString('fr-FR') : 'Sans date limite'}
+                    {hw.closeAt ? new Date(hw.closeAt).toLocaleDateString() : t('noDeadline')}
                   </span>
 
                   {hasSubmissions && (
                     <Button
                       size="sm"
                       onClick={() => openCorrection(hw)}
-                      className="rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs shadow-2xs gap-1.5 px-4"
+                      className="rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs shadow-2xs gap-1.5 px-4 cursor-pointer"
                     >
-                      <span>Corriger</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
+                      <span>{t('correctActionBtn')}</span>
+                      <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
                     </Button>
                   )}
                 </div>
@@ -562,7 +564,7 @@ export default function HomeworkPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-lg w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h2 className="text-lg font-extrabold text-[#16212B]">Créer un Devoir / Exercice</h2>
+              <h2 className="text-lg font-extrabold text-[#16212B]">{t('modalCreateHomeworkTitle')}</h2>
               <button
                 onClick={() => setShowCreateModal(false)}
                 className="p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
@@ -573,51 +575,51 @@ export default function HomeworkPage() {
 
             <form onSubmit={handleCreateHomework} className="space-y-3.5">
               <div>
-                <label className="text-xs font-bold text-slate-700">Titre du Devoir</label>
+                <label className="text-xs font-bold text-slate-700">{t('homeworkTitleLabel')}</label>
                 <Input
                   type="text"
                   required
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="Ex: Devoir de Vocabulaire - Unit 5 Essay"
-                  className="mt-1 text-xs rounded-xl"
+                  placeholder={t('homeworkTitlePlaceholder')}
+                  className="mt-1 text-xs rounded-xl text-start"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700">Objectif du Devoir</label>
+                <label className="text-xs font-bold text-slate-700">{t('homeworkObjectiveLabel')}</label>
                 <Input
                   type="text"
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
-                  placeholder="Objectif pédagogique principal..."
-                  className="mt-1 text-xs rounded-xl"
+                  placeholder={t('homeworkObjectivePlaceholder')}
+                  className="mt-1 text-xs rounded-xl text-start"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700">Consignes &amp; Directives</label>
+                <label className="text-xs font-bold text-slate-700">{t('instructionsGuidelinesLabel')}</label>
                 <textarea
                   value={newInstructions}
                   onChange={(e) => setNewInstructions(e.target.value)}
-                  placeholder="Écrivez les consignes claires pour les élèves..."
+                  placeholder={t('instructionsPlaceholder')}
                   rows={3}
-                  className="mt-1 w-full p-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2487B8]"
+                  className="mt-1 w-full p-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2487B8] text-start"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Note Max (/20)</label>
+                  <label className="text-xs font-bold text-slate-700">{t('maxScoreLabel')}</label>
                   <Input
                     type="number"
                     value={newMaxScore}
                     onChange={(e) => setNewMaxScore(e.target.value)}
-                    className="mt-1 text-xs rounded-xl"
+                    className="mt-1 text-xs rounded-xl text-start"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Date Limite de Rendu</label>
+                  <label className="text-xs font-bold text-slate-700">{t('deadlineDateLabel')}</label>
                   <Input
                     type="date"
                     value={newCloseAt}
@@ -635,35 +637,37 @@ export default function HomeworkPage() {
                 >
                   <span className="flex items-center gap-1.5">
                     <BookOpen className="w-3.5 h-3.5 text-[#2487B8]" />
-                    Banque de questions
+                    {t('questionBankSection')}
                   </span>
-                  <span className="text-slate-400 text-[10px]">{bankOpen ? 'Masquer' : 'Afficher'}</span>
+                  <span className="text-slate-400 text-[10px]">{bankOpen ? t('hideBankAction') : t('showBankAction')}</span>
                 </button>
 
                 {bankOpen && (
                   <div className="border-t border-slate-200 p-3 space-y-2.5 bg-slate-50/40">
                     <Input
                       type="text"
-                      placeholder="Rechercher dans la banque..."
+                      placeholder={t('searchInBankPlaceholder')}
                       value={bankSearch}
                       onChange={(e) => setBankSearch(e.target.value)}
-                      className="text-xs rounded-lg"
+                      className="text-xs rounded-lg text-start"
                     />
 
                     <div className="max-h-40 overflow-y-auto space-y-1.5">
                       {bankLoading ? (
-                        <p className="text-[11px] font-semibold text-slate-400 py-2">Chargement...</p>
+                        <p className="text-[11px] font-semibold text-slate-400 py-2">{tCommon('loading')}</p>
                       ) : filteredBankItems.length === 0 ? (
-                        <p className="text-[11px] font-semibold text-slate-400 py-2">Aucune question enregistrée.</p>
+                        <p className="text-[11px] font-semibold text-slate-400 py-2">{t('noQuestionsInBank')}</p>
                       ) : (
                         filteredBankItems.map((item) => (
                           <div key={item.id} className="flex items-start justify-between gap-2 p-2 rounded-lg bg-white border border-slate-200">
-                            <div className="min-w-0">
+                            <div className="min-w-0 text-start">
                               <p className="text-xs font-bold text-slate-800 truncate">{item.title}</p>
                               {item.content ? <p className="text-[11px] text-slate-500 line-clamp-1">{item.content}</p> : null}
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
-                              <button type="button" onClick={() => useBankItem(item)} className="text-[10px] font-bold text-[#2487B8] hover:underline cursor-pointer">Utiliser</button>
+                              <button type="button" onClick={() => useBankItem(item)} className="text-[10px] font-bold text-[#2487B8] hover:underline cursor-pointer">
+                                {t('useQuestionAction')}
+                              </button>
                               <button type="button" onClick={() => handleDeleteBankItem(item.id)} className="p-0.5 text-slate-300 hover:text-red-500 cursor-pointer">
                                 <X className="w-3.5 h-3.5" />
                               </button>
@@ -674,31 +678,31 @@ export default function HomeworkPage() {
                     </div>
 
                     <div className="pt-2 border-t border-slate-200 space-y-1.5">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Ajouter à la banque</p>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{t('addToBankHeading')}</p>
                       <Input
                         type="text"
-                        placeholder="Titre de la question"
+                        placeholder={t('questionTitlePlaceholder')}
                         value={bankNewTitle}
                         onChange={(e) => setBankNewTitle(e.target.value)}
-                        className="text-xs rounded-lg"
+                        className="text-xs rounded-lg text-start"
                       />
                       <textarea
                         value={bankNewContent}
                         onChange={(e) => setBankNewContent(e.target.value)}
-                        placeholder="Énoncé / consigne..."
+                        placeholder={t('questionPromptPlaceholder')}
                         rows={2}
-                        className="w-full p-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2487B8]"
+                        className="w-full p-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2487B8] text-start"
                       />
                       <div className="flex items-center gap-2">
                         <Input
                           type="text"
-                          placeholder="Tags (séparés par des virgules)"
+                          placeholder={t('tagsCommaSeparatedPlaceholder')}
                           value={bankNewTags}
                           onChange={(e) => setBankNewTags(e.target.value)}
-                          className="text-xs rounded-lg flex-1"
+                          className="text-xs rounded-lg flex-1 text-start"
                         />
-                        <Button type="button" size="sm" onClick={handleAddToBank} disabled={bankSaving} className="rounded-lg text-xs shrink-0">
-                          {bankSaving ? 'Ajout...' : 'Ajouter'}
+                        <Button type="button" size="sm" onClick={handleAddToBank} disabled={bankSaving} className="rounded-lg text-xs shrink-0 cursor-pointer">
+                          {bankSaving ? tCommon('loading') : t('addToBankBtn')}
                         </Button>
                       </div>
                     </div>
@@ -711,16 +715,16 @@ export default function HomeworkPage() {
                   type="button"
                   variant="ghost"
                   onClick={() => setShowCreateModal(false)}
-                  className="text-xs rounded-xl"
+                  className="text-xs rounded-xl cursor-pointer"
                 >
-                  Annuler
+                  {tCommon('cancel')}
                 </Button>
                 <Button
                   type="submit"
                   disabled={submittingCreate}
-                  className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl shadow-2xs"
+                  className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl shadow-2xs cursor-pointer"
                 >
-                  {submittingCreate ? 'Création...' : 'Publier le Devoir'}
+                  {submittingCreate ? t('publishingHomework') : t('publishHomeworkBtn')}
                 </Button>
               </div>
             </form>
@@ -734,23 +738,23 @@ export default function HomeworkPage() {
           <div className="bg-white w-full max-w-6xl h-[90vh] rounded-2xl border border-slate-200 shadow-2xl flex overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {/* Left: roster */}
             <div className="w-80 shrink-0 border-r border-slate-200 flex flex-col bg-slate-50/50">
-              <div className="p-4 border-b border-slate-200 bg-white">
+              <div className="p-4 border-b border-slate-200 bg-white text-start">
                 <Badge variant="info" className="text-[10px] font-bold uppercase">
-                  Boîte de correction
+                  {t('correctionInboxBadge')}
                 </Badge>
                 <h2 className="text-base font-extrabold text-[#16212B] mt-1 leading-snug">{correctionHw.title}</h2>
-                <p className="text-[11px] font-semibold text-slate-500 mt-0.5">{attempts.length} rendu(s)</p>
+                <p className="text-[11px] font-semibold text-slate-500 mt-0.5">{t('submissionsCountHeader', { count: attempts.length })}</p>
               </div>
 
               <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
                 {attemptsLoading ? (
                   <div className="flex items-center justify-center py-10 gap-2 text-xs font-semibold text-slate-500">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Chargement...
+                    {tCommon('loading')}
                   </div>
                 ) : attempts.length === 0 ? (
                   <div className="p-6 text-center text-xs font-semibold text-slate-400">
-                    {"Aucun élève n'a encore rendu ce devoir."}
+                    {t('noStudentSubmittedYet')}
                   </div>
                 ) : (
                   attempts.map((a) => (
@@ -761,7 +765,7 @@ export default function HomeworkPage() {
                         setGradeScore(a.score || '16');
                         setFeedback(a.feedbackText || '');
                       }}
-                      className={`w-full text-left rounded-xl px-3 py-2.5 border transition-all cursor-pointer ${
+                      className={`w-full text-start rounded-xl px-3 py-2.5 border transition-all cursor-pointer ${
                         selectedAttempt?.id === a.id
                           ? 'bg-[#2487B8] text-white border-[#2487B8] shadow-2xs'
                           : 'bg-white border-slate-200 hover:border-[#2487B8]/40 hover:bg-blue-50/40'
@@ -771,18 +775,18 @@ export default function HomeworkPage() {
                         <span className="text-xs font-bold truncate">{a.studentName}</span>
                         <span className="shrink-0">
                           {a.status === 'graded' ? (
-                            <Badge variant="success" className="text-[10px] font-bold px-1.5 py-0">Corrigé</Badge>
+                            <Badge variant="success" className="text-[10px] font-bold px-1.5 py-0">{t('badgeGraded')}</Badge>
                           ) : (
-                            <Badge variant="warning" className="text-[10px] font-bold px-1.5 py-0">À corriger</Badge>
+                            <Badge variant="warning" className="text-[10px] font-bold px-1.5 py-0">{t('badgeToGrade')}</Badge>
                           )}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-2 mt-1">
                         <span className={`text-[10px] font-semibold ${selectedAttempt?.id === a.id ? 'text-white/80' : 'text-slate-400'}`}>
-                          {a.matricule || '—'} · tentative n°{a.attemptNumber}
+                          {a.matricule || '—'} · {t('attemptNumberLabel', { number: a.attemptNumber })}
                         </span>
                         <span className={`text-[10px] font-bold ${selectedAttempt?.id === a.id ? 'text-white/90' : a.isLate ? 'text-amber-600' : 'text-emerald-600'}`}>
-                          {a.status === 'graded' ? `${a.score} pts` : a.isLate ? 'En retard' : 'À temps'}
+                          {a.status === 'graded' ? t('scorePointsDisplay', { score: a.score ?? '0' }) : a.isLate ? t('badgeLate') : t('badgeOnTime')}
                         </span>
                       </div>
                     </button>
@@ -796,11 +800,11 @@ export default function HomeworkPage() {
               {selectedAttempt ? (
                 <>
                   <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-white">
-                    <div>
+                    <div className="text-start">
                       <h3 className="text-sm font-extrabold text-[#16212B]">{selectedAttempt.studentName}</h3>
                       <p className="text-[11px] font-semibold text-slate-500">
-                        {selectedAttempt.matricule || 'Sans matricule'} · tentative n°{selectedAttempt.attemptNumber}
-                        {selectedAttempt.submittedAt ? ` · ${new Date(selectedAttempt.submittedAt).toLocaleDateString('fr-FR')}` : ''}
+                        {selectedAttempt.matricule || t('noMatricule')} · {t('attemptNumberLabel', { number: selectedAttempt.attemptNumber })}
+                        {selectedAttempt.submittedAt ? ` · ${new Date(selectedAttempt.submittedAt).toLocaleDateString()}` : ''}
                       </p>
                     </div>
                     <button onClick={() => setCorrectionHw(null)} className="p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer">
@@ -809,17 +813,17 @@ export default function HomeworkPage() {
                   </div>
 
                   <div className="flex-1 overflow-y-auto p-5 space-y-5">
-                    <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50 space-y-2">
-                      <label className="text-[11px] font-bold text-slate-500 uppercase">{"Texte remis par l'élève:"}</label>
+                    <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50 space-y-2 text-start">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase">{t('studentSubmittedTextLabel')}</label>
                       <p className="text-xs text-slate-800 leading-relaxed bg-white p-3 rounded-lg border border-slate-200/60 font-mono whitespace-pre-wrap">
-                        {selectedAttempt.responseText || 'Aucun texte fourni.'}
+                        {selectedAttempt.responseText || t('noTextProvided')}
                       </p>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-3 text-start">
                       <div>
                         <label className="text-xs font-bold text-slate-700">
-                          Note Attribuée (sur {correctionHw.maximumScore})
+                          {t('assignedGradeOutOfMax', { max: correctionHw.maximumScore ?? '20' })}
                         </label>
                         <Input
                           type="number"
@@ -828,41 +832,41 @@ export default function HomeworkPage() {
                           max={correctionHw.maximumScore}
                           value={gradeScore}
                           onChange={(e) => setGradeScore(e.target.value)}
-                          className="mt-1 text-xs rounded-xl font-bold text-[#2487B8] h-10 text-base"
+                          className="mt-1 text-xs rounded-xl font-bold text-[#2487B8] h-10 text-base text-start"
                         />
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold text-slate-700">Commentaires &amp; Correction du Professeur</label>
+                        <label className="text-xs font-bold text-slate-700">{t('teacherFeedbackLabel')}</label>
                         <textarea
                           value={feedback}
                           onChange={(e) => setFeedback(e.target.value)}
-                          placeholder="Saisissez vos remarques pédagogiques, corrections de syntaxe et conseils..."
+                          placeholder={t('teacherFeedbackPlaceholder')}
                           rows={4}
-                          className="mt-1 w-full p-3 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2487B8]"
+                          className="mt-1 w-full p-3 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2487B8] text-start"
                         />
                       </div>
                     </div>
                   </div>
 
                   <div className="p-4 border-t border-slate-100 flex items-center justify-end gap-3 bg-white">
-                    <Button variant="ghost" onClick={() => setCorrectionHw(null)} className="text-xs rounded-xl">
-                      Fermer
+                    <Button variant="ghost" onClick={() => setCorrectionHw(null)} className="text-xs rounded-xl cursor-pointer">
+                      {tCommon('close')}
                     </Button>
                     <Button
                       onClick={handleGradeSubmit}
                       disabled={grading}
-                      className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl shadow-2xs gap-1.5"
+                      className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl shadow-2xs gap-1.5 cursor-pointer"
                     >
                       <FileCheck className="w-4 h-4" />
-                      <span>{grading ? 'Enregistrement...' : 'Enregistrer & Valider la Note'}</span>
+                      <span>{grading ? t('savingGrade') : t('saveAndValidateGradeBtn')}</span>
                     </Button>
                   </div>
                 </>
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center gap-2 text-slate-400">
                   <FileText className="w-8 h-8" />
-                  <p className="text-xs font-semibold">{"Sélectionnez un élève pour corriger sa copie."}</p>
+                  <p className="text-xs font-semibold">{t('selectStudentToGradeEmpty')}</p>
                 </div>
               )}
             </div>

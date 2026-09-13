@@ -1,12 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ReportingNav } from './components/reporting-nav';
 import { DataTable, Column } from '@/components/shared/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Clock, FileSpreadsheet } from 'lucide-react';
 
 export function SchedulesView() {
+  const t = useTranslations('Reports');
+  const tCommon = useTranslations('Common');
+  const tSuper = useTranslations('SuperAdmin');
+
   const [schedules, setSchedules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,7 +36,7 @@ export function SchedulesView() {
   const columns: Column<any>[] = [
     {
       key: 'name',
-      header: 'Nom de la Planification',
+      header: t('colScheduleName'),
       cell: (row) => (
         <div className="font-bold text-[#16212B]">
           {row.name}
@@ -41,7 +46,7 @@ export function SchedulesView() {
     },
     {
       key: 'cronExpression',
-      header: 'Expression Cron',
+      header: t('colCron'),
       cell: (row) => (
         <div className="flex items-center gap-1.5 font-mono text-xs text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg w-fit border border-slate-200/60">
           <Clock className="h-3 w-3 text-slate-500" />
@@ -51,7 +56,7 @@ export function SchedulesView() {
     },
     {
       key: 'format',
-      header: 'Format Export',
+      header: t('colExportFormat'),
       cell: (row) => (
         <div className="flex items-center gap-1">
           <FileSpreadsheet className="h-3.5 w-3.5 text-[#2487B8]" />
@@ -61,19 +66,19 @@ export function SchedulesView() {
     },
     {
       key: 'nextRunAt',
-      header: 'Prochaine Exécution',
+      header: t('colNextRun'),
       cell: (row) => (
         <span className="text-xs text-slate-600 font-medium">
-          {row.nextRunAt ? new Date(row.nextRunAt).toLocaleString() : 'Sur demande'}
+          {row.nextRunAt ? new Date(row.nextRunAt).toLocaleString() : '—'}
         </span>
       ),
     },
     {
       key: 'isActive',
-      header: 'État Récurrence',
+      header: t('colRecurrenceState'),
       cell: (row) => (
         <Badge variant={row.isActive ? 'success' : 'neutral'} className="font-bold">
-          {row.isActive ? 'Actif' : 'Inactif'}
+          {row.isActive ? tSuper('statusActive') : tCommon('cancel')}
         </Badge>
       ),
     },
@@ -86,10 +91,10 @@ export function SchedulesView() {
       <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
         <div>
           <h2 className="text-base font-bold text-[#16212B]">
-            Planifications & Livraisons Automatiques
+            {t('schedulesTitle')}
           </h2>
           <p className="text-xs text-slate-500">
-            Gérez les récurrences automatisées (toutes les nuits, hebdomadaires ou mensuelles) pour la génération de vos bilans comptables et académiques.
+            {t('schedulesSubtitle')}
           </p>
         </div>
       </div>
@@ -99,10 +104,11 @@ export function SchedulesView() {
           data={schedules}
           columns={columns}
           isLoading={loading}
-          emptyTitle="Aucune planification configurée"
-          emptyDescription="Les planifications automatiques seront listées ici une fois programmées par un administrateur."
+          emptyTitle={tCommon('empty')}
+          emptyDescription={tCommon('empty')}
         />
       </div>
     </div>
   );
 }
+

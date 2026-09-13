@@ -1,16 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FileSpreadsheet, Download, Bus, MapPin, Navigation, ShieldCheck } from 'lucide-react';
+import { FileSpreadsheet, Download, Bus, MapPin, Navigation } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function TransportReportsPage() {
+  const t = useTranslations('Transport');
   const [downloading, setDownloading] = useState<string | null>(null);
 
   const handleExport = async (type: 'vehicles' | 'stops' | 'routes') => {
     setDownloading(type);
     try {
       const res = await fetch(`/api/transport/reports/export?type=${type}`);
-      if (!res.ok) throw new Error('Erreur d\'export');
+      if (!res.ok) throw new Error('Export error');
 
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
@@ -21,8 +23,8 @@ export default function TransportReportsPage() {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-    } catch (err) {
-      alert('Impossible de télécharger le fichier CSV.');
+    } catch {
+      alert(t('exportFailed'));
     } finally {
       setDownloading(null);
     }
@@ -34,10 +36,10 @@ export default function TransportReportsPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <FileSpreadsheet className="w-7 h-7 text-[#0066FF]" />
-            Rapports & Exports CSV
+            {t('transportReportsTitle')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Exportations conformes des données du parc, des itinéraires et des arrêts.
+            {t('transportReportsSubtitle')}
           </p>
         </div>
       </div>
@@ -49,9 +51,9 @@ export default function TransportReportsPage() {
             <div className="p-3 bg-blue-50 text-[#0066FF] w-fit rounded-lg">
               <Bus className="w-6 h-6" />
             </div>
-            <h3 className="font-bold text-slate-900">Rapport de la Flotte</h3>
+            <h3 className="font-bold text-slate-900">{t('fleetReportTitle')}</h3>
             <p className="text-xs text-slate-500">
-              Export de tous les véhicules, leur capacité, leur statut et l'expiration des visites techniques et assurances.
+              {t('fleetReportDesc')}
             </p>
           </div>
           <button
@@ -60,7 +62,7 @@ export default function TransportReportsPage() {
             className="w-full py-2.5 bg-[#0066FF] hover:bg-blue-600 disabled:opacity-50 text-white font-semibold text-sm rounded-lg transition flex items-center justify-center gap-2 shadow-xs"
           >
             <Download className="w-4 h-4" />
-            {downloading === 'vehicles' ? 'Génération...' : 'Télécharger CSV Véhicules'}
+            {downloading === 'vehicles' ? t('generatingExport') : t('downloadVehiclesCsv')}
           </button>
         </div>
 
@@ -70,9 +72,9 @@ export default function TransportReportsPage() {
             <div className="p-3 bg-indigo-50 text-indigo-600 w-fit rounded-lg">
               <MapPin className="w-6 h-6" />
             </div>
-            <h3 className="font-bold text-slate-900">Répertoire des Arrêts</h3>
+            <h3 className="font-bold text-slate-900">{t('stopsReportTitle')}</h3>
             <p className="text-xs text-slate-500">
-              Export de l'ensemble des points de ramassage avec adresses et coordonnées GPS géolocalisées.
+              {t('stopsReportDesc')}
             </p>
           </div>
           <button
@@ -81,7 +83,7 @@ export default function TransportReportsPage() {
             className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-sm rounded-lg transition flex items-center justify-center gap-2 shadow-xs"
           >
             <Download className="w-4 h-4" />
-            {downloading === 'stops' ? 'Génération...' : 'Télécharger CSV Arrêts'}
+            {downloading === 'stops' ? t('generatingExport') : t('downloadStopsCsv')}
           </button>
         </div>
 
@@ -91,9 +93,9 @@ export default function TransportReportsPage() {
             <div className="p-3 bg-emerald-50 text-emerald-600 w-fit rounded-lg">
               <Navigation className="w-6 h-6" />
             </div>
-            <h3 className="font-bold text-slate-900">Rapport des Circuits</h3>
+            <h3 className="font-bold text-slate-900">{t('routesReportTitle')}</h3>
             <p className="text-xs text-slate-500">
-              Export des itinéraires homologués, directions de service et statuts opérationnels.
+              {t('routesReportDesc')}
             </p>
           </div>
           <button
@@ -102,7 +104,7 @@ export default function TransportReportsPage() {
             className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold text-sm rounded-lg transition flex items-center justify-center gap-2 shadow-xs"
           >
             <Download className="w-4 h-4" />
-            {downloading === 'routes' ? 'Génération...' : 'Télécharger CSV Circuits'}
+            {downloading === 'routes' ? t('generatingExport') : t('downloadRoutesCsv')}
           </button>
         </div>
       </div>

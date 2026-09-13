@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   BellRing,
   CalendarClock,
@@ -38,20 +39,41 @@ type HomeData = {
   };
 };
 
-const WIDGET_CARDS: { key: keyof HomeData['widgets']; label: string; icon: React.ReactNode }[] = [
-  { key: 'alerts', label: 'Alertes urgentes', icon: <BellRing className="w-5 h-5" /> },
-  { key: 'attendanceToday', label: "Présence d'aujourd'hui", icon: <Clock className="w-5 h-5" /> },
-  { key: 'balances', label: 'Solde & paiements', icon: <Wallet className="w-5 h-5" /> },
-  { key: 'upcoming', label: 'Événements à venir', icon: <CalendarClock className="w-5 h-5" /> },
-  { key: 'homework', label: 'Devoirs', icon: <BookOpen className="w-5 h-5" /> },
-  { key: 'messages', label: 'Messages', icon: <MessageSquareText className="w-5 h-5" /> },
+const WIDGET_CONFIG: { key: keyof HomeData['widgets']; icon: React.ReactNode }[] = [
+  { key: 'alerts', icon: <BellRing className="w-5 h-5" /> },
+  { key: 'attendanceToday', icon: <Clock className="w-5 h-5" /> },
+  { key: 'balances', icon: <Wallet className="w-5 h-5" /> },
+  { key: 'upcoming', icon: <CalendarClock className="w-5 h-5" /> },
+  { key: 'homework', icon: <BookOpen className="w-5 h-5" /> },
+  { key: 'messages', icon: <MessageSquareText className="w-5 h-5" /> },
 ];
 
 export function ParentHomeView() {
+  const tParent = useTranslations('Parent');
+  const tCommon = useTranslations('Common');
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeRelationshipId, setActiveRelationshipId] = useState<string | null>(null);
+
+  const getWidgetLabel = (key: keyof HomeData['widgets']): string => {
+    switch (key) {
+      case 'alerts':
+        return tParent('urgentAlerts');
+      case 'attendanceToday':
+        return tParent('attendanceToday');
+      case 'balances':
+        return tParent('balancesAndPayments');
+      case 'upcoming':
+        return tParent('upcomingEvents');
+      case 'homework':
+        return tParent('homework');
+      case 'messages':
+        return tParent('messages');
+      default:
+        return key;
+    }
+  };
 
   const loadHome = useCallback(async (child?: string) => {
     setLoading(true);
@@ -64,14 +86,14 @@ export function ParentHomeView() {
         setData(json.data as HomeData);
         setActiveRelationshipId(json.data.activeChild?.relationshipId ?? null);
       } else {
-        setError(json.error?.message ?? 'Erreur lors du chargement du tableau de bord.');
+        setError(json.error?.message ?? tParent('errorLoad'));
       }
     } catch {
-      setError('Impossible de se connecter au serveur.');
+      setError(tParent('errorConnect'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tParent]);
 
   useEffect(() => {
     loadHome();
@@ -103,8 +125,8 @@ export function ParentHomeView() {
             <Home className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Espace Parent</h1>
-            <p className="text-sm text-slate-500">Suivi de la scolarité de vos enfants.</p>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{tParent('portalTitle')}</h1>
+            <p className="text-sm text-slate-500">{tParent('portalSubtitle')}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -117,11 +139,11 @@ export function ParentHomeView() {
             type="button"
             onClick={() => loadHome(activeRelationshipId ?? undefined)}
             disabled={loading}
-            aria-label="Actualiser"
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition"
+            aria-label={tCommon('refresh')}
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition cursor-pointer"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Actualiser
+            {tCommon('refresh')}
           </button>
         </div>
       </div>
@@ -140,7 +162,7 @@ export function ParentHomeView() {
             {initials(data.activeChild.name)}
           </div>
           <div>
-            <div className="text-[11px] text-slate-500 font-medium uppercase tracking-wide">Enfant actif</div>
+            <div className="text-[11px] text-slate-500 font-medium uppercase tracking-wide">{tParent('activeChild')}</div>
             <div className="text-lg font-bold text-slate-900">{data.activeChild.name}</div>
           </div>
         </div>
@@ -152,17 +174,16 @@ export function ParentHomeView() {
           <div className="w-14 h-14 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
             <AlertTriangle className="w-7 h-7" />
           </div>
-          <h2 className="mt-4 text-lg font-semibold text-slate-900">Aucun enfant lié</h2>
+          <h2 className="mt-4 text-lg font-semibold text-slate-900">{tParent('noChildrenLinked')}</h2>
           <p className="mt-1 text-sm text-slate-500 max-w-md mx-auto">
-            Votre compte n'est relié à aucun enfant pour le moment. Contactez l'établissement
-            pour activer le lien (jeton de liaison) et accéder au suivi scolaire.
+            {tParent('noChildrenLinkedDesc')}
           </p>
         </div>
       )}
 
       {/* Widget grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {WIDGET_CARDS.map((card) => {
+        {WIDGET_CONFIG.map((card) => {
           const widget = data?.widgets[card.key];
           return (
             <div
@@ -171,7 +192,7 @@ export function ParentHomeView() {
             >
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-blue-50 text-[#0066FF] rounded-lg">{card.icon}</div>
-                <h3 className="font-semibold text-slate-900">{card.label}</h3>
+                <h3 className="font-semibold text-slate-900">{getWidgetLabel(card.key)}</h3>
               </div>
               {loading ? (
                 <div className="h-16 animate-pulse bg-slate-100 rounded-lg" />
@@ -179,8 +200,8 @@ export function ParentHomeView() {
                 <div className="text-sm text-slate-400 flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-slate-300" />
                   {widget.reason === 'error'
-                    ? 'Donnée momentanément indisponible.'
-                    : 'Disponible prochainement.'}
+                    ? tParent('dataTemporarilyUnavailable')
+                    : tParent('availableSoon')}
                 </div>
               ) : (
                 <div><div className="text-2xl font-bold text-slate-900">{widget?.value ?? 0}</div><div className="text-sm text-slate-500">{widget?.label}</div></div>

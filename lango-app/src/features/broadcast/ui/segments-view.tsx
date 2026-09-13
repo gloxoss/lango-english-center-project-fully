@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import {
   Loader2, Plus, RefreshCw, Users, AlertCircle, X, Trash2,
 } from 'lucide-react';
-import { api, fmtDate, fmtCount, RECIPIENT_KIND_LABELS, isAddonNotActivated, type ApiErrorShape } from './broadcast-ui';
+import { api, fmtDate, fmtCount, isAddonNotActivated, type ApiErrorShape } from './broadcast-ui';
 
 type SegmentDefinition = {
   kind: string;
@@ -29,36 +31,13 @@ type Segment = {
 
 const KINDS = ['inquiry', 'student', 'guardian', 'staff', 'alumni', 'external'];
 
-const KIND_FILTERS: Record<string, { key: string; label: string; values: string[] }[]> = {
-  inquiry: [
-    { key: 'status', label: 'Statut', values: ['new', 'contacted', 'qualified', 'converted', 'lost'] },
-    { key: 'source', label: 'Source', values: ['walk_in', 'phone', 'web', 'referral', 'facebook_ads', 'google_ads'] },
-    { key: 'interestLevel', label: 'Intérêt', values: ['low', 'medium', 'high'] },
-  ],
-  student: [
-    { key: 'role', label: 'Rôle', values: ['student'] },
-    { key: 'userStatus', label: 'Statut', values: ['active', 'inactive', 'archived'] },
-    { key: 'contactByGuardian', label: 'Contact', values: ['guardian'] },
-  ],
-  staff: [
-    { key: 'userStatus', label: 'Statut', values: ['active', 'inactive', 'archived'] },
-  ],
-  guardian: [
-    { key: 'hasPhone', label: 'Téléphone', values: ['yes', 'no'] },
-    { key: 'hasEmail', label: 'E-mail', values: ['yes', 'no'] },
-  ],
-  alumni: [
-    { key: 'userStatus', label: 'Statut', values: ['active', 'inactive', 'archived'] },
-  ],
-};
-
-const FILTER_LABELS: Record<string, string> = {
-  status: 'Statut', source: 'Source', interestLevel: 'Intérêt', assignedToId: 'Responsable',
-  tag: 'Étiquette', role: 'Rôle', userStatus: 'Statut', classSectionId: 'Section',
-  branchId: 'Succursale', hasPhone: 'Téléphone', hasEmail: 'E-mail', contactByGuardian: 'Contact tuteur',
-};
-
 export function SegmentsView() {
+  const t = useTranslations('Broadcast');
+  const tCRM = useTranslations('CRM');
+  const tCommon = useTranslations('Common');
+  const params = useParams<{ locale?: string }>();
+  const locale = params?.locale ?? 'fr';
+
   const [rows, setRows] = useState<Segment[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<ApiErrorShape | null>(null);
@@ -71,19 +50,103 @@ export function SegmentsView() {
   const [tag, setTag] = useState('');
   const [filters, setFilters] = useState<Record<string, string>>({});
 
+  const getRecipientKindLabel = (k: string) => {
+    switch (k) {
+      case 'inquiry': return t('kindInquiry');
+      case 'student': return t('kindStudent');
+      case 'guardian': return t('kindGuardian');
+      case 'staff': return t('kindStaff');
+      case 'alumni': return t('kindAlumni');
+      case 'external': return t('kindExternal');
+      default: return k;
+    }
+  };
+
+  const getFilterLabel = (k: string) => {
+    switch (k) {
+      case 'status': return t('colStatus');
+      case 'source': return tCRM('filterSource');
+      case 'interestLevel': return tCRM('interestLevel');
+      case 'assignedToId': return tCRM('filterOwner');
+      case 'tag': return tCRM('tags');
+      case 'role': return 'Rôle';
+      case 'userStatus': return t('colStatus');
+      case 'branchId': return 'Succursale';
+      case 'hasPhone': return t('phone');
+      case 'hasEmail': return t('email');
+      case 'contactByGuardian': return t('kindGuardian');
+      default: return k;
+    }
+  };
+
+  const getFilterValueLabel = (filterKey: string, v: string) => {
+    if (filterKey === 'status' && kind === 'inquiry') {
+      switch (v) {
+        case 'new': return tCRM('stageNew');
+        case 'contacted': return tCRM('stageContacted');
+        case 'qualified': return tCRM('stageQualified');
+        case 'converted': return tCRM('stageConverted');
+        case 'lost': return tCRM('stageLost');
+        default: return v;
+      }
+    }
+    if (filterKey === 'source') {
+      switch (v) {
+        case 'walk_in': return tCRM('sourceWalkIn');
+        case 'phone': return tCRM('sourcePhone');
+        case 'web': return tCRM('sourceWeb');
+        case 'referral': return tCRM('sourceReferral');
+        case 'facebook_ads': return tCRM('sourceFacebookAds');
+        case 'google_ads': return tCRM('sourceGoogleAds');
+        default: return v;
+      }
+    }
+    if (filterKey === 'interestLevel') {
+      switch (v) {
+        case 'low': return tCRM('interestLow');
+        case 'medium': return tCRM('interestMedium');
+        case 'high': return tCRM('interestHigh');
+        default: return v;
+      }
+    }
+    return v;
+  };
+
+  const KIND_FILTERS: Record<string, { key: string; label: string; values: string[] }[]> = {
+    inquiry: [
+      { key: 'status', label: t('colStatus'), values: ['new', 'contacted', 'qualified', 'converted', 'lost'] },
+      { key: 'source', label: tCRM('filterSource'), values: ['walk_in', 'phone', 'web', 'referral', 'facebook_ads', 'google_ads'] },
+      { key: 'interestLevel', label: tCRM('interestLevel'), values: ['low', 'medium', 'high'] },
+    ],
+    student: [
+      { key: 'role', label: 'Rôle', values: ['student'] },
+      { key: 'userStatus', label: t('colStatus'), values: ['active', 'inactive', 'archived'] },
+      { key: 'contactByGuardian', label: t('kindGuardian'), values: ['guardian'] },
+    ],
+    staff: [
+      { key: 'userStatus', label: t('colStatus'), values: ['active', 'inactive', 'archived'] },
+    ],
+    guardian: [
+      { key: 'hasPhone', label: t('phone'), values: ['yes', 'no'] },
+      { key: 'hasEmail', label: t('email'), values: ['yes', 'no'] },
+    ],
+    alumni: [
+      { key: 'userStatus', label: t('colStatus'), values: ['active', 'inactive', 'archived'] },
+    ],
+  };
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     const res = await api<Segment[]>('/api/addons/broadcast/segments');
     if (res.ok && res.data) setRows(res.data);
-    else setError(res.error ?? { message: 'Impossible de charger les segments.' });
+    else setError(res.error ?? { message: t('addonNotActivated') });
     setLoading(false);
-  }, []);
+  }, [t]);
 
   useEffect(() => { load(); }, [load]);
 
   const refresh = async (s: Segment) => {
-    // updateSegment recomputes memberCount; re-send the stored definition unchanged.
     await api(`/api/addons/broadcast/segments/${s.id}`, {
       method: 'PUT', body: JSON.stringify({ name: s.name, description: s.description, definition: s.definition }),
     });
@@ -111,26 +174,26 @@ export function SegmentsView() {
       setName(''); setDescription(''); setTag(''); setFilters({}); setKind('inquiry');
       load();
     } else {
-      setFormError(res.error?.message ?? 'Création impossible.');
+      setFormError(res.error?.message ?? t('addonNotActivated'));
     }
   };
 
   if (loading) {
-    return <div className="flex items-center gap-2 py-20 text-slate-500"><Loader2 className="h-5 w-5 animate-spin" /> Chargement des segments…</div>;
+    return <div className="flex items-center gap-2 py-20 text-slate-500"><Loader2 className="h-5 w-5 animate-spin" /> {tCommon('loading')}</div>;
   }
 
   if (error && !rows) {
     if (isAddonNotActivated(error)) {
       return (
         <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-700">
-          <AlertCircle className="h-5 w-5 shrink-0" /> {error.message ?? 'Module non activé.'}
+          <AlertCircle className="h-5 w-5 shrink-0" /> {error.message ?? t('addonNotActivated')}
         </div>
       );
     }
     return (
       <div className="flex items-center gap-2 py-20 text-rose-600">
-        <AlertCircle className="h-5 w-5" /> {error.message ?? 'Erreur inconnue.'}
-        <Button variant="outline" size="sm" onClick={load}><RefreshCw className="mr-1 h-4 w-4" />Réessayer</Button>
+        <AlertCircle className="h-5 w-5" /> {error.message ?? tCommon('error')}
+        <Button variant="outline" size="sm" onClick={load} className="cursor-pointer"><RefreshCw className="mr-1 h-4 w-4" />{tCommon('retry')}</Button>
       </div>
     );
   }
@@ -139,34 +202,34 @@ export function SegmentsView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#16212B]">Segments d’audience</h1>
-          <p className="text-sm text-slate-500">Audiences ciblées, calculées en direct à l’approbation d’une campagne.</p>
+          <h1 className="text-2xl font-bold text-[#16212B]">{t('segmentsTitle')}</h1>
+          <p className="text-sm text-slate-500">{t('segmentsSubtitle')}</p>
         </div>
-        <Button onClick={() => setShowForm((v) => !v)}><Plus className="mr-2 h-4 w-4" /> Nouveau segment</Button>
+        <Button onClick={() => setShowForm((v) => !v)} className="cursor-pointer"><Plus className="me-2 h-4 w-4" /> {t('btnNewSegment')}</Button>
       </div>
 
       {showForm && (
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-semibold text-[#16212B]">Nouveau segment</h2>
-            <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}><X className="h-4 w-4" /></Button>
+            <h2 className="font-semibold text-[#16212B]">{t('btnNewSegment')}</h2>
+            <Button variant="ghost" size="sm" onClick={() => setShowForm(false)} className="cursor-pointer"><X className="h-4 w-4" /></Button>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label>Nom</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex. : Parents de nouveaux inscrits" />
+              <Label>{t('colName')}</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('segmentName')} />
             </div>
             <div>
-              <Label>Type d’audience</Label>
-              <select value={kind} onChange={(e) => setKind(e.target.value)} className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm">
-                {KINDS.map((k) => <option key={k} value={k}>{RECIPIENT_KIND_LABELS[k]}</option>)}
+              <Label>{t('audienceType')}</Label>
+              <select value={kind} onChange={(e) => setKind(e.target.value)} className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm cursor-pointer">
+                {KINDS.map((k) => <option key={k} value={k}>{getRecipientKindLabel(k)}</option>)}
               </select>
             </div>
             <div className="sm:col-span-2">
-              <Label>Étiquette (facultatif)</Label>
-              <Input value={tag} onChange={(e) => setTag(e.target.value)} placeholder="Ex. : rentrée-2026" />
+              <Label>{t('tagOptional')}</Label>
+              <Input value={tag} onChange={(e) => setTag(e.target.value)} placeholder={tCRM('tagsPlaceholder')} />
             </div>
             {activeFilters.map((f) => (
               <div key={f.key}>
@@ -174,12 +237,12 @@ export function SegmentsView() {
                 <select
                   value={filters[f.key] ?? ''}
                   onChange={(e) => setFilters({ ...filters, [f.key]: e.target.value })}
-                  className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
+                  className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm cursor-pointer"
                 >
-                  <option value="">Tous</option>
+                  <option value="">{t('filterAll')}</option>
                   {f.values.map((v) => (
                     <option key={v} value={v}>
-                      {f.key === 'source' ? v.replace(/_/g, ' ') : f.key === 'status' && kind === 'inquiry' ? (v === 'new' ? 'Nouveau' : v === 'contacted' ? 'Contacté' : v === 'qualified' ? 'Qualifié' : v === 'converted' ? 'Converti' : 'Perdu') : v}
+                      {getFilterValueLabel(f.key, v)}
                     </option>
                   ))}
                 </select>
@@ -188,49 +251,53 @@ export function SegmentsView() {
           </div>
           {formError && <p className="mt-3 text-sm text-rose-600">{formError}</p>}
           <div className="mt-4 flex gap-2">
-            <Button onClick={submit} disabled={saving || !name.trim()}>
-              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Users className="mr-2 h-4 w-4" />} Créer le segment
+            <Button onClick={submit} disabled={saving || !name.trim()} className="cursor-pointer">
+              {saving ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : <Users className="me-2 h-4 w-4" />} {t('btnCreate')}
             </Button>
-            <Button variant="outline" onClick={() => setShowForm(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setShowForm(false)} className="cursor-pointer">{t('btnCancel')}</Button>
           </div>
         </Card>
       )}
 
       {(!rows || rows.length === 0) ? (
         <Card className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">
-          Aucun segment. Créez une audience pour lancer une campagne.
+          {t('noSegments')}
         </Card>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-              <tr>
-                <th className="px-4 py-3">Nom</th>
-                <th className="px-4 py-3">Audience</th>
-                <th className="px-4 py-3">Filtres</th>
-                <th className="px-4 py-3">Membres</th>
-                <th className="px-4 py-3">Calculé</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {rows.map((s) => (
-                <tr key={s.id} className="hover:bg-slate-50/60">
-                  <td className="px-4 py-3 font-medium text-[#16212B]">{s.name}</td>
-                  <td className="px-4 py-3"><Badge className="border border-slate-200 bg-slate-50 text-slate-700">{RECIPIENT_KIND_LABELS[s.definition?.kind] ?? s.definition?.kind}</Badge></td>
-                  <td className="px-4 py-3 text-xs text-slate-500">
-                    {Object.entries(s.definition?.filters ?? {}).filter(([, v]) => v !== undefined && v !== null && v !== '').map(([k, v]) => `${FILTER_LABELS[k] ?? k}: ${String(v)}`).join(' · ') || '—'}
-                  </td>
-                  <td className="px-4 py-3 font-semibold text-[#16212B]">{fmtCount(s.memberCount)}</td>
-                  <td className="px-4 py-3 text-slate-500">{fmtDate(s.lastComputedAt)}</td>
-                  <td className="px-4 py-3 text-right">
-                    <Button variant="outline" size="sm" onClick={() => refresh(s)}><RefreshCw className="mr-1 h-3.5 w-3.5" /> Recalculer</Button>
-                    <Button variant="ghost" size="sm" className="text-slate-400 hover:text-rose-600" onClick={() => del(s.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 text-start text-xs uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-4 py-3 text-start">{t('colName')}</th>
+                  <th className="px-4 py-3 text-start">{t('audienceType')}</th>
+                  <th className="px-4 py-3 text-start">{t('filters')}</th>
+                  <th className="px-4 py-3 text-start">{t('members')}</th>
+                  <th className="px-4 py-3 text-start">{t('computed')}</th>
+                  <th className="px-4 py-3 text-end" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {rows.map((s) => (
+                  <tr key={s.id} className="hover:bg-slate-50/60">
+                    <td className="px-4 py-3 font-medium text-[#16212B] text-start">{s.name}</td>
+                    <td className="px-4 py-3 text-start"><Badge className="border border-slate-200 bg-slate-50 text-slate-700">{getRecipientKindLabel(s.definition?.kind ?? '')}</Badge></td>
+                    <td className="px-4 py-3 text-xs text-slate-500 text-start">
+                      {Object.entries(s.definition?.filters ?? {}).filter(([, v]) => v !== undefined && v !== null && v !== '').map(([k, v]) => `${getFilterLabel(k)}: ${getFilterValueLabel(k, String(v))}`).join(' · ') || '—'}
+                    </td>
+                    <td className="px-4 py-3 font-semibold text-[#16212B] text-start">{fmtCount(s.memberCount, locale)}</td>
+                    <td className="px-4 py-3 text-slate-500 text-start">{fmtDate(s.lastComputedAt, locale)}</td>
+                    <td className="px-4 py-3 text-end">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="outline" size="sm" onClick={() => refresh(s)} className="cursor-pointer"><RefreshCw className="me-1 h-3.5 w-3.5" /> {t('btnRecalculate')}</Button>
+                        <Button variant="ghost" size="sm" className="text-slate-400 hover:text-rose-600 cursor-pointer" onClick={() => del(s.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

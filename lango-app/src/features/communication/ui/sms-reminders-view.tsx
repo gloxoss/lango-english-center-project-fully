@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,7 +23,9 @@ type ApiClassSection = { id: string; className: string; sectionName: string };
 
 type Recipient = { studentId: string; studentName: string; className: string; phone: string; guardianName: string };
 
-export function SmsRemindersView() {
+export function SmsRemindersView({ locale }: { locale?: string } = {}) {
+  const t = useTranslations('Communication');
+  const tCommon = useTranslations('Common');
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [templates, setTemplates] = useState<ApiTemplate[]>([]);
@@ -100,12 +103,12 @@ export function SmsRemindersView() {
 
   async function handleSend() {
     if (!selectedTemplate) {
-      setError('Sélectionnez un modèle de message.');
+      setError(t('selectTemplate'));
       return;
     }
     const targets = recipients.filter((r) => selectedIds.has(r.studentId));
     if (targets.length === 0) {
-      setError('Sélectionnez au moins un destinataire.');
+      setError(t('selectAtLeastOne'));
       return;
     }
     setSending(true);
@@ -133,7 +136,7 @@ export function SmsRemindersView() {
         console.error('Reminder send failed', err);
       }
     }
-    setSuccess(`${sent} / ${targets.length} message(s) simulé(s) enregistré(s).`);
+    setSuccess(t('messagesSentCount', { sent, total: targets.length }));
     setSending(false);
   }
 
@@ -147,10 +150,10 @@ export function SmsRemindersView() {
           </div>
           <div>
             <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">
-              Envoyer des Rappels & Notifications
+              {t('remindersTitle')}
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Transmission automatique des rappels d'absences, d'impayés et de convocations aux examens.
+              {t('remindersSubtitle')}
             </p>
           </div>
         </div>
@@ -159,7 +162,7 @@ export function SmsRemindersView() {
       <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3 text-amber-800 text-xs font-semibold shadow-2xs">
         <Info className="w-4 h-4 shrink-0 text-amber-600" />
         <span>
-          Mode simulation : aucun SMS n'est réellement envoyé. Les messages sont enregistrés dans le journal de l'établissement.
+          {t('simulationNotice')}
         </span>
       </div>
 
@@ -182,14 +185,14 @@ export function SmsRemindersView() {
             <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <span className="text-xs font-extrabold text-[#16212B]">
-                  {recipients.length} destinataire(s) nécessitant un rappel
+                  {t('recipientsNeedingReminder', { count: recipients.length })}
                 </span>
                 <Select value={selectedClassSectionId || 'all'} onValueChange={(v) => setSelectedClassSectionId(v === 'all' ? '' : v)}>
                   <SelectTrigger className="w-56 h-9 text-xs rounded-lg border-slate-200">
-                    <SelectValue placeholder="Toutes les classes" />
+                    <SelectValue placeholder={t('allClasses')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Toutes les classes</SelectItem>
+                    <SelectItem value="all">{t('allClasses')}</SelectItem>
                     {classSections.map((cs) => (
                       <SelectItem key={cs.id} value={cs.id}>
                         {cs.className} {cs.sectionName}
@@ -199,7 +202,7 @@ export function SmsRemindersView() {
                 </Select>
               </div>
               <label className="flex items-center gap-2 text-xs font-bold text-[#2487B8] cursor-pointer">
-                <span>Tout sélectionner</span>
+                <span>{t('selectAll')}</span>
                 <input
                   type="checkbox"
                   checked={selectedIds.size === recipients.length && recipients.length > 0}
@@ -213,20 +216,20 @@ export function SmsRemindersView() {
               </label>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-start text-xs">
                 <thead className="bg-[#F6F9FC] text-slate-500 font-semibold border-b border-slate-200/80">
                   <tr>
                     <th className="py-3 px-4 w-10 text-center"></th>
-                    <th className="py-3 px-4">Élève</th>
-                    <th className="py-3 px-4">Tuteur / Parent</th>
-                    <th className="py-3 px-4">Téléphone</th>
+                    <th className="py-3 px-4 text-start">{t('colStudent')}</th>
+                    <th className="py-3 px-4 text-start">{t('colGuardian')}</th>
+                    <th className="py-3 px-4 text-start">{t('colPhone')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {recipients.length === 0 && (
                     <tr>
                       <td colSpan={4} className="py-12 px-4 text-center text-slate-400 font-medium">
-                        Aucun élève à risque nécessitant un rappel immédiat.
+                        {t('noAtRiskStudents')}
                       </td>
                     </tr>
                   )}
@@ -240,12 +243,12 @@ export function SmsRemindersView() {
                           className="w-4 h-4 accent-[#2487B8] rounded"
                         />
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 text-start">
                         <p className="font-extrabold text-[#16212B]">{r.studentName}</p>
                         <p className="text-[10px] text-slate-400 font-semibold">{r.className}</p>
                       </td>
-                      <td className="py-3 px-4 text-slate-700 font-medium">{r.guardianName}</td>
-                      <td className="py-3 px-4 font-mono font-bold text-slate-600">{r.phone}</td>
+                      <td className="py-3 px-4 text-start text-slate-700 font-medium">{r.guardianName}</td>
+                      <td className="py-3 px-4 text-start font-mono font-bold text-slate-600">{r.phone}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -256,15 +259,15 @@ export function SmsRemindersView() {
 
         <div className="space-y-6">
           <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-            <h3 className="text-sm font-extrabold text-[#16212B]">Sélection du Modèle & Envoi</h3>
+            <h3 className="text-sm font-extrabold text-[#16212B]">{t('templateSelectionTitle')}</h3>
             <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
               <SelectTrigger className="w-full h-10 text-xs rounded-xl border-slate-200">
-                <SelectValue placeholder="Sélectionnez un modèle de rappel" />
+                <SelectValue placeholder={t('selectReminderTemplatePlaceholder')} />
               </SelectTrigger>
               <SelectContent>
-                {templates.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.name}
+                {templates.map((tItem) => (
+                  <SelectItem key={tItem.id} value={tItem.id}>
+                    {tItem.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -278,12 +281,12 @@ export function SmsRemindersView() {
 
             <div className="space-y-2 text-xs pt-2 border-t border-slate-100 font-medium">
               <div className="flex justify-between py-1">
-                <span className="text-slate-500">Destinataires cochés</span>
+                <span className="text-slate-500">{t('checkedRecipients')}</span>
                 <span className="font-extrabold text-[#2487B8]">{selectedIds.size}</span>
               </div>
               {sending && (
                 <div className="flex justify-between py-1">
-                  <span className="text-slate-500">Envoyés</span>
+                  <span className="text-slate-500">{t('sentProgress')}</span>
                   <span className="font-extrabold text-[#16212B]">
                     {sentCount} / {selectedIds.size}
                   </span>
@@ -297,17 +300,17 @@ export function SmsRemindersView() {
               className="w-full h-10 bg-[#2487B8] hover:bg-[#1B6C93] disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-2xs cursor-pointer"
             >
               <Send className="w-4 h-4" />
-              <span>{sending ? 'Envoi en cours...' : 'Envoyer les Rappels (simulation)'}</span>
+              <span>{sending ? t('sending') : t('sendRemindersAction')}</span>
             </Button>
           </Card>
 
           <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-2">
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-              <h4 className="text-xs font-bold text-[#16212B]">Origine des Destinataires à Risque</h4>
+              <h4 className="text-xs font-bold text-[#16212B]">{t('atRiskOriginTitle')}</h4>
             </div>
             <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
-              Élèves automatiquement identifiés par le grand livre académique (taux d'absence élevé ou factures en souffrance).
+              {t('atRiskOriginDesc')}
             </p>
           </Card>
         </div>

@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { Send, Plus, CheckCircle2, AlertTriangle, Copy, ShieldAlert, Sparkles } from 'lucide-react';
+import { Send, Plus, CheckCircle2, AlertTriangle, ShieldAlert, Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface TimetableVersion {
   id: string;
@@ -31,6 +32,9 @@ export function SchedulePublishBar({
   sessionYearId?: string;
   onVersionChange?: (versionId: string, status: string) => void;
 }) {
+  const t = useTranslations('Academics');
+  const tCommon = useTranslations('Common');
+
   const [versions, setVersions] = useState<TimetableVersion[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -76,6 +80,12 @@ export function SchedulePublishBar({
 
   const activeVersion = versions.find((v) => v.id === selectedVersionId);
 
+  const formatStatus = (status: TimetableVersion['status']) => {
+    if (status === 'published') return t('statusPublished');
+    if (status === 'draft') return t('statusDraft');
+    return t('statusArchived');
+  };
+
   const handleSelectVersion = (id: string) => {
     setSelectedVersionId(id);
     const ver = versions.find((v) => v.id === id);
@@ -99,14 +109,14 @@ export function SchedulePublishBar({
       const data = await res.json();
       if (data.success) {
         setCreateModalOpen(false);
-        setMessage({ type: 'success', text: `Brouillon v${data.data.versionNumber} créé avec succès.` });
+        setMessage({ type: 'success', text: t('draftCreatedSuccess', { version: data.data.versionNumber }) });
         await loadVersions();
         handleSelectVersion(data.data.id);
       } else {
-        setMessage({ type: 'error', text: data.error?.message || 'Erreur lors de la création.' });
+        setMessage({ type: 'error', text: data.error?.message || t('connectionError') });
       }
     } catch {
-      setMessage({ type: 'error', text: 'Erreur réseau.' });
+      setMessage({ type: 'error', text: t('connectionError') });
     } finally {
       setCreating(false);
     }
@@ -125,16 +135,16 @@ export function SchedulePublishBar({
       const data = await res.json();
       if (data.success) {
         const s = data.data;
-        const skipped = s.skippedNoTeacher > 0 ? ` · ${s.skippedNoTeacher} matière(s) sans enseignant` : '';
-        const unplaced = s.unplaced > 0 ? ` · ${s.unplaced} créneau(x) non placé(s)` : '';
-        setMessage({ type: 'success', text: `${s.slotsCreated} créneau(x) généré(s) — v${s.version.versionNumber}${skipped}${unplaced}.` });
+        const skipped = s.skippedNoTeacher > 0 ? ` · ${s.skippedNoTeacher} ${t('optionalSubject')}` : '';
+        const unplaced = s.unplaced > 0 ? ` · ${s.unplaced}` : '';
+        setMessage({ type: 'success', text: `${s.slotsCreated} — v${s.version.versionNumber}${skipped}${unplaced}.` });
         await loadVersions();
         handleSelectVersion(data.data.version.id);
       } else {
-        setMessage({ type: 'error', text: data.error?.message || 'Erreur lors de la génération.' });
+        setMessage({ type: 'error', text: data.error?.message || t('connectionError') });
       }
     } catch {
-      setMessage({ type: 'error', text: 'Erreur réseau lors de la génération.' });
+      setMessage({ type: 'error', text: t('connectionError') });
     } finally {
       setGenerating(false);
     }
@@ -152,17 +162,17 @@ export function SchedulePublishBar({
       });
       const data = await res.json();
       if (data.success) {
-        setMessage({ type: 'success', text: `Emploi du temps v${data.data.versionNumber} publié avec succès !` });
+        setMessage({ type: 'success', text: t('schedulePublishedSuccess', { version: data.data.versionNumber }) });
         await loadVersions();
         onVersionChange?.(data.data.id, 'published');
       } else if (res.status === 409 && data.error?.code === 'TIMETABLE_CONFLICTS_FOUND') {
         setConflicts(data.error?.details?.conflicts || []);
         setConflictModalOpen(true);
       } else {
-        setMessage({ type: 'error', text: data.error?.message || 'Erreur de publication.' });
+        setMessage({ type: 'error', text: data.error?.message || t('connectionError') });
       }
     } catch {
-      setMessage({ type: 'error', text: 'Erreur réseau lors de la publication.' });
+      setMessage({ type: 'error', text: t('connectionError') });
     } finally {
       setPublishing(false);
     }
@@ -175,12 +185,12 @@ export function SchedulePublishBar({
           <div className="w-52">
             <Select value={selectedVersionId} onValueChange={handleSelectVersion} disabled={loading}>
               <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200 bg-white">
-                <SelectValue placeholder="Sélectionner une version" />
+                <SelectValue placeholder={t('selectVersionPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
                 {versions.map((v) => (
                   <SelectItem key={v.id} value={v.id}>
-                    Version {v.versionNumber} ({v.status})
+                    {t('versionOption', { version: v.versionNumber, status: formatStatus(v.status) })}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -192,7 +202,7 @@ export function SchedulePublishBar({
               variant={activeVersion.status === 'published' ? 'success' : activeVersion.status === 'draft' ? 'warning' : 'neutral'}
               className="text-xs px-2.5 py-1 capitalize"
             >
-              {activeVersion.status === 'published' ? 'En Rigueur (Publiée)' : activeVersion.status === 'draft' ? 'Brouillon' : 'Archivée'}
+              {formatStatus(activeVersion.status)}
             </Badge>
           )}
         </div>
@@ -206,7 +216,7 @@ export function SchedulePublishBar({
             className="h-9 text-xs rounded-xl gap-1.5 border-slate-200"
           >
             <Sparkles className="w-3.5 h-3.5 text-[#2487B8]" />
-            {generating ? 'Génération...' : 'Générer automatiquement'}
+            {generating ? t('btnAutoGenerating') : t('btnAutoGenerate')}
           </Button>
 
           <Button
@@ -216,7 +226,7 @@ export function SchedulePublishBar({
             className="h-9 text-xs rounded-xl gap-1.5 border-slate-200"
           >
             <Plus className="w-3.5 h-3.5" />
-            Nouveau Brouillon
+            {t('btnNewDraft')}
           </Button>
 
           {activeVersion && activeVersion.status === 'draft' && (
@@ -227,7 +237,7 @@ export function SchedulePublishBar({
               className="h-9 text-xs rounded-xl gap-1.5 bg-[#2487B8] hover:bg-[#1B6C93]"
             >
               <Send className="w-3.5 h-3.5" />
-              {publishing ? 'Publication...' : 'Publier cette Version'}
+              {publishing ? t('btnPublishingVersion') : t('btnPublishVersion')}
             </Button>
           )}
         </div>
@@ -251,24 +261,24 @@ export function SchedulePublishBar({
         <DialogContent className="rounded-2xl max-w-md">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-[#16212B]">
-              Créer une Nouvelle Version Brouillon
+              {t('createDraftModalTitle')}
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              Vous pouvez démarrer d'une version vierge ou dupliquer une version existante.
+              {t('createDraftModalDesc')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-700">Source de duplication</label>
+              <label className="text-xs font-medium text-slate-700">{t('duplicationSource')}</label>
               <Select value={copySourceId} onValueChange={setCopySourceId}>
                 <SelectTrigger className="rounded-xl h-10 border-slate-200">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Vierge (Aucune duplication)</SelectItem>
+                  <SelectItem value="none">{t('blankNoDuplication')}</SelectItem>
                   {versions.map((v) => (
                     <SelectItem key={v.id} value={v.id}>
-                      Copier depuis Version {v.versionNumber} ({v.status})
+                      {t('copyFromVersion', { version: v.versionNumber, status: formatStatus(v.status) })}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -277,14 +287,14 @@ export function SchedulePublishBar({
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateModalOpen(false)} className="rounded-xl h-9 text-xs">
-              Annuler
+              {tCommon('cancel')}
             </Button>
             <Button
               onClick={handleCreateDraft}
               disabled={creating}
               className="rounded-xl h-9 text-xs bg-[#2487B8] hover:bg-[#1B6C93]"
             >
-              {creating ? 'Création...' : 'Créer le brouillon'}
+              {creating ? tCommon('loading') : t('btnCreateDraft')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -296,10 +306,10 @@ export function SchedulePublishBar({
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-red-600 flex items-center gap-2">
               <ShieldAlert className="w-5 h-5" />
-              Conflits Horaires Détectés
+              {t('publishConflictsTitle')}
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              La publication à échoué car des chevauchements d'horaires sont présents.
+              {t('publishConflictsDesc')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-2 max-h-60 overflow-y-auto">
@@ -308,13 +318,13 @@ export function SchedulePublishBar({
                 <span className="font-bold uppercase text-[10px] px-2 py-0.5 rounded bg-red-200 text-red-900 inline-block">
                   {c.type}
                 </span>
-                <p>{c.message || 'Chevauchement de salle, d\'enseignant ou de classe.'}</p>
+                <p>{c.message || t('publishConflictsDesc')}</p>
               </div>
             ))}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConflictModalOpen(false)} className="rounded-xl h-9 text-xs">
-              Fermer et Corriger
+              {t('btnCloseAndFix')}
             </Button>
           </DialogFooter>
         </DialogContent>

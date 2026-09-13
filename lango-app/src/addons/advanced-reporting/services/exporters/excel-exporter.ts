@@ -1,5 +1,5 @@
-import ExcelJS from 'exceljs';
 import type { ColumnDefinition } from '../../types/reporting-types';
+import ExcelJS from 'exceljs';
 import { CsvExporter } from './csv-exporter';
 
 const NUMERIC_TYPES = new Set(['number', 'currency', 'percentage']);

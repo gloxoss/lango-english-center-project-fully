@@ -8,5 +8,10 @@ export default async function ReceptionistHomePage({
 }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'reception.portal.use' });
-  return <ReceptionHomeView />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <ReceptionHomeView />
+    </main>
+  );
 }

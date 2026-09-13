@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Sliders, ShieldCheck, CheckCircle, Bell, Loader2, AlertTriangle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 type TransportPolicies = {
   maxCapacityMarginPercent: number;
@@ -16,6 +17,7 @@ const DEFAULTS: TransportPolicies = {
 };
 
 export default function TransportPoliciesPage() {
+  const t = useTranslations('Transport');
   const [policies, setPolicies] = useState<TransportPolicies>(DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -37,16 +39,16 @@ export default function TransportPoliciesPage() {
             handoffAgeThresholdYears: json.data.handoffAgeThresholdYears ?? 8,
           });
         } else {
-          setError(json.error?.message || 'Impossible de charger les politiques.');
+          setError(json.error?.message || t('failedToLoadPolicies'));
         }
       } catch {
-        if (!cancelled) setError('Impossible de joindre le serveur.');
+        if (!cancelled) setError(t('failedToLoadPolicies'));
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [t]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,10 +66,10 @@ export default function TransportPoliciesPage() {
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
       } else {
-        setError(json.error?.message || 'Erreur lors de l\'enregistrement.');
+        setError(json.error?.message || t('failedToSavePolicies'));
       }
     } catch {
-      setError('Impossible de joindre le serveur.');
+      setError(t('failedToSavePolicies'));
     } finally {
       setSaving(false);
     }
@@ -79,43 +81,43 @@ export default function TransportPoliciesPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <Sliders className="w-7 h-7 text-[#0066FF]" />
-            Règles & Politiques de Transport
+            {t('policiesTitle')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Configuration des contrôles de sécurité, remise des jeunes élèves et limites de capacité.
+            {t('policiesSubtitle')}
           </p>
         </div>
       </div>
 
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-red-600" />
+          <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {saved && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-sm flex items-center gap-2">
-          <CheckCircle className="w-4 h-4 text-emerald-600" />
-          <span>Politiques enregistrées avec succès.</span>
+          <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{t('policiesUpdatedMsg')}</span>
         </div>
       )}
 
       {loading ? (
         <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500">
-          <Loader2 className="h-4 w-4 animate-spin" /> Chargement…
+          <Loader2 className="h-4 w-4 animate-spin" />
         </div>
       ) : (
         <form onSubmit={handleSave} className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-6">
           <div className="space-y-4">
             <h2 className="font-bold text-slate-900 flex items-center gap-2 border-b pb-3 text-base">
               <ShieldCheck className="w-5 h-5 text-[#0066FF]" />
-              Capacité des Véhicules
+              {t('vehicleCapacityTitle')}
             </h2>
 
             <div className="py-2">
-              <label className="font-semibold text-slate-800 text-sm block mb-1">Marge de surcapacité autorisée (%)</label>
-              <span className="text-xs text-slate-500 block mb-1">Autorise un dépassement temporaire de la capacité assise lors de l'affectation.</span>
+              <label className="font-semibold text-slate-800 text-sm block mb-1">{t('maxCapacityMarginLabel')}</label>
+              <span className="text-xs text-slate-500 block mb-1">{t('maxCapacityMarginDesc')}</span>
               <input
                 type="number"
                 min={0}
@@ -130,13 +132,13 @@ export default function TransportPoliciesPage() {
           <div className="space-y-4 pt-4 border-t">
             <h2 className="font-bold text-slate-900 flex items-center gap-2 border-b pb-3 text-base">
               <Bell className="w-5 h-5 text-[#0066FF]" />
-              Remise Sécurisée des Jeunes Élèves
+              {t('safeHandoffTitle')}
             </h2>
 
             <div className="flex items-center justify-between py-2">
               <div>
-                <span className="font-semibold text-slate-800 text-sm block">Remise sécurisée obligatoire pour les jeunes élèves</span>
-                <span className="text-xs text-slate-500">Exiger un adulte responsable à la dépose pour les élèves sous le seuil d'âge.</span>
+                <span className="font-semibold text-slate-800 text-sm block">{t('requireSafeHandoffLabel')}</span>
+                <span className="text-xs text-slate-500">{t('requireSafeHandoffDesc')}</span>
               </div>
               <input
                 type="checkbox"
@@ -147,7 +149,7 @@ export default function TransportPoliciesPage() {
             </div>
 
             <div className="py-2 border-t">
-              <label className="font-semibold text-slate-800 text-sm block mb-1">Âge seuil de remise sécurisée (années)</label>
+              <label className="font-semibold text-slate-800 text-sm block mb-1">{t('handoffAgeThresholdLabel')}</label>
               <input
                 type="number"
                 min={0}
@@ -165,7 +167,7 @@ export default function TransportPoliciesPage() {
               disabled={saving}
               className="px-6 py-2.5 bg-[#0066FF] hover:bg-blue-600 text-white font-semibold text-sm rounded-lg shadow-sm transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {saving ? 'Enregistrement…' : 'Enregistrer les Politiques'}
+              {saving ? t('savingPolicies') : t('savePoliciesBtn')}
             </button>
           </div>
         </form>

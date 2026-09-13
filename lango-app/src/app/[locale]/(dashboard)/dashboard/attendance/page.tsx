@@ -8,5 +8,5 @@ export default async function AttendancePage({
 }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'attendance.read' });
-  return <AttendanceView />;
+  return <AttendanceView locale={locale} />;
 }

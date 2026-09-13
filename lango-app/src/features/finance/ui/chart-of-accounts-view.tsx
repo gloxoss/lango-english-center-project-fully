@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,6 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import { Search, Plus, BookOpen, CheckCircle2, FileSpreadsheet, Archive, AlertCircle } from 'lucide-react';
-
 
 type Account = {
   id: string;
@@ -35,7 +35,21 @@ function buildTree(accounts: Account[]): AccountNode[] {
   return roots;
 }
 
-function AccountRow({ node, depth, selectedId, onSelect }: { node: AccountNode; depth: number; selectedId: string | null; onSelect: (a: Account) => void }) {
+function AccountRow({
+  node,
+  depth,
+  selectedId,
+  onSelect,
+  typeLabels,
+  t,
+}: {
+  node: AccountNode;
+  depth: number;
+  selectedId: string | null;
+  onSelect: (a: Account) => void;
+  typeLabels: Record<string, string>;
+  t: (key: any) => string;
+}) {
   return (
     <>
       <tr
@@ -46,26 +60,44 @@ function AccountRow({ node, depth, selectedId, onSelect }: { node: AccountNode; 
         onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(node); } }}
         className={`cursor-pointer transition-colors border-b border-slate-100 ${selectedId === node.id ? 'bg-[#DCEBF4]/30' : 'hover:bg-slate-50/80'}`}
       >
-        <td className="py-2 px-4" style={{ paddingLeft: `${16 + depth * 20}px` }}>
+        <td className="py-2 px-4" style={{ paddingInlineStart: `${16 + depth * 20}px` }}>
           <span className="text-[11px] font-mono font-bold text-[#16212B]">{node.code}</span>
         </td>
         <td className="py-2 px-3 text-[11px] font-semibold text-[#16212B]">{node.name}</td>
-        <td className="py-2 px-3 text-[10px] text-slate-500 capitalize">{node.accountType}</td>
+        <td className="py-2 px-3 text-[10px] text-slate-500 capitalize">{typeLabels[node.accountType] ?? node.accountType}</td>
         <td className="py-2 px-3">
           <Badge className={`text-[9px] border-none font-bold ${node.isActive ? 'bg-[#DDF5EC] text-[#17A673]' : 'bg-slate-100 text-slate-500'}`}>
-            {node.isActive ? 'Actif' : 'Inactif'}
+            {node.isActive ? t('statusActive') : t('statusInactive')}
           </Badge>
         </td>
       </tr>
       {node.children.map(child => (
-        <AccountRow key={child.id} node={child} depth={depth + 1} selectedId={selectedId} onSelect={onSelect} />
+        <AccountRow
+          key={child.id}
+          node={child}
+          depth={depth + 1}
+          selectedId={selectedId}
+          onSelect={onSelect}
+          typeLabels={typeLabels}
+          t={t}
+        />
       ))}
     </>
   );
 }
 
-export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
-  const isArabic = locale === 'ar';
+export function ChartOfAccountsView({ locale: _locale }: { locale?: string } = {}) {
+  const t = useTranslations('Finance');
+  const tCommon = useTranslations('Common');
+
+  const typeLabels: Record<string, string> = {
+    asset: t('accountTypeAsset'),
+    liability: t('accountTypeLiability'),
+    equity: t('accountTypeEquity'),
+    revenue: t('accountTypeRevenue'),
+    expense: t('accountTypeExpense'),
+  };
+
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Account | null>(null);
@@ -130,7 +162,7 @@ export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
       if (!response.ok) throw new Error('ACCOUNT_CREATE_FAILED');
       setIsAddModalOpen(false);
       setForm({ code: '', name: '', accountType: 'asset', parentAccountId: '' });
-      setFeedbackMsg(`Compte "${form.code} - ${form.name}" ajouté au Plan Comptable.`);
+      setFeedbackMsg(t('accountCreatedFeedback', { code: form.code, name: form.name }));
       setTimeout(() => setFeedbackMsg(null), 4000);
       load();
     } catch (err) {
@@ -150,12 +182,12 @@ export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
         body: JSON.stringify({ id: selected.id, isActive: false }),
       });
       const json = await response.json();
-      if (!response.ok) throw new Error(json.error?.message ?? (isArabic ? 'تعذر أرشفة الحساب.' : 'Impossible d’archiver le compte.'));
-      setFeedbackMsg(isArabic ? `تمت أرشفة الحساب ${selected.code}.` : `Compte ${selected.code} archivé.`);
+      if (!response.ok) throw new Error(json.error?.message ?? t('archiveAccountError'));
+      setFeedbackMsg(t('accountArchivedFeedback', { code: selected.code }));
       setSelected({ ...selected, isActive: false });
       load();
     } catch (cause) {
-      setErrorMsg(cause instanceof Error ? cause.message : (isArabic ? 'تعذر أرشفة الحساب.' : 'Impossible d’archiver le compte.'));
+      setErrorMsg(cause instanceof Error ? cause.message : t('archiveAccountError'));
     } finally { setIsArchiving(false); }
   };
 
@@ -165,15 +197,15 @@ export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
   const tree = buildTree(filtered);
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto" dir={isArabic ? 'rtl' : 'ltr'} lang={locale}>
+    <div className="space-y-6 max-w-[1600px] mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{isArabic ? 'الدليل المحاسبي العام' : 'Plan comptable général (PCG)'}</h1>
-          <p className="text-xs text-slate-500 mt-1">{isArabic ? `${accounts.length} حساباً مهيأً لهذه المؤسسة.` : `${accounts.length} compte(s) configuré(s) pour cet établissement.`}</p>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('chartOfAccountsTitle')}</h1>
+          <p className="text-xs text-slate-500 mt-1">{t('chartOfAccountsSubtitle', { count: accounts.length })}</p>
         </div>
         <Button size="sm" onClick={() => setIsAddModalOpen(true)} className="h-9 text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5 font-bold shadow-sm">
           <Plus className="w-3.5 h-3.5" />
-          {isArabic ? 'إنشاء حساب' : 'Créer un compte'}
+          {t('createAccountBtn')}
         </Button>
       </div>
 
@@ -192,9 +224,9 @@ export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
             <BookOpen className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-slate-400">Total Comptes PCG</p>
+            <p className="text-[10px] font-bold text-slate-400">{t('totalAccountsCard')}</p>
             <p className="text-xl font-extrabold text-[#16212B]">{accounts.length}</p>
-            <p className="text-[10px] font-semibold text-[#17A673]">Plan comptable général</p>
+            <p className="text-[10px] font-semibold text-[#17A673]">{t('chartOfAccountsTitle')}</p>
           </div>
         </Card>
 
@@ -203,9 +235,9 @@ export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
             <CheckCircle2 className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-slate-400">Comptes Actifs</p>
+            <p className="text-[10px] font-bold text-slate-400">{t('activeAccountsCard')}</p>
             <p className="text-xl font-extrabold text-[#16212B]">{accounts.filter(a => a.isActive).length}</p>
-            <p className="text-[10px] font-semibold text-slate-500">Prêts aux écritures</p>
+            <p className="text-[10px] font-semibold text-slate-500">{t('readyForEntriesSub')}</p>
           </div>
         </Card>
 
@@ -214,9 +246,9 @@ export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
             <FileSpreadsheet className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-slate-400">{isArabic ? 'أنواع الحسابات' : 'Types de comptes'}</p>
+            <p className="text-[10px] font-bold text-slate-400">{t('accountTypesCard')}</p>
             <p className="text-xl font-extrabold text-[#16212B]">{new Set(accounts.map(account => account.accountType)).size}</p>
-            <p className="text-[10px] font-semibold text-slate-500">{isArabic ? 'بيانات المؤسسة الفعلية' : 'Données réelles de l’établissement'}</p>
+            <p className="text-[10px] font-semibold text-slate-500">{t('realTenantData')}</p>
           </div>
         </Card>
       </div>
@@ -224,10 +256,16 @@ export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5 items-start">
         <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
           <div className="p-4 flex items-center justify-between border-b border-slate-100">
-            <h3 className="text-xs font-extrabold text-[#16212B]">Hiérarchie des comptes</h3>
+            <h3 className="text-xs font-extrabold text-[#16212B]">{t('accountHierarchyTitle')}</h3>
             <div className="relative">
               <Search className="w-3.5 h-3.5 absolute start-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <Input aria-label={isArabic ? 'البحث في الحسابات' : 'Rechercher dans les comptes'} placeholder={isArabic ? 'بحث...' : 'Rechercher...'} value={search} onChange={e => setSearch(e.target.value)} className="ps-8 h-8 text-[11px] bg-slate-50 rounded-xl border-slate-200 w-full sm:w-56" />
+              <Input
+                aria-label={t('searchAccountsPlaceholder')}
+                placeholder={t('searchAccountsPlaceholder')}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="ps-8 h-8 text-[11px] bg-slate-50 rounded-xl border-slate-200 w-full sm:w-56"
+              />
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -235,17 +273,25 @@ export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
               <thead>
                 <tr className="text-slate-400 font-bold border-b border-slate-100 bg-slate-50/50">
                   <th className="py-2.5 px-4 text-start">Code</th>
-                  <th className="py-2.5 px-3 text-start">Libellé</th>
-                  <th className="py-2.5 px-3 text-start">Type</th>
-                  <th className="py-2.5 px-3 text-start">Statut</th>
+                  <th className="py-2.5 px-3 text-start">{t('nameLabel')}</th>
+                  <th className="py-2.5 px-3 text-start">{t('accountTypeLabel')}</th>
+                  <th className="py-2.5 px-3 text-start">{tCommon('status')}</th>
                 </tr>
               </thead>
               <tbody>
                 {tree.length === 0 && (
-                  <tr><td colSpan={4} className="py-8 text-center text-slate-400">Aucun compte configuré.</td></tr>
+                  <tr><td colSpan={4} className="py-8 text-center text-slate-400">{t('noAccountsConfigured')}</td></tr>
                 )}
                 {tree.map(node => (
-                  <AccountRow key={node.id} node={node} depth={0} selectedId={selected?.id ?? null} onSelect={setSelected} />
+                  <AccountRow
+                    key={node.id}
+                    node={node}
+                    depth={0}
+                    selectedId={selected?.id ?? null}
+                    onSelect={setSelected}
+                    typeLabels={typeLabels}
+                    t={t}
+                  />
                 ))}
               </tbody>
             </table>
@@ -253,42 +299,47 @@ export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
         </Card>
 
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-          <h3 className="text-xs font-extrabold text-[#16212B]">Détail du compte</h3>
-          {!selected && <p className="text-xs text-slate-500">Sélectionnez un compte pour voir son détail.</p>}
+          <h3 className="text-xs font-extrabold text-[#16212B]">{t('accountDetailTitle')}</h3>
+          {!selected && <p className="text-xs text-slate-500">{t('selectAccountPrompt')}</p>}
           {selected && (
             <div className="space-y-2 text-[11px]">
               <div className="flex justify-between border-b border-slate-50 pb-1">
                 <span className="text-slate-500 font-semibold">Code</span>
                 <span className="font-bold text-[#16212B] font-mono">{selected.code}</span>
               </div>
-              {selected.isActive && <Button type="button" variant="outline" className="mt-3 w-full text-xs" disabled={isArchiving} onClick={handleArchive}><Archive className="size-3.5" />{isArchiving ? (isArabic ? 'جارٍ الأرشفة…' : 'Archivage…') : (isArabic ? 'أرشفة الحساب' : 'Archiver le compte')}</Button>}
+              {selected.isActive && (
+                <Button type="button" variant="outline" className="mt-3 w-full text-xs" disabled={isArchiving} onClick={handleArchive}>
+                  <Archive className="size-3.5" />
+                  {isArchiving ? t('archiving') : t('archiveAccountBtn')}
+                </Button>
+              )}
               <div className="flex justify-between border-b border-slate-50 pb-1">
-                <span className="text-slate-500 font-semibold">Libellé</span>
+                <span className="text-slate-500 font-semibold">{t('nameLabel')}</span>
                 <span className="font-bold text-[#16212B]">{selected.name}</span>
               </div>
               <div className="flex justify-between border-b border-slate-50 pb-1">
-                <span className="text-slate-500 font-semibold">Type</span>
-                <span className="font-bold text-[#16212B] capitalize">{selected.accountType}</span>
+                <span className="text-slate-500 font-semibold">{t('accountTypeLabel')}</span>
+                <span className="font-bold text-[#16212B] capitalize">{typeLabels[selected.accountType] ?? selected.accountType}</span>
               </div>
               <div className="flex justify-between border-b border-slate-50 pb-1">
-                <span className="text-slate-500 font-semibold">Statut</span>
-                <span className="font-bold text-[#16212B]">{selected.isActive ? 'Actif' : 'Inactif'}</span>
+                <span className="text-slate-500 font-semibold">{tCommon('status')}</span>
+                <span className="font-bold text-[#16212B]">{selected.isActive ? t('statusActive') : t('statusInactive')}</span>
               </div>
               <div className="space-y-1 border-t border-slate-100 pt-2">
-                <p className="text-[10px] font-extrabold text-slate-400 uppercase">Historique des écritures</p>
+                <p className="text-[10px] font-extrabold text-slate-400 uppercase">{t('accountHistoryTitle')}</p>
                 {drillLoading ? (
-                  <p className="text-xs text-slate-400 py-2">Chargement...</p>
+                  <p className="text-xs text-slate-400 py-2">{tCommon('loading')}</p>
                 ) : drillRows.length === 0 ? (
-                  <p className="text-xs text-slate-400 py-2">Aucune écriture comptabilisée.</p>
+                  <p className="text-xs text-slate-400 py-2">{t('noPostedEntries')}</p>
                 ) : (
-                  <div className="space-y-1 max-h-64 overflow-y-auto pr-1">
+                  <div className="space-y-1 max-h-64 overflow-y-auto pe-1">
                     {drillRows.map(line => (
                       <div key={line.id} className="flex items-start justify-between gap-2 border-b border-slate-50 pb-1">
                         <div className="min-w-0">
                           <p className="text-[10px] font-semibold text-[#16212B] truncate">{line.description || line.entryNumber}</p>
                           <p className="text-[9px] text-slate-400">{line.entryNumber} · {line.entryDate}</p>
                         </div>
-                        <div className="text-right shrink-0">
+                        <div className="text-end shrink-0">
                           {Number(line.debit) > 0 && <p className="text-[10px] font-bold text-[#16212B]">D {line.debit}</p>}
                           {Number(line.credit) > 0 && <p className="text-[10px] font-bold text-[#16212B]">C {line.credit}</p>}
                           <p className="text-[9px] font-mono text-slate-500">Solde {line.balance}</p>
@@ -299,7 +350,7 @@ export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
                 )}
                 {drillMeta?.runningBalance != null && (
                   <div className="flex justify-between pt-1 font-bold text-[#16212B]">
-                    <span className="text-slate-500">Solde courant</span>
+                    <span className="text-slate-500">{t('currentBalance')}</span>
                     <span className="font-mono">{drillMeta.runningBalance}</span>
                   </div>
                 )}
@@ -313,11 +364,11 @@ export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent className="max-w-md bg-white rounded-2xl p-6">
           <DialogHeader>
-            <DialogTitle className="text-base font-extrabold text-[#16212B]">Créer un nouveau compte comptable</DialogTitle>
+            <DialogTitle className="text-base font-extrabold text-[#16212B]">{t('newAccountModalTitle')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 text-xs pt-2">
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Code du compte *</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('accountCodeLabel')}</label>
               <Input
                 placeholder="ex: 611100"
                 value={form.code}
@@ -326,7 +377,7 @@ export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
               />
             </div>
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Libellé du compte *</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('accountNameLabel')}</label>
               <Input
                 placeholder="ex: Achats de fournitures de bureau"
                 value={form.name}
@@ -335,27 +386,27 @@ export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
               />
             </div>
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Type de compte</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('accountTypeLabel')}</label>
               <select
                 value={form.accountType}
                 onChange={e => setForm({ ...form, accountType: e.target.value })}
                 className="w-full h-9 text-xs rounded-xl border border-slate-200 px-3 bg-white font-medium"
               >
-                <option value="asset">Actif</option>
-                <option value="liability">Passif</option>
-                <option value="equity">Capitaux propres</option>
-                <option value="revenue">Produits</option>
-                <option value="expense">Charges</option>
+                <option value="asset">{t('accountTypeAsset')}</option>
+                <option value="liability">{t('accountTypeLiability')}</option>
+                <option value="equity">{t('accountTypeEquity')}</option>
+                <option value="revenue">{t('accountTypeRevenue')}</option>
+                <option value="expense">{t('accountTypeExpense')}</option>
               </select>
             </div>
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Compte parent</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('parentAccountLabel')}</label>
               <select
                 value={form.parentAccountId}
                 onChange={e => setForm({ ...form, parentAccountId: e.target.value })}
                 className="w-full h-9 text-xs rounded-xl border border-slate-200 px-3 bg-white font-medium"
               >
-                <option value="">Aucun (compte racine)</option>
+                <option value="">{t('rootAccountPlaceholder')}</option>
                 {[...accounts].sort((a, b) => a.code.localeCompare(b.code)).map(a => (
                   <option key={a.id} value={a.id}>{a.code} — {a.name}</option>
                 ))}
@@ -364,10 +415,10 @@ export function ChartOfAccountsView({ locale = 'fr' }: { locale?: string }) {
           </div>
           <DialogFooter className="gap-2 pt-4">
             <Button variant="outline" onClick={() => setIsAddModalOpen(false)} className="rounded-xl text-xs h-9">
-              Annuler
+              {tCommon('cancel')}
             </Button>
             <Button disabled={isSaving} onClick={handleCreate} className="rounded-xl text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold">
-              Enregistrer le compte
+              {t('saveAccountBtn')}
             </Button>
           </DialogFooter>
         </DialogContent>

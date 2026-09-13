@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -49,9 +49,16 @@ type HostelBoard = {
   rooms: RoomOccupancy[];
 };
 
-const GENDER_LABELS: Record<string, string> = { mixed: 'Mixte', male_only: 'Garçons', female_only: 'Filles' };
-
 export function BedBoardView() {
+  const t = useTranslations('Hostel');
+  const tCommon = useTranslations('Common');
+
+  const GENDER_LABELS: Record<string, string> = {
+    mixed: t('genderMixed'),
+    male_only: t('genderMaleOnly'),
+    female_only: t('genderFemaleOnly'),
+  };
+
   const [board, setBoard] = useState<HostelBoard[]>([]);
   const [hostels, setHostels] = useState<HostelRow[]>([]);
   const [filterHostel, setFilterHostel] = useState('all');
@@ -99,13 +106,13 @@ export function BedBoardView() {
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#16212B]">Occupancy — Vue d&apos;ensemble</h1>
-          <p className="text-sm text-slate-500">Occupation dérivée des affectations effectives, jamais d&apos;un compteur manuel.</p>
+          <h1 className="text-2xl font-bold text-[#16212B]">{t('bedBoardTitle')}</h1>
+          <p className="text-sm text-slate-500">{t('bedBoardSubtitle')}</p>
         </div>
         <Select value={filterHostel} onValueChange={setFilterHostel}>
           <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Toutes les résidences</SelectItem>
+            <SelectItem value="all">{t('filterAllHostels')}</SelectItem>
             {hostels.map(h => <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>)}
           </SelectContent>
         </Select>
@@ -115,19 +122,19 @@ export function BedBoardView() {
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#D1F5E8] text-[#16212B]"><BedDouble className="h-5 w-5" /></div>
-            <div><p className="text-sm text-slate-500">Lits occupés</p><p className="text-2xl font-bold text-[#16212B]">{totals.occupiedBeds} <span className="text-sm font-normal text-slate-400">/ {totals.usableBeds}</span></p></div>
+            <div><p className="text-sm text-slate-500">{t('occupiedBeds')}</p><p className="text-2xl font-bold text-[#16212B]">{totals.occupiedBeds} <span className="text-sm font-normal text-slate-400">/ {totals.usableBeds}</span></p></div>
           </div>
         </Card>
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-[#16212B]"><Users className="h-5 w-5" /></div>
-            <div><p className="text-sm text-slate-500">Réservés</p><p className="text-2xl font-bold text-[#16212B]">{totals.reservedBeds}</p></div>
+            <div><p className="text-sm text-slate-500">{t('stateReserved')}</p><p className="text-2xl font-bold text-[#16212B]">{totals.reservedBeds}</p></div>
           </div>
         </Card>
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-[#16212B]"><BedDouble className="h-5 w-5" /></div>
-            <div><p className="text-sm text-slate-500">Lits disponibles</p><p className="text-2xl font-bold text-[#16212B]">{totals.usableBeds - totals.occupiedBeds - totals.reservedBeds}</p></div>
+            <div><p className="text-sm text-slate-500">{t('availableBeds')}</p><p className="text-2xl font-bold text-[#16212B]">{totals.usableBeds - totals.occupiedBeds - totals.reservedBeds}</p></div>
           </div>
         </Card>
       </div>
@@ -136,9 +143,9 @@ export function BedBoardView() {
 
       <div className="space-y-6">
         {loading ? (
-          <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-white p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Chargement…</div>
+          <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-white p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> {tCommon('loading')}</div>
         ) : board.length === 0 ? (
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-10 text-center text-sm text-slate-500">Aucune résidence trouvée.</div>
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-10 text-center text-sm text-slate-500">{t('noHostelsFound')}</div>
         ) : (
           board.map(hostel => (
             <Card key={hostel.hostelId} className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
@@ -148,17 +155,17 @@ export function BedBoardView() {
                   <div>
                     <p className="font-bold text-[#16212B]">{hostel.hostelName}</p>
                     <p className="text-xs text-slate-500">
-                      {hostel.hostelCode} · {GENDER_LABELS[hostel.genderPolicy] ?? hostel.genderPolicy} · {hostel.occupiedBeds}/{hostel.usableBeds} occupés
+                      {hostel.hostelCode} · {GENDER_LABELS[hostel.genderPolicy] ?? hostel.genderPolicy} · {hostel.occupiedBeds}/{hostel.usableBeds}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-40">
-                    <div className="mb-1 flex justify-between text-xs text-slate-500"><span>Taux d&apos;occupation</span><span className="font-semibold text-[#16212B]">{Math.round(hostel.occupancyRate * 100)}%</span></div>
+                    <div className="mb-1 flex justify-between text-xs text-slate-500"><span>{t('occupancyRate')}</span><span className="font-semibold text-[#16212B]">{Math.round(hostel.occupancyRate * 100)}%</span></div>
                     <Progress value={hostel.occupancyRate * 100} className="h-2" />
                   </div>
                   <Badge className={hostel.status === 'active' ? 'bg-[#D1F5E8] text-[#0b5c3a]' : 'bg-slate-100 text-slate-500'}>
-                    {hostel.status === 'active' ? 'Actif' : hostel.status === 'inactive' ? 'Inactif' : 'Archivé'}
+                    {hostel.status === 'active' ? t('statusActive') : hostel.status === 'inactive' ? t('statusInactive') : t('statusArchived')}
                   </Badge>
                 </div>
               </div>
@@ -169,22 +176,22 @@ export function BedBoardView() {
                     <div key={room.room.id}>
                       <button
                         onClick={() => toggleRoom(room.room.id)}
-                        className="flex w-full items-center justify-between gap-4 px-5 py-3 text-left transition-colors hover:bg-slate-50"
+                        className="flex w-full items-center justify-between gap-4 px-5 py-3 text-start transition-colors hover:bg-slate-50"
                       >
                         <div className="flex items-center gap-3">
                           {isOpen ? <ChevronDown className="h-4 w-4 text-slate-400" /> : <ChevronRight className="h-4 w-4 text-slate-400" />}
                           <div>
                             <p className="text-sm font-semibold text-[#16212B]">{room.room.code}{room.room.name ? ` — ${room.room.name}` : ''}</p>
                             <p className="text-xs text-slate-500">
-                              {room.zoneName ?? 'Sans zone'}
+                              {room.zoneName ?? ''}
                               {room.categoryCode ? ` · ${room.categoryCode}` : ''}
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3 text-xs text-slate-500">
-                          <span className="text-[#0b5c3a]">{room.occupiedBeds} occupé{room.occupiedBeds > 1 ? 's' : ''}</span>
-                          <span className="text-amber-600">{room.reservedBeds} réservé{room.reservedBeds > 1 ? 's' : ''}</span>
-                          <span>{room.availableBeds} libre{room.availableBeds > 1 ? 's' : ''}</span>
+                          <span className="text-[#0b5c3a]">{room.occupiedBeds}</span>
+                          <span className="text-amber-600">{room.reservedBeds}</span>
+                          <span>{room.availableBeds}</span>
                           <Badge className="bg-slate-100 text-slate-600">{Math.round(room.occupancyRate * 100)}%</Badge>
                         </div>
                       </button>
@@ -205,10 +212,10 @@ export function BedBoardView() {
                             >
                               <div className="flex items-center justify-between">
                                 <p className="text-sm font-semibold text-[#16212B]">{bed.bed.code}</p>
-                                {bed.state === 'checked_in' && <Badge className="bg-[#D1F5E8] text-[#0b5c3a]">Présent</Badge>}
-                                {bed.state === 'reserved' && <Badge className="bg-amber-100 text-amber-700">Réservé</Badge>}
-                                {bed.state === null && bed.bed.status === 'active' && <Badge className="bg-slate-100 text-slate-500">Libre</Badge>}
-                                {bed.bed.status !== 'active' && <Badge className="bg-slate-200 text-slate-600">Hors service</Badge>}
+                                {bed.state === 'checked_in' && <Badge className="bg-[#D1F5E8] text-[#0b5c3a]">{t('stateCheckedIn')}</Badge>}
+                                {bed.state === 'reserved' && <Badge className="bg-amber-100 text-amber-700">{t('stateReserved')}</Badge>}
+                                {bed.state === null && bed.bed.status === 'active' && <Badge className="bg-slate-100 text-slate-500">{t('stateAvailable')}</Badge>}
+                                {bed.bed.status !== 'active' && <Badge className="bg-slate-200 text-slate-600">{t('statusOutOfService')}</Badge>}
                               </div>
                               <p className="mt-1 text-xs text-slate-500">{bed.studentName ?? '—'}</p>
                             </div>

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Users, UserCheck, ShieldCheck, Search, Filter, Phone, Mail, BadgeCheck } from 'lucide-react';
+import { Users, ShieldCheck, Search, Filter, Phone, Mail, BadgeCheck } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface DriverProfile {
   id: string;
@@ -13,6 +14,9 @@ interface DriverProfile {
 }
 
 export default function DriversPage() {
+  const t = useTranslations('Transport');
+  const tc = useTranslations('Common');
+
   const [drivers, setDrivers] = useState<DriverProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -24,7 +28,7 @@ export default function DriversPage() {
       const res = await fetch('/api/transport/drivers');
       const data = await res.json();
       if (data.success) {
-        setDrivers(data.data);
+        setDrivers(data.data || []);
       }
     } catch (err) {
       console.error(err);
@@ -50,15 +54,15 @@ export default function DriversPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <Users className="w-7 h-7 text-[#0066FF]" />
-            Conducteurs & Accompagnateurs
+            {t('driversTitle')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Personnel habilité pour la conduite et la surveillance à bord des bus scolaires.
+            {t('driversSubtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs bg-blue-50 text-[#0066FF] px-3 py-2 rounded-lg border border-blue-100 font-medium">
           <ShieldCheck className="w-4 h-4" />
-          <span>Données RH et PII sécurisées</span>
+          <span>{t('secureRhData')}</span>
         </div>
       </div>
 
@@ -68,7 +72,7 @@ export default function DriversPage() {
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Rechercher un conducteur ou accompagnateur..."
+            placeholder={t('searchDriverPlaceholder')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0066FF]/20 focus:border-[#0066FF]"
@@ -81,9 +85,9 @@ export default function DriversPage() {
             onChange={e => setRoleFilter(e.target.value)}
             className="w-full sm:w-auto border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0066FF]/20"
           >
-            <option value="all">Tous les rôles</option>
-            <option value="driver">Conducteurs (Chauffeurs)</option>
-            <option value="attendant">Accompagnateurs (Convoyeurs)</option>
+            <option value="all">{t('allRoles')}</option>
+            <option value="driver">{t('driversRole')}</option>
+            <option value="attendant">{t('attendantsRole')}</option>
           </select>
         </div>
       </div>
@@ -92,11 +96,11 @@ export default function DriversPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading ? (
           <div className="col-span-full p-8 text-center text-slate-500 bg-white border rounded-xl">
-            Chargement de l'équipe de transport...
+            {t('loadingDrivers')}
           </div>
         ) : filteredDrivers.length === 0 ? (
           <div className="col-span-full p-8 text-center text-slate-500 bg-white border rounded-xl">
-            Aucun personnel de transport trouvé.
+            {t('noDriversFound')}
           </div>
         ) : (
           filteredDrivers.map(person => (
@@ -111,11 +115,11 @@ export default function DriversPage() {
                       {person.name}
                       <BadgeCheck className="w-4 h-4 text-[#0066FF]" />
                     </h3>
-                    <span className="text-xs text-slate-500 capitalize">{person.role === 'driver' ? 'Chauffeur Titulaire' : 'Accompagnateur Scolaire'}</span>
+                    <span className="text-xs text-slate-500 capitalize">{person.role === 'driver' ? t('headDriver') : t('schoolAttendant')}</span>
                   </div>
                 </div>
                 <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  Qualifié
+                  {t('qualified')}
                 </span>
               </div>
 

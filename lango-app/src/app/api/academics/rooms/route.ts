@@ -1,6 +1,14 @@
-import { and, count, eq } from 'drizzle-orm';
+import type { RoomRow } from '@/features/academics/services/room-registry';
+import { and, count, eq, ne } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import {
+  attachOccupancy,
+  fetchScheduleByRoomLabel,
+  normalizeLabel,
+
+  weekdayOf,
+} from '@/features/academics/services/room-registry';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
@@ -10,10 +18,20 @@ import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { academicRooms } from '@/models/Schema';
 
+const equipmentSchema = z
+  .array(z.string().trim().min(1).max(80))
+  .max(30, 'Une salle ne peut pas déclarer plus de 30 équipements.')
+  .optional();
+
 export const roomCreateSchema = z.object({
   name: z.string().trim().min(1, 'Le nom de la salle est requis.').max(100),
+  code: z.string().trim().max(50).nullable().optional(),
+  building: z.string().trim().max(100).nullable().optional(),
+  floor: z.string().trim().max(50).nullable().optional(),
   capacity: z.number().int().positive().nullable().optional(),
   roomType: z.string().trim().max(50).nullable().optional(),
+  equipment: equipmentSchema,
+  status: z.enum(['available', 'maintenance']).optional().default('available'),
   isActive: z.boolean().optional().default(true),
 }).strict();
 
@@ -21,6 +39,15 @@ export const roomUpdateSchema = roomCreateSchema
   .partial()
   .extend({ id: z.string().uuid() })
   .strict();
+
+/** Empty string is how a cleared form field arrives; store it as NULL. */
+function nullableText(value: string | null | undefined): string | null | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  const trimmed = value?.trim() ?? '';
+  return trimmed === '' ? null : trimmed;
+}
 
 export async function GET(request: Request) {
   try {
@@ -37,9 +64,15 @@ export async function GET(request: Request) {
       db.select({ total: count() }).from(academicRooms).where(where),
     ]);
 
+    // Occupancy is computed from the live timetable rather than stored, so the
+    // Salles screen can never show a room as free while a class sits in it.
+    const now = new Date();
+    const scheduleByLabel = await fetchScheduleByRoomLabel(tenantId, weekdayOf(now));
+    const data = attachOccupancy(rows as RoomRow[], scheduleByLabel, now);
+
     return NextResponse.json({
       success: true,
-      data: rows,
+      data,
       total: totalRows[0]?.total ?? 0,
       page: pagination.page,
       pageSize: pagination.pageSize,
@@ -56,6 +89,7 @@ export async function POST(request: Request) {
     const tenantId = requireTenant(context);
 
     const body = await parseJson(request, roomCreateSchema);
+    const code = nullableText(body.code) ?? null;
 
     const [existing] = await db
       .select({ id: academicRooms.id })
@@ -67,13 +101,30 @@ export async function POST(request: Request) {
       throw new ApiError(409, 'ALREADY_EXISTS', 'Une salle avec ce nom existe déjà dans cet établissement.');
     }
 
+    if (code) {
+      const [dupCode] = await db
+        .select({ id: academicRooms.id })
+        .from(academicRooms)
+        .where(and(eq(academicRooms.tenantId, tenantId), eq(academicRooms.code, code)))
+        .limit(1);
+
+      if (dupCode) {
+        throw new ApiError(409, 'ALREADY_EXISTS', 'Une salle avec ce code existe déjà dans cet établissement.');
+      }
+    }
+
     const [inserted] = await db
       .insert(academicRooms)
       .values({
         tenantId,
         name: body.name,
+        code,
+        building: nullableText(body.building) ?? null,
+        floor: nullableText(body.floor) ?? null,
         capacity: body.capacity ?? null,
-        roomType: body.roomType ?? null,
+        roomType: nullableText(body.roomType) ?? null,
+        equipment: body.equipment ?? [],
+        status: body.status ?? 'available',
         isActive: body.isActive ?? true,
       })
       .returning();
@@ -116,12 +167,35 @@ export async function PUT(request: Request) {
       }
     }
 
+    const nextCode = nullableText(body.code);
+    if (nextCode !== undefined && nextCode !== null && normalizeLabel(nextCode) !== normalizeLabel(existing.code)) {
+      // Excludes self, so re-saving a room without changing its code is not a conflict.
+      const [dupCode] = await db
+        .select({ id: academicRooms.id })
+        .from(academicRooms)
+        .where(and(
+          eq(academicRooms.tenantId, tenantId),
+          eq(academicRooms.code, nextCode),
+          ne(academicRooms.id, body.id),
+        ))
+        .limit(1);
+
+      if (dupCode) {
+        throw new ApiError(409, 'ALREADY_EXISTS', 'Une autre salle avec ce code existe déjà.');
+      }
+    }
+
     const [updated] = await db
       .update(academicRooms)
       .set({
         name: body.name ?? existing.name,
+        code: nextCode !== undefined ? nextCode : existing.code,
+        building: body.building !== undefined ? nullableText(body.building) ?? null : existing.building,
+        floor: body.floor !== undefined ? nullableText(body.floor) ?? null : existing.floor,
         capacity: body.capacity !== undefined ? body.capacity : existing.capacity,
-        roomType: body.roomType !== undefined ? body.roomType : existing.roomType,
+        roomType: body.roomType !== undefined ? nullableText(body.roomType) ?? null : existing.roomType,
+        equipment: body.equipment !== undefined ? body.equipment : existing.equipment,
+        status: body.status !== undefined ? body.status : existing.status,
         isActive: body.isActive !== undefined ? body.isActive : existing.isActive,
         updatedAt: new Date().toISOString(),
       })

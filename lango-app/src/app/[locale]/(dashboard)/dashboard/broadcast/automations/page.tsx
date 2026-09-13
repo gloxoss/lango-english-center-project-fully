@@ -3,15 +3,16 @@ import { AutomationsView } from '@/features/broadcast/ui/automations-view';
 
 export const metadata = {
   title: 'Automations de diffusion — SchoolOS',
-  description: 'Envois automatiques : anniversaires et événements programmés.',
+  description: 'Automatisation des envois d’anniversaire et déclencheurs d’événements.',
 };
 
 export default async function BroadcastAutomationsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'broadcast.automations.manage' });
+  const isRtl = locale === 'ar';
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale} className="mx-auto max-w-7xl px-4 py-8">
       <AutomationsView />
-    </div>
+    </main>
   );
 }

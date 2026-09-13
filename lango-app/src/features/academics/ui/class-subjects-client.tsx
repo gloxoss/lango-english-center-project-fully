@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,9 @@ import {
 } from '../data/class-subjects-config';
 
 export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {}) {
+  const t = useTranslations('Academics');
+  const tc = useTranslations('Common');
+
   const [selectedClass, setSelectedClass] = useState('2BAC-A');
   const [assignments, setAssignments] = useState<SubjectAssignmentItem[]>(MOCK_ASSIGNMENTS);
   const [search, setSearch] = useState('');
@@ -68,13 +72,13 @@ export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Affectation des Matières par Classe</h1>
-          <p className="text-xs text-slate-500 mt-1">Définissez la grille horaire, coefficients, enseignants référents et salles pour chaque classe.</p>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('classSubjectsTitle')}</h1>
+          <p className="text-xs text-slate-500 mt-1">{t('classSubjectsSubtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" className="h-10 rounded-xl px-4 gap-2 border-slate-200 text-xs font-bold">
             <Download className="w-4 h-4 text-slate-600" />
-            <span>Exporter la grille</span>
+            <span>{t('btnExportGrid')}</span>
           </Button>
           <Button
             size="sm"
@@ -82,7 +86,7 @@ export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {
             className="h-10 rounded-xl px-4 gap-2 bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold shadow-2xs"
           >
             <Plus className="w-4 h-4" />
-            <span>Affecter une matière</span>
+            <span>{t('btnAssignSubject')}</span>
           </Button>
         </div>
       </div>
@@ -91,7 +95,7 @@ export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {
       <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Classe sélectionnée:</span>
+            <span className="text-xs font-bold text-slate-500 whitespace-nowrap">{t('selectedClassLabel')}</span>
             <Select value={selectedClass} onValueChange={setSelectedClass}>
               <SelectTrigger className="w-64 h-10 rounded-xl text-xs font-extrabold border-slate-200">
                 <SelectValue />
@@ -107,11 +111,11 @@ export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {
 
           <div className="flex items-center gap-4 text-xs font-bold">
             <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-              <span className="text-slate-500">Volume Horaire:</span>
+              <span className="text-slate-500">{t('hourlyVolumeLabel')}</span>
               <strong className="text-[#2487B8]">{totalHours}h / 30h max</strong>
             </div>
             <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-              <span className="text-slate-500">Total Coeff:</span>
+              <span className="text-slate-500">{t('totalCoeffLabel')}</span>
               <strong className="text-[#16212B]">{totalCoeff}</strong>
             </div>
           </div>
@@ -125,27 +129,27 @@ export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {
           <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <h3 className="text-sm font-extrabold text-[#16212B]">
-                Grille des matières ({filteredAssignments.length})
+                {t('subjectsGridTitle', { count: filteredAssignments.length })}
               </h3>
               <div className="flex items-center gap-2">
                 <div className="relative w-48">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <Input
-                    placeholder="Filtrer matière..."
+                    placeholder={t('filterSubjectPlaceholder')}
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="pl-9 h-9 text-xs rounded-xl bg-slate-50 border-none"
+                    className="ps-9 h-9 text-xs rounded-xl bg-slate-50 border-none"
                   />
                 </div>
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
                   <SelectTrigger className="w-36 h-9 rounded-xl text-xs bg-slate-50 border-none">
-                    <SelectValue placeholder="Tous statuts" />
+                    <SelectValue placeholder={t('statusAll')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tous statuts</SelectItem>
-                    <SelectItem value="assigned">Complet</SelectItem>
-                    <SelectItem value="conflict">En Conflit</SelectItem>
-                    <SelectItem value="unassigned">Non assigné</SelectItem>
+                    <SelectItem value="all">{t('statusAll')}</SelectItem>
+                    <SelectItem value="assigned">{t('statusAssigned')}</SelectItem>
+                    <SelectItem value="conflict">{t('statusConflict')}</SelectItem>
+                    <SelectItem value="unassigned">{t('statusUnassigned')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -176,7 +180,7 @@ export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {
                           </span>
                         </div>
                         <p className="text-xs text-slate-500">
-                          Coeff: <strong>{item.coefficient}</strong> • Volume: <strong>{item.weeklyHours}h / semaine</strong> • {item.type === 'compulsory' ? 'Obligatoire' : 'Optionnel'}
+                          Coeff: <strong>{item.coefficient}</strong> • Volume: <strong>{t('hoursPerWeek', { hours: item.weeklyHours })}</strong> • {item.type === 'compulsory' ? t('typeCompulsory') : t('typeElective')}
                         </p>
                       </div>
                     </div>
@@ -185,7 +189,7 @@ export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {
                       item.status === 'assigned' ? 'bg-[#DDF5EC] text-[#17A673]' :
                       item.status === 'conflict' ? 'bg-[#FCE4E2] text-[#E5544B]' : 'bg-[#FCF0DC] text-[#E8A33D]'
                     }`}>
-                      {item.status === 'assigned' ? '✔ Assigné' : item.status === 'conflict' ? '⚠ Conflit' : '❓ Non assigné'}
+                      {item.status === 'assigned' ? t('badgeAssigned') : item.status === 'conflict' ? t('badgeConflict') : t('badgeUnassigned')}
                     </span>
                   </div>
 
@@ -211,20 +215,20 @@ export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {
         <div className="lg:col-span-5 space-y-4">
           <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
             <h3 className="text-xs font-extrabold text-[#16212B] uppercase tracking-wider text-[10px]">
-              Alertes & Postes Enseignants à pourvoir
+              {t('alertsAndVacancies')}
             </h3>
 
             {/* Conflict Alert */}
             <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200/80 space-y-2 text-xs text-rose-900">
               <div className="flex items-center gap-2 font-extrabold text-rose-800">
                 <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-                <span>1 Conflit d&apos;enseignant à résoudre</span>
+                <span>{t('teacherConflictAlertTitle')}</span>
               </div>
               <p className="text-xs text-rose-700">
                 <strong>Anglais renforcé (M. John Smith)</strong> est en chevauchement avec la classe 1BAC-A sur le créneau Mardi 10h-12h.
               </p>
               <Button size="sm" className="h-8 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white mt-1">
-                Résoudre le conflit
+                {t('btnResolveConflict')}
               </Button>
             </div>
 
@@ -233,14 +237,14 @@ export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {
               <div className="flex items-center justify-between font-extrabold text-amber-900">
                 <span>Philosophie (2h/semaine)</span>
                 <span className="text-[10px] font-bold bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full">
-                  Poste vacant
+                  {t('vacantPositionBadge')}
                 </span>
               </div>
               <p className="text-xs text-amber-800">
                 Aucun professeur de philosophie n&apos;est attribué à la classe 2BAC-A pour l&apos;année 2026-2027.
               </p>
               <Button size="sm" variant="outline" className="h-8 text-xs font-bold rounded-xl border-amber-300 bg-white text-amber-900 mt-1">
-                Attribuer un professeur
+                {t('btnAssignTeacher')}
               </Button>
             </div>
           </Card>
@@ -253,13 +257,13 @@ export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-[#2487B8]" />
-              Affecter une Matière à {selectedClass}
+              {t('assignSubjectModalTitle', { className: selectedClass })}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-3 my-3 text-xs">
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Matière *</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('subjectFieldLabel')}</label>
               <Input
                 placeholder="Ex. Histoire-Géographie"
                 value={newSubject.subjectName}
@@ -270,7 +274,7 @@ export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {
 
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Code *</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('codeFieldLabel')}</label>
                 <Input
                   placeholder="HIST-2BAC"
                   value={newSubject.code}
@@ -279,7 +283,7 @@ export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {
                 />
               </div>
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Coeff *</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('coeffFieldLabel')}</label>
                 <Input
                   type="number"
                   value={newSubject.coefficient}
@@ -288,7 +292,7 @@ export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {
                 />
               </div>
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Volume (h) *</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('weeklyHoursFieldLabel')}</label>
                 <Input
                   type="number"
                   value={newSubject.weeklyHours}
@@ -300,7 +304,7 @@ export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Enseignant référent *</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('teacherFieldLabel')}</label>
                 <Input
                   value={newSubject.teacherName}
                   onChange={e => setNewSubject({ ...newSubject, teacherName: e.target.value })}
@@ -308,7 +312,7 @@ export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {
                 />
               </div>
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Salle *</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('roomFieldLabel')}</label>
                 <Input
                   value={newSubject.roomName}
                   onChange={e => setNewSubject({ ...newSubject, roomName: e.target.value })}
@@ -318,14 +322,14 @@ export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Type d&apos;enseignement</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('teachingTypeLabel')}</label>
               <Select value={newSubject.type} onValueChange={val => setNewSubject({ ...newSubject, type: val as 'compulsory' | 'elective' })}>
                 <SelectTrigger className="h-9 text-xs rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="compulsory">Obligatoire (Socle commun)</SelectItem>
-                  <SelectItem value="elective">Optionnel / Choisis</SelectItem>
+                  <SelectItem value="compulsory">{t('compulsoryCore')}</SelectItem>
+                  <SelectItem value="elective">{t('electiveOptional')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -333,10 +337,10 @@ export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {
 
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setIsAddOpen(false)} className="rounded-xl text-xs h-9">
-              Annuler
+              {tc('cancel')}
             </Button>
             <Button onClick={handleAddSubject} className="rounded-xl text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold">
-              Valider l&apos;affectation
+              {t('btnConfirmAssignment')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -344,3 +348,4 @@ export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {
     </div>
   );
 }
+

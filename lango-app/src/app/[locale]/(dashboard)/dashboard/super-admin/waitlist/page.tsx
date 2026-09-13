@@ -8,5 +8,5 @@ export default async function SuperAdminWaitlistPage({
 }) {
   const { locale } = await params;
   await requireServerPage(locale, { allowedRoles: ['super_admin'] });
-  return <SuperAdminWaitlistView />;
+  return <SuperAdminWaitlistView locale={locale} />;
 }

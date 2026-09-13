@@ -6,7 +6,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-type Locale = 'fr' | 'ar';
+export type Locale = 'fr' | 'ar' | 'en';
 type Dir = 'ltr' | 'rtl';
 
 interface LocaleContextType {
@@ -31,7 +31,7 @@ export const LocaleProvider: React.FC<{ children: React.ReactNode; initialLocale
   };
 
   const toggleLocale = () => {
-    setLocaleState((prev) => (prev === 'fr' ? 'ar' : 'fr'));
+    setLocaleState((prev) => (prev === 'fr' ? 'ar' : prev === 'ar' ? 'en' : 'fr'));
   };
 
   useEffect(() => {

@@ -4,5 +4,10 @@ import { LibraryStocktakeClient } from '@/features/library/ui/library-stocktake-
 export default async function LibrarianStocktakePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   await requireLibraryPage(locale, { capability: 'library.stocktake.manage' });
-  return <LibraryStocktakeClient />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <LibraryStocktakeClient />
+    </main>
+  );
 }

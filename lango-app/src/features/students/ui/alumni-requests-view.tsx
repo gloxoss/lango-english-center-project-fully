@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,28 +28,21 @@ const TYPE_LABELS: Record<string, string> = {
   deletion: 'Suppression',
 };
 
-const COLUMNS: { key: RequestStatus; label: string; dot: string }[] = [
-  { key: 'received', label: 'Reçues', dot: 'bg-amber-500' },
-  { key: 'accepted', label: 'Acceptées', dot: 'bg-blue-500' },
-  { key: 'preparing', label: 'En préparation', dot: 'bg-indigo-500' },
-  { key: 'ready', label: 'Prêtes', dot: 'bg-violet-500' },
-  { key: 'taken', label: 'Récupérées', dot: 'bg-emerald-500' },
-  { key: 'refused', label: 'Refusées', dot: 'bg-rose-500' },
-];
-
-const STATUS_LABEL: Record<RequestStatus, string> = {
-  received: 'Reçue',
-  accepted: 'Acceptée',
-  preparing: 'En préparation',
-  ready: 'Prête',
-  taken: 'Récupérée',
-  refused: 'Refusée',
-};
-
 export function AlumniRequestsView() {
+  const t = useTranslations('Students');
+  const tCommon = useTranslations('Common');
   const [rows, setRows] = useState<RequestRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [advancing, setAdvancing] = useState<string | null>(null);
+
+  const columns = useMemo<{ key: RequestStatus; label: string; dot: string }[]>(() => [
+    { key: 'received', label: t('applicantReceived'), dot: 'bg-amber-500' },
+    { key: 'accepted', label: t('statusAccepted'), dot: 'bg-blue-500' },
+    { key: 'preparing', label: t('statusInPrep'), dot: 'bg-indigo-500' },
+    { key: 'ready', label: t('statusReady'), dot: 'bg-violet-500' },
+    { key: 'taken', label: t('retrieved'), dot: 'bg-emerald-500' },
+    { key: 'refused', label: t('statusRefused'), dot: 'bg-rose-500' },
+  ], [t]);
 
   const load = () => {
     fetch(`/api/students/alumni/requests?pageSize=200`).then(r => r.json()).then(j => {
@@ -75,10 +69,10 @@ export function AlumniRequestsView() {
 
   const byStatus = useMemo(() => {
     const map = new Map<RequestStatus, RequestRow[]>();
-    for (const c of COLUMNS) map.set(c.key, []);
+    for (const c of columns) map.set(c.key, []);
     for (const r of rows) map.get(r.status)?.push(r);
     return map;
-  }, [rows]);
+  }, [rows, columns]);
 
   const inProgress = rows.filter(r => r.status !== 'taken' && r.status !== 'refused').length;
   const decided = rows.filter(r => r.decidedAt);
@@ -89,25 +83,25 @@ export function AlumniRequestsView() {
   return (
     <div className="space-y-5 max-w-[1400px] mx-auto pb-10">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Demandes Anciens Élèves</h1>
+        <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('alumniRequestsTitle')}</h1>
       </div>
 
       {/* Analytics strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card className="p-4 rounded-2xl border-slate-200/80 shadow-2xs space-y-1 bg-white">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total demandes</span>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('totalRequests')}</span>
           <div className="text-2xl font-extrabold text-[#16212B]">{rows.length}</div>
         </Card>
         <Card className="p-4 rounded-2xl border-slate-200/80 shadow-2xs space-y-1 bg-white">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">En cours</span>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('inProgress')}</span>
           <div className="text-2xl font-extrabold text-[#0066FF]">{inProgress}</div>
         </Card>
         <Card className="p-4 rounded-2xl border-slate-200/80 shadow-2xs space-y-1 bg-white">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Récupérées</span>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('retrieved')}</span>
           <div className="text-2xl font-extrabold text-emerald-600">{byStatus.get('taken')?.length ?? 0}</div>
         </Card>
         <Card className="p-4 rounded-2xl border-slate-200/80 shadow-2xs space-y-1 bg-white">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Délai moyen décision</span>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('avgDecisionTime')}</span>
           <div className="text-2xl font-extrabold text-purple-700">{avgDays != null ? `${avgDays} j` : '—'}</div>
         </Card>
       </div>
@@ -115,11 +109,11 @@ export function AlumniRequestsView() {
       {loading ? (
         <div className="flex items-center justify-center p-16 text-slate-400 gap-2">
           <Loader2 className="w-5 h-5 animate-spin text-[#0066FF]" />
-          <span className="text-xs font-medium">Chargement...</span>
+          <span className="text-xs font-medium">{tCommon('loading')}</span>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 items-start">
-          {COLUMNS.map(col => {
+          {columns.map(col => {
             const items = byStatus.get(col.key) ?? [];
             return (
               <div key={col.key} className="rounded-2xl bg-slate-50/70 border border-slate-200/70 p-2.5 min-h-[120px]">

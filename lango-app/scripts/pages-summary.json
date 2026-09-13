@@ -1,0 +1,3098 @@
+[
+  {
+    "file": "src/app/page.tsx",
+    "route": "/page.tsx",
+    "domain": "Marketing & Public Site",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": false,
+    "status": "IN_PROGRESS"
+  },
+  {
+    "file": "src/app/[locale]/(alumni-portal)/alumni/directory/page.tsx",
+    "route": "/alumni/directory",
+    "domain": "Alumni Portal",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(alumni-portal)/alumni/events/page.tsx",
+    "route": "/alumni/events",
+    "domain": "Alumni Portal",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(alumni-portal)/alumni/mentoring/page.tsx",
+    "route": "/alumni/mentoring",
+    "domain": "Alumni Portal",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(alumni-portal)/alumni/page.tsx",
+    "route": "/alumni",
+    "domain": "Alumni Portal",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(alumni-portal)/alumni/profile/page.tsx",
+    "route": "/alumni/profile",
+    "domain": "Alumni Portal",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(alumni-portal)/alumni/records/page.tsx",
+    "route": "/alumni/records",
+    "domain": "Alumni Portal",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(alumni-portal)/alumni/requests/page.tsx",
+    "route": "/alumni/requests",
+    "domain": "Alumni Portal",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(auth)/invitations/[token]/page.tsx",
+    "route": "/invitations/[token]",
+    "domain": "Marketing & Public Site",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(auth)/login/page.tsx",
+    "route": "/login",
+    "domain": "Marketing & Public Site",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(auth)/signup/page.tsx",
+    "route": "/signup",
+    "domain": "Marketing & Public Site",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/assessment/exam-master/page.tsx",
+    "route": "/dashboard/academics/assessment/exam-master",
+    "domain": "Grades & Assessments",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/assessment/homework/page.tsx",
+    "route": "/dashboard/academics/assessment/homework",
+    "domain": "Grades & Assessments",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/assessment/marksheet/page.tsx",
+    "route": "/dashboard/academics/assessment/marksheet",
+    "domain": "Grades & Assessments",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/assessment/online-exams/page.tsx",
+    "route": "/dashboard/academics/assessment/online-exams",
+    "domain": "Grades & Assessments",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/assignments/page.tsx",
+    "route": "/dashboard/academics/assignments",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/calendar/page.tsx",
+    "route": "/dashboard/academics/calendar",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/class-section-teachers/page.tsx",
+    "route": "/dashboard/academics/class-section-teachers",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/class-subjects/page.tsx",
+    "route": "/dashboard/academics/class-subjects",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/classes/page.tsx",
+    "route": "/dashboard/academics/classes",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/classes/[id]/page.tsx",
+    "route": "/dashboard/academics/classes/[id]",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/conflicts/page.tsx",
+    "route": "/dashboard/academics/conflicts",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/evaluations/page.tsx",
+    "route": "/dashboard/academics/evaluations",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/exams/page.tsx",
+    "route": "/dashboard/academics/exams",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/grades/entry/page.tsx",
+    "route": "/dashboard/academics/grades/entry",
+    "domain": "Grades & Assessments",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/grading/policies/page.tsx",
+    "route": "/dashboard/academics/grading/policies",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/live-class/new/page.tsx",
+    "route": "/dashboard/academics/live-class/new",
+    "domain": "Academics & Timetable",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/live-class/page.tsx",
+    "route": "/dashboard/academics/live-class",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/live-class/[id]/page.tsx",
+    "route": "/dashboard/academics/live-class/[id]",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/live-class-reports/page.tsx",
+    "route": "/dashboard/academics/live-class-reports",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/mediums/page.tsx",
+    "route": "/dashboard/academics/mediums",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/optional-subjects/page.tsx",
+    "route": "/dashboard/academics/optional-subjects",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/page.tsx",
+    "route": "/dashboard/academics",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/promotions/page.tsx",
+    "route": "/dashboard/academics/promotions",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/question-bank/page.tsx",
+    "route": "/dashboard/academics/question-bank",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/readiness/page.tsx",
+    "route": "/dashboard/academics/readiness",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/results/page.tsx",
+    "route": "/dashboard/academics/results",
+    "domain": "Grades & Assessments",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/rooms/page.tsx",
+    "route": "/dashboard/academics/rooms",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/schedule/page.tsx",
+    "route": "/dashboard/academics/schedule",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/sections/page.tsx",
+    "route": "/dashboard/academics/sections",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/semesters/page.tsx",
+    "route": "/dashboard/academics/semesters",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/session-copy/page.tsx",
+    "route": "/dashboard/academics/session-copy",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/shifts/page.tsx",
+    "route": "/dashboard/academics/shifts",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/streams/page.tsx",
+    "route": "/dashboard/academics/streams",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/subjects/page.tsx",
+    "route": "/dashboard/academics/subjects",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/syllabus/page.tsx",
+    "route": "/dashboard/academics/syllabus",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/teacher-availability/page.tsx",
+    "route": "/dashboard/academics/teacher-availability",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/teacher-schedule/page.tsx",
+    "route": "/dashboard/academics/teacher-schedule",
+    "domain": "Academics & Timetable",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/accountant/page.tsx",
+    "route": "/dashboard/accountant",
+    "domain": "Dedicated Role Portals",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/analytics/page.tsx",
+    "route": "/dashboard/analytics",
+    "domain": "Dashboard Core",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/attendance/audit/page.tsx",
+    "route": "/dashboard/attendance/audit",
+    "domain": "Attendance & QR",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/attendance/badges/page.tsx",
+    "route": "/dashboard/attendance/badges",
+    "domain": "Attendance & QR",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/attendance/excuses/page.tsx",
+    "route": "/dashboard/attendance/excuses",
+    "domain": "Attendance & QR",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/attendance/flags/page.tsx",
+    "route": "/dashboard/attendance/flags",
+    "domain": "Attendance & QR",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/attendance/flags/[id]/page.tsx",
+    "route": "/dashboard/attendance/flags/[id]",
+    "domain": "Attendance & QR",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/attendance/page.tsx",
+    "route": "/dashboard/attendance",
+    "domain": "Attendance & QR",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/attendance/qr-reports/page.tsx",
+    "route": "/dashboard/attendance/qr-reports",
+    "domain": "Attendance & QR",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/attendance/scanner/page.tsx",
+    "route": "/dashboard/attendance/scanner",
+    "domain": "Attendance & QR",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/broadcast/automations/page.tsx",
+    "route": "/dashboard/broadcast/automations",
+    "domain": "Communication & SMS",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/broadcast/campaigns/page.tsx",
+    "route": "/dashboard/broadcast/campaigns",
+    "domain": "Communication & SMS",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/broadcast/campaigns/[id]/page.tsx",
+    "route": "/dashboard/broadcast/campaigns/[id]",
+    "domain": "Communication & SMS",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/broadcast/connections/page.tsx",
+    "route": "/dashboard/broadcast/connections",
+    "domain": "Communication & SMS",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/broadcast/page.tsx",
+    "route": "/dashboard/broadcast",
+    "domain": "Communication & SMS",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/broadcast/reports/page.tsx",
+    "route": "/dashboard/broadcast/reports",
+    "domain": "Communication & SMS",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/broadcast/segments/page.tsx",
+    "route": "/dashboard/broadcast/segments",
+    "domain": "Communication & SMS",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/broadcast/templates/page.tsx",
+    "route": "/dashboard/broadcast/templates",
+    "domain": "Communication & SMS",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/cards/admit-cards/page.tsx",
+    "route": "/dashboard/cards/admit-cards",
+    "domain": "Student Cards",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/cards/employees/page.tsx",
+    "route": "/dashboard/cards/employees",
+    "domain": "Student Cards",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/cards/issued/page.tsx",
+    "route": "/dashboard/cards/issued",
+    "domain": "Student Cards",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/cards/jobs/page.tsx",
+    "route": "/dashboard/cards/jobs",
+    "domain": "Student Cards",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/cards/page.tsx",
+    "route": "/dashboard/cards",
+    "domain": "Student Cards",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/cards/students/page.tsx",
+    "route": "/dashboard/cards/students",
+    "domain": "Student Cards",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/cards/templates/page.tsx",
+    "route": "/dashboard/cards/templates",
+    "domain": "Student Cards",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/cards/templates/[id]/edit/page.tsx",
+    "route": "/dashboard/cards/templates/[id]/edit",
+    "domain": "Student Cards",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/definitions/page.tsx",
+    "route": "/dashboard/certificates/definitions",
+    "domain": "Certificates",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/definitions/[id]/page.tsx",
+    "route": "/dashboard/certificates/definitions/[id]",
+    "domain": "Certificates",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/issue/employees/page.tsx",
+    "route": "/dashboard/certificates/issue/employees",
+    "domain": "Certificates",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/issue/students/page.tsx",
+    "route": "/dashboard/certificates/issue/students",
+    "domain": "Certificates",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/issued/page.tsx",
+    "route": "/dashboard/certificates/issued",
+    "domain": "Certificates",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/issued/[id]/page.tsx",
+    "route": "/dashboard/certificates/issued/[id]",
+    "domain": "Certificates",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/jobs/page.tsx",
+    "route": "/dashboard/certificates/jobs",
+    "domain": "Certificates",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/page.tsx",
+    "route": "/dashboard/certificates",
+    "domain": "Certificates",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/requests/page.tsx",
+    "route": "/dashboard/certificates/requests",
+    "domain": "Certificates",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/settings/page.tsx",
+    "route": "/dashboard/certificates/settings",
+    "domain": "Certificates",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/templates/page.tsx",
+    "route": "/dashboard/certificates/templates",
+    "domain": "Certificates",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/templates/[id]/edit/page.tsx",
+    "route": "/dashboard/certificates/templates/[id]/edit",
+    "domain": "Certificates",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/broadcast/page.tsx",
+    "route": "/dashboard/communication/broadcast",
+    "domain": "Communication & SMS",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/campaign-composer/page.tsx",
+    "route": "/dashboard/communication/campaign-composer",
+    "domain": "Communication & SMS",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/crm/page.tsx",
+    "route": "/dashboard/communication/crm",
+    "domain": "Communication & SMS",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/delivery-reports/page.tsx",
+    "route": "/dashboard/communication/delivery-reports",
+    "domain": "Communication & SMS",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/events/page.tsx",
+    "route": "/dashboard/communication/events",
+    "domain": "Communication & SMS",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/forms/page.tsx",
+    "route": "/dashboard/communication/forms",
+    "domain": "Communication & SMS",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/leads/page.tsx",
+    "route": "/dashboard/communication/leads",
+    "domain": "Communication & SMS",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/milestones/page.tsx",
+    "route": "/dashboard/communication/milestones",
+    "domain": "Communication & SMS",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/page.tsx",
+    "route": "/dashboard/communication",
+    "domain": "Communication & SMS",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/reminders/page.tsx",
+    "route": "/dashboard/communication/reminders",
+    "domain": "Communication & SMS",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/segments/page.tsx",
+    "route": "/dashboard/communication/segments",
+    "domain": "Communication & SMS",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/templates/page.tsx",
+    "route": "/dashboard/communication/templates",
+    "domain": "Communication & SMS",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/templates-automation/page.tsx",
+    "route": "/dashboard/communication/templates-automation",
+    "domain": "Communication & SMS",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/content/library/page.tsx",
+    "route": "/dashboard/content/library",
+    "domain": "Pedagogical Content",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/content/types/page.tsx",
+    "route": "/dashboard/content/types",
+    "domain": "Pedagogical Content",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/documents/generator/page.tsx",
+    "route": "/dashboard/documents/generator",
+    "domain": "Documents Generator",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/events/page.tsx",
+    "route": "/dashboard/events",
+    "domain": "Events",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/events/[id]/page.tsx",
+    "route": "/dashboard/events/[id]",
+    "domain": "Events",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/accounts/page.tsx",
+    "route": "/dashboard/finance/accounting/accounts",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/deposits/new/page.tsx",
+    "route": "/dashboard/finance/accounting/deposits/new",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/expenses/page.tsx",
+    "route": "/dashboard/finance/accounting/expenses",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/periods/page.tsx",
+    "route": "/dashboard/finance/accounting/periods",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/statements/page.tsx",
+    "route": "/dashboard/finance/accounting/statements",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/student-accounting/page.tsx",
+    "route": "/dashboard/finance/accounting/student-accounting",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/transactions/page.tsx",
+    "route": "/dashboard/finance/accounting/transactions",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/voucher-types/page.tsx",
+    "route": "/dashboard/finance/accounting/voucher-types",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/allocation/page.tsx",
+    "route": "/dashboard/finance/allocation",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/allocations/page.tsx",
+    "route": "/dashboard/finance/allocations",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/approvals/page.tsx",
+    "route": "/dashboard/finance/approvals",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/bank-reconciliation/page.tsx",
+    "route": "/dashboard/finance/bank-reconciliation",
+    "domain": "Finance & Accounting",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/cashier-sessions/page.tsx",
+    "route": "/dashboard/finance/cashier-sessions",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/chart-of-accounts/page.tsx",
+    "route": "/dashboard/finance/chart-of-accounts",
+    "domain": "Finance & Accounting",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/collection-desk/page.tsx",
+    "route": "/dashboard/finance/collection-desk",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/credit-notes/page.tsx",
+    "route": "/dashboard/finance/credit-notes",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/expenses/new/page.tsx",
+    "route": "/dashboard/finance/expenses/new",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/expenses/page.tsx",
+    "route": "/dashboard/finance/expenses",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/fee-assignments/page.tsx",
+    "route": "/dashboard/finance/fee-assignments",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/fee-structures/page.tsx",
+    "route": "/dashboard/finance/fee-structures",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/fee-types/page.tsx",
+    "route": "/dashboard/finance/fee-types",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/fine-policies/page.tsx",
+    "route": "/dashboard/finance/fine-policies",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/invoices/page.tsx",
+    "route": "/dashboard/finance/invoices",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/invoices/[id]/page.tsx",
+    "route": "/dashboard/finance/invoices/[id]",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/journal/page.tsx",
+    "route": "/dashboard/finance/journal",
+    "domain": "Finance & Accounting",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/office-accounting/page.tsx",
+    "route": "/dashboard/finance/office-accounting",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/online-payments/page.tsx",
+    "route": "/dashboard/finance/online-payments",
+    "domain": "Finance & Accounting",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/page.tsx",
+    "route": "/dashboard/finance",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/payments/new/page.tsx",
+    "route": "/dashboard/finance/payments/new",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/payments/page.tsx",
+    "route": "/dashboard/finance/payments",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/receipts/page.tsx",
+    "route": "/dashboard/finance/receipts",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/receivables/page.tsx",
+    "route": "/dashboard/finance/receivables",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/reconciliation/page.tsx",
+    "route": "/dashboard/finance/reconciliation",
+    "domain": "Finance & Accounting",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/refunds/page.tsx",
+    "route": "/dashboard/finance/refunds",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/reminders/page.tsx",
+    "route": "/dashboard/finance/reminders",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/reports/page.tsx",
+    "route": "/dashboard/finance/reports",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/statements/page.tsx",
+    "route": "/dashboard/finance/statements",
+    "domain": "Finance & Accounting",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/homework/page.tsx",
+    "route": "/dashboard/homework",
+    "domain": "Dashboard Core",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/homework/submissions/page.tsx",
+    "route": "/dashboard/homework/submissions",
+    "domain": "Dashboard Core",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/allocations/page.tsx",
+    "route": "/dashboard/hostel/allocations",
+    "domain": "Hostel",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/allocations/[id]/page.tsx",
+    "route": "/dashboard/hostel/allocations/[id]",
+    "domain": "Hostel",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/applications/page.tsx",
+    "route": "/dashboard/hostel/applications",
+    "domain": "Hostel",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/board/page.tsx",
+    "route": "/dashboard/hostel/board",
+    "domain": "Hostel",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/categories/page.tsx",
+    "route": "/dashboard/hostel/categories",
+    "domain": "Hostel",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/guardian/page.tsx",
+    "route": "/dashboard/hostel/guardian",
+    "domain": "Hostel",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/hostels/page.tsx",
+    "route": "/dashboard/hostel/hostels",
+    "domain": "Hostel",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/hostels/[id]/page.tsx",
+    "route": "/dashboard/hostel/hostels/[id]",
+    "domain": "Hostel",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/leave-passes/page.tsx",
+    "route": "/dashboard/hostel/leave-passes",
+    "domain": "Hostel",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/me/page.tsx",
+    "route": "/dashboard/hostel/me",
+    "domain": "Hostel",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/page.tsx",
+    "route": "/dashboard/hostel",
+    "domain": "Hostel",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/policies/page.tsx",
+    "route": "/dashboard/hostel/policies",
+    "domain": "Hostel",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/reports/page.tsx",
+    "route": "/dashboard/hostel/reports",
+    "domain": "Hostel",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/roll-call/page.tsx",
+    "route": "/dashboard/hostel/roll-call",
+    "domain": "Hostel",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/rooms/page.tsx",
+    "route": "/dashboard/hostel/rooms",
+    "domain": "Hostel",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/zones/page.tsx",
+    "route": "/dashboard/hostel/zones",
+    "domain": "Hostel",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/access/page.tsx",
+    "route": "/dashboard/hr/access",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/advances/page.tsx",
+    "route": "/dashboard/hr/advances",
+    "domain": "HR & Workforce",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/awards/page.tsx",
+    "route": "/dashboard/hr/awards",
+    "domain": "HR & Workforce",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/departments/page.tsx",
+    "route": "/dashboard/hr/departments",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/designations/page.tsx",
+    "route": "/dashboard/hr/designations",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/employees/new/page.tsx",
+    "route": "/dashboard/hr/employees/new",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/employees/page.tsx",
+    "route": "/dashboard/hr/employees",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/employees/[id]/page.tsx",
+    "route": "/dashboard/hr/employees/[id]",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/leave/page.tsx",
+    "route": "/dashboard/hr/leave",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/leave-management/page.tsx",
+    "route": "/dashboard/hr/leave-management",
+    "domain": "HR & Workforce",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/overview/page.tsx",
+    "route": "/dashboard/hr/overview",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/page.tsx",
+    "route": "/dashboard/hr",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/salary-advances/page.tsx",
+    "route": "/dashboard/hr/salary-advances",
+    "domain": "HR & Workforce",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/self-service/page.tsx",
+    "route": "/dashboard/hr/self-service",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/adjustments/page.tsx",
+    "route": "/dashboard/inventory/adjustments",
+    "domain": "Inventory",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/categories/page.tsx",
+    "route": "/dashboard/inventory/categories",
+    "domain": "Inventory",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/issues/page.tsx",
+    "route": "/dashboard/inventory/issues",
+    "domain": "Inventory",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/overview/page.tsx",
+    "route": "/dashboard/inventory/overview",
+    "domain": "Inventory",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/page.tsx",
+    "route": "/dashboard/inventory",
+    "domain": "Inventory",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/products/page.tsx",
+    "route": "/dashboard/inventory/products",
+    "domain": "Inventory",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/purchases/page.tsx",
+    "route": "/dashboard/inventory/purchases",
+    "domain": "Inventory",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/sales/page.tsx",
+    "route": "/dashboard/inventory/sales",
+    "domain": "Inventory",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/stock/page.tsx",
+    "route": "/dashboard/inventory/stock",
+    "domain": "Inventory",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/stores/page.tsx",
+    "route": "/dashboard/inventory/stores",
+    "domain": "Inventory",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/suppliers/page.tsx",
+    "route": "/dashboard/inventory/suppliers",
+    "domain": "Inventory",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/transfers/page.tsx",
+    "route": "/dashboard/inventory/transfers",
+    "domain": "Inventory",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/units/page.tsx",
+    "route": "/dashboard/inventory/units",
+    "domain": "Inventory",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/library/catalog/page.tsx",
+    "route": "/dashboard/library/catalog",
+    "domain": "School Library",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": false,
+    "status": "IN_PROGRESS"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/library/catalog/[id]/page.tsx",
+    "route": "/dashboard/library/catalog/[id]",
+    "domain": "School Library",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/library/categories/page.tsx",
+    "route": "/dashboard/library/categories",
+    "domain": "School Library",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/library/me/page.tsx",
+    "route": "/dashboard/library/me",
+    "domain": "School Library",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/library/page.tsx",
+    "route": "/dashboard/library",
+    "domain": "School Library",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/page.tsx",
+    "route": "/dashboard",
+    "domain": "Dashboard Core",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/parent/attendance/page.tsx",
+    "route": "/dashboard/parent/attendance",
+    "domain": "Dedicated Role Portals",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/parent/communication/page.tsx",
+    "route": "/dashboard/parent/communication",
+    "domain": "Dedicated Role Portals",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/parent/finance/page.tsx",
+    "route": "/dashboard/parent/finance",
+    "domain": "Dedicated Role Portals",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/parent/live-classes/page.tsx",
+    "route": "/dashboard/parent/live-classes",
+    "domain": "Dedicated Role Portals",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/parent/page.tsx",
+    "route": "/dashboard/parent",
+    "domain": "Dedicated Role Portals",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/parent/requests/page.tsx",
+    "route": "/dashboard/parent/requests",
+    "domain": "Dedicated Role Portals",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/parent/settings/page.tsx",
+    "route": "/dashboard/parent/settings",
+    "domain": "Dedicated Role Portals",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/guard/config/page.tsx",
+    "route": "/dashboard/portals/guard/config",
+    "domain": "Gate, Security & Front Desk",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/guard/emergency/page.tsx",
+    "route": "/dashboard/portals/guard/emergency",
+    "domain": "Gate, Security & Front Desk",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/guard/incidents/page.tsx",
+    "route": "/dashboard/portals/guard/incidents",
+    "domain": "Gate, Security & Front Desk",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/guard/page.tsx",
+    "route": "/dashboard/portals/guard",
+    "domain": "Gate, Security & Front Desk",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/guard/pickups/page.tsx",
+    "route": "/dashboard/portals/guard/pickups",
+    "domain": "Gate, Security & Front Desk",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/guard/scanner/page.tsx",
+    "route": "/dashboard/portals/guard/scanner",
+    "domain": "Gate, Security & Front Desk",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/guard/visitors/page.tsx",
+    "route": "/dashboard/portals/guard/visitors",
+    "domain": "Gate, Security & Front Desk",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/leadership/admin/page.tsx",
+    "route": "/dashboard/portals/leadership/admin",
+    "domain": "Dashboard Core",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/leadership/approvals/page.tsx",
+    "route": "/dashboard/portals/leadership/approvals",
+    "domain": "Dashboard Core",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/leadership/exceptions/page.tsx",
+    "route": "/dashboard/portals/leadership/exceptions",
+    "domain": "Dashboard Core",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/leadership/page.tsx",
+    "route": "/dashboard/portals/leadership",
+    "domain": "Dashboard Core",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/charges/page.tsx",
+    "route": "/dashboard/portals/librarian/charges",
+    "domain": "School Library",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/copies/page.tsx",
+    "route": "/dashboard/portals/librarian/copies",
+    "domain": "School Library",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/desk/page.tsx",
+    "route": "/dashboard/portals/librarian/desk",
+    "domain": "School Library",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/holds/page.tsx",
+    "route": "/dashboard/portals/librarian/holds",
+    "domain": "School Library",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/members/page.tsx",
+    "route": "/dashboard/portals/librarian/members",
+    "domain": "School Library",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/members/[id]/page.tsx",
+    "route": "/dashboard/portals/librarian/members/[id]",
+    "domain": "School Library",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/page.tsx",
+    "route": "/dashboard/portals/librarian",
+    "domain": "School Library",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/policies/page.tsx",
+    "route": "/dashboard/portals/librarian/policies",
+    "domain": "School Library",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/reports/page.tsx",
+    "route": "/dashboard/portals/librarian/reports",
+    "domain": "School Library",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/stocktake/page.tsx",
+    "route": "/dashboard/portals/librarian/stocktake",
+    "domain": "School Library",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/transfers/page.tsx",
+    "route": "/dashboard/portals/librarian/transfers",
+    "domain": "School Library",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/receptionist/appointments/page.tsx",
+    "route": "/dashboard/receptionist/appointments",
+    "domain": "Gate, Security & Front Desk",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/receptionist/handoffs/page.tsx",
+    "route": "/dashboard/receptionist/handoffs",
+    "domain": "Gate, Security & Front Desk",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/receptionist/inquiries/page.tsx",
+    "route": "/dashboard/receptionist/inquiries",
+    "domain": "Gate, Security & Front Desk",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/receptionist/page.tsx",
+    "route": "/dashboard/receptionist",
+    "domain": "Gate, Security & Front Desk",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/receptionist/pickups/page.tsx",
+    "route": "/dashboard/receptionist/pickups",
+    "domain": "Gate, Security & Front Desk",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/receptionist/visitors/page.tsx",
+    "route": "/dashboard/receptionist/visitors",
+    "domain": "Gate, Security & Front Desk",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/reports/admin/page.tsx",
+    "route": "/dashboard/reports/admin",
+    "domain": "Reports & Analytics",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/reports/page.tsx",
+    "route": "/dashboard/reports",
+    "domain": "Reports & Analytics",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/reports/runs/page.tsx",
+    "route": "/dashboard/reports/runs",
+    "domain": "Reports & Analytics",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/reports/schedules/page.tsx",
+    "route": "/dashboard/reports/schedules",
+    "domain": "Reports & Analytics",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/reports/[key]/page.tsx",
+    "route": "/dashboard/reports/[key]",
+    "domain": "Reports & Analytics",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/access-reset/page.tsx",
+    "route": "/dashboard/settings/access-reset",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/accounting-defaults/page.tsx",
+    "route": "/dashboard/settings/accounting-defaults",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/attendance/page.tsx",
+    "route": "/dashboard/settings/attendance",
+    "domain": "School Settings",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/audit-logs/page.tsx",
+    "route": "/dashboard/settings/audit-logs",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/branches/page.tsx",
+    "route": "/dashboard/settings/branches",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/cndp/page.tsx",
+    "route": "/dashboard/settings/cndp",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/custom-fields/page.tsx",
+    "route": "/dashboard/settings/custom-fields",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/domain/page.tsx",
+    "route": "/dashboard/settings/domain",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/drafts/page.tsx",
+    "route": "/dashboard/settings/drafts",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/entitlements/page.tsx",
+    "route": "/dashboard/settings/entitlements",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/exports/page.tsx",
+    "route": "/dashboard/settings/exports",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/jobs/page.tsx",
+    "route": "/dashboard/settings/jobs",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/live-classrooms/page.tsx",
+    "route": "/dashboard/settings/live-classrooms",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/migration/page.tsx",
+    "route": "/dashboard/settings/migration",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/notifications/page.tsx",
+    "route": "/dashboard/settings/notifications",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/numbering/page.tsx",
+    "route": "/dashboard/settings/numbering",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/onboarding/page.tsx",
+    "route": "/dashboard/settings/onboarding",
+    "domain": "School Settings",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/page.tsx",
+    "route": "/dashboard/settings",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/payment-methods/page.tsx",
+    "route": "/dashboard/settings/payment-methods",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/permissions/page.tsx",
+    "route": "/dashboard/settings/permissions",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/policies/page.tsx",
+    "route": "/dashboard/settings/policies",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/providers/page.tsx",
+    "route": "/dashboard/settings/providers",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/scanner-devices/page.tsx",
+    "route": "/dashboard/settings/scanner-devices",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/scheduled-jobs/page.tsx",
+    "route": "/dashboard/settings/scheduled-jobs",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/security/2fa/page.tsx",
+    "route": "/dashboard/settings/security/2fa",
+    "domain": "School Settings",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/security/login-events/page.tsx",
+    "route": "/dashboard/settings/security/login-events",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/security/page.tsx",
+    "route": "/dashboard/settings/security",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/staff/page.tsx",
+    "route": "/dashboard/settings/staff",
+    "domain": "School Settings",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/subscription/page.tsx",
+    "route": "/dashboard/settings/subscription",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/translations/page.tsx",
+    "route": "/dashboard/settings/translations",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/users/page.tsx",
+    "route": "/dashboard/settings/users",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/values/page.tsx",
+    "route": "/dashboard/settings/values",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/website/menu/page.tsx",
+    "route": "/dashboard/settings/website/menu",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/website/news/page.tsx",
+    "route": "/dashboard/settings/website/news",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/website/page.tsx",
+    "route": "/dashboard/settings/website",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/website/pages/page.tsx",
+    "route": "/dashboard/settings/website/pages",
+    "domain": "School Settings",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/student/live-classes/page.tsx",
+    "route": "/dashboard/student/live-classes",
+    "domain": "Dedicated Role Portals",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/student/page.tsx",
+    "route": "/dashboard/student",
+    "domain": "Dedicated Role Portals",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/add/page.tsx",
+    "route": "/dashboard/students/add",
+    "domain": "Students & Admissions",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/admissions/new/page.tsx",
+    "route": "/dashboard/students/admissions/new",
+    "domain": "Students & Admissions",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/admissions/page.tsx",
+    "route": "/dashboard/students/admissions",
+    "domain": "Students & Admissions",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/alumni/events/page.tsx",
+    "route": "/dashboard/students/alumni/events",
+    "domain": "Students & Admissions",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/alumni/page.tsx",
+    "route": "/dashboard/students/alumni",
+    "domain": "Students & Admissions",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/alumni/requests/page.tsx",
+    "route": "/dashboard/students/alumni/requests",
+    "domain": "Students & Admissions",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/alumni-transition/page.tsx",
+    "route": "/dashboard/students/alumni-transition",
+    "domain": "Students & Admissions",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/import/page.tsx",
+    "route": "/dashboard/students/import",
+    "domain": "Students & Admissions",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/matricules/page.tsx",
+    "route": "/dashboard/students/matricules",
+    "domain": "Students & Admissions",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/page.tsx",
+    "route": "/dashboard/students",
+    "domain": "Students & Admissions",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/parents/page.tsx",
+    "route": "/dashboard/students/parents",
+    "domain": "Students & Admissions",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/parents/[id]/page.tsx",
+    "route": "/dashboard/students/parents/[id]",
+    "domain": "Students & Admissions",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/photos/page.tsx",
+    "route": "/dashboard/students/photos",
+    "domain": "Students & Admissions",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/promotions/page.tsx",
+    "route": "/dashboard/students/promotions",
+    "domain": "Students & Admissions",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/transfers/page.tsx",
+    "route": "/dashboard/students/transfers",
+    "domain": "Students & Admissions",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/[id]/page.tsx",
+    "route": "/dashboard/students/[id]",
+    "domain": "Students & Admissions",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/domains/page.tsx",
+    "route": "/dashboard/super-admin/domains",
+    "domain": "Super Admin",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/page.tsx",
+    "route": "/dashboard/super-admin",
+    "domain": "Super Admin",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/reports/page.tsx",
+    "route": "/dashboard/super-admin/reports",
+    "domain": "Super Admin",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/schools/create/page.tsx",
+    "route": "/dashboard/super-admin/schools/create",
+    "domain": "Super Admin",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/schools/page.tsx",
+    "route": "/dashboard/super-admin/schools",
+    "domain": "Super Admin",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/schools/[id]/page.tsx",
+    "route": "/dashboard/super-admin/schools/[id]",
+    "domain": "Super Admin",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/settings/page.tsx",
+    "route": "/dashboard/super-admin/settings",
+    "domain": "Super Admin",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/sms/page.tsx",
+    "route": "/dashboard/super-admin/sms",
+    "domain": "Super Admin",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/subscriptions/list/page.tsx",
+    "route": "/dashboard/super-admin/subscriptions/list",
+    "domain": "Super Admin",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/subscriptions/page.tsx",
+    "route": "/dashboard/super-admin/subscriptions",
+    "domain": "Super Admin",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/support/page.tsx",
+    "route": "/dashboard/super-admin/support",
+    "domain": "Super Admin",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/waitlist/page.tsx",
+    "route": "/dashboard/super-admin/waitlist",
+    "domain": "Super Admin",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/teacher/page.tsx",
+    "route": "/dashboard/teacher",
+    "domain": "Dedicated Role Portals",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/teachers/bulk-import/page.tsx",
+    "route": "/dashboard/teachers/bulk-import",
+    "domain": "Faculty & Staff",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/teachers/manage/page.tsx",
+    "route": "/dashboard/teachers/manage",
+    "domain": "Faculty & Staff",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/teachers/page.tsx",
+    "route": "/dashboard/teachers",
+    "domain": "Faculty & Staff",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/teachers/[id]/page.tsx",
+    "route": "/dashboard/teachers/[id]",
+    "domain": "Faculty & Staff",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/allocations/page.tsx",
+    "route": "/dashboard/transport/allocations",
+    "domain": "School Transport",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/boarding/page.tsx",
+    "route": "/dashboard/transport/boarding",
+    "domain": "School Transport",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/drivers/page.tsx",
+    "route": "/dashboard/transport/drivers",
+    "domain": "School Transport",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/guardian/page.tsx",
+    "route": "/dashboard/transport/guardian",
+    "domain": "School Transport",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/incidents/page.tsx",
+    "route": "/dashboard/transport/incidents",
+    "domain": "School Transport",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/page.tsx",
+    "route": "/dashboard/transport",
+    "domain": "School Transport",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/policies/page.tsx",
+    "route": "/dashboard/transport/policies",
+    "domain": "School Transport",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/reports/page.tsx",
+    "route": "/dashboard/transport/reports",
+    "domain": "School Transport",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/routes/page.tsx",
+    "route": "/dashboard/transport/routes",
+    "domain": "School Transport",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/stops/page.tsx",
+    "route": "/dashboard/transport/stops",
+    "domain": "School Transport",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/student/page.tsx",
+    "route": "/dashboard/transport/student",
+    "domain": "School Transport",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/trips/page.tsx",
+    "route": "/dashboard/transport/trips",
+    "domain": "School Transport",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/vehicles/page.tsx",
+    "route": "/dashboard/transport/vehicles",
+    "domain": "School Transport",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/advances/page.tsx",
+    "route": "/dashboard/workforce/advances",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/awards/page.tsx",
+    "route": "/dashboard/workforce/awards",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/leave/page.tsx",
+    "route": "/dashboard/workforce/leave",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/page.tsx",
+    "route": "/dashboard/workforce",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/adjustments/page.tsx",
+    "route": "/dashboard/workforce/payroll/adjustments",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/assignments/page.tsx",
+    "route": "/dashboard/workforce/payroll/assignments",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/components/page.tsx",
+    "route": "/dashboard/workforce/payroll/components",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/payments/page.tsx",
+    "route": "/dashboard/workforce/payroll/payments",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/payslips/page.tsx",
+    "route": "/dashboard/workforce/payroll/payslips",
+    "domain": "HR & Workforce",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/regulations/page.tsx",
+    "route": "/dashboard/workforce/payroll/regulations",
+    "domain": "HR & Workforce",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/runs/page.tsx",
+    "route": "/dashboard/workforce/payroll/runs",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/runs/[id]/page.tsx",
+    "route": "/dashboard/workforce/payroll/runs/[id]",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/settings/page.tsx",
+    "route": "/dashboard/workforce/payroll/settings",
+    "domain": "HR & Workforce",
+    "linked": false,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "UNLINKED"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/structures/page.tsx",
+    "route": "/dashboard/workforce/payroll/structures",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/timeclock/page.tsx",
+    "route": "/dashboard/workforce/timeclock",
+    "domain": "HR & Workforce",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(marketing)/page.tsx",
+    "route": "/[locale]",
+    "domain": "Marketing & Public Site",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": false,
+    "status": "IN_PROGRESS"
+  },
+  {
+    "file": "src/app/[locale]/(school-site)/[tenantSlug]/about/page.tsx",
+    "route": "/[tenantSlug]/about",
+    "domain": "Marketing & Public Site",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(school-site)/[tenantSlug]/contact/page.tsx",
+    "route": "/[tenantSlug]/contact",
+    "domain": "Marketing & Public Site",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(school-site)/[tenantSlug]/events/page.tsx",
+    "route": "/[tenantSlug]/events",
+    "domain": "Marketing & Public Site",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(school-site)/[tenantSlug]/faq/page.tsx",
+    "route": "/[tenantSlug]/faq",
+    "domain": "Marketing & Public Site",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(school-site)/[tenantSlug]/gallery/page.tsx",
+    "route": "/[tenantSlug]/gallery",
+    "domain": "Marketing & Public Site",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(school-site)/[tenantSlug]/news/page.tsx",
+    "route": "/[tenantSlug]/news",
+    "domain": "Marketing & Public Site",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(school-site)/[tenantSlug]/news/[slug]/page.tsx",
+    "route": "/[tenantSlug]/news/[slug]",
+    "domain": "Marketing & Public Site",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(school-site)/[tenantSlug]/page.tsx",
+    "route": "/[tenantSlug]",
+    "domain": "Marketing & Public Site",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/(school-site)/[tenantSlug]/services/page.tsx",
+    "route": "/[tenantSlug]/services",
+    "domain": "Marketing & Public Site",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/verify/card/[token]/page.tsx",
+    "route": "/verify/card/[token]",
+    "domain": "Public Verification",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/verify/certificate/[token]/page.tsx",
+    "route": "/verify/certificate/[token]",
+    "domain": "Public Verification",
+    "linked": true,
+    "isDynamic": true,
+    "hasRealData": true,
+    "status": "DONE"
+  },
+  {
+    "file": "src/app/[locale]/verify-document/page.tsx",
+    "route": "/verify-document",
+    "domain": "Public Verification",
+    "linked": true,
+    "isDynamic": false,
+    "hasRealData": true,
+    "status": "DONE"
+  }
+]

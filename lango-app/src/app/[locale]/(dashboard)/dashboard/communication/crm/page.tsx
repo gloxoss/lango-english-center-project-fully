@@ -9,9 +9,10 @@ export const metadata = {
 export default async function CrmPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'crm.manage' });
+  const isRtl = locale === 'ar';
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale} className="mx-auto max-w-7xl px-4 py-8">
       <InquiriesKanbanView />
-    </div>
+    </main>
   );
 }

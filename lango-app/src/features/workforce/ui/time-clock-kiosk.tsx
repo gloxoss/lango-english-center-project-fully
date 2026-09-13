@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +14,6 @@ import {
   CheckCircle2,
   AlertCircle,
   QrCode,
-  UserCheck,
 } from 'lucide-react';
 
 interface PunchItem {
@@ -25,6 +25,8 @@ interface PunchItem {
 }
 
 export function TimeClockKiosk() {
+  const t = useTranslations('Workforce');
+  const tCommon = useTranslations('Common');
   const [punchMode, setPunchMode] = useState<'in' | 'out'>('in');
   const [rawTokenInput, setRawTokenInput] = useState('');
   const [punches, setPunches] = useState<PunchItem[]>([]);
@@ -70,36 +72,36 @@ export function TimeClockKiosk() {
         setRawTokenInput('');
         fetchPunches();
       } else {
-        setError(json.error?.message || 'Pointage échoué.');
+        setError(json.error?.message || t('punchFailed'));
       }
-    } catch (err) {
-      setError('Erreur de connexion au serveur de pointage.');
+    } catch {
+      setError(t('punchConnError'));
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto pb-12">
+    <div className="space-y-6 max-w-2xl mx-auto pb-12 text-start">
       {/* Top Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs text-center sm:text-left">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs text-center sm:text-start">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2487B8] to-[#1B6C93] flex items-center justify-center text-white shadow-2xs shrink-0 mx-auto sm:mx-0">
             <Clock className="w-6 h-6" />
           </div>
           <div>
             <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">
-              Pointeuse Kiosque Employés & Personnel
+              {t('kioskTitle')}
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Horodatage certifié des arrivées et départs sur le registre des heures de travail.
+              {t('kioskSubtitle')}
             </p>
           </div>
         </div>
 
         <Badge variant="success" className="font-bold gap-1 px-3 py-1.5 text-xs mx-auto sm:mx-0">
           <ShieldCheck className="w-3.5 h-3.5" />
-          <span>Pointage Certifié</span>
+          <span>{t('certifiedBadge')}</span>
         </Badge>
       </div>
 
@@ -115,8 +117,8 @@ export function TimeClockKiosk() {
                 : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
             }`}
           >
-            <LogIn className="w-6 h-6 mx-auto mb-1.5 text-emerald-600" />
-            <span className="text-xs font-extrabold uppercase tracking-wider block">Entrée / Arrivée</span>
+            <LogIn className="w-6 h-6 mx-auto mb-1.5 text-emerald-600 rtl:rotate-180" />
+            <span className="text-xs font-extrabold uppercase tracking-wider block">{t('btnPunchIn')}</span>
           </button>
 
           <button
@@ -128,20 +130,20 @@ export function TimeClockKiosk() {
                 : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
             }`}
           >
-            <LogOut className="w-6 h-6 mx-auto mb-1.5 text-amber-600" />
-            <span className="text-xs font-extrabold uppercase tracking-wider block">Sortie / Départ</span>
+            <LogOut className="w-6 h-6 mx-auto mb-1.5 text-amber-600 rtl:rotate-180" />
+            <span className="text-xs font-extrabold uppercase tracking-wider block">{t('btnPunchOut')}</span>
           </button>
         </div>
 
         <form onSubmit={handlePunch} className="space-y-4">
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1">Scanner ou Saisir le Badge QR</label>
+            <label className="text-xs font-bold text-slate-700 block mb-1">{t('scanBadgeLabel')}</label>
             <Input
               type="password"
               required
               value={rawTokenInput}
               onChange={(e) => setRawTokenInput(e.target.value)}
-              placeholder="Scannez votre badge devant la caméra du kiosque..."
+              placeholder={t('scanBadgePlaceholder')}
               className="text-xs rounded-xl h-11 border-slate-200 focus:ring-2 focus:ring-[#2487B8] font-mono text-center text-sm"
               autoFocus
             />
@@ -151,7 +153,7 @@ export function TimeClockKiosk() {
             <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3 text-emerald-800 text-xs font-bold">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
               <span>
-                Pointage {lastPunch.type === 'in' ? "d'entrée" : 'de sortie'} enregistré pour {lastPunch.name} !
+                {lastPunch.type === 'in' ? t('punchSuccessIn', { name: lastPunch.name }) : t('punchSuccessOut', { name: lastPunch.name })}
               </span>
             </div>
           )}
@@ -171,7 +173,7 @@ export function TimeClockKiosk() {
             }`}
           >
             <QrCode className="w-4 h-4" />
-            <span>{submitting ? 'Validation...' : `Valider Pointage ${punchMode === 'in' ? 'Entrée' : 'Sortie'}`}</span>
+            <span>{submitting ? tCommon('loading') : (punchMode === 'in' ? t('punchSubmitIn') : t('punchSubmitOut'))}</span>
           </Button>
         </form>
       </Card>
@@ -179,7 +181,7 @@ export function TimeClockKiosk() {
       {/* Recent Punches Journal Card */}
       <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
         <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">
-          Derniers Pointages du Personnel
+          {t('recentPunchesTitle')}
         </h3>
 
         <div className="space-y-2">
@@ -187,7 +189,7 @@ export function TimeClockKiosk() {
             <div key={p.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between text-xs">
               <div className="flex items-center gap-3">
                 <Badge variant={p.punchType === 'in' ? 'success' : 'warning'} className="text-[10px] font-bold uppercase">
-                  {p.punchType === 'in' ? 'Entrée' : 'Sortie'}
+                  {p.punchType === 'in' ? t('btnPunchIn') : t('btnPunchOut')}
                 </Badge>
                 <span className="font-extrabold text-[#16212B]">{p.employeeName || p.employeeId}</span>
               </div>
@@ -195,7 +197,7 @@ export function TimeClockKiosk() {
             </div>
           ))}
 
-          {punches.length === 0 && <p className="text-xs text-slate-400 text-center py-6">Aucun pointage aujourd'hui.</p>}
+          {punches.length === 0 && <p className="text-xs text-slate-400 text-center py-6">{t('noPunchesToday')}</p>}
         </div>
       </Card>
     </div>

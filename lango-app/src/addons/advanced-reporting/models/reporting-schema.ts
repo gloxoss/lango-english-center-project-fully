@@ -84,6 +84,18 @@ export const reportRuns = pgTable('report_runs', {
   executionTimeMs: integer('execution_time_ms'),
   errorMessage: text('error_message'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  // When work actually began, as opposed to when the run was queued. Staleness is
+  // judged from the heartbeat below, never from createdAt: a report that sat in a
+  // queue for an hour is not stuck, and one that has been working hard for 20
+  // minutes is not stuck either.
+  startedAt: timestamp('started_at', { mode: 'string' }),
+  // Touched periodically by the executing process. A heartbeat that stops is the
+  // only reliable signal that the process died — a deploy or a crash leaves no
+  // other trace.
+  heartbeatAt: timestamp('heartbeat_at', { mode: 'string' }),
+  // How many times this run has been attempted, so a crash loop is capped
+  // instead of retrying for ever.
+  attempts: integer('attempts').default(0).notNull(),
   finishedAt: timestamp('finished_at', { mode: 'string' }),
 });
 

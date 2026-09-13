@@ -9,9 +9,10 @@ export const metadata = {
 export default async function BroadcastPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'broadcast.manage' });
+  const isRtl = locale === 'ar';
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale} className="mx-auto max-w-4xl px-4 py-8">
       <BroadcastSendView />
-    </div>
+    </main>
   );
 }

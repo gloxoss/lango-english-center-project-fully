@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { createProduct, listProducts } from '@/features/inventory/services/catalog-service';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { requireAddon } from '@/libs/api/entitlements';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
-import { requireAddon } from '@/libs/api/entitlements';
 import { parseJson } from '@/libs/api/validation';
-import { createProduct, listProducts } from '@/features/inventory/services/catalog-service';
 
 const productSchema = z.object({
   name: z.string().trim().min(1).max(120),
@@ -16,6 +16,10 @@ const productSchema = z.object({
   unitRatio: z.string().trim().max(20).optional(),
   purchasePrice: z.number().nonnegative().nullable().optional(),
   salePrice: z.number().nonnegative().nullable().optional(),
+  // Reorder policy, in sale units. 0 is a valid reorder point ("run to empty");
+  // a reorder quantity of 0 would raise an order for nothing, so it is positive.
+  reorderPoint: z.number().nonnegative().nullable().optional(),
+  reorderQuantity: z.number().positive().nullable().optional(),
   remarks: z.string().max(2000).nullable().optional(),
   isActive: z.boolean().optional(),
 }).strict();

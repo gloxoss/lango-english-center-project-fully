@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -50,21 +51,15 @@ interface ReportOptions {
 }
 
 const REJECTION_REASONS = [
-  { value: 'WRONG_CLASS', label: 'Mauvaise classe' },
-  { value: 'REGISTER_LOCKED', label: 'Registre verrouillé' },
-  { value: 'SESSION_INVALID', label: 'Session invalide' },
-  { value: 'SESSION_CLOSED', label: 'Session clôturée' },
-  { value: 'INVALID_CREDENTIAL', label: 'Badge invalide' },
-  { value: 'BADGE_REVOKED', label: 'Badge révoqué' },
-  { value: 'BADGE_EXPIRED', label: 'Badge expiré' },
-  { value: 'BADGE_REPLACED', label: 'Badge remplacé' },
-];
-
-const RESULT_LABELS: Record<string, string> = {
-  accepted: 'Accepté',
-  rejected: 'Rejeté',
-  already_scanned: 'Déjà scanné',
-};
+  { value: 'WRONG_CLASS', key: 'reasonWrongClass' },
+  { value: 'REGISTER_LOCKED', key: 'reasonRegisterLocked' },
+  { value: 'SESSION_INVALID', key: 'reasonSessionInvalid' },
+  { value: 'SESSION_CLOSED', key: 'reasonSessionClosed' },
+  { value: 'INVALID_CREDENTIAL', key: 'reasonInvalidCredential' },
+  { value: 'BADGE_REVOKED', key: 'reasonBadgeRevoked' },
+  { value: 'BADGE_EXPIRED', key: 'reasonBadgeExpired' },
+  { value: 'BADGE_REPLACED', key: 'reasonBadgeReplaced' },
+] as const;
 
 function resultVariant(status: string): 'success' | 'danger' | 'warning' {
   if (status === 'accepted') return 'success';
@@ -73,6 +68,9 @@ function resultVariant(status: string): 'success' | 'danger' | 'warning' {
 }
 
 export function QrReportsView() {
+  const t = useTranslations('Attendance');
+  const tCommon = useTranslations('Common');
+  const tStatus = useTranslations('Status');
   const [events, setEvents] = useState<ScanEventItem[]>([]);
   const [aggregates, setAggregates] = useState<Aggregates>({
     total: 0, accepted: 0, rejected: 0, alreadyScanned: 0,
@@ -164,10 +162,10 @@ export function QrReportsView() {
           </div>
           <div>
             <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">
-              Journal d'Audit & Rapports de Scans QR
+              {t('qrReportsTitle')}
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Historique immuable des preuves de présence et raisons de rejet des badges scannés.
+              {t('qrReportsSubtitle')}
             </p>
           </div>
         </div>
@@ -180,7 +178,7 @@ export function QrReportsView() {
             onClick={() => { window.location.href = exportUrl('csv'); }}
           >
             <Download className="w-4 h-4 text-[#2487B8]" />
-            <span>Exporter CSV</span>
+            <span>{t('exportAuditCsvBtn')}</span>
           </Button>
           <Button
             variant="outline"
@@ -189,7 +187,7 @@ export function QrReportsView() {
             onClick={() => { window.location.href = exportUrl('pdf'); }}
           >
             <FileText className="w-4 h-4 text-rose-600" />
-            <span>Exporter PDF</span>
+            <span>{t('exportPdfBtn')}</span>
           </Button>
         </div>
       </div>
@@ -199,7 +197,7 @@ export function QrReportsView() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-extrabold text-slate-700">
             <Search className="w-4 h-4 text-[#2487B8]" />
-            <span>Filtres du rapport</span>
+            <span>{t('reportFiltersHeading')}</span>
           </div>
           <Button
             variant="ghost"
@@ -208,13 +206,13 @@ export function QrReportsView() {
             className="h-8 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 gap-1.5"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            Réinitialiser
+            {t('resetFiltersBtn')}
           </Button>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-8 gap-3">
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-slate-500">Du</label>
+            <label className="text-[11px] font-bold text-slate-500">{t('filterFrom')}</label>
             <Input
               type="date"
               value={from}
@@ -223,7 +221,7 @@ export function QrReportsView() {
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-slate-500">Au</label>
+            <label className="text-[11px] font-bold text-slate-500">{t('filterTo')}</label>
             <Input
               type="date"
               value={to}
@@ -232,13 +230,13 @@ export function QrReportsView() {
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-slate-500">Classe / Section</label>
+            <label className="text-[11px] font-bold text-slate-500">{t('filterClassSection')}</label>
             <Select value={classSectionId} onValueChange={setClassSectionId}>
               <SelectTrigger className="h-10 text-xs rounded-xl">
-                <SelectValue placeholder="Toutes" />
+                <SelectValue placeholder={t('allClassesOption')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Toutes</SelectItem>
+                <SelectItem value="">{t('allClassesOption')}</SelectItem>
                 {sections.map(s => (
                   <SelectItem key={s.id} value={s.id}>
                     {s.className} — {s.sectionName}
@@ -248,41 +246,41 @@ export function QrReportsView() {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-slate-500">Résultat</label>
+            <label className="text-[11px] font-bold text-slate-500">{t('filterResult')}</label>
             <Select value={resultStatus} onValueChange={setResultStatus}>
               <SelectTrigger className="h-10 text-xs rounded-xl">
-                <SelectValue placeholder="Tous" />
+                <SelectValue placeholder={t('allResultsOption')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous</SelectItem>
-                <SelectItem value="accepted">Accepté</SelectItem>
-                <SelectItem value="rejected">Rejeté</SelectItem>
-                <SelectItem value="already_scanned">Déjà scanné</SelectItem>
+                <SelectItem value="">{t('allResultsOption')}</SelectItem>
+                <SelectItem value="accepted">{t('resultAccepted')}</SelectItem>
+                <SelectItem value="rejected">{t('resultRejected')}</SelectItem>
+                <SelectItem value="already_scanned">{t('resultAlreadyScanned')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-slate-500">Motif de rejet</label>
+            <label className="text-[11px] font-bold text-slate-500">{t('filterRejectionReason')}</label>
             <Select value={rejectionReason} onValueChange={setRejectionReason}>
               <SelectTrigger className="h-10 text-xs rounded-xl">
-                <SelectValue placeholder="Tous" />
+                <SelectValue placeholder={t('allReasonsOption')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous</SelectItem>
+                <SelectItem value="">{t('allReasonsOption')}</SelectItem>
                 {REJECTION_REASONS.map(r => (
-                  <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                  <SelectItem key={r.value} value={r.value}>{t(r.key as any)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-slate-500">Dispositif</label>
+            <label className="text-[11px] font-bold text-slate-500">{t('filterDevice')}</label>
             <Select value={deviceId} onValueChange={setDeviceId}>
               <SelectTrigger className="h-10 text-xs rounded-xl">
-                <SelectValue placeholder="Tous" />
+                <SelectValue placeholder={t('allDevicesOption')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous</SelectItem>
+                <SelectItem value="">{t('allDevicesOption')}</SelectItem>
                 {options.devices.map(d => (
                   <SelectItem key={d.id} value={d.id}>{d.label}</SelectItem>
                 ))}
@@ -290,24 +288,24 @@ export function QrReportsView() {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-slate-500">Opérateur</label>
+            <label className="text-[11px] font-bold text-slate-500">{t('filterOperator')}</label>
             <Select value={operatorId} onValueChange={setOperatorId}>
               <SelectTrigger className="h-10 text-xs rounded-xl">
-                <SelectValue placeholder="Tous" />
+                <SelectValue placeholder={t('allOperatorsOption')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous</SelectItem>
+                <SelectItem value="">{t('allOperatorsOption')}</SelectItem>
                 {options.operators.map(op => (
-                  <SelectItem key={op.id} value={op.id}>{op.name || 'Opérateur'}</SelectItem>
+                  <SelectItem key={op.id} value={op.id}>{op.name || t('colOperator')}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-slate-500">Élève</label>
+            <label className="text-[11px] font-bold text-slate-500">{t('filterStudent')}</label>
             <Input
               type="text"
-              placeholder="Nom..."
+              placeholder={t('searchPlaceholder')}
               value={studentName}
               onChange={e => setStudentName(e.target.value)}
               className="h-10 text-xs rounded-xl border-slate-200 bg-slate-50/50 font-medium text-slate-800"
@@ -320,9 +318,9 @@ export function QrReportsView() {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Scans Valides Acceptés</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('kpiAcceptedScans')}</span>
             <h3 className="text-2xl font-extrabold text-emerald-600 mt-1">{aggregates.accepted}</h3>
-            <p className="text-[11px] text-slate-500 font-semibold mt-1">Preuves de présence staged</p>
+            <p className="text-[11px] text-slate-500 font-semibold mt-1">{t('kpiAcceptedScansDesc')}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
             <CheckCircle2 className="w-5 h-5" />
@@ -331,9 +329,9 @@ export function QrReportsView() {
 
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Badges Rejetés</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('kpiRejectedScans')}</span>
             <h3 className="text-2xl font-extrabold text-rose-600 mt-1">{aggregates.rejected}</h3>
-            <p className="text-[11px] text-slate-500 font-semibold mt-1">Authentification bloquée</p>
+            <p className="text-[11px] text-slate-500 font-semibold mt-1">{t('kpiRejectedScansDesc')}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
             <XCircle className="w-5 h-5" />
@@ -342,9 +340,9 @@ export function QrReportsView() {
 
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Déjà Scannés</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('kpiAlreadyScanned')}</span>
             <h3 className="text-2xl font-extrabold text-[#E8A33D] mt-1">{aggregates.alreadyScanned}</h3>
-            <p className="text-[11px] text-slate-500 font-semibold mt-1">Tentatives en double</p>
+            <p className="text-[11px] text-slate-500 font-semibold mt-1">{t('kpiAlreadyScannedDesc')}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-[#FCF0DC] text-[#E8A33D] flex items-center justify-center shrink-0">
             <AlertTriangle className="w-5 h-5" />
@@ -353,9 +351,9 @@ export function QrReportsView() {
 
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Terminaux Appairés Actifs</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('kpiPairedTerminals')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{pairedDeviceCount}</h3>
-            <p className="text-[11px] text-slate-500 font-semibold mt-1">Dispositifs sur le réseau</p>
+            <p className="text-[11px] text-slate-500 font-semibold mt-1">{t('kpiPairedTerminalsDesc')}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2487B8] flex items-center justify-center shrink-0">
             <Laptop className="w-5 h-5" />
@@ -367,26 +365,26 @@ export function QrReportsView() {
       <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-xs font-extrabold text-slate-700">
-            {loading ? 'Chargement...' : `${events.length} événement(s) trouvé(s)`}
+            {loading ? t('loading') : t('eventsFoundCount', { count: events.length })}
           </p>
           <Badge variant="neutral" className="font-mono text-[10px]">
-            {aggregates.total} au total
+            {t('totalCountBadge', { count: aggregates.total })}
           </Badge>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-start text-xs">
             <thead className="bg-[#F6F9FC] text-slate-500 font-semibold border-b border-slate-200/80">
               <tr>
-                <th className="py-3.5 px-4">Événement ID</th>
-                <th className="py-3.5 px-4">Horodatage Scan</th>
-                <th className="py-3.5 px-4">Résultat Scan</th>
-                <th className="py-3.5 px-4">Statut Staged</th>
-                <th className="py-3.5 px-4">Raison Rejet</th>
-                <th className="py-3.5 px-4">Classe / Section</th>
-                <th className="py-3.5 px-4">Élève Cible</th>
-                <th className="py-3.5 px-4">Dispositif</th>
-                <th className="py-3.5 px-4">Opérateur</th>
+                <th className="py-3.5 px-4 text-start">{t('colEventId')}</th>
+                <th className="py-3.5 px-4 text-start">{t('colScanTime')}</th>
+                <th className="py-3.5 px-4 text-start">{t('colScanResult')}</th>
+                <th className="py-3.5 px-4 text-start">{t('colStagedStatus')}</th>
+                <th className="py-3.5 px-4 text-start">{t('colReason')}</th>
+                <th className="py-3.5 px-4 text-start">{t('colClassSection')}</th>
+                <th className="py-3.5 px-4 text-start">{t('colTargetStudent')}</th>
+                <th className="py-3.5 px-4 text-start">{t('colTerminal')}</th>
+                <th className="py-3.5 px-4 text-start">{t('colOperator')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -394,20 +392,23 @@ export function QrReportsView() {
                 <tr key={evt.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-3.5 px-4 font-mono font-bold text-slate-700">{evt.id.slice(0, 8)}…</td>
                   <td className="py-3.5 px-4 text-slate-600">
-                    {new Date(evt.scannedAt).toLocaleString('fr-FR', {
-                      day: '2-digit', month: '2-digit', year: 'numeric',
-                      hour: '2-digit', minute: '2-digit',
-                    })}
+                    {new Date(evt.scannedAt).toLocaleString()}
                   </td>
                   <td className="py-3.5 px-4">
                     <Badge variant={resultVariant(evt.resultStatus)} className="text-[10px] uppercase font-bold">
-                      {RESULT_LABELS[evt.resultStatus] || evt.resultStatus}
+                      {evt.resultStatus === 'accepted'
+                        ? t('resultAccepted')
+                        : evt.resultStatus === 'rejected'
+                        ? t('resultRejected')
+                        : evt.resultStatus === 'already_scanned'
+                        ? t('resultAlreadyScanned')
+                        : evt.resultStatus}
                     </Badge>
                   </td>
                   <td className="py-3.5 px-4">
                     {evt.stagedStatus
                       ? <Badge variant="info" className="text-[10px] uppercase font-bold">
-                          {evt.stagedStatus === 'late' ? 'Retard' : 'Présent'}
+                          {evt.stagedStatus === 'late' ? tStatus('late') : tStatus('present')}
                         </Badge>
                       : <span className="text-slate-400">—</span>}
                   </td>
@@ -425,14 +426,14 @@ export function QrReportsView() {
               {events.length === 0 && !loading && (
                 <tr>
                   <td colSpan={9} className="py-8 text-center text-slate-500 font-medium">
-                    Aucun événement de scan trouvé. Modifiez les filtres ou effectuez des scans.
+                    {t('noScanEventsFound')}
                   </td>
                 </tr>
               )}
               {loading && (
                 <tr>
                   <td colSpan={9} className="py-8 text-center text-slate-500 font-medium">
-                    Chargement de l'historique...
+                    {t('loadingScanHistory')}
                   </td>
                 </tr>
               )}

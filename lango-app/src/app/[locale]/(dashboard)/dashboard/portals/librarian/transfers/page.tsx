@@ -4,5 +4,10 @@ import { LibraryTransfersClient } from '@/features/library/ui/library-transfers-
 export default async function LibrarianTransfersPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   await requireLibraryPage(locale, { capability: 'library.copy.manage' });
-  return <LibraryTransfersClient />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <LibraryTransfersClient />
+    </main>
+  );
 }

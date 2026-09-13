@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +16,7 @@ import {
   CheckCircle2,
   Loader2,
   Award,
+  ArrowLeft,
 } from 'lucide-react';
 
 interface OnlineExam {
@@ -59,7 +61,7 @@ interface AttemptResult {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleString('fr-FR', {
+  return new Date(iso).toLocaleString(undefined, {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -74,6 +76,9 @@ function classSubjectLabel(cs: ClassSubject | undefined) {
 }
 
 export default function OnlineExamsPage() {
+  const t = useTranslations('Grading');
+  const tCommon = useTranslations('Common');
+
   const [exams, setExams] = useState<OnlineExam[]>([]);
   const [classSubjects, setClassSubjects] = useState<ClassSubject[]>([]);
   const [loading, setLoading] = useState(true);
@@ -120,16 +125,16 @@ export default function OnlineExamsPage() {
       const res = await fetch('/api/academics/online-exams');
       const json = await res.json();
       if (!res.ok) {
-        setError(json?.error?.message || 'Impossible de charger les examens.');
+        setError(json?.error?.message || t('loadingExams'));
       } else {
         setExams(Array.isArray(json.data) ? json.data : []);
       }
     } catch {
-      setError('Impossible de charger les examens.');
+      setError(t('loadingExams'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   const loadClassSubjects = useCallback(async () => {
     try {
@@ -150,18 +155,18 @@ export default function OnlineExamsPage() {
       const res = await fetch(`/api/academics/online-exams/${examId}/questions`);
       const json = await res.json();
       if (!res.ok) {
-        setQuestionError(json?.error?.message || 'Impossible de charger les questions.');
+        setQuestionError(json?.error?.message || tCommon('error'));
         setQuestions([]);
       } else {
         setQuestions(Array.isArray(json.data) ? json.data : []);
       }
     } catch {
-      setQuestionError('Impossible de charger les questions.');
+      setQuestionError(tCommon('error'));
       setQuestions([]);
     } finally {
       setLoadingQuestions(false);
     }
-  }, []);
+  }, [t, tCommon]);
 
   useEffect(() => {
     loadExams();
@@ -195,7 +200,7 @@ export default function OnlineExamsPage() {
   const handleCreateExam = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!cTitle || !cClassSubjectId || !cStartsAt || !cEndsAt) {
-      setCreateError('Titre, matière, date de début et date de fin sont requis.');
+      setCreateError(t('examCreateFieldsRequired'));
       return;
     }
     setCreating(true);
@@ -215,7 +220,7 @@ export default function OnlineExamsPage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setCreateError(json?.error?.message || 'Échec de la création de l\'examen.');
+        setCreateError(json?.error?.message || tCommon('error'));
         return;
       }
       setShowCreate(false);
@@ -227,7 +232,7 @@ export default function OnlineExamsPage() {
       setCEndsAt('');
       await loadExams();
     } catch {
-      setCreateError('Échec de la création de l\'examen.');
+      setCreateError(tCommon('error'));
     } finally {
       setCreating(false);
     }
@@ -238,15 +243,15 @@ export default function OnlineExamsPage() {
     if (!authoringExam) return;
     const filledOptions = qOptions.filter((o) => o.optionText.trim().length > 0);
     if (!qText.trim()) {
-      setQuestionError('Le texte de la question est requis.');
+      setQuestionError(t('questionTextRequired'));
       return;
     }
     if (filledOptions.length < 2) {
-      setQuestionError('Ajoutez au moins deux options.');
+      setQuestionError(t('atLeastTwoOptions'));
       return;
     }
     if (!filledOptions.some((o) => o.isCorrect)) {
-      setQuestionError('Désignez une réponse correcte.');
+      setQuestionError(t('designateCorrectOption'));
       return;
     }
     setAddingQuestion(true);
@@ -263,7 +268,7 @@ export default function OnlineExamsPage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setQuestionError(json?.error?.message || 'Échec de la création de la question.');
+        setQuestionError(json?.error?.message || tCommon('error'));
         return;
       }
       setQText('');
@@ -274,7 +279,7 @@ export default function OnlineExamsPage() {
       ]);
       await loadQuestions(authoringExam.id);
     } catch {
-      setQuestionError('Échec de la création de la question.');
+      setQuestionError(tCommon('error'));
     } finally {
       setAddingQuestion(false);
     }
@@ -298,12 +303,12 @@ export default function OnlineExamsPage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setSubmitError(json?.error?.message || 'Échec de la soumission.');
+        setSubmitError(json?.error?.message || tCommon('error'));
         return;
       }
       setResult(json.data || null);
     } catch {
-      setSubmitError('Échec de la soumission.');
+      setSubmitError(tCommon('error'));
     } finally {
       setSubmitting(false);
     }
@@ -321,10 +326,10 @@ export default function OnlineExamsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">
-              Examens en Ligne
+              {t('onlineExamsTitle')}
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Examens QCM réels : création, questions à choix multiple et correction automatique.
+              {t('onlineExamsSubtitle')}
             </p>
           </div>
         </div>
@@ -334,10 +339,10 @@ export default function OnlineExamsPage() {
             setShowCreate(true);
             setCreateError('');
           }}
-          className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold rounded-xl shadow-2xs gap-2 shrink-0"
+          className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold rounded-xl shadow-2xs gap-2 shrink-0 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>Créer un Examen</span>
+          <span>{t('createExamBtn')}</span>
         </Button>
       </div>
 
@@ -345,9 +350,9 @@ export default function OnlineExamsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Examens publiés</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('publishedExamsKpi')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{exams.length}</h3>
-            <p className="text-[11px] text-slate-500 font-semibold mt-1">Liste réelle du tenant</p>
+            <p className="text-[11px] text-slate-500 font-semibold mt-1">{t('realTenantList')}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2487B8] flex items-center justify-center shrink-0">
             <FileQuestion className="w-5 h-5" />
@@ -356,9 +361,9 @@ export default function OnlineExamsPage() {
 
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Matières de classe</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('classSubjectsKpi')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{classSubjects.length}</h3>
-            <p className="text-[11px] text-slate-500 font-semibold mt-1">Disponibles pour créer un examen</p>
+            <p className="text-[11px] text-slate-500 font-semibold mt-1">{t('availableForExamsDesc')}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
             <Award className="w-5 h-5" />
@@ -367,9 +372,9 @@ export default function OnlineExamsPage() {
 
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Questions (examen sélectionné)</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('questionsCountKpi')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{totalQuestions}</h3>
-            <p className="text-[11px] text-slate-500 font-semibold mt-1">{authoringExam ? authoringExam.title : 'Sélectionnez un examen'}</p>
+            <p className="text-[11px] text-slate-500 font-semibold mt-1">{authoringExam ? authoringExam.title : t('selectExamHint')}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
             <Clock className="w-5 h-5" />
@@ -410,15 +415,15 @@ export default function OnlineExamsPage() {
       ) : (
         <Card className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-extrabold text-[#16212B]">Liste des examens</h2>
+            <h2 className="text-base font-extrabold text-[#16212B]">{t('examsListTitle')}</h2>
             <Button
               variant="ghost"
               onClick={loadExams}
               disabled={loading}
-              className="text-xs font-bold text-[#2487B8] gap-1.5"
+              className="text-xs font-bold text-[#2487B8] gap-1.5 cursor-pointer"
             >
               <Loader2 className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-              Actualiser
+              {tCommon('refresh')}
             </Button>
           </div>
 
@@ -427,23 +432,23 @@ export default function OnlineExamsPage() {
           {loading ? (
             <div className="flex items-center justify-center py-16 text-xs font-semibold text-slate-500 gap-2">
               <Loader2 className="w-4 h-4 animate-spin" />
-              Chargement des examens...
+              {t('loadingExams')}
             </div>
           ) : exams.length === 0 ? (
             <div className="text-center py-16 space-y-3">
               <div className="w-14 h-14 rounded-2xl bg-blue-50 text-[#2487B8] flex items-center justify-center mx-auto">
                 <FileQuestion className="w-7 h-7" />
               </div>
-              <h3 className="text-base font-extrabold text-[#16212B]">Aucun examen pour le moment</h3>
+              <h3 className="text-base font-extrabold text-[#16212B]">{t('noExamsTitle')}</h3>
               <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                Créez votre premier examen QCM en ligne, ajoutez des questions, puis les élèves pourront le passer et recevoir leur note.
+                {t('noExamsDesc')}
               </p>
               <Button
                 onClick={() => setShowCreate(true)}
-                className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl gap-1.5"
+                className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl gap-1.5 cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                Créer un Examen
+                {t('createExamBtn')}
               </Button>
             </div>
           ) : (
@@ -455,17 +460,17 @@ export default function OnlineExamsPage() {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between gap-2">
                         <span className="px-2.5 py-1 bg-blue-50 text-[#2487B8] text-[10px] font-bold uppercase tracking-wider rounded-lg border border-blue-100">
-                          {classSubjectLabel(cs) || 'Matière'}
+                          {classSubjectLabel(cs) || t('typeOnlineExam')}
                         </span>
                         <Badge variant="info" className="font-bold text-[10px]">
                           QCM
                         </Badge>
                       </div>
-                      <h3 className="text-base font-extrabold text-[#16212B] tracking-tight leading-snug">{exam.title}</h3>
-                      <div className="space-y-1 text-xs text-slate-600 font-medium">
+                      <h3 className="text-base font-extrabold text-[#16212B] tracking-tight leading-snug text-start">{exam.title}</h3>
+                      <div className="space-y-1 text-xs text-slate-600 font-medium text-start">
                         <p className="flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5 text-[#2487B8]" />
-                          {exam.durationMinutes} min · {exam.totalMarks} points
+                          {t('examDurationAndPoints', { duration: exam.durationMinutes, points: exam.totalMarks })}
                         </p>
                         <p className="text-[11px] text-slate-400">
                           {formatDate(exam.startsAt)} → {formatDate(exam.endsAt)}
@@ -478,18 +483,18 @@ export default function OnlineExamsPage() {
                         size="sm"
                         variant="outline"
                         onClick={() => openAuthoring(exam)}
-                        className="rounded-xl border-slate-200 text-[#2487B8] font-bold text-xs gap-1.5 flex-1"
+                        className="rounded-xl border-slate-200 text-[#2487B8] font-bold text-xs gap-1.5 flex-1 cursor-pointer"
                       >
                         <FileQuestion className="w-3.5 h-3.5" />
-                        Questions
+                        {t('questionsActionBtn')}
                       </Button>
                       <Button
                         size="sm"
                         onClick={() => openTake(exam)}
-                        className="rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs shadow-2xs gap-1.5 flex-1"
+                        className="rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs shadow-2xs gap-1.5 flex-1 cursor-pointer"
                       >
                         <Play className="w-3.5 h-3.5" />
-                        Passer
+                        {t('takeExamActionBtn')}
                       </Button>
                     </div>
                   </Card>
@@ -505,7 +510,7 @@ export default function OnlineExamsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-lg w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h2 className="text-lg font-extrabold text-[#16212B]">Créer un Examen QCM</h2>
+              <h2 className="text-lg font-extrabold text-[#16212B]">{t('modalCreateExamTitle')}</h2>
               <button onClick={() => setShowCreate(false)} className="p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
@@ -513,25 +518,25 @@ export default function OnlineExamsPage() {
 
             <form onSubmit={handleCreateExam} className="space-y-3.5">
               <div>
-                <label className="text-xs font-bold text-slate-700">Titre de l&apos;examen</label>
+                <label className="text-xs font-bold text-slate-700">{t('examTitleLabel')}</label>
                 <Input
                   type="text"
                   required
                   value={cTitle}
                   onChange={(e) => setCTitle(e.target.value)}
-                  placeholder="Ex: Placement Test B2"
-                  className="mt-1 text-xs rounded-xl"
+                  placeholder={t('examTitlePlaceholder')}
+                  className="mt-1 text-xs rounded-xl text-start"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700">Matière / Classe</label>
+                <label className="text-xs font-bold text-slate-700">{t('classSubjectLabel')}</label>
                 <select
                   value={cClassSubjectId}
                   onChange={(e) => setCClassSubjectId(e.target.value)}
-                  className="mt-1 w-full p-2.5 text-xs rounded-xl border border-slate-200 font-medium"
+                  className="mt-1 w-full p-2.5 text-xs rounded-xl border border-slate-200 font-medium text-start bg-white"
                 >
-                  <option value="">Sélectionner une matière...</option>
+                  <option value="">{t('selectSubjectOption')}</option>
                   {classSubjects.map((cs) => (
                     <option key={cs.id} value={cs.id}>
                       {classSubjectLabel(cs)}
@@ -540,37 +545,37 @@ export default function OnlineExamsPage() {
                 </select>
                 {classSubjects.length === 0 && (
                   <p className="text-[11px] text-amber-600 font-semibold mt-1">
-                    Aucune matière de classe n&apos;est configurée pour cet établissement.
+                    {t('noClassSubjectsConfigured')}
                   </p>
                 )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Durée (minutes)</label>
+                  <label className="text-xs font-bold text-slate-700">{t('durationMinutesLabel')}</label>
                   <Input
                     type="number"
                     min={1}
                     value={cDuration}
                     onChange={(e) => setCDuration(e.target.value)}
-                    className="mt-1 text-xs rounded-xl"
+                    className="mt-1 text-xs rounded-xl text-start"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Note maximale</label>
+                  <label className="text-xs font-bold text-slate-700">{t('maxScoreLabelOnline')}</label>
                   <Input
                     type="number"
                     min={1}
                     value={cTotalMarks}
                     onChange={(e) => setCTotalMarks(e.target.value)}
-                    className="mt-1 text-xs rounded-xl"
+                    className="mt-1 text-xs rounded-xl text-start"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Début</label>
+                  <label className="text-xs font-bold text-slate-700">{t('startsAtLabel')}</label>
                   <Input
                     type="datetime-local"
                     value={cStartsAt}
@@ -579,7 +584,7 @@ export default function OnlineExamsPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Fin</label>
+                  <label className="text-xs font-bold text-slate-700">{t('endsAtLabel')}</label>
                   <Input
                     type="datetime-local"
                     value={cEndsAt}
@@ -592,15 +597,15 @@ export default function OnlineExamsPage() {
               {createError && <p className="text-xs text-red-600 font-semibold">{createError}</p>}
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-                <Button type="button" variant="ghost" onClick={() => setShowCreate(false)} className="text-xs rounded-xl">
-                  Annuler
+                <Button type="button" variant="ghost" onClick={() => setShowCreate(false)} className="text-xs rounded-xl cursor-pointer">
+                  {tCommon('cancel')}
                 </Button>
                 <Button
                   type="submit"
                   disabled={creating}
-                  className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl shadow-2xs"
+                  className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl shadow-2xs cursor-pointer"
                 >
-                  {creating ? 'Création...' : 'Publier l\'examen'}
+                  {creating ? t('creatingExam') : t('publishExamBtn')}
                 </Button>
               </div>
             </form>
@@ -626,6 +631,9 @@ function AuthoringView(props: {
   onAdd: (e: React.FormEvent) => void;
   onBack: () => void;
 }) {
+  const t = useTranslations('Grading');
+  const tCommon = useTranslations('Common');
+
   const {
     exam, questions, loading, error,
     qText, setQText, qMarks, setQMarks, qOptions, setQOptions, adding, onAdd, onBack,
@@ -644,42 +652,43 @@ function AuthoringView(props: {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <button onClick={onBack} className="text-xs font-bold text-[#2487B8] hover:underline mb-1">
-            ← Retour aux examens
+          <button onClick={onBack} className="text-xs font-bold text-[#2487B8] hover:underline mb-1 cursor-pointer flex items-center gap-1">
+            <ArrowLeft className="w-3.5 h-3.5 rtl:rotate-180" />
+            <span>{t('backToExamsList')}</span>
           </button>
-          <h2 className="text-lg font-extrabold text-[#16212B]">{exam.title} — Questions</h2>
+          <h2 className="text-lg font-extrabold text-[#16212B]">{t('examQuestionsHeading', { title: exam.title })}</h2>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="p-5 rounded-2xl border border-slate-200 bg-white shadow-2xs lg:col-span-1 space-y-4">
-          <h2 className="text-base font-extrabold text-[#16212B]">Ajouter une Question</h2>
+          <h2 className="text-base font-extrabold text-[#16212B]">{t('addQuestionTitle')}</h2>
           <form onSubmit={onAdd} className="space-y-3.5">
             <div>
-              <label className="text-xs font-bold text-slate-700">Énoncé de la question</label>
+              <label className="text-xs font-bold text-slate-700">{t('questionTextLabel')}</label>
               <textarea
                 value={qText}
                 onChange={(e) => setQText(e.target.value)}
                 rows={3}
-                placeholder="Ex: Choose the correct past participle of the verb 'write'..."
-                className="mt-1 w-full p-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2487B8]"
+                placeholder={t('questionTextPlaceholder')}
+                className="mt-1 w-full p-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2487B8] text-start"
               />
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-700">Points</label>
+              <label className="text-xs font-bold text-slate-700">{t('pointsLabel')}</label>
               <Input
                 type="number"
                 min={0.5}
                 step={0.5}
                 value={qMarks}
                 onChange={(e) => setQMarks(e.target.value)}
-                className="mt-1 text-xs rounded-xl"
+                className="mt-1 text-xs rounded-xl text-start"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700">Options (cochez la bonne réponse)</label>
+              <label className="text-xs font-bold text-slate-700">{t('optionsRadioHint')}</label>
               {qOptions.map((opt, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                   <input
@@ -693,8 +702,8 @@ function AuthoringView(props: {
                     type="text"
                     value={opt.optionText}
                     onChange={(e) => setOptionText(idx, e.target.value)}
-                    placeholder={`Option ${idx + 1}`}
-                    className="text-xs rounded-xl"
+                    placeholder={t('optionNumberPlaceholder', { number: idx + 1 })}
+                    className="text-xs rounded-xl text-start"
                   />
                   {qOptions.length > 2 && (
                     <button type="button" onClick={() => removeOption(idx)} className="text-slate-400 hover:text-red-500 cursor-pointer">
@@ -705,7 +714,7 @@ function AuthoringView(props: {
               ))}
               {qOptions.length < 8 && (
                 <button type="button" onClick={addOption} className="text-xs font-bold text-[#2487B8] hover:underline cursor-pointer">
-                  + Ajouter une option
+                  {t('addOptionBtn')}
                 </button>
               )}
             </div>
@@ -715,22 +724,22 @@ function AuthoringView(props: {
             <Button
               type="submit"
               disabled={adding}
-              className="w-full bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl shadow-2xs gap-1.5"
+              className="w-full bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl shadow-2xs gap-1.5 cursor-pointer"
             >
-              {adding ? 'Ajout...' : 'Ajouter la question'}
+              {adding ? t('addingQuestionText') : t('addQuestionSubmitBtn')}
             </Button>
           </form>
         </Card>
 
         <Card className="p-5 rounded-2xl border border-slate-200 bg-white shadow-2xs lg:col-span-2 space-y-4">
-          <h2 className="text-base font-extrabold text-[#16212B]">Questions ({questions.length})</h2>
+          <h2 className="text-base font-extrabold text-[#16212B]">{t('questionsCountHeading', { count: questions.length })}</h2>
           {loading ? (
             <div className="flex items-center justify-center py-12 text-xs font-semibold text-slate-500 gap-2">
               <Loader2 className="w-4 h-4 animate-spin" />
-              Chargement...
+              {tCommon('loading')}
             </div>
           ) : questions.length === 0 ? (
-            <p className="text-xs text-slate-500 py-8 text-center">Aucune question pour cet examen. Ajoutez-en une à gauche.</p>
+            <p className="text-xs text-slate-500 py-8 text-center">{t('noQuestionsYetInExam')}</p>
           ) : (
             <div className="space-y-3">
               {questions.map((q, i) => (
@@ -739,7 +748,7 @@ function AuthoringView(props: {
                     <Badge variant="info" className="text-[10px]">Q{i + 1}</Badge>
                     <span className="text-xs font-bold text-slate-500">{q.marks} pt(s)</span>
                   </div>
-                  <h4 className="text-xs font-bold text-[#16212B] mt-1.5">{q.questionText}</h4>
+                  <h4 className="text-xs font-bold text-[#16212B] mt-1.5 text-start">{q.questionText}</h4>
                   <div className="mt-2 space-y-1">
                     {q.options.map((opt) => (
                       <div key={opt.id} className="flex items-center gap-2 text-[11px]">
@@ -774,6 +783,9 @@ function TakeView(props: {
   onSubmit: () => void;
   onBack: () => void;
 }) {
+  const t = useTranslations('Grading');
+  const tCommon = useTranslations('Common');
+
   const { exam, questions, loading, answers, setAnswers, submitting, result, error, onSubmit, onBack } = props;
 
   if (result) {
@@ -782,16 +794,17 @@ function TakeView(props: {
         <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
           <CheckCircle2 className="w-10 h-10" />
         </div>
-        <h2 className="text-xl font-extrabold text-[#16212B]">Épreuve soumise &amp; corrigée</h2>
+        <h2 className="text-xl font-extrabold text-[#16212B]">{t('examSubmittedAndGradedTitle')}</h2>
         <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 max-w-sm mx-auto space-y-1">
-          <span className="text-xs font-bold text-slate-500 uppercase">Score obtenu</span>
+          <span className="text-xs font-bold text-slate-500 uppercase">{t('obtainedScoreLabel')}</span>
           <div className="text-2xl font-extrabold text-[#2487B8]">{result.score ?? '—'} / {exam.totalMarks}</div>
           <Badge variant={result.status === 'graded' ? 'success' : 'warning'} className="font-bold text-[10px]">
             {result.status}
           </Badge>
         </div>
-        <Button variant="ghost" onClick={onBack} className="text-xs font-bold text-[#2487B8] gap-1.5">
-          Retour aux examens
+        <Button variant="ghost" onClick={onBack} className="text-xs font-bold text-[#2487B8] gap-1.5 cursor-pointer">
+          <ArrowLeft className="w-3.5 h-3.5 rtl:rotate-180" />
+          <span>{t('backToExamsList')}</span>
         </Button>
       </Card>
     );
@@ -801,28 +814,29 @@ function TakeView(props: {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <button onClick={onBack} className="text-xs font-bold text-[#2487B8] hover:underline mb-1">
-            ← Retour aux examens
+          <button onClick={onBack} className="text-xs font-bold text-[#2487B8] hover:underline mb-1 cursor-pointer flex items-center gap-1">
+            <ArrowLeft className="w-3.5 h-3.5 rtl:rotate-180" />
+            <span>{t('backToExamsList')}</span>
           </button>
           <h2 className="text-lg font-extrabold text-[#16212B]">{exam.title}</h2>
-          <p className="text-xs text-slate-500">{exam.durationMinutes} min · {exam.totalMarks} points</p>
+          <p className="text-xs text-slate-500">{t('examDurationAndPoints', { duration: exam.durationMinutes, points: exam.totalMarks })}</p>
         </div>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-16 text-xs font-semibold text-slate-500 gap-2">
           <Loader2 className="w-4 h-4 animate-spin" />
-          Chargement des questions...
+          {tCommon('loading')}
         </div>
       ) : questions.length === 0 ? (
         <Card className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs text-center text-xs text-slate-500">
-          Aucune question pour cet examen.
+          {t('noQuestionsYetInExam')}
         </Card>
       ) : (
         <div className="space-y-4 max-w-3xl">
           {questions.map((q, i) => (
             <Card key={q.id} className="p-5 rounded-2xl border border-slate-200 bg-white shadow-2xs">
-              <h3 className="text-sm font-extrabold text-[#16212B]">
+              <h3 className="text-sm font-extrabold text-[#16212B] text-start">
                 {i + 1}. {q.questionText}
               </h3>
               <div className="space-y-2 pt-3">
@@ -830,7 +844,7 @@ function TakeView(props: {
                   <button
                     key={opt.id}
                     onClick={() => setAnswers({ ...answers, [q.id]: opt.id })}
-                    className={`w-full text-left p-3 text-xs font-semibold rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
+                    className={`w-full text-start p-3 text-xs font-semibold rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
                       answers[q.id] === opt.id
                         ? 'border-[#2487B8] bg-blue-50/80 text-[#2487B8]'
                         : 'border-slate-200 bg-white hover:bg-slate-100/70 text-slate-700'
@@ -849,10 +863,10 @@ function TakeView(props: {
           <Button
             onClick={onSubmit}
             disabled={submitting}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-2xs gap-1.5"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-2xs gap-1.5 cursor-pointer"
           >
             <CheckCircle2 className="w-4 h-4" />
-            <span>{submitting ? 'Soumission...' : 'Soumettre l\'épreuve'}</span>
+            <span>{submitting ? t('submittingExam') : t('submitExamBtn')}</span>
           </Button>
         </div>
       )}

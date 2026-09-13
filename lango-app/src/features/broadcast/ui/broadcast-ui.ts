@@ -18,13 +18,17 @@ export async function api<T>(url: string, init?: RequestInit): Promise<{ ok: boo
   }
 }
 
-export const fmtDate = (iso: string | null | undefined) => {
+export const fmtDate = (iso: string | null | undefined, locale: string = 'fr') => {
   if (!iso) return '—';
   const d = new Date(iso);
-  return isNaN(d.getTime()) ? iso : d.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+  const loc = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR';
+  return isNaN(d.getTime()) ? iso : d.toLocaleString(loc, { dateStyle: 'short', timeStyle: 'short' });
 };
 
-export const fmtCount = (n: number | null | undefined) => (n ?? 0).toLocaleString('fr-FR');
+export const fmtCount = (n: number | null | undefined, locale: string = 'fr') => {
+  const loc = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR';
+  return (n ?? 0).toLocaleString(loc);
+};
 
 export const CHANNEL_LABELS: Record<string, string> = {
   sms: 'SMS',

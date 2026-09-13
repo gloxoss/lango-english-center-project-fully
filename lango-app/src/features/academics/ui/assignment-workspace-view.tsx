@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { AlertTriangle, UserCheck, BookOpen, Users, CheckCircle2, Plus, Edit } from 'lucide-react';
+import { AlertTriangle, UserCheck, BookOpen, Users, CheckCircle2, Plus } from 'lucide-react';
 
 interface CoverageData {
   offeringsWithoutPrimaryTeacher: Array<{ offeringId: string; className: string; sectionName: string }>;
@@ -46,13 +47,16 @@ interface ClassTeacher {
   role: string;
 }
 
-export function AssignmentWorkspaceView({ locale }: { locale: string }) {
+export function AssignmentWorkspaceView({ locale: _locale }: { locale?: string } = {}) {
+  const t = useTranslations('Academics');
+  const tc = useTranslations('Common');
+
   const [coverage, setCoverage] = useState<CoverageData | null>(null);
   const [offerings, setOfferings] = useState<ClassOffering[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [selectedOfferingId, setSelectedOfferingId] = useState<string>('');
   const [classSubjectsList, setClassSubjectsList] = useState<ClassSubjectItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<ClassSubjectItem | null>(null);
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('');
@@ -121,15 +125,15 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
 
       const data = await res.json();
       if (data.success) {
-        setMessage('Enseignant assigné avec succès.');
+        setMessage(t('teacherAssignedSuccess'));
         setAssignModalOpen(false);
         // Refresh coverage
         fetch('/api/academics/coverage').then((r) => r.json()).then((c) => setCoverage(c.data));
       } else {
-        setMessage(data.error?.message || 'Erreur lors de l\'affectation de l\'enseignant.');
+        setMessage(data.error?.message || t('networkError'));
       }
     } catch {
-      setMessage('Erreur réseau lors de l\'affectation.');
+      setMessage(t('networkError'));
     } finally {
       setSaving(false);
     }
@@ -149,7 +153,7 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
         classSectionId = sections.find((s) => s.sectionId === offering.sectionId)?.id ?? '';
       }
       if (!classSectionId) {
-        setMessage('Impossible de déterminer la section de classe pour cette offre.');
+        setMessage(t('unableToDetermineClassSection'));
         setSavingSubstitute(false);
         return;
       }
@@ -166,17 +170,17 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
       });
       const data = await res.json();
       if (data.success) {
-        setMessage('Remplaçant affecté avec succès.');
+        setMessage(t('substituteAssignedSuccess'));
         setSubstituteModalOpen(false);
         setSubstituteTeacherId('');
         fetch(`/api/academics/class-teachers?offeringId=${selectedOfferingId}`)
           .then((r) => r.json())
           .then((res) => { if (res.success && Array.isArray(res.data)) setClassTeachers(res.data); });
       } else {
-        setMessage(data.error?.message || 'Erreur lors de l\'affectation du remplaçant.');
+        setMessage(data.error?.message || t('networkError'));
       }
     } catch {
-      setMessage('Erreur réseau lors de l\'affectation du remplaçant.');
+      setMessage(t('networkError'));
     } finally {
       setSavingSubstitute(false);
     }
@@ -188,10 +192,10 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">
-            Espace d'Affectation des Enseignants
+            {t('assignmentWorkspaceTitle')}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Gérez les titulaires de classes et l'attribution des matières par classe et session.
+            {t('assignmentWorkspaceSubtitle')}
           </p>
         </div>
       </div>
@@ -208,7 +212,7 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
         <Card className="rounded-2xl border border-slate-200/80 shadow-xs bg-white">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-500">Classes sans Titulaire</p>
+              <p className="text-xs font-semibold text-slate-500">{t('classesWithoutPrimaryTeacher')}</p>
               <p className="text-2xl font-extrabold text-[#16212B] mt-1">
                 {coverage?.offeringsWithoutPrimaryTeacher.length ?? 0}
               </p>
@@ -222,7 +226,7 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
         <Card className="rounded-2xl border border-slate-200/80 shadow-xs bg-white">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-500">Matières non Assignées</p>
+              <p className="text-xs font-semibold text-slate-500">{t('unassignedSubjects')}</p>
               <p className="text-2xl font-extrabold text-[#16212B] mt-1">
                 {coverage?.subjectsWithoutTeacher.length ?? 0}
               </p>
@@ -236,7 +240,7 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
         <Card className="rounded-2xl border border-slate-200/80 shadow-xs bg-white">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-500">Enseignants en Surcharge (&ge;30h)</p>
+              <p className="text-xs font-semibold text-slate-500">{t('overloadedTeachers30h')}</p>
               <p className="text-2xl font-extrabold text-[#16212B] mt-1">
                 {coverage?.overloadedTeachers.length ?? 0}
               </p>
@@ -252,9 +256,9 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
       <Card className="rounded-2xl border border-slate-200/80 shadow-xs bg-white">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-base font-bold text-[#16212B]">Titulaire &amp; Remplaçants</CardTitle>
+            <CardTitle className="text-base font-bold text-[#16212B]">{t('homeroomAndSubstitutes')}</CardTitle>
             <CardDescription className="text-xs text-slate-500">
-              Enseignant principal de la section et remplaçants assignés.
+              {t('homeroomAndSubstitutesDesc')}
             </CardDescription>
           </div>
           <Button
@@ -263,18 +267,18 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
             onClick={() => { setSubstituteTeacherId(''); setSubstituteModalOpen(true); }}
             className="h-8 text-xs rounded-xl gap-1"
           >
-            <Plus className="w-3.5 h-3.5" />
-            Affecter un remplaçant
+            <Plus className="w-3.5 h-3.5 me-1" />
+            {t('btnAssignSubstitute')}
           </Button>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
             {classTeachers.length === 0 && (
-              <p className="text-xs text-slate-400">Aucun titulaire ou remplaçant pour cette section.</p>
+              <p className="text-xs text-slate-400">{t('noHomeroomOrSubstitute')}</p>
             )}
             {classTeachers.map((ct) => {
-              const t = teachers.find((x) => x.id === ct.teacherId);
-              const name = t ? `${t.firstName} ${t.lastName}` : ct.teacherId;
+              const teacherObj = teachers.find((x) => x.id === ct.teacherId);
+              const name = teacherObj ? `${teacherObj.firstName} ${teacherObj.lastName}` : ct.teacherId;
               const isPrimary = ct.role === 'primary';
               return (
                 <Badge
@@ -282,7 +286,7 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
                   variant="neutral"
                   className={isPrimary ? 'bg-blue-50 text-[#2487B8] border-blue-200' : 'bg-amber-50 text-amber-700 border-amber-200'}
                 >
-                  {name} {isPrimary ? '(Titulaire)' : '(Remplaçant)'}
+                  {name} {isPrimary ? t('tagPrimary') : t('tagSubstitute')}
                 </Badge>
               );
             })}
@@ -294,15 +298,15 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
       <Card className="rounded-2xl border border-slate-200/80 shadow-xs bg-white">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-base font-bold text-[#16212B]">Matrice d'Affectation</CardTitle>
+            <CardTitle className="text-base font-bold text-[#16212B]">{t('assignmentMatrixTitle')}</CardTitle>
             <CardDescription className="text-xs text-slate-500">
-              Sélectionnez une offre de classe pour visualiser et modifier l'affectation des enseignants.
+              {t('assignmentMatrixSubtitle')}
             </CardDescription>
           </div>
           <div className="w-64">
             <Select value={selectedOfferingId} onValueChange={setSelectedOfferingId}>
               <SelectTrigger className="rounded-xl h-9 text-xs border-slate-200">
-                <SelectValue placeholder="Sélectionner une offre" />
+                <SelectValue placeholder={t('selectOfferingPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
                 {offerings.map((o) => (
@@ -318,18 +322,18 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
           <Table>
             <TableHeader>
               <TableRow className="border-slate-100">
-                <TableHead className="text-xs font-bold text-slate-700">Type</TableHead>
-                <TableHead className="text-xs font-bold text-slate-700">Matière</TableHead>
-                <TableHead className="text-xs font-bold text-slate-700">Volume Horaire</TableHead>
-                <TableHead className="text-xs font-bold text-slate-700">Coefficient</TableHead>
-                <TableHead className="text-xs font-bold text-slate-700 text-right">Action</TableHead>
+                <TableHead className="text-xs font-bold text-slate-700 text-left rtl:text-right">{t('colType')}</TableHead>
+                <TableHead className="text-xs font-bold text-slate-700 text-left rtl:text-right">{t('colSubject')}</TableHead>
+                <TableHead className="text-xs font-bold text-slate-700 text-left rtl:text-right">{t('colHourlyVolume')}</TableHead>
+                <TableHead className="text-xs font-bold text-slate-700 text-left rtl:text-right">{t('colCoefficient')}</TableHead>
+                <TableHead className="text-xs font-bold text-slate-700 text-right rtl:text-left">{t('colAction')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {classSubjectsList.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-xs text-slate-400 py-8">
-                    Aucune matière configurée pour cette classe.
+                    {t('noSubjectsConfigured')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -347,7 +351,7 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
                       {cs.weeklyMinutes ? `${cs.weeklyMinutes} min/sem` : '-'}
                     </TableCell>
                     <TableCell className="text-xs text-slate-600">{cs.coefficient}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right rtl:text-left">
                       <Button
                         size="sm"
                         variant="outline"
@@ -357,8 +361,8 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
                         }}
                         className="h-8 text-xs rounded-xl gap-1"
                       >
-                        <UserCheck className="w-3.5 h-3.5" />
-                        Affecter
+                        <UserCheck className="w-3.5 h-3.5 me-1" />
+                        {t('btnAssignSubjectAction')}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -374,20 +378,20 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
         <DialogContent className="rounded-2xl max-w-md">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-[#16212B]">
-              Affecter un Enseignant
+              {t('assignTeacherTitle')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-700">Enseignant</label>
+              <label className="text-xs font-medium text-slate-700">{t('teacherLabel')}</label>
               <Select value={selectedTeacherId} onValueChange={setSelectedTeacherId}>
                 <SelectTrigger className="rounded-xl h-10 border-slate-200">
-                  <SelectValue placeholder="Choisir un enseignant" />
+                  <SelectValue placeholder={t('chooseTeacherPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {teachers.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.firstName} {t.lastName}
+                  {teachers.map((teach) => (
+                    <SelectItem key={teach.id} value={teach.id}>
+                      {teach.firstName} {teach.lastName}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -396,14 +400,14 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAssignModalOpen(false)} className="rounded-xl h-9 text-xs">
-              Annuler
+              {tc('cancel')}
             </Button>
             <Button
               onClick={handleAssignTeacher}
               disabled={!selectedTeacherId || saving}
               className="rounded-xl h-9 text-xs bg-[#2487B8] hover:bg-[#1B6C93]"
             >
-              {saving ? 'Enregistrement...' : 'Confirmer'}
+              {saving ? t('saving') : t('btnConfirm')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -414,20 +418,20 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
         <DialogContent className="rounded-2xl max-w-md">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-[#16212B]">
-              Affecter un Remplaçant
+              {t('assignSubstituteTitle')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-700">Enseignant remplaçant</label>
+              <label className="text-xs font-medium text-slate-700">{t('substituteTeacherLabel')}</label>
               <Select value={substituteTeacherId} onValueChange={setSubstituteTeacherId}>
                 <SelectTrigger className="rounded-xl h-10 border-slate-200">
-                  <SelectValue placeholder="Choisir un enseignant remplaçant" />
+                  <SelectValue placeholder={t('chooseSubstitutePlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {teachers.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.firstName} {t.lastName}
+                  {teachers.map((teach) => (
+                    <SelectItem key={teach.id} value={teach.id}>
+                      {teach.firstName} {teach.lastName}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -436,14 +440,14 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSubstituteModalOpen(false)} className="rounded-xl h-9 text-xs">
-              Annuler
+              {tc('cancel')}
             </Button>
             <Button
               onClick={handleAssignSubstitute}
               disabled={!substituteTeacherId || savingSubstitute}
               className="rounded-xl h-9 text-xs bg-[#2487B8] hover:bg-[#1B6C93]"
             >
-              {savingSubstitute ? 'Enregistrement...' : 'Confirmer'}
+              {savingSubstitute ? t('saving') : t('btnConfirm')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -451,3 +455,4 @@ export function AssignmentWorkspaceView({ locale }: { locale: string }) {
     </div>
   );
 }
+

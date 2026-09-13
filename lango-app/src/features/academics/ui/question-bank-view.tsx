@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,7 +24,6 @@ import {
   Sparkles,
   Layers,
   Wand2,
-  FileCheck,
   AlertCircle,
   Loader2,
   BookOpen,
@@ -55,20 +55,41 @@ type BankItem = {
   options: QuestionOption[];
 };
 
-const DIFFICULTY_OPTIONS = [
-  { value: 'facile', label: 'Facile' },
-  { value: 'moyen', label: 'Moyen' },
-  { value: 'difficile', label: 'Difficile' },
-];
-const CYCLE_OPTIONS = [
-  { value: 'maternelle', label: 'Maternelle' },
-  { value: 'primaire', label: 'Primaire' },
-  { value: 'college', label: 'Collège' },
-  { value: 'lycee', label: 'Lycée' },
-];
-
 export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) {
+  const t = useTranslations('Academics');
+  const tCommon = useTranslations('Common');
   const { can } = usePermissions();
+
+  const difficultyOptions = useMemo(() => [
+    { value: 'facile', label: t('diffEasy') },
+    { value: 'moyen', label: t('diffMedium') },
+    { value: 'difficile', label: t('diffHard') },
+  ], [t]);
+
+  const cycleOptions = useMemo(() => [
+    { value: 'maternelle', label: t('cycleMaternelle') },
+    { value: 'primaire', label: t('cyclePrimaire') },
+    { value: 'college', label: t('cycleCollege') },
+    { value: 'lycee', label: t('cycleLycee') },
+  ], [t]);
+
+  const getDifficultyLabel = (diff: string | null) => {
+    if (!diff) return '';
+    if (diff === 'facile') return t('diffEasy');
+    if (diff === 'moyen') return t('diffMedium');
+    if (diff === 'difficile') return t('diffHard');
+    return diff;
+  };
+
+  const getCycleLabel = (c: string | null) => {
+    if (!c) return '';
+    if (c === 'maternelle') return t('cycleMaternelle');
+    if (c === 'primaire') return t('cyclePrimaire');
+    if (c === 'college') return t('cycleCollege');
+    if (c === 'lycee') return t('cycleLycee');
+    return c;
+  };
+
   const [tab, setTab] = useState<'exam' | 'bank'>('exam');
   const [exams, setExams] = useState<Exam[]>([]);
   const [classSubjects, setClassSubjects] = useState<ClassSubjectOption[]>([]);
@@ -147,7 +168,7 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
       });
       const json = await res.json();
       if (!json.success) {
-        setError(json.error?.message || json.message || 'Échec de l\'enregistrement.');
+        setError(json.error?.message || json.message || t('slotCreateFailed'));
         return;
       }
       setShowBankForm(false);
@@ -155,7 +176,7 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
       resetBankForm();
       loadBankItems();
     } catch {
-      setError('Connexion impossible.');
+      setError(t('networkError'));
     } finally {
       setSaving(false);
     }
@@ -253,7 +274,7 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
       });
       const json = await res.json();
       if (!json.success) {
-        setError(json.error?.message || json.message || 'Échec de la création de l\'examen.');
+        setError(json.error?.message || json.message || t('slotCreateFailed'));
         return;
       }
       setShowExamForm(false);
@@ -261,7 +282,7 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
       loadExams();
       setSelectedExamId(json.data.id);
     } catch {
-      setError('Connexion impossible.');
+      setError(t('networkError'));
     } finally {
       setSaving(false);
     }
@@ -291,7 +312,7 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
       });
       const json = await res.json();
       if (!json.success) {
-        setError(json.error?.message || json.message || 'Échec de l\'enregistrement de la question.');
+        setError(json.error?.message || json.message || t('slotCreateFailed'));
         return;
       }
       setShowQuestionForm(false);
@@ -299,7 +320,7 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
       setQuestionForm({ questionText: '', marks: '1', isQcm: false, options: [{ optionText: '', isCorrect: true }, { optionText: '', isCorrect: false }], sectionLabel: '', difficulty: 'moyen' });
       loadQuestions(selectedExamId);
     } catch {
-      setError('Connexion impossible.');
+      setError(t('networkError'));
     } finally {
       setSaving(false);
     }
@@ -327,14 +348,13 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
   const handleAutoCompose = async () => {
     const targetExamId = composeTargetExamId || selectedExamId;
     if (!targetExamId) {
-      setError('Veuillez sélectionner un examen de destination.');
+      setError(t('selectTargetExamPrompt'));
       return;
     }
     setComposing(true);
     setError(null);
 
     try {
-      // 1. Fetch available bank items
       const params = new URLSearchParams();
       if (composeSubjectId) params.set('subjectId', composeSubjectId);
       const res = await fetch(`/api/academics/question-bank?${params}`).then(r => r.json());
@@ -348,7 +368,6 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
       const neededMedium = Number(countMedium) || 0;
       const neededHard = Number(countHard) || 0;
 
-      // Select random subset from each bucket
       const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
 
       const pickedEasy = shuffle(easyItems).slice(0, neededEasy);
@@ -358,11 +377,10 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
       const assembled = [...pickedEasy, ...pickedMedium, ...pickedHard];
 
       if (assembled.length === 0) {
-        setError('Aucune question disponible dans la banque pour cette matière.');
+        setError(t('noQuestionsInBank'));
         return;
       }
 
-      // Copy each into target online exam
       let copiedCount = 0;
       for (const item of assembled) {
         await fetch(`/api/academics/question-bank/${item.id}/copy-into-exam`, {
@@ -374,11 +392,11 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
       }
 
       setAutoComposeOpen(false);
-      setSuccessMsg(`Composition réussie : ${copiedCount} question(s) injectée(s) avec difficulté équilibrée.`);
+      setSuccessMsg(`Composition réussie : ${copiedCount} question(s) injectée(s).`);
       setTimeout(() => setSuccessMsg(null), 5000);
       loadQuestions(targetExamId);
     } catch {
-      setError('Échec de la composition automatique.');
+      setError(t('networkError'));
     } finally {
       setComposing(false);
     }
@@ -387,7 +405,7 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
   // Generate N variants of the selected exam (§6.9b)
   const handleGenerateVariants = async () => {
     if (!selectedExamId) {
-      setError('Veuillez sélectionner un examen source.');
+      setError(t('selectExamPrompt'));
       return;
     }
     setGeneratingVariants(true);
@@ -400,15 +418,15 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
       });
       const json = await res.json();
       if (!json.success) {
-        setError(json.error?.message || json.message || 'Échec de la génération des variantes.');
+        setError(json.error?.message || json.message || t('slotCreateFailed'));
         return;
       }
       setVariantsOpen(false);
-      setSuccessMsg(`${json.total} variante(s) générée(s) avec ordre des questions et des choix QCM mélangés.`);
+      setSuccessMsg(`${json.total} variante(s) générée(s).`);
       setTimeout(() => setSuccessMsg(null), 5000);
       loadExams();
     } catch {
-      setError('Connexion impossible.');
+      setError(t('networkError'));
     } finally {
       setGeneratingVariants(false);
     }
@@ -419,16 +437,16 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
   const selectedExam = exams.find(e => e.id === selectedExamId);
 
   return (
-    <div className="space-y-6 max-w-[1400px] mx-auto pb-12">
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-12 text-start">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
         <div>
           <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight flex items-center gap-2.5">
             <BookOpen className="w-6 h-6 text-[#0066FF]" />
-            Banque de Questions &amp; Auto-Composition
+            {t('questionBankTitle')}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Référentiel de questions réutilisables, composition automatique d&apos;épreuves par difficulté et génération de variantes.
+            {t('questionBankSubtitle')}
           </p>
         </div>
 
@@ -443,20 +461,20 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
               className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5 shadow-xs"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              Auto-composer épreuve (§6.9)
+              {t('btnAutoCompose')}
             </Button>
           )}
 
           {canManage && tab === 'exam' && (
             <Button size="sm" variant="outline" onClick={() => setShowExamForm(v => !v)} className="h-9 text-xs rounded-xl border-slate-200 font-bold gap-1.5">
               <Plus className="w-3.5 h-3.5" />
-              Nouvel examen
+              {t('btnNewExam')}
             </Button>
           )}
           {canManage && tab === 'bank' && (
             <Button size="sm" variant="outline" onClick={() => { setEditingBankItemId(null); resetBankForm(); setShowBankForm(v => !v); }} className="h-9 text-xs rounded-xl border-slate-200 font-bold gap-1.5">
               <Plus className="w-3.5 h-3.5" />
-              Nouvelle question
+              {t('btnNewQuestion')}
             </Button>
           )}
         </div>
@@ -478,14 +496,14 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
 
       {/* Tabs Switcher */}
       <div className="flex items-center rounded-xl border border-slate-200 p-0.5 bg-slate-50 w-fit">
-        {(['exam', 'bank'] as const).map(t => (
+        {(['exam', 'bank'] as const).map(tabKey => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`h-8 px-4 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${tab === t ? 'bg-[#0066FF] text-white shadow-2xs' : 'text-slate-500 hover:text-[#16212B]'}`}
+            key={tabKey}
+            onClick={() => setTab(tabKey)}
+            className={`h-8 px-4 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${tab === tabKey ? 'bg-[#0066FF] text-white shadow-2xs' : 'text-slate-500 hover:text-[#16212B]'}`}
           >
-            {t === 'exam' ? <Clock className="w-3.5 h-3.5" /> : <Library className="w-3.5 h-3.5" />}
-            {t === 'exam' ? 'Par Examen / Épreuve' : 'Banque Centrale Réutilisable'}
+            {tabKey === 'exam' ? <Clock className="w-3.5 h-3.5" /> : <Library className="w-3.5 h-3.5" />}
+            {tabKey === 'exam' ? t('tabExam') : t('tabBank')}
           </button>
         ))}
       </div>
@@ -496,13 +514,13 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div className="space-y-1 sm:col-span-3">
-              <label className="font-bold text-slate-600">Titre de l&apos;examen</label>
-              <Input value={examForm.title} onChange={e => setExamForm({ ...examForm, title: e.target.value })} className="h-9 rounded-xl" placeholder="Ex: Devoir Surveillé N°1" />
+              <label className="font-bold text-slate-600">{t('examTitleLabel')}</label>
+              <Input value={examForm.title} onChange={e => setExamForm({ ...examForm, title: e.target.value })} className="h-9 rounded-xl" placeholder={t('examTitlePlaceholder')} />
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Classe + Matière</label>
+              <label className="font-bold text-slate-600">{t('classSubjectLabel')}</label>
               <select value={examForm.classSubjectId} onChange={e => setExamForm({ ...examForm, classSubjectId: e.target.value })} className="h-9 w-full rounded-xl border border-slate-200 px-3 bg-white">
-                <option value="">Sélectionner...</option>
+                <option value="">{tCommon('filter')}...</option>
                 {classSubjects.map(cs => (
                   <option key={cs.id} value={cs.id}>
                     {classes.find(c => c.id === cs.classId)?.name ?? cs.classId} · {subjects.find(s => s.id === cs.subjectId)?.name ?? cs.subjectId}
@@ -511,28 +529,28 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
               </select>
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Durée (min)</label>
+              <label className="font-bold text-slate-600">{t('durationMinutesLabel')}</label>
               <Input type="number" value={examForm.durationMinutes} onChange={e => setExamForm({ ...examForm, durationMinutes: e.target.value })} className="h-9 rounded-xl" />
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Total points</label>
+              <label className="font-bold text-slate-600">{t('totalMarksLabel')}</label>
               <Input type="number" value={examForm.totalMarks} onChange={e => setExamForm({ ...examForm, totalMarks: e.target.value })} className="h-9 rounded-xl" />
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Début</label>
+              <label className="font-bold text-slate-600">{t('startsAtLabel')}</label>
               <Input type="datetime-local" value={examForm.startsAt} onChange={e => setExamForm({ ...examForm, startsAt: e.target.value })} className="h-9 rounded-xl" />
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Fin</label>
+              <label className="font-bold text-slate-600">{t('endsAtLabel')}</label>
               <Input type="datetime-local" value={examForm.endsAt} onChange={e => setExamForm({ ...examForm, endsAt: e.target.value })} className="h-9 rounded-xl" />
             </div>
           </div>
           <div className="flex items-center gap-2 pt-1">
             <Button size="sm" disabled={saving} onClick={handleCreateExam} className="h-9 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white text-xs font-bold">
-              {saving ? 'Enregistrement...' : 'Créer l\'examen'}
+              {saving ? t('saving') : t('btnCreateExam')}
             </Button>
             <Button size="sm" variant="outline" onClick={() => setShowExamForm(false)} className="h-9 rounded-xl text-xs font-bold">
-              Annuler
+              {tCommon('cancel')}
             </Button>
           </div>
         </Card>
@@ -544,7 +562,7 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
           onChange={e => setSelectedExamId(e.target.value)}
           className="h-9 px-3 rounded-xl border border-slate-200 text-xs font-bold bg-white text-[#16212B] w-full sm:w-96"
         >
-          <option value="">Sélectionner un examen...</option>
+          <option value="">{t('selectExamPrompt')}</option>
           {exams.map(exam => <option key={exam.id} value={exam.id}>{examLabel(exam)}</option>)}
         </select>
       </Card>
@@ -553,18 +571,18 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
         ? (
             <Card className="p-12 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col items-center justify-center gap-3 text-center">
               <Clock className="w-10 h-10 text-slate-200" />
-              <p className="text-sm font-bold text-slate-400">{exams.length === 0 ? 'Aucun examen créé.' : 'Sélectionnez un examen pour afficher et composer ses questions.'}</p>
+              <p className="text-sm font-bold text-slate-400">{exams.length === 0 ? t('noExamCreated') : t('selectExamToDisplay')}</p>
             </Card>
           )
         : (
             <>
               <div className="grid grid-cols-2 gap-4">
                 <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                  <p className="text-xs font-bold text-slate-400">Questions Configurées</p>
+                  <p className="text-xs font-bold text-slate-400">{t('configuredQuestionsCard')}</p>
                   <p className="text-xl font-extrabold text-[#16212B]">{questions.length}</p>
                 </Card>
                 <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                  <p className="text-xs font-bold text-slate-400">Points (Somme / Barème)</p>
+                  <p className="text-xs font-bold text-slate-400">{t('marksSumCard')}</p>
                   <p className="text-xl font-extrabold text-[#0066FF]">{totalQuestionMarks} / {selectedExam?.totalMarks ?? '—'} pts</p>
                 </Card>
               </div>
@@ -573,11 +591,11 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
                 <div className="flex items-center gap-2">
                   <Button size="sm" onClick={() => { setEditingQuestionId(null); setShowQuestionForm(v => !v); }} className="h-9 text-xs rounded-xl bg-[#0066FF] text-white font-bold gap-1.5">
                     <Plus className="w-3.5 h-3.5" />
-                    Ajouter une question
+                    {t('btnAddQuestion')}
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => setVariantsOpen(true)} className="h-9 text-xs rounded-xl border-slate-200 font-bold gap-1.5">
                     <Layers className="w-3.5 h-3.5" />
-                    Générer des variantes
+                    {t('btnGenerateVariants')}
                   </Button>
                 </div>
               )}
@@ -585,7 +603,7 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
               {canManage && showQuestionForm && (
                 <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-600">Texte de la question</label>
+                    <label className="text-xs font-bold text-slate-600">{t('questionTextLabel')}</label>
                     <textarea
                       value={questionForm.questionText}
                       onChange={e => setQuestionForm({ ...questionForm, questionText: e.target.value })}
@@ -595,21 +613,21 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
                   </div>
                   <div className="flex items-center gap-4 text-xs flex-wrap">
                     <div className="space-y-1">
-                      <label className="font-bold text-slate-600">Points</label>
+                      <label className="font-bold text-slate-600">{t('marksLabel')}</label>
                       <Input type="number" value={questionForm.marks} onChange={e => setQuestionForm({ ...questionForm, marks: e.target.value })} className="h-9 w-24 rounded-xl" />
                     </div>
                     <label className="flex items-center gap-1.5 font-bold text-slate-600 mt-4 cursor-pointer">
                       <input type="checkbox" checked={questionForm.isQcm} onChange={e => setQuestionForm({ ...questionForm, isQcm: e.target.checked })} />
-                      QCM (choix multiple)
+                      {t('qcmLabel')}
                     </label>
                     <div className="space-y-1">
-                      <label className="font-bold text-slate-600">Section</label>
-                      <Input value={questionForm.sectionLabel} onChange={e => setQuestionForm({ ...questionForm, sectionLabel: e.target.value })} className="h-9 w-32 rounded-xl" placeholder="Ex. Partie A" />
+                      <label className="font-bold text-slate-600">{t('sectionLabel')}</label>
+                      <Input value={questionForm.sectionLabel} onChange={e => setQuestionForm({ ...questionForm, sectionLabel: e.target.value })} className="h-9 w-32 rounded-xl" placeholder={t('sectionPlaceholder')} />
                     </div>
                     <div className="space-y-1">
-                      <label className="font-bold text-slate-600">Difficulté</label>
+                      <label className="font-bold text-slate-600">{t('difficultyLabel')}</label>
                       <select value={questionForm.difficulty} onChange={e => setQuestionForm({ ...questionForm, difficulty: e.target.value })} className="h-9 rounded-xl border border-slate-200 px-3 bg-white">
-                        {DIFFICULTY_OPTIONS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                        {difficultyOptions.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
                       </select>
                     </div>
                   </div>
@@ -626,7 +644,7 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
                           <Input
                             value={opt.optionText}
                             onChange={e => setQuestionForm({ ...questionForm, options: questionForm.options.map((o, oi) => (oi === i ? { ...o, optionText: e.target.value } : o)) })}
-                            placeholder={`Choix ${i + 1}`}
+                            placeholder={t('choicePlaceholder', { index: i + 1 })}
                             className="h-9 rounded-xl text-xs flex-1"
                           />
                         </div>
@@ -636,26 +654,26 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
                         onClick={() => setQuestionForm({ ...questionForm, options: [...questionForm.options, { optionText: '', isCorrect: false }] })}
                         className="text-[11px] font-bold text-[#0066FF] hover:underline"
                       >
-                        + Ajouter un choix
+                        {t('btnAddChoice')}
                       </button>
                     </div>
                   )}
                   <div className="flex items-center gap-2 pt-1">
                     <Button size="sm" disabled={saving} onClick={handleCreateQuestion} className="h-9 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white text-xs font-bold">
-                      {saving ? 'Enregistrement...' : editingQuestionId ? 'Enregistrer' : 'Ajouter'}
+                      {saving ? t('saving') : editingQuestionId ? tCommon('save') : tCommon('add')}
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => { setShowQuestionForm(false); setEditingQuestionId(null); }} className="h-9 rounded-xl text-xs font-bold">
-                      Annuler
+                      {tCommon('cancel')}
                     </Button>
                   </div>
                 </Card>
               )}
 
               <div className="space-y-2">
-                {loadingQuestions && <p className="text-xs text-slate-400 text-center py-8">Chargement...</p>}
+                {loadingQuestions && <p className="text-xs text-slate-400 text-center py-8">{tCommon('loading')}...</p>}
                 {!loadingQuestions && questions.length === 0 && (
                   <Card className="p-8 bg-white rounded-2xl border border-slate-200/80 shadow-2xs text-center">
-                    <p className="text-xs text-slate-400">Aucune question pour cet examen. Utilisez l&apos;auto-composition pour en générer rapidement.</p>
+                    <p className="text-xs text-slate-400">{t('noQuestionsInExam')}</p>
                   </Card>
                 )}
                 {questions.map((q, i) => (
@@ -666,7 +684,7 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
                         {(q.sectionLabel || q.difficulty) && (
                           <div className="flex items-center gap-1.5 mt-1">
                             {q.sectionLabel && <Badge className="bg-[#DCEBF4] text-[#0066FF] border-none text-[10px] font-bold">{q.sectionLabel}</Badge>}
-                            {q.difficulty && <Badge className="bg-amber-50 text-amber-700 border-none text-[10px] font-bold">{DIFFICULTY_OPTIONS.find(d => d.value === q.difficulty)?.label || q.difficulty}</Badge>}
+                            {q.difficulty && <Badge className="bg-amber-50 text-amber-700 border-none text-[10px] font-bold">{getDifficultyLabel(q.difficulty)}</Badge>}
                           </div>
                         )}
                         {q.options.length > 0 && (
@@ -684,10 +702,10 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
                         <Badge className="bg-[#DCEBF4] text-[#0066FF] border-none text-[10px] font-bold">{q.marks} pts</Badge>
                         {canManage && (
                           <>
-                            <button onClick={() => handleEditQuestion(q)} className="p-1 rounded-lg text-slate-400 hover:bg-[#DCEBF4] hover:text-[#0066FF]" title="Modifier">
+                            <button onClick={() => handleEditQuestion(q)} className="p-1 rounded-lg text-slate-400 hover:bg-[#DCEBF4] hover:text-[#0066FF]" title={tCommon('edit')}>
                               <Pencil className="w-3.5 h-3.5" />
                             </button>
-                            <button onClick={() => handleDeleteQuestion(q.id)} className="p-1 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600">
+                            <button onClick={() => handleDeleteQuestion(q.id)} className="p-1 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600" title={tCommon('delete')}>
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </>
@@ -707,63 +725,63 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
         <>
           <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center gap-3">
             <select value={bankFilter.subjectId} onChange={e => setBankFilter({ ...bankFilter, subjectId: e.target.value })} className="h-9 px-3 rounded-xl border border-slate-200 text-xs font-bold bg-white text-[#16212B]">
-              <option value="">Toutes matières</option>
+              <option value="">{t('allSubjectsFilter')}</option>
               {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
             <select value={bankFilter.cycle} onChange={e => setBankFilter({ ...bankFilter, cycle: e.target.value })} className="h-9 px-3 rounded-xl border border-slate-200 text-xs font-bold bg-white text-[#16212B]">
-              <option value="">Tous cycles</option>
-              {CYCLE_OPTIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+              <option value="">{t('allCyclesFilter')}</option>
+              {cycleOptions.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
             <select value={bankFilter.difficulty} onChange={e => setBankFilter({ ...bankFilter, difficulty: e.target.value })} className="h-9 px-3 rounded-xl border border-slate-200 text-xs font-bold bg-white text-[#16212B]">
-              <option value="">Toutes difficultés</option>
-              {DIFFICULTY_OPTIONS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+              <option value="">{t('allDifficultiesFilter')}</option>
+              {difficultyOptions.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
             </select>
           </Card>
 
           {canManage && showBankForm && (
             <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-600">Texte de la question</label>
+                <label className="text-xs font-bold text-slate-600">{t('questionTextLabel')}</label>
                 <textarea
                   value={bankForm.questionText}
                   onChange={e => setBankForm({ ...bankForm, questionText: e.target.value })}
                   rows={2}
                   className="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 resize-none"
-                  placeholder="Énoncé de la question..."
+                  placeholder={t('questionStatementPlaceholder')}
                 />
               </div>
               <div className="flex flex-wrap items-end gap-3 text-xs">
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-600">Points</label>
+                  <label className="font-bold text-slate-600">{t('marksLabel')}</label>
                   <Input type="number" value={bankForm.marks} onChange={e => setBankForm({ ...bankForm, marks: e.target.value })} className="h-9 w-24 rounded-xl" />
                 </div>
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-600">Matière</label>
+                  <label className="font-bold text-slate-600">{t('subject')}</label>
                   <select value={bankForm.subjectId} onChange={e => setBankForm({ ...bankForm, subjectId: e.target.value })} className="h-9 rounded-xl border border-slate-200 px-3 bg-white">
                     <option value="">—</option>
                     {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-600">Cycle</label>
+                  <label className="font-bold text-slate-600">{t('allCyclesFilter')}</label>
                   <select value={bankForm.cycle} onChange={e => setBankForm({ ...bankForm, cycle: e.target.value })} className="h-9 rounded-xl border border-slate-200 px-3 bg-white">
                     <option value="">—</option>
-                    {CYCLE_OPTIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                    {cycleOptions.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-600">Difficulté</label>
+                  <label className="font-bold text-slate-600">{t('difficultyLabel')}</label>
                   <select value={bankForm.difficulty} onChange={e => setBankForm({ ...bankForm, difficulty: e.target.value })} className="h-9 rounded-xl border border-slate-200 px-3 bg-white">
-                    {DIFFICULTY_OPTIONS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                    {difficultyOptions.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-600">Section</label>
-                  <Input value={bankForm.sectionLabel} onChange={e => setBankForm({ ...bankForm, sectionLabel: e.target.value })} className="h-9 w-32 rounded-xl" placeholder="Ex. Partie A" />
+                  <label className="font-bold text-slate-600">{t('sectionLabel')}</label>
+                  <Input value={bankForm.sectionLabel} onChange={e => setBankForm({ ...bankForm, sectionLabel: e.target.value })} className="h-9 w-32 rounded-xl" placeholder={t('sectionPlaceholder')} />
                 </div>
                 <label className="flex items-center gap-1.5 font-bold text-slate-600 h-9 cursor-pointer">
                   <input type="checkbox" checked={bankForm.isQcm} onChange={e => setBankForm({ ...bankForm, isQcm: e.target.checked })} />
-                  QCM
+                  {t('qcmLabel')}
                 </label>
               </div>
               {bankForm.isQcm && (
@@ -779,7 +797,7 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
                       <Input
                         value={opt.optionText}
                         onChange={e => setBankForm({ ...bankForm, options: bankForm.options.map((o, oi) => (oi === i ? { ...o, optionText: e.target.value } : o)) })}
-                        placeholder={`Choix ${i + 1}`}
+                        placeholder={t('choicePlaceholder', { index: i + 1 })}
                         className="h-9 rounded-xl text-xs flex-1"
                       />
                     </div>
@@ -789,16 +807,16 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
                     onClick={() => setBankForm({ ...bankForm, options: [...bankForm.options, { optionText: '', isCorrect: false }] })}
                     className="text-[11px] font-bold text-[#0066FF] hover:underline"
                   >
-                    + Ajouter un choix
+                    {t('btnAddChoice')}
                   </button>
                 </div>
               )}
               <div className="flex items-center gap-2 pt-1">
                 <Button size="sm" disabled={saving} onClick={handleSubmitBankItem} className="h-9 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white text-xs font-bold">
-                  {saving ? 'Enregistrement...' : editingBankItemId ? 'Enregistrer' : 'Ajouter à la banque'}
+                  {saving ? t('saving') : editingBankItemId ? tCommon('save') : t('btnSaveToBank')}
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => { setShowBankForm(false); setEditingBankItemId(null); }} className="h-9 rounded-xl text-xs font-bold">
-                  Annuler
+                  {tCommon('cancel')}
                 </Button>
               </div>
             </Card>
@@ -808,7 +826,7 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
             {bankItems.length === 0 && (
               <Card className="p-12 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col items-center justify-center gap-3 text-center">
                 <Library className="w-10 h-10 text-slate-200" />
-                <p className="text-sm font-bold text-slate-400">Aucune question dans la banque.</p>
+                <p className="text-sm font-bold text-slate-400">{t('noQuestionsInBank')}</p>
               </Card>
             )}
             {bankItems.map(item => (
@@ -818,8 +836,8 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
                     <p className="text-xs font-bold text-[#16212B]">{item.questionText}</p>
                     <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                       {item.subjectName && <Badge className="bg-slate-100 text-slate-600 border-none text-[10px] font-bold">{item.subjectName}</Badge>}
-                      {item.cycle && <Badge className="bg-slate-100 text-slate-600 border-none text-[10px] font-bold">{CYCLE_OPTIONS.find(c => c.value === item.cycle)?.label}</Badge>}
-                      {item.difficulty && <Badge className="bg-amber-50 text-amber-700 border-none text-[10px] font-bold">{DIFFICULTY_OPTIONS.find(d => d.value === item.difficulty)?.label || item.difficulty}</Badge>}
+                      {item.cycle && <Badge className="bg-slate-100 text-slate-600 border-none text-[10px] font-bold">{getCycleLabel(item.cycle)}</Badge>}
+                      {item.difficulty && <Badge className="bg-amber-50 text-amber-700 border-none text-[10px] font-bold">{getDifficultyLabel(item.difficulty)}</Badge>}
                       {item.sectionLabel && <Badge className="bg-[#DCEBF4] text-[#0066FF] border-none text-[10px] font-bold">{item.sectionLabel}</Badge>}
                     </div>
                     {item.options.length > 0 && (
@@ -837,13 +855,13 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
                     <Badge className="bg-[#DCEBF4] text-[#0066FF] border-none text-[10px] font-bold">{item.marks} pts</Badge>
                     {canManage && (
                       <>
-                        <button onClick={() => handleEditBankItem(item)} className="p-1 rounded-lg text-slate-400 hover:bg-[#DCEBF4] hover:text-[#0066FF]" title="Modifier">
+                        <button onClick={() => handleEditBankItem(item)} className="p-1 rounded-lg text-slate-400 hover:bg-[#DCEBF4] hover:text-[#0066FF]" title={tCommon('edit')}>
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={() => setCopyTarget({ bankItemId: item.id, onlineExamId: '' })} className="p-1 rounded-lg text-slate-400 hover:bg-[#DCEBF4] hover:text-[#0066FF]" title="Copier dans un examen">
+                        <button onClick={() => setCopyTarget({ bankItemId: item.id, onlineExamId: '' })} className="p-1 rounded-lg text-slate-400 hover:bg-[#DCEBF4] hover:text-[#0066FF]" title={t('copyIntoExamTooltip')}>
                           <Copy className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={() => handleDeleteBankItem(item.id)} className="p-1 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600">
+                        <button onClick={() => handleDeleteBankItem(item.id)} className="p-1 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600" title={tCommon('delete')}>
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </>
@@ -857,14 +875,14 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
                       onChange={e => setCopyTarget({ bankItemId: item.id, onlineExamId: e.target.value })}
                       className="h-8 flex-1 rounded-lg border border-slate-200 px-2 text-xs bg-white"
                     >
-                      <option value="">Sélectionner un examen de destination...</option>
+                      <option value="">{t('selectTargetExamPrompt')}</option>
                       {exams.map(exam => <option key={exam.id} value={exam.id}>{examLabel(exam)}</option>)}
                     </select>
                     <Button size="sm" disabled={!copyTarget.onlineExamId} onClick={handleCopyIntoExam} className="h-8 rounded-lg bg-[#0066FF] hover:bg-[#0052CC] text-white text-xs font-bold">
-                      Copier
+                      {t('btnCopy')}
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => setCopyTarget(null)} className="h-8 rounded-lg text-xs font-bold">
-                      Annuler
+                      {tCommon('cancel')}
                     </Button>
                   </div>
                 )}
@@ -876,65 +894,65 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
 
       {/* AUTO-COMPOSE MODAL (§6.9) */}
       <Dialog open={autoComposeOpen} onOpenChange={setAutoComposeOpen}>
-        <DialogContent className="max-w-md rounded-2xl">
+        <DialogContent className="max-w-md rounded-2xl text-start">
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-[#0066FF]" />
-              Auto-Composition par Difficulté (§6.9)
+              {t('autoComposeModalTitle')}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-2 text-xs">
             <p className="text-slate-600">
-              L&apos;assistant tire aléatoirement un ensemble équilibré de questions depuis la banque selon les quotas de difficulté définis.
+              {t('autoComposeModalDesc')}
             </p>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Matière</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('subject')}</label>
               <select
                 value={composeSubjectId}
                 onChange={e => setComposeSubjectId(e.target.value)}
                 className="w-full h-9 px-3 text-xs rounded-xl border border-slate-200 bg-white font-medium"
               >
-                <option value="">Toutes les matières</option>
+                <option value="">{t('allSubjectsFilter')}</option>
                 {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Examen de destination *</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('targetExamLabel')}</label>
               <select
                 value={composeTargetExamId}
                 onChange={e => setComposeTargetExamId(e.target.value)}
                 className="w-full h-9 px-3 text-xs rounded-xl border border-slate-200 bg-white font-medium"
               >
-                <option value="">Choisir un examen...</option>
+                <option value="">{t('chooseExamPrompt')}</option>
                 {exams.map(e => <option key={e.id} value={e.id}>{examLabel(e)}</option>)}
               </select>
             </div>
 
             <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3">
-              <span className="font-bold text-slate-700 block">Répartition des questions par difficulté :</span>
+              <span className="font-bold text-slate-700 block">{t('difficultyDistributionLabel')}</span>
               <div className="grid grid-cols-3 gap-2 text-xs">
                 <div>
-                  <label className="font-bold text-emerald-700 block mb-1">Faciles</label>
+                  <label className="font-bold text-emerald-700 block mb-1">{t('countEasyLabel')}</label>
                   <Input type="number" min={0} value={countEasy} onChange={e => setCountEasy(e.target.value)} className="h-9 text-xs rounded-xl bg-white" />
                 </div>
                 <div>
-                  <label className="font-bold text-blue-700 block mb-1">Moyennes</label>
+                  <label className="font-bold text-blue-700 block mb-1">{t('countMediumLabel')}</label>
                   <Input type="number" min={0} value={countMedium} onChange={e => setCountMedium(e.target.value)} className="h-9 text-xs rounded-xl bg-white" />
                 </div>
                 <div>
-                  <label className="font-bold text-amber-700 block mb-1">Difficiles</label>
+                  <label className="font-bold text-amber-700 block mb-1">{t('countHardLabel')}</label>
                   <Input type="number" min={0} value={countHard} onChange={e => setCountHard(e.target.value)} className="h-9 text-xs rounded-xl bg-white" />
                 </div>
               </div>
             </div>
           </div>
 
-          <DialogFooter className="pt-2">
+          <DialogFooter className="pt-2 gap-2">
             <Button variant="outline" onClick={() => setAutoComposeOpen(false)} className="h-9 text-xs rounded-xl border-slate-200">
-              Annuler
+              {tCommon('cancel')}
             </Button>
             <Button
               onClick={handleAutoCompose}
@@ -942,7 +960,7 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
               className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5"
             >
               {composing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
-              Générer et injecter
+              {t('btnGenerateAndInject')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -950,28 +968,28 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
 
       {/* GENERATE VARIANTS MODAL (§6.9b) */}
       <Dialog open={variantsOpen} onOpenChange={setVariantsOpen}>
-        <DialogContent className="max-w-md rounded-2xl">
+        <DialogContent className="max-w-md rounded-2xl text-start">
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
               <Layers className="w-4 h-4 text-[#0066FF]" />
-              Générer des Variantes (§6.9b)
+              {t('variantsModalTitle')}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-2 text-xs">
             <p className="text-slate-600">
-              Crée plusieurs variantes de l&apos;examen <strong>{selectedExam?.title ?? 'sélectionné'}</strong>. Chaque variante reprend les mêmes questions dans un ordre aléatoire, avec les choix QCM réordonnés.
+              {t('variantDesc')}
             </p>
 
             <div className="space-y-1">
-              <label className="font-bold text-slate-700 block">Nombre de variantes</label>
+              <label className="font-bold text-slate-700 block">{t('variantCountLabel')}</label>
               <Input type="number" min={1} max={20} value={variantCount} onChange={e => setVariantCount(e.target.value)} className="h-9 text-xs rounded-xl" />
             </div>
           </div>
 
-          <DialogFooter className="pt-2">
+          <DialogFooter className="pt-2 gap-2">
             <Button variant="outline" onClick={() => setVariantsOpen(false)} className="h-9 text-xs rounded-xl border-slate-200">
-              Annuler
+              {tCommon('cancel')}
             </Button>
             <Button
               onClick={handleGenerateVariants}
@@ -979,7 +997,7 @@ export function QuestionBankView({ locale: _locale }: { locale?: string } = {}) 
               className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5"
             >
               {generatingVariants ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
-              Générer
+              {t('btnGenerate')}
             </Button>
           </DialogFooter>
         </DialogContent>

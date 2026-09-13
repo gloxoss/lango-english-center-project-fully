@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -32,7 +33,10 @@ type PickupPerson = {
 type StudentPickups = { student: StudentHit; pickups: PickupPerson[] };
 type Gate = { id: string; gateCode: string; gateName: string; direction: string; branchId: string | null };
 
-export function ReceptionPickupsView() {
+export function ReceptionPickupsView({ locale = 'fr' }: { locale?: string } = {}) {
+  const t = useTranslations('Reception');
+  const tCommon = useTranslations('Common');
+
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'forbidden' | 'error'>('loading');
   const [loadError, setLoadError] = useState<string | null>(null);
   const [q, setQ] = useState('');
@@ -45,24 +49,21 @@ export function ReceptionPickupsView() {
   const [gates, setGates] = useState<Gate[]>([]);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
 
-  // Probe access first. Default receptionist role does NOT carry
-  // reception.pickup.release — the API answers 403 and we render a graceful
-  // forbidden state instead of a broken list.
   const probe = useCallback(async () => {
     setLoadState('loading');
     const res = await api<Authorization[]>('/api/reception/pickups/authorizations');
     if (res.status === 403) { setLoadState('forbidden'); return; }
     if (res.ok) { setLoadState('ready'); return; }
-    setLoadError(res.error?.message ?? 'Chargement impossible.');
+    setLoadError(res.error?.message ?? t('errorLoad'));
     setLoadState('error');
-  }, []);
+  }, [t]);
 
   useEffect(() => { probe(); }, [probe]);
 
   const search = async () => {
     const term = q.trim();
     if (term.length < 3) {
-      setSearchError('Saisissez au moins 3 caractères (nom, matricule ou téléphone).');
+      setSearchError(t('searchMinCharsPickup'));
       setHits([]);
       return;
     }
@@ -72,10 +73,10 @@ export function ReceptionPickupsView() {
     setSearching(false);
     if (res.ok && Array.isArray(res.data)) {
       setHits(res.data);
-      if (res.data.length === 0) setSearchError('Aucun élève trouvé.');
+      if (res.data.length === 0) setSearchError(t('noPersonFound'));
     } else {
       setHits([]);
-      setSearchError(res.error?.message ?? 'Recherche impossible.');
+      setSearchError(res.error?.message ?? t('actionFailed'));
     }
   };
 
@@ -86,7 +87,7 @@ export function ReceptionPickupsView() {
     if (res.ok && res.data) {
       setSelected(res.data);
     } else {
-      setSearchError(res.error?.message ?? 'Chargement impossible.');
+      setSearchError(res.error?.message ?? t('errorLoad'));
     }
   };
 
@@ -105,23 +106,21 @@ export function ReceptionPickupsView() {
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs">
           <PortalStateView state="forbidden" />
           <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-            La sortie d&apos;un élève exige une autorisation de retrait effective et un pouvoir de libération
-            explicite. Votre profil ne dispose pas de cette habilitation ; adressez-vous à un responsable
-            autorisé.
+            {t('forbiddenDetailedDesc')}
           </p>
         </Card>
       </div>
     );
   }
-  if (loadState === 'error') return <PortalStateView state="error" action={<Button size="sm" variant="outline" onClick={probe}>Réessayer</Button>} />;
+  if (loadState === 'error') return <PortalStateView state="error" action={<Button size="sm" variant="outline" onClick={probe}>{t('retry')}</Button>} />;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">Retraits &amp; autorisations</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('pickupsTitle')}</h1>
           <p className="mt-0.5 text-xs font-medium text-slate-500">
-            Rechercher un élève, vérifier les personnes autorisées et libérer le retrait (habilitation spécifique requise).
+            {t('pickupsSubtitle')}
           </p>
         </div>
       </div>
@@ -136,13 +135,13 @@ export function ReceptionPickupsView() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') search(); }}
-              placeholder="Rechercher un élève (nom, matricule, téléphone)…"
+              placeholder={t('searchStudentPlaceholder')}
               className="pl-8"
-              aria-label="Rechercher un élève"
+              aria-label={t('searchStudentPlaceholder')}
             />
           </div>
           <Button onClick={search} disabled={searching} size="sm">
-            {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Rechercher'}
+            {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : t('btnSearch')}
           </Button>
         </div>
 
@@ -165,7 +164,7 @@ export function ReceptionPickupsView() {
                     <span className="block truncate text-sm font-semibold text-[#16212B]">{s.name}</span>
                     {s.matricule ? <span className="block font-mono text-xs text-slate-400">{s.matricule}</span> : null}
                   </span>
-                  <span className="text-xs font-bold text-[#2487B8]">Consulter →</span>
+                  <span className="text-xs font-bold text-[#2487B8]">{t('btnConsult')}</span>
                 </button>
               </li>
             ))}
@@ -179,7 +178,7 @@ export function ReceptionPickupsView() {
               {selected.student.matricule ? <span className="font-mono text-xs text-slate-400">{selected.student.matricule}</span> : null}
             </div>
             {selected.pickups.length === 0 ? (
-              <p className="mt-3 text-sm text-slate-400">Aucune personne autorisée pour ce retrait.</p>
+              <p className="mt-3 text-sm text-slate-400">{t('noAuthorizedPersonsForStudent')}</p>
             ) : (
               <div className="mt-3 space-y-2">
                 {selected.pickups.map((p) => (
@@ -188,22 +187,22 @@ export function ReceptionPickupsView() {
                       <p className="text-sm font-semibold text-[#16212B]">{p.firstName} {p.lastName}</p>
                       <p className="text-xs text-slate-500">
                         {p.relationshipType}
-                        {p.isPrimaryContact ? ' · contact principal' : ''}
-                        {p.canPickup ? ' · retrait autorisé' : ''}
+                        {p.isPrimaryContact ? ` · ${t('primaryContact')}` : ''}
+                        {p.canPickup ? ` · ${t('authorizedPickup')}` : ''}
                       </p>
                       {p.activeAuthorizations.length > 0 && (
                         <p className="mt-1 text-[11px] text-slate-400">
-                          {p.activeAuthorizations.length} autorisation(s) active(s) · {p.activeAuthorizations.map((a) => fmtDateTime(a.authorizedFrom)).join(', ')}
+                          {t('activeAuthCount', { count: p.activeAuthorizations.length })} · {p.activeAuthorizations.map((a) => fmtDateTime(a.authorizedFrom, locale)).join(', ')}
                         </p>
                       )}
                     </div>
                     <div className="flex gap-1">
                       <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => setCreateAuth({ person: p })}>
-                        <KeyRound className="h-3 w-3" /> Autoriser
+                        <KeyRound className="h-3 w-3" /> {t('btnAuthorize')}
                       </Button>
                       {p.activeAuthorizations.map((a) => (
                         <Button key={a.id} size="sm" variant="outline" className="h-7 text-[11px] text-emerald-700" onClick={() => openRelease(p, a)}>
-                          <LogOut className="h-3 w-3" /> Libérer
+                          <LogOut className="h-3 w-3" /> {t('btnRelease')}
                         </Button>
                       ))}
                     </div>
@@ -221,6 +220,7 @@ export function ReceptionPickupsView() {
           person={createAuth.person}
           onClose={() => setCreateAuth(null)}
           onDone={() => { setCreateAuth(null); selectStudent(selected.student.id); }}
+          t={t}
         />
       )}
 
@@ -232,18 +232,21 @@ export function ReceptionPickupsView() {
           authorization={release.authorization}
           gates={gates}
           onClose={() => setRelease(null)}
-          onDone={() => { setRelease(null); selectStudent(selected.student.id); setActionMsg('Retrait libéré.'); }}
+          onDone={() => { setRelease(null); selectStudent(selected.student.id); setActionMsg(t('pickupReleasedMsg')); }}
+          t={t}
+          locale={locale}
         />
       )}
     </div>
   );
 }
 
-function CreateAuthorizationDialog({ studentId, person, onClose, onDone }: {
+function CreateAuthorizationDialog({ studentId, person, onClose, onDone, t }: {
   studentId: string;
   person: PickupPerson;
   onClose: () => void;
   onDone: () => void;
+  t: ReturnType<typeof useTranslations<'Reception'>>;
 }) {
   const [form, setForm] = useState({
     authorizedFrom: '', authorizedUntil: '', reason: '', relationshipType: person.relationshipType,
@@ -253,7 +256,7 @@ function CreateAuthorizationDialog({ studentId, person, onClose, onDone }: {
 
   const submit = async () => {
     if (!form.authorizedFrom || !form.authorizedUntil) {
-      setError('La fenêtre de validité est obligatoire.');
+      setError(t('errValidityWindowRequired'));
       return;
     }
     setSubmitting(true);
@@ -271,42 +274,42 @@ function CreateAuthorizationDialog({ studentId, person, onClose, onDone }: {
     });
     setSubmitting(false);
     if (res.ok) onDone();
-    else setError(res.error?.message ?? 'Création impossible.');
+    else setError(res.error?.message ?? t('actionFailed'));
   };
 
   return (
     <Dialog open onOpenChange={(v) => { if (!v && !submitting) onClose(); }}>
       <DialogContent className="sm:max-w-md" aria-describedby="auth-create-desc">
         <DialogHeader>
-          <DialogTitle>Autoriser le retrait · {person.firstName} {person.lastName}</DialogTitle>
+          <DialogTitle>{t('temporaryAuthTitle', { name: `${person.firstName} ${person.lastName}` })}</DialogTitle>
           <DialogDescription id="auth-create-desc">
-            Définir une fenêtre de validité. Le retrait ne pourra être libéré qu&apos;avec une autorisation active et effective.
+            {t('temporaryAuthDesc', { name: `${person.firstName} ${person.lastName}` })}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="pa-rel">Lien</Label>
+            <Label htmlFor="pa-rel">{t('labelRelationship')}</Label>
             <Input id="pa-rel" value={form.relationshipType} onChange={(e) => setForm({ ...form, relationshipType: e.target.value })} />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="pa-from">Début *</Label>
+              <Label htmlFor="pa-from">{t('labelStart')}</Label>
               <Input id="pa-from" type="datetime-local" value={form.authorizedFrom} onChange={(e) => setForm({ ...form, authorizedFrom: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="pa-until">Fin *</Label>
+              <Label htmlFor="pa-until">{t('labelEnd')}</Label>
               <Input id="pa-until" type="datetime-local" value={form.authorizedUntil} onChange={(e) => setForm({ ...form, authorizedUntil: e.target.value })} />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="pa-reason">Motif</Label>
-            <Textarea id="pa-reason" rows={2} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="Ex. Sortie anticipée, autorisation ponctuelle…" />
+            <Label htmlFor="pa-reason">{t('labelReason')}</Label>
+            <Textarea id="pa-reason" rows={2} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder={t('phReason')} />
           </div>
           {error && <p className="text-sm text-rose-600" role="alert">{error}</p>}
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose} disabled={submitting}>Fermer</Button>
+            <Button variant="outline" onClick={onClose} disabled={submitting}>{t('btnCancel')}</Button>
             <Button onClick={submit} disabled={submitting}>
-              {submitting ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <KeyRound className="mr-1 h-4 w-4" />} Créer
+              {submitting ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <KeyRound className="mr-1 h-4 w-4" />} {t('btnAuthorize')}
             </Button>
           </div>
         </div>
@@ -315,7 +318,7 @@ function CreateAuthorizationDialog({ studentId, person, onClose, onDone }: {
   );
 }
 
-function ReleaseDialog({ studentId, studentName, person, authorization, gates, onClose, onDone }: {
+function ReleaseDialog({ studentId, studentName, person, authorization, gates, onClose, onDone, t, locale }: {
   studentId: string;
   studentName: string;
   person: PickupPerson;
@@ -323,6 +326,8 @@ function ReleaseDialog({ studentId, studentName, person, authorization, gates, o
   gates: Gate[];
   onClose: () => void;
   onDone: () => void;
+  t: ReturnType<typeof useTranslations<'Reception'>>;
+  locale: string;
 }) {
   const [gateId, setGateId] = useState('');
   const [method, setMethod] = useState<'badge_qr' | 'manual'>('manual');
@@ -331,12 +336,11 @@ function ReleaseDialog({ studentId, studentName, person, authorization, gates, o
 
   useEffect(() => {
     if (gates.length > 0 && !gateId) setGateId(gates[0]!.id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gates]);
+  }, [gates, gateId]);
 
   const submit = async () => {
     if (!gateId) {
-      setError('Un portail est requis pour la libération.');
+      setError(t('errGateRequired'));
       return;
     }
     setSubmitting(true);
@@ -353,43 +357,48 @@ function ReleaseDialog({ studentId, studentName, person, authorization, gates, o
     });
     setSubmitting(false);
     if (res.ok) onDone();
-    else setError(res.error?.message ?? 'Libération impossible.');
+    else setError(res.error?.message ?? t('actionFailed'));
   };
 
   return (
     <Dialog open onOpenChange={(v) => { if (!v && !submitting) onClose(); }}>
       <DialogContent className="sm:max-w-md" aria-describedby="release-desc">
         <DialogHeader>
-          <DialogTitle>Libérer le retrait · {studentName}</DialogTitle>
+          <DialogTitle>{t('releaseStudentTitle', { name: studentName })}</DialogTitle>
           <DialogDescription id="release-desc">
-            Personne autorisée : <span className="font-semibold">{person.firstName} {person.lastName}</span> ({person.relationshipType}). Fenêtre de validité jusqu&apos;au {fmtDateTime(authorization.authorizedUntil)}.
+            {t('releaseStudentDesc', {
+              name: studentName,
+              person: `${person.firstName} ${person.lastName}`,
+              relation: person.relationshipType,
+              until: fmtDateTime(authorization.authorizedUntil, locale),
+            })}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="rel-gate">Portail de sortie *</Label>
+            <Label htmlFor="rel-gate">{t('labelExitGate')}</Label>
             <Select value={gateId} onValueChange={setGateId}>
-              <SelectTrigger id="rel-gate" aria-label="Portail de sortie"><SelectValue placeholder="Choisir un portail" /></SelectTrigger>
+              <SelectTrigger id="rel-gate" aria-label={t('labelExitGate')}><SelectValue placeholder={t('phChooseGate')} /></SelectTrigger>
               <SelectContent>
                 {gates.map((g) => <SelectItem key={g.id} value={g.id}>{g.gateName} ({g.gateCode})</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="rel-method">Méthode de vérification</Label>
+            <Label htmlFor="rel-method">{t('labelVerificationMethod')}</Label>
             <Select value={method} onValueChange={(v) => setMethod(v as 'badge_qr' | 'manual')}>
-              <SelectTrigger id="rel-method" aria-label="Méthode de vérification"><SelectValue /></SelectTrigger>
+              <SelectTrigger id="rel-method" aria-label={t('labelVerificationMethod')}><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="manual">Manuelle</SelectItem>
-                <SelectItem value="badge_qr">Badge / QR</SelectItem>
+                <SelectItem value="manual">{t('methodManual')}</SelectItem>
+                <SelectItem value="badge_qr">{t('methodBadgeQr')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           {error && <p className="text-sm text-rose-600" role="alert">{error}</p>}
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose} disabled={submitting}>Annuler</Button>
+            <Button variant="outline" onClick={onClose} disabled={submitting}>{t('btnCancel')}</Button>
             <Button onClick={submit} disabled={submitting} className="gap-1.5">
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldAlert className="h-4 w-4" />} Libérer
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldAlert className="h-4 w-4" />} {t('btnRelease')}
             </Button>
           </div>
         </div>

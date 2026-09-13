@@ -1,15 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Loader2, Search, SearchX } from 'lucide-react';
-import { api, type LookupResult } from './reception-api';
-
-const TYPE_LABELS: Record<string, string> = { student: 'Élève', guardian: 'Parent / Tuteur', parent: 'Parent (compte)' };
+import { api, TYPE_KEYS, type LookupResult } from './reception-api';
 
 export function ReceptionLookupPanel() {
+  const t = useTranslations('Reception');
   const [q, setQ] = useState('');
   const [results, setResults] = useState<LookupResult[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,7 @@ export function ReceptionLookupPanel() {
   const search = async () => {
     const term = q.trim();
     if (term.length < 3) {
-      setMessage('Saisissez au moins 3 caractères (ou le matricule exact).');
+      setMessage(t('lookupMinChars'));
       setResults(null);
       return;
     }
@@ -28,10 +28,10 @@ export function ReceptionLookupPanel() {
     setLoading(false);
     if (res.ok && Array.isArray(res.data)) {
       setResults(res.data);
-      if (res.data.length === 0) setMessage('Aucune personne trouvée.');
+      if (res.data.length === 0) setMessage(t('noPersonFound'));
     } else {
       setResults([]);
-      setMessage(res.error?.message ?? 'Recherche impossible.');
+      setMessage(res.error?.message ?? t('errorSearch'));
     }
   };
 
@@ -39,24 +39,24 @@ export function ReceptionLookupPanel() {
     <div>
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-2.5 rtl:left-auto rtl:right-2.5 top-2.5 h-4 w-4 text-slate-400" />
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') search(); }}
-            placeholder="Rechercher (nom, téléphone, matricule)…"
-            className="pl-8"
-            aria-label="Rechercher une personne"
+            placeholder={t('lookupPlaceholder')}
+            className="pl-8 rtl:pl-3 rtl:pr-8"
+            aria-label={t('searchAriaLabelPerson')}
           />
         </div>
         <Button type="button" onClick={search} disabled={loading} size="sm">
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Rechercher'}
+          {loading ? <Loader2 className="h-4 w-4 animate-spin rtl:ml-1" /> : t('btnSearch')}
         </Button>
       </div>
 
       {message && !loading && (
         <p className="mt-2 flex items-center gap-1.5 text-sm text-slate-500">
-          {message.startsWith('Aucune') ? <SearchX className="h-4 w-4" /> : <AlertCircle className="h-4 w-4 text-rose-500" />}
+          {message === t('noPersonFound') ? <SearchX className="h-4 w-4" /> : <AlertCircle className="h-4 w-4 text-rose-500" />}
           {message}
         </p>
       )}
@@ -68,7 +68,7 @@ export function ReceptionLookupPanel() {
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-[#16212B]">{r.name}</p>
                 <p className="truncate text-xs text-slate-500">
-                  {TYPE_LABELS[r.type] ?? r.type}
+                  {TYPE_KEYS[r.type] ? t(TYPE_KEYS[r.type] as any) : r.type}
                   {r.matricule ? ` · ${r.matricule}` : ''}
                   {r.className ? ` · ${r.className}` : ''}
                   {r.maskedPhone ? ` · ${r.maskedPhone}` : ''}
@@ -76,7 +76,7 @@ export function ReceptionLookupPanel() {
                 </p>
               </div>
               <Badge className={r.hasPickupAuthority ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}>
-                {r.hasPickupAuthority ? 'Retrait autorisé' : r.isLinkedGuardian ? 'Parent lié' : '—'}
+                {r.hasPickupAuthority ? t('hasPickupAuthority') : r.isLinkedGuardian ? t('isLinkedGuardian') : '—'}
               </Badge>
             </li>
           ))}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,6 +55,10 @@ interface SchoolOption {
 }
 
 export function SuperAdminSmsView() {
+  const t = useTranslations('SuperAdmin');
+  const tCommon = useTranslations('Common');
+  const locale = useLocale();
+
   const [logs, setLogs] = useState<SmsLog[]>([]);
   const [stats, setStats] = useState<SmsStats>({ total: 0, sent: 0, queued: 0, failed: 0, successRate: 100 });
   const [schools, setSchools] = useState<SchoolOption[]>([]);
@@ -112,7 +117,7 @@ export function SuperAdminSmsView() {
       });
       const json = await res.json();
       if (json.success) {
-        setSuccessMsg(json.data.message || 'Crédits alloués avec succès.');
+        setSuccessMsg(json.data.message || tCommon('success'));
         setTopupOpen(false);
         setTopupNote('');
         fetchSmsData();
@@ -127,11 +132,11 @@ export function SuperAdminSmsView() {
   const statusBadge = (status: SmsLog['status']) => {
     switch (status) {
       case 'sent':
-        return <Badge className="bg-[#DDF5EC] text-[#17A673] border-none font-bold text-[11px]">Envoyé</Badge>;
+        return <Badge className="bg-[#DDF5EC] text-[#17A673] border-none font-bold text-[11px]">{t('statusSent')}</Badge>;
       case 'queued':
-        return <Badge className="bg-amber-100 text-amber-700 border-none font-bold text-[11px]">En attente</Badge>;
+        return <Badge className="bg-amber-100 text-amber-700 border-none font-bold text-[11px]">{t('statusQueued')}</Badge>;
       case 'failed':
-        return <Badge className="bg-rose-100 text-rose-600 border-none font-bold text-[11px]">Échoué</Badge>;
+        return <Badge className="bg-rose-100 text-rose-600 border-none font-bold text-[11px]">{t('statusFailed')}</Badge>;
     }
   };
 
@@ -142,10 +147,10 @@ export function SuperAdminSmsView() {
         <div>
           <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight flex items-center gap-2.5">
             <MessageSquare className="w-6 h-6 text-[#0066FF]" />
-            Plateforme SMS & Passerelles Télécom
+            {t('smsPlatformTitle')}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Supervision globale des flux SMS, consommation de crédits et passerelles Maroc Télécom / Inwi / Orange.
+            {t('smsPlatformSubtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -157,7 +162,7 @@ export function SuperAdminSmsView() {
             className="h-9 text-xs rounded-xl border-slate-200 bg-white gap-1.5"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Actualiser
+            {tCommon('refresh')}
           </Button>
           <Button
             size="sm"
@@ -168,7 +173,7 @@ export function SuperAdminSmsView() {
             className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5 shadow-xs"
           >
             <PlusCircle className="w-3.5 h-3.5" />
-            Allouer des crédits SMS
+            {t('allocateCredits')}
           </Button>
         </div>
       </div>
@@ -180,7 +185,7 @@ export function SuperAdminSmsView() {
             {successMsg}
           </div>
           <button onClick={() => setSuccessMsg(null)} className="text-emerald-600 hover:text-emerald-800 text-xs font-bold">
-            Fermer
+            {tCommon('close')}
           </button>
         </div>
       )}
@@ -189,46 +194,46 @@ export function SuperAdminSmsView() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-4 rounded-2xl border-slate-200/80 shadow-2xs space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Volume Total</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('totalVolume')}</span>
             <div className="w-8 h-8 rounded-xl bg-[#DCEBF4] flex items-center justify-center text-[#0066FF]">
               <Radio className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-extrabold text-[#16212B]">{stats.total.toLocaleString('fr-FR')}</div>
-          <p className="text-[11px] text-slate-400">Messages enregistrés sur la plateforme</p>
+          <div className="text-2xl font-extrabold text-[#16212B]">{stats.total.toLocaleString(locale)}</div>
+          <p className="text-[11px] text-slate-400">{t('totalVolumeDesc')}</p>
         </Card>
 
         <Card className="p-4 rounded-2xl border-slate-200/80 shadow-2xs space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Taux de Délivrabilité</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('deliveryRate')}</span>
             <div className="w-8 h-8 rounded-xl bg-[#DDF5EC] flex items-center justify-center text-[#17A673]">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-extrabold text-[#17A673]">{stats.successRate}%</div>
-          <p className="text-[11px] text-slate-400">{stats.sent.toLocaleString('fr-FR')} délivrés avec succès</p>
+          <p className="text-[11px] text-slate-400">{t('deliveredCountDesc', { count: stats.sent.toLocaleString(locale) })}</p>
         </Card>
 
         <Card className="p-4 rounded-2xl border-slate-200/80 shadow-2xs space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">En file d'attente</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('inQueue')}</span>
             <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
               <Clock className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-extrabold text-amber-700">{stats.queued}</div>
-          <p className="text-[11px] text-slate-400">En cours de routage opérateur</p>
+          <p className="text-[11px] text-slate-400">{t('routingDesc')}</p>
         </Card>
 
         <Card className="p-4 rounded-2xl border-slate-200/80 shadow-2xs space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Écoles Connectées</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('connectedSchools')}</span>
             <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center text-violet-600">
               <Building2 className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-extrabold text-violet-700">{schools.length}</div>
-          <p className="text-[11px] text-slate-400">Établissements avec passerelle active</p>
+          <p className="text-[11px] text-slate-400">{t('connectedSchoolsDesc')}</p>
         </Card>
       </div>
 
@@ -240,7 +245,7 @@ export function SuperAdminSmsView() {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher par numéro ou texte..."
+              placeholder={tCommon('search')}
               className="pl-9 h-9 text-xs rounded-xl border-slate-200"
             />
           </div>
@@ -249,7 +254,7 @@ export function SuperAdminSmsView() {
             onChange={(e) => setSelectedSchool(e.target.value)}
             className="h-9 px-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-700 font-medium"
           >
-            <option value="all">Toutes les écoles ({schools.length})</option>
+            <option value="all">{t('allSchoolsOption', { count: schools.length })}</option>
             {schools.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -261,10 +266,10 @@ export function SuperAdminSmsView() {
             onChange={(e) => setSelectedStatus(e.target.value)}
             className="h-9 px-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-700 font-medium"
           >
-            <option value="all">Tous les statuts</option>
-            <option value="sent">Envoyés</option>
-            <option value="queued">En attente</option>
-            <option value="failed">Échoués</option>
+            <option value="all">{t('allStatusesOption')}</option>
+            <option value="sent">{t('statusSent')}</option>
+            <option value="queued">{t('statusQueued')}</option>
+            <option value="failed">{t('statusFailed')}</option>
           </select>
         </div>
       </Card>
@@ -275,11 +280,11 @@ export function SuperAdminSmsView() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/70 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-                <th className="py-3 px-4">Établissement</th>
-                <th className="py-3 px-4">Destinataire</th>
-                <th className="py-3 px-4">Message</th>
-                <th className="py-3 px-4">Statut</th>
-                <th className="py-3 px-4">Date d'envoi</th>
+                <th className="py-3 px-4">{t('schoolCol')}</th>
+                <th className="py-3 px-4">{t('recipientCol')}</th>
+                <th className="py-3 px-4">{t('messageCol')}</th>
+                <th className="py-3 px-4">{t('statusCol')}</th>
+                <th className="py-3 px-4">{t('sentDateCol')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -287,13 +292,13 @@ export function SuperAdminSmsView() {
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-slate-400">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#0066FF] mb-2" />
-                    Chargement des journaux SMS...
+                    {tCommon('loading')}
                   </td>
                 </tr>
               ) : logs.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-slate-400">
-                    Aucun message SMS trouvé pour les filtres sélectionnés.
+                    {tCommon('empty')}
                   </td>
                 </tr>
               ) : (
@@ -311,7 +316,7 @@ export function SuperAdminSmsView() {
                     </td>
                     <td className="py-3 px-4">{statusBadge(log.status)}</td>
                     <td className="py-3 px-4 text-slate-400 text-[11px] whitespace-nowrap">
-                      {new Date(log.createdAt).toLocaleString('fr-FR', {
+                      {new Date(log.createdAt).toLocaleString(locale, {
                         day: '2-digit',
                         month: 'short',
                         year: 'numeric',
@@ -332,12 +337,12 @@ export function SuperAdminSmsView() {
         <DialogContent className="max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B]">
-              Allouer des crédits SMS à un établissement
+              {t('allocateCredits')}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleTopup} className="space-y-4 py-2">
             <div>
-              <label className="text-xs font-bold text-slate-600 block mb-1">Établissement scolaire</label>
+              <label className="text-xs font-bold text-slate-600 block mb-1">{t('schoolCol')}</label>
               <select
                 value={topupSchoolId}
                 onChange={(e) => setTopupSchoolId(e.target.value)}
@@ -384,7 +389,7 @@ export function SuperAdminSmsView() {
                 onClick={() => setTopupOpen(false)}
                 className="h-9 text-xs rounded-xl border-slate-200"
               >
-                Annuler
+                {tCommon('cancel')}
               </Button>
               <Button
                 type="submit"
@@ -393,7 +398,7 @@ export function SuperAdminSmsView() {
                 className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5 shadow-xs"
               >
                 {topupLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                Valider l'allocation
+                {tCommon('confirm')}
               </Button>
             </DialogFooter>
           </form>

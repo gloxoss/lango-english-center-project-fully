@@ -9,5 +9,10 @@ export const metadata = {
 export default async function HrOverviewPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'hr.read' });
-  return <HrOverviewView />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <HrOverviewView />
+    </main>
+  );
 }

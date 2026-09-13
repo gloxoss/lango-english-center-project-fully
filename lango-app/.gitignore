@@ -16,6 +16,7 @@
 
 # next.js
 /.next/
+/.next-audit/
 /.next-build-failed-*/
 /out/
 
@@ -61,3 +62,7 @@ build-archive.log
 /test-results/
 /playwright-report/
 /playwright/.cache/
+
+# deploy cache
+scripts/.deploy_cache/
+

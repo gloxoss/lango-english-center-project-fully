@@ -126,6 +126,7 @@ export const FULL_NAVIGATION: NavItem[] = [
       // /api/finance/expenses requires — with `finance.read` the page opened and
       // every fetch on it 403'd.
       { id: 'expenses', label: 'Dépenses', icon: 'TrendingDown', href: '/dashboard/finance/expenses', permission: 'finance.manage' },
+      { id: 'office-accounting', label: 'Comptabilité générale & caisse', icon: 'Calculator', href: '/dashboard/finance/office-accounting', permission: 'accounting.account.read' },
       { id: 'accounting-accounts', label: 'Plan comptable', icon: 'BookOpen', href: '/dashboard/finance/accounting/accounts', permission: 'accounting.account.read' },
       { id: 'accounting-transactions', label: 'Grand livre', icon: 'FileText', href: '/dashboard/finance/accounting/transactions', permission: 'accounting.account.read' },
       { id: 'accounting-voucher-types', label: 'Journaux & pièces', icon: 'Settings2', href: '/dashboard/finance/accounting/voucher-types', permission: 'accounting.account.manage' },

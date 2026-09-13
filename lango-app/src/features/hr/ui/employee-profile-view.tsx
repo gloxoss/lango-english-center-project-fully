@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,7 @@ import {
 import {
   CONTRACT_TYPE_LABELS, EMPLOYMENT_STATUS_LABELS, EMPLOYMENT_STATUS_STYLES, EMPLOYMENT_TYPE_LABELS,
   type BranchOption, type DepartmentRow, type DesignationRow, type EmployeeRow, type EmploymentEventRow,
-  type EmploymentStatus, type EmploymentType,
+  type EmploymentStatus, type EmploymentType, type ContractType,
 } from '@/features/hr/model/types';
 
 type ApiErrorShape = { code?: string; message?: string };
@@ -49,25 +50,62 @@ function initials(name: string) {
   return name.trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('') || '?';
 }
 
-function fmtDate(value: string | null) {
+function fmtDate(value: string | null, loc = 'fr') {
   if (!value) return '—';
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return value;
-  return d.toLocaleDateString('fr-MA');
+  const resolved = loc.startsWith('ar') ? 'ar-MA' : loc.startsWith('en') ? 'en-US' : 'fr-FR';
+  return d.toLocaleDateString(resolved);
 }
 
-const EVENT_LABELS: Record<string, string> = {
-  hired: 'Embauche',
-  changed_department: 'Changement de département',
-  changed_designation: 'Changement de poste',
-  changed_manager: 'Changement de responsable',
-  employment_status_change: 'Changement de statut',
-  access_granted: 'Accès accordé',
-  access_revoked: 'Accès révoqué',
-  offboarded: 'Désactivation',
-  reactivated: 'Réactivation',
-  archived: 'Archivage',
-  linked_account: 'Compte lié',
+function fmtTime(value: string | null, loc = 'fr') {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  const resolved = loc.startsWith('ar') ? 'ar-MA' : loc.startsWith('en') ? 'en-US' : 'fr-FR';
+  return d.toLocaleTimeString(resolved, { hour: '2-digit', minute: '2-digit' });
+}
+
+function monthLabel(year: number, month: number, loc = 'fr') {
+  const resolved = loc.startsWith('ar') ? 'ar-MA' : loc.startsWith('en') ? 'en-US' : 'fr-FR';
+  return new Date(year, month - 1, 1).toLocaleDateString(resolved, { month: 'long', year: 'numeric' });
+}
+
+const EVENT_KEYS: Record<string, string> = {
+  hired: 'eventHired',
+  changed_department: 'eventChangedDept',
+  changed_designation: 'eventChangedDesignation',
+  changed_manager: 'eventChangedManager',
+  employment_status_change: 'eventStatusChange',
+  access_granted: 'eventAccessGranted',
+  access_revoked: 'eventAccessRevoked',
+  offboarded: 'eventOffboarded',
+  reactivated: 'eventReactivated',
+  archived: 'eventArchived',
+  linked_account: 'eventLinkedAccount',
+};
+
+const EMPLOYMENT_STATUS_I18N_KEYS: Record<EmploymentStatus, string> = {
+  active: 'statusActive',
+  probation: 'statusProbation',
+  on_leave: 'statusOnLeave',
+  offboarded: 'statusOffboarded',
+  archived: 'statusArchived',
+};
+
+const EMPLOYMENT_TYPE_I18N_KEYS: Record<EmploymentType, string> = {
+  permanent: 'typePermanent',
+  fixed_term: 'typeFixedTerm',
+  part_time: 'typePartTime',
+  contractor: 'typeContractor',
+  internship: 'typeInternship',
+  substitute: 'typeSubstitute',
+};
+
+const CONTRACT_TYPE_I18N_KEYS: Record<ContractType, string> = {
+  cdi: 'contractCdi',
+  cdd: 'contractCdd',
+  vacation: 'contractVacation',
 };
 
 type Field = 'departmentId' | 'designationId' | 'managerEmployeeId' | 'employmentType' | 'employmentStatus' | 'hireDate' | 'contractStartDate' | 'contractEndDate' | 'workloadHours';
@@ -76,13 +114,13 @@ type PayslipRecord = { id: string; year: number; month: number; grossSalary: str
 type PunchRecord = { id: string; punchType: string; scannedAt: string; notes: string | null };
 type PayrollAttendance = { linked: boolean; payslips: PayslipRecord[]; punches: PunchRecord[] };
 
-function monthLabel(year: number, month: number) {
-  return new Date(year, month - 1, 1).toLocaleDateString('fr-MA', { month: 'long', year: 'numeric' });
-}
-
 export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
+  const t = useTranslations('HR');
+  const tCommon = useTranslations('Common');
+  const locale = useLocale();
   const router = useRouter();
   const { can } = usePermissions();
+
   const [employee, setEmployee] = useState<EmployeeRow | null>(null);
   const [events, setEvents] = useState<EmploymentEventRow[]>([]);
   const [records, setRecords] = useState<PayrollAttendance | null>(null);
@@ -112,11 +150,11 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
       api<PayrollAttendance>(`/api/hr/employees/${employeeId}/payroll-attendance`),
     ]);
     if (emp.ok && emp.data) setEmployee(emp.data);
-    else setError(emp.error?.message ?? 'Employé introuvable.');
+    else setError(emp.error?.message ?? t('employeeNotFound'));
     if (hist.ok && Array.isArray(hist.data)) setEvents(hist.data);
     if (rec.ok && rec.data) setRecords(rec.data);
     setLoading(false);
-  }, [employeeId]);
+  }, [employeeId, t]);
 
   useEffect(() => { load().catch(() => {}); }, [load]);
 
@@ -171,7 +209,7 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
       setEditOpen(false);
       await load();
     } else {
-      setEditError(res.error?.message ?? 'Enregistrement impossible.');
+      setEditError(res.error?.message ?? t('loadError'));
     }
   };
 
@@ -186,7 +224,7 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center gap-2 p-16 text-sm text-slate-500">
-        <Loader2 className="h-4 w-4 animate-spin" /> Chargement…
+        <Loader2 className="h-4 w-4 animate-spin" /> {tCommon('loading')}
       </div>
     );
   }
@@ -194,29 +232,29 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
   if (error || !employee) {
     return (
       <div className="mx-auto max-w-xl space-y-4 p-10 text-center">
-        <p className="flex items-center justify-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error ?? 'Employé introuvable.'}</p>
-        <Button variant="outline" onClick={() => router.push('/dashboard/hr/employees')}>Retour à l&apos;annuaire</Button>
+        <p className="flex items-center justify-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error ?? t('employeeNotFound')}</p>
+        <Button variant="outline" onClick={() => router.push('/dashboard/hr/employees')}>{t('backToDirectory')}</Button>
       </div>
     );
   }
 
   const manager = employees.find(e => e.id === employee.managerEmployeeId);
   const branch = branches.find(b => b.id === employee.branchId);
-  const employeeTypes = Object.keys(EMPLOYMENT_TYPE_LABELS) as EmploymentType[];
+  const employeeTypes = Object.keys(EMPLOYMENT_TYPE_I18N_KEYS) as EmploymentType[];
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard/hr/employees')}>
-          <ArrowLeft className="h-4 w-4" />
+        <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard/hr/employees')} aria-label={t('backToDirectory')}>
+          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-[#16212B]">Dossier employé</h1>
+          <h1 className="text-2xl font-bold text-[#16212B]">{t('profileTitle')}</h1>
         </div>
         {can('cards.issue') && employee.userId && (
-          <Button variant="outline" onClick={() => setIssueCardOpen(true)}><IdCard className="mr-2 h-4 w-4" /> Émettre une carte</Button>
+          <Button variant="outline" onClick={() => setIssueCardOpen(true)}><IdCard className="mr-2 rtl:mr-0 rtl:ml-2 h-4 w-4" /> {t('btnIssueCard')}</Button>
         )}
-        <Button onClick={openEdit}><Pencil className="mr-2 h-4 w-4" /> Modifier</Button>
+        <Button onClick={openEdit}><Pencil className="mr-2 rtl:mr-0 rtl:ml-2 h-4 w-4" /> {t('btnEdit')}</Button>
       </div>
 
       <Card className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs">
@@ -229,7 +267,7 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-xl font-bold text-[#16212B]">{employee.displayName}</h2>
               <Badge className={EMPLOYMENT_STATUS_STYLES[employee.employmentStatus]}>
-                {EMPLOYMENT_STATUS_LABELS[employee.employmentStatus]}
+                {EMPLOYMENT_STATUS_I18N_KEYS[employee.employmentStatus] ? t(EMPLOYMENT_STATUS_I18N_KEYS[employee.employmentStatus] as any) : (EMPLOYMENT_STATUS_LABELS[employee.employmentStatus] ?? employee.employmentStatus)}
               </Badge>
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
@@ -239,14 +277,14 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
               {branch && <span className="flex items-center gap-1">{branch.name}</span>}
             </div>
           </div>
-          <div className="text-right">
+          <div className="text-right rtl:text-left">
             {employee.userId ? (
               <>
-                <Badge className="bg-[#D1F5E8] text-[#0b5c3a]">Compte lié</Badge>
+                <Badge className="bg-[#D1F5E8] text-[#0b5c3a]">{t('linkedAccount')}</Badge>
                 <p className="mt-1 text-xs text-slate-500">{employee.accountEmail || employee.accountName}</p>
               </>
             ) : (
-              <Badge className="bg-amber-50 text-amber-700">Sans compte</Badge>
+              <Badge className="bg-amber-50 text-amber-700">{t('unlinkedAccount')}</Badge>
             )}
           </div>
         </div>
@@ -254,32 +292,32 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
 
       <Tabs defaultValue="details">
         <TabsList>
-          <TabsTrigger value="details" className="flex items-center gap-1"><UserRound className="h-4 w-4" /> Détails</TabsTrigger>
-          <TabsTrigger value="sensitive" className="flex items-center gap-1"><Lock className="h-4 w-4" /> Données sensibles</TabsTrigger>
-          <TabsTrigger value="documents" className="flex items-center gap-1"><FileText className="h-4 w-4" /> Documents</TabsTrigger>
-          <TabsTrigger value="history" className="flex items-center gap-1"><History className="h-4 w-4" /> Chronologie</TabsTrigger>
-          <TabsTrigger value="payroll" className="flex items-center gap-1"><Wallet className="h-4 w-4" /> Finance</TabsTrigger>
-          <TabsTrigger value="attendance" className="flex items-center gap-1"><CalendarClock className="h-4 w-4" /> Présences</TabsTrigger>
+          <TabsTrigger value="details" className="flex items-center gap-1"><UserRound className="h-4 w-4" /> {t('tabDetails')}</TabsTrigger>
+          <TabsTrigger value="sensitive" className="flex items-center gap-1"><Lock className="h-4 w-4" /> {t('tabSensitive')}</TabsTrigger>
+          <TabsTrigger value="documents" className="flex items-center gap-1"><FileText className="h-4 w-4" /> {t('tabDocuments')}</TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-1"><History className="h-4 w-4" /> {t('tabHistory')}</TabsTrigger>
+          <TabsTrigger value="payroll" className="flex items-center gap-1"><Wallet className="h-4 w-4" /> {t('tabFinance')}</TabsTrigger>
+          <TabsTrigger value="attendance" className="flex items-center gap-1"><CalendarClock className="h-4 w-4" /> {t('tabAttendance')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="details">
           <div className="grid gap-4 md:grid-cols-2">
             <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-400">Contact</h3>
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-400">{t('sectionContact')}</h3>
               <dl className="space-y-3 text-sm">
-                <div className="flex items-center justify-between"><dt className="flex items-center gap-2 text-slate-500"><Mail className="h-4 w-4" /> Email</dt><dd className="text-slate-700">{employee.email || '—'}</dd></div>
-                <div className="flex items-center justify-between"><dt className="flex items-center gap-2 text-slate-500"><Phone className="h-4 w-4" /> Téléphone</dt><dd className="text-slate-700">{employee.phone || '—'}</dd></div>
+                <div className="flex items-center justify-between"><dt className="flex items-center gap-2 text-slate-500"><Mail className="h-4 w-4" /> {t('email')}</dt><dd className="text-slate-700">{employee.email || '—'}</dd></div>
+                <div className="flex items-center justify-between"><dt className="flex items-center gap-2 text-slate-500"><Phone className="h-4 w-4" /> {t('phone')}</dt><dd className="text-slate-700">{employee.phone || '—'}</dd></div>
               </dl>
             </Card>
             <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-400">Emploi</h3>
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-400">{t('sectionEmployment')}</h3>
               <dl className="grid grid-cols-2 gap-3 text-sm">
-                <div><dt className="text-slate-500">Type</dt><dd className="font-medium text-[#16212B]">{employee.employmentType ? EMPLOYMENT_TYPE_LABELS[employee.employmentType] : '—'}</dd></div>
-                <div><dt className="text-slate-500">Responsable</dt><dd className="font-medium text-[#16212B]">{manager?.displayName ?? '—'}</dd></div>
-                <div><dt className="text-slate-500">Embauche</dt><dd className="font-medium text-[#16212B]">{fmtDate(employee.hireDate)}</dd></div>
-                <div><dt className="text-slate-500">Heures / sem.</dt><dd className="font-medium text-[#16212B]">{employee.workloadHours ?? '—'}</dd></div>
-                <div><dt className="text-slate-500">Contrat</dt><dd className="font-medium text-[#16212B]">{employee.contractStartDate ? `${fmtDate(employee.contractStartDate)} → ${fmtDate(employee.contractEndDate)}` : '—'}</dd></div>
-                <div><dt className="text-slate-500">À charge</dt><dd className="font-medium text-[#16212B]">{employee.dependantsCount ?? 0}</dd></div>
+                <div><dt className="text-slate-500">{t('labelType')}</dt><dd className="font-medium text-[#16212B]">{employee.employmentType && EMPLOYMENT_TYPE_I18N_KEYS[employee.employmentType] ? t(EMPLOYMENT_TYPE_I18N_KEYS[employee.employmentType] as any) : '—'}</dd></div>
+                <div><dt className="text-slate-500">{t('labelManager')}</dt><dd className="font-medium text-[#16212B]">{manager?.displayName ?? '—'}</dd></div>
+                <div><dt className="text-slate-500">{t('labelHireDate')}</dt><dd className="font-medium text-[#16212B]">{fmtDate(employee.hireDate, locale)}</dd></div>
+                <div><dt className="text-slate-500">{t('labelWorkload')}</dt><dd className="font-medium text-[#16212B]">{employee.workloadHours ?? '—'}</dd></div>
+                <div><dt className="text-slate-500">{t('labelContract')}</dt><dd className="font-medium text-[#16212B]">{employee.contractStartDate ? `${fmtDate(employee.contractStartDate, locale)} → ${fmtDate(employee.contractEndDate, locale)}` : '—'}</dd></div>
+                <div><dt className="text-slate-500">{t('labelDependants')}</dt><dd className="font-medium text-[#16212B]">{employee.dependantsCount ?? 0}</dd></div>
               </dl>
             </Card>
           </div>
@@ -290,27 +328,27 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
             {sensitivePresent ? (
               <dl className="grid grid-cols-2 gap-4 text-sm md:grid-cols-3">
                 {employee.cnssNumber !== undefined && (
-                  <div><dt className="text-slate-500">N° CNSS</dt><dd className="font-mono font-medium text-[#16212B]">{employee.cnssNumber ?? '—'}</dd></div>
+                  <div><dt className="text-slate-500">{t('labelCnss')}</dt><dd className="font-mono font-medium text-[#16212B]">{employee.cnssNumber ?? '—'}</dd></div>
                 )}
                 {employee.amoNumber !== undefined && (
-                  <div><dt className="text-slate-500">N° AMO</dt><dd className="font-mono font-medium text-[#16212B]">{employee.amoNumber ?? '—'}</dd></div>
+                  <div><dt className="text-slate-500">{t('labelAmo')}</dt><dd className="font-mono font-medium text-[#16212B]">{employee.amoNumber ?? '—'}</dd></div>
                 )}
                 {employee.bankRib !== undefined && (
-                  <div><dt className="text-slate-500">RIB bancaire</dt><dd className="font-mono font-medium text-[#16212B]">{employee.bankRib ?? '—'}</dd></div>
+                  <div><dt className="text-slate-500">{t('labelRib')}</dt><dd className="font-mono font-medium text-[#16212B]">{employee.bankRib ?? '—'}</dd></div>
                 )}
                 {employee.contractType !== undefined && (
-                  <div><dt className="text-slate-500">Type de contrat</dt><dd className="font-medium text-[#16212B]">{employee.contractType ? CONTRACT_TYPE_LABELS[employee.contractType] : '—'}</dd></div>
+                  <div><dt className="text-slate-500">{t('labelContractType')}</dt><dd className="font-medium text-[#16212B]">{employee.contractType && CONTRACT_TYPE_I18N_KEYS[employee.contractType] ? t(CONTRACT_TYPE_I18N_KEYS[employee.contractType] as any) : '—'}</dd></div>
                 )}
                 {employee.nationalId !== undefined && (
-                  <div><dt className="text-slate-500">CIN</dt><dd className="font-mono font-medium text-[#16212B]">{employee.nationalId ?? '—'}</dd></div>
+                  <div><dt className="text-slate-500">{t('labelCin')}</dt><dd className="font-mono font-medium text-[#16212B]">{employee.nationalId ?? '—'}</dd></div>
                 )}
                 {employee.salary !== undefined && (
-                  <div><dt className="text-slate-500">Salaire mensuel</dt><dd className="font-medium text-[#16212B]">{employee.salary ? `${employee.salary} MAD` : '—'}</dd></div>
+                  <div><dt className="text-slate-500">{t('labelSalary')}</dt><dd className="font-medium text-[#16212B]">{employee.salary ? `${employee.salary} MAD` : '—'}</dd></div>
                 )}
               </dl>
             ) : (
               <p className="flex items-center gap-2 text-sm text-slate-500">
-                <Lock className="h-4 w-4" /> Vous ne disposez pas de la permission de lecture des données sensibles.
+                <Lock className="h-4 w-4" /> {t('noSensitivePermission')}
               </p>
             )}
           </Card>
@@ -323,18 +361,20 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
         <TabsContent value="history">
           <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
             {events.length === 0 ? (
-              <p className="p-6 text-center text-sm text-slate-500">Aucun événement enregistré.</p>
+              <p className="p-6 text-center text-sm text-slate-500">{tCommon('empty')}</p>
             ) : (
-              <ol className="relative space-y-5 border-l border-slate-200 pl-6">
+              <ol className="relative space-y-5 border-l rtl:border-l-0 rtl:border-r border-slate-200 pl-6 rtl:pl-0 rtl:pr-6">
                 {events.map(ev => (
                   <li key={ev.id} className="relative">
-                    <span className="absolute -left-[29px] top-1 flex h-3 w-3 items-center justify-center rounded-full bg-[#0066FF]" />
+                    <span className="absolute -left-[29px] rtl:-left-auto rtl:-right-[29px] top-1 flex h-3 w-3 items-center justify-center rounded-full bg-[#0066FF]" />
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-sm font-semibold text-[#16212B]">{EVENT_LABELS[ev.eventType] ?? ev.eventType}</p>
-                      <span className="flex items-center gap-1 text-xs text-slate-400"><Calendar className="h-3.5 w-3.5" />{fmtDate(ev.effectiveAt)}</span>
+                      <p className="text-sm font-semibold text-[#16212B]">
+                        {EVENT_KEYS[ev.eventType] ? t(EVENT_KEYS[ev.eventType] as any) : ev.eventType}
+                      </p>
+                      <span className="flex items-center gap-1 text-xs text-slate-400"><Calendar className="h-3.5 w-3.5" />{fmtDate(ev.effectiveAt, locale)}</span>
                     </div>
                     {ev.reason && <p className="mt-1 text-xs text-slate-500">{ev.reason}</p>}
-                    <p className="mt-0.5 text-xs text-slate-400">Par {ev.actorName ?? ev.actorId}</p>
+                    <p className="mt-0.5 text-xs text-slate-400">{t('awardedBy', { name: ev.actorName ?? ev.actorId ?? '—' })}</p>
                   </li>
                 ))}
               </ol>
@@ -346,26 +386,26 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
           <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
             {!records || records.linked === false ? (
               <p className="flex items-center gap-2 p-6 text-sm text-slate-500">
-                <Wallet className="h-4 w-4" /> Cet employé est « Sans compte » : aucune donnée de paie n'est rattachée à un compte de connexion.
+                <Wallet className="h-4 w-4" /> {t('accessRestrictedDesc')}
               </p>
             ) : records.payslips.length === 0 ? (
-              <p className="p-6 text-center text-sm text-slate-500">Aucun bulletin de paie émis.</p>
+              <p className="p-6 text-center text-sm text-slate-500">{t('noPayslipPublished')}</p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
+                <table className="w-full text-left rtl:text-right text-sm">
                   <thead className="border-b text-xs uppercase tracking-wide text-slate-400">
                     <tr>
-                      <th className="py-2 pr-4">Période</th>
-                      <th className="py-2 px-4 text-right">Salaire brut</th>
-                      <th className="py-2 pl-4 text-right">Net à payer</th>
+                      <th className="py-2 pr-4 rtl:pr-0 rtl:pl-4">{t('colDate')}</th>
+                      <th className="py-2 px-4 text-right rtl:text-left">{t('gross', { amount: '' })}</th>
+                      <th className="py-2 pl-4 rtl:pl-0 rtl:pr-4 text-right rtl:text-left">{t('salary')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {records.payslips.map(p => (
                       <tr key={p.id}>
-                        <td className="py-2.5 pr-4 font-medium text-[#16212B]">{monthLabel(p.year, p.month)}</td>
-                        <td className="py-2.5 px-4 text-right text-slate-600">{Number(p.grossSalary).toFixed(2)} MAD</td>
-                        <td className="py-2.5 pl-4 text-right font-semibold text-[#16212B]">{Number(p.netSalary).toFixed(2)} MAD</td>
+                        <td className="py-2.5 pr-4 rtl:pr-0 rtl:pl-4 font-medium text-[#16212B]">{monthLabel(p.year, p.month, locale)}</td>
+                        <td className="py-2.5 px-4 text-right rtl:text-left text-slate-600">{Number(p.grossSalary).toFixed(2)} MAD</td>
+                        <td className="py-2.5 pl-4 rtl:pl-0 rtl:pr-4 text-right rtl:text-left font-semibold text-[#16212B]">{Number(p.netSalary).toFixed(2)} MAD</td>
                       </tr>
                     ))}
                   </tbody>
@@ -379,30 +419,30 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
           <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
             {!records || records.linked === false ? (
               <p className="flex items-center gap-2 p-6 text-sm text-slate-500">
-                <CalendarClock className="h-4 w-4" /> Cet employé est « Sans compte » : aucun pointage n'est rattaché à un compte de connexion.
+                <CalendarClock className="h-4 w-4" /> {t('accessRestrictedDesc')}
               </p>
             ) : records.punches.length === 0 ? (
-              <p className="p-6 text-center text-sm text-slate-500">Aucun pointage enregistré.</p>
+              <p className="p-6 text-center text-sm text-slate-500">{t('noPunches')}</p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
+                <table className="w-full text-left rtl:text-right text-sm">
                   <thead className="border-b text-xs uppercase tracking-wide text-slate-400">
                     <tr>
-                      <th className="py-2 pr-4">Type</th>
-                      <th className="py-2 px-4">Horodatage</th>
-                      <th className="py-2 pl-4">Note</th>
+                      <th className="py-2 pr-4 rtl:pr-0 rtl:pl-4">{t('labelType')}</th>
+                      <th className="py-2 px-4">{t('colDate')}</th>
+                      <th className="py-2 pl-4 rtl:pl-0 rtl:pr-4">{t('reason')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {records.punches.map(p => (
                       <tr key={p.id}>
-                        <td className="py-2.5 pr-4">
+                        <td className="py-2.5 pr-4 rtl:pr-0 rtl:pl-4">
                           <Badge className={p.punchType === 'in' ? 'bg-[#D1F5E8] text-[#0b5c3a]' : 'bg-slate-100 text-slate-600'}>
-                            {p.punchType === 'in' ? 'Entrée' : 'Sortie'}
+                            {p.punchType === 'in' ? t('punchIn') : t('punchOut')}
                           </Badge>
                         </td>
-                        <td className="py-2.5 px-4 font-mono text-xs text-slate-600">{fmtDate(p.scannedAt)} {new Date(p.scannedAt).toLocaleTimeString('fr-MA')}</td>
-                        <td className="py-2.5 pl-4 text-slate-500">{p.notes ?? '—'}</td>
+                        <td className="py-2.5 px-4 font-mono text-xs text-slate-600">{fmtDate(p.scannedAt, locale)} {fmtTime(p.scannedAt, locale)}</td>
+                        <td className="py-2.5 pl-4 rtl:pl-0 rtl:pr-4 text-slate-500">{p.notes ?? '—'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -416,70 +456,76 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Modifier {employee.displayName}</DialogTitle>
+            <DialogTitle>{t('editEmployeeProfile')} · {employee.displayName}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Département</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('department')}</Label>
               <Select value={form.departmentId} onValueChange={v => setForm(f => ({ ...f, departmentId: v }))}>
-                <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={tCommon('all')} /></SelectTrigger>
                 <SelectContent>
                   {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Poste</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('designation')}</Label>
               <Select value={form.designationId} onValueChange={v => setForm(f => ({ ...f, designationId: v }))}>
-                <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={tCommon('all')} /></SelectTrigger>
                 <SelectContent>
                   {designations.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Responsable</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('labelManager')}</Label>
               <Select value={form.managerEmployeeId} onValueChange={v => setForm(f => ({ ...f, managerEmployeeId: v }))}>
-                <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={tCommon('all')} /></SelectTrigger>
                 <SelectContent>
                   {employees.filter(e => e.id !== employeeId).map(e => <SelectItem key={e.id} value={e.id}>{e.displayName}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Type</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('labelType')}</Label>
               <Select value={form.employmentType} onValueChange={v => setForm(f => ({ ...f, employmentType: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {employeeTypes.map(t => <SelectItem key={t} value={t}>{EMPLOYMENT_TYPE_LABELS[t]}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Statut</Label>
-              <Select value={form.employmentStatus} onValueChange={v => setForm(f => ({ ...f, employmentStatus: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(EMPLOYMENT_STATUS_LABELS) as EmploymentStatus[]).map(s => (
-                    <SelectItem key={s} value={s}>{EMPLOYMENT_STATUS_LABELS[s]}</SelectItem>
+                  {employeeTypes.map(et => (
+                    <SelectItem key={et} value={et}>
+                      {EMPLOYMENT_TYPE_I18N_KEYS[et] ? t(EMPLOYMENT_TYPE_I18N_KEYS[et] as any) : et}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Embauche</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{tCommon('status')}</Label>
+              <Select value={form.employmentStatus} onValueChange={v => setForm(f => ({ ...f, employmentStatus: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(EMPLOYMENT_STATUS_I18N_KEYS) as EmploymentStatus[]).map(es => (
+                    <SelectItem key={es} value={es}>
+                      {t(EMPLOYMENT_STATUS_I18N_KEYS[es] as any)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('labelHireDate')}</Label>
               <Input type="date" value={form.hireDate} onChange={e => setForm(f => ({ ...f, hireDate: e.target.value }))} />
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Début contrat</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('startDate')}</Label>
               <Input type="date" value={form.contractStartDate} onChange={e => setForm(f => ({ ...f, contractStartDate: e.target.value }))} />
             </div>
             <div>
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Fin contrat</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('endDate')}</Label>
               <Input type="date" value={form.contractEndDate} onChange={e => setForm(f => ({ ...f, contractEndDate: e.target.value }))} />
             </div>
             <div className="sm:col-span-2">
-              <Label className="mb-1 block text-sm font-medium text-slate-700">Heures hebdomadaires</Label>
+              <Label className="mb-1 block text-sm font-medium text-slate-700">{t('labelWorkload')}</Label>
               <Input type="number" min={0} max={168} value={form.workloadHours} onChange={e => setForm(f => ({ ...f, workloadHours: e.target.value }))} />
             </div>
             {editError && (
@@ -487,9 +533,9 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditOpen(false)}><X className="mr-2 h-4 w-4" /> Annuler</Button>
+            <Button variant="outline" onClick={() => setEditOpen(false)}><X className="mr-2 rtl:mr-0 rtl:ml-2 h-4 w-4" /> {tCommon('cancel')}</Button>
             <Button onClick={save} disabled={saving}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} <Save className="mr-2 h-4 w-4" /> Enregistrer
+              {saving && <Loader2 className="mr-2 rtl:mr-0 rtl:ml-2 h-4 w-4 animate-spin" />} <Save className="mr-2 rtl:mr-0 rtl:ml-2 h-4 w-4" /> {t('saveChanges')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -501,7 +547,7 @@ export function EmployeeProfileView({ employeeId }: { employeeId: string }) {
         subjectType="employee"
         templateType="employee_id"
         subjectId={employee.userId ?? ''}
-        subjectLabel="Employé"
+        subjectLabel={t('colEmployee')}
         subjectName={employee.displayName}
       />
     </div>

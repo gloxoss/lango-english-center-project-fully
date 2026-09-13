@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, Download, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
@@ -48,6 +49,8 @@ function parseCsv(text: string): ParsedRow[] {
 }
 
 export function ExcelImportView({ locale: _locale }: { locale?: string } = {}) {
+  const t = useTranslations('Students');
+  const tCommon = useTranslations('Common');
   const fileRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -73,7 +76,7 @@ export function ExcelImportView({ locale: _locale }: { locale?: string } = {}) {
     const text = await file.text();
     const parsed = parseCsv(text);
     if (parsed.length === 0) {
-      setError('Aucune ligne valide trouvée. Vérifiez que le fichier suit le modèle (colonne fullName requise).');
+      setError(t('noValidRowsFound'));
     }
     setRows(parsed);
   };
@@ -92,12 +95,12 @@ export function ExcelImportView({ locale: _locale }: { locale?: string } = {}) {
       });
       const json = await res.json();
       if (!json.success) {
-        setError(json.error?.message || json.message || 'Échec de l\'import.');
+        setError(json.error?.message || json.message || t('importFailedGeneric'));
         return;
       }
       setResults(json.results);
     } catch {
-      setError('Connexion impossible.');
+      setError(t('connectionError'));
     } finally {
       setImporting(false);
     }
@@ -107,15 +110,15 @@ export function ExcelImportView({ locale: _locale }: { locale?: string } = {}) {
     <div className="space-y-6 max-w-[1200px] mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Import massif d&apos;élèves</h1>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('bulkImportTitle')}</h1>
           <p className="text-xs text-slate-500 mt-1">
-            Importez un lot d&apos;élèves via fichier CSV. Pour un seul élève, utilisez plutôt{' '}
-            <Link href={`/${_locale || 'fr'}/dashboard/students/add`} className="text-[#2487B8] font-bold hover:underline">le formulaire d&apos;admission</Link>.
+            {t('bulkImportSubtitle')}{' '}
+            <Link href={`/${_locale || 'fr'}/dashboard/students/add`} className="text-[#2487B8] font-bold hover:underline">{t('admissionFormLink')}</Link>.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={downloadTemplate} className="h-10 rounded-xl px-4 gap-2 border-slate-200 text-xs font-bold">
           <Download className="w-4 h-4 text-slate-600" />
-          <span>Télécharger le modèle CSV</span>
+          <span>{t('downloadTemplate')}</span>
         </Button>
       </div>
 
@@ -124,8 +127,8 @@ export function ExcelImportView({ locale: _locale }: { locale?: string } = {}) {
           <Upload className="w-6 h-6" />
         </div>
         <div>
-          <p className="text-sm font-extrabold text-[#16212B]">{fileName ?? 'Sélectionnez votre fichier CSV'}</p>
-          <p className="text-xs text-slate-400 mt-0.5">Colonnes attendues : fullName (requis), email, phone, classLabel</p>
+          <p className="text-sm font-extrabold text-[#16212B]">{fileName ?? t('selectCsvFile')}</p>
+          <p className="text-xs text-slate-400 mt-0.5">{t('expectedColumns')}</p>
         </div>
         <input
           ref={fileRef}
@@ -140,7 +143,7 @@ export function ExcelImportView({ locale: _locale }: { locale?: string } = {}) {
           }}
         />
         <Button onClick={() => fileRef.current?.click()} variant="outline" size="sm" className="h-9 rounded-xl px-4 text-xs font-bold border-slate-200 text-[#2487B8]">
-          Parcourir mes fichiers
+          {t('browseFiles')}
         </Button>
       </Card>
 
@@ -154,19 +157,19 @@ export function ExcelImportView({ locale: _locale }: { locale?: string } = {}) {
       {rows.length > 0 && !results && (
         <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <p className="text-xs font-bold text-[#16212B]">{rows.length} ligne(s) prête(s) à importer</p>
+            <p className="text-xs font-bold text-[#16212B]">{t('importRowsReady', { count: rows.length })}</p>
             <Button size="sm" disabled={importing} onClick={handleImport} className="h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold gap-1.5">
               {importing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-              {importing ? 'Import en cours...' : 'Importer'}
+              {importing ? t('importInProgress') : t('importNow')}
             </Button>
           </div>
           <table className="w-full text-left text-xs">
             <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
               <tr>
-                <th className="py-2.5 px-4">Nom</th>
-                <th className="py-2.5 px-4">Email</th>
-                <th className="py-2.5 px-4">Téléphone</th>
-                <th className="py-2.5 px-4">Classe</th>
+                <th className="py-2.5 px-4">{t('studentNameCol')}</th>
+                <th className="py-2.5 px-4">{t('email')}</th>
+                <th className="py-2.5 px-4">{t('phone')}</th>
+                <th className="py-2.5 px-4">{t('classCol')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -187,15 +190,15 @@ export function ExcelImportView({ locale: _locale }: { locale?: string } = {}) {
         <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
           <div className="p-4 border-b border-slate-100">
             <p className="text-xs font-bold text-[#16212B]">
-              {results.filter(r => r.status === 'inserted').length} élève(s) importé(s) sur {results.length}
+              {t('importedStudentsCount', { count: results.filter(r => r.status === 'inserted').length, total: results.length })}
             </p>
           </div>
           <table className="w-full text-left text-xs">
             <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
               <tr>
-                <th className="py-2.5 px-4">Ligne</th>
-                <th className="py-2.5 px-4">Nom</th>
-                <th className="py-2.5 px-4">Statut</th>
+                <th className="py-2.5 px-4">{t('rowLineCol')}</th>
+                <th className="py-2.5 px-4">{t('studentNameCol')}</th>
+                <th className="py-2.5 px-4">{tCommon('status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -204,8 +207,8 @@ export function ExcelImportView({ locale: _locale }: { locale?: string } = {}) {
                   <td className="py-2 px-4 text-slate-500">{r.line}</td>
                   <td className="py-2 px-4 font-bold text-[#16212B]">{rows[r.line - 1]?.fullName ?? '—'}</td>
                   <td className="py-2 px-4">
-                    {r.status === 'inserted' && <span className="flex items-center gap-1 text-[#17A673] font-bold"><CheckCircle2 className="w-3.5 h-3.5" /> Importé</span>}
-                    {r.status === 'error' && <span className="text-rose-600 font-bold">Échec : {r.message}</span>}
+                    {r.status === 'inserted' && <span className="flex items-center gap-1 text-[#17A673] font-bold"><CheckCircle2 className="w-3.5 h-3.5" /> {t('importedStatus')}</span>}
+                    {r.status === 'error' && <span className="text-rose-600 font-bold">{t('importFailed', { message: r.message ?? '' })}</span>}
                   </td>
                 </tr>
               ))}

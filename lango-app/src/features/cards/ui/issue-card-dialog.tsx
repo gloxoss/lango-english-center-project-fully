@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -39,6 +41,9 @@ type IssueResult = {
 
 export function IssueCardDialog(props: Props) {
   const { open, onOpenChange, subjectType, templateType, subjectId, subjectLabel, subjectName } = props;
+  const t = useTranslations('Cards');
+  const params = useParams<{ locale?: string }>();
+  const locale = params?.locale ?? 'fr';
 
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
@@ -82,12 +87,12 @@ export function IssueCardDialog(props: Props) {
       });
       const json = await res.json();
       if (!json.success) {
-        setError(json.message || json.error?.message || 'Erreur lors de l\'émission.');
+        setError(json.message || json.error?.message || t('errorIssueCard'));
         return;
       }
       setResult(json.data);
     } catch {
-      setError('Connexion impossible.');
+      setError(t('connectionFailed'));
     } finally {
       setIssuing(false);
     }
@@ -104,7 +109,7 @@ export function IssueCardDialog(props: Props) {
     <Dialog open={open} onOpenChange={(o) => { if (!issuing) onOpenChange(o); }}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Émettre une carte</DialogTitle>
+          <DialogTitle>{t('dialogIssueCardTitle')}</DialogTitle>
           <DialogDescription>
             {subjectLabel} : <strong>{subjectName}</strong>
           </DialogDescription>
@@ -115,10 +120,10 @@ export function IssueCardDialog(props: Props) {
             <div className="rounded-2xl border border-emerald-200 bg-[#DDF5EC] p-4">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-[#17A673]" />
-                <p className="text-sm font-extrabold text-[#17A673]">Carte émise avec succès</p>
+                <p className="text-sm font-extrabold text-[#17A673]">{t('cardIssuedSuccess')}</p>
               </div>
               <p className="text-[11px] text-slate-600 mt-1">
-                Le jeton de vérification ne sera affiché qu'une fois. Conservez-le pour l'impression.
+                {t('tokenSingleViewNotice')}
               </p>
               <div className="mt-3 flex items-center gap-2">
                 <code className="flex-1 font-mono text-[10px] text-slate-700 bg-white border border-emerald-200 rounded-lg px-3 py-2 break-all">
@@ -126,7 +131,7 @@ export function IssueCardDialog(props: Props) {
                 </code>
                 <Button variant="outline" size="sm" className="h-8 text-xs cursor-pointer" onClick={copyToken}>
                   {copied ? <CheckCircle2 className="w-3.5 h-3.5 text-[#17A673]" /> : <Copy className="w-3.5 h-3.5" />}
-                  {copied ? 'Copié' : 'Copier'}
+                  {copied ? t('btnCopied') : t('btnCopy')}
                 </Button>
               </div>
             </div>
@@ -137,44 +142,44 @@ export function IssueCardDialog(props: Props) {
                   download={`carte-${subjectId}.pdf`}
                   className="inline-flex items-center justify-center gap-1.5 h-10 bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold rounded-xl cursor-pointer"
                 >
-                  <Download className="w-4 h-4" />Télécharger le PDF
+                  <Download className="w-4 h-4" />{t('btnDownloadPdfFull')}
                 </a>
               ) : (
                 <p className="text-[11px] font-semibold text-amber-600 text-center">
-                  PDF non généré automatiquement. Téléchargez-le depuis « Documents émis ».
+                  {t('pdfNotGeneratedWarning')}
                 </p>
               )}
               <a
-                href={`/fr/verify/card/${result.rawToken}`}
+                href={`/${locale}/verify/card/${result.rawToken}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-1.5 h-10 border border-slate-200 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-50 cursor-pointer"
               >
-                <ExternalLink className="w-4 h-4" />Tester la page de vérification
+                <ExternalLink className="w-4 h-4" />{t('btnTestVerification')}
               </a>
             </div>
           </div>
         ) : (
           <div className="py-4 space-y-4">
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-700">Modèle</Label>
+              <Label className="text-xs font-bold text-slate-700">{t('selectTemplateLabel')}</Label>
               <Select value={selectedTemplateId} onValueChange={selectTemplate}>
                 <SelectTrigger className="h-9 text-xs">
-                  <SelectValue placeholder="Choisir un modèle" />
+                  <SelectValue placeholder={t('chooseTemplatePlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {templates.length === 0 ? (
-                    <p className="px-3 py-2 text-xs text-slate-400">Aucun modèle de ce type.</p>
+                    <p className="px-3 py-2 text-xs text-slate-400">{t('noTemplateOfType')}</p>
                   ) : (
-                    templates.map(t => (
-                      <SelectItem key={t.id} value={t.id} className="text-xs">{t.name}</SelectItem>
+                    templates.map(tpl => (
+                      <SelectItem key={tpl.id} value={tpl.id} className="text-xs">{tpl.name}</SelectItem>
                     ))
                   )}
                 </SelectContent>
               </Select>
               {selectedTemplateId && !publishedVersionId && (
                 <p className="text-[11px] font-semibold text-amber-600">
-                  Ce modèle n'a pas de version publiée. Publiez-le depuis l'éditeur avant de l'émettre.
+                  {t('noPublishedVersionWarning')}
                 </p>
               )}
             </div>
@@ -185,12 +190,12 @@ export function IssueCardDialog(props: Props) {
         <DialogFooter>
           {result ? (
             <Button variant="outline" onClick={() => onOpenChange(false)} className="text-xs h-9 cursor-pointer">
-              Fermer
+              {t('btnClose')}
             </Button>
           ) : (
             <>
               <Button variant="outline" onClick={() => onOpenChange(false)} className="text-xs h-9 cursor-pointer" disabled={issuing}>
-                Annuler
+                {t('btnCancel')}
               </Button>
               <Button
                 className="bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs h-9 font-bold shadow-2xs gap-1.5 px-4 cursor-pointer"
@@ -198,7 +203,7 @@ export function IssueCardDialog(props: Props) {
                 disabled={issuing || !publishedVersionId}
               >
                 {issuing && <Loader2 className="w-4 h-4 animate-spin" />}
-                {issuing ? 'Émission...' : 'Émettre la carte'}
+                {issuing ? t('btnIssuing') : t('btnIssueCard')}
               </Button>
             </>
           )}

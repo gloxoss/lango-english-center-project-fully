@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Bus, Plus, Search, Filter, Edit2, Trash2, ShieldAlert, CheckCircle, AlertTriangle, X } from 'lucide-react';
+import { Bus, Plus, Search, Filter, Edit2, Trash2, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface Vehicle {
   id: string;
@@ -16,6 +17,9 @@ interface Vehicle {
 }
 
 export default function VehiclesPage() {
+  const t = useTranslations('Transport');
+  const tc = useTranslations('Common');
+
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -39,7 +43,7 @@ export default function VehiclesPage() {
       const res = await fetch('/api/transport/vehicles');
       const data = await res.json();
       if (data.success) {
-        setVehicles(data.data);
+        setVehicles(data.data || []);
       }
     } catch (err) {
       console.error(err);
@@ -99,25 +103,25 @@ export default function VehiclesPage() {
         setIsModalOpen(false);
         fetchVehicles();
       } else {
-        alert(data.error?.message || 'Erreur lors de l\'enregistrement');
+        alert(data.error?.message || t('errorSave'));
       }
     } catch (err) {
-      alert('Erreur serveur');
+      alert(t('serverError'));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Voulez-vous vraiment supprimer ce véhicule ?')) return;
+    if (!confirm(t('confirmDeleteVehicle'))) return;
     try {
       const res = await fetch(`/api/transport/vehicles/${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
         fetchVehicles();
       } else {
-        alert(data.error?.message || 'Erreur lors de la suppression');
+        alert(data.error?.message || t('errorDelete'));
       }
     } catch (err) {
-      alert('Erreur serveur');
+      alert(t('serverError'));
     }
   };
 
@@ -134,10 +138,10 @@ export default function VehiclesPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <Bus className="w-7 h-7 text-[#0066FF]" />
-            Gestion des Véhicules & Flotte
+            {t('vehiclesPageTitle')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Inventaire des bus, minicars et suivi des contrôles techniques et assurances.
+            {t('vehiclesPageSubtitle')}
           </p>
         </div>
         <button
@@ -145,7 +149,7 @@ export default function VehiclesPage() {
           className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-[#0066FF] rounded-lg hover:bg-blue-600 shadow-sm transition"
         >
           <Plus className="w-4 h-4" />
-          Ajouter un Véhicule
+          {t('addVehicle')}
         </button>
       </div>
 
@@ -155,7 +159,7 @@ export default function VehiclesPage() {
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Rechercher par code ou immatriculation..."
+            placeholder={t('searchVehiclePlaceholder')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0066FF]/20 focus:border-[#0066FF]"
@@ -168,10 +172,10 @@ export default function VehiclesPage() {
             onChange={e => setStatusFilter(e.target.value)}
             className="w-full sm:w-auto border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0066FF]/20"
           >
-            <option value="all">Tous les statuts</option>
-            <option value="active">Actif</option>
-            <option value="maintenance">En Maintenance</option>
-            <option value="out_of_service">Hors Service</option>
+            <option value="all">{t('allVehicleStatuses')}</option>
+            <option value="active">{t('inService')}</option>
+            <option value="maintenance">{t('inMaintenance')}</option>
+            <option value="out_of_service">{t('outOfService')}</option>
           </select>
         </div>
       </div>
@@ -179,27 +183,27 @@ export default function VehiclesPage() {
       {/* Table */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table role="table" aria-label="Liste des véhicules de transport" className="w-full text-left border-collapse">
+          <table role="table" aria-label={t('vehiclesPageTitle')} className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                <th className="p-4">Code</th>
-                <th className="p-4">Immatriculation</th>
-                <th className="p-4">Type / Marque</th>
-                <th className="p-4">Capacité</th>
-                <th className="p-4">Statut</th>
-                <th className="p-4">Assurance</th>
-                <th className="p-4">Visite Technique</th>
-                <th className="p-4 text-right">Actions</th>
+                <th className="p-4">{t('vehicleCodeHeader')}</th>
+                <th className="p-4">{t('registrationHeader')}</th>
+                <th className="p-4">{t('vehicleType')}</th>
+                <th className="p-4">{t('capacityHeader')}</th>
+                <th className="p-4">{tc('status')}</th>
+                <th className="p-4">{t('insuranceExpiry')}</th>
+                <th className="p-4">{t('inspectionExpiry')}</th>
+                <th className="p-4 text-right">{tc('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-slate-500">Chargement de la flotte...</td>
+                  <td colSpan={8} className="p-8 text-center text-slate-500">{t('loadingVehicles')}</td>
                 </tr>
               ) : filteredVehicles.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-slate-500">Aucun véhicule trouvé.</td>
+                  <td colSpan={8} className="p-8 text-center text-slate-500">{t('noVehiclesFound')}</td>
                 </tr>
               ) : (
                 filteredVehicles.map(vehicle => (
@@ -209,21 +213,21 @@ export default function VehiclesPage() {
                     <td className="p-4 text-slate-600 capitalize">
                       {vehicle.vehicleType} {vehicle.makeModel ? `(${vehicle.makeModel})` : ''}
                     </td>
-                    <td className="p-4 text-slate-900 font-medium">{vehicle.capacity} places</td>
+                    <td className="p-4 text-slate-900 font-medium">{vehicle.capacity}</td>
                     <td className="p-4">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
                         vehicle.status === 'active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
                         vehicle.status === 'maintenance' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
                         'bg-red-50 text-red-700 border border-red-200'
                       }`}>
-                        {vehicle.status === 'active' ? 'Actif' : vehicle.status === 'maintenance' ? 'Maintenance' : 'Hors Service'}
+                        {vehicle.status === 'active' ? t('inService') : vehicle.status === 'maintenance' ? t('inMaintenance') : t('outOfService')}
                       </span>
                     </td>
                     <td className="p-4 text-slate-600">
-                      {vehicle.insuranceExpiry ? new Date(vehicle.insuranceExpiry).toLocaleDateString('fr-FR') : '-'}
+                      {vehicle.insuranceExpiry ? new Date(vehicle.insuranceExpiry).toLocaleDateString() : '-'}
                     </td>
                     <td className="p-4 text-slate-600">
-                      {vehicle.inspectionExpiry ? new Date(vehicle.inspectionExpiry).toLocaleDateString('fr-FR') : '-'}
+                      {vehicle.inspectionExpiry ? new Date(vehicle.inspectionExpiry).toLocaleDateString() : '-'}
                     </td>
                     <td className="p-4 text-right space-x-2">
                       <button
@@ -253,7 +257,7 @@ export default function VehiclesPage() {
           <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl space-y-4">
             <div className="flex justify-between items-center border-b pb-3">
               <h3 id="modal-title" className="font-bold text-slate-900">
-                {editingVehicle ? 'Modifier le Véhicule' : 'Nouveau Véhicule'}
+                {editingVehicle ? t('editVehicle') : t('addVehicle')}
               </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
@@ -262,7 +266,7 @@ export default function VehiclesPage() {
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Code Véhicule</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">{t('vehicleCodeHeader')}</label>
                 <input
                   type="text"
                   required
@@ -273,7 +277,7 @@ export default function VehiclesPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Immatriculation</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">{t('registrationHeader')}</label>
                 <input
                   type="text"
                   required
@@ -286,7 +290,7 @@ export default function VehiclesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Capacité</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">{t('capacitySeats')}</label>
                   <input
                     type="number"
                     min={1}
@@ -297,7 +301,7 @@ export default function VehiclesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Type</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">{t('vehicleType')}</label>
                   <select
                     value={formData.vehicleType}
                     onChange={e => setFormData({ ...formData, vehicleType: e.target.value })}
@@ -312,19 +316,19 @@ export default function VehiclesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Statut</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">{tc('status')}</label>
                   <select
                     value={formData.status}
                     onChange={e => setFormData({ ...formData, status: e.target.value })}
                     className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#0066FF]/20"
                   >
-                    <option value="active">Actif</option>
-                    <option value="maintenance">Maintenance</option>
-                    <option value="out_of_service">Hors Service</option>
+                    <option value="active">{t('inService')}</option>
+                    <option value="maintenance">{t('inMaintenance')}</option>
+                    <option value="out_of_service">{t('outOfService')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Marque / Modèle</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">{t('makeModel')}</label>
                   <input
                     type="text"
                     value={formData.makeModel}
@@ -336,7 +340,7 @@ export default function VehiclesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Exp. Assurance</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">{t('insuranceExpiry')}</label>
                   <input
                     type="date"
                     value={formData.insuranceExpiry}
@@ -345,7 +349,7 @@ export default function VehiclesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Exp. Visite</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">{t('inspectionExpiry')}</label>
                   <input
                     type="date"
                     value={formData.inspectionExpiry}
@@ -361,13 +365,13 @@ export default function VehiclesPage() {
                   onClick={() => setIsModalOpen(false)}
                   className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200"
                 >
-                  Annuler
+                  {tc('cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 text-sm font-semibold text-white bg-[#0066FF] rounded-lg hover:bg-blue-600 shadow-sm"
                 >
-                  Enregistrer
+                  {tc('save')}
                 </button>
               </div>
             </form>

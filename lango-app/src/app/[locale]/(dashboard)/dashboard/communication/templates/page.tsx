@@ -4,5 +4,9 @@ import { SmsTemplatesView } from '@/features/communication/ui/sms-templates-view
 export default async function SmsTemplatesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'communication.send' });
-  return <SmsTemplatesView />;
+  return (
+    <main dir={locale === 'ar' ? 'rtl' : 'ltr'} lang={locale}>
+      <SmsTemplatesView locale={locale} />
+    </main>
+  );
 }

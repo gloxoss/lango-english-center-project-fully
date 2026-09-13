@@ -2,29 +2,31 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { Settings as SettingsIcon, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 type Preference = { key: string; value: unknown };
 
-const CONSENTS: { key: string; label: string; hint: string }[] = [
-  { key: 'contactConsent', label: 'Contact par téléphone', hint: "Autorisez l'établissement à vous contacter par téléphone." },
-  { key: 'mediaConsent', label: 'Photos / médias', hint: "Autorisez la publication de photos de votre enfant (événements)." },
-  { key: 'transportConsent', label: 'Transport scolaire', hint: "Autorisez la communication sur le transport scolaire." },
-  { key: 'hostelConsent', label: 'Internat', hint: "Autorisez la communication sur l'internat." },
-  { key: 'eventConsent', label: 'Événements', hint: "Autorisez la communication sur les événements de l'établissement." },
-];
-
-const OTHER_KEYS: { key: string; label: string }[] = [
-  { key: 'locale', label: 'Langue préférée' },
-  { key: 'theme', label: 'Thème' },
-  { key: 'navCollapsed', label: 'Menu réduit' },
-  { key: 'notificationsEnabled', label: 'Notifications activées' },
-];
-
 export function SettingsView() {
+  const tParent = useTranslations('Parent');
   const [prefs, setPrefs] = useState<Preference[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
+
+  const consents = [
+    { key: 'contactConsent', label: tParent('phoneConsent'), hint: tParent('phoneConsentHint') },
+    { key: 'mediaConsent', label: tParent('mediaConsent'), hint: tParent('mediaConsentHint') },
+    { key: 'transportConsent', label: tParent('transportConsent'), hint: tParent('transportConsentHint') },
+    { key: 'hostelConsent', label: tParent('hostelConsent'), hint: tParent('hostelConsentHint') },
+    { key: 'eventConsent', label: tParent('eventConsent'), hint: tParent('eventConsentHint') },
+  ];
+
+  const otherKeys = [
+    { key: 'locale', label: tParent('preferredLanguage') },
+    { key: 'theme', label: tParent('theme') },
+    { key: 'navCollapsed', label: tParent('collapsedMenu') },
+    { key: 'notificationsEnabled', label: tParent('notificationsEnabled') },
+  ];
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -35,14 +37,14 @@ export function SettingsView() {
       if (json.success) {
         setPrefs(json.data as Preference[]);
       } else {
-        setError(json.error?.message ?? 'Erreur lors du chargement des préférences.');
+        setError(json.error?.message ?? tParent('errorLoadPrefs'));
       }
     } catch {
-      setError('Impossible de se connecter au serveur.');
+      setError(tParent('errorConnect'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tParent]);
 
   useEffect(() => {
     load();
@@ -61,14 +63,14 @@ export function SettingsView() {
       const json = await res.json();
       if (json.success) {
         setPrefs(json.data as Preference[]);
-        setFlash('Préférence enregistrée.');
+        setFlash(tParent('preferenceSaved'));
       } else {
-        setFlash(json.error?.message ?? "Erreur lors de l'enregistrement.");
+        setFlash(json.error?.message ?? tParent('preferenceFailed'));
       }
     } catch {
-      setFlash('Impossible de se connecter au serveur.');
+      setFlash(tParent('errorConnect'));
     }
-  }, []);
+  }, [tParent]);
 
   return (
     <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
@@ -77,8 +79,8 @@ export function SettingsView() {
           <SettingsIcon className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Paramètres</h1>
-          <p className="text-sm text-slate-500">Préférences de contact et consentements.</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{tParent('settingsTitle')}</h1>
+          <p className="text-sm text-slate-500">{tParent('settingsSubtitle')}</p>
         </div>
       </div>
 
@@ -89,7 +91,7 @@ export function SettingsView() {
         </div>
       )}
       {flash && (
-        <div className={`p-4 rounded-lg text-sm flex items-center gap-2 ${flash.includes('enregistrée') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`} role="status">
+        <div className={`p-4 rounded-lg text-sm flex items-center gap-2 ${flash === tParent('preferenceSaved') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`} role="status">
           <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
           <span>{flash}</span>
         </div>
@@ -101,11 +103,11 @@ export function SettingsView() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
             <div className="px-5 py-4 border-b border-slate-100">
-              <h2 className="font-semibold text-slate-900">Consentements</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Vous pouvez retirer chaque consentement à tout moment.</p>
+              <h2 className="font-semibold text-slate-900">{tParent('consents')}</h2>
+              <p className="text-xs text-slate-500 mt-0.5">{tParent('consentsHint')}</p>
             </div>
             <div className="divide-y divide-slate-100">
-              {CONSENTS.map((c) => (
+              {consents.map((c) => (
                 <div key={c.key} className="px-5 py-4 flex items-start justify-between gap-4">
                   <div>
                     <div className="text-sm font-medium text-slate-800">{c.label}</div>
@@ -119,7 +121,7 @@ export function SettingsView() {
                       onChange={(e) => patch(c.key, e.target.checked)}
                       aria-label={c.label}
                     />
-                    <div className="w-10 h-6 bg-slate-200 rounded-full peer-checked:bg-[#0066FF] peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-[#0066FF] peer-focus-visible:ring-offset-2 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-4"></div>
+                    <div className="w-10 h-6 bg-slate-200 rounded-full peer-checked:bg-[#0066FF] peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-[#0066FF] peer-focus-visible:ring-offset-2 after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-4 rtl:peer-checked:after:-translate-x-4"></div>
                   </label>
                 </div>
               ))}
@@ -128,10 +130,10 @@ export function SettingsView() {
 
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm h-fit">
             <div className="px-5 py-4 border-b border-slate-100">
-              <h2 className="font-semibold text-slate-900">Préférences générales</h2>
+              <h2 className="font-semibold text-slate-900">{tParent('generalPreferences')}</h2>
             </div>
             <div className="divide-y divide-slate-100">
-              {OTHER_KEYS.map((k) => (
+              {otherKeys.map((k) => (
                 <div key={k.key} className="px-5 py-4 flex items-center justify-between gap-4">
                   <span className="text-sm font-medium text-slate-800">{k.label}</span>
                   <span className="text-sm text-slate-500">

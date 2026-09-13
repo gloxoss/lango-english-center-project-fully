@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,7 +22,9 @@ type ApiTemplate = { id: string; name: string; body: string };
 
 const VARIABLES = ['{nom_parent}', '{nom_eleve}', '{montant}', '{date}', '{ecole}'];
 
-export function SmsTemplatesView() {
+export function SmsTemplatesView({ locale }: { locale?: string } = {}) {
+  const t = useTranslations('Communication');
+  const tCommon = useTranslations('Common');
   const [templates, setTemplates] = useState<ApiTemplate[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [name, setName] = useState('');
@@ -64,7 +67,7 @@ export function SmsTemplatesView() {
 
   async function handleSave() {
     if (!name || !body) {
-      setError('Nom et message sont requis.');
+      setError(t('nameAndBodyRequired'));
       return;
     }
     setSaving(true);
@@ -78,7 +81,7 @@ export function SmsTemplatesView() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.message || "Échec de l'enregistrement.");
+        setError(json.message || t('saveFailed'));
         return;
       }
       setSuccess(json.message);
@@ -88,7 +91,7 @@ export function SmsTemplatesView() {
       }
     } catch (err) {
       console.error('Template save failed', err);
-      setError('Connexion impossible. Vérifiez votre réseau.');
+      setError(t('connectionFailed'));
     } finally {
       setSaving(false);
     }
@@ -119,17 +122,17 @@ export function SmsTemplatesView() {
           </div>
           <div>
             <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">
-              Studio de Modèles de Messages
+              {t('templatesStudioTitle')}
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Conception de modèles réutilisables avec variables dynamiques et prévisualisation mobile en direct.
+              {t('templatesStudioSubtitle')}
             </p>
           </div>
         </div>
 
         <Badge variant="success" className="font-bold gap-1 px-3 py-1.5 text-xs">
           <ShieldCheck className="w-3.5 h-3.5" />
-          <span>Approuvé Meta WhatsApp API</span>
+          <span>{t('metaApproved')}</span>
         </Badge>
       </div>
 
@@ -150,76 +153,79 @@ export function SmsTemplatesView() {
         {/* Templates List Column */}
         <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Modèles Enregistrés</h3>
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('savedTemplates')}</h3>
             <button
               onClick={newTemplate}
               className="text-xs font-bold text-[#0066FF] hover:underline flex items-center gap-1 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Nouveau</span>
+              <span>{t('newTemplate')}</span>
             </button>
           </div>
           <div className="space-y-2">
-            {templates.map((t) => (
+            {templates.map((tItem) => (
               <div
-                key={t.id}
+                key={tItem.id}
                 className={`w-full p-3 rounded-xl border flex items-start gap-2 transition-all ${
-                  selectedId === t.id ? 'bg-blue-50/70 border-[#0066FF]' : 'bg-white border-slate-200/80 hover:bg-slate-50'
+                  selectedId === tItem.id ? 'bg-blue-50/70 border-[#0066FF]' : 'bg-white border-slate-200/80 hover:bg-slate-50'
                 }`}
               >
-                <button onClick={() => selectTemplate(t)} className="flex-1 min-w-0 text-left flex items-start gap-2 cursor-pointer">
+                <button onClick={() => selectTemplate(tItem)} className="flex-1 min-w-0 text-start flex items-start gap-2 cursor-pointer">
                   <div
                     className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                      selectedId === t.id ? 'bg-[#0066FF] text-white' : 'bg-slate-100 text-slate-500'
+                      selectedId === tItem.id ? 'bg-[#0066FF] text-white' : 'bg-slate-100 text-slate-500'
                     }`}
                   >
                     <MessageSquare className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-extrabold text-[#16212B] truncate">{t.name}</p>
-                    <p className="text-[10px] text-slate-400 font-medium truncate mt-0.5">{t.body}</p>
+                    <p className="text-xs font-extrabold text-[#16212B] truncate">{tItem.name}</p>
+                    <p className="text-[10px] text-slate-400 font-medium truncate mt-0.5">{tItem.body}</p>
                   </div>
                 </button>
                 <button
-                  onClick={() => handleDelete(t.id)}
+                  onClick={() => handleDelete(tItem.id)}
+                  title={t('deleteTemplate')}
                   className="p-1 rounded-lg hover:bg-rose-50 text-rose-500 shrink-0 cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
             ))}
-            {templates.length === 0 && <p className="text-xs text-slate-400 font-medium">Aucun modèle créé.</p>}
+            {templates.length === 0 && <p className="text-xs text-slate-400 font-medium">{t('noTemplatesCreated')}</p>}
           </div>
         </Card>
 
         {/* Editor Form Column */}
         <Card className="lg:col-span-2 p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-6">
           <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-700">Nom de Référence du Modèle *</label>
+            <label className="text-xs font-bold text-slate-700">{t('templateNameLabel')}</label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: Rappel Facture Impayée - Relance 1"
+              placeholder={t('templateNamePlaceholder')}
               className="h-10 text-xs bg-slate-50 border border-slate-200 rounded-xl"
             />
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <label className="font-bold text-slate-700">Corps du Message *</label>
-              <span className="text-[11px] text-slate-400 font-mono font-bold">{body.length} / 160 caractères</span>
+              <label className="font-bold text-slate-700">{t('messageBodyLabel')}</label>
+              <span className="text-[11px] text-slate-400 font-mono font-bold">
+                {t('charCount', { current: body.length, max: 160 })}
+              </span>
             </div>
             <textarea
               rows={5}
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="Saisissez le texte du modèle..."
+              placeholder={t('messageBodyPlaceholder')}
               className="w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0066FF] text-slate-800 leading-relaxed font-mono"
             />
 
             <div className="space-y-2 pt-2">
               <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                Variables Dynamiques Disponibles:
+                {t('dynamicVariablesAvailable')}
               </label>
               <div className="flex flex-wrap gap-2">
                 {VARIABLES.map((v) => (
@@ -243,7 +249,7 @@ export function SmsTemplatesView() {
               className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-2 text-xs rounded-xl h-10 px-6 cursor-pointer"
             >
               <Save className="w-4 h-4" />
-              <span>{saving ? 'Enregistrement...' : 'Enregistrer le Modèle'}</span>
+              <span>{saving ? t('saving') : t('saveTemplate')}</span>
             </Button>
           </div>
         </Card>
@@ -252,7 +258,7 @@ export function SmsTemplatesView() {
         <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
           <div className="flex items-center gap-2">
             <Smartphone className="w-4 h-4 text-[#0066FF]" />
-            <h3 className="text-sm font-bold text-[#16212B]">Simulateur Mobile Live</h3>
+            <h3 className="text-sm font-bold text-[#16212B]">{t('mobileSimulatorTitle')}</h3>
           </div>
 
           <div className="bg-slate-900 p-4 rounded-3xl border-4 border-slate-800 shadow-xl space-y-3 max-w-[280px] mx-auto">
@@ -260,9 +266,9 @@ export function SmsTemplatesView() {
             <div className="bg-slate-100 p-3 rounded-2xl space-y-2 text-xs">
               <div className="bg-white p-3 rounded-xl shadow-xs border border-slate-200 text-slate-800 space-y-1">
                 <p className="text-[11px] leading-relaxed whitespace-pre-wrap font-sans">
-                  {previewBody || 'Votre message de démonstration s\'affichera ici avec les variables remplacées.'}
+                  {previewBody || t('mobileSimulatorPlaceholder')}
                 </p>
-                <span className="text-[9px] text-slate-400 block text-right">Aujourd'hui 14:32</span>
+                <span className="text-[9px] text-slate-400 block text-right">{t('todayTime', { time: '14:32' })}</span>
               </div>
             </div>
           </div>

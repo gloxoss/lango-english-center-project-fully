@@ -1,0 +1,2066 @@
+[
+  {
+    "route": "/page.tsx",
+    "file": "src/app/page.tsx",
+    "role": "Admin / Staff",
+    "status": "IN PROGRESS"
+  },
+  {
+    "route": "/alumni/directory",
+    "file": "src/app/[locale]/(alumni-portal)/alumni/directory/page.tsx",
+    "role": "Alumni Community",
+    "status": "DONE"
+  },
+  {
+    "route": "/alumni/events",
+    "file": "src/app/[locale]/(alumni-portal)/alumni/events/page.tsx",
+    "role": "Alumni Community",
+    "status": "DONE"
+  },
+  {
+    "route": "/alumni/mentoring",
+    "file": "src/app/[locale]/(alumni-portal)/alumni/mentoring/page.tsx",
+    "role": "Alumni Community",
+    "status": "DONE"
+  },
+  {
+    "route": "/alumni",
+    "file": "src/app/[locale]/(alumni-portal)/alumni/page.tsx",
+    "role": "Alumni Community",
+    "status": "DONE"
+  },
+  {
+    "route": "/alumni/profile",
+    "file": "src/app/[locale]/(alumni-portal)/alumni/profile/page.tsx",
+    "role": "Alumni Community",
+    "status": "DONE"
+  },
+  {
+    "route": "/alumni/records",
+    "file": "src/app/[locale]/(alumni-portal)/alumni/records/page.tsx",
+    "role": "Alumni Community",
+    "status": "DONE"
+  },
+  {
+    "route": "/alumni/requests",
+    "file": "src/app/[locale]/(alumni-portal)/alumni/requests/page.tsx",
+    "role": "Alumni Community",
+    "status": "DONE"
+  },
+  {
+    "route": "/invitations/[token]",
+    "file": "src/app/[locale]/(auth)/invitations/[token]/page.tsx",
+    "role": "Public / User",
+    "status": "DONE"
+  },
+  {
+    "route": "/login",
+    "file": "src/app/[locale]/(auth)/login/page.tsx",
+    "role": "Public / User",
+    "status": "DONE"
+  },
+  {
+    "route": "/signup",
+    "file": "src/app/[locale]/(auth)/signup/page.tsx",
+    "role": "Public / User",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/assessment/exam-master",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/assessment/exam-master/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/assessment/homework",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/assessment/homework/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/assessment/marksheet",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/assessment/marksheet/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/academics/assessment/online-exams",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/assessment/online-exams/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/assignments",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/assignments/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/calendar",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/calendar/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/class-section-teachers",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/class-section-teachers/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/class-subjects",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/class-subjects/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/classes",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/classes/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/classes/[id]",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/classes/[id]/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/conflicts",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/conflicts/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/evaluations",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/evaluations/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/exams",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/exams/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/grades/entry",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/grades/entry/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/grading/policies",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/grading/policies/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/live-class/new",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/live-class/new/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/academics/live-class",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/live-class/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/live-class/[id]",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/live-class/[id]/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/live-class-reports",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/live-class-reports/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/mediums",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/mediums/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/optional-subjects",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/optional-subjects/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/promotions",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/promotions/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/question-bank",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/question-bank/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/readiness",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/readiness/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/results",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/results/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/rooms",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/rooms/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/schedule",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/schedule/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/sections",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/sections/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/semesters",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/semesters/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/session-copy",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/session-copy/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/shifts",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/shifts/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/streams",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/streams/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/subjects",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/subjects/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/syllabus",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/syllabus/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/teacher-availability",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/teacher-availability/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/academics/teacher-schedule",
+    "file": "src/app/[locale]/(dashboard)/dashboard/academics/teacher-schedule/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/accountant",
+    "file": "src/app/[locale]/(dashboard)/dashboard/accountant/page.tsx",
+    "role": "Accountant",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/analytics",
+    "file": "src/app/[locale]/(dashboard)/dashboard/analytics/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/attendance/audit",
+    "file": "src/app/[locale]/(dashboard)/dashboard/attendance/audit/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/attendance/badges",
+    "file": "src/app/[locale]/(dashboard)/dashboard/attendance/badges/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/attendance/excuses",
+    "file": "src/app/[locale]/(dashboard)/dashboard/attendance/excuses/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/attendance/flags",
+    "file": "src/app/[locale]/(dashboard)/dashboard/attendance/flags/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/attendance/flags/[id]",
+    "file": "src/app/[locale]/(dashboard)/dashboard/attendance/flags/[id]/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/attendance",
+    "file": "src/app/[locale]/(dashboard)/dashboard/attendance/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/attendance/qr-reports",
+    "file": "src/app/[locale]/(dashboard)/dashboard/attendance/qr-reports/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/attendance/scanner",
+    "file": "src/app/[locale]/(dashboard)/dashboard/attendance/scanner/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/broadcast/automations",
+    "file": "src/app/[locale]/(dashboard)/dashboard/broadcast/automations/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/broadcast/campaigns",
+    "file": "src/app/[locale]/(dashboard)/dashboard/broadcast/campaigns/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/broadcast/campaigns/[id]",
+    "file": "src/app/[locale]/(dashboard)/dashboard/broadcast/campaigns/[id]/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/broadcast/connections",
+    "file": "src/app/[locale]/(dashboard)/dashboard/broadcast/connections/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/broadcast",
+    "file": "src/app/[locale]/(dashboard)/dashboard/broadcast/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/broadcast/reports",
+    "file": "src/app/[locale]/(dashboard)/dashboard/broadcast/reports/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/broadcast/segments",
+    "file": "src/app/[locale]/(dashboard)/dashboard/broadcast/segments/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/broadcast/templates",
+    "file": "src/app/[locale]/(dashboard)/dashboard/broadcast/templates/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/cards/admit-cards",
+    "file": "src/app/[locale]/(dashboard)/dashboard/cards/admit-cards/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/cards/employees",
+    "file": "src/app/[locale]/(dashboard)/dashboard/cards/employees/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/cards/issued",
+    "file": "src/app/[locale]/(dashboard)/dashboard/cards/issued/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/cards/jobs",
+    "file": "src/app/[locale]/(dashboard)/dashboard/cards/jobs/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/cards",
+    "file": "src/app/[locale]/(dashboard)/dashboard/cards/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/cards/students",
+    "file": "src/app/[locale]/(dashboard)/dashboard/cards/students/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/cards/templates",
+    "file": "src/app/[locale]/(dashboard)/dashboard/cards/templates/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/cards/templates/[id]/edit",
+    "file": "src/app/[locale]/(dashboard)/dashboard/cards/templates/[id]/edit/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/certificates/definitions",
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/definitions/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/certificates/definitions/[id]",
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/definitions/[id]/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/certificates/issue/employees",
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/issue/employees/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/certificates/issue/students",
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/issue/students/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/certificates/issued",
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/issued/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/certificates/issued/[id]",
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/issued/[id]/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/certificates/jobs",
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/jobs/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/certificates",
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/certificates/requests",
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/requests/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/certificates/settings",
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/settings/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/certificates/templates",
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/templates/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/certificates/templates/[id]/edit",
+    "file": "src/app/[locale]/(dashboard)/dashboard/certificates/templates/[id]/edit/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/communication/broadcast",
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/broadcast/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/communication/campaign-composer",
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/campaign-composer/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/communication/crm",
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/crm/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/communication/delivery-reports",
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/delivery-reports/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/communication/events",
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/events/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/communication/forms",
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/forms/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/communication/leads",
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/leads/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/communication/milestones",
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/milestones/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/communication",
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/communication/reminders",
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/reminders/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/communication/segments",
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/segments/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/communication/templates",
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/templates/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/communication/templates-automation",
+    "file": "src/app/[locale]/(dashboard)/dashboard/communication/templates-automation/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/content/library",
+    "file": "src/app/[locale]/(dashboard)/dashboard/content/library/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/content/types",
+    "file": "src/app/[locale]/(dashboard)/dashboard/content/types/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/documents/generator",
+    "file": "src/app/[locale]/(dashboard)/dashboard/documents/generator/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/events",
+    "file": "src/app/[locale]/(dashboard)/dashboard/events/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/events/[id]",
+    "file": "src/app/[locale]/(dashboard)/dashboard/events/[id]/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/accounting/accounts",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/accounts/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/accounting/deposits/new",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/deposits/new/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/accounting/expenses",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/expenses/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/accounting/periods",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/periods/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/accounting/statements",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/statements/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/accounting/student-accounting",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/student-accounting/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/accounting/transactions",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/transactions/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/accounting/voucher-types",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/accounting/voucher-types/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/allocation",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/allocation/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/allocations",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/allocations/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/approvals",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/approvals/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/bank-reconciliation",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/bank-reconciliation/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/finance/cashier-sessions",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/cashier-sessions/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/chart-of-accounts",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/chart-of-accounts/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/finance/collection-desk",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/collection-desk/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/credit-notes",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/credit-notes/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/expenses/new",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/expenses/new/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/expenses",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/expenses/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/fee-assignments",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/fee-assignments/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/fee-structures",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/fee-structures/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/fee-types",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/fee-types/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/fine-policies",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/fine-policies/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/invoices",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/invoices/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/invoices/[id]",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/invoices/[id]/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/journal",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/journal/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/finance/office-accounting",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/office-accounting/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/online-payments",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/online-payments/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/finance",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/payments/new",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/payments/new/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/payments",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/payments/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/receipts",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/receipts/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/receivables",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/receivables/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/reconciliation",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/reconciliation/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/finance/refunds",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/refunds/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/reminders",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/reminders/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/reports",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/reports/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/finance/statements",
+    "file": "src/app/[locale]/(dashboard)/dashboard/finance/statements/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/homework",
+    "file": "src/app/[locale]/(dashboard)/dashboard/homework/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/homework/submissions",
+    "file": "src/app/[locale]/(dashboard)/dashboard/homework/submissions/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/hostel/allocations",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/allocations/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hostel/allocations/[id]",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/allocations/[id]/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hostel/applications",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/applications/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hostel/board",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/board/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hostel/categories",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/categories/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hostel/guardian",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/guardian/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hostel/hostels",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/hostels/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hostel/hostels/[id]",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/hostels/[id]/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hostel/leave-passes",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/leave-passes/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hostel/me",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/me/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hostel",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hostel/policies",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/policies/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hostel/reports",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/reports/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hostel/roll-call",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/roll-call/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hostel/rooms",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/rooms/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hostel/zones",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hostel/zones/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hr/access",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/access/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hr/advances",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/advances/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/hr/awards",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/awards/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/hr/departments",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/departments/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hr/designations",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/designations/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hr/employees/new",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/employees/new/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hr/employees",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/employees/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hr/employees/[id]",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/employees/[id]/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hr/leave",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/leave/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hr/leave-management",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/leave-management/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/hr/overview",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/overview/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hr",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/hr/salary-advances",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/salary-advances/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/hr/self-service",
+    "file": "src/app/[locale]/(dashboard)/dashboard/hr/self-service/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/inventory/adjustments",
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/adjustments/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/inventory/categories",
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/categories/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/inventory/issues",
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/issues/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/inventory/overview",
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/overview/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/inventory",
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/inventory/products",
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/products/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/inventory/purchases",
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/purchases/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/inventory/sales",
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/sales/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/inventory/stock",
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/stock/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/inventory/stores",
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/stores/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/inventory/suppliers",
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/suppliers/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/inventory/transfers",
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/transfers/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/inventory/units",
+    "file": "src/app/[locale]/(dashboard)/dashboard/inventory/units/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/library/catalog",
+    "file": "src/app/[locale]/(dashboard)/dashboard/library/catalog/page.tsx",
+    "role": "Librarian / Staff",
+    "status": "IN PROGRESS"
+  },
+  {
+    "route": "/dashboard/library/catalog/[id]",
+    "file": "src/app/[locale]/(dashboard)/dashboard/library/catalog/[id]/page.tsx",
+    "role": "Librarian / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/library/categories",
+    "file": "src/app/[locale]/(dashboard)/dashboard/library/categories/page.tsx",
+    "role": "Librarian / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/library/me",
+    "file": "src/app/[locale]/(dashboard)/dashboard/library/me/page.tsx",
+    "role": "Librarian / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/library",
+    "file": "src/app/[locale]/(dashboard)/dashboard/library/page.tsx",
+    "role": "Librarian / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard",
+    "file": "src/app/[locale]/(dashboard)/dashboard/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/parent/attendance",
+    "file": "src/app/[locale]/(dashboard)/dashboard/parent/attendance/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/parent/communication",
+    "file": "src/app/[locale]/(dashboard)/dashboard/parent/communication/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/parent/finance",
+    "file": "src/app/[locale]/(dashboard)/dashboard/parent/finance/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/parent/live-classes",
+    "file": "src/app/[locale]/(dashboard)/dashboard/parent/live-classes/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/parent",
+    "file": "src/app/[locale]/(dashboard)/dashboard/parent/page.tsx",
+    "role": "Parent / Guardian",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/parent/requests",
+    "file": "src/app/[locale]/(dashboard)/dashboard/parent/requests/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/parent/settings",
+    "file": "src/app/[locale]/(dashboard)/dashboard/parent/settings/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/guard/config",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/guard/config/page.tsx",
+    "role": "Security Guard",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/guard/emergency",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/guard/emergency/page.tsx",
+    "role": "Security Guard",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/guard/incidents",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/guard/incidents/page.tsx",
+    "role": "Security Guard",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/guard",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/guard/page.tsx",
+    "role": "Security Guard",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/guard/pickups",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/guard/pickups/page.tsx",
+    "role": "Security Guard",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/guard/scanner",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/guard/scanner/page.tsx",
+    "role": "Security Guard",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/guard/visitors",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/guard/visitors/page.tsx",
+    "role": "Security Guard",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/leadership/admin",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/leadership/admin/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/leadership/approvals",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/leadership/approvals/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/leadership/exceptions",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/leadership/exceptions/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/leadership",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/leadership/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/librarian/charges",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/charges/page.tsx",
+    "role": "Librarian / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/librarian/copies",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/copies/page.tsx",
+    "role": "Librarian / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/librarian/desk",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/desk/page.tsx",
+    "role": "Librarian / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/librarian/holds",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/holds/page.tsx",
+    "role": "Librarian / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/librarian/members",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/members/page.tsx",
+    "role": "Librarian / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/librarian/members/[id]",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/members/[id]/page.tsx",
+    "role": "Librarian / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/librarian",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/page.tsx",
+    "role": "Librarian / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/librarian/policies",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/policies/page.tsx",
+    "role": "Librarian / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/librarian/reports",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/reports/page.tsx",
+    "role": "Librarian / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/librarian/stocktake",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/stocktake/page.tsx",
+    "role": "Librarian / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/portals/librarian/transfers",
+    "file": "src/app/[locale]/(dashboard)/dashboard/portals/librarian/transfers/page.tsx",
+    "role": "Librarian / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/receptionist/appointments",
+    "file": "src/app/[locale]/(dashboard)/dashboard/receptionist/appointments/page.tsx",
+    "role": "Receptionist",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/receptionist/handoffs",
+    "file": "src/app/[locale]/(dashboard)/dashboard/receptionist/handoffs/page.tsx",
+    "role": "Receptionist",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/receptionist/inquiries",
+    "file": "src/app/[locale]/(dashboard)/dashboard/receptionist/inquiries/page.tsx",
+    "role": "Receptionist",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/receptionist",
+    "file": "src/app/[locale]/(dashboard)/dashboard/receptionist/page.tsx",
+    "role": "Receptionist",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/receptionist/pickups",
+    "file": "src/app/[locale]/(dashboard)/dashboard/receptionist/pickups/page.tsx",
+    "role": "Receptionist",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/receptionist/visitors",
+    "file": "src/app/[locale]/(dashboard)/dashboard/receptionist/visitors/page.tsx",
+    "role": "Receptionist",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/reports/admin",
+    "file": "src/app/[locale]/(dashboard)/dashboard/reports/admin/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/reports",
+    "file": "src/app/[locale]/(dashboard)/dashboard/reports/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/reports/runs",
+    "file": "src/app/[locale]/(dashboard)/dashboard/reports/runs/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/reports/schedules",
+    "file": "src/app/[locale]/(dashboard)/dashboard/reports/schedules/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/reports/[key]",
+    "file": "src/app/[locale]/(dashboard)/dashboard/reports/[key]/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/access-reset",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/access-reset/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/accounting-defaults",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/accounting-defaults/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/attendance",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/attendance/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/settings/audit-logs",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/audit-logs/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/branches",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/branches/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/cndp",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/cndp/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/custom-fields",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/custom-fields/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/domain",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/domain/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/drafts",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/drafts/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/entitlements",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/entitlements/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/exports",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/exports/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/jobs",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/jobs/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/live-classrooms",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/live-classrooms/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/migration",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/migration/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/notifications",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/notifications/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/numbering",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/numbering/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/onboarding",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/onboarding/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/settings",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/payment-methods",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/payment-methods/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/permissions",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/permissions/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/policies",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/policies/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/providers",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/providers/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/scanner-devices",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/scanner-devices/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/scheduled-jobs",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/scheduled-jobs/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/security/2fa",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/security/2fa/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/settings/security/login-events",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/security/login-events/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/security",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/security/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/staff",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/staff/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/settings/subscription",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/subscription/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/translations",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/translations/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/users",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/users/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/values",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/values/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/website/menu",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/website/menu/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/website/news",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/website/news/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/website",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/website/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/settings/website/pages",
+    "file": "src/app/[locale]/(dashboard)/dashboard/settings/website/pages/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/student/live-classes",
+    "file": "src/app/[locale]/(dashboard)/dashboard/student/live-classes/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/student",
+    "file": "src/app/[locale]/(dashboard)/dashboard/student/page.tsx",
+    "role": "Student",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/students/add",
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/add/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/students/admissions/new",
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/admissions/new/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/students/admissions",
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/admissions/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/students/alumni/events",
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/alumni/events/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/students/alumni",
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/alumni/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/students/alumni/requests",
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/alumni/requests/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/students/alumni-transition",
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/alumni-transition/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/students/import",
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/import/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/students/matricules",
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/matricules/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/students",
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/students/parents",
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/parents/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/students/parents/[id]",
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/parents/[id]/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/students/photos",
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/photos/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/students/promotions",
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/promotions/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/students/transfers",
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/transfers/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/students/[id]",
+    "file": "src/app/[locale]/(dashboard)/dashboard/students/[id]/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/super-admin/domains",
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/domains/page.tsx",
+    "role": "Super Admin",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/super-admin",
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/page.tsx",
+    "role": "Super Admin",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/super-admin/reports",
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/reports/page.tsx",
+    "role": "Super Admin",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/super-admin/schools/create",
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/schools/create/page.tsx",
+    "role": "Super Admin",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/super-admin/schools",
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/schools/page.tsx",
+    "role": "Super Admin",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/super-admin/schools/[id]",
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/schools/[id]/page.tsx",
+    "role": "Super Admin",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/super-admin/settings",
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/settings/page.tsx",
+    "role": "Super Admin",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/super-admin/sms",
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/sms/page.tsx",
+    "role": "Super Admin",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/super-admin/subscriptions/list",
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/subscriptions/list/page.tsx",
+    "role": "Super Admin",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/super-admin/subscriptions",
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/subscriptions/page.tsx",
+    "role": "Super Admin",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/super-admin/support",
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/support/page.tsx",
+    "role": "Super Admin",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/super-admin/waitlist",
+    "file": "src/app/[locale]/(dashboard)/dashboard/super-admin/waitlist/page.tsx",
+    "role": "Super Admin",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/teacher",
+    "file": "src/app/[locale]/(dashboard)/dashboard/teacher/page.tsx",
+    "role": "Teacher",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/teachers/bulk-import",
+    "file": "src/app/[locale]/(dashboard)/dashboard/teachers/bulk-import/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/teachers/manage",
+    "file": "src/app/[locale]/(dashboard)/dashboard/teachers/manage/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/teachers",
+    "file": "src/app/[locale]/(dashboard)/dashboard/teachers/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/teachers/[id]",
+    "file": "src/app/[locale]/(dashboard)/dashboard/teachers/[id]/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/transport/allocations",
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/allocations/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/transport/boarding",
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/boarding/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/transport/drivers",
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/drivers/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/transport/guardian",
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/guardian/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/transport/incidents",
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/incidents/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/transport",
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/transport/policies",
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/policies/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/transport/reports",
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/reports/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/transport/routes",
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/routes/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/transport/stops",
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/stops/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/transport/student",
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/student/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/transport/trips",
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/trips/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/transport/vehicles",
+    "file": "src/app/[locale]/(dashboard)/dashboard/transport/vehicles/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/workforce/advances",
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/advances/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/workforce/awards",
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/awards/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/workforce/leave",
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/leave/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/workforce",
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/adjustments",
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/adjustments/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/assignments",
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/assignments/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/components",
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/components/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/payments",
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/payments/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/payslips",
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/payslips/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/regulations",
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/regulations/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/runs",
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/runs/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/runs/[id]",
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/runs/[id]/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/settings",
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/settings/page.tsx",
+    "role": "Admin / Staff",
+    "status": "CONTEXTUAL / SUB-FLOW"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/structures",
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/payroll/structures/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/dashboard/workforce/timeclock",
+    "file": "src/app/[locale]/(dashboard)/dashboard/workforce/timeclock/page.tsx",
+    "role": "Admin / Staff",
+    "status": "DONE"
+  },
+  {
+    "route": "/[locale]",
+    "file": "src/app/[locale]/(marketing)/page.tsx",
+    "role": "Public Visitor",
+    "status": "DONE"
+  },
+  {
+    "route": "/[tenantSlug]/about",
+    "file": "src/app/[locale]/(school-site)/[tenantSlug]/about/page.tsx",
+    "role": "Public Visitor",
+    "status": "DONE"
+  },
+  {
+    "route": "/[tenantSlug]/contact",
+    "file": "src/app/[locale]/(school-site)/[tenantSlug]/contact/page.tsx",
+    "role": "Public Visitor",
+    "status": "DONE"
+  },
+  {
+    "route": "/[tenantSlug]/events",
+    "file": "src/app/[locale]/(school-site)/[tenantSlug]/events/page.tsx",
+    "role": "Public Visitor",
+    "status": "DONE"
+  },
+  {
+    "route": "/[tenantSlug]/faq",
+    "file": "src/app/[locale]/(school-site)/[tenantSlug]/faq/page.tsx",
+    "role": "Public Visitor",
+    "status": "DONE"
+  },
+  {
+    "route": "/[tenantSlug]/gallery",
+    "file": "src/app/[locale]/(school-site)/[tenantSlug]/gallery/page.tsx",
+    "role": "Public Visitor",
+    "status": "DONE"
+  },
+  {
+    "route": "/[tenantSlug]/news",
+    "file": "src/app/[locale]/(school-site)/[tenantSlug]/news/page.tsx",
+    "role": "Public Visitor",
+    "status": "DONE"
+  },
+  {
+    "route": "/[tenantSlug]/news/[slug]",
+    "file": "src/app/[locale]/(school-site)/[tenantSlug]/news/[slug]/page.tsx",
+    "role": "Public Visitor",
+    "status": "DONE"
+  },
+  {
+    "route": "/[tenantSlug]",
+    "file": "src/app/[locale]/(school-site)/[tenantSlug]/page.tsx",
+    "role": "Public Visitor",
+    "status": "DONE"
+  },
+  {
+    "route": "/[tenantSlug]/services",
+    "file": "src/app/[locale]/(school-site)/[tenantSlug]/services/page.tsx",
+    "role": "Public Visitor",
+    "status": "DONE"
+  },
+  {
+    "route": "/verify/card/[token]",
+    "file": "src/app/[locale]/verify/card/[token]/page.tsx",
+    "role": "Public (Any)",
+    "status": "DONE"
+  },
+  {
+    "route": "/verify/certificate/[token]",
+    "file": "src/app/[locale]/verify/certificate/[token]/page.tsx",
+    "role": "Public (Any)",
+    "status": "DONE"
+  },
+  {
+    "route": "/verify-document",
+    "file": "src/app/[locale]/verify-document/page.tsx",
+    "role": "Public (Any)",
+    "status": "DONE"
+  }
+]

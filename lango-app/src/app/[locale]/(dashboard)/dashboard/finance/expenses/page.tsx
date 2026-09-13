@@ -7,6 +7,8 @@ export default async function ExpensesPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { requiredCapability: 'finance.read' });
+  // `finance.manage`, matching the capability /api/finance/expenses requires: with
+  // `finance.read` a user reached the page and every fetch on it 403'd.
+  await requireServerPage(locale, { requiredCapability: 'finance.manage' });
   return <ExpensesManagementView />;
 }

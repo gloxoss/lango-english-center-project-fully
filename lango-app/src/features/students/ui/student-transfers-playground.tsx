@@ -12,6 +12,7 @@ import {
   MapPin, Users, ArrowUpRight, Info
 } from 'lucide-react';
 import { usePermissions } from '@/hooks/use-permissions';
+import { useTranslations } from 'next-intl';
 import { StudentTransfersClient } from './student-transfers-client';
 
 type StudentResult = {
@@ -65,6 +66,8 @@ const DEFAULT_PLAYGROUND_CLASSES: ClassSectionOption[] = [
 ];
 
 export function StudentTransfersPlayground({ locale = 'fr' }: { locale?: string }) {
+  const t = useTranslations('Students');
+  const tCommon = useTranslations('Common');
   const { can } = usePermissions();
   const [activeTab, setActiveTab] = useState<'standard' | 'variation-a' | 'variation-b' | 'variation-c'>('variation-a');
 
@@ -245,10 +248,10 @@ export function StudentTransfersPlayground({ locale = 'fr' }: { locale?: string 
               <span className="text-xs font-semibold text-slate-400">Interactif · 3 Variations</span>
             </div>
             <h1 className="text-xl font-bold text-[#16212B] mt-1.5 tracking-tight">
-              Module Transferts d&apos;Élèves & Mutations Inter-Campus
+              {t('transfersTitle')}
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Comparez les modèles d&apos;interaction pour le transfert d&apos;élèves entre établissements et sections.
+              {t('transfersSubtitle')}
             </p>
           </div>
 
@@ -263,7 +266,7 @@ export function StudentTransfersPlayground({ locale = 'fr' }: { locale?: string 
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
-              <span>Var. A : Assistant Guidé (3 Étapes)</span>
+              <span>{t('varAGuided')}</span>
             </button>
             <button
               onClick={() => setActiveTab('variation-b')}
@@ -274,7 +277,7 @@ export function StudentTransfersPlayground({ locale = 'fr' }: { locale?: string 
               }`}
             >
               <ArrowLeftRight className="w-3.5 h-3.5" />
-              <span>Var. B : Panneau Comparatif</span>
+              <span>{t('varBComparative')}</span>
             </button>
             <button
               onClick={() => setActiveTab('variation-c')}
@@ -285,7 +288,7 @@ export function StudentTransfersPlayground({ locale = 'fr' }: { locale?: string 
               }`}
             >
               <Building2 className="w-3.5 h-3.5" />
-              <span>Var. C : Matrice de Campus</span>
+              <span>{t('varCCampusMatrix')}</span>
             </button>
             <button
               onClick={() => setActiveTab('standard')}
@@ -295,7 +298,7 @@ export function StudentTransfersPlayground({ locale = 'fr' }: { locale?: string 
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              <span>Vue Initiale</span>
+              <span>{t('varInitialView')}</span>
             </button>
           </div>
         </div>
@@ -317,7 +320,7 @@ export function StudentTransfersPlayground({ locale = 'fr' }: { locale?: string 
             onClick={() => setSuccess(null)}
             className="h-7 text-xs border-[#17A673]/40 text-[#17A673] bg-white hover:bg-[#DDF5EC]"
           >
-            Fermer
+            {tCommon('close')}
           </Button>
         </div>
       )}
@@ -348,9 +351,9 @@ export function StudentTransfersPlayground({ locale = 'fr' }: { locale?: string 
                   {wizardStep > 1 ? <Check className="w-4 h-4" /> : '1'}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-[#16212B] truncate">1. Sélection Élève</p>
+                  <p className="text-xs font-bold text-[#16212B] truncate">{t('stepSelectStudent')}</p>
                   <p className="text-[10px] text-slate-500 truncate">
-                    {selected ? selected.fullName : 'Rechercher le dossier'}
+                    {selected ? selected.fullName : t('step1SearchStudent')}
                   </p>
                 </div>
               </div>
@@ -377,9 +380,9 @@ export function StudentTransfersPlayground({ locale = 'fr' }: { locale?: string 
                   {wizardStep > 2 ? <Check className="w-4 h-4" /> : '2'}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-[#16212B] truncate">2. Destination & Capacité</p>
+                  <p className="text-xs font-bold text-[#16212B] truncate">{t('stepDestinationCapacity')}</p>
                   <p className="text-[10px] text-slate-500 truncate">
-                    {selectedTargetBranch ? selectedTargetBranch.name : 'Choisir le campus'}
+                    {selectedTargetBranch ? selectedTargetBranch.name : t('step2ChooseCampus')}
                   </p>
                 </div>
               </div>
@@ -402,8 +405,8 @@ export function StudentTransfersPlayground({ locale = 'fr' }: { locale?: string 
                   3
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-[#16212B] truncate">3. Synthèse & Confirmation</p>
-                  <p className="text-[10px] text-slate-500 truncate">Validation du dossier</p>
+                  <p className="text-xs font-bold text-[#16212B] truncate">{t('stepSynthesisConfirm')}</p>
+                  <p className="text-[10px] text-slate-500 truncate">{t('step3ConfirmDossier')}</p>
                 </div>
               </div>
             </div>
@@ -414,13 +417,13 @@ export function StudentTransfersPlayground({ locale = 'fr' }: { locale?: string 
             <Card className="p-6 bg-white rounded-2xl border border-slate-200/90 shadow-2xs space-y-5">
               <div>
                 <div className="flex items-center justify-between">
-                  <h2 className="text-base font-bold text-[#16212B]">Étape 1 : Trouver l&apos;élève à muter</h2>
+                  <h2 className="text-base font-bold text-[#16212B]">{t('step1SearchTitle')}</h2>
                   <Badge variant="neutral" className="text-[10px] font-semibold text-slate-500">
-                    Recherche directe multi-campus
+                    {t('step1SearchSubtitle')}
                   </Badge>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  Tapez le matricule (ex: ETU-2025-0042) ou le nom de l&apos;élève pour charger son dossier scolaire actif.
+                  {t('step1SearchPrompt')}
                 </p>
               </div>
 
@@ -431,14 +434,14 @@ export function StudentTransfersPlayground({ locale = 'fr' }: { locale?: string 
                     <Input
                       value={search}
                       onChange={e => setSearch(e.target.value)}
-                      placeholder="Ex: Yasmine Benjelloun, Mehdi El Amrani ou matricule..."
+                      placeholder={t('searchPlaceholderStudent')}
                       className="h-11 pl-10 rounded-xl text-xs border-slate-200 focus:border-[#2487B8]"
                     />
                   </div>
 
                   {searching && (
                     <div className="p-4 text-center text-xs text-slate-400 bg-slate-50 rounded-xl">
-                      Recherche dans la base de données...
+                      {tCommon('loading')}
                     </div>
                   )}
 
@@ -459,15 +462,15 @@ export function StudentTransfersPlayground({ locale = 'fr' }: { locale?: string 
                                 {r.fullName}
                               </p>
                               <p className="text-[10px] text-slate-500 flex items-center gap-1.5 mt-0.5">
-                                <span className="font-mono bg-slate-100 px-1 py-0.5 rounded text-slate-600">{r.matricule || 'Sans matricule'}</span>
+                                <span className="font-mono bg-slate-100 px-1 py-0.5 rounded text-slate-600">{r.matricule || t('unassignedBadge', { count: 0 })}</span>
                                 <span>·</span>
-                                <span>{r.className || 'Classe non assignée'}</span>
+                                <span>{r.className || t('unassignedBadge', { count: 0 })}</span>
                               </p>
                             </div>
                           </div>
 
                           <Button size="sm" variant="ghost" className="h-8 text-xs font-semibold text-[#2487B8] gap-1 group-hover:bg-[#2487B8] group-hover:text-white">
-                            Choisir <ChevronRight className="w-3.5 h-3.5" />
+                            {tCommon('view')} <ChevronRight className="w-3.5 h-3.5" />
                           </Button>
                         </div>
                       ))}
@@ -477,8 +480,8 @@ export function StudentTransfersPlayground({ locale = 'fr' }: { locale?: string 
                   {search.length < 2 && (
                     <div className="p-6 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
                       <Search className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                      <p className="text-xs font-semibold text-slate-600">Recherchez un élève pour démarrer</p>
-                      <p className="text-[11px] text-slate-400 mt-1">Vous pouvez tester avec &quot;Yasmine&quot; ou &quot;Mehdi&quot;.</p>
+                      <p className="text-xs font-semibold text-slate-600">{t('searchPromptEmpty')}</p>
+                      <p className="text-[11px] text-slate-400 mt-1">{t('searchPromptHint')}</p>
                     </div>
                   )}
                 </div>

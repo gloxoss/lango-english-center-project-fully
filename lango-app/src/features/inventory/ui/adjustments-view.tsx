@@ -1,11 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -34,23 +34,37 @@ async function api<T>(url: string, init?: RequestInit): Promise<{ ok: boolean; s
     const json = await res.json().catch(() => ({}));
     return { ok: res.ok, status: res.status, ...json };
   } catch {
-    return { ok: false, status: 0, error: { code: 'NETWORK_ERROR', message: 'Impossible de joindre le serveur.' } };
+    return { ok: false, status: 0, error: { code: 'NETWORK_ERROR', message: 'Network error.' } };
   }
 }
 
-const fmtDate = (d: string | null | undefined) => (d ? d.slice(0, 10) : '—');
-
-const TYPE_LABEL: Record<Row['type'], string> = {
-  count_correction: 'Correction de stock', damage: 'Abîmé', loss: 'Perte', donation: 'Don', write_off: 'Mise au rebut',
-};
 const TYPE_VARIANT: Record<Row['type'], 'info' | 'warning' | 'danger' | 'success' | 'neutral'> = {
   count_correction: 'info', damage: 'warning', loss: 'danger', donation: 'success', write_off: 'neutral',
 };
-const DIRECTION_LABEL: Record<string, string> = { in: 'Entrée', out: 'Sortie' };
 
 type LineForm = { productId: string; direction: 'in' | 'out'; qty: string };
 
-export function AdjustmentsView() {
+export function AdjustmentsView({ locale: initialLocale }: { locale?: string } = {}) {
+  const currentLocale = useLocale();
+  const locale = initialLocale || currentLocale;
+  const t = useTranslations('Inventory');
+  const tCommon = useTranslations('Common');
+
+  const dateLocale = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR';
+  const fmtDate = (d: string | null | undefined) => {
+    if (!d) return '—';
+    const date = new Date(d);
+    return isNaN(date.getTime()) ? d.slice(0, 10) : date.toLocaleDateString(dateLocale, { dateStyle: 'short' });
+  };
+
+  const typeLabels: Record<Row['type'], string> = {
+    count_correction: t('typeCountCorrection'),
+    damage: t('typeDamage'),
+    loss: t('typeLoss'),
+    donation: t('typeDonation'),
+    write_off: t('typeWriteOff'),
+  };
+
   const [rows, setRows] = useState<Row[]>([]);
   const [stores, setStores] = useState<StoreRef[]>([]);
   const [products, setProducts] = useState<ProductRef[]>([]);
@@ -78,9 +92,9 @@ export function AdjustmentsView() {
           ? res.data.filter(r => `${r.adjustmentNumber} ${r.storeName} ${r.reason ?? ''}`.toLowerCase().includes(search.trim().toLowerCase()))
           : res.data,
       );
-    } else setError(res.error?.message ?? 'Chargement impossible.');
+    } else setError(res.error?.message ?? tCommon('networkError'));
     setLoading(false);
-  }, [search, typeFilter]);
+  }, [search, typeFilter, tCommon]);
 
   const loadRefs = useCallback(async () => {
     const [storeRes, prodRes] = await Promise.all([
@@ -130,7 +144,7 @@ export function AdjustmentsView() {
       setModalOpen(false);
       await load();
     } else {
-      setError(res.error?.message ?? 'Enregistrement impossible.');
+      setError(res.error?.message ?? tCommon('networkError'));
     }
   };
 
@@ -138,35 +152,35 @@ export function AdjustmentsView() {
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#16212B]">Ajustements de stock</h1>
-          <p className="text-sm text-slate-500">Corrections d&apos;inventaire, pertes, dons et mises au rebut — appliquées immédiatement.</p>
+          <h1 className="text-2xl font-bold text-[#16212B]">{t('adjustmentsTitle')}</h1>
+          <p className="text-sm text-slate-500">{t('adjustmentsSubtitle')}</p>
         </div>
-        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" /> Nouvel ajustement</Button>
+        <Button onClick={openCreate}><Plus className="me-2 h-4 w-4" /> {t('newAdjustmentBtn')}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#D1F5E8] text-[#16212B]"><ClipboardList className="h-5 w-5" /></div>
-            <div><p className="text-sm text-slate-500">Ajustements</p><p className="text-2xl font-bold text-[#16212B]">{counts.total}</p></div>
+            <div><p className="text-sm text-slate-500">{t('adjustmentsCount')}</p><p className="text-2xl font-bold text-[#16212B]">{counts.total}</p></div>
           </div>
         </Card>
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-[#16212B]"><Boxes className="h-5 w-5" /></div>
-            <div><p className="text-sm text-slate-500">Inventaires</p><p className="text-2xl font-bold text-[#16212B]">{counts.inventory}</p></div>
+            <div><p className="text-sm text-slate-500">{t('inventoryCounts')}</p><p className="text-2xl font-bold text-[#16212B]">{counts.inventory}</p></div>
           </div>
         </Card>
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-[#16212B]"><Trash2 className="h-5 w-5" /></div>
-            <div><p className="text-sm text-slate-500">Pertes / Abîmés</p><p className="text-2xl font-bold text-[#16212B]">{counts.losses}</p></div>
+            <div><p className="text-sm text-slate-500">{t('lossesCounts')}</p><p className="text-2xl font-bold text-[#16212B]">{counts.losses}</p></div>
           </div>
         </Card>
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-[#16212B]"><ArrowLeftRight className="h-5 w-5" /></div>
-            <div><p className="text-sm text-slate-500">Dons / Rebuts</p><p className="text-2xl font-bold text-[#16212B]">{counts.others}</p></div>
+            <div><p className="text-sm text-slate-500">{t('othersCounts')}</p><p className="text-2xl font-bold text-[#16212B]">{counts.others}</p></div>
           </div>
         </Card>
       </div>
@@ -175,23 +189,23 @@ export function AdjustmentsView() {
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 p-4">
           <div className="flex flex-1 flex-wrap items-center gap-3">
             <div className="relative w-full max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Rechercher (N°, magasin, motif)…"
-                className="pl-9"
+                placeholder={t('searchAdjustmentsPlaceholder')}
+                className="ps-9"
               />
             </div>
             <Select value={typeFilter || 'all'} onValueChange={v => setTypeFilter(v === 'all' ? '' : v)}>
-              <SelectTrigger className="w-48"><SelectValue placeholder="Tous les types" /></SelectTrigger>
+              <SelectTrigger className="w-48"><SelectValue placeholder={t('allTypes')} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les types</SelectItem>
-                <SelectItem value="count_correction">Correction de stock</SelectItem>
-                <SelectItem value="damage">Abîmé</SelectItem>
-                <SelectItem value="loss">Perte</SelectItem>
-                <SelectItem value="donation">Don</SelectItem>
-                <SelectItem value="write_off">Mise au rebut</SelectItem>
+                <SelectItem value="all">{t('allTypes')}</SelectItem>
+                <SelectItem value="count_correction">{t('typeCountCorrection')}</SelectItem>
+                <SelectItem value="damage">{t('typeDamage')}</SelectItem>
+                <SelectItem value="loss">{t('typeLoss')}</SelectItem>
+                <SelectItem value="donation">{t('typeDonation')}</SelectItem>
+                <SelectItem value="write_off">{t('typeWriteOff')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -200,9 +214,9 @@ export function AdjustmentsView() {
 
         <div className="divide-y divide-slate-100">
           {loading ? (
-            <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Chargement…</div>
+            <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> {tCommon('loading')}</div>
           ) : rows.length === 0 ? (
-            <div className="p-10 text-center text-sm text-slate-500">Aucun ajustement trouvé.</div>
+            <div className="p-10 text-center text-sm text-slate-500">{t('noAdjustmentsFound')}</div>
           ) : (
             rows.map(row => (
               <div key={row.id} className="flex items-center justify-between gap-4 p-4">
@@ -211,7 +225,7 @@ export function AdjustmentsView() {
                   <div>
                     <p className="flex items-center gap-2 font-semibold text-[#16212B]">
                       {row.adjustmentNumber}
-                      <Badge variant={TYPE_VARIANT[row.type]}>{TYPE_LABEL[row.type]}</Badge>
+                      <Badge variant={TYPE_VARIANT[row.type]}>{typeLabels[row.type]}</Badge>
                     </p>
                     <p className="text-xs text-slate-500">
                       {row.storeName} · {fmtDate(row.createdAt)}
@@ -219,7 +233,7 @@ export function AdjustmentsView() {
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="text-end">
                   <p className="text-xs text-slate-400">{row.note ?? '—'}</p>
                 </div>
               </div>
@@ -230,28 +244,28 @@ export function AdjustmentsView() {
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Nouvel ajustement</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('newAdjustmentBtn')}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Magasin *</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('storeLabel')}</label>
                 <Select value={form.storeId} onValueChange={v => setForm({ ...form, storeId: v })}>
-                  <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tCommon('select')} /></SelectTrigger>
                   <SelectContent>
                     {stores.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Type *</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('typeLabel')}</label>
                 <Select value={form.type} onValueChange={v => setForm({ ...form, type: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="count_correction">Correction de stock</SelectItem>
-                    <SelectItem value="damage">Abîmé</SelectItem>
-                    <SelectItem value="loss">Perte</SelectItem>
-                    <SelectItem value="donation">Don</SelectItem>
-                    <SelectItem value="write_off">Mise au rebut</SelectItem>
+                    <SelectItem value="count_correction">{t('typeCountCorrection')}</SelectItem>
+                    <SelectItem value="damage">{t('typeDamage')}</SelectItem>
+                    <SelectItem value="loss">{t('typeLoss')}</SelectItem>
+                    <SelectItem value="donation">{t('typeDonation')}</SelectItem>
+                    <SelectItem value="write_off">{t('typeWriteOff')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -259,37 +273,37 @@ export function AdjustmentsView() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Raison</label>
-                <Input value={form.reason} onChange={e => setForm({ ...form, reason: e.target.value })} placeholder="Raison de l'ajustement" />
+                <label className="mb-1 block text-sm font-medium text-slate-700">{tCommon('reason')}</label>
+                <Input value={form.reason} onChange={e => setForm({ ...form, reason: e.target.value })} placeholder={tCommon('reason')} />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Note</label>
-                <Input value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} placeholder="Note complémentaire" />
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('noteLabel')}</label>
+                <Input value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} placeholder={t('notePlaceholder')} />
               </div>
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Lignes *</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('linesLabel')}</label>
               <div className="space-y-2">
                 {lines.map((line, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <Select value={line.productId} onValueChange={v => updateLine(i, { productId: v })}>
-                      <SelectTrigger className="flex-1"><SelectValue placeholder="Produit" /></SelectTrigger>
+                      <SelectTrigger className="flex-1"><SelectValue placeholder={t('selectProductPlaceholder')} /></SelectTrigger>
                       <SelectContent>
                         {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <Select value={line.direction} onValueChange={v => updateLine(i, { direction: v as 'in' | 'out' })}>
                       <SelectTrigger className="w-32">
-                        <SelectValue>{line.direction === 'in' ? <span className="flex items-center gap-1"><Plus className="h-3 w-3" /> Entrée</span> : <span className="flex items-center gap-1"><Minus className="h-3 w-3" /> Sortie</span>}</SelectValue>
+                        <SelectValue>{line.direction === 'in' ? <span className="flex items-center gap-1"><Plus className="h-3 w-3" /> {t('directionIn')}</span> : <span className="flex items-center gap-1"><Minus className="h-3 w-3" /> {t('directionOut')}</span>}</SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="in">Entrée (+)</SelectItem>
-                        <SelectItem value="out">Sortie (−)</SelectItem>
+                        <SelectItem value="in">{t('directionIn')}</SelectItem>
+                        <SelectItem value="out">{t('directionOut')}</SelectItem>
                       </SelectContent>
                     </Select>
                     <Input
-                      type="number" min={0} step="0.001" className="w-24" placeholder="Qté"
+                      type="number" min={0} step="0.001" className="w-24" placeholder={t('qtyPlaceholder')}
                       value={line.qty}
                       onChange={e => updateLine(i, { qty: e.target.value })}
                     />
@@ -305,7 +319,7 @@ export function AdjustmentsView() {
                   variant="outline" size="sm"
                   onClick={() => setLines(prev => [...prev, { productId: '', direction: 'in', qty: '1' }])}
                 >
-                  <Plus className="mr-1 h-4 w-4" /> Ajouter une ligne
+                  <Plus className="me-1 h-4 w-4" /> {t('btnAddLine')}
                 </Button>
               </div>
             </div>
@@ -313,12 +327,12 @@ export function AdjustmentsView() {
             {error && <p className="flex items-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error}</p>}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>{tCommon('cancel')}</Button>
             <Button
               onClick={save}
               disabled={saving || !form.storeId || !lines.some(l => l.productId && l.qty.trim())}
             >
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Appliquer l&apos;ajustement
+              {saving && <Loader2 className="me-2 h-4 w-4 animate-spin" />} {t('btnApplyAdjustment')}
             </Button>
           </DialogFooter>
         </DialogContent>

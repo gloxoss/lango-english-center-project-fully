@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,8 @@ export function ReceptionInquiryDialog({
   onOpenChange: (open: boolean) => void;
   onCreated: (inquiry: Inquiry) => void;
 }) {
+  const t = useTranslations('Reception');
+
   const [contactName, setContactName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -53,7 +56,7 @@ export function ReceptionInquiryDialog({
 
   const submit = async () => {
     if (contactName.trim().length === 0) {
-      setError('Le nom du contact est requis.');
+      setError(t('errContactNameRequired'));
       return;
     }
     setSubmitting(true);
@@ -78,37 +81,37 @@ export function ReceptionInquiryDialog({
     }
     if (res.status === 409 && res.error && (res.error as { candidates?: DuplicateCandidate[] }).candidates) {
       setDuplicates((res.error as { candidates?: DuplicateCandidate[] }).candidates ?? []);
-      setError('Une fiche identique existe déjà pour ce contact.');
+      setError(t('duplicateInquiryNotice'));
       return;
     }
-    setError(res.error?.message ?? 'Création impossible.');
+    setError(res.error?.message ?? t('actionFailed'));
   };
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!submitting) onOpenChange(v); }}>
       <DialogContent className="sm:max-w-lg" aria-describedby="inquiry-dialog-desc">
         <DialogHeader>
-          <DialogTitle>Nouvelle demande de renseignements</DialogTitle>
+          <DialogTitle>{t('newInquiryTitle')}</DialogTitle>
           <DialogDescription id="inquiry-dialog-desc">
-            Enregistrer un visiteur ou un appel. Les doublons (téléphone / email) sont bloqués automatiquement.
+            {t('newInquiryDesc')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="inq-name">Nom complet *</Label>
-              <Input id="inq-name" value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Ex. Amina El Fassi" />
+              <Label htmlFor="inq-name">{t('labelFullName')}</Label>
+              <Input id="inq-name" value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder={t('phContactName')} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="inq-source">Canal</Label>
+              <Label htmlFor="inq-source">{t('labelSource')}</Label>
               <Select value={source} onValueChange={setSource}>
-                <SelectTrigger id="inq-source" aria-label="Canal de provenance"><SelectValue placeholder="Canal" /></SelectTrigger>
+                <SelectTrigger id="inq-source" aria-label={t('labelSource')}><SelectValue placeholder={t('labelSource')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="walk_in">Visite / Accueil</SelectItem>
-                  <SelectItem value="phone">Téléphone</SelectItem>
-                  <SelectItem value="web">Site web</SelectItem>
-                  <SelectItem value="referral">Recommandation</SelectItem>
+                  <SelectItem value="walk_in">{t('sourceWalkIn')}</SelectItem>
+                  <SelectItem value="phone">{t('sourcePhone')}</SelectItem>
+                  <SelectItem value="web">{t('sourceWeb')}</SelectItem>
+                  <SelectItem value="referral">{t('sourceReferral')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -116,32 +119,32 @@ export function ReceptionInquiryDialog({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="inq-phone">Téléphone</Label>
-              <Input id="inq-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="06 12 34 56 78" inputMode="tel" />
+              <Label htmlFor="inq-phone">{t('labelPhone')}</Label>
+              <Input id="inq-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t('phPhone')} inputMode="tel" />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="inq-email">Email</Label>
-              <Input id="inq-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="contact@exemple.ma" />
+              <Label htmlFor="inq-email">{t('labelEmail')}</Label>
+              <Input id="inq-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('phContactEmail')} />
             </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="inq-interest">Intérêt</Label>
+              <Label htmlFor="inq-interest">{t('labelInterestLevel')}</Label>
               <Select value={interestLevel} onValueChange={setInterestLevel}>
-                <SelectTrigger id="inq-interest" aria-label="Niveau d'intérêt"><SelectValue placeholder="Intérêt" /></SelectTrigger>
+                <SelectTrigger id="inq-interest" aria-label={t('labelInterestLevel')}><SelectValue placeholder={t('labelInterestLevel')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="high">Élevé</SelectItem>
-                  <SelectItem value="medium">Moyen</SelectItem>
-                  <SelectItem value="low">Faible</SelectItem>
+                  <SelectItem value="high">{t('interestHigh')}</SelectItem>
+                  <SelectItem value="medium">{t('interestMedium')}</SelectItem>
+                  <SelectItem value="low">{t('interestLow')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="inq-notes">Notes</Label>
-            <Textarea id="inq-notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Objet de la demande, informations complémentaires…" />
+            <Label htmlFor="inq-notes">{t('labelNotes')}</Label>
+            <Textarea id="inq-notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t('phInquiryNotes')} />
           </div>
 
           {error && (
@@ -151,7 +154,7 @@ export function ReceptionInquiryDialog({
                 {error}
                 {duplicates.length > 0 && (
                   <span className="mt-1 block text-xs text-slate-500">
-                    {duplicates.map((d) => `${d.contactName} (${d.phone ?? d.email ?? 'sans coordonnées'})`).join(' · ')}
+                    {duplicates.map((d) => `${d.contactName} (${d.phone ?? d.email ?? '—'})`).join(' · ')}
                   </span>
                 )}
               </span>
@@ -159,10 +162,10 @@ export function ReceptionInquiryDialog({
           )}
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>Annuler</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>{t('btnCancel')}</Button>
             <Button type="button" onClick={submit} disabled={submitting}>
               {submitting ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
-              Enregistrer
+              {t('btnRegister')}
             </Button>
           </div>
         </div>

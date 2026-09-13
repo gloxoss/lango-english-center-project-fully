@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, ReactNode } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@/components/ui/table';
@@ -39,8 +40,8 @@ export function DataTable<T extends Record<string, any>>({
   data,
   columns,
   isLoading = false,
-  emptyTitle = 'Aucune donnée disponible',
-  emptyDescription = 'Aucun élément ne correspond à vos critères.',
+  emptyTitle,
+  emptyDescription,
   defaultPageSize = 10,
   selectedRowIndex,
   selectedRowId,
@@ -48,6 +49,9 @@ export function DataTable<T extends Record<string, any>>({
   exportFilename,
   keyExtractor = (row, index) => row.id ?? String(index),
 }: DataTableProps<T>) {
+  const tCommon = useTranslations('Common');
+  const locale = useLocale();
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(defaultPageSize);
 
@@ -75,7 +79,12 @@ export function DataTable<T extends Record<string, any>>({
   }
 
   if (!isLoading && data.length === 0) {
-    return <EmptyState title={emptyTitle} description={emptyDescription} />;
+    return (
+      <EmptyState
+        title={emptyTitle || tCommon('empty')}
+        description={emptyDescription || tCommon('noDataMatch')}
+      />
+    );
   }
 
   return (
@@ -88,7 +97,7 @@ export function DataTable<T extends Record<string, any>>({
             onClick={handleExport}
             className="gap-2 h-9 rounded-full px-4 text-xs font-bold border-slate-200"
           >
-            <Download className="w-3.5 h-3.5" /> Exporter en CSV
+            <Download className="w-3.5 h-3.5" /> {tCommon('exportCsv')}
           </Button>
         </div>
       )}
@@ -135,12 +144,28 @@ export function DataTable<T extends Record<string, any>>({
         <div className="px-4 py-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
           <div className="flex items-center gap-3">
             <span>
-              Affichage de <strong className="font-bold text-slate-700">{totalItems > 0 ? startIndex + 1 : 0}</strong> à{' '}
-              <strong className="font-bold text-slate-700">{endIndex}</strong> sur{' '}
-              <strong className="font-bold text-slate-700">{totalItems}</strong> éléments
+              {locale === 'ar' ? (
+                <>
+                  عرض <strong className="font-bold text-slate-700">{totalItems > 0 ? startIndex + 1 : 0}</strong> إلى{' '}
+                  <strong className="font-bold text-slate-700">{endIndex}</strong> من أصل{' '}
+                  <strong className="font-bold text-slate-700">{totalItems}</strong> عناصر
+                </>
+              ) : locale === 'en' ? (
+                <>
+                  Showing <strong className="font-bold text-slate-700">{totalItems > 0 ? startIndex + 1 : 0}</strong> to{' '}
+                  <strong className="font-bold text-slate-700">{endIndex}</strong> of{' '}
+                  <strong className="font-bold text-slate-700">{totalItems}</strong> items
+                </>
+              ) : (
+                <>
+                  Affichage de <strong className="font-bold text-slate-700">{totalItems > 0 ? startIndex + 1 : 0}</strong> à{' '}
+                  <strong className="font-bold text-slate-700">{endIndex}</strong> sur{' '}
+                  <strong className="font-bold text-slate-700">{totalItems}</strong> éléments
+                </>
+              )}
             </span>
             <div className="flex items-center gap-1.5 ml-2">
-              <span className="text-[11px] text-slate-400">Lignes par page:</span>
+              <span className="text-[11px] text-slate-400">{tCommon('rowsPerPage')}</span>
               <Select
                 value={String(pageSize)}
                 onValueChange={(val) => {
@@ -169,7 +194,7 @@ export function DataTable<T extends Record<string, any>>({
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               className="w-8 h-8 p-0 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
             </Button>
 
             {Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -203,7 +228,7 @@ export function DataTable<T extends Record<string, any>>({
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               className="w-8 h-8 p-0 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4 rtl:rotate-180" />
             </Button>
           </div>
         </div>

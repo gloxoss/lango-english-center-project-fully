@@ -4,5 +4,10 @@ import { LibraryPoliciesClient } from '@/features/library/ui/library-policies-cl
 export default async function LibrarianPoliciesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   await requireLibraryPage(locale, { capability: 'library.policy.manage' });
-  return <LibraryPoliciesClient />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <LibraryPoliciesClient />
+    </main>
+  );
 }

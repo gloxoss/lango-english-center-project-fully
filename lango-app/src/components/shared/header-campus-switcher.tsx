@@ -2,6 +2,7 @@
 
 import { Building2, ChevronDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +18,7 @@ export type BranchItem = {
 };
 
 export function HeaderCampusSwitcher() {
+  const t = useTranslations('Common');
   const [branches, setBranches] = useState<BranchItem[]>([]);
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -48,7 +50,7 @@ export function HeaderCampusSwitcher() {
       <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200/80 bg-slate-50 text-xs font-bold text-[#16212B]">
         <Building2 className="w-3.5 h-3.5 text-[#2487B8]" />
         <span className="truncate max-w-[120px]">
-          {singleBranch ? singleBranch.name : 'Campus Principal'}
+          {singleBranch ? singleBranch.name : t('mainCampus')}
         </span>
         {singleBranch?.code && (
           <span className="text-[10px] bg-slate-200/60 px-1.5 py-0.5 rounded text-slate-600 font-mono">
@@ -76,7 +78,7 @@ export function HeaderCampusSwitcher() {
       <DropdownMenuTrigger className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200/80 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-[#16212B] transition-colors outline-hidden cursor-pointer">
         <Building2 className="w-3.5 h-3.5 text-[#2487B8]" />
         <span className="truncate max-w-[120px]">
-          {selectedBranch ? selectedBranch.name : 'Toutes les succursales'}
+          {selectedBranch ? selectedBranch.name : t('allBranches')}
         </span>
         <ChevronDown className="w-3 h-3 text-slate-400" />
       </DropdownMenuTrigger>
@@ -85,7 +87,7 @@ export function HeaderCampusSwitcher() {
           onClick={() => handleSelect(null)}
           className={`px-3 py-2 rounded-lg cursor-pointer font-bold ${!selectedBranchId ? 'bg-[#DCEBF4] text-[#1B6C93]' : 'text-[#16212B] hover:bg-slate-50'}`}
         >
-          Toutes les succursales
+          {t('allBranches')}
         </DropdownMenuItem>
         {branches.map(b => (
           <DropdownMenuItem

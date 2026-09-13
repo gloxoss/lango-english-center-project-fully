@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,7 +22,10 @@ type ItemResult = { studentId: string; success: boolean; tempPassword?: string |
 // refinement, future-implementation/alumni-portal) - one real confirmation
 // step naming the count, not one dialog per student.
 export function BulkAlumniTransitionView({ locale: _locale }: { locale?: string } = {}) {
+  const t = useTranslations('Students');
+  const tCommon = useTranslations('Common');
   const { can } = usePermissions();
+
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [classSections, setClassSections] = useState<ClassSection[]>([]);
   const [terminalClassSectionId, setTerminalClassSectionId] = useState('');
@@ -89,7 +93,7 @@ export function BulkAlumniTransitionView({ locale: _locale }: { locale?: string 
   if (!canManage) {
     return (
       <div className="max-w-lg mx-auto mt-12 p-6 bg-slate-50 border border-slate-200 rounded-2xl text-slate-500 text-sm font-semibold text-center">
-        Vous ne disposez pas des autorisations nécessaires.
+        {tCommon('error')}
       </div>
     );
   }
@@ -97,19 +101,19 @@ export function BulkAlumniTransitionView({ locale: _locale }: { locale?: string 
   return (
     <div className="space-y-6 max-w-[1000px] mx-auto">
       <div>
-        <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Transition en masse — Anciens élèves</h1>
-        <p className="text-xs text-slate-500 mt-1">Sélectionnez plusieurs élèves d&apos;une même cohorte diplômée et confirmez une seule fois.</p>
+        <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('bulkAlumniTitle')}</h1>
+        <p className="text-xs text-slate-500 mt-1">{t('bulkAlumniSubtitle')}</p>
       </div>
 
       <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <span className="text-xs font-bold text-[#16212B]">Promouvoir la classe sortante</span>
-          <span className="text-[11px] text-slate-500">Transférer d&apos;un coup tous les élèves d&apos;une classe terminale (Terminale / 3ème) vers le statut Ancien élève.</span>
+          <span className="text-xs font-bold text-[#16212B]">{t('promoteGraduatingClassTitle')}</span>
+          <span className="text-[11px] text-slate-500">{t('promoteGraduatingClassDesc')}</span>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Select value={terminalClassSectionId} onValueChange={setTerminalClassSectionId}>
             <SelectTrigger className="h-9 text-xs rounded-xl bg-slate-50 border-slate-200 flex-1 sm:w-64">
-              <SelectValue placeholder="Choisir la classe sortante" />
+              <SelectValue placeholder={t('chooseGraduatingClass')} />
             </SelectTrigger>
             <SelectContent>
               {classSections.map(cs => (
@@ -124,15 +128,15 @@ export function BulkAlumniTransitionView({ locale: _locale }: { locale?: string 
             className="h-9 rounded-xl bg-[#17A673] hover:bg-[#12845B] text-white text-xs font-bold gap-1.5"
           >
             <GraduationCap className="w-3.5 h-3.5" />
-            Sélectionner
+            {t('selectBtn')}
           </Button>
         </div>
       </Card>
 
       <Card className="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between gap-3">
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <Input placeholder="Rechercher un élève..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9 text-xs rounded-xl bg-slate-50 border-none" />
+          <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Input placeholder={t('searchStudentPlaceholder')} value={search} onChange={e => setSearch(e.target.value)} className="ps-9 h-9 text-xs rounded-xl bg-slate-50 border-none text-start" />
         </div>
         <Button
           size="sm"
@@ -141,20 +145,18 @@ export function BulkAlumniTransitionView({ locale: _locale }: { locale?: string 
           className="h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold gap-1.5"
         >
           <GraduationCap className="w-3.5 h-3.5" />
-          Transitionner (
-          {selected.size}
-          )
+          {t('transitionCountBtn', { count: selected.size })}
         </Button>
       </Card>
 
       <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-        <table className="w-full text-left text-xs">
+        <table className="w-full text-start text-xs">
           <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
             <tr>
               <th className="py-3 px-4 w-10" />
-              <th className="py-3 px-4">Élève</th>
-              <th className="py-3 px-4">Matricule</th>
-              <th className="py-3 px-4">Classe</th>
+              <th className="py-3 px-4">{t('student')}</th>
+              <th className="py-3 px-4">{t('matricule')}</th>
+              <th className="py-3 px-4">{t('classSection')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -163,10 +165,10 @@ export function BulkAlumniTransitionView({ locale: _locale }: { locale?: string 
                 <td className="py-2.5 px-4"><input type="checkbox" checked={selected.has(s.id)} onChange={() => toggle(s.id)} onClick={e => e.stopPropagation()} className="rounded border-slate-300" /></td>
                 <td className="py-2.5 px-4 font-bold text-[#16212B]">{s.fullName}</td>
                 <td className="py-2.5 px-4 font-mono text-slate-400">{s.matricule ?? '—'}</td>
-                <td className="py-2.5 px-4 text-slate-600">{s.className ?? 'Non assigné'}</td>
+                <td className="py-2.5 px-4 text-slate-600">{s.className ?? t('unassigned')}</td>
               </tr>
             ))}
-            {filtered.length === 0 && <tr><td colSpan={4} className="py-8 text-center text-slate-400">Aucun élève trouvé.</td></tr>}
+            {filtered.length === 0 && <tr><td colSpan={4} className="py-8 text-center text-slate-400">{t('emptyRosterFound')}</td></tr>}
           </tbody>
         </table>
       </Card>
@@ -175,7 +177,10 @@ export function BulkAlumniTransitionView({ locale: _locale }: { locale?: string 
         <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
           <div className="p-4 border-b border-slate-100">
             <p className="text-xs font-bold text-[#16212B]">
-              {results.filter(r => r.success).length} transitionné(s) avec succès sur {results.length}
+              {t('bulkTransitionResultSummary', {
+                successCount: results.filter(r => r.success).length,
+                totalCount: results.length,
+              })}
             </p>
           </div>
           <div className="divide-y divide-slate-100">
@@ -184,7 +189,7 @@ export function BulkAlumniTransitionView({ locale: _locale }: { locale?: string 
                 {r.success ? <CheckCircle2 className="w-3.5 h-3.5 text-[#17A673] shrink-0" /> : <XCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />}
                 <span className="font-mono text-slate-400">{r.studentId}</span>
                 {r.success
-                  ? <span className="text-[#17A673] font-semibold">{r.tempPassword ? `Mot de passe : ${r.tempPassword}` : 'Compte créé'}</span>
+                  ? <span className="text-[#17A673] font-semibold">{r.tempPassword ? t('passwordLabel', { password: r.tempPassword }) : t('accountCreated')}</span>
                   : <span className="text-rose-600 font-semibold">{r.error}</span>}
               </div>
             ))}
@@ -197,20 +202,18 @@ export function BulkAlumniTransitionView({ locale: _locale }: { locale?: string 
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-amber-500" />
-              Confirmer la transition en masse
+              {t('bulkTransitionConfirmTitle')}
             </DialogTitle>
           </DialogHeader>
           <p className="text-xs text-slate-600 mt-2">
-            {selected.size}
-            {' '}
-            élève(s) seront immédiatement désactivé(s) de leur compte élève et recevront un nouveau compte Ancien(ne) élève.
+            {t('bulkTransitionConfirmDesc', { count: selected.size })}
           </p>
           <DialogFooter className="gap-2 mt-4">
             <Button variant="outline" onClick={() => setShowConfirm(false)} className="rounded-full text-xs h-9">
-              Annuler
+              {tCommon('cancel')}
             </Button>
             <Button disabled={submitting} onClick={handleConfirm} className="rounded-full text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white border-0">
-              {submitting ? 'Transition en cours...' : 'Confirmer'}
+              {submitting ? t('transitionInProgress') : tCommon('confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -218,3 +221,4 @@ export function BulkAlumniTransitionView({ locale: _locale }: { locale?: string 
     </div>
   );
 }
+

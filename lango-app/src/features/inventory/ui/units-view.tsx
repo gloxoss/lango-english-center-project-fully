@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,11 +23,14 @@ async function api<T>(url: string, init?: RequestInit): Promise<{ ok: boolean; s
     const json = await res.json().catch(() => ({}));
     return { ok: res.ok, status: res.status, ...json };
   } catch {
-    return { ok: false, status: 0, error: { code: 'NETWORK_ERROR', message: 'Impossible de joindre le serveur.' } };
+    return { ok: false, status: 0, error: { code: 'NETWORK_ERROR', message: 'Network error.' } };
   }
 }
 
 export function UnitsView() {
+  const t = useTranslations('Inventory');
+  const tCommon = useTranslations('Common');
+
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -45,9 +49,9 @@ export function UnitsView() {
     if (search.trim()) qs.set('search', search.trim());
     const res = await api<Row[]>(`/api/addons/inventory/units?${qs.toString()}`);
     if (res.ok && Array.isArray(res.data)) setRows(res.data);
-    else setError(res.error?.message ?? 'Chargement impossible.');
+    else setError(res.error?.message ?? tCommon('networkError'));
     setLoading(false);
-  }, [search, showArchived]);
+  }, [search, showArchived, tCommon]);
 
   useEffect(() => { load().catch(() => {}); }, [load]);
 
@@ -76,7 +80,7 @@ export function UnitsView() {
       setModalOpen(false);
       await load();
     } else {
-      setError(res.error?.message ?? 'Enregistrement impossible.');
+      setError(res.error?.message ?? tCommon('networkError'));
     }
   };
 
@@ -84,37 +88,37 @@ export function UnitsView() {
     setError(null);
     const res = await api(`/api/addons/inventory/units/${row.id}`, { method: 'DELETE' });
     if (res.ok) await load();
-    else setError(res.error?.message ?? 'Archivage impossible.');
+    else setError(res.error?.message ?? tCommon('networkError'));
   };
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#16212B]">Unités</h1>
-          <p className="text-sm text-slate-500">Unités de mesure pour les achats et les ventes.</p>
+          <h1 className="text-2xl font-bold text-[#16212B]">{t('unitsTitle')}</h1>
+          <p className="text-sm text-slate-500">{t('unitsSubtitle')}</p>
         </div>
-        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" /> Nouvelle unité</Button>
+        <Button onClick={openCreate}><Plus className="me-2 h-4 w-4" /> {t('newUnitBtn')}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#D1F5E8] text-[#16212B]"><Ruler className="h-5 w-5" /></div>
-            <div><p className="text-sm text-slate-500">Unités actives</p><p className="text-2xl font-bold text-[#16212B]">{rows.length}</p></div>
+            <div><p className="text-sm text-slate-500">{t('activeUnits')}</p><p className="text-2xl font-bold text-[#16212B]">{rows.length}</p></div>
           </div>
         </Card>
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-[#16212B]"><Archive className="h-5 w-5" /></div>
             <div className="flex flex-col gap-1">
-              <p className="text-sm text-slate-500">Statut</p>
+              <p className="text-sm text-slate-500">{tCommon('status')}</p>
               <button
                 type="button"
                 onClick={() => setShowArchived(v => !v)}
-                className="text-left text-sm font-semibold text-[#2487B8] hover:underline"
+                className="text-start text-sm font-semibold text-[#2487B8] hover:underline"
               >
-                {showArchived ? 'Voir actives' : 'Voir archivées'}
+                {showArchived ? t('viewActive') : t('viewArchived')}
               </button>
             </div>
           </div>
@@ -124,12 +128,12 @@ export function UnitsView() {
       <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
         <div className="flex items-center justify-between gap-4 border-b border-slate-100 p-4">
           <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Rechercher une unité…"
-              className="pl-9"
+              placeholder={t('searchUnitsPlaceholder')}
+              className="ps-9"
             />
           </div>
           {error && <p className="flex items-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error}</p>}
@@ -137,9 +141,9 @@ export function UnitsView() {
 
         <div className="divide-y divide-slate-100">
           {loading ? (
-            <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Chargement…</div>
+            <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> {tCommon('loading')}</div>
           ) : rows.length === 0 ? (
-            <div className="p-10 text-center text-sm text-slate-500">Aucune unité trouvée.</div>
+            <div className="p-10 text-center text-sm text-slate-500">{t('noUnitsFound')}</div>
           ) : (
             rows.map(row => (
               <div key={row.id} className="flex items-center justify-between gap-4 p-4">
@@ -147,11 +151,11 @@ export function UnitsView() {
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><Ruler className="h-5 w-5" /></div>
                   <div>
                     <p className="font-semibold text-[#16212B]">{row.name}</p>
-                    {row.abbreviation && <p className="text-xs text-slate-500">Abréviation : {row.abbreviation}</p>}
+                    {row.abbreviation && <p className="text-xs text-slate-500">{t('abbreviationPrefix', { abbr: row.abbreviation })}</p>}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Badge variant={row.status === 'active' ? 'success' : 'neutral'}>{row.status === 'active' ? 'Actif' : 'Archivé'}</Badge>
+                  <Badge variant={row.status === 'active' ? 'success' : 'neutral'}>{row.status === 'active' ? tCommon('active') : t('archived')}</Badge>
                   <Button variant="ghost" size="icon" onClick={() => openEdit(row)}><Pencil className="h-4 w-4" /></Button>
                   {row.status === 'active' && (
                     <Button variant="ghost" size="icon" onClick={() => archive(row)}><Archive className="h-4 w-4" /></Button>
@@ -165,22 +169,22 @@ export function UnitsView() {
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{editing ? 'Modifier l\'unité' : 'Nouvelle unité'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editing ? t('editUnitTitle') : t('newUnitBtn')}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Nom *</label>
-              <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ex : Kilogramme" />
+              <label className="mb-1 block text-sm font-medium text-slate-700">{tCommon('name')} *</label>
+              <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder={t('unitNamePlaceholder')} />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Abréviation</label>
-              <Input value={form.abbreviation} onChange={e => setForm({ ...form, abbreviation: e.target.value })} placeholder="Ex : KG" />
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('abbreviationLabel')}</label>
+              <Input value={form.abbreviation} onChange={e => setForm({ ...form, abbreviation: e.target.value })} placeholder={t('unitAbbrPlaceholder')} />
             </div>
             {error && <p className="flex items-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error}</p>}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>{tCommon('cancel')}</Button>
             <Button onClick={save} disabled={saving || !form.name.trim()}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Enregistrer
+              {saving && <Loader2 className="me-2 h-4 w-4 animate-spin" />} {tCommon('save')}
             </Button>
           </DialogFooter>
         </DialogContent>

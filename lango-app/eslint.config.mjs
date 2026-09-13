@@ -36,6 +36,9 @@ export default antfu(
       '.ultraplan/**/*',
       'docs/**/*',
       'scratch/**/*',
+      // Parked UI, kept for reference only. Excluded so dead code cannot block a
+      // refactor of the live app; see its README before restoring anything.
+      'future-implementation/_archived-ui/**/*',
       '*.json',
       '*.yml',
       '*.yaml',

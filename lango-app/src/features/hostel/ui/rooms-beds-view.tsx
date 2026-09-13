@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,6 @@ import {
   BedDouble,
   CheckCircle2,
   DoorOpen,
-  Layers,
   Loader2,
   Pencil,
   Plus,
@@ -52,13 +52,6 @@ type BedRow = {
   notes: string | null;
 };
 
-const ROOM_STATUS_LABELS: Record<string, string> = {
-  active: 'Actif',
-  inactive: 'Inactif',
-  out_of_service: 'Hors service',
-  archived: 'Archivé',
-};
-
 const emptyRoomForm = {
   hostelId: '',
   zoneId: 'none',
@@ -88,6 +81,16 @@ type WizardPreviewItem = {
 };
 
 export function RoomsBedsView() {
+  const t = useTranslations('Hostel');
+  const tCommon = useTranslations('Common');
+
+  const ROOM_STATUS_LABELS: Record<string, string> = {
+    active: t('statusActive'),
+    inactive: t('statusInactive'),
+    out_of_service: t('statusOutOfService'),
+    archived: t('statusArchived'),
+  };
+
   const [rooms, setRooms] = useState<RoomRow[]>([]);
   const [beds, setBeds] = useState<BedRow[]>([]);
   const [hostels, setHostels] = useState<HostelRow[]>([]);
@@ -114,7 +117,7 @@ export function RoomsBedsView() {
   const [wizardCategoryId, setWizardCategoryId] = useState('none');
   const [wizardFloorsCount, setWizardFloorsCount] = useState('3');
   const [wizardRoomsPerFloor, setWizardRoomsPerFloor] = useState('6');
-  const [wizardFloorPrefix, setWizardFloorPrefix] = useState('Étage');
+  const [wizardFloorPrefix, setWizardFloorPrefix] = useState('Floor');
   const [wizardNumberingFormat, setWizardNumberingFormat] = useState<'hundreds' | 'prefixed'>('hundreds');
   const [wizardIncludeRdc, setWizardIncludeRdc] = useState(true);
   const [wizardRdcPmr, setWizardRdcPmr] = useState(true);
@@ -243,7 +246,6 @@ export function RoomsBedsView() {
       : await api<RoomRow>('/api/addons/hostel/rooms', { method: 'POST', body: JSON.stringify(body) });
 
     if (res.ok && res.data) {
-      // If new room & autoGenerateBeds is checked (§19.5):
       if (!editingRoom && roomForm.autoGenerateBeds) {
         const count = Number.parseInt(roomForm.bedsCount, 10) || 2;
         const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -262,7 +264,7 @@ export function RoomsBedsView() {
       }
       setSaving(false);
       setRoomModal(false);
-      setSuccessBanner(`Chambre ${roomForm.code} enregistrée avec succès.`);
+      setSuccessBanner(`${roomForm.code}`);
       setTimeout(() => setSuccessBanner(null), 4000);
       await loadRooms();
       if (res.data.id) {
@@ -336,7 +338,7 @@ export function RoomsBedsView() {
 
       for (let f = 0; f < numFloors; f++) {
         const isRdc = f === 0 && wizardIncludeRdc;
-        const floorName = isRdc ? 'Rez-de-chaussée (RDC)' : `${wizardFloorPrefix} ${f + (wizardIncludeRdc ? 0 : 1)}`;
+        const floorName = isRdc ? 'RDC' : `${wizardFloorPrefix} ${f + (wizardIncludeRdc ? 0 : 1)}`;
         const floorCode = isRdc ? 'RDC' : `ET-${f + (wizardIncludeRdc ? 0 : 1)}`;
 
         for (let r = 1; r <= roomsPerFloor; r++) {
@@ -359,7 +361,7 @@ export function RoomsBedsView() {
             zoneName: floorName,
             zoneCode: floorCode,
             roomCode,
-            roomName: `Chambre ${roomCode}`,
+            roomName: `${roomCode}`,
             isAccessible,
             bedCodes,
           });
@@ -378,7 +380,7 @@ export function RoomsBedsView() {
         }
         items.push({
           roomCode,
-          roomName: `Chambre ${roomCode}`,
+          roomName: `${roomCode}`,
           isAccessible: false,
           bedCodes,
         });
@@ -397,10 +399,9 @@ export function RoomsBedsView() {
     setWizardRunning(true);
     setError(null);
     setWizardProgressPercent(5);
-    setWizardProgressText('Initialisation des zones et étages...');
+    setWizardProgressText(t('wizardInitZones'));
 
     try {
-      // 1. If multi-floor, ensure zones exist or create them
       const zoneIdMap: Record<string, string> = {};
 
       if (wizardMode === 'multi_floor') {
@@ -411,7 +412,7 @@ export function RoomsBedsView() {
           if (existing) {
             zoneIdMap[z.name] = existing.id;
           } else {
-            setWizardProgressText(`Création de la zone ${z.name}...`);
+            setWizardProgressText(t('wizardCreatingZone', { name: z.name }));
             const created = await api<ZoneRow>('/api/addons/hostel/zones', {
               method: 'POST',
               body: JSON.stringify({
@@ -429,12 +430,11 @@ export function RoomsBedsView() {
         }
       }
 
-      // 2. Create Rooms and Beds sequentially
       const totalSteps = previewItems.length;
       let completedSteps = 0;
 
       for (const item of previewItems) {
-        setWizardProgressText(`Création chambre ${item.roomCode} et de ses ${item.bedCodes.length} lits...`);
+        setWizardProgressText(t('wizardCreatingRoom', { code: item.roomCode, beds: item.bedCodes.length }));
 
         const zoneId = wizardMode === 'multi_floor'
           ? (item.zoneName ? zoneIdMap[item.zoneName] : null)
@@ -473,16 +473,16 @@ export function RoomsBedsView() {
       }
 
       setWizardProgressPercent(100);
-      setWizardProgressText('Génération terminée avec succès !');
+      setWizardProgressText(t('wizardCompleteSuccess'));
 
-      setSuccessBanner(`${totalPreviewRooms} chambres et ${totalPreviewBeds} lits ont été créés avec succès.`);
+      setSuccessBanner(t('wizardSuccessSummary', { rooms: totalPreviewRooms, beds: totalPreviewBeds }));
       setTimeout(() => setSuccessBanner(null), 5000);
 
       await loadMeta();
       await loadRooms(wizardHostelId);
       setWizardOpen(false);
     } catch (e: any) {
-      setError(e?.message || 'Une erreur est survenue lors de la création groupée.');
+      setError(e?.message || t('wizardErrorDefault'));
     } finally {
       setWizardRunning(false);
     }
@@ -497,10 +497,10 @@ export function RoomsBedsView() {
         <div>
           <h1 className="text-2xl font-bold text-[#16212B] flex items-center gap-2.5">
             <DoorOpen className="w-6 h-6 text-[#0066FF]" />
-            Chambres &amp; Lits
+            {t('roomsBedsPageTitle')}
           </h1>
           <p className="text-sm text-slate-500">
-            Gestion du parc résidentiel, assistant de génération rapide par étage et suivi des lits disponibles.
+            {t('roomsBedsPageSubtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2.5">
@@ -509,7 +509,7 @@ export function RoomsBedsView() {
             className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5 shadow-xs cursor-pointer"
           >
             <Sparkles className="h-4 w-4" />
-            Assistant de création groupée
+            {t('btnBulkCreationWizard')}
           </Button>
           <Button
             variant="outline"
@@ -517,7 +517,7 @@ export function RoomsBedsView() {
             className="h-9 text-xs rounded-xl border-slate-200 bg-white font-bold gap-1.5"
           >
             <Plus className="h-4 w-4" />
-            Nouvelle chambre
+            {t('btnNewRoom')}
           </Button>
         </div>
       </div>
@@ -529,7 +529,7 @@ export function RoomsBedsView() {
             {successBanner}
           </div>
           <button onClick={() => setSuccessBanner(null)} className="text-emerald-600 hover:text-emerald-800 text-xs font-bold">
-            Fermer
+            {t('closeSuccessBanner')}
           </button>
         </div>
       )}
@@ -539,12 +539,12 @@ export function RoomsBedsView() {
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 p-4">
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher par code ou nom…" className="pl-9 text-xs rounded-xl h-9 border-slate-200" />
+            <Input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('searchRoomPlaceholder')} className="pl-9 text-xs rounded-xl h-9 border-slate-200" />
           </div>
           <Select value={filterHostel} onValueChange={v => { setFilterHostel(v); loadRooms(v); }}>
-            <SelectTrigger className="w-56 h-9 text-xs rounded-xl border-slate-200"><SelectValue placeholder="Toutes les résidences" /></SelectTrigger>
+            <SelectTrigger className="w-56 h-9 text-xs rounded-xl border-slate-200"><SelectValue placeholder={t('filterAllHostels')} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Toutes les résidences</SelectItem>
+              <SelectItem value="all">{t('filterAllHostels')}</SelectItem>
               {hostels.map(h => <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -553,9 +553,9 @@ export function RoomsBedsView() {
 
         <div className="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center gap-2 p-10 text-xs text-slate-500"><Loader2 className="h-4 w-4 animate-spin text-[#0066FF]" /> Chargement des chambres…</div>
+            <div className="flex items-center justify-center gap-2 p-10 text-xs text-slate-500"><Loader2 className="h-4 w-4 animate-spin text-[#0066FF]" /> {tCommon('loading')}</div>
           ) : filtered.length === 0 ? (
-            <div className="p-10 text-center text-xs text-slate-500">Aucune chambre trouvée pour ces critères.</div>
+            <div className="p-10 text-center text-xs text-slate-500">{t('noRoomsMatch')}</div>
           ) : (
             filtered.map(row => (
               <div key={row.id}
@@ -566,9 +566,9 @@ export function RoomsBedsView() {
                   <div>
                     <p className="font-bold text-[#16212B] text-xs">{row.code}{row.name ? ` — ${row.name}` : ''}</p>
                     <p className="text-[11px] text-slate-500">
-                      {row.zoneName ?? 'Sans zone'}
+                      {row.zoneName ?? t('unassignedZone')}
                       {row.categoryName ? ` · ${row.categoryName}` : ''}
-                      {row.isAccessible ? ' · PMR' : ''}
+                      {row.isAccessible ? ` · ${t('accessibleBadge')}` : ''}
                     </p>
                   </div>
                 </div>
@@ -591,15 +591,15 @@ export function RoomsBedsView() {
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[#0066FF]"><BedDouble className="h-5 w-5" /></div>
               <div>
-                <p className="font-bold text-[#16212B] text-xs">Lits assignés à la chambre {selectedRoom.code}</p>
-                <p className="text-[11px] text-slate-400">{beds.length} lit(s) configuré(s) dans cette unité</p>
+                <p className="font-bold text-[#16212B] text-xs">{t('assignedBedsTitle', { code: selectedRoom.code })}</p>
+                <p className="text-[11px] text-slate-400">{t('assignedBedsSubtitle', { count: beds.length })}</p>
               </div>
             </div>
-            <Button size="sm" onClick={openBedCreate} className="h-8 text-xs rounded-xl bg-[#0066FF] text-white font-bold gap-1"><Plus className="h-3.5 w-3.5" /> Ajouter un lit</Button>
+            <Button size="sm" onClick={openBedCreate} className="h-8 text-xs rounded-xl bg-[#0066FF] text-white font-bold gap-1"><Plus className="h-3.5 w-3.5" /> {t('btnNewBed')}</Button>
           </div>
           <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
             {beds.length === 0 && (
-              <p className="col-span-full p-6 text-center text-xs text-slate-400">Aucun lit configuré dans cette chambre.</p>
+              <p className="col-span-full p-6 text-center text-xs text-slate-400">{t('noBeds')}</p>
             )}
             {beds.map(bed => (
               <div key={bed.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/80 p-3 bg-slate-50/50">
@@ -607,11 +607,11 @@ export function RoomsBedsView() {
                   <BedDouble className="h-4 w-4 text-[#0066FF]" />
                   <div>
                     <p className="text-xs font-bold text-[#16212B] font-mono">{bed.code}</p>
-                    <p className="text-[10px] text-slate-400">{bed.notes ?? (bed.isAccessible ? 'Accès PMR' : 'Standard')}</p>
+                    <p className="text-[10px] text-slate-400">{bed.notes ?? (bed.isAccessible ? t('prmAccess') : t('standardBed'))}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" className="h-7 w-7" title="Hors service"
+                  <Button variant="ghost" size="icon" className="h-7 w-7" title={t('outOfServiceTitle')}
                     onClick={() => setBedStatus(bed, bed.status === 'out_of_service' ? 'active' : 'out_of_service')}>
                     <Wrench className={`h-3.5 w-3.5 ${bed.status === 'out_of_service' ? 'text-red-500' : 'text-slate-400'}`} />
                   </Button>
@@ -631,7 +631,7 @@ export function RoomsBedsView() {
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-[#0066FF]" />
-              Assistant de Création Rapide (Étages × Chambres × Lits)
+              {t('wizardModalTitle')}
             </DialogTitle>
           </DialogHeader>
 
@@ -645,7 +645,7 @@ export function RoomsBedsView() {
                   wizardMode === 'multi_floor' ? 'bg-[#0066FF] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Génération par Étages (Multi-Niveaux)
+                {t('wizardModeMultiFloor')}
               </button>
               <button
                 type="button"
@@ -654,16 +654,16 @@ export function RoomsBedsView() {
                   wizardMode === 'single_batch' ? 'bg-[#0066FF] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Génération par Série de Chambres
+                {t('wizardModeSingleBatch')}
               </button>
             </div>
 
             {/* Target Hostel */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Résidence de destination *</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('targetResidence')}</label>
                 <Select value={wizardHostelId} onValueChange={setWizardHostelId}>
-                  <SelectTrigger className="h-9 text-xs rounded-xl border-slate-200"><SelectValue placeholder="Choisir une résidence" /></SelectTrigger>
+                  <SelectTrigger className="h-9 text-xs rounded-xl border-slate-200"><SelectValue placeholder={t('selectHostel')} /></SelectTrigger>
                   <SelectContent>
                     {hostels.map(h => <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>)}
                   </SelectContent>
@@ -671,14 +671,14 @@ export function RoomsBedsView() {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Catégorie de chambre</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('roomCategory')}</label>
                 <Select value={wizardCategoryId} onValueChange={handleWizardCategoryChange}>
-                  <SelectTrigger className="h-9 text-xs rounded-xl border-slate-200"><SelectValue placeholder="Choisir une catégorie" /></SelectTrigger>
+                  <SelectTrigger className="h-9 text-xs rounded-xl border-slate-200"><SelectValue placeholder={t('roomCategory')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Standard (Sans catégorie)</SelectItem>
+                    <SelectItem value="none">{t('standardNoCategory')}</SelectItem>
                     {categories.map(c => (
                       <SelectItem key={c.id} value={c.id}>
-                        {c.name} {c.defaultCapacity ? `(${c.defaultCapacity} lits)` : ''}
+                        {c.name} {c.defaultCapacity ? `(${c.defaultCapacity})` : ''}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -691,7 +691,7 @@ export function RoomsBedsView() {
               <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div>
-                    <label className="font-bold text-slate-600 block mb-1">Nombre d'étages</label>
+                    <label className="font-bold text-slate-600 block mb-1">{t('numberOfFloors')}</label>
                     <Input
                       type="number"
                       min="1"
@@ -702,7 +702,7 @@ export function RoomsBedsView() {
                     />
                   </div>
                   <div>
-                    <label className="font-bold text-slate-600 block mb-1">Chambres par étage</label>
+                    <label className="font-bold text-slate-600 block mb-1">{t('roomsPerFloor')}</label>
                     <Input
                       type="number"
                       min="1"
@@ -713,16 +713,15 @@ export function RoomsBedsView() {
                     />
                   </div>
                   <div>
-                    <label className="font-bold text-slate-600 block mb-1">Préfixe de zone</label>
+                    <label className="font-bold text-slate-600 block mb-1">{t('zonePrefix')}</label>
                     <Input
                       value={wizardFloorPrefix}
                       onChange={e => setWizardFloorPrefix(e.target.value)}
-                      placeholder="Étage"
                       className="h-9 text-xs rounded-xl border-slate-200 bg-white"
                     />
                   </div>
                   <div>
-                    <label className="font-bold text-slate-600 block mb-1">Numérotation</label>
+                    <label className="font-bold text-slate-600 block mb-1">{t('numberingFormat')}</label>
                     <Select value={wizardNumberingFormat} onValueChange={(v: any) => setWizardNumberingFormat(v)}>
                       <SelectTrigger className="h-9 text-xs rounded-xl border-slate-200 bg-white"><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -736,11 +735,11 @@ export function RoomsBedsView() {
                 <div className="flex items-center gap-6 pt-1">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <Checkbox checked={wizardIncludeRdc} onCheckedChange={(v) => setWizardIncludeRdc(v === true)} />
-                    <span className="font-medium text-slate-700">Inclure un Rez-de-chaussée (RDC)</span>
+                    <span className="font-medium text-slate-700">{t('includeGroundFloor')}</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <Checkbox checked={wizardRdcPmr} onCheckedChange={(v) => setWizardRdcPmr(v === true)} />
-                    <span className="font-medium text-slate-700">RDC accessible PMR</span>
+                    <span className="font-medium text-slate-700">{t('groundFloorPmr')}</span>
                   </label>
                 </div>
               </div>
@@ -748,17 +747,17 @@ export function RoomsBedsView() {
               <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
-                    <label className="font-bold text-slate-600 block mb-1">Zone de rattachement</label>
+                    <label className="font-bold text-slate-600 block mb-1">{t('attachedZone')}</label>
                     <Select value={wizardBatchZoneId} onValueChange={setWizardBatchZoneId}>
-                      <SelectTrigger className="h-9 text-xs rounded-xl border-slate-200 bg-white"><SelectValue placeholder="Aucune" /></SelectTrigger>
+                      <SelectTrigger className="h-9 text-xs rounded-xl border-slate-200 bg-white"><SelectValue placeholder={t('noZoneOption')} /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">Sans zone</SelectItem>
+                        <SelectItem value="none">{t('noZoneOption')}</SelectItem>
                         {hostelZones.map(z => <SelectItem key={z.id} value={z.id}>{z.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <label className="font-bold text-slate-600 block mb-1">Préfixe code</label>
+                    <label className="font-bold text-slate-600 block mb-1">{t('roomCodePrefix')}</label>
                     <Input
                       value={wizardBatchPrefix}
                       onChange={e => setWizardBatchPrefix(e.target.value)}
@@ -767,7 +766,7 @@ export function RoomsBedsView() {
                     />
                   </div>
                   <div>
-                    <label className="font-bold text-slate-600 block mb-1">Numéro initial</label>
+                    <label className="font-bold text-slate-600 block mb-1">{t('initialNumber')}</label>
                     <Input
                       type="number"
                       value={wizardBatchStartNum}
@@ -776,7 +775,7 @@ export function RoomsBedsView() {
                     />
                   </div>
                   <div>
-                    <label className="font-bold text-slate-600 block mb-1">Nombre de chambres</label>
+                    <label className="font-bold text-slate-600 block mb-1">{t('numberOfRooms')}</label>
                     <Input
                       type="number"
                       min="1"
@@ -795,17 +794,17 @@ export function RoomsBedsView() {
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <Checkbox checked={wizardAutoBeds} onCheckedChange={(v) => setWizardAutoBeds(v === true)} />
-                  <span className="font-bold text-[#16212B]">Générer automatiquement les lits selon la capacité (§19.5)</span>
+                  <span className="font-bold text-[#16212B]">{t('autoGenerateBedsCap')}</span>
                 </label>
                 <Badge className="bg-[#0066FF]/10 text-[#0066FF] border-none font-bold text-[10px]">
-                  Auto-Génération
+                  {t('autoGenerationBadge')}
                 </Badge>
               </div>
 
               {wizardAutoBeds && (
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <div>
-                    <label className="font-bold text-slate-600 block mb-1">Lits par chambre</label>
+                    <label className="font-bold text-slate-600 block mb-1">{t('bedsPerRoom')}</label>
                     <Input
                       type="number"
                       min="1"
@@ -816,12 +815,12 @@ export function RoomsBedsView() {
                     />
                   </div>
                   <div>
-                    <label className="font-bold text-slate-600 block mb-1">Format de nommage des lits</label>
+                    <label className="font-bold text-slate-600 block mb-1">{t('bedNamingFormat')}</label>
                     <Select value={wizardBedNaming} onValueChange={(v: any) => setWizardBedNaming(v)}>
                       <SelectTrigger className="h-9 text-xs rounded-xl border-slate-200 bg-white"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="alpha">101-A, 101-B (Lettres)</SelectItem>
-                        <SelectItem value="numeric">101-L1, 101-L2 (Numéros)</SelectItem>
+                        <SelectItem value="alpha">101-A, 101-B</SelectItem>
+                        <SelectItem value="numeric">101-L1, 101-L2</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -832,10 +831,10 @@ export function RoomsBedsView() {
             {/* Interactive Preview Box */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-700">Aperçu avant génération :</span>
+                <span className="font-bold text-slate-700">{t('previewBeforeGeneration')}</span>
                 <div className="flex items-center gap-2">
-                  <Badge variant="neutral" className="font-bold text-[10px]">{totalPreviewRooms} Chambres</Badge>
-                  <Badge variant="neutral" className="font-bold text-[10px] bg-blue-50 text-[#0066FF] border-blue-200">{totalPreviewBeds} Lits</Badge>
+                  <Badge variant="neutral" className="font-bold text-[10px]">{t('chambresBadge', { count: totalPreviewRooms })}</Badge>
+                  <Badge variant="neutral" className="font-bold text-[10px] bg-blue-50 text-[#0066FF] border-blue-200">{t('litsBadge', { count: totalPreviewBeds })}</Badge>
                 </div>
               </div>
 
@@ -845,16 +844,16 @@ export function RoomsBedsView() {
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-[#16212B]">{item.roomCode}</span>
                       {item.zoneName && <span className="text-slate-400 font-sans">({item.zoneName})</span>}
-                      {item.isAccessible && <Badge className="bg-emerald-50 text-emerald-700 border-none text-[9px]">PMR</Badge>}
+                      {item.isAccessible && <Badge className="bg-emerald-50 text-emerald-700 border-none text-[9px]">{t('accessibleBadge')}</Badge>}
                     </div>
                     <div className="text-slate-500 text-[10px]">
-                      {item.bedCodes.length > 0 ? `Lits: ${item.bedCodes.join(', ')}` : 'Sans lit'}
+                      {item.bedCodes.length > 0 ? `${t('bed')}: ${item.bedCodes.join(', ')}` : t('noBedsInPreview')}
                     </div>
                   </div>
                 ))}
                 {previewItems.length > 30 && (
                   <div className="text-center text-slate-400 text-[10px] py-1">
-                    ... et {previewItems.length - 30} autre(s) chambre(s)
+                    {t('andMoreRooms', { count: previewItems.length - 30 })}
                   </div>
                 )}
               </div>
@@ -881,7 +880,7 @@ export function RoomsBedsView() {
               onClick={() => setWizardOpen(false)}
               className="h-9 text-xs rounded-xl border-slate-200"
             >
-              Annuler
+              {t('btnCancel')}
             </Button>
             <Button
               disabled={wizardRunning || !wizardHostelId || previewItems.length === 0}
@@ -889,7 +888,7 @@ export function RoomsBedsView() {
               className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5 shadow-xs cursor-pointer"
             >
               {wizardRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
-              Générer {totalPreviewRooms} chambres &amp; {totalPreviewBeds} lits
+              {t('btnExecuteWizard', { rooms: totalPreviewRooms, beds: totalPreviewBeds })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -900,14 +899,14 @@ export function RoomsBedsView() {
         <DialogContent className="rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B]">
-              {editingRoom ? `Modifier ${editingRoom.code}` : 'Nouvelle chambre'}
+              {editingRoom ? t('dialogEditRoom', { code: editingRoom.code }) : t('dialogNewRoom')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2 text-xs">
             <div>
-              <label className="mb-1 block font-bold text-slate-700">Résidence *</label>
+              <label className="mb-1 block font-bold text-slate-700">{t('targetResidence')}</label>
               <Select value={roomForm.hostelId} onValueChange={v => setRoomForm({ ...roomForm, hostelId: v })} disabled={Boolean(editingRoom)}>
-                <SelectTrigger className="h-9 text-xs rounded-xl border-slate-200"><SelectValue placeholder="Sélectionner une résidence" /></SelectTrigger>
+                <SelectTrigger className="h-9 text-xs rounded-xl border-slate-200"><SelectValue placeholder={t('selectHostel')} /></SelectTrigger>
                 <SelectContent>
                   {hostels.map(h => <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>)}
                 </SelectContent>
@@ -915,32 +914,32 @@ export function RoomsBedsView() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block font-bold text-slate-700">Code chambre *</label>
+                <label className="mb-1 block font-bold text-slate-700">{t('roomCode')}</label>
                 <Input value={roomForm.code} onChange={e => setRoomForm({ ...roomForm, code: e.target.value })} placeholder="Ex : 101" className="h-9 text-xs rounded-xl border-slate-200" />
               </div>
               <div>
-                <label className="mb-1 block font-bold text-slate-700">Nom (optionnel)</label>
-                <Input value={roomForm.name} onChange={e => setRoomForm({ ...roomForm, name: e.target.value })} placeholder="Ex: Suite Sud" className="h-9 text-xs rounded-xl border-slate-200" />
+                <label className="mb-1 block font-bold text-slate-700">{t('roomNameOptional')}</label>
+                <Input value={roomForm.name} onChange={e => setRoomForm({ ...roomForm, name: e.target.value })} className="h-9 text-xs rounded-xl border-slate-200" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block font-bold text-slate-700">Zone / Étage</label>
+                <label className="mb-1 block font-bold text-slate-700">{t('zoneFloor')}</label>
                 <Select value={roomForm.zoneId} onValueChange={v => setRoomForm({ ...roomForm, zoneId: v })}>
                   <SelectTrigger className="h-9 text-xs rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Aucune</SelectItem>
+                    <SelectItem value="none">{t('noZoneOption')}</SelectItem>
                     {hostelZones.map(z => <SelectItem key={z.id} value={z.id}>{z.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="mb-1 block font-bold text-slate-700">Catégorie</label>
+                <label className="mb-1 block font-bold text-slate-700">{t('roomCategory')}</label>
                 <Select value={roomForm.categoryId} onValueChange={handleCategoryChangeInRoomForm}>
                   <SelectTrigger className="h-9 text-xs rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Aucune</SelectItem>
-                    {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name} {c.defaultCapacity ? `(${c.defaultCapacity} lits)` : ''}</SelectItem>)}
+                    <SelectItem value="none">{t('standardNoCategory')}</SelectItem>
+                    {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name} {c.defaultCapacity ? `(${c.defaultCapacity})` : ''}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -955,12 +954,12 @@ export function RoomsBedsView() {
                     onCheckedChange={(v) => setRoomForm({ ...roomForm, autoGenerateBeds: v === true })}
                   />
                   <label htmlFor="auto-beds" className="font-bold text-[#16212B] cursor-pointer">
-                    Générer automatiquement les lits (§19.5)
+                    {t('autoGenerateBedsCap')}
                   </label>
                 </div>
                 {roomForm.autoGenerateBeds && (
                   <div className="flex items-center gap-2 pt-1">
-                    <span className="text-slate-600">Nombre de lits :</span>
+                    <span className="text-slate-600">{t('bedsCount')} :</span>
                     <Input
                       type="number"
                       min="1"
@@ -977,26 +976,26 @@ export function RoomsBedsView() {
 
             <div className="flex items-center gap-2">
               <Checkbox id="room-pmr" checked={roomForm.isAccessible} onCheckedChange={(v) => setRoomForm({ ...roomForm, isAccessible: v === true })} />
-              <label htmlFor="room-pmr" className="text-slate-700 font-medium cursor-pointer">Chambre accessible (PMR)</label>
+              <label htmlFor="room-pmr" className="text-slate-700 font-medium cursor-pointer">{t('accessiblePmr')}</label>
             </div>
             <div>
-              <label className="mb-1 block font-bold text-slate-700">Statut</label>
+              <label className="mb-1 block font-bold text-slate-700">{t('csvState')}</label>
               <Select value={roomForm.status} onValueChange={v => setRoomForm({ ...roomForm, status: v })}>
                 <SelectTrigger className="h-9 text-xs rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Actif</SelectItem>
-                  <SelectItem value="inactive">Inactif</SelectItem>
-                  <SelectItem value="out_of_service">Hors service</SelectItem>
-                  <SelectItem value="archived">Archivé</SelectItem>
+                  <SelectItem value="active">{t('statusActive')}</SelectItem>
+                  <SelectItem value="inactive">{t('statusInactive')}</SelectItem>
+                  <SelectItem value="out_of_service">{t('statusOutOfService')}</SelectItem>
+                  <SelectItem value="archived">{t('statusArchived')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {error && <p className="flex items-center gap-1 text-xs text-red-600"><AlertCircle className="h-4 w-4 shrink-0" />{error}</p>}
           </div>
           <DialogFooter className="pt-2">
-            <Button variant="outline" onClick={() => setRoomModal(false)} className="h-9 text-xs rounded-xl border-slate-200">Annuler</Button>
+            <Button variant="outline" onClick={() => setRoomModal(false)} className="h-9 text-xs rounded-xl border-slate-200">{t('btnCancel')}</Button>
             <Button onClick={saveRoom} disabled={saving || !roomForm.hostelId || !roomForm.code.trim()} className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5 shadow-xs">
-              {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Enregistrer
+              {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />} {t('btnSave')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1007,39 +1006,39 @@ export function RoomsBedsView() {
         <DialogContent className="rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B]">
-              {editingBed ? `Modifier ${editingBed.code}` : `Nouveau lit — ${selectedRoom?.code ?? ''}`}
+              {editingBed ? t('dialogEditBed', { code: editingBed.code }) : t('dialogNewBed', { room: selectedRoom?.code ?? '' })}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2 text-xs">
             <div>
-              <label className="mb-1 block font-bold text-slate-700">Code du lit *</label>
+              <label className="mb-1 block font-bold text-slate-700">{t('bedCodeReq')}</label>
               <Input value={bedForm.code} onChange={e => setBedForm({ ...bedForm, code: e.target.value })} placeholder="Ex : 101-A" className="h-9 text-xs rounded-xl border-slate-200 font-mono font-bold" />
             </div>
             <div className="flex items-center gap-2">
               <Checkbox id="bed-pmr" checked={bedForm.isAccessible} onCheckedChange={(v) => setBedForm({ ...bedForm, isAccessible: v === true })} />
-              <label htmlFor="bed-pmr" className="text-slate-700 font-medium cursor-pointer">Lit accessible (PMR)</label>
+              <label htmlFor="bed-pmr" className="text-slate-700 font-medium cursor-pointer">{t('accessibleBedPmr')}</label>
             </div>
             <div>
-              <label className="mb-1 block font-bold text-slate-700">Statut</label>
+              <label className="mb-1 block font-bold text-slate-700">{t('csvState')}</label>
               <Select value={bedForm.status} onValueChange={(v: any) => setBedForm({ ...bedForm, status: v })}>
                 <SelectTrigger className="h-9 text-xs rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Actif</SelectItem>
-                  <SelectItem value="out_of_service">Hors service</SelectItem>
-                  <SelectItem value="archived">Archivé</SelectItem>
+                  <SelectItem value="active">{t('statusActive')}</SelectItem>
+                  <SelectItem value="out_of_service">{t('statusOutOfService')}</SelectItem>
+                  <SelectItem value="archived">{t('statusArchived')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="mb-1 block font-bold text-slate-700">Notes ou remarques</label>
-              <Input value={bedForm.notes} onChange={e => setBedForm({ ...bedForm, notes: e.target.value })} placeholder="Ex: Matelas neuf / Côté fenêtre" className="h-9 text-xs rounded-xl border-slate-200" />
+              <label className="mb-1 block font-bold text-slate-700">{t('notesOrRemarks')}</label>
+              <Input value={bedForm.notes} onChange={e => setBedForm({ ...bedForm, notes: e.target.value })} className="h-9 text-xs rounded-xl border-slate-200" />
             </div>
             {error && <p className="flex items-center gap-1 text-xs text-red-600"><AlertCircle className="h-4 w-4 shrink-0" />{error}</p>}
           </div>
           <DialogFooter className="pt-2">
-            <Button variant="outline" onClick={() => setBedModal(false)} className="h-9 text-xs rounded-xl border-slate-200">Annuler</Button>
+            <Button variant="outline" onClick={() => setBedModal(false)} className="h-9 text-xs rounded-xl border-slate-200">{t('btnCancel')}</Button>
             <Button onClick={saveBed} disabled={saving || !bedForm.code.trim()} className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5 shadow-xs">
-              {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Enregistrer le lit
+              {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />} {t('btnSaveBed')}
             </Button>
           </DialogFooter>
         </DialogContent>

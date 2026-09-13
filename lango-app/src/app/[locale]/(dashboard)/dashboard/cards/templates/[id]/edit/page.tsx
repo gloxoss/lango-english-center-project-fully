@@ -4,5 +4,10 @@ import TemplateDesignerPage from './page.client';
 export default async function Page({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const p = await params;
   await requireServerPage(p.locale, { requiredCapability: 'cards.templates.manage' });
-  return <TemplateDesignerPage />;
+  const isRtl = p.locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={p.locale}>
+      <TemplateDesignerPage />
+    </main>
+  );
 }

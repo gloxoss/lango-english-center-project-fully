@@ -1,15 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Award, Ban, Calendar, CheckCircle2, Clock, Download, DollarSign, FileText,
+  Award, Ban, Calendar, Clock, Download, DollarSign, FileText,
   FolderDown, Loader2, LogIn, PiggyBank, ShieldAlert, User, UserCheck,
 } from 'lucide-react';
-
-const MONTHS_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
 type ApiResult<T> = { success: boolean; data?: T; error?: { code?: string; message?: string } };
 
@@ -99,45 +98,59 @@ async function fetchJson<T>(url: string): Promise<ApiResult<T>> {
   }
 }
 
-function money(n: string | number): string {
-  return `${Number(n).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} DH`;
+function money(n: string | number, loc = 'fr'): string {
+  const resolved = loc.startsWith('ar') ? 'ar-MA' : loc.startsWith('en') ? 'en-US' : 'fr-FR';
+  return `${Number(n).toLocaleString(resolved, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`;
 }
 
-function monthLabel(year: number | null, month: number | null): string {
-  return `${MONTHS_FR[(month ?? 1) - 1] ?? ''} ${year ?? ''}`.trim();
+function monthLabel(year: number | null, month: number | null, loc = 'fr'): string {
+  if (!year || !month) return '—';
+  const resolved = loc.startsWith('ar') ? 'ar-MA' : loc.startsWith('en') ? 'en-US' : 'fr-FR';
+  return new Date(year, month - 1, 1).toLocaleDateString(resolved, { month: 'long', year: 'numeric' });
 }
 
-function formatDate(iso: string | null): string {
+function formatDate(iso: string | null, loc = 'fr'): string {
   if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('fr-FR');
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const resolved = loc.startsWith('ar') ? 'ar-MA' : loc.startsWith('en') ? 'en-US' : 'fr-FR';
+  return d.toLocaleDateString(resolved);
 }
 
-function statusBadge(status: string): React.ReactNode {
-  const map: Record<string, { label: string; cls: string }> = {
-    pending: { label: 'En attente', cls: 'bg-amber-100 text-amber-700' },
-    approved: { label: 'Approuvée', cls: 'bg-[#DDF5EC] text-[#17A673]' },
-    granted: { label: 'Accordé', cls: 'bg-[#DDF5EC] text-[#17A673]' },
-    rejected: { label: 'Refusée', cls: 'bg-rose-100 text-rose-600' },
-    cancelled: { label: 'Annulée', cls: 'bg-slate-100 text-slate-500' },
-    fully_repaid: { label: 'Remboursé', cls: 'bg-emerald-100 text-emerald-700' },
-  };
-  const s = map[status] ?? { label: status, cls: 'bg-slate-100 text-slate-600' };
-  return <Badge className={`border-none text-[9px] font-bold ${s.cls}`}>{s.label}</Badge>;
+const STATUS_I18N_KEYS: Record<string, { key: string; cls: string }> = {
+  pending: { key: 'statusPending', cls: 'bg-amber-100 text-amber-700' },
+  approved: { key: 'statusApproved', cls: 'bg-[#DDF5EC] text-[#17A673]' },
+  granted: { key: 'statusGranted', cls: 'bg-[#DDF5EC] text-[#17A673]' },
+  rejected: { key: 'statusRejected', cls: 'bg-rose-100 text-rose-600' },
+  cancelled: { key: 'statusCancelled', cls: 'bg-slate-100 text-slate-500' },
+  fully_repaid: { key: 'statusFullyRepaid', cls: 'bg-emerald-100 text-emerald-700' },
+};
+
+function StatusBadgeItem({ status }: { status: string }) {
+  const t = useTranslations('HR');
+  const s = STATUS_I18N_KEYS[status];
+  const label = s ? t(s.key as any) : status;
+  const cls = s?.cls ?? 'bg-slate-100 text-slate-600';
+  return <Badge className={`border-none text-[9px] font-bold ${cls}`}>{label}</Badge>;
 }
 
-const NAV: { key: SectionKey; label: string }[] = [
-  { key: 'home', label: 'Accueil' },
-  { key: 'profile', label: 'Mon profil' },
-  { key: 'leave', label: 'Congés' },
-  { key: 'advances', label: 'Avances sur salaire' },
-  { key: 'time', label: 'Pointage' },
-  { key: 'payroll', label: 'Fiches de paie' },
-  { key: 'awards', label: 'Distinctions' },
-  { key: 'documents', label: 'Documents' },
-  { key: 'requests', label: 'Mes demandes' },
+const NAV: { key: SectionKey; labelKey: string }[] = [
+  { key: 'home', labelKey: 'navHome' },
+  { key: 'profile', labelKey: 'navProfile' },
+  { key: 'leave', labelKey: 'navLeave' },
+  { key: 'advances', labelKey: 'navAdvances' },
+  { key: 'time', labelKey: 'navTime' },
+  { key: 'payroll', labelKey: 'navPayroll' },
+  { key: 'awards', labelKey: 'navAwards' },
+  { key: 'documents', labelKey: 'navDocuments' },
+  { key: 'requests', labelKey: 'navRequests' },
 ];
 
 export function EmployeePortalView() {
+  const t = useTranslations('HR');
+  const tCommon = useTranslations('Common');
+  const locale = useLocale();
+
   const [status, setStatus] = useState<'loading' | 'notEmployee' | 'error' | 'ready'>('loading');
   const [errorMsg, setErrorMsg] = useState('');
   const [section, setSection] = useState<SectionKey>('home');
@@ -153,7 +166,7 @@ export function EmployeePortalView() {
 
   const loadAll = useCallback(async () => {
     setStatus('loading');
-    const [h, p, l, t, pay, adv, aw, doc, req] = await Promise.all([
+    const [h, p, l, tRes, pay, adv, aw, doc, req] = await Promise.all([
       fetchJson<HomeData>('/api/employee/me/home'),
       fetchJson<ProfileData>('/api/employee/me/profile'),
       fetchJson<LeaveRow[]>('/api/employee/me/leave'),
@@ -165,27 +178,27 @@ export function EmployeePortalView() {
       fetchJson<ProfileRequestRow[]>('/api/employee/me/requests'),
     ]);
 
-    const anyErr = [h, p, l, t, pay].find(r => !r.success);
+    const anyErr = [h, p, l, tRes, pay].find(r => !r.success);
     if (anyErr?.error?.code === 'NOT_AN_EMPLOYEE' || (anyErr as ApiResult<unknown> & { status?: number })?.status === 403) {
       setStatus('notEmployee');
       return;
     }
     if (anyErr) {
       setStatus('error');
-      setErrorMsg(anyErr.error?.message ?? 'Une erreur est survenue.');
+      setErrorMsg(anyErr.error?.message ?? t('loadError'));
       return;
     }
     setHome(h.data ?? null);
     setProfile(p.data ?? null);
     setLeave(l.data ?? []);
-    setTime(t.data ?? null);
+    setTime(tRes.data ?? null);
     setPayroll(pay.data ?? null);
     setAdvances(adv.data ?? null);
     setAwards(aw.data ?? []);
     setDocuments(doc.data ?? []);
     setRequests(req.data ?? []);
     setStatus('ready');
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadAll();
@@ -204,7 +217,7 @@ export function EmployeePortalView() {
   if (status === 'loading') {
     return (
       <div className="flex items-center justify-center py-24 text-slate-400">
-        <Loader2 className="w-5 h-5 animate-spin mr-2" /> Chargement de votre espace employé…
+        <Loader2 className="w-5 h-5 animate-spin mr-2 rtl:mr-0 rtl:ml-2" /> {t('portalLoading')}
       </div>
     );
   }
@@ -216,9 +229,9 @@ export function EmployeePortalView() {
           <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
             <ShieldAlert className="w-7 h-7" />
           </div>
-          <h1 className="text-lg font-extrabold text-[#16212B]">Accès réservé aux employés</h1>
+          <h1 className="text-lg font-extrabold text-[#16212B]">{t('accessRestricted')}</h1>
           <p className="text-xs text-slate-500">
-            Aucun profil employé n'est associé à ce compte. Contactez votre administration pour activer l'accès à cet espace.
+            {t('accessRestrictedDesc')}
           </p>
         </Card>
       </div>
@@ -232,9 +245,9 @@ export function EmployeePortalView() {
           <div className="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
             <ShieldAlert className="w-7 h-7" />
           </div>
-          <h1 className="text-lg font-extrabold text-[#16212B]">Impossible de charger l'espace employé</h1>
+          <h1 className="text-lg font-extrabold text-[#16212B]">{t('loadErrorTitle')}</h1>
           <p className="text-xs text-slate-500">{errorMsg}</p>
-          <Button onClick={loadAll} className="mx-auto">Réessayer</Button>
+          <Button onClick={loadAll} className="mx-auto">{tCommon('retry')}</Button>
         </Card>
       </div>
     );
@@ -247,35 +260,35 @@ export function EmployeePortalView() {
     <div className="space-y-6 max-w-[1800px] mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Portail employé</h1>
-          <p className="text-xs text-slate-500 mt-1">Gérez votre profil, vos congés, vos avances, votre pointage et vos fiches de paie.</p>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('portalTitle')}</h1>
+          <p className="text-xs text-slate-500 mt-1">{t('portalSubtitle')}</p>
         </div>
         <Button onClick={loadAll} variant="outline" size="sm" className="h-8 text-xs font-bold border-slate-200 text-[#2487B8]">
-          Actualiser
+          {t('btnRefresh')}
         </Button>
       </div>
 
       {/* KPI banner */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
         <Card className="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs text-center">
-          <span className="text-[9px] font-bold text-slate-400 uppercase block">Solde de congés</span>
-          <span className="text-lg font-extrabold text-[#16212B]">{home?.totalRemaining ?? 0} jours</span>
-          <span className="text-[9px] font-semibold text-slate-500 block">Disponibles ({home?.leaveBalances.length ?? 0} catégorie(s))</span>
+          <span className="text-[9px] font-bold text-slate-400 uppercase block">{t('kpiLeaveBalance')}</span>
+          <span className="text-lg font-extrabold text-[#16212B]">{t('kpiAvailableDays', { count: home?.totalRemaining ?? 0 })}</span>
+          <span className="text-[9px] font-semibold text-slate-500 block">{t('kpiCategoriesCount', { count: home?.leaveBalances.length ?? 0 })}</span>
         </Card>
         <Card className="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs text-center">
-          <span className="text-[9px] font-bold text-slate-400 uppercase block">Dernière fiche de paie</span>
-          <span className="text-sm font-extrabold text-[#16212B]">{home?.latestPayslip ? money(home.latestPayslip.netSalary) : '—'}</span>
-          <span className="text-[9px] font-semibold text-slate-500 block">{home?.latestPayslip ? monthLabel(home.latestPayslip.year, home.latestPayslip.month) : 'Aucune fiche émise'}</span>
+          <span className="text-[9px] font-bold text-slate-400 uppercase block">{t('kpiLatestPayslip')}</span>
+          <span className="text-sm font-extrabold text-[#16212B]">{home?.latestPayslip ? money(home.latestPayslip.netSalary, locale) : '—'}</span>
+          <span className="text-[9px] font-semibold text-slate-500 block">{home?.latestPayslip ? monthLabel(home.latestPayslip.year, home.latestPayslip.month, locale) : t('noPayslipIssued')}</span>
         </Card>
         <Card className="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs text-center">
-          <span className="text-[9px] font-bold text-slate-400 uppercase block">État de pointage</span>
-          <span className={`text-lg font-extrabold ${isClockedIn ? 'text-[#17A673]' : 'text-slate-400'}`}>{isClockedIn ? 'En service' : 'Hors service'}</span>
-          <span className="text-[9px] font-semibold text-slate-500 block">{isClockedIn ? formatDate(time?.openSession?.in ?? null) : 'Dernier pointage —'}</span>
+          <span className="text-[9px] font-bold text-slate-400 uppercase block">{t('kpiClockStatus')}</span>
+          <span className={`text-lg font-extrabold ${isClockedIn ? 'text-[#17A673]' : 'text-slate-400'}`}>{isClockedIn ? t('clockInService') : t('clockOffService')}</span>
+          <span className="text-[9px] font-semibold text-slate-500 block">{isClockedIn ? formatDate(time?.openSession?.in ?? null, locale) : '—'}</span>
         </Card>
         <Card className="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs text-center">
-          <span className="text-[9px] font-bold text-slate-400 uppercase block">Demandes en attente</span>
+          <span className="text-[9px] font-bold text-slate-400 uppercase block">{t('kpiPendingRequests')}</span>
           <span className="text-lg font-extrabold text-amber-700">{pendingCount}</span>
-          <span className="text-[9px] font-semibold text-slate-500 block">Congés & modifications</span>
+          <span className="text-[9px] font-semibold text-slate-500 block">{t('pendingSubtext')}</span>
         </Card>
       </div>
 
@@ -287,31 +300,33 @@ export function EmployeePortalView() {
             onClick={() => setSection(n.key)}
             className={`px-4 py-2 text-xs font-extrabold rounded-xl transition-colors cursor-pointer ${section === n.key ? 'bg-[#2487B8] text-white' : 'text-slate-500 hover:bg-slate-100'}`}
           >
-            {n.label}
+            {t(n.labelKey as any)}
           </button>
         ))}
       </div>
 
-      {section === 'home' && <HomeSection home={home} leave={leave} />}
+      {section === 'home' && <HomeSection home={home} leave={leave} locale={locale} />}
       {section === 'profile' && <ProfileSection profile={profile} onSaved={loadAll} />}
-      {section === 'leave' && <LeaveSection balances={home?.leaveBalances ?? []} rows={leave} onChanged={refreshLeave} />}
-      {section === 'advances' && <AdvancesSection data={advances} onChanged={refreshAdvances} />}
-      {section === 'time' && <TimeSection time={time} />}
-      {section === 'payroll' && <PayrollSection payroll={payroll} />}
-      {section === 'awards' && <AwardsSection awards={awards} />}
-      {section === 'documents' && <DocumentsSection docs={documents} />}
-      {section === 'requests' && <RequestsSection requests={requests} />}
+      {section === 'leave' && <LeaveSection balances={home?.leaveBalances ?? []} rows={leave} onChanged={refreshLeave} locale={locale} />}
+      {section === 'advances' && <AdvancesSection data={advances} onChanged={refreshAdvances} locale={locale} />}
+      {section === 'time' && <TimeSection time={time} locale={locale} />}
+      {section === 'payroll' && <PayrollSection payroll={payroll} locale={locale} />}
+      {section === 'awards' && <AwardsSection awards={awards} locale={locale} />}
+      {section === 'documents' && <DocumentsSection docs={documents} locale={locale} />}
+      {section === 'requests' && <RequestsSection requests={requests} locale={locale} />}
     </div>
   );
 }
 
-function HomeSection({ home, leave }: { home: HomeData | null; leave: LeaveRow[] }) {
+function HomeSection({ home, leave, locale }: { home: HomeData | null; leave: LeaveRow[]; locale: string }) {
+  const t = useTranslations('HR');
+
   return (
     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
       <div className="xl:col-span-5 space-y-4">
         <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-extrabold text-[#16212B]">Solde de congés</h2>
+            <h2 className="text-xs font-extrabold text-[#16212B]">{t('leaveBalancesTitle')}</h2>
             <Calendar className="w-4 h-4 text-[#2487B8]" />
           </div>
           {home && home.leaveBalances.length > 0 ? (
@@ -320,20 +335,20 @@ function HomeSection({ home, leave }: { home: HomeData | null; leave: LeaveRow[]
                 <div key={b.categoryId} className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between">
                   <div>
                     <p className="font-bold text-[#16212B] text-[11px]">{b.categoryName}</p>
-                    <p className="text-[10px] text-slate-400">Acquis {b.accruedDays} · Pris {b.usedDays}</p>
+                    <p className="text-[10px] text-slate-400">{t('leaveAccruedUsed', { accrued: b.accruedDays, used: b.usedDays })}</p>
                   </div>
-                  <span className="font-mono font-extrabold text-[#2487B8] text-[11px]">{b.remainingDays} j</span>
+                  <span className="font-mono font-extrabold text-[#2487B8] text-[11px]">{t('daysRemaining', { count: b.remainingDays })}</span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-[11px] text-slate-400 py-2">Aucun solde de congé configuré pour cette année.</p>
+            <p className="text-[11px] text-slate-400 py-2">{t('noLeaveConfigured')}</p>
           )}
         </Card>
 
         <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-extrabold text-[#16212B]">Dernières demandes</h2>
+            <h2 className="text-xs font-extrabold text-[#16212B]">{t('recentRequestsTitle')}</h2>
             <FileText className="w-4 h-4 text-[#2487B8]" />
           </div>
           {leave.length > 0 ? (
@@ -342,14 +357,14 @@ function HomeSection({ home, leave }: { home: HomeData | null; leave: LeaveRow[]
                 <div key={r.id} className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between">
                   <div>
                     <p className="font-bold text-[#16212B] text-[11px]">{r.categoryName}</p>
-                    <p className="text-[10px] text-slate-400">{formatDate(r.startDate)} → {formatDate(r.endDate)} ({r.daysRequested} j)</p>
+                    <p className="text-[10px] text-slate-400">{formatDate(r.startDate, locale)} → {formatDate(r.endDate, locale)} ({t('daysCount', { count: r.daysRequested })})</p>
                   </div>
-                  {statusBadge(r.status)}
+                  <StatusBadgeItem status={r.status} />
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-[11px] text-slate-400 py-2">Aucune demande de congé.</p>
+            <p className="text-[11px] text-slate-400 py-2">{t('noLeaveRequests')}</p>
           )}
         </Card>
       </div>
@@ -357,7 +372,7 @@ function HomeSection({ home, leave }: { home: HomeData | null; leave: LeaveRow[]
       <div className="xl:col-span-7 space-y-4">
         <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-extrabold text-[#16212B]">Cours du jour</h2>
+            <h2 className="text-xs font-extrabold text-[#16212B]">{t('todayScheduleTitle')}</h2>
             <Clock className="w-4 h-4 text-[#2487B8]" />
           </div>
           {home && home.todaySchedule.length > 0 ? (
@@ -376,25 +391,25 @@ function HomeSection({ home, leave }: { home: HomeData | null; leave: LeaveRow[]
               ))}
             </div>
           ) : (
-            <p className="text-[11px] text-slate-400 py-2">Aucun cours prévu aujourd'hui.</p>
+            <p className="text-[11px] text-slate-400 py-2">{t('noScheduleToday')}</p>
           )}
         </Card>
 
         <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-extrabold text-[#16212B]">Dernière fiche de paie</h2>
+            <h2 className="text-xs font-extrabold text-[#16212B]">{t('kpiLatestPayslip')}</h2>
             <DollarSign className="w-4 h-4 text-[#2487B8]" />
           </div>
           {home?.latestPayslip ? (
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between">
               <div>
-                <p className="font-bold text-[#16212B] text-[11px]">{monthLabel(home.latestPayslip.year, home.latestPayslip.month)}</p>
-                <p className="text-[10px] text-slate-400">Émise le {formatDate(home.latestPayslip.issuedAt)}</p>
+                <p className="font-bold text-[#16212B] text-[11px]">{monthLabel(home.latestPayslip.year, home.latestPayslip.month, locale)}</p>
+                <p className="text-[10px] text-slate-400">{t('issuedOn', { date: formatDate(home.latestPayslip.issuedAt, locale) })}</p>
               </div>
-              <span className="font-mono font-extrabold text-[#16212B] text-[11px]">{money(home.latestPayslip.netSalary)}</span>
+              <span className="font-mono font-extrabold text-[#16212B] text-[11px]">{money(home.latestPayslip.netSalary, locale)}</span>
             </div>
           ) : (
-            <p className="text-[11px] text-slate-400 py-2">Aucune fiche de paie publiée.</p>
+            <p className="text-[11px] text-slate-400 py-2">{t('noPayslipPublished')}</p>
           )}
         </Card>
       </div>
@@ -403,6 +418,8 @@ function HomeSection({ home, leave }: { home: HomeData | null; leave: LeaveRow[]
 }
 
 function ProfileSection({ profile, onSaved }: { profile: ProfileData | null; onSaved: () => void }) {
+  const t = useTranslations('HR');
+
   const [firstName, setFirstName] = useState(profile?.user?.firstName ?? '');
   const [lastName, setLastName] = useState(profile?.user?.lastName ?? '');
   const [phone, setPhone] = useState(profile?.user?.phone ?? '');
@@ -430,10 +447,10 @@ function ProfileSection({ profile, onSaved }: { profile: ProfileData | null; onS
     const json = await res.json().catch(() => ({ success: false }));
     setSaving(false);
     if (json.success) {
-      setMsg({ ok: true, text: 'Profil mis à jour.' });
+      setMsg({ ok: true, text: t('saveChanges') });
       onSaved();
     } else {
-      setMsg({ ok: false, text: json.error?.message ?? 'Échec de la mise à jour.' });
+      setMsg({ ok: false, text: json.error?.message ?? t('loadError') });
     }
   };
 
@@ -448,12 +465,12 @@ function ProfileSection({ profile, onSaved }: { profile: ProfileData | null; onS
     const json = await res.json().catch(() => ({ success: false }));
     setSaving(false);
     if (json.success) {
-      setMsg({ ok: true, text: json.data?.pendingApproval ? 'Demande de modification envoyée aux RH pour validation.' : 'Coordonnées bancaires mises à jour.' });
+      setMsg({ ok: true, text: json.data?.pendingApproval ? t('bankingSocialNotice') : t('saveChanges') });
       setRibOpen(false);
       setRibPassword('');
       onSaved();
     } else {
-      setMsg({ ok: false, text: json.error?.message ?? 'Échec de la demande.' });
+      setMsg({ ok: false, text: json.error?.message ?? t('loadError') });
     }
   };
 
@@ -461,24 +478,24 @@ function ProfileSection({ profile, onSaved }: { profile: ProfileData | null; onS
     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
       <Card className="xl:col-span-7 p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-extrabold text-[#16212B]">Mes informations</h2>
+          <h2 className="text-xs font-extrabold text-[#16212B]">{t('myInfoTitle')}</h2>
           <User className="w-4 h-4 text-[#2487B8]" />
         </div>
         <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          <div><span className="text-[10px] font-bold text-slate-400 uppercase block">Nom complet</span><span className="font-bold text-[#16212B]">{profile.user?.name ?? '—'}</span></div>
-          <div><span className="text-[10px] font-bold text-slate-400 uppercase block">Email</span><span className="font-bold text-[#16212B]">{profile.employee.email}</span></div>
-          <div><span className="text-[10px] font-bold text-slate-400 uppercase block">Rôle</span><span className="font-bold text-[#16212B]">{profile.employee.role}</span></div>
-          <div><span className="text-[10px] font-bold text-slate-400 uppercase block">Type de contrat</span><span className="font-bold text-[#16212B] uppercase">{profile.employee.contractType}</span></div>
+          <div><span className="text-[10px] font-bold text-slate-400 uppercase block">{t('fullName')}</span><span className="font-bold text-[#16212B]">{profile.user?.name ?? '—'}</span></div>
+          <div><span className="text-[10px] font-bold text-slate-400 uppercase block">{t('email')}</span><span className="font-bold text-[#16212B]">{profile.employee.email}</span></div>
+          <div><span className="text-[10px] font-bold text-slate-400 uppercase block">{t('role')}</span><span className="font-bold text-[#16212B]">{profile.employee.role}</span></div>
+          <div><span className="text-[10px] font-bold text-slate-400 uppercase block">{t('labelContractType')}</span><span className="font-bold text-[#16212B] uppercase">{profile.employee.contractType}</span></div>
         </div>
 
         <div className="pt-2 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label="Prénom" value={firstName} onChange={setFirstName} />
-            <Field label="Nom" value={lastName} onChange={setLastName} />
+            <Field label={t('firstName')} value={firstName} onChange={setFirstName} />
+            <Field label={t('lastName')} value={lastName} onChange={setLastName} />
           </div>
-          <Field label="Téléphone" value={phone} onChange={setPhone} />
-          <Field label="Adresse" value={address} onChange={setAddress} />
-          <label className="block text-[10px] font-bold text-slate-400 uppercase">Nombre de personnes à charge</label>
+          <Field label={t('phone')} value={phone} onChange={setPhone} />
+          <Field label={t('address')} value={address} onChange={setAddress} />
+          <label className="block text-[10px] font-bold text-slate-400 uppercase">{t('dependantsCount')}</label>
           <input
             type="number" min={0} max={20}
             value={dependantsCount}
@@ -487,40 +504,40 @@ function ProfileSection({ profile, onSaved }: { profile: ProfileData | null; onS
           />
           {msg && <p className={`text-[11px] font-bold ${msg.ok ? 'text-[#17A673]' : 'text-rose-600'}`}>{msg.text}</p>}
           <Button onClick={saveProfile} disabled={saving} className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl shadow-2xs px-4 cursor-pointer">
-            {saving ? 'Enregistrement…' : 'Enregistrer mes informations'}
+            {saving ? t('savingChanges') : t('saveMyInfo')}
           </Button>
         </div>
       </Card>
 
       <Card className="xl:col-span-5 p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-extrabold text-[#16212B]">Données bancaires et sociales</h2>
+          <h2 className="text-xs font-extrabold text-[#16212B]">{t('bankingSocialTitle')}</h2>
           <ShieldAlert className="w-4 h-4 text-amber-500" />
         </div>
-        <p className="text-[10px] text-slate-400">La modification du RIB, CNSS ou AMO exige une re-authentification par mot de passe et une approbation RH.</p>
+        <p className="text-[10px] text-slate-400">{t('bankingSocialNotice')}</p>
         {!ribOpen ? (
           <div className="space-y-2">
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-2 text-xs">
-              <div><span className="text-[10px] font-bold text-slate-400 uppercase block">RIB</span><span className="font-mono font-extrabold text-[#16212B]">{profile.employee.bankRib ?? 'Non renseigné'}</span></div>
-              <div><span className="text-[10px] font-bold text-slate-400 uppercase block">N° CNSS</span><span className="font-extrabold text-[#16212B]">{profile.employee.cnssNumber ?? 'Non renseigné'}</span></div>
-              <div><span className="text-[10px] font-bold text-slate-400 uppercase block">N° AMO</span><span className="font-extrabold text-[#16212B]">{profile.employee.amoNumber ?? 'Non renseigné'}</span></div>
+              <div><span className="text-[10px] font-bold text-slate-400 uppercase block">{t('labelRib')}</span><span className="font-mono font-extrabold text-[#16212B]">{profile.employee.bankRib ?? t('notProvided')}</span></div>
+              <div><span className="text-[10px] font-bold text-slate-400 uppercase block">{t('labelCnss')}</span><span className="font-extrabold text-[#16212B]">{profile.employee.cnssNumber ?? t('notProvided')}</span></div>
+              <div><span className="text-[10px] font-bold text-slate-400 uppercase block">{t('labelAmo')}</span><span className="font-extrabold text-[#16212B]">{profile.employee.amoNumber ?? t('notProvided')}</span></div>
             </div>
             <Button onClick={() => setRibOpen(true)} variant="outline" className="w-full h-8 text-xs font-bold rounded-xl border-slate-200 text-[#2487B8]">
-              Proposer une modification
+              {t('proposeEdit')}
             </Button>
           </div>
         ) : (
           <div className="space-y-3">
-            <Field label="Nouveau RIB" value={rib} onChange={setRib} />
-            <Field label="N° CNSS" value={cnss} onChange={setCnss} />
-            <Field label="N° AMO" value={amo} onChange={setAmo} />
-            <Field label="Mot de passe (confirmation)" value={ribPassword} onChange={setRibPassword} type="password" />
+            <Field label={t('newRib')} value={rib} onChange={setRib} />
+            <Field label={t('labelCnss')} value={cnss} onChange={setCnss} />
+            <Field label={t('labelAmo')} value={amo} onChange={setAmo} />
+            <Field label={t('confirmPassword')} value={ribPassword} onChange={setRibPassword} type="password" />
             <div className="flex gap-2">
               <Button onClick={saveSensitive} disabled={saving || !ribPassword} className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl shadow-2xs px-4 cursor-pointer">
-                Soumettre aux RH
+                {t('submitToHr')}
               </Button>
               <Button onClick={() => { setRibOpen(false); setRibPassword(''); }} variant="outline" className="h-8 text-xs font-bold rounded-xl border-slate-200 text-slate-500">
-                Annuler
+                {t('cancel')}
               </Button>
             </div>
           </div>
@@ -542,7 +559,10 @@ function Field({ label, value, onChange, type = 'text' }: { label: string; value
   );
 }
 
-function LeaveSection({ balances, rows, onChanged }: { balances: HomeData['leaveBalances']; rows: LeaveRow[]; onChanged: () => void }) {
+function LeaveSection({ balances, rows, onChanged, locale }: { balances: HomeData['leaveBalances']; rows: LeaveRow[]; onChanged: () => void; locale: string }) {
+  const t = useTranslations('HR');
+  const tCommon = useTranslations('Common');
+
   const [categoryId, setCategoryId] = useState(balances[0]?.categoryId ?? '');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -561,11 +581,11 @@ function LeaveSection({ balances, rows, onChanged }: { balances: HomeData['leave
     const json = await res.json().catch(() => ({ success: false }));
     setBusy(false);
     if (json.success) {
-      setMsg({ ok: true, text: 'Demande de congé envoyée.' });
+      setMsg({ ok: true, text: t('sendRequest') });
       setStartDate(''); setEndDate(''); setReason('');
       onChanged();
     } else {
-      setMsg({ ok: false, text: json.error?.message ?? 'Échec de la demande.' });
+      setMsg({ ok: false, text: json.error?.message ?? t('loadError') });
     }
   };
 
@@ -577,37 +597,37 @@ function LeaveSection({ balances, rows, onChanged }: { balances: HomeData['leave
   return (
     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
       <Card className="xl:col-span-4 p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-        <h2 className="text-xs font-extrabold text-[#16212B]">Nouvelle demande</h2>
+        <h2 className="text-xs font-extrabold text-[#16212B]">{t('newLeaveRequest')}</h2>
         {balances.length === 0 ? (
-          <p className="text-[11px] text-slate-400 py-2">Aucune catégorie de congé disponible.</p>
+          <p className="text-[11px] text-slate-400 py-2">{t('noLeaveCategory')}</p>
         ) : (
           <div className="space-y-3">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase">Catégorie
+            <label className="block text-[10px] font-bold text-slate-400 uppercase">{t('category')}
               <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className="mt-1 w-full h-9 rounded-xl border border-slate-200 bg-white px-2 text-xs font-bold text-[#16212B]">
                 {balances.map(b => (
-                  <option key={b.categoryId} value={b.categoryId}>{b.categoryName} — {b.remainingDays} j restants</option>
+                  <option key={b.categoryId} value={b.categoryId}>{b.categoryName} — {t('daysRemaining', { count: b.remainingDays })}</option>
                 ))}
               </select>
             </label>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Début" value={startDate} onChange={setStartDate} />
-              <Field label="Fin" value={endDate} onChange={setEndDate} />
+              <Field label={t('startDate')} value={startDate} onChange={setStartDate} />
+              <Field label={t('endDate')} value={endDate} onChange={setEndDate} />
             </div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase">Motif
+            <label className="block text-[10px] font-bold text-slate-400 uppercase">{t('reason')}
               <textarea value={reason} onChange={e => setReason(e.target.value)} rows={2} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-[#16212B] focus:outline-none focus:ring-2 focus:ring-[#2487B8]/30" />
             </label>
             {msg && <p className={`text-[11px] font-bold ${msg.ok ? 'text-[#17A673]' : 'text-rose-600'}`}>{msg.text}</p>}
             <Button onClick={submit} disabled={busy || !categoryId || !startDate || !endDate} className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl shadow-2xs px-4 cursor-pointer">
-              {busy ? 'Envoi…' : 'Envoyer la demande'}
+              {busy ? t('sending') : t('sendRequest')}
             </Button>
           </div>
         )}
       </Card>
 
       <Card className="xl:col-span-8 p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-        <h2 className="text-xs font-extrabold text-[#16212B]">Mes demandes ({rows.length})</h2>
+        <h2 className="text-xs font-extrabold text-[#16212B]">{t('myLeaveRequests', { count: rows.length })}</h2>
         {rows.length === 0 ? (
-          <p className="text-[11px] text-slate-400 py-2">Aucune demande de congé.</p>
+          <p className="text-[11px] text-slate-400 py-2">{t('noLeaveRequests')}</p>
         ) : (
           <div className="space-y-2">
             {rows.map(r => (
@@ -615,13 +635,13 @@ function LeaveSection({ balances, rows, onChanged }: { balances: HomeData['leave
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="font-bold text-[#16212B] text-xs">{r.categoryName}</p>
-                    {statusBadge(r.status)}
+                    <StatusBadgeItem status={r.status} />
                   </div>
-                  <p className="text-[10px] text-slate-500 mt-0.5">{formatDate(r.startDate)} → {formatDate(r.endDate)} ({r.daysRequested} jour(s)){r.reason ? ` — ${r.reason}` : ''}</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">{formatDate(r.startDate, locale)} → {formatDate(r.endDate, locale)} ({t('daysCount', { count: r.daysRequested })}){r.reason ? ` — ${r.reason}` : ''}</p>
                 </div>
                 {r.status === 'pending' && (
                   <Button onClick={() => cancel(r.id)} variant="outline" size="sm" className="h-7 px-2 text-[10px] font-bold rounded-lg border-slate-200 text-slate-500">
-                    <Ban className="w-3 h-3" /> Annuler
+                    <Ban className="w-3 h-3 rtl:mr-0 rtl:ml-1" /> {tCommon('cancel')}
                   </Button>
                 )}
               </div>
@@ -633,7 +653,9 @@ function LeaveSection({ balances, rows, onChanged }: { balances: HomeData['leave
   );
 }
 
-function AdvancesSection({ data, onChanged }: { data: AdvanceData | null; onChanged: () => void }) {
+function AdvancesSection({ data, onChanged, locale }: { data: AdvanceData | null; onChanged: () => void; locale: string }) {
+  const t = useTranslations('HR');
+
   const [requestedAmount, setRequestedAmount] = useState('');
   const [monthlyInstallment, setMonthlyInstallment] = useState('');
   const [reason, setReason] = useState('');
@@ -655,11 +677,11 @@ function AdvancesSection({ data, onChanged }: { data: AdvanceData | null; onChan
     const json = await res.json().catch(() => ({ success: false }));
     setBusy(false);
     if (json.success) {
-      setMsg({ ok: true, text: 'Demande d\'avance enregistrée.' });
+      setMsg({ ok: true, text: t('submitAdvance') });
       setRequestedAmount(''); setMonthlyInstallment(''); setReason('');
       onChanged();
     } else {
-      setMsg({ ok: false, text: json.error?.message ?? 'Échec de la demande d\'avance.' });
+      setMsg({ ok: false, text: json.error?.message ?? t('loadError') });
     }
   };
 
@@ -670,41 +692,41 @@ function AdvancesSection({ data, onChanged }: { data: AdvanceData | null; onChan
     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
       <Card className="xl:col-span-4 p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-extrabold text-[#16212B]">Demander une avance</h2>
+          <h2 className="text-xs font-extrabold text-[#16212B]">{t('requestAdvanceTitle')}</h2>
           <PiggyBank className="w-4 h-4 text-[#2487B8]" />
         </div>
         <div className="space-y-3">
-          <Field label="Montant souhaité (DH)" value={requestedAmount} onChange={setRequestedAmount} type="number" />
-          <Field label="Mensualité souhaitée (DH)" value={monthlyInstallment} onChange={setMonthlyInstallment} type="number" />
-          <label className="block text-[10px] font-bold text-slate-400 uppercase">Motif de l'avance
+          <Field label={t('requestedAmountDh')} value={requestedAmount} onChange={setRequestedAmount} type="number" />
+          <Field label={t('monthlyInstallmentDh')} value={monthlyInstallment} onChange={setMonthlyInstallment} type="number" />
+          <label className="block text-[10px] font-bold text-slate-400 uppercase">{t('advanceReason')}
             <textarea value={reason} onChange={e => setReason(e.target.value)} rows={2} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-[#16212B] focus:outline-none focus:ring-2 focus:ring-[#2487B8]/30" />
           </label>
           {msg && <p className={`text-[11px] font-bold ${msg.ok ? 'text-[#17A673]' : 'text-rose-600'}`}>{msg.text}</p>}
           <Button onClick={submitAdvance} disabled={busy || !requestedAmount} className="bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs rounded-xl shadow-2xs px-4 cursor-pointer">
-            {busy ? 'Envoi…' : 'Soumettre l\'avance'}
+            {busy ? t('sending') : t('submitAdvance')}
           </Button>
         </div>
       </Card>
 
       <div className="xl:col-span-8 space-y-4">
         <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-          <h2 className="text-xs font-extrabold text-[#16212B]">Mes demandes d'avances ({advances.length})</h2>
+          <h2 className="text-xs font-extrabold text-[#16212B]">{t('myAdvances', { count: advances.length })}</h2>
           {advances.length === 0 ? (
-            <p className="text-[11px] text-slate-400 py-2">Aucune avance enregistrée.</p>
+            <p className="text-[11px] text-slate-400 py-2">{t('noAdvances')}</p>
           ) : (
             <div className="space-y-2">
               {advances.map(a => (
                 <div key={a.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="font-bold text-[#16212B] text-xs">{money(a.requestedAmount)}</p>
-                      {statusBadge(a.status)}
+                      <p className="font-bold text-[#16212B] text-xs">{money(a.requestedAmount, locale)}</p>
+                      <StatusBadgeItem status={a.status} />
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-0.5">Demande du {formatDate(a.requestedAt)}{a.reason ? ` — ${a.reason}` : ''}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{t('requestDate', { date: formatDate(a.requestedAt, locale) })}{a.reason ? ` — ${a.reason}` : ''}</p>
                   </div>
-                  <div className="text-right">
-                    <span className="font-mono font-extrabold text-[#16212B] text-[11px] block">Reste: {money(a.remainingBalance)}</span>
-                    <span className="text-[9px] text-slate-400">Remboursé {money(a.repaidAmount)}</span>
+                  <div className="text-right rtl:text-left">
+                    <span className="font-mono font-extrabold text-[#16212B] text-[11px] block">{t('remainingBalance', { amount: money(a.remainingBalance, locale) })}</span>
+                    <span className="text-[9px] text-slate-400">{t('repaidAmount', { amount: money(a.repaidAmount, locale) })}</span>
                   </div>
                 </div>
               ))}
@@ -714,15 +736,15 @@ function AdvancesSection({ data, onChanged }: { data: AdvanceData | null; onChan
 
         {transactions.length > 0 && (
           <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-            <h2 className="text-xs font-extrabold text-[#16212B]">Historique des remboursements</h2>
+            <h2 className="text-xs font-extrabold text-[#16212B]">{t('repaymentHistory')}</h2>
             <div className="space-y-2">
-              {transactions.map(t => (
-                <div key={t.id} className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between text-xs">
+              {transactions.map(tr => (
+                <div key={tr.id} className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between text-xs">
                   <div>
-                    <span className="font-bold text-[#16212B] uppercase">{t.type}</span>
-                    <span className="text-[10px] text-slate-400 block">{formatDate(t.transactionDate)}</span>
+                    <span className="font-bold text-[#16212B] uppercase">{tr.type}</span>
+                    <span className="text-[10px] text-slate-400 block">{formatDate(tr.transactionDate, locale)}</span>
                   </div>
-                  <span className="font-mono font-extrabold text-[#17A673]">{money(t.amount)}</span>
+                  <span className="font-mono font-extrabold text-[#17A673]">{money(tr.amount, locale)}</span>
                 </div>
               ))}
             </div>
@@ -733,7 +755,9 @@ function AdvancesSection({ data, onChanged }: { data: AdvanceData | null; onChan
   );
 }
 
-function TimeSection({ time }: { time: TimeData | null }) {
+function TimeSection({ time, locale }: { time: TimeData | null; locale: string }) {
+  const t = useTranslations('HR');
+
   if (!time) return null;
   const h = Math.floor(time.todayTotalMinutes / 60);
   const m = time.todayTotalMinutes % 60;
@@ -741,28 +765,28 @@ function TimeSection({ time }: { time: TimeData | null }) {
   return (
     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
       <Card className="xl:col-span-5 p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-        <h2 className="text-xs font-extrabold text-[#16212B]">Aujourd'hui</h2>
+        <h2 className="text-xs font-extrabold text-[#16212B]">{t('todaySectionTitle')}</h2>
         <div className="grid grid-cols-2 gap-3">
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-center">
-            <span className="text-[9px] font-bold text-slate-400 uppercase block">Total travaillé</span>
+            <span className="text-[9px] font-bold text-slate-400 uppercase block">{t('totalWorked')}</span>
             <span className="text-lg font-extrabold text-[#16212B]">{h}h{m.toString().padStart(2, '0')}</span>
           </div>
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-center">
-            <span className="text-[9px] font-bold text-slate-400 uppercase block">Statut</span>
+            <span className="text-[9px] font-bold text-slate-400 uppercase block">{t('kpiClockStatus')}</span>
             <span className={`text-lg font-extrabold ${time.openSession ? 'text-[#17A673]' : 'text-slate-400'}`}>
-              {time.openSession ? 'En service' : 'Hors service'}
+              {time.openSession ? t('clockInService') : t('clockOffService')}
             </span>
           </div>
         </div>
         {time.openSession && (
           <div className="p-2.5 bg-[#DDF5EC] rounded-xl border border-emerald-100 flex items-center gap-2">
             <LogIn className="w-3.5 h-3.5 text-[#17A673]" />
-            <p className="text-[11px] font-bold text-[#17A673]">Pointage d'entrée ouvert à {time.openSession.in.slice(11, 16)}</p>
+            <p className="text-[11px] font-bold text-[#17A673]">{t('clockSessionOpen', { time: time.openSession.in.slice(11, 16) })}</p>
           </div>
         )}
-        <h2 className="text-xs font-extrabold text-[#16212B] pt-2">Sessions de travail ({time.sessions.length})</h2>
+        <h2 className="text-xs font-extrabold text-[#16212B] pt-2">{t('workSessions', { count: time.sessions.length })}</h2>
         {time.sessions.length === 0 ? (
-          <p className="text-[11px] text-slate-400 py-2">Aucune session complète.</p>
+          <p className="text-[11px] text-slate-400 py-2">{t('noWorkSessions')}</p>
         ) : (
           <div className="space-y-2">
             {time.sessions.slice(0, 8).map((s, i) => (
@@ -776,18 +800,18 @@ function TimeSection({ time }: { time: TimeData | null }) {
       </Card>
 
       <Card className="xl:col-span-7 p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-        <h2 className="text-xs font-extrabold text-[#16212B]">Historique des pointages ({time.punches.length})</h2>
+        <h2 className="text-xs font-extrabold text-[#16212B]">{t('punchHistory', { count: time.punches.length })}</h2>
         {time.punches.length === 0 ? (
-          <p className="text-[11px] text-slate-400 py-2">Aucun pointage enregistré.</p>
+          <p className="text-[11px] text-slate-400 py-2">{t('noPunches')}</p>
         ) : (
           <div className="space-y-1.5">
             {time.punches.slice(0, 20).map(p => (
               <div key={p.id} className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between">
                 <span className={`inline-flex items-center gap-1.5 text-[11px] font-extrabold ${p.punchType === 'in' ? 'text-[#17A673]' : 'text-rose-500'}`}>
                   {p.punchType === 'in' ? <LogIn className="w-3.5 h-3.5" /> : <Ban className="w-3.5 h-3.5" />}
-                  {p.punchType === 'in' ? 'Entrée' : 'Sortie'}
+                  {p.punchType === 'in' ? t('punchIn') : t('punchOut')}
                 </span>
-                <span className="text-[11px] font-bold text-[#16212B]">{formatDate(p.scannedAt)} à {p.scannedAt.slice(11, 16)}</span>
+                <span className="text-[11px] font-bold text-[#16212B]">{formatDate(p.scannedAt, locale)} {t('atTime', { time: p.scannedAt.slice(11, 16) })}</span>
               </div>
             ))}
           </div>
@@ -797,31 +821,33 @@ function TimeSection({ time }: { time: TimeData | null }) {
   );
 }
 
-function PayrollSection({ payroll }: { payroll: PayrollData | null }) {
+function PayrollSection({ payroll, locale }: { payroll: PayrollData | null; locale: string }) {
+  const t = useTranslations('HR');
+
   if (!payroll) return null;
   return (
     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
       <Card className="xl:col-span-8 p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-extrabold text-[#16212B]">Mes fiches de paie ({payroll.payslips.length})</h2>
+          <h2 className="text-xs font-extrabold text-[#16212B]">{t('myPayslips', { count: payroll.payslips.length })}</h2>
           <FileText className="w-4 h-4 text-[#2487B8]" />
         </div>
         {payroll.payslips.length === 0 ? (
-          <p className="text-[11px] text-slate-400 py-2">Aucune fiche de paie publiée.</p>
+          <p className="text-[11px] text-slate-400 py-2">{t('noPayslipPublished')}</p>
         ) : (
           <div className="space-y-2">
             {payroll.payslips.map(ps => (
               <div key={ps.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between">
                 <div>
-                  <p className="font-bold text-[#16212B] text-xs">{monthLabel(ps.year, ps.month)}</p>
-                  <p className="text-[10px] text-slate-400">Émise le {formatDate(ps.issuedAt)}</p>
+                  <p className="font-bold text-[#16212B] text-xs">{monthLabel(ps.year, ps.month, locale)}</p>
+                  <p className="text-[10px] text-slate-400">{t('issuedOn', { date: formatDate(ps.issuedAt, locale) })}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <span className="font-mono font-extrabold text-[#16212B] text-[11px] block">{money(ps.netSalary)}</span>
-                    <span className="text-[9px] text-slate-400 font-medium">Brut {money(ps.grossSalary)}</span>
+                  <div className="text-right rtl:text-left">
+                    <span className="font-mono font-extrabold text-[#16212B] text-[11px] block">{money(ps.netSalary, locale)}</span>
+                    <span className="text-[9px] text-slate-400 font-medium">{t('gross', { amount: money(ps.grossSalary, locale) })}</span>
                   </div>
-                  <a href={`/api/employee/me/payroll/${ps.id}/download`} className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-[#2487B8] cursor-pointer" title="Télécharger">
+                  <a href={`/api/employee/me/payroll/${ps.id}/download`} className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-[#2487B8] cursor-pointer" title={t('actionDownload')} aria-label={t('actionDownload')}>
                     <Download className="w-3.5 h-3.5" />
                   </a>
                 </div>
@@ -832,18 +858,18 @@ function PayrollSection({ payroll }: { payroll: PayrollData | null }) {
       </Card>
 
       <Card className="xl:col-span-4 p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-        <h2 className="text-xs font-extrabold text-[#16212B]">Synthèse annuelle</h2>
+        <h2 className="text-xs font-extrabold text-[#16212B]">{t('annualSummary')}</h2>
         {payroll.annualSummaries.length === 0 ? (
-          <p className="text-[11px] text-slate-400 py-2">Aucune donnée.</p>
+          <p className="text-[11px] text-slate-400 py-2">{t('noDataMatch')}</p>
         ) : (
           <div className="space-y-2">
             {payroll.annualSummaries.map(s => (
               <div key={s.year} className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between">
                 <div>
-                  <p className="font-bold text-[#16212B] text-[11px]">Année {s.year}</p>
-                  <p className="text-[10px] text-slate-400">{s.count} fiche(s)</p>
+                  <p className="font-bold text-[#16212B] text-[11px]">{t('yearLabel', { year: s.year })}</p>
+                  <p className="text-[10px] text-slate-400">{t('payslipsCount', { count: s.count })}</p>
                 </div>
-                <span className="font-mono font-extrabold text-[#16212B] text-[11px]">{money(s.totalNet)}</span>
+                <span className="font-mono font-extrabold text-[#16212B] text-[11px]">{money(s.totalNet, locale)}</span>
               </div>
             ))}
           </div>
@@ -853,15 +879,17 @@ function PayrollSection({ payroll }: { payroll: PayrollData | null }) {
   );
 }
 
-function AwardsSection({ awards }: { awards: AwardRow[] }) {
+function AwardsSection({ awards, locale }: { awards: AwardRow[]; locale: string }) {
+  const t = useTranslations('HR');
+
   return (
     <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3 max-w-4xl">
       <div className="flex items-center justify-between">
-        <h2 className="text-xs font-extrabold text-[#16212B]">Mes distinctions et récompenses ({awards.length})</h2>
+        <h2 className="text-xs font-extrabold text-[#16212B]">{t('myAwards', { count: awards.length })}</h2>
         <Award className="w-4 h-4 text-amber-500" />
       </div>
       {awards.length === 0 ? (
-        <p className="text-[11px] text-slate-400 py-2">Aucune distinction attribuée pour le moment.</p>
+        <p className="text-[11px] text-slate-400 py-2">{t('noAwards')}</p>
       ) : (
         <div className="space-y-2">
           {awards.map(a => (
@@ -871,11 +899,11 @@ function AwardsSection({ awards }: { awards: AwardRow[] }) {
                   <p className="font-bold text-[#16212B] text-xs">{a.title}</p>
                   <Badge className="bg-amber-100 text-amber-700 text-[9px] font-bold border-none">{a.category}</Badge>
                 </div>
-                <p className="text-[10px] text-slate-400 mt-0.5">Décerné le {formatDate(a.awardDate)}{a.presentedBy ? ` par ${a.presentedBy}` : ''}</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">{t('awardedOn', { date: formatDate(a.awardDate, locale) })}{a.presentedBy ? ` ${t('awardedBy', { name: a.presentedBy })}` : ''}</p>
                 {a.summary && <p className="text-[10px] text-slate-600 mt-1">{a.summary}</p>}
               </div>
               {a.monetaryReward > 0 && (
-                <span className="font-mono font-extrabold text-[#17A673] text-xs">{money(a.monetaryReward)}</span>
+                <span className="font-mono font-extrabold text-[#17A673] text-xs">{money(a.monetaryReward, locale)}</span>
               )}
             </div>
           ))}
@@ -885,25 +913,27 @@ function AwardsSection({ awards }: { awards: AwardRow[] }) {
   );
 }
 
-function DocumentsSection({ docs }: { docs: DocumentRow[] }) {
+function DocumentsSection({ docs, locale }: { docs: DocumentRow[]; locale: string }) {
+  const t = useTranslations('HR');
+
   return (
     <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3 max-w-4xl">
       <div className="flex items-center justify-between">
-        <h2 className="text-xs font-extrabold text-[#16212B]">Mes documents RH ({docs.length})</h2>
+        <h2 className="text-xs font-extrabold text-[#16212B]">{t('myHrDocuments', { count: docs.length })}</h2>
         <FolderDown className="w-4 h-4 text-[#2487B8]" />
       </div>
       {docs.length === 0 ? (
-        <p className="text-[11px] text-slate-400 py-2">Aucun document administratif disponible.</p>
+        <p className="text-[11px] text-slate-400 py-2">{t('noAdminDocuments')}</p>
       ) : (
         <div className="space-y-2">
           {docs.map(d => (
             <div key={d.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between">
               <div>
                 <p className="font-bold text-[#16212B] text-xs">{d.originalName}</p>
-                <p className="text-[10px] text-slate-400">{d.documentType.toUpperCase()} · Déposé le {formatDate(d.createdAt)}</p>
+                <p className="text-[10px] text-slate-400">{d.documentType.toUpperCase()} · {t('depositedOn', { date: formatDate(d.createdAt, locale) })}</p>
               </div>
               <a href={`/api/employee/me/documents/${d.id}/download`} className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 text-[10px] font-bold text-[#2487B8] hover:bg-slate-100">
-                <Download className="h-3.5 w-3.5" /> Télécharger
+                <Download className="h-3.5 w-3.5" /> {t('actionDownload')}
               </a>
             </div>
           ))}
@@ -913,26 +943,28 @@ function DocumentsSection({ docs }: { docs: DocumentRow[] }) {
   );
 }
 
-function RequestsSection({ requests }: { requests: ProfileRequestRow[] }) {
+function RequestsSection({ requests, locale }: { requests: ProfileRequestRow[]; locale: string }) {
+  const t = useTranslations('HR');
+
   return (
     <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3 max-w-4xl">
       <div className="flex items-center justify-between">
-        <h2 className="text-xs font-extrabold text-[#16212B]">Historique des demandes de modification ({requests.length})</h2>
+        <h2 className="text-xs font-extrabold text-[#16212B]">{t('requestsHistory', { count: requests.length })}</h2>
         <UserCheck className="w-4 h-4 text-[#2487B8]" />
       </div>
       {requests.length === 0 ? (
-        <p className="text-[11px] text-slate-400 py-2">Aucune demande de modification enregistrée.</p>
+        <p className="text-[11px] text-slate-400 py-2">{t('noModificationRequests')}</p>
       ) : (
         <div className="space-y-2">
           {requests.map(r => (
             <div key={r.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <p className="font-bold text-[#16212B] text-xs">Demande #{r.id.slice(0, 8)}</p>
-                  {statusBadge(r.status)}
+                  <p className="font-bold text-[#16212B] text-xs">{t('requestNumber', { id: r.id.slice(0, 8) })}</p>
+                  <StatusBadgeItem status={r.status} />
                 </div>
-                <p className="text-[10px] text-slate-400 mt-0.5">Soumise le {formatDate(r.createdAt)} · Type: {r.requestType}</p>
-                {r.rejectionReason && <p className="text-[10px] text-rose-600 font-bold mt-1">Refus: {r.rejectionReason}</p>}
+                <p className="text-[10px] text-slate-400 mt-0.5">{t('submittedOn', { date: formatDate(r.createdAt, locale) })} · {t('labelType')}: {r.requestType}</p>
+                {r.rejectionReason && <p className="text-[10px] text-rose-600 font-bold mt-1">{t('rejectionReason', { reason: r.rejectionReason })}</p>}
               </div>
             </div>
           ))}

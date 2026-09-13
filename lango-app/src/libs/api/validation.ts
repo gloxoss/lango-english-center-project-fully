@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ApiError } from './errors';
 import { moneyInput } from '@/libs/finance/validation';
+import { ApiError } from './errors';
 
 export async function parseJson<T extends z.ZodType>(request: Request, schema: T): Promise<z.output<T>> {
   let body: unknown;
@@ -221,8 +221,35 @@ export const mediumCreateSchema = namedEntitySchema;
 export const mediumUpdateSchema = namedEntityUpdateSchema;
 export const sectionCreateSchema = namedEntitySchema;
 export const sectionUpdateSchema = namedEntityUpdateSchema;
-export const streamCreateSchema = namedEntitySchema;
-export const streamUpdateSchema = namedEntityUpdateSchema;
+// Filières carry real structure, not just a name: the cycle they belong to, the
+// national Bac series code, and (separately, via the coefficients endpoint) the
+// subject weights their moyenne générale is computed on.
+const classCycleEnum = z.enum(['maternelle', 'primaire', 'college', 'lycee']);
+
+export const streamCreateSchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  code: z.string().trim().max(20).nullable().optional(),
+  cycle: classCycleEnum.nullable().optional(),
+  bacSeriesCode: z.string().trim().max(20).nullable().optional(),
+  isActive: z.boolean().optional(),
+  displayOrder: z.number().int().min(0).optional(),
+}).strict();
+
+export const streamUpdateSchema = streamCreateSchema
+  .partial()
+  .extend({ id: z.string().uuid() })
+  .strict();
+
+export const streamCoefficientsSchema = z.object({
+  streamId: z.string().uuid(),
+  coefficients: z.array(z.object({
+    subjectId: z.string().uuid(),
+    // Strictly positive: a 0 would silently drop the subject from the average,
+    // which is what deleting the row is for.
+    coefficient: z.number().positive().max(99),
+    isCore: z.boolean().optional().default(false),
+  })).min(1).max(40),
+}).strict();
 
 const timeOfDay = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'HH:MM attendu');
 
@@ -370,7 +397,6 @@ export const branchCreateSchema = z.object({
   phone: optionalText(50),
   email: z.email().max(255).optional().nullable(),
 }).strict();
-
 
 // ==========================================================================
 // Assessment/grading engine

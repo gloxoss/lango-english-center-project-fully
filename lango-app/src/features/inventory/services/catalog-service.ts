@@ -2,29 +2,20 @@
 // Every query is tenant-scoped; every foreign id from a request body is re-verified
 // `WHERE id=? AND tenantId=?`; "delete" is archive-only and guarded by IN_USE.
 import { and, asc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
-import { db } from '@/libs/DB';
 import { ApiError } from '@/libs/api/errors';
-import { branches } from '@/models/Schema';
-import {
-  inventoryCategories,
-  inventoryIssues,
-  inventoryProducts,
-  inventoryPurchases,
-  inventorySales,
-  inventoryStockBalances,
-  inventoryStockMovements,
-  inventoryStores,
-  inventorySuppliers,
-  inventoryUnits,
-} from '@/models/Schema';
-import { qtyToMilli, milliToQty } from './inventory-math';
+import { db } from '@/libs/DB';
+import { branches, inventoryCategories, inventoryIssues, inventoryProducts, inventoryPurchases, inventorySales, inventoryStockBalances, inventoryStockMovements, inventoryStores, inventorySuppliers, inventoryUnits } from '@/models/Schema';
+
+import { milliToQty, qtyToMilli } from './inventory-math';
 
 function isUniqueViolation(err: unknown): boolean {
   return (err as { code?: string })?.code === '23505';
 }
 
 async function verifyRef(table: any, tenantId: string, id: string | null | undefined, label: string): Promise<void> {
-  if (!id) return;
+  if (!id) {
+    return;
+  }
   const [row] = await db.select({ id: table.id }).from(table).where(and(eq(table.id, id), eq(table.tenantId, tenantId))).limit(1);
   if (!row) {
     throw new ApiError(422, 'INVALID_REF', `${label} introuvable dans cet établissement.`);
@@ -48,8 +39,12 @@ export type CategoryInput = {
 
 export async function listCategories(tenantId: string, opts: { status?: 'active' | 'archived'; search?: string } = {}) {
   const conditions = [eq(inventoryCategories.tenantId, tenantId)];
-  if (opts.status) conditions.push(eq(inventoryCategories.status, opts.status));
-  if (opts.search) conditions.push(ilike(inventoryCategories.name, `%${opts.search}%`));
+  if (opts.status) {
+    conditions.push(eq(inventoryCategories.status, opts.status));
+  }
+  if (opts.search) {
+    conditions.push(ilike(inventoryCategories.name, `%${opts.search}%`));
+  }
   return db.select().from(inventoryCategories).where(and(...conditions)).orderBy(asc(inventoryCategories.name));
 }
 
@@ -68,14 +63,18 @@ export async function createCategory(tenantId: string, input: CategoryInput) {
     }).returning();
     return row;
   } catch (err) {
-    if (isUniqueViolation(err)) throw new ApiError(409, 'DUPLICATE', 'Une catégorie avec ce nom existe déjà.');
+    if (isUniqueViolation(err)) {
+      throw new ApiError(409, 'DUPLICATE', 'Une catégorie avec ce nom existe déjà.');
+    }
     throw err;
   }
 }
 
 export async function updateCategory(tenantId: string, id: string, input: Partial<CategoryInput>) {
   const existing = await getCategory(tenantId, id);
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Catégorie introuvable dans cet établissement.');
+  if (!existing) {
+    throw new ApiError(404, 'NOT_FOUND', 'Catégorie introuvable dans cet établissement.');
+  }
   try {
     const [row] = await db.update(inventoryCategories).set({
       ...(input.name !== undefined ? { name: input.name } : {}),
@@ -85,14 +84,18 @@ export async function updateCategory(tenantId: string, id: string, input: Partia
     }).where(and(eq(inventoryCategories.id, id), eq(inventoryCategories.tenantId, tenantId))).returning();
     return row;
   } catch (err) {
-    if (isUniqueViolation(err)) throw new ApiError(409, 'DUPLICATE', 'Une catégorie avec ce nom existe déjà.');
+    if (isUniqueViolation(err)) {
+      throw new ApiError(409, 'DUPLICATE', 'Une catégorie avec ce nom existe déjà.');
+    }
     throw err;
   }
 }
 
 export async function archiveCategory(tenantId: string, id: string) {
   const existing = await getCategory(tenantId, id);
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Catégorie introuvable dans cet établissement.');
+  if (!existing) {
+    throw new ApiError(404, 'NOT_FOUND', 'Catégorie introuvable dans cet établissement.');
+  }
   if (await existsWhere([eq(inventoryProducts.tenantId, tenantId), eq(inventoryProducts.categoryId, id)])) {
     throw new ApiError(409, 'IN_USE', 'Cette catégorie est utilisée par au moins un produit.');
   }
@@ -115,8 +118,12 @@ export type UnitInput = {
 
 export async function listUnits(tenantId: string, opts: { status?: 'active' | 'archived'; search?: string } = {}) {
   const conditions = [eq(inventoryUnits.tenantId, tenantId)];
-  if (opts.status) conditions.push(eq(inventoryUnits.status, opts.status));
-  if (opts.search) conditions.push(ilike(inventoryUnits.name, `%${opts.search}%`));
+  if (opts.status) {
+    conditions.push(eq(inventoryUnits.status, opts.status));
+  }
+  if (opts.search) {
+    conditions.push(ilike(inventoryUnits.name, `%${opts.search}%`));
+  }
   return db.select().from(inventoryUnits).where(and(...conditions)).orderBy(asc(inventoryUnits.name));
 }
 
@@ -126,11 +133,10 @@ export async function getUnit(tenantId: string, id: string) {
 }
 
 async function unitInUse(tenantId: string, id: string): Promise<boolean> {
-  const [row] = await db.select({ one: sql<number>`1` }).from(inventoryProducts)
-    .where(and(
-      eq(inventoryProducts.tenantId, tenantId),
-      or(eq(inventoryProducts.purchaseUnitId, id), eq(inventoryProducts.saleUnitId, id)),
-    )).limit(1);
+  const [row] = await db.select({ one: sql<number>`1` }).from(inventoryProducts).where(and(
+    eq(inventoryProducts.tenantId, tenantId),
+    or(eq(inventoryProducts.purchaseUnitId, id), eq(inventoryProducts.saleUnitId, id)),
+  )).limit(1);
   return !!row;
 }
 
@@ -144,14 +150,18 @@ export async function createUnit(tenantId: string, input: UnitInput) {
     }).returning();
     return row;
   } catch (err) {
-    if (isUniqueViolation(err)) throw new ApiError(409, 'DUPLICATE', 'Une unité avec ce nom existe déjà.');
+    if (isUniqueViolation(err)) {
+      throw new ApiError(409, 'DUPLICATE', 'Une unité avec ce nom existe déjà.');
+    }
     throw err;
   }
 }
 
 export async function updateUnit(tenantId: string, id: string, input: Partial<UnitInput>) {
   const existing = await getUnit(tenantId, id);
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Unité introuvable dans cet établissement.');
+  if (!existing) {
+    throw new ApiError(404, 'NOT_FOUND', 'Unité introuvable dans cet établissement.');
+  }
   try {
     const [row] = await db.update(inventoryUnits).set({
       ...(input.name !== undefined ? { name: input.name } : {}),
@@ -161,14 +171,18 @@ export async function updateUnit(tenantId: string, id: string, input: Partial<Un
     }).where(and(eq(inventoryUnits.id, id), eq(inventoryUnits.tenantId, tenantId))).returning();
     return row;
   } catch (err) {
-    if (isUniqueViolation(err)) throw new ApiError(409, 'DUPLICATE', 'Une unité avec ce nom existe déjà.');
+    if (isUniqueViolation(err)) {
+      throw new ApiError(409, 'DUPLICATE', 'Une unité avec ce nom existe déjà.');
+    }
     throw err;
   }
 }
 
 export async function archiveUnit(tenantId: string, id: string) {
   const existing = await getUnit(tenantId, id);
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Unité introuvable dans cet établissement.');
+  if (!existing) {
+    throw new ApiError(404, 'NOT_FOUND', 'Unité introuvable dans cet établissement.');
+  }
   if (await unitInUse(tenantId, id)) {
     throw new ApiError(409, 'IN_USE', 'Cette unité est utilisée par au moins un produit.');
   }
@@ -195,9 +209,13 @@ export type StoreInput = {
 
 export async function listStores(tenantId: string, opts: { status?: 'active' | 'archived'; search?: string } = {}) {
   const conditions = [eq(inventoryStores.tenantId, tenantId)];
-  if (opts.status) conditions.push(eq(inventoryStores.status, opts.status));
+  if (opts.status) {
+    conditions.push(eq(inventoryStores.status, opts.status));
+  }
   const searchCond = opts.search ? or(ilike(inventoryStores.name, `%${opts.search}%`), ilike(inventoryStores.code, `%${opts.search}%`)) : undefined;
-  if (searchCond) conditions.push(searchCond);
+  if (searchCond) {
+    conditions.push(searchCond);
+  }
   return db.select().from(inventoryStores).where(and(...conditions)).orderBy(asc(inventoryStores.name));
 }
 
@@ -221,14 +239,18 @@ export async function createStore(tenantId: string, input: StoreInput) {
     }).returning();
     return row;
   } catch (err) {
-    if (isUniqueViolation(err)) throw new ApiError(409, 'DUPLICATE', 'Un magasin avec ce code existe déjà.');
+    if (isUniqueViolation(err)) {
+      throw new ApiError(409, 'DUPLICATE', 'Un magasin avec ce code existe déjà.');
+    }
     throw err;
   }
 }
 
 export async function updateStore(tenantId: string, id: string, input: Partial<StoreInput>) {
   const existing = await getStore(tenantId, id);
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Magasin introuvable dans cet établissement.');
+  if (!existing) {
+    throw new ApiError(404, 'NOT_FOUND', 'Magasin introuvable dans cet établissement.');
+  }
   await verifyRef(branches, tenantId, input.branchId !== undefined ? input.branchId : existing.branchId, 'La succursale');
   try {
     const [row] = await db.update(inventoryStores).set({
@@ -243,14 +265,18 @@ export async function updateStore(tenantId: string, id: string, input: Partial<S
     }).where(and(eq(inventoryStores.id, id), eq(inventoryStores.tenantId, tenantId))).returning();
     return row;
   } catch (err) {
-    if (isUniqueViolation(err)) throw new ApiError(409, 'DUPLICATE', 'Un magasin avec ce code existe déjà.');
+    if (isUniqueViolation(err)) {
+      throw new ApiError(409, 'DUPLICATE', 'Un magasin avec ce code existe déjà.');
+    }
     throw err;
   }
 }
 
 export async function archiveStore(tenantId: string, id: string) {
   const existing = await getStore(tenantId, id);
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Magasin introuvable dans cet établissement.');
+  if (!existing) {
+    throw new ApiError(404, 'NOT_FOUND', 'Magasin introuvable dans cet établissement.');
+  }
   const usedIn = (t: any, cond: any) => db.select({ one: sql<number>`1` }).from(t).where(cond).limit(1);
   const checks = [
     usedIn(inventoryPurchases, and(eq(inventoryPurchases.tenantId, tenantId), eq(inventoryPurchases.storeId, id))),
@@ -261,7 +287,9 @@ export async function archiveStore(tenantId: string, id: string) {
   ];
   for (const check of checks) {
     const [row] = await check;
-    if (row) throw new ApiError(409, 'IN_USE', 'Ce magasin est utilisé par des mouvements ou documents de stock.');
+    if (row) {
+      throw new ApiError(409, 'IN_USE', 'Ce magasin est utilisé par des mouvements ou documents de stock.');
+    }
   }
   const [row] = await db.update(inventoryStores)
     .set({ status: 'archived', updatedAt: sql`now()` })
@@ -286,9 +314,13 @@ export type SupplierInput = {
 
 export async function listSuppliers(tenantId: string, opts: { status?: 'active' | 'archived'; search?: string } = {}) {
   const conditions = [eq(inventorySuppliers.tenantId, tenantId)];
-  if (opts.status) conditions.push(eq(inventorySuppliers.status, opts.status));
+  if (opts.status) {
+    conditions.push(eq(inventorySuppliers.status, opts.status));
+  }
   const searchCond = opts.search ? or(ilike(inventorySuppliers.name, `%${opts.search}%`), ilike(inventorySuppliers.companyName, `%${opts.search}%`)) : undefined;
-  if (searchCond) conditions.push(searchCond);
+  if (searchCond) {
+    conditions.push(searchCond);
+  }
   return db.select().from(inventorySuppliers).where(and(...conditions)).orderBy(asc(inventorySuppliers.name));
 }
 
@@ -311,14 +343,18 @@ export async function createSupplier(tenantId: string, input: SupplierInput) {
     }).returning();
     return row;
   } catch (err) {
-    if (isUniqueViolation(err)) throw new ApiError(409, 'DUPLICATE', 'Un fournisseur avec ce nom existe déjà.');
+    if (isUniqueViolation(err)) {
+      throw new ApiError(409, 'DUPLICATE', 'Un fournisseur avec ce nom existe déjà.');
+    }
     throw err;
   }
 }
 
 export async function updateSupplier(tenantId: string, id: string, input: Partial<SupplierInput>) {
   const existing = await getSupplier(tenantId, id);
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Fournisseur introuvable dans cet établissement.');
+  if (!existing) {
+    throw new ApiError(404, 'NOT_FOUND', 'Fournisseur introuvable dans cet établissement.');
+  }
   try {
     const [row] = await db.update(inventorySuppliers).set({
       ...(input.name !== undefined ? { name: input.name } : {}),
@@ -332,17 +368,22 @@ export async function updateSupplier(tenantId: string, id: string, input: Partia
     }).where(and(eq(inventorySuppliers.id, id), eq(inventorySuppliers.tenantId, tenantId))).returning();
     return row;
   } catch (err) {
-    if (isUniqueViolation(err)) throw new ApiError(409, 'DUPLICATE', 'Un fournisseur avec ce nom existe déjà.');
+    if (isUniqueViolation(err)) {
+      throw new ApiError(409, 'DUPLICATE', 'Un fournisseur avec ce nom existe déjà.');
+    }
     throw err;
   }
 }
 
 export async function archiveSupplier(tenantId: string, id: string) {
   const existing = await getSupplier(tenantId, id);
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Fournisseur introuvable dans cet établissement.');
-  const [used] = await db.select({ one: sql<number>`1` }).from(inventoryPurchases)
-    .where(and(eq(inventoryPurchases.tenantId, tenantId), eq(inventoryPurchases.supplierId, id))).limit(1);
-  if (used) throw new ApiError(409, 'IN_USE', 'Ce fournisseur est référencé par des achats.');
+  if (!existing) {
+    throw new ApiError(404, 'NOT_FOUND', 'Fournisseur introuvable dans cet établissement.');
+  }
+  const [used] = await db.select({ one: sql<number>`1` }).from(inventoryPurchases).where(and(eq(inventoryPurchases.tenantId, tenantId), eq(inventoryPurchases.supplierId, id))).limit(1);
+  if (used) {
+    throw new ApiError(409, 'IN_USE', 'Ce fournisseur est référencé par des achats.');
+  }
   const [row] = await db.update(inventorySuppliers)
     .set({ status: 'archived', updatedAt: sql`now()` })
     .where(and(eq(inventorySuppliers.id, id), eq(inventorySuppliers.tenantId, tenantId)))
@@ -363,6 +404,8 @@ export type ProductInput = {
   unitRatio?: string;
   purchasePrice?: number | null;
   salePrice?: number | null;
+  reorderPoint?: number | null;
+  reorderQuantity?: number | null;
   remarks?: string | null;
   isActive?: boolean;
 };
@@ -370,7 +413,9 @@ export type ProductInput = {
 type BalanceRow = { productId: string; storeId: string; storeName: string; storeCode: string; quantity: string };
 
 async function loadBalances(tenantId: string, productIds: string[]): Promise<BalanceRow[]> {
-  if (productIds.length === 0) return [];
+  if (productIds.length === 0) {
+    return [];
+  }
   const rows = await db.select({
     productId: inventoryStockBalances.productId,
     storeId: inventoryStockBalances.storeId,
@@ -393,13 +438,19 @@ export async function listProducts(
   opts: { status?: 'active' | 'archived'; categoryId?: string | null; search?: string; includeArchived?: boolean } = {},
 ) {
   const conditions = [eq(inventoryProducts.tenantId, tenantId)];
-  if (opts.categoryId) conditions.push(eq(inventoryProducts.categoryId, opts.categoryId));
-  if (opts.includeArchived !== true) conditions.push(eq(inventoryProducts.isActive, true));
+  if (opts.categoryId) {
+    conditions.push(eq(inventoryProducts.categoryId, opts.categoryId));
+  }
+  if (opts.includeArchived !== true) {
+    conditions.push(eq(inventoryProducts.isActive, true));
+  }
   const searchCond = opts.search ? or(ilike(inventoryProducts.name, `%${opts.search}%`), ilike(inventoryProducts.code, `%${opts.search}%`)) : undefined;
-  if (searchCond) conditions.push(searchCond);
+  if (searchCond) {
+    conditions.push(searchCond);
+  }
 
   const products = await db.select().from(inventoryProducts).where(and(...conditions)).orderBy(asc(inventoryProducts.name));
-  const balances = await loadBalances(tenantId, products.map((p) => p.id));
+  const balances = await loadBalances(tenantId, products.map(p => p.id));
 
   const grouped = new Map<string, BalanceRow[]>();
   for (const b of balances) {
@@ -424,7 +475,9 @@ export async function listProducts(
 
 export async function getProduct(tenantId: string, id: string) {
   const [product] = await db.select().from(inventoryProducts).where(and(eq(inventoryProducts.id, id), eq(inventoryProducts.tenantId, tenantId))).limit(1);
-  if (!product) return null;
+  if (!product) {
+    return null;
+  }
   const balances = await loadBalances(tenantId, [id]);
   const totalMilli = balances.reduce((acc, b) => acc + qtyToMilli(b.quantity), BigInt(0));
   return {
@@ -452,20 +505,28 @@ export async function createProduct(tenantId: string, input: ProductInput) {
       unitRatio: input.unitRatio ?? '1',
       purchasePrice: input.purchasePrice ?? null,
       salePrice: input.salePrice ?? null,
+      reorderPoint: input.reorderPoint ?? null,
+      reorderQuantity: input.reorderQuantity ?? null,
       remarks: input.remarks ?? null,
       isActive: input.isActive ?? true,
     }).returning();
-    if (!row) throw new ApiError(500, 'INSERT_FAILED', 'Échec de l\'enregistrement du produit.');
+    if (!row) {
+      throw new ApiError(500, 'INSERT_FAILED', 'Échec de l\'enregistrement du produit.');
+    }
     return getProduct(tenantId, row.id);
   } catch (err) {
-    if (isUniqueViolation(err)) throw new ApiError(409, 'DUPLICATE', 'Un produit avec ce code existe déjà.');
+    if (isUniqueViolation(err)) {
+      throw new ApiError(409, 'DUPLICATE', 'Un produit avec ce code existe déjà.');
+    }
     throw err;
   }
 }
 
 export async function updateProduct(tenantId: string, id: string, input: Partial<ProductInput>) {
   const existing = await getProduct(tenantId, id);
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Produit introuvable dans cet établissement.');
+  if (!existing) {
+    throw new ApiError(404, 'NOT_FOUND', 'Produit introuvable dans cet établissement.');
+  }
   await verifyRef(inventoryCategories, tenantId, input.categoryId !== undefined ? input.categoryId : existing.categoryId, 'La catégorie');
   await verifyRef(inventoryUnits, tenantId, input.purchaseUnitId !== undefined ? input.purchaseUnitId : existing.purchaseUnitId, 'L\'unité d\'achat');
   await verifyRef(inventoryUnits, tenantId, input.saleUnitId !== undefined ? input.saleUnitId : existing.saleUnitId, 'L\'unité de vente');
@@ -479,28 +540,39 @@ export async function updateProduct(tenantId: string, id: string, input: Partial
       ...(input.unitRatio !== undefined ? { unitRatio: input.unitRatio } : {}),
       ...(input.purchasePrice !== undefined ? { purchasePrice: input.purchasePrice } : {}),
       ...(input.salePrice !== undefined ? { salePrice: input.salePrice } : {}),
+      ...(input.reorderPoint !== undefined ? { reorderPoint: input.reorderPoint } : {}),
+      ...(input.reorderQuantity !== undefined ? { reorderQuantity: input.reorderQuantity } : {}),
       ...(input.remarks !== undefined ? { remarks: input.remarks } : {}),
       ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
       updatedAt: sql`now()`,
     }).where(and(eq(inventoryProducts.id, id), eq(inventoryProducts.tenantId, tenantId))).returning();
-    if (!row) throw new ApiError(500, 'UPDATE_FAILED', 'Échec de la mise à jour du produit.');
+    if (!row) {
+      throw new ApiError(500, 'UPDATE_FAILED', 'Échec de la mise à jour du produit.');
+    }
     return getProduct(tenantId, row.id);
   } catch (err) {
-    if (isUniqueViolation(err)) throw new ApiError(409, 'DUPLICATE', 'Un produit avec ce code existe déjà.');
+    if (isUniqueViolation(err)) {
+      throw new ApiError(409, 'DUPLICATE', 'Un produit avec ce code existe déjà.');
+    }
     throw err;
   }
 }
 
 export async function archiveProduct(tenantId: string, id: string) {
   const existing = await getProduct(tenantId, id);
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Produit introuvable dans cet établissement.');
-  const [used] = await db.select({ one: sql<number>`1` }).from(inventoryStockMovements)
-    .where(and(eq(inventoryStockMovements.tenantId, tenantId), eq(inventoryStockMovements.productId, id))).limit(1);
-  if (used) throw new ApiError(409, 'IN_USE', 'Ce produit a déjà un historique de stock.');
+  if (!existing) {
+    throw new ApiError(404, 'NOT_FOUND', 'Produit introuvable dans cet établissement.');
+  }
+  const [used] = await db.select({ one: sql<number>`1` }).from(inventoryStockMovements).where(and(eq(inventoryStockMovements.tenantId, tenantId), eq(inventoryStockMovements.productId, id))).limit(1);
+  if (used) {
+    throw new ApiError(409, 'IN_USE', 'Ce produit a déjà un historique de stock.');
+  }
   const [row] = await db.update(inventoryProducts)
     .set({ isActive: false, updatedAt: sql`now()` })
     .where(and(eq(inventoryProducts.id, id), eq(inventoryProducts.tenantId, tenantId)))
     .returning();
-  if (!row) throw new ApiError(500, 'UPDATE_FAILED', 'Échec de l\'archivage du produit.');
+  if (!row) {
+    throw new ApiError(500, 'UPDATE_FAILED', 'Échec de l\'archivage du produit.');
+  }
   return getProduct(tenantId, row.id);
 }

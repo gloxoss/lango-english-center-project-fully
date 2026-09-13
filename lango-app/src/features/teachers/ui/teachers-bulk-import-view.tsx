@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +25,8 @@ const HEADERS = ['Nom complet', 'Email', 'Téléphone', 'Spécialité'];
 const TEMPLATE_CSV = `${HEADERS.join(',')}\nYoussef El Amrani,y.elamrani@atlas.ma,0665879012,Mathématiques\n`;
 
 export function TeachersBulkImportView({ locale }: { locale: string }) {
+  const t = useTranslations('Teachers');
+  const tCommon = useTranslations('Common');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [rows, setRows] = useState<ImportRow[]>([]);
@@ -55,18 +58,18 @@ export function TeachersBulkImportView({ locale }: { locale: string }) {
       const text = String(reader.result ?? '');
       const parsed = parseCsv(text);
       if (parsed.length < 2) {
-        setError('Le fichier ne contient aucune ligne de données.');
+        setError(t('noDataRowsFound'));
         setRows([]);
         return;
       }
       const [header, ...dataRows] = parsed as [string[], ...string[][]];
-      const nameCol = findCsvColumn(header, ['nom complet', 'nom', 'fullname']);
-      const emailCol = findCsvColumn(header, ['email', 'e-mail']);
-      const phoneCol = findCsvColumn(header, ['téléphone', 'telephone', 'phone']);
-      const specCol = findCsvColumn(header, ['spécialité', 'specialite', 'specialization']);
+      const nameCol = findCsvColumn(header, ['nom complet', 'nom', 'fullname', 'full name', 'الاسم الكامل']);
+      const emailCol = findCsvColumn(header, ['email', 'e-mail', 'البريد']);
+      const phoneCol = findCsvColumn(header, ['téléphone', 'telephone', 'phone', 'الهاتف']);
+      const specCol = findCsvColumn(header, ['spécialité', 'specialite', 'specialization', 'speciality', 'التخصص']);
 
       if (nameCol === -1) {
-        setError('Colonne "Nom complet" introuvable. Utilisez le modèle fourni.');
+        setError(t('missingFullNameCol'));
         setRows([]);
         return;
       }
@@ -77,9 +80,9 @@ export function TeachersBulkImportView({ locale }: { locale: string }) {
         const email = emailCol !== -1 ? (cols[emailCol] ?? '').trim() : '';
         let errorMessage: string | undefined;
         if (!fullName) {
-          errorMessage = 'Nom complet manquant';
+          errorMessage = t('fullNameMissing');
         } else if (email && !emailRegex.test(email)) {
-          errorMessage = 'Email invalide';
+          errorMessage = t('invalidEmail');
         }
         return {
           line: idx + 2,
@@ -99,7 +102,7 @@ export function TeachersBulkImportView({ locale }: { locale: string }) {
   async function handleConfirmImport() {
     const validRows = rows.filter(r => r.valid);
     if (validRows.length === 0) {
-      setError('Aucune ligne valide à importer.');
+      setError(t('noValidRowsToImport'));
       return;
     }
     setImporting(true);
@@ -119,7 +122,7 @@ export function TeachersBulkImportView({ locale }: { locale: string }) {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.message || 'Échec de l\'import.');
+        setError(json.message || t('importFailed'));
         return;
       }
       setResult({ importedCount: json.importedCount, errorCount: json.errorCount, message: json.message });
@@ -127,7 +130,7 @@ export function TeachersBulkImportView({ locale }: { locale: string }) {
       setFileName(null);
     } catch (err) {
       console.error('Teacher import failed', err);
-      setError('Connexion impossible. Vérifiez votre réseau.');
+      setError(t('networkError'));
     } finally {
       setImporting(false);
     }
@@ -139,8 +142,8 @@ export function TeachersBulkImportView({ locale }: { locale: string }) {
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
       <div>
-        <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Importer les enseignants</h1>
-        <p className="text-xs text-slate-500 mt-1">Importez vos données enseignants à partir d&apos;un fichier CSV.</p>
+        <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('bulkImportTitle')}</h1>
+        <p className="text-xs text-slate-500 mt-1">{t('bulkImportDesc')}</p>
       </div>
 
       {error && (
@@ -164,8 +167,8 @@ export function TeachersBulkImportView({ locale }: { locale: string }) {
           className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center space-y-2 bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer"
         >
           <Upload className="w-8 h-8 mx-auto text-[#2487B8]" />
-          <p className="font-bold text-slate-700 text-xs">{fileName ?? 'Cliquez pour sélectionner un fichier CSV'}</p>
-          <p className="text-[10px] text-slate-400">Colonnes attendues : {HEADERS.join(', ')}</p>
+          <p className="font-bold text-slate-700 text-xs">{fileName ?? t('clickToSelectCsv')}</p>
+          <p className="text-[10px] text-slate-400">{t('expectedColumns', { cols: HEADERS.join(', ') })}</p>
         </div>
       </Card>
 
@@ -182,27 +185,27 @@ export function TeachersBulkImportView({ locale }: { locale: string }) {
               </div>
               <div className="text-center">
                 <p className="text-xl font-extrabold text-[#2487B8]">{validCount}</p>
-                <p className="text-[10px] text-slate-400">Lignes valides</p>
+                <p className="text-[10px] text-slate-400">{t('validRowsCount')}</p>
               </div>
               <div className="text-center">
                 <p className="text-xl font-extrabold text-[#E5544B]">{errorCount}</p>
-                <p className="text-[10px] text-slate-400">Lignes avec erreurs</p>
+                <p className="text-[10px] text-slate-400">{t('errorRowsCount')}</p>
               </div>
             </div>
           </Card>
 
           <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-start text-xs">
                 <thead className="bg-[#F6F9FC] text-slate-500 font-semibold border-b border-slate-200/80">
                   <tr>
-                    <th className="py-3 px-4">Ligne</th>
-                    <th className="py-3 px-4">Statut</th>
-                    <th className="py-3 px-4">Nom complet</th>
-                    <th className="py-3 px-4">Spécialité</th>
-                    <th className="py-3 px-4">Téléphone</th>
-                    <th className="py-3 px-4">Email</th>
-                    <th className="py-3 px-4">Erreur</th>
+                    <th className="py-3 px-4 text-start">{t('rowLine')}</th>
+                    <th className="py-3 px-4 text-start">{tCommon('status')}</th>
+                    <th className="py-3 px-4 text-start">{t('fullNameRequired')}</th>
+                    <th className="py-3 px-4 text-start">{t('specialty')}</th>
+                    <th className="py-3 px-4 text-start">{t('phone')}</th>
+                    <th className="py-3 px-4 text-start">{t('email')}</th>
+                    <th className="py-3 px-4 text-start">{t('error')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -211,9 +214,9 @@ export function TeachersBulkImportView({ locale }: { locale: string }) {
                       <td className="py-3 px-4 font-mono text-slate-400">{row.line}</td>
                       <td className="py-3 px-4">
                         {row.valid ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-bold text-[#2487B8]"><CheckCircle2 className="w-3.5 h-3.5" /> Valide</span>
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-[#2487B8]"><CheckCircle2 className="w-3.5 h-3.5" /> {t('valid')}</span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-xs font-bold text-[#E5544B]"><AlertTriangle className="w-3.5 h-3.5" /> Erreur</span>
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-[#E5544B]"><AlertTriangle className="w-3.5 h-3.5" /> {t('error')}</span>
                         )}
                       </td>
                       <td className="py-3 px-4 font-semibold text-[#16212B]">{row.fullName || '—'}</td>
@@ -234,13 +237,13 @@ export function TeachersBulkImportView({ locale }: { locale: string }) {
       <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs flex items-center justify-between">
         <Button variant="outline" size="sm" className="gap-2 text-xs rounded-xl h-10" onClick={handleDownloadTemplate}>
           <Download className="w-4 h-4" />
-          <span>Télécharger le modèle</span>
+          <span>{t('downloadTemplate')}</span>
         </Button>
 
         <div className="flex items-center gap-3">
           <Link href={`/${locale}/dashboard/teachers/manage`}>
             <Button variant="outline" size="sm" className="text-xs rounded-xl h-10 px-4">
-              Retour
+              {tCommon('back')}
             </Button>
           </Link>
           <Button
@@ -250,7 +253,7 @@ export function TeachersBulkImportView({ locale }: { locale: string }) {
             disabled={importing || validCount === 0}
             onClick={handleConfirmImport}
           >
-            {importing ? 'Import en cours...' : `Confirmer l'import (${validCount})`}
+            {importing ? t('importingAction') : t('confirmImportCount', { count: validCount })}
           </Button>
         </div>
       </div>

@@ -1,9 +1,12 @@
 import type { ChromaticConfig } from '@chromatic-com/playwright';
 import { defineConfig, devices } from '@playwright/test';
+import dotenv from 'dotenv';
+import path from 'path';
 
-// Use process.env.PORT by default and fallback to port 3008
-// to avoid conflicts with the Next.js default port 3000.
-const PORT = process.env.PORT ?? '3008';
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+
+// Use process.env.PORT by default and fallback to port 3111
+const PORT = process.env.PORT ?? '3111';
 
 // Set webServer.url and use.baseURL with the location of the WebServer respecting the correct set port
 const baseURL = `http://localhost:${PORT}`;
@@ -40,7 +43,7 @@ export default defineConfig<ChromaticConfig>({
   // migrated + seeded) locally, and the CI job's Postgres service in CI.
   webServer: {
     command: process.env.CI ? 'run-s start' : 'run-s dev:next',
-    url: baseURL,
+    url: `${baseURL}/fr`,
     timeout: 180 * 1000,
     reuseExistingServer: !process.env.CI,
     gracefulShutdown: { signal: 'SIGTERM', timeout: 2 * 1000 },

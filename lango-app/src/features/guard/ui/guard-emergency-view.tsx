@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -28,6 +29,8 @@ type Contact = { id: string; name: string; role: string; phone: string; priority
 type Emergency = { active: boolean; acknowledged: boolean; activation: { id: string; activatedAt: string; status: string; procedureSnapshot: Procedure[] } | null };
 
 export function GuardEmergencyView() {
+  const t = useTranslations('Guard');
+  const tCommon = useTranslations('Common');
   const [procedures, setProcedures] = useState<Procedure[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [emergency, setEmergency] = useState<Emergency>({ active: false, acknowledged: false, activation: null });
@@ -98,16 +101,16 @@ export function GuardEmergencyView() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6 text-start">
       <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">Urgence</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('emergencyTitle')}</h1>
           <p className="mt-0.5 text-xs font-medium text-slate-500">
-            Procédures, contacts et gestion du mode urgence.
+            {t('emergencySubtitle')}
           </p>
         </div>
         <Badge className={emergency.active ? 'animate-pulse bg-rose-600 text-white' : 'bg-[#DCEBF4] text-[#1B6C93]'}>
-          <Siren className="mr-1 h-3.5 w-3.5" /> {emergency.active ? 'URGENCE ACTIVE' : 'Aucune urgence active'}
+          <Siren className="me-1 h-3.5 w-3.5" /> {emergency.active ? t('activeEmergencyBadge') : t('noActiveEmergency')}
         </Badge>
       </div>
 
@@ -118,24 +121,24 @@ export function GuardEmergencyView() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="flex items-center gap-2 font-extrabold text-rose-700">
-                <AlertTriangle className="h-5 w-5" /> Urgence active
+                <AlertTriangle className="h-5 w-5" /> {t('activeEmergencyBadge')}
               </p>
               <p className="mt-0.5 text-xs text-rose-600">
-                Activée le {emergency.activation ? new Date(emergency.activation.activatedAt).toLocaleString('fr-FR') : '—'}
+                {t('activatedAt', { time: emergency.activation ? new Date(emergency.activation.activatedAt).toLocaleString('fr-FR') : '—' })}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
               {!emergency.acknowledged && (
                 <Button onClick={() => void acknowledge()} disabled={busy}>
-                  <CheckCircle2 className="mr-2 h-4 w-4" /> Accuser réception
+                  <CheckCircle2 className="me-2 h-4 w-4" /> {t('btnAcknowledge')}
                 </Button>
               )}
               {emergency.acknowledged && (
-                <Badge className="bg-[#D1F5E8] text-[#0b5c3a]"><CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Accusé reçu</Badge>
+                <Badge className="bg-[#D1F5E8] text-[#0b5c3a]"><CheckCircle2 className="me-1 h-3.5 w-3.5" /> {t('acknowledgedBadge')}</Badge>
               )}
               {canActivate && (
                 <Button variant="danger" onClick={() => void end()} disabled={busy}>
-                  <Square className="mr-2 h-4 w-4" /> Terminer l&apos;urgence
+                  <Square className="me-2 h-4 w-4" /> {t('btnEndEmergency')}
                 </Button>
               )}
             </div>
@@ -147,13 +150,13 @@ export function GuardEmergencyView() {
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="font-extrabold text-[#16212B]">Activer le mode urgence</p>
+              <p className="font-extrabold text-[#16212B]">{t('btnActivateEmergency')}</p>
               <p className="mt-0.5 text-xs text-slate-500">
-                Prend un instantané des procédures actives pour chaque gardien.
+                {t('activateEmergencyDesc')}
               </p>
             </div>
             <Button variant="danger" onClick={() => setConfirmActivate(true)}>
-              <AlertTriangle className="mr-2 h-4 w-4" /> Activer
+              <AlertTriangle className="me-2 h-4 w-4" /> {t('btnActivate')}
             </Button>
           </div>
         </Card>
@@ -161,16 +164,16 @@ export function GuardEmergencyView() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-          <h2 className="font-extrabold text-[#16212B]">Procédures actives</h2>
+          <h2 className="font-extrabold text-[#16212B]">{t('activeProcedures')}</h2>
           {procedures.length === 0 ? (
-            <p className="mt-3 text-sm text-slate-400">Aucune procédure active.</p>
+            <p className="mt-3 text-sm text-slate-400">{t('noProcedures')}</p>
           ) : (
             <div className="mt-3 space-y-3">
               {procedures.map(p => (
                 <details key={p.id} className="group rounded-xl border border-slate-200/80 bg-slate-50 p-3">
                   <summary className="cursor-pointer list-none font-semibold text-[#16212B]">
                     {p.title}
-                    <span className="ml-2 text-xs font-normal text-slate-400">v{p.version}</span>
+                    <span className="ms-2 text-xs font-normal text-slate-400">v{p.version}</span>
                   </summary>
                   <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">{p.body}</p>
                 </details>
@@ -180,9 +183,9 @@ export function GuardEmergencyView() {
         </Card>
 
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-          <h2 className="flex items-center gap-2 font-extrabold text-[#16212B]"><Phone className="h-4 w-4 text-[#1B6C93]" /> Contacts d&apos;urgence</h2>
+          <h2 className="flex items-center gap-2 font-extrabold text-[#16212B]"><Phone className="h-4 w-4 text-[#1B6C93]" /> {t('emergencyContacts')}</h2>
           {contacts.length === 0 ? (
-            <p className="mt-3 text-sm text-slate-400">Aucun contact.</p>
+            <p className="mt-3 text-sm text-slate-400">{t('noContacts')}</p>
           ) : (
             <div className="mt-3 divide-y divide-slate-100">
               {contacts.map(c => (
@@ -203,7 +206,7 @@ export function GuardEmergencyView() {
 
       {emergency.active && emergency.activation?.procedureSnapshot && emergency.activation.procedureSnapshot.length > 0 && (
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-          <h2 className="font-extrabold text-[#16212B]">Procédures de l&apos;urgence en cours</h2>
+          <h2 className="font-extrabold text-[#16212B]">{t('currentEmergencyProcedures')}</h2>
           <div className="mt-3 space-y-3">
             {emergency.activation.procedureSnapshot.map((p, idx) => (
               <div key={`${p.id}-${idx}`} className="rounded-xl border border-slate-200/80 bg-slate-50 p-3">
@@ -217,23 +220,23 @@ export function GuardEmergencyView() {
 
       <Dialog open={confirmActivate} onOpenChange={setConfirmActivate}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Activer le mode urgence</DialogTitle></DialogHeader>
-          <div className="space-y-3">
+          <DialogHeader><DialogTitle>{t('confirmActivateTitle')}</DialogTitle></DialogHeader>
+          <div className="space-y-3 text-start">
             <p className="text-sm text-slate-600">
-              Confirmer l&apos;activation ? Tous les gardiens verront une alerte et pourront accuser réception.
+              {t('confirmActivateDesc')}
             </p>
             <textarea
               value={reason}
               onChange={e => setReason(e.target.value)}
               rows={3}
               className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2487B8]/40"
-              placeholder="Motif (optionnel)…"
+              placeholder={t('reasonOptional')}
             />
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmActivate(false)} disabled={busy}>Annuler</Button>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setConfirmActivate(false)} disabled={busy}>{tCommon('cancel')}</Button>
             <Button variant="danger" onClick={() => void activate()} disabled={busy}>
-              {busy ? 'Activation…' : 'Activer'}
+              {busy ? t('activating') : t('btnActivate')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,9 +1,10 @@
-﻿// settings-hub-client.tsx
+// settings-hub-client.tsx
 // CLIENT ISLAND — owns settings search filter, category tabs, module cards grid, and audit feed.
 'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import {
   Building2, Users, ShieldCheck, Globe, FileText, Languages, Clock, ArrowRightLeft,
   Sliders, Layers, MapPin, Shield, FileCheck2, Hash, Tags, CalendarClock, Search, ArrowRight, CheckCircle2, History,
@@ -33,8 +34,10 @@ type Props = {
   configuredCount: number;
   totalModules: number;
   conformityPercent: number;
-  conformityLabel: string;
+  conformityCode?: string;
+  conformityLabel?: string;
   lastModification: AuditItem | null;
+  locale?: string;
 };
 
 export function SettingsHubClient({
@@ -44,15 +47,37 @@ export function SettingsHubClient({
   configuredCount,
   totalModules,
   conformityPercent,
+  conformityCode,
   conformityLabel,
   lastModification,
+  locale = 'fr',
 }: Props) {
+  const t = useTranslations('Settings');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
+  const safeT = (key: string, fallback: string) => {
+    try {
+      const res = t(key as any);
+      return res || fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const resolvedConformity = conformityCode
+    ? safeT(`compliance_${conformityCode}`, conformityLabel || '')
+    : (conformityLabel || t('compliance_both'));
+
   const filteredModules = SETTINGS_MODULES.filter(m => {
     const matchesCategory = selectedCategory === 'all' || m.category === selectedCategory;
+    const key = `mod_${m.id.replace(/-/g, '_')}`;
+    const mTitle = safeT(`${key}_title`, m.title);
+    const mDesc = safeT(`${key}_desc`, m.desc);
+
     const matchesSearch = searchQuery === '' ||
+      mTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      mDesc.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.desc.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
@@ -64,9 +89,9 @@ export function SettingsHubClient({
       {/* ── Top Header & Global Search ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-[#111827]">Espace de Configuration Système (PF-02)</h1>
+          <h1 className="text-xl font-bold text-[#111827]">{t('hubPageTitle')}</h1>
           <p className="text-sm text-[#6B7280] mt-0.5">
-            Accès centralisé à l'ensemble des modules d'administration et politiques de votre établissement.
+            {t('hubPageSubtitle')}
           </p>
         </div>
 
@@ -77,7 +102,7 @@ export function SettingsHubClient({
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Rechercher un paramètre ou module..."
+            placeholder={t('hubSearchPlaceholder')}
             className="w-full pl-9 pr-4 py-2 bg-white border border-[#E5E7EB] rounded-xl text-xs text-[#111827] outline-none focus:border-[#4B6BFB] transition-colors"
           />
         </div>
@@ -87,12 +112,12 @@ export function SettingsHubClient({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] flex items-center justify-between shadow-2xs">
           <div className="space-y-1">
-            <p className="text-xs font-medium text-[#6B7280]">Modules de configuration</p>
+            <p className="text-xs font-medium text-[#6B7280]">{t('configModules')}</p>
             <p className="text-2xl font-bold text-[#111827]">{configuredCount} / {totalModules}</p>
             <p className="text-[11px] font-semibold text-emerald-600">
               {configuredCount === totalModules
-                ? 'Tous les modules configurés'
-                : `${totalModules - configuredCount} module(s) à configurer`}
+                ? t('allConfigured')
+                : t('modulesToConfigure', { count: totalModules - configuredCount })}
             </p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -102,9 +127,9 @@ export function SettingsHubClient({
 
         <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] flex items-center justify-between shadow-2xs">
           <div className="space-y-1">
-            <p className="text-xs font-medium text-[#6B7280]">Statut de conformité</p>
+            <p className="text-xs font-medium text-[#6B7280]">{t('complianceStatus')}</p>
             <p className="text-2xl font-bold text-[#111827]">{conformityPercent}%</p>
-            <p className="text-[11px] font-semibold text-[#4B6BFB]">{conformityLabel}</p>
+            <p className="text-[11px] font-semibold text-[#4B6BFB]">{resolvedConformity}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-[#F0F4FF] text-[#4B6BFB] flex items-center justify-center">
             <ShieldCheck className="w-5 h-5" />
@@ -113,10 +138,10 @@ export function SettingsHubClient({
 
         <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] flex items-center justify-between shadow-2xs">
           <div className="space-y-1">
-            <p className="text-xs font-medium text-[#6B7280]">Dernière modification</p>
+            <p className="text-xs font-medium text-[#6B7280]">{t('lastModification')}</p>
             <p className="text-2xl font-bold text-[#111827]">{lastModification?.timestamp ?? '—'}</p>
             <p className="text-[11px] font-semibold text-[#6B7280]">
-              {lastModification ? `Par ${lastModification.userName}` : 'Aucune modification enregistrée'}
+              {lastModification ? t('byUser', { name: lastModification.userName }) : t('noModifications')}
             </p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
@@ -126,13 +151,13 @@ export function SettingsHubClient({
 
         <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] flex items-center justify-between shadow-2xs">
           <div className="space-y-1">
-            <p className="text-xs font-medium text-[#6B7280]">Établissement actif</p>
+            <p className="text-xs font-medium text-[#6B7280]">{t('activeSchool')}</p>
             <p className="text-base font-bold text-[#111827] truncate max-w-[180px]">
-              {initialTenant.name || 'Non configuré'}
+              {initialTenant.name || t('notConfigured')}
             </p>
             <p className="text-[11px] font-semibold text-[#4B6BFB]">
               {[initialTenant.city, initialTenant.ice ? `ICE ${initialTenant.ice}` : ''].filter(Boolean).join(' · ')
-                || 'Informations à compléter'}
+                || t('infoIncomplete')}
             </p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-[#F0F4FF] text-[#4B6BFB] flex items-center justify-center">
@@ -143,30 +168,38 @@ export function SettingsHubClient({
 
       {/* ── Category Filter Tabs ── */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {HUB_CATEGORIES.map(cat => (
-          <button
-            key={cat.id}
-            onClick={() => setSelectedCategory(cat.id)}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-xl whitespace-nowrap transition-all ${
-              selectedCategory === cat.id
-                ? 'bg-[#4B6BFB] text-white shadow-xs'
-                : 'bg-white text-[#374151] border border-[#E5E7EB] hover:bg-[#F9FAFB]'
-            }`}
-          >
-            {cat.label}
-          </button>
-        ))}
+        {HUB_CATEGORIES.map(cat => {
+          const catLabel = safeT(`cat_${cat.id}`, cat.label);
+          return (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`px-3.5 py-2 text-xs font-semibold rounded-xl whitespace-nowrap transition-all ${
+                selectedCategory === cat.id
+                  ? 'bg-[#4B6BFB] text-white shadow-xs'
+                  : 'bg-white text-[#374151] border border-[#E5E7EB] hover:bg-[#F9FAFB]'
+              }`}
+            >
+              {catLabel}
+            </button>
+          );
+        })}
       </div>
 
-      {/* ── 12 Bento Settings Module Cards Grid ── */}
+      {/* ── 17 Bento Settings Module Cards Grid ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredModules.map(mod => {
           const IconComp = ICON_MAP[mod.iconName] || Building2;
           const isConfigured = Boolean(initialModulesStatus[mod.id]);
+          const key = `mod_${mod.id.replace(/-/g, '_')}`;
+          const modTitle = safeT(`${key}_title`, mod.title);
+          const modDesc = safeT(`${key}_desc`, mod.desc);
+          const targetHref = mod.href.startsWith(`/${locale}`) ? mod.href : `/${locale}${mod.href}`;
+
           return (
             <Link
               key={mod.id}
-              href={mod.href}
+              href={targetHref}
               className="group bg-white p-6 rounded-2xl border border-[#E5E7EB] hover:border-[#4B6BFB]/50
                 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between"
             >
@@ -178,23 +211,23 @@ export function SettingsHubClient({
                   <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                     isConfigured ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
                   }`}>
-                    {isConfigured ? 'Configuré' : 'À configurer'}
+                    {isConfigured ? t('configuredBadge') : t('toConfigureBadge')}
                   </span>
                 </div>
 
                 <div>
                   <h3 className="text-sm font-bold text-[#111827] group-hover:text-[#4B6BFB] transition-colors flex items-center gap-1.5">
-                    <span>{mod.title}</span>
+                    <span>{modTitle}</span>
                   </h3>
                   <p className="text-xs text-[#6B7280] mt-1 line-clamp-2">
-                    {mod.desc}
+                    {modDesc}
                   </p>
                 </div>
               </div>
 
               <div className="mt-4 pt-3 border-t border-[#F3F4F6] flex items-center justify-between text-xs font-semibold text-[#4B6BFB]">
-                <span>Accéder au module</span>
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <span>{t('accessModule')}</span>
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform rtl:group-hover:-translate-x-1 rtl:rotate-180" />
               </div>
             </Link>
           );
@@ -206,20 +239,20 @@ export function SettingsHubClient({
         <div className="flex items-center justify-between border-b border-[#F3F4F6] pb-3">
           <div className="flex items-center gap-2">
             <History className="w-4 h-4 text-[#4B6BFB]" />
-            <h3 className="text-sm font-semibold text-[#111827]">Modifications Récentes des Paramètres</h3>
+            <h3 className="text-sm font-semibold text-[#111827]">{t('recentModifications')}</h3>
           </div>
-          <Link href="/dashboard/settings/jobs" className="text-xs font-semibold text-[#4B6BFB] hover:underline flex items-center gap-1">
-            <span>Voir le journal complet</span>
-            <ChevronRight className="w-3.5 h-3.5" />
+          <Link href={`/${locale}/dashboard/settings/jobs`} className="text-xs font-semibold text-[#4B6BFB] hover:underline flex items-center gap-1">
+            <span>{t('viewFullLog')}</span>
+            <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180" />
           </Link>
         </div>
 
         <div className="space-y-3">
           {initialAudits.length === 0 ? (
             <div className="p-6 text-center border border-dashed border-[#E5E7EB] rounded-xl">
-              <p className="text-xs font-semibold text-[#6B7280]">Aucune modification récente enregistrée.</p>
+              <p className="text-xs font-semibold text-[#6B7280]">{t('noRecentModifications')}</p>
               <p className="text-[11px] text-[#9CA3AF] mt-1">
-                Les actions de configuration apparaîtront ici une fois le journal d'audit alimenté.
+                {t('auditFeedSubtitle')}
               </p>
             </div>
           ) : (
@@ -237,7 +270,7 @@ export function SettingsHubClient({
                   </div>
                 </div>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F0F4FF] text-[#4B6BFB]">
-                  Audité
+                  {t('auditedBadge')}
                 </span>
               </div>
             ))

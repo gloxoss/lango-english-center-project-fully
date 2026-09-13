@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +27,7 @@ type IssuedCert = {
 };
 
 export default function CertificatesIssueEmployeesPage() {
+  const t = useTranslations('Certificates');
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [issued, setIssued] = useState<IssuedCert[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,8 +78,8 @@ export default function CertificatesIssueEmployeesPage() {
             <UserCheck className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Émettre — Employés</h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Émettez des certificats pour le personnel de l'établissement.</p>
+            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('issueEmployeesTitle')}</h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">{t('issueEmployeesSubtitle')}</p>
           </div>
         </div>
       </div>
@@ -86,21 +88,21 @@ export default function CertificatesIssueEmployeesPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Employés</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('statStaff')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{recipients.length}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2487B8] flex items-center justify-center"><UserCheck className="w-5 h-5" /></div>
         </Card>
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Certificats valides</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('statValidCertificates')}</span>
             <h3 className="text-2xl font-extrabold text-[#17A673] mt-1">{withCert}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><ScrollText className="w-5 h-5" /></div>
         </Card>
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Sans certificat</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('statWithoutCertificate')}</span>
             <h3 className="text-2xl font-extrabold text-[#0EA5C4] mt-1">{recipients.length - withCert}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-cyan-50 text-[#0EA5C4] flex items-center justify-center"><ScrollText className="w-5 h-5" /></div>
@@ -111,55 +113,55 @@ export default function CertificatesIssueEmployeesPage() {
       <Card className="p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-4">
         <div className="flex justify-between items-center">
           <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input placeholder="Rechercher par nom ou identifiant..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9 text-xs rounded-xl" />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input placeholder={t('searchEmployeesPlaceholder')} value={search} onChange={e => setSearch(e.target.value)} className="ps-9 h-9 text-xs rounded-xl" />
           </div>
           <Button variant="outline" size="sm" className="h-8 rounded-lg text-xs font-medium cursor-pointer" onClick={load}>
-            <RefreshCw className="w-3.5 h-3.5 mr-1.5" />Actualiser
+            <RefreshCw className="w-3.5 h-3.5 me-1.5" />{t('btnRefresh')}
           </Button>
         </div>
 
         <div className="rounded-xl border border-slate-100 overflow-hidden">
           <table className="w-full text-xs">
             <thead>
-              <tr className="bg-slate-50/50 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                <th className="p-3 pl-4">Employé</th>
-                <th className="p-3">Rôle</th>
-                <th className="p-3">Identifiant</th>
-                <th className="p-3">Statut certificat</th>
-                <th className="p-3 text-right pr-4">Actions</th>
+              <tr className="bg-slate-50/50 text-start text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                <th className="p-3 ps-4 text-start">{t('thEmployee')}</th>
+                <th className="p-3 text-start">{t('thRole')}</th>
+                <th className="p-3 text-start">{t('thStaffId')}</th>
+                <th className="p-3 text-start">{t('thCertStatus')}</th>
+                <th className="p-3 text-end pe-4">{t('thActions')}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={5} className="p-8 text-center text-slate-400">Chargement...</td></tr>
+                <tr><td colSpan={5} className="p-8 text-center text-slate-400">{t('tableLoading')}</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={5} className="p-8 text-center text-slate-400">Aucun employé trouvé.</td></tr>
+                <tr><td colSpan={5} className="p-8 text-center text-slate-400">{t('noEmployeesFound')}</td></tr>
               ) : (
                 filtered.map(s => {
                   const certStatus = statusByRecipient.get(s.id);
                   return (
                     <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                      <td className="p-3 pl-4 font-semibold text-slate-700">{s.name}</td>
+                      <td className="p-3 ps-4 font-semibold text-slate-700">{s.name}</td>
                       <td className="p-3 text-slate-600">{s.role ?? '-'}</td>
                       <td className="p-3 font-mono text-[11px] text-slate-500">{s.employeeId ?? '-'}</td>
                       <td className="p-3">
                         {certStatus ? (
                           <Badge variant={certStatus === 'valid' ? 'success' : 'danger'}>
-                            {certStatus === 'valid' ? 'Valide' : 'Révoqué'}
+                            {certStatus === 'valid' ? t('statusValid') : t('statusRevoked')}
                           </Badge>
                         ) : (
-                          <Badge variant="neutral">Aucun</Badge>
+                          <Badge variant="neutral">{t('statusNone')}</Badge>
                         )}
                       </td>
-                      <td className="p-3 pr-4 text-right">
+                      <td className="p-3 pe-4 text-end">
                         <Button
                           variant="outline"
                           size="sm"
                           className="h-8 rounded-lg text-xs font-medium cursor-pointer"
                           onClick={() => setDialog(s)}
                         >
-                          <ScrollText className="w-3.5 h-3.5 mr-1.5" />Émettre
+                          <ScrollText className="w-3.5 h-3.5 me-1.5" />{t('btnIssue')}
                         </Button>
                       </td>
                     </tr>
@@ -176,7 +178,7 @@ export default function CertificatesIssueEmployeesPage() {
         onOpenChange={(o) => { if (!o) setDialog(null); }}
         recipientType="employee"
         recipientId={dialog?.id ?? ''}
-        recipientLabel="Employé"
+        recipientLabel={t('recipientLabelEmployee')}
         recipientName={dialog?.name ?? ''}
       />
     </div>

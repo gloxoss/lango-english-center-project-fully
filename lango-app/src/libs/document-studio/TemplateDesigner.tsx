@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Designer } from '@pdfme/ui';
 import { text, image, barcodes } from '@pdfme/schemas';
 import { DocumentTemplateSchema, FieldAllowlist } from './types';
@@ -17,6 +18,7 @@ export interface TemplateDesignerProps {
 }
 
 export function TemplateDesigner({ initialTemplate, allowlist, onSave, isSaving }: TemplateDesignerProps) {
+  const t = useTranslations('Cards');
   const designerRef = useRef<HTMLDivElement>(null);
   const designerInstance = useRef<Designer | null>(null);
   const [violations, setViolations] = useState<string[]>([]);
@@ -67,14 +69,14 @@ export function TemplateDesigner({ initialTemplate, allowlist, onSave, isSaving 
   return (
     <div className="flex flex-col space-y-4 w-full h-[800px]">
       <div className="flex justify-between items-center bg-white p-4 border rounded-md shadow-sm">
-        <h2 className="text-lg font-semibold">Éditeur de Modèle</h2>
-        <div className="flex items-center space-x-4">
+        <h2 className="text-lg font-semibold">{t('designerTitle')}</h2>
+        <div className="flex items-center space-x-4 rtl:space-x-reverse">
           <div className="text-sm text-gray-500">
-            Champs autorisés: {allowlist.allowedFields.join(', ')}
+            {t('allowedFields', { fields: allowlist.allowedFields.join(', ') })}
           </div>
           <Button onClick={handleSave} disabled={isSaving || violations.length > 0}>
-            <Save className="w-4 h-4 mr-2" />
-            {isSaving ? 'Enregistrement...' : 'Enregistrer le modèle'}
+            <Save className="w-4 h-4 me-2" />
+            {isSaving ? t('saving') : t('btnSaveTemplate')}
           </Button>
         </div>
       </div>
@@ -82,11 +84,11 @@ export function TemplateDesigner({ initialTemplate, allowlist, onSave, isSaving 
       {violations.length > 0 && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-md">
           <h4 className="font-medium text-red-800 flex items-center">
-            <AlertCircle className="w-4 h-4 mr-2" />
-            Champs non autorisés détectés
+            <AlertCircle className="w-4 h-4 me-2" />
+            {t('unauthorizedFieldsDetected')}
           </h4>
           <p className="text-sm mt-1 text-red-600">
-            Veuillez supprimer les champs suivants ou les renommer avec un nom autorisé: {violations.join(', ')}
+            {t('unauthorizedFieldsDesc', { fields: violations.join(', ') })}
           </p>
         </div>
       )}

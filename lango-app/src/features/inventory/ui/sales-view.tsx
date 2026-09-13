@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -39,23 +40,37 @@ async function api<T>(url: string, init?: RequestInit): Promise<{ ok: boolean; s
     const json = await res.json().catch(() => ({}));
     return { ok: res.ok, status: res.status, ...json };
   } catch {
-    return { ok: false, status: 0, error: { code: 'NETWORK_ERROR', message: 'Impossible de joindre le serveur.' } };
+    return { ok: false, status: 0, error: { code: 'NETWORK_ERROR', message: 'Network error.' } };
   }
 }
 
-const fmtPrice = (v: number | null | undefined) => (v === null || v === undefined ? '—' : `${v.toLocaleString('fr-FR')} DH`);
-const fmtDate = (d: string | null | undefined) => (d ? d.slice(0, 10) : '—');
-
-const STATUS_LABEL: Record<Row['status'], string> = { completed: 'Terminée', reversed: 'Annulée' };
 const STATUS_VARIANT: Record<Row['status'], 'success' | 'neutral'> = { completed: 'success', reversed: 'neutral' };
-const PAY_LABEL: Record<Row['paymentStatus'], string> = { paid: 'Payée', partial: 'Partielle', unpaid: 'Impayée' };
 const PAY_VARIANT: Record<Row['paymentStatus'], 'success' | 'warning' | 'danger'> = { paid: 'success', partial: 'warning', unpaid: 'danger' };
-const ROLE_LABEL: Record<Row['saleToRole'], string> = { student: 'Étudiant', staff: 'Personnel', guest: 'Comptoir' };
-const PAY_METHOD_LABEL: Record<string, string> = { cash: 'Espèces', card: 'Carte', transfer: 'Virement', check: 'Chèque' };
 
 type LineForm = { productId: string; qty: string; unitPrice: string };
 
-export function SalesView() {
+export function SalesView({ locale: initialLocale }: { locale?: string } = {}) {
+  const currentLocale = useLocale();
+  const locale = initialLocale || currentLocale;
+  const t = useTranslations('Inventory');
+  const tCommon = useTranslations('Common');
+
+  const dateLocale = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR';
+  const fmtPrice = (v: number | null | undefined) =>
+    (v === null || v === undefined ? '—' : `${v.toLocaleString(dateLocale, { minimumFractionDigits: 2 })} ${tCommon('currency')}`);
+  const fmtDate = (d: string | null | undefined) => {
+    if (!d) return '—';
+    const date = new Date(d);
+    return isNaN(date.getTime()) ? d.slice(0, 10) : date.toLocaleDateString(dateLocale, { dateStyle: 'short' });
+  };
+
+  const statusLabels: Record<Row['status'], string> = { completed: t('salesCompleted'), reversed: t('salesReversed') };
+  const payLabels: Record<Row['paymentStatus'], string> = { paid: t('payPaid'), partial: t('payPartial'), unpaid: t('payUnpaid') };
+  const roleLabels: Record<Row['saleToRole'], string> = { student: t('roleStudent'), staff: t('roleStaff'), guest: t('roleGuest') };
+  const payMethodLabels: Record<string, string> = {
+    cash: t('payMethodCash'), card: t('payMethodCard'), transfer: t('payMethodTransfer'), check: t('payMethodCheck'),
+  };
+
   const [rows, setRows] = useState<Row[]>([]);
   const [stores, setStores] = useState<StoreRef[]>([]);
   const [products, setProducts] = useState<ProductRef[]>([]);
@@ -89,9 +104,9 @@ export function SalesView() {
           ? res.data.filter(r => `${r.saleNumber} ${r.storeName} ${r.customerName ?? ''} ${r.studentName ?? ''}`.toLowerCase().includes(search.trim().toLowerCase()))
           : res.data,
       );
-    } else setError(res.error?.message ?? 'Chargement impossible.');
+    } else setError(res.error?.message ?? tCommon('networkError'));
     setLoading(false);
-  }, [search, statusFilter, roleFilter]);
+  }, [search, statusFilter, roleFilter, tCommon]);
 
   const loadRefs = useCallback(async () => {
     const [storeRes, prodRes, stuRes] = await Promise.all([
@@ -158,7 +173,7 @@ export function SalesView() {
       setModalOpen(false);
       await load();
     } else {
-      setError(res.error?.message ?? 'Enregistrement impossible.');
+      setError(res.error?.message ?? tCommon('networkError'));
     }
   };
 
@@ -168,42 +183,42 @@ export function SalesView() {
     const res = await api(`/api/addons/inventory/sales/${row.id}/reverse`, { method: 'POST', body: JSON.stringify({}) });
     setBusyId(null);
     if (res.ok) await load();
-    else setError(res.error?.message ?? 'Annulation impossible.');
+    else setError(res.error?.message ?? tCommon('networkError'));
   };
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#16212B]">Ventes</h1>
-          <p className="text-sm text-slate-500">Caisse &amp; point de vente : la vente étudiant crée la facture et le paiement.</p>
+          <h1 className="text-2xl font-bold text-[#16212B]">{t('salesTitle')}</h1>
+          <p className="text-sm text-slate-500">{t('salesSubtitle')}</p>
         </div>
-        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" /> Nouvelle vente</Button>
+        <Button onClick={openCreate}><Plus className="me-2 h-4 w-4" /> {t('newSaleBtn')}</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#D1F5E8] text-[#16212B]"><ShoppingCart className="h-5 w-5" /></div>
-            <div><p className="text-sm text-slate-500">Ventes</p><p className="text-2xl font-bold text-[#16212B]">{counts.total}</p></div>
+            <div><p className="text-sm text-slate-500">{t('salesCount')}</p><p className="text-2xl font-bold text-[#16212B]">{counts.total}</p></div>
           </div>
         </Card>
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-[#16212B]"><Wallet className="h-5 w-5" /></div>
-            <div><p className="text-sm text-slate-500">Terminées</p><p className="text-2xl font-bold text-[#16212B]">{counts.completed}</p></div>
+            <div><p className="text-sm text-slate-500">{t('salesCompleted')}</p><p className="text-2xl font-bold text-[#16212B]">{counts.completed}</p></div>
           </div>
         </Card>
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-[#16212B]"><GraduationCap className="h-5 w-5" /></div>
-            <div><p className="text-sm text-slate-500">Étudiants</p><p className="text-2xl font-bold text-[#16212B]">{counts.student}</p></div>
+            <div><p className="text-sm text-slate-500">{t('salesStudents')}</p><p className="text-2xl font-bold text-[#16212B]">{counts.student}</p></div>
           </div>
         </Card>
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-[#16212B]"><Undo2 className="h-5 w-5" /></div>
-            <div><p className="text-sm text-slate-500">Annulées</p><p className="text-2xl font-bold text-[#16212B]">{counts.reversed}</p></div>
+            <div><p className="text-sm text-slate-500">{t('salesReversed')}</p><p className="text-2xl font-bold text-[#16212B]">{counts.reversed}</p></div>
           </div>
         </Card>
       </div>
@@ -212,29 +227,29 @@ export function SalesView() {
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 p-4">
           <div className="flex flex-1 flex-wrap items-center gap-3">
             <div className="relative w-full max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Rechercher (N°, client, magasin)…"
-                className="pl-9"
+                placeholder={t('searchSalesPlaceholder')}
+                className="ps-9"
               />
             </div>
             <Select value={statusFilter || 'all'} onValueChange={v => setStatusFilter(v === 'all' ? '' : v)}>
-              <SelectTrigger className="w-44"><SelectValue placeholder="Tous les statuts" /></SelectTrigger>
+              <SelectTrigger className="w-44"><SelectValue placeholder={tCommon('all')} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les statuts</SelectItem>
-                <SelectItem value="completed">Terminée</SelectItem>
-                <SelectItem value="reversed">Annulée</SelectItem>
+                <SelectItem value="all">{tCommon('all')}</SelectItem>
+                <SelectItem value="completed">{t('salesCompleted')}</SelectItem>
+                <SelectItem value="reversed">{t('salesReversed')}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={roleFilter || 'all'} onValueChange={v => setRoleFilter(v === 'all' ? '' : v)}>
-              <SelectTrigger className="w-44"><SelectValue placeholder="Tous les clients" /></SelectTrigger>
+              <SelectTrigger className="w-44"><SelectValue placeholder={t('allCustomers')} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les clients</SelectItem>
-                <SelectItem value="student">Étudiant</SelectItem>
-                <SelectItem value="staff">Personnel</SelectItem>
-                <SelectItem value="guest">Comptoir</SelectItem>
+                <SelectItem value="all">{t('allCustomers')}</SelectItem>
+                <SelectItem value="student">{t('roleStudent')}</SelectItem>
+                <SelectItem value="staff">{t('roleStaff')}</SelectItem>
+                <SelectItem value="guest">{t('roleGuest')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -243,9 +258,9 @@ export function SalesView() {
 
         <div className="divide-y divide-slate-100">
           {loading ? (
-            <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Chargement…</div>
+            <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> {tCommon('loading')}</div>
           ) : rows.length === 0 ? (
-            <div className="p-10 text-center text-sm text-slate-500">Aucune vente trouvée.</div>
+            <div className="p-10 text-center text-sm text-slate-500">{t('noSalesFound')}</div>
           ) : (
             rows.map(row => (
               <div key={row.id} className="flex items-center justify-between gap-4 p-4">
@@ -254,30 +269,30 @@ export function SalesView() {
                   <div>
                     <p className="flex items-center gap-2 font-semibold text-[#16212B]">
                       {row.saleNumber}
-                      <Badge variant={STATUS_VARIANT[row.status]}>{STATUS_LABEL[row.status]}</Badge>
-                      <Badge variant={PAY_VARIANT[row.paymentStatus]}>{PAY_LABEL[row.paymentStatus]}</Badge>
-                      {row.invoiceId && <Badge variant="neutral">Facture liée</Badge>}
+                      <Badge variant={STATUS_VARIANT[row.status]}>{statusLabels[row.status]}</Badge>
+                      <Badge variant={PAY_VARIANT[row.paymentStatus]}>{payLabels[row.paymentStatus]}</Badge>
+                      {row.invoiceId && <Badge variant="neutral">{t('linkedInvoiceBadge')}</Badge>}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {customerLabel(row)} · {ROLE_LABEL[row.saleToRole]} · {row.storeName} · Vente du {fmtDate(row.saleDate)}
+                      {customerLabel(row)} · {roleLabels[row.saleToRole]} · {row.storeName} · {t('saleOfDate', { date: fmtDate(row.saleDate) })}
                     </p>
                     {row.status === 'reversed' && row.reversalReason && (
-                      <p className="text-xs text-slate-400">Motif : {row.reversalReason}</p>
+                      <p className="text-xs text-slate-400">{tCommon('reason')}: {row.reversalReason}</p>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="text-right">
+                  <div className="text-end">
                     <p className="text-sm font-bold text-[#16212B]">{fmtPrice(row.netAmount)}</p>
                     <p className="text-xs text-slate-400">
-                      {row.paymentMethod ? PAY_METHOD_LABEL[row.paymentMethod] ?? row.paymentMethod : '—'}
+                      {row.paymentMethod ? payMethodLabels[row.paymentMethod] ?? row.paymentMethod : '—'}
                       {row.paymentReference ? ` · ${row.paymentReference}` : ''}
                     </p>
                   </div>
                   {row.status === 'completed' && (
                     <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" onClick={() => reverse(row)} disabled={busyId === row.id}>
-                        {busyId === row.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Undo2 className="mr-1 h-4 w-4" />} Annuler
+                        {busyId === row.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Undo2 className="me-1 h-4 w-4" />} {t('btnReverseSale')}
                       </Button>
                     </div>
                   )}
@@ -290,26 +305,26 @@ export function SalesView() {
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Nouvelle vente</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('newSaleBtn')}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Magasin *</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('storeLabel')}</label>
                 <Select value={form.storeId} onValueChange={v => setForm({ ...form, storeId: v })}>
-                  <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tCommon('select')} /></SelectTrigger>
                   <SelectContent>
                     {stores.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Type de client *</label>
-                <Select value={form.saleToRole} onValueChange={v => setForm({ ...form, saleToRole: v, studentId: '', customerName: '' })}>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('customerTypeLabel')}</label>
+                <Select value={form.saleToRole} onValueChange={v => setForm({ ...form, saleToRole: v as any, studentId: '', customerName: '' })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="student">Étudiant (facture + paiement)</SelectItem>
-                    <SelectItem value="staff">Personnel</SelectItem>
-                    <SelectItem value="guest">Comptoir</SelectItem>
+                    <SelectItem value="student">{t('studentOption')}</SelectItem>
+                    <SelectItem value="staff">{t('staffOption')}</SelectItem>
+                    <SelectItem value="guest">{t('guestOption')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -317,44 +332,44 @@ export function SalesView() {
 
             {form.saleToRole === 'student' ? (
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Étudiant *</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('studentLabel')}</label>
                 <Select value={form.studentId} onValueChange={v => setForm({ ...form, studentId: v })}>
-                  <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('selectStudentPlaceholder')} /></SelectTrigger>
                   <SelectContent>
-                    {students.map(s => <SelectItem key={s.id} value={s.id}>{s.fullName} ({s.id})</SelectItem>)}
+                    {students.map(s => <SelectItem key={s.id} value={s.id}>{s.fullName}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
             ) : (
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Nom du client *</label>
-                <Input value={form.customerName} onChange={e => setForm({ ...form, customerName: e.target.value })} placeholder="Nom du client" />
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('customerNameLabel')}</label>
+                <Input value={form.customerName} onChange={e => setForm({ ...form, customerName: e.target.value })} placeholder={t('customerNamePlaceholder')} />
               </div>
             )}
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Date de vente *</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('saleDateLabel')}</label>
               <Input type="date" value={form.saleDate} onChange={e => setForm({ ...form, saleDate: e.target.value })} />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Lignes *</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('linesLabel')}</label>
               <div className="space-y-2">
                 {lines.map((line, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <Select value={line.productId} onValueChange={v => pickProduct(i, v)}>
-                      <SelectTrigger className="flex-1"><SelectValue placeholder="Produit" /></SelectTrigger>
+                      <SelectTrigger className="flex-1"><SelectValue placeholder={t('selectProductPlaceholder')} /></SelectTrigger>
                       <SelectContent>
                         {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <Input
-                      type="number" min={0} step="0.001" className="w-20" placeholder="Qté"
+                      type="number" min={0} step="0.001" className="w-24" placeholder={t('qtyPlaceholder')}
                       value={line.qty}
                       onChange={e => updateLine(i, { qty: e.target.value })}
                     />
                     <Input
-                      type="number" min={0} step="0.01" className="w-28" placeholder="Prix unit."
+                      type="number" min={0} step="0.01" className="w-28" placeholder={t('unitPricePlaceholder')}
                       value={line.unitPrice}
                       onChange={e => updateLine(i, { unitPrice: e.target.value })}
                     />
@@ -370,46 +385,49 @@ export function SalesView() {
                   variant="outline" size="sm"
                   onClick={() => setLines(prev => [...prev, { productId: '', qty: '1', unitPrice: '' }])}
                 >
-                  <Plus className="mr-1 h-4 w-4" /> Ajouter une ligne
+                  <Plus className="me-1 h-4 w-4" /> {t('btnAddLine')}
                 </Button>
               </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Montant payé (DH)</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('paidAmountLabel')} ({tCommon('currency')})</label>
                 <Input type="number" min={0} step="0.01" value={form.paidAmount} onChange={e => setForm({ ...form, paidAmount: e.target.value })} placeholder="0.00" />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Moyen</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('paymentMethodLabel')}</label>
                 <Select value={form.paymentMethod || 'none'} onValueChange={v => setForm({ ...form, paymentMethod: v === 'none' ? '' : v })}>
                   <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Aucun</SelectItem>
-                    <SelectItem value="cash">Espèces</SelectItem>
-                    <SelectItem value="card">Carte</SelectItem>
-                    <SelectItem value="transfer">Virement</SelectItem>
-                    <SelectItem value="check">Chèque</SelectItem>
+                    <SelectItem value="none">—</SelectItem>
+                    <SelectItem value="cash">{t('payMethodCash')}</SelectItem>
+                    <SelectItem value="card">{t('payMethodCard')}</SelectItem>
+                    <SelectItem value="transfer">{t('payMethodTransfer')}</SelectItem>
+                    <SelectItem value="check">{t('payMethodCheck')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Réf. paiement</label>
-                <Input value={form.paymentReference} onChange={e => setForm({ ...form, paymentReference: e.target.value })} />
+                <label className="mb-1 block text-sm font-medium text-slate-700">{t('paymentReferenceLabel')}</label>
+                <Input value={form.paymentReference} onChange={e => setForm({ ...form, paymentReference: e.target.value })} placeholder={t('paymentRefPlaceholder')} />
               </div>
             </div>
 
             {error && <p className="flex items-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error}</p>}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>{tCommon('cancel')}</Button>
             <Button
               onClick={save}
-              disabled={saving || !form.storeId || !form.saleDate
-                || (form.saleToRole === 'student' ? !form.studentId : !form.customerName.trim())
-                || !lines.some(l => l.productId && l.qty.trim() && l.unitPrice.trim() !== '')}
+              disabled={
+                saving || !form.storeId || !form.saleDate
+                || (form.saleToRole === 'student' && !form.studentId)
+                || (form.saleToRole !== 'student' && !form.customerName.trim())
+                || !lines.some(l => l.productId && l.qty.trim() && l.unitPrice.trim() !== '')
+              }
             >
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Créer la vente
+              {saving && <Loader2 className="me-2 h-4 w-4 animate-spin" />} {t('btnCreateSale')}
             </Button>
           </DialogFooter>
         </DialogContent>

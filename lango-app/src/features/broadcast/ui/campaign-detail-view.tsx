@@ -3,16 +3,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Loader2, RefreshCw, Megaphone, AlertCircle, ArrowLeft, CheckCircle2, XCircle,
+  Loader2, RefreshCw, AlertCircle, ArrowLeft, CheckCircle2, XCircle,
   Download, Send, RotateCcw, History, CalendarClock, Eye,
 } from 'lucide-react';
 import {
-  api, CHANNEL_LABELS, CHANNEL_BADGE, CAMPAIGN_STATUS_LABELS, CAMPAIGN_STATUS_BADGE,
-  DELIVERY_STATUS_LABELS, RECIPIENT_STATUS_LABELS, RECIPIENT_KIND_LABELS, SKIP_REASON_LABELS,
+  api, CHANNEL_BADGE, CAMPAIGN_STATUS_BADGE,
   fmtDate, fmtCount,
 } from './broadcast-ui';
 
@@ -45,9 +45,11 @@ const maskContact = (kind: 'phone' | 'email', value: string | null) => {
 };
 
 export function CampaignDetailView({ campaignId: propId }: { campaignId?: string }) {
+  const t = useTranslations('Broadcast');
+  const tCommon = useTranslations('Common');
   const params = useParams<{ locale?: string; id?: string }>();
   const id = propId ?? (params?.id as string | undefined) ?? '';
-  const locale = params?.locale ?? '';
+  const locale = params?.locale ?? 'fr';
 
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [report, setReport] = useState<Report | null>(null);
@@ -60,18 +62,80 @@ export function CampaignDetailView({ campaignId: propId }: { campaignId?: string
   const [events, setEvents] = useState<Record<string, DeliveryEvent[]>>({});
   const [scheduleAt, setScheduleAt] = useState('');
 
+  const getChannelLabel = (ch: string) => {
+    switch (ch) {
+      case 'sms': return t('channelSms');
+      case 'email': return t('channelEmail');
+      case 'whatsapp': return t('channelWhatsapp');
+      case 'telegram': return t('channelTelegram');
+      case 'messenger': return t('channelMessenger');
+      default: return ch;
+    }
+  };
+
+  const getCampaignStatusLabel = (st: string) => {
+    switch (st) {
+      case 'draft': return t('statusDraft');
+      case 'pending_approval': return t('statusPendingApproval');
+      case 'scheduled': return t('statusScheduled');
+      case 'queued': return t('statusQueued');
+      case 'sending': return t('statusSending');
+      case 'completed': return t('statusCompleted');
+      case 'failed': return t('statusFailed');
+      case 'cancelled': return t('statusCancelled');
+      default: return st;
+    }
+  };
+
+  const getRecipientKindLabel = (k: string) => {
+    switch (k) {
+      case 'inquiry': return t('kindInquiry');
+      case 'student': return t('kindStudent');
+      case 'guardian': return t('kindGuardian');
+      case 'staff': return t('kindStaff');
+      case 'alumni': return t('kindAlumni');
+      case 'external': return t('kindExternal');
+      default: return k;
+    }
+  };
+
+  const getSkipReasonLabel = (r: string) => {
+    switch (r) {
+      case 'no_contact': return t('skipNoContact');
+      case 'invalid_phone': return t('skipInvalidPhone');
+      case 'invalid_email': return t('skipInvalidEmail');
+      case 'no_consent': return t('skipNoConsent');
+      case 'suppressed': return t('skipSuppressed');
+      case 'duplicate': return t('skipDuplicate');
+      default: return t('skipOther');
+    }
+  };
+
+  const getDeliveryStatusLabel = (st: string) => {
+    switch (st) {
+      case 'pending': return t('delivPending');
+      case 'sending': return t('delivSending');
+      case 'sent': return t('delivSent');
+      case 'delivered': return t('delivDelivered');
+      case 'failed': return t('delivFailed');
+      case 'bounced': return t('delivBounced');
+      case 'complained': return t('delivComplained');
+      default: return st;
+    }
+  };
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     const c = await api<Campaign>(`/api/addons/broadcast/campaigns/${id}`);
-    if (!c.ok || !c.data) { setError(c.error?.message ?? 'Campagne introuvable.'); setLoading(false); return; }
+    if (!c.ok || !c.data) { setError(c.error?.message ?? t('noCampaigns')); setLoading(false); return; }
     setCampaign(c.data);
     const r = await api<Report>(`/api/addons/broadcast/campaigns/${id}/report`);
     if (r.ok && r.data) setReport(r.data);
     const rec = await api<{ rows: DeliveryRow[]; total: number }>(`/api/addons/broadcast/campaigns/${id}/recipients?pageSize=100`);
     if (rec.ok && rec.data) { setRecipients(rec.data.rows); setTotalRecipients(rec.data.total); }
     setLoading(false);
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -84,24 +148,24 @@ export function CampaignDetailView({ campaignId: propId }: { campaignId?: string
     if (ok) load();
   };
 
-  const approve = () => act(async () => (await api(`/api/addons/broadcast/campaigns/${id}/approve`, { method: 'POST' })).ok, 'Campagne approuvée et lancée.', 'Approbation impossible.');
-  const cancel = () => act(async () => (await api(`/api/addons/broadcast/campaigns/${id}/cancel`, { method: 'POST' })).ok, 'Campagne annulée.', 'Annulation impossible.');
-  const processQueue = () => act(async () => (await api('/api/addons/broadcast/worker/process', { method: 'POST', body: JSON.stringify({ batch: 100 }) })).ok, 'File traitée.', 'Traitement impossible.');
-  const runPreview = () => act(async () => (await api(`/api/addons/broadcast/campaigns/${id}/preview`, { method: 'POST' })).ok, 'Aperçu recalculé.', 'Aperçu impossible.');
+  const approve = () => act(async () => (await api(`/api/addons/broadcast/campaigns/${id}/approve`, { method: 'POST' })).ok, t('completedStatus'), tCommon('error'));
+  const cancel = () => act(async () => (await api(`/api/addons/broadcast/campaigns/${id}/cancel`, { method: 'POST' })).ok, t('statusCancelled'), tCommon('error'));
+  const processQueue = () => act(async () => (await api('/api/addons/broadcast/worker/process', { method: 'POST', body: JSON.stringify({ batch: 100 }) })).ok, t('processQueue'), tCommon('error'));
+  const runPreview = () => act(async () => (await api(`/api/addons/broadcast/campaigns/${id}/preview`, { method: 'POST' })).ok, t('previewAudience'), tCommon('error'));
 
   const schedule = async () => {
     if (!scheduleAt) return;
     await act(
       async () => (await api(`/api/addons/broadcast/campaigns/${id}/schedule`, { method: 'POST', body: JSON.stringify({ scheduleAt }) })).ok,
-      'Campagne programmée.',
-      'Programmation impossible.',
+      t('scheduled'),
+      tCommon('error'),
     );
     setScheduleAt('');
   };
 
   const exportCsv = async () => {
     const res = await fetch(`/api/addons/broadcast/campaigns/${id}/export`, { credentials: 'include' });
-    if (!res.ok) { setActionMsg({ ok: false, text: 'Export impossible.' }); return; }
+    if (!res.ok) { setActionMsg({ ok: false, text: tCommon('error') }); return; }
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -109,7 +173,7 @@ export function CampaignDetailView({ campaignId: propId }: { campaignId?: string
     a.download = `campagne-${campaign?.name?.toLowerCase().replace(/\s+/g, '-') ?? id}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    setActionMsg({ ok: true, text: 'Export CSV téléchargé (contacts masqués).' });
+    setActionMsg({ ok: true, text: t('exportCsv') });
   };
 
   const showEvents = async (deliveryId: string) => {
@@ -120,19 +184,19 @@ export function CampaignDetailView({ campaignId: propId }: { campaignId?: string
 
   const retryDelivery = async (deliveryId: string) => {
     const r = await api(`/api/addons/broadcast/deliveries/${deliveryId}/retry`, { method: 'POST' });
-    if (r.ok) { setActionMsg({ ok: true, text: 'Envoi relancé.' }); load(); }
-    else setActionMsg({ ok: false, text: r.error?.message ?? 'Relance impossible.' });
+    if (r.ok) { setActionMsg({ ok: true, text: t('retry') }); load(); }
+    else setActionMsg({ ok: false, text: r.error?.message ?? tCommon('error') });
   };
 
   if (loading) {
-    return <div className="flex items-center gap-2 py-20 text-slate-500"><Loader2 className="h-5 w-5 animate-spin" /> Chargement de la campagne…</div>;
+    return <div className="flex items-center gap-2 py-20 text-slate-500"><Loader2 className="h-5 w-5 animate-spin" /> {tCommon('loading')}</div>;
   }
 
   if (error || !campaign) {
     return (
       <div className="flex items-center gap-2 py-20 text-rose-600">
-        <AlertCircle className="h-5 w-5" /> {error ?? 'Campagne introuvable.'}
-        <Link href={`/${locale}/dashboard/broadcast/campaigns`}><Button variant="outline" size="sm">Retour</Button></Link>
+        <AlertCircle className="h-5 w-5" /> {error ?? t('noCampaigns')}
+        <Link href={`/${locale}/dashboard/broadcast/campaigns`}><Button variant="outline" size="sm">{t('backToCampaigns')}</Button></Link>
       </div>
     );
   }
@@ -143,36 +207,36 @@ export function CampaignDetailView({ campaignId: propId }: { campaignId?: string
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link href={`/${locale}/dashboard/broadcast/campaigns`}>
-            <Button variant="ghost" size="icon"><ArrowLeft className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" className="cursor-pointer"><ArrowLeft className="h-4 w-4" /></Button>
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-[#16212B]">{campaign.name}</h1>
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-              <Badge className={`border ${CHANNEL_BADGE[campaign.channel]}`}>{CHANNEL_LABELS[campaign.channel]}</Badge>
-              <Badge className={`border ${CAMPAIGN_STATUS_BADGE[campaign.status]}`}>{CAMPAIGN_STATUS_LABELS[campaign.status] ?? campaign.status}</Badge>
-              {campaign.scheduleAt && <span className="inline-flex items-center gap-1 text-xs"><CalendarClock className="h-3.5 w-3.5" />{fmtDate(campaign.scheduleAt)}</span>}
-              <span className="text-xs">créée le {fmtDate(campaign.createdAt)}</span>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+              <Badge className={`border ${CHANNEL_BADGE[campaign.channel]}`}>{getChannelLabel(campaign.channel)}</Badge>
+              <Badge className={`border ${CAMPAIGN_STATUS_BADGE[campaign.status]}`}>{getCampaignStatusLabel(campaign.status)}</Badge>
+              {campaign.scheduleAt && <span className="inline-flex items-center gap-1 text-xs"><CalendarClock className="h-3.5 w-3.5" />{fmtDate(campaign.scheduleAt, locale)}</span>}
+              <span className="text-xs">{t('colCreatedAt')}: {fmtDate(campaign.createdAt, locale)}</span>
             </div>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {editable && <Button onClick={approve} disabled={busy}><CheckCircle2 className="mr-1.5 h-4 w-4" /> Approuver & lancer</Button>}
-          {cancellable && <Button variant="outline" onClick={cancel} disabled={busy}><XCircle className="mr-1.5 h-4 w-4" /> Annuler</Button>}
+          {editable && <Button onClick={approve} disabled={busy} className="cursor-pointer"><CheckCircle2 className="me-1.5 h-4 w-4" /> {t('approveAndLaunch')}</Button>}
+          {cancellable && <Button variant="outline" onClick={cancel} disabled={busy} className="cursor-pointer"><XCircle className="me-1.5 h-4 w-4" /> {t('btnCancel')}</Button>}
           {editable && (
             <>
-              <Button variant="outline" onClick={runPreview} disabled={busy}><Eye className="mr-1.5 h-4 w-4" /> Prévisualiser</Button>
+              <Button variant="outline" onClick={runPreview} disabled={busy} className="cursor-pointer"><Eye className="me-1.5 h-4 w-4" /> {t('previewAudience')}</Button>
               <div className="flex items-center gap-1">
                 <input type="datetime-local" value={scheduleAt} onChange={(e) => setScheduleAt(e.target.value)} className="h-9 rounded-md border border-slate-200 px-2 text-sm" />
-                <Button variant="outline" size="icon" onClick={schedule} disabled={busy || !scheduleAt} title="Programmer"><CalendarClock className="h-4 w-4" /></Button>
+                <Button variant="outline" size="icon" onClick={schedule} disabled={busy || !scheduleAt} title={t('scheduled')} className="cursor-pointer"><CalendarClock className="h-4 w-4" /></Button>
               </div>
             </>
           )}
-          <Button variant="outline" onClick={processQueue} disabled={busy}><Send className="mr-1.5 h-4 w-4" /> Traiter la file</Button>
-          <Button variant="outline" onClick={exportCsv}><Download className="mr-1.5 h-4 w-4" /> Exporter CSV</Button>
-          <Button variant="ghost" size="icon" onClick={load} title="Actualiser"><RefreshCw className="h-4 w-4" /></Button>
+          <Button variant="outline" onClick={processQueue} disabled={busy} className="cursor-pointer"><Send className="me-1.5 h-4 w-4" /> {t('processQueue')}</Button>
+          <Button variant="outline" onClick={exportCsv} className="cursor-pointer"><Download className="me-1.5 h-4 w-4" /> {t('exportCsv')}</Button>
+          <Button variant="ghost" size="icon" onClick={load} title={t('refresh')} className="cursor-pointer"><RefreshCw className="h-4 w-4" /></Button>
         </div>
       </div>
 
@@ -183,108 +247,110 @@ export function CampaignDetailView({ campaignId: propId }: { campaignId?: string
       )}
 
       <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-        <p className="text-sm font-medium text-slate-500">Message</p>
+        <p className="text-sm font-medium text-slate-500">{t('fieldMessage')}</p>
         <p className="mt-1 whitespace-pre-wrap text-[#16212B]">{campaign.bodyText || '—'}</p>
       </Card>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: 'Ciblés', value: counts?.targeted },
-          { label: 'Envoyables', value: counts?.enqueued },
-          { label: 'Envoyés', value: counts?.sent },
-          { label: 'Délivrés', value: counts?.delivered },
-          { label: 'Échecs', value: counts?.failed },
-          { label: 'Exclus', value: counts?.skipped },
-          { label: 'En attente', value: counts?.pending },
-          { label: 'Cout estimé (SMS)', value: counts?.enqueued },
+          { label: t('targeted'), value: counts?.targeted },
+          { label: t('enqueued'), value: counts?.enqueued },
+          { label: t('colSent'), value: counts?.sent },
+          { label: t('colDelivered'), value: counts?.delivered },
+          { label: t('colFailed'), value: counts?.failed },
+          { label: t('delivSkipped'), value: counts?.skipped },
+          { label: t('delivPending'), value: counts?.pending },
+          { label: t('estimatedCostSms'), value: counts?.enqueued },
         ].map((kpi) => (
           <Card key={kpi.label} className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs">
             <p className="text-sm text-slate-500">{kpi.label}</p>
-            <p className="text-2xl font-bold text-[#16212B]">{kpi.value != null ? fmtCount(kpi.value) : '—'}</p>
+            <p className="text-2xl font-bold text-[#16212B]">{kpi.value != null ? fmtCount(kpi.value, locale) : '—'}</p>
           </Card>
         ))}
       </div>
 
       {counts && (counts.invalid > 0 || counts.consentExcluded > 0 || counts.suppressionExcluded > 0 || counts.dedup > 0) && (
         <div className="grid gap-3 rounded-xl border border-amber-100 bg-amber-50/50 p-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
-          <p className="text-amber-800">Contact invalide : <b>{fmtCount(counts.invalid)}</b></p>
-          <p className="text-amber-800">Consentement retiré : <b>{fmtCount(counts.consentExcluded)}</b></p>
-          <p className="text-amber-800">Opposition : <b>{fmtCount(counts.suppressionExcluded)}</b></p>
-          <p className="text-amber-800">Doublons : <b>{fmtCount(counts.dedup)}</b></p>
+          <p className="text-amber-800">{t('invalidContact')} : <b>{fmtCount(counts.invalid, locale)}</b></p>
+          <p className="text-amber-800">{t('consentExcluded')} : <b>{fmtCount(counts.consentExcluded, locale)}</b></p>
+          <p className="text-amber-800">{t('suppressionExcluded')} : <b>{fmtCount(counts.suppressionExcluded, locale)}</b></p>
+          <p className="text-amber-800">{t('duplicates')} : <b>{fmtCount(counts.dedup, locale)}</b></p>
         </div>
       )}
 
       <div>
-        <h2 className="mb-2 text-lg font-semibold text-[#16212B]">Destinataires ({fmtCount(totalRecipients)})</h2>
+        <h2 className="mb-2 text-lg font-semibold text-[#16212B]">{t('recipients')} ({fmtCount(totalRecipients, locale)})</h2>
         <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-              <tr>
-                <th className="px-4 py-3">Contact</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Téléphone</th>
-                <th className="px-4 py-3">E-mail</th>
-                <th className="px-4 py-3">Statut</th>
-                <th className="px-4 py-3">Motif d’exclusion</th>
-                <th className="px-4 py-3">Envoi</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {recipients.length === 0 && (
-                <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-400">Aucun destinataire (campagne non approuvée).</td></tr>
-              )}
-              {recipients.map((row) => {
-                const r = row.recipient;
-                const d = row.delivery;
-                return (
-                  <tr key={r.id} className="hover:bg-slate-50/60">
-                    <td className="px-4 py-3 font-medium text-[#16212B]">{r.contactName ?? '—'}</td>
-                    <td className="px-4 py-3"><Badge className="border border-slate-200 bg-slate-50 text-slate-600">{RECIPIENT_KIND_LABELS[r.recipientKind] ?? r.recipientKind}</Badge></td>
-                    <td className="px-4 py-3 text-slate-500">{r.phone ? maskContact('phone', r.phone) : '—'}</td>
-                    <td className="px-4 py-3 text-slate-500">{r.email ? maskContact('email', r.email) : '—'}</td>
-                    <td className="px-4 py-3">
-                      {r.status === 'skipped'
-                        ? <Badge className="border border-slate-200 bg-slate-100 text-slate-500">Exclu</Badge>
-                        : <Badge className="border border-blue-100 bg-blue-50 text-blue-700">{RECIPIENT_STATUS_LABELS[r.status] ?? r.status}</Badge>}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-500">{r.skipReason ? (SKIP_REASON_LABELS[r.skipReason] ?? r.skipReason) : '—'}</td>
-                    <td className="px-4 py-3">
-                      {d ? (
-                        <span className="inline-flex items-center gap-1 text-xs">
-                          <Badge className={`border ${d.status === 'delivered' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : d.status === 'failed' || d.status === 'bounced' || d.status === 'complained' ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
-                            {DELIVERY_STATUS_LABELS[d.status] ?? d.status}
-                          </Badge>
-                          {d.retryCount > 0 && <span className="text-slate-400">×{d.retryCount}</span>}
-                        </span>
-                      ) : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {d && (
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" title="Événements" onClick={() => showEvents(d.id)}><History className="h-3.5 w-3.5" /></Button>
-                          {(d.status === 'failed' || d.status === 'bounced') && (
-                            <Button variant="ghost" size="icon" title="Relancer" onClick={() => retryDelivery(d.id)}><RotateCcw className="h-3.5 w-3.5" /></Button>
-                          )}
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 text-start text-xs uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-4 py-3 text-start">{t('contactName')}</th>
+                  <th className="px-4 py-3 text-start">{t('type')}</th>
+                  <th className="px-4 py-3 text-start">{t('phone')}</th>
+                  <th className="px-4 py-3 text-start">{t('email')}</th>
+                  <th className="px-4 py-3 text-start">{t('colStatus')}</th>
+                  <th className="px-4 py-3 text-start">{t('skipReason')}</th>
+                  <th className="px-4 py-3 text-start">{t('delivery')}</th>
+                  <th className="px-4 py-3 text-end" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {recipients.length === 0 && (
+                  <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-400">{t('noRecipientsYet')}</td></tr>
+                )}
+                {recipients.map((row) => {
+                  const r = row.recipient;
+                  const d = row.delivery;
+                  return (
+                    <tr key={r.id} className="hover:bg-slate-50/60">
+                      <td className="px-4 py-3 font-medium text-[#16212B] text-start">{r.contactName ?? '—'}</td>
+                      <td className="px-4 py-3 text-start"><Badge className="border border-slate-200 bg-slate-50 text-slate-600">{getRecipientKindLabel(r.recipientKind)}</Badge></td>
+                      <td className="px-4 py-3 text-slate-500 text-start">{r.phone ? maskContact('phone', r.phone) : '—'}</td>
+                      <td className="px-4 py-3 text-slate-500 text-start">{r.email ? maskContact('email', r.email) : '—'}</td>
+                      <td className="px-4 py-3 text-start">
+                        {r.status === 'skipped'
+                          ? <Badge className="border border-slate-200 bg-slate-100 text-slate-500">{t('delivSkipped')}</Badge>
+                          : <Badge className="border border-blue-100 bg-blue-50 text-blue-700">{r.status === 'enqueued' ? t('enqueued') : r.status}</Badge>}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-slate-500 text-start">{r.skipReason ? getSkipReasonLabel(r.skipReason) : '—'}</td>
+                      <td className="px-4 py-3 text-start">
+                        {d ? (
+                          <span className="inline-flex items-center gap-1 text-xs">
+                            <Badge className={`border ${d.status === 'delivered' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : d.status === 'failed' || d.status === 'bounced' || d.status === 'complained' ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
+                              {getDeliveryStatusLabel(d.status)}
+                            </Badge>
+                            {d.retryCount > 0 && <span className="text-slate-400">×{d.retryCount}</span>}
+                          </span>
+                        ) : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-end">
+                        {d && (
+                          <div className="flex justify-end gap-1">
+                            <Button variant="ghost" size="icon" title={t('events')} onClick={() => showEvents(d.id)} className="cursor-pointer"><History className="h-3.5 w-3.5" /></Button>
+                            {(d.status === 'failed' || d.status === 'bounced') && (
+                              <Button variant="ghost" size="icon" title={t('retry')} onClick={() => retryDelivery(d.id)} className="cursor-pointer"><RotateCcw className="h-3.5 w-3.5" /></Button>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {Object.entries(events).map(([deliveryId, evs]) => (
           <Card key={deliveryId} className="mt-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs">
-            <h3 className="mb-2 text-sm font-semibold text-[#16212B]">Journal d’envoi</h3>
+            <h3 className="mb-2 text-sm font-semibold text-[#16212B]">{t('deliveryLog')}</h3>
             <div className="space-y-1 text-sm">
               {evs.map((e) => (
                 <div key={e.id} className="flex items-center gap-2">
-                  <Badge className={`border ${e.status === 'delivered' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : e.status === 'failed' || e.status === 'bounced' ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>{DELIVERY_STATUS_LABELS[e.status] ?? e.status}</Badge>
+                  <Badge className={`border ${e.status === 'delivered' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : e.status === 'failed' || e.status === 'bounced' ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>{getDeliveryStatusLabel(e.status)}</Badge>
                   <span className="text-xs text-slate-400">{e.eventType}</span>
-                  <span className="text-xs text-slate-500">{fmtDate(e.createdAt)}</span>
+                  <span className="text-xs text-slate-500">{fmtDate(e.createdAt, locale)}</span>
                   {e.detail && Object.keys(e.detail).length > 0 && <span className="text-xs text-slate-400">{JSON.stringify(e.detail)}</span>}
                 </div>
               ))}

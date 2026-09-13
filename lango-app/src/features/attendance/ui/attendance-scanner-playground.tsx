@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +36,9 @@ const DEFAULT_DEMO_SCANS: ScanEvent[] = [
 ];
 
 export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string }) {
+  const t = useTranslations('Attendance');
+  const tCommon = useTranslations('Common');
+  const tStatus = useTranslations('Status');
   const [activeTab, setActiveTab] = useState<'standard' | 'variation-a' | 'variation-b' | 'variation-c'>('variation-a');
 
   // Scanner States
@@ -116,10 +120,10 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
               <span className="text-xs font-semibold text-slate-400">Interactif · 3 Variations</span>
             </div>
             <h1 className="text-xl font-bold text-[#16212B] mt-1.5 tracking-tight">
-              Poste & Borne de Pointage Présence QR / Badge
+              {t('scannerKioskTitle')}
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Comparez les 3 interfaces : Borne Tablette Hall d&apos;Entrée, Mode Mobile Enseignant, et Poste Sécurité & Contrôle d&apos;Accès.
+              {t('scannerKioskSubtitle')}
             </p>
           </div>
 
@@ -134,7 +138,7 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
               }`}
             >
               <Monitor className="w-3.5 h-3.5" />
-              <span>Var. A : Borne Tablette / Kiosk</span>
+              <span>{t('tabKioskStandard')}</span>
             </button>
             <button
               onClick={() => setActiveTab('variation-b')}
@@ -145,7 +149,7 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
               }`}
             >
               <Smartphone className="w-3.5 h-3.5" />
-              <span>Var. B : Mobile Enseignant & Clavier</span>
+              <span>{t('tabKioskHandheld')}</span>
             </button>
             <button
               onClick={() => setActiveTab('variation-c')}
@@ -156,7 +160,7 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
               }`}
             >
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Var. C : Poste Sécurité & Tuteurs</span>
+              <span>{t('tabKioskSecurity')}</span>
             </button>
             <button
               onClick={() => setActiveTab('standard')}
@@ -166,7 +170,7 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              <span>Vue Standard</span>
+              <span>{t('viewStandard')}</span>
             </button>
           </div>
         </div>
@@ -176,7 +180,7 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
       <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs">
         <span className="font-bold text-slate-600 flex items-center gap-1.5">
           <QrCode className="w-4 h-4 text-[#2487B8]" />
-          Simulateur de Scan Rapide :
+          {t('simScanFast')}
         </span>
         <div className="flex items-center gap-2 flex-wrap">
           <Button
@@ -184,21 +188,21 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
             onClick={() => triggerSimulatedScan('present')}
             className="h-8 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-1"
           >
-            <CheckCircle2 className="w-3.5 h-3.5" /> Scan Présent (À l&apos;heure)
+            <CheckCircle2 className="w-3.5 h-3.5" /> {t('simScanPresent')}
           </Button>
           <Button
             size="sm"
             onClick={() => triggerSimulatedScan('late')}
             className="h-8 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-xl gap-1"
           >
-            <Clock className="w-3.5 h-3.5" /> Scan En Retard (+15 min)
+            <Clock className="w-3.5 h-3.5" /> {t('simScanLate')}
           </Button>
           <Button
             size="sm"
             onClick={() => triggerSimulatedScan('invalid')}
             className="h-8 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl gap-1"
           >
-            <XCircle className="w-3.5 h-3.5" /> Scan Invalide / Rejeté
+            <XCircle className="w-3.5 h-3.5" /> {t('simScanInvalid')}
           </Button>
         </div>
       </div>
@@ -214,7 +218,7 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="font-mono text-xs text-emerald-400 font-bold uppercase tracking-wider">
-                      Borne Entrée Principale (En Ligne)
+                      {t('kioskMainEntranceOnline')}
                     </span>
                   </div>
 
@@ -241,15 +245,15 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
                     <QrCode className="w-24 h-24 text-white/30" />
                   </div>
                   <p className="mt-4 text-xs font-semibold text-slate-400 text-center">
-                    Présentez votre badge élève ou carte NFC devant la caméra
+                    {t('presentBadgePrompt')}
                   </p>
                 </div>
 
                 {/* Live Ticker Bar at Bottom */}
                 <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400 font-mono">
-                  <span>Pointages aujourd&apos;hui : <strong className="text-white">342</strong></span>
-                  <span>À l&apos;heure : <strong className="text-emerald-400">328 (96%)</strong></span>
-                  <span>Retards : <strong className="text-amber-400">14</strong></span>
+                  <span>{t('scansToday')} <strong className="text-white">342</strong></span>
+                  <span>{t('onTimeLabel')} <strong className="text-emerald-400">328 (96%)</strong></span>
+                  <span>{t('lateLabel')} <strong className="text-amber-400">14</strong></span>
                 </div>
               </Card>
             </div>
@@ -259,7 +263,7 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
               <Card className="h-full p-6 bg-white rounded-3xl border border-slate-200/90 shadow-lg flex flex-col justify-between">
                 <div>
                   <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider pb-3 border-b border-slate-100">
-                    Dernier Pointage Validé
+                    {t('lastValidatedScan')}
                   </h3>
 
                   {lastScan ? (
@@ -297,26 +301,26 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
                           <p className="font-bold text-sm">
                             {lastScan.resultStatus === 'accepted'
                               ? lastScan.stagedStatus === 'present'
-                                ? 'ENTRÉE VALIDÉE — À L\'HEURE'
-                                : 'RETARD NOTIFIÉ (+15 MIN)'
-                              : 'ACCÈS REFUSÉ / BADGE INCONNU'}
+                                ? t('scanResultAccepted')
+                                : t('scanResultLate')
+                              : t('scanResultRejected')}
                           </p>
-                          <p className="text-xs opacity-80 mt-0.5">Pointé à {lastScan.scannedAt}</p>
+                          <p className="text-xs opacity-80 mt-0.5">{t('scannedAtTime', { time: lastScan.scannedAt })}</p>
                         </div>
                       </div>
 
                       {lastScan.guardianName && (
                         <div className="p-3 bg-slate-50 rounded-xl text-xs space-y-1 text-slate-600 border border-slate-200/60">
-                          <p><span className="text-slate-400">Tuteur Légal :</span> <strong className="text-slate-800">{lastScan.guardianName}</strong></p>
+                          <p><span className="text-slate-400">{t('guardianLegalLabel')}</span> <strong className="text-slate-800">{lastScan.guardianName}</strong></p>
                           <p className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
-                            <Check className="w-3 h-3" /> Confirmation WhatsApp délivrée en direct
+                            <Check className="w-3 h-3" /> {t('whatsappDeliveredNotice')}
                           </p>
                         </div>
                       )}
                     </div>
                   ) : (
                     <div className="py-12 text-center text-xs text-slate-400">
-                      En attente de pointage...
+                      {t('waitingForScan')}
                     </div>
                   )}
                 </div>
@@ -341,18 +345,18 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <Smartphone className="w-4 h-4 text-[#2487B8]" />
-                  <h3 className="font-bold text-xs text-[#16212B]">Mode Smartphone Enseignant</h3>
+                  <h3 className="font-bold text-xs text-[#16212B]">{t('modeSmartphoneTeacher')}</h3>
                 </div>
                 <Badge className="bg-emerald-500/15 text-emerald-700 border-none text-[10px]">
-                  En Ligne
+                  {tCommon('statusOnline')}
                 </Badge>
               </div>
 
               {/* Progress Roll Call Meter */}
               <div className="p-3 bg-slate-50 rounded-xl space-y-1.5">
                 <div className="flex justify-between text-xs font-bold">
-                  <span className="text-slate-600">Appel 1ère Bac Sc. Ex - B :</span>
-                  <span className="text-[#2487B8]">24 / 28 élèves pointés (85%)</span>
+                  <span className="text-slate-600">{t('rollCallProgressLabel')}</span>
+                  <span className="text-[#2487B8]">{t('rollCallProgressDetail', { scanned: '24', total: '28', percent: '85' })}</span>
                 </div>
                 <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                   <div className="h-full bg-[#2487B8] rounded-full" style={{ width: '85%' }} />
@@ -362,7 +366,7 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
               <div className="h-48 bg-slate-900 rounded-2xl relative flex items-center justify-center overflow-hidden">
                 <Camera className="w-12 h-12 text-white/30" />
                 <div className="absolute inset-4 border border-dashed border-[#0EA5C4] rounded-xl flex items-center justify-center text-[10px] text-white/60">
-                  Cibler le QR badge de l&apos;élève
+                  {t('targetQrBadge')}
                 </div>
               </div>
 
@@ -370,7 +374,7 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
                 onClick={() => triggerSimulatedScan('present')}
                 className="w-full h-10 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold gap-2 shadow-xs"
               >
-                <ScanLine className="w-4 h-4" /> Déclencher le Scan Caméra
+                <ScanLine className="w-4 h-4" /> {t('triggerCameraScan')}
               </Button>
             </Card>
 
@@ -379,16 +383,16 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <Keyboard className="w-4 h-4 text-slate-700" />
-                  <h3 className="font-bold text-xs text-[#16212B]">Saisie Manuelle (Sans Badge)</h3>
+                  <h3 className="font-bold text-xs text-[#16212B]">{t('manualEntryHeading')}</h3>
                 </div>
-                <span className="text-[10px] text-slate-400 font-mono">Secours</span>
+                <span className="text-[10px] text-slate-400 font-mono">{t('backupMode')}</span>
               </div>
 
               <div className="space-y-3">
                 <Input
                   value={keypadInput}
                   onChange={e => setKeypadInput(e.target.value)}
-                  placeholder="Tapez le N° matricule..."
+                  placeholder={t('manualEntryPlaceholder')}
                   className="h-10 text-center font-mono font-bold text-sm tracking-widest rounded-xl border-slate-200"
                 />
 
@@ -435,10 +439,10 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
               </div>
               <div>
                 <h3 className="font-bold text-sm">
-                  {emergencyLockdown ? 'ALERTE CONFINEMENT / ÉVACUATION INCENDIE' : 'Poste Central de Contrôle & Sécurité Établissement'}
+                  {emergencyLockdown ? t('alertLockdownTitle') : t('securityCentralDeskTitle')}
                 </h3>
                 <p className="text-xs text-white/70">
-                  Comptage instantané des personnes présentes dans l&apos;enceinte scolaire : <strong className="text-white">{insideHeadcount} personnes</strong>
+                  {t('headcountInstantNotice', { count: String(insideHeadcount) })}
                 </p>
               </div>
             </div>
@@ -453,7 +457,7 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
               }`}
             >
               <AlertTriangle className="w-4 h-4" />
-              {emergencyLockdown ? 'Lever le Confinement' : 'Déclencher Alerte Sécurité'}
+              {emergencyLockdown ? t('liftLockdownBtn') : t('triggerLockdownBtn')}
             </Button>
           </div>
 
@@ -464,15 +468,15 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
               <Card className="p-5 bg-white rounded-2xl border border-slate-200/90 shadow-2xs space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700">
-                    Contrôle des Tuteurs & Sorties / Pickups
+                    {t('guardianPickupControl')}
                   </h3>
-                  <Badge variant="neutral" className="text-[10px]">Portail Sud</Badge>
+                  <Badge variant="neutral" className="text-[10px]">{t('southGate')}</Badge>
                 </div>
 
                 <div className="p-4 bg-[#2487B8]/5 border border-[#2487B8]/20 rounded-2xl space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-[#2487B8] uppercase">Tuteur Autorisé</span>
-                    <Badge className="bg-emerald-500/15 text-emerald-700 border-none text-[10px]">Identité Vérifiée</Badge>
+                    <span className="text-[10px] font-bold text-[#2487B8] uppercase">{t('guardianAuthorized')}</span>
+                    <Badge className="bg-emerald-500/15 text-emerald-700 border-none text-[10px]">{t('identityVerified')}</Badge>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-slate-200 font-bold flex items-center justify-center text-slate-700">
@@ -492,9 +496,9 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
               <Card className="p-5 bg-white rounded-2xl border border-slate-200/90 shadow-2xs space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700">
-                    Journal des Événements d&apos;Accès
+                    {t('accessEventsLog')}
                   </h3>
-                  <span className="text-[10px] font-mono text-slate-400">Flux direct</span>
+                  <span className="text-[10px] font-mono text-slate-400">{t('liveStream')}</span>
                 </div>
 
                 <div className="space-y-2 max-h-80 overflow-y-auto text-xs">
@@ -511,7 +515,7 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
                             : 'bg-amber-500/15 text-amber-700'
                           : 'bg-rose-500/15 text-rose-700'
                       }`}>
-                        {item.resultStatus === 'accepted' ? (item.stagedStatus === 'present' ? 'Présent' : 'Retard') : 'Refusé'}
+                        {item.resultStatus === 'accepted' ? (item.stagedStatus === 'present' ? tStatus('present') : tStatus('late')) : tStatus('rejected')}
                       </Badge>
                     </div>
                   ))}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -52,6 +53,9 @@ function fmtDateTime(iso: string): string {
 }
 
 export function GuardPickupsView() {
+  const t = useTranslations('Guard');
+  const tCommon = useTranslations('Common');
+
   const [gate, setGate] = useState<{ id: string; gateName: string } | null>(null);
   const [gateError, setGateError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -75,9 +79,9 @@ export function GuardPickupsView() {
       setGateError(null);
     } else {
       setGate(null);
-      setGateError(res.error?.message ?? 'Aucun portail actif.');
+      setGateError(res.error?.message ?? t('noActiveGate'));
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { loadGate(); }, [loadGate]);
 
@@ -95,7 +99,7 @@ export function GuardPickupsView() {
       if (res.data.length === 0) setSuccessMsg(null);
     } else {
       setResults([]);
-      setError(res.error?.message ?? 'Recherche impossible.');
+      setError(res.error?.message ?? t('errSearchFailed'));
     }
   };
 
@@ -109,7 +113,7 @@ export function GuardPickupsView() {
       setSelected(res.data);
       setResults([]);
     } else {
-      setError(res.error?.message ?? 'Chargement impossible.');
+      setError(res.error?.message ?? tCommon('loading'));
     }
   };
 
@@ -131,10 +135,10 @@ export function GuardPickupsView() {
     setReleasing(false);
     setConfirmAuth(null);
     if (res.ok) {
-      setSuccessMsg(`${confirmAuth.studentName} remis(e) à ${confirmAuth.pickupName}.`);
+      setSuccessMsg(t('releasedSuccess', { student: confirmAuth.studentName, pickup: confirmAuth.pickupName }));
       if (selected) await selectStudent(selected.student.id);
     } else {
-      setError(res.error?.message ?? 'Remise impossible.');
+      setError(res.error?.message ?? t('errReleaseFailed'));
     }
   };
 
@@ -142,22 +146,22 @@ export function GuardPickupsView() {
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">Sorties</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('pickupsTitle')}</h1>
           <p className="mt-0.5 text-xs font-medium text-slate-500">
-            Remise des élèves aux personnes autorisées.
-            {gate ? ` · Portail : ${gate.gateName}` : gateError ? ` · ${gateError}` : ' · Chargement du portail…'}
+            {t('pickupsSubtitle')}
+            {gate ? ` · ${t('gateLabel')} : ${gate.gateName}` : gateError ? ` · ${gateError}` : ` · ${t('loadingGate')}`}
           </p>
         </div>
-        <Badge className="bg-[#DCEBF4] text-[#1B6C93]"><DoorOpen className="mr-1 h-3.5 w-3.5" /> Enlèvements</Badge>
+        <Badge className="bg-[#DCEBF4] text-[#1B6C93]"><DoorOpen className="mr-1 h-3.5 w-3.5" /> {t('pickupsBadge')}</Badge>
       </div>
 
       {error && <p className="flex items-center gap-1 text-sm text-rose-600"><AlertCircle className="h-4 w-4" />{error}</p>}
       {successMsg && <p className="flex items-center gap-1 text-sm text-emerald-600"><CheckCircle2 className="h-4 w-4" />{successMsg}</p>}
-      {!gate && !gateError && <p className="text-xs text-slate-500">Chargement du portail…</p>}
+      {!gate && !gateError && <p className="text-xs text-slate-500">{t('loadingGate')}</p>}
 
       {!selected && (
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-          <label className="mb-1 block text-sm font-medium text-slate-700">Rechercher un élève</label>
+          <label className="mb-1 block text-sm font-medium text-slate-700">{t('searchStudent')}</label>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -165,18 +169,18 @@ export function GuardPickupsView() {
                 value={q}
                 onChange={e => setQ(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') void search(); }}
-                placeholder="Nom (3 car. min), téléphone (6 car. min) ou matricule exact"
+                placeholder={t('searchPlaceholder')}
                 className="pl-9"
               />
             </div>
             <Button onClick={() => void search()} disabled={q.trim().length < 3 || searching}>
-              {searching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />} Rechercher
+              {searching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />} {t('btnSearch')}
             </Button>
           </div>
 
-          {searching && <p className="mt-4 text-sm text-slate-500">Recherche…</p>}
+          {searching && <p className="mt-4 text-sm text-slate-500">{t('searching')}</p>}
           {!searching && searched && results.length === 0 && (
-            <p className="mt-4 text-sm text-slate-500">Aucun élève trouvé.</p>
+            <p className="mt-4 text-sm text-slate-500">{t('noStudentFound')}</p>
           )}
           {!searching && results.length > 0 && (
             <div className="mt-4 divide-y divide-slate-100 rounded-xl border border-slate-200/80">
@@ -184,7 +188,7 @@ export function GuardPickupsView() {
                 <button
                   key={s.id}
                   onClick={() => void selectStudent(s.id)}
-                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-slate-50"
+                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-start transition hover:bg-slate-50"
                 >
                   <span className="flex items-center gap-2 font-semibold text-[#16212B]">
                     <UserRound className="h-4 w-4 text-[#1B6C93]" /> {s.name}
@@ -197,7 +201,7 @@ export function GuardPickupsView() {
         </Card>
       )}
 
-      {loadingPickups && <p className="text-sm text-slate-500">Chargement des personnes autorisées…</p>}
+      {loadingPickups && <p className="text-sm text-slate-500">{t('loadingAuthorizedPersons')}</p>}
 
       {selected && !loadingPickups && (
         <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
@@ -207,13 +211,13 @@ export function GuardPickupsView() {
               {selected.student.matricule && <p className="font-mono text-xs text-slate-400">{selected.student.matricule}</p>}
             </div>
             <Button variant="outline" size="sm" onClick={() => { setSelected(null); setResults([]); setSearched(false); }}>
-              Nouvelle recherche
+              {t('newSearch')}
             </Button>
           </div>
 
           {selected.pickups.length === 0 ? (
             <p className="mt-6 rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
-              Aucune personne de contact liée pour cet élève.
+              {t('noLinkedContacts')}
             </p>
           ) : (
             <div className="mt-4 divide-y divide-slate-100">
@@ -222,12 +226,12 @@ export function GuardPickupsView() {
                   <div className="min-w-0">
                     <p className="font-semibold text-[#16212B]">
                       {p.firstName} {p.lastName}
-                      {p.isPrimaryContact && <span className="ml-2 rounded bg-[#D1F5E8] px-1.5 py-0.5 text-[10px] font-bold text-[#0b5c3a]">Contact principal</span>}
-                      {p.isEmergencyContact && <span className="ml-2 rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold text-rose-600">Urgence</span>}
+                      {p.isPrimaryContact && <span className="ml-2 rounded bg-[#D1F5E8] px-1.5 py-0.5 text-[10px] font-bold text-[#0b5c3a]">{t('primaryContact')}</span>}
+                      {p.isEmergencyContact && <span className="ml-2 rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold text-rose-600">{t('emergency')}</span>}
                     </p>
                     <p className="text-xs text-slate-500">{p.relationshipType}</p>
                     {p.activeAuthorizations.length === 0 && (
-                      <p className="mt-1 text-xs text-slate-400">Aucune autorisation de remise active.</p>
+                      <p className="mt-1 text-xs text-slate-400">{t('noActiveReleaseAuth')}</p>
                     )}
                     {p.activeAuthorizations.length > 0 && (
                       <ul className="mt-2 space-y-1.5">
@@ -249,7 +253,7 @@ export function GuardPickupsView() {
                                 authorizationId: a.id,
                               })}
                             >
-                              <LogOut className="mr-1.5 h-3.5 w-3.5" /> Remettre
+                              <LogOut className="mr-1.5 h-3.5 w-3.5" /> {t('btnRelease')}
                             </Button>
                           </li>
                         ))}
@@ -265,16 +269,18 @@ export function GuardPickupsView() {
 
       <Dialog open={confirmAuth !== null} onOpenChange={o => { if (!o) setConfirmAuth(null); }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Confirmer la remise</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('confirmReleaseTitle')}</DialogTitle></DialogHeader>
           <p className="text-sm text-slate-600">
-            Remettre <strong className="text-[#16212B]">{confirmAuth?.studentName}</strong> à{' '}
-            <strong className="text-[#16212B]">{confirmAuth?.pickupName}</strong>&nbsp;? Cette autorisation sera
-            consommée définitivement et la sortie sera enregistrée sur le portail {gate?.gateName}.
+            {t('confirmReleaseDesc', {
+              student: confirmAuth?.studentName ?? '',
+              pickup: confirmAuth?.pickupName ?? '',
+              gate: gate?.gateName ?? ''
+            })}
           </p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmAuth(null)} disabled={releasing}>Annuler</Button>
+            <Button variant="outline" onClick={() => setConfirmAuth(null)} disabled={releasing}>{tCommon('cancel')}</Button>
             <Button onClick={() => void release()} disabled={releasing}>
-              {releasing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogOut className="mr-2 h-4 w-4" />} Confirmer la sortie
+              {releasing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogOut className="mr-2 h-4 w-4" />} {t('btnConfirmExit')}
             </Button>
           </DialogFooter>
         </DialogContent>

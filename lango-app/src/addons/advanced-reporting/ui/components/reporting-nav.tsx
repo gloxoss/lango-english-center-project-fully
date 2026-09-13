@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { FileText, History, Calendar, ShieldCheck, FileSpreadsheet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -10,6 +11,7 @@ const RUNS_LAST_VIEWED_KEY = 'reporting.runs.lastViewedAt';
 
 export function ReportingNav({ currentKey }: { currentKey?: string }) {
   const pathname = usePathname();
+  const t = useTranslations('Reports');
   const [newRunsCount, setNewRunsCount] = useState(0);
 
   // Extract locale from pathname (e.g. /fr/dashboard/reports -> locale = 'fr')
@@ -39,26 +41,26 @@ export function ReportingNav({ currentKey }: { currentKey?: string }) {
 
   const navItems = [
     {
-      label: 'Centre de Rapports',
+      label: t('reportCenter'),
       href: `/${locale}/dashboard/reports`,
       icon: FileText,
       active: (pathname.endsWith('/reports') || pathname.endsWith('/reports/')) && !currentKey,
     },
     {
-      label: 'Mes Exécutions',
+      label: t('myRuns'),
       href: `/${locale}/dashboard/reports/runs`,
       icon: History,
       active: onRunsPage,
       badge: newRunsCount > 0 ? newRunsCount : undefined,
     },
     {
-      label: 'Planifications',
+      label: t('schedules'),
       href: `/${locale}/dashboard/reports/schedules`,
       icon: Calendar,
       active: pathname.includes('/reports/schedules'),
     },
     {
-      label: 'Console Admin',
+      label: t('adminConsole'),
       href: `/${locale}/dashboard/reports/admin`,
       icon: ShieldCheck,
       active: pathname.includes('/reports/admin'),
@@ -75,14 +77,14 @@ export function ReportingNav({ currentKey }: { currentKey?: string }) {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-extrabold tracking-tight text-[#16212B]">
-                Rapports & Analytics
+                {t('navTitle')}
               </h1>
               <span className="rounded-full bg-[#E4EDFD] px-2.5 py-0.5 text-[10px] font-bold text-[#2487B8] uppercase tracking-wider">
-                Module Add-on
+                {t('moduleAddon')}
               </span>
             </div>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Plateforme décisionnelle unifiée pour l'exploration, l'analyse et l'exportation des données SchoolOS.
+              {t('navDescription')}
             </p>
           </div>
         </div>

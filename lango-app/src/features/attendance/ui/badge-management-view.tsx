@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -48,7 +49,9 @@ interface BulkIssuedItem {
   rawToken: string;
 }
 
-export function BadgeManagementView() {
+export function BadgeManagementView({ locale: _locale }: { locale?: string } = {}) {
+  const t = useTranslations('Attendance');
+  const tCommon = useTranslations('Common');
   const [badges, setBadges] = useState<BadgeItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
@@ -207,11 +210,11 @@ export function BadgeManagementView() {
         setBulkResults(issuedItems);
         await fetchBadges();
       } else {
-        alert(json.error?.message || json.message || 'Erreur lors de l’émission groupée.');
+        alert(json.error?.message || json.message || t('bulkIssueError'));
       }
     } catch (e) {
       console.error('Failed bulk issue', e);
-      alert('Erreur réseau.');
+      alert(t('serverConnectionError'));
     } finally {
       setBulkIssuing(false);
     }
@@ -227,7 +230,7 @@ export function BadgeManagementView() {
     const html = `
       <html>
         <head>
-          <title>Planche de Badges QR - SchoolOS</title>
+          <title>${t('printSheetBtn')} - SchoolOS</title>
           <style>
             body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 20px; background: white; }
             .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; page-break-inside: avoid; }
@@ -280,7 +283,7 @@ export function BadgeManagementView() {
   };
 
   const handleReplaceBadge = async (badge: BadgeItem) => {
-    if (!confirm('Remplacer ce badge ? L\'ancien badge sera révoqué et un nouveau QR sera émis.')) return;
+    if (!confirm(t('confirmReplaceBadge'))) return;
 
     try {
       const res = await fetch(`/api/identity-badges/${badge.id}/replace`, {
@@ -295,16 +298,16 @@ export function BadgeManagementView() {
         setShowIssueModal(true);
         await fetchBadges();
       } else {
-        alert(json.error?.message || json.message || 'Erreur lors du remplacement');
+        alert(json.error?.message || json.message || t('replaceError'));
       }
     } catch (err) {
       console.error(err);
-      alert('Erreur serveur');
+      alert(t('serverError'));
     }
   };
 
   const handleRevokeBadge = async (badgeId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir révoquer ce badge ? Cette action est irréversible.')) return;
+    if (!confirm(t('confirmRevokeBadge'))) return;
 
     try {
       const res = await fetch(`/api/identity-badges/${badgeId}`, {
@@ -314,11 +317,11 @@ export function BadgeManagementView() {
       if (json.success) {
         setBadges(badges.map((b) => (b.id === badgeId ? { ...b, status: 'revoked' } : b)));
       } else {
-        alert(json.message || 'Erreur lors de la révocation');
+        alert(json.message || t('revokeError'));
       }
     } catch (err) {
       console.error(err);
-      alert('Erreur serveur');
+      alert(t('serverError'));
     }
   };
 
@@ -332,7 +335,7 @@ export function BadgeManagementView() {
     const html = `
       <html>
         <head>
-          <title>Impression Badge QR</title>
+          <title>${t('printBadgeBtn')}</title>
           <style>
             body { font-family: system-ui, -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f8fafc; }
             .badge-card { background: white; padding: 2rem; border-radius: 1rem; border: 2px solid #e2e8f0; text-align: center; max-width: 300px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
@@ -371,10 +374,10 @@ export function BadgeManagementView() {
           </div>
           <div>
             <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">
-              Gestion des Badges QR Sécurisés
+              {t('badgesTitle')}
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Émission de jetons QR aléatoires 128-bit cryptographiés par HMAC SHA-256 (sans PII lisible).
+              {t('badgesSubtitle')}
             </p>
           </div>
         </div>
@@ -390,7 +393,7 @@ export function BadgeManagementView() {
             className="border-slate-200 text-[#0066FF] hover:bg-blue-50 font-bold rounded-xl gap-2 h-10 px-4 cursor-pointer"
           >
             <Layers className="w-4 h-4" />
-            <span>Émission groupée (Cohorte)</span>
+            <span>{t('bulkIssueBtn')}</span>
           </Button>
 
           <Button
@@ -405,7 +408,7 @@ export function BadgeManagementView() {
             className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold rounded-xl shadow-2xs gap-2 h-10 px-4 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>+ Émettre un Badge</span>
+            <span>{t('issueBadgeBtn')}</span>
           </Button>
         </div>
       </div>
@@ -413,33 +416,33 @@ export function BadgeManagementView() {
       <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
               type="text"
-              placeholder="Rechercher par préfixe ou identifiant..."
+              placeholder={t('searchBadgePlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 text-xs rounded-xl border-slate-200 bg-slate-50/50 h-10 font-medium text-slate-800"
+              className="ps-9 text-xs rounded-xl border-slate-200 bg-slate-50/50 h-10 font-medium text-slate-800"
             />
           </div>
 
           <Badge className="bg-[#DDF5EC] text-[#17A673] font-bold gap-1 px-3 py-1.5 text-xs border-none">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>HMAC-SHA256 Chiffrement Actif</span>
+            <span>{t('hmacEncryptionActive')}</span>
           </Badge>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-start text-xs">
             <thead className="bg-[#F6F9FC] text-slate-500 font-semibold border-b border-slate-200/80">
               <tr>
-                <th className="py-3.5 px-4">Préfixe Badge</th>
-                <th className="py-3.5 px-4">Type Sujet</th>
-                <th className="py-3.5 px-4">Utilisateur ID</th>
-                <th className="py-3.5 px-4">Statut Credential</th>
-                <th className="py-3.5 px-4">Date Émission</th>
-                <th className="py-3.5 px-4">Expiration</th>
-                <th className="py-3.5 px-4 text-right">Actions</th>
+                <th className="py-3.5 px-4 text-start">{t('colBadgePrefix')}</th>
+                <th className="py-3.5 px-4 text-start">{t('colSubjectType')}</th>
+                <th className="py-3.5 px-4 text-start">{t('colUserId')}</th>
+                <th className="py-3.5 px-4 text-start">{t('colCredentialStatus')}</th>
+                <th className="py-3.5 px-4 text-start">{t('colIssueDate')}</th>
+                <th className="py-3.5 px-4 text-start">{t('colExpiration')}</th>
+                <th className="py-3.5 px-4 text-end">{t('colActions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -452,7 +455,7 @@ export function BadgeManagementView() {
                         b.subjectType === 'staff' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-700'
                       }`}
                     >
-                      {b.subjectType}
+                      {b.subjectType === 'staff' ? t('subjectTypeStaff') : t('subjectTypeStudent')}
                     </Badge>
                   </td>
                   <td className="py-3.5 px-4 font-mono text-slate-600">{b.userId}</td>
@@ -462,10 +465,16 @@ export function BadgeManagementView() {
                         b.status === 'active' ? 'bg-[#DDF5EC] text-[#17A673]' : 'bg-rose-100 text-rose-600'
                       }`}
                     >
-                      {b.status}
+                      {b.status === 'active'
+                        ? t('badgeStatusActive')
+                        : b.status === 'revoked'
+                        ? t('badgeStatusRevoked')
+                        : b.status === 'expired'
+                        ? t('badgeStatusExpired')
+                        : t('badgeStatusReplaced')}
                     </Badge>
                   </td>
-                  <td className="py-3.5 px-4 text-slate-500">{new Date(b.issuedAt).toLocaleDateString('fr-FR')}</td>
+                  <td className="py-3.5 px-4 text-slate-500">{new Date(b.issuedAt).toLocaleDateString()}</td>
                   <td className="py-3.5 px-4">
                     {b.expiresAt ? (
                       <span
@@ -473,13 +482,13 @@ export function BadgeManagementView() {
                           new Date(b.expiresAt) < new Date() ? 'text-rose-600' : 'text-slate-500'
                         }`}
                       >
-                        {new Date(b.expiresAt).toLocaleDateString('fr-FR')}
+                        {new Date(b.expiresAt).toLocaleDateString()}
                       </span>
                     ) : (
                       <span className="text-slate-400">—</span>
                     )}
                   </td>
-                  <td className="py-3.5 px-4 text-right">
+                  <td className="py-3.5 px-4 text-end">
                     {b.status === 'active' && (
                       <div className="flex items-center justify-end gap-1">
                         <Button
@@ -488,7 +497,7 @@ export function BadgeManagementView() {
                           onClick={() => handleReplaceBadge(b)}
                           className="text-[#0066FF] hover:text-[#0052CC] hover:bg-blue-50 h-8 px-2 text-xs font-bold"
                         >
-                          Remplacer
+                          {t('reissueBadgeBtn')}
                         </Button>
                         <Button
                           variant="ghost"
@@ -496,7 +505,7 @@ export function BadgeManagementView() {
                           onClick={() => handleRevokeBadge(b.id)}
                           className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 h-8 px-2 text-xs font-bold"
                         >
-                          Révoquer
+                          {t('revokeBadgeBtn')}
                         </Button>
                       </div>
                     )}
@@ -506,7 +515,7 @@ export function BadgeManagementView() {
               {filteredBadges.length === 0 && (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-slate-500 font-medium">
-                    Aucun badge trouvé.
+                    {t('noBadgesFound')}
                   </td>
                 </tr>
               )}
@@ -520,7 +529,7 @@ export function BadgeManagementView() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h2 className="text-base font-extrabold text-[#16212B]">Émettre un Badge QR</h2>
+              <h2 className="text-base font-extrabold text-[#16212B]">{t('singleIssueModalTitle')}</h2>
               <button
                 onClick={() => setShowIssueModal(false)}
                 className="p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
@@ -532,7 +541,7 @@ export function BadgeManagementView() {
             {!issuedRawToken ? (
               <form onSubmit={handleIssueBadge} className="space-y-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-700">Type de Sujet</label>
+                  <label className="text-xs font-bold text-slate-700">{t('subjectTypeLabel')}</label>
                   <select
                     value={subjectType}
                     onChange={(e) => {
@@ -543,13 +552,13 @@ export function BadgeManagementView() {
                     }}
                     className="mt-1 w-full p-2.5 text-xs rounded-xl border border-slate-200 font-medium bg-slate-50"
                   >
-                    <option value="student">Élève</option>
-                    <option value="staff">Employé / Enseignant</option>
+                    <option value="student">{t('subjectTypeStudent')}</option>
+                    <option value="staff">{t('subjectTypeStaff')}</option>
                   </select>
                 </div>
 
                 <div className="relative">
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Rechercher Utilisateur</label>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">{t('searchUserLabel')}</label>
                   {targetUserId ? (
                     <div className="flex items-center justify-between p-2.5 border border-[#0066FF] bg-blue-50/50 rounded-xl">
                       <div className="flex items-center gap-2">
@@ -571,7 +580,7 @@ export function BadgeManagementView() {
                   ) : (
                     <div>
                       <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <Input
                           type="text"
                           value={userSearchTerm}
@@ -580,11 +589,11 @@ export function BadgeManagementView() {
                             setShowUserDropdown(true);
                           }}
                           onFocus={() => setShowUserDropdown(true)}
-                          placeholder="Saisissez un nom pour rechercher..."
-                          className="pl-9 text-xs rounded-xl h-10 border-slate-200"
+                          placeholder={t('searchUserPlaceholder')}
+                          className="ps-9 text-xs rounded-xl h-10 border-slate-200"
                         />
                         {isSearchingUsers && (
-                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 animate-spin" />
+                          <Loader2 className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 animate-spin" />
                         )}
                       </div>
 
@@ -600,7 +609,7 @@ export function BadgeManagementView() {
                                   setTargetUserName(u.fullName || u.name);
                                   setShowUserDropdown(false);
                                 }}
-                                className="w-full text-left px-4 py-2.5 hover:bg-slate-50 border-b border-slate-100 last:border-0 text-xs transition-colors"
+                                className="w-full text-start px-4 py-2.5 hover:bg-slate-50 border-b border-slate-100 last:border-0 text-xs transition-colors"
                               >
                                 <div className="font-bold text-slate-800">{u.fullName || u.name}</div>
                                 <div className="text-slate-500 text-[10px] truncate">{u.email || u.id}</div>
@@ -608,7 +617,7 @@ export function BadgeManagementView() {
                             ))
                           ) : (
                             <div className="p-4 text-center text-xs text-slate-500">
-                              Aucun résultat trouvé
+                              {t('noResultsFound')}
                             </div>
                           )}
                         </div>
@@ -624,14 +633,14 @@ export function BadgeManagementView() {
                     onClick={() => setShowIssueModal(false)}
                     className="text-xs rounded-xl h-10"
                   >
-                    Annuler
+                    {tCommon('cancel')}
                   </Button>
                   <Button
                     type="submit"
                     disabled={issuing || !targetUserId}
                     className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs rounded-xl shadow-2xs h-10"
                   >
-                    {issuing ? 'Génération...' : 'Générer & Émettre'}
+                    {issuing ? t('generatingText') : t('generateAndIssueBtn')}
                   </Button>
                 </div>
               </form>
@@ -639,7 +648,7 @@ export function BadgeManagementView() {
               <div className="space-y-6 text-center">
                 <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-2 text-emerald-800 text-xs font-bold">
                   <CheckCircle2 className="w-6 h-6 text-emerald-600 mx-auto" />
-                  <p>Badge QR Émis avec Succès !</p>
+                  <p>{t('badgeIssuedSuccess')}</p>
                 </div>
 
                 {/* Hidden printable area */}
@@ -647,11 +656,11 @@ export function BadgeManagementView() {
                   <div className="badge-card">
                     <div className="school-name">SchoolOS Identity</div>
                     <h2 className="user-name">{targetUserName}</h2>
-                    <div className="subject-type">{subjectType === 'student' ? 'Élève' : 'Staff'}</div>
+                    <div className="subject-type">{subjectType === 'student' ? t('subjectTypeStudent') : t('subjectTypeStaff')}</div>
                     <div className="qr-container">
                       <QRCodeSVG value={issuedRawToken} size={150} level="H" />
                     </div>
-                    <div className="footer-note">Jeton unique. Ce badge est strictement personnel.</div>
+                    <div className="footer-note">{t('badgePersonalNote')}</div>
                   </div>
                 </div>
 
@@ -661,7 +670,7 @@ export function BadgeManagementView() {
                 </div>
 
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1 font-mono text-xs">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Jeton Brut (À Ne Pas Partager) :</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">{t('rawTokenWarning')} :</span>
                   <p className="text-[#0066FF] font-bold break-all">{issuedRawToken}</p>
                 </div>
 
@@ -671,14 +680,14 @@ export function BadgeManagementView() {
                     variant="outline"
                     className="flex-1 font-bold text-xs rounded-xl h-10 border-slate-200 text-slate-600"
                   >
-                    Fermer
+                    {tCommon('close')}
                   </Button>
                   <Button
                     onClick={handlePrintBadge}
                     className="flex-1 bg-[#0066FF] hover:bg-[#0052CC] font-bold text-xs rounded-xl h-10 text-white gap-1.5 shadow-2xs"
                   >
                     <Printer className="w-4 h-4" />
-                    Imprimer Badge
+                    {t('printBadgeBtn')}
                   </Button>
                 </div>
               </div>
@@ -695,10 +704,10 @@ export function BadgeManagementView() {
               <div>
                 <h2 className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
                   <Layers className="w-5 h-5 text-[#0066FF]" />
-                  Émission Groupée de Badges QR
+                  {t('bulkIssueModalTitle')}
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Génération en lot de badges HMAC SHA-256 pour toute une cohorte ou classe.
+                  {t('bulkIssueModalDesc')}
                 </p>
               </div>
               <button
@@ -712,7 +721,7 @@ export function BadgeManagementView() {
             {!bulkResults ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <label className="text-xs font-bold text-slate-700">Cohorte cible :</label>
+                  <label className="text-xs font-bold text-slate-700">{t('targetCohortLabel')}</label>
                   <div className="flex gap-2">
                     <Button
                       size="sm"
@@ -725,7 +734,7 @@ export function BadgeManagementView() {
                         cohortType === 'students' ? 'bg-[#0066FF] text-white' : 'border-slate-200 text-slate-600'
                       }`}
                     >
-                      Élèves ({cohortType === 'students' ? candidates.length : '...'})
+                      {t('studentsLabel')} ({cohortType === 'students' ? candidates.length : '...'})
                     </Button>
                     <Button
                       size="sm"
@@ -738,7 +747,7 @@ export function BadgeManagementView() {
                         cohortType === 'staff' ? 'bg-[#0066FF] text-white' : 'border-slate-200 text-slate-600'
                       }`}
                     >
-                      Personnel / Enseignants ({cohortType === 'staff' ? candidates.length : '...'})
+                      {t('staffLabel')} ({cohortType === 'staff' ? candidates.length : '...'})
                     </Button>
                   </div>
                 </div>
@@ -755,7 +764,7 @@ export function BadgeManagementView() {
                       ) : (
                         <Square className="w-4 h-4 text-slate-400" />
                       )}
-                      <span>Tout sélectionner ({selectedIds.size} / {candidates.length})</span>
+                      <span>{t('selectAllCount', { count: selectedIds.size, total: candidates.length })}</span>
                     </button>
                   </div>
 
@@ -763,11 +772,11 @@ export function BadgeManagementView() {
                     {loadingCandidates ? (
                       <div className="py-8 text-center text-slate-400">
                         <Loader2 className="w-5 h-5 animate-spin mx-auto text-[#0066FF] mb-1" />
-                        Chargement de la cohorte...
+                        {t('loadingCohort')}
                       </div>
                     ) : candidates.length === 0 ? (
                       <div className="py-8 text-center text-slate-400">
-                        Aucun utilisateur trouvé dans cette catégorie.
+                        {t('noUsersFoundCategory')}
                       </div>
                     ) : (
                       candidates.map((c) => {
@@ -803,7 +812,7 @@ export function BadgeManagementView() {
 
                 <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                   <span className="text-xs text-slate-500 font-medium">
-                    {selectedIds.size} badge(s) prêt(s) à être émis.
+                    {t('badgesReadyToIssue', { count: selectedIds.size })}
                   </span>
                   <div className="flex gap-2">
                     <Button
@@ -812,7 +821,7 @@ export function BadgeManagementView() {
                       onClick={() => setShowBulkModal(false)}
                       className="text-xs rounded-xl h-9"
                     >
-                      Annuler
+                      {tCommon('cancel')}
                     </Button>
                     <Button
                       type="button"
@@ -821,7 +830,7 @@ export function BadgeManagementView() {
                       className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs rounded-xl shadow-2xs h-9 gap-1.5"
                     >
                       {bulkIssuing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                      Émettre {selectedIds.size} badge(s)
+                      {t('generateBadgesBtn')} ({selectedIds.size})
                     </Button>
                   </div>
                 </div>
@@ -830,9 +839,9 @@ export function BadgeManagementView() {
               <div className="space-y-4">
                 <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-1 text-emerald-800 text-xs font-bold">
                   <CheckCircle2 className="w-6 h-6 text-emerald-600 mx-auto" />
-                  <p>{bulkResults.length} Badges QR générés et signés avec succès !</p>
+                  <p>{t('bulkSuccessNotice', { count: bulkResults.length })}</p>
                   <p className="text-[11px] font-normal text-emerald-700">
-                    Les anciens badges des utilisateurs sélectionnés ont été révoqués et remplacés.
+                    {t('bulkRevokedNotice')}
                   </p>
                 </div>
 
@@ -843,7 +852,7 @@ export function BadgeManagementView() {
                       <div key={item.id} className="badge-card">
                         <div className="school-name">SchoolOS Identity</div>
                         <div className="user-name">{item.userName}</div>
-                        <div className="badge-type">{cohortType === 'students' ? 'Élève' : 'Personnel'}</div>
+                        <div className="badge-type">{cohortType === 'students' ? t('subjectTypeStudent') : t('subjectTypeStaff')}</div>
                         <div className="qr-box">
                           <QRCodeSVG value={item.rawToken} size={110} level="H" />
                         </div>
@@ -872,14 +881,14 @@ export function BadgeManagementView() {
                     variant="outline"
                     className="flex-1 font-bold text-xs rounded-xl h-10 border-slate-200"
                   >
-                    Fermer
+                    {tCommon('close')}
                   </Button>
                   <Button
                     onClick={handlePrintBatch}
                     className="flex-1 bg-[#0066FF] hover:bg-[#0052CC] font-bold text-xs rounded-xl h-10 text-white gap-1.5 shadow-2xs"
                   >
                     <Printer className="w-4 h-4" />
-                    Imprimer la Planche ({bulkResults.length})
+                    {t('printSheetBtn')} ({bulkResults.length})
                   </Button>
                 </div>
               </div>

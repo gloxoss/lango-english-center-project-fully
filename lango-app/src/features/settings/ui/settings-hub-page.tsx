@@ -14,19 +14,25 @@ import { SettingsHubClient, type AuditItem } from './settings-hub-client';
 const STAFF_ROLES = ['school_admin', 'teacher', 'accountant', 'receptionist', 'guard'] as const;
 const CNDP_DONE_STATUSES = ['submitted', 'approved'] as const;
 
-function relativeTime(iso: string | null): string {
+function relativeTime(iso: string | null, locale = 'fr'): string {
   if (!iso) return '';
   const then = new Date(iso).getTime();
   if (Number.isNaN(then)) return '';
-  const minutes = Math.floor((Date.now() - then) / 60000);
-  if (minutes < 1) return "À l'instant";
-  if (minutes < 60) return `Il y a ${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `Il y a ${hours} h`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return 'Hier';
-  if (days < 30) return `Il y a ${days} jours`;
-  return new Date(iso).toLocaleDateString('fr-FR');
+  const diffSec = Math.floor((Date.now() - then) / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHours = Math.floor(diffMin / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  try {
+    const rtf = new Intl.RelativeTimeFormat(locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR', { numeric: 'auto' });
+    if (diffMin < 1) return rtf.format(0, 'second');
+    if (diffHours < 1) return rtf.format(-diffMin, 'minute');
+    if (diffDays < 1) return rtf.format(-diffHours, 'hour');
+    if (diffDays < 30) return rtf.format(-diffDays, 'day');
+  } catch {
+    // fallback
+  }
+  return new Date(iso).toLocaleDateString(locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR');
 }
 
 function initialsOf(name: string): string {
@@ -67,13 +73,13 @@ export async function SettingsHubPage({ locale }: { locale?: string } = {}) {
       .limit(5);
 
     initialAudits = auditRows.map(r => {
-      const actorName = r.actorName ?? (r.actorId ? `Utilisateur (${r.actorId.slice(0, 6)})` : 'Système');
+      const actorName = r.actorName ?? (r.actorId ? `User (${r.actorId.slice(0, 6)})` : 'System');
       return {
         id: r.id,
         userName: actorName,
         userInitials: r.actorId ? initialsOf(actorName) : 'SYS',
         action: r.action,
-        timestamp: relativeTime(r.createdAt) || new Date(r.createdAt).toLocaleString('fr-FR'),
+        timestamp: relativeTime(r.createdAt, locale) || new Date(r.createdAt).toLocaleString(locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR'),
       };
     });
     lastModification = initialAudits[0] ?? null;
@@ -167,13 +173,13 @@ export async function SettingsHubPage({ locale }: { locale?: string } = {}) {
   const totalModules = SETTINGS_MODULES.length;
   const configuredCount = SETTINGS_MODULES.filter(m => modulesStatus[m.id]).length;
   const conformityPercent = Math.round(((cndpDone ? 1 : 0) + (pcgDone ? 1 : 0)) / 2 * 100);
-  const conformityLabel = cndpDone && pcgDone
-    ? 'PCG 2026 & CNDP conformes'
+  const conformityCode = cndpDone && pcgDone
+    ? 'both'
     : cndpDone
-      ? 'CNDP déposé · PCG non configuré'
+      ? 'cndp_only'
       : pcgDone
-        ? 'PCG 2026 configuré · CNDP non déposé'
-        : 'PCG 2026 & CNDP non configurés';
+        ? 'pcg_only'
+        : 'none';
 
   return (
     <SettingsHubClient
@@ -183,8 +189,9 @@ export async function SettingsHubPage({ locale }: { locale?: string } = {}) {
       configuredCount={configuredCount}
       totalModules={totalModules}
       conformityPercent={conformityPercent}
-      conformityLabel={conformityLabel}
+      conformityCode={conformityCode}
       lastModification={lastModification}
+      locale={locale || 'fr'}
     />
   );
 }

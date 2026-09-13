@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -29,26 +30,6 @@ type Overview = {
 
 type ApiErrorShape = { code?: string; message?: string };
 
-const MOVEMENT_LABELS: Record<string, string> = {
-  receipt: 'Réception',
-  sale: 'Vente',
-  sale_reversal: 'Annulation vente',
-  issue: 'Sortie',
-  issue_return: 'Retour sortie',
-  adjustment_in: 'Ajustement +',
-  adjustment_out: 'Ajustement −',
-  transfer_out: 'Transfert sortant',
-  transfer_in: 'Transfert entrant',
-};
-
-const fmtDate = (iso: string) => {
-  const d = new Date(iso);
-  return isNaN(d.getTime()) ? iso : d.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
-};
-
-const fmtMoney = (cents: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(cents / 100);
-
 async function api<T>(url: string, init?: RequestInit): Promise<{ ok: boolean; status: number; data?: T; error?: ApiErrorShape }> {
   try {
     const res = await fetch(url, { ...init, credentials: 'include', headers: { 'Content-Type': 'application/json' } });
@@ -74,7 +55,33 @@ function Kpi({ icon, label, value, sub }: { icon: React.ReactNode; label: string
   );
 }
 
-export function OverviewView() {
+export function OverviewView({ locale: initialLocale }: { locale?: string } = {}) {
+  const currentLocale = useLocale();
+  const locale = initialLocale || currentLocale;
+  const t = useTranslations('Inventory');
+  const tCommon = useTranslations('Common');
+
+  const movementLabels: Record<string, string> = {
+    receipt: t('movementReceipt'),
+    sale: t('movementSale'),
+    sale_reversal: t('movementSaleReversal'),
+    issue: t('movementIssue'),
+    issue_return: t('movementIssueReturn'),
+    adjustment_in: t('movementAdjustmentIn'),
+    adjustment_out: t('movementAdjustmentOut'),
+    transfer_out: t('movementTransferOut'),
+    transfer_in: t('movementTransferIn'),
+  };
+
+  const dateLocale = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR';
+  const fmtDate = (iso: string) => {
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? iso : d.toLocaleString(dateLocale, { dateStyle: 'short', timeStyle: 'short' });
+  };
+
+  const fmtMoney = (cents: number) =>
+    `${(cents / 100).toLocaleString(dateLocale, { minimumFractionDigits: 2 })} ${tCommon('currency')}`;
+
   const [overview, setOverview] = useState<Overview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,9 +91,9 @@ export function OverviewView() {
     setError(null);
     const res = await api<Overview>('/api/addons/inventory/overview');
     if (res.ok && res.data) setOverview(res.data);
-    else setError(res.error?.message ?? 'Chargement impossible.');
+    else setError(res.error?.message ?? tCommon('networkError'));
     setLoading(false);
-  }, []);
+  }, [tCommon]);
 
   useEffect(() => { load().catch(() => {}); }, [load]);
 
@@ -95,33 +102,32 @@ export function OverviewView() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#16212B]">Vue d&apos;ensemble</h1>
-        <p className="text-sm text-slate-500">Situation de l&apos;inventaire : produits, stock, prêts et mouvements récents.</p>
+        <h1 className="text-2xl font-bold text-[#16212B]">{t('overviewTitle')}</h1>
+        <p className="text-sm text-slate-500">{t('overviewSubtitle')}</p>
       </div>
 
       {error && <p className="flex items-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error}</p>}
 
       {loading ? (
-        <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Chargement…</div>
+        <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> {tCommon('loading')}</div>
       ) : overview ? (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Kpi icon={<Package className="h-5 w-5" />} label="Produits actifs" value={overview.counts.products} sub={`${overview.counts.categories} catégories`} />
-            <Kpi icon={<Banknote className="h-5 w-5" />} label="Valeur du stock" value={fmtMoney(overview.stockValueCents)} sub="au coût d'achat" />
-            <Kpi icon={<TrendingDown className="h-5 w-5" />} label="Stock bas" value={overview.lowStockCount} sub="produits en rupture ou à zéro" />
-            <Kpi icon={<ClipboardList className="h-5 w-5" />} label="Prêts en cours" value={overview.counts.openIssues} sub={`${overview.counts.overdueIssues} en retard`} />
-            <Kpi icon={<ArrowLeftRight className="h-5 w-5" />} label="Transferts en attente" value={overview.counts.pendingTransfers} sub={`${overview.counts.stores} magasins`} />
-            <Kpi icon={<Boxes className="h-5 w-5" />} label="Mouvements" value={overview.counts.movements} sub={`${total30} sur 30 jours`} />
+            <Kpi icon={<Package className="h-5 w-5" />} label={t('activeProducts')} value={overview.counts.products} sub={`${overview.counts.categories} ${t('categoryLabel').toLowerCase()}`} />
+            <Kpi icon={<Banknote className="h-5 w-5" />} label={t('totalStockValue')} value={fmtMoney(overview.stockValueCents)} />
+            <Kpi icon={<TrendingDown className="h-5 w-5" />} label={t('lowStockAlerts')} value={overview.lowStockCount} />
+            <Kpi icon={<ClipboardList className="h-5 w-5" />} label={t('openIssues')} value={overview.counts.openIssues} sub={`${overview.counts.overdueIssues} ${t('statusOverdue')}`} />
+            <Kpi icon={<ArrowLeftRight className="h-5 w-5" />} label={t('pendingTransfers')} value={overview.counts.pendingTransfers} sub={`${overview.counts.stores} ${t('storesTitle')}`} />
+            <Kpi icon={<Boxes className="h-5 w-5" />} label={t('movements30d')} value={overview.counts.movements} sub={`${total30}`} />
           </div>
 
           <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
             <div className="border-b border-slate-100 p-4">
-              <h2 className="font-semibold text-[#16212B]">Produits à faible stock</h2>
-              <p className="text-sm text-slate-500">Références dont le stock total est à zéro.</p>
+              <h2 className="font-semibold text-[#16212B]">{t('lowStockProductsTitle')}</h2>
             </div>
             <div className="divide-y divide-slate-100">
               {overview.lowStockProducts.length === 0 ? (
-                <div className="p-10 text-center text-sm text-slate-500">Aucun produit en rupture. Parfait.</div>
+                <div className="p-10 text-center text-sm text-slate-500">{t('noLowStock')}</div>
               ) : (
                 overview.lowStockProducts.map(p => (
                   <div key={p.id} className="flex items-center justify-between gap-4 p-4">
@@ -141,12 +147,11 @@ export function OverviewView() {
 
           <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
             <div className="border-b border-slate-100 p-4">
-              <h2 className="font-semibold text-[#16212B]">Mouvements récents</h2>
-              <p className="text-sm text-slate-500">Journal immuable — source de vérité des soldes.</p>
+              <h2 className="font-semibold text-[#16212B]">{t('recentMovementsTitle')}</h2>
             </div>
             <div className="divide-y divide-slate-100">
               {overview.recent.length === 0 ? (
-                <div className="p-10 text-center text-sm text-slate-500">Aucun mouvement enregistré.</div>
+                <div className="p-10 text-center text-sm text-slate-500">{t('noMovements')}</div>
               ) : (
                 overview.recent.map(m => {
                   const positive = m.movementType === 'receipt' || m.movementType === 'issue_return' || m.movementType === 'adjustment_in' || m.movementType === 'transfer_in';
@@ -158,7 +163,7 @@ export function OverviewView() {
                         </div>
                         <div>
                           <p className="font-semibold text-[#16212B]">{m.productName}</p>
-                          <p className="text-xs text-slate-500">{MOVEMENT_LABELS[m.movementType] ?? m.movementType} · {m.storeName}</p>
+                          <p className="text-xs text-slate-500">{movementLabels[m.movementType] ?? m.movementType} · {m.storeName}</p>
                           {m.reason && <p className="text-xs text-slate-400">{m.reason}</p>}
                         </div>
                       </div>
@@ -174,17 +179,16 @@ export function OverviewView() {
           </Card>
 
           <Card className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs">
-            <h2 className="font-semibold text-[#16212B]">Exporter (CSV)</h2>
-            <p className="mb-3 text-sm text-slate-500">Téléchargements filtrés par votre établissement.</p>
-            <div className="flex flex-wrap gap-2">
+            <h2 className="font-semibold text-[#16212B]">{tCommon('export')} (CSV)</h2>
+            <div className="mt-3 flex flex-wrap gap-2">
               <a href="/api/addons/inventory/export?type=products" className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-[#16212B] hover:bg-slate-50">
-                <Download className="h-4 w-4" /> Produits
+                <Download className="h-4 w-4" /> {t('productsTitle')}
               </a>
               <a href="/api/addons/inventory/export?type=stock" className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-[#16212B] hover:bg-slate-50">
-                <Download className="h-4 w-4" /> Stock
+                <Download className="h-4 w-4" /> {t('stockTitle')}
               </a>
               <a href="/api/addons/inventory/export?type=movements" className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-[#16212B] hover:bg-slate-50">
-                <Download className="h-4 w-4" /> Mouvements
+                <Download className="h-4 w-4" /> {t('recentMovementsTitle')}
               </a>
             </div>
           </Card>

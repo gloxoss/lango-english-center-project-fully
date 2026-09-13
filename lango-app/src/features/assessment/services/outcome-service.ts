@@ -1,3 +1,4 @@
+import { ApiError } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
 import { assessmentOutcomes, assessmentOutcomeRevisions, assessmentDefinitions } from '../models/assessment-schema';
 import { eq, and } from 'drizzle-orm';
@@ -76,7 +77,14 @@ export class OutcomeService {
     if (existing) {
       // Check moderation lock
       if (existing.moderationState === 'locked' || existing.moderationState === 'published') {
-        throw new Error('Assessment outcome is locked/published and cannot be overwritten without unlock approval.');
+        // An ApiError, not a bare Error: a locked mark is an expected business
+        // condition, and as a plain Error it reached the client as an opaque 500
+        // with no hint that the mark needs unlock approval.
+        throw new ApiError(
+          409,
+          'OUTCOME_LOCKED',
+          'Cette note est verrouillée ou déjà publiée. Demandez un déverrouillage avant de la modifier.',
+        );
       }
 
       // Record revision audit log if score or status changed

@@ -18,6 +18,7 @@ export const attendanceFlagStatus = pgEnum('attendance_flag_status', ['OPEN', 'R
 export const attendanceFlagSeverity = pgEnum('attendance_flag_severity', ['CRITIQUE', 'ELEVE', 'MOYEN']);
 export const attendanceRegisterStatus = pgEnum('attendance_register_status', ['LOCKED', 'REOPENED']);
 export const dayOfWeek = pgEnum('day_of_week', ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']);
+export const academicRoomStatus = pgEnum('academic_room_status', ['available', 'maintenance']);
 export const enrollmentStatus = pgEnum('enrollment_status', ['enrolled', 'dropped', 'graduated']);
 export const expenseCategory = pgEnum('expense_category', ['salary', 'rent', 'utilities', 'supplies', 'marketing', 'other']);
 export const gender = pgEnum('gender', ['female', 'male', 'other']);
@@ -206,11 +207,27 @@ export const sections = pgTable('sections', {
   unique('sections_tenant_id_name_unique').on(table.tenantId, table.name),
 ]);
 
+// Filières. A filière is not just a label: it belongs to one cycle, carries the
+// national Bac series code that appears on official transcripts, and defines the
+// subject coefficients its students are averaged on
+// (see streamSubjectCoefficients below).
 export const streams = pgTable('streams', {
   id: uuid().defaultRandom().primaryKey().notNull(),
   tenantId: uuid('tenant_id').notNull(),
   name: varchar({ length: 100 }).notNull(),
+  // Short internal code, e.g. 'SM' for Sciences Mathématiques.
+  code: varchar({ length: 20 }),
+  // The cycle this filière exists in. A class may only be assigned a filière of
+  // its own cycle — a collège class cannot be "Sciences Maths".
+  cycle: classCycle(),
+  // National Bac series code, printed on transcripts and relevé de notes. Kept
+  // separate from `code` because a school's internal shorthand and the ministry's
+  // official series identifier are not always the same string.
+  bacSeriesCode: varchar('bac_series_code', { length: 20 }),
+  isActive: boolean('is_active').default(true).notNull(),
+  displayOrder: integer('display_order').default(0).notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
   foreignKey({
     columns: [table.tenantId],
@@ -218,6 +235,40 @@ export const streams = pgTable('streams', {
     name: 'streams_tenant_id_tenants_id_fk',
   }).onDelete('cascade'),
   unique('streams_tenant_id_name_unique').on(table.tenantId, table.name),
+  uniqueIndex('streams_tenant_code_unique').on(table.tenantId, table.code).where(sql`code IS NOT NULL`),
+]);
+
+// Per-filière subject coefficients — the weights a filière's général average is
+// computed on. These override classSubjects.coefficient, which is per class and
+// cannot express "Maths counts 7 in Sciences Maths but 3 in Lettres".
+export const streamSubjectCoefficients = pgTable('stream_subject_coefficients', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  streamId: uuid('stream_id').notNull(),
+  subjectId: uuid('subject_id').notNull(),
+  coefficient: numeric('coefficient', { precision: 4, scale: 2 }).notNull(),
+  // A matière principale: counts toward the filière's defining subjects, which
+  // some decisions (redoublement, orientation) weigh separately from the average.
+  isCore: boolean('is_core').default(false).notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'stream_subject_coefficients_tenant_id_tenants_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.streamId],
+    foreignColumns: [streams.id],
+    name: 'stream_subject_coefficients_stream_id_streams_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.subjectId],
+    foreignColumns: [subjects.id],
+    name: 'stream_subject_coefficients_subject_id_subjects_id_fk',
+  }).onDelete('cascade'),
+  unique('stream_subject_coefficients_unique').on(table.tenantId, table.streamId, table.subjectId),
 ]);
 
 export const shifts = pgTable('shifts', {
@@ -3214,6 +3265,8 @@ export const twoFactor = pgTable('two_factor', {
   backupCodes: text('backup_codes').notNull(),
   userId: text('user_id').notNull(),
   verified: boolean().default(true).notNull(),
+  failedVerificationCount: integer('failed_verification_count').default(0).notNull(),
+  lockedUntil: timestamp('locked_until'),
 }, table => [
   foreignKey({
     columns: [table.userId],
@@ -4243,12 +4296,21 @@ export const academicClassOfferings = pgTable('academic_class_offerings', {
   unique('academic_class_offerings_unique').on(table.tenantId, table.sessionYearId, table.classId, table.sectionId),
 ]);
 
+// The tenant-scoped room registry. Occupancy deliberately has no column:
+// whether a room is busy right now is derived from class_schedule_slots at read
+// time, so it cannot drift from the timetable. Only `status`, which is an admin
+// decision (a room pulled out of service), is stored.
 export const academicRooms = pgTable('academic_rooms', {
   id: uuid().defaultRandom().primaryKey().notNull(),
   tenantId: uuid('tenant_id').notNull(),
   name: varchar('name', { length: 100 }).notNull(),
+  code: varchar('code', { length: 50 }),
+  building: varchar('building', { length: 100 }),
+  floor: varchar('floor', { length: 50 }),
   capacity: integer('capacity'),
   roomType: varchar('room_type', { length: 50 }),
+  equipment: text('equipment').array().default(sql`'{}'::text[]`).notNull(),
+  status: academicRoomStatus('status').default('available').notNull(),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
@@ -4259,6 +4321,7 @@ export const academicRooms = pgTable('academic_rooms', {
     name: 'academic_rooms_tenant_id_tenants_id_fk',
   }).onDelete('cascade'),
   unique('academic_rooms_tenant_name_unique').on(table.tenantId, table.name),
+  uniqueIndex('academic_rooms_tenant_code_unique').on(table.tenantId, table.code).where(sql`code IS NOT NULL`),
 ]);
 
 // Weekly point-in-time snapshots of the academic readiness score, captured

@@ -43,7 +43,8 @@ export async function middleware(request: NextRequest) {
 
   // Extract locale from path or default to 'fr'
   const localeMatch = pathname.match(/^\/([a-z]{2})(\/|$)/);
-  const locale = localeMatch ? localeMatch[1] : 'fr';
+  const rawLocale = localeMatch?.[1];
+  const locale = rawLocale && ['fr', 'ar', 'en'].includes(rawLocale) ? rawLocale : 'fr';
 
   // If missing locale prefix on dashboard or login routes, redirect to localized URL
   if (!localeMatch && (pathname.startsWith('/dashboard') || pathname === '/login')) {

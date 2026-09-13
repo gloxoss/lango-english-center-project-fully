@@ -9,5 +9,10 @@ export const metadata = {
 export default async function HrDesignationsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'hr.organization.manage' });
-  return <DesignationsView />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <DesignationsView />
+    </main>
+  );
 }

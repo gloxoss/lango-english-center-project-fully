@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -71,29 +72,6 @@ const EMPTY_FORM: FormState = {
   guardianPreferredLanguage: '',
 };
 
-const STEPS = [
-  { num: 1, label: 'Informations élève', sub: 'Identité & parcours' },
-  { num: 2, label: 'Tuteur & contacts', sub: 'Responsables légaux' },
-  { num: 3, label: 'Documents & consentements', sub: 'Pièces justificatives' },
-  { num: 4, label: 'Validation & envoi', sub: 'Récapitulatif' },
-] as const;
-
-const DOCUMENTS = [
-  { type: 'photo', name: 'Photo d\'identité de l\'élève', format: 'JPG/PNG • max 5 Mo', required: true },
-  { type: 'birth_certificate', name: 'Acte de naissance', format: 'PDF • max 5 Mo', required: true },
-  { type: 'school_certificate', name: 'Certificat de scolarité précédent', format: 'PDF • max 5 Mo', required: true },
-  { type: 'guardian_cni', name: 'Copie CNI du tuteur', format: 'PDF • max 5 Mo', required: true },
-  { type: 'bulletin', name: 'Bulletins scolaires (2 dernières années)', format: 'PDF • max 5 Mo', required: false },
-] as const;
-
-const MOTHER_TONGUE_OPTIONS = [
-  { value: 'arabic', label: 'Arabe' },
-  { value: 'french', label: 'Français' },
-  { value: 'tamazight', label: 'Tamazight' },
-  { value: 'english', label: 'Anglais' },
-  { value: 'other', label: 'Autre' },
-];
-
 const BLOOD_GROUP_OPTIONS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 type AcademicYear = { id: string; name: string };
@@ -103,7 +81,12 @@ function isStep1Valid(f: FormState) {
   return f.firstName.trim().length > 0 && f.lastName.trim().length > 0 && f.email.trim().length > 0 && f.phone.trim().length > 0;
 }
 
-export function StudentAdmissionView({ locale }: { locale: string }) {
+export function StudentAdmissionView({ locale: propLocale }: { locale?: string } = {}) {
+  const currentLocale = useLocale();
+  const locale = propLocale || currentLocale;
+  const t = useTranslations('Students');
+  const tCommon = useTranslations('Common');
+
   const router = useRouter();
   const { role, loaded } = usePermissions();
   const [step, setStep] = useState(1);
@@ -142,6 +125,29 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
     setForm(prev => ({ ...prev, [field]: e.target.value }));
 
   const canGoNext = step !== 1 || isStep1Valid(form);
+
+  const steps = [
+    { num: 1, label: t('stepStudentInfo'), sub: t('stepStudentInfoSub') },
+    { num: 2, label: t('stepGuardian'), sub: t('stepGuardianSub') },
+    { num: 3, label: t('stepDocuments'), sub: t('stepDocumentsSub') },
+    { num: 4, label: t('stepValidation'), sub: t('stepValidationSub') },
+  ];
+
+  const documents = [
+    { type: 'photo', name: t('docPhoto'), format: 'JPG/PNG • max 5 Mo', required: true },
+    { type: 'birth_certificate', name: t('docBirthCert'), format: 'PDF • max 5 Mo', required: true },
+    { type: 'school_certificate', name: t('docSchoolCert'), format: 'PDF • max 5 Mo', required: true },
+    { type: 'guardian_cni', name: t('docGuardianCni'), format: 'PDF • max 5 Mo', required: true },
+    { type: 'bulletin', name: t('docReportCards'), format: 'PDF • max 5 Mo', required: false },
+  ];
+
+  const motherTongueOptions = [
+    { value: 'arabic', label: t('langArabic') },
+    { value: 'french', label: t('langFrench') },
+    { value: 'tamazight', label: t('langTamazight') },
+    { value: 'english', label: t('langEnglish') },
+    { value: 'other', label: t('langOther') },
+  ];
 
   useEffect(() => {
     fetch('/api/academics/academic-years')
@@ -183,11 +189,11 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
           }
           setGuardianSearchAttempted(true);
         })
-        .catch(() => setGuardianSearchError('Impossible de rechercher les tuteurs. Réessayez.'))
+        .catch(() => setGuardianSearchError(t('guardianSearchError')))
         .finally(() => setGuardianSearching(false));
     }, 300);
     return () => clearTimeout(handle);
-  }, [guardianSearch]);
+  }, [guardianSearch, t]);
 
   async function handleGoToStep2() {
     if (applicantId) {
@@ -216,12 +222,12 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        throw new Error(json.error?.message || json.message || 'Échec de la création de la demande.');
+        throw new Error(json.error?.message || json.message || (locale === 'ar' ? 'فشل إنشاء طلب القبول.' : 'Échec de la création de la demande.'));
       }
       setApplicantId(json.data.id);
       setStep(2);
     } catch (err) {
-      setStep1Error(err instanceof Error ? err.message : 'Erreur inconnue.');
+      setStep1Error(err instanceof Error ? err.message : (locale === 'ar' ? 'حدث خطأ غير متوقع.' : 'Erreur inconnue.'));
     } finally {
       setCreatingApplicant(false);
     }
@@ -241,11 +247,11 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
       const res = await fetch('/api/students/admissions/documents', { method: 'POST', body: formData });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        throw new Error(json.error?.message || json.message || 'Échec du téléversement.');
+        throw new Error(json.error?.message || json.message || t('uploadFailed'));
       }
       setUploadedDocTypes(prev => new Set(prev).add(docType));
     } catch (err) {
-      setDocUploadErrors(prev => ({ ...prev, [docType]: err instanceof Error ? err.message : 'Échec du téléversement.' }));
+      setDocUploadErrors(prev => ({ ...prev, [docType]: err instanceof Error ? err.message : t('uploadFailed') }));
     } finally {
       setUploadingDocType(null);
     }
@@ -279,11 +285,11 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        throw new Error(json.error?.message || json.message || 'Échec de la mise à jour de la demande.');
+        throw new Error(json.error?.message || json.message || (locale === 'ar' ? 'فشل إتمام طلب القبول.' : 'Échec de la mise à jour de la demande.'));
       }
       setSubmitted(true);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Erreur inconnue.');
+      setSubmitError(err instanceof Error ? err.message : (locale === 'ar' ? 'حدث خطأ غير متوقع.' : 'Erreur inconnue.'));
     } finally {
       setSubmitting(false);
     }
@@ -310,12 +316,12 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
         <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-rose-100 text-rose-600">
           <AlertTriangle className="size-8" />
         </div>
-        <h1 className="text-xl font-extrabold text-[#16212B]">Accès non autorisé</h1>
+        <h1 className="text-xl font-extrabold text-[#16212B]">{t('unauthorizedTitle')}</h1>
         <p className="text-sm text-slate-500">
-          Vous ne disposez pas des autorisations nécessaires pour créer une demande d&apos;admission.
+          {t('unauthorizedDesc')}
         </p>
         <Button variant="outline" onClick={() => router.push(`/${locale}/dashboard/students`)} className="rounded-full">
-          Retour au répertoire des élèves
+          {t('backToDirectoryFull')}
         </Button>
       </div>
     );
@@ -331,26 +337,20 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
         >
           <CheckCircle2 className="size-8" />
         </div>
-        <h1 className="text-xl font-extrabold text-[#16212B]">Demande d&apos;admission créée</h1>
+        <h1 className="text-xl font-extrabold text-[#16212B]">{t('admissionSuccessTitle')}</h1>
         <p className="text-sm text-slate-500">
-          Le dossier de
-          {' '}
-          {form.firstName}
-          {' '}
-          {form.lastName}
-          {' '}
-          a été enregistré. Il apparaît maintenant dans la liste des demandes en attente.
+          {t('admissionSuccessDesc', { name: `${form.firstName} ${form.lastName}`.trim() || t('summaryStudent') })}
         </p>
         <div className="flex items-center justify-center gap-3 pt-2">
           <Button variant="outline" onClick={resetWizard} className="rounded-full">
-            Nouvelle demande
+            {t('btnNewRequest')}
           </Button>
           <Button
             variant="primary"
             onClick={() => router.push(`/${locale}/dashboard/students/admissions`)}
             className="rounded-full bg-[#0066FF]"
           >
-            Voir les demandes
+            {t('btnViewRequests')}
           </Button>
         </div>
       </div>
@@ -362,22 +362,22 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
       <div className="min-w-0 flex-1 space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">Admission d&apos;un élève</h1>
-          <p className="mt-1 text-xs text-slate-500">Création d&apos;un dossier d&apos;inscription en quatre étapes</p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('admissionTitle')}</h1>
+          <p className="mt-1 text-xs text-slate-500">{t('admissionSubtitle')}</p>
         </div>
 
         {/* Steps */}
         <div className="
           flex items-center gap-0 rounded-2xl border border-slate-200/80
-          bg-white p-4 shadow-2xs
+          bg-white p-4 shadow-2xs overflow-x-auto
         "
         >
-          {STEPS.map((s, i) => (
-            <div key={s.num} className="flex flex-1 items-center">
+          {steps.map((s, i) => (
+            <div key={s.num} className="flex flex-1 items-center min-w-[140px]">
               <div className="flex items-center gap-3">
                 <div className={`
                   flex size-8 items-center justify-center rounded-full text-xs
-                  font-bold
+                  font-bold shrink-0
                   ${s.num < step
               ? `bg-[#17A673] text-white`
               : s.num === step
@@ -400,7 +400,7 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
                   </p>
                 </div>
               </div>
-              {i < STEPS.length - 1 && (
+              {i < steps.length - 1 && (
                 <div className={`
                   mx-4 h-0.5 flex-1
                   ${s.num < step
@@ -421,11 +421,11 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
         "
         >
           {[
-            { label: 'Dossiers en cours', value: kpi.inProgress, icon: FolderOpen, iconBg: 'bg-[#DCEBF4]', iconColor: 'text-[#1B6C93]' },
-            { label: 'Dossiers complets', value: kpi.complete, icon: CheckCircle2, iconBg: 'bg-[#D1F5E8]', iconColor: 'text-[#17A673]' },
-            { label: 'Documents manquants', value: kpi.missingDocs, icon: AlertTriangle, iconBg: 'bg-[#FCF0DC]', iconColor: 'text-[#E8A33D]' },
-            { label: 'Frais d\'inscription', value: kpi.approved, icon: Wallet, iconBg: 'bg-[#DCEBF4]', iconColor: 'text-[#1B6C93]' },
-          ].map((kpi, i) => (
+            { label: t('dossiersInProgress'), value: kpi.inProgress, icon: FolderOpen, iconBg: 'bg-[#DCEBF4]', iconColor: 'text-[#1B6C93]' },
+            { label: t('dossiersComplete'), value: kpi.complete, icon: CheckCircle2, iconBg: 'bg-[#D1F5E8]', iconColor: 'text-[#17A673]' },
+            { label: t('documentsMissing'), value: kpi.missingDocs, icon: AlertTriangle, iconBg: 'bg-[#FCF0DC]', iconColor: 'text-[#E8A33D]' },
+            { label: t('registrationFees'), value: kpi.approved, icon: Wallet, iconBg: 'bg-[#DCEBF4]', iconColor: 'text-[#1B6C93]' },
+          ].map((kpiItem, i) => (
             <Card
               key={i}
               className="
@@ -434,17 +434,17 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
               "
             >
               <div className="space-y-1">
-                <p className="text-xs font-bold text-slate-500">{kpi.label}</p>
-                <p className="text-2xl font-extrabold text-[#16212B]">{kpi.value}</p>
+                <p className="text-xs font-bold text-slate-500">{kpiItem.label}</p>
+                <p className="text-2xl font-extrabold text-[#16212B]">{kpiItem.value}</p>
               </div>
               <div className={`
                 size-10 rounded-full
-                ${kpi.iconBg}
-                ${kpi.iconColor}
-                flex items-center justify-center
+                ${kpiItem.iconBg}
+                ${kpiItem.iconColor}
+                flex items-center justify-center shrink-0
               `}
               >
-                <kpi.icon className="size-5" />
+                <kpiItem.icon className="size-5" />
               </div>
             </Card>
           ))}
@@ -456,72 +456,72 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
         >
           {step === 1 && (
             <div>
-              <h2 className="mb-1 text-sm font-extrabold text-[#16212B]">Informations de l&apos;élève</h2>
-              <p className="mb-4 text-[10px] text-slate-500">Champs marqués * requis pour créer la demande.</p>
-              <div className="mb-3 grid grid-cols-2 gap-4">
+              <h2 className="mb-1 text-sm font-extrabold text-[#16212B]">{t('studentInfoSectionTitle')}</h2>
+              <p className="mb-4 text-[10px] text-slate-500">{t('requiredFieldsNote')}</p>
+              <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="admission-first-name" className="text-[10px] font-bold text-slate-500">Prénom *</label>
+                  <label htmlFor="admission-first-name" className="text-[10px] font-bold text-slate-500">{t('firstName')}</label>
                   <Input id="admission-first-name" value={form.firstName} onChange={set('firstName')} className="mt-1 h-10 rounded-xl text-xs" />
                 </div>
                 <div>
-                  <label htmlFor="admission-last-name" className="text-[10px] font-bold text-slate-500">Nom *</label>
+                  <label htmlFor="admission-last-name" className="text-[10px] font-bold text-slate-500">{t('lastName')}</label>
                   <Input id="admission-last-name" value={form.lastName} onChange={set('lastName')} className="mt-1 h-10 rounded-xl text-xs" />
                 </div>
               </div>
-              <div className="mb-3 grid grid-cols-2 gap-4">
+              <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="admission-email" className="text-[10px] font-bold text-slate-500">Email *</label>
+                  <label htmlFor="admission-email" className="text-[10px] font-bold text-slate-500">{t('email')}</label>
                   <Input id="admission-email" type="email" value={form.email} onChange={set('email')} className="mt-1 h-10 rounded-xl text-xs" />
                 </div>
                 <div>
-                  <label htmlFor="admission-phone" className="text-[10px] font-bold text-slate-500">Téléphone *</label>
+                  <label htmlFor="admission-phone" className="text-[10px] font-bold text-slate-500">{t('phone')}</label>
                   <Input id="admission-phone" value={form.phone} onChange={set('phone')} placeholder="+212 6 00 00 00 00" className="mt-1 h-10 rounded-xl text-xs" />
                 </div>
               </div>
-              <div className="mb-3 grid grid-cols-3 gap-4">
+              <div className="mb-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label htmlFor="admission-dob" className="text-[10px] font-bold text-slate-500">Date de naissance</label>
+                  <label htmlFor="admission-dob" className="text-[10px] font-bold text-slate-500">{t('dateOfBirth')}</label>
                   <Input id="admission-dob" type="date" value={form.dateOfBirth} onChange={set('dateOfBirth')} className="mt-1 h-10 rounded-xl text-xs" />
                 </div>
                 <div>
-                  <label htmlFor="admission-gender" className="text-[10px] font-bold text-slate-500">Genre</label>
-                  <select id="admission-gender" value={form.gender} onChange={set('gender')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs">
-                    <option value="">Sélectionner...</option>
-                    <option value="female">Femme</option>
-                    <option value="male">Homme</option>
-                    <option value="other">Autre</option>
+                  <label htmlFor="admission-gender" className="text-[10px] font-bold text-slate-500">{t('gender')}</label>
+                  <select id="admission-gender" value={form.gender} onChange={set('gender')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs bg-white">
+                    <option value="">{t('selectPlaceholder')}</option>
+                    <option value="female">{t('genderFemale')}</option>
+                    <option value="male">{t('genderMale')}</option>
+                    <option value="other">{t('genderOther')}</option>
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="admission-year" className="text-[10px] font-bold text-slate-500">Année scolaire</label>
-                  <select id="admission-year" value={form.academicYearId} onChange={set('academicYearId')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs">
-                    <option value="">Sélectionner...</option>
+                  <label htmlFor="admission-year" className="text-[10px] font-bold text-slate-500">{t('academicYear')}</label>
+                  <select id="admission-year" value={form.academicYearId} onChange={set('academicYearId')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs bg-white">
+                    <option value="">{t('selectPlaceholder')}</option>
                     {academicYears.map(y => <option key={y.id} value={y.id}>{y.name}</option>)}
                   </select>
                 </div>
               </div>
-              <div className="mb-3 grid grid-cols-3 gap-4">
+              <div className="mb-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label htmlFor="admission-nationality" className="text-[10px] font-bold text-slate-500">Nationalité</label>
+                  <label htmlFor="admission-nationality" className="text-[10px] font-bold text-slate-500">{t('nationality')}</label>
                   <Input id="admission-nationality" value={form.nationality} onChange={set('nationality')} className="mt-1 h-10 rounded-xl text-xs" />
                 </div>
                 <div>
-                  <label htmlFor="admission-mother-tongue" className="text-[10px] font-bold text-slate-500">Langue maternelle</label>
-                  <select id="admission-mother-tongue" value={form.motherTongue} onChange={set('motherTongue')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs">
-                    <option value="">Sélectionner...</option>
-                    {MOTHER_TONGUE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  <label htmlFor="admission-mother-tongue" className="text-[10px] font-bold text-slate-500">{t('motherTongue')}</label>
+                  <select id="admission-mother-tongue" value={form.motherTongue} onChange={set('motherTongue')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs bg-white">
+                    <option value="">{t('selectPlaceholder')}</option>
+                    {motherTongueOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="admission-city" className="text-[10px] font-bold text-slate-500">Ville</label>
+                  <label htmlFor="admission-city" className="text-[10px] font-bold text-slate-500">{t('city')}</label>
                   <Input id="admission-city" value={form.city} onChange={set('city')} className="mt-1 h-10 rounded-xl text-xs" />
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label htmlFor="admission-blood-group" className="text-[10px] font-bold text-slate-500">Groupe sanguin (optionnel)</label>
-                  <select id="admission-blood-group" value={form.bloodGroup} onChange={set('bloodGroup')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs">
-                    <option value="">Non renseigné</option>
+                  <label htmlFor="admission-blood-group" className="text-[10px] font-bold text-slate-500">{t('bloodGroupOptional')}</label>
+                  <select id="admission-blood-group" value={form.bloodGroup} onChange={set('bloodGroup')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs bg-white">
+                    <option value="">{t('notSpecified')}</option>
                     {BLOOD_GROUP_OPTIONS.map(bg => <option key={bg} value={bg}>{bg}</option>)}
                   </select>
                 </div>
@@ -536,23 +536,23 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
 
           {step === 2 && (
             <div>
-              <h2 className="mb-1 text-sm font-extrabold text-[#16212B]">Tuteur & contacts</h2>
-              <p className="mb-4 text-[10px] text-slate-500">Recherchez un tuteur déjà enregistré avant d&apos;en créer un nouveau - évite les doublons pour les fratries.</p>
+              <h2 className="mb-1 text-sm font-extrabold text-[#16212B]">{t('guardianSectionTitle')}</h2>
+              <p className="mb-4 text-[10px] text-slate-500">{t('guardianSectionSubtitle')}</p>
 
               {!selectedGuardian && (
                 <div className="mb-4">
-                  <label htmlFor="admission-guardian-search" className="text-[10px] font-bold text-slate-500">Rechercher un tuteur (nom ou téléphone)</label>
+                  <label htmlFor="admission-guardian-search" className="text-[10px] font-bold text-slate-500">{t('searchGuardianLabel')}</label>
                   <div className="relative mt-1">
-                    <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                    <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                     <Input
                       id="admission-guardian-search"
                       value={guardianSearch}
                       onChange={e => setGuardianSearch(e.target.value)}
-                      placeholder="Ex. Karim Bennani ou 06..."
-                      className="h-10 rounded-xl pl-9 text-xs"
+                      placeholder={t('searchGuardianPlaceholder')}
+                      className="h-10 rounded-xl ps-9 text-xs"
                     />
                   </div>
-                  {guardianSearching && <p className="mt-2 text-[10px] text-slate-400">Recherche...</p>}
+                  {guardianSearching && <p className="mt-2 text-[10px] text-slate-400">{t('searching')}</p>}
                   {guardianSearchError && <p className="mt-2 text-[10px] font-semibold text-rose-600">{guardianSearchError}</p>}
                   {!guardianSearching && !guardianSearchError && guardianResults.length > 0 && (
                     <div className="mt-2 space-y-1.5">
@@ -561,7 +561,7 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
                           type="button"
                           key={g.id}
                           onClick={() => { setSelectedGuardian(g); setShowCreateGuardianForm(false); }}
-                          className="flex w-full items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-3 text-left hover:bg-[#DCEBF4]/40"
+                          className="flex w-full items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-3 text-start hover:bg-[#DCEBF4]/40 transition-colors"
                         >
                           <div>
                             <p className="text-xs font-bold text-[#16212B]">{g.name}</p>
@@ -570,24 +570,24 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
                               {' '}
                               •
                               {' '}
-                              {g.relation || 'Tuteur'}
+                              {g.relation || t('summaryGuardian')}
                             </p>
                           </div>
-                          <span className="text-[10px] font-bold text-[#2487B8]">Sélectionner</span>
+                          <span className="text-[10px] font-bold text-[#2487B8]">{t('selectBtn')}</span>
                         </button>
                       ))}
                     </div>
                   )}
                   {!guardianSearching && guardianSearchAttempted && guardianResults.length === 0 && guardianSearch.trim().length >= 2 && (
-                    <p className="mt-2 text-[10px] text-slate-400">Aucun tuteur trouvé.</p>
+                    <p className="mt-2 text-[10px] text-slate-400">{t('noGuardianFound')}</p>
                   )}
                   {guardianSearchAttempted && (
                     <button
                       type="button"
                       onClick={() => setShowCreateGuardianForm(true)}
-                      className="mt-3 text-[11px] font-bold text-[#2487B8] hover:underline"
+                      className="mt-3 text-[11px] font-bold text-[#2487B8] hover:underline block"
                     >
-                      Aucun tuteur trouvé ? Créer un nouveau tuteur
+                      {t('createNewGuardianPrompt')}
                     </button>
                   )}
                 </div>
@@ -602,56 +602,56 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
                   <button
                     type="button"
                     onClick={() => setSelectedGuardian(null)}
-                    className="flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-rose-600"
+                    className="flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-rose-600 transition-colors"
                   >
                     <X className="size-3" />
-                    Changer
+                    {t('changeGuardian')}
                   </button>
                 </div>
               )}
 
               {!selectedGuardian && showCreateGuardianForm && (
                 <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-                  <p className="mb-3 text-xs font-bold text-[#16212B]">Nouveau tuteur</p>
-                  <div className="mb-3 grid grid-cols-2 gap-4">
+                  <p className="mb-3 text-xs font-bold text-[#16212B]">{t('newGuardianTitle')}</p>
+                  <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="admission-guardian-name" className="text-[10px] font-bold text-slate-500">Nom du tuteur</label>
+                      <label htmlFor="admission-guardian-name" className="text-[10px] font-bold text-slate-500">{t('guardianNameField')}</label>
                       <Input id="admission-guardian-name" value={form.guardianName} onChange={set('guardianName')} className="mt-1 h-10 rounded-xl text-xs" />
                     </div>
                     <div>
-                      <label htmlFor="admission-guardian-phone" className="text-[10px] font-bold text-slate-500">Téléphone du tuteur</label>
+                      <label htmlFor="admission-guardian-phone" className="text-[10px] font-bold text-slate-500">{t('guardianPhoneField')}</label>
                       <Input id="admission-guardian-phone" value={form.guardianPhone} onChange={set('guardianPhone')} className="mt-1 h-10 rounded-xl text-xs" />
                     </div>
                   </div>
                   <div className="mb-3">
-                    <label htmlFor="admission-guardian-email" className="text-[10px] font-bold text-slate-500">Email du tuteur</label>
+                    <label htmlFor="admission-guardian-email" className="text-[10px] font-bold text-slate-500">{t('guardianEmailField')}</label>
                     <Input id="admission-guardian-email" type="email" value={form.guardianEmail} onChange={set('guardianEmail')} className="mt-1 h-10 rounded-xl text-xs" />
                   </div>
-                  <div className="mb-3 grid grid-cols-2 gap-4">
+                  <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="admission-guardian-occupation" className="text-[10px] font-bold text-slate-500">Profession</label>
+                      <label htmlFor="admission-guardian-occupation" className="text-[10px] font-bold text-slate-500">{t('guardianOccupation')}</label>
                       <Input id="admission-guardian-occupation" value={form.guardianOccupation} onChange={set('guardianOccupation')} className="mt-1 h-10 rounded-xl text-xs" />
                     </div>
                     <div>
-                      <label htmlFor="admission-guardian-pref-lang" className="text-[10px] font-bold text-slate-500">Langue de communication</label>
-                      <select id="admission-guardian-pref-lang" value={form.guardianPreferredLanguage} onChange={set('guardianPreferredLanguage')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs">
-                        <option value="">Par défaut</option>
-                        <option value="fr">Français</option>
-                        <option value="ar">Arabe</option>
-                        <option value="en">Anglais</option>
+                      <label htmlFor="admission-guardian-pref-lang" className="text-[10px] font-bold text-slate-500">{t('preferredLanguage')}</label>
+                      <select id="admission-guardian-pref-lang" value={form.guardianPreferredLanguage} onChange={set('guardianPreferredLanguage')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs bg-white">
+                        <option value="">{t('defaultLang')}</option>
+                        <option value="fr">{t('langFrench')}</option>
+                        <option value="ar">{t('langArabic')}</option>
+                        <option value="en">{t('langEnglish')}</option>
                       </select>
                     </div>
                   </div>
                   <div className="mb-3">
-                    <label htmlFor="admission-guardian-address" className="text-[10px] font-bold text-slate-500">Adresse</label>
+                    <label htmlFor="admission-guardian-address" className="text-[10px] font-bold text-slate-500">{t('guardianAddress')}</label>
                     <Input id="admission-guardian-address" value={form.guardianAddress} onChange={set('guardianAddress')} className="mt-1 h-10 rounded-xl text-xs" />
                   </div>
                   <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600">
+                    <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 cursor-pointer">
                       <input type="checkbox" checked={form.guardianEmailOptIn} onChange={e => setForm(prev => ({ ...prev, guardianEmailOptIn: e.target.checked }))} className="rounded border-slate-300" />
                       Email
                     </label>
-                    <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600">
+                    <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 cursor-pointer">
                       <input type="checkbox" checked={form.guardianSmsOptIn} onChange={e => setForm(prev => ({ ...prev, guardianSmsOptIn: e.target.checked }))} className="rounded border-slate-300" />
                       SMS
                     </label>
@@ -663,16 +663,16 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
 
           {step === 3 && (
             <div>
-              <h2 className="mb-1 text-sm font-extrabold text-[#16212B]">Documents & consentements</h2>
-              <p className="mb-4 text-[10px] text-slate-500">Cliquez sur un document pour le téléverser. Enregistré immédiatement.</p>
-              <div className="mb-6 grid grid-cols-2 gap-3">
-                {DOCUMENTS.map((doc) => {
+              <h2 className="mb-1 text-sm font-extrabold text-[#16212B]">{t('documentsSectionTitle')}</h2>
+              <p className="mb-4 text-[10px] text-slate-500">{t('documentsSectionSubtitle')}</p>
+              <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {documents.map((doc) => {
                   const uploaded = uploadedDocTypes.has(doc.type);
                   const uploading = uploadingDocType === doc.type;
                   const error = docUploadErrors[doc.type];
                   return (
                     <div key={doc.type} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
-                      <div className={`flex size-9 items-center justify-center rounded-lg ${uploaded ? 'bg-[#D1F5E8]' : 'bg-slate-100'}`}>
+                      <div className={`flex size-9 items-center justify-center rounded-lg shrink-0 ${uploaded ? 'bg-[#D1F5E8]' : 'bg-slate-100'}`}>
                         {uploaded ? <CheckCircle2 className="size-4 text-[#17A673]" /> : <FileText className="size-4 text-slate-400" />}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -702,21 +702,21 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
                         size="sm"
                         disabled={!applicantId || uploading}
                         onClick={() => document.getElementById(`admission-doc-${doc.type}`)?.click()}
-                        className="h-7 gap-1 rounded-lg px-2.5 text-[10px]"
+                        className="h-7 gap-1 rounded-lg px-2.5 text-[10px] shrink-0"
                       >
                         {uploading ? <Loader2 className="size-3 animate-spin" /> : <Upload className="size-3" />}
                         {' '}
-                        {uploaded ? 'Remplacer' : 'Téléverser'}
+                        {uploaded ? t('btnReplace') : t('btnUpload')}
                       </Button>
                     </div>
                   );
                 })}
               </div>
               <div>
-                <h3 className="mb-3 text-xs font-bold text-[#16212B]">Consentements & autorisations</h3>
+                <h3 className="mb-3 text-xs font-bold text-[#16212B]">{t('consentsTitle')}</h3>
                 {[
-                  'J\'accepte que les informations fournies soient exactes et complètes.',
-                  'J\'autorise l\'établissement à utiliser les données personnelles de l\'élève conformément à la loi 09-08 (CNDP).',
+                  t('consentAccuracy'),
+                  t('consentCndp'),
                 ].map((c, i) => (
                   <div key={i} className="flex items-start gap-2 py-1">
                     <input
@@ -736,11 +736,11 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
 
           {step === 4 && (
             <div>
-              <h2 className="mb-1 text-sm font-extrabold text-[#16212B]">Validation & envoi</h2>
-              <p className="mb-4 text-[10px] text-slate-500">Vérifiez les informations avant de finaliser la demande.</p>
+              <h2 className="mb-1 text-sm font-extrabold text-[#16212B]">{t('validationSectionTitle')}</h2>
+              <p className="mb-4 text-[10px] text-slate-500">{t('validationSectionSubtitle')}</p>
               <div className="space-y-2 rounded-xl bg-[#F6F9FC] p-4 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Élève</span>
+                  <span className="text-slate-500">{t('summaryStudent')}</span>
                   <span className="font-bold text-[#16212B]">
                     {form.firstName}
                     {' '}
@@ -748,25 +748,25 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Email</span>
+                  <span className="text-slate-500">{t('summaryEmail')}</span>
                   <span className="font-bold text-[#16212B]">{form.email || '—'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Téléphone</span>
+                  <span className="text-slate-500">{t('summaryPhone')}</span>
                   <span className="font-bold text-[#16212B]">{form.phone || '—'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Tuteur</span>
+                  <span className="text-slate-500">{t('summaryGuardian')}</span>
                   <span className="font-bold text-[#16212B]">{selectedGuardian?.name || form.guardianName || '—'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Documents téléversés</span>
+                  <span className="text-slate-500">{t('summaryUploadedDocs')}</span>
                   <span className="font-bold text-[#16212B]">
                     {uploadedDocTypes.size}
                     {' '}
                     /
                     {' '}
-                    {DOCUMENTS.length}
+                    {documents.length}
                   </span>
                 </div>
               </div>
@@ -787,9 +787,9 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
               onClick={() => setStep(s => Math.max(1, s - 1))}
               className="h-10 gap-2 rounded-full px-5 text-xs"
             >
-              <ChevronLeft className="size-4" />
+              <ChevronLeft className="size-4 rtl:rotate-180" />
               {' '}
-              Précédent
+              {t('btnPrevious')}
             </Button>
             <div className="flex gap-2">
               {step === 1 && (
@@ -801,8 +801,8 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
                   className="h-10 gap-2 rounded-full bg-[#0066FF] px-5 text-xs"
                 >
                   {creatingApplicant ? <Loader2 className="size-4 animate-spin" /> : null}
-                  {creatingApplicant ? 'Création...' : 'Suivant'}
-                  {!creatingApplicant && <ChevronRight className="size-4" />}
+                  {creatingApplicant ? t('creating') : t('btnNext')}
+                  {!creatingApplicant && <ChevronRight className="size-4 rtl:rotate-180" />}
                 </Button>
               )}
               {step > 1 && step < 4 && (
@@ -812,9 +812,9 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
                   onClick={() => setStep(s => Math.min(4, s + 1))}
                   className="h-10 gap-2 rounded-full bg-[#0066FF] px-5 text-xs"
                 >
-                  Suivant
+                  {t('btnNext')}
                   {' '}
-                  <ChevronRight className="size-4" />
+                  <ChevronRight className="size-4 rtl:rotate-180" />
                 </Button>
               )}
               {step === 4 && (
@@ -826,7 +826,7 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
                   className="h-10 gap-2 rounded-full bg-[#0066FF] px-5 text-xs"
                 >
                   {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
-                  {submitting ? 'Envoi...' : 'Finaliser la demande'}
+                  {submitting ? t('submitting') : t('submitRequestBtn')}
                 </Button>
               )}
             </div>
@@ -845,31 +845,31 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
         "
         >
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-sm font-extrabold text-[#16212B]">Résumé du dossier</h3>
-            <Badge className="bg-[#FCF0DC] text-[9px] text-[#E8A33D]">Dossier en cours</Badge>
+            <h3 className="text-sm font-extrabold text-[#16212B]">{t('sidebarSummaryTitle')}</h3>
+            <Badge className="bg-[#FCF0DC] text-[9px] text-[#E8A33D]">{t('dossierInProgressBadge')}</Badge>
           </div>
-          <h4 className="mb-2 text-xs font-bold text-[#16212B]">Élève</h4>
+          <h4 className="mb-2 text-xs font-bold text-[#16212B]">{t('summaryStudent')}</h4>
           <div className="mb-4 flex items-center gap-3">
             <div className="
               flex size-12 items-center justify-center rounded-full bg-slate-200
-              text-sm font-bold text-slate-600
+              text-sm font-bold text-slate-600 shrink-0
             "
             >
               {(form.firstName[0] || '') + (form.lastName[0] || '') || '—'}
             </div>
             <div>
-              <p className="text-sm font-extrabold text-[#16212B]">{form.firstName || form.lastName ? `${form.firstName} ${form.lastName}` : 'Non renseigné'}</p>
-              <p className="text-[10px] text-slate-400">{form.dateOfBirth || 'Date de naissance non renseignée'}</p>
+              <p className="text-sm font-extrabold text-[#16212B]">{form.firstName || form.lastName ? `${form.firstName} ${form.lastName}` : t('notSpecified')}</p>
+              <p className="text-[10px] text-slate-400">{form.dateOfBirth || t('dobNotSpecified')}</p>
             </div>
           </div>
 
-          <h4 className="mb-2 text-xs font-bold text-[#16212B]">Tuteur</h4>
+          <h4 className="mb-2 text-xs font-bold text-[#16212B]">{t('summaryGuardian')}</h4>
           {(selectedGuardian || form.guardianName)
             ? (
                 <div className="flex items-center gap-2 py-1.5">
                   <div className="
                     flex size-8 items-center justify-center rounded-full
-                    bg-slate-200 text-[10px] font-bold text-slate-600
+                    bg-slate-200 text-[10px] font-bold text-slate-600 shrink-0
                   "
                   >
                     {(selectedGuardian?.name || form.guardianName).split(' ').map(n => n[0]).join('').slice(0, 2)}
@@ -882,9 +882,10 @@ export function StudentAdmissionView({ locale }: { locale: string }) {
                   </div>
                 </div>
               )
-            : <p className="text-[11px] text-slate-400">Non renseigné</p>}
+            : <p className="text-[11px] text-slate-400">{t('notSpecified')}</p>}
         </Card>
       </div>
     </div>
   );
 }
+

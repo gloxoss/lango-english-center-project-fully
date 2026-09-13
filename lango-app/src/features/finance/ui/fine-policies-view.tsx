@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,13 +33,16 @@ type FineAssessment = {
   assessedAt: string;
 };
 
-const formulaLabel: Record<FinePolicy['formula'], string> = {
-  flat: 'Forfait',
-  per_day: 'Par jour',
-  tiered: 'Par paliers',
-};
+export function FinePoliciesView({ locale: _locale }: { locale?: string } = {}) {
+  const t = useTranslations('Finance');
+  const tCommon = useTranslations('Common');
 
-export function FinePoliciesView() {
+  const formulaLabel: Record<FinePolicy['formula'], string> = {
+    flat: t('formulaFlat'),
+    per_day: t('formulaPerDay'),
+    tiered: t('formulaTiered'),
+  };
+
   const { role } = usePermissions();
   const canManage = role === 'school_admin' || role === 'accountant';
   const [policies, setPolicies] = useState<FinePolicy[]>([]);
@@ -93,7 +97,7 @@ export function FinePoliciesView() {
   };
 
   const handleWaive = async (a: FineAssessment) => {
-    const reason = window.prompt('Motif de l\'exonération ?', '');
+    const reason = window.prompt(t('waiveReasonPrompt'), '');
     if (!reason) return;
     setWaivingId(a.id);
     try {
@@ -185,10 +189,10 @@ export function FinePoliciesView() {
     try {
       const res = await fetch('/api/finance/fine-runs', { method: 'POST' });
       const json = await res.json();
-      setRunResult(json?.message ?? (json?.success ? 'Évaluation terminée.' : 'Échec de l\'évaluation.'));
+      setRunResult(json?.message ?? (json?.success ? t('runAssessmentSuccess') : t('runAssessmentFailure')));
       if (json?.success) load();
-    } catch (err) {
-      setRunResult('Erreur réseau pendant l\'évaluation.');
+    } catch (_err) {
+      setRunResult(t('runAssessmentError'));
     } finally {
       setRunning(false);
     }
@@ -200,18 +204,18 @@ export function FinePoliciesView() {
     <div className="space-y-6 max-w-[1200px] mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Politiques d&apos;amendes</h1>
-          <p className="text-xs text-slate-500 mt-1">{policies.length} politique(s) de pénalité de retard.</p>
+          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('finePoliciesTitle')}</h1>
+          <p className="text-xs text-slate-500 mt-1">{t('finePoliciesSubtitle', { count: policies.length })}</p>
         </div>
         {canManage && (
           <div className="flex items-center gap-2">
             <Button size="sm" variant="outline" disabled={running} onClick={handleRun} className="h-9 text-xs rounded-xl gap-1.5 font-bold">
-              {running ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
-              {running ? 'Évaluation...' : 'Lancer l\'évaluation'}
+              {running ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5 rtl:rotate-180" />}
+              {running ? t('runningAssessment') : t('runAssessmentBtn')}
             </Button>
             <Button size="sm" onClick={openCreate} className="h-9 text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5">
               <Plus className="w-3.5 h-3.5" />
-              Nouvelle politique
+              {t('newPolicyBtn')}
             </Button>
           </div>
         )}
@@ -225,91 +229,96 @@ export function FinePoliciesView() {
 
       <Card className="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
         <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <Input placeholder="Rechercher une politique..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9 text-xs rounded-xl bg-slate-50 border-none" />
+          <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Input
+            placeholder={t('searchPolicyPlaceholder')}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="ps-9 h-9 text-xs rounded-xl bg-slate-50 border-none"
+          />
         </div>
       </Card>
 
       {canManage && showForm && (
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-          <h3 className="text-xs font-extrabold text-[#16212B]">{editing ? 'Modifier la politique' : 'Nouvelle politique d\'amende'}</h3>
+          <h3 className="text-xs font-extrabold text-[#16212B]">{editing ? t('editPolicyTitle') : t('newPolicyTitle')}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Nom</label>
+              <label className="font-bold text-slate-600">{t('nameLabel')}</label>
               <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="h-9 rounded-xl" />
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Formule</label>
-              <select value={form.formula} onChange={e => setForm({ ...form, formula: e.target.value as FinePolicy['formula'] })} className="h-9 w-full rounded-xl border border-slate-200 px-3">
-                <option value="flat">Forfait</option>
-                <option value="per_day">Par jour</option>
-                <option value="tiered">Par paliers</option>
+              <label className="font-bold text-slate-600">{t('formulaLabel')}</label>
+              <select value={form.formula} onChange={e => setForm({ ...form, formula: e.target.value as FinePolicy['formula'] })} className="h-9 w-full rounded-xl border border-slate-200 px-3 bg-white">
+                <option value="flat">{t('formulaFlat')}</option>
+                <option value="per_day">{t('formulaPerDay')}</option>
+                <option value="tiered">{t('formulaTiered')}</option>
               </select>
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Jours de grâce</label>
+              <label className="font-bold text-slate-600">{t('graceDaysLabel')}</label>
               <Input type="number" value={form.graceDays} onChange={e => setForm({ ...form, graceDays: e.target.value })} className="h-9 rounded-xl" />
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Montant forfait (MAD)</label>
+              <label className="font-bold text-slate-600">{t('flatAmountLabel')}</label>
               <Input type="number" value={form.flatAmount} onChange={e => setForm({ ...form, flatAmount: e.target.value })} className="h-9 rounded-xl" />
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Par jour (MAD)</label>
+              <label className="font-bold text-slate-600">{t('perDayAmountLabel')}</label>
               <Input type="number" value={form.perDayAmount} onChange={e => setForm({ ...form, perDayAmount: e.target.value })} className="h-9 rounded-xl" />
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Plafond (MAD, optionnel)</label>
+              <label className="font-bold text-slate-600">{t('maxAmountOptionalLabel')}</label>
               <Input type="number" value={form.maxAmount} onChange={e => setForm({ ...form, maxAmount: e.target.value })} className="h-9 rounded-xl" />
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Début d&apos;effet</label>
+              <label className="font-bold text-slate-600">{t('effectiveFromLabel')}</label>
               <Input type="date" value={form.effectiveFrom} onChange={e => setForm({ ...form, effectiveFrom: e.target.value })} className="h-9 rounded-xl" />
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Fin d&apos;effet (optionnel)</label>
+              <label className="font-bold text-slate-600">{t('effectiveToOptionalLabel')}</label>
               <Input type="date" value={form.effectiveTo} onChange={e => setForm({ ...form, effectiveTo: e.target.value })} className="h-9 rounded-xl" />
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Statut</label>
-              <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value as FinePolicy['status'] })} className="h-9 w-full rounded-xl border border-slate-200 px-3">
-                <option value="active">Active</option>
-                <option value="archived">Archivée</option>
+              <label className="font-bold text-slate-600">{tCommon('status')}</label>
+              <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value as FinePolicy['status'] })} className="h-9 w-full rounded-xl border border-slate-200 px-3 bg-white">
+                <option value="active">{t('statusActive')}</option>
+                <option value="archived">{t('statusArchived')}</option>
               </select>
             </div>
             <div className="space-y-1 sm:col-span-3">
-              <label className="font-bold text-slate-600">Description (optionnel)</label>
+              <label className="font-bold text-slate-600">{t('descriptionOptionalLabel')}</label>
               <Input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="h-9 rounded-xl" />
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Button size="sm" disabled={saving} onClick={handleSave} className="h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold">
-              {saving ? 'Enregistrement...' : 'Enregistrer'}
+              {saving ? tCommon('loading') : tCommon('save')}
             </Button>
             <Button size="sm" variant="outline" onClick={() => setShowForm(false)} className="h-9 rounded-xl text-xs font-bold">
-              Annuler
+              {tCommon('cancel')}
             </Button>
           </div>
         </Card>
       )}
 
       <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-        <table className="w-full text-left text-xs">
+        <table className="w-full text-start text-xs">
           <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
             <tr>
-              <th className="py-3.5 px-4">Nom</th>
-              <th className="py-3.5 px-4">Formule</th>
-              <th className="py-3.5 px-4 text-right">Forfait</th>
-              <th className="py-3.5 px-4 text-right">Par jour</th>
-              <th className="py-3.5 px-4 text-right">Plafond</th>
-              <th className="py-3.5 px-4 text-center">Grâce</th>
-              <th className="py-3.5 px-4 text-center">Statut</th>
+              <th className="py-3.5 px-4 text-start">{t('nameLabel')}</th>
+              <th className="py-3.5 px-4 text-start">{t('formulaLabel')}</th>
+              <th className="py-3.5 px-4 text-end">{t('formulaFlat')}</th>
+              <th className="py-3.5 px-4 text-end">{t('perDayAmountLabel')}</th>
+              <th className="py-3.5 px-4 text-end">{t('maxAmountOptionalLabel')}</th>
+              <th className="py-3.5 px-4 text-center">{t('graceDaysLabel')}</th>
+              <th className="py-3.5 px-4 text-center">{tCommon('status')}</th>
               {canManage && <th className="py-3.5 px-4" />}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {!loading && filtered.length === 0 && (
-              <tr><td colSpan={canManage ? 8 : 7} className="py-8 text-center text-slate-400">Aucune politique d&apos;amende configurée.</td></tr>
+              <tr><td colSpan={canManage ? 8 : 7} className="py-8 text-center text-slate-400">{t('noPoliciesConfigured')}</td></tr>
             )}
             {filtered.map(p => (
               <tr key={p.id} className="hover:bg-slate-50/80 transition font-medium">
@@ -318,19 +327,19 @@ export function FinePoliciesView() {
                   <div className="text-[10px] font-medium text-slate-400">{p.description ?? '—'}</div>
                 </td>
                 <td className="py-3.5 px-4 text-slate-500">{formulaLabel[p.formula]}</td>
-                <td className="py-3.5 px-4 text-right font-extrabold text-[#16212B]">{p.flatAmount.toFixed(2)} MAD</td>
-                <td className="py-3.5 px-4 text-right text-slate-500">{p.perDayAmount.toFixed(2)} MAD</td>
-                <td className="py-3.5 px-4 text-right text-slate-500">{p.maxAmount != null ? `${p.maxAmount.toFixed(2)} MAD` : '—'}</td>
-                <td className="py-3.5 px-4 text-center text-slate-500">{p.graceDays} j</td>
+                <td className="py-3.5 px-4 text-end font-extrabold text-[#16212B]">{p.flatAmount.toFixed(2)} {tCommon('currency')}</td>
+                <td className="py-3.5 px-4 text-end text-slate-500">{p.perDayAmount.toFixed(2)} {tCommon('currency')}</td>
+                <td className="py-3.5 px-4 text-end text-slate-500">{p.maxAmount != null ? `${p.maxAmount.toFixed(2)} ${tCommon('currency')}` : '—'}</td>
+                <td className="py-3.5 px-4 text-center text-slate-500">{p.graceDays} {t('daysUnit')}</td>
                 <td className="py-3.5 px-4 text-center">
                   <Badge className={`text-[10px] border-none font-bold ${p.status === 'active' ? 'bg-[#DDF5EC] text-[#17A673]' : 'bg-slate-100 text-slate-500'}`}>
-                    {p.status === 'active' ? 'Active' : 'Archivée'}
+                    {p.status === 'active' ? t('statusActive') : t('statusArchived')}
                   </Badge>
                 </td>
                 {canManage && (
                   <td className="py-3.5 px-4">
                     <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#2487B8]">
+                      <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#2487B8]" title={tCommon('edit')}>
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -344,33 +353,33 @@ export function FinePoliciesView() {
 
       <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
         <div className="p-4 border-b border-slate-200/80 flex items-center justify-between">
-          <h3 className="text-xs font-extrabold text-[#16212B]">Évaluations de pénalités</h3>
-          <span className="text-[10px] font-bold text-slate-400">{assessments.length} évaluation(s)</span>
+          <h3 className="text-xs font-extrabold text-[#16212B]">{t('fineAssessmentsTitle')}</h3>
+          <span className="text-[10px] font-bold text-slate-400">{t('assessmentsCountSub', { count: assessments.length })}</span>
         </div>
-        <table className="w-full text-left text-xs">
+        <table className="w-full text-start text-xs">
           <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
             <tr>
-              <th className="py-3.5 px-4">Élève</th>
-              <th className="py-3.5 px-4">Politique</th>
-              <th className="py-3.5 px-4 text-right">Montant</th>
-              <th className="py-3.5 px-4">Motif</th>
-              <th className="py-3.5 px-4 text-center">Statut</th>
+              <th className="py-3.5 px-4 text-start">{t('studentCol')}</th>
+              <th className="py-3.5 px-4 text-start">{t('policyCol')}</th>
+              <th className="py-3.5 px-4 text-end">{t('amountCol')}</th>
+              <th className="py-3.5 px-4 text-start">{t('reasonCol')}</th>
+              <th className="py-3.5 px-4 text-center">{tCommon('status')}</th>
               {canManage && <th className="py-3.5 px-4" />}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {!assessmentsLoading && assessments.length === 0 && (
-              <tr><td colSpan={canManage ? 6 : 5} className="py-8 text-center text-slate-400">Aucune pénalité évaluée.</td></tr>
+              <tr><td colSpan={canManage ? 6 : 5} className="py-8 text-center text-slate-400">{t('noAssessmentsFound')}</td></tr>
             )}
             {assessments.map(a => (
               <tr key={a.id} className="hover:bg-slate-50/80 transition font-medium">
                 <td className="py-3.5 px-4 font-bold text-[#16212B]">{a.studentName ?? '—'}</td>
                 <td className="py-3.5 px-4 text-slate-500">{a.policyName ?? '—'}</td>
-                <td className="py-3.5 px-4 text-right font-extrabold text-[#16212B]">{a.amount.toFixed(2)} MAD</td>
+                <td className="py-3.5 px-4 text-end font-extrabold text-[#16212B]">{a.amount.toFixed(2)} {tCommon('currency')}</td>
                 <td className="py-3.5 px-4 text-slate-500">{a.reason ?? '—'}</td>
                 <td className="py-3.5 px-4 text-center">
                   <Badge className={`text-[10px] border-none font-bold ${a.status === 'waived' ? 'bg-violet-100 text-violet-700' : 'bg-amber-100 text-amber-700'}`}>
-                    {a.status === 'waived' ? 'Exonérée' : 'Évaluée'}
+                    {a.status === 'waived' ? t('assessmentWaived') : t('assessmentAssessed')}
                   </Badge>
                 </td>
                 {canManage && (
@@ -380,7 +389,7 @@ export function FinePoliciesView() {
                         onClick={() => handleWaive(a)}
                         disabled={waivingId === a.id}
                         className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#2487B8] disabled:opacity-50"
-                        title="Exonérer"
+                        title={t('waiveBtn')}
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </button>

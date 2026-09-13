@@ -3,6 +3,7 @@
 import { AlertTriangle, Flag, Search, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -26,39 +27,35 @@ type ApiFlag = {
   resolvedAt: string | null;
 };
 
-const TYPE_LABELS: Record<FlagType, string> = {
-  UNJUSTIFIED_ABSENCE: 'Absence non justifiée',
-  CONSECUTIVE_ABSENCE: 'Absences consécutives',
-  REPEATED_LATE: 'Retards répétés',
+const TYPE_KEYS: Record<FlagType, string> = {
+  UNJUSTIFIED_ABSENCE: 'flagUnjustifiedAbsence',
+  CONSECUTIVE_ABSENCE: 'flagConsecutiveAbsence',
+  REPEATED_LATE: 'flagRepeatedLate',
 };
-
-const SEVERITY_LABELS: Record<FlagSeverity, string> = {
-  CRITIQUE: 'Critique',
-  ELEVE: 'Élevé',
-  MOYEN: 'Moyen',
-};
-
-function severityBadge(severity: FlagSeverity) {
-  switch (severity) {
-    case 'CRITIQUE':
-      return <Badge className="bg-[#FCE4E2] text-[#E5544B]">Critique</Badge>;
-    case 'ELEVE':
-      return <Badge className="bg-[#FCF0DC] text-[#E8A33D]">Élevé</Badge>;
-    default:
-      return <Badge variant="neutral">Moyen</Badge>;
-  }
-}
-
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
-}
 
 export function AttendanceFlagsView({ locale }: { locale: string }) {
+  const t = useTranslations('Attendance');
+
   const [flags, setFlags] = useState<ApiFlag[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('OPEN');
   const [severityFilter, setSeverityFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+
+  function severityBadge(severity: FlagSeverity) {
+    switch (severity) {
+      case 'CRITIQUE':
+        return <Badge className="bg-[#FCE4E2] text-[#E5544B]">{t('severityCritical')}</Badge>;
+      case 'ELEVE':
+        return <Badge className="bg-[#FCF0DC] text-[#E8A33D]">{t('severityHigh')}</Badge>;
+      default:
+        return <Badge variant="neutral">{t('severityMedium')}</Badge>;
+    }
+  }
+
+  function formatDateTime(iso: string): string {
+    return new Date(iso).toLocaleString(locale, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
 
   async function load() {
     setLoading(true);
@@ -100,86 +97,86 @@ export function AttendanceFlagsView({ locale }: { locale: string }) {
   const columns: Column<ApiFlag>[] = [
     {
       key: 'type',
-      header: 'Type de signalement',
+      header: t('colFlagType'),
       cell: f => (
-        <div className="flex items-center gap-2">
-          <Flag className="w-3.5 h-3.5 text-slate-400" />
-          <span className="font-semibold text-[#16212B]">{TYPE_LABELS[f.type]}</span>
+        <div className="flex items-center gap-2 text-start">
+          <Flag className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <span className="font-semibold text-[#16212B]">{(t as any)(TYPE_KEYS[f.type])}</span>
         </div>
       ),
     },
     {
       key: 'studentName',
-      header: 'Élève',
+      header: t('colStudentName'),
       cell: f => (
-        <Link href={`/${locale}/dashboard/attendance/flags/${f.id}`} className="font-bold text-[#16212B] hover:text-[#2487B8] hover:underline">
+        <Link href={`/${locale}/dashboard/attendance/flags/${f.id}`} className="font-bold text-[#16212B] hover:text-[#2487B8] hover:underline text-start block">
           {f.studentName}
         </Link>
       ),
     },
     {
       key: 'severity',
-      header: 'Gravité',
+      header: t('colSeverity'),
       cell: f => severityBadge(f.severity),
     },
     {
       key: 'guardianPhone',
-      header: 'Tél. tuteur',
-      cell: f => <span className="font-mono text-slate-600">{f.guardianPhone ?? '—'}</span>,
+      header: t('colGuardianPhone'),
+      cell: f => <span className="font-mono text-slate-600 text-start block">{f.guardianPhone ?? '—'}</span>,
     },
     {
       key: 'assignedToName',
-      header: 'Assigné à',
+      header: t('colAssignedTo'),
       cell: f => (f.assignedToName
-        ? <span className="text-slate-700 font-semibold">{f.assignedToName}</span>
-        : <span className="text-slate-400">Non assigné</span>),
+        ? <span className="text-slate-700 font-semibold text-start block">{f.assignedToName}</span>
+        : <span className="text-slate-400 text-start block">{t('unassigned')}</span>),
     },
     {
       key: 'detectedAt',
-      header: 'Détecté le',
-      cell: f => <span className="text-slate-500">{formatDateTime(f.detectedAt)}</span>,
+      header: t('colDetectedAt'),
+      cell: f => <span className="text-slate-500 text-start block">{formatDateTime(f.detectedAt)}</span>,
     },
     {
       key: 'status',
-      header: 'Statut',
+      header: t('colFlagStatus'),
       cell: f => (f.status === 'OPEN'
-        ? <Badge className="bg-[#FCF0DC] text-[#E8A33D]">À traiter</Badge>
-        : <Badge className="bg-[#D1F5E8] text-[#17A673]">Résolu</Badge>),
+        ? <Badge className="bg-[#FCF0DC] text-[#E8A33D]">{t('statusOpen')}</Badge>
+        : <Badge className="bg-[#D1F5E8] text-[#17A673]">{t('statusResolved')}</Badge>),
     },
   ];
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
-      <div>
-        <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Signalements de présence</h1>
-        <p className="text-xs text-slate-500 mt-1">Suivi des élèves à risque : absences non justifiées, absences consécutives, retards répétés.</p>
+      <div className="text-start">
+        <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('flagsTitle')}</h1>
+        <p className="text-xs text-slate-500 mt-1">{t('flagsSubtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-xs font-bold text-slate-500">Critique</p>
+          <div className="space-y-1 text-start">
+            <p className="text-xs font-bold text-slate-500">{t('severityCritical')}</p>
             <p className="text-2xl font-extrabold text-[#16212B]">{severityCounts.CRITIQUE}</p>
           </div>
-          <div className="w-10 h-10 rounded-full bg-[#FCE4E2] text-[#E5544B] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-[#FCE4E2] text-[#E5544B] flex items-center justify-center shrink-0">
             <AlertTriangle className="w-5 h-5" />
           </div>
         </Card>
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-xs font-bold text-slate-500">Élevé</p>
+          <div className="space-y-1 text-start">
+            <p className="text-xs font-bold text-slate-500">{t('severityHigh')}</p>
             <p className="text-2xl font-extrabold text-[#16212B]">{severityCounts.ELEVE}</p>
           </div>
-          <div className="w-10 h-10 rounded-full bg-[#FCF0DC] text-[#E8A33D] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-[#FCF0DC] text-[#E8A33D] flex items-center justify-center shrink-0">
             <Flag className="w-5 h-5" />
           </div>
         </Card>
         <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-xs font-bold text-slate-500">Moyen</p>
+          <div className="space-y-1 text-start">
+            <p className="text-xs font-bold text-slate-500">{t('severityMedium')}</p>
             <p className="text-2xl font-extrabold text-[#16212B]">{severityCounts.MOYEN}</p>
           </div>
-          <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
             <UserCheck className="w-5 h-5" />
           </div>
         </Card>
@@ -191,9 +188,9 @@ export function AttendanceFlagsView({ locale }: { locale: string }) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="OPEN">À traiter</SelectItem>
-            <SelectItem value="RESOLVED">Résolu</SelectItem>
-            <SelectItem value="all">Tous les statuts</SelectItem>
+            <SelectItem value="OPEN">{t('statusOpen')}</SelectItem>
+            <SelectItem value="RESOLVED">{t('statusResolved')}</SelectItem>
+            <SelectItem value="all">{t('allStatusesOption')}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={severityFilter} onValueChange={setSeverityFilter}>
@@ -201,19 +198,19 @@ export function AttendanceFlagsView({ locale }: { locale: string }) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Toutes gravités</SelectItem>
-            <SelectItem value="CRITIQUE">Critique</SelectItem>
-            <SelectItem value="ELEVE">Élevé</SelectItem>
-            <SelectItem value="MOYEN">Moyen</SelectItem>
+            <SelectItem value="all">{t('allSeveritiesOption')}</SelectItem>
+            <SelectItem value="CRITIQUE">{t('severityCritical')}</SelectItem>
+            <SelectItem value="ELEVE">{t('severityHigh')}</SelectItem>
+            <SelectItem value="MOYEN">{t('severityMedium')}</SelectItem>
           </SelectContent>
         </Select>
-        <div className="relative min-w-[220px] ml-auto">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div className="relative min-w-[220px] ms-auto">
+          <Search className="w-4 h-4 absolute start-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <Input
-            placeholder="Rechercher un élève..."
+            placeholder={t('searchStudentPlaceholder')}
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="pl-10 h-9 text-xs bg-slate-50 border-none rounded-full"
+            className="ps-10 h-9 text-xs bg-slate-50 border-none rounded-full text-start"
           />
         </div>
       </div>
@@ -222,8 +219,8 @@ export function AttendanceFlagsView({ locale }: { locale: string }) {
         data={filtered}
         columns={columns}
         isLoading={loading}
-        emptyTitle="Aucun signalement"
-        emptyDescription="Aucun signalement ne correspond à vos filtres."
+        emptyTitle={t('emptyFlagsTitle')}
+        emptyDescription={t('emptyFlagsDesc')}
         exportFilename="signalements-presence"
       />
     </div>

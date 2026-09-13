@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,8 +17,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  EMPLOYMENT_STATUS_LABELS, EMPLOYMENT_STATUS_STYLES, EMPLOYMENT_TYPE_LABELS,
-  type EmployeeRow, type EmploymentStatus,
+  EMPLOYMENT_STATUS_STYLES,
+  type EmployeeRow, type EmploymentStatus, type EmploymentType,
 } from '@/features/hr/model/types';
 
 type ApiErrorShape = { code?: string; message?: string };
@@ -38,6 +39,11 @@ function initials(name: string) {
 
 export function EmployeeDirectoryView() {
   const router = useRouter();
+  const params = useParams<{ locale?: string }>();
+  const locale = params?.locale ?? 'fr';
+  const t = useTranslations('HR');
+  const tCommon = useTranslations('Common');
+
   const [rows, setRows] = useState<EmployeeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +51,29 @@ export function EmployeeDirectoryView() {
   const [search, setSearch] = useState('');
   const [employmentStatus, setEmploymentStatus] = useState<string>('all');
   const [loginStatus, setLoginStatus] = useState<string>('all');
+
+  const getStatusLabel = (st: EmploymentStatus) => {
+    switch (st) {
+      case 'active': return t('statusActive');
+      case 'probation': return t('statusProbation');
+      case 'on_leave': return t('statusOnLeave');
+      case 'offboarded': return t('statusOffboarded');
+      case 'archived': return t('statusArchived');
+      default: return st;
+    }
+  };
+
+  const getTypeLabel = (tp: EmploymentType) => {
+    switch (tp) {
+      case 'permanent': return t('typePermanent');
+      case 'fixed_term': return t('typeFixedTerm');
+      case 'part_time': return t('typePartTime');
+      case 'contractor': return t('typeContractor');
+      case 'internship': return t('typeInternship');
+      case 'substitute': return t('typeSubstitute');
+      default: return tp;
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -58,10 +87,10 @@ export function EmployeeDirectoryView() {
     if (res.ok && Array.isArray(res.data)) setRows(res.data);
     else {
       if (res.error?.code === 'ADDON_NOT_ACTIVATED') setAddonDisabled(true);
-      setError(res.error?.message ?? 'Chargement impossible.');
+      setError(res.error?.message ?? t('loadError'));
     }
     setLoading(false);
-  }, [search, employmentStatus, loginStatus]);
+  }, [search, employmentStatus, loginStatus, t]);
 
   useEffect(() => { load().catch(() => {}); }, [load]);
 
@@ -71,10 +100,9 @@ export function EmployeeDirectoryView() {
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
           <Lock className="h-8 w-8" />
         </div>
-        <h1 className="text-xl font-bold text-[#16212B]">Module non activé</h1>
+        <h1 className="text-xl font-bold text-[#16212B]">{t('moduleDisabled')}</h1>
         <p className="text-sm text-slate-500">
-          La gestion avancée des ressources humaines n&apos;est pas activée pour votre établissement.
-          Contactez l&apos;administrateur de la plateforme.
+          {t('moduleDisabledDesc')}
         </p>
       </div>
     );
@@ -90,21 +118,23 @@ export function EmployeeDirectoryView() {
   }, { total: 0, active: 0, probation: 0, onLeave: 0, unlinked: 0 });
 
   const kpis = [
-    { label: 'Effectif total', value: counts.total, icon: Users },
-    { label: 'Actifs', value: counts.active, icon: UserRoundCheck },
-    { label: 'En congé', value: counts.onLeave, icon: UserX },
-    { label: 'Sans compte', value: counts.unlinked, icon: UserPlus },
+    { label: t('kpiTotalHeadcount'), value: counts.total, icon: Users },
+    { label: t('kpiActive'), value: counts.active, icon: UserRoundCheck },
+    { label: t('kpiOnLeave'), value: counts.onLeave, icon: UserX },
+    { label: t('kpiUnlinked'), value: counts.unlinked, icon: UserPlus },
   ];
+
+  const allStatuses: EmploymentStatus[] = ['active', 'probation', 'on_leave', 'offboarded', 'archived'];
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#16212B]">Employés</h1>
-          <p className="text-sm text-slate-500">Annuaire du personnel, contrats et affectations.</p>
+          <h1 className="text-2xl font-bold text-[#16212B]">{t('directoryTitle')}</h1>
+          <p className="text-sm text-slate-500">{t('directorySubtitle')}</p>
         </div>
-        <Button onClick={() => router.push('/dashboard/hr/employees/new')}>
-          <Plus className="mr-2 h-4 w-4" /> Nouvel employé
+        <Button onClick={() => router.push(`/${locale}/dashboard/hr/employees/new`)} className="cursor-pointer">
+          <Plus className="me-2 h-4 w-4" /> {t('btnNewEmployee')}
         </Button>
       </div>
 
@@ -112,7 +142,7 @@ export function EmployeeDirectoryView() {
         {kpis.map(kpi => (
           <Card key={kpi.label} className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#D1F5E8] text-[#16212B]">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#D1F5E8] text-[#16212B]">
                 <kpi.icon className="h-5 w-5" />
               </div>
               <div>
@@ -127,29 +157,29 @@ export function EmployeeDirectoryView() {
       <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
         <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 p-4">
           <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Nom, matricule, email…"
-              className="pl-9"
+              placeholder={t('searchPlaceholder')}
+              className="ps-9"
             />
           </div>
           <Select value={employmentStatus} onValueChange={setEmploymentStatus}>
-            <SelectTrigger className="w-44"><SelectValue placeholder="Statut" /></SelectTrigger>
+            <SelectTrigger className="w-44"><SelectValue placeholder={t('colStatus')} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous les statuts</SelectItem>
-              {(Object.keys(EMPLOYMENT_STATUS_LABELS) as EmploymentStatus[]).map(s => (
-                <SelectItem key={s} value={s}>{EMPLOYMENT_STATUS_LABELS[s]}</SelectItem>
+              <SelectItem value="all">{t('filterAllStatuses')}</SelectItem>
+              {allStatuses.map(s => (
+                <SelectItem key={s} value={s}>{getStatusLabel(s)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Select value={loginStatus} onValueChange={setLoginStatus}>
-            <SelectTrigger className="w-44"><SelectValue placeholder="Compte" /></SelectTrigger>
+            <SelectTrigger className="w-44"><SelectValue placeholder={t('colAccount')} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous les comptes</SelectItem>
-              <SelectItem value="linked">Avec compte</SelectItem>
-              <SelectItem value="unlinked">Sans compte</SelectItem>
+              <SelectItem value="all">{t('filterAllAccounts')}</SelectItem>
+              <SelectItem value="linked">{t('filterWithAccount')}</SelectItem>
+              <SelectItem value="unlinked">{t('filterWithoutAccount')}</SelectItem>
             </SelectContent>
           </Select>
           {error && (
@@ -160,21 +190,21 @@ export function EmployeeDirectoryView() {
         <div className="overflow-x-auto">
           {loading ? (
             <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500">
-              <Loader2 className="h-4 w-4 animate-spin" /> Chargement…
+              <Loader2 className="h-4 w-4 animate-spin" /> {tCommon('loading')}
             </div>
           ) : rows.length === 0 ? (
-            <div className="p-10 text-center text-sm text-slate-500">Aucun employé trouvé.</div>
+            <div className="p-10 text-center text-sm text-slate-500">{t('noEmployeesFound')}</div>
           ) : (
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-start text-sm">
               <thead>
-                <tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400">
-                  <th className="px-4 py-3 font-medium">Employé</th>
-                  <th className="px-4 py-3 font-medium">Matricule</th>
-                  <th className="px-4 py-3 font-medium">Département</th>
-                  <th className="px-4 py-3 font-medium">Poste</th>
-                  <th className="px-4 py-3 font-medium">Type</th>
-                  <th className="px-4 py-3 font-medium">Statut</th>
-                  <th className="px-4 py-3 font-medium">Compte</th>
+                <tr className="border-b border-slate-100 text-start text-xs uppercase tracking-wide text-slate-400">
+                  <th className="px-4 py-3 text-start font-medium">{t('colEmployee')}</th>
+                  <th className="px-4 py-3 text-start font-medium">{t('colMatricule')}</th>
+                  <th className="px-4 py-3 text-start font-medium">{t('colDepartment')}</th>
+                  <th className="px-4 py-3 text-start font-medium">{t('colDesignation')}</th>
+                  <th className="px-4 py-3 text-start font-medium">{t('colType')}</th>
+                  <th className="px-4 py-3 text-start font-medium">{t('colStatus')}</th>
+                  <th className="px-4 py-3 text-start font-medium">{t('colAccount')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -182,11 +212,11 @@ export function EmployeeDirectoryView() {
                   <tr
                     key={row.id}
                     className="cursor-pointer transition-colors hover:bg-slate-50"
-                    onClick={() => router.push(`/dashboard/hr/employees/${row.id}`)}
+                    onClick={() => router.push(`/${locale}/dashboard/hr/employees/${row.id}`)}
                   >
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-start">
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9">
+                        <Avatar className="h-9 w-9 shrink-0">
                           <AvatarImage src={row.photoUrl ?? undefined} alt={row.displayName} />
                           <AvatarFallback className="bg-[#D1F5E8] text-xs font-semibold text-[#16212B]">{initials(row.displayName)}</AvatarFallback>
                         </Avatar>
@@ -196,20 +226,20 @@ export function EmployeeDirectoryView() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-slate-600">{row.employeeId || '—'}</td>
-                    <td className="px-4 py-3 text-slate-600">{row.departmentName || '—'}</td>
-                    <td className="px-4 py-3 text-slate-600">{row.designationTitle || '—'}</td>
-                    <td className="px-4 py-3 text-slate-600">{row.employmentType ? EMPLOYMENT_TYPE_LABELS[row.employmentType] : '—'}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-start text-slate-600">{row.employeeId || '—'}</td>
+                    <td className="px-4 py-3 text-start text-slate-600">{row.departmentName || '—'}</td>
+                    <td className="px-4 py-3 text-start text-slate-600">{row.designationTitle || '—'}</td>
+                    <td className="px-4 py-3 text-start text-slate-600">{row.employmentType ? getTypeLabel(row.employmentType) : '—'}</td>
+                    <td className="px-4 py-3 text-start">
                       <Badge className={EMPLOYMENT_STATUS_STYLES[row.employmentStatus]}>
-                        {EMPLOYMENT_STATUS_LABELS[row.employmentStatus]}
+                        {getStatusLabel(row.employmentStatus)}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-start">
                       {row.userId ? (
-                        <Badge className="bg-slate-100 text-slate-600">{row.accountRole || 'Compte'}</Badge>
+                        <Badge className="bg-slate-100 text-slate-600">{row.accountRole || t('colAccount')}</Badge>
                       ) : (
-                        <Badge className="bg-amber-50 text-amber-700">Sans compte</Badge>
+                        <Badge className="bg-amber-50 text-amber-700">{t('kpiUnlinked')}</Badge>
                       )}
                     </td>
                   </tr>
@@ -219,7 +249,7 @@ export function EmployeeDirectoryView() {
           )}
         </div>
         <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-400">
-          {rows.length} employé(s) affiché(s) — cliquez sur une ligne pour ouvrir le dossier.
+          {t('clickRowHint', { count: rows.length })}
         </div>
       </Card>
     </div>

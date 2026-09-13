@@ -102,6 +102,19 @@ jobs:
       - name: Tenant isolation check
         run: npm run check:isolation
 
+      # BLOCKING, and on its own step for the same reason as the check above:
+      # `npm run lint` short-circuits on eslint's exit code, so anything chained
+      # behind it never runs.
+      #
+      # Ratchets four defect classes that unit tests cannot see, because each sits
+      # between a working API and the user: controls with no handler, screens
+      # rendering invented data, pages no nav entry reaches, and dead components.
+      # Counts may only go down. Baselines live in scripts/ui-reality-baseline.json.
+      # Verified 2026-09-11: exits 1 on an injected dead button + mock array, 0 on a
+      # clean tree.
+      - name: UI reality check
+        run: npm run check:ui
+
       - name: Type checking
         run: npm run check:types
 

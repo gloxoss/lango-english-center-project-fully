@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -48,7 +49,9 @@ type LiveFeedback = {
   scannedAt: Date;
 } | null;
 
-export function AttendanceScannerKiosk() {
+export function AttendanceScannerKiosk({ locale: _locale }: { locale?: string } = {}) {
+  const t = useTranslations('Attendance');
+  const tCommon = useTranslations('Common');
   const [sections, setSections] = useState<ClassSectionOption[]>([]);
   const [selectedSectionId, setSelectedSectionId] = useState('');
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -160,32 +163,32 @@ export function AttendanceScannerKiosk() {
         const resultStatus = json.data?.resultStatus || 'accepted';
         const stagedStatus = json.data?.stagedStatus;
         setFeedback({
-          name: json.data?.student?.name || 'Élève reconnu',
+          name: json.data?.student?.name || t('studentRecognized'),
           status: resultStatus,
           message: resultStatus === 'already_scanned'
-            ? 'Déjà scanné — présence déjà enregistrée'
-            : stagedStatus === 'late' ? 'Présence validée (retard)' : 'Présence validée',
+            ? t('alreadyScannedMessage')
+            : stagedStatus === 'late' ? t('presenceLateMessage') : t('presenceValidMessage'),
           scannedAt: new Date(),
         });
       } else {
         setFeedback({
-          name: 'Badge Non Valide',
+          name: t('badgeInvalid'),
           status: 'rejected',
-          message: json.error?.message || json.message || 'Badge non reconnu pour cette classe',
+          message: json.error?.message || json.message || t('badgeNotRecognizedClass'),
           scannedAt: new Date(),
         });
       }
     } catch {
       setFeedback({
-        name: 'Erreur réseau',
+        name: tCommon('error'),
         status: 'rejected',
-        message: 'Impossible de contacter le serveur',
+        message: t('serverUnreachable'),
         scannedAt: new Date(),
       });
     } finally {
       setSubmitting(false);
     }
-  }, []);
+  }, [t, tCommon]);
 
   // Camera stream management (§8.3)
   const stopCamera = useCallback(() => {
@@ -206,7 +209,7 @@ export function AttendanceScannerKiosk() {
     setCameraError(null);
 
     if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-      setCameraError('Accès caméra non supporté par ce navigateur.');
+      setCameraError(t('cameraUnsupported'));
       return;
     }
 
@@ -258,9 +261,9 @@ export function AttendanceScannerKiosk() {
       }
     } catch (err: any) {
       console.warn('Camera access error:', err);
-      setCameraError('Impossible d\'activer la caméra. Vérifiez les autorisations du navigateur.');
+      setCameraError(t('cameraPermissionError'));
     }
-  }, [cameraFacing, stopCamera, processToken]);
+  }, [cameraFacing, stopCamera, processToken, t]);
 
   useEffect(() => {
     if (sessionId && scanMode === 'camera' && cameraActive) {
@@ -285,14 +288,14 @@ export function AttendanceScannerKiosk() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.error?.message || 'Impossible de démarrer la session.');
+        setError(json.error?.message || t('sessionStartError'));
         return;
       }
       setSessionId(json.data.id);
       sessionIdRef.current = json.data.id;
       setEvents([]);
     } catch {
-      setError('Erreur réseau lors du démarrage de la session.');
+      setError(t('sessionNetworkError'));
     } finally {
       setStarting(false);
     }
@@ -329,10 +332,10 @@ export function AttendanceScannerKiosk() {
           </div>
           <div>
             <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">
-              Kiosque Scanner Élèves (Caméra &amp; QR Code)
+              {t('kioskScannerTitle')}
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Émargement temps réel par caméra vidéo HD ou douchette USB avec validation cryptographique instantanée.
+              {t('kioskScannerSubtitle')}
             </p>
           </div>
         </div>
@@ -341,12 +344,12 @@ export function AttendanceScannerKiosk() {
           {sessionId ? (
             <Badge variant="success" className="font-bold gap-1 px-3 py-1.5 text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Session Active</span>
+              <span>{t('sessionActive')}</span>
             </Badge>
           ) : (
             <Badge variant="neutral" className="font-bold gap-1 px-3 py-1.5 text-xs">
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Prêt pour session</span>
+              <span>{t('sessionReady')}</span>
             </Badge>
           )}
         </div>
@@ -358,9 +361,9 @@ export function AttendanceScannerKiosk() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="text-xs text-slate-500">
               <p className="font-extrabold text-[#16212B] text-sm">
-                Session en cours — Classe : {sections.find(s => s.id === selectedSectionId)?.className} {sections.find(s => s.id === selectedSectionId)?.sectionName}
+                {t('sessionInProgress', { className: `${sections.find(s => s.id === selectedSectionId)?.className || ''} ${sections.find(s => s.id === selectedSectionId)?.sectionName || ''}` })}
               </p>
-              <p className="text-[11px] font-mono mt-0.5 text-slate-400">ID Session : {sessionId.slice(0, 8)}... (Authentification HMAC)</p>
+              <p className="text-[11px] font-mono mt-0.5 text-slate-400">{t('sessionIdHmac', { id: sessionId.slice(0, 8) })}</p>
             </div>
 
             <div className="flex items-center gap-3">
@@ -374,7 +377,7 @@ export function AttendanceScannerKiosk() {
                   }`}
                 >
                   <Camera className="w-3.5 h-3.5" />
-                  Caméra
+                  {t('cameraMode')}
                 </button>
                 <button
                   type="button"
@@ -384,7 +387,7 @@ export function AttendanceScannerKiosk() {
                   }`}
                 >
                   <Keyboard className="w-3.5 h-3.5" />
-                  Douchette USB
+                  {t('usbScannerMode')}
                 </button>
               </div>
 
@@ -393,20 +396,20 @@ export function AttendanceScannerKiosk() {
                 className="gap-2 h-9 text-xs rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold"
               >
                 <Square className="w-3.5 h-3.5" />
-                Terminer la session
+                {t('endSessionBtn')}
               </Button>
             </div>
           </div>
         ) : (
           <div className="flex flex-col sm:flex-row sm:items-end gap-4">
             <div className="flex-1 space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">Sélectionner la classe / section à émarger</label>
+              <label className="text-xs font-bold text-slate-700">{t('selectClassToScan')}</label>
               <select
                 value={selectedSectionId}
                 onChange={e => setSelectedSectionId(e.target.value)}
                 className="w-full h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-[#0066FF] focus:border-[#0066FF] outline-none"
               >
-                <option value="">-- Choisir une classe --</option>
+                <option value="">{t('chooseClassPlaceholder')}</option>
                 {sections.map(s => (
                   <option key={s.id} value={s.id}>
                     {s.className} — {s.sectionName}
@@ -420,7 +423,7 @@ export function AttendanceScannerKiosk() {
               className="gap-2 h-10 text-xs rounded-xl px-5 bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold"
             >
               <Play className="w-3.5 h-3.5" />
-              {starting ? 'Démarrage...' : 'Ouvrir le kiosque de scan'}
+              {starting ? t('startingText') : t('openKioskBtn')}
             </Button>
           </div>
         )}
@@ -462,7 +465,7 @@ export function AttendanceScannerKiosk() {
                         <div className="absolute inset-x-2 h-0.5 bg-gradient-to-r from-transparent via-[#0066FF] to-transparent shadow-[0_0_12px_#0066FF] animate-bounce" />
                       </div>
                       <p className="mt-4 text-xs font-bold text-white/90 bg-black/60 px-3 py-1 rounded-full backdrop-blur-xs">
-                        Cadrez le QR Code de l&apos;élève au centre
+                        {t('frameQrCenterPrompt')}
                       </p>
                     </div>
 
@@ -475,7 +478,7 @@ export function AttendanceScannerKiosk() {
                           onClick={startCamera}
                           className="mt-3 text-xs rounded-xl bg-white text-slate-900 font-bold"
                         >
-                          Réessayer
+                          {t('retryBtn')}
                         </Button>
                       </div>
                     )}
@@ -484,7 +487,7 @@ export function AttendanceScannerKiosk() {
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2 text-slate-500">
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                      <span className="font-bold text-slate-700">Flux vidéo en direct</span>
+                      <span className="font-bold text-slate-700">{t('liveVideoFeed')}</span>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -497,7 +500,7 @@ export function AttendanceScannerKiosk() {
                         className="h-8 text-xs rounded-xl border-slate-200 bg-white gap-1.5 font-bold"
                       >
                         <RefreshCw className="w-3.5 h-3.5" />
-                        Basculer caméra ({cameraFacing === 'environment' ? 'Arrière' : 'Avant'})
+                        {t('switchCameraBtn', { direction: cameraFacing === 'environment' ? t('rearCamera') : t('frontCamera') })}
                       </Button>
                     </div>
                   </div>
@@ -509,9 +512,9 @@ export function AttendanceScannerKiosk() {
                     <ScanLine className="w-10 h-10" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-extrabold text-[#16212B]">Mode Douchette USB Actif</h2>
+                    <h2 className="text-lg font-extrabold text-[#16212B]">{t('usbModeActive')}</h2>
                     <p className="text-xs text-slate-500 max-w-xs mx-auto mt-1">
-                      Scannez directement avec votre lecteur physique. La saisie est automatiquement capturée.
+                      {t('usbModeDesc')}
                     </p>
                   </div>
 
@@ -522,7 +525,7 @@ export function AttendanceScannerKiosk() {
                       required
                       value={rawTokenInput}
                       onChange={(e) => setRawTokenInput(e.target.value)}
-                      placeholder="Prêt pour le scan..."
+                      placeholder={t('readyToScanPlaceholder')}
                       className="text-center text-sm font-mono h-11 rounded-xl border-slate-200 bg-slate-50 focus:ring-2 focus:ring-[#0066FF] focus:border-[#0066FF]"
                       autoFocus
                     />
@@ -534,9 +537,9 @@ export function AttendanceScannerKiosk() {
                 <div className="w-16 h-16 bg-slate-100 rounded-2xl mx-auto flex items-center justify-center text-slate-400">
                   <ScanLine className="w-8 h-8" />
                 </div>
-                <h3 className="text-base font-extrabold text-[#16212B]">Session requise</h3>
+                <h3 className="text-base font-extrabold text-[#16212B]">{t('sessionRequired')}</h3>
                 <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  Sélectionnez une classe dans la barre supérieure et démarrez la session pour activer la caméra de scan.
+                  {t('sessionRequiredDesc')}
                 </p>
               </div>
             )}
@@ -578,15 +581,15 @@ export function AttendanceScannerKiosk() {
         <div className="lg:col-span-5 space-y-4">
           <div className="grid grid-cols-3 gap-3">
             <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs text-center">
-              <p className="text-[10px] font-bold text-slate-400 uppercase">Présents</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase">{t('presentsLabel')}</p>
               <p className="text-2xl font-extrabold text-emerald-600 mt-0.5">{acceptedCount}</p>
             </Card>
             <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs text-center">
-              <p className="text-[10px] font-bold text-slate-400 uppercase">Déjà Scannés</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase">{t('alreadyScannedLabel')}</p>
               <p className="text-2xl font-extrabold text-amber-600 mt-0.5">{alreadyScannedCount}</p>
             </Card>
             <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs text-center">
-              <p className="text-[10px] font-bold text-slate-400 uppercase">Rejets</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase">{t('rejectionsLabel')}</p>
               <p className="text-2xl font-extrabold text-rose-600 mt-0.5">{rejectedCount}</p>
             </Card>
           </div>
@@ -595,9 +598,9 @@ export function AttendanceScannerKiosk() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
               <h3 className="text-xs font-extrabold text-[#16212B] flex items-center gap-1.5">
                 <History className="w-3.5 h-3.5 text-[#0066FF]" />
-                Journal des Scans de la Session
+                {t('sessionScansLog')}
               </h3>
-              <Badge variant="neutral" className="text-[10px]">{events.length} scan(s)</Badge>
+              <Badge variant="neutral" className="text-[10px]">{t('scansCount', { count: String(events.length) })}</Badge>
             </div>
 
             <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
@@ -617,11 +620,11 @@ export function AttendanceScannerKiosk() {
                        <XCircle className="w-4 h-4" />}
                     </div>
                     <div>
-                      <p className="font-bold text-[#16212B]">{ev.studentName || 'Élève inconnu'}</p>
+                      <p className="font-bold text-[#16212B]">{ev.studentName || t('unknownStudent')}</p>
                       <p className="text-[10px] text-slate-400 font-mono">
-                        {ev.resultStatus === 'accepted' ? (ev.stagedStatus === 'late' ? 'Présence (Retard)' : 'Présence Validée') :
-                         ev.resultStatus === 'already_scanned' ? 'Déjà scanné' :
-                         (ev.rejectionReason || 'Badge rejeté')}
+                        {ev.resultStatus === 'accepted' ? (ev.stagedStatus === 'late' ? t('presenceLate') : t('presenceValidated')) :
+                         ev.resultStatus === 'already_scanned' ? t('alreadyScanned') :
+                         (ev.rejectionReason || t('badgeRejected'))}
                       </p>
                     </div>
                   </div>
@@ -634,7 +637,7 @@ export function AttendanceScannerKiosk() {
 
               {events.length === 0 && (
                 <p className="text-center text-xs text-slate-400 py-10">
-                  En attente des premiers scans de badges...
+                  {t('waitingForFirstScans')}
                 </p>
               )}
             </div>

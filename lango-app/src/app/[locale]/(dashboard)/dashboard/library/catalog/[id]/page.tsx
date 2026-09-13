@@ -4,5 +4,10 @@ import { LibraryCatalogDetailClient } from '@/features/library/ui/library-catalo
 export default async function LibraryCatalogDetailPage(props: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await props.params;
   await requireLibraryPage(locale, { capability: 'library.catalog.read' });
-  return <LibraryCatalogDetailClient recordId={id} />;
+  const isRtl = locale === 'ar';
+  return (
+    <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
+      <LibraryCatalogDetailClient recordId={id} />
+    </main>
+  );
 }

@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Search, AlertCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 type RosterStudent = {
   id: string;
@@ -18,6 +19,8 @@ type RosterStudent = {
 };
 
 export function ClassDetail360View({ id, locale }: { id: string; locale: string }) {
+  const t = useTranslations('Academics');
+  const tCommon = useTranslations('Common');
   const [className, setClassName] = useState('');
   const [students, setStudents] = useState<RosterStudent[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,14 +34,14 @@ export function ClassDetail360View({ id, locale }: { id: string; locale: string 
           setClassName(json.data.className);
           setStudents(json.data.students);
         } else {
-          setError(json.message || 'Classe introuvable.');
+          setError(json.message || t('classNotFound'));
         }
       })
       .catch((err) => {
         console.error('Failed loading class roster', err);
-        setError('Connexion impossible.');
+        setError(t('connectionError'));
       });
-  }, [id]);
+  }, [id, t]);
 
   const filtered = students.filter(s => s.name.toLowerCase().includes(searchTerm.trim().toLowerCase()));
 
@@ -46,14 +49,14 @@ export function ClassDetail360View({ id, locale }: { id: string; locale: string 
     <div className="space-y-6 max-w-[1600px] mx-auto">
       <div className="flex items-center gap-3">
         <Link href={`/${locale}/dashboard/academics/classes`}>
-          <button className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#2487B8]">
-            <ArrowLeft className="w-4 h-4" />
+          <button className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#2487B8]" title={tCommon('back')}>
+            <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
           </button>
         </Link>
         <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">
-          {className || 'Classe'}
+          {className || t('classDefault')}
         </h1>
-        <Badge className="bg-[#DCEBF4] text-[#1B6C93] text-[10px]">{students.length} élève(s)</Badge>
+        <Badge className="bg-[#DCEBF4] text-[#1B6C93] text-[10px]">{t('studentRosterCount', { count: students.length })}</Badge>
       </div>
 
       {error && (
@@ -65,27 +68,27 @@ export function ClassDetail360View({ id, locale }: { id: string; locale: string 
 
       <div className="bg-white p-4 rounded-2xl shadow-2xs border border-slate-200/80 flex items-center gap-3">
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-4 h-4 absolute start-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <Input
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            placeholder="Rechercher un élève..."
-            className="pl-10 h-9 text-xs bg-slate-50 border-none rounded-full"
+            placeholder={t('searchStudentRoster')}
+            className="ps-10 h-9 text-xs bg-slate-50 border-none rounded-full text-start"
           />
         </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-2xs border border-slate-200/80 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-start text-xs">
             <thead className="bg-[#F6F9FC] text-slate-500 font-semibold border-b border-slate-200/80">
               <tr>
-                <th className="py-3 px-4">Élève</th>
-                <th className="py-3 px-4">Matricule</th>
-                <th className="py-3 px-4">Section</th>
-                <th className="py-3 px-4">Présence (30 j)</th>
-                <th className="py-3 px-4">Solde dû</th>
-                <th className="py-3 px-4">Moyenne générale</th>
+                <th className="py-3 px-4 text-start">{t('colStudent')}</th>
+                <th className="py-3 px-4 text-start">{t('colMatricule')}</th>
+                <th className="py-3 px-4 text-start">{t('colSectionRoster')}</th>
+                <th className="py-3 px-4 text-start">{t('colAttendance30d')}</th>
+                <th className="py-3 px-4 text-start">{t('colBalanceDue')}</th>
+                <th className="py-3 px-4 text-start">{t('colGeneralAverage')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
@@ -104,14 +107,14 @@ export function ClassDetail360View({ id, locale }: { id: string; locale: string 
                       ? '—'
                       : st.balanceDue > 0
                         ? <Badge className="bg-[#FCE4E2] text-[#E5544B]">{st.balanceDue.toLocaleString('fr-FR')} MAD</Badge>
-                        : <Badge className="bg-[#DCEBF4] text-[#1B6C93]">À jour</Badge>}
+                        : <Badge className="bg-[#DCEBF4] text-[#1B6C93]">{t('badgeUpToDate')}</Badge>}
                   </td>
                   <td className="py-3 px-4 font-extrabold text-[#16212B]">{st.average !== null ? `${st.average} /20` : '—'}</td>
                 </tr>
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">Aucun élève trouvé.</td>
+                  <td colSpan={6} className="py-8 text-center text-slate-400">{t('emptyClassRoster')}</td>
                 </tr>
               )}
             </tbody>
