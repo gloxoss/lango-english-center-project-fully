@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, ilike, inArray, or } from 'drizzle-orm';
+import { and, count, desc, eq, gte, ilike, inArray, or, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { assertStudentCapacity } from '@/features/subscriptions/services/plan-limits-service';
 import { recordAudit } from '@/libs/api/audit';
@@ -244,18 +244,30 @@ export async function GET(request: Request) {
         .limit(pagination.limit)
         .offset(pagination.offset),
       db
-        .select({ total: count() })
+        .select({
+          total: count(),
+          active: count(sql`CASE WHEN ${user.userStatus} = 'active' THEN 1 END`),
+          unassigned: count(sql`CASE WHEN ${user.classSectionId} IS NULL THEN 1 END`),
+          overdue: count(sql`CASE WHEN ${user.paymentStatus} IN ('overdue', 'En retard', 'Partiel', 'partial') THEN 1 END`),
+        })
         .from(user)
         .leftJoin(classSections, eq(user.classSectionId, classSections.id))
         .leftJoin(classes, eq(classSections.classId, classes.id))
         .where(where),
     ]);
     const total = totalRows[0]?.total ?? 0;
+    const stats = {
+      total,
+      active: Number(totalRows[0]?.active ?? 0),
+      unassigned: Number(totalRows[0]?.unassigned ?? 0),
+      overdue: Number(totalRows[0]?.overdue ?? 0),
+    };
 
     return NextResponse.json({
       success: true,
       data: rows.map(row => toApiStudent(row.student, row.className ? { className: row.className, sectionName: row.sectionName } : null)),
       total,
+      stats,
       page: pagination.page,
       pageSize: pagination.pageSize,
     });

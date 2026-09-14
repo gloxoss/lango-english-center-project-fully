@@ -105,6 +105,12 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [stats, setStats] = useState<{ total: number; active: number; unassigned: number; overdue: number }>({
+    total: 0,
+    active: 0,
+    unassigned: 0,
+    overdue: 0,
+  });
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -134,6 +140,16 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
         const mapped = (json.data as ApiStudent[]).map(fromApiStudent);
         setStudents(mapped);
         setTotal(json.total ?? mapped.length);
+        if (json.stats) {
+          setStats(json.stats);
+        } else {
+          setStats({
+            total: json.total ?? mapped.length,
+            active: json.total ?? mapped.length,
+            unassigned: 0,
+            overdue: 0,
+          });
+        }
         setSelectedId(prev => (mapped.some(s => s.id === prev) ? prev : (mapped[0]?.id ?? '')));
       }
     } catch (e) {
@@ -271,10 +287,10 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
         {/* Top KPIs Banner */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: t('activeCount'), value: students.filter(s => s.status === 'Actif').length, sub: t('activeCountSub'), color: 'text-[#2487B8]', icon: Users, iconBg: 'bg-[#DCEBF4]', iconColor: 'text-[#1B6C93]' },
-            { label: t('totalCount'), value: total, sub: t('totalCountSub'), color: 'text-emerald-600', icon: CheckCircle2, iconBg: 'bg-[#D1F5E8]', iconColor: 'text-[#17A673]' },
-            { label: t('unassignedCount'), value: students.filter(s => !s.classSection).length, sub: t('unassignedCountSub'), color: 'text-amber-600', icon: AlertTriangle, iconBg: 'bg-[#FCF0DC]', iconColor: 'text-[#E8A33D]' },
-            { label: t('overdueCount'), value: students.filter(s => s.financialStatus !== 'À jour').length, sub: t('overdueCountSub'), color: 'text-rose-600', icon: Wallet, iconBg: 'bg-[#FCE4E2]', iconColor: 'text-[#E5544B]' },
+            { label: t('activeCount'), value: stats.active, sub: t('activeCountSub'), color: 'text-[#2487B8]', icon: Users, iconBg: 'bg-[#DCEBF4]', iconColor: 'text-[#1B6C93]' },
+            { label: t('totalCount'), value: stats.total, sub: t('totalCountSub'), color: 'text-emerald-600', icon: CheckCircle2, iconBg: 'bg-[#D1F5E8]', iconColor: 'text-[#17A673]' },
+            { label: t('unassignedCount'), value: stats.unassigned, sub: t('unassignedCountSub'), color: 'text-amber-600', icon: AlertTriangle, iconBg: 'bg-[#FCF0DC]', iconColor: 'text-[#E8A33D]' },
+            { label: t('overdueCount'), value: stats.overdue, sub: t('overdueCountSub'), color: 'text-rose-600', icon: Wallet, iconBg: 'bg-[#FCE4E2]', iconColor: 'text-[#E5544B]' },
           ].map((kpi, i) => (
             <Card key={i} className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
               <div className="space-y-1">
