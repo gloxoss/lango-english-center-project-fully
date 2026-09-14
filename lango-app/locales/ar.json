@@ -988,6 +988,8 @@
     "streamCol": "الشعبة",
     "cycleCol": "السلك الدراسي",
     "periodCol": "النظام الدوري",
+    "sectionsCol": "الأفواج / Sections",
+    "actionsCol": "الإجراءات",
     "cycleMaternelle": "التعليم الأولي / الروض",
     "cyclePrimaire": "الابتدائي",
     "cycleCollege": "الإعدادي",

@@ -988,6 +988,8 @@
     "streamCol": "Stream",
     "cycleCol": "Cycle",
     "periodCol": "Period",
+    "sectionsCol": "Sections",
+    "actionsCol": "Actions",
     "cycleMaternelle": "Kindergarten",
     "cyclePrimaire": "Primary",
     "cycleCollege": "Middle School",

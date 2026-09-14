@@ -988,6 +988,8 @@
     "streamCol": "Filière",
     "cycleCol": "Cycle",
     "periodCol": "Période",
+    "sectionsCol": "Sections",
+    "actionsCol": "Actions",
     "cycleMaternelle": "Maternelle",
     "cyclePrimaire": "Primaire",
     "cycleCollege": "Collège",
