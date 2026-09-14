@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   Calendar, AlertTriangle, User, Building2,
   Copy, Printer, Plus, Trash2, Clock, CheckCircle2,
-  RefreshCw, BookOpen, Layers, Check
+  RefreshCw, BookOpen, Layers, Check, Sparkles
 } from 'lucide-react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
@@ -134,6 +134,11 @@ export function ScheduleClient({ locale = 'fr' }: { locale?: string } = {}) {
   const [duplicateTargetSectionIds, setDuplicateTargetSectionIds] = useState<string[]>([]);
   const [duplicating, setDuplicating] = useState(false);
 
+  // Auto-Generate Timetable State
+  const [showAutoGenerateModal, setShowAutoGenerateModal] = useState(false);
+  const [generatingTimetable, setGeneratingTimetable] = useState(false);
+  const [sessionYearsList, setSessionYearsList] = useState<Array<{ id: string; name: string; isDefault: boolean }>>([]);
+
   // Moroccan Standard Days List
   const daysList = useMemo(() => [
     { value: 'monday', label: t('dayMonday') },
@@ -159,6 +164,7 @@ export function ScheduleClient({ locale = 'fr' }: { locale?: string } = {}) {
       .then(r => r.json())
       .then((j) => {
         if (j?.success && Array.isArray(j.data) && j.data.length > 0) {
+          setSessionYearsList(j.data);
           const def = j.data.find((s: any) => s.isDefault) ?? j.data[0];
           setSessionYearId(def?.id ?? null);
         }
@@ -505,6 +511,38 @@ export function ScheduleClient({ locale = 'fr' }: { locale?: string } = {}) {
     }
   };
 
+  // Full-School Automated Timetable Constraint Solver Trigger
+  const handleAutoGenerateTimetable = async () => {
+    if (!sessionYearId) {
+      toast.error('Veuillez sélectionner une session académique.');
+      return;
+    }
+    setGeneratingTimetable(true);
+    try {
+      const res = await fetch('/api/academics/timetable-versions/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionYearId }),
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        toast.success(json.message || 'Emploi du temps généré avec succès pour toutes les classes !');
+        if (json.data.version?.id) {
+          setVersionId(json.data.version.id);
+        }
+        loadAllSlots();
+        loadSlots();
+        setShowAutoGenerateModal(false);
+      } else {
+        toast.error(json.error?.message || 'Échec de la génération automatique.');
+      }
+    } catch {
+      toast.error('Erreur réseau lors de la génération.');
+    } finally {
+      setGeneratingTimetable(false);
+    }
+  };
+
   // Helper: Find active section object
   const activeSection = classSections.find(cs => cs.id === selectedSectionId);
 
@@ -521,7 +559,7 @@ export function ScheduleClient({ locale = 'fr' }: { locale?: string } = {}) {
     return map;
   }, [allSlots]);
 
-  // Helper: Calculate weekly booked hours for each room
+  // Helper: Calculate weekly room usage hours
   const roomWorkloads = useMemo(() => {
     const map = new Map<string, number>();
     for (const slot of allSlots) {
@@ -529,24 +567,39 @@ export function ScheduleClient({ locale = 'fr' }: { locale?: string } = {}) {
       const [sh, sm] = slot.startTime.split(':').map(Number);
       const [eh, em] = slot.endTime.split(':').map(Number);
       const durationHours = ((eh ?? 0) * 60 + (em ?? 0) - ((sh ?? 0) * 60 + (sm ?? 0))) / 60;
-      const key = slot.roomLabel.trim().toLowerCase();
-      map.set(key, (map.get(key) || 0) + Math.max(0, durationHours));
+      map.set(slot.roomLabel, (map.get(slot.roomLabel) || 0) + Math.max(0, durationHours));
     }
     return map;
   }, [allSlots]);
 
+  // Global Conflict Summary across ALL slots
+  const allConflicts = useMemo(() => {
+    const conflicts: { slot: TimetableSlot; details: string }[] = [];
+    for (const s of allSlots) {
+      const c = checkConflict(s);
+      if (c.hasConflict && c.details) {
+        conflicts.push({ slot: s, details: c.details });
+      }
+    }
+    return conflicts;
+  }, [allSlots, checkConflict]);
+
   return (
-    <div className="space-y-6 max-w-[1400px] mx-auto pb-16 text-start">
-      {/* Official Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-5 max-w-[1600px] mx-auto text-start">
+      {/* Top Header & Context */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#2487B8]/10 text-[#2487B8] border border-[#2487B8]/20">
-              <Calendar className="w-3.5 h-3.5" /> {t('timetableTitle') || 'Emploi du Temps'}
-            </span>
-            <Badge variant="neutral" className="text-[10px] font-bold">
-              {t('realtimeBadge')}
+            <Badge variant="neutral" className="text-xs font-bold gap-1 bg-slate-100 text-slate-700">
+              <Calendar className="w-3.5 h-3.5 text-[#2487B8]" />
+              <span>{t('scheduleModuleTag')}</span>
             </Badge>
+            {allConflicts.length > 0 && (
+              <Badge variant="danger" className="text-xs font-bold gap-1 animate-pulse">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>{allConflicts.length} {t('conflictsDetectedCount')}</span>
+              </Badge>
+            )}
           </div>
           <h1 className="text-2xl font-extrabold text-[#16212B] mt-1.5 tracking-tight">
             {t('scheduleRealTitle')}
@@ -567,6 +620,17 @@ export function ScheduleClient({ locale = 'fr' }: { locale?: string } = {}) {
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             {tCommon('refresh')}
           </Button>
+
+          {canManage && (
+            <Button
+              size="sm"
+              onClick={() => setShowAutoGenerateModal(true)}
+              className="h-9 px-3.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold gap-1.5 shadow-xs"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Générer Tout Automatiquement
+            </Button>
+          )}
 
           {canManage && viewMode === 'class' && selectedSectionId && (
             <Button
@@ -1376,6 +1440,84 @@ export function ScheduleClient({ locale = 'fr' }: { locale?: string } = {}) {
               className="text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold"
             >
               {duplicating ? t('duplicationInProgress') : t('btnConfirmDuplicate')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* AUTO-GENERATE FULL TIMETABLE MODAL */}
+      <Dialog open={showAutoGenerateModal} onOpenChange={setShowAutoGenerateModal}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-[#16212B] flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-purple-600" />
+              <span>Générateur Automatique d&apos;Emplois du Temps</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              Générez un emploi du temps complet pour l&apos;ensemble de l&apos;établissement en 1 clic grâce au solveur sous contraintes.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2 text-xs">
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-700">Session Académique Cible</label>
+              <select
+                value={sessionYearId || ''}
+                onChange={(e) => setSessionYearId(e.target.value)}
+                className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium focus:outline-hidden focus:ring-2 focus:ring-purple-500"
+              >
+                {sessionYearsList.map((sy) => (
+                  <option key={sy.id} value={sy.id}>
+                    {sy.name} {sy.isDefault ? '(Active)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="bg-purple-50/70 border border-purple-100 rounded-xl p-3.5 space-y-2 text-purple-950">
+              <p className="font-bold text-xs flex items-center gap-1.5 text-purple-900">
+                <CheckCircle2 className="w-4 h-4 text-purple-600" />
+                Garanties du solveur SchoolOS :
+              </p>
+              <ul className="space-y-1.5 text-[11px] text-purple-900 ps-5 list-disc">
+                <li><strong>Toutes les classes &amp; sections</strong> traitées simultanément (3ème, 2nde, 1ère, Terminale...)</li>
+                <li><strong>Zéro conflit enseignant</strong> : aucun professeur n&apos;est programmé sur deux créneaux simultanés</li>
+                <li><strong>Zéro conflit de salle</strong> : chaque salle dispose d&apos;un cours unique par tranche horaire</li>
+                <li><strong>Respect des volumes horaires</strong> officiels par matière (maths, français, arabe, sciences...)</li>
+              </ul>
+            </div>
+
+            <p className="text-[11px] text-slate-500 italic">
+              Une nouvelle version brouillon sera créée. Vous pourrez ensuite ajuster individuellement chaque créneau, échanger des cours ou adapter selon les désidératas des enseignants.
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAutoGenerateModal(false)}
+              className="text-xs rounded-xl"
+            >
+              {tCommon('cancel')}
+            </Button>
+            <Button
+              size="sm"
+              disabled={generatingTimetable || !sessionYearId}
+              onClick={handleAutoGenerateTimetable}
+              className="text-xs rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold gap-1.5 shadow-xs"
+            >
+              {generatingTimetable ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>Résolution &amp; Génération en cours...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Lancer la Génération Globale</span>
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
