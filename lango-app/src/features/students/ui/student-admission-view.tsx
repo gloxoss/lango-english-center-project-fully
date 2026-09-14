@@ -7,11 +7,9 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
-  FolderOpen,
   Loader2,
   Search,
   Upload,
-  Wallet,
   X,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -103,10 +101,6 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
 
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
 
-  // Real pipeline counts for the four KPI cards, derived from the tenant's
-  // existing admission requests (GET /api/students/admissions).
-  const [kpi, setKpi] = useState({ inProgress: 0, complete: 0, missingDocs: 0, approved: 0 });
-
   // Step 2: guardian search-first.
   const [guardianSearch, setGuardianSearch] = useState('');
   const [guardianResults, setGuardianResults] = useState<GuardianResult[]>([]);
@@ -153,22 +147,6 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
     fetch('/api/academics/academic-years')
       .then(res => (res.ok ? res.json() : null))
       .then(json => json?.success && setAcademicYears(json.data))
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    fetch('/api/students/admissions')
-      .then(res => (res.ok ? res.json() : null))
-      .then((json) => {
-        if (!json?.success || !Array.isArray(json.data)) return;
-        const rows = json.data as Array<{ status: string; checklistDocumentsReceived: boolean; checklistFileComplete: boolean }>;
-        setKpi({
-          inProgress: rows.filter(r => r.status === 'applied' || r.status === 'in_review').length,
-          complete: rows.filter(r => r.checklistFileComplete).length,
-          missingDocs: rows.filter(r => !r.checklistDocumentsReceived).length,
-          approved: rows.filter(r => r.status === 'approved').length,
-        });
-      })
       .catch(() => {});
   }, []);
 
@@ -413,42 +391,7 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
           ))}
         </div>
 
-        {/* KPIs - contextual counts, not tied to this specific submission */}
-        <div className="
-          grid grid-cols-1 gap-4
-          sm:grid-cols-2
-          lg:grid-cols-4
-        "
-        >
-          {[
-            { label: t('dossiersInProgress'), value: kpi.inProgress, icon: FolderOpen, iconBg: 'bg-[#DCEBF4]', iconColor: 'text-[#1B6C93]' },
-            { label: t('dossiersComplete'), value: kpi.complete, icon: CheckCircle2, iconBg: 'bg-[#D1F5E8]', iconColor: 'text-[#17A673]' },
-            { label: t('documentsMissing'), value: kpi.missingDocs, icon: AlertTriangle, iconBg: 'bg-[#FCF0DC]', iconColor: 'text-[#E8A33D]' },
-            { label: t('registrationFees'), value: kpi.approved, icon: Wallet, iconBg: 'bg-[#DCEBF4]', iconColor: 'text-[#1B6C93]' },
-          ].map((kpiItem, i) => (
-            <Card
-              key={i}
-              className="
-                flex items-center justify-between rounded-2xl border
-                border-slate-200/80 bg-white p-5 shadow-2xs
-              "
-            >
-              <div className="space-y-1">
-                <p className="text-xs font-bold text-slate-500">{kpiItem.label}</p>
-                <p className="text-2xl font-extrabold text-[#16212B]">{kpiItem.value}</p>
-              </div>
-              <div className={`
-                size-10 rounded-full
-                ${kpiItem.iconBg}
-                ${kpiItem.iconColor}
-                flex items-center justify-center shrink-0
-              `}
-              >
-                <kpiItem.icon className="size-5" />
-              </div>
-            </Card>
-          ))}
-        </div>
+
 
         <Card className="
           rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs
