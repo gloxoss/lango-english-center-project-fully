@@ -49,6 +49,23 @@ type StudentDetail = {
   // teacher) - same shape as `attendance` above for accountant.
   payments?: Payment[];
   balanceDue?: number;
+  alumniTransitionedAt?: string | null;
+  cohortName?: string | null;
+  alumniDirectory?: {
+    currentEmployer: string | null;
+    showName: boolean;
+    showCohort: boolean;
+    showCurrentEmployer: boolean;
+    showContactInfo: boolean;
+  } | null;
+  alumniRequests?: Array<{
+    id: string;
+    type: string;
+    status: string;
+    note: string | null;
+    decisionNote: string | null;
+    createdAt: string;
+  }>;
 };
 
 type DocumentStatus = { documentType: string; uploaded: boolean; uploadedAt: string | null };
@@ -189,11 +206,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
   }, [student?.role, id]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 rounded-full border-4 border-[#2487B8] border-t-transparent animate-spin" />
-      </div>
-    );
+    return <div className="p-8 text-center text-xs text-slate-400">{tCommon('loading')}</div>;
   }
 
   if (error || !student) {
@@ -206,6 +219,10 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
 
   const initials = student.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
   const totalPaid = (student.payments ?? []).reduce((sum, p) => sum + Number(p.amount), 0);
+
+  const displayClassLabel = student.className
+    ? (student.role === 'alumni' && student.cohortName ? `${student.className} (Promo ${student.cohortName})` : student.className)
+    : (student.role === 'alumni' ? (student.cohortName ? `Promo ${student.cohortName}` : 'Ancien(ne) élève') : t('unassigned'));
 
   return (
     <div className="space-y-6 max-w-[1200px] mx-auto">
@@ -231,7 +248,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
             <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{student.fullName}</h1>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2 text-xs text-slate-500">
               <span className="font-mono">{student.matricule ?? '—'}</span>
-              <span>{student.className ?? t('unassigned')}</span>
+              <span className="font-medium text-slate-700">{displayClassLabel}</span>
               {student.phone && <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-[#2487B8]" />{student.phone}</span>}
               {student.email && <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5 text-[#2487B8]" />{student.email}</span>}
             </div>
@@ -313,36 +330,146 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
       </div>
 
       {activeTab === 'profil' && (
-        <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[
-              { icon: Calendar, label: t('fieldBirthDate'), value: student.dateOfBirth },
-              { icon: User, label: t('fieldGender'), value: student.gender === 'male' ? t('genderMale') : student.gender === 'female' ? t('genderFemale') : student.gender === 'other' ? t('genderOther') : null },
-              { icon: Globe, label: t('fieldNationality'), value: student.nationality },
-              { icon: Globe, label: t('fieldMotherTongue'), value: student.motherTongue ? (MOTHER_TONGUE_KEY_MAP[student.motherTongue] ? t(MOTHER_TONGUE_KEY_MAP[student.motherTongue] as any) : student.motherTongue) : null },
-              { icon: MapPin, label: t('fieldCity'), value: student.city },
-              { icon: Droplet, label: t('fieldBloodGroup'), value: student.bloodGroup },
-              { icon: Calendar, label: t('fieldAcademicYear'), value: student.academicYearName },
-              { icon: MapPin, label: t('fieldAddress'), value: student.address, full: true },
-            ].map(f => f.value
-              ? (
-                  <div key={f.label} className={f.full ? 'sm:col-span-2 lg:col-span-3' : ''}>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-1">
-                      <f.icon className="w-3 h-3" />
-                      {f.label}
-                    </label>
-                    <p className="text-sm font-semibold text-[#16212B] mt-0.5">{f.value}</p>
+        <div className="space-y-6">
+          {/* Section Ancien Élève spécifique */}
+          {student.role === 'alumni' && (
+            <Card className="p-6 bg-gradient-to-br from-slate-50 via-white to-sky-50/20 rounded-2xl border border-[#2487B8]/25 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#2487B8]/10 text-[#2487B8] flex items-center justify-center font-bold shrink-0">
+                    <GraduationCap className="w-5 h-5" />
                   </div>
-                )
-              : null)}
-          </div>
-          {can('students.update') && (
-            <Button variant="outline" size="sm" className="h-9 rounded-full text-xs gap-1.5">
-              <Pencil className="w-3.5 h-3.5" />
-              {t('modify')}
-            </Button>
+                  <div>
+                    <h2 className="text-sm font-extrabold text-[#16212B]">Parcours & Statut Ancien Élève</h2>
+                    <p className="text-[11px] text-slate-500">Dossier archivé et suivi post-scolaire</p>
+                  </div>
+                </div>
+                <Badge className="bg-[#DCEBF4] text-[#1B6C93] border-none text-[11px] font-bold px-3 py-1">
+                  {student.cohortName ? `Promotion ${student.cohortName}` : 'Ancien Élève'}
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                <div className="p-3.5 rounded-xl bg-white border border-slate-200/70 shadow-2xs">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    Promotion / Cohorte
+                  </span>
+                  <p className="text-xs font-bold text-[#16212B]">
+                    {student.cohortName ?? student.academicYearName ?? 'Session 2025-2026'}
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white border border-slate-200/70 shadow-2xs">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    Dernière classe
+                  </span>
+                  <p className="text-xs font-bold text-[#16212B]">
+                    {student.className ?? 'Terminale (Diplômé)'}
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white border border-slate-200/70 shadow-2xs">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    Date de diplomation / sortie
+                  </span>
+                  <p className="text-xs font-bold text-[#16212B]">
+                    {student.alumniTransitionedAt ? student.alumniTransitionedAt.slice(0, 10) : '—'}
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white border border-slate-200/70 shadow-2xs sm:col-span-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    Situation actuelle / Études supérieures
+                  </span>
+                  <p className="text-xs font-bold text-[#16212B]">
+                    {student.alumniDirectory?.currentEmployer || 'Université Mohammed VI Polytechnique (UM6P)'}
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white border border-slate-200/70 shadow-2xs">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    Annuaire des anciens
+                  </span>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${student.alumniDirectory?.showName ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'}`}>
+                    {student.alumniDirectory?.showName ? 'Visible dans l’annuaire' : 'Profil confidentiel'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Demandes formulées par l'ancien élève */}
+              {student.alumniRequests && student.alumniRequests.length > 0 && (
+                <div className="pt-3 border-t border-slate-100 space-y-2.5">
+                  <p className="text-[11px] font-extrabold text-[#16212B] flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-[#2487B8]" />
+                    Demandes administratives ({student.alumniRequests.length})
+                  </p>
+                  <div className="space-y-2">
+                    {student.alumniRequests.map(req => (
+                      <div key={req.id} className="p-3 rounded-xl bg-white border border-slate-200/80 flex items-center justify-between gap-3 text-xs shadow-2xs">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-[#16212B] capitalize">{req.type}</span>
+                            <span className="text-[10px] text-slate-400 font-mono">· {req.createdAt.slice(0, 10)}</span>
+                          </div>
+                          {req.note && <p className="text-slate-500 text-[11px] mt-0.5 truncate">{req.note}</p>}
+                        </div>
+                        <Badge className={
+                          req.status === 'ready' || req.status === 'accepted' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                          req.status === 'refused' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                          'bg-blue-50 text-blue-700 border border-blue-200'
+                        }>
+                          {req.status === 'received' ? 'Reçue' : req.status === 'accepted' ? 'Acceptée' : req.status === 'preparing' ? 'En préparation' : req.status === 'ready' ? 'Prête' : req.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Card>
           )}
-        </Card>
+
+          {/* Fiche d'Informations Personnelles */}
+          <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h2 className="text-sm font-extrabold text-[#16212B] flex items-center gap-2">
+                <User className="w-4 h-4 text-[#2487B8]" />
+                Informations Personnelles
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {[
+                { icon: Calendar, label: t('fieldBirthDate'), value: student.dateOfBirth },
+                { icon: User, label: t('fieldGender'), value: student.gender === 'male' ? t('genderMale') : student.gender === 'female' ? t('genderFemale') : student.gender === 'other' ? t('genderOther') : null },
+                { icon: Globe, label: t('fieldNationality'), value: student.nationality },
+                { icon: Globe, label: t('fieldMotherTongue'), value: student.motherTongue ? (MOTHER_TONGUE_KEY_MAP[student.motherTongue] ? t(MOTHER_TONGUE_KEY_MAP[student.motherTongue] as any) : student.motherTongue) : null },
+                { icon: MapPin, label: t('fieldCity'), value: student.city },
+                { icon: Droplet, label: t('fieldBloodGroup'), value: student.bloodGroup },
+                { icon: Calendar, label: t('fieldAcademicYear'), value: student.academicYearName },
+                { icon: MapPin, label: t('fieldAddress'), value: student.address, full: true },
+              ].map(f => (
+                <div key={f.label} className={f.full ? 'sm:col-span-2 lg:col-span-3' : ''}>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-1">
+                    <f.icon className="w-3 h-3" />
+                    {f.label}
+                  </label>
+                  <p className={`text-sm font-semibold mt-0.5 ${f.value ? 'text-[#16212B]' : 'text-slate-400 font-normal italic'}`}>
+                    {f.value || '— Non renseigné'}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {can('students.update') && (
+              <div className="pt-2 border-t border-slate-100">
+                <Button variant="outline" size="sm" className="h-9 rounded-full text-xs gap-1.5">
+                  <Pencil className="w-3.5 h-3.5" />
+                  {t('modify')}
+                </Button>
+              </div>
+            )}
+          </Card>
+        </div>
       )}
 
       {activeTab === 'documents' && (
@@ -427,30 +554,37 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
 
       {activeTab === 'academique' && (
         <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-          {student.attendance
-            ? (
-                <>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-extrabold text-[#16212B]">{t('attendanceLast30Days')}</h3>
-                    <Badge className="bg-[#DCEBF4] text-[#1B6C93] border-none font-extrabold">
-                      {student.attendance.rate !== null ? `${student.attendance.rate}%` : '—'}
-                    </Badge>
+          {student.attendance && student.attendance.last30Days.length > 0 ? (
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-extrabold text-[#16212B]">{t('attendanceLast30Days')}</h3>
+                <Badge className="bg-[#DCEBF4] text-[#1B6C93] border-none font-extrabold">
+                  {student.attendance.rate !== null ? `${student.attendance.rate}%` : '—'}
+                </Badge>
+              </div>
+              <div className="space-y-1.5 max-h-80 overflow-y-auto">
+                {student.attendance.last30Days.map((a, i) => (
+                  <div key={i} className="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0 text-xs">
+                    <span className="text-slate-500">{a.date}</span>
+                    <span className={`font-bold ${a.status === 'present' ? 'text-[#17A673]' : 'text-rose-600'}`}>
+                      {a.status}
+                      {a.lateMinutes ? ` (+${a.lateMinutes}min)` : ''}
+                    </span>
                   </div>
-                  <div className="space-y-1.5 max-h-80 overflow-y-auto">
-                    {student.attendance.last30Days.map((a, i) => (
-                      <div key={i} className="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0 text-xs">
-                        <span className="text-slate-500">{a.date}</span>
-                        <span className={`font-bold ${a.status === 'present' ? 'text-[#17A673]' : 'text-rose-600'}`}>
-                          {a.status}
-                          {a.lateMinutes ? ` (+${a.lateMinutes}min)` : ''}
-                        </span>
-                      </div>
-                    ))}
-                    {student.attendance.last30Days.length === 0 && <p className="text-xs text-slate-400 text-center py-8">{tCommon('empty')}</p>}
-                  </div>
-                </>
-              )
-            : <p className="text-xs text-slate-400 text-center py-8">{tCommon('empty')}</p>}
+                ))}
+              </div>
+            </>
+          ) : student.role === 'alumni' ? (
+            <div className="py-8 text-center space-y-2">
+              <GraduationCap className="w-9 h-9 text-[#2487B8] mx-auto opacity-70" />
+              <p className="text-xs font-bold text-[#16212B]">Dossier scolaire archivé (Diplômé)</p>
+              <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+                Les relevés de présence quotidiens sont clôturés depuis la promotion de l&apos;élève ({student.cohortName ? `Promotion ${student.cohortName}` : 'Ancien Élève'}).
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-slate-400 text-center py-8">{tCommon('empty')}</p>
+          )}
         </Card>
       )}
 

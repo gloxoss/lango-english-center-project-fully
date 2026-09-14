@@ -318,7 +318,27 @@ async function run() {
         { id: 'USR-LIB-001', tenantId, name: 'Fatima Zahra Mansouri (Bibliothécaire)', email: 'bibliotheque@atlas.ma', phone: '+212 6 61-112233', role: 'librarian', userStatus: 'active' },
         { id: 'USR-GUARD-001', tenantId, name: 'Hassan Chraibi (Chef de Sécurité)', email: 'securite@atlas.ma', phone: '+212 6 62-223344', role: 'guard', userStatus: 'active' },
         { id: 'USR-RECEPT-001', tenantId, name: 'Kenza Berrada (Accueil & Réception)', email: 'accueil@atlas.ma', phone: '+212 6 63-334455', role: 'receptionist', userStatus: 'active' },
-        { id: 'USR-ALUM-001', tenantId, name: 'Mehdi Benjelloun (Ancien Élève)', email: 'ancien.eleve@atlas.ma', phone: '+212 6 64-445566', role: 'alumni', userStatus: 'active' },
+        {
+          id: 'USR-ALUM-001',
+          tenantId,
+          name: 'Mehdi Benjelloun (Ancien Élève)',
+          firstName: 'Mehdi',
+          lastName: 'Benjelloun',
+          matricule: 'ALUM-2025-0042',
+          dateOfBirth: '2005-04-12',
+          gender: 'male',
+          nationality: 'Marocaine',
+          motherTongue: 'arabic',
+          city: 'Casablanca',
+          address: '14, Boulevard Zerktouni, Racine, Casablanca',
+          bloodGroup: 'O+',
+          email: 'ancien.eleve@atlas.ma',
+          phone: '+212 6 64-445566',
+          role: 'alumni',
+          userStatus: 'active',
+          alumniTransitionedAt: '2025-06-30 11:30:00',
+          alumniTransitionedBy: 'USR-001',
+        },
       ])
       .onConflictDoNothing();
 

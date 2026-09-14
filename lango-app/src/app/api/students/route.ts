@@ -9,7 +9,21 @@ import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, studentCreateSchema, studentUpdateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { reserveMatricule } from '@/libs/services/matricule';
-import { academicYears, attendance, classes, classSections, guardians, guardianStudents, invoices, payments, sections, user } from '@/models/Schema';
+import {
+  academicYears,
+  alumniDirectoryConsent,
+  alumniRequests,
+  attendance,
+  classes,
+  classSections,
+  guardians,
+  guardianStudents,
+  invoices,
+  payments,
+  sections,
+  sessionYears,
+  user,
+} from '@/models/Schema';
 import { toDbStatus, toUiStatus } from '@/models/userMapping';
 
 // ponytail: students are `user` rows with role = 'student'. The schema has no
@@ -90,7 +104,7 @@ async function getStudentDetail(tenantId: string, id: string) {
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-  const [guardianRows, attendanceRows, paymentRows, invoiceRows, academicYearRow] = await Promise.all([
+  const [guardianRows, attendanceRows, paymentRows, invoiceRows, academicYearRow, cohortRow, directoryRow, alumniRequestRows] = await Promise.all([
     db
       .select({
         id: guardians.id,
@@ -121,6 +135,28 @@ async function getStudentDetail(tenantId: string, id: string) {
     row.student.academicYearId
       ? db.select({ name: academicYears.name }).from(academicYears).where(eq(academicYears.id, row.student.academicYearId)).limit(1)
       : Promise.resolve([]),
+    row.student.graduationCohortSessionYearId
+      ? db.select({ name: sessionYears.name }).from(sessionYears).where(eq(sessionYears.id, row.student.graduationCohortSessionYearId)).limit(1)
+      : Promise.resolve([]),
+    row.student.role === 'alumni'
+      ? db.select().from(alumniDirectoryConsent).where(and(eq(alumniDirectoryConsent.tenantId, tenantId), eq(alumniDirectoryConsent.alumnusId, id))).limit(1)
+      : Promise.resolve([]),
+    row.student.role === 'alumni'
+      ? db
+          .select({
+            id: alumniRequests.id,
+            type: alumniRequests.type,
+            status: alumniRequests.status,
+            note: alumniRequests.note,
+            decisionNote: alumniRequests.decisionNote,
+            decidedAt: alumniRequests.decidedAt,
+            createdAt: alumniRequests.createdAt,
+          })
+          .from(alumniRequests)
+          .where(and(eq(alumniRequests.tenantId, tenantId), eq(alumniRequests.alumnusId, id)))
+          .orderBy(desc(alumniRequests.createdAt))
+          .limit(10)
+      : Promise.resolve([]),
   ]);
 
   const presentCount = attendanceRows.filter(a => a.status === 'present').length;
@@ -148,6 +184,16 @@ async function getStudentDetail(tenantId: string, id: string) {
     attendance: { last30Days: attendanceRows, rate: attendanceRate },
     payments: paymentRows,
     balanceDue,
+    alumniTransitionedAt: row.student.alumniTransitionedAt ?? null,
+    cohortName: cohortRow[0]?.name ?? null,
+    alumniDirectory: directoryRow[0] ? {
+      currentEmployer: directoryRow[0].currentEmployer ?? null,
+      showName: directoryRow[0].showName ?? false,
+      showCohort: directoryRow[0].showCohort ?? false,
+      showCurrentEmployer: directoryRow[0].showCurrentEmployer ?? false,
+      showContactInfo: directoryRow[0].showContactInfo ?? false,
+    } : null,
+    alumniRequests: alumniRequestRows ?? [],
   };
 }
 
