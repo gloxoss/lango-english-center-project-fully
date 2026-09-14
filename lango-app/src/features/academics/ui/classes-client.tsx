@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Search, Plus, Trash2, Pencil, ArrowRight, UserCog,
-  SlidersHorizontal, Layers, Clock, DoorOpen, UserCheck, Check, AlertCircle, X
+  SlidersHorizontal, Layers, Clock, DoorOpen, UserCheck, Check, AlertCircle, X,
+  ChevronDown, ChevronUp
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -78,6 +79,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
   const [newSectionMaxStudents, setNewSectionMaxStudents] = useState('');
   const [newSectionHomeRoomId, setNewSectionHomeRoomId] = useState('');
   const [linkingSection, setLinkingSection] = useState(false);
+  const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);
 
   const loadSubstitutes = (sectionId: string) => {
     fetch(`/api/academics/class-teachers?classSectionId=${sectionId}&pageSize=50`)
@@ -566,23 +568,23 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
       {/* DEDICATED SECTIONS MANAGEMENT MODAL DIALOG */}
       {selectedClassForSections && (
         <Dialog open={!!selectedClassForSections} onOpenChange={open => !open && setSelectedClassForSections(null)}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-6 rounded-2xl bg-white border border-slate-200 shadow-xl space-y-5">
-            <DialogHeader className="border-b border-slate-100 pb-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#2487B8]/10 text-[#2487B8] flex items-center justify-center font-bold shrink-0">
-                    <Layers className="w-5 h-5" />
+          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto p-5 rounded-2xl bg-white border border-slate-200 shadow-xl space-y-4">
+            <DialogHeader className="border-b border-slate-100 pb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-[#2487B8]/10 text-[#2487B8] flex items-center justify-center font-bold shrink-0">
+                    <Layers className="w-4 h-4" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <DialogTitle className="text-lg font-extrabold text-[#16212B]">
+                      <DialogTitle className="text-base font-extrabold text-[#16212B]">
                         Sections · {selectedClassForSections.name}
                       </DialogTitle>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-[#0066FF] border border-blue-200/60">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-[#0066FF] border border-blue-200/60">
                         {selectedClassForSections.periodType === 'trimester' ? t('periodTrimester') : selectedClassForSections.periodType === 'month' ? t('periodMonth') : t('periodSemester')}
                       </span>
                     </div>
-                    <DialogDescription className="text-xs text-slate-500 mt-0.5">
+                    <DialogDescription className="text-[11px] text-slate-500 mt-0.5">
                       {nameOf(mediums, selectedClassForSections.mediumId) ?? 'Médium non défini'}
                       {selectedClassForSections.cycle ? ` · ${cycleLabels[selectedClassForSections.cycle] || selectedClassForSections.cycle}` : ''}
                       {selectedClassForSections.shiftId ? ` · Shift: ${nameOf(shifts, selectedClassForSections.shiftId)}` : ''}
@@ -590,78 +592,57 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                   </div>
                 </div>
 
-                <div className="text-left sm:text-right bg-slate-50 sm:bg-transparent p-2 sm:p-0 rounded-xl">
-                  <span className="text-xs font-bold text-[#16212B]">
-                    {(sectionsByClass[selectedClassForSections.id] ?? []).length} section(s) configurée(s)
-                  </span>
-                  <p className="text-[11px] text-slate-400">
-                    {(sectionsByClass[selectedClassForSections.id] ?? []).reduce((acc, s) => acc + s.enrolledCount, 0)} élève(s) au total
-                  </p>
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-600 bg-slate-50 px-2.5 py-1 rounded-lg self-start sm:self-auto">
+                  <span>{(sectionsByClass[selectedClassForSections.id] ?? []).length} section(s)</span>
+                  <span className="text-slate-300">·</span>
+                  <span className="text-slate-500">{(sectionsByClass[selectedClassForSections.id] ?? []).reduce((acc, s) => acc + s.enrolledCount, 0)} élèves</span>
                 </div>
               </div>
             </DialogHeader>
 
-            {/* Quick Add Section Bar */}
+            {/* Quick Add Section Bar (Compact Single Row) */}
             {canManage && (
-              <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/90 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-[#16212B] flex items-center gap-1.5">
-                    <Plus className="w-3.5 h-3.5 text-[#2487B8]" />
-                    Lier une nouvelle section à cette classe
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">
-                    Sélectionnez une section ou créez-en une nouvelle
-                  </span>
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="flex-1 min-w-[140px]">
+                  <SectionCombobox
+                    sections={availableUnlinkedSections}
+                    value={newSectionId}
+                    onChange={setNewSectionId}
+                    onCreated={s => {
+                      setAllSections(p => [...p, s]);
+                      setNewSectionId(s.id);
+                    }}
+                    placeholder="Lier une section (ex: A, B, C...)"
+                  />
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                  <div className="sm:col-span-5 space-y-1">
-                    <label className="text-[10px] font-bold text-slate-600">Section</label>
-                    <SectionCombobox
-                      sections={availableUnlinkedSections}
-                      value={newSectionId}
-                      onChange={setNewSectionId}
-                      onCreated={s => {
-                        setAllSections(p => [...p, s]);
-                        setNewSectionId(s.id);
-                      }}
-                      placeholder="Choisir (ex: A, B, C...)"
-                    />
-                  </div>
-                  <div className="sm:col-span-3 space-y-1">
-                    <label className="text-[10px] font-bold text-slate-600">Capacité max</label>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={100}
-                      value={newSectionMaxStudents}
-                      onChange={e => setNewSectionMaxStudents(e.target.value)}
-                      placeholder="Ex: 30"
-                      className="h-9 rounded-xl text-xs bg-white"
-                    />
-                  </div>
-                  <div className="sm:col-span-4 flex items-end">
-                    <Button
-                      disabled={!newSectionId || linkingSection}
-                      onClick={() => handleAttachSection(selectedClassForSections.id)}
-                      className="w-full h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold gap-1.5"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      {linkingSection ? 'Liaison...' : 'Lier à la classe'}
-                    </Button>
-                  </div>
-                </div>
+                <Input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={newSectionMaxStudents}
+                  onChange={e => setNewSectionMaxStudents(e.target.value)}
+                  placeholder="Cap. (30)"
+                  className="w-24 h-9 rounded-xl text-xs bg-white"
+                />
+                <Button
+                  disabled={!newSectionId || linkingSection}
+                  onClick={() => handleAttachSection(selectedClassForSections.id)}
+                  className="h-9 px-4 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold gap-1 shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{linkingSection ? '...' : 'Lier'}</span>
+                </Button>
               </div>
             )}
 
-            {/* List of Attached Sections */}
-            <div className="space-y-3">
+            {/* List of Attached Sections (Clean, Minimalist Compact Rows) */}
+            <div className="space-y-2.5">
               {(!sectionsByClass[selectedClassForSections.id] || sectionsByClass[selectedClassForSections.id]!.length === 0) && (
-                <div className="py-10 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/50 p-6 space-y-2">
-                  <Layers className="w-8 h-8 text-slate-300 mx-auto" />
+                <div className="py-8 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/50 p-6 space-y-1.5">
+                  <Layers className="w-6 h-6 text-slate-300 mx-auto" />
                   <p className="text-xs font-bold text-slate-600">Aucune section liée à cette classe</p>
                   <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
-                    Utilisez le sélecteur ci-dessus pour associer des sections (A, B, C...) à cette classe afin d&apos;y affecter des élèves et des enseignants.
+                    Utilisez le sélecteur ci-dessus pour associer des sections à cette classe.
                   </p>
                 </div>
               )}
@@ -669,78 +650,40 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
               {sectionsByClass[selectedClassForSections.id]?.map(sec => {
                 const max = sec.maxStudents ?? 30;
                 const fillPercentage = Math.min(100, Math.round((sec.enrolledCount / max) * 100));
-                const barColor = fillPercentage >= 100 ? 'bg-rose-500' : fillPercentage >= 80 ? 'bg-amber-500' : 'bg-[#17A673]';
+                const isExpanded = expandedSectionId === sec.id;
+                const slotsCount = (slotsBySection[sec.id] ?? []).length;
 
                 return (
-                  <div key={sec.id} className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-3.5 hover:border-[#2487B8]/40 transition">
-                    {/* Top Row: Section Badge, Capacity & Detach button */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                      <div className="flex items-center gap-3">
-                        <span className="w-8 h-8 rounded-xl bg-[#16212B] text-white flex items-center justify-center font-extrabold text-xs">
+                  <div
+                    key={sec.id}
+                    className="rounded-xl border border-slate-200/90 bg-white overflow-hidden transition-all hover:border-[#2487B8]/40 shadow-2xs"
+                  >
+                    {/* Primary Row: Badge, Name, Homeroom Teacher, Room, Schedule pill & Detach */}
+                    <div className="p-3 flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+                      {/* Section Badge & Count */}
+                      <div className="flex items-center gap-2.5 min-w-[130px] shrink-0">
+                        <span className="w-7 h-7 rounded-lg bg-[#16212B] text-white flex items-center justify-center font-extrabold text-xs shrink-0">
                           {sec.sectionName}
                         </span>
                         <div>
-                          <p className="text-xs font-extrabold text-[#16212B]">
+                          <p className="text-xs font-extrabold text-[#16212B] leading-tight">
                             Section {sec.sectionName}
                           </p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[11px] text-slate-500 font-medium">
-                              {sec.enrolledCount} / {sec.maxStudents ?? '—'} élèves
-                            </span>
-                            <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                              <div className={`h-full ${barColor}`} style={{ width: `${fillPercentage}%` }} />
-                            </div>
-                            <span className="text-[10px] font-bold text-slate-400">
-                              {fillPercentage}%
-                            </span>
-                          </div>
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            {sec.enrolledCount}{sec.maxStudents ? ` / ${sec.maxStudents}` : ''} élèves
+                          </span>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                          <span className="text-[11px] font-semibold text-slate-400">Capacité :</span>
-                          <input
-                            type="number"
-                            min={1}
-                            max={100}
-                            defaultValue={sec.maxStudents ?? ''}
-                            onBlur={e => updateSection(selectedClassForSections.id, sec.id, { maxStudents: e.target.value ? Number(e.target.value) : null })}
-                            className="w-14 h-7 text-xs font-bold rounded-lg border border-slate-200 text-center bg-slate-50 focus:bg-white"
-                            placeholder="—"
-                            title="Modifier la capacité max de la section"
-                          />
-                        </div>
-
-                        {canManage && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleUnlinkSection(selectedClassForSections.id, sec.id, sec.sectionName)}
-                            className="h-7 px-2 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg gap-1"
-                            title="Détacher cette section"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            <span className="text-[11px] font-semibold hidden sm:inline">Détacher</span>
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Assignments 3-Column Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                      {/* Homeroom Teacher */}
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
-                          <UserCheck className="w-3.5 h-3.5 text-[#2487B8]" />
-                          Professeur principal
-                        </label>
+                      {/* Professeur Principal Selector */}
+                      <div className="flex-1 min-w-[150px] max-w-[210px]">
                         <select
                           value={sec.homeroomTeacherId ?? ''}
                           onChange={e => setHomeroomTeacher(selectedClassForSections.id, sec.id, e.target.value)}
-                          className="h-8 w-full px-2.5 rounded-xl border border-slate-200 text-xs bg-white font-medium"
+                          className="h-8 w-full px-2 rounded-lg border border-slate-200 text-xs bg-slate-50 font-medium text-[#16212B] truncate"
+                          title="Professeur principal"
                         >
-                          <option value="">À affecter...</option>
+                          <option value="">Prof. principal...</option>
                           {teachers.map(t => (
                             <option key={t.id} value={t.id}>
                               {isTeacherAvailable(t.id) ? '✓ ' : ''}{t.name}
@@ -749,25 +692,92 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                         </select>
                       </div>
 
-                      {/* Substitutes */}
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
-                          <UserCog className="w-3.5 h-3.5 text-amber-600" />
-                          Professeur remplaçant
-                        </label>
+                      {/* Salle de Base Selector */}
+                      <div className="min-w-[110px] max-w-[150px]">
                         <select
-                          value=""
-                          onChange={e => assignSubstitute(sec.id, e.target.value)}
-                          className="h-8 w-full px-2.5 rounded-xl border border-slate-200 text-xs bg-white font-medium"
+                          value={sec.homeRoomId ?? ''}
+                          onChange={e => updateSection(selectedClassForSections.id, sec.id, { homeRoomId: e.target.value || null })}
+                          className="h-8 w-full px-2 rounded-lg border border-slate-200 text-xs bg-slate-50 font-medium text-[#16212B] truncate"
+                          title="Salle de base"
                         >
-                          <option value="">Affecter un remplaçant...</option>
-                          {teachers.map(t => (
-                            <option key={t.id} value={t.id}>{t.name}</option>
+                          <option value="">Salle...</option>
+                          {rooms.map(r => (
+                            <option key={r.id} value={r.id}>{r.name}</option>
                           ))}
                         </select>
+                      </div>
 
+                      {/* Action & Toggle Buttons */}
+                      <div className="flex items-center gap-1.5 shrink-0 ms-auto">
+                        <button
+                          type="button"
+                          onClick={() => setExpandedSectionId(isExpanded ? null : sec.id)}
+                          className={`h-8 px-2.5 rounded-lg text-xs font-bold border transition-all flex items-center gap-1 ${
+                            isExpanded
+                              ? 'bg-[#2487B8] text-white border-[#2487B8]'
+                              : slotsCount > 0
+                              ? 'bg-[#2487B8]/10 text-[#2487B8] border-[#2487B8]/20 hover:bg-[#2487B8]/20'
+                              : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+                          }`}
+                          title="Afficher les détails et le planning"
+                        >
+                          <Clock className="w-3 h-3" />
+                          <span>{slotsCount > 0 ? `${slotsCount} créneaux` : 'Détails'}</span>
+                          {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                        </button>
+
+                        {canManage && (
+                          <button
+                            onClick={() => handleUnlinkSection(selectedClassForSections.id, sec.id, sec.sectionName)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                            title="Détacher cette section"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Collapsible Details & Planning Drawer */}
+                    {isExpanded && (
+                      <div className="p-3 bg-slate-50/70 border-t border-slate-100 space-y-3 text-xs">
+                        {/* Capacity and Substitute Teacher */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-bold text-slate-500 whitespace-nowrap">Capacité max :</span>
+                            <input
+                              type="number"
+                              min={1}
+                              max={100}
+                              defaultValue={sec.maxStudents ?? ''}
+                              onBlur={e => updateSection(selectedClassForSections.id, sec.id, { maxStudents: e.target.value ? Number(e.target.value) : null })}
+                              className="w-16 h-7 text-xs font-bold rounded-lg border border-slate-200 text-center bg-white"
+                              placeholder="30"
+                            />
+                            <span className="text-[10px] text-slate-400">
+                              ({fillPercentage}% occupé)
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-bold text-slate-500 whitespace-nowrap">Remplaçant :</span>
+                            <select
+                              value=""
+                              onChange={e => assignSubstitute(sec.id, e.target.value)}
+                              className="h-7 flex-1 px-2 rounded-lg border border-slate-200 text-[11px] bg-white font-medium"
+                            >
+                              <option value="">Affecter...</option>
+                              {teachers.map(t => (
+                                <option key={t.id} value={t.id}>{t.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Substitute Badges if any */}
                         {(substitutesBySection[sec.id] ?? []).length > 0 && (
-                          <div className="flex flex-wrap gap-1 pt-1">
+                          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                            <span className="text-[10px] font-bold text-slate-400">Remplaçants :</span>
                             {(substitutesBySection[sec.id] ?? []).map(sb => {
                               const teacher = teachers.find(x => x.id === sb.teacherId);
                               const name = teacher?.name ?? sb.teacherId;
@@ -789,52 +799,33 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                             })}
                           </div>
                         )}
-                      </div>
 
-                      {/* Home Room */}
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
-                          <DoorOpen className="w-3.5 h-3.5 text-slate-500" />
-                          Salle de base
-                        </label>
-                        <select
-                          value={sec.homeRoomId ?? ''}
-                          onChange={e => updateSection(selectedClassForSections.id, sec.id, { homeRoomId: e.target.value || null })}
-                          className="h-8 w-full px-2.5 rounded-xl border border-slate-200 text-xs bg-white font-medium"
-                        >
-                          <option value="">Salle de base...</option>
-                          {rooms.map(r => (
-                            <option key={r.id} value={r.id}>{r.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Weekly Schedule Preview */}
-                    {slotsBySection[sec.id] && slotsBySection[sec.id]!.length > 0 ? (
-                      <div className="pt-2 border-t border-slate-100 space-y-1.5">
-                        <span className="text-[11px] font-bold text-slate-600 flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5 text-[#2487B8]" />
-                          Aperçu hebdomadaire ({slotsBySection[sec.id]!.length} créneaux)
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {slotsBySection[sec.id]!.map(slot => (
-                            <span
-                              key={slot.id}
-                              className="inline-flex items-center gap-1 rounded-lg bg-[#DCEBF4]/60 border border-[#2487B8]/20 px-2 py-1 text-[11px] font-semibold text-[#1B6C93]"
-                            >
-                              <span className="font-bold capitalize">{slot.dayOfWeek.slice(0, 3)}.</span>
-                              <span>{slot.startTime.slice(0, 5)}–{slot.endTime.slice(0, 5)}</span>
-                              {slot.subjectName && <span className="font-bold text-[#16212B]">· {slot.subjectName}</span>}
-                              {slot.roomLabel && <span className="text-slate-500 font-normal">({slot.roomLabel})</span>}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-slate-300" />
-                        <span>Aucun cours programmé dans l&apos;emploi du temps.</span>
+                        {/* Weekly Schedule Chips */}
+                        {slotsBySection[sec.id] && slotsBySection[sec.id]!.length > 0 ? (
+                          <div className="space-y-1.5 pt-2 border-t border-slate-200/60">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-[#2487B8]" />
+                              Aperçu hebdomadaire ({slotsBySection[sec.id]!.length} cours)
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {slotsBySection[sec.id]!.map(slot => (
+                                <span
+                                  key={slot.id}
+                                  className="inline-flex items-center gap-1 rounded-md bg-white border border-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-700 shadow-2xs"
+                                >
+                                  <span className="font-bold text-[#2487B8] capitalize">{slot.dayOfWeek.slice(0, 3)}.</span>
+                                  <span>{slot.startTime.slice(0, 5)}–{slot.endTime.slice(0, 5)}</span>
+                                  {slot.subjectName && <span className="font-semibold text-[#16212B]">· {slot.subjectName}</span>}
+                                  {slot.roomLabel && <span className="text-slate-400 font-mono">({slot.roomLabel})</span>}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-[10px] text-slate-400 italic pt-1">
+                            Aucun cours programmé dans l&apos;emploi du temps pour cette section.
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -842,12 +833,12 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
               })}
             </div>
 
-            <div className="flex justify-end pt-3 border-t border-slate-100">
+            <div className="flex justify-end pt-2 border-t border-slate-100">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setSelectedClassForSections(null)}
-                className="h-9 px-5 rounded-xl text-xs font-bold"
+                className="h-8 px-4 rounded-xl text-xs font-bold"
               >
                 Fermer
               </Button>
