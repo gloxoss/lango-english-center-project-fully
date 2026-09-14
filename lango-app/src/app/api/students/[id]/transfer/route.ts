@@ -12,6 +12,10 @@ import { branches, classSections, user } from '@/models/Schema';
 const transferSchema = z.object({
   branchId: z.string().uuid(),
   classSectionId: z.string().uuid().optional(),
+  reason: z.string().trim().max(500).optional(),
+  effectiveDate: z.string().optional(),
+  notifyGuardian: z.boolean().optional(),
+  generateCertificate: z.boolean().optional(),
 }).strict();
 
 // Real branch-to-branch student transfer. `user.branchId` is a real, already
@@ -27,14 +31,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const { id: studentId } = await params;
     const body = await parseJson(request, transferSchema);
 
-    const [student] = await db.select({ id: user.id, branchId: user.branchId }).from(user)
+    const [student] = await db.select({ id: user.id, name: user.name, branchId: user.branchId, classSectionId: user.classSectionId }).from(user)
       .where(and(eq(user.id, studentId), eq(user.tenantId, tenantId), eq(user.role, 'student')))
       .limit(1);
     if (!student) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'Élève introuvable pour cet établissement.');
     }
 
-    const [branch] = await db.select({ id: branches.id }).from(branches)
+    const [branch] = await db.select({ id: branches.id, name: branches.name }).from(branches)
       .where(and(eq(branches.id, body.branchId), eq(branches.tenantId, tenantId)))
       .limit(1);
     if (!branch) {
@@ -50,8 +54,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       }
     }
 
-    if (student.branchId === body.branchId) {
-      throw new ApiError(409, 'SAME_BRANCH', 'Cet élève est déjà affecté à cette branche.');
+    if (student.branchId === body.branchId && (!body.classSectionId || body.classSectionId === student.classSectionId)) {
+      throw new ApiError(409, 'SAME_BRANCH', 'Cet élève est déjà affecté à ce campus et à cette section.');
     }
 
     const [updated] = await db.update(user)
@@ -59,7 +63,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       .where(and(eq(user.id, studentId), eq(user.tenantId, tenantId)))
       .returning();
 
-    recordAudit(context, 'update', 'student_transfer', studentId, { fromBranchId: student.branchId, toBranchId: body.branchId });
+    recordAudit(context, 'update', 'student_transfer', studentId, {
+      fromBranchId: student.branchId,
+      toBranchId: body.branchId,
+      toBranchName: branch.name,
+      classSectionId: body.classSectionId ?? null,
+      reason: body.reason ?? 'Mutation administrative',
+      effectiveDate: body.effectiveDate ?? new Date().toISOString(),
+      studentName: student.name,
+    });
 
     return NextResponse.json({ success: true, data: updated, message: 'Élève transféré avec succès.' });
   } catch (error) {

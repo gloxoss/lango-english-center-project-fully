@@ -36,6 +36,7 @@ function toApiStudent(row: StudentRow, classSection: ClassSectionDisplay) {
     status: toUiStatus(row.userStatus),
     paymentStatus: row.paymentStatus,
     schoolId: row.tenantId,
+    branchId: row.branchId,
   };
 }
 

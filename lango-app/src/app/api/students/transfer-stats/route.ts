@@ -1,4 +1,4 @@
-import { and, eq, gte, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
@@ -44,11 +44,46 @@ export async function GET(request: Request) {
       .where(eq(branches.tenantId, tenantId))
       .groupBy(branches.id, branches.name);
 
+    const recentLogs = await db
+      .select({
+        id: auditLogs.id,
+        createdAt: auditLogs.createdAt,
+        actorId: auditLogs.actorId,
+        studentId: auditLogs.entityId,
+        metadata: auditLogs.metadata,
+        studentName: user.name,
+        studentMatricule: user.matricule,
+      })
+      .from(auditLogs)
+      .leftJoin(user, and(eq(user.id, auditLogs.entityId), eq(user.tenantId, tenantId)))
+      .where(and(
+        eq(auditLogs.tenantId, tenantId),
+        eq(auditLogs.entityType, 'student_transfer'),
+        eq(auditLogs.action, 'update'),
+      ))
+      .orderBy(desc(auditLogs.createdAt))
+      .limit(10);
+
     return NextResponse.json({
       success: true,
       data: {
         transfersThisMonth: transfersRow?.count ?? 0,
         byBranch,
+        recentTransfers: recentLogs.map((log) => {
+          const meta = (log.metadata as Record<string, any>) || {};
+          return {
+            id: log.id,
+            createdAt: log.createdAt,
+            studentId: log.studentId,
+            studentName: log.studentName || meta.studentName || 'Élève',
+            studentMatricule: log.studentMatricule || null,
+            fromBranchId: meta.fromBranchId ?? null,
+            toBranchId: meta.toBranchId ?? null,
+            toBranchName: meta.toBranchName ?? null,
+            reason: meta.reason ?? 'Mutation administrative',
+            effectiveDate: meta.effectiveDate ?? log.createdAt,
+          };
+        }),
       },
     });
   } catch (error) {
