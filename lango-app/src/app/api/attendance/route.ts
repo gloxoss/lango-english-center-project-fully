@@ -12,7 +12,7 @@ import { requireCapability } from '@/libs/api/permissions';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { attendance, classSections, guardians, guardianStudents, smsMessages, user } from '@/models/Schema';
+import { attendance, classes, classSections, guardians, guardianStudents, smsMessages, user } from '@/models/Schema';
 
 const attendanceRecordItemSchema = z.object({
   studentId: z.string().min(1),
@@ -69,7 +69,7 @@ export async function GET(request: Request) {
       conditions.push(eq(attendance.subjectId, subjectIdParam));
     }
     if (periodParam) {
-      conditions.push(eq(attendance.period, parseInt(periodParam, 10)));
+      conditions.push(eq(attendance.period, Number.parseInt(periodParam, 10)));
     }
 
     if (context.role === 'teacher') {
@@ -82,6 +82,12 @@ export async function GET(request: Request) {
         });
       }
       conditions.push(inArray(user.classSectionId, assignedIds));
+    }
+
+    // BRANCH SCOPE (P0): a branch-limited caller only sees marks of students
+    // belonging to their own campus. Whole-school callers are unaffected.
+    if (context.branchId) {
+      conditions.push(eq(user.branchId, context.branchId));
     }
 
     const rows = await db
@@ -148,13 +154,36 @@ export async function POST(request: Request) {
     let attendanceSectionId: string | null = null;
     if (body.studentGroupId) {
       const [sec] = await db
-        .select({ classId: classSections.classId })
+        .select({ classId: classSections.classId, branchId: classes.branchId })
         .from(classSections)
+        .innerJoin(classes, eq(classSections.classId, classes.id))
         .where(and(eq(classSections.tenantId, tenantId), eq(classSections.id, body.studentGroupId)))
         .limit(1);
       if (sec?.classId) {
+        // BRANCH SCOPE (P0): a branch-limited admin cannot mark another
+        // campus's section, even with valid student ids.
+        if (context.branchId && sec.branchId !== context.branchId) {
+          throw new ApiError(403, 'FORBIDDEN', 'Cette section appartient à un autre campus.');
+        }
         attendanceClassId = sec.classId;
         attendanceSectionId = body.studentGroupId;
+      }
+    }
+
+    // BRANCH SCOPE (P0): a branch-limited admin may only mark students of their
+    // own campus; ambiguous (branch-less) students are refused rather than
+    // silently mutated. Teachers are already scoped to assigned sections above.
+    if (context.role === 'school_admin' && context.branchId) {
+      const studentIds = body.records.map(r => r.studentId);
+      const rows = await db
+        .select({ id: user.id, branchId: user.branchId })
+        .from(user)
+        .where(and(eq(user.tenantId, tenantId), inArray(user.id, studentIds)));
+
+      const known = new Set(rows.map(r => r.id));
+      const outOfScope = rows.some(r => !r.branchId || r.branchId !== context.branchId);
+      if (outOfScope || studentIds.some(id => !known.has(id))) {
+        throw new ApiError(403, 'FORBIDDEN', 'Un ou plusieurs élèves ne font pas partie de votre campus.');
       }
     }
 

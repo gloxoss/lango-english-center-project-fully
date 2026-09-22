@@ -3,13 +3,13 @@ import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext } from '@/libs/api/context';
-import { apiErrorResponse } from '@/libs/api/errors';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
 import { assertSectionCapacity } from '@/libs/services/section-capacity';
 import { recordStudentPlacement } from '@/libs/services/student-placement';
-import { sessionYears, studentPlacements, user } from '@/models/Schema';
+import { classes, classSections, sessionYears, studentPlacements, user } from '@/models/Schema';
 
 const postPlacementSchema = z.object({
   studentId: z.string().min(1, 'studentId est requis'),
@@ -84,6 +84,33 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const validated = postPlacementSchema.parse(body);
+
+    // BRANCH SCOPE (P0): a student may only be placed into a section of their
+    // own campus, and a branch-limited admin only into their own campus. The
+    // section must also belong to the caller's tenant before anything else.
+    const [sectionScope] = await db
+      .select({ classId: classSections.classId, branchId: classes.branchId })
+      .from(classSections)
+      .innerJoin(classes, eq(classSections.classId, classes.id))
+      .where(and(eq(classSections.id, validated.classSectionId), eq(classSections.tenantId, ctx.tenantId!)))
+      .limit(1);
+    if (!sectionScope) {
+      throw new ApiError(422, 'INVALID_REFERENCE', 'La section de classe indiquée n\'existe pas pour cet établissement.');
+    }
+    if (ctx.branchId && sectionScope.branchId !== ctx.branchId) {
+      throw new ApiError(403, 'FORBIDDEN', 'Vous ne pouvez affecter des élèves que sur votre campus.');
+    }
+    const [studentScope] = await db
+      .select({ branchId: user.branchId })
+      .from(user)
+      .where(and(eq(user.id, validated.studentId), eq(user.tenantId, ctx.tenantId!), eq(user.role, 'student')))
+      .limit(1);
+    if (!studentScope) {
+      throw new ApiError(422, 'INVALID_REFERENCE', 'L\'élève indiqué n\'existe pas pour cet établissement.');
+    }
+    if (studentScope.branchId && sectionScope.branchId && studentScope.branchId !== sectionScope.branchId) {
+      throw new ApiError(422, 'CROSS_BRANCH_ASSIGNMENT', 'Cet élève appartient à un autre campus que cette section.');
+    }
 
     // ONE CAPACITY TRUTH: every operational placement path enforces the same
     // class_sections.maxStudents rule (the student keeps their own seat when

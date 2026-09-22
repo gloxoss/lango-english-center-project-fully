@@ -1016,6 +1016,13 @@
       "when": 1790114023878,
       "tag": "0147_attendance_section_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 145,
+      "version": "7",
+      "when": 1790115023878,
+      "tag": "0148_attendance_register_section_cascade",
+      "breakpoints": true
     }
   ]
 }
