@@ -259,6 +259,8 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
       reason: string;
     }>;
     integrityWarnings?: any[];
+    /** Server-computed roster hash for the exact preview→commit flow (audit 2026-09-22 P1-3). */
+    rosterFingerprint?: string;
   } | null>(null);
 
   const [showMovementDetails, setShowMovementDetails] = useState(false);
@@ -1019,12 +1021,12 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <p className="font-medium text-[#16212B]">{st.guardianName}</p>
                         {st.isLegacyFallback && st.guardianName !== '—' && (
-                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 bg-amber-50 text-amber-700 border-amber-200 font-semibold">
+                          <Badge variant="neutral" className="text-[9px] px-1.5 py-0 h-4 bg-amber-50 text-amber-700 border-amber-200 font-semibold">
                             À confirmer
                           </Badge>
                         )}
                         {st.guardianVerified && st.guardianRelation && (
-                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold">
+                          <Badge variant="neutral" className="text-[9px] px-1.5 py-0 h-4 bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold">
                             {st.guardianRelation}
                           </Badge>
                         )}
@@ -1305,12 +1307,12 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                 <div className="flex items-center gap-1.5 flex-wrap justify-end">
                   <span className="font-bold text-[#16212B]">{activeStudent.guardianName}</span>
                   {activeStudent.isLegacyFallback && activeStudent.guardianName !== '—' && (
-                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 bg-amber-50 text-amber-700 border-amber-200 font-semibold">
+                    <Badge variant="neutral" className="text-[9px] px-1.5 py-0 h-4 bg-amber-50 text-amber-700 border-amber-200 font-semibold">
                       À confirmer
                     </Badge>
                   )}
                   {activeStudent.guardianVerified && activeStudent.guardianRelation && (
-                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold">
+                    <Badge variant="neutral" className="text-[9px] px-1.5 py-0 h-4 bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold">
                       {activeStudent.guardianRelation}
                     </Badge>
                   )}

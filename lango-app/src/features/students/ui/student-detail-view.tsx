@@ -1131,7 +1131,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-extrabold text-[#16212B]">{t('attendanceLast30Days')}</h3>
-                  <Badge variant="outline" className="text-[10px] font-semibold text-slate-500 bg-slate-50 border-slate-200">
+                  <Badge variant="neutral" className="text-[10px] font-semibold text-slate-500 bg-slate-50 border-slate-200">
                     Taux sur pointages enregistrés
                   </Badge>
                 </div>
