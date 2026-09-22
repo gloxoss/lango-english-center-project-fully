@@ -1,235 +1,76 @@
-import { and, count, eq, ilike, inArray, or } from 'drizzle-orm';
+import type { TeacherStatus } from '@/features/teachers/server/teacher-service';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import {
+  checkHardDelete,
+  createTeacher,
+  getTeacherDetail,
+  hardDeleteTeacher,
+  listTeachers,
+
+  transitionTeacherStatus,
+  updateTeacher,
+} from '@/features/teachers/server/teacher-service';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, teacherCreateSchema, teacherUpdateSchema } from '@/libs/api/validation';
-import { db } from '@/libs/DB';
-import { classes, classSections, classTeachers, employeeProfiles, sections, subjects, subjectTeachers, user } from '@/models/Schema';
-import { toDbStatus, toUiStatus } from '@/models/userMapping';
+import { toDbStatus } from '@/models/userMapping';
 
-// ponytail: teachers are `user` rows with role = 'teacher'. employeeId,
-// specialization, cycle, workloadHours, hireDate, documents are stopgap columns -
-// see MIGRATION-NOTES.md. subjects/assignedClasses are DEPRECATED stopgaps,
-// superseded by the real classTeachers/subjectTeachers join tables; still read
-// as a fallback for teachers with no rows in those tables yet.
+// Teacher directory API. All business logic lives in
+// src/features/teachers/server/teacher-service.ts; this file is the HTTP edge:
+// role + capability gates, Zod parsing, audit, response envelope.
+//
+// The list response carries a redacted projection (no salary, RIB, CNSS,
+// national id, address or DOB) plus institution-wide KPI summary computed
+// server-side, independent of the current page/filters.
 
-// Batch-loads real assignments for a page of teachers in two queries total,
-// rather than one query per teacher.
-async function loadAssignedClassNames(teacherIds: string[]): Promise<Map<string, string[]>> {
-  const map = new Map<string, string[]>();
-  if (teacherIds.length === 0) {
-    return map;
-  }
-  const rows = await db
-    .select({ teacherId: classTeachers.teacherId, className: classes.name, sectionName: sections.name })
-    .from(classTeachers)
-    .innerJoin(classSections, eq(classTeachers.classSectionId, classSections.id))
-    .innerJoin(classes, eq(classSections.classId, classes.id))
-    .innerJoin(sections, eq(classSections.sectionId, sections.id))
-    .where(inArray(classTeachers.teacherId, teacherIds));
+const teacherCreateBodySchema = teacherCreateSchema.extend({
+  branchId: z.string().uuid().nullable().optional(),
+});
 
-  for (const row of rows) {
-    const names = map.get(row.teacherId) ?? [];
-    names.push(`${row.className} ${row.sectionName}`.trim());
-    map.set(row.teacherId, names);
-  }
-  return map;
-}
-
-async function loadTaughtSubjectNames(teacherIds: string[]): Promise<Map<string, string[]>> {
-  const map = new Map<string, string[]>();
-  if (teacherIds.length === 0) {
-    return map;
-  }
-  const rows = await db
-    .select({ teacherId: subjectTeachers.teacherId, subjectName: subjects.name })
-    .from(subjectTeachers)
-    .innerJoin(subjects, eq(subjectTeachers.subjectId, subjects.id))
-    .where(inArray(subjectTeachers.teacherId, teacherIds));
-
-  for (const row of rows) {
-    const names = map.get(row.teacherId) ?? [];
-    if (!names.includes(row.subjectName)) {
-      names.push(row.subjectName);
-    }
-    map.set(row.teacherId, names);
-  }
-  return map;
-}
-
-function toApiTeacher(row: typeof user.$inferSelect, assignedClasses: string[], taughtSubjects: string[]) {
-  return {
-    id: row.id,
-    employeeId: row.employeeId ?? '',
-    name: row.name,
-    email: row.email,
-    phone: row.phone ?? '',
-    specialization: row.specialization ?? '',
-    subjects: taughtSubjects.length > 0 ? taughtSubjects : (row.subjects ?? []),
-    cycle: row.cycle ?? '',
-    assignedClasses: assignedClasses.length > 0 ? assignedClasses : (row.assignedClasses ?? []),
-    status: toUiStatus(row.userStatus),
-    workloadHours: row.workloadHours ?? 0,
-    avatarUrl: row.photoUrl ? `/api/teachers/photo?id=${row.id}` : undefined,
-    hireDate: row.hireDate ?? undefined,
-    dateOfBirth: row.dateOfBirth ?? undefined,
-    gender: row.gender ?? undefined,
-    nationalId: row.nationalId ?? undefined,
-    address: row.address ?? undefined,
-    city: row.city ?? undefined,
-    qualification: row.qualification ?? undefined,
-    salary: row.salary ? Number(row.salary) : null,
-    documents: row.documents ?? { contract: false, cin: false, diploma: false },
-  };
-}
-
-function generateEmployeeId(): string {
-  const year = new Date().getFullYear();
-  return `ENS-${year}-${Math.floor(100 + Math.random() * 900)}`;
-}
-
-// Single-teacher detail fetch (dashboard/teachers/:id profile page) - `?id=`
-// matches the query-param-detail convention already used by
-// /api/students?id= and DELETE below, rather than a new [id] route style.
-async function getTeacherDetail(tenantId: string, id: string) {
-  const [row] = await db
-    .select()
-    .from(user)
-    .where(and(eq(user.id, id), eq(user.tenantId, tenantId), eq(user.role, 'teacher')))
-    .limit(1);
-
-  if (!row) {
-    return null;
-  }
-
-  const assignmentRows = await db
-    .select({ classSectionId: classTeachers.classSectionId, className: classes.name, sectionName: sections.name })
-    .from(classTeachers)
-    .innerJoin(classSections, eq(classTeachers.classSectionId, classSections.id))
-    .innerJoin(classes, eq(classSections.classId, classes.id))
-    .innerJoin(sections, eq(classSections.sectionId, sections.id))
-    .where(eq(classTeachers.teacherId, id));
-
-  const classSectionIds = assignmentRows.map(a => a.classSectionId);
-  const studentCounts = new Map<string, number>();
-  if (classSectionIds.length > 0) {
-    const countRows = await db
-      .select({ classSectionId: user.classSectionId, count: count() })
-      .from(user)
-      .where(and(eq(user.role, 'student'), eq(user.tenantId, tenantId), inArray(user.classSectionId, classSectionIds)))
-      .groupBy(user.classSectionId);
-    for (const c of countRows) {
-      if (c.classSectionId) {
-        studentCounts.set(c.classSectionId, c.count);
-      }
-    }
-  }
-
-  const [taughtSubjects] = await Promise.all([loadTaughtSubjectNames([id])]);
-
-  // HR employment profile, when a linked one exists. Teachers created via the
-  // teachers flow live only on `user`; contract/employment terms come from the
-  // HR addon's employee_profiles when that module has a record for them.
-  const [profile] = await db
-    .select({
-      contractType: employeeProfiles.contractType,
-      employmentType: employeeProfiles.employmentType,
-      employmentStatus: employeeProfiles.employmentStatus,
-      contractStartDate: employeeProfiles.contractStartDate,
-      contractEndDate: employeeProfiles.contractEndDate,
-      cnssNumber: employeeProfiles.cnssNumber,
-      amoNumber: employeeProfiles.amoNumber,
-      bankRib: employeeProfiles.bankRib,
-    })
-    .from(employeeProfiles)
-    .where(and(eq(employeeProfiles.userId, id), eq(employeeProfiles.tenantId, tenantId)))
-    .limit(1);
-
-  return {
-    ...toApiTeacher(row, assignmentRows.map(a => `${a.className} ${a.sectionName}`.trim()), taughtSubjects.get(id) ?? []),
-    firstName: row.firstName,
-    lastName: row.lastName,
-    createdAt: row.createdAt,
-    // Employment + contact fields carried on the `user` stopgap columns.
-    salary: row.salary,
-    qualification: row.qualification,
-    nationalId: row.nationalId,
-    address: row.address,
-    city: row.city,
-    dateOfBirth: row.dateOfBirth,
-    gender: row.gender,
-    lastLogin: row.lastLogin,
-    employment: profile ?? null,
-    assignedClassDetails: assignmentRows.map(a => ({
-      classSectionId: a.classSectionId,
-      label: `${a.className} ${a.sectionName}`.trim(),
-      studentCount: studentCounts.get(a.classSectionId) ?? 0,
-    })),
-  };
-}
+const teacherUpdateBodySchema = teacherUpdateSchema.extend({
+  branchId: z.string().uuid().nullable().optional(),
+});
 
 export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
-    const { searchParams } = new URL(request.url);
+    await requireCapability(context, 'teachers.read');
 
+    const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     if (id) {
-      const detail = await getTeacherDetail(tenantId, id);
+      const detail = await getTeacherDetail(context, tenantId, id);
       if (!detail) {
         return NextResponse.json({ success: false, message: 'Enseignant non trouvé' }, { status: 404 });
       }
       return NextResponse.json({ success: true, data: detail });
     }
 
-    const search = searchParams.get('search') || '';
-    const status = searchParams.get('status');
-
-    const filters = [
-      eq(user.role, 'teacher'),
-      eq(user.tenantId, tenantId),
-    ];
-
-    if (search) {
-      const term = `%${search}%`;
-      filters.push(
-        or(
-          ilike(user.name, term),
-          ilike(user.employeeId, term),
-          ilike(user.specialization, term),
-        )!,
-      );
-    }
-
-    if (status && status !== 'Tous' && status !== 'all') {
-      filters.push(eq(user.userStatus, toDbStatus(status)));
-    }
-
     const pagination = parsePagination(searchParams);
-    const where = and(...filters);
-
-    const [rows, totalRows] = await Promise.all([
-      db.select().from(user).where(where).limit(pagination.limit).offset(pagination.offset),
-      db.select({ total: count() }).from(user).where(where),
-    ]);
-    const total = totalRows[0]?.total ?? 0;
-
-    const teacherIds = rows.map(r => r.id);
-    const [classesByTeacher, subjectsByTeacher] = await Promise.all([
-      loadAssignedClassNames(teacherIds),
-      loadTaughtSubjectNames(teacherIds),
-    ]);
+    const rawStatus = searchParams.get('status');
+    const result = await listTeachers(context, tenantId, {
+      search: searchParams.get('search'),
+      status: rawStatus && rawStatus !== 'all' ? toDbStatus(rawStatus) : 'all',
+      subjectId: searchParams.get('subjectId'),
+      classSectionId: searchParams.get('classSectionId'),
+      branchId: searchParams.get('branchId'),
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+    });
 
     return NextResponse.json({
       success: true,
-      data: rows.map(row => toApiTeacher(row, classesByTeacher.get(row.id) ?? [], subjectsByTeacher.get(row.id) ?? [])),
-      total,
-      page: pagination.page,
-      pageSize: pagination.pageSize,
+      data: result.items,
+      total: result.total,
+      page: result.page,
+      pageSize: result.pageSize,
+      totalPages: result.totalPages,
+      summary: result.summary,
     });
   } catch (error) {
     return apiErrorResponse(error);
@@ -241,41 +82,23 @@ export async function POST(request: Request) {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
     await requireCapability(context, 'teachers.create');
-    const body = await parseJson(request, teacherCreateSchema);
-    const id = `TCH-${Date.now()}`;
+    const body = await parseJson(request, teacherCreateBodySchema);
 
-    const [inserted] = await db
-      .insert(user)
-      .values({
-        id,
-        tenantId,
-        name: body.fullName,
-        email: body.email || `${id.toLowerCase()}@schoolos.ma`,
-        phone: body.phone,
-        role: 'teacher',
-        employeeId: body.employeeId || generateEmployeeId(),
-        specialization: body.specialization,
-        cycle: body.cycle,
-        workloadHours: body.workloadHours,
-        hireDate: body.hireDate,
-        dateOfBirth: body.dateOfBirth,
-        gender: body.gender,
-        nationalId: body.nationalId,
-        address: body.address,
-        city: body.city,
-        qualification: body.qualification,
-        salary: body.salary ? String(body.salary) : null,
-        userStatus: toDbStatus(body.status),
-        documents: body.documents,
-      })
-      .returning();
-
-    recordAudit(context, 'create', 'teacher', inserted!.id);
+    const { teacher, provisioning, linkedEmployeeProfileId } = await createTeacher(context, tenantId, body);
+    recordAudit(context, 'create', 'teacher', teacher.id, {
+      branchId: teacher.branchId,
+      employeeId: teacher.employeeId,
+      invitation: provisioning.deliveryStatus,
+      linkedEmployeeProfileId,
+    });
 
     return NextResponse.json({
       success: true,
-      data: toApiTeacher(inserted!, [], []),
-      message: 'Enseignant créé avec succès',
+      data: teacher,
+      provisioning,
+      message: provisioning.tokenCreated
+        ? 'Enseignant créé — lien d\'activation généré et SMS mis en file d\'attente.'
+        : 'Enseignant créé — aucun téléphone fourni, aucun lien d\'activation généré.',
     });
   } catch (error) {
     return apiErrorResponse(error);
@@ -287,45 +110,34 @@ export async function PUT(request: Request) {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
     await requireCapability(context, 'teachers.update');
-    const body = await parseJson(request, teacherUpdateSchema);
+    const body = await parseJson(request, teacherUpdateBodySchema);
 
-    const [updated] = await db
-      .update(user)
-      .set({
-        name: body.fullName,
-        phone: body.phone,
-        specialization: body.specialization,
-        cycle: body.cycle,
-        workloadHours: body.workloadHours,
-        hireDate: body.hireDate,
-        dateOfBirth: body.dateOfBirth,
-        gender: body.gender,
-        nationalId: body.nationalId,
-        address: body.address,
-        city: body.city,
-        qualification: body.qualification,
-        salary: body.salary !== undefined ? (body.salary ? String(body.salary) : null) : undefined,
-        userStatus: body.status ? toDbStatus(body.status) : undefined,
-        documents: body.documents,
-        updatedAt: new Date().toISOString(),
-      })
-      .where(and(eq(user.id, body.id), eq(user.tenantId, tenantId), eq(user.role, 'teacher')))
-      .returning();
+    // workloadHours is a deprecated stopgap column and deliberately not
+    // editable from the directory (planned workload comes from the timetable).
+    const { id, status, branchId, fullName, workloadHours: _ignoredWorkloadHours, ...fields } = body;
 
-    if (!updated) {
-      return NextResponse.json({ success: false, message: 'Enseignant non trouvé' }, { status: 404 });
+    let transition: Awaited<ReturnType<typeof transitionTeacherStatus>> | null = null;
+    if (status) {
+      transition = await transitionTeacherStatus(context, tenantId, id, status as TeacherStatus);
+      recordAudit(context, 'update', 'teacher_status', id, {
+        status,
+        closedClassAssignments: transition.closedClassAssignments,
+      });
     }
 
-    recordAudit(context, 'update', 'teacher', body.id);
-
-    const [classesByTeacher, subjectsByTeacher] = await Promise.all([
-      loadAssignedClassNames([updated.id]),
-      loadTaughtSubjectNames([updated.id]),
-    ]);
+    const teacher = await updateTeacher(context, tenantId, id, {
+      ...(fullName !== undefined ? { name: fullName } : {}),
+      ...fields,
+      ...(branchId !== undefined ? { branchId } : {}),
+    });
+    recordAudit(context, 'update', 'teacher', id, { fields: Object.keys(fields) });
 
     return NextResponse.json({
       success: true,
-      data: toApiTeacher(updated, classesByTeacher.get(updated.id) ?? [], subjectsByTeacher.get(updated.id) ?? []),
+      data: teacher,
+      statusChange: transition
+        ? { status, closedClassAssignments: transition.closedClassAssignments }
+        : null,
       message: 'Enseignant mis à jour avec succès',
     });
   } catch (error) {
@@ -341,17 +153,36 @@ export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
-    if (id) {
-      await db.delete(user).where(and(eq(user.id, id), eq(user.tenantId, tenantId), eq(user.role, 'teacher')));
-      recordAudit(context, 'delete', 'teacher', id);
-      return NextResponse.json({
-        success: true,
-        message: 'Enseignant supprimé avec succès',
-        id,
-      });
+    if (!id) {
+      return NextResponse.json({ success: false, message: 'ID non fourni' }, { status: 400 });
     }
 
-    return NextResponse.json({ success: false, message: 'ID non fourni' }, { status: 400 });
+    // Pre-check dependencies so the caller gets an actionable 409 with the
+    // reason instead of a raw FK error. Hard delete stays allowed only for a
+    // clean record created by mistake.
+    const check = await checkHardDelete(context, tenantId, id);
+    if (!check.canHardDelete) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'CANNOT_HARD_DELETE',
+            message: 'Cet enseignant possède un historique académique ou RH : désactivez-le ou archivez-le au lieu de le supprimer.',
+          },
+          dependencies: check.dependencies,
+        },
+        { status: 409 },
+      );
+    }
+
+    await hardDeleteTeacher(context, tenantId, id);
+    recordAudit(context, 'delete', 'teacher', id);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Enseignant supprimé avec succès',
+      id,
+    });
   } catch (error) {
     return apiErrorResponse(error);
   }

@@ -7,7 +7,7 @@ import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, subjectTeacherCreateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { classSections, classSubjects, subjects, subjectTeachers, user } from '@/models/Schema';
+import { classes, classSections, classSubjects, subjects, subjectTeachers, user } from '@/models/Schema';
 
 // ponytail: pure join record, no PUT - reassignment is delete + recreate.
 
@@ -55,7 +55,12 @@ export async function POST(request: Request) {
     await requireCapability(context, 'academics.manage');
     const body = await parseJson(request, subjectTeacherCreateSchema);
 
-    const [sectionRow] = await db.select({ id: classSections.id, classId: classSections.classId }).from(classSections).where(and(eq(classSections.id, body.classSectionId), eq(classSections.tenantId, tenantId))).limit(1);
+    const [sectionRow] = await db
+      .select({ id: classSections.id, classId: classSections.classId, branchId: classes.branchId })
+      .from(classSections)
+      .innerJoin(classes, eq(classSections.classId, classes.id))
+      .where(and(eq(classSections.id, body.classSectionId), eq(classSections.tenantId, tenantId)))
+      .limit(1);
     if (!sectionRow) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'La section de classe indiquée n\'existe pas pour cet établissement.');
     }
@@ -78,9 +83,18 @@ export async function POST(request: Request) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'Cette matière n\'est pas assignée à la classe de cette section.');
     }
 
-    const [teacherRow] = await db.select({ id: user.id }).from(user).where(and(eq(user.id, body.teacherId), eq(user.tenantId, tenantId), eq(user.role, 'teacher'))).limit(1);
+    const [teacherRow] = await db
+      .select({ id: user.id, branchId: user.branchId })
+      .from(user)
+      .where(and(eq(user.id, body.teacherId), eq(user.tenantId, tenantId), eq(user.role, 'teacher')))
+      .limit(1);
     if (!teacherRow) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'L\'enseignant indiqué n\'existe pas pour cet établissement.');
+    }
+
+    // Same cross-campus rule as class-teacher assignment.
+    if (teacherRow.branchId && sectionRow.branchId && teacherRow.branchId !== sectionRow.branchId) {
+      throw new ApiError(422, 'CROSS_BRANCH_ASSIGNMENT', 'Cet enseignant appartient à un autre campus que cette classe.');
     }
 
     const [inserted] = await db

@@ -1,7 +1,7 @@
 import { and, eq, ne } from 'drizzle-orm';
 import { ApiError } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
-import { classScheduleSlots, classSections, classSubjects, subjectTeachers } from '@/models/Schema';
+import { classes, classScheduleSlots, classSections, classSubjects, subjectTeachers, teacherAvailability, user } from '@/models/Schema';
 
 export type SlotCandidate = {
   classSectionId: string;
@@ -37,32 +37,65 @@ export async function assertSlotIsValid(tenantId: string, candidate: SlotCandida
     throw new ApiError(422, 'INVALID_TIME_RANGE', 'L\'heure de fin doit être après l\'heure de début.');
   }
 
-  const [section] = await db.select({ classId: classSections.classId }).from(classSections)
-    .where(and(eq(classSections.id, candidate.classSectionId), eq(classSections.tenantId, tenantId))).limit(1);
+  const [section] = await db
+    .select({ classId: classSections.classId, branchId: classes.branchId })
+    .from(classSections)
+    .innerJoin(classes, eq(classSections.classId, classes.id))
+    .where(and(eq(classSections.id, candidate.classSectionId), eq(classSections.tenantId, tenantId)))
+    .limit(1);
   if (!section) {
     throw new ApiError(422, 'INVALID_REFERENCE', 'La classe/section indiquée n\'existe pas pour cet établissement.');
   }
 
-  const [classSubject] = await db.select({ id: classSubjects.id }).from(classSubjects)
-    .where(and(eq(classSubjects.id, candidate.classSubjectId), eq(classSubjects.tenantId, tenantId), eq(classSubjects.classId, section.classId))).limit(1);
+  const [classSubject] = await db.select({ id: classSubjects.id }).from(classSubjects).where(and(eq(classSubjects.id, candidate.classSubjectId), eq(classSubjects.tenantId, tenantId), eq(classSubjects.classId, section.classId))).limit(1);
   if (!classSubject) {
     throw new ApiError(422, 'SUBJECT_NOT_IN_CLASS', 'Cette matière n\'est pas assignée à la classe de cette section.');
   }
 
-  const [eligibleTeacher] = await db.select({ id: subjectTeachers.id }).from(subjectTeachers)
-    .where(and(
-      eq(subjectTeachers.tenantId, tenantId),
-      eq(subjectTeachers.classSectionId, candidate.classSectionId),
-      eq(subjectTeachers.classSubjectId, candidate.classSubjectId),
-      eq(subjectTeachers.teacherId, candidate.teacherId),
-    )).limit(1);
+  const [eligibleTeacher] = await db.select({ id: subjectTeachers.id }).from(subjectTeachers).where(and(
+    eq(subjectTeachers.tenantId, tenantId),
+    eq(subjectTeachers.classSectionId, candidate.classSectionId),
+    eq(subjectTeachers.classSubjectId, candidate.classSubjectId),
+    eq(subjectTeachers.teacherId, candidate.teacherId),
+  )).limit(1);
   if (!eligibleTeacher) {
     throw new ApiError(422, 'TEACHER_NOT_ASSIGNED', 'Cet enseignant n\'est pas assigné à cette matière pour cette section.');
   }
 
+  // Cross-campus guard: a teacher pinned to one branch may not be scheduled on
+  // another branch's class unless the product explicitly models approved
+  // cross-campus teaching (it does not today). An unassigned teacher (null
+  // branch) is treated as whole-school and stays schedulable everywhere.
+  const [teacherRow] = await db
+    .select({ branchId: user.branchId })
+    .from(user)
+    .where(and(eq(user.id, candidate.teacherId), eq(user.tenantId, tenantId)))
+    .limit(1);
+  if (teacherRow?.branchId && section.branchId && teacherRow.branchId !== section.branchId) {
+    throw new ApiError(422, 'CROSS_BRANCH_ASSIGNMENT', 'Cet enseignant appartient à un autre campus que cette classe.');
+  }
+
+  // Declared availability (rows are hours the teacher IS free). When the
+  // teacher has declared windows for this weekday, the slot must fit entirely
+  // inside one of them; otherwise the declaration would be decorative.
+  const availability = await db
+    .select({ startTime: teacherAvailability.startTime, endTime: teacherAvailability.endTime })
+    .from(teacherAvailability)
+    .where(and(
+      eq(teacherAvailability.tenantId, tenantId),
+      eq(teacherAvailability.teacherId, candidate.teacherId),
+      eq(teacherAvailability.dayOfWeek, candidate.dayOfWeek as typeof teacherAvailability.$inferSelect.dayOfWeek),
+    ));
+  if (availability.length > 0) {
+    const fits = availability.some(window => window.startTime <= candidate.startTime && window.endTime >= candidate.endTime);
+    if (!fits) {
+      throw new ApiError(422, 'TEACHER_NOT_AVAILABLE', 'L\'enseignant n\'est pas disponible sur ce créneau.');
+    }
+  }
+
   const filters = [
     eq(classScheduleSlots.tenantId, tenantId),
-    eq(classScheduleSlots.dayOfWeek, candidate.dayOfWeek as typeof classScheduleSlots.$inferSelect.dayOfWeek)
+    eq(classScheduleSlots.dayOfWeek, candidate.dayOfWeek as typeof classScheduleSlots.$inferSelect.dayOfWeek),
   ];
   if (candidate.versionId) {
     filters.push(eq(classScheduleSlots.versionId, candidate.versionId));
@@ -112,8 +145,12 @@ export async function findVersionConflicts(tenantId: string, versionId: string):
       const a = slots[i]!;
       const b = slots[j]!;
 
-      if (a.dayOfWeek !== b.dayOfWeek) continue;
-      if (!overlaps(a.startTime, a.endTime, b.startTime, b.endTime)) continue;
+      if (a.dayOfWeek !== b.dayOfWeek) {
+        continue;
+      }
+      if (!overlaps(a.startTime, a.endTime, b.startTime, b.endTime)) {
+        continue;
+      }
 
       if (a.teacherId === b.teacherId) {
         conflicts.push({
