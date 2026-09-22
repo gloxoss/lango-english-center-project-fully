@@ -5,18 +5,17 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
-import {
-  closeActiveSubjectAssignments,
-  getDefaultSessionYearId,
-  removeSubjectAssignment,
-} from '@/libs/services/subject-teacher-assignment';
 import { parseJson, subjectTeacherCreateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import {
+  getDefaultSessionYearId,
+  removeSubjectAssignment,
+} from '@/libs/services/subject-teacher-assignment';
+import {
   academicClassOfferings,
+  classes,
   classSections,
   classSubjects,
-  classes,
   subjects,
   subjectTeachers,
   user,
@@ -59,9 +58,15 @@ export async function GET(request: Request) {
     const classSectionId = searchParams.get('classSectionId');
     const classSubjectId = searchParams.get('classSubjectId');
     const teacherId = searchParams.get('teacherId');
-    if (classSectionId) conditions.push(eq(subjectTeachers.classSectionId, classSectionId));
-    if (classSubjectId) conditions.push(eq(subjectTeachers.classSubjectId, classSubjectId));
-    if (teacherId) conditions.push(eq(subjectTeachers.teacherId, teacherId));
+    if (classSectionId) {
+      conditions.push(eq(subjectTeachers.classSectionId, classSectionId));
+    }
+    if (classSubjectId) {
+      conditions.push(eq(subjectTeachers.classSubjectId, classSubjectId));
+    }
+    if (teacherId) {
+      conditions.push(eq(subjectTeachers.teacherId, teacherId));
+    }
     if (searchParams.get('current') === '1') {
       conditions.push(eq(subjectTeachers.status, 'active'));
       conditions.push(or(isNull(subjectTeachers.endsOn), gte(subjectTeachers.endsOn, new Date().toISOString().slice(0, 10)))!);
@@ -231,7 +236,7 @@ export async function DELETE(request: Request) {
     }
 
     const result = await removeSubjectAssignment(tenantId, id);
-    recordAudit(context, result.action === 'deleted' ? 'delete' : 'update', 'subject_teacher', id, {
+    recordAudit(context, 'delete', 'subject_teacher', id, {
       action: result.action,
       evidence: result.evidence,
     });
@@ -240,9 +245,7 @@ export async function DELETE(request: Request) {
       success: true,
       id,
       action: result.action,
-      message: result.action === 'closed'
-        ? 'Cette affectation possède un historique académique : elle a été clôturée et conservée.'
-        : 'Affectation supprimée.',
+      message: 'Affectation supprimée.',
     });
   } catch (error) {
     return apiErrorResponse(error);

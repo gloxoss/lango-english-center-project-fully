@@ -1,4 +1,4 @@
-import { and, count, eq, inArray, isNull, or, gte, desc } from 'drizzle-orm';
+import { and, count, desc, eq, gte, isNull, or } from 'drizzle-orm';
 import { assessmentDefinitions, assessmentOutcomes } from '@/features/assessment/models/assessment-schema';
 import { ApiError } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
@@ -116,31 +116,30 @@ export async function closeActiveSubjectAssignments(
   return closed.length;
 }
 
-export type RemoveAssignmentResult = { action: 'deleted' | 'closed'; id: string; evidence: number };
+export type RemoveAssignmentResult = { action: 'deleted'; id: string; evidence: number };
 
 /**
  * Remove an assignment safely:
  *   - no teaching evidence  -> hard delete (clean mistake)
- *   - teaching evidence     -> close (status=inactive, endsOn=today) and keep it
+ *   - teaching evidence     -> 409 SUBJECT_ASSIGNMENT_HISTORY_MIGRATION_REQUIRED,
+ *     nothing mutated. The row is the only record of the relationship; it must
+ *     be migrated or superseded by a close-then-insert reassignment, never
+ *     destroyed by a delete click.
  */
 export async function removeSubjectAssignment(tenantId: string, subjectTeacherId: string): Promise<RemoveAssignmentResult> {
   const evidence = await subjectAssignmentUsage(tenantId, subjectTeacherId);
-  if (evidence === 0) {
-    await db
-      .delete(subjectTeachers)
-      .where(and(eq(subjectTeachers.id, subjectTeacherId), eq(subjectTeachers.tenantId, tenantId)));
-    return { action: 'deleted', id: subjectTeacherId, evidence };
+  if (evidence > 0) {
+    throw new ApiError(
+      409,
+      'SUBJECT_ASSIGNMENT_HISTORY_MIGRATION_REQUIRED',
+      'Cette affectation porte un historique académique (emploi du temps, évaluations ou notes). Elle ne peut pas être supprimée : migrez l\'historique ou remplacez l\'affectation par une nouvelle affectation.',
+    );
   }
 
-  const [closed] = await db
-    .update(subjectTeachers)
-    .set({ status: 'inactive', endsOn: todayIso() })
-    .where(and(eq(subjectTeachers.id, subjectTeacherId), eq(subjectTeachers.tenantId, tenantId)))
-    .returning({ id: subjectTeachers.id });
-  if (!closed) {
-    throw new ApiError(404, 'NOT_FOUND', 'Affectation introuvable.');
-  }
-  return { action: 'closed', id: subjectTeacherId, evidence };
+  await db
+    .delete(subjectTeachers)
+    .where(and(eq(subjectTeachers.id, subjectTeacherId), eq(subjectTeachers.tenantId, tenantId)));
+  return { action: 'deleted', id: subjectTeacherId, evidence };
 }
 
 /** Historical assignments for a pair, most recent first (reporting/UI). */
