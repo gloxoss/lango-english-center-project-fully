@@ -96,6 +96,8 @@ export type TeacherListResult = {
   pageSize: number;
   totalPages: number;
   summary: TeacherDirectorySummary;
+  /** The single resolved scope used by items + summary + export. */
+  scope: TeacherScopeInfo;
 };
 
 export type TeacherAttentionItem = {
@@ -187,42 +189,99 @@ export function todayIso(): string {
 }
 
 /**
- * Authoritative branch scope. A branch-limited principal only ever sees their
- * own branch; a whole-school principal (branchId null) may optionally narrow
- * to one branch. A requested branch that conflicts with the principal's own is
- * a 403, never a silently widened query.
+ * The single authoritative view scope for one teacher-directory request.
+ *
+ * The effective scope is resolved once and then used by EVERY read surface:
+ * list, KPIs, dossier summary, workload, filter options and export. This is
+ * what prevents the previous contradiction (topbar showing a campus while the
+ * directory silently queried all campuses).
+ *
+ * Rules:
+ *   - A branch-limited principal is always pinned to their home branch; asking
+ *     for another branch is a 403.
+ *   - A whole-school principal (branchId null) may select one validated branch
+ *     of their tenant, or none = institution-wide.
+ *   - A branch id that does not exist in the tenant is refused (422) — browser
+ *     input is never trusted.
  */
-export function resolveBranchScope(viewer: RequestContext, requestedBranchId?: string | null): string | null {
+export type TeacherScopeInfo = {
+  /** The viewer's own branch assignment (null = whole-school). */
+  homeBranchId: string | null;
+  /** The branch every query in this request is narrowed to (null = all). */
+  effectiveBranchId: string | null;
+  branchName: string | null;
+  allBranches: boolean;
+};
+
+async function branchNameInTenant(tenantId: string, branchId: string): Promise<string | null> {
+  const [row] = await db
+    .select({ name: branches.name })
+    .from(branches)
+    .where(and(eq(branches.id, branchId), eq(branches.tenantId, tenantId)))
+    .limit(1);
+  return row?.name ?? null;
+}
+
+export async function resolveTeacherScope(
+  viewer: RequestContext,
+  tenantId: string,
+  requestedBranchId?: string | null,
+): Promise<TeacherScopeInfo> {
   const requested = requestedBranchId && requestedBranchId !== 'all' ? requestedBranchId : null;
+
   if (viewer.branchId) {
     if (requested && requested !== viewer.branchId) {
       throw new ApiError(403, 'FORBIDDEN', 'Vous ne pouvez pas accéder aux enseignants d\'un autre campus.');
     }
-    return viewer.branchId;
+    return {
+      homeBranchId: viewer.branchId,
+      effectiveBranchId: viewer.branchId,
+      branchName: await branchNameInTenant(tenantId, viewer.branchId),
+      allBranches: false,
+    };
   }
-  return requested;
+
+  if (requested) {
+    const branchName = await branchNameInTenant(tenantId, requested);
+    if (!branchName) {
+      throw new ApiError(422, 'INVALID_BRANCH', 'Le campus sélectionné n\'existe pas pour cet établissement.');
+    }
+    return { homeBranchId: null, effectiveBranchId: requested, branchName, allBranches: false };
+  }
+
+  return { homeBranchId: null, effectiveBranchId: null, branchName: null, allBranches: true };
 }
 
-function teacherBaseConditions(viewer: RequestContext, tenantId: string) {
+function teacherBaseConditions(tenantId: string, effectiveBranchId: string | null) {
   const conditions = [eq(user.tenantId, tenantId), eq(user.role, 'teacher')];
-  if (viewer.branchId) {
-    conditions.push(eq(user.branchId, viewer.branchId));
+  if (effectiveBranchId) {
+    conditions.push(eq(user.branchId, effectiveBranchId));
   }
   return conditions;
 }
 
-/** A teacher the caller is allowed to see; null when out of scope (404 upstream). */
-export async function findScopedTeacher(viewer: RequestContext, tenantId: string, id: string) {
+/**
+ * A teacher the caller is allowed to see; null when out of scope (404 upstream).
+ * `effectiveBranchId` narrows to the selected view scope when provided
+ * (directory detail); omitted, the viewer's home scope applies.
+ */
+export async function findScopedTeacher(
+  viewer: RequestContext,
+  tenantId: string,
+  id: string,
+  effectiveBranchId?: string | null,
+) {
+  const branch = effectiveBranchId === undefined ? viewer.branchId : effectiveBranchId;
   const [row] = await db
     .select()
     .from(user)
-    .where(and(...teacherBaseConditions(viewer, tenantId), eq(user.id, id)))
+    .where(and(...teacherBaseConditions(tenantId, branch), eq(user.id, id)))
     .limit(1);
   return row ?? null;
 }
 
-function scopedTeacherIdsSubquery(viewer: RequestContext, tenantId: string) {
-  return db.select({ id: user.id }).from(user).where(and(...teacherBaseConditions(viewer, tenantId)));
+function scopedTeacherIdsSubquery(tenantId: string, effectiveBranchId: string | null) {
+  return db.select({ id: user.id }).from(user).where(and(...teacherBaseConditions(tenantId, effectiveBranchId)));
 }
 
 // ---------------------------------------------------------------------------
@@ -494,12 +553,8 @@ async function hydrateDirectoryItems(tenantId: string, rows: (typeof user.$infer
 // List + summary
 // ---------------------------------------------------------------------------
 
-function buildListConditions(viewer: RequestContext, tenantId: string, filters: TeacherListFilters) {
-  const conditions = teacherBaseConditions(viewer, tenantId);
-  const branchScope = resolveBranchScope(viewer, filters.branchId ?? null);
-  if (branchScope) {
-    conditions.push(eq(user.branchId, branchScope));
-  }
+function buildListConditions(tenantId: string, effectiveBranchId: string | null, filters: TeacherListFilters) {
+  const conditions = teacherBaseConditions(tenantId, effectiveBranchId);
 
   const search = filters.search?.trim();
   if (search) {
@@ -543,7 +598,9 @@ function buildListConditions(viewer: RequestContext, tenantId: string, filters: 
 export async function listTeachers(viewer: RequestContext, tenantId: string, filters: TeacherListFilters): Promise<TeacherListResult> {
   const page = Number.isFinite(filters.page) && filters.page > 0 ? Math.floor(filters.page) : 1;
   const pageSize = Number.isFinite(filters.pageSize) && filters.pageSize > 0 ? Math.min(Math.floor(filters.pageSize), 100) : 20;
-  const conditions = buildListConditions(viewer, tenantId, filters);
+  // Resolved once; every surface below receives the same effective branch.
+  const scope = await resolveTeacherScope(viewer, tenantId, filters.branchId);
+  const conditions = buildListConditions(tenantId, scope.effectiveBranchId, filters);
   const where = and(...conditions);
 
   const [rows, totalRows] = await Promise.all([
@@ -561,7 +618,7 @@ export async function listTeachers(viewer: RequestContext, tenantId: string, fil
   const total = Number(totalRows[0]?.total ?? 0);
   const [items, summary] = await Promise.all([
     hydrateDirectoryItems(tenantId, rows),
-    teacherDirectorySummary(viewer, tenantId),
+    teacherDirectorySummary(tenantId, scope.effectiveBranchId),
   ]);
 
   return {
@@ -571,6 +628,7 @@ export async function listTeachers(viewer: RequestContext, tenantId: string, fil
     pageSize,
     totalPages: Math.max(1, Math.ceil(total / pageSize)),
     summary,
+    scope,
   };
 }
 
@@ -579,8 +637,8 @@ export async function listTeachers(viewer: RequestContext, tenantId: string, fil
  * filters never silently change what "Enseignants actifs" means. All counts
  * respect the caller's branch scope.
  */
-export async function teacherDirectorySummary(viewer: RequestContext, tenantId: string): Promise<TeacherDirectorySummary> {
-  const scope = teacherBaseConditions(viewer, tenantId);
+export async function teacherDirectorySummary(tenantId: string, effectiveBranchId: string | null): Promise<TeacherDirectorySummary> {
+  const scope = teacherBaseConditions(tenantId, effectiveBranchId);
 
   const [allRows, onLeaveRows] = await Promise.all([
     db
@@ -764,8 +822,13 @@ async function subjectAssignmentsForTeacher(tenantId: string, teacherId: string)
   }));
 }
 
-export async function getTeacherDetail(viewer: RequestContext, tenantId: string, id: string): Promise<TeacherDetail | null> {
-  const row = await findScopedTeacher(viewer, tenantId, id);
+export async function getTeacherDetail(
+  viewer: RequestContext,
+  tenantId: string,
+  id: string,
+  effectiveBranchId?: string | null,
+): Promise<TeacherDetail | null> {
+  const row = await findScopedTeacher(viewer, tenantId, id, effectiveBranchId);
   if (!row) {
     return null;
   }
@@ -1069,6 +1132,38 @@ export async function createTeacher(
   return { teacher: item!, provisioning: record.provisioning, linkedEmployeeProfileId: record.linkedEmployeeProfileId };
 }
 
+/**
+ * Current academic dependencies that make a direct campus reassignment unsafe.
+ * Only ACTIVE, non-ended class-teacher rows block; subject_teachers and
+ * timetable rows have no history columns today, so any row counts as current.
+ * Historical rows are never touched by this check — they are why reassignment
+ * needs a real transfer workflow instead of a silent branch flip.
+ */
+export async function currentAssignmentBlockers(tenantId: string, teacherId: string): Promise<TeacherDependency[]> {
+  const today = todayIso();
+  const [classRows, subjectRows, scheduleRows, legacyScheduleRows] = await Promise.all([
+    db
+      .select({ n: count() })
+      .from(classTeachers)
+      .where(and(
+        eq(classTeachers.tenantId, tenantId),
+        eq(classTeachers.teacherId, teacherId),
+        eq(classTeachers.status, 'active'),
+        or(isNull(classTeachers.endsOn), gte(classTeachers.endsOn, today))!,
+      )),
+    db.select({ n: count() }).from(subjectTeachers).where(and(eq(subjectTeachers.tenantId, tenantId), eq(subjectTeachers.teacherId, teacherId))),
+    db.select({ n: count() }).from(classScheduleSlots).where(and(eq(classScheduleSlots.tenantId, tenantId), eq(classScheduleSlots.teacherId, teacherId))),
+    db.select({ n: count() }).from(timetableSlots).where(and(eq(timetableSlots.tenantId, tenantId), eq(timetableSlots.teacherId, teacherId))),
+  ]);
+
+  return [
+    { key: 'class_assignments_active', count: Number(classRows[0]?.n ?? 0) },
+    { key: 'subject_assignments', count: Number(subjectRows[0]?.n ?? 0) },
+    { key: 'timetable_slots', count: Number(scheduleRows[0]?.n ?? 0) },
+    { key: 'legacy_timetable_slots', count: Number(legacyScheduleRows[0]?.n ?? 0) },
+  ].filter(dep => dep.count > 0);
+}
+
 export type UpdateTeacherInput = {
   name?: string;
   phone?: string | null;
@@ -1104,6 +1199,21 @@ export async function updateTeacher(
       throw new ApiError(403, 'FORBIDDEN', 'Vous ne pouvez pas déplacer un enseignant vers un autre campus.');
     }
     branchId = input.branchId;
+
+    // Direct campus reassignment is refused while the teacher still has
+    // current academic dependencies: moving only user.branchId would leave
+    // class/subject/timetable assignments pointing at the old campus. Until a
+    // full transfer workflow exists, the assignments must be closed first.
+    if (branchId !== existing.branchId) {
+      const blockers = await currentAssignmentBlockers(tenantId, id);
+      if (blockers.length > 0) {
+        throw new ApiError(
+          409,
+          'TEACHER_BRANCH_TRANSFER_REQUIRED',
+          'Cet enseignant possède encore des affectations actives dans son campus actuel. Clôturez ou transférez ses affectations avant de changer de campus.',
+        );
+      }
+    }
   }
 
   const [updated] = await db
@@ -1243,11 +1353,24 @@ export type TeacherFilterOptions = {
   subjects: { id: string; name: string }[];
   classes: { id: string; label: string }[];
   branches: { id: string; name: string }[];
+  scope: TeacherScopeInfo;
 };
 
-/** Only the subjects/classes actually attached to teachers in scope. */
-export async function listTeacherFilterOptions(viewer: RequestContext, tenantId: string): Promise<TeacherFilterOptions> {
-  const scopedIds = scopedTeacherIdsSubquery(viewer, tenantId);
+/**
+ * Filter options for the directory.
+ *
+ * Subjects/classes are limited to teachers in the selected scope. Branches are
+ * the selectable scopes themselves: a whole-school principal may pick any
+ * active branch of the tenant (so the selector can name every campus even
+ * before it has teachers), a branch-limited principal only ever sees their own.
+ */
+export async function listTeacherFilterOptions(
+  viewer: RequestContext,
+  tenantId: string,
+  requestedBranchId?: string | null,
+): Promise<TeacherFilterOptions> {
+  const scope = await resolveTeacherScope(viewer, tenantId, requestedBranchId);
+  const scopedIds = scopedTeacherIdsSubquery(tenantId, scope.effectiveBranchId);
 
   const [subjectRows, classRows, branchRows] = await Promise.all([
     db
@@ -1268,23 +1391,27 @@ export async function listTeacherFilterOptions(viewer: RequestContext, tenantId:
       .innerJoin(sections, eq(classSections.sectionId, sections.id))
       .where(and(eq(classTeachers.tenantId, tenantId), inArray(classTeachers.teacherId, scopedIds)))
       .orderBy(asc(classes.name), asc(sections.name)),
-    db
-      .selectDistinct({ id: branches.id, name: branches.name })
-      .from(branches)
-      .innerJoin(user, eq(user.branchId, branches.id))
-      .where(and(
-        eq(branches.tenantId, tenantId),
-        ...(viewer.branchId ? [eq(branches.id, viewer.branchId)] : []),
-        eq(user.role, 'teacher'),
-        eq(user.tenantId, tenantId),
-      ))
-      .orderBy(asc(branches.name)),
+    viewer.branchId
+      ? db
+          .selectDistinct({ id: branches.id, name: branches.name })
+          .from(branches)
+          .where(and(
+            eq(branches.tenantId, tenantId),
+            eq(branches.id, viewer.branchId),
+            eq(branches.isActive, true),
+          ))
+      : db
+          .selectDistinct({ id: branches.id, name: branches.name })
+          .from(branches)
+          .where(and(eq(branches.tenantId, tenantId), eq(branches.isActive, true)))
+          .orderBy(asc(branches.name)),
   ]);
 
   return {
     subjects: subjectRows.map(row => ({ id: row.id, name: row.name })),
     classes: classRows.map(row => ({ id: row.id, label: `${row.className} ${row.sectionName}`.trim() })),
     branches: branchRows.map(row => ({ id: row.id, name: row.name })),
+    scope,
   };
 }
 
@@ -1298,13 +1425,20 @@ export type TeacherExportScope = Pick<TeacherListFilters, 'search' | 'status' | 
  * Same filters as the directory, but the whole authorized result set (bounded)
  * with the safe projection only — no salary, RIB, CNSS, national id or DOB.
  */
-export async function listTeachersForExport(viewer: RequestContext, tenantId: string, filters: TeacherExportScope): Promise<TeacherDirectoryItem[]> {
-  const conditions = buildListConditions(viewer, tenantId, { ...filters, page: 1, pageSize: 100 });
+export async function listTeachersForExport(
+  viewer: RequestContext,
+  tenantId: string,
+  filters: TeacherExportScope,
+): Promise<{ items: TeacherDirectoryItem[]; scope: TeacherScopeInfo }> {
+  // Same scope resolution as the list: export can never widen what the
+  // directory shows.
+  const scope = await resolveTeacherScope(viewer, tenantId, filters.branchId);
+  const conditions = buildListConditions(tenantId, scope.effectiveBranchId, { ...filters, page: 1, pageSize: 100 });
   const rows = await db
     .select()
     .from(user)
     .where(and(...conditions))
     .orderBy(asc(user.name), asc(user.id))
     .limit(5000);
-  return hydrateDirectoryItems(tenantId, rows);
+  return { items: await hydrateDirectoryItems(tenantId, rows), scope };
 }

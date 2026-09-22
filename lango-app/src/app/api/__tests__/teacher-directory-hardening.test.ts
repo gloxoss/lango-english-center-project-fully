@@ -1,4 +1,4 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, count, eq, inArray } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 // Teacher directory hardening suite.
@@ -60,9 +60,12 @@ const {
   employeeProfiles,
 } = await import('@/models/Schema');
 const teacherRoutes = await import('@/app/api/teachers/route');
+const teacherOptionsRoute = await import('@/app/api/teachers/options/route');
+const teacherExportRoute = await import('@/app/api/teachers/export/route');
 const attendanceRoutes = await import('@/app/api/attendance/route');
 const gradeEntryRoutes = await import('@/app/api/academics/grade-entry/route');
 const classTeachersRoutes = await import('@/app/api/academics/class-teachers/route');
+const subjectTeachersRoutes = await import('@/app/api/academics/subject-teachers/route');
 const photoRoute = await import('@/app/api/teachers/photo/route');
 const { reserveTeacherEmployeeId } = await import('@/features/teachers/server/teacher-service');
 const { getTeacherClassSectionIds } = await import('@/libs/api/teacher-scope');
@@ -317,9 +320,56 @@ describe.skipIf(!hasDb)('teacher directory hardening', () => {
     const res = await teacherRoutes.GET(new Request('http://x/api/teachers?pageSize=100'));
     const body = await res.json();
     const ids = body.data.map((item: { id: string }) => item.id);
-
     expect(ids).toContain(teacherA);
     expect(ids).toContain(teacherB);
+    expect(body.scope.allBranches).toBe(true);
+    expect(body.scope.effectiveBranchId).toBeNull();
+  });
+
+  it('selected branch drives list, KPIs, options and export from one scope', async () => {
+    await asPrincipal(adminAll, 'school_admin');
+
+    const listRes = await teacherRoutes.GET(new Request(`http://x/api/teachers?branchId=${branchA}&pageSize=100`));
+    expect(listRes.status).toBe(200);
+    const list = await listRes.json();
+    const ids = list.data.map((item: { id: string }) => item.id);
+    expect(list.scope.effectiveBranchId).toBe(branchA);
+    expect(list.scope.allBranches).toBe(false);
+    expect(list.scope.branchName).toBe('Campus A');
+    expect(ids).toContain(teacherA);
+    expect(ids).not.toContain(teacherB);
+
+    // KPI + dossier + workload summary are computed for the SAME branch, not
+    // institution-wide.
+    const expectedScoped = await db
+      .select({ n: count() })
+      .from(user)
+      .where(and(eq(user.tenantId, tenantId), eq(user.role, 'teacher'), eq(user.branchId, branchA)));
+    expect(list.summary.scopedTeachers).toBe(Number(expectedScoped[0]?.n ?? 0));
+    expect(list.total).toBe(Number(expectedScoped[0]?.n ?? 0));
+
+    // Filter options are scoped to the branch too.
+    const optionsRes = await teacherOptionsRoute.GET(new Request(`http://x/api/teachers/options?branchId=${branchA}`));
+    const options = await optionsRes.json();
+    expect(options.data.scope.effectiveBranchId).toBe(branchA);
+    expect(options.data.branches.map((branch: { id: string }) => branch.id)).toContain(branchA);
+    expect(options.data.classes.map((classItem: { id: string }) => classItem.id)).toContain(sectionA1);
+    expect(options.data.classes.map((classItem: { id: string }) => classItem.id)).not.toContain(sectionB1);
+
+    // Export uses the same scope: branch A teacher in, branch B teacher out.
+    const exportRes = await teacherExportRoute.GET(new Request(`http://x/api/teachers/export?branchId=${branchA}`));
+    expect(exportRes.status).toBe(200);
+    const csv = await exportRes.text();
+    expect(csv).toContain('Aicha Teacher');
+    expect(csv).not.toContain('Brahim Teacher');
+  });
+
+  it('rejects a branch id that does not belong to the tenant', async () => {
+    await asPrincipal(adminAll, 'school_admin');
+    const res = await teacherRoutes.GET(new Request(`http://x/api/teachers?branchId=${crypto.randomUUID()}`));
+    expect(res.status).toBe(422);
+    const body = await res.json();
+    expect(body.error.code).toBe('INVALID_BRANCH');
   });
 
   it('list payload carries no HR-sensitive fields', async () => {
@@ -530,6 +580,81 @@ describe.skipIf(!hasDb)('teacher directory hardening', () => {
     const res = await photoRoute.POST(new Request('http://x/api/teachers/photo', { method: 'POST', body: form }));
 
     expect(res.status).toBe(403);
+  });
+
+  it('blocks destructive subject reassignment when history exists', async () => {
+    await asPrincipal(adminAll, 'school_admin');
+    const [assignment] = await db
+      .select()
+      .from(subjectTeachers)
+      .where(and(eq(subjectTeachers.tenantId, tenantId), eq(subjectTeachers.teacherId, teacherA)));
+    expect(assignment).toBeTruthy();
+
+    const res = await subjectTeachersRoutes.DELETE(new Request(`http://x/api/academics/subject-teachers?id=${assignment!.id}`));
+    expect(res.status).toBe(409);
+
+    const body = await res.json();
+    expect(body.error.code).toBe('SUBJECT_ASSIGNMENT_HISTORY_MIGRATION_REQUIRED');
+
+    // Nothing may be deleted — the row is the only record of the relationship.
+    const [stillThere] = await db.select().from(subjectTeachers).where(eq(subjectTeachers.id, assignment!.id));
+    expect(stillThere).toBeTruthy();
+  });
+
+  it('allows removing a co-teacher row that leaves the assignment context intact', async () => {
+    await asPrincipal(adminAll, 'school_admin');
+    const [classSubject] = await db.select().from(classSubjects).where(eq(classSubjects.id, mathClassSubjectId));
+
+    const [coTeacher] = await db
+      .insert(subjectTeachers)
+      .values({
+        tenantId,
+        classSectionId: sectionA1,
+        subjectId: classSubject!.subjectId,
+        classSubjectId: mathClassSubjectId,
+        teacherId: teacherComplete,
+      })
+      .returning();
+
+    const res = await subjectTeachersRoutes.DELETE(new Request(`http://x/api/academics/subject-teachers?id=${coTeacher!.id}`));
+    expect(res.status).toBe(200);
+
+    // teacherA's only historical record for the pair is untouched.
+    const [primary] = await db
+      .select()
+      .from(subjectTeachers)
+      .where(and(eq(subjectTeachers.teacherId, teacherA), eq(subjectTeachers.classSubjectId, mathClassSubjectId)));
+    expect(primary).toBeTruthy();
+  });
+
+  it('blocks a direct campus change while current assignments exist', async () => {
+    await asPrincipal(adminAll, 'school_admin');
+
+    const res = await teacherRoutes.PUT(jsonRequest('http://x/api/teachers', 'PUT', { id: teacherA, branchId: branchB }));
+    expect(res.status).toBe(409);
+
+    const body = await res.json();
+    expect(body.error.code).toBe('TEACHER_BRANCH_TRANSFER_REQUIRED');
+    expect(body.blockers.length).toBeGreaterThan(0);
+
+    // Nothing moved: branch and assignment untouched.
+    const [teacherRow] = await db.select().from(user).where(eq(user.id, teacherA));
+    expect(teacherRow!.branchId).toBe(branchA);
+    const assignments = await db
+      .select()
+      .from(classTeachers)
+      .where(and(eq(classTeachers.teacherId, teacherA), eq(classTeachers.status, 'active')));
+    expect(assignments).toHaveLength(1);
+  });
+
+  it('allows an authorized campus change for a teacher with no current assignments', async () => {
+    await asPrincipal(adminAll, 'school_admin');
+
+    const res = await teacherRoutes.PUT(jsonRequest('http://x/api/teachers', 'PUT', { id: teacherClean, branchId: branchB }));
+    expect(res.status).toBe(200);
+
+    const [teacherRow] = await db.select().from(user).where(eq(user.id, teacherClean));
+    expect(teacherRow!.branchId).toBe(branchB);
   });
 
   it('deactivation closes class assignments, preserves history, and hard delete is refused', async () => {

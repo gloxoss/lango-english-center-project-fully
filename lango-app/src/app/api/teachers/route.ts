@@ -4,16 +4,18 @@ import { z } from 'zod';
 import {
   checkHardDelete,
   createTeacher,
+  currentAssignmentBlockers,
   getTeacherDetail,
   hardDeleteTeacher,
   listTeachers,
+  resolveTeacherScope,
 
   transitionTeacherStatus,
   updateTeacher,
 } from '@/features/teachers/server/teacher-service';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse } from '@/libs/api/errors';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, teacherCreateSchema, teacherUpdateSchema } from '@/libs/api/validation';
@@ -42,13 +44,17 @@ export async function GET(request: Request) {
     await requireCapability(context, 'teachers.read');
 
     const { searchParams } = new URL(request.url);
+    const branchId = searchParams.get('branchId');
     const id = searchParams.get('id');
     if (id) {
-      const detail = await getTeacherDetail(context, tenantId, id);
+      // Detail honours the same selected scope as the list: a teacher outside
+      // the selected campus is a 404, never a silent scope escape.
+      const scope = await resolveTeacherScope(context, tenantId, branchId);
+      const detail = await getTeacherDetail(context, tenantId, id, scope.effectiveBranchId);
       if (!detail) {
         return NextResponse.json({ success: false, message: 'Enseignant non trouvé' }, { status: 404 });
       }
-      return NextResponse.json({ success: true, data: detail });
+      return NextResponse.json({ success: true, data: detail, scope });
     }
 
     const pagination = parsePagination(searchParams);
@@ -58,7 +64,7 @@ export async function GET(request: Request) {
       status: rawStatus && rawStatus !== 'all' ? toDbStatus(rawStatus) : 'all',
       subjectId: searchParams.get('subjectId'),
       classSectionId: searchParams.get('classSectionId'),
-      branchId: searchParams.get('branchId'),
+      branchId,
       page: pagination.page,
       pageSize: pagination.pageSize,
     });
@@ -71,6 +77,7 @@ export async function GET(request: Request) {
       pageSize: result.pageSize,
       totalPages: result.totalPages,
       summary: result.summary,
+      scope: result.scope,
     });
   } catch (error) {
     return apiErrorResponse(error);
@@ -106,6 +113,7 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  let parsedId: string | null = null;
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
@@ -115,6 +123,7 @@ export async function PUT(request: Request) {
     // workloadHours is a deprecated stopgap column and deliberately not
     // editable from the directory (planned workload comes from the timetable).
     const { id, status, branchId, fullName, workloadHours: _ignoredWorkloadHours, ...fields } = body;
+    parsedId = id;
 
     let transition: Awaited<ReturnType<typeof transitionTeacherStatus>> | null = null;
     if (status) {
@@ -141,6 +150,21 @@ export async function PUT(request: Request) {
       message: 'Enseignant mis à jour avec succès',
     });
   } catch (error) {
+    // Surface exactly which current assignments block a campus change, so the
+    // UI (and the operator) can act instead of guessing.
+    if (error instanceof ApiError && error.code === 'TEACHER_BRANCH_TRANSFER_REQUIRED' && parsedId) {
+      try {
+        const context = await requireRequestContext(request, ['school_admin']);
+        const tenantId = requireTenant(context);
+        const blockers = await currentAssignmentBlockers(tenantId, parsedId);
+        return NextResponse.json(
+          { success: false, error: { code: error.code, message: error.message }, blockers },
+          { status: 409 },
+        );
+      } catch {
+        // fall through to the generic envelope
+      }
+    }
     return apiErrorResponse(error);
   }
 }

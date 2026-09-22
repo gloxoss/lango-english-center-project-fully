@@ -57,7 +57,10 @@ export function TeacherFilters({
   ];
 
   const hasFilters = Boolean(query.search || query.status !== 'all' || query.subjectId || query.classSectionId || query.branchId);
-  const showBranchFilter = (options?.branches.length ?? 0) > 1;
+  // The branch selector is a SCOPE selector: only a whole-school principal may
+  // change it (the server pins branch-limited principals to their home branch
+  // and 403s anything else). It appears as soon as the tenant has any branch.
+  const showBranchFilter = options != null && options.scope.homeBranchId === null && options.branches.length > 0;
 
   return (
     <div className="flex flex-wrap items-center gap-2">

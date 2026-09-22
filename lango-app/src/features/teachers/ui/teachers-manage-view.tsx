@@ -6,12 +6,14 @@ import type {
   TeacherDirectoryQuery,
   TeacherDirectorySummary,
   TeacherFilterOptions,
+  TeacherScopeInfo,
   TeacherStatus,
 } from '../model/types';
 import type { TeacherRowAction } from './teacher-directory-table';
 import type { LifecycleTarget } from './teacher-lifecycle-dialog';
 import {
   AlertCircle,
+  Building2,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -57,6 +59,8 @@ type EditableTeacher = TeacherDirectoryItem | TeacherDetail;
 
 const STATUS_VALUES: TeacherStatus[] = ['active', 'inactive', 'archived'];
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+/** Same shell key the topbar campus switcher uses — one agreed scope. */
+const BRANCH_STORAGE_KEY = 'schoolos_active_branch_id';
 
 function parseQuery(params: URLSearchParams): TeacherDirectoryQuery {
   const statusRaw = params.get('status') ?? '';
@@ -119,6 +123,7 @@ export function TeachersManageView({ locale }: { locale: string }) {
 
   const [items, setItems] = useState<TeacherDirectoryItem[]>([]);
   const [summary, setSummary] = useState<TeacherDirectorySummary | null>(null);
+  const [scope, setScope] = useState<TeacherScopeInfo | null>(null);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -141,12 +146,38 @@ export function TeachersManageView({ locale }: { locale: string }) {
   const reload = useCallback(() => setReloadToken(token => token + 1), []);
 
   useEffect(() => {
-    fetchTeacherFilterOptions().then((result) => {
-      if (result.ok) {
-        setOptions(result.data);
+    let cancelled = false;
+    fetchTeacherFilterOptions(query.branchId).then((result) => {
+      if (cancelled || !result.ok) {
+        return;
+      }
+      setOptions(result.data);
+      // One authoritative scope: a whole-school principal's stored campus
+      // selection (same key the topbar switcher writes) seeds the directory
+      // URL. The id is only a hint — the server validates it.
+      if (!query.branchId && result.data.scope.homeBranchId === null) {
+        const stored = window.localStorage.getItem(BRANCH_STORAGE_KEY);
+        if (stored && result.data.branches.some(branch => branch.id === stored)) {
+          setQuery({ branchId: stored, page: 1 });
+        }
       }
     });
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [query.branchId, setQuery]);
+
+  /** Any scope change is mirrored to the shell's stored selection. */
+  const handleQueryChange = useCallback((partial: Partial<TeacherDirectoryQuery>) => {
+    if ('branchId' in partial) {
+      if (partial.branchId) {
+        window.localStorage.setItem(BRANCH_STORAGE_KEY, partial.branchId);
+      } else {
+        window.localStorage.removeItem(BRANCH_STORAGE_KEY);
+      }
+    }
+    setQuery(partial);
+  }, [setQuery]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -160,6 +191,7 @@ export function TeachersManageView({ locale }: { locale: string }) {
         if (result.ok) {
           setItems(result.data.data);
           setSummary(result.data.summary);
+          setScope(result.data.scope);
           setTotal(result.data.total);
           setTotalPages(result.data.totalPages);
           setSelectedTeacherId((previous) => {
@@ -223,9 +255,14 @@ export function TeachersManageView({ locale }: { locale: string }) {
     return `/api/teachers/export?${params.toString()}`;
   })();
 
+  // One scope label for the whole page: the resolved list scope, falling back
+  // to the options scope while the first list response is in flight.
+  const effectiveScope = scope ?? options?.scope ?? null;
+
   const inspector = (
     <TeacherInspectorContent
       teacherId={selectedTeacherId}
+      branchId={query.branchId}
       locale={locale}
       onEdit={(teacher) => {
         setEditing(teacher);
@@ -249,6 +286,18 @@ export function TeachersManageView({ locale }: { locale: string }) {
               {t('title')}
             </h1>
             <p className="mt-1 text-xs text-slate-500">{t('manage')}</p>
+            {effectiveScope && (
+              <span className="
+                mt-1.5 inline-flex items-center gap-1.5 rounded-full
+                bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-600
+              "
+              >
+                <Building2 className="size-3 text-[#2487B8]" />
+                {t('scopeLabel')}
+                {' : '}
+                {effectiveScope.allBranches ? t('scopeAllBranches') : (effectiveScope.branchName ?? '-')}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -386,8 +435,11 @@ export function TeachersManageView({ locale }: { locale: string }) {
           <TeacherFilters
             query={query}
             options={options}
-            onChange={setQuery}
-            onClear={() => router.push(`?`, { scroll: false })}
+            onChange={handleQueryChange}
+            onClear={() => {
+              window.localStorage.removeItem(BRANCH_STORAGE_KEY);
+              router.push(`?`, { scroll: false });
+            }}
           />
 
           {/* Desktop table */}

@@ -392,7 +392,12 @@ export function TeachersBulkImportView({ locale }: { locale: string }) {
         </Button>
 
         <div className="flex items-center gap-3">
-          <Button asChild variant="outline" size="sm" className="h-10 rounded-xl px-4 text-xs">
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="h-10 rounded-xl px-4 text-xs"
+          >
             <Link href={`/${locale}/dashboard/teachers/manage`}>
               {tCommon('back')}
             </Link>

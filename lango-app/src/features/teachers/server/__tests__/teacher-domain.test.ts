@@ -42,6 +42,23 @@ describe('teacher dossier completeness', () => {
     const summary = summarizeTeacherDossiers([complete, partial, none, none]);
 
     expect(summary).toEqual({ complete: 1, partial: 1, noDocuments: 2, toComplete: 3 });
+    // "Sans pièces" is a subset of "à régulariser", never double-counted.
+    expect(summary.partial + summary.noDocuments).toBe(summary.toComplete);
+  });
+
+  it('counts "1 élément manquant" as one missing item, not a whole dossier', () => {
+    // Only the contract is missing: the count is a number of items, which is
+    // what the UI pluralizes (1 élément manquant / N éléments manquants).
+    const dossier = computeTeacherDossier({
+      documents: { cin: true, diploma: true },
+      employeeId: completeInput.employeeId,
+      hireDate: completeInput.hireDate,
+      specialization: completeInput.specialization,
+    });
+
+    expect(dossier.complete).toBe(false);
+    expect(dossier.missingItems).toHaveLength(1);
+    expect(dossier.missingItems).toEqual(['contract']);
   });
 });
 

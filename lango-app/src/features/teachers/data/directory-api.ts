@@ -58,8 +58,9 @@ export async function fetchTeachers(query: TeacherDirectoryQuery, signal?: Abort
   return { ok: true, data: json };
 }
 
-export async function fetchTeacherDetail(id: string, signal?: AbortSignal): Promise<ApiResult<TeacherDetail>> {
-  const res = await fetch(`/api/teachers?id=${encodeURIComponent(id)}`, { signal });
+export async function fetchTeacherDetail(id: string, branchId?: string, signal?: AbortSignal): Promise<ApiResult<TeacherDetail>> {
+  const scopeQuery = branchId ? `&branchId=${encodeURIComponent(branchId)}` : '';
+  const res = await fetch(`/api/teachers?id=${encodeURIComponent(id)}${scopeQuery}`, { signal });
   if (!res.ok) {
     return { ok: false, status: res.status, ...(await readError(res)) };
   }
@@ -67,8 +68,9 @@ export async function fetchTeacherDetail(id: string, signal?: AbortSignal): Prom
   return { ok: true, data: json.data as TeacherDetail };
 }
 
-export async function fetchTeacherFilterOptions(): Promise<ApiResult<TeacherFilterOptions>> {
-  const res = await fetch('/api/teachers/options');
+export async function fetchTeacherFilterOptions(branchId?: string): Promise<ApiResult<TeacherFilterOptions>> {
+  const query = branchId ? `?branchId=${encodeURIComponent(branchId)}` : '';
+  const res = await fetch(`/api/teachers/options${query}`);
   if (!res.ok) {
     return { ok: false, status: res.status, ...(await readError(res)) };
   }

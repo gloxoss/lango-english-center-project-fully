@@ -30,7 +30,8 @@ export async function GET(request: Request) {
       branchId: searchParams.get('branchId'),
     };
 
-    const items = await listTeachersForExport(context, tenantId, filters);
+    // Same scope resolution as the list — export can never widen the view.
+    const { items, scope } = await listTeachersForExport(context, tenantId, filters);
 
     const header = [
       'Matricule',
@@ -66,6 +67,8 @@ export async function GET(request: Request) {
     recordAudit(context, 'export', 'teacher_directory', 'export', {
       filters,
       count: items.length,
+      effectiveBranchId: scope.effectiveBranchId,
+      allBranches: scope.allBranches,
     });
 
     const filename = `enseignants-${new Date().toISOString().slice(0, 10)}.csv`;

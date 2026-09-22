@@ -6,6 +6,7 @@ import {
   BookOpen,
   Briefcase,
   CalendarCheck,
+  ChevronDown,
   Clock,
   FileText,
   Lock,
@@ -56,12 +57,14 @@ const DOC_LABEL_KEYS: Record<string, string> = {
  */
 export function TeacherInspectorContent({
   teacherId,
+  branchId,
   locale,
   onEdit,
   onStatus,
   onDelete,
 }: {
   teacherId: string | null;
+  branchId?: string;
   locale: string;
   onEdit: (teacher: TeacherDetail) => void;
   onStatus: (teacher: TeacherDetail, status: TeacherStatus) => void;
@@ -71,11 +74,15 @@ export function TeacherInspectorContent({
   const [detail, setDetail] = useState<TeacherDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Privacy-by-design: sensitive HR data starts collapsed even for an
+  // authorized viewer (shoulder-surfing protection). Permission rules are
+  // unchanged — the server decides whether the block exists at all.
+  const [hrExpanded, setHrExpanded] = useState(false);
 
   const load = useCallback(async (id: string, signal?: AbortSignal) => {
     setLoading(true);
     setError(null);
-    const result = await fetchTeacherDetail(id, signal);
+    const result = await fetchTeacherDetail(id, branchId, signal);
     if (signal?.aborted) {
       return;
     }
@@ -86,13 +93,14 @@ export function TeacherInspectorContent({
       setError(result.message);
     }
     setLoading(false);
-  }, []);
+  }, [branchId]);
 
   useEffect(() => {
     if (!teacherId) {
       setDetail(null);
       return;
     }
+    setHrExpanded(false);
     const controller = new AbortController();
     load(teacherId, controller.signal);
     return () => controller.abort();
@@ -265,40 +273,58 @@ export function TeacherInspectorContent({
       {detail.sensitiveHr
         ? (
             <div className="space-y-2 border-t pt-3">
-              <h4 className="
-                flex items-center gap-1.5 text-xs font-bold text-[#16212B]
-              "
+              <button
+                type="button"
+                onClick={() => setHrExpanded(expanded => !expanded)}
+                aria-expanded={hrExpanded}
+                className="
+                  flex w-full items-center justify-between gap-1.5 text-xs
+                  font-bold text-[#16212B]
+                "
               >
-                <FileText className="size-3.5 text-slate-400" />
-                {' '}
-                {t('hrSensitiveTitle')}
-              </h4>
-              <dl className="grid grid-cols-2 gap-2 text-[10px]">
-                <div>
-                  <dt className="text-slate-400">{t('salaryMad')}</dt>
-                  <dd className="font-semibold text-[#16212B]">
-                    {detail.sensitiveHr.salary ?? '—'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-slate-400">{t('cnss')}</dt>
-                  <dd className="font-semibold text-[#16212B]">
-                    {detail.sensitiveHr.cnssNumber ?? '—'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-slate-400">{t('amo')}</dt>
-                  <dd className="font-semibold text-[#16212B]">
-                    {detail.sensitiveHr.amoNumber ?? '—'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-slate-400">{t('bankRib')}</dt>
-                  <dd className="font-semibold text-[#16212B]">
-                    {detail.sensitiveHr.bankRib ?? '—'}
-                  </dd>
-                </div>
-              </dl>
+                <span className="flex items-center gap-1.5">
+                  <FileText className="size-3.5 text-slate-400" />
+                  {' '}
+                  {t('hrSensitiveTitle')}
+                </span>
+                <ChevronDown
+                  className={`
+                    size-3.5 text-slate-400 transition-transform
+                    ${hrExpanded ? 'rotate-180' : ''}
+                  `}
+                />
+              </button>
+              {!hrExpanded && (
+                <p className="text-[10px] text-slate-400">{t('hrSensitiveCollapsedHint')}</p>
+              )}
+              {hrExpanded && (
+                <dl className="grid grid-cols-2 gap-2 text-[10px]">
+                  <div>
+                    <dt className="text-slate-400">{t('salaryMad')}</dt>
+                    <dd className="font-semibold text-[#16212B]">
+                      {detail.sensitiveHr.salary ?? '—'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-400">{t('cnss')}</dt>
+                    <dd className="font-semibold text-[#16212B]">
+                      {detail.sensitiveHr.cnssNumber ?? '—'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-400">{t('amo')}</dt>
+                    <dd className="font-semibold text-[#16212B]">
+                      {detail.sensitiveHr.amoNumber ?? '—'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-400">{t('bankRib')}</dt>
+                    <dd className="font-semibold text-[#16212B]">
+                      {detail.sensitiveHr.bankRib ?? '—'}
+                    </dd>
+                  </div>
+                </dl>
+              )}
             </div>
           )
         : (

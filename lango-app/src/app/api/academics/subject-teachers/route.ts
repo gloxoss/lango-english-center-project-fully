@@ -7,6 +7,7 @@ import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, subjectTeacherCreateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
+import { assertSubjectAssignmentRemovable } from '@/libs/services/subject-teacher-assignment';
 import { classes, classSections, classSubjects, subjects, subjectTeachers, user } from '@/models/Schema';
 
 // ponytail: pure join record, no PUT - reassignment is delete + recreate.
@@ -127,6 +128,11 @@ export async function DELETE(request: Request) {
     if (!id) {
       return NextResponse.json({ success: false, message: 'ID non fourni' }, { status: 400 });
     }
+
+    // Refuses the destructive case: deleting the only record of a teaching
+    // relationship that has real usage. See the guard for the exact rule and
+    // the deferred schema migration that will make proper closing possible.
+    await assertSubjectAssignmentRemovable(tenantId, id);
 
     await db.delete(subjectTeachers).where(and(eq(subjectTeachers.id, id), eq(subjectTeachers.tenantId, tenantId)));
     recordAudit(context, 'delete', 'subject_teacher', id);

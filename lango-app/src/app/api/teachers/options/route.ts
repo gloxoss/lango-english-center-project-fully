@@ -15,7 +15,9 @@ export async function GET(request: Request) {
     const tenantId = requireTenant(context);
     await requireCapability(context, 'teachers.read');
 
-    const options = await listTeacherFilterOptions(context, tenantId);
+    // The selected branch is validated server-side inside the service.
+    const branchId = new URL(request.url).searchParams.get('branchId');
+    const options = await listTeacherFilterOptions(context, tenantId, branchId);
     return NextResponse.json({ success: true, data: options });
   } catch (error) {
     return apiErrorResponse(error);

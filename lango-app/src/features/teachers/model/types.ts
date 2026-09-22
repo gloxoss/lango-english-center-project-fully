@@ -60,6 +60,14 @@ export type TeacherDirectorySummary = {
   attention: TeacherAttentionItem[];
 };
 
+/** One authoritative view scope, resolved server-side for every request. */
+export type TeacherScopeInfo = {
+  homeBranchId: string | null;
+  effectiveBranchId: string | null;
+  branchName: string | null;
+  allBranches: boolean;
+};
+
 export type TeacherListResponse = {
   success: boolean;
   data: TeacherDirectoryItem[];
@@ -68,6 +76,7 @@ export type TeacherListResponse = {
   pageSize: number;
   totalPages: number;
   summary: TeacherDirectorySummary;
+  scope: TeacherScopeInfo;
 };
 
 export type TeacherClassAssignmentHistoryItem = {
@@ -136,6 +145,7 @@ export type TeacherFilterOptions = {
   subjects: { id: string; name: string }[];
   classes: { id: string; label: string }[];
   branches: { id: string; name: string }[];
+  scope: TeacherScopeInfo;
 };
 
 export type TeacherDirectoryQuery = {
