@@ -42,6 +42,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         studentId: invoices.studentId,
         studentName: user.name,
         amount: invoices.netAmount,
+        paidAmount: invoices.paidAmount,
         status: invoices.status,
         date: invoices.issueDate,
       })
@@ -62,6 +63,28 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       .innerJoin(user, eq(payments.studentId, user.id))
       .where(and(eq(payments.tenantId, tenantId), inArray(payments.studentId, studentIds)));
 
+    let totalInvoiced = 0;
+    let outstandingBalance = 0;
+    let unpaidInvoicesCount = 0;
+
+    for (const inv of realInvoices) {
+      if (inv.status !== 'cancelled') {
+        const net = Number(inv.amount || 0);
+        const paid = Number(inv.paidAmount || 0);
+        totalInvoiced += net;
+        const due = Math.max(0, net - paid);
+        if (due > 0 && inv.status !== 'paid') {
+          outstandingBalance += due;
+          unpaidInvoicesCount++;
+        }
+      }
+    }
+
+    let totalPaid = 0;
+    for (const pay of realPayments) {
+      totalPaid += Number(pay.amount || 0);
+    }
+
     const merged = [
       ...realInvoices.map(r => ({ type: 'invoice' as const, ...r })),
       ...realPayments.map(r => ({ type: 'payment' as const, ...r })),
@@ -69,7 +92,16 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       .sort((a, b) => (a.date < b.date ? 1 : -1))
       .slice(0, limit);
 
-    return NextResponse.json({ success: true, data: merged });
+    return NextResponse.json({
+      success: true,
+      data: merged,
+      summary: {
+        totalInvoiced,
+        totalPaid,
+        outstandingBalance,
+        unpaidInvoicesCount,
+      },
+    });
   } catch (error) {
     return apiErrorResponse(error);
   }

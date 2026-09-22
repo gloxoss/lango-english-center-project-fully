@@ -50,6 +50,7 @@ export function IssueCardDialog(props: Props) {
   const [publishedVersionId, setPublishedVersionId] = useState<string | null>(null);
   const [issuing, setIssuing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [canReissue, setCanReissue] = useState(false);
   const [result, setResult] = useState<IssueResult | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -58,6 +59,7 @@ export function IssueCardDialog(props: Props) {
     setSelectedTemplateId('');
     setPublishedVersionId(null);
     setError(null);
+    setCanReissue(false);
     setResult(null);
     setCopied(false);
     fetch(`/api/cards/templates?type=${templateType}`)
@@ -68,6 +70,7 @@ export function IssueCardDialog(props: Props) {
   const selectTemplate = async (templateId: string) => {
     setSelectedTemplateId(templateId);
     setPublishedVersionId(null);
+    setCanReissue(false);
     const res = await fetch(`/api/cards/templates/${templateId}/versions`).then(r => r.json());
     if (res.success) {
       const published = res.data.find((v: any) => v.publishedById);
@@ -75,7 +78,7 @@ export function IssueCardDialog(props: Props) {
     }
   };
 
-  const handleIssue = async () => {
+  const handleIssue = async (isReissue = false) => {
     if (!publishedVersionId) return;
     setIssuing(true);
     setError(null);
@@ -83,13 +86,22 @@ export function IssueCardDialog(props: Props) {
       const res = await fetch('/api/cards/issue', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ templateVersionId: publishedVersionId, subjectType, subjectId }),
+        body: JSON.stringify({
+          templateVersionId: publishedVersionId,
+          subjectType,
+          subjectId,
+          reissue: isReissue,
+        }),
       });
       const json = await res.json();
       if (!json.success) {
+        if (res.status === 409 || json.error?.code === 'ACTIVE_CARD_EXISTS') {
+          setCanReissue(true);
+        }
         setError(json.message || json.error?.message || t('errorIssueCard'));
         return;
       }
+      setCanReissue(false);
       setResult(json.data);
     } catch {
       setError(t('connectionFailed'));
@@ -197,14 +209,25 @@ export function IssueCardDialog(props: Props) {
               <Button variant="outline" onClick={() => onOpenChange(false)} className="text-xs h-9 cursor-pointer" disabled={issuing}>
                 {t('btnCancel')}
               </Button>
-              <Button
-                className="bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs h-9 font-bold shadow-2xs gap-1.5 px-4 cursor-pointer"
-                onClick={handleIssue}
-                disabled={issuing || !publishedVersionId}
-              >
-                {issuing && <Loader2 className="w-4 h-4 animate-spin" />}
-                {issuing ? t('btnIssuing') : t('btnIssueCard')}
-              </Button>
+              {canReissue ? (
+                <Button
+                  className="bg-amber-600 hover:bg-amber-700 text-white text-xs h-9 font-bold shadow-2xs gap-1.5 px-4 cursor-pointer"
+                  onClick={() => handleIssue(true)}
+                  disabled={issuing || !publishedVersionId}
+                >
+                  {issuing && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {issuing ? t('btnIssuing') : 'Réémettre la carte'}
+                </Button>
+              ) : (
+                <Button
+                  className="bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs h-9 font-bold shadow-2xs gap-1.5 px-4 cursor-pointer"
+                  onClick={() => handleIssue(false)}
+                  disabled={issuing || !publishedVersionId}
+                >
+                  {issuing && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {issuing ? t('btnIssuing') : t('btnIssueCard')}
+                </Button>
+              )}
             </>
           )}
         </DialogFooter>

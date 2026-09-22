@@ -69,7 +69,7 @@ export async function resolveSubjectData(
         bloodGroup: u.bloodGroup ?? '',
         nationalId: u.nationalId ?? '',
         guardianName: u.guardianName ?? '',
-        photo: '',
+        photo: u.avatarUrl ?? (u.photoUrl ? `/api/students/photos?id=${u.id}` : ''),
         title: 'Carte d\'étudiant',
         subtitle: '',
       },
@@ -94,7 +94,7 @@ export async function resolveSubjectData(
         qualification: u.qualification ?? '',
         hireDate: u.hireDate ?? '',
         phone: u.phone ?? '',
-        photo: '',
+        photo: u.avatarUrl ?? '',
         title: 'Carte d\'employé',
         subtitle: '',
       },
@@ -119,18 +119,12 @@ export async function resolveSubjectData(
       firstName: u?.firstName ?? firstName,
       lastName: u?.lastName ?? lastName,
       matricule: u?.matricule ?? '',
-      dateOfBirth: u?.dateOfBirth ?? '',
-      candidateNumber: seat.candidateNumber,
-      seatNumber: String(seat.seatNumber),
-      deskLabel: seat.deskLabel ?? '',
-      hall: hall?.name ?? '',
-      examName: term?.name ?? '',
-      date: term?.startDate ?? '',
-      barcode: seat.candidateNumber,
-      photo: '',
+      examTerm: term?.name ?? '',
+      examHall: hall?.name ?? '',
+      seatNumber: String(seat.seatNumber ?? ''),
+      photo: u?.avatarUrl ?? '',
       title: 'Convocation d\'examen',
       subtitle: '',
-      instructions: '',
     },
   };
 }
@@ -141,6 +135,7 @@ export type IssueDocumentParams = {
   subjectType: CardSubjectType;
   subjectId: string;
   issuedBy: string;
+  reissue?: boolean;
 };
 
 export type IssuedResult = {
@@ -180,6 +175,39 @@ export async function issueDocument(params: IssueDocumentParams): Promise<Issued
   }
 
   const { subjectId: resolvedSubjectId, data } = await resolveSubjectData(tenantId, subjectType, subjectId);
+
+  // Check if active card already exists for this subject
+  const [existingActive] = await db
+    .select({ id: issuedDocuments.id })
+    .from(issuedDocuments)
+    .where(and(
+      eq(issuedDocuments.tenantId, tenantId),
+      eq(issuedDocuments.subjectType, subjectType),
+      eq(issuedDocuments.subjectId, resolvedSubjectId),
+      eq(issuedDocuments.status, 'active'),
+    ))
+    .limit(1);
+
+  if (existingActive) {
+    if (!params.reissue) {
+      throw new ApiError(409, 'ACTIVE_CARD_EXISTS', 'Une carte active existe déjà pour ce sujet. Confirmez la réémission pour la remplacer.');
+    }
+    // Reissue transaction: revoke prior active card
+    await db.update(issuedDocuments)
+      .set({ status: 'revoked' })
+      .where(and(
+        eq(issuedDocuments.tenantId, tenantId),
+        eq(issuedDocuments.id, existingActive.id),
+      ));
+
+    await db.insert(documentEvents).values({
+      tenantId,
+      issuedDocumentId: existingActive.id,
+      eventKind: 'revoked',
+      actorId: issuedBy,
+      metadata: { reason: 'reissued', replacementTemplateVersionId: templateVersionId },
+    });
+  }
 
   const rawToken = randomBytes(32).toString('hex');
   const hash = createHash('sha256').update(rawToken).digest('hex');
