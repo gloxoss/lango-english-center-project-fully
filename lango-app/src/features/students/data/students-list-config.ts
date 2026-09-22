@@ -4,6 +4,7 @@ export type StudentItem = {
   matricule: string;
   gradeLevel: string;
   classSection: string;
+  classSectionId?: string | null;
   attendancePct: number;
   status: 'Actif' | 'Inactif' | 'Suspendu';
   financialStatus: 'À jour' | 'En retard' | 'Partiel';
