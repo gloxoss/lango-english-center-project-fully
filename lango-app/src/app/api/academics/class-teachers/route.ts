@@ -6,9 +6,9 @@ import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { classTeacherCreateSchema, parseJson } from '@/libs/api/validation';
-import { reassignClassTeacher } from '@/libs/services/class-teacher-assignment';
 import { db } from '@/libs/DB';
-import { classSections, classTeachers, user } from '@/models/Schema';
+import { reassignClassTeacher } from '@/libs/services/class-teacher-assignment';
+import { classes, classSections, classTeachers, user } from '@/models/Schema';
 
 function toApiClassTeacher(row: typeof classTeachers.$inferSelect) {
   return {
@@ -70,8 +70,9 @@ export async function POST(request: Request) {
     const body = await parseJson(request, classTeacherCreateSchema);
 
     const [sectionRow] = await db
-      .select({ id: classSections.id })
+      .select({ id: classSections.id, branchId: classes.branchId })
       .from(classSections)
+      .innerJoin(classes, eq(classSections.classId, classes.id))
       .where(and(eq(classSections.id, body.classSectionId), eq(classSections.tenantId, tenantId)))
       .limit(1);
 
@@ -80,13 +81,20 @@ export async function POST(request: Request) {
     }
 
     const [teacherRow] = await db
-      .select({ id: user.id })
+      .select({ id: user.id, branchId: user.branchId })
       .from(user)
       .where(and(eq(user.id, body.teacherId), eq(user.tenantId, tenantId), eq(user.role, 'teacher')))
       .limit(1);
 
     if (!teacherRow) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'L\'enseignant indiqué n\'existe pas pour cet établissement.');
+    }
+
+    // Cross-campus teaching needs an explicit model; until one exists, a
+    // branch-pinned teacher cannot be assigned to another branch's class.
+    // A null branch means "whole-school / not yet assigned" and stays allowed.
+    if (teacherRow.branchId && sectionRow.branchId && teacherRow.branchId !== sectionRow.branchId) {
+      throw new ApiError(422, 'CROSS_BRANCH_ASSIGNMENT', 'Cet enseignant appartient à un autre campus que cette classe.');
     }
 
     const assigned = await reassignClassTeacher({
