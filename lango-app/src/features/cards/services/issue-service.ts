@@ -31,6 +31,27 @@ function splitName(fullName: string | null): [string, string] {
   return [parts[0] ?? '', parts.slice(1).join(' ')];
 }
 
+export function templateRequiresPhoto(schemaJson: unknown): boolean {
+  if (!schemaJson || typeof schemaJson !== 'object') return false;
+  const s = schemaJson as { schemas?: unknown[] };
+  if (!Array.isArray(s.schemas)) return false;
+  for (const page of s.schemas) {
+    if (Array.isArray(page)) {
+      for (const element of page) {
+        if (element && typeof element === 'object' && (element as any).name === 'photo') {
+          return true;
+        }
+      }
+    } else if (page && typeof page === 'object') {
+      for (const [key, value] of Object.entries(page)) {
+        const fieldName = (value && typeof value === 'object' && (value as any).name) ? (value as any).name : key;
+        if (fieldName === 'photo') return true;
+      }
+    }
+  }
+  return false;
+}
+
 export async function resolveSubjectData(
   tenantId: string,
   subjectType: CardSubjectType,
@@ -55,6 +76,7 @@ export async function resolveSubjectData(
         program = [u.className ?? u.level, sec.label].filter(Boolean).join(' ');
       }
     }
+    const resolvedPhoto = u.photoUrl ? `/api/students/photos?id=${u.id}` : (u.image ?? '');
     return {
       subjectId: u.id,
       data: {
@@ -69,7 +91,7 @@ export async function resolveSubjectData(
         bloodGroup: u.bloodGroup ?? '',
         nationalId: u.nationalId ?? '',
         guardianName: u.guardianName ?? '',
-        photo: u.avatarUrl ?? (u.photoUrl ? `/api/students/photos?id=${u.id}` : ''),
+        photo: resolvedPhoto,
         title: 'Carte d\'étudiant',
         subtitle: '',
       },
@@ -82,6 +104,7 @@ export async function resolveSubjectData(
       .limit(1);
     if (!u) throw new ApiError(404, 'NOT_FOUND', 'Employé introuvable pour cet établissement.');
     const [firstName, lastName] = splitName(u.name);
+    const resolvedPhoto = u.photoUrl ? `/api/students/photos?id=${u.id}` : (u.image ?? '');
     return {
       subjectId: u.id,
       data: {
@@ -94,7 +117,7 @@ export async function resolveSubjectData(
         qualification: u.qualification ?? '',
         hireDate: u.hireDate ?? '',
         phone: u.phone ?? '',
-        photo: u.avatarUrl ?? '',
+        photo: resolvedPhoto,
         title: 'Carte d\'employé',
         subtitle: '',
       },
@@ -111,6 +134,7 @@ export async function resolveSubjectData(
   const [term] = await db.select().from(examTerms).where(eq(examTerms.id, seat.examTermId)).limit(1);
   const [hall] = await db.select().from(examHalls).where(eq(examHalls.id, seat.examHallId)).limit(1);
   const [firstName, lastName] = splitName(u?.name ?? '');
+  const resolvedPhoto = u?.photoUrl ? `/api/students/photos?id=${seat.studentId}` : (u?.image ?? '');
 
   return {
     subjectId: seat.studentId,
@@ -122,7 +146,7 @@ export async function resolveSubjectData(
       examTerm: term?.name ?? '',
       examHall: hall?.name ?? '',
       seatNumber: String(seat.seatNumber ?? ''),
-      photo: u?.avatarUrl ?? '',
+      photo: resolvedPhoto,
       title: 'Convocation d\'examen',
       subtitle: '',
     },
@@ -176,6 +200,14 @@ export async function issueDocument(params: IssueDocumentParams): Promise<Issued
 
   const { subjectId: resolvedSubjectId, data } = await resolveSubjectData(tenantId, subjectType, subjectId);
 
+  // If card template requires a photo, verify authoritative photo is present
+  if (templateRequiresPhoto(version.schemaJson)) {
+    const photoValue = data.photo?.trim();
+    if (!photoValue) {
+      throw new ApiError(400, 'STUDENT_PHOTO_REQUIRED', 'Une photo d\'identité est requise pour émettre cette carte.');
+    }
+  }
+
   // Check if active card already exists for this subject
   const [existingActive] = await db
     .select({ id: issuedDocuments.id })
@@ -214,6 +246,8 @@ export async function issueDocument(params: IssueDocumentParams): Promise<Issued
 
   const renderData: Record<string, string> = {
     ...data,
+    photoUrl: data.photo ?? '',
+    image: data.photo ?? '',
     qrCode: `${VERIFY_BASE_URL}/fr/verify/card/${rawToken}`,
   };
 
@@ -313,6 +347,7 @@ export async function autoIssueStudentCardOnAdmission(
     subjectType: 'student',
     subjectId: studentId,
     issuedBy,
+    reissue: true,
   });
 
   await db.insert(documentEvents).values({

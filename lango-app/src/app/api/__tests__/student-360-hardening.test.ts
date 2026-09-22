@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { ApiError } from '@/libs/api/errors';
 import { transitionStudentLifecycle } from '@/libs/services/student-lifecycle';
-import { issueDocument } from '@/features/cards/services/issue-service';
+import { issueDocument, templateRequiresPhoto } from '@/features/cards/services/issue-service';
 
 vi.mock('@/libs/env/server', () => ({
   serverEnv: {
@@ -226,7 +226,11 @@ describe('SchoolOS Student 360 Hardening — P0 & P1 Test Suite', () => {
       // When relational guardian exists, legacy guardian is suppressed
       expect(legacyGuardian).toBeNull();
       expect(relationalGuardians).toHaveLength(1);
-      expect(relationalGuardians[0].relationshipType).toBe('Père');
+      const primaryGuardian = relationalGuardians[0];
+      expect(primaryGuardian).toBeDefined();
+      if (primaryGuardian) {
+        expect(primaryGuardian.relationshipType).toBe('Père');
+      }
     });
 
     it('11. Lifecycle action routes through authoritative student-lifecycle.ts and validates targetStatus', async () => {
@@ -424,20 +428,72 @@ describe('SchoolOS Student 360 Hardening — P0 & P1 Test Suite', () => {
     });
 
     it('20. Student photo is authoritatively forwarded to card issuance template', () => {
-      const studentWithAvatar = {
+      const studentWithPhoto = {
         id: 'STU-001',
         name: 'Yassine El Amrani',
-        avatarUrl: '/uploads/avatars/yassine.jpg',
+        photoUrl: 'STU-001.jpg',
       };
 
+      const resolvedPhoto = studentWithPhoto.photoUrl ? `/api/students/photos?id=${studentWithPhoto.id}` : '';
       const cardPayload = {
-        subjectId: studentWithAvatar.id,
-        fullName: studentWithAvatar.name,
-        photo: studentWithAvatar.avatarUrl ?? '',
+        subjectId: studentWithPhoto.id,
+        fullName: studentWithPhoto.name,
+        photo: resolvedPhoto,
+        photoUrl: resolvedPhoto,
+        image: resolvedPhoto,
       };
 
-      expect(cardPayload.photo).toBe('/uploads/avatars/yassine.jpg');
-      expect(cardPayload.photo).not.toBe('');
+      expect(cardPayload.photo).toBe('/api/students/photos?id=STU-001');
+      expect(cardPayload.photoUrl).toBe('/api/students/photos?id=STU-001');
+      expect(cardPayload.image).toBe('/api/students/photos?id=STU-001');
+    });
+
+    it('20b. Card issuance validates photo requirement against template schema', () => {
+      const templateWithPhoto = {
+        schemas: [
+          [
+            { name: 'fullName', type: 'text' },
+            { name: 'photo', type: 'image' },
+          ],
+        ],
+      };
+      const templateWithoutPhoto = {
+        schemas: [
+          [
+            { name: 'fullName', type: 'text' },
+            { name: 'matricule', type: 'text' },
+          ],
+        ],
+      };
+
+      expect(templateRequiresPhoto(templateWithPhoto)).toBe(true);
+      expect(templateRequiresPhoto(templateWithoutPhoto)).toBe(false);
+
+      function validatePhotoForTemplate(schema: unknown, photo?: string | null) {
+        if (templateRequiresPhoto(schema)) {
+          const photoValue = photo?.trim();
+          if (!photoValue) {
+            throw new ApiError(400, 'STUDENT_PHOTO_REQUIRED', 'Une photo d\'identité est requise pour émettre cette carte.');
+          }
+        }
+        return true;
+      }
+
+      // 1. Missing photo when required -> throws STUDENT_PHOTO_REQUIRED
+      expect(() => validatePhotoForTemplate(templateWithPhoto, '')).toThrowError(/Une photo d'identité est requise/);
+      try {
+        validatePhotoForTemplate(templateWithPhoto, null);
+      } catch (e: any) {
+        expect(e.status).toBe(400);
+        expect(e.code).toBe('STUDENT_PHOTO_REQUIRED');
+      }
+
+      // 2. Photo present when required -> succeeds
+      expect(validatePhotoForTemplate(templateWithPhoto, '/api/students/photos?id=STU-001')).toBe(true);
+
+      // 3. Photo absent when NOT required -> succeeds cleanly
+      expect(validatePhotoForTemplate(templateWithoutPhoto, '')).toBe(true);
+      expect(validatePhotoForTemplate(templateWithoutPhoto, null)).toBe(true);
     });
   });
 

@@ -64,15 +64,17 @@ export function resolveStudentGuardianProjection(
   } | null,
 ): StudentGuardianProjection {
   if (relationalGuardians && relationalGuardians.length > 0) {
-    const primary = relationalGuardians.find(g => g.isPrimaryContact) || relationalGuardians[0];
-    const name = `${primary.firstName || ''} ${primary.lastName || ''}`.trim() || null;
-    return {
-      guardianName: name,
-      guardianPhone: primary.phone ?? null,
-      relationshipType: primary.relationshipType ?? null,
-      isVerified: true,
-      isLegacyFallback: false,
-    };
+    const primary = relationalGuardians.find(g => g.isPrimaryContact) ?? relationalGuardians[0];
+    if (primary) {
+      const name = `${primary.firstName || ''} ${primary.lastName || ''}`.trim() || null;
+      return {
+        guardianName: name,
+        guardianPhone: primary.phone ?? null,
+        relationshipType: primary.relationshipType ?? null,
+        isVerified: true,
+        isLegacyFallback: false,
+      };
+    }
   }
 
   if (legacy?.guardianName || legacy?.guardianPhone) {
