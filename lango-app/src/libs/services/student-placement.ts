@@ -14,13 +14,12 @@ export type RecordPlacementInput = {
   notes?: string;
 };
 
-/** The only supported writer for placement history and its user projection. */
-export async function recordStudentPlacement(input: RecordPlacementInput) {
+export async function recordStudentPlacement(input: RecordPlacementInput, txClient?: any) {
   const { tenantId, studentId, sessionYearId, classSectionId, notes } = input;
   const effectiveStartDate = input.startDate ?? new Date().toISOString().slice(0, 10);
   const status = input.status ?? 'enrolled';
 
-  return db.transaction(async (tx) => {
+  const runWithTx = async (tx: any) => {
     // An advisory transaction lock also serializes concurrent first placements,
     // where SELECT FOR UPDATE would have no existing row to lock.
     await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${tenantId}:${studentId}`}, 0))`);
@@ -56,8 +55,21 @@ export async function recordStudentPlacement(input: RecordPlacementInput) {
       && currentPlacement.classSectionId === classSectionId) {
       return currentPlacement;
     }
-    if (currentPlacement && effectiveStartDate <= currentPlacement.startDate) {
-      throw new ApiError(409, 'PLACEMENT_DATE_CONFLICT', 'La date du nouveau placement doit être postérieure au placement actuel.');
+    if (currentPlacement && effectiveStartDate === currentPlacement.startDate) {
+      // Same-day reassignment / rebalancing: update current placement to new section
+      const [updatedPlacement] = await tx.update(studentPlacements).set({
+        classSectionId,
+        sessionYearId,
+        status,
+        notes: notes || null,
+        updatedAt: new Date().toISOString(),
+      }).where(eq(studentPlacements.id, currentPlacement.id)).returning();
+
+      await tx.update(user).set({ classSectionId, updatedAt: new Date().toISOString() }).where(and(eq(user.tenantId, tenantId), eq(user.id, studentId)));
+      return updatedPlacement!;
+    }
+    if (currentPlacement && effectiveStartDate < currentPlacement.startDate) {
+      throw new ApiError(409, 'PLACEMENT_DATE_CONFLICT', 'La date du nouveau placement ne peut pas être antérieure au placement actuel.');
     }
 
     let predecessorId = input.promotedFromPlacementId ?? currentPlacement?.id ?? null;
@@ -105,7 +117,12 @@ export async function recordStudentPlacement(input: RecordPlacementInput) {
     await tx.update(user).set({ classSectionId, updatedAt: new Date().toISOString() }).where(and(eq(user.tenantId, tenantId), eq(user.id, studentId)));
 
     return newPlacement;
-  });
+  };
+
+  if (txClient) {
+    return runWithTx(txClient);
+  }
+  return db.transaction(async (tx) => runWithTx(tx));
 }
 
 export type ClosePlacementInput = {
