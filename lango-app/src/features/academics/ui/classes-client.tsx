@@ -576,7 +576,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
               </select>
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Shift (optionnel)</label>
+              <label className="font-bold text-slate-600">Vacation (matin / après-midi, optionnel)</label>
               <select
                 value={form.shiftId}
                 onChange={e => setForm({ ...form, shiftId: e.target.value })}

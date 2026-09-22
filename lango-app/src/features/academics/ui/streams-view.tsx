@@ -232,6 +232,8 @@ export function StreamsView({ locale: _locale }: { locale?: string } = {}) {
   });
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const massarConfiguredCount = items.filter(i => i.massarBacCode).length;
+  const massarPercent = items.length > 0 ? Math.round((massarConfiguredCount / items.length) * 100) : 0;
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
@@ -301,7 +303,11 @@ export function StreamsView({ locale: _locale }: { locale?: string } = {}) {
         <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
           <div>
             <p className="text-xs font-bold text-slate-400">{t('massarCompliance')}</p>
-            <p className="text-2xl font-extrabold text-[#17A673] tracking-tight">100%</p>
+            {massarConfiguredCount === 0 ? (
+              <p className="text-sm font-extrabold text-amber-700 tracking-tight">{t('massarNotConfigured')}</p>
+            ) : (
+              <p className="text-2xl font-extrabold text-[#17A673] tracking-tight">{massarPercent}%</p>
+            )}
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#17A673] flex items-center justify-center font-bold">
             <ShieldCheck className="w-5 h-5" />
