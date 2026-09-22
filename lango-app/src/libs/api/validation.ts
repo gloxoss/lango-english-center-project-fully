@@ -33,16 +33,35 @@ export const studentCreateSchema = z.object({
   // see MIGRATION-NOTES.md.
   classSectionId: z.uuid().optional().nullable(),
   guardianName: optionalText(255),
+  guardianPhone: optionalText(50),
   phone: optionalText(50),
   status: z.enum(['Actif', 'Inactif', 'Archivé', 'active', 'inactive', 'archived']).optional(),
   paymentStatus: optionalText(50),
 }).strict();
 
-export const studentUpdateSchema = studentCreateSchema
-  .omit({ email: true, matricule: true })
-  .partial()
-  .extend({ id: z.string().trim().min(1).max(100) })
-  .strict();
+export const studentUpdateSchema = z.object({
+  id: z.string().trim().min(1).max(100),
+  fullName: z.string().trim().min(2).max(255).optional(),
+  firstName: optionalText(100),
+  lastName: optionalText(100),
+  email: z.string().trim().email().max(255).optional().nullable(),
+  matricule: optionalText(50),
+  classSectionId: z.uuid().optional().nullable(),
+  guardianName: optionalText(255),
+  guardianPhone: optionalText(50),
+  phone: optionalText(50),
+  status: z.enum(['Actif', 'Inactif', 'Archivé', 'active', 'inactive', 'archived']).optional(),
+  paymentStatus: optionalText(50),
+  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  gender: z.enum(['male', 'female', 'other']).optional().nullable(),
+  address: optionalText(500),
+  nationality: optionalText(100),
+  motherTongue: optionalText(50),
+  city: optionalText(100),
+  bloodGroup: optionalText(10),
+  nationalId: optionalText(100),
+  academicYearId: z.uuid().optional().nullable(),
+}).strict();
 
 // Import rows carry a free-text class label (e.g. "2nde A") instead of a
 // classSectionId - the server resolves it against the tenant's real

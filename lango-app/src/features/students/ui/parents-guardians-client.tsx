@@ -90,20 +90,19 @@ export function ParentsGuardiansClient({ locale }: { locale?: string } = {}) {
   ];
 
   const filtered = households.filter(h =>
-    (relationFilter === 'all' || (
+    relationFilter === 'all' || (
       relationFilter === 'pere' ? (h.primaryTutorRelation.toLowerCase().includes('père') || h.primaryTutorRelation.toLowerCase().includes('father') || h.primaryTutorRelation.includes('أب')) :
       relationFilter === 'mere' ? (h.primaryTutorRelation.toLowerCase().includes('mère') || h.primaryTutorRelation.toLowerCase().includes('mother') || h.primaryTutorRelation.includes('أم')) :
       relationFilter === 'tuteur' ? (h.primaryTutorRelation.toLowerCase().includes('tuteur') || h.primaryTutorRelation.toLowerCase().includes('guardian') || h.primaryTutorRelation.includes('وصي')) :
       (h.primaryTutorRelation.toLowerCase().includes('parent') || h.primaryTutorRelation.includes('أمر'))
-    )) &&
-    (h.familyName.toLowerCase().includes(search.toLowerCase()) ||
-      h.primaryTutorName.toLowerCase().includes(search.toLowerCase()) ||
-      h.primaryTutorPhone.includes(search))
+    )
   );
 
   const fetchHouseholds = async () => {
     try {
-      const res = await fetch(`/api/students/parents?page=${page}&pageSize=${pageSize}`);
+      const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+      if (search.trim()) params.set('search', search.trim());
+      const res = await fetch(`/api/students/parents?${params}`);
       const json = await res.json();
       if (json.success) {
         setHouseholds((json.data as ApiGuardian[]).map(fromApiGuardian));
@@ -115,9 +114,9 @@ export function ParentsGuardiansClient({ locale }: { locale?: string } = {}) {
   };
 
   useEffect(() => {
-    fetchHouseholds();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize]);
+    const timer = setTimeout(fetchHouseholds, search ? 300 : 0);
+    return () => clearTimeout(timer);
+  }, [page, pageSize, search]);
 
   const handleAddHousehold = async () => {
     if (!newHousehold.familyName.trim() || !newHousehold.primaryTutorName.trim()) return;

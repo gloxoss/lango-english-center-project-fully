@@ -73,7 +73,7 @@ export async function GET(request: Request) {
     const tenantId = requireTenant(context);
     await requireCapability(context, 'guardians.read');
     const { searchParams } = new URL(request.url);
-    const search = searchParams.get('search') || '';
+    const search = searchParams.get('search') || searchParams.get('q') || '';
 
     const filters = [eq(guardians.tenantId, tenantId)];
     if (search) {

@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
@@ -20,6 +20,9 @@ const updateGuardianStudentLinkSchema = z.object({
   studentId: z.string().min(1),
   emergencyPriority: z.number().int().nullable().optional(),
   canPickup: z.boolean().optional(),
+  isPrimaryContact: z.boolean().optional(),
+  isEmergencyContact: z.boolean().optional(),
+  relationshipType: z.string().trim().max(100).optional(),
 }).strict();
 
 export async function POST(request: Request) {
@@ -40,15 +43,19 @@ export async function POST(request: Request) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'Le tuteur indiqué n\'existe pas.');
     }
 
-    // Verify student belongs to tenant
+    // Verify student belongs to tenant and authorized branch
     const [studentRow] = await db
-      .select({ id: user.id, name: user.name })
+      .select({ id: user.id, name: user.name, branchId: user.branchId })
       .from(user)
-      .where(and(eq(user.id, body.studentId), eq(user.tenantId, tenantId), eq(user.role, 'student')))
+      .where(and(eq(user.id, body.studentId), eq(user.tenantId, tenantId), inArray(user.role, ['student', 'alumni'])))
       .limit(1);
 
     if (!studentRow) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'L\'élève indiqué n\'existe pas.');
+    }
+
+    if (context.branchId && studentRow.branchId && studentRow.branchId !== context.branchId) {
+      throw new ApiError(403, 'FORBIDDEN', 'Accès non autorisé pour cette succursale.');
     }
 
     // Check if link already exists
@@ -96,11 +103,11 @@ export async function POST(request: Request) {
       success: true,
       data: {
         id: resultId,
-        guardianId: body.guardianId,
         studentId: body.studentId,
-        studentName: studentRow.name,
+        guardianId: body.guardianId,
+        relationshipType: body.relationshipType || 'Parent',
       },
-      message: 'Liaison tuteur-élève enregistrée avec succès',
+      message: 'Tuteur associé avec succès',
     });
   } catch (error) {
     return apiErrorResponse(error);
@@ -113,6 +120,21 @@ export async function PATCH(request: Request) {
     const tenantId = requireTenant(context);
     await requireCapability(context, 'students.guardians.manage');
     const body = await parseJson(request, updateGuardianStudentLinkSchema);
+
+    // Verify student branch
+    const [studentRow] = await db
+      .select({ id: user.id, branchId: user.branchId })
+      .from(user)
+      .where(and(eq(user.id, body.studentId), eq(user.tenantId, tenantId), inArray(user.role, ['student', 'alumni'])))
+      .limit(1);
+
+    if (!studentRow) {
+      throw new ApiError(422, 'INVALID_REFERENCE', 'L\'élève indiqué n\'existe pas.');
+    }
+
+    if (context.branchId && studentRow.branchId && studentRow.branchId !== context.branchId) {
+      throw new ApiError(403, 'FORBIDDEN', 'Accès non autorisé pour cette succursale.');
+    }
 
     const [link] = await db
       .select({ id: guardianStudents.id })
@@ -128,12 +150,45 @@ export async function PATCH(request: Request) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'Cette liaison tuteur-élève n\'existe pas.');
     }
 
-    const patch: { emergencyPriority?: number | null; canPickup?: boolean } = {};
+    const patch: {
+      emergencyPriority?: number | null;
+      canPickup?: boolean;
+      hasPickupAuthority?: boolean;
+      isPrimaryContact?: boolean;
+      isEmergencyContact?: boolean;
+      relationshipType?: string;
+    } = {};
+
     if (body.emergencyPriority !== undefined) {
       patch.emergencyPriority = body.emergencyPriority;
+      if (body.emergencyPriority !== null && body.isEmergencyContact === undefined) {
+        patch.isEmergencyContact = true;
+      }
     }
     if (body.canPickup !== undefined) {
       patch.canPickup = body.canPickup;
+      patch.hasPickupAuthority = body.canPickup;
+    }
+    if (body.isEmergencyContact !== undefined) {
+      patch.isEmergencyContact = body.isEmergencyContact;
+      if (!body.isEmergencyContact && body.emergencyPriority === undefined) {
+        patch.emergencyPriority = null;
+      }
+    }
+    if (body.isPrimaryContact !== undefined) {
+      patch.isPrimaryContact = body.isPrimaryContact;
+      if (body.isPrimaryContact) {
+        // Guarantee single primary contact per student for this tenant
+        await db.update(guardianStudents)
+          .set({ isPrimaryContact: false })
+          .where(and(
+            eq(guardianStudents.tenantId, tenantId),
+            eq(guardianStudents.studentId, body.studentId),
+          ));
+      }
+    }
+    if (body.relationshipType !== undefined) {
+      patch.relationshipType = body.relationshipType;
     }
 
     await db.update(guardianStudents).set(patch).where(eq(guardianStudents.id, link.id));
@@ -157,6 +212,21 @@ export async function DELETE(request: Request) {
 
     if (!guardianId || !studentId) {
       return NextResponse.json({ success: false, message: 'guardianId et studentId requis' }, { status: 400 });
+    }
+
+    // Branch authorization check
+    const [studentRow] = await db
+      .select({ id: user.id, branchId: user.branchId })
+      .from(user)
+      .where(and(eq(user.id, studentId), eq(user.tenantId, tenantId), inArray(user.role, ['student', 'alumni'])))
+      .limit(1);
+
+    if (!studentRow) {
+      return NextResponse.json({ success: false, message: 'Élève introuvable' }, { status: 404 });
+    }
+
+    if (context.branchId && studentRow.branchId && studentRow.branchId !== context.branchId) {
+      return NextResponse.json({ success: false, message: 'Accès non autorisé pour cette succursale.' }, { status: 403 });
     }
 
     await db
