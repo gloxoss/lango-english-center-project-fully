@@ -38,8 +38,8 @@ type Stream = {
   name: string;
   schoolId: string;
   code?: string | null;
-  massarBacCode?: string | null;
-  cycleRestriction?: 'lycee' | 'college' | 'primaire' | 'all';
+  bacSeriesCode?: string | null;
+  cycle?: 'lycee' | 'college' | 'primaire' | 'maternelle' | null;
   subjects?: SubjectCoeff[];
 };
 
@@ -145,8 +145,8 @@ export function StreamsView({ locale: _locale }: { locale?: string } = {}) {
 
   const openEdit = (s: Stream) => {
     setFormName(s.name);
-    setFormBacCode(s.massarBacCode || 'SM_A');
-    setFormCycle(s.cycleRestriction || 'lycee');
+    setFormBacCode(s.bacSeriesCode || 'SM_A');
+    setFormCycle(s.cycle === 'college' || s.cycle === 'primaire' || s.cycle === 'lycee' ? s.cycle : 'lycee');
     setFormSubjects(s.subjects && s.subjects.length > 0 ? s.subjects : [
       { subjectName: 'Matière Principale 1', coefficient: 5 },
       { subjectName: 'Matière Principale 2', coefficient: 4 },
@@ -180,14 +180,14 @@ export function StreamsView({ locale: _locale }: { locale?: string } = {}) {
         ? {
           id: (modal as { mode: 'edit'; stream: Stream }).stream.id,
           name: formName.trim(),
-          massarBacCode: formBacCode,
-          cycleRestriction: formCycle,
+          bacSeriesCode: formBacCode,
+          cycle: formCycle,
           subjects: formSubjects.filter(s => s.subjectName.trim() !== ''),
         }
         : {
           name: formName.trim(),
-          massarBacCode: formBacCode,
-          cycleRestriction: formCycle,
+          bacSeriesCode: formBacCode,
+          cycle: formCycle,
           subjects: formSubjects.filter(s => s.subjectName.trim() !== ''),
         };
 
@@ -227,8 +227,8 @@ export function StreamsView({ locale: _locale }: { locale?: string } = {}) {
 
   const filtered = items.filter(s => {
     const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
-      (s.massarBacCode && s.massarBacCode.toLowerCase().includes(search.toLowerCase()));
-    const matchesCycle = selectedCycle === 'all' || (s.cycleRestriction || 'lycee') === selectedCycle;
+      (s.bacSeriesCode && s.bacSeriesCode.toLowerCase().includes(search.toLowerCase()));
+    const matchesCycle = selectedCycle === 'all' || (s.cycle || 'lycee') === selectedCycle;
     return matchesSearch && matchesCycle;
   });
 
@@ -293,7 +293,7 @@ export function StreamsView({ locale: _locale }: { locale?: string } = {}) {
           <div>
             <p className="text-xs font-bold text-slate-400">{t('bacStreams')}</p>
             <p className="text-2xl font-extrabold text-purple-700 tracking-tight">
-              {items.filter(i => (i.cycleRestriction || 'lycee') === 'lycee').length}
+              {items.filter(i => (i.cycle || 'lycee') === 'lycee').length}
             </p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
@@ -354,7 +354,7 @@ export function StreamsView({ locale: _locale }: { locale?: string } = {}) {
                     </tr>
                   )}
                   {filtered.map(s => {
-                    const cycleInfo = cycleLabels[s.cycleRestriction || 'lycee'] || cycleLabels.all!;
+                    const cycleInfo = cycleLabels[s.cycle || 'lycee'] || cycleLabels.all!;
                     return (
                       <tr key={s.id} className="hover:bg-slate-50/60 transition-colors">
                         <td className="py-3 px-4">
@@ -364,9 +364,9 @@ export function StreamsView({ locale: _locale }: { locale?: string } = {}) {
                           </div>
                         </td>
                         <td className="py-3 px-4 font-mono font-bold text-slate-700">
-                          {s.massarBacCode ? (
+                          {s.bacSeriesCode ? (
                             <Badge variant="neutral" className="font-mono text-[10px] bg-slate-100 text-slate-700">
-                              {s.massarBacCode}
+                              {s.bacSeriesCode}
                             </Badge>
                           ) : (
                             <span className="text-slate-400">—</span>

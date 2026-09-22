@@ -1,4 +1,4 @@
-export type MassarCoverageInput = { massarBacCode?: string | null };
+export type MassarCoverageInput = { bacSeriesCode?: string | null };
 
 export type MassarCoverage = {
   eligible: number;
@@ -11,7 +11,7 @@ export type MassarCoverage = {
  * MEN Massar coverage over registered streams.
  *
  *   eligible   = streams evaluated (the registered catalogue)
- *   compliant  = streams carrying a non-blank massarBacCode
+ *   compliant  = streams carrying a non-blank bacSeriesCode (MEN Massar code)
  *   percent    = round(compliant / eligible * 100), or null when eligible = 0
  *   configured = at least one compliant stream exists
  *
@@ -20,7 +20,7 @@ export type MassarCoverage = {
  */
 export function computeMassarCoverage(items: MassarCoverageInput[]): MassarCoverage {
   const eligible = items.length;
-  const compliant = items.filter(item => (item.massarBacCode ?? '').trim().length > 0).length;
+  const compliant = items.filter(item => (item.bacSeriesCode ?? '').trim().length > 0).length;
 
   return {
     eligible,

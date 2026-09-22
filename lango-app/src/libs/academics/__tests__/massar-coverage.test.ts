@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { computeMassarCoverage } from '@/libs/academics/massar-coverage';
 
 // FORMULA UNDER TEST (single source of truth for the UI):
-//   compliant  = streams with a non-blank massarBacCode
+//   compliant  = streams with a non-blank bacSeriesCode
 //   eligible   = registered streams evaluated
 //   percent    = round(compliant / eligible * 100), null when eligible = 0
 //   configured = compliant > 0
@@ -22,9 +22,9 @@ describe('massar coverage — computed formula', () => {
 
   it('computes a partial percentage from real records', () => {
     const coverage = computeMassarCoverage([
-      { massarBacCode: 'SM-A' },
-      { massarBacCode: null },
-      { massarBacCode: 'SP-B' },
+      { bacSeriesCode: 'SM-A' },
+      { bacSeriesCode: null },
+      { bacSeriesCode: 'SP-B' },
     ]);
 
     expect(coverage.eligible).toBe(3);
@@ -35,8 +35,8 @@ describe('massar coverage — computed formula', () => {
 
   it('reports full compliance only when every stream carries a code', () => {
     const coverage = computeMassarCoverage([
-      { massarBacCode: 'SM-A' },
-      { massarBacCode: 'SV-B' },
+      { bacSeriesCode: 'SM-A' },
+      { bacSeriesCode: 'SV-B' },
     ]);
 
     expect(coverage.percent).toBe(100);
@@ -46,9 +46,9 @@ describe('massar coverage — computed formula', () => {
   it('treats missing, empty and whitespace-only codes as non-compliant', () => {
     const coverage = computeMassarCoverage([
       {},
-      { massarBacCode: '' },
-      { massarBacCode: '   ' },
-      { massarBacCode: 'SE-A' },
+      { bacSeriesCode: '' },
+      { bacSeriesCode: '   ' },
+      { bacSeriesCode: 'SE-A' },
     ]);
 
     expect(coverage.compliant).toBe(1);
@@ -56,7 +56,7 @@ describe('massar coverage — computed formula', () => {
   });
 
   it('never claims configured when no stream has a code', () => {
-    const coverage = computeMassarCoverage([{ massarBacCode: null }, {}]);
+    const coverage = computeMassarCoverage([{ bacSeriesCode: null }, {}]);
 
     expect(coverage.percent).toBe(0);
     expect(coverage.configured).toBe(false);

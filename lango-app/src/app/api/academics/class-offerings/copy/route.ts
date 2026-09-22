@@ -26,10 +26,10 @@ export const copySessionSetupSchema = z.object({
   mode: z.enum(['preview', 'commit']),
   idempotencyKey: z.string().optional(),
   offeringIds: z.array(z.string().uuid()).optional(),
-}).strict().refine((data) => data.sourceSessionYearId !== data.targetSessionYearId, {
+}).strict().refine(data => data.sourceSessionYearId !== data.targetSessionYearId, {
   message: 'La session source et la session cible doivent être différentes.',
   path: ['targetSessionYearId'],
-}).refine((data) => data.mode !== 'commit' || (data.idempotencyKey && data.idempotencyKey.length > 0), {
+}).refine(data => data.mode !== 'commit' || (data.idempotencyKey && data.idempotencyKey.length > 0), {
   message: 'Une clé d\'idempotence est requise pour confirmer la copie.',
   path: ['idempotencyKey'],
 });
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
     // Apply the editable-preview selection when provided (subset of source offerings to copy)
     if (body.offeringIds && body.offeringIds.length > 0) {
       const selected = new Set(body.offeringIds);
-      sourceOfferings = sourceOfferings.filter((o) => selected.has(o.id));
+      sourceOfferings = sourceOfferings.filter(o => selected.has(o.id));
       if (sourceOfferings.length === 0) {
         throw new ApiError(400, 'BAD_REQUEST', 'Aucune offre de classe sélectionnée pour la copie.');
       }
@@ -120,15 +120,15 @@ export async function POST(request: Request) {
       ));
 
     const existingTargetKeyMap = new Set(
-      targetOfferings.map((o) => `${o.classId}:${o.sectionId}`)
+      targetOfferings.map(o => `${o.classId}:${o.sectionId}`),
     );
 
     const offeringsToCreate = sourceOfferings.filter(
-      (o) => !existingTargetKeyMap.has(`${o.classId}:${o.sectionId}`)
+      o => !existingTargetKeyMap.has(`${o.classId}:${o.sectionId}`),
     );
     const offeringsSkippedCount = sourceOfferings.length - offeringsToCreate.length;
 
-    const sourceOfferingIds = sourceOfferings.map((o) => o.id);
+    const sourceOfferingIds = sourceOfferings.map(o => o.id);
 
     // Fetch linked classSubjects for source offerings
     const linkedSubjects = sourceOfferingIds.length > 0
@@ -141,7 +141,9 @@ export async function POST(request: Request) {
           ))
       : [];
 
-    // Fetch linked classTeachers for source offerings
+    // Fetch linked classTeachers for source offerings — CURRENT rows only.
+    // A closed historical assignment must never be copied back to life as an
+    // active assignment in the target session.
     const linkedClassTeachers = sourceOfferingIds.length > 0
       ? await db
           .select()
@@ -149,10 +151,13 @@ export async function POST(request: Request) {
           .where(and(
             eq(classTeachers.tenantId, tenantId),
             inArray(classTeachers.offeringId, sourceOfferingIds),
+            eq(classTeachers.status, 'active'),
+            isNull(classTeachers.endsOn),
           ))
       : [];
 
-    // Fetch linked subjectTeachers for source offerings
+    // Fetch linked subjectTeachers for source offerings — CURRENT rows only
+    // (migration 0146 lifecycle: status active + open-ended).
     const linkedSubjectTeachers = sourceOfferingIds.length > 0
       ? await db
           .select()
@@ -160,20 +165,22 @@ export async function POST(request: Request) {
           .where(and(
             eq(subjectTeachers.tenantId, tenantId),
             inArray(subjectTeachers.offeringId, sourceOfferingIds),
+            eq(subjectTeachers.status, 'active'),
+            isNull(subjectTeachers.endsOn),
           ))
       : [];
 
     if (body.mode === 'preview') {
       // Resolve human-readable names for the editable item-level preview
-      const classIds = [...new Set(sourceOfferings.map((o) => o.classId))];
-      const sectionIds = [...new Set(sourceOfferings.map((o) => o.sectionId))];
+      const classIds = [...new Set(sourceOfferings.map(o => o.classId))];
+      const sectionIds = [...new Set(sourceOfferings.map(o => o.sectionId))];
       const subjectIds = [...new Set([
-        ...linkedSubjects.map((s) => s.subjectId),
-        ...linkedSubjectTeachers.map((s) => s.subjectId),
+        ...linkedSubjects.map(s => s.subjectId),
+        ...linkedSubjectTeachers.map(s => s.subjectId),
       ])];
       const teacherIds = [...new Set([
-        ...linkedClassTeachers.map((c) => c.teacherId),
-        ...linkedSubjectTeachers.map((s) => s.teacherId),
+        ...linkedClassTeachers.map(c => c.teacherId),
+        ...linkedSubjectTeachers.map(s => s.teacherId),
       ])];
 
       const [classRows, sectionRows, subjectRows, teacherRows] = await Promise.all([
@@ -191,30 +198,30 @@ export async function POST(request: Request) {
           : Promise.resolve([] as { id: string; name: string }[]),
       ]);
 
-      const classNameMap = new Map(classRows.map((c) => [c.id, c.name]));
-      const sectionNameMap = new Map(sectionRows.map((s) => [s.id, s.name]));
-      const subjectNameMap = new Map(subjectRows.map((s) => [s.id, s.name]));
-      const teacherNameMap = new Map(teacherRows.map((t) => [t.id, t.name]));
+      const classNameMap = new Map(classRows.map(c => [c.id, c.name]));
+      const sectionNameMap = new Map(sectionRows.map(s => [s.id, s.name]));
+      const subjectNameMap = new Map(subjectRows.map(s => [s.id, s.name]));
+      const teacherNameMap = new Map(teacherRows.map(t => [t.id, t.name]));
 
-      const items = sourceOfferings.map((o) => ({
+      const items = sourceOfferings.map(o => ({
         sourceOfferingId: o.id,
         classId: o.classId,
         sectionId: o.sectionId,
         className: classNameMap.get(o.classId) ?? o.classId,
         sectionName: sectionNameMap.get(o.sectionId) ?? o.sectionId,
         capacity: o.capacity,
-        willCreate: offeringsToCreate.some((x) => x.id === o.id),
-        classSubjects: linkedSubjects.filter((s) => s.offeringId === o.id).map((s) => ({
+        willCreate: offeringsToCreate.some(x => x.id === o.id),
+        classSubjects: linkedSubjects.filter(s => s.offeringId === o.id).map(s => ({
           subjectId: s.subjectId,
           subjectName: subjectNameMap.get(s.subjectId) ?? s.subjectId,
           type: s.type,
         })),
-        classTeachers: linkedClassTeachers.filter((c) => c.offeringId === o.id).map((c) => ({
+        classTeachers: linkedClassTeachers.filter(c => c.offeringId === o.id).map(c => ({
           teacherId: c.teacherId,
           teacherName: teacherNameMap.get(c.teacherId) ?? c.teacherId,
           role: c.role,
         })),
-        subjectTeachers: linkedSubjectTeachers.filter((s) => s.offeringId === o.id).map((s) => ({
+        subjectTeachers: linkedSubjectTeachers.filter(s => s.offeringId === o.id).map(s => ({
           teacherId: s.teacherId,
           teacherName: teacherNameMap.get(s.teacherId) ?? s.teacherId,
           subjectId: s.subjectId,
@@ -246,7 +253,7 @@ export async function POST(request: Request) {
       // Map existing target offerings first
       for (const targetOff of targetOfferings) {
         const sourceMatching = sourceOfferings.find(
-          (so) => so.classId === targetOff.classId && so.sectionId === targetOff.sectionId
+          so => so.classId === targetOff.classId && so.sectionId === targetOff.sectionId,
         );
         if (sourceMatching) {
           createdOfferingMap.set(sourceMatching.id, targetOff.id);
@@ -297,9 +304,13 @@ export async function POST(request: Request) {
 
       // Copy classSubjects safely
       for (const subj of linkedSubjects) {
-        if (!subj.offeringId) continue;
+        if (!subj.offeringId) {
+          continue;
+        }
         const targetOfferingId = createdOfferingMap.get(subj.offeringId);
-        if (!targetOfferingId) continue;
+        if (!targetOfferingId) {
+          continue;
+        }
 
         // Check if classSubject already exists for this offering/subject
         // Check if classSubject already exists for this target offering/subject
@@ -344,9 +355,13 @@ export async function POST(request: Request) {
 
       // Copy classTeachers safely
       for (const ct of linkedClassTeachers) {
-        if (!ct.offeringId) continue;
+        if (!ct.offeringId) {
+          continue;
+        }
         const targetOfferingId = createdOfferingMap.get(ct.offeringId);
-        if (!targetOfferingId) continue;
+        if (!targetOfferingId) {
+          continue;
+        }
 
         // Check if active classTeacher assignment already exists
         const [existingCt] = await tx
@@ -404,9 +419,13 @@ export async function POST(request: Request) {
 
       // Copy subjectTeachers safely
       for (const st of linkedSubjectTeachers) {
-        if (!st.offeringId) continue;
+        if (!st.offeringId) {
+          continue;
+        }
         const targetOfferingId = createdOfferingMap.get(st.offeringId);
-        if (!targetOfferingId) continue;
+        if (!targetOfferingId) {
+          continue;
+        }
 
         // Ensure linked classSubject exists in target
         const targetClassSubj = await tx
@@ -465,7 +484,7 @@ export async function POST(request: Request) {
           sourceSessionYearId: body.sourceSessionYearId,
           targetSessionYearId: body.targetSessionYearId,
           idempotencyKey: body.idempotencyKey,
-        }
+        },
       );
 
       return {
