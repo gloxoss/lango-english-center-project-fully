@@ -1,4 +1,4 @@
-import { and, count, eq, inArray, isNull } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, isNull } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
@@ -6,9 +6,32 @@ import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
+import { assertCapacityNotBelowOccupancy } from '@/libs/services/section-capacity';
 import { classSectionCreateSchema, classSectionUpdateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { classes, classSections, classTeachers, rooms, sections, user } from '@/models/Schema';
+import {
+  academicRooms,
+  attendance,
+  classScheduleSlots,
+  classSections,
+  classTeachers,
+  classes,
+  rooms,
+  sections,
+  studentPlacements,
+  subjectTeachers,
+  user,
+} from '@/models/Schema';
+
+// ---------------------------------------------------------------------------
+// Operating class sections (class + section label + medium).
+//
+// Branch inheritance: class_sections has no branchId on purpose. The
+// authoritative branch is the parent class's branch, resolved through a join
+// for every read AND write. Branch-limited admins only see/act on sections of
+// classes in their own campus; ambiguous legacy classes (branchId NULL) are
+// readable by whole-school admins only for writes.
+// ---------------------------------------------------------------------------
 
 function toApiClassSection(row: typeof classSections.$inferSelect) {
   return {
@@ -22,30 +45,105 @@ function toApiClassSection(row: typeof classSections.$inferSelect) {
   };
 }
 
+/** Salle de base: accept the academic room registry (UI) or the legacy rooms table. */
 async function assertRoomBelongsToTenant(tenantId: string, homeRoomId: string | null | undefined) {
   if (!homeRoomId) {
     return;
   }
-  const [row] = await db.select({ id: rooms.id }).from(rooms).where(and(eq(rooms.id, homeRoomId), eq(rooms.tenantId, tenantId))).limit(1);
-  if (!row) {
+  const [academicRoom] = await db
+    .select({ id: academicRooms.id })
+    .from(academicRooms)
+    .where(and(eq(academicRooms.id, homeRoomId), eq(academicRooms.tenantId, tenantId)))
+    .limit(1);
+  if (academicRoom) {
+    return;
+  }
+  const [legacyRoom] = await db.select({ id: rooms.id }).from(rooms).where(and(eq(rooms.id, homeRoomId), eq(rooms.tenantId, tenantId))).limit(1);
+  if (!legacyRoom) {
     throw new ApiError(422, 'INVALID_REFERENCE', 'La salle indiquée n\'existe pas pour cet établissement.');
   }
 }
 
-// mediumId is never accepted from the client - it is always derived from the
-// class, matching ESchool's denormalization intent (class_sections.medium_id
-// always mirrors classes.medium_id). Also confirms classId/sectionId belong to
-// this tenant before the insert/update is attempted.
-async function resolveMediumId(tenantId: string, classId: string, sectionId: string): Promise<string> {
-  const [classRow] = await db.select({ mediumId: classes.mediumId }).from(classes).where(and(eq(classes.id, classId), eq(classes.tenantId, tenantId))).limit(1);
-  if (!classRow) {
-    throw new ApiError(422, 'INVALID_REFERENCE', 'La classe indiquée n\'existe pas pour cet établissement.');
+type Context = Awaited<ReturnType<typeof requireRequestContext>>;
+
+/**
+ * The section a caller may read/write, with its parent class. Branch-limited
+ * principals are pinned to their campus; writes on an ambiguous legacy class
+ * (no campus) are refused with an actionable message.
+ */
+async function findSectionInScope(
+  context: Context,
+  tenantId: string,
+  sectionRowId: string,
+  purpose: 'read' | 'write',
+) {
+  const [row] = await db
+    .select({
+      section: classSections,
+      classBranchId: classes.branchId,
+      className: classes.name,
+      mediumId: classes.mediumId,
+    })
+    .from(classSections)
+    .innerJoin(classes, eq(classSections.classId, classes.id))
+    .where(and(eq(classSections.id, sectionRowId), eq(classSections.tenantId, tenantId)))
+    .limit(1);
+  if (!row) {
+    return null;
   }
-  const [sectionRow] = await db.select({ id: sections.id }).from(sections).where(and(eq(sections.id, sectionId), eq(sections.tenantId, tenantId))).limit(1);
-  if (!sectionRow) {
-    throw new ApiError(422, 'INVALID_REFERENCE', 'La section indiquée n\'existe pas pour cet établissement.');
+  if (!context.branchId) {
+    return row;
   }
-  return classRow.mediumId;
+  if (row.classBranchId === context.branchId) {
+    return row;
+  }
+  if (purpose === 'write' && row.classBranchId === null) {
+    throw new ApiError(403, 'FORBIDDEN', 'La classe de cette section n\'est rattachée à aucun campus. Un administrateur global doit d\'abord lui attribuer un campus.');
+  }
+  return null;
+}
+
+/**
+ * Operational blockers that make a section delete unsafe. Historical records
+ * (placements, teacher/timetable links, section-scoped attendance) must never
+ * be cascade-deleted by a configuration action.
+ */
+export async function classSectionDependencyBlockers(tenantId: string, classSectionId: string) {
+  const [placementRows, attendanceRows, classTeacherRows, subjectTeacherRows, slotRows, enrolledRows] = await Promise.all([
+    db
+      .select({ n: count() })
+      .from(studentPlacements)
+      .where(and(eq(studentPlacements.tenantId, tenantId), eq(studentPlacements.classSectionId, classSectionId))),
+    db
+      .select({ n: count() })
+      .from(attendance)
+      .where(and(eq(attendance.tenantId, tenantId), eq(attendance.classSectionId, classSectionId))),
+    db
+      .select({ n: count() })
+      .from(classTeachers)
+      .where(and(eq(classTeachers.tenantId, tenantId), eq(classTeachers.classSectionId, classSectionId))),
+    db
+      .select({ n: count() })
+      .from(subjectTeachers)
+      .where(and(eq(subjectTeachers.tenantId, tenantId), eq(subjectTeachers.classSectionId, classSectionId))),
+    db
+      .select({ n: count() })
+      .from(classScheduleSlots)
+      .where(and(eq(classScheduleSlots.tenantId, tenantId), eq(classScheduleSlots.classSectionId, classSectionId))),
+    db
+      .select({ n: count() })
+      .from(user)
+      .where(and(eq(user.tenantId, tenantId), eq(user.role, 'student'), eq(user.classSectionId, classSectionId))),
+  ]);
+
+  return [
+    { key: 'student_placements', count: Number(placementRows[0]?.n ?? 0) },
+    { key: 'attendance_records', count: Number(attendanceRows[0]?.n ?? 0) },
+    { key: 'enrolled_students', count: Number(enrolledRows[0]?.n ?? 0) },
+    { key: 'class_teacher_assignments', count: Number(classTeacherRows[0]?.n ?? 0) },
+    { key: 'subject_teacher_assignments', count: Number(subjectTeacherRows[0]?.n ?? 0) },
+    { key: 'timetable_slots', count: Number(slotRows[0]?.n ?? 0) },
+  ].filter(blocker => blocker.count > 0);
 }
 
 export async function GET(request: Request) {
@@ -59,6 +157,11 @@ export async function GET(request: Request) {
     const classIdFilter = searchParams.get('classId');
     if (classIdFilter) {
       conditions.push(eq(classSections.classId, classIdFilter));
+    }
+    // Branch inheritance: a branch-limited principal only sees sections whose
+    // parent class belongs to their campus.
+    if (context.branchId) {
+      conditions.push(eq(classes.branchId, context.branchId));
     }
     if (context.role === 'teacher') {
       const assignedIds = await getTeacherClassSectionIds(tenantId, context.userId);
@@ -80,6 +183,7 @@ export async function GET(request: Request) {
         .select({
           classSection: classSections,
           className: classes.name,
+          classBranchId: classes.branchId,
           periodType: classes.periodType,
           sectionName: sections.name,
         })
@@ -87,9 +191,14 @@ export async function GET(request: Request) {
         .innerJoin(classes, eq(classSections.classId, classes.id))
         .innerJoin(sections, eq(classSections.sectionId, sections.id))
         .where(where)
+        .orderBy(asc(classes.name), asc(sections.name), asc(classSections.id))
         .limit(pagination.limit)
         .offset(pagination.offset),
-      db.select({ total: count() }).from(classSections).where(where),
+      db
+        .select({ total: count() })
+        .from(classSections)
+        .innerJoin(classes, eq(classSections.classId, classes.id))
+        .where(where),
     ]);
 
     // Real live roster count per section, batched in one query (not N+1).
@@ -110,6 +219,7 @@ export async function GET(request: Request) {
           .where(and(
             inArray(classTeachers.classSectionId, sectionIds),
             eq(classTeachers.role, 'primary'),
+            eq(classTeachers.status, 'active'),
             isNull(classTeachers.endsOn),
           ))
       : [];
@@ -119,6 +229,7 @@ export async function GET(request: Request) {
       success: true,
       data: rows.map(r => ({
         ...toApiClassSection(r.classSection),
+        branchId: r.classBranchId,
         className: r.className,
         periodType: r.periodType,
         sectionName: r.sectionName,
@@ -134,6 +245,40 @@ export async function GET(request: Request) {
   }
 }
 
+// mediumId is never accepted from the client - it is always derived from the
+// class, matching ESchool's denormalization intent (class_sections.medium_id
+// always mirrors classes.medium_id). Also confirms classId/sectionId belong to
+// this tenant and that the caller may operate on the class's campus.
+async function resolveMediumId(context: Context, tenantId: string, classId: string, sectionId: string, purpose: 'read' | 'write'): Promise<string> {
+  const row = await findSectionClass(context, tenantId, classId, purpose);
+  const [sectionRow] = await db.select({ id: sections.id }).from(sections).where(and(eq(sections.id, sectionId), eq(sections.tenantId, tenantId))).limit(1);
+  if (!sectionRow) {
+    throw new ApiError(422, 'INVALID_REFERENCE', 'La section indiquée n\'existe pas pour cet établissement.');
+  }
+  return row.mediumId;
+}
+
+async function findSectionClass(context: Context, tenantId: string, classId: string, purpose: 'read' | 'write') {
+  const [classRow] = await db
+    .select({ id: classes.id, mediumId: classes.mediumId, branchId: classes.branchId })
+    .from(classes)
+    .where(and(eq(classes.id, classId), eq(classes.tenantId, tenantId)))
+    .limit(1);
+  if (!classRow) {
+    throw new ApiError(422, 'INVALID_REFERENCE', 'La classe indiquée n\'existe pas pour cet établissement.');
+  }
+  if (context.branchId) {
+    if (classRow.branchId === context.branchId) {
+      return classRow;
+    }
+    if (purpose === 'write' && classRow.branchId === null) {
+      throw new ApiError(403, 'FORBIDDEN', 'Cette classe n\'est rattachée à aucun campus. Un administrateur global doit d\'abord lui attribuer un campus.');
+    }
+    throw new ApiError(403, 'FORBIDDEN', 'Vous ne pouvez agir que sur les classes de votre campus.');
+  }
+  return classRow;
+}
+
 export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
@@ -141,7 +286,7 @@ export async function POST(request: Request) {
     await requireCapability(context, 'academics.manage');
     const body = await parseJson(request, classSectionCreateSchema);
 
-    const mediumId = await resolveMediumId(tenantId, body.classId, body.sectionId);
+    const mediumId = await resolveMediumId(context, tenantId, body.classId, body.sectionId, 'write');
     await assertRoomBelongsToTenant(tenantId, body.homeRoomId);
 
     const [inserted] = await db
@@ -171,21 +316,26 @@ export async function PUT(request: Request) {
     await requireCapability(context, 'academics.manage');
     const body = await parseJson(request, classSectionUpdateSchema);
 
+    const existing = await findSectionInScope(context, tenantId, body.id, 'write');
+    if (!existing) {
+      return NextResponse.json({ success: false, message: 'Introuvable' }, { status: 404 });
+    }
+
     const set: { classId?: string; sectionId?: string; mediumId?: string; maxStudents?: number | null; homeRoomId?: string | null; updatedAt: string } = {
       updatedAt: new Date().toISOString(),
     };
     if (body.classId || body.sectionId) {
-      const [existing] = await db.select().from(classSections).where(and(eq(classSections.id, body.id), eq(classSections.tenantId, tenantId))).limit(1);
-      if (!existing) {
-        return NextResponse.json({ success: false, message: 'Introuvable' }, { status: 404 });
-      }
-      const classId = body.classId ?? existing.classId;
-      const sectionId = body.sectionId ?? existing.sectionId;
-      set.mediumId = await resolveMediumId(tenantId, classId, sectionId);
+      const classId = body.classId ?? existing.section.classId;
+      const sectionId = body.sectionId ?? existing.section.sectionId;
+      set.mediumId = await resolveMediumId(context, tenantId, classId, sectionId, 'write');
       set.classId = classId;
       set.sectionId = sectionId;
     }
     if (body.maxStudents !== undefined) {
+      // Capacity must never drop below the students already seated.
+      if (body.maxStudents !== null) {
+        await assertCapacityNotBelowOccupancy(tenantId, body.id, body.maxStudents);
+      }
       set.maxStudents = body.maxStudents;
     }
     if (body.homeRoomId !== undefined) {
@@ -203,7 +353,9 @@ export async function PUT(request: Request) {
       return NextResponse.json({ success: false, message: 'Introuvable' }, { status: 404 });
     }
 
-    recordAudit(context, 'update', 'class_section', body.id);
+    recordAudit(context, 'update', 'class_section', body.id, {
+      maxStudents: body.maxStudents !== undefined ? body.maxStudents : undefined,
+    });
 
     return NextResponse.json({ success: true, data: toApiClassSection(updated) });
   } catch (error) {
@@ -221,6 +373,26 @@ export async function DELETE(request: Request) {
 
     if (!id) {
       return NextResponse.json({ success: false, message: 'ID non fourni' }, { status: 400 });
+    }
+
+    const existing = await findSectionInScope(context, tenantId, id, 'write');
+    if (!existing) {
+      return NextResponse.json({ success: false, message: 'Introuvable' }, { status: 404 });
+    }
+
+    const blockers = await classSectionDependencyBlockers(tenantId, id);
+    if (blockers.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'SECTION_IN_USE',
+            message: 'Cette section possède un historique scolaire et ne peut pas être supprimée.',
+          },
+          blockers,
+        },
+        { status: 409 },
+      );
     }
 
     await db.delete(classSections).where(and(eq(classSections.id, id), eq(classSections.tenantId, tenantId)));

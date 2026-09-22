@@ -1,15 +1,21 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { ApiError } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
 import { attendanceRegisters } from '@/models/Schema';
 
-function generateReference(classId: string, date: string, period: number) {
-  return `REG-${date}-P${period}-${classId.slice(0, 8).toUpperCase()}`;
+function generateReference(classSectionId: string | null, classId: string, date: string, period: number) {
+  const scope = (classSectionId ?? classId).slice(0, 8).toUpperCase();
+  return `REG-${date}-P${period}-${scope}`;
 }
 
-// Finds or creates the register for (classId, date, period) inside the given
-// transaction, enforcing the lock. Returns the register row to attach to each
-// attendance record written in this same submission.
+/**
+ * Finds or creates the register for a submission, enforcing the lock.
+ *
+ * SECTION SCOPE (migration 0147): when the submission belongs to an operating
+ * class section, the register is keyed by that section — Section A can no
+ * longer lock or be read as Section B. Legacy rows without a section keep the
+ * old class-level key so historical registers stay reachable and unique.
+ */
 export async function resolveRegisterForSubmission(
   tenantId: string,
   classId: string,
@@ -18,6 +24,7 @@ export async function resolveRegisterForSubmission(
   submittedById: string,
   correctionNote: string | undefined,
   executor: any = db,
+  classSectionId: string | null = null,
 ) {
   const [existing] = await executor
     .select()
@@ -27,6 +34,9 @@ export async function resolveRegisterForSubmission(
       eq(attendanceRegisters.classId, classId),
       eq(attendanceRegisters.date, date),
       eq(attendanceRegisters.period, period),
+      classSectionId
+        ? eq(attendanceRegisters.classSectionId, classSectionId)
+        : isNull(attendanceRegisters.classSectionId),
     ))
     .limit(1);
 
@@ -36,9 +46,10 @@ export async function resolveRegisterForSubmission(
       .values({
         tenantId,
         classId,
+        classSectionId,
         date,
         period,
-        reference: generateReference(classId, date, period),
+        reference: generateReference(classSectionId, classId, date, period),
         status: 'LOCKED',
         submittedAt: new Date().toISOString(),
         submittedById,

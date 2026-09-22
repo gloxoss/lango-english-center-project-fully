@@ -1,9 +1,21 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
-import { attendanceRegisters, user } from '@/models/Schema';
+import { attendanceRegisters, classSections, user } from '@/models/Schema';
+
+const registerProjection = {
+  id: attendanceRegisters.id,
+  reference: attendanceRegisters.reference,
+  status: attendanceRegisters.status,
+  submittedAt: attendanceRegisters.submittedAt,
+  submittedById: attendanceRegisters.submittedById,
+  submittedByName: user.name,
+  reopenedAt: attendanceRegisters.reopenedAt,
+  reopenReason: attendanceRegisters.reopenReason,
+  correctionNote: attendanceRegisters.correctionNote,
+} as const;
 
 export async function GET(request: Request) {
   try {
@@ -20,29 +32,49 @@ export async function GET(request: Request) {
 
     const period = periodParam ? Number.parseInt(periodParam, 10) : 1;
 
-    const [row] = await db
-      .select({
-        id: attendanceRegisters.id,
-        reference: attendanceRegisters.reference,
-        status: attendanceRegisters.status,
-        submittedAt: attendanceRegisters.submittedAt,
-        submittedById: attendanceRegisters.submittedById,
-        submittedByName: user.name,
-        reopenedAt: attendanceRegisters.reopenedAt,
-        reopenReason: attendanceRegisters.reopenReason,
-        correctionNote: attendanceRegisters.correctionNote,
-      })
+    // SECTION SCOPE (migration 0147): resolve the operating section first, so
+    // Section A and Section B read independent registers. If the section has
+    // no register yet, fall back to a legacy class-level register (historical
+    // rows whose section identity was never stored).
+    const [sec] = await db
+      .select({ id: classSections.id, classId: classSections.classId })
+      .from(classSections)
+      .where(and(eq(classSections.tenantId, tenantId), eq(classSections.id, classId)))
+      .limit(1);
+
+    const classKey = sec?.classId ?? classId;
+
+    const [sectionRow] = await db
+      .select(registerProjection)
       .from(attendanceRegisters)
       .leftJoin(user, eq(attendanceRegisters.submittedById, user.id))
       .where(and(
         eq(attendanceRegisters.tenantId, tenantId),
-        eq(attendanceRegisters.classId, classId),
+        eq(attendanceRegisters.classId, classKey),
         eq(attendanceRegisters.date, date),
         eq(attendanceRegisters.period, period),
+        sec ? eq(attendanceRegisters.classSectionId, sec.id) : isNull(attendanceRegisters.classSectionId),
       ))
       .limit(1);
 
-    return NextResponse.json({ success: true, data: row ?? null });
+    if (sectionRow || !sec) {
+      return NextResponse.json({ success: true, data: sectionRow ?? null });
+    }
+
+    const [legacyRow] = await db
+      .select(registerProjection)
+      .from(attendanceRegisters)
+      .leftJoin(user, eq(attendanceRegisters.submittedById, user.id))
+      .where(and(
+        eq(attendanceRegisters.tenantId, tenantId),
+        eq(attendanceRegisters.classId, classKey),
+        eq(attendanceRegisters.date, date),
+        eq(attendanceRegisters.period, period),
+        isNull(attendanceRegisters.classSectionId),
+      ))
+      .limit(1);
+
+    return NextResponse.json({ success: true, data: legacyRow ?? null });
   } catch (error) {
     return apiErrorResponse(error);
   }

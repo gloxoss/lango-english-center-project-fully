@@ -1,4 +1,4 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
@@ -292,6 +292,8 @@ export async function POST(request: Request) {
       let createdSubjectsCount = 0;
       let createdClassTeachersCount = 0;
       let createdSubjectTeachersCount = 0;
+      const warnings: string[] = [];
+      const today = new Date().toISOString().slice(0, 10);
 
       // Copy classSubjects safely
       for (const subj of linkedSubjects) {
@@ -312,6 +314,10 @@ export async function POST(request: Request) {
           .limit(1);
 
         if (!existingSubj) {
+          // Curriculum weights are copied intentionally — a new session that
+          // silently reset coefficients to 1.00 produced wrong Moroccan
+          // averages. No onConflictDoNothing: an unexpected collision must
+          // surface instead of being dropped.
           const [inserted] = await tx
             .insert(classSubjects)
             .values({
@@ -321,8 +327,13 @@ export async function POST(request: Request) {
               type: subj.type,
               semesterId: subj.semesterId,
               offeringId: targetOfferingId,
+              coefficient: subj.coefficient,
+              weeklyMinutes: subj.weeklyMinutes,
+              displayOrder: subj.displayOrder,
+              isActive: subj.isActive,
+              passThreshold: subj.passThreshold,
+              curriculumLabel: subj.curriculumLabel,
             })
-            .onConflictDoNothing()
             .returning({ id: classSubjects.id });
 
           if (inserted) {
@@ -349,6 +360,29 @@ export async function POST(request: Request) {
           .limit(1);
 
         if (!existingCt) {
+          // A new primary for an offering that already has one is a real
+          // decision, not a silent skip: report it and let the administrator
+          // resolve the conflict.
+          if (ct.role === 'primary') {
+            const [activePrimary] = await tx
+              .select({ id: classTeachers.id, teacherId: classTeachers.teacherId })
+              .from(classTeachers)
+              .where(and(
+                eq(classTeachers.tenantId, tenantId),
+                eq(classTeachers.offeringId, targetOfferingId),
+                eq(classTeachers.role, 'primary'),
+                eq(classTeachers.status, 'active'),
+                isNull(classTeachers.endsOn),
+              ))
+              .limit(1);
+            if (activePrimary) {
+              if (activePrimary.teacherId !== ct.teacherId) {
+                warnings.push(`Enseignant principal non copié pour une section : ${activePrimary.teacherId} est déjà titulaire sur la session cible.`);
+              }
+              continue;
+            }
+          }
+
           const [inserted] = await tx
             .insert(classTeachers)
             .values({
@@ -357,8 +391,9 @@ export async function POST(request: Request) {
               teacherId: ct.teacherId,
               offeringId: targetOfferingId,
               role: ct.role,
+              startsOn: today,
+              status: 'active',
             })
-            .onConflictDoNothing()
             .returning({ id: classTeachers.id });
 
           if (inserted) {
@@ -397,6 +432,8 @@ export async function POST(request: Request) {
             .limit(1);
 
           if (!existingSt) {
+            // Target-session assignment semantics (migration 0146): the copied
+            // row is explicitly scoped to the target session year and active.
             const [inserted] = await tx
               .insert(subjectTeachers)
               .values({
@@ -406,8 +443,10 @@ export async function POST(request: Request) {
                 classSubjectId: targetClassSubj[0]!.id,
                 teacherId: st.teacherId,
                 offeringId: targetOfferingId,
+                sessionYearId: body.targetSessionYearId,
+                startsOn: today,
+                status: 'active',
               })
-              .onConflictDoNothing()
               .returning({ id: subjectTeachers.id });
 
             if (inserted) {
@@ -437,6 +476,7 @@ export async function POST(request: Request) {
         classSubjectsCreated: createdSubjectsCount,
         classTeachersCreated: createdClassTeachersCount,
         subjectTeachersCreated: createdSubjectTeachersCount,
+        warnings,
       };
     });
 

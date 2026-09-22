@@ -1,32 +1,47 @@
-import { and, count, eq, ne } from 'drizzle-orm';
+import { and, count, eq, inArray, isNull, or, gte, desc } from 'drizzle-orm';
 import { assessmentDefinitions, assessmentOutcomes } from '@/features/assessment/models/assessment-schema';
 import { ApiError } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
-import { classScheduleSlots, subjectTeachers } from '@/models/Schema';
+import { classScheduleSlots, sessionYears, subjectTeachers } from '@/models/Schema';
 
 /**
- * Guard for subject-teacher assignment removal.
+ * TEACHER SUBJECT ASSIGNMENT HISTORY (migration 0146).
  *
- * `subject_teachers` has no history columns today (no sessionYearId, no
- * status, no endsOn) — a row IS the assignment and there is no way to close it
- * while keeping the record. A delete therefore removes the only record of who
- * taught that subject to that section.
+ * `subject_teachers` now carries sessionYearId / startsOn / endsOn / status.
+ * Reassignment is close-then-insert; a current assignment is
+ * `status='active' AND (endsOn IS NULL OR endsOn >= today)` and, when the row is
+ * year-scoped, belongs to the target session year.
  *
- * Until the TEACHER SUBJECT ASSIGNMENT HISTORY MIGRATION lands (see
- * future-implementation/teacher-subject-assignment-history/README.md), this
- * guard refuses the destructive case:
- *
- *   - Deleting one of several teachers for the same (section, class-subject)
- *     pair is allowed — the teaching context is still represented by the
- *     remaining teacher row(s).
- *   - Deleting the LAST teacher for the pair is allowed only when the
- *     assignment was never used (no timetable slot, no assessment authored,
- *     no mark recorded). A clean removal created by mistake stays possible.
- *   - Deleting the last teacher with any teaching evidence is refused with
- *     409 SUBJECT_ASSIGNMENT_HISTORY_MIGRATION_REQUIRED, and nothing is
- *     deleted.
+ * A hard delete stays allowed only for a mistake with no teaching evidence.
+ * Rows with evidence are CLOSED (kept as history) instead — never destroyed.
  */
-export async function assertSubjectAssignmentRemovable(tenantId: string, subjectTeacherId: string): Promise<void> {
+
+export function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export async function getDefaultSessionYearId(tenantId: string): Promise<string | null> {
+  const [row] = await db
+    .select({ id: sessionYears.id })
+    .from(sessionYears)
+    .where(and(eq(sessionYears.tenantId, tenantId), eq(sessionYears.isDefault, true)))
+    .limit(1);
+  return row?.id ?? null;
+}
+
+/** Current-assignment SQL predicate (null endsOn = open-ended). */
+export function currentAssignmentCondition(column: typeof subjectTeachers.endsOn, statusColumn: typeof subjectTeachers.status) {
+  return and(
+    eq(statusColumn, 'active'),
+    or(isNull(column), gte(column, todayIso()))!,
+  )!;
+}
+
+/**
+ * Does this assignment have teaching evidence (timetable slot, authored
+ * assessment, recorded mark)? Evidence means it must survive as history.
+ */
+export async function subjectAssignmentUsage(tenantId: string, subjectTeacherId: string): Promise<number> {
   const [row] = await db
     .select({
       id: subjectTeachers.id,
@@ -37,28 +52,10 @@ export async function assertSubjectAssignmentRemovable(tenantId: string, subject
     .from(subjectTeachers)
     .where(and(eq(subjectTeachers.id, subjectTeacherId), eq(subjectTeachers.tenantId, tenantId)))
     .limit(1);
-
   if (!row) {
     throw new ApiError(404, 'NOT_FOUND', 'Affectation introuvable.');
   }
 
-  // Another teacher still covers the same (section, class-subject): the
-  // teaching context survives the deletion, so it may proceed.
-  const [others] = await db
-    .select({ n: count() })
-    .from(subjectTeachers)
-    .where(and(
-      eq(subjectTeachers.tenantId, tenantId),
-      eq(subjectTeachers.classSectionId, row.classSectionId),
-      eq(subjectTeachers.classSubjectId, row.classSubjectId),
-      ne(subjectTeachers.id, row.id),
-    ));
-  if (Number(others?.n ?? 0) > 0) {
-    return;
-  }
-
-  // Last row for the pair — destructive only if the assignment was actually
-  // used. Evidence: timetabled slots, authored assessments, recorded marks.
   const [slotRows, definitionRows, outcomeRows] = await Promise.all([
     db
       .select({ n: count() })
@@ -88,12 +85,75 @@ export async function assertSubjectAssignmentRemovable(tenantId: string, subject
       )),
   ]);
 
-  const evidence = Number(slotRows[0]?.n ?? 0) + Number(definitionRows[0]?.n ?? 0) + Number(outcomeRows[0]?.n ?? 0);
-  if (evidence > 0) {
-    throw new ApiError(
-      409,
-      'SUBJECT_ASSIGNMENT_HISTORY_MIGRATION_REQUIRED',
-      'Cette affectation possède un historique académique qui doit être conservé. La modification directe n\'est pas disponible tant que l\'ancienne affectation n\'a pas été clôturée correctement.',
-    );
+  return Number(slotRows[0]?.n ?? 0) + Number(definitionRows[0]?.n ?? 0) + Number(outcomeRows[0]?.n ?? 0);
+}
+
+/**
+ * Close every currently-active assignment for a (section, class-subject) pair
+ * — optionally scoped to one teacher — before inserting the replacement.
+ */
+export async function closeActiveSubjectAssignments(
+  tenantId: string,
+  classSectionId: string,
+  classSubjectId: string,
+  opts: { teacherId?: string; endsOn?: string } = {},
+): Promise<number> {
+  const conditions = [
+    eq(subjectTeachers.tenantId, tenantId),
+    eq(subjectTeachers.classSectionId, classSectionId),
+    eq(subjectTeachers.classSubjectId, classSubjectId),
+    eq(subjectTeachers.status, 'active'),
+    isNull(subjectTeachers.endsOn),
+  ];
+  if (opts.teacherId) {
+    conditions.push(eq(subjectTeachers.teacherId, opts.teacherId));
   }
+  const closed = await db
+    .update(subjectTeachers)
+    .set({ status: 'inactive', endsOn: opts.endsOn ?? todayIso() })
+    .where(and(...conditions))
+    .returning({ id: subjectTeachers.id });
+  return closed.length;
+}
+
+export type RemoveAssignmentResult = { action: 'deleted' | 'closed'; id: string; evidence: number };
+
+/**
+ * Remove an assignment safely:
+ *   - no teaching evidence  -> hard delete (clean mistake)
+ *   - teaching evidence     -> close (status=inactive, endsOn=today) and keep it
+ */
+export async function removeSubjectAssignment(tenantId: string, subjectTeacherId: string): Promise<RemoveAssignmentResult> {
+  const evidence = await subjectAssignmentUsage(tenantId, subjectTeacherId);
+  if (evidence === 0) {
+    await db
+      .delete(subjectTeachers)
+      .where(and(eq(subjectTeachers.id, subjectTeacherId), eq(subjectTeachers.tenantId, tenantId)));
+    return { action: 'deleted', id: subjectTeacherId, evidence };
+  }
+
+  const [closed] = await db
+    .update(subjectTeachers)
+    .set({ status: 'inactive', endsOn: todayIso() })
+    .where(and(eq(subjectTeachers.id, subjectTeacherId), eq(subjectTeachers.tenantId, tenantId)))
+    .returning({ id: subjectTeachers.id });
+  if (!closed) {
+    throw new ApiError(404, 'NOT_FOUND', 'Affectation introuvable.');
+  }
+  return { action: 'closed', id: subjectTeacherId, evidence };
+}
+
+/** Historical assignments for a pair, most recent first (reporting/UI). */
+export async function listClosedSubjectAssignments(tenantId: string, classSectionId: string, classSubjectId: string) {
+  return db
+    .select()
+    .from(subjectTeachers)
+    .where(and(
+      eq(subjectTeachers.tenantId, tenantId),
+      eq(subjectTeachers.classSectionId, classSectionId),
+      eq(subjectTeachers.classSubjectId, classSubjectId),
+      eq(subjectTeachers.status, 'inactive'),
+    ))
+    .orderBy(desc(subjectTeachers.endsOn))
+    .limit(50);
 }

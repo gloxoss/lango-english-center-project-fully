@@ -1,4 +1,4 @@
-import { and, count, eq, isNull } from 'drizzle-orm';
+import { and, asc, count, eq, ilike, isNull } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
@@ -7,7 +7,36 @@ import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { classSubjectCreateSchema, classSubjectUpdateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { assessmentPlans, classes, classScheduleSlots, classSubjects, semesters, subjects, subjectTeachers } from '@/models/Schema';
+import { academicClassOfferings, assessmentPlans, classes, classScheduleSlots, classSubjects, semesters, subjects, subjectTeachers } from '@/models/Schema';
+
+type Context = Awaited<ReturnType<typeof requireRequestContext>>;
+
+/** Branch scope through the class (class_sections have no branch of their own). */
+async function resolveClassBranch(
+  context: Context,
+  tenantId: string,
+  classId: string,
+  purpose: 'read' | 'write',
+): Promise<string | null | undefined> {
+  const [classRow] = await db
+    .select({ branchId: classes.branchId })
+    .from(classes)
+    .where(and(eq(classes.id, classId), eq(classes.tenantId, tenantId)))
+    .limit(1);
+  if (!classRow) {
+    throw new ApiError(422, 'INVALID_REFERENCE', 'La classe indiquée n\'existe pas pour cet établissement.');
+  }
+  if (!context.branchId) {
+    return classRow.branchId;
+  }
+  if (classRow.branchId === context.branchId) {
+    return classRow.branchId;
+  }
+  if (purpose === 'write' && classRow.branchId === null) {
+    throw new ApiError(403, 'FORBIDDEN', 'Cette classe n\'est rattachée à aucun campus. Un administrateur global doit d\'abord lui attribuer un campus.');
+  }
+  throw new ApiError(403, 'FORBIDDEN', 'Vous ne pouvez agir que sur les classes de votre campus.');
+}
 
 function toApiClassSubject(row: typeof classSubjects.$inferSelect) {
   return {
@@ -27,7 +56,10 @@ function toApiClassSubject(row: typeof classSubjects.$inferSelect) {
   };
 }
 
-async function assertReferencesBelongToTenant(tenantId: string, refs: { classId: string; subjectId: string; semesterId?: string | null }) {
+async function assertReferencesBelongToTenant(
+  tenantId: string,
+  refs: { classId: string; subjectId: string; semesterId?: string | null; offeringId?: string | null },
+) {
   const [classRow] = await db.select({ id: classes.id }).from(classes).where(and(eq(classes.id, refs.classId), eq(classes.tenantId, tenantId))).limit(1);
   if (!classRow) {
     throw new ApiError(422, 'INVALID_REFERENCE', 'La classe indiquée n\'existe pas pour cet établissement.');
@@ -35,6 +67,22 @@ async function assertReferencesBelongToTenant(tenantId: string, refs: { classId:
   const [subjectRow] = await db.select({ id: subjects.id }).from(subjects).where(and(eq(subjects.id, refs.subjectId), eq(subjects.tenantId, tenantId))).limit(1);
   if (!subjectRow) {
     throw new ApiError(422, 'INVALID_REFERENCE', 'La matière indiquée n\'existe pas pour cet établissement.');
+  }
+  if (refs.offeringId) {
+    // An offering must belong to this tenant AND to the same class — a client
+    // cannot attach curriculum to another tenant's or another class's session.
+    const [offeringRow] = await db
+      .select({ id: academicClassOfferings.id })
+      .from(academicClassOfferings)
+      .where(and(
+        eq(academicClassOfferings.id, refs.offeringId),
+        eq(academicClassOfferings.tenantId, tenantId),
+        eq(academicClassOfferings.classId, refs.classId),
+      ))
+      .limit(1);
+    if (!offeringRow) {
+      throw new ApiError(422, 'INVALID_REFERENCE', 'La session/offre indiquée n\'appartient pas à cette classe ou à cet établissement.');
+    }
   }
   if (refs.semesterId) {
     const [semesterRow] = await db.select({ id: semesters.id }).from(semesters).where(and(eq(semesters.id, refs.semesterId), eq(semesters.tenantId, tenantId))).limit(1);
@@ -79,9 +127,17 @@ export async function GET(request: Request) {
     const conditions = [eq(classSubjects.tenantId, tenantId)];
     if (classId) {
       conditions.push(eq(classSubjects.classId, classId));
+      await resolveClassBranch(context, tenantId, classId, 'read');
     }
     if (offeringId) {
       conditions.push(eq(classSubjects.offeringId, offeringId));
+    }
+    if (context.branchId) {
+      conditions.push(eq(classes.branchId, context.branchId));
+    }
+    const search = searchParams.get('search')?.trim();
+    if (search) {
+      conditions.push(ilike(subjects.name, `%${search}%`));
     }
 
     const where = and(...conditions);
@@ -113,7 +169,8 @@ export async function GET(request: Request) {
         .leftJoin(subjects, eq(classSubjects.subjectId, subjects.id))
         .leftJoin(classes, eq(classSubjects.classId, classes.id))
         .where(where)
-        .orderBy(classSubjects.displayOrder)
+        // Stable ordering: class, then curriculum order, then primary key.
+        .orderBy(asc(classes.name), asc(classSubjects.displayOrder), asc(classSubjects.id))
         .limit(pagination.limit)
         .offset(pagination.offset),
       db.select({ total: count() }).from(classSubjects).where(where),
@@ -138,7 +195,8 @@ export async function POST(request: Request) {
     await requireCapability(context, 'academics.manage');
     const body = await parseJson(request, classSubjectCreateSchema);
 
-    await assertReferencesBelongToTenant(tenantId, { classId: body.classId, subjectId: body.subjectId, semesterId: body.semesterId });
+    await resolveClassBranch(context, tenantId, body.classId, 'write');
+    await assertReferencesBelongToTenant(tenantId, { classId: body.classId, subjectId: body.subjectId, semesterId: body.semesterId, offeringId: body.offeringId });
     await assertNotAlreadyAssigned(tenantId, body.classId, body.subjectId, body.semesterId);
 
     const [inserted] = await db
@@ -183,9 +241,13 @@ export async function PUT(request: Request) {
     const subjectId = body.subjectId ?? existing.subjectId;
     const semesterId = body.semesterId !== undefined ? body.semesterId : existing.semesterId;
 
+    await resolveClassBranch(context, tenantId, existing.classId, 'write');
     if (body.classId || body.subjectId) {
-      await assertReferencesBelongToTenant(tenantId, { classId, subjectId, semesterId });
+      await resolveClassBranch(context, tenantId, classId, 'write');
+      await assertReferencesBelongToTenant(tenantId, { classId, subjectId, semesterId, offeringId: body.offeringId });
       await assertNotAlreadyAssigned(tenantId, classId, subjectId, semesterId, body.id);
+    } else if (body.offeringId) {
+      await assertReferencesBelongToTenant(tenantId, { classId, subjectId, semesterId, offeringId: body.offeringId });
     }
 
     const updatePayload: Record<string, any> = {
@@ -247,6 +309,8 @@ export async function DELETE(request: Request) {
     if (!existing) {
       throw new ApiError(404, 'NOT_FOUND', 'Matière assignée introuvable.');
     }
+
+    await resolveClassBranch(context, tenantId, existing.classId, 'write');
 
     // Protected Deletion Check: check references in assessmentPlans, subjectTeachers, classScheduleSlots
     const [assessmentCount] = await db

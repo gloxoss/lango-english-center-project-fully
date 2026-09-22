@@ -9,6 +9,7 @@ import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
+import { evaluateCapacity, exceedsCapacity } from '@/libs/services/section-capacity';
 import { recordStudentPlacement } from '@/libs/services/student-placement';
 import {
   assessmentResults,
@@ -289,11 +290,12 @@ export function runAutoPlacementSimulation({
 
   const tryAssignStudent = (st: ReconciledStudent, sectionsPool: TargetSection[]): boolean => {
     const availableSections = sectionsPool.filter(sec => {
-      if (sec.maxStudents == null) return false;
       // Strict cross-branch guard: student branch must match section branch
       if (st.branchId && sec.branchId && st.branchId !== sec.branchId) return false;
       const occ = simOccupancy.get(sec.id) || 0;
-      return occ < sec.maxStudents;
+      // ONE CAPACITY TRUTH (libs/services/section-capacity): unconfigured
+      // capacity never accepts a student; the rule is shared with all writers.
+      return evaluateCapacity(sec.maxStudents, occ).allowsOneMore;
     });
 
     if (availableSections.length === 0) {
@@ -438,7 +440,7 @@ export function runAutoPlacementSimulation({
     const after = simOccupancy.get(sec.id) || 0;
     const delta = after - before; // TRUE DELTA!
     const maxCap = sec.maxStudents;
-    const isOver = maxCap != null && after > maxCap;
+    const isOver = exceedsCapacity(maxCap, after);
     if (isOver) hasOverCapacitySection = true;
 
     const secAssignments = assignments.filter(a => a.targetClassSectionId === sec.id);

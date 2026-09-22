@@ -1,4 +1,4 @@
-import { and, eq, ne } from 'drizzle-orm';
+import { and, eq, gte, isNull, ne, or } from 'drizzle-orm';
 import { ApiError } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
 import { classes, classScheduleSlots, classSections, classSubjects, subjectTeachers, teacherAvailability, user } from '@/models/Schema';
@@ -52,11 +52,16 @@ export async function assertSlotIsValid(tenantId: string, candidate: SlotCandida
     throw new ApiError(422, 'SUBJECT_NOT_IN_CLASS', 'Cette matière n\'est pas assignée à la classe de cette section.');
   }
 
+  // Only a CURRENT subject assignment makes a teacher eligible: closed or
+  // ended assignments must not be schedulable.
+  const today = new Date().toISOString().slice(0, 10);
   const [eligibleTeacher] = await db.select({ id: subjectTeachers.id }).from(subjectTeachers).where(and(
     eq(subjectTeachers.tenantId, tenantId),
     eq(subjectTeachers.classSectionId, candidate.classSectionId),
     eq(subjectTeachers.classSubjectId, candidate.classSubjectId),
     eq(subjectTeachers.teacherId, candidate.teacherId),
+    eq(subjectTeachers.status, 'active'),
+    or(isNull(subjectTeachers.endsOn), gte(subjectTeachers.endsOn, today))!,
   )).limit(1);
   if (!eligibleTeacher) {
     throw new ApiError(422, 'TEACHER_NOT_ASSIGNED', 'Cet enseignant n\'est pas assigné à cette matière pour cette section.');

@@ -1,346 +1,535 @@
 'use client';
 
-import { useState } from 'react';
+import { BookOpen, Layers, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Card } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
-  Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from '@/components/ui/dialog';
-import {
-  BookOpen, AlertTriangle, Plus, Download, Building2, Search,
-} from 'lucide-react';
-import {
-  SubjectAssignmentItem, MOCK_ASSIGNMENTS,
-} from '../data/class-subjects-config';
+import { usePermissions } from '@/hooks/use-permissions';
+
+type ClassOption = { id: string; name: string; cycle: string | null };
+type SubjectOption = { id: string; name: string };
+type Assignment = {
+  id: string;
+  classId: string;
+  subjectId: string;
+  subjectName: string | null;
+  className: string | null;
+  coefficient: string | number | null;
+  weeklyMinutes: number | null;
+  displayOrder: number | null;
+  isActive: boolean;
+  curriculumLabel: string | null;
+  passThreshold: string | null;
+};
+
+const emptyForm = {
+  subjectId: '',
+  coefficient: '1',
+  weeklyMinutes: '',
+  displayOrder: '0',
+  curriculumLabel: '',
+  passThreshold: '',
+  isActive: true,
+};
 
 export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {}) {
   const t = useTranslations('Academics');
   const tc = useTranslations('Common');
+  const { can } = usePermissions();
+  const canManage = can('academics.manage');
 
-  const [selectedClass, setSelectedClass] = useState('2BAC-A');
-  const [assignments, setAssignments] = useState<SubjectAssignmentItem[]>(MOCK_ASSIGNMENTS);
-  const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [classes, setClasses] = useState<ClassOption[]>([]);
+  const [subjects, setSubjects] = useState<SubjectOption[]>([]);
+  const [classId, setClassId] = useState('');
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [editing, setEditing] = useState<Assignment | null>(null);
+  const [form, setForm] = useState({ ...emptyForm });
+  const [saving, setSaving] = useState(false);
 
-  // Modal State
-  const [isAddOpen, setIsAddOpen] = useState(false);
-  const [newSubject, setNewSubject] = useState({
-    subjectName: '',
-    code: '',
-    coefficient: '3',
-    weeklyHours: '3',
-    teacherName: 'M. Omar Alami',
-    roomName: 'Salle 104',
-    type: 'compulsory' as 'compulsory' | 'elective',
-  });
+  useEffect(() => {
+    fetch('/api/academics/classes?pageSize=100')
+      .then(r => r.json())
+      .then((j) => {
+        if (j?.success && Array.isArray(j.data)) {
+          setClasses(j.data);
+          if (j.data.length > 0) {
+            setClassId(j.data[0].id);
+          }
+        }
+      })
+      .catch(() => {});
+    fetch('/api/academics/subjects?pageSize=200')
+      .then(r => r.json())
+      .then(j => j?.success && setSubjects(j.data))
+      .catch(() => {});
+  }, []);
 
-  const filteredAssignments = assignments.filter(item => {
-    const matchesSearch = item.subjectName.toLowerCase().includes(search.toLowerCase()) || item.teacherName.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
-
-  const totalHours = assignments.reduce((acc, i) => acc + (i.status !== 'unassigned' ? i.weeklyHours : 0), 0);
-  const totalCoeff = assignments.reduce((acc, i) => acc + i.coefficient, 0);
-
-  const handleAddSubject = () => {
-    if (!newSubject.subjectName.trim()) return;
-    const created: SubjectAssignmentItem = {
-      id: `s-${Date.now()}`,
-      subjectName: newSubject.subjectName.trim(),
-      code: newSubject.code.trim() || `SUB-${Date.now()}`,
-      coefficient: Number(newSubject.coefficient) || 2,
-      weeklyHours: Number(newSubject.weeklyHours) || 2,
-      teacherName: newSubject.teacherName,
-      teacherAvatar: newSubject.teacherName.split(' ').map(n => n[0]).join('').slice(0, 2),
-      roomName: newSubject.roomName,
-      type: newSubject.type,
-      status: 'assigned',
-    };
-    setAssignments(prev => [...prev, created]);
-    setIsAddOpen(false);
-    setNewSubject({ subjectName: '', code: '', coefficient: '3', weeklyHours: '3', teacherName: 'M. Omar Alami', roomName: 'Salle 104', type: 'compulsory' });
+  const loadAssignments = (id: string) => {
+    if (!id) {
+      setAssignments([]);
+      return;
+    }
+    setLoading(true);
+    fetch(`/api/academics/class-subjects?classId=${id}&pageSize=100`)
+      .then(r => r.json())
+      .then(j => j?.success && setAssignments(j.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   };
 
+  useEffect(() => {
+    loadAssignments(classId);
+  }, [classId]);
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm({ ...emptyForm });
+    setIsOpen(true);
+  };
+
+  const openEdit = (item: Assignment) => {
+    setEditing(item);
+    setForm({
+      subjectId: item.subjectId,
+      coefficient: item.coefficient != null ? String(Number(item.coefficient)) : '1',
+      weeklyMinutes: item.weeklyMinutes != null ? String(item.weeklyMinutes) : '',
+      displayOrder: item.displayOrder != null ? String(item.displayOrder) : '0',
+      curriculumLabel: item.curriculumLabel ?? '',
+      passThreshold: item.passThreshold != null ? String(Number(item.passThreshold)) : '',
+      isActive: item.isActive,
+    });
+    setIsOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!editing && !form.subjectId) {
+      toast.error(t('subjectFieldLabel'));
+      return;
+    }
+    setSaving(true);
+    try {
+      const body = editing
+        ? {
+            id: editing.id,
+            coefficient: form.coefficient ? Number(form.coefficient) : 1,
+            weeklyMinutes: form.weeklyMinutes ? Number(form.weeklyMinutes) : null,
+            displayOrder: form.displayOrder ? Number(form.displayOrder) : 0,
+            curriculumLabel: form.curriculumLabel.trim() || null,
+            passThreshold: form.passThreshold ? Number(form.passThreshold) : null,
+            isActive: form.isActive,
+          }
+        : {
+            classId,
+            subjectId: form.subjectId,
+            coefficient: form.coefficient ? Number(form.coefficient) : 1,
+            weeklyMinutes: form.weeklyMinutes ? Number(form.weeklyMinutes) : undefined,
+            displayOrder: form.displayOrder ? Number(form.displayOrder) : 0,
+            curriculumLabel: form.curriculumLabel.trim() || undefined,
+            passThreshold: form.passThreshold ? Number(form.passThreshold) : undefined,
+            isActive: form.isActive,
+          };
+      const res = await fetch('/api/academics/class-subjects', {
+        method: editing ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        toast.error(json.error?.message || tc('errorOccurred'));
+        return;
+      }
+      toast.success(tc('save'));
+      setIsOpen(false);
+      loadAssignments(classId);
+    } catch {
+      toast.error(tc('errorOccurred'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const performDelete = async (item: Assignment) => {
+    try {
+      const res = await fetch(`/api/academics/class-subjects?id=${item.id}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (!json.success) {
+        toast.error(json.error?.message || tc('errorOccurred'));
+        return;
+      }
+      toast.success(t('deleteAction'));
+      loadAssignments(classId);
+    } catch {
+      toast.error(tc('errorOccurred'));
+    }
+  };
+
+  const handleDelete = (item: Assignment) => {
+    toast(`${t('deleteAction')} · ${item.subjectName ?? ''} ?`, {
+      action: {
+        label: tc('confirm'),
+        onClick: () => {
+          void performDelete(item);
+        },
+      },
+    });
+  };
+
+  const totalCoeff = assignments.reduce((acc, a) => acc + Number(a.coefficient ?? 0), 0);
+  const totalMinutes = assignments.reduce((acc, a) => acc + (a.weeklyMinutes ?? 0), 0);
+  const availableSubjects = subjects.filter(s => !assignments.some(a => a.subjectId === s.id));
+
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="mx-auto max-w-[1600px] space-y-6">
+      <div className="
+        flex flex-col justify-between gap-4
+        sm:flex-row sm:items-center
+      "
+      >
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('classSubjectsTitle')}</h1>
-          <p className="text-xs text-slate-500 mt-1">{t('classSubjectsSubtitle')}</p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('classSubjectsTitle')}</h1>
+          <p className="mt-1 text-xs text-slate-500">{t('classSubjectsSubtitle')}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" className="h-10 rounded-xl px-4 gap-2 border-slate-200 text-xs font-bold">
-            <Download className="w-4 h-4 text-slate-600" />
-            <span>{t('btnExportGrid')}</span>
-          </Button>
+        {canManage && (
           <Button
             size="sm"
-            onClick={() => setIsAddOpen(true)}
-            className="h-10 rounded-xl px-4 gap-2 bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold shadow-2xs"
+            onClick={openCreate}
+            disabled={!classId}
+            className="
+              h-10 gap-2 rounded-xl bg-[#2487B8] px-4 text-xs font-bold
+              text-white shadow-2xs
+              hover:bg-[#1B6C93]
+            "
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="size-4" />
             <span>{t('btnAssignSubject')}</span>
           </Button>
-        </div>
+        )}
       </div>
 
-      {/* Class Selector Bar */}
-      <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <span className="text-xs font-bold text-slate-500 whitespace-nowrap">{t('selectedClassLabel')}</span>
-            <Select value={selectedClass} onValueChange={setSelectedClass}>
-              <SelectTrigger className="w-64 h-10 rounded-xl text-xs font-extrabold border-slate-200">
-                <SelectValue />
+      <Card className="
+        rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs
+      "
+      >
+        <div className="
+          flex flex-col items-center justify-between gap-4
+          sm:flex-row
+        "
+        >
+          <div className="
+            flex w-full items-center gap-3
+            sm:w-auto
+          "
+          >
+            <span className="text-xs font-bold whitespace-nowrap text-slate-500">{t('selectedClassLabel')}</span>
+            <Select value={classId} onValueChange={setClassId}>
+              <SelectTrigger className="
+                h-10 w-64 rounded-xl border-slate-200 text-xs font-extrabold
+              "
+              >
+                <SelectValue placeholder={t('selectedClassLabel')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="2BAC-A">2BAC-A (Sciences Maths)</SelectItem>
-                <SelectItem value="2BAC-B">2BAC-B (Sciences Physiques)</SelectItem>
-                <SelectItem value="1BAC-A">1BAC-A (Lettres & Huma)</SelectItem>
-                <SelectItem value="3AC-A">3AC-A (Collège)</SelectItem>
+                {classes.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
-
           <div className="flex items-center gap-4 text-xs font-bold">
-            <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+            <div className="
+              flex items-center gap-2 rounded-xl border border-slate-100
+              bg-slate-50 px-3 py-1.5
+            "
+            >
               <span className="text-slate-500">{t('hourlyVolumeLabel')}</span>
-              <strong className="text-[#2487B8]">{totalHours}h / 30h max</strong>
+              <strong className="text-[#2487B8]">
+                {totalMinutes}
+                {' '}
+                {t('minutesShort')}
+              </strong>
             </div>
-            <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+            <div className="
+              flex items-center gap-2 rounded-xl border border-slate-100
+              bg-slate-50 px-3 py-1.5
+            "
+            >
               <span className="text-slate-500">{t('totalCoeffLabel')}</span>
-              <strong className="text-[#16212B]">{totalCoeff}</strong>
+              <strong className="text-[#16212B]">{Number.isInteger(totalCoeff) ? totalCoeff : totalCoeff.toFixed(2)}</strong>
             </div>
           </div>
         </div>
       </Card>
 
-      {/* Main 12-col Workspace */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left 7 cols: Assigned Subjects List & Search Toolbar */}
-        <div className="lg:col-span-7 space-y-4">
-          <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <h3 className="text-sm font-extrabold text-[#16212B]">
-                {t('subjectsGridTitle', { count: filteredAssignments.length })}
-              </h3>
-              <div className="flex items-center gap-2">
-                <div className="relative w-48">
-                  <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <Input
-                    placeholder={t('filterSubjectPlaceholder')}
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    className="ps-9 h-9 text-xs rounded-xl bg-slate-50 border-none"
-                  />
-                </div>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-36 h-9 rounded-xl text-xs bg-slate-50 border-none">
-                    <SelectValue placeholder={t('statusAll')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t('statusAll')}</SelectItem>
-                    <SelectItem value="assigned">{t('statusAssigned')}</SelectItem>
-                    <SelectItem value="conflict">{t('statusConflict')}</SelectItem>
-                    <SelectItem value="unassigned">{t('statusUnassigned')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+      <Card className="
+        space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs
+      "
+      >
+        <h3 className="text-sm font-extrabold text-[#16212B]">
+          {t('subjectsGridTitle', { count: assignments.length })}
+        </h3>
 
-            <div className="space-y-3">
-              {filteredAssignments.map(item => (
-                <div
-                  key={item.id}
-                  className={`p-4 rounded-2xl border transition space-y-3 ${
-                    item.status === 'conflict'
-                      ? 'bg-rose-50/50 border-rose-200'
-                      : item.status === 'unassigned'
-                      ? 'bg-amber-50/50 border-amber-200'
-                      : 'bg-white border-slate-200/80 hover:border-slate-300'
-                  }`}
+        {!loading && assignments.length === 0 && (
+          <div className="
+            space-y-2 rounded-2xl border border-dashed border-slate-200
+            bg-slate-50/50 py-10 text-center
+          "
+          >
+            <BookOpen className="mx-auto size-6 text-slate-300" />
+            <p className="text-xs font-bold text-slate-600">{t('noAssignmentsYet')}</p>
+          </div>
+        )}
+
+        <div className="space-y-3">
+          {assignments.map(item => (
+            <div
+              key={item.id}
+              className={`
+                space-y-3 rounded-2xl border p-4 transition
+                ${
+            item.isActive
+              ? `
+                border-slate-200/80 bg-white
+                hover:border-slate-300
+              `
+              : `border-slate-200 bg-slate-50/60`
+            }
+              `}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="
+                    flex size-10 shrink-0 items-center justify-center
+                    rounded-2xl bg-[#DCEBF4] font-bold text-[#1B6C93]
+                  "
+                  >
+                    <BookOpen className="size-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="
+                        truncate text-sm font-extrabold text-[#16212B]
+                      "
+                      >
+                        {item.subjectName ?? '—'}
+                      </h4>
+                      {!item.isActive && (
+                        <span className="
+                          rounded-sm bg-slate-200 px-2 py-0.5 text-[10px]
+                          font-bold text-slate-600
+                        "
+                        >
+                          {t('inactiveBadge')}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      {t('coeffFieldLabel')}
+                      :
+                      <strong>{item.coefficient != null ? Number(item.coefficient) : '—'}</strong>
+                      {' • '}
+                      {t('weeklyMinutesFieldLabel')}
+                      :
+                      <strong>{item.weeklyMinutes != null ? `${item.weeklyMinutes} ${t('minutesShort')}` : '—'}</strong>
+                      {item.displayOrder != null ? ` • ${t('displayOrderFieldLabel')}: ${item.displayOrder}` : ''}
+                    </p>
+                  </div>
+                </div>
+
+                {canManage && (
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      onClick={() => openEdit(item)}
+                      className="
+                        rounded-lg p-1.5 text-slate-400 transition
+                        hover:bg-slate-100 hover:text-[#2487B8]
+                      "
+                      title={t('editAssignment')}
+                    >
+                      <Pencil className="size-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item)}
+                      className="
+                        rounded-lg p-1.5 text-slate-400 transition
+                        hover:bg-rose-50 hover:text-rose-600
+                      "
+                      title={t('deleteAction')}
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {(item.curriculumLabel || item.passThreshold != null) && (
+                <div className="
+                  flex items-center gap-2 border-t border-slate-100 pt-2
+                  text-[11px] font-bold text-slate-600
+                "
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-2xl bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center font-bold">
-                        <BookOpen className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-extrabold text-[#16212B]">{item.subjectName}</h4>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-mono">
-                            {item.code}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500">
-                          Coeff: <strong>{item.coefficient}</strong> • Volume: <strong>{t('hoursPerWeek', { hours: item.weeklyHours })}</strong> • {item.type === 'compulsory' ? t('typeCompulsory') : t('typeElective')}
-                        </p>
-                      </div>
-                    </div>
-
-                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
-                      item.status === 'assigned' ? 'bg-[#DDF5EC] text-[#17A673]' :
-                      item.status === 'conflict' ? 'bg-[#FCE4E2] text-[#E5544B]' : 'bg-[#FCF0DC] text-[#E8A33D]'
-                    }`}>
-                      {item.status === 'assigned' ? t('badgeAssigned') : item.status === 'conflict' ? t('badgeConflict') : t('badgeUnassigned')}
+                  {item.curriculumLabel && (
+                    <span className="
+                      inline-flex items-center gap-1 rounded-lg border
+                      border-slate-100 bg-slate-50 px-2.5 py-1
+                    "
+                    >
+                      <Layers className="size-3.5 text-slate-400" />
+                      {item.curriculumLabel}
                     </span>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center font-extrabold text-[10px]">
-                        {item.teacherAvatar}
-                      </div>
-                      <span className="font-semibold text-slate-700">{item.teacherName}</span>
-                    </div>
-                    <span className="flex items-center gap-1 font-bold text-slate-600 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
-                      <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                      {item.roomName}
+                  )}
+                  {item.passThreshold != null && (
+                    <span className="
+                      rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1
+                    "
+                    >
+                      {t('passThresholdFieldLabel')}
+                      :
+                      {Number(item.passThreshold)}
                     </span>
-                  </div>
+                  )}
                 </div>
-              ))}
+              )}
             </div>
-          </Card>
+          ))}
         </div>
+      </Card>
 
-        {/* Right 5 cols: Alerts & Missing Teacher Action Inspector */}
-        <div className="lg:col-span-5 space-y-4">
-          <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-            <h3 className="text-xs font-extrabold text-[#16212B] uppercase tracking-wider text-[10px]">
-              {t('alertsAndVacancies')}
-            </h3>
-
-            {/* Conflict Alert */}
-            <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200/80 space-y-2 text-xs text-rose-900">
-              <div className="flex items-center gap-2 font-extrabold text-rose-800">
-                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-                <span>{t('teacherConflictAlertTitle')}</span>
-              </div>
-              <p className="text-xs text-rose-700">
-                <strong>Anglais renforcé (M. John Smith)</strong> est en chevauchement avec la classe 1BAC-A sur le créneau Mardi 10h-12h.
-              </p>
-              <Button size="sm" className="h-8 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white mt-1">
-                {t('btnResolveConflict')}
-              </Button>
-            </div>
-
-            {/* Unassigned Subject Callout */}
-            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/80 space-y-2 text-xs text-amber-900">
-              <div className="flex items-center justify-between font-extrabold text-amber-900">
-                <span>Philosophie (2h/semaine)</span>
-                <span className="text-[10px] font-bold bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full">
-                  {t('vacantPositionBadge')}
-                </span>
-              </div>
-              <p className="text-xs text-amber-800">
-                Aucun professeur de philosophie n&apos;est attribué à la classe 2BAC-A pour l&apos;année 2026-2027.
-              </p>
-              <Button size="sm" variant="outline" className="h-8 text-xs font-bold rounded-xl border-amber-300 bg-white text-amber-900 mt-1">
-                {t('btnAssignTeacher')}
-              </Button>
-            </div>
-          </Card>
-        </div>
-      </div>
-
-      {/* Affecter une Matière Modal Dialog */}
-      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogContent className="max-w-md bg-white rounded-2xl p-6">
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-md rounded-2xl bg-white p-6">
           <DialogHeader>
-            <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-[#2487B8]" />
-              {t('assignSubjectModalTitle', { className: selectedClass })}
+            <DialogTitle className="
+              flex items-center gap-2 text-base font-extrabold text-[#16212B]
+            "
+            >
+              <BookOpen className="size-5 text-[#2487B8]" />
+              {editing ? t('editAssignment') : t('assignSubjectModalTitle', { className: assignments[0]?.className ?? classes.find(c => c.id === classId)?.name ?? '' })}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-3 my-3 text-xs">
-            <div>
-              <label className="font-bold text-slate-700 block mb-1">{t('subjectFieldLabel')}</label>
-              <Input
-                placeholder="Ex. Histoire-Géographie"
-                value={newSubject.subjectName}
-                onChange={e => setNewSubject({ ...newSubject, subjectName: e.target.value })}
-                className="h-9 text-xs rounded-xl"
-              />
-            </div>
+          <div className="my-3 space-y-3 text-xs">
+            {!editing && (
+              <div>
+                <label className="mb-1 block font-bold text-slate-700">{t('subjectFieldLabel')}</label>
+                <Select value={form.subjectId} onValueChange={val => setForm({ ...form, subjectId: val })}>
+                  <SelectTrigger className="h-9 rounded-xl text-xs">
+                    <SelectValue placeholder={t('subjectFieldLabel')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableSubjects.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="font-bold text-slate-700 block mb-1">{t('codeFieldLabel')}</label>
+                <label className="mb-1 block font-bold text-slate-700">{t('coeffFieldLabel')}</label>
                 <Input
-                  placeholder="HIST-2BAC"
-                  value={newSubject.code}
-                  onChange={e => setNewSubject({ ...newSubject, code: e.target.value })}
-                  className="h-9 text-xs rounded-xl"
+                  type="number"
+                  step="0.25"
+                  min="0"
+                  value={form.coefficient}
+                  onChange={e => setForm({ ...form, coefficient: e.target.value })}
+                  className="h-9 rounded-xl text-xs"
                 />
               </div>
               <div>
-                <label className="font-bold text-slate-700 block mb-1">{t('coeffFieldLabel')}</label>
+                <label className="mb-1 block font-bold text-slate-700">{t('weeklyMinutesFieldLabel')}</label>
                 <Input
                   type="number"
-                  value={newSubject.coefficient}
-                  onChange={e => setNewSubject({ ...newSubject, coefficient: e.target.value })}
-                  className="h-9 text-xs rounded-xl"
-                />
-              </div>
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">{t('weeklyHoursFieldLabel')}</label>
-                <Input
-                  type="number"
-                  value={newSubject.weeklyHours}
-                  onChange={e => setNewSubject({ ...newSubject, weeklyHours: e.target.value })}
-                  className="h-9 text-xs rounded-xl"
+                  min="0"
+                  value={form.weeklyMinutes}
+                  onChange={e => setForm({ ...form, weeklyMinutes: e.target.value })}
+                  className="h-9 rounded-xl text-xs"
+                  placeholder="180"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="font-bold text-slate-700 block mb-1">{t('teacherFieldLabel')}</label>
+                <label className="mb-1 block font-bold text-slate-700">{t('displayOrderFieldLabel')}</label>
                 <Input
-                  value={newSubject.teacherName}
-                  onChange={e => setNewSubject({ ...newSubject, teacherName: e.target.value })}
-                  className="h-9 text-xs rounded-xl"
+                  type="number"
+                  min="0"
+                  value={form.displayOrder}
+                  onChange={e => setForm({ ...form, displayOrder: e.target.value })}
+                  className="h-9 rounded-xl text-xs"
                 />
               </div>
               <div>
-                <label className="font-bold text-slate-700 block mb-1">{t('roomFieldLabel')}</label>
+                <label className="mb-1 block font-bold text-slate-700">{t('passThresholdFieldLabel')}</label>
                 <Input
-                  value={newSubject.roomName}
-                  onChange={e => setNewSubject({ ...newSubject, roomName: e.target.value })}
-                  className="h-9 text-xs rounded-xl"
+                  type="number"
+                  min="0"
+                  max="20"
+                  step="0.5"
+                  value={form.passThreshold}
+                  onChange={e => setForm({ ...form, passThreshold: e.target.value })}
+                  className="h-9 rounded-xl text-xs"
+                  placeholder="10"
                 />
               </div>
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">{t('teachingTypeLabel')}</label>
-              <Select value={newSubject.type} onValueChange={val => setNewSubject({ ...newSubject, type: val as 'compulsory' | 'elective' })}>
-                <SelectTrigger className="h-9 text-xs rounded-xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="compulsory">{t('compulsoryCore')}</SelectItem>
-                  <SelectItem value="elective">{t('electiveOptional')}</SelectItem>
-                </SelectContent>
-              </Select>
+              <label className="mb-1 block font-bold text-slate-700">{t('curriculumLabelField')}</label>
+              <Input
+                value={form.curriculumLabel}
+                onChange={e => setForm({ ...form, curriculumLabel: e.target.value })}
+                className="h-9 rounded-xl text-xs"
+              />
             </div>
+
+            <label className="flex items-center gap-2 font-bold text-slate-700">
+              <input
+                type="checkbox"
+                checked={form.isActive}
+                onChange={e => setForm({ ...form, isActive: e.target.checked })}
+                className="size-4 rounded-sm border-slate-300"
+              />
+              {t('activeFieldLabel')}
+            </label>
           </div>
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIsAddOpen(false)} className="rounded-xl text-xs h-9">
+            <Button
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+              className="h-9 rounded-xl text-xs"
+            >
               {tc('cancel')}
             </Button>
-            <Button onClick={handleAddSubject} className="rounded-xl text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold">
-              {t('btnConfirmAssignment')}
+            <Button
+              onClick={handleSave}
+              disabled={saving || (!editing && !form.subjectId)}
+              className="
+                h-9 rounded-xl bg-[#2487B8] text-xs font-bold text-white
+                hover:bg-[#1B6C93]
+              "
+            >
+              {saving ? tc('loading') : t('btnConfirmAssignment')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -348,4 +537,3 @@ export function ClassSubjectsClient({ locale: _locale }: { locale?: string } = {
     </div>
   );
 }
-

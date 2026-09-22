@@ -6,7 +6,14 @@ import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { academicClassOfferings, classes, sections, user } from '@/models/Schema';
+import { resolveSectionCapacities } from '@/libs/services/section-capacity';
+import { academicClassOfferings, classes, classSections, sections } from '@/models/Schema';
+
+// Capacity pre-check for promotions.
+//
+// ONE CAPACITY TRUTH: class_sections.maxStudents (never the legacy
+// academic_class_offerings.capacity). The legacy value is returned alongside
+// as `legacyOfferingCapacity` so drift is visible, but it never decides.
 
 export const capacityCheckSchema = z.object({
   targetSessionYearId: z.string().uuid({ message: 'L\'identifiant de la session cible est requis.' }).optional().nullable(),
@@ -15,7 +22,7 @@ export const capacityCheckSchema = z.object({
       offeringId: z.string().uuid().optional().nullable(),
       classSectionId: z.string().uuid().optional().nullable(),
       studentCount: z.number().int().nonnegative().optional().default(0),
-    })
+    }),
   ).optional().default([]),
 }).strict();
 
@@ -28,15 +35,15 @@ export async function POST(request: Request) {
     const body = await parseJson(request, capacityCheckSchema);
     const assignments = body.assignments || [];
 
-    // Extract non-null offeringIds and classSectionIds
-    const offeringIds = assignments.map((a) => a.offeringId).filter((id): id is string => Boolean(id));
+    const offeringIds = assignments.map(a => a.offeringId).filter((id): id is string => Boolean(id));
 
     const offerings = offeringIds.length > 0
       ? await db
           .select({
             id: academicClassOfferings.id,
+            classId: academicClassOfferings.classId,
+            sectionId: academicClassOfferings.sectionId,
             capacity: academicClassOfferings.capacity,
-            classSectionId: academicClassOfferings.sectionId,
             className: classes.name,
             sectionName: sections.name,
           })
@@ -46,48 +53,71 @@ export async function POST(request: Request) {
           .where(and(eq(academicClassOfferings.tenantId, tenantId), inArray(academicClassOfferings.id, offeringIds)))
       : [];
 
-    const breakdown = await Promise.all(
-      assignments.map(async (item) => {
-        const offering = offerings.find((o) => o.id === item.offeringId);
-        const capacity = offering?.capacity ?? null; // null represents unlimited capacity
+    // Resolve offering-only items to operating class sections (batched).
+    const offeringPairs = offerings.map(o => ({ classId: o.classId, sectionId: o.sectionId }));
+    const classSectionsByPair = new Map<string, string>();
+    if (offeringPairs.length > 0) {
+      const sectionRows = await db
+        .select({ id: classSections.id, classId: classSections.classId, sectionId: classSections.sectionId })
+        .from(classSections)
+        .where(and(
+          eq(classSections.tenantId, tenantId),
+          inArray(classSections.classId, offeringPairs.map(p => p.classId)),
+        ));
+      for (const row of sectionRows) {
+        classSectionsByPair.set(`${row.classId}|${row.sectionId}`, row.id);
+      }
+    }
 
-        let currentStudentsCount = 0;
-        const targetSectionId = item.classSectionId || offering?.classSectionId;
-
-        if (targetSectionId) {
-          const [countResult] = await db
-            .select({ count: count() })
-            .from(user)
-            .where(and(eq(user.tenantId, tenantId), eq(user.role, 'student'), eq(user.classSectionId, targetSectionId)));
-          currentStudentsCount = countResult?.count ?? 0;
+    const resolvedSectionIds = assignments
+      .map(item => {
+        const offering = offerings.find(o => o.id === item.offeringId);
+        if (item.classSectionId) {
+          return item.classSectionId;
         }
-
-        const proposed = item.studentCount ?? 0;
-        const totalAfterPromotion = currentStudentsCount + proposed;
-        const headroom = capacity != null ? capacity - totalAfterPromotion : null;
-        const isExceeded = capacity != null ? headroom! < 0 : false;
-
-        return {
-          offeringId: item.offeringId ?? null,
-          classSectionId: targetSectionId ?? null,
-          className: offering?.className ?? 'Classe',
-          sectionName: offering?.sectionName ?? 'Section',
-          capacity,
-          currentStudentsCount,
-          proposedStudentsCount: proposed,
-          headroom,
-          isExceeded,
-        };
+        return offering ? classSectionsByPair.get(`${offering.classId}|${offering.sectionId}`) ?? null : null;
       })
-    );
+      .filter((id): id is string => Boolean(id));
 
-    const hasCapacityExceeded = breakdown.some((b) => b.isExceeded);
+    const capacities = await resolveSectionCapacities(tenantId, [...new Set(resolvedSectionIds)]);
+
+    const breakdown = assignments.map(item => {
+      const offering = offerings.find(o => o.id === item.offeringId);
+      const targetSectionId = item.classSectionId
+        || (offering ? classSectionsByPair.get(`${offering.classId}|${offering.sectionId}`) ?? null : null);
+      const capacity = targetSectionId ? capacities.get(targetSectionId) ?? null : null;
+      const proposed = item.studentCount ?? 0;
+      const totalAfterPromotion = (capacity?.occupancy ?? 0) + proposed;
+      const configured = capacity?.configured ?? false;
+      const headroom = configured && capacity?.maxStudents != null ? capacity.maxStudents - totalAfterPromotion : null;
+
+      return {
+        offeringId: item.offeringId ?? null,
+        classSectionId: targetSectionId,
+        className: offering?.className ?? 'Classe',
+        sectionName: offering?.sectionName ?? 'Section',
+        // Canonical capacity (class_sections.maxStudents).
+        capacity: capacity?.maxStudents ?? null,
+        capacityConfigured: configured,
+        currentStudentsCount: capacity?.occupancy ?? 0,
+        proposedStudentsCount: proposed,
+        headroom,
+        isExceeded: configured && headroom != null ? headroom < 0 : false,
+        unknownCapacity: !configured,
+        // Drift visibility only — never used for the decision.
+        legacyOfferingCapacity: offering?.capacity ?? null,
+      };
+    });
+
+    const hasCapacityExceeded = breakdown.some(b => b.isExceeded);
+    const hasUnknownCapacity = breakdown.some(b => b.unknownCapacity);
 
     return NextResponse.json({
       success: true,
       data: {
         targetSessionYearId: body.targetSessionYearId ?? null,
         hasCapacityExceeded,
+        hasUnknownCapacity,
         breakdown,
       },
     });

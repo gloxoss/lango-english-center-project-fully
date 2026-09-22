@@ -7,6 +7,7 @@ import { apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
+import { assertSectionCapacity } from '@/libs/services/section-capacity';
 import { recordStudentPlacement } from '@/libs/services/student-placement';
 import { sessionYears, studentPlacements, user } from '@/models/Schema';
 
@@ -83,6 +84,13 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const validated = postPlacementSchema.parse(body);
+
+    // ONE CAPACITY TRUTH: every operational placement path enforces the same
+    // class_sections.maxStudents rule (the student keeps their own seat when
+    // moving within the same section).
+    await assertSectionCapacity(ctx.tenantId!, validated.classSectionId, {
+      excludeStudentIds: [validated.studentId],
+    });
 
     const newPlacement = await recordStudentPlacement({
       tenantId: ctx.tenantId!,

@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, or } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -12,7 +12,7 @@ import { requireCapability } from '@/libs/api/permissions';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { attendance, guardians, guardianStudents, smsMessages, user } from '@/models/Schema';
+import { attendance, classSections, guardians, guardianStudents, smsMessages, user } from '@/models/Schema';
 
 const attendanceRecordItemSchema = z.object({
   studentId: z.string().min(1),
@@ -47,7 +47,23 @@ export async function GET(request: Request) {
     ];
 
     if (classIdParam) {
-      conditions.push(eq(attendance.studentGroupId, classIdParam));
+      // SECTION SCOPE (migration 0147): when the caller passes an operating
+      // class section, only that section's marks are returned. Legacy rows
+      // (class_section_id IS NULL) stay visible through their class id —
+      // their historical section identity is unknowable.
+      const [sec] = await db
+        .select({ classId: classSections.classId })
+        .from(classSections)
+        .where(and(eq(classSections.tenantId, tenantId), eq(classSections.id, classIdParam)))
+        .limit(1);
+      if (sec?.classId) {
+        conditions.push(or(
+          eq(attendance.classSectionId, classIdParam),
+          and(isNull(attendance.classSectionId), eq(attendance.studentGroupId, sec.classId)),
+        )!);
+      } else {
+        conditions.push(eq(attendance.studentGroupId, classIdParam));
+      }
     }
     if (subjectIdParam) {
       conditions.push(eq(attendance.subjectId, subjectIdParam));
@@ -123,13 +139,32 @@ export async function POST(request: Request) {
       }
     }
 
+    // SECTION SCOPE (migration 0147): `studentGroupId` carries the operating
+    // class section from the intake UI. Resolve its parent class for the
+    // legacy FK column and store the section explicitly, so Section A and
+    // Section B get independent registers instead of sharing (and locking)
+    // one class-level register.
+    let attendanceClassId: string | null = body.studentGroupId || null;
+    let attendanceSectionId: string | null = null;
+    if (body.studentGroupId) {
+      const [sec] = await db
+        .select({ classId: classSections.classId })
+        .from(classSections)
+        .where(and(eq(classSections.tenantId, tenantId), eq(classSections.id, body.studentGroupId)))
+        .limit(1);
+      if (sec?.classId) {
+        attendanceClassId = sec.classId;
+        attendanceSectionId = body.studentGroupId;
+      }
+    }
+
     const savedRecords = await db.transaction(async (tx) => {
-      // Registers are keyed per (class, date, period) - only enforced when a
-      // class is actually selected (studentGroupId), matching how the real
-      // intake UI always submits. Ad hoc submissions without a class context
-      // stay unregistered rather than being blocked.
-      const register = body.studentGroupId
-        ? await resolveRegisterForSubmission(tenantId, body.studentGroupId, body.date, body.period, context.userId, body.correctionNote, tx)
+      // Registers are keyed per (section, date, period) when a section is
+      // known — only enforced when a class context is actually selected,
+      // matching how the real intake UI always submits. Ad hoc submissions
+      // without a class context stay unregistered rather than being blocked.
+      const register = attendanceClassId
+        ? await resolveRegisterForSubmission(tenantId, attendanceClassId, body.date, body.period, context.userId, body.correctionNote, tx, attendanceSectionId)
         : null;
 
       const results = [];
@@ -152,7 +187,8 @@ export async function POST(request: Request) {
           .values({
             tenantId,
             studentId: rec.studentId,
-            studentGroupId: body.studentGroupId || null,
+            studentGroupId: attendanceClassId,
+            classSectionId: attendanceSectionId,
             subjectId: body.subjectId || null,
             period: body.period,
             date: body.date,
@@ -207,7 +243,8 @@ export async function POST(request: Request) {
 
     recordAudit(context, 'update', 'attendance', body.date, {
       count: body.records.length,
-      studentGroupId: body.studentGroupId,
+      studentGroupId: attendanceClassId,
+      classSectionId: attendanceSectionId,
       subjectId: body.subjectId,
       period: body.period,
       registerReference: savedRecords.register?.reference,

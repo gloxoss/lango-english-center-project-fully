@@ -361,6 +361,7 @@ async function currentSubjectsByTeacher(tenantId: string, teacherIds: string[], 
   if (teacherIds.length === 0) {
     return map;
   }
+  const today = todayIso();
   const rows = await db
     .select({
       teacherId: subjectTeachers.teacherId,
@@ -368,6 +369,9 @@ async function currentSubjectsByTeacher(tenantId: string, teacherIds: string[], 
       subjectName: subjects.name,
       isActive: classSubjects.isActive,
       offeringSessionYearId: academicClassOfferings.sessionYearId,
+      status: subjectTeachers.status,
+      endsOn: subjectTeachers.endsOn,
+      sessionYearId: subjectTeachers.sessionYearId,
     })
     .from(subjectTeachers)
     .innerJoin(subjects, eq(subjectTeachers.subjectId, subjects.id))
@@ -381,6 +385,16 @@ async function currentSubjectsByTeacher(tenantId: string, teacherIds: string[], 
   const seen = new Set<string>();
   for (const row of rows) {
     if (!row.isActive) {
+      continue;
+    }
+    // Current-assignment lifecycle: active, not ended, target session year.
+    if (row.status !== 'active') {
+      continue;
+    }
+    if (row.endsOn && row.endsOn < today) {
+      continue;
+    }
+    if (row.sessionYearId && defaultSessionYearId && row.sessionYearId !== defaultSessionYearId) {
       continue;
     }
     if (!isCurrentOffering(row.offeringSessionYearId, defaultSessionYearId)) {
@@ -801,6 +815,9 @@ async function subjectAssignmentsForTeacher(tenantId: string, teacherId: string)
       className: classes.name,
       sectionName: sections.name,
       isActive: classSubjects.isActive,
+      status: subjectTeachers.status,
+      endsOn: subjectTeachers.endsOn,
+      sessionYearId: subjectTeachers.sessionYearId,
     })
     .from(subjectTeachers)
     .innerJoin(subjects, eq(subjectTeachers.subjectId, subjects.id))
@@ -811,6 +828,9 @@ async function subjectAssignmentsForTeacher(tenantId: string, teacherId: string)
     .where(and(eq(subjectTeachers.tenantId, tenantId), eq(subjectTeachers.teacherId, teacherId)))
     .orderBy(asc(subjects.name));
 
+  const today = todayIso();
+  const defaultSessionYearId = await getDefaultSessionYearId(tenantId);
+
   return rows.map(row => ({
     id: row.id,
     subjectId: row.subjectId,
@@ -818,7 +838,11 @@ async function subjectAssignmentsForTeacher(tenantId: string, teacherId: string)
     classSectionId: row.classSectionId,
     classLabel: `${row.className} ${row.sectionName}`.trim(),
     offeringId: row.offeringId,
-    isCurrent: row.isActive,
+    // Current = lifecycle-active, not ended, and in the target session year.
+    isCurrent: row.isActive
+      && row.status === 'active'
+      && (!row.endsOn || row.endsOn >= today)
+      && (!row.sessionYearId || !defaultSessionYearId || row.sessionYearId === defaultSessionYearId),
   }));
 }
 
