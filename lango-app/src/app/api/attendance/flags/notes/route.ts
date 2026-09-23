@@ -15,9 +15,21 @@ export async function GET(request: Request) {
     const tenantId = requireTenant(context);
     const { searchParams } = new URL(request.url);
     const flagId = searchParams.get('flagId');
-    if (!flagId) {
+    if (!flagId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(flagId)) {
       return NextResponse.json({ success: false, message: 'flagId requis' }, { status: 400 });
     }
+
+    // AUTHORITATIVE SCOPE: notes are only readable when the caller is
+    // authorized for the flag's student — a guessed flagId fails closed.
+    const [flag] = await db
+      .select({ id: attendanceFlags.id, studentId: attendanceFlags.studentId })
+      .from(attendanceFlags)
+      .where(and(eq(attendanceFlags.id, flagId), eq(attendanceFlags.tenantId, tenantId)))
+      .limit(1);
+    if (!flag) {
+      throw new ApiError(404, 'NOT_FOUND', 'Signalement introuvable');
+    }
+    await assertStudentAccess(context, tenantId, flag.studentId);
 
     const rows = await db
       .select({
@@ -28,7 +40,7 @@ export async function GET(request: Request) {
       })
       .from(attendanceFlagNotes)
       .innerJoin(user, eq(attendanceFlagNotes.authorId, user.id))
-      .where(and(eq(attendanceFlagNotes.tenantId, tenantId), eq(attendanceFlagNotes.flagId, flagId)))
+      .where(and(eq(attendanceFlagNotes.tenantId, tenantId), eq(attendanceFlagNotes.flagId, flag.id)))
       .orderBy(desc(attendanceFlagNotes.createdAt));
 
     return NextResponse.json({ success: true, data: rows });

@@ -114,10 +114,23 @@ export async function GET(request: Request) {
       .innerJoin(user, eq(attendance.studentId, user.id))
       .where(and(...conditions));
 
+    // Academic session context (read-only): the session is date-derived truth —
+    // the UI surfaces it instead of offering a second, divergent selector.
+    const [sessionRow] = await db
+      .select({ id: sessionYears.id, name: sessionYears.name })
+      .from(sessionYears)
+      .where(and(
+        eq(sessionYears.tenantId, tenantId),
+        sql`${sessionYears.startDate}::date <= ${dateParam}::date`,
+        sql`${sessionYears.endDate}::date >= ${dateParam}::date`,
+      ))
+      .limit(1);
+
     return NextResponse.json({
       success: true,
       data: rows,
       total: rows.length,
+      session: sessionRow ?? null,
     });
   } catch (error) {
     return apiErrorResponse(error);

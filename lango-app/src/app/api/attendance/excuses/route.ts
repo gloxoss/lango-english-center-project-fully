@@ -8,6 +8,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { getGuardianChildIds } from '@/libs/api/guardian-scope';
+import { requireCapability } from '@/libs/api/permissions';
 import { assertStudentAccess } from '@/libs/api/student-access';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { parseJson } from '@/libs/api/validation';
@@ -93,6 +94,17 @@ export async function GET(request: Request) {
       conditions.push(eq(attendanceExcuses.status, statusParam as any));
     }
 
+    // BOUNDED LIST (scale): excuses are paginated server-side; the default
+    // keeps the staff queue complete for normal volumes without ever returning
+    // an unbounded tenant dataset.
+    const page = Math.max(Number.parseInt(searchParams.get('page') ?? '1', 10) || 1, 1);
+    const pageSize = Math.min(Math.max(Number.parseInt(searchParams.get('pageSize') ?? '200', 10) || 200, 1), 500);
+
+    const [totalRow] = await db
+      .select({ total: sql<number>`count(*)::int` })
+      .from(attendanceExcuses)
+      .where(and(...conditions));
+
     const rows = await db
       .select({
         id: attendanceExcuses.id,
@@ -113,7 +125,9 @@ export async function GET(request: Request) {
       .from(attendanceExcuses)
       .innerJoin(user, eq(attendanceExcuses.studentId, user.id))
       .where(and(...conditions))
-      .orderBy(desc(attendanceExcuses.createdAt));
+      .orderBy(desc(attendanceExcuses.createdAt))
+      .limit(pageSize)
+      .offset((page - 1) * pageSize);
 
     // One guardian per student (primary if set, else any) - batched, not
     // per-row, to avoid duplicating excuse rows via a direct join.
@@ -153,7 +167,9 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       data: enrichedRows,
-      total: enrichedRows.length,
+      total: totalRow?.total ?? enrichedRows.length,
+      page,
+      pageSize,
     });
   } catch (error) {
     return apiErrorResponse(error);
@@ -256,6 +272,7 @@ export async function PATCH(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'attendance.manage');
     const body = await parseJson(request, reviewExcuseSchema);
 
     const [existingExcuse] = await db

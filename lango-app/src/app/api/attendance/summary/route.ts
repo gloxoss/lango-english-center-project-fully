@@ -2,7 +2,7 @@ import { and, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse } from '@/libs/api/errors';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { getGuardianChildIds } from '@/libs/api/guardian-scope';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { db } from '@/libs/DB';
@@ -52,6 +52,18 @@ export async function GET(request: Request) {
     // BRANCH SCOPE (P0): branch-limited callers only see their campus.
     if (context.branchId) {
       conditions.push(eq(user.branchId, context.branchId));
+    }
+
+    // BATCH SCOPE (Phase 7B): roster consumers request a bounded student set in
+    // one call (max 200); every role/branch scope above still applies, so a
+    // batch can never widen access.
+    const studentIdsParam = searchParams.get('studentIds');
+    if (studentIdsParam) {
+      const ids = studentIdsParam.split(',').map(s => s.trim()).filter(Boolean);
+      if (ids.length === 0 || ids.length > 200) {
+        throw new ApiError(400, 'INVALID_QUERY', 'studentIds doit contenir entre 1 et 200 identifiants.');
+      }
+      conditions.push(inArray(attendanceSummary.studentId, ids));
     }
 
     const rows = await db

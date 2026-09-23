@@ -94,7 +94,7 @@ export async function GET(request: Request) {
         guardianName: guardian ? `${guardian.name} ${guardian.lastName}`.trim() : null,
         guardianPhone: guardian?.phone ?? null,
         guardianEmail: guardian?.email ?? null,
-        attendanceRate: summaryRow?.attendanceRate ? Number(summaryRow.attendanceRate) : null,
+        attendanceRate: summaryRow?.attendanceRate != null ? Number(summaryRow.attendanceRate) : null,
         recentEvents,
         linkedExcuse,
         smsHistory,

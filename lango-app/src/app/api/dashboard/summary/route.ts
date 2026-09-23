@@ -1,15 +1,27 @@
+import type {
+  ActionCenterData,
+  AttendanceTrendData,
+  DailyPulseData,
+  FinanceMonthlyBreakdown,
+  FinanceOverviewData,
+  FullDashboardSummary,
+  RecentPaymentItem,
+  StudentDistributionItem,
+  UpcomingEventItem,
+  WatchlistStudent,
+} from '@/features/dashboard/model/types';
 import { and, desc, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { eventOccurrences, events, eventSchedules } from '@/features/events/models/events-schema';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { db } from '@/libs/DB';
 import {
   collectedPaymentCondition,
-  netCollectedSumSql,
   invoicedInvoiceCondition,
+  netCollectedSumSql,
   overdueInvoiceCondition,
 } from '@/libs/finance/definitions';
-import { casablancaTodayIso } from '@/libs/finance/today';
-import { db } from '@/libs/DB';
 import {
   attendance,
   attendanceExcuses,
@@ -24,19 +36,6 @@ import {
   tenants,
   user,
 } from '@/models/Schema';
-import { events, eventOccurrences, eventSchedules } from '@/features/events/models/events-schema';
-import type {
-  ActionCenterData,
-  AttendanceTrendData,
-  DailyPulseData,
-  FinanceMonthlyBreakdown,
-  FinanceOverviewData,
-  FullDashboardSummary,
-  RecentPaymentItem,
-  StudentDistributionItem,
-  UpcomingEventItem,
-  WatchlistStudent,
-} from '@/features/dashboard/model/types';
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -128,13 +127,13 @@ export async function GET(request: Request) {
           eq(sessionYears.tenantId, tenantId),
           or(
             eq(sessionYears.isDefault, true),
-            and(lte(sessionYears.startDate, today), gte(sessionYears.endDate, today))
-          )
+            and(lte(sessionYears.startDate, today), gte(sessionYears.endDate, today)),
+          ),
         ))
         .orderBy(
           desc(sql`CASE WHEN ${sessionYears.startDate} <= ${today} AND ${sessionYears.endDate} >= ${today} THEN 1 ELSE 0 END`),
           desc(sessionYears.isDefault),
-          desc(sessionYears.startDate)
+          desc(sessionYears.startDate),
         )
         .limit(1),
     ]);
@@ -184,7 +183,7 @@ export async function GET(request: Request) {
           eq(user.tenantId, tenantId),
           eq(user.role, 'student'),
           eq(user.userStatus, 'active'),
-          userBranchFilter
+          userBranchFilter,
         )),
 
       // 3.2 New Registrations this month (Authoritative source: user.createdAt represents registration timestamp in SchoolOS)
@@ -195,10 +194,11 @@ export async function GET(request: Request) {
           eq(user.role, 'student'),
           eq(user.userStatus, 'active'),
           gte(user.createdAt, monthStart),
-          userBranchFilter
+          userBranchFilter,
         )),
 
-      // 3.3 Today's attendance marks (present, absent, late, etc.)
+      // 3.3 Today's attendance marks (present, absent, late, etc. — voided rows
+      // are audit history and never count toward today's pulse or trend)
       db.select({
         status: attendance.status,
         count: sql<number>`count(*)::int`,
@@ -208,7 +208,8 @@ export async function GET(request: Request) {
         .where(and(
           eq(attendance.tenantId, tenantId),
           eq(attendance.date, today),
-          userBranchFilter
+          eq(attendance.isVoided, false),
+          userBranchFilter,
         ))
         .groupBy(attendance.status),
 
@@ -221,7 +222,7 @@ export async function GET(request: Request) {
           eq(invoices.tenantId, tenantId),
           gte(invoices.issueDate, monthStart),
           invoicedInvoiceCondition(invoices.status),
-          userBranchFilter
+          userBranchFilter,
         )),
 
       // 3.5 Collected this month (posted payments net of approved partial refunds)
@@ -232,7 +233,7 @@ export async function GET(request: Request) {
           eq(payments.tenantId, tenantId),
           gte(payments.paymentDate, monthStart),
           collectedPaymentCondition(payments.status),
-          userBranchFilter
+          userBranchFilter,
         )),
 
       // 3.6 Active classes count
@@ -240,7 +241,7 @@ export async function GET(request: Request) {
         .from(classes)
         .where(and(
           eq(classes.tenantId, tenantId),
-          classBranchFilter
+          classBranchFilter,
         )),
 
       // 3.7 Active class sections count (expected classes for attendance)
@@ -249,7 +250,7 @@ export async function GET(request: Request) {
         .innerJoin(classes, and(eq(classSections.classId, classes.id), eq(classes.tenantId, tenantId)))
         .where(and(
           eq(classSections.tenantId, tenantId),
-          classBranchFilter
+          classBranchFilter,
         )),
 
       // 3.8 Distinct class sections with submitted attendance today
@@ -259,10 +260,13 @@ export async function GET(request: Request) {
         .where(and(
           eq(attendance.tenantId, tenantId),
           eq(attendance.date, today),
-          userBranchFilter
+          eq(attendance.isVoided, false),
+          userBranchFilter,
         )),
 
-      // 3.9 Today's Unjustified Absences (Absent WITHOUT approved excuse)
+      // 3.9 Today's Unjustified Absences (Absent WITHOUT an approved excuse
+      // covering the mark's EXACT scope — period/section when the excuse
+      // carries them; voided rows never count)
       db.select({
         studentId: attendance.studentId,
         studentName: user.name,
@@ -275,15 +279,18 @@ export async function GET(request: Request) {
             eq(attendanceExcuses.tenantId, tenantId),
             eq(attendanceExcuses.studentId, attendance.studentId),
             eq(attendanceExcuses.status, 'approved'),
-            eq(attendanceExcuses.date, today)
-          )
+            eq(attendanceExcuses.date, today),
+            or(isNull(attendanceExcuses.classSectionId), eq(attendanceExcuses.classSectionId, attendance.classSectionId))!,
+            or(isNull(attendanceExcuses.period), eq(attendanceExcuses.period, attendance.period))!,
+          ),
         )
         .where(and(
           eq(attendance.tenantId, tenantId),
           eq(attendance.date, today),
           eq(attendance.status, 'absent'),
+          eq(attendance.isVoided, false),
           isNull(attendanceExcuses.id),
-          userBranchFilter
+          userBranchFilter,
         )),
 
       // 3.10 Overdue Invoices (still owed AND past due date — credited/cancelled/draft invoices are never chased)
@@ -300,7 +307,7 @@ export async function GET(request: Request) {
         .where(and(
           eq(invoices.tenantId, tenantId),
           overdueInvoiceCondition(invoices.status, invoices.dueDate, today),
-          userBranchFilter
+          userBranchFilter,
         )),
 
       // 3.11 Financial breakdown by month across configured period (Invoiced — issued invoices only)
@@ -317,16 +324,16 @@ export async function GET(request: Request) {
           gte(invoices.issueDate, periodStart),
           lte(invoices.issueDate, periodEnd),
           invoicedInvoiceCondition(invoices.status),
-          userBranchFilter
+          userBranchFilter,
         ))
         .groupBy(
           sql`extract(year from date(${invoices.issueDate}))::int`,
           sql`extract(month from date(${invoices.issueDate}))::int`,
-          sql`to_char(date(${invoices.issueDate}), 'Mon')`
+          sql`to_char(date(${invoices.issueDate}), 'Mon')`,
         )
         .orderBy(
           sql`extract(year from date(${invoices.issueDate}))::int`,
-          sql`extract(month from date(${invoices.issueDate}))::int`
+          sql`extract(month from date(${invoices.issueDate}))::int`,
         ),
 
       // 3.12 Financial breakdown by month across configured period (Collected — posted payments only)
@@ -342,15 +349,15 @@ export async function GET(request: Request) {
           gte(payments.paymentDate, periodStart),
           lte(payments.paymentDate, periodEnd),
           collectedPaymentCondition(payments.status),
-          userBranchFilter
+          userBranchFilter,
         ))
         .groupBy(
           sql`extract(year from date(${payments.paymentDate}))::int`,
-          sql`extract(month from date(${payments.paymentDate}))::int`
+          sql`extract(month from date(${payments.paymentDate}))::int`,
         )
         .orderBy(
           sql`extract(year from date(${payments.paymentDate}))::int`,
-          sql`extract(month from date(${payments.paymentDate}))::int`
+          sql`extract(month from date(${payments.paymentDate}))::int`,
         ),
 
       // 3.13 Level distribution (P1 Reconciliation Invariant: includes 'Sans niveau')
@@ -365,7 +372,7 @@ export async function GET(request: Request) {
           eq(user.tenantId, tenantId),
           eq(user.role, 'student'),
           eq(user.userStatus, 'active'),
-          userBranchFilter
+          userBranchFilter,
         ))
         .groupBy(sql`coalesce(${classes.name}, 'Sans niveau')`),
 
@@ -385,12 +392,13 @@ export async function GET(request: Request) {
         .where(and(
           eq(payments.tenantId, tenantId),
           collectedPaymentCondition(payments.status),
-          userBranchFilter
+          userBranchFilter,
         ))
         .orderBy(desc(payments.paymentDate), desc(payments.createdAt))
         .limit(5),
 
-      // 3.15 Watchlist Candidate 1: High absences in last 30 days
+      // 3.15 Watchlist Candidate 1: Unjustified absences in last 30 days
+      // (canonical: voided excluded, approved excuses reconciled at exact scope)
       db.select({
         studentId: attendance.studentId,
         studentName: user.name,
@@ -402,9 +410,19 @@ export async function GET(request: Request) {
         .where(and(
           eq(attendance.tenantId, tenantId),
           eq(attendance.status, 'absent'),
+          eq(attendance.isVoided, false),
           gte(attendance.date, thirtyDaysAgo),
           eq(user.userStatus, 'active'),
-          userBranchFilter
+          userBranchFilter,
+          sql`NOT EXISTS (
+            SELECT 1 FROM attendance_excuses ex
+            WHERE ex.tenant_id = ${attendance.tenantId}
+              AND ex.student_id = ${attendance.studentId}
+              AND ex.date = ${attendance.date}
+              AND ex.status = 'approved'
+              AND (ex.class_section_id IS NULL OR ex.class_section_id = ${attendance.classSectionId})
+              AND (ex.period IS NULL OR ex.period = ${attendance.period})
+          )`,
         ))
         .groupBy(attendance.studentId, user.name, user.classSectionId)
         .having(sql`count(*) >= 2`),
@@ -424,7 +442,7 @@ export async function GET(request: Request) {
           eq(invoices.tenantId, tenantId),
           overdueInvoiceCondition(invoices.status, invoices.dueDate, today),
           eq(user.userStatus, 'active'),
-          userBranchFilter
+          userBranchFilter,
         ))
         .groupBy(invoices.studentId, user.name, user.classSectionId),
 
@@ -439,7 +457,7 @@ export async function GET(request: Request) {
           eq(user.tenantId, tenantId),
           eq(user.userStatus, 'active'),
           sql`to_char(date(${user.dateOfBirth}), 'MM-DD') = to_char(date(${today}), 'MM-DD')`,
-          userBranchFilter
+          userBranchFilter,
         ))
         .limit(10),
 
@@ -458,12 +476,12 @@ export async function GET(request: Request) {
           eq(events.tenantId, tenantId),
           eq(events.lifecycle, 'published'),
           gte(eventOccurrences.startTime, `${today}T00:00:00`),
-          lte(eventOccurrences.startTime, `${new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)}T23:59:59`)
+          lte(eventOccurrences.startTime, `${new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)}T23:59:59`),
         ))
         .orderBy(eventOccurrences.startTime)
         .limit(6),
 
-      // 3.19 Attendance past 7 days (Weekly trend)
+      // 3.19 Attendance past 7 days (Weekly trend — voided rows excluded)
       db.select({
         date: attendance.date,
         status: attendance.status,
@@ -473,26 +491,29 @@ export async function GET(request: Request) {
         .innerJoin(user, and(eq(attendance.studentId, user.id), eq(user.tenantId, tenantId)))
         .where(and(
           eq(attendance.tenantId, tenantId),
+          eq(attendance.isVoided, false),
           gte(attendance.date, new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10)),
-          userBranchFilter
+          userBranchFilter,
         ))
         .groupBy(attendance.date, attendance.status),
 
-      // 3.20 Classes with low attendance (< 85%) past 7 days
+      // 3.20 Classes with low attendance (< 85%) past 7 days (canonical
+      // presence: present + late + excused; voided excluded)
       db.select({
         classSectionId: user.classSectionId,
-        present: sql<number>`sum(case when ${attendance.status} = 'present' then 1 else 0 end)::int`,
+        attended: sql<number>`sum(case when ${attendance.status} in ('present', 'late', 'excused') then 1 else 0 end)::int`,
         total: sql<number>`count(*)::int`,
       })
         .from(attendance)
         .innerJoin(user, and(eq(attendance.studentId, user.id), eq(user.tenantId, tenantId)))
         .where(and(
           eq(attendance.tenantId, tenantId),
+          eq(attendance.isVoided, false),
           gte(attendance.date, new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10)),
-          userBranchFilter
+          userBranchFilter,
         ))
         .groupBy(user.classSectionId)
-        .having(sql`count(*) >= 1 and (sum(case when ${attendance.status} = 'present' then 1 else 0 end)::float / count(*)::float) < 0.85`),
+        .having(sql`count(*) >= 1 and (sum(case when ${attendance.status} in ('present', 'late', 'excused') then 1 else 0 end)::float / count(*)::float) < 0.85`),
 
       // 3.21 Active schedule days (to know which weekdays have scheduled classes according to the timetable)
       db.selectDistinct({ dayOfWeek: classScheduleSlots.dayOfWeek })
@@ -522,7 +543,7 @@ export async function GET(request: Request) {
         .innerJoin(sections, and(eq(classSections.sectionId, sections.id), eq(sections.tenantId, tenantId)))
         .where(and(
           eq(classSections.tenantId, tenantId),
-          inArray(classSections.id, neededSectionIds)
+          inArray(classSections.id, neededSectionIds),
         ));
       for (const row of sectionRows) {
         classSectionNames.set(row.id, `${row.className} ${row.sectionName}`.trim());
@@ -548,7 +569,7 @@ export async function GET(request: Request) {
 
     if (!isSchoolDay) {
       actionCenterAttendanceStatus = 'no_school';
-      actionCenterAttendanceTitle = "Aucun cours prévu aujourd'hui";
+      actionCenterAttendanceTitle = 'Aucun cours prévu aujourd\'hui';
       actionCenterAttendanceSub = isSunday ? 'Dimanche — Journée de repos' : 'Vacances scolaires / Jour férié';
     } else if (missingAttendanceClasses === 0 && expectedClasses > 0) {
       actionCenterAttendanceStatus = 'all_clear';
@@ -619,7 +640,12 @@ export async function GET(request: Request) {
 
     const presentMarks = todayAttendanceStatusRows.find(r => r.status === 'present')?.count ?? 0;
     const totalMarks = todayAttendanceStatusRows.reduce((sum, r) => sum + r.count, 0);
-    const todayAttendanceRate = totalMarks > 0 ? Math.round((presentMarks / totalMarks) * 1000) / 10 : null;
+    // CANONICAL PRESENCE (Phase 7B): present + late + excused count as attended;
+    // NULL (never 100) when no marks exist for today.
+    const attendedMarks = todayAttendanceStatusRows
+      .filter(r => r.status === 'present' || r.status === 'late' || r.status === 'excused')
+      .reduce((sum, r) => sum + r.count, 0);
+    const todayAttendanceRate = totalMarks > 0 ? Math.round((attendedMarks / totalMarks) * 1000) / 10 : null;
 
     const monthInvoiced = Number(monthInvoicedRows[0]?.total ?? 0);
     const monthCollected = Number(monthCollectedRows[0]?.total ?? 0);
@@ -713,12 +739,13 @@ export async function GET(request: Request) {
     // =========================================================================
     // 8. Compute Attendance Trend (Instructional Days, No Fake Staff)
     // =========================================================================
-    const attendanceByDate = new Map<string, { present: number; total: number }>();
+    const attendanceByDate = new Map<string, { attended: number; total: number }>();
     for (const row of weeklyAttendanceRows) {
-      const entry = attendanceByDate.get(row.date) ?? { present: 0, total: 0 };
+      const entry = attendanceByDate.get(row.date) ?? { attended: 0, total: 0 };
       entry.total += row.count;
-      if (row.status === 'present') {
-        entry.present += row.count;
+      // CANONICAL PRESENCE: present + late + excused are attended.
+      if (row.status === 'present' || row.status === 'late' || row.status === 'excused') {
+        entry.attended += row.count;
       }
       attendanceByDate.set(row.date, entry);
     }
@@ -743,7 +770,7 @@ export async function GET(request: Request) {
       const iso = d.toISOString().slice(0, 10);
       const dayIndex = d.getDay();
       const dayName = DOW_INDEX_TO_NAME[dayIndex];
-      const isDateHoliday = calendarEventRows.some(e => {
+      const isDateHoliday = calendarEventRows.some((e) => {
         const evDate = e.startTime.slice(0, 10);
         return evDate === iso && (e.eventType === 'holiday' || e.eventType === 'vacation');
       });
@@ -752,7 +779,7 @@ export async function GET(request: Request) {
       const isNonInstructional = isDateHoliday || (hasConfiguredSchedule ? !scheduledDaysSet.has(dayName as any) : dayIndex === 0);
 
       const entry = attendanceByDate.get(iso);
-      const sRate = entry && entry.total > 0 ? Math.round((entry.present / entry.total) * 1000) / 10 : null;
+      const sRate = entry && entry.total > 0 ? Math.round((entry.attended / entry.total) * 1000) / 10 : null;
       return {
         dayLabel: DAY_LABELS[dayIndex] ?? '',
         date: `${iso.slice(8, 10)}/${iso.slice(5, 7)}`,
@@ -781,11 +808,14 @@ export async function GET(request: Request) {
     // 9. Upcoming Events & Birthdays
     // =========================================================================
     const tomorrowIso = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-    const upcomingEvents: UpcomingEventItem[] = calendarEventRows.map(ev => {
+    const upcomingEvents: UpcomingEventItem[] = calendarEventRows.map((ev) => {
       const dateStr = ev.startTime.slice(0, 10);
       let timingGroup: UpcomingEventItem['timingGroup'] = 'this_week';
-      if (dateStr === today) timingGroup = 'today';
-      else if (dateStr === tomorrowIso) timingGroup = 'tomorrow';
+      if (dateStr === today) {
+        timingGroup = 'today';
+      } else if (dateStr === tomorrowIso) {
+        timingGroup = 'tomorrow';
+      }
 
       return {
         id: ev.id,
@@ -850,8 +880,12 @@ export async function GET(request: Request) {
     }
 
     const allWatchlist = [...watchlistMap.values()].sort((a, b) => {
-      if (a.severity === 'critical' && b.severity !== 'critical') return -1;
-      if (b.severity === 'critical' && a.severity !== 'critical') return 1;
+      if (a.severity === 'critical' && b.severity !== 'critical') {
+        return -1;
+      }
+      if (b.severity === 'critical' && a.severity !== 'critical') {
+        return 1;
+      }
       return 0;
     });
 

@@ -105,7 +105,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       data: {
-        overallAttendanceRate: summaryStats?.avgRate ? Number(summaryStats.avgRate).toFixed(2) : null,
+        overallAttendanceRate: summaryStats?.avgRate != null ? Number(summaryStats.avgRate).toFixed(2) : null,
         totalStudentsTracked: summaryStats?.totalTracked ?? 0,
         atRiskCount: summaryStats?.atRiskCount ?? 0,
         openFlagsByType,

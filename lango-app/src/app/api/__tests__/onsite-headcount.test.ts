@@ -1,12 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { eq, sql } from 'drizzle-orm';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { GET } from '@/app/api/attendance/onsite/route';
+import { attendanceScanEvents } from '@/features/attendance/models/attendance-qr-schema';
+import { guardGates, guardGateScanEvents } from '@/features/guard/models/guard-schema';
 import { db } from '@/libs/DB';
 import { casablancaTodayIso } from '@/libs/finance/today';
 import { attendance, sessionYears, tenants, user } from '@/models/Schema';
-import { attendanceScanEvents } from '@/features/attendance/models/attendance-qr-schema';
-import { guardGates, guardGateScanEvents } from '@/features/guard/models/guard-schema';
-import { GET } from '@/app/api/attendance/onsite/route';
 
 const requestContext = vi.hoisted(() => ({ tenantId: '' }));
 vi.mock('@/libs/api/context', () => ({
@@ -16,7 +16,11 @@ vi.mock('@/libs/api/context', () => ({
 vi.mock('@/libs/api/permissions', () => ({ requireCapability: async () => undefined }));
 
 async function databaseAvailable() {
-  try { await db.execute(sql`select 1`); return true; } catch { return false; }
+  try {
+    await db.execute(sql`select 1`); return true;
+  } catch {
+    return false;
+  }
 }
 
 const available = await databaseAvailable();
@@ -32,7 +36,9 @@ describe.skipIf(!available)('on-site headcount combines manual and gate evidence
 
   async function headcount() {
     const response = await GET(new Request('http://localhost/api/attendance/onsite'));
+
     expect(response.status).toBe(200);
+
     const body = await response.json();
     return body.data as { headcount: number; confirmedArrivals: number; manualUnverified: number };
   }
@@ -71,9 +77,16 @@ describe.skipIf(!available)('on-site headcount combines manual and gate evidence
     expect(await headcount()).toMatchObject({ headcount: 2, confirmedArrivals: 1, manualUnverified: 1 });
 
     await db.insert(guardGateScanEvents).values({
-      tenantId, gateId, studentId: scannedStudentId, subjectType: 'student',
-      direction: 'exit', resultStatus: 'accepted', actorId: adminId, scannedAt: departureAt,
+      tenantId,
+      gateId,
+      studentId: scannedStudentId,
+      subjectType: 'student',
+      direction: 'exit',
+      resultStatus: 'accepted',
+      actorId: adminId,
+      scannedAt: departureAt,
     });
+
     expect(await headcount()).toMatchObject({ headcount: 1, confirmedArrivals: 0, manualUnverified: 1 });
   });
 });

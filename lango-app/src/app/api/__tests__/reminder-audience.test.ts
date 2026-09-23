@@ -1,10 +1,10 @@
 import { randomUUID } from 'node:crypto';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { eq, sql } from 'drizzle-orm';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { GET, POST } from '@/app/api/communication/reminder-audience/route';
 import { db } from '@/libs/DB';
 import { casablancaTodayIso } from '@/libs/finance/today';
-import { attendance, guardianStudents, guardians, sessionYears, tenants, user } from '@/models/Schema';
-import { GET, POST } from '@/app/api/communication/reminder-audience/route';
+import { attendance, guardians, guardianStudents, sessionYears, tenants, user } from '@/models/Schema';
 
 const authState = vi.hoisted(() => ({ tenantId: '' }));
 vi.mock('@/libs/api/context', () => ({
@@ -31,7 +31,9 @@ describe.skipIf(!available)('reminder audience uses full risk and consent truth'
 
   async function audience(mode: 'atRisk' | 'all' = 'atRisk') {
     const response = await GET(new Request(`http://localhost/api/communication/reminder-audience?mode=${mode}`));
+
     expect(response.status).toBe(200);
+
     return response.json();
   }
 
@@ -75,6 +77,7 @@ describe.skipIf(!available)('reminder audience uses full risk and consent truth'
 
   it('lists the two-day risk once and removes the contact after access is revoked', async () => {
     const before = await audience();
+
     expect(before).toMatchObject({ total: 1, eligibleCount: 1 });
     expect(before.data[0]).toMatchObject({ studentId: firstId, phone: '0612345678', riskLevel: 'Absences répétées' });
 
@@ -84,11 +87,16 @@ describe.skipIf(!available)('reminder audience uses full risk and consent truth'
     expect(sendState.send).toHaveBeenCalledTimes(1);
 
     await db.update(guardianStudents).set({ canAccessCommunication: false }).where(eq(guardianStudents.id, linkId));
+
     expect((await sendReminder()).status).toBe(409);
     expect(sendState.send).toHaveBeenCalledTimes(1);
+
     const after = await audience();
+
     expect(after).toMatchObject({ total: 0, eligibleCount: 1, data: [] });
+
     const all = await audience('all');
+
     expect(all).toMatchObject({ total: 0, eligibleCount: 2 });
   });
 });

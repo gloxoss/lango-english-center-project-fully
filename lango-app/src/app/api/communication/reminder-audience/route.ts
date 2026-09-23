@@ -1,16 +1,16 @@
 import { sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
-import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { ApiError, apiErrorResponse } from '@/libs/api/errors';
-import { requireCapability } from '@/libs/api/permissions';
-import { db } from '@/libs/DB';
-import { casablancaTodayIso } from '@/libs/finance/today';
-import { parseJson } from '@/libs/api/validation';
-import { normalizeMoroccanPhone } from '@/libs/sms/moroccan-sms-adapter';
+import { z } from 'zod';
 import { sendSmsMessage } from '@/features/broadcast/services/sms-delivery';
 import { assertAndConsumeWhatsAppQuota } from '@/features/broadcast/services/whatsapp-anti-spam-service';
 import { recordAudit } from '@/libs/api/audit';
-import { z } from 'zod';
+import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
+import { parseJson } from '@/libs/api/validation';
+import { db } from '@/libs/DB';
+import { casablancaTodayIso } from '@/libs/finance/today';
+import { normalizeMoroccanPhone } from '@/libs/sms/moroccan-sms-adapter';
 
 type AudienceRow = {
   eligible_count: number;
@@ -44,10 +44,10 @@ export async function GET(request: Request) {
     const classSectionId = params.get('classSectionId');
     const page = Number(params.get('page') ?? '1');
     const pageSize = Number(params.get('pageSize') ?? '100');
-    if (!['atRisk', 'all'].includes(mode) ||
-        (classSectionId && !UUID.test(classSectionId)) ||
-        !Number.isSafeInteger(page) || page < 1 || page > 10000 ||
-        !Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 100) {
+    if (!['atRisk', 'all'].includes(mode)
+      || (classSectionId && !UUID.test(classSectionId))
+      || !Number.isSafeInteger(page) || page < 1 || page > 10000
+      || !Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 100) {
       throw new ApiError(400, 'INVALID_QUERY', 'Filtre ou pagination invalide.');
     }
 
@@ -75,6 +75,8 @@ export async function GET(request: Request) {
                SELECT 1 FROM attendance_excuses ex
                WHERE ex.tenant_id = ${tenantId}::uuid AND ex.student_id = b.id
                  AND ex.date = a.date AND ex.status = 'approved'
+                 AND (ex.class_section_id IS NULL OR ex.class_section_id = a.class_section_id)
+                 AND (ex.period IS NULL OR ex.period = a.period)
              )) AS absent_days,
           (SELECT count(*)::int FROM invoices i
            WHERE i.tenant_id = ${tenantId}::uuid AND i.student_id = b.id
@@ -161,6 +163,8 @@ export async function POST(request: Request) {
                SELECT 1 FROM attendance_excuses ex
                WHERE ex.tenant_id = ${tenantId}::uuid AND ex.student_id = u.id
                  AND ex.date = a.date AND ex.status = 'approved'
+                 AND (ex.class_section_id IS NULL OR ex.class_section_id = a.class_section_id)
+                 AND (ex.period IS NULL OR ex.period = a.period)
              )) >= 2
           OR EXISTS (
             SELECT 1 FROM invoices i
@@ -172,7 +176,7 @@ export async function POST(request: Request) {
         )
     `);
     const recipient = normalizeMoroccanPhone(body.recipientPhone);
-    if (!result.rows.some((row) => normalizeMoroccanPhone(row.phone) === recipient)) {
+    if (!result.rows.some(row => normalizeMoroccanPhone(row.phone) === recipient)) {
       throw new ApiError(409, 'REMINDER_ELIGIBILITY_CHANGED', 'Le risque ou le droit de contact a changé. Actualisez les destinataires.');
     }
 
