@@ -833,6 +833,7 @@ function AdjustmentsView() {
 
 export function PayrollPayments() {
   const t = useTranslations('Workforce');
+  const tCommon = useTranslations('Common');
   const [rows, setRows] = useState<Json[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
   const [error, setError] = useState('');
@@ -905,14 +906,24 @@ export function PayrollPayments() {
               </div>
               <p className="mt-2 text-2xl font-bold">{money(row.totalAmount)}</p>
               <p className="text-sm text-slate-500">{t('reconciliation')}: {String(row.reconciliationStatus)}</p>
-              <div className="mt-4 flex gap-2">
+              {(row.method === 'bank' || row.method === 'bank_transfer') && Number(row.bankRibMissingCount) > 0 && (
+                <p role="alert" className="mt-2 rounded bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900">
+                  {t('missingRibCount', { count: Number(row.bankRibMissingCount) })}
+                </p>
+              )}
+              <div className="mt-4 flex flex-wrap gap-2">
                 {row.status === 'prepared' && (
-                  <button disabled={busy === row.id} onClick={() => action(String(row.id), 'approve')} className="rounded border px-3 py-2 text-sm font-semibold">
+                  <button disabled={busy === row.id || Number(row.bankRibMissingCount) > 0} onClick={() => action(String(row.id), 'approve')} className="rounded border px-3 py-2 text-sm font-semibold disabled:opacity-50">
                     {t('btnApprove')}
                   </button>
                 )}
-                {(row.status === 'approved' || row.status === 'submitted') && (
-                  <button disabled={busy === row.id} onClick={() => action(String(row.id), 'reconcile')} className="rounded bg-sky-700 px-3 py-2 text-sm font-semibold text-white">
+                {(row.method === 'bank' || row.method === 'bank_transfer') && Number(row.bankRibMissingCount) === 0 && ['approved', 'exported', 'submitted', 'paid'].includes(String(row.status)) && (
+                  <a href={`/api/workforce/payroll/payments/${row.id}/export`} className="rounded border px-3 py-2 text-sm font-semibold">
+                    {tCommon('exportCsv')}
+                  </a>
+                )}
+                {(row.status === 'approved' || row.status === 'exported' || row.status === 'submitted') && (
+                  <button disabled={busy === row.id || Number(row.bankRibMissingCount) > 0} onClick={() => action(String(row.id), 'reconcile')} className="rounded bg-sky-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">
                     {t('btnReconcile')}
                   </button>
                 )}

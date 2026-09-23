@@ -349,6 +349,7 @@ export async function createSale(context: RequestContext, tenantId: string, inpu
       invoiceNumber,
       amount: String(input.paidAmount),
       paymentDate: new Date().toISOString(),
+      paymentMethod: input.paymentMethod ?? 'cash',
     });
   }
   return getSale(tenantId, saleId);

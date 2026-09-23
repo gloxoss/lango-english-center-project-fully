@@ -41,8 +41,10 @@ export function StatementsView({ locale: _locale }: { locale?: string } = {}) {
   const [totals, setTotals] = useState<{ debit: string; credit: string; balanced: boolean } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [postingStatus, setPostingStatus] = useState<{ openFiscalPeriod: boolean; unpostedPaymentsCount: number; unpostedPaymentsAmount: number } | null>(null);
+  const [postingStatus, setPostingStatus] = useState<{ openFiscalPeriod: boolean; unpostedPaymentsCount: number; unpostedPaymentsAmount: number; unpostedAdjustmentsCount: number; unpostedAdjustmentsAmount: number } | null>(null);
   const [postingStatusError, setPostingStatusError] = useState(false);
+  const [backfilling, setBackfilling] = useState(false);
+  const [backfillMessage, setBackfillMessage] = useState<string | null>(null);
 
   const [accounts, setAccounts] = useState<Array<{ id: string; code: string; name: string }>>([]);
   const [drill, setDrill] = useState<Drill | null>(null);
@@ -138,6 +140,22 @@ export function StatementsView({ locale: _locale }: { locale?: string } = {}) {
   useEffect(() => {
     load(type);
   }, [load, type]);
+
+  const backfillPayments = async () => {
+    setBackfilling(true);
+    setBackfillMessage(null);
+    try {
+      const response = await fetch('/api/finance/accounting/posting-status', { method: 'POST' });
+      const json = await response.json();
+      if (!response.ok || !json.success) throw new Error(json.error?.message ?? t('loadingFailed'));
+      setBackfillMessage(t('paymentBackfillResult', { posted: json.data.posted, blocked: json.data.blocked }));
+      await load(type);
+    } catch (cause) {
+      setBackfillMessage(cause instanceof Error ? cause.message : t('loadingFailed'));
+    } finally {
+      setBackfilling(false);
+    }
+  };
 
   const csvUrl = () => {
     const base =
@@ -265,14 +283,23 @@ export function StatementsView({ locale: _locale }: { locale?: string } = {}) {
           {t('postingStatusUnavailable')}
         </div>
       )}
-      {postingStatus && (!postingStatus.openFiscalPeriod || postingStatus.unpostedPaymentsCount > 0) && (
+      {postingStatus && (!postingStatus.openFiscalPeriod || postingStatus.unpostedPaymentsCount > 0 || postingStatus.unpostedAdjustmentsCount > 0) && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           {!postingStatus.openFiscalPeriod && <p className="font-bold">{t('noOpenFiscalPeriod')}</p>}
           {postingStatus.unpostedPaymentsCount > 0 && (
             <p className="font-bold">{t('unpostedPayments', { count: postingStatus.unpostedPaymentsCount, amount: postingStatus.unpostedPaymentsAmount })}</p>
           )}
+          {postingStatus.unpostedAdjustmentsCount > 0 && (
+            <p className="font-bold">{t('unpostedAdjustments', { count: postingStatus.unpostedAdjustmentsCount, amount: postingStatus.unpostedAdjustmentsAmount })}</p>
+          )}
+          {postingStatus.openFiscalPeriod && (postingStatus.unpostedPaymentsCount > 0 || postingStatus.unpostedAdjustmentsCount > 0) && (
+            <Button variant="outline" className="mt-3" onClick={backfillPayments} disabled={backfilling}>
+              {backfilling ? tCommon('loading') : t('retryPaymentPosting')}
+            </Button>
+          )}
         </div>
       )}
+      {backfillMessage && <p className="text-sm font-semibold text-slate-700" role="status">{backfillMessage}</p>}
 
       <div className="flex flex-wrap items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 text-xs font-semibold">
         {STATEMENT_TYPES.map(key => (
@@ -291,7 +318,7 @@ export function StatementsView({ locale: _locale }: { locale?: string } = {}) {
       </div>
 
       {totals && (() => {
-        const complete = Boolean(postingStatus?.openFiscalPeriod && postingStatus.unpostedPaymentsCount === 0 && rows.length > 0);
+        const complete = Boolean(postingStatus?.openFiscalPeriod && postingStatus.unpostedPaymentsCount === 0 && postingStatus.unpostedAdjustmentsCount === 0 && rows.length > 0);
         const balanced = totals.balanced && complete;
         return (
         <div

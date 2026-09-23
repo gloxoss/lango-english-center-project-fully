@@ -72,7 +72,9 @@ function rel(file: string): string {
   return path.relative(process.cwd(), file).replace(/\\/g, '/');
 }
 
-const isComponentFile = (name: string) =>
+/** Production UI only: test fixtures and story files are allowed to hold sample
+ * records, so the walk must never judge them. */
+export const isComponentFile = (name: string) =>
   name.endsWith('.tsx') && !name.includes('.test.') && !name.includes('.stories.');
 
 // ---------------------------------------------------------------------------
@@ -221,10 +223,103 @@ export function findImportedFixtureSeeds(src: string): string[] {
       if (!part || part.startsWith('type ')) continue;
       const localName = (part.split(/\s+as\s+/)[1] ?? part).trim();
       if (!/^[A-Za-z_$][\w$]*$/.test(localName)) continue;
-      const seed = new RegExp(`\\buseState(?:<[^;\\n]{0,160}>)?\\s*\\(\\s*${localName}\\s*\\)`);
+      // Both `useState(FIXTURE)` and the lazy form `useState(() => FIXTURE)` seed
+      // the screen from the import. The lazy form slipped past the first version
+      // of this rule, which is the same blind spot the whole check exists for.
+      const seed = new RegExp(
+        `\\buseState(?:<[^;\\n]{0,160}>)?\\s*\\(\\s*(?:\\([^)\\n]*\\)\\s*=>\\s*)?${localName}\\s*\\)`,
+      );
       if (seed.test(src)) found.push(localName);
     }
   }
+  return found;
+}
+
+/**
+ * Names that mark a module constant as configuration or static content rather
+ * than invented rows: lookup tables, settings catalogs, navigation catalogs and
+ * localized copy. `PCG_MAPPINGS`, `PROVIDER_LIST`, `SETTINGS_MODULES` and
+ * `INTEGRATION_TOOLS_COL1` are legitimate to import; `CAMPAIGN_PRESETS` and
+ * `INITIAL_ROSTER` are not. Wider than LOOKUP_NAME on purpose — a menu catalog
+ * and marketing copy are content, not data. Narrowing this list costs honest
+ * code a CI failure; widening it costs a fake screen its warning.
+ */
+const CONFIG_NAME = new RegExp(
+  `${LOOKUP_NAME.source}|MAPPING|LIST|DEFAULT|CONFIG|COPY|CONTENT|ITEM|TIER|TOOL|FAQ|SECTION|PROVIDER|RESOURCE|SCHEMA|BRACKET|SCALE|TEXT|MODULE|CATALOG|MENU|ENTRY|HUB`,
+);
+
+export type ImportedBinding = { imported: string; local: string; specifier: string };
+
+/** Every value binding a file imports. Type-only imports are skipped. */
+export function findImportedBindings(src: string): ImportedBinding[] {
+  const out: ImportedBinding[] = [];
+  const named = /import\s*\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]/g;
+  let m: RegExpExecArray | null;
+
+  // eslint-disable-next-line no-cond-assign
+  while ((m = named.exec(src))) {
+    for (const specifier of m[1]!.split(',')) {
+      const part = specifier.trim();
+      if (!part || part.startsWith('type ')) continue;
+      const [imported, local] = part.split(/\s+as\s+/).map((s) => s.trim());
+      if (!imported || !/^[A-Za-z_$][\w$]*$/.test(imported)) continue;
+      out.push({ imported, local: local ?? imported, specifier: m[2]! });
+    }
+  }
+
+  const fallback = /import\s+([A-Za-z_$][\w$]*)\s+from\s*['"]([^'"]+)['"]/g;
+  // eslint-disable-next-line no-cond-assign
+  while ((m = fallback.exec(src))) {
+    if (m[1] === 'type') continue;
+    out.push({ imported: 'default', local: m[1]!, specifier: m[2]! });
+  }
+
+  return out;
+}
+
+/**
+ * Whether a module declares `name` as a record set: an array literal of object
+ * rows. Types, functions and lookup tables answer false, so importing them is
+ * never read as invented data. Matches `const`, with or without `export`.
+ */
+export function declaresRecordSet(moduleSrc: string, name: string): boolean {
+  const decl = new RegExp(`^(?:export\\s+)?(?:const|let|var)\\s+${name}\\b[^=\\n]*=\\s*\\[`, 'm');
+  const hit = decl.exec(moduleSrc);
+  if (!hit) return false;
+  // Same slice as findRecordConsts: bound the scan so a missing terminator on a
+  // long line cannot swallow the rest of the file.
+  const body = moduleSrc.slice(hit.index, hit.index + 8000).split('\n];')[0] ?? '';
+  return (body.match(/\{/g) || []).length >= 2;
+}
+
+/**
+ * Fixture records a screen renders straight from an imported data module. The
+ * state-seeding form above was caught first; rendering the import directly hid
+ * behind it, which is how two Communication pages shipped invented campaigns and
+ * delivery rates while this gate reported zero mock screens.
+ *
+ * `moduleSource` resolves an import specifier to its module text. When a module
+ * cannot be resolved the import is left alone rather than guessed at.
+ */
+export function findRenderedFixtureImports(
+  src: string,
+  moduleSource: (specifier: string) => string | null,
+): string[] {
+  const found: string[] = [];
+
+  for (const { imported, local, specifier } of findImportedBindings(src)) {
+    if (!specifier.includes('/data/')) continue;
+    if (CONFIG_NAME.test(local) || CONFIG_NAME.test(imported)) continue;
+    // Imported and used. An unused import is dead code, not a mock screen.
+    if ((src.match(new RegExp(`\\b${local}\\b`, 'g')) || []).length < 2) continue;
+
+    const moduleSrc = moduleSource(specifier);
+    if (!moduleSrc) continue;
+    if (!declaresRecordSet(moduleSrc, imported === 'default' ? local : imported)) continue;
+
+    found.push(local);
+  }
+
   return found;
 }
 
@@ -285,26 +380,71 @@ function findDeadControls(): Finding[] {
 // 2. Mock screens
 // ---------------------------------------------------------------------------
 
+/**
+ * The mock-screen rule for one file's source, returning the fixture names it
+ * renders. Split out from the tree walk so a test can hold the gate to a fixture
+ * file: the helpers below were tested while their caller was not, and a rule that
+ * is wired up wrong reports green all the same.
+ */
+export function findMockScreenSeeds(
+  src: string,
+  moduleSource?: (specifier: string) => string | null,
+): string[] {
+  // A file that fetches is not a mock screen, even if it also holds constants.
+  if (fileFetchesData(src)) {
+    return [];
+  }
+  // Server components receive data as props rather than fetching.
+  if (!src.includes('\'use client\'')) {
+    return [];
+  }
+
+  return [
+    ...findRecordConsts(src),
+    ...findImportedFixtureSeeds(src),
+    ...(moduleSource ? findRenderedFixtureImports(src, moduleSource) : []),
+  ];
+}
+
+/** Resolves an import specifier to its module text, so a screen can be judged by
+ * what the module it imports actually declares. */
+function moduleSourceFor(fromFile: string): (specifier: string) => string | null {
+  const cache = new Map<string, string | null>();
+
+  return (specifier: string) => {
+    const cached = cache.get(specifier);
+    if (cached !== undefined) return cached;
+
+    const base = specifier.startsWith('@/')
+      ? path.join(SRC, specifier.slice(2))
+      : specifier.startsWith('.')
+        ? path.resolve(path.dirname(fromFile), specifier)
+        : null;
+
+    let source: string | null = null;
+    if (base) {
+      for (const candidate of [base, `${base}.ts`, `${base}.tsx`, path.join(base, 'index.ts')]) {
+        if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+          source = fs.readFileSync(candidate, 'utf8');
+          break;
+        }
+      }
+    }
+
+    cache.set(specifier, source);
+    return source;
+  };
+}
+
 function findMockScreens(): Finding[] {
   const findings: Finding[] = [];
 
   for (const file of walk(SRC, isComponentFile)) {
     const src = fs.readFileSync(file, 'utf8');
 
-    // A file that fetches is not a mock screen, even if it also holds constants.
-    if (fileFetchesData(src)) {
-      continue;
-    }
-    // Server components receive data as props rather than fetching.
-    if (!src.includes('\'use client\'')) {
-      continue;
-    }
-
-    const recordConsts = findRecordConsts(src);
-
-    const importedSeeds = findImportedFixtureSeeds(src);
-    if (recordConsts.length > 0 || importedSeeds.length > 0) {
-      findings.push({ file: rel(file), line: 1, detail: [...recordConsts, ...importedSeeds].join(', ') });
+    const seeds = findMockScreenSeeds(src, moduleSourceFor(file));
+    if (seeds.length > 0) {
+      findings.push({ file: rel(file), line: 1, detail: seeds.join(', ') });
     }
   }
 

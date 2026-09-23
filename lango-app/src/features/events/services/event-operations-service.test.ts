@@ -3,11 +3,11 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { tenants } from '@/models/Schema';
-import { events, eventSchedules, eventOccurrences, eventRegistrations, eventWaitlistEntries } from '../models/events-schema';
-import { createEvent, registerForEvent } from './events-service';
+import { events, eventAudienceRules, eventSchedules, eventOccurrences, eventRegistrations, eventWaitlistEntries } from '../models/events-schema';
+import { createEvent, listVisibleEvents, registerForEvent } from './events-service';
 import {
-  buildEventIcs, cancelEvent, cancelRegistration, checkinOccurrence, createEventType,
-  getEventReports, listEventTypes, materializeOccurrences, publishEvent, respondToWaitlistOffer,
+  assertFamilyEventReadable, buildEventIcs, cancelEvent, cancelRegistration, checkinOccurrence, createEventType,
+  getEventDetail, getEventReports, listEventTypes, materializeOccurrences, publishEvent, respondToWaitlistOffer,
 } from './event-operations-service';
 
 const hasDb = Boolean(process.env.DATABASE_URL);
@@ -90,6 +90,36 @@ describe.skipIf(!hasDb)('events operations service', () => {
     const published = await publishEvent(tenantId, event.id, ownerId);
     expect(published!.lifecycle).toBe('published');
     expect(published!.publishedAt).toBeTruthy();
+  });
+
+  it('hides draft and staff-only event details from a parent', async () => {
+    const { event } = await makeEvent({ title: 'Restricted Event' });
+    const parent = { userId: attendeeA, role: 'parent' as const, sectionId: null, offeringIds: [], classSubjectIds: [] };
+    await expect(getEventDetail(tenantId, event.id, parent)).rejects.toMatchObject({ status: 404 });
+    await expect(assertFamilyEventReadable(tenantId, event.id, parent)).rejects.toMatchObject({ status: 404 });
+
+    await publishEvent(tenantId, event.id, ownerId);
+    await db.update(events).set({ visibility: 'public' }).where(and(eq(events.id, event.id), eq(events.tenantId, tenantId)));
+    await db.insert(eventAudienceRules).values({ tenantId, eventId: event.id, targetKind: 'role', targetRoleValue: 'teacher' });
+    await expect(getEventDetail(tenantId, event.id, parent)).rejects.toMatchObject({ status: 404 });
+    await expect(assertFamilyEventReadable(tenantId, event.id, parent)).rejects.toMatchObject({ status: 404 });
+
+    await db.update(eventAudienceRules).set({ targetRoleValue: 'parent' })
+      .where(and(eq(eventAudienceRules.eventId, event.id), eq(eventAudienceRules.tenantId, tenantId)));
+    const visible = await getEventDetail(tenantId, event.id, parent);
+    expect(visible.event.id).toBe(event.id);
+    expect(visible.rules).toEqual([]);
+    expect(visible.registrationSummary).toEqual([]);
+    await expect(assertFamilyEventReadable(tenantId, event.id, parent)).resolves.toBeUndefined();
+  });
+
+  it('omits draft and internal events from the parent event list', async () => {
+    const { event } = await makeEvent({ title: 'Hidden Parent List Event' });
+    expect((await listVisibleEvents(tenantId, attendeeA, 'parent')).some(row => row.id === event.id)).toBe(false);
+    await publishEvent(tenantId, event.id, ownerId);
+    expect((await listVisibleEvents(tenantId, attendeeA, 'parent')).some(row => row.id === event.id)).toBe(false);
+    await db.update(events).set({ visibility: 'public' }).where(and(eq(events.id, event.id), eq(events.tenantId, tenantId)));
+    expect((await listVisibleEvents(tenantId, attendeeA, 'parent')).some(row => row.id === event.id)).toBe(true);
   });
 
   it('cancels an event and its occurrences, and rejects re-cancel / publish-after-cancel', async () => {

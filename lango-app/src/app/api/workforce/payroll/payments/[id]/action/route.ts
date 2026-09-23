@@ -8,7 +8,8 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { payrollPeriods, salaryPaymentBatches, salaryPayments } from '@/models/Schema';
+import { employeeProfiles, payrollPeriods, salaryPaymentBatches, salaryPayments } from '@/models/Schema';
+import { isBankPaymentMethod, missingBankRibCount } from '@/features/workforce/services/payment-bank';
 
 const schema = z.object({ action: z.enum(['approve', 'reconcile', 'fail', 'reverse']), reference: z.string().trim().max(120).optional() });
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -21,13 +22,25 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`payroll:batch:${tenantId}:${id}`}, 0))`);
       const [batch] = await tx.select().from(salaryPaymentBatches).where(and(eq(salaryPaymentBatches.tenantId, tenantId), eq(salaryPaymentBatches.id, id))).for('update');
       if (!batch) throw new ApiError(404, 'PAYMENT_BATCH_NOT_FOUND', 'Lot de paiement introuvable.');
+      if (isBankPaymentMethod(batch.method) && (body.action === 'approve' || body.action === 'reconcile')) {
+        const recipients = await tx.select({ bankRib: employeeProfiles.bankRib })
+          .from(salaryPayments)
+          .leftJoin(employeeProfiles, and(
+            eq(employeeProfiles.tenantId, tenantId),
+            eq(employeeProfiles.userId, salaryPayments.userId),
+          ))
+          .where(and(eq(salaryPayments.tenantId, tenantId), eq(salaryPayments.batchId, id)));
+        if (!recipients.length) throw new ApiError(409, 'PAYMENT_BATCH_EMPTY', 'Le lot ne contient aucun paiement.');
+        const missingCount = missingBankRibCount(recipients);
+        if (missingCount) throw new ApiError(409, 'PAYROLL_BANK_RIB_MISSING', `Lot bancaire bloqué : ${missingCount} salarié(s) n’ont pas de RIB enregistré.`);
+      }
       if (body.action === 'approve') {
         if (batch.status !== 'prepared') throw new ApiError(409, 'PAYMENT_INVALID_TRANSITION', 'Le lot n’est pas prêt à être approuvé.');
         if (batch.preparedById === ctx.userId) throw new ApiError(403, 'PAYMENT_SELF_APPROVAL', 'Le préparateur ne peut pas approuver son propre lot.');
         return (await tx.update(salaryPaymentBatches).set({ status: 'approved', approvedById: ctx.userId, approvedAt: new Date().toISOString() }).where(eq(salaryPaymentBatches.id, id)).returning())[0];
       }
       if (body.action === 'reconcile') {
-        if (batch.status !== 'approved' && batch.status !== 'submitted') throw new ApiError(409, 'PAYMENT_INVALID_TRANSITION', 'Le lot doit être approuvé.');
+        if (batch.status !== 'approved' && batch.status !== 'exported' && batch.status !== 'submitted') throw new ApiError(409, 'PAYMENT_INVALID_TRANSITION', 'Le lot doit être approuvé.');
         const now = new Date().toISOString();
         await tx.update(salaryPayments).set({ status: 'paid', bankReference: body.reference ?? null, paidById: ctx.userId, paidAt: now }).where(and(eq(salaryPayments.tenantId, tenantId), eq(salaryPayments.batchId, id), eq(salaryPayments.status, 'pending')));
         const updated = (await tx.update(salaryPaymentBatches).set({ status: 'paid', reconciliationStatus: 'reconciled', reconciledById: ctx.userId, reconciledAt: now }).where(eq(salaryPaymentBatches.id, id)).returning())[0];

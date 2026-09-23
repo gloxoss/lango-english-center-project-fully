@@ -1,5 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { isEventVisibleToUser, type EventTargetRow, type EventViewer } from './audience-service';
+import { canViewPublishedEvent, isEventVisibleToUser, isFamilyEventViewerRole, type EventTargetRow, type EventViewer } from './audience-service';
+
+describe('family event roles', () => {
+  it('applies public audience checks to family roles without hiding staff events', () => {
+    expect(['parent', 'student', 'alumni'].every(role => isFamilyEventViewerRole(role as EventViewer['role']))).toBe(true);
+    expect(isFamilyEventViewerRole('teacher')).toBe(false);
+    expect(isFamilyEventViewerRole('school_admin')).toBe(false);
+  });
+});
+
+describe('canViewPublishedEvent', () => {
+  const parent: EventViewer = { userId: 'parent-1', role: 'parent', sectionId: null, offeringIds: [], classSubjectIds: [] };
+  it('hides drafts and internal events even when their audience matches', () => {
+    expect(canViewPublishedEvent({ lifecycle: 'draft', visibility: 'public' }, [], parent)).toBe(false);
+    expect(canViewPublishedEvent({ lifecycle: 'published', visibility: 'internal' }, [{ targetKind: 'school', targetRoleValue: null, targetRefId: null }], parent)).toBe(false);
+  });
+  it('requires an explicit matching audience for targeted events', () => {
+    expect(canViewPublishedEvent({ lifecycle: 'published', visibility: 'targeted' }, [], parent)).toBe(false);
+    expect(canViewPublishedEvent({ lifecycle: 'published', visibility: 'targeted' }, [{ targetKind: 'role', targetRoleValue: 'teacher', targetRefId: null }], parent)).toBe(false);
+    expect(canViewPublishedEvent({ lifecycle: 'published', visibility: 'targeted' }, [{ targetKind: 'role', targetRoleValue: 'parent', targetRefId: null }], parent)).toBe(true);
+    expect(canViewPublishedEvent({ lifecycle: 'published', visibility: 'public' }, [], parent)).toBe(true);
+    expect(canViewPublishedEvent({ lifecycle: 'published', visibility: 'public' }, [{ targetKind: 'role', targetRoleValue: 'teacher', targetRefId: null }], parent)).toBe(false);
+  });
+});
 
 function viewer(overrides: Partial<EventViewer> = {}): EventViewer {
   return {

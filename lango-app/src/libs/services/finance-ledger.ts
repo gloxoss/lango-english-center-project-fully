@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import { ApiError } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
 import { centsToMoney, moneyToCents, normalizeMoney } from '@/libs/finance/money';
@@ -38,9 +38,29 @@ export async function postBalancedJournal(input: PostJournalInput) {
   }
 
   return db.transaction(async (tx) => {
+    if (input.sourceModule && input.sourceId) {
+      // Serialize retries for one source so two workers cannot post it twice.
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`${input.tenantId}:${input.sourceModule}:${input.sourceId}`}, 0))`);
+      const [existing] = await tx.select().from(journalEntries).where(and(
+        eq(journalEntries.tenantId, input.tenantId),
+        eq(journalEntries.sourceModule, input.sourceModule),
+        eq(journalEntries.sourceId, input.sourceId),
+        eq(journalEntries.status, 'posted'),
+      )).limit(1);
+      if (existing) {
+        const lines = await tx.select().from(journalEntryLines).where(and(
+          eq(journalEntryLines.tenantId, input.tenantId), eq(journalEntryLines.journalEntryId, existing.id),
+        ));
+        const totalDebit = lines.reduce((sum, line) => sum + moneyToCents(line.debitAmount), BigInt(0));
+        const totalCredit = lines.reduce((sum, line) => sum + moneyToCents(line.creditAmount), BigInt(0));
+        return { entry: existing, lines, totalDebit: centsToMoney(totalDebit), totalCredit: centsToMoney(totalCredit) };
+      }
+    }
     const [openPeriod] = await tx.select({ id: fiscalPeriods.id }).from(fiscalPeriods).where(and(
       eq(fiscalPeriods.tenantId, input.tenantId),
       eq(fiscalPeriods.status, 'open'),
+      lte(fiscalPeriods.startDate, input.entryDate),
+      gte(fiscalPeriods.endDate, input.entryDate),
     ));
     if (!openPeriod) {
       throw new ApiError(409, 'NO_OPEN_FISCAL_PERIOD', 'Aucune période comptable ouverte ne permet cette écriture.');

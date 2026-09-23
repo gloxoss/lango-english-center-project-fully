@@ -15,6 +15,19 @@ export type EventViewer = {
   classSubjectIds: string[];
 };
 
+export function isFamilyEventViewerRole(role: AppRole): boolean {
+  return role === 'parent' || role === 'student' || role === 'alumni';
+}
+
+export function canViewPublishedEvent(
+  event: { lifecycle: string; visibility: string },
+  targets: EventTargetRow[],
+  viewer: EventViewer,
+): boolean {
+  if (event.lifecycle !== 'published' || event.visibility === 'internal') return false;
+  return targets.length === 0 ? event.visibility === 'public' : isEventVisibleToUser(targets, viewer);
+}
+
 /**
  * Validates if an event is visible to the given user context based on audience rules.
  * This function follows the exact same shape as isAssetVisibleToUser.

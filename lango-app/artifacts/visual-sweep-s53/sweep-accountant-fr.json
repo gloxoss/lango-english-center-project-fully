@@ -1,0 +1,14 @@
+[
+  {
+    "route": "/dashboard/workforce/payroll/payments",
+    "finalPath": "/fr/dashboard/workforce/payroll/payments",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "403 /api/workforce/payroll/payments"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-workforce__payroll__payments.png"
+  }
+]

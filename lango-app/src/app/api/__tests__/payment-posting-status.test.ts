@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { and, eq, sql } from 'drizzle-orm';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/libs/DB';
-import { accountingAdapterExceptions, invoices, tenants, user } from '@/models/Schema';
+import { tryPostPaymentGLEntry } from '@/libs/finance/gl-auto-post';
+import { accountingAdapterExceptions, chartOfAccounts, fiscalPeriods, invoices, journalEntries, journalEntryLines, paymentReversals, payments, refunds, tenants, user } from '@/models/Schema';
 import { POST as createPayment } from '@/app/api/finance/payments/route';
-import { GET as getPostingStatus } from '@/app/api/finance/accounting/posting-status/route';
+import { GET as getPostingStatus, POST as retryPosting } from '@/app/api/finance/accounting/posting-status/route';
 
 const authState = vi.hoisted(() => ({ tenantId: '', userId: '' }));
 vi.mock('@/libs/api/context', () => ({
@@ -33,11 +34,6 @@ describe.skipIf(!available)('payment ledger status', () => {
     invoiceId = invoice!.id;
   });
 
-  afterAll(async () => {
-    await db.delete(accountingAdapterExceptions).where(eq(accountingAdapterExceptions.tenantId, tenantId));
-    await db.delete(tenants).where(eq(tenants.id, tenantId));
-  });
-
   it('records a visible exception when a posted payment cannot enter the ledger', async () => {
     const response = await createPayment(new Request('http://localhost/api/finance/payments', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -55,5 +51,75 @@ describe.skipIf(!available)('payment ledger status', () => {
     const statusResponse = await getPostingStatus(new Request('http://localhost/api/finance/accounting/posting-status'));
     expect(statusResponse.status).toBe(200);
     expect((await statusResponse.json()).data).toMatchObject({ openFiscalPeriod: false, unpostedPaymentsCount: 1, unpostedPaymentsAmount: 120 });
+
+    const blockedRetry = await retryPosting(new Request('http://localhost/api/finance/accounting/posting-status', { method: 'POST' }));
+    expect(blockedRetry.status).toBe(409);
+
+    await db.insert(chartOfAccounts).values([
+      { tenantId, code: '512', name: 'Bank', accountType: 'asset' },
+      { tenantId, code: '411', name: 'Receivables', accountType: 'asset' },
+      { tenantId, code: '516', name: 'Cash', accountType: 'asset' },
+    ]);
+    await db.insert(fiscalPeriods).values({ tenantId, name: '2026', startDate: '2026-01-01', endDate: '2026-12-31', status: 'open' });
+
+    const retry = await retryPosting(new Request('http://localhost/api/finance/accounting/posting-status', { method: 'POST' }));
+    expect(retry.status).toBe(200);
+    expect((await retry.json()).data).toMatchObject({ attempted: 1, posted: 1, blocked: 0 });
+    const repeat = await retryPosting(new Request('http://localhost/api/finance/accounting/posting-status', { method: 'POST' }));
+    expect((await repeat.json()).data).toMatchObject({ attempted: 0, posted: 0 });
+    await Promise.all(Array.from({ length: 2 }, () => tryPostPaymentGLEntry({ tenantId, actorId,
+      paymentId: body.data.payment.id, invoiceNumber: 'GL-TEST-1', amount: '120.00',
+      paymentDate: body.data.payment.paymentDate })));
+    const entries = await db.select().from(journalEntries).where(and(
+      eq(journalEntries.tenantId, tenantId), eq(journalEntries.sourceModule, 'payment'), eq(journalEntries.sourceId, body.data.payment.id),
+    ));
+    expect(entries).toHaveLength(1);
+    const paymentLines = await db.select({ code: chartOfAccounts.code, debit: journalEntryLines.debitAmount,
+      credit: journalEntryLines.creditAmount }).from(journalEntryLines)
+      .innerJoin(chartOfAccounts, and(eq(chartOfAccounts.id, journalEntryLines.accountId), eq(chartOfAccounts.tenantId, tenantId)))
+      .where(and(eq(journalEntryLines.tenantId, tenantId), eq(journalEntryLines.journalEntryId, entries[0]!.id)));
+    expect(paymentLines).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: '512', debit: '120.00' }),
+      expect.objectContaining({ code: '411', credit: '120.00' }),
+    ]));
+    const [resolved] = await db.select().from(accountingAdapterExceptions).where(and(
+      eq(accountingAdapterExceptions.tenantId, tenantId), eq(accountingAdapterExceptions.sourceDocumentId, body.data.payment.id),
+    ));
+    expect(resolved?.status).toBe('resolved');
+    const finalStatus = await getPostingStatus(new Request('http://localhost/api/finance/accounting/posting-status'));
+    expect((await finalStatus.json()).data).toMatchObject({ unpostedPaymentsCount: 0, unpostedPaymentsAmount: 0 });
+
+    const now = new Date().toISOString();
+    const [reversal] = await db.insert(paymentReversals).values({ tenantId, paymentId: body.data.payment.id,
+      status: 'approved', reversedAt: now, reversedById: actorId, approvedById: actorId }).returning({ id: paymentReversals.id });
+    await db.update(payments).set({ status: 'reversed' }).where(and(eq(payments.tenantId, tenantId), eq(payments.id, body.data.payment.id)));
+    const [secondInvoice] = await db.insert(invoices).values({ tenantId, studentId, invoiceNumber: 'GL-TEST-2',
+      amount: 50, netAmount: 50, paidAmount: 0, status: 'pending', dueDate: '2026-12-31' }).returning({ id: invoices.id });
+    const secondPaymentResponse = await createPayment(new Request('http://localhost/api/finance/payments', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invoiceId: secondInvoice!.id, amount: '50.00', paymentMethod: 'card', idempotencyKey: randomUUID() }),
+    }));
+    expect(secondPaymentResponse.status).toBe(200);
+    const secondPayment = (await secondPaymentResponse.json()).data.payment;
+    const [refund] = await db.insert(refunds).values({ tenantId, studentId, paymentId: secondPayment.id,
+      refundNumber: `RF-${tenantId.slice(0, 8)}`, amount: '20.00', reason: 'Test refund',
+      status: 'approved', decidedAt: now }).returning({ id: refunds.id });
+
+    const adjustmentStatus = await getPostingStatus(new Request('http://localhost/api/finance/accounting/posting-status'));
+    expect((await adjustmentStatus.json()).data).toMatchObject({ unpostedPaymentsCount: 0,
+      unpostedAdjustmentsCount: 2, unpostedAdjustmentsAmount: 140 });
+    const adjustmentRetry = await retryPosting(new Request('http://localhost/api/finance/accounting/posting-status', { method: 'POST' }));
+    expect((await adjustmentRetry.json()).data).toMatchObject({ attempted: 2, posted: 2, blocked: 0 });
+    const adjustmentEntries = await db.select().from(journalEntries).where(and(eq(journalEntries.tenantId, tenantId),
+      inArray(journalEntries.sourceId, [reversal!.id, refund!.id])));
+    expect(adjustmentEntries).toHaveLength(2);
+    const [refundEntry] = adjustmentEntries.filter(entry => entry.sourceId === refund!.id);
+    const refundLines = await db.select({ code: chartOfAccounts.code, credit: journalEntryLines.creditAmount })
+      .from(journalEntryLines).innerJoin(chartOfAccounts,
+        and(eq(chartOfAccounts.id, journalEntryLines.accountId), eq(chartOfAccounts.tenantId, tenantId)))
+      .where(and(eq(journalEntryLines.tenantId, tenantId), eq(journalEntryLines.journalEntryId, refundEntry!.id)));
+    expect(refundLines).toContainEqual(expect.objectContaining({ code: '516', credit: '20.00' }));
+    const cleanStatus = await getPostingStatus(new Request('http://localhost/api/finance/accounting/posting-status'));
+    expect((await cleanStatus.json()).data).toMatchObject({ unpostedAdjustmentsCount: 0 });
   });
 });

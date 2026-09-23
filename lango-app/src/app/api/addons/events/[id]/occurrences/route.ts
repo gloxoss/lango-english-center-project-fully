@@ -5,8 +5,9 @@ import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { requireAddon } from '@/libs/api/entitlements';
 import { db } from '@/libs/DB';
-import { events, eventOccurrences, eventAudienceRules } from '@/features/events/models/events-schema';
-import { isEventVisibleToUser, resolveEventViewerContext, type EventTargetRow } from '@/features/events/services/audience-service';
+import { events, eventOccurrences } from '@/features/events/models/events-schema';
+import { isFamilyEventViewerRole, resolveEventViewerContext } from '@/features/events/services/audience-service';
+import { assertFamilyEventReadable } from '@/features/events/services/event-operations-service';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -16,35 +17,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     await requireAddon(tenantId, 'event-management');
     await requireCapability(context, 'events.read');
 
-    const [event] = await db
-      .select({
-        id: events.id,
-        visibility: events.visibility,
-      })
-      .from(events)
-      .where(and(eq(events.id, id), eq(events.tenantId, tenantId)))
-      .limit(1);
-
-    if (!event) {
-      return NextResponse.json({ success: false, error: { code: 'NOT_FOUND', message: 'Événement introuvable.' } }, { status: 404 });
-    }
-
-    if (event.visibility === 'targeted') {
-      const rules = await db
-        .select({
-          targetKind: eventAudienceRules.targetKind,
-          targetRoleValue: eventAudienceRules.targetRoleValue,
-          targetRefId: eventAudienceRules.targetRefId,
-        })
-        .from(eventAudienceRules)
-        .where(and(eq(eventAudienceRules.eventId, id), eq(eventAudienceRules.tenantId, tenantId)));
-
-      const viewer = await resolveEventViewerContext(context.userId, context.role);
-      const targets = rules as EventTargetRow[];
-
-      if (!isEventVisibleToUser(targets, viewer)) {
-        return NextResponse.json({ success: false, error: { code: 'FORBIDDEN', message: 'Accès refusé.' } }, { status: 403 });
-      }
+    if (isFamilyEventViewerRole(context.role)) {
+      await assertFamilyEventReadable(tenantId, id, await resolveEventViewerContext(context.userId, context.role));
+    } else {
+      const [event] = await db.select({ id: events.id }).from(events)
+        .where(and(eq(events.id, id), eq(events.tenantId, tenantId))).limit(1);
+      if (!event) return NextResponse.json({ success: false, error: { code: 'NOT_FOUND', message: 'Événement introuvable.' } }, { status: 404 });
     }
 
     const occurrences = await db

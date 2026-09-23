@@ -1,0 +1,14 @@
+[
+  {
+    "route": "/dashboard/events/b2dc40ce-338e-47ee-a604-3340a9ad0d1b",
+    "finalPath": "/fr/dashboard/events/b2dc40ce-338e-47ee-a604-3340a9ad0d1b",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 155,
+    "failures": [
+      "403 /api/settings/branches"
+    ],
+    "textDefects": [],
+    "file": "parent-fr-events__b2dc40ce-338e-47ee-a604-3340a9ad0d1b.png"
+  }
+]
