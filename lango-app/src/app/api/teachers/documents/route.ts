@@ -1,7 +1,10 @@
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { findScopedTeacher } from '@/features/teachers/server/teacher-service';
+import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { contentTypeFor, readUploadedFile, saveUploadedFile } from '@/libs/api/uploads';
 import { db } from '@/libs/DB';
 import { user } from '@/models/Schema';
@@ -15,13 +18,17 @@ const ALLOWED_TYPES: Record<string, string> = {
 };
 const MAX_SIZE_BYTES = 10 * 1024 * 1024;
 
-// Teacher compliance documents (Contrat / CIN / Diplôme). Each upload flips the
-// matching flag on user.documents and records the file extension so GET can
-// serve the bytes back. Mirrors /api/students/documents upload semantics.
+// Teacher compliance documents (Contrat / CIN / Diplôme).
+//
+// Reading requires teachers.read; uploading/replacing requires teachers.update.
+// Both are branch-scoped through findScopedTeacher, and every mutation is
+// audited — these files are CNDP-sensitive identity documents.
+
 export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'teachers.read');
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const type = searchParams.get('type');
@@ -30,11 +37,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: false, message: 'id et type (contract|cin|diploma) requis.' }, { status: 400 });
     }
 
-    const [teacher] = await db
-      .select({ documents: user.documents })
-      .from(user)
-      .where(and(eq(user.id, id), eq(user.tenantId, tenantId), eq(user.role, 'teacher')))
-      .limit(1);
+    const teacher = await findScopedTeacher(context, tenantId, id);
     if (!teacher) {
       throw new ApiError(404, 'NOT_FOUND', 'Enseignant introuvable.');
     }
@@ -58,6 +61,7 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'teachers.update');
 
     const formData = await request.formData();
     const teacherId = formData.get('teacherId');
@@ -74,11 +78,7 @@ export async function POST(request: Request) {
       throw new ApiError(422, 'VALIDATION_ERROR', 'Fichier requis.');
     }
 
-    const [teacher] = await db
-      .select({ documents: user.documents })
-      .from(user)
-      .where(and(eq(user.id, teacherId), eq(user.tenantId, tenantId), eq(user.role, 'teacher')))
-      .limit(1);
+    const teacher = await findScopedTeacher(context, tenantId, teacherId);
     if (!teacher) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'L\'enseignant indiqué n\'existe pas pour cet établissement.');
     }
@@ -93,6 +93,8 @@ export async function POST(request: Request) {
         updatedAt: new Date().toISOString(),
       })
       .where(and(eq(user.id, teacherId), eq(user.tenantId, tenantId)));
+
+    recordAudit(context, 'update', 'teacher_document', teacherId, { type, ext });
 
     return NextResponse.json({ success: true, data: { teacherId, type, ext }, message: 'Document enregistré avec succès' });
   } catch (error) {

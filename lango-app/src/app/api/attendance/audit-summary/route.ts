@@ -1,13 +1,13 @@
 import { and, avg, count, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { sendSmsMessage } from '@/features/broadcast/services/sms-delivery';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { attendance, attendanceFlags, attendanceSummary, classes, classScheduleSlots, classSections, classSubjects, sections, subjects, user } from '@/models/Schema';
-import { sendSmsMessage } from '@/features/broadcast/services/sms-delivery';
+import { attendance, attendanceFlags, attendanceSummary, classes, classScheduleSlots, classSections, classSubjects, sections, sessionYears, subjects, user } from '@/models/Schema';
 
 const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
 
@@ -20,8 +20,18 @@ export async function GET(request: Request) {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
 
-    const today = new Date().toISOString().slice(0, 10);
+    const { searchParams } = new URL(request.url);
+    const today = searchParams.get('date') || new Date().toISOString().slice(0, 10);
     const todayDayOfWeek = DAY_NAMES[new Date(`${today}T00:00:00Z`).getUTCDay()]!;
+
+    // BRANCH SCOPE (P0): every aggregate is scoped through the student row so
+    // a branch-limited principal only audits their own campus.
+    const summaryConditions = [eq(attendanceSummary.tenantId, tenantId)];
+    const flagConditions = [eq(attendanceFlags.tenantId, tenantId), eq(attendanceFlags.status, 'OPEN')];
+    if (context.branchId) {
+      summaryConditions.push(eq(user.branchId, context.branchId));
+      flagConditions.push(eq(user.branchId, context.branchId));
+    }
 
     const [summaryStats] = await db
       .select({
@@ -30,12 +40,14 @@ export async function GET(request: Request) {
         totalTracked: count(),
       })
       .from(attendanceSummary)
-      .where(eq(attendanceSummary.tenantId, tenantId));
+      .innerJoin(user, eq(attendanceSummary.studentId, user.id))
+      .where(and(...summaryConditions));
 
     const openFlagsByType = await db
       .select({ type: attendanceFlags.type, count: sql<number>`count(*)::int` })
       .from(attendanceFlags)
-      .where(and(eq(attendanceFlags.tenantId, tenantId), eq(attendanceFlags.status, 'OPEN')))
+      .innerJoin(user, eq(attendanceFlags.studentId, user.id))
+      .where(and(...flagConditions))
       .groupBy(attendanceFlags.type);
 
     const todaySlots = await db
@@ -57,16 +69,38 @@ export async function GET(request: Request) {
       .innerJoin(classSubjects, eq(classScheduleSlots.classSubjectId, classSubjects.id))
       .innerJoin(subjects, eq(classSubjects.subjectId, subjects.id))
       .innerJoin(user, eq(classScheduleSlots.teacherId, user.id))
-      .where(and(eq(classScheduleSlots.tenantId, tenantId), eq(classScheduleSlots.dayOfWeek, todayDayOfWeek)));
+      .where(and(
+        eq(classScheduleSlots.tenantId, tenantId),
+        eq(classScheduleSlots.dayOfWeek, todayDayOfWeek),
+        ...(context.branchId ? [eq(classes.branchId, context.branchId)] : []),
+      ));
 
     const submittedRows = await db
       .selectDistinct({ classSectionId: user.classSectionId })
       .from(attendance)
       .innerJoin(user, eq(attendance.studentId, user.id))
-      .where(and(eq(attendance.tenantId, tenantId), eq(attendance.date, today)));
+      .where(and(
+        eq(attendance.tenantId, tenantId),
+        eq(attendance.date, today),
+        ...(context.branchId ? [eq(user.branchId, context.branchId)] : []),
+      ));
     const submittedSectionIds = new Set(submittedRows.map(r => r.classSectionId).filter(Boolean));
 
-    const missingRegistersToday = todaySlots.filter(slot => !submittedSectionIds.has(slot.classSectionId));
+    // CALENDAR GUARD (Phase 5): a date outside every academic session can
+    // never produce a "missing register" expectation.
+    const [sessionForToday] = await db
+      .select({ id: sessionYears.id })
+      .from(sessionYears)
+      .where(and(
+        eq(sessionYears.tenantId, tenantId),
+        sql`${sessionYears.startDate}::date <= ${today}::date`,
+        sql`${sessionYears.endDate}::date >= ${today}::date`,
+      ))
+      .limit(1);
+
+    const missingRegistersToday = sessionForToday
+      ? todaySlots.filter(slot => !submittedSectionIds.has(slot.classSectionId))
+      : [];
 
     return NextResponse.json({
       success: true,

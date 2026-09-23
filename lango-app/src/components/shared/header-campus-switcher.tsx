@@ -1,8 +1,8 @@
 'use client';
 
 import { Building2, ChevronDown } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +26,7 @@ export function HeaderCampusSwitcher() {
   useEffect(() => {
     fetch('/api/settings/branches')
       .then(res => (res.ok ? res.json() : null))
-      .then(json => {
+      .then((json) => {
         if (json?.success && Array.isArray(json.data)) {
           setBranches(json.data);
           const saved = localStorage.getItem('schoolos_active_branch_id');
@@ -50,7 +50,7 @@ export function HeaderCampusSwitcher() {
       <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200/80 bg-slate-50 text-xs font-bold text-[#16212B]">
         <Building2 className="w-3.5 h-3.5 text-[#2487B8]" />
         <span className="truncate max-w-[120px]">
-          {singleBranch ? singleBranch.name : t('mainCampus')}
+          {singleBranch ? singleBranch.name : t('allBranches')}
         </span>
         {singleBranch?.code && (
           <span className="text-[10px] bg-slate-200/60 px-1.5 py-0.5 rounded text-slate-600 font-mono">

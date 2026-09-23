@@ -1,6 +1,6 @@
-import { createHash } from 'node:crypto';
-import { and, avg, count, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import type { NextRequest } from 'next/server';
+import { createHash } from 'node:crypto';
+import { and, avg, count, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
@@ -9,6 +9,7 @@ import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
+import { evaluateCapacity, exceedsCapacity } from '@/libs/services/section-capacity';
 import { recordStudentPlacement } from '@/libs/services/student-placement';
 import {
   assessmentResults,
@@ -172,8 +173,12 @@ export async function resolveAuthoritativeStudents(
     eq(user.role, 'student'),
     eq(user.userStatus, 'active'),
   ];
-  if (branchId) userConditions.push(eq(user.branchId, branchId));
-  if (studentIds && studentIds.length > 0) userConditions.push(inArray(user.id, studentIds));
+  if (branchId) {
+    userConditions.push(eq(user.branchId, branchId));
+  }
+  if (studentIds && studentIds.length > 0) {
+    userConditions.push(inArray(user.id, studentIds));
+  }
 
   const [studentRows, placementRows, sectionMetaRows] = await Promise.all([
     db.select({
@@ -186,23 +191,25 @@ export async function resolveAuthoritativeStudents(
       className: user.className,
     }).from(user).where(and(...userConditions)),
 
-    db.select({
-      studentId: studentPlacements.studentId,
-      classSectionId: studentPlacements.classSectionId,
-      status: studentPlacements.status,
-    }).from(studentPlacements).where(and(
-      eq(studentPlacements.tenantId, tenantId),
-      eq(studentPlacements.sessionYearId, sessionYearId),
-      eq(studentPlacements.isCurrent, true),
-    )),
+    // No default session year yet -> no placement history to reconcile; the
+    // user profile remains the sole authority. Never query with an empty uuid.
+    sessionYearId
+      ? db.select({
+          studentId: studentPlacements.studentId,
+          classSectionId: studentPlacements.classSectionId,
+          status: studentPlacements.status,
+        }).from(studentPlacements).where(and(
+          eq(studentPlacements.tenantId, tenantId),
+          eq(studentPlacements.sessionYearId, sessionYearId),
+          eq(studentPlacements.isCurrent, true),
+        ))
+      : Promise.resolve([] as Array<{ studentId: string; classSectionId: string; status: string | null }>),
 
     db.select({
       id: classSections.id,
       classId: classSections.classId,
       className: classes.name,
-    }).from(classSections)
-      .innerJoin(classes, eq(classSections.classId, classes.id))
-      .where(eq(classSections.tenantId, tenantId)),
+    }).from(classSections).innerJoin(classes, eq(classSections.classId, classes.id)).where(eq(classSections.tenantId, tenantId)),
   ]);
 
   const placementMap = new Map<string, string>();
@@ -288,12 +295,15 @@ export function runAutoPlacementSimulation({
   const unplacedStudents: Array<{ studentId: string; studentName: string; matricule: string | null; reason: string }> = [];
 
   const tryAssignStudent = (st: ReconciledStudent, sectionsPool: TargetSection[]): boolean => {
-    const availableSections = sectionsPool.filter(sec => {
-      if (sec.maxStudents == null) return false;
+    const availableSections = sectionsPool.filter((sec) => {
       // Strict cross-branch guard: student branch must match section branch
-      if (st.branchId && sec.branchId && st.branchId !== sec.branchId) return false;
+      if (st.branchId && sec.branchId && st.branchId !== sec.branchId) {
+        return false;
+      }
       const occ = simOccupancy.get(sec.id) || 0;
-      return occ < sec.maxStudents;
+      // ONE CAPACITY TRUTH (libs/services/section-capacity): unconfigured
+      // capacity never accepts a student; the rule is shared with all writers.
+      return evaluateCapacity(sec.maxStudents, occ).allowsOneMore;
     });
 
     if (availableSections.length === 0) {
@@ -303,7 +313,7 @@ export function runAutoPlacementSimulation({
         studentName: st.name,
         matricule: st.matricule,
         reason: hasBranchMismatch && !sectionsPool.some(s => !s.branchId || !st.branchId || s.branchId === st.branchId)
-          ? "Violation de frontière de succursale : Aucune section disponible dans la succursale de l'élève."
+          ? 'Violation de frontière de succursale : Aucune section disponible dans la succursale de l\'élève.'
           : 'Toutes les sections cibles ont atteint leur capacité maximale autorisée.',
       });
       return false;
@@ -367,11 +377,15 @@ export function runAutoPlacementSimulation({
   };
 
   const distributeCluster = (students: ReconciledStudent[], sectionsPool: TargetSection[]) => {
-    if (sectionsPool.length === 0 || students.length === 0) return;
+    if (sectionsPool.length === 0 || students.length === 0) {
+      return;
+    }
 
     if (targetClassSectionId) {
       const targetSec = sectionsPool.find(s => s.id === targetClassSectionId);
-      if (!targetSec) return;
+      if (!targetSec) {
+        return;
+      }
       for (const st of students) {
         tryAssignStudent(st, [targetSec]);
       }
@@ -382,9 +396,15 @@ export function runAutoPlacementSimulation({
 
       const maxLen = Math.max(males.length, females.length, others.length);
       for (let i = 0; i < maxLen; i++) {
-        if (i < females.length) tryAssignStudent(females[i]!, sectionsPool);
-        if (i < males.length) tryAssignStudent(males[i]!, sectionsPool);
-        if (i < others.length) tryAssignStudent(others[i]!, sectionsPool);
+        if (i < females.length) {
+          tryAssignStudent(females[i]!, sectionsPool);
+        }
+        if (i < males.length) {
+          tryAssignStudent(males[i]!, sectionsPool);
+        }
+        if (i < others.length) {
+          tryAssignStudent(others[i]!, sectionsPool);
+        }
       }
     } else if (method === 'academic_balance') {
       const sorted = [...students].sort((a, b) => {
@@ -438,8 +458,10 @@ export function runAutoPlacementSimulation({
     const after = simOccupancy.get(sec.id) || 0;
     const delta = after - before; // TRUE DELTA!
     const maxCap = sec.maxStudents;
-    const isOver = maxCap != null && after > maxCap;
-    if (isOver) hasOverCapacitySection = true;
+    const isOver = exceedsCapacity(maxCap, after);
+    if (isOver) {
+      hasOverCapacitySection = true;
+    }
 
     const secAssignments = assignments.filter(a => a.targetClassSectionId === sec.id);
 
@@ -506,10 +528,14 @@ export async function GET(req: NextRequest) {
     let branchName = 'Campus Principal';
     if (ctx.branchId) {
       const [b] = await db.select({ name: branches.name }).from(branches).where(and(eq(branches.tenantId, tenantId), eq(branches.id, ctx.branchId))).limit(1);
-      if (b) branchName = b.name;
+      if (b) {
+        branchName = b.name;
+      }
     } else {
       const [defaultB] = await db.select({ name: branches.name }).from(branches).where(and(eq(branches.tenantId, tenantId), eq(branches.isDefault, true))).limit(1);
-      if (defaultB) branchName = defaultB.name;
+      if (defaultB) {
+        branchName = defaultB.name;
+      }
     }
 
     // 2. Query target sections
@@ -556,7 +582,7 @@ export async function GET(req: NextRequest) {
 
     const occMap = new Map<string, number>();
     targetSectionIds.forEach(id => occMap.set(id, 0));
-    allActiveStudents.forEach(st => {
+    allActiveStudents.forEach((st) => {
       if (st.authoritativeSectionId && occMap.has(st.authoritativeSectionId)) {
         occMap.set(st.authoritativeSectionId, (occMap.get(st.authoritativeSectionId) || 0) + 1);
       }
@@ -611,14 +637,18 @@ export async function POST(req: NextRequest) {
         .where(and(eq(sessionYears.tenantId, tenantId), eq(sessionYears.isDefault, true)))
         .limit(1);
       targetSessionYearId = activeSession?.id;
-      if (activeSession) sessionYearName = activeSession.name;
+      if (activeSession) {
+        sessionYearName = activeSession.name;
+      }
     } else {
       const [sess] = await db
         .select({ id: sessionYears.id, name: sessionYears.name })
         .from(sessionYears)
         .where(and(eq(sessionYears.tenantId, tenantId), eq(sessionYears.id, targetSessionYearId)))
         .limit(1);
-      if (sess) sessionYearName = sess.name;
+      if (sess) {
+        sessionYearName = sess.name;
+      }
     }
 
     if (!targetSessionYearId) {
@@ -628,10 +658,14 @@ export async function POST(req: NextRequest) {
     let branchName = 'Campus Principal';
     if (ctx.branchId) {
       const [b] = await db.select({ name: branches.name }).from(branches).where(and(eq(branches.tenantId, tenantId), eq(branches.id, ctx.branchId))).limit(1);
-      if (b) branchName = b.name;
+      if (b) {
+        branchName = b.name;
+      }
     } else {
       const [defaultB] = await db.select({ name: branches.name }).from(branches).where(and(eq(branches.tenantId, tenantId), eq(branches.isDefault, true))).limit(1);
-      if (defaultB) branchName = defaultB.name;
+      if (defaultB) {
+        branchName = defaultB.name;
+      }
     }
 
     // 2. Query target sections
@@ -706,7 +740,7 @@ export async function POST(req: NextRequest) {
     // Frozen baseline occupancy map from current authoritative assignments
     const initialOccupancyMap = new Map<string, number>();
     targetSectionIds.forEach(id => initialOccupancyMap.set(id, 0));
-    allActiveStudents.forEach(st => {
+    allActiveStudents.forEach((st) => {
       if (st.authoritativeSectionId && initialOccupancyMap.has(st.authoritativeSectionId)) {
         initialOccupancyMap.set(st.authoritativeSectionId, (initialOccupancyMap.get(st.authoritativeSectionId) || 0) + 1);
       }
@@ -739,10 +773,8 @@ export async function POST(req: NextRequest) {
       const historySet = new Set<string>();
       if (movedInIds.length > 0) {
         const [attRows, gradeRows] = await Promise.all([
-          db.select({ studentId: attendance.studentId }).from(attendance)
-            .where(and(eq(attendance.tenantId, tenantId), inArray(attendance.studentId, movedInIds))).limit(500),
-          db.select({ studentId: assessmentResults.studentId }).from(assessmentResults)
-            .where(and(eq(assessmentResults.tenantId, tenantId), inArray(assessmentResults.studentId, movedInIds))).limit(500),
+          db.select({ studentId: attendance.studentId }).from(attendance).where(and(eq(attendance.tenantId, tenantId), inArray(attendance.studentId, movedInIds))).limit(500),
+          db.select({ studentId: assessmentResults.studentId }).from(assessmentResults).where(and(eq(assessmentResults.tenantId, tenantId), inArray(assessmentResults.studentId, movedInIds))).limit(500),
         ]);
         attRows.forEach(r => historySet.add(r.studentId));
         gradeRows.forEach(r => historySet.add(r.studentId));
@@ -922,14 +954,14 @@ export async function POST(req: NextRequest) {
     if (body.rebalanceAssigned) {
       if (body.classId) {
         eligibleStudents = allActiveStudents.filter(s =>
-          s.authoritativeClassId === body.classId ||
-          (s.authoritativeSectionId && targetSectionIds.includes(s.authoritativeSectionId)) ||
-          s.authoritativeSectionId == null,
+          s.authoritativeClassId === body.classId
+          || (s.authoritativeSectionId && targetSectionIds.includes(s.authoritativeSectionId))
+          || s.authoritativeSectionId == null,
         );
       } else {
         eligibleStudents = allActiveStudents.filter(s =>
-          (s.authoritativeSectionId && targetSectionIds.includes(s.authoritativeSectionId)) ||
-          s.authoritativeSectionId == null,
+          (s.authoritativeSectionId && targetSectionIds.includes(s.authoritativeSectionId))
+          || s.authoritativeSectionId == null,
         );
       }
     } else {
@@ -1026,10 +1058,6 @@ export async function POST(req: NextRequest) {
       simulationValid,
       hasAcademicHistoryWarning,
       movedWithHistoryCount,
-      evaluatedStudentsCount,
-      unchangedCount,
-      newAssignmentsCount,
-      movedCount,
     } = simulation;
 
     const movedStudents = assignments.filter(a => a.isMove);
@@ -1141,10 +1169,10 @@ export async function POST(req: NextRequest) {
       message: unplacedStudents.length > 0
         ? `${assignments.length} modification(s) proposée(s), ${unplacedStudents.length} non affecté(s).`
         : !hasChanges
-          ? 'Aucune modification nécessaire. Les sections sont déjà équilibrées.'
-          : body.dryRun
-            ? `Simulation prête : ${newAssignments.length} nouvelle(s) affectation(s), ${movedStudents.length} déplacement(s).`
-            : `${assignments.length} affectation(s) appliquée(s) avec succès.`,
+            ? 'Aucune modification nécessaire. Les sections sont déjà équilibrées.'
+            : body.dryRun
+              ? `Simulation prête : ${newAssignments.length} nouvelle(s) affectation(s), ${movedStudents.length} déplacement(s).`
+              : `${assignments.length} affectation(s) appliquée(s) avec succès.`,
     });
   } catch (error) {
     return apiErrorResponse(error);

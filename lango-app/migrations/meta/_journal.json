@@ -1051,6 +1051,55 @@
       "when": 1789400040000,
       "tag": "0148_matricule_tenant_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 150,
+      "version": "7",
+      "when": 1790114022878,
+      "tag": "0149_subject_teacher_assignment_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 151,
+      "version": "7",
+      "when": 1790114023878,
+      "tag": "0150_attendance_section_scope",
+      "breakpoints": true
+    },
+    {
+      "idx": 152,
+      "version": "7",
+      "when": 1790115023878,
+      "tag": "0151_attendance_register_section_cascade",
+      "breakpoints": true
+    },
+    {
+      "idx": 153,
+      "version": "7",
+      "when": 1790116023878,
+      "tag": "0152_attendance_active_mark_unique",
+      "breakpoints": true
+    },
+    {
+      "idx": 154,
+      "version": "7",
+      "when": 1790117023878,
+      "tag": "0153_attendance_excuse_scope",
+      "breakpoints": true
+    },
+    {
+      "idx": 155,
+      "version": "7",
+      "when": 1790118023878,
+      "tag": "0154_attendance_session_year_truth",
+      "breakpoints": true
+    },
+    {
+      "idx": 156,
+      "version": "7",
+      "when": 1790119023878,
+      "tag": "0155_attendance_rate_nullable",
+      "breakpoints": true
     }
   ]
 }

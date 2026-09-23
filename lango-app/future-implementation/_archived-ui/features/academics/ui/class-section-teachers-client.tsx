@@ -1,379 +1,488 @@
 'use client';
 
-import { useState } from 'react';
+import { Layers, Plus, Trash2, UserCog, Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Card } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
-  Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from '@/components/ui/dialog';
-import {
-  Plus, Download, Search, Calendar, Users, Edit,
-} from 'lucide-react';
-import {
-  TeacherWorkloadItem, MOCK_TEACHERS, TIMETABLE_DAYS,
-} from '../data/class-section-teachers-config';
+import { usePermissions } from '@/hooks/use-permissions';
+
+type ClassOption = { id: string; name: string };
+type SectionOption = {
+  id: string;
+  classId: string;
+  sectionName: string | null;
+  enrolledCount: number;
+  maxStudents: number | null;
+  homeroomTeacherId: string | null;
+};
+type Assignment = { id: string; classSectionId: string; teacherId: string; role: string; notes: string | null };
+type TeacherOption = { id: string; name: string };
 
 export function ClassSectionTeachersClient({ locale: _locale }: { locale?: string } = {}) {
   const t = useTranslations('Academics');
   const tc = useTranslations('Common');
+  const { can } = usePermissions();
+  const canManage = can('academics.manage');
 
-  const [teachers, setTeachers] = useState<TeacherWorkloadItem[]>(MOCK_TEACHERS);
-  const [selectedTeacherId, setSelectedTeacherId] = useState('t1');
-  const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [classes, setClasses] = useState<ClassOption[]>([]);
+  const [teachers, setTeachers] = useState<TeacherOption[]>([]);
+  const [classId, setClassId] = useState('');
+  const [sections, setSections] = useState<SectionOption[]>([]);
+  const [sectionId, setSectionId] = useState('');
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [form, setForm] = useState({ teacherId: '', role: 'primary', notes: '' });
+  const [saving, setSaving] = useState(false);
 
-  const dayNames: Record<string, string> = {
-    Lundi: t('dayMonday'),
-    Mardi: t('dayTuesday'),
-    Mercredi: t('dayWednesday'),
-    Jeudi: t('dayThursday'),
-    Vendredi: t('dayFriday'),
-    Samedi: t('daySaturday'),
-    Dimanche: t('daySunday'),
+  useEffect(() => {
+    fetch('/api/academics/classes?pageSize=100')
+      .then(r => r.json())
+      .then((j) => {
+        if (j?.success && Array.isArray(j.data)) {
+          setClasses(j.data);
+          if (j.data.length > 0) {
+            setClassId(j.data[0].id);
+          }
+        }
+      })
+      .catch(() => {});
+    fetch('/api/teachers?pageSize=200')
+      .then(r => r.json())
+      .then(j => j?.success && setTeachers(j.data))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!classId) {
+      setSections([]);
+      setSectionId('');
+      return;
+    }
+    fetch(`/api/academics/class-sections?classId=${classId}&pageSize=100`)
+      .then(r => r.json())
+      .then((j) => {
+        if (j?.success && Array.isArray(j.data)) {
+          setSections(j.data);
+          setSectionId(j.data.length > 0 ? j.data[0].id : '');
+        }
+      })
+      .catch(() => {});
+  }, [classId]);
+
+  const loadAssignments = (id: string) => {
+    if (!id) {
+      setAssignments([]);
+      return;
+    }
+    setLoading(true);
+    fetch(`/api/academics/class-teachers?classSectionId=${id}&pageSize=100`)
+      .then(r => r.json())
+      .then(j => j?.success && setAssignments(j.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   };
 
-  // Modal State
-  const [isAssignOpen, setIsAssignOpen] = useState(false);
-  const [assignment, setAssignment] = useState({
-    teacherId: 't1',
-    className: '2BAC-A',
-    subject: 'Mathématiques',
-    weeklyHours: '4',
-    day: 'Lundi',
-    slot: '08h-10h',
-  });
+  useEffect(() => {
+    loadAssignments(sectionId);
+  }, [sectionId]);
 
-  const filteredTeachers = teachers.filter(t => {
-    const matchesSearch = t.name.toLowerCase().includes(search.toLowerCase()) || t.specialty.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || t.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+  const teacherName = (id: string) => teachers.find(x => x.id === id)?.name ?? id;
+  const activeSection = sections.find(s => s.id === sectionId) ?? null;
+  const sectionsWithoutHomeroom = sections.filter(s => !s.homeroomTeacherId).length;
+  const assignedTeacherIds = new Set(assignments.map(a => a.teacherId));
+  const availableTeachers = teachers.filter(x => !assignedTeacherIds.has(x.id));
 
-  const activeTeacher = teachers.find(t => t.id === selectedTeacherId) ?? teachers[0];
+  const openAssign = () => {
+    setForm({ teacherId: '', role: 'primary', notes: '' });
+    setIsOpen(true);
+  };
 
-  const handleAssignTeacher = () => {
-    const hoursNum = Number(assignment.weeklyHours) || 2;
-    setTeachers(prev => prev.map(t => {
-      if (t.id === assignment.teacherId) {
-        const newHours = t.weeklyHours + hoursNum;
-        const newStatus = newHours > t.maxHours ? 'overload' : newHours >= 18 ? 'balanced' : 'underload';
-        return {
-          ...t,
-          weeklyHours: newHours,
-          status: newStatus,
-          timetablePreview: [
-            ...t.timetablePreview,
-            {
-              day: assignment.day,
-              hours: assignment.slot,
-              className: assignment.className,
-              subject: assignment.subject,
-              room: 'Salle Nouveaux',
-            },
-          ],
-        };
+  const handleAssign = async () => {
+    if (!form.teacherId || !sectionId) {
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch('/api/academics/class-teachers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          classSectionId: sectionId,
+          teacherId: form.teacherId,
+          role: form.role,
+          notes: form.notes.trim() || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        toast.error(json.error?.message || tc('errorOccurred'));
+        return;
       }
-      return t;
-    }));
-    setIsAssignOpen(false);
+      toast.success(t('btnConfirmAssignment'));
+      setIsOpen(false);
+      loadAssignments(sectionId);
+    } catch {
+      toast.error(tc('errorOccurred'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const performRemove = async (item: Assignment) => {
+    try {
+      const res = await fetch(`/api/academics/class-teachers?id=${item.id}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (!json.success) {
+        toast.error(json.error?.message || tc('errorOccurred'));
+        return;
+      }
+      toast.success(t('removeAssignment'));
+      loadAssignments(sectionId);
+    } catch {
+      toast.error(tc('errorOccurred'));
+    }
+  };
+
+  const handleRemove = (item: Assignment) => {
+    toast(`${t('removeAssignment')} · ${teacherName(item.teacherId)} ?`, {
+      action: {
+        label: tc('confirm'),
+        onClick: () => {
+          void performRemove(item);
+        },
+      },
+    });
   };
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="mx-auto max-w-[1600px] space-y-6">
+      <div className="
+        flex flex-col justify-between gap-4
+        sm:flex-row sm:items-center
+      "
+      >
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('teachersWorkloadTitle')}</h1>
-          <p className="text-xs text-slate-500 mt-1">{t('teachersWorkloadSubtitle')}</p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('sectionTeachersTitle')}</h1>
+          <p className="mt-1 text-xs text-slate-500">{t('sectionTeachersSubtitle')}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" className="h-10 rounded-xl px-4 gap-2 border-slate-200 text-xs font-bold">
-            <Download className="w-4 h-4 text-slate-600" />
-            <span>{t('btnExportWorkloads')}</span>
-          </Button>
+        {canManage && (
           <Button
             size="sm"
-            onClick={() => setIsAssignOpen(true)}
-            className="h-10 rounded-xl px-4 gap-2 bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold shadow-2xs"
+            onClick={openAssign}
+            disabled={!sectionId}
+            className="
+              h-10 gap-2 rounded-xl bg-[#2487B8] px-4 text-xs font-bold
+              text-white shadow-2xs
+              hover:bg-[#1B6C93]
+            "
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="size-4" />
             <span>{t('btnAssignTeacher')}</span>
           </Button>
-        </div>
+        )}
       </div>
 
-      {/* Top 3 Analytics Cards Suite */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-1">
-          <p className="text-xs font-bold text-slate-500">{t('totalActiveTeachers')}</p>
-          <p className="text-2xl font-extrabold text-[#16212B]">42</p>
-          <p className="text-[10px] text-slate-400">{t('teachingStaffLabel')}</p>
+      <div className="
+        grid grid-cols-1 gap-4
+        md:grid-cols-3
+      "
+      >
+        <Card className="
+          space-y-1 rounded-2xl border border-slate-200/80 bg-white p-4
+          shadow-2xs
+        "
+        >
+          <p className="text-xs font-bold text-slate-500">{t('sectionsCol')}</p>
+          <p className="text-2xl font-extrabold text-[#16212B]">{sections.length}</p>
+          <p className="text-[10px] text-slate-400">{classes.find(c => c.id === classId)?.name ?? '—'}</p>
         </Card>
-        <Card className="p-4 bg-white rounded-2xl border border-rose-200/60 bg-rose-50/20 shadow-2xs space-y-1">
-          <p className="text-xs font-bold text-[#E5544B]">{t('teachersInOverload')}</p>
-          <p className="text-2xl font-extrabold text-[#E5544B]">
-            {teachers.filter(t => t.status === 'overload').length}
+        <Card className={`
+          space-y-1 rounded-2xl border bg-white p-4 shadow-2xs
+          ${sectionsWithoutHomeroom > 0
+      ? `border-amber-200/60 bg-amber-50/20`
+      : `border-slate-200/80`}
+        `}
+        >
+          <p className={`
+            text-xs font-bold
+            ${sectionsWithoutHomeroom > 0
+      ? `text-amber-700`
+      : `text-slate-500`}
+          `}
+          >
+            {t('noTeacherAssigned')}
           </p>
-          <p className="text-[10px] text-rose-600 font-bold">{t('correctiveActionRecommended')}</p>
+          <p className={`
+            text-2xl font-extrabold
+            ${sectionsWithoutHomeroom > 0
+      ? `text-amber-700`
+      : `text-[#16212B]`}
+          `}
+          >
+            {sectionsWithoutHomeroom}
+          </p>
+          <p className="text-[10px] text-slate-400">{t('primaryRole')}</p>
         </Card>
-        <Card className="p-4 bg-white rounded-2xl border border-blue-200/60 bg-blue-50/20 shadow-2xs space-y-1">
-          <p className="text-xs font-bold text-[#1B6C93]">{t('globalAvailability')}</p>
-          <p className="text-2xl font-extrabold text-[#2487B8]">{t('freeHoursLabel')}</p>
-          <p className="text-[10px] text-slate-400">{t('residualCapacity')}</p>
+        <Card className="
+          space-y-1 rounded-2xl border border-slate-200/80 bg-white p-4
+          shadow-2xs
+        "
+        >
+          <p className="text-xs font-bold text-slate-500">{t('btnAssignTeacher')}</p>
+          <p className="text-2xl font-extrabold text-[#2487B8]">{assignments.length}</p>
+          <p className="text-[10px] text-slate-400">{activeSection?.sectionName ?? '—'}</p>
         </Card>
       </div>
 
-      {/* Main 12-col Workspace */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left 7 cols: Teachers List with 36px Avatars */}
-        <div className="lg:col-span-7 space-y-3">
-          {/* Search & Workload Filter Toolbar */}
-          <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center justify-between gap-3">
-            <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <Input
-                placeholder={t('filterTeacherPlaceholder')}
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="ps-9 h-9 text-xs rounded-xl bg-slate-50 border-none"
-              />
-            </div>
-            <div className="flex items-center gap-1 overflow-x-auto">
-              {[
-                { id: 'all', label: t('filterAll') },
-                { id: 'overload', label: t('filterOverload') },
-                { id: 'balanced', label: t('filterBalanced') },
-                { id: 'underload', label: t('filterUnderload') },
-              ].map(f => (
-                <button
-                  key={f.id}
-                  onClick={() => setFilterStatus(f.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
-                    filterStatus === f.id ? 'bg-[#2487B8] text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
+      <Card className="
+        rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs
+      "
+      >
+        <div className="
+          flex flex-col items-center gap-3
+          sm:flex-row
+        "
+        >
+          <div className="
+            flex w-full items-center gap-3
+            sm:w-auto
+          "
+          >
+            <span className="text-xs font-bold whitespace-nowrap text-slate-500">{t('classCol')}</span>
+            <Select value={classId} onValueChange={setClassId}>
+              <SelectTrigger className="
+                h-10 w-56 rounded-xl border-slate-200 text-xs font-extrabold
+              "
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {classes.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-
-          <div className="space-y-3">
-            {filteredTeachers.map(tItem => {
-              const isSelected = tItem.id === selectedTeacherId;
-              const pct = Math.round((tItem.weeklyHours / tItem.maxHours) * 100);
-              return (
-                <Card
-                  key={tItem.id}
-                  onClick={() => setSelectedTeacherId(tItem.id)}
-                  className={`p-4 bg-white rounded-2xl border transition cursor-pointer space-y-3 ${
-                    isSelected ? 'border-[#2487B8] bg-[#DCEBF4]/20 shadow-xs' : 'border-slate-200/80 hover:border-slate-300 shadow-2xs'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {/* 36px Circular Avatar */}
-                      <div className="w-9 h-9 rounded-full bg-[#DCEBF4] text-[#1B6C93] border-2 border-white shadow-2xs flex items-center justify-center font-extrabold text-xs shrink-0">
-                        {tItem.avatar}
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-extrabold text-[#16212B]">{tItem.name}</h3>
-                        <p className="text-[10px] text-slate-400">{tItem.specialty} • {t('classesAssigned', { count: tItem.assignedClassesCount })}</p>
-                      </div>
-                    </div>
-
-                    {/* Status Badge */}
-                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
-                      tItem.status === 'overload' ? 'bg-[#FCE4E2] text-[#E5544B]' :
-                      tItem.status === 'balanced' ? 'bg-[#DDF5EC] text-[#17A673]' : 'bg-[#DCEBF4] text-[#1B6C93]'
-                    }`}>
-                      {tItem.status === 'overload' ? t('badgeOverload') : tItem.status === 'balanced' ? t('badgeBalanced') : t('badgeUnderload')}
+          <div className="
+            flex w-full items-center gap-3
+            sm:w-auto
+          "
+          >
+            <span className="text-xs font-bold whitespace-nowrap text-slate-500">{t('sectionsCol')}</span>
+            <Select value={sectionId} onValueChange={setSectionId}>
+              <SelectTrigger className="
+                h-10 w-44 rounded-xl border-slate-200 text-xs font-extrabold
+              "
+              >
+                <SelectValue placeholder={t('sectionsCol')} />
+              </SelectTrigger>
+              <SelectContent>
+                {sections.map(s => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.sectionName ?? '—'}
+                    {' '}
+                    (
+                    {s.enrolledCount}
+                    {s.maxStudents ? `/${s.maxStudents}` : ''}
+                    )
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {activeSection && (
+            <div className="
+              rounded-xl border border-slate-100 bg-slate-50 px-3 py-2
+              text-[11px] font-bold text-slate-600
+              sm:ms-auto
+            "
+            >
+              {t('primaryRole')}
+              :
+              {activeSection.homeroomTeacherId
+                ? teacherName(activeSection.homeroomTeacherId)
+                : (
+                    <span className="text-amber-700">
+                      {t('noTeacherAssigned')}
                     </span>
-                  </div>
-
-                  {/* 26h Workload Progress Bar */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500">
-                      <span>{t('workloadVolume', { hours: tItem.weeklyHours, max: tItem.maxHours })}</span>
-                      <span>{pct}%</span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${
-                          tItem.weeklyHours > tItem.maxHours ? 'bg-[#E5544B]' : 'bg-[#2487B8]'
-                        }`}
-                        style={{ width: `${Math.min(100, pct)}%` }}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Right 5 cols: 5-Day Weekly Timetable Matrix Inspector */}
-        <div className="lg:col-span-5 space-y-4">
-          {activeTeacher && (
-            <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-              <div className="flex items-start justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center font-extrabold text-sm">
-                    {activeTeacher.avatar}
-                  </div>
-                  <div>
-                    <h2 className="text-base font-extrabold text-[#16212B]">{activeTeacher.name}</h2>
-                    <p className="text-xs text-slate-400">{activeTeacher.specialty} • {activeTeacher.phone}</p>
-                  </div>
-                </div>
-                <Button size="sm" variant="outline" className="h-8 text-xs rounded-xl border-slate-200">
-                  <Edit className="w-3.5 h-3.5 text-slate-600 me-1" /> {t('btnRebalance')}
-                </Button>
-              </div>
-
-              {/* 5-Day Weekly Timetable Grid Matrix */}
-              <div className="space-y-3">
-                <h3 className="text-xs font-extrabold text-[#16212B] uppercase tracking-wider flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-[#2487B8]" />
-                  {t('weeklySchedule')}
-                </h3>
-
-                <div className="space-y-2">
-                  {TIMETABLE_DAYS.map(day => {
-                    const daySlots = activeTeacher.timetablePreview.filter(s => s.day === day);
-                    return (
-                      <div key={day} className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 space-y-1.5">
-                        <span className="text-[11px] font-extrabold text-[#16212B] block">{dayNames[day] || day}</span>
-                        {daySlots.length === 0 ? (
-                          <p className="text-[10px] text-slate-400 italic">{t('noClassesThisDay')}</p>
-                        ) : (
-                          <div className="space-y-1">
-                            {daySlots.map((slot, i) => (
-                              <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200/70 text-xs">
-                                <div>
-                                  <span className="font-bold text-[#16212B]">{slot.hours}</span>
-                                  <span className="text-[10px] text-slate-400 ms-2">{slot.room}</span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700">
-                                    {slot.subject}
-                                  </span>
-                                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-[#DCEBF4] text-[#1B6C93]">
-                                    {slot.className}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </Card>
+                  )}
+            </div>
           )}
         </div>
-      </div>
+      </Card>
 
-      {/* Affectation Modal Dialog */}
-      <Dialog open={isAssignOpen} onOpenChange={setIsAssignOpen}>
-        <DialogContent className="max-w-md bg-white rounded-2xl p-6">
+      <Card className="
+        space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs
+      "
+      >
+        <h3 className="
+          flex items-center gap-2 text-sm font-extrabold text-[#16212B]
+        "
+        >
+          <Users className="size-4 text-[#2487B8]" />
+          {t('sectionTeachersTitle')}
+        </h3>
+
+        {!loading && assignments.length === 0 && (
+          <div className="
+            space-y-2 rounded-2xl border border-dashed border-slate-200
+            bg-slate-50/50 py-10 text-center
+          "
+          >
+            <UserCog className="mx-auto size-6 text-slate-300" />
+            <p className="text-xs font-bold text-slate-600">{t('noAssignmentsForSection')}</p>
+          </div>
+        )}
+
+        <div className="space-y-3">
+          {assignments.map(item => (
+            <div
+              key={item.id}
+              className="
+                rounded-2xl border border-slate-200/80 bg-white p-4 transition
+                hover:border-slate-300
+              "
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="
+                    flex size-10 shrink-0 items-center justify-center
+                    rounded-full bg-[#DCEBF4] text-xs font-extrabold
+                    text-[#1B6C93]
+                  "
+                  >
+                    {teacherName(item.teacherId).split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="
+                        truncate text-sm font-extrabold text-[#16212B]
+                      "
+                      >
+                        {teacherName(item.teacherId)}
+                      </h4>
+                      <span className={`
+                        rounded-full px-2 py-0.5 text-[10px] font-bold
+                        ${
+            item.role === 'substitute'
+              ? `border border-amber-200/60 bg-amber-50 text-amber-700`
+              : `bg-[#DCEBF4] text-[#1B6C93]`
+            }
+                      `}
+                      >
+                        {item.role === 'substitute' ? t('substituteRole') : t('primaryRole')}
+                      </span>
+                    </div>
+                    {item.notes && (
+                      <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                        {item.notes}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {canManage && (
+                  <button
+                    onClick={() => handleRemove(item)}
+                    className="
+                      shrink-0 rounded-lg p-1.5 text-slate-400 transition
+                      hover:bg-rose-50 hover:text-rose-600
+                    "
+                    title={t('removeAssignment')}
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-md rounded-2xl bg-white p-6">
           <DialogHeader>
-            <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
-              <Users className="w-5 h-5 text-[#2487B8]" />
-              {t('assignTeacherModalTitle')}
+            <DialogTitle className="
+              flex items-center gap-2 text-base font-extrabold text-[#16212B]
+            "
+            >
+              <Layers className="size-5 text-[#2487B8]" />
+              {t('assignTeacherToSection')}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-3 my-3 text-xs">
+          <div className="my-3 space-y-3 text-xs">
             <div>
-              <label className="font-bold text-slate-700 block mb-1">{t('teacherFieldLabel')}</label>
-              <Select value={assignment.teacherId} onValueChange={val => setAssignment({ ...assignment, teacherId: val })}>
-                <SelectTrigger className="h-9 text-xs rounded-xl">
-                  <SelectValue />
+              <label className="mb-1 block font-bold text-slate-700">{t('teacherFieldLabel')}</label>
+              <Select value={form.teacherId} onValueChange={val => setForm({ ...form, teacherId: val })}>
+                <SelectTrigger className="h-9 rounded-xl text-xs">
+                  <SelectValue placeholder={t('teacherFieldLabel')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {teachers.map(tItem => (
-                    <SelectItem key={tItem.id} value={tItem.id}>
-                      {tItem.name} ({tItem.weeklyHours}h / {tItem.maxHours}h)
-                    </SelectItem>
+                  {availableTeachers.map(x => (
+                    <SelectItem key={x.id} value={x.id}>{x.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">{t('classFieldLabel')}</label>
-                <Select value={assignment.className} onValueChange={val => setAssignment({ ...assignment, className: val })}>
-                  <SelectTrigger className="h-9 text-xs rounded-xl">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="2BAC-A">2BAC-A</SelectItem>
-                    <SelectItem value="2BAC-B">2BAC-B</SelectItem>
-                    <SelectItem value="1BAC-A">1BAC-A</SelectItem>
-                    <SelectItem value="3AC-A">3AC-A</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">{t('subjectFieldLabel')}</label>
-                <Input
-                  value={assignment.subject}
-                  onChange={e => setAssignment({ ...assignment, subject: e.target.value })}
-                  className="h-9 text-xs rounded-xl"
-                />
-              </div>
+            <div>
+              <label className="mb-1 block font-bold text-slate-700">{t('teachingTypeLabel')}</label>
+              <Select value={form.role} onValueChange={val => setForm({ ...form, role: val })}>
+                <SelectTrigger className="h-9 rounded-xl text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="primary">{t('primaryRole')}</SelectItem>
+                  <SelectItem value="substitute">{t('substituteRole')}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">{t('weeklyHoursFieldLabel')}</label>
-                <Input
-                  type="number"
-                  value={assignment.weeklyHours}
-                  onChange={e => setAssignment({ ...assignment, weeklyHours: e.target.value })}
-                  className="h-9 text-xs rounded-xl"
-                />
-              </div>
-
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">{t('dayFieldLabel')}</label>
-                <Select value={assignment.day} onValueChange={val => setAssignment({ ...assignment, day: val })}>
-                  <SelectTrigger className="h-9 text-xs rounded-xl">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIMETABLE_DAYS.map(d => <SelectItem key={d} value={d}>{dayNames[d] || d}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">{t('slotFieldLabel')}</label>
-                <Input
-                  value={assignment.slot}
-                  onChange={e => setAssignment({ ...assignment, slot: e.target.value })}
-                  className="h-9 text-xs rounded-xl"
-                />
-              </div>
+            <div>
+              <label className="mb-1 block font-bold text-slate-700">{t('notesFieldLabel')}</label>
+              <Input
+                value={form.notes}
+                onChange={e => setForm({ ...form, notes: e.target.value })}
+                className="h-9 rounded-xl text-xs"
+              />
             </div>
           </div>
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIsAssignOpen(false)} className="rounded-xl text-xs h-9">
+            <Button
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+              className="h-9 rounded-xl text-xs"
+            >
               {tc('cancel')}
             </Button>
-            <Button onClick={handleAssignTeacher} className="rounded-xl text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold">
-              {t('btnConfirmAssignment')}
+            <Button
+              onClick={handleAssign}
+              disabled={saving || !form.teacherId}
+              className="
+                h-9 rounded-xl bg-[#2487B8] text-xs font-bold text-white
+                hover:bg-[#1B6C93]
+              "
+            >
+              {saving ? tc('loading') : t('btnConfirmAssignment')}
             </Button>
           </DialogFooter>
         </DialogContent>

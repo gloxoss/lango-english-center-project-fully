@@ -2,13 +2,14 @@ import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { assertStudentAccess } from '@/libs/api/student-access';
 import { db } from '@/libs/DB';
 import { attendance, attendanceExcuses, attendanceFlags, attendanceSummary, guardians, guardianStudents, smsMessages, user } from '@/models/Schema';
 
 const RECOMMENDED_ACTION: Record<string, string> = {
   CONSECUTIVE_ABSENCE: 'Entretien avec les parents + plan de suivi',
   UNJUSTIFIED_ABSENCE: 'Contacter le tuteur pour obtenir une justification',
-  REPEATED_LATE: "Avertissement écrit + suivi hebdomadaire de l'assiduité",
+  REPEATED_LATE: 'Avertissement écrit + suivi hebdomadaire de l\'assiduité',
 };
 
 export async function GET(request: Request) {
@@ -41,6 +42,9 @@ export async function GET(request: Request) {
     if (!flag) {
       return NextResponse.json({ success: false, message: 'Signalement introuvable' }, { status: 404 });
     }
+
+    // AUTHORITATIVE SCOPE (P0): teacher sections / campus / guardian links.
+    await assertStudentAccess(context, tenantId, flag.studentId);
 
     const detectedDate = flag.detectedAt.slice(0, 10);
 

@@ -7,7 +7,7 @@ import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, shiftCreateSchema, shiftUpdateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { shifts } from '@/models/Schema';
+import { classes, shifts } from '@/models/Schema';
 
 function toApiShift(row: typeof shifts.$inferSelect) {
   return {
@@ -102,6 +102,21 @@ export async function PUT(request: Request) {
   }
 }
 
+/**
+ * Reference safety: the ACTUAL dependency graph is classes.shiftId. Timetable
+ * slots do not reference shifts directly in the current model, so they are not
+ * claimed as blockers here.
+ */
+async function shiftDependencyBlockers(tenantId: string, shiftId: string) {
+  const [classRows] = await Promise.all([
+    db.select({ n: count() }).from(classes).where(and(eq(classes.tenantId, tenantId), eq(classes.shiftId, shiftId))),
+  ]);
+
+  return [
+    { key: 'classes', count: Number(classRows[0]?.n ?? 0) },
+  ].filter(blocker => blocker.count > 0);
+}
+
 export async function DELETE(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
@@ -112,6 +127,26 @@ export async function DELETE(request: Request) {
 
     if (!id) {
       return NextResponse.json({ success: false, message: 'ID non fourni' }, { status: 400 });
+    }
+
+    const [existing] = await db.select({ id: shifts.id }).from(shifts).where(and(eq(shifts.id, id), eq(shifts.tenantId, tenantId))).limit(1);
+    if (!existing) {
+      return NextResponse.json({ success: false, message: 'Introuvable' }, { status: 404 });
+    }
+
+    const blockers = await shiftDependencyBlockers(tenantId, id);
+    if (blockers.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'SHIFT_IN_USE',
+            message: 'Cette vacation est utilisée par des classes actives et ne peut pas être supprimée.',
+          },
+          blockers,
+        },
+        { status: 409 },
+      );
     }
 
     await db.delete(shifts).where(and(eq(shifts.id, id), eq(shifts.tenantId, tenantId)));

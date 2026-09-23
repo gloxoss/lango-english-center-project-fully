@@ -7,7 +7,7 @@ import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, semesterCreateSchema, semesterUpdateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { semesters } from '@/models/Schema';
+import { classSubjects, semesters } from '@/models/Schema';
 
 function toApiSemester(row: typeof semesters.$inferSelect) {
   return {
@@ -90,6 +90,22 @@ export async function PUT(request: Request) {
   }
 }
 
+/**
+ * Reference safety: in the CURRENT exposed model, curriculum rows
+ * (class_subjects.semesterId) are the authoritative period dependency.
+ * Exam-term and reporting convergence is a separate tracked workstream and is
+ * deliberately not claimed here.
+ */
+async function semesterDependencyBlockers(tenantId: string, semesterId: string) {
+  const [classSubjectRows] = await Promise.all([
+    db.select({ n: count() }).from(classSubjects).where(and(eq(classSubjects.tenantId, tenantId), eq(classSubjects.semesterId, semesterId))),
+  ]);
+
+  return [
+    { key: 'class_subjects', count: Number(classSubjectRows[0]?.n ?? 0) },
+  ].filter(blocker => blocker.count > 0);
+}
+
 export async function DELETE(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
@@ -100,6 +116,26 @@ export async function DELETE(request: Request) {
 
     if (!id) {
       return NextResponse.json({ success: false, message: 'ID non fourni' }, { status: 400 });
+    }
+
+    const [existing] = await db.select({ id: semesters.id }).from(semesters).where(and(eq(semesters.id, id), eq(semesters.tenantId, tenantId))).limit(1);
+    if (!existing) {
+      return NextResponse.json({ success: false, message: 'Introuvable' }, { status: 404 });
+    }
+
+    const blockers = await semesterDependencyBlockers(tenantId, id);
+    if (blockers.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'SEMESTER_IN_USE',
+            message: 'Cette période est référencée par le curriculum actif et ne peut pas être supprimée.',
+          },
+          blockers,
+        },
+        { status: 409 },
+      );
     }
 
     await db.delete(semesters).where(and(eq(semesters.id, id), eq(semesters.tenantId, tenantId)));

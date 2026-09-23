@@ -7,7 +7,7 @@ import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { mediumCreateSchema, mediumUpdateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { mediums } from '@/models/Schema';
+import { classes, classSections, mediums, subjects } from '@/models/Schema';
 
 function toApiMedium(row: typeof mediums.$inferSelect) {
   return { id: row.id, name: row.name, schoolId: row.tenantId };
@@ -81,6 +81,25 @@ export async function PUT(request: Request) {
   }
 }
 
+/**
+ * Reference safety: a medium is the TEACHING language of classes, sections and
+ * subjects. It is not a UI locale, a student native language or a guardian
+ * communication language — those live elsewhere and must not be conflated.
+ */
+async function mediumDependencyBlockers(tenantId: string, mediumId: string) {
+  const [classRows, sectionRows, subjectRows] = await Promise.all([
+    db.select({ n: count() }).from(classes).where(and(eq(classes.tenantId, tenantId), eq(classes.mediumId, mediumId))),
+    db.select({ n: count() }).from(classSections).where(and(eq(classSections.tenantId, tenantId), eq(classSections.mediumId, mediumId))),
+    db.select({ n: count() }).from(subjects).where(and(eq(subjects.tenantId, tenantId), eq(subjects.mediumId, mediumId))),
+  ]);
+
+  return [
+    { key: 'classes', count: Number(classRows[0]?.n ?? 0) },
+    { key: 'class_sections', count: Number(sectionRows[0]?.n ?? 0) },
+    { key: 'subjects', count: Number(subjectRows[0]?.n ?? 0) },
+  ].filter(blocker => blocker.count > 0);
+}
+
 export async function DELETE(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
@@ -91,6 +110,26 @@ export async function DELETE(request: Request) {
 
     if (!id) {
       return NextResponse.json({ success: false, message: 'ID non fourni' }, { status: 400 });
+    }
+
+    const [existing] = await db.select({ id: mediums.id }).from(mediums).where(and(eq(mediums.id, id), eq(mediums.tenantId, tenantId))).limit(1);
+    if (!existing) {
+      return NextResponse.json({ success: false, message: 'Introuvable' }, { status: 404 });
+    }
+
+    const blockers = await mediumDependencyBlockers(tenantId, id);
+    if (blockers.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'MEDIUM_IN_USE',
+            message: 'Ce médium est utilisé par la structure académique active et ne peut pas être supprimé.',
+          },
+          blockers,
+        },
+        { status: 409 },
+      );
     }
 
     await db.delete(mediums).where(and(eq(mediums.id, id), eq(mediums.tenantId, tenantId)));

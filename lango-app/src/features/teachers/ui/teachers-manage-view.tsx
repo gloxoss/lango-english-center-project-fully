@@ -1,36 +1,36 @@
 'use client';
 
-import Link from 'next/link';
-import type { Teacher } from '../model/types';
+import type {
+  TeacherDetail,
+  TeacherDirectoryItem,
+  TeacherDirectoryQuery,
+  TeacherDirectorySummary,
+  TeacherFilterOptions,
+  TeacherScopeInfo,
+  TeacherStatus,
+} from '../model/types';
+import type { TeacherRowAction } from './teacher-directory-table';
+import type { LifecycleTarget } from './teacher-lifecycle-dialog';
 import {
   AlertCircle,
-  BookOpen,
-  Calendar,
-  CalendarCheck,
-  Clock,
+  Building2,
+  ChevronLeft,
+  ChevronRight,
   Download,
-  Edit2,
-  Eye,
-  FileText,
-  MoreVertical,
+  MoreHorizontal,
   Plus,
-  Search,
-  Trash2,
-  Users,
+  Upload,
+  X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -38,715 +38,609 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { DataTable, Column } from '@/components/shared/data-table';
-import { exportToCsv } from '@/libs/csv-export';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { fetchTeacherFilterOptions, fetchTeachers } from '../data/directory-api';
+import { TeacherDirectoryTable } from './teacher-directory-table';
+import { TeacherDossierPanel } from './teacher-dossier-panel';
+import { TeacherFilters } from './teacher-filters';
+import { TeacherFormDialog } from './teacher-form-dialog';
+import { TeacherInspectorContent } from './teacher-inspector';
+import { TeacherKpiCards } from './teacher-kpi-cards';
+import { TeacherLifecycleDialog } from './teacher-lifecycle-dialog';
+import { TeacherMobileCards } from './teacher-mobile-cards';
 
-type TeacherForm = {
-  fullName: string;
-  email: string;
-  phone: string;
-  employeeId: string;
-  specialization: string;
-  hireDate: string;
-  dateOfBirth: string;
-  gender: string;
-  nationalId: string;
-  address: string;
-  city: string;
-  qualification: string;
-  salary: string;
-  contract: boolean;
-  cin: boolean;
-  diploma: boolean;
-};
+type EditableTeacher = TeacherDirectoryItem | TeacherDetail;
 
-const emptyTeacherForm: TeacherForm = {
-  fullName: '',
-  email: '',
-  phone: '',
-  employeeId: '',
-  specialization: '',
-  hireDate: '',
-  dateOfBirth: '',
-  gender: '',
-  nationalId: '',
-  address: '',
-  city: '',
-  qualification: '',
-  salary: '',
-  contract: false,
-  cin: false,
-  diploma: false,
-};
+const STATUS_VALUES: TeacherStatus[] = ['active', 'inactive', 'archived'];
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+/** Same shell key the topbar campus switcher uses — one agreed scope. */
+const BRANCH_STORAGE_KEY = 'schoolos_active_branch_id';
 
-type FilterTabKey = 'all' | 'active' | 'incomplete';
+function parseQuery(params: URLSearchParams): TeacherDirectoryQuery {
+  const statusRaw = params.get('status') ?? '';
+  const status = STATUS_VALUES.includes(statusRaw as TeacherStatus) ? (statusRaw as TeacherStatus) : 'all';
+  const pageRaw = Number(params.get('page'));
+  const pageSizeRaw = Number(params.get('pageSize'));
+  return {
+    search: params.get('search') ?? '',
+    status,
+    subjectId: params.get('subjectId') ?? '',
+    classSectionId: params.get('classSectionId') ?? '',
+    branchId: params.get('branchId') ?? '',
+    page: Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : 1,
+    pageSize: PAGE_SIZE_OPTIONS.includes(pageSizeRaw) ? pageSizeRaw : 20,
+  };
+}
 
+function toSearchParams(query: TeacherDirectoryQuery): URLSearchParams {
+  const params = new URLSearchParams();
+  if (query.search) {
+    params.set('search', query.search);
+  }
+  if (query.status !== 'all') {
+    params.set('status', query.status);
+  }
+  if (query.subjectId) {
+    params.set('subjectId', query.subjectId);
+  }
+  if (query.classSectionId) {
+    params.set('classSectionId', query.classSectionId);
+  }
+  if (query.branchId) {
+    params.set('branchId', query.branchId);
+  }
+  if (query.page > 1) {
+    params.set('page', String(query.page));
+  }
+  if (query.pageSize !== 20) {
+    params.set('pageSize', String(query.pageSize));
+  }
+  return params;
+}
+
+/**
+ * Teacher directory container.
+ *
+ * - Query state (search/status/subject/class/branch/page/pageSize) lives in the
+ *   URL so Back/forward restores it and a filtered view is shareable.
+ * - The list, KPIs and pagination all come from the server; the client never
+ *   filters or paginates a truncated array.
+ * - Every mutation surfaces API errors; destructive actions are confirmed.
+ */
 export function TeachersManageView({ locale }: { locale: string }) {
   const t = useTranslations('Teachers');
   const tCommon = useTranslations('Common');
-  const tStatus = useTranslations('Status');
-  const tStudents = useTranslations('Students');
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
-  const [filterTab, setFilterTab] = useState<FilterTabKey>('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
-  const [form, setForm] = useState<TeacherForm>(emptyTeacherForm);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  async function loadData() {
-    setIsLoading(true);
-    try {
-      const res = await fetch('/api/teachers?pageSize=200');
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success && Array.isArray(json.data)) {
-          setTeachers(json.data);
-          if (json.data.length > 0) {
-            setSelectedTeacherId(prev => prev ?? json.data[0].id);
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Failed to load teachers data', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const query = useMemo(() => parseQuery(new URLSearchParams(searchParams.toString())), [searchParams]);
+
+  const [items, setItems] = useState<TeacherDirectoryItem[]>([]);
+  const [summary, setSummary] = useState<TeacherDirectorySummary | null>(null);
+  const [scope, setScope] = useState<TeacherScopeInfo | null>(null);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [listError, setListError] = useState<string | null>(null);
+  const [options, setOptions] = useState<TeacherFilterOptions | null>(null);
+  const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<EditableTeacher | null>(null);
+  const [lifecycleTarget, setLifecycleTarget] = useState<LifecycleTarget | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
+
+  const setQuery = useCallback((partial: Partial<TeacherDirectoryQuery>) => {
+    const next = { ...query, ...partial };
+    const params = toSearchParams(next);
+    router.push(`?${params.toString()}`, { scroll: false });
+  }, [query, router]);
+
+  const reload = useCallback(() => setReloadToken(token => token + 1), []);
 
   useEffect(() => {
-    loadData();
-  }, []);
-
-  const openCreateDialog = () => {
-    setEditingTeacher(null);
-    setForm(emptyTeacherForm);
-    setDialogOpen(true);
-  };
-
-  const openEditDialog = (teacherItem: Teacher) => {
-    setEditingTeacher(teacherItem);
-    setForm({
-      fullName: teacherItem.name,
-      email: teacherItem.email,
-      phone: teacherItem.phone,
-      employeeId: teacherItem.employeeId,
-      specialization: teacherItem.specialization,
-      hireDate: teacherItem.hireDate ?? '',
-      dateOfBirth: teacherItem.dateOfBirth ?? '',
-      gender: teacherItem.gender ?? '',
-      nationalId: teacherItem.nationalId ?? '',
-      address: teacherItem.address ?? '',
-      city: teacherItem.city ?? '',
-      qualification: teacherItem.qualification ?? '',
-      salary: teacherItem.salary != null ? String(teacherItem.salary) : '',
-      contract: teacherItem.documents?.contract ?? false,
-      cin: teacherItem.documents?.cin ?? false,
-      diploma: teacherItem.documents?.diploma ?? false,
+    let cancelled = false;
+    fetchTeacherFilterOptions(query.branchId).then((result) => {
+      if (cancelled || !result.ok) {
+        return;
+      }
+      setOptions(result.data);
+      // One authoritative scope: a whole-school principal's stored campus
+      // selection (same key the topbar switcher writes) seeds the directory
+      // URL. The id is only a hint — the server validates it.
+      if (!query.branchId && result.data.scope.homeBranchId === null) {
+        const stored = window.localStorage.getItem(BRANCH_STORAGE_KEY);
+        if (stored && result.data.branches.some(branch => branch.id === stored)) {
+          setQuery({ branchId: stored, page: 1 });
+        }
+      }
     });
-    setDialogOpen(true);
-  };
+    return () => {
+      cancelled = true;
+    };
+  }, [query.branchId, setQuery]);
 
-  const buildPayload = () => ({
-    fullName: form.fullName,
-    phone: form.phone,
-    specialization: form.specialization,
-    hireDate: form.hireDate || undefined,
-    dateOfBirth: form.dateOfBirth || undefined,
-    gender: form.gender || undefined,
-    nationalId: form.nationalId || undefined,
-    address: form.address || undefined,
-    city: form.city || undefined,
-    qualification: form.qualification || undefined,
-    salary: form.salary ? Number(form.salary) : null,
-    documents: { contract: form.contract, cin: form.cin, diploma: form.diploma },
-  });
+  /** Any scope change is mirrored to the shell's stored selection. */
+  const handleQueryChange = useCallback((partial: Partial<TeacherDirectoryQuery>) => {
+    if ('branchId' in partial) {
+      if (partial.branchId) {
+        window.localStorage.setItem(BRANCH_STORAGE_KEY, partial.branchId);
+      } else {
+        window.localStorage.removeItem(BRANCH_STORAGE_KEY);
+      }
+    }
+    setQuery(partial);
+  }, [setQuery]);
 
-  const handleSubmit = async () => {
-    if (!form.fullName.trim()) {
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setListError(null);
+    fetchTeachers(query, controller.signal)
+      .then((result) => {
+        if (controller.signal.aborted) {
+          return;
+        }
+        if (result.ok) {
+          setItems(result.data.data);
+          setSummary(result.data.summary);
+          setScope(result.data.scope);
+          setTotal(result.data.total);
+          setTotalPages(result.data.totalPages);
+          setSelectedTeacherId((previous) => {
+            if (previous && result.data.data.some(item => item.id === previous)) {
+              return previous;
+            }
+            return result.data.data[0]?.id ?? null;
+          });
+        } else {
+          setItems([]);
+          setSummary(null);
+          setListError(result.message);
+        }
+        setLoading(false);
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) {
+          return;
+        }
+        setItems([]);
+        setListError(error instanceof Error ? error.message : t('errLoadTeachers'));
+        setLoading(false);
+      });
+    return () => controller.abort();
+  }, [query, reloadToken, t]);
+
+  useEffect(() => {
+    if (!notice) {
       return;
     }
-    setIsSubmitting(true);
-    try {
-      if (editingTeacher) {
-        await fetch('/api/teachers', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: editingTeacher.id, ...buildPayload() }),
-        });
-      } else {
-        await fetch('/api/teachers', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: form.email, employeeId: form.employeeId, ...buildPayload() }),
-        });
-      }
-      setDialogOpen(false);
-      await loadData();
-    } catch (err) {
-      console.error('Failed to save teacher', err);
-    } finally {
-      setIsSubmitting(false);
+    const handle = setTimeout(setNotice, 6000, null);
+    return () => clearTimeout(handle);
+  }, [notice]);
+
+  const handleRowAction = useCallback((action: TeacherRowAction) => {
+    if (action.type === 'edit') {
+      setEditing(action.teacher);
+      setFormOpen(true);
+    } else if (action.type === 'status') {
+      setLifecycleTarget({ type: 'status', teacher: action.teacher, status: action.status });
+    } else {
+      setLifecycleTarget({ type: 'delete', teacher: action.teacher });
     }
-  };
+  }, []);
 
-  const handleDelete = async (id: string) => {
-    try {
-      await fetch(`/api/teachers?id=${id}`, { method: 'DELETE' });
-      await loadData();
-    } catch (err) {
-      console.error('Failed to delete teacher', err);
+  const handleSelectFromPanel = useCallback((teacherId: string) => {
+    setSelectedTeacherId(teacherId);
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 1279px)').matches) {
+      setMobileInspectorOpen(true);
     }
-  };
+  }, []);
 
-  const filteredTeachers = teachers.filter((teacherItem) => {
-    if (filterTab === 'active' && teacherItem.status !== 'Actif' && teacherItem.status !== 'active') {
-      return false;
-    }
-    if (filterTab === 'incomplete' && teacherItem.status !== 'Incomplet') {
-      return false;
-    }
-    const term = searchTerm.trim().toLowerCase();
-    if (!term) {
-      return true;
-    }
-    return (
-      (teacherItem.name ?? '').toLowerCase().includes(term) ||
-      (teacherItem.employeeId ?? '').toLowerCase().includes(term) ||
-      (teacherItem.specialization ?? '').toLowerCase().includes(term)
-    );
-  });
+  const rangeStart = total === 0 ? 0 : (query.page - 1) * query.pageSize + 1;
+  const rangeEnd = Math.min(query.page * query.pageSize, total);
+  const hasFilters = Boolean(query.search || query.status !== 'all' || query.subjectId || query.classSectionId || query.branchId);
 
-  const getStatusBadge = (status: Teacher['status']) => {
-    switch (status) {
-      case 'Actif':
-      case 'active':
-        return (
-          <Badge className="border-none bg-[#D1F5E8] px-2 py-0.5 text-[10px] text-[#17A673]">
-            {tStatus('active')}
-          </Badge>
-        );
-      case 'Incomplet':
-        return (
-          <Badge className="border-none bg-[#FCF0DC] px-2 py-0.5 text-[10px] text-[#E8A33D]">
-            {t('statusIncomplete')}
-          </Badge>
-        );
-      case 'Congé':
-      case 'leave':
-        return (
-          <Badge className="border-none bg-[#DCEBF4] px-2 py-0.5 text-[10px] text-[#1B6C93]">
-            {t('statusOnLeave')}
-          </Badge>
-        );
-      default:
-        return (
-          <Badge className="border-none bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">
-            {status === 'inactive' ? tStatus('inactive') : (status || t('statusInactive'))}
-          </Badge>
-        );
-    }
-  };
+  const exportHref = (() => {
+    const params = toSearchParams({ ...query, page: 1, pageSize: 20 });
+    params.delete('page');
+    params.delete('pageSize');
+    return `/api/teachers/export?${params.toString()}`;
+  })();
 
-  const columns: Column<Teacher>[] = [
-    {
-      key: 'name',
-      header: t('title'),
-      cell: (tc) => (
-        <div className="flex items-center gap-2.5">
-          <Avatar className="size-8">
-            <AvatarFallback className="bg-slate-200 text-xs font-bold text-slate-700">
-              {tc.name.split(' ').map((n) => n[0]).join('')}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <p className="font-bold text-[#16212B]">{tc.name}</p>
-            <p className="text-[10px] font-normal text-slate-400">{tc.specialization || t('teachingStaffFallback')}</p>
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: 'employeeId',
-      header: tStudents('matricule'),
-      cell: (tc) => <span className="font-mono text-[11px] text-slate-600">{tc.employeeId}</span>,
-    },
-    {
-      key: 'specialization',
-      header: t('specialty'),
-      cell: (tc) => <span className="font-semibold text-slate-700">{tc.specialization}</span>,
-    },
-    {
-      key: 'subjects',
-      header: t('subjects'),
-      cell: (tc) => (
-        <div className="flex flex-wrap gap-1">
-          {tc.subjects?.map((s) => (
-            <Badge
-              key={s}
-              className="border-none bg-slate-100 px-1.5 py-0 text-[9px] font-normal text-slate-700"
-            >
-              {s}
-            </Badge>
-          ))}
-        </div>
-      ),
-    },
-    {
-      key: 'assignedClasses',
-      header: t('assignedClasses'),
-      cell: (tc) => <span className="text-[11px] text-slate-600">{tc.assignedClasses.join(', ')}</span>,
-    },
-    {
-      key: 'workloadHours',
-      header: t('workload'),
-      cell: (tc) => <span className="font-bold text-[#16212B]">{tc.workloadHours}h</span>,
-    },
-    {
-      key: 'contact',
-      header: t('contact'),
-      cell: (tc) => (
-        <div className="text-[10px] text-slate-500">
-          <p>{tc.phone}</p>
-          <p className="text-slate-400">{tc.email}</p>
-        </div>
-      ),
-    },
-    {
-      key: 'status',
-      header: tCommon('status'),
-      cell: (tc) => getStatusBadge(tc.status),
-    },
-    {
-      key: 'actions',
-      header: tCommon('actions'),
-      headerClassName: 'text-center',
-      cell: (tc) => (
-        <div className="flex items-center justify-center gap-1">
-          <Link
-            href={`/${locale}/dashboard/teachers/${tc.id}`}
-            title={t('viewProfile')}
-            className="inline-flex rounded-lg p-1 text-slate-400 hover:bg-slate-100"
-          >
-            <Eye className="size-4" />
-          </Link>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); openEditDialog(tc); }}
-            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
-          >
-            <Edit2 className="size-4" />
-          </button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                onClick={e => e.stopPropagation()}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
-              >
-                <MoreVertical className="size-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleDelete(tc.id)} className="text-rose-600 focus:text-rose-600">
-                <Trash2 className="me-2 size-3.5" />
-                {tCommon('delete')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ),
-      className: 'text-center',
-    },
-  ];
+  // One scope label for the whole page: the resolved list scope, falling back
+  // to the options scope while the first list response is in flight.
+  const effectiveScope = scope ?? options?.scope ?? null;
 
-  const sel = teachers.find(item => item.id === selectedTeacherId) || (filteredTeachers.length > 0 ? filteredTeachers[0] : null);
-
-  const docsComplete = teachers.filter(item => item.documents?.contract && item.documents?.cin && item.documents?.diploma).length;
-  const docsMissing = teachers.filter(item => !item.documents?.contract && !item.documents?.cin && !item.documents?.diploma).length;
-  const docsIncomplete = teachers.length - docsComplete - docsMissing;
-  const docsTotal = teachers.length || 1;
-  const pctComplete = (docsComplete / docsTotal) * 100;
-  const pctIncomplete = (docsIncomplete / docsTotal) * 100;
-  const pctMissing = (docsMissing / docsTotal) * 100;
-
-  const tabs: { key: FilterTabKey; label: string }[] = [
-    { key: 'all', label: t('tabAll') },
-    { key: 'active', label: t('tabActive') },
-    { key: 'incomplete', label: t('tabIncomplete') },
-  ];
+  const inspector = (
+    <TeacherInspectorContent
+      teacherId={selectedTeacherId}
+      branchId={query.branchId}
+      locale={locale}
+      onEdit={(teacher) => {
+        setEditing(teacher);
+        setFormOpen(true);
+      }}
+      onStatus={(teacher, status) => setLifecycleTarget({ type: 'status', teacher, status })}
+      onDelete={teacher => setLifecycleTarget({ type: 'delete', teacher })}
+    />
+  );
 
   return (
     <div className="mx-auto flex max-w-[1600px] gap-6">
-      <div className="min-w-0 flex-1 space-y-6">
+      <div className="min-w-0 flex-1 space-y-5">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('title')}</h1>
-          <p className="mt-1 text-xs text-slate-500">{t('manage')}</p>
-        </div>
-
-        {/* Top KPIs */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            {
-              label: t('activeTeachers'),
-              value: teachers.filter(item => item.status === 'Actif' || item.status === 'active').length,
-              sub: t('ofTotalTeachers', { count: teachers.length }),
-              color: 'text-emerald-600',
-              icon: Users,
-              iconBg: 'bg-[#DCEBF4]',
-              iconColor: 'text-[#1B6C93]',
-            },
-            {
-              label: t('averageWorkload'),
-              value: teachers.length > 0 ? t('hoursPerWeek', { hours: Math.round(teachers.reduce((sum, item) => sum + item.workloadHours, 0) / teachers.length) }) : '—',
-              sub: t('allAssignments'),
-              color: 'text-blue-600',
-              icon: Clock,
-              iconBg: 'bg-[#DCEBF4]',
-              iconColor: 'text-[#1B6C93]',
-            },
-            {
-              label: t('incompleteProfiles'),
-              value: teachers.filter(item => item.status === 'Incomplet').length,
-              sub: t('toComplete'),
-              color: 'text-amber-600',
-              icon: AlertCircle,
-              iconBg: 'bg-[#FCF0DC]',
-              iconColor: 'text-[#E8A33D]',
-            },
-            {
-              label: t('onLeave'),
-              value: teachers.filter(item => item.status === 'Congé' || item.status === 'leave').length,
-              sub: t('currently'),
-              color: 'text-rose-600',
-              icon: Calendar,
-              iconBg: 'bg-[#FCE4E2]',
-              iconColor: 'text-[#E5544B]',
-            },
-          ].map((kpi, i) => (
-            <Card
-              key={i}
-              className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs"
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="
+              text-2xl font-extrabold tracking-tight text-[#16212B]
+            "
             >
-              <div className="space-y-1">
-                <p className="text-xs font-bold text-slate-500">{kpi.label}</p>
-                <p className="text-2xl font-extrabold text-[#16212B]">{kpi.value}</p>
-                <p className={`text-[11px] font-bold ${kpi.color}`}>
-                  {kpi.sub}
-                </p>
-              </div>
-              <div className={`size-10 rounded-full ${kpi.iconBg} ${kpi.iconColor} flex items-center justify-center`}>
-                <kpi.icon className="size-5" />
-              </div>
-            </Card>
-          ))}
+              {t('title')}
+            </h1>
+            <p className="mt-1 text-xs text-slate-500">{t('manage')}</p>
+            {effectiveScope && (
+              <span className="
+                mt-1.5 inline-flex items-center gap-1.5 rounded-full
+                bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-600
+              "
+              >
+                <Building2 className="size-3 text-[#2487B8]" />
+                {t('scopeLabel')}
+                {' : '}
+                {effectiveScope.allBranches ? t('scopeAllBranches') : (effectiveScope.branchName ?? '-')}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                setEditing(null);
+                setFormOpen(true);
+              }}
+              className="
+                h-10 gap-1.5 rounded-full bg-[#0066FF] px-4 text-xs font-bold
+                hover:bg-[#0052CC]
+              "
+            >
+              <Plus className="size-3.5" />
+              {' '}
+              {t('addTeacher')}
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="
+                    h-10 gap-1.5 rounded-full border-slate-200 px-4 text-xs
+                    font-bold
+                  "
+                >
+                  <MoreHorizontal className="size-3.5" />
+                  {' '}
+                  {t('actionsMenu')}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <a href={exportHref} download className="cursor-pointer">
+                    <Download className="me-2 size-3.5" />
+                    {' '}
+                    {t('exportDirectory')}
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    href={`/${locale}/dashboard/teachers/bulk-import`}
+                    className="cursor-pointer"
+                  >
+                    <Upload className="me-2 size-3.5" />
+                    {' '}
+                    {t('importTeachers')}
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
-        {/* Directory Card */}
-        <Card className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-sm font-extrabold text-[#16212B]">{t('manage')}</h2>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => exportToCsv(filteredTeachers, 'enseignants')}
-                className="h-9 gap-1.5 rounded-full border-slate-200 px-3 text-xs font-bold"
-              >
-                <Download className="size-3.5" />
-                {' '}
-                {tCommon('export')}
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={openCreateDialog}
-                className="h-9 gap-1.5 rounded-full bg-[#0066FF] px-4 text-xs font-bold hover:bg-[#0052CC]"
-              >
-                <Plus className="size-3.5" />
-                {' '}
-                {t('addTeacher')}
-              </Button>
-            </div>
+        {notice && (
+          <div className="
+            flex items-start justify-between gap-3 rounded-xl border
+            border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs font-semibold
+            text-emerald-700
+          "
+          >
+            <span>{notice}</span>
+            <button type="button" aria-label={tCommon('close')} onClick={() => setNotice(null)}>
+              <X className="size-3.5" />
+            </button>
           </div>
+        )}
 
-          {/* Search & Tabs */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative min-w-[220px] flex-1">
-              <Search className="absolute top-1/2 start-3.5 size-4 -translate-y-1/2 text-slate-400" />
-              <Input
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                placeholder={t('searchPlaceholder')}
-                className="h-9 rounded-full border-slate-200 bg-slate-50 ps-10 text-start text-xs"
-              />
-            </div>
-
-            <div className="flex items-center gap-1 rounded-full bg-slate-100 p-1 text-xs">
-              {tabs.map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => setFilterTab(tab.key)}
-                  className={`rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${
-                    filterTab === tab.key
-                      ? 'bg-white text-[#16212B] shadow-2xs'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
+        {listError && (
+          <div
+            role="alert"
+            className="
+              flex flex-wrap items-center justify-between gap-3 rounded-xl
+              border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold
+              text-rose-700
+            "
+          >
+            <span className="flex items-center gap-2">
+              <AlertCircle className="size-4" />
+              {' '}
+              {t('loadErrorTitle')}
+              {' '}
+              —
+              {' '}
+              {listError}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={reload}
+              className="h-9 rounded-full border-rose-200 text-xs"
+            >
+              {t('retry')}
+            </Button>
           </div>
+        )}
 
-          {/* Dynamic DataTable Component */}
-          <DataTable
-            data={filteredTeachers}
-            columns={columns}
-            isLoading={isLoading}
-            emptyTitle={t('noTeachersFound')}
-            emptyDescription={t('noTeachersFoundDesc')}
-            defaultPageSize={10}
-            selectedRowId={selectedTeacherId}
-            onRowClick={(row) => setSelectedTeacherId(row.id)}
+        {/* KPI: full cards on >=md, compact summary line on mobile */}
+        <div className="
+          hidden
+          md:block
+        "
+        >
+          <TeacherKpiCards summary={summary} loading={loading && !summary} />
+        </div>
+        <div className="
+          flex flex-wrap items-center gap-2 rounded-2xl border
+          border-slate-200/80 bg-white px-4 py-2.5 text-[11px] font-bold
+          text-slate-600
+          md:hidden
+        "
+        >
+          {summary
+            ? (
+                <>
+                  <span>{t('kpiActiveCompact', { count: summary.activeTeachers })}</span>
+                  <span className="text-slate-300">·</span>
+                  <span>{t('kpiOnLeaveCompact', { count: summary.onLeave })}</span>
+                  <span className="text-slate-300">·</span>
+                  <span>{t('kpiDossiersCompact', { count: summary.dossiers.toComplete })}</span>
+                </>
+              )
+            : (
+                <span className="text-slate-400">…</span>
+              )}
+        </div>
+
+        <Card className="
+          space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5
+          shadow-2xs
+        "
+        >
+          <TeacherFilters
+            query={query}
+            options={options}
+            onChange={handleQueryChange}
+            onClear={() => {
+              window.localStorage.removeItem(BRANCH_STORAGE_KEY);
+              router.push(`?`, { scroll: false });
+            }}
           />
-        </Card>
 
-        {/* Documents & Compliance */}
-        <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-          <h3 className="mb-1 text-sm font-extrabold text-[#16212B]">{t('complianceDocs')}</h3>
-          <p className="mb-4 text-[10px] text-slate-400">{t('complianceDocsStatus')}</p>
-
-          <div className="flex items-center justify-around gap-4">
-            <div className="relative flex size-32 items-center justify-center">
-              <svg viewBox="0 0 36 36" className="size-full -rotate-90">
-                <circle cx="18" cy="18" r="14" fill="none" stroke="#F1F5F9" strokeWidth="4" />
-                <circle cx="18" cy="18" r="14" fill="none" stroke="#17A673" strokeWidth="4" strokeDasharray={`${pctComplete} ${100 - pctComplete}`} strokeDashoffset="0" />
-                <circle cx="18" cy="18" r="14" fill="none" stroke="#E8A33D" strokeWidth="4" strokeDasharray={`${pctIncomplete} ${100 - pctIncomplete}`} strokeDashoffset={-pctComplete} />
-                <circle cx="18" cy="18" r="14" fill="none" stroke="#E5544B" strokeWidth="4" strokeDasharray={`${pctMissing} ${100 - pctMissing}`} strokeDashoffset={-(pctComplete + pctIncomplete)} />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-xl font-extrabold text-[#16212B]">{teachers.length}</span>
-                <span className="text-[9px] text-slate-400">{t('teachersCountLabel')}</span>
-              </div>
-            </div>
-
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="size-2.5 rounded-full bg-[#17A673]" />
-                <span className="text-slate-600">{t('docsStatusComplete')}</span>
-                <span className="ms-auto font-bold text-[#16212B]">{docsComplete}</span>
-                <span className="text-[10px] text-slate-400">{pctComplete.toFixed(1)}%</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="size-2.5 rounded-full bg-[#E8A33D]" />
-                <span className="text-slate-600">{t('docsStatusIncomplete')}</span>
-                <span className="ms-auto font-bold text-[#16212B]">{docsIncomplete}</span>
-                <span className="text-[10px] text-slate-400">{pctIncomplete.toFixed(1)}%</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="size-2.5 rounded-full bg-[#E5544B]" />
-                <span className="text-slate-600">{t('docsStatusMissing')}</span>
-                <span className="ms-auto font-bold text-[#16212B]">{docsMissing}</span>
-                <span className="text-[10px] text-slate-400">{pctMissing.toFixed(1)}%</span>
-              </div>
-            </div>
+          {/* Desktop table */}
+          <div className="
+            hidden
+            lg:block
+          "
+          >
+            <TeacherDirectoryTable
+              items={items}
+              loading={loading}
+              locale={locale}
+              selectedTeacherId={selectedTeacherId}
+              onSelect={setSelectedTeacherId}
+              onAction={handleRowAction}
+            />
           </div>
+
+          {/* Mobile cards */}
+          <div className="lg:hidden">
+            {loading
+              ? (
+                  <div className="space-y-3" aria-busy="true">
+                    {[0, 1, 2].map(i => (
+                      <div
+                        key={i}
+                        className="h-24 animate-pulse rounded-2xl bg-slate-100"
+                      />
+                    ))}
+                  </div>
+                )
+              : (
+                  <TeacherMobileCards
+                    items={items}
+                    onSelect={(teacherId) => {
+                      setSelectedTeacherId(teacherId);
+                      setMobileInspectorOpen(true);
+                    }}
+                  />
+                )}
+          </div>
+
+          {/* Server-driven pagination */}
+          {!loading && total > 0 && (
+            <div className="
+              flex flex-col items-center justify-between gap-3 border-t
+              border-slate-100 pt-3 text-xs text-slate-500
+              sm:flex-row
+            "
+            >
+              <div className="flex items-center gap-3">
+                <span>{t('paginationRange', { from: rangeStart, to: rangeEnd, total })}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] text-slate-400">{tCommon('rowsPerPage')}</span>
+                  <Select
+                    value={String(query.pageSize)}
+                    onValueChange={value => setQuery({ pageSize: Number(value), page: 1 })}
+                  >
+                    <SelectTrigger className="
+                      h-8 w-[72px] rounded-lg border-slate-200 text-[11px]
+                    "
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAGE_SIZE_OPTIONS.map(size => <SelectItem key={size} value={String(size)}>{size}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={query.page <= 1}
+                  aria-label={t('previousPage')}
+                  onClick={() => setQuery({ page: query.page - 1 })}
+                  className="size-9 rounded-lg border border-slate-200 p-0"
+                >
+                  <ChevronLeft className="
+                    size-4
+                    rtl:rotate-180
+                  "
+                  />
+                </Button>
+                <span className="px-2 font-bold text-slate-700">
+                  {query.page}
+                  {' '}
+                  /
+                  {' '}
+                  {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={query.page >= totalPages}
+                  aria-label={t('nextPage')}
+                  onClick={() => setQuery({ page: query.page + 1 })}
+                  className="size-9 rounded-lg border border-slate-200 p-0"
+                >
+                  <ChevronRight className="
+                    size-4
+                    rtl:rotate-180
+                  "
+                  />
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
+
+        {/* Dossiers panel */}
+        <TeacherDossierPanel
+          summary={summary}
+          locale={locale}
+          loading={loading && !summary}
+          onSelectTeacher={handleSelectFromPanel}
+        />
+
+        {!loading && total === 0 && !hasFilters && (
+          <Card className="
+            rounded-2xl border border-dashed border-slate-200 bg-white p-8
+            text-center shadow-2xs
+          "
+          >
+            <p className="text-sm font-extrabold text-[#16212B]">{t('noTeachersTitle')}</p>
+            <p className="mt-1 text-xs text-slate-500">{t('noTeachersDescription')}</p>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                setEditing(null);
+                setFormOpen(true);
+              }}
+              className="
+                mt-4 h-10 gap-1.5 rounded-full bg-[#0066FF] px-4 text-xs
+                font-bold text-white
+              "
+            >
+              <Plus className="size-3.5" />
+              {' '}
+              {t('addTeacher')}
+            </Button>
+          </Card>
+        )}
       </div>
 
-      {/* Right Inspector Drawer */}
-      {sel && (
-        <div className="hidden w-[320px] shrink-0 space-y-4 xl:block">
-          <Card className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-            <div className="flex items-center gap-3">
-              <Avatar className="size-14">
-                <AvatarFallback className="bg-slate-200 text-base font-bold text-slate-700">
-                  {sel.name.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <p className="text-sm font-extrabold text-[#16212B]">{sel.name}</p>
-                  {getStatusBadge(sel.status)}
-                </div>
-                <p className="text-[11px] text-slate-500">{sel.specialization}</p>
-                <p className="mt-0.5 font-mono text-[10px] text-slate-400">{sel.phone}</p>
-                <p className="font-mono text-[10px] text-slate-400">{sel.email}</p>
-                <p className="font-mono text-[9px] text-slate-400">
-                  {tStudents('matricule')} : {sel.employeeId}
-                </p>
-              </div>
-            </div>
+      {/* Desktop inspector */}
+      <div className="
+        hidden w-[340px] shrink-0
+        xl:block
+      "
+      >
+        {inspector}
+      </div>
 
-            <div className="space-y-2 border-t pt-3 text-xs">
-              <div className="flex items-center gap-2 text-slate-600">
-                <BookOpen className="size-3.5 shrink-0 text-blue-500" />
-                <span>
-                  {t('subjects')} : <strong className="text-[#16212B]">{sel.subjects?.join(', ') || '—'}</strong>
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-600">
-                <Users className="size-3.5 shrink-0 text-emerald-500" />
-                <span>
-                  {t('classes')} : <strong className="text-[#16212B]">{sel.assignedClasses.join(', ')}</strong>
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-600">
-                <Clock className="size-3.5 shrink-0 text-purple-500" />
-                <span>
-                  {t('workload')} : <strong className="text-[#16212B]">{t('hoursPerWeek', { hours: sel.workloadHours })}</strong>
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-600">
-                <CalendarCheck className="size-3.5 shrink-0 text-amber-500" />
-                <span>
-                  {t('hireDate')} : <strong className="text-[#16212B]">{sel.hireDate || t('notSpecified')}</strong>
-                </span>
-              </div>
-            </div>
-
-            <div className="flex gap-1.5 border-t pt-3">
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                className="h-8 flex-1 rounded-full text-[10px]"
-              >
-                <Link href={`/${locale}/dashboard/teachers/${sel.id}`}>{t('viewProfile')}</Link>
-              </Button>
-            </div>
-
-            {/* Documents Check Section */}
-            <div className="space-y-2 border-t pt-3">
-              <h4 className="text-xs font-bold text-[#16212B]">{t('complianceDocs')}</h4>
-              {[
-                { name: t('docContract'), valid: sel.documents?.contract ?? false },
-                { name: t('docCin'), valid: sel.documents?.cin ?? false },
-                { name: t('docDiploma'), valid: sel.documents?.diploma ?? false },
-              ].map((doc, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between rounded-lg bg-slate-50 p-2 text-xs"
-                >
-                  <div className="flex items-center gap-2">
-                    <FileText className="size-3.5 text-slate-400" />
-                    <p className="text-[11px] font-bold text-[#16212B]">{doc.name}</p>
-                  </div>
-                  {doc.valid ? (
-                    <Badge className="border-none bg-[#D1F5E8] px-1.5 py-0 text-[9px] text-[#17A673]">{t('docProvided')}</Badge>
-                  ) : (
-                    <Badge className="border-none bg-[#FCE4E2] px-1.5 py-0 text-[9px] text-[#E5544B]">{t('docMissing')}</Badge>
-                  )}
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* Create / Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl rounded-2xl bg-white p-6">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-extrabold text-[#16212B]">
-              {editingTeacher ? t('editTeacher') : t('createTeacher')}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="my-2 grid grid-cols-2 gap-3 text-xs">
-            <div className="col-span-2">
-              <label className="mb-1 block font-bold text-slate-700">{t('fullNameRequired')}</label>
-              <Input value={form.fullName} onChange={e => setForm({ ...form, fullName: e.target.value })} className="h-9 rounded-xl text-xs" />
-            </div>
-            {!editingTeacher && (
-              <>
-                <div>
-                  <label className="mb-1 block font-bold text-slate-700">{t('email')}</label>
-                  <Input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="h-9 rounded-xl text-xs" />
-                </div>
-                <div>
-                  <label className="mb-1 block font-bold text-slate-700">{tStudents('matricule')}</label>
-                  <Input value={form.employeeId} onChange={e => setForm({ ...form, employeeId: e.target.value })} className="h-9 rounded-xl text-xs" />
-                </div>
-              </>
-            )}
-            <div>
-              <label className="mb-1 block font-bold text-slate-700">{t('phone')}</label>
-              <Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="h-9 rounded-xl text-xs" />
-            </div>
-            <div>
-              <label className="mb-1 block font-bold text-slate-700">{t('specialty')}</label>
-              <Input value={form.specialization} onChange={e => setForm({ ...form, specialization: e.target.value })} className="h-9 rounded-xl text-xs" />
-            </div>
-            <div>
-              <label className="mb-1 block font-bold text-slate-700">{t('hireDate')}</label>
-              <Input type="date" value={form.hireDate} onChange={e => setForm({ ...form, hireDate: e.target.value })} className="h-9 rounded-xl text-xs" />
-            </div>
-            <div>
-              <label className="mb-1 block font-bold text-slate-700">{t('dateOfBirth')}</label>
-              <Input type="date" value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })} className="h-9 rounded-xl text-xs" />
-            </div>
-            <div>
-              <label className="mb-1 block font-bold text-slate-700">{t('gender')}</label>
-              <select value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })} className="h-9 w-full rounded-xl border border-slate-200 px-3 text-xs">
-                <option value="">—</option>
-                <option value="female">{t('genderFemale')}</option>
-                <option value="male">{t('genderMale')}</option>
-                <option value="other">{t('genderOther')}</option>
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block font-bold text-slate-700">{t('cin')}</label>
-              <Input value={form.nationalId} onChange={e => setForm({ ...form, nationalId: e.target.value })} className="h-9 rounded-xl text-xs" />
-            </div>
-            <div>
-              <label className="mb-1 block font-bold text-slate-700">{t('city')}</label>
-              <Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} className="h-9 rounded-xl text-xs" />
-            </div>
-            <div>
-              <label className="mb-1 block font-bold text-slate-700">{t('qualification')}</label>
-              <Input value={form.qualification} onChange={e => setForm({ ...form, qualification: e.target.value })} className="h-9 rounded-xl text-xs" />
-            </div>
-            <div>
-              <label className="mb-1 block font-bold text-slate-700">{t('salaryMad')}</label>
-              <Input type="number" value={form.salary} onChange={e => setForm({ ...form, salary: e.target.value })} className="h-9 rounded-xl text-xs" />
-            </div>
-            <div className="col-span-2">
-              <label className="mb-1 block font-bold text-slate-700">{t('address')}</label>
-              <Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className="h-9 rounded-xl text-xs" />
-            </div>
-            <div className="col-span-2 rounded-xl border border-slate-100 bg-slate-50 p-3">
-              <p className="mb-2 font-bold text-slate-700">{t('providedDocs')}</p>
-              <div className="grid grid-cols-3 gap-2">
-                {([
-                  ['contract', t('docContract')],
-                  ['cin', t('docCin')],
-                  ['diploma', t('docDiploma')],
-                ] as const).map(([key, label]) => (
-                  <label key={key} className="flex items-center gap-2 font-medium text-slate-600">
-                    <input
-                      type="checkbox"
-                      checked={form[key]}
-                      onChange={e => setForm({ ...form, [key]: e.target.checked })}
-                      className="size-3.5 accent-[#0066FF]"
-                    />
-                    {label}
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDialogOpen(false)} className="h-9 rounded-full text-xs">{tCommon('cancel')}</Button>
-            <Button variant="primary" disabled={isSubmitting} onClick={handleSubmit} className="h-9 rounded-full bg-[#0066FF] text-xs text-white">
-              {editingTeacher ? tCommon('save') : t('createTeacher')}
-            </Button>
-          </DialogFooter>
+      {/* Mobile inspector bottom sheet */}
+      <Dialog open={mobileInspectorOpen} onOpenChange={setMobileInspectorOpen}>
+        <DialogContent className="
+          top-auto! bottom-0! left-0! max-h-[88vh]! w-full! max-w-none!
+          translate-0! overflow-y-auto rounded-t-2xl rounded-b-none p-4
+        "
+        >
+          <p className="
+            mb-2 text-xs font-extrabold tracking-wide text-slate-400 uppercase
+          "
+          >
+            {t('quickProfile')}
+          </p>
+          {inspector}
         </DialogContent>
       </Dialog>
+
+      <TeacherFormDialog
+        open={formOpen}
+        onOpenChange={(open) => {
+          setFormOpen(open);
+          if (!open) {
+            setEditing(null);
+          }
+        }}
+        editing={editing}
+        options={options}
+        onSaved={(message) => {
+          setNotice(message);
+          reload();
+        }}
+      />
+
+      <TeacherLifecycleDialog
+        target={lifecycleTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setLifecycleTarget(null);
+          }
+        }}
+        onDone={(message) => {
+          setNotice(message);
+          reload();
+        }}
+      />
     </div>
   );
 }

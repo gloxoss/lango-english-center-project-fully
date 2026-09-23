@@ -6,6 +6,7 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
+import { assertSectionCapacity } from '@/libs/services/section-capacity';
 import { closeStudentPlacement, recordStudentPlacement } from '@/libs/services/student-placement';
 import { db } from '@/libs/DB';
 import { classSections, promotionBatches, promotionDecisions, sessionYears, user } from '@/models/Schema';
@@ -132,6 +133,25 @@ export async function POST(request: Request) {
     }
     if (body.decisions.some(decision => decision.decision === 'hold')) {
       throw new ApiError(409, 'PENDING_DECISIONS', 'Traitez toutes les décisions en attente avant de confirmer la promotion.');
+    }
+
+    // ONE CAPACITY TRUTH: pre-flight every target section (class_sections
+    // .maxStudents) before writing any placement. Aggregate per section so a
+    // batch cannot collectively overflow a section; students repeating into
+    // their current section keep their own seats.
+    const plannedBySection = new Map<string, string[]>();
+    for (const decision of body.decisions) {
+      if ((decision.decision === 'promote' || decision.decision === 'repeat') && decision.targetClassSectionId) {
+        const list = plannedBySection.get(decision.targetClassSectionId) ?? [];
+        list.push(decision.studentId);
+        plannedBySection.set(decision.targetClassSectionId, list);
+      }
+    }
+    for (const [targetSectionId, studentIds] of plannedBySection) {
+      await assertSectionCapacity(tenantId, targetSectionId, {
+        additionalStudents: studentIds.length,
+        excludeStudentIds: studentIds,
+      });
     }
 
     const decisionRows: (typeof promotionDecisions.$inferInsert)[] = [];

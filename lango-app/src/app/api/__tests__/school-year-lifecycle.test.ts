@@ -1,9 +1,16 @@
+import type { SubjectGradeInput } from '@/libs/grading/moroccan-grade-engine';
 import { randomUUID } from 'node:crypto';
+import { and, eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { POST as postPromotion } from '@/app/api/students/promotions/route';
 import { db } from '@/libs/DB';
 import {
-  academicPeriodType,
+  calculateClassRanks,
+  calculateMoroccanAverage,
+
+} from '@/libs/grading/moroccan-grade-engine';
+import { recordStudentPlacement } from '@/libs/services/student-placement';
+import {
   attendance,
   attendanceExcuses,
   attendanceRegisters,
@@ -24,24 +31,16 @@ import {
   promotionBatches,
   promotionDecisions,
   sections,
-  sessionYears,
   semesters,
+  sessionYears,
   shifts,
   streams,
   studentPlacements,
-  subjectTeachers,
   subjects,
+  subjectTeachers,
   tenants,
   user,
 } from '@/models/Schema';
-import { recordStudentPlacement } from '@/libs/services/student-placement';
-import { POST as postPromotion } from '@/app/api/students/promotions/route';
-import {
-  calculateMoroccanAverage,
-  calculateAnnualAverage,
-  calculateClassRanks,
-  type SubjectGradeInput,
-} from '@/libs/grading/moroccan-grade-engine';
 
 vi.mock('@/libs/env/server', () => ({
   serverEnv: {
@@ -367,6 +366,7 @@ describe.skipIf(!dbReachable)('School Year Lifecycle End-to-End Test (Task T11)'
 
   it('Phase 1 & 2: confirms initial tenant setup, academic structure, and student enrollments', async () => {
     const studentRows = await db.select().from(user).where(and(eq(user.tenantId, tenantId), eq(user.role, 'student')));
+
     expect(studentRows).toHaveLength(6);
 
     for (const st of studentRows) {
@@ -378,6 +378,7 @@ describe.skipIf(!dbReachable)('School Year Lifecycle End-to-End Test (Task T11)'
       eq(studentPlacements.sessionYearId, sessionYear2025Id),
       eq(studentPlacements.isCurrent, true),
     ));
+
     expect(placements).toHaveLength(6);
   });
 
@@ -486,20 +487,39 @@ describe.skipIf(!dbReachable)('School Year Lifecycle End-to-End Test (Task T11)'
 
     // Verify Invoicing & Payment States
     const [inv1] = await db.select().from(invoices).where(eq(invoices.id, invoiceAmineId));
+
     expect(inv1!.status).toBe('paid');
 
     const [inv2] = await db.select().from(invoices).where(eq(invoices.id, invoiceKenzaId));
+
     expect(inv2!.status).toBe('partial');
 
     const [inv3] = await db.select().from(invoices).where(eq(invoices.id, invoiceOmarId));
+
     expect(inv3!.status).toBe('pending');
   });
 
   it('Phase 4: records attendance sessions and validates attendance tracking with medical excuses', async () => {
     // Create attendance register for ClassSection TC-SC-A
+    // SESSION TRUTH (Phase 4): attendance rows must resolve to the session
+    // whose date bounds contain them — resolved, never hardcoded.
+    const [session2025] = await db
+      .select({ id: sessionYears.id })
+      .from(sessionYears)
+      .where(and(
+        eq(sessionYears.tenantId, tenantId),
+        sql`${sessionYears.startDate}::date <= date '2025-10-15'`,
+        sql`${sessionYears.endDate}::date >= date '2025-10-15'`,
+      ))
+      .limit(1);
+    if (!session2025) {
+      throw new Error('fixture: no session covers 2025-10-15');
+    }
+
     const [register] = await db.insert(attendanceRegisters).values({
       tenantId,
       classId: classTcScId,
+      sessionYearId: session2025.id,
       date: '2025-10-15',
       reference: `REG-2025-10-15-${suffix}`,
       status: 'LOCKED',
@@ -508,18 +528,19 @@ describe.skipIf(!dbReachable)('School Year Lifecycle End-to-End Test (Task T11)'
 
     // Mark attendance rows
     await db.insert(attendance).values([
-      { tenantId, registerId: register!.id, studentId: studentAmineId, date: '2025-10-15', status: 'present' },
-      { tenantId, registerId: register!.id, studentId: studentKenzaId, date: '2025-10-15', status: 'present' },
-      { tenantId, registerId: register!.id, studentId: studentYoussefId, date: '2025-10-15', status: 'present' },
-      { tenantId, registerId: register!.id, studentId: studentNadiaId, date: '2025-10-15', status: 'present' },
-      { tenantId, registerId: register!.id, studentId: studentSalmaId, date: '2025-10-15', status: 'late', note: 'Retard de 15 min' },
-      { tenantId, registerId: register!.id, studentId: studentOmarId, date: '2025-10-15', status: 'absent', note: 'Absence non justifiée' },
+      { tenantId, academicYearId: session2025.id, registerId: register!.id, studentId: studentAmineId, date: '2025-10-15', status: 'present' },
+      { tenantId, academicYearId: session2025.id, registerId: register!.id, studentId: studentKenzaId, date: '2025-10-15', status: 'present' },
+      { tenantId, academicYearId: session2025.id, registerId: register!.id, studentId: studentYoussefId, date: '2025-10-15', status: 'present' },
+      { tenantId, academicYearId: session2025.id, registerId: register!.id, studentId: studentNadiaId, date: '2025-10-15', status: 'present' },
+      { tenantId, academicYearId: session2025.id, registerId: register!.id, studentId: studentSalmaId, date: '2025-10-15', status: 'late', note: 'Retard de 15 min' },
+      { tenantId, academicYearId: session2025.id, registerId: register!.id, studentId: studentOmarId, date: '2025-10-15', status: 'absent', note: 'Absence non justifiée' },
     ]);
 
     // Record a medical excuse for Kenza for another session
     const [excuseRegister] = await db.insert(attendanceRegisters).values({
       tenantId,
       classId: classTcScId,
+      sessionYearId: session2025.id,
       date: '2025-10-16',
       reference: `REG-2025-10-16-${suffix}`,
       status: 'LOCKED',
@@ -528,6 +549,7 @@ describe.skipIf(!dbReachable)('School Year Lifecycle End-to-End Test (Task T11)'
 
     await db.insert(attendance).values({
       tenantId,
+      academicYearId: session2025.id,
       registerId: excuseRegister!.id,
       studentId: studentKenzaId,
       date: '2025-10-16',
@@ -537,12 +559,16 @@ describe.skipIf(!dbReachable)('School Year Lifecycle End-to-End Test (Task T11)'
     await db.insert(attendanceExcuses).values({
       tenantId,
       studentId: studentKenzaId,
+      sessionYearId: session2025.id,
+      classSectionId: null,
+      period: 1,
       date: '2025-10-16',
       reason: 'Certificat médical de consultation pédiatrique',
       status: 'approved',
     });
 
     const excuses = await db.select().from(attendanceExcuses).where(and(eq(attendanceExcuses.tenantId, tenantId), eq(attendanceExcuses.studentId, studentKenzaId)));
+
     expect(excuses).toHaveLength(1);
     expect(excuses[0]!.status).toBe('approved');
   });
@@ -560,6 +586,7 @@ describe.skipIf(!dbReachable)('School Year Lifecycle End-to-End Test (Task T11)'
       { subjectId: subjectEpsId, subjectName: 'EPS', grade: 16.0, coefficient: 2 },
     ];
     const amineS1Res = calculateMoroccanAverage(amineS1);
+
     expect(amineS1Res.generalAverage).toBeGreaterThan(16.5);
     expect(amineS1Res.mention).toBe('Très Bien');
     expect(amineS1Res.status).toBe('Admis');
@@ -576,6 +603,7 @@ describe.skipIf(!dbReachable)('School Year Lifecycle End-to-End Test (Task T11)'
       { subjectId: subjectEpsId, subjectName: 'EPS', grade: 0, coefficient: 2, isExempt: true }, // Medical exemption
     ];
     const nadiaS1Res = calculateMoroccanAverage(nadiaS1);
+
     expect(nadiaS1Res.totalCoefficients).toBe(27); // 29 - 2 (EPS exempt) = 27
     expect(nadiaS1Res.mention).toBe('Assez Bien');
     expect(nadiaS1Res.status).toBe('Admis');
@@ -592,6 +620,7 @@ describe.skipIf(!dbReachable)('School Year Lifecycle End-to-End Test (Task T11)'
       { subjectId: subjectEpsId, subjectName: 'EPS', grade: 11.0, coefficient: 2 },
     ];
     const omarS1Res = calculateMoroccanAverage(omarS1);
+
     expect(omarS1Res.generalAverage).toBeLessThan(10.0);
     expect(omarS1Res.mention).toBe('Insuffisant');
     expect(omarS1Res.status).toBe('Ajourné');
@@ -607,6 +636,7 @@ describe.skipIf(!dbReachable)('School Year Lifecycle End-to-End Test (Task T11)'
     ];
 
     const ranks = calculateClassRanks(annualAverages);
+
     expect(ranks.find(r => r.studentId === studentAmineId)?.rank).toBe(1);
     expect(ranks.find(r => r.studentId === studentKenzaId)?.rank).toBe(2);
     expect(ranks.find(r => r.studentId === studentYoussefId)?.rank).toBe(3);
@@ -639,9 +669,11 @@ describe.skipIf(!dbReachable)('School Year Lifecycle End-to-End Test (Task T11)'
     });
 
     const res = await postPromotion(req);
+
     expect(res.status).toBe(200);
 
     const json = await res.json();
+
     expect(json.success).toBe(true);
     expect(json.data.decisions).toHaveLength(6);
 
@@ -650,6 +682,7 @@ describe.skipIf(!dbReachable)('School Year Lifecycle End-to-End Test (Task T11)'
       eq(promotionBatches.tenantId, tenantId),
       eq(promotionBatches.idempotencyKey, `promo-2025-2026-tc-${suffix}`),
     ));
+
     expect(batch).toBeTruthy();
     expect(batch!.status).toBe('committed');
 
@@ -657,12 +690,14 @@ describe.skipIf(!dbReachable)('School Year Lifecycle End-to-End Test (Task T11)'
       eq(promotionDecisions.tenantId, tenantId),
       eq(promotionDecisions.batchId, batch!.id),
     ));
+
     expect(decisions).toHaveLength(6);
 
     // Verify 5 students promoted to 1BAC-SE-A in session 2026-2027
     const promotedStudents = [studentAmineId, studentKenzaId, studentYoussefId, studentNadiaId, studentSalmaId];
     for (const sid of promotedStudents) {
       const [u] = await db.select().from(user).where(eq(user.id, sid));
+
       expect(u!.classSectionId).toBe(classSection1BacSeAId);
 
       // Verify active placement in 2026-2027
@@ -671,6 +706,7 @@ describe.skipIf(!dbReachable)('School Year Lifecycle End-to-End Test (Task T11)'
         eq(studentPlacements.studentId, sid),
         eq(studentPlacements.isCurrent, true),
       ));
+
       expect(currentPlacement!.classSectionId).toBe(classSection1BacSeAId);
       expect(currentPlacement!.sessionYearId).toBe(sessionYear2026Id);
 
@@ -680,12 +716,14 @@ describe.skipIf(!dbReachable)('School Year Lifecycle End-to-End Test (Task T11)'
         eq(studentPlacements.studentId, sid),
         eq(studentPlacements.sessionYearId, sessionYear2025Id),
       ));
+
       expect(histPlacement!.isCurrent).toBe(false);
       expect(histPlacement!.classSectionId).toBe(classSectionTcScAId);
     }
 
     // Verify Omar repeats in TC-SC-A for session 2026-2027
     const [omar] = await db.select().from(user).where(eq(user.id, studentOmarId));
+
     expect(omar!.classSectionId).toBe(classSectionTcScAId);
 
     const [omarCurrentPlacement] = await db.select().from(studentPlacements).where(and(
@@ -693,6 +731,7 @@ describe.skipIf(!dbReachable)('School Year Lifecycle End-to-End Test (Task T11)'
       eq(studentPlacements.studentId, studentOmarId),
       eq(studentPlacements.isCurrent, true),
     ));
+
     expect(omarCurrentPlacement!.classSectionId).toBe(classSectionTcScAId);
     expect(omarCurrentPlacement!.sessionYearId).toBe(sessionYear2026Id);
   });
@@ -721,9 +760,11 @@ describe.skipIf(!dbReachable)('School Year Lifecycle End-to-End Test (Task T11)'
     });
 
     const res = await postPromotion(req);
+
     expect(res.status).toBe(200);
 
     const json = await res.json();
+
     expect(json.success).toBe(true);
     expect(json.data.decisions).toHaveLength(6);
   });

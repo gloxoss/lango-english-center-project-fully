@@ -6,6 +6,7 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
+import { assertSectionCapacity } from '@/libs/services/section-capacity';
 import { recordStudentPlacement } from '@/libs/services/student-placement';
 import { db } from '@/libs/DB';
 import { classSections, invoices, sessionYears, user } from '@/models/Schema';
@@ -85,15 +86,12 @@ export async function POST(request: Request) {
 
     // Capacity check — classSections has no maxStudents column, so we return a soft warning
     // ponytail: count-only, no hard block — add migration + hard limit when school asks for it
-    const enrolledCountResult = await db
-      .select({ enrolledCount: count() })
-      .from(user)
-      .where(and(
-        eq(user.tenantId, tenantId),
-        eq(user.role, 'student'),
-        eq(user.classSectionId, body.targetClassSectionId),
-      ));
-    const enrolledCount = enrolledCountResult[0]?.enrolledCount ?? 0;
+    // ONE CAPACITY TRUTH: the target section's class_sections.maxStudents is
+    // enforced (no hardcoded thresholds). The moving student keeps their own
+    // seat when the target is their current section.
+    await assertSectionCapacity(tenantId, body.targetClassSectionId, {
+      excludeStudentIds: [body.studentId],
+    });
 
 
     // Unpaid invoice check — advisory warning only, not a hard block
@@ -147,7 +145,6 @@ export async function POST(request: Request) {
       success: true,
       data: newPlacement,
       warnings: [
-        ...(enrolledCount >= 30 ? [`La section cible compte déjà ${enrolledCount} élèves.`] : []),
         ...(unpaidInvoice ? [`Cet élève a des factures impayées (solde dû).`] : []),
       ],
       message: `Le transfert de ${student.name} a été exécuté avec succès.`,
