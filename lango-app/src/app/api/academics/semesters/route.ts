@@ -96,7 +96,7 @@ export async function PUT(request: Request) {
  * Exam-term and reporting convergence is a separate tracked workstream and is
  * deliberately not claimed here.
  */
-export async function semesterDependencyBlockers(tenantId: string, semesterId: string) {
+async function semesterDependencyBlockers(tenantId: string, semesterId: string) {
   const [classSubjectRows] = await Promise.all([
     db.select({ n: count() }).from(classSubjects).where(and(eq(classSubjects.tenantId, tenantId), eq(classSubjects.semesterId, semesterId))),
   ]);

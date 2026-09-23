@@ -959,17 +959,17 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                       size="sm"
                       onClick={() => openSectionsModal(cls)}
                       className="
-                        h-7 gap-1 rounded-lg px-2.5 text-[10px] font-bold
+                        h-11 gap-1 rounded-lg px-3 text-[11px] font-bold
                       "
                     >
-                      <Layers className="size-3" />
+                      <Layers className="size-3.5" />
                       {t('manageSectionsBtn')}
                     </Button>
                     <Link
                       href={`/${locale || 'fr'}/dashboard/academics/classes/${cls.id}`}
                       className="
-                        inline-flex h-7 items-center rounded-lg border
-                        border-slate-200 px-2.5 text-[10px] font-bold
+                        inline-flex h-11 items-center rounded-lg border
+                        border-slate-200 px-3 text-[11px] font-bold
                         text-[#2487B8]
                         hover:bg-slate-50
                       "

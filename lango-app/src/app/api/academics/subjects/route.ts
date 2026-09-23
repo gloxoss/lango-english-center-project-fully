@@ -119,7 +119,7 @@ export async function PUT(request: Request) {
  * attendance.subject_id references the legacy `courses` table in the current
  * schema, NOT the subjects catalogue — it is deliberately not claimed here.
  */
-export async function subjectDependencyBlockers(tenantId: string, subjectId: string) {
+async function subjectDependencyBlockers(tenantId: string, subjectId: string) {
   const [classSubjectRows, subjectTeacherRows] = await Promise.all([
     db.select({ n: count() }).from(classSubjects).where(and(eq(classSubjects.tenantId, tenantId), eq(classSubjects.subjectId, subjectId))),
     db.select({ n: count() }).from(subjectTeachers).where(and(eq(subjectTeachers.tenantId, tenantId), eq(subjectTeachers.subjectId, subjectId))),

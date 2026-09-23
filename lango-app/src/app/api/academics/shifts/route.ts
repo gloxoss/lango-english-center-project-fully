@@ -107,7 +107,7 @@ export async function PUT(request: Request) {
  * slots do not reference shifts directly in the current model, so they are not
  * claimed as blockers here.
  */
-export async function shiftDependencyBlockers(tenantId: string, shiftId: string) {
+async function shiftDependencyBlockers(tenantId: string, shiftId: string) {
   const [classRows] = await Promise.all([
     db.select({ n: count() }).from(classes).where(and(eq(classes.tenantId, tenantId), eq(classes.shiftId, shiftId))),
   ]);

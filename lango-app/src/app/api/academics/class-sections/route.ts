@@ -6,16 +6,16 @@ import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
-import { assertCapacityNotBelowOccupancy } from '@/libs/services/section-capacity';
 import { classSectionCreateSchema, classSectionUpdateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
+import { assertCapacityNotBelowOccupancy } from '@/libs/services/section-capacity';
 import {
   academicRooms,
   attendance,
+  classes,
   classScheduleSlots,
   classSections,
   classTeachers,
-  classes,
   rooms,
   sections,
   studentPlacements,
@@ -108,7 +108,7 @@ async function findSectionInScope(
  * (placements, teacher/timetable links, section-scoped attendance) must never
  * be cascade-deleted by a configuration action.
  */
-export async function classSectionDependencyBlockers(tenantId: string, classSectionId: string) {
+async function classSectionDependencyBlockers(tenantId: string, classSectionId: string) {
   const [placementRows, attendanceRows, classTeacherRows, subjectTeacherRows, slotRows, enrolledRows] = await Promise.all([
     db
       .select({ n: count() })

@@ -86,7 +86,7 @@ export async function PUT(request: Request) {
  * subjects. It is not a UI locale, a student native language or a guardian
  * communication language — those live elsewhere and must not be conflated.
  */
-export async function mediumDependencyBlockers(tenantId: string, mediumId: string) {
+async function mediumDependencyBlockers(tenantId: string, mediumId: string) {
   const [classRows, sectionRows, subjectRows] = await Promise.all([
     db.select({ n: count() }).from(classes).where(and(eq(classes.tenantId, tenantId), eq(classes.mediumId, mediumId))),
     db.select({ n: count() }).from(classSections).where(and(eq(classSections.tenantId, tenantId), eq(classSections.mediumId, mediumId))),

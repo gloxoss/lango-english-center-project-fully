@@ -18,11 +18,11 @@ import {
   attendance,
   attendanceRegisters,
   branches,
+  classes,
   classScheduleSlots,
   classSections,
   classSubjects,
   classTeachers,
-  classes,
   mediums,
   sections,
   semesters,
@@ -157,7 +157,7 @@ async function assertSameTenantReferences(tenantId: string, refs: { mediumId?: s
  * Operational blockers that make a class delete unsafe. Batched counts, one
  * query each; returned to the client so the administrator knows exactly why.
  */
-export async function classDependencyBlockers(tenantId: string, classId: string) {
+async function classDependencyBlockers(tenantId: string, classId: string) {
   const sectionIds = db
     .select({ id: classSections.id })
     .from(classSections)
@@ -268,7 +268,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      data: rows.map(row => {
+      data: rows.map((row) => {
         const sections = sectionsByClass.get(row.id);
         const capacityTotal = Number(sections?.capacityTotal ?? 0);
         const capacityConfigured = Number(sections?.capacityConfigured ?? 0);
