@@ -4,9 +4,10 @@ import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { attendanceRegisters } from '@/models/Schema';
+import { attendanceRegisters, classes } from '@/models/Schema';
 
 const reopenSchema = z.object({
   registerId: z.string().uuid(),
@@ -17,18 +18,28 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'attendance.manage');
     const body = await parseJson(request, reopenSchema);
 
+    // Register ownership + branch ownership are resolved through the parent
+    // class — a reopen is a correction action and must never cross campuses.
     const [existing] = await db
-      .select()
+      .select({
+        register: attendanceRegisters,
+        branchId: classes.branchId,
+      })
       .from(attendanceRegisters)
+      .innerJoin(classes, eq(attendanceRegisters.classId, classes.id))
       .where(and(eq(attendanceRegisters.id, body.registerId), eq(attendanceRegisters.tenantId, tenantId)))
       .limit(1);
 
     if (!existing) {
       throw new ApiError(404, 'NOT_FOUND', 'Registre introuvable');
     }
-    if (existing.status === 'REOPENED') {
+    if (context.branchId && existing.branchId !== context.branchId) {
+      throw new ApiError(403, 'FORBIDDEN', 'Ce registre appartient à un autre campus.');
+    }
+    if (existing.register.status === 'REOPENED') {
       throw new ApiError(409, 'ALREADY_REOPENED', 'Ce registre est déjà rouvert');
     }
 
@@ -49,7 +60,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       data: updated,
-      message: `Registre ${existing.reference} rouvert pour correction.`,
+      message: `Registre ${existing.register.reference} rouvert pour correction.`,
     });
   } catch (error) {
     return apiErrorResponse(error);

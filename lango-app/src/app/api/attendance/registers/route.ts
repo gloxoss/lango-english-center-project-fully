@@ -2,8 +2,9 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { db } from '@/libs/DB';
-import { attendanceRegisters, classSections, user } from '@/models/Schema';
+import { attendanceRegisters, classes, classSections, user } from '@/models/Schema';
 
 const registerProjection = {
   id: attendanceRegisters.id,
@@ -37,10 +38,41 @@ export async function GET(request: Request) {
     // no register yet, fall back to a legacy class-level register (historical
     // rows whose section identity was never stored).
     const [sec] = await db
-      .select({ id: classSections.id, classId: classSections.classId })
+      .select({ id: classSections.id, classId: classSections.classId, branchId: classes.branchId })
       .from(classSections)
+      .innerJoin(classes, eq(classSections.classId, classes.id))
       .where(and(eq(classSections.tenantId, tenantId), eq(classSections.id, classId)))
       .limit(1);
+
+    // AUTHORITATIVE SCOPE (P0): branch-limited callers only read registers of
+    // their campus; teachers only registers of their assigned sections.
+    if (sec) {
+      if (context.branchId && sec.branchId !== context.branchId) {
+        return NextResponse.json({ success: true, data: null });
+      }
+      if (context.role === 'teacher') {
+        const assignedIds = await getTeacherClassSectionIds(tenantId, context.userId);
+        if (!assignedIds.includes(sec.id)) {
+          return NextResponse.json({ success: true, data: null });
+        }
+      }
+    } else {
+      // Legacy class-level register (no section identity): whole-school admins
+      // and matching-campus admins only; teachers never read these.
+      if (context.role === 'teacher') {
+        return NextResponse.json({ success: true, data: null });
+      }
+      if (context.branchId) {
+        const [cls] = await db
+          .select({ branchId: classes.branchId })
+          .from(classes)
+          .where(and(eq(classes.tenantId, tenantId), eq(classes.id, classId)))
+          .limit(1);
+        if (!cls || cls.branchId !== context.branchId) {
+          return NextResponse.json({ success: true, data: null });
+        }
+      }
+    }
 
     const classKey = sec?.classId ?? classId;
 

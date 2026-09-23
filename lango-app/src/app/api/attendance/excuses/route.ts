@@ -7,6 +7,9 @@ import { recalculateStudentAttendanceSummary } from '@/libs/api/attendance-summa
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { getGuardianChildIds } from '@/libs/api/guardian-scope';
+import { assertStudentAccess } from '@/libs/api/student-access';
+import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { attendance, attendanceExcuses, guardians, guardianStudents, user } from '@/models/Schema';
@@ -26,22 +29,6 @@ const reviewExcuseSchema = z.object({
   data => data.status !== 'rejected' || !!data.rejectionReason,
   { message: 'Un motif de refus est requis.', path: ['rejectionReason'] },
 );
-
-// A parent's own children, resolved server-side from the guardianStudents
-// relationship - never trust a client-supplied studentId for this role.
-async function getGuardianChildIds(tenantId: string, guardianUserId: string): Promise<string[]> {
-  const [guardian] = await db
-    .select({ id: guardians.id })
-    .from(guardians)
-    .where(and(eq(guardians.tenantId, tenantId), eq(guardians.userId, guardianUserId)))
-    .limit(1);
-  if (!guardian) return [];
-  const links = await db
-    .select({ studentId: guardianStudents.studentId })
-    .from(guardianStudents)
-    .where(and(eq(guardianStudents.tenantId, tenantId), eq(guardianStudents.guardianId, guardian.id)));
-  return links.map(l => l.studentId);
-}
 
 export async function GET(request: Request) {
   try {
@@ -73,6 +60,25 @@ export async function GET(request: Request) {
       }
     } else if (studentIdParam) {
       conditions.push(eq(attendanceExcuses.studentId, studentIdParam));
+    }
+
+    // TEACHER SCOPE (P0): excuses only for students currently in the teacher's
+    // authorized sections. BRANCH SCOPE: branch-limited admins only their
+    // campus. Both are enforced through the student row, never the request.
+    if (context.role === 'teacher') {
+      const assignedIds = await getTeacherClassSectionIds(tenantId, context.userId);
+      if (assignedIds.length === 0) {
+        return NextResponse.json({ success: true, data: [], total: 0 });
+      }
+      conditions.push(inArray(
+        attendanceExcuses.studentId,
+        db.select({ id: user.id }).from(user).where(and(eq(user.tenantId, tenantId), inArray(user.classSectionId, assignedIds))),
+      ));
+    } else if (context.role === 'school_admin' && context.branchId) {
+      conditions.push(inArray(
+        attendanceExcuses.studentId,
+        db.select({ id: user.id }).from(user).where(and(eq(user.tenantId, tenantId), eq(user.branchId, context.branchId))),
+      ));
     }
 
     if (statusParam && ['pending', 'approved', 'rejected'].includes(statusParam)) {
@@ -167,6 +173,10 @@ export async function POST(request: Request) {
       }
       targetStudentId = body.studentId;
     } else {
+      // TEACHER/ADMIN SCOPE (P0): teacher -> own sections; branch-limited
+      // admin -> own campus. Previously any teacher/admin could file an
+      // excuse for any student in the tenant.
+      await assertStudentAccess(context, tenantId, body.studentId);
       targetStudentId = body.studentId;
     }
 

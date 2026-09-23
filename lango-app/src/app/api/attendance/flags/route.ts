@@ -5,6 +5,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
+import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { attendanceFlags, guardians, guardianStudents, user } from '@/models/Schema';
@@ -35,6 +36,21 @@ export async function GET(request: Request) {
     }
     if (assignedToParam) {
       conditions.push(eq(attendanceFlags.assignedToId, assignedToParam));
+    }
+
+    // TEACHER SCOPE (P0): flags only for students currently in the teacher's
+    // authorized sections.
+    if (context.role === 'teacher') {
+      const assignedIds = await getTeacherClassSectionIds(tenantId, context.userId);
+      if (assignedIds.length === 0) {
+        return NextResponse.json({ success: true, data: [], total: 0, page: pagination.page, pageSize: pagination.pageSize });
+      }
+      conditions.push(inArray(user.classSectionId, assignedIds));
+    }
+
+    // BRANCH SCOPE (P0): branch-limited callers only see their campus.
+    if (context.branchId) {
+      conditions.push(eq(user.branchId, context.branchId));
     }
 
     const rows = await db
@@ -103,12 +119,25 @@ export async function PATCH(request: Request) {
     const body = await parseJson(request, updateFlagSchema);
 
     const [existing] = await db
-      .select({ id: attendanceFlags.id })
+      .select({ id: attendanceFlags.id, studentId: attendanceFlags.studentId })
       .from(attendanceFlags)
       .where(and(eq(attendanceFlags.id, body.flagId), eq(attendanceFlags.tenantId, tenantId)))
       .limit(1);
     if (!existing) {
       throw new ApiError(404, 'NOT_FOUND', 'Signalement introuvable');
+    }
+
+    // BRANCH SCOPE (P0): a branch-limited admin may only act on flags of
+    // students in their own campus.
+    if (context.branchId) {
+      const [studentRow] = await db
+        .select({ branchId: user.branchId })
+        .from(user)
+        .where(and(eq(user.id, existing.studentId), eq(user.tenantId, tenantId)))
+        .limit(1);
+      if (studentRow?.branchId !== context.branchId) {
+        throw new ApiError(403, 'FORBIDDEN', 'Cet élève appartient à un autre campus.');
+      }
     }
 
     const updates: Record<string, unknown> = {};
