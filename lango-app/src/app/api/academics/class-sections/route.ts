@@ -1,4 +1,4 @@
-import { and, count, eq, inArray, isNull } from 'drizzle-orm';
+import { and, count, eq, inArray, isNull, or } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
@@ -50,8 +50,21 @@ async function resolveMediumId(tenantId: string, classId: string, sectionId: str
 
 export async function GET(request: Request) {
   try {
-    const context = await requireRequestContext(request, ['school_admin', 'teacher']);
+    // Read-only structural lookup: the cash desk needs section names to allocate
+    // fees, so the accountant reads it under academics.read like any other staff
+    // reader. The role allowlist used to reject the account outright, which is
+    // how the accountant got 403 on screens that only need names.
+    const context = await requireRequestContext(request, ['school_admin', 'teacher', 'accountant']);
     const tenantId = requireTenant(context);
+    // The accountant needs these names to label fee allocations and nothing
+    // else, and may hold finance powers without academics.read. So the finance
+    // capability is accepted here as the alternative gate; nothing broader is
+    // granted by it.
+    if (context.role === 'accountant') {
+      await requireCapability(context, 'finance.manage');
+    } else {
+      await requireCapability(context, 'academics.read');
+    }
     const { searchParams } = new URL(request.url);
     const pagination = parsePagination(searchParams);
 
@@ -59,6 +72,10 @@ export async function GET(request: Request) {
     const classIdFilter = searchParams.get('classId');
     if (classIdFilter) {
       conditions.push(eq(classSections.classId, classIdFilter));
+    }
+    const branchIdFilter = searchParams.get('branchId');
+    if (branchIdFilter) {
+      conditions.push(or(eq(classes.branchId, branchIdFilter), isNull(classes.branchId))!);
     }
     if (context.role === 'teacher') {
       const assignedIds = await getTeacherClassSectionIds(tenantId, context.userId);
@@ -82,6 +99,7 @@ export async function GET(request: Request) {
           className: classes.name,
           periodType: classes.periodType,
           sectionName: sections.name,
+          branchId: classes.branchId,
         })
         .from(classSections)
         .innerJoin(classes, eq(classSections.classId, classes.id))
@@ -122,6 +140,7 @@ export async function GET(request: Request) {
         className: r.className,
         periodType: r.periodType,
         sectionName: r.sectionName,
+        branchId: r.branchId ?? null,
         enrolledCount: enrolledById.get(r.classSection.id) ?? 0,
         homeroomTeacherId: homeroomById.get(r.classSection.id) ?? null,
       })),

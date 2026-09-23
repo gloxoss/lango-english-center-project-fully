@@ -21,9 +21,18 @@ function toApiSemester(row: typeof semesters.$inferSelect) {
 
 export async function GET(request: Request) {
   try {
-    const context = await requireRequestContext(request, ['school_admin']);
+    // Listing terms is a read and belongs to academics.read; academics.manage
+    // still gates the writes on this route. The cash desk needs term names and
+    // used to get 403 here.
+    const context = await requireRequestContext(request, ['school_admin', 'teacher', 'accountant']);
     const tenantId = requireTenant(context);
-    await requireCapability(context, 'academics.manage');
+    // Finance-scoped read for the accountant: term names are needed to post
+    // payments and the role may hold finance powers without academics.read.
+    if (context.role === 'accountant') {
+      await requireCapability(context, 'finance.manage');
+    } else {
+      await requireCapability(context, 'academics.read');
+    }
     const { searchParams } = new URL(request.url);
     const pagination = parsePagination(searchParams);
     const where = eq(semesters.tenantId, tenantId);
