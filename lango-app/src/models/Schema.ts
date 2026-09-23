@@ -4605,6 +4605,9 @@ export const processedStripeEvents = pgTable('processed_stripe_events', {
 // Advanced Reporting Add-on exports
 export * from '@/addons/advanced-reporting/models/reporting-schema';
 
+// Academics Syllabus Progression Schema
+export * from '@/features/academics/model/syllabus-schema';
+
 // Office Accounting core ledger extensions
 export * from '@/features/accounting/models/accounting-schema';
 
@@ -4613,10 +4616,10 @@ export * from '@/features/assessment/models/assessment-schema';
 
 // Attachments Book Add-on exports
 export * from '@/features/attachments/models/attachments-schema';
-
 export * from '@/features/attendance/models/attendance-qr-schema';
 // Broadcast Messaging Add-on exports
 export * from '@/features/broadcast/models/broadcast-schema';
+
 export * from '@/features/cards/models/cards-schema';
 
 // Attendance QR Enhancement exports
@@ -4664,9 +4667,6 @@ export * from '@/features/transport/models/transport-schema';
 
 // School Website CMS Add-on (public per-tenant marketing site)
 export * from '@/features/website/models/website-schema';
-
-// Academics Syllabus Progression Schema
-export * from '@/features/academics/model/syllabus-schema';
 
 // Payroll & Workforce Operations add-on
 export * from '@/features/workforce/models/workforce-schema';
