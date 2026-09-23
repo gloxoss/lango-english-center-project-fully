@@ -8,6 +8,7 @@ import { enforceEmailPasswordLockout, trackEmailPasswordResult } from '@/libs/au
 import { deliverOtpEmail } from '@/libs/auth/otp-email';
 import { captureSignInLoginEvent } from '@/features/settings/services/login-events-service';
 import { scopeSignInToTenant } from '@/libs/auth/tenant-scope';
+import { AUTH_RATE_LIMIT_CUSTOM_RULES } from '@/libs/auth/rate-limit';
 import { listApprovedDomains } from '@/features/platform/services/domains-service';
 import { db } from '@/libs/DB';
 import { logger } from '@/libs/logger';
@@ -66,9 +67,7 @@ export const auth = betterAuth({
     enabled: true,
     window: 60,
     max: 100,
-    customRules: {
-      '/sign-in/email': { window: 60, max: 30 },
-    },
+    customRules: AUTH_RATE_LIMIT_CUSTOM_RULES,
   },
   hooks: {
     // Closes the long-standing gap where user.failedLoginCount / lockedUntil

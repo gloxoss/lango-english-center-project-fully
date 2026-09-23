@@ -1,0 +1,12 @@
+[
+  {
+    "route": "/dashboard/hr/self-service",
+    "finalPath": "/fr/dashboard/hr/self-service",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 302,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-hr__self-service.png"
+  }
+]

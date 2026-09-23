@@ -42,6 +42,12 @@ describe('Permissions system', () => {
     expect(DEFAULT_ROLE_PERMISSIONS.teacher).not.toContain('students.delete');
   });
 
+  it('employee roles can access their own HR self-service data', () => {
+    for (const role of ['teacher', 'accountant', 'receptionist', 'guard', 'librarian'] as const) {
+      expect(DEFAULT_ROLE_PERMISSIONS[role], `${role} lacks payroll.self.read`).toContain('payroll.self.read');
+    }
+  });
+
   it('student cannot manage anything', () => {
     const studentPerms = DEFAULT_ROLE_PERMISSIONS.student;
     const managePerms = studentPerms.filter(p => p.includes('.manage') || p.includes('.create') || p.includes('.delete'));
@@ -56,6 +62,7 @@ describe('Permissions system', () => {
       'guard.pickup.release',
       'guard.incidents.manage',
       'guard.evidence.read',
+      'payroll.self.read',
       'events.checkin',
       'transport.read',
       'transport.boarding.manage',

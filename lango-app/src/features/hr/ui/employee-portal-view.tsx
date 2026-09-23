@@ -10,7 +10,7 @@ import {
   FolderDown, Loader2, LogIn, PiggyBank, ShieldAlert, User, UserCheck,
 } from 'lucide-react';
 
-type ApiResult<T> = { success: boolean; data?: T; error?: { code?: string; message?: string } };
+type ApiResult<T> = { success: boolean; data?: T; error?: { code?: string; message?: string }; status?: number };
 
 type HomeData = {
   leaveBalances: {
@@ -163,6 +163,7 @@ export function EmployeePortalView() {
   const [awards, setAwards] = useState<AwardRow[]>([]);
   const [documents, setDocuments] = useState<DocumentRow[]>([]);
   const [requests, setRequests] = useState<ProfileRequestRow[]>([]);
+  const [unavailableSections, setUnavailableSections] = useState<Set<SectionKey>>(new Set());
 
   const loadAll = useCallback(async () => {
     setStatus('loading');
@@ -178,16 +179,19 @@ export function EmployeePortalView() {
       fetchJson<ProfileRequestRow[]>('/api/employee/me/requests'),
     ]);
 
-    const anyErr = [h, p, l, tRes, pay].find(r => !r.success);
-    if (anyErr?.error?.code === 'NOT_AN_EMPLOYEE' || (anyErr as ApiResult<unknown> & { status?: number })?.status === 403) {
+    const results: Array<[SectionKey, ApiResult<unknown>]> = [
+      ['home', h], ['profile', p], ['leave', l], ['time', tRes], ['payroll', pay],
+      ['advances', adv], ['awards', aw], ['documents', doc], ['requests', req],
+    ];
+    if (results.some(([, result]) => result.error?.code === 'NOT_AN_EMPLOYEE')) {
       setStatus('notEmployee');
       return;
     }
-    if (anyErr) {
-      setStatus('error');
-      setErrorMsg(anyErr.error?.message ?? t('loadError'));
-      return;
-    }
+    const failedSections = new Set(results.filter(([, result]) => !result.success).map(([key]) => key));
+    setUnavailableSections(failedSections);
+    setSection(current => failedSections.has(current)
+      ? (NAV.find(item => !failedSections.has(item.key))?.key ?? 'home')
+      : current);
     setHome(h.data ?? null);
     setProfile(p.data ?? null);
     setLeave(l.data ?? []);
@@ -294,7 +298,7 @@ export function EmployeePortalView() {
 
       {/* Section nav */}
       <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
-        {NAV.map(n => (
+        {NAV.filter(n => !unavailableSections.has(n.key)).map(n => (
           <button
             key={n.key}
             onClick={() => setSection(n.key)}
@@ -305,15 +309,15 @@ export function EmployeePortalView() {
         ))}
       </div>
 
-      {section === 'home' && <HomeSection home={home} leave={leave} locale={locale} />}
-      {section === 'profile' && <ProfileSection profile={profile} onSaved={loadAll} />}
-      {section === 'leave' && <LeaveSection balances={home?.leaveBalances ?? []} rows={leave} onChanged={refreshLeave} locale={locale} />}
-      {section === 'advances' && <AdvancesSection data={advances} onChanged={refreshAdvances} locale={locale} />}
-      {section === 'time' && <TimeSection time={time} locale={locale} />}
-      {section === 'payroll' && <PayrollSection payroll={payroll} locale={locale} />}
-      {section === 'awards' && <AwardsSection awards={awards} locale={locale} />}
-      {section === 'documents' && <DocumentsSection docs={documents} locale={locale} />}
-      {section === 'requests' && <RequestsSection requests={requests} locale={locale} />}
+      {section === 'home' && !unavailableSections.has('home') && <HomeSection home={home} leave={leave} locale={locale} />}
+      {section === 'profile' && !unavailableSections.has('profile') && <ProfileSection profile={profile} onSaved={loadAll} />}
+      {section === 'leave' && !unavailableSections.has('leave') && <LeaveSection balances={home?.leaveBalances ?? []} rows={leave} onChanged={refreshLeave} locale={locale} />}
+      {section === 'advances' && !unavailableSections.has('advances') && <AdvancesSection data={advances} onChanged={refreshAdvances} locale={locale} />}
+      {section === 'time' && !unavailableSections.has('time') && <TimeSection time={time} locale={locale} />}
+      {section === 'payroll' && !unavailableSections.has('payroll') && <PayrollSection payroll={payroll} locale={locale} />}
+      {section === 'awards' && !unavailableSections.has('awards') && <AwardsSection awards={awards} locale={locale} />}
+      {section === 'documents' && !unavailableSections.has('documents') && <DocumentsSection docs={documents} locale={locale} />}
+      {section === 'requests' && !unavailableSections.has('requests') && <RequestsSection requests={requests} locale={locale} />}
     </div>
   );
 }

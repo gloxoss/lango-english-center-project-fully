@@ -301,6 +301,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<AppRole, readonly PermissionKey[]>
     'academics.read',
     'attendance.read', 'attendance.manage',
     'grading.read', 'grading.manage',
+    'payroll.self.read',
     'communication.read',
     'guardians.read',
     'reports.read',
@@ -330,6 +331,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<AppRole, readonly PermissionKey[]>
     // approve, or post (those stay school_admin). Matches the workforce page
     // guards which list 'accountant' in allowedRoles with payroll.review.
     'payroll.review',
+    'payroll.self.read',
     // hr.read/hr.manage deliberately excluded: full HR/payroll ownership isn't
     // part of the Accountant Portal's scope (future-implementation/accountant-portal).
     // Procurement is finance-adjacent: accountants view inventory and manage
@@ -386,6 +388,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<AppRole, readonly PermissionKey[]>
     'reception.appointment.manage',
     'reception.handoff.manage',
     'reception.visitor.manage',
+    'payroll.self.read',
   ],
   guard: [
     // Operational guard set. students.read/attendance.read/events.read are
@@ -397,6 +400,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<AppRole, readonly PermissionKey[]>
     'guard.pickup.release',
     'guard.incidents.manage',
     'guard.evidence.read',
+    'payroll.self.read',
     'events.checkin',
     // Operational transport boarding & incidents
     'transport.read', 'transport.boarding.manage', 'transport.incident.manage',
@@ -417,6 +421,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<AppRole, readonly PermissionKey[]>
     'library.hold.manage',
     'library.stocktake.manage',
     'library.report.read',
+    'payroll.self.read',
   ],
 };
 
