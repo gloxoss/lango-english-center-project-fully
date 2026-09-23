@@ -1,23 +1,22 @@
 /**
  * GL auto-posting: fires after financial transactions are recorded.
  *
- * Payment:  DR Cash (11xx) / CR AR Receivable (34xx)
- * Expense:  DR Expense (6xx) / CR Cash (11xx)
- * Refund:   DR AR Receivable (34xx) / CR Cash (11xx)   [reversal of payment]
+ * Payment:  DR treasury / CR receivables
+ * Expense:  DR expense / CR treasury
+ * Refund:   DR receivables / CR treasury
  *
- * Fail-open: skips silently if CoA not configured or no open fiscal period.
- * ponytail: resolve accounts by code prefix (Moroccan CGNC plan comptable).
- *   Add a settings lookup when schools need configurable GL mappings.
+ * Returns null when GL setup is incomplete. Callers must surface and retry that state.
+ * Treasury uses the configured payment method account when available.
  */
 
 import { and, eq, like } from 'drizzle-orm';
 import { db } from '@/libs/DB';
-import { chartOfAccounts } from '@/models/Schema';
+import { chartOfAccounts, paymentMethodConfigurations } from '@/models/Schema';
 import { postBalancedJournal } from '@/libs/services/finance-ledger';
 
 type PostResult = Awaited<ReturnType<typeof postBalancedJournal>> | null;
 
-// Shared fail-open wrapper — rethrows unexpected errors, swallows known setup gaps
+// Known setup gaps remain retryable; unexpected errors go to the caller.
 function isSoftError(err: unknown): boolean {
   const code = (err as { code?: string })?.code ?? '';
   const msg = (err as { message?: string })?.message ?? '';
@@ -38,8 +37,35 @@ async function resolveAccount(tenantId: string, codePrefix: string) {
       eq(chartOfAccounts.isActive, true),
       like(chartOfAccounts.code, `${codePrefix}%`),
     ))
+    .orderBy(chartOfAccounts.code)
     .limit(1);
   return account ?? null;
+}
+
+async function resolveFirstAccount(tenantId: string, prefixes: string[]) {
+  for (const prefix of prefixes) {
+    const account = await resolveAccount(tenantId, prefix);
+    if (account) return account;
+  }
+  return null;
+}
+
+async function resolveTreasuryAccount(tenantId: string, paymentMethod?: string) {
+  if (paymentMethod) {
+    const [configured] = await db.select({ id: chartOfAccounts.id })
+      .from(paymentMethodConfigurations)
+      .innerJoin(chartOfAccounts, and(
+        eq(chartOfAccounts.id, paymentMethodConfigurations.accountingAccountId),
+        eq(chartOfAccounts.tenantId, tenantId), eq(chartOfAccounts.isActive, true),
+      ))
+      .where(and(eq(paymentMethodConfigurations.tenantId, tenantId),
+        eq(paymentMethodConfigurations.methodCode, paymentMethod), eq(paymentMethodConfigurations.isActive, true)))
+      .limit(1);
+    if (configured) return configured;
+  }
+  return resolveFirstAccount(tenantId, paymentMethod === 'cash'
+    ? ['516', '53', '512', '514', '11']
+    : ['514', '512', '51', '516', '53', '11']);
 }
 
 export async function tryPostPaymentGLEntry(opts: {
@@ -49,11 +75,12 @@ export async function tryPostPaymentGLEntry(opts: {
   invoiceNumber: string;
   amount: string; // decimal string e.g. "1250.00"
   paymentDate: string; // ISO date string
+  paymentMethod?: string;
 }): Promise<PostResult> {
   try {
     const [cashAccount, arAccount] = await Promise.all([
-      resolveAccount(opts.tenantId, '11'),
-      resolveAccount(opts.tenantId, '34'),
+      resolveTreasuryAccount(opts.tenantId, opts.paymentMethod),
+      resolveFirstAccount(opts.tenantId, ['342', '411', '34']),
     ]);
     if (!cashAccount || !arAccount) return null;
 
@@ -115,11 +142,12 @@ export async function tryPostRefundGLEntry(opts: {
   refundNumber: string;
   amount: string; // decimal string
   refundDate: string; // ISO date string
+  refundMethod?: string;
 }): Promise<PostResult> {
   try {
     const [arAccount, cashAccount] = await Promise.all([
-      resolveAccount(opts.tenantId, '34'),
-      resolveAccount(opts.tenantId, '11'),
+      resolveFirstAccount(opts.tenantId, ['342', '411', '34']),
+      resolveTreasuryAccount(opts.tenantId, opts.refundMethod),
     ]);
     if (!arAccount || !cashAccount) return null;
 
@@ -149,11 +177,12 @@ export async function tryPostPaymentReversalGLEntry(opts: {
   invoiceNumber: string;
   amount: string; // decimal string
   reversalDate: string; // ISO date string
+  paymentMethod?: string;
 }): Promise<PostResult> {
   try {
     const [arAccount, cashAccount] = await Promise.all([
-      resolveAccount(opts.tenantId, '34'),
-      resolveAccount(opts.tenantId, '11'),
+      resolveFirstAccount(opts.tenantId, ['342', '411', '34']),
+      resolveTreasuryAccount(opts.tenantId, opts.paymentMethod),
     ]);
     if (!arAccount || !cashAccount) return null;
 

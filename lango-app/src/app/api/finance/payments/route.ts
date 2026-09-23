@@ -146,6 +146,7 @@ export async function POST(request: Request) {
         invoiceNumber: updatedInvoices[0]?.invoiceNumber ?? '',
         amount: String(centsToMoney(totalPaymentCents)),
         paymentDate: payment.paymentDate,
+        paymentMethod: payment.paymentMethod,
       }));
     } catch (error) {
       postingReason = 'gl_post_failed';

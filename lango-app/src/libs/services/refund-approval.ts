@@ -21,6 +21,7 @@ export type ApprovedRefund = {
   amount: string;
   refundNumber: string;
   decidedAt: string | null;
+  refundMethod?: string;
 };
 
 /** Same shape as decideCreditNote - one state transition, shared by the Refunds page and the accountant approvals queue. */
@@ -155,6 +156,7 @@ export async function applyApprovedRefund(input: {
     refundNumber: refund.refundNumber,
     amount: refund.amount,
     refundDate: refund.decidedAt ?? now,
+    refundMethod: refund.refundMethod,
   });
 
   // Audit 3 P1-N: the student ledger has already moved. If this school keeps a

@@ -157,7 +157,7 @@ async function applyReversal(input: {
       .set({ reversedAt: new Date().toISOString() })
       .where(eq(paymentReversals.id, reversal.id));
 
-    return { invoiceNumber: touchedInvoiceNumber, amount: centsToMoney(moneyToCents(String(payment.amount))) };
+    return { invoiceNumber: touchedInvoiceNumber, amount: centsToMoney(moneyToCents(String(payment.amount))), paymentMethod: payment.paymentMethod };
   });
 
   await tryPostPaymentReversalGLEntry({
@@ -167,5 +167,6 @@ async function applyReversal(input: {
     invoiceNumber: result.invoiceNumber,
     amount: result.amount,
     reversalDate: new Date().toISOString(),
+    paymentMethod: result.paymentMethod,
   });
 }
