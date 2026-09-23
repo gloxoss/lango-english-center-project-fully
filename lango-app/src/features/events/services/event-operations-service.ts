@@ -8,7 +8,7 @@ import {
 } from '@/features/events/models/events-schema';
 import { ApiError } from '@/libs/api/errors';
 import { sendNotification } from '@/libs/services/notification-service';
-import type { EventTargetRow } from './audience-service';
+import { canViewPublishedEvent, type EventTargetRow, type EventViewer } from './audience-service';
 
 // Every helper below re-verifies the parent event belongs to the caller's
 // tenant before touching a child row (venues/audiences/tasks/incidents/
@@ -621,21 +621,26 @@ export async function buildEventIcs(tenantId: string, eventId: string): Promise<
   return lines.join('\r\n');
 }
 
-export async function getEventDetail(tenantId: string, eventId: string) {
+export async function getEventDetail(tenantId: string, eventId: string, viewer?: EventViewer) {
   const [event] = await db.select().from(events)
     .where(and(eq(events.id, eventId), eq(events.tenantId, tenantId))).limit(1);
   if (!event) throw new ApiError(404, 'EVENT_NOT_FOUND', 'Événement introuvable.');
 
-  const [schedules, venues, rules, regs] = await Promise.all([
-    db.select().from(eventSchedules).where(eq(eventSchedules.eventId, eventId)),
-    db.select().from(eventVenues).where(eq(eventVenues.eventId, eventId)),
-    db.select().from(eventAudienceRules).where(eq(eventAudienceRules.eventId, eventId)),
-    db.select({ status: eventRegistrations.status, seats: eventRegistrations.seats, n: sql<number>`count(*)` })
+  const rules = await db.select().from(eventAudienceRules)
+    .where(and(eq(eventAudienceRules.eventId, eventId), eq(eventAudienceRules.tenantId, tenantId)));
+  if (viewer && !canViewPublishedEvent(event, rules, viewer)) {
+    throw new ApiError(404, 'EVENT_NOT_FOUND', 'Événement introuvable.');
+  }
+
+  const [schedules, venues] = await Promise.all([
+    db.select().from(eventSchedules).where(and(eq(eventSchedules.eventId, eventId), eq(eventSchedules.tenantId, tenantId))),
+    db.select().from(eventVenues).where(and(eq(eventVenues.eventId, eventId), eq(eventVenues.tenantId, tenantId))),
+  ]);
+  const regs = viewer ? [] : await db.select({ status: eventRegistrations.status, seats: eventRegistrations.seats, n: sql<number>`count(*)` })
       .from(eventRegistrations)
       .innerJoin(eventOccurrences, eq(eventRegistrations.occurrenceId, eventOccurrences.id))
-      .where(eq(eventOccurrences.eventId, eventId))
-      .groupBy(eventRegistrations.status, eventRegistrations.seats),
-  ]);
+      .where(and(eq(eventOccurrences.eventId, eventId), eq(eventOccurrences.tenantId, tenantId)))
+      .groupBy(eventRegistrations.status, eventRegistrations.seats);
   const scheduleIds = schedules.map(s => s.id);
   const occurrences = scheduleIds.length
     ? await db.select().from(eventOccurrences)
@@ -643,7 +648,19 @@ export async function getEventDetail(tenantId: string, eventId: string) {
         .orderBy(eventOccurrences.startTime)
     : [];
 
+  if (viewer) return { event, schedules, occurrences, venues, rules: [], registrationSummary: [] };
   return { event, schedules, occurrences, venues, rules, registrationSummary: regs };
+}
+
+export async function assertFamilyEventReadable(tenantId: string, eventId: string, viewer: EventViewer): Promise<void> {
+  const [event] = await db.select({ lifecycle: events.lifecycle, visibility: events.visibility }).from(events)
+    .where(and(eq(events.id, eventId), eq(events.tenantId, tenantId))).limit(1);
+  if (!event) throw new ApiError(404, 'EVENT_NOT_FOUND', 'Événement introuvable.');
+  const rules = await db.select().from(eventAudienceRules)
+    .where(and(eq(eventAudienceRules.eventId, eventId), eq(eventAudienceRules.tenantId, tenantId)));
+  if (!canViewPublishedEvent(event, rules, viewer)) {
+    throw new ApiError(404, 'EVENT_NOT_FOUND', 'Événement introuvable.');
+  }
 }
 
 // ---------------------------------------------------------------------------

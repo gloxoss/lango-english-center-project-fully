@@ -6736,6 +6736,7 @@
     "selectPlaceholder": "Select...",
     "paymentsTitle": "Payment Batches",
     "paymentsDesc": "No bank export or DAMANCOM integration is certified in this version.",
+    "missingRibCount": "{count} employee(s) have no RIB. Complete their HR profiles before approval or export.",
     "selectPostedRun": "Select a posted payroll run",
     "btnPrepareBatch": "Prepare Batch",
     "noPaymentBatches": "No payment batches found.",

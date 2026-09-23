@@ -6,7 +6,8 @@ import { requireCapability } from '@/libs/api/permissions';
 import { requireAddon } from '@/libs/api/entitlements';
 import { recordAudit } from '@/libs/api/audit';
 import { parseJson } from '@/libs/api/validation';
-import { addEventVenue, listEventVenues } from '@/features/events/services/event-operations-service';
+import { addEventVenue, assertFamilyEventReadable, listEventVenues } from '@/features/events/services/event-operations-service';
+import { isFamilyEventViewerRole, resolveEventViewerContext } from '@/features/events/services/audience-service';
 
 const createVenueSchema = z.object({
   venueType: z.enum(['physical', 'online', 'hybrid']).optional(),
@@ -28,6 +29,9 @@ export async function GET(request: Request, { params }: Params) {
     await requireCapability(context, 'events.read');
 
     const { id } = await params;
+    if (isFamilyEventViewerRole(context.role)) {
+      await assertFamilyEventReadable(tenantId, id, await resolveEventViewerContext(context.userId, context.role));
+    }
     const venues = await listEventVenues(tenantId, id);
     return NextResponse.json({ success: true, data: venues });
   } catch (error) {

@@ -8,9 +8,11 @@ import { recordAudit } from '@/libs/api/audit';
 import { contentTypeFor, readUploadedFile, saveUploadedFile } from '@/libs/api/uploads';
 import {
   addEventAttachment,
+  assertFamilyEventReadable,
   getEventAttachment,
   listEventAttachments,
 } from '@/features/events/services/event-operations-service';
+import { isFamilyEventViewerRole, resolveEventViewerContext } from '@/features/events/services/audience-service';
 
 const ALLOWED_TYPES: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -31,6 +33,9 @@ export async function GET(request: Request, { params }: Params) {
     await requireCapability(context, 'events.read');
 
     const { id } = await params;
+    if (isFamilyEventViewerRole(context.role)) {
+      await assertFamilyEventReadable(tenantId, id, await resolveEventViewerContext(context.userId, context.role));
+    }
     const { searchParams } = new URL(request.url);
     const fileId = searchParams.get('file');
 

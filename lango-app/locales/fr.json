@@ -6736,6 +6736,7 @@
     "selectPlaceholder": "Sélectionner",
     "paymentsTitle": "Lots de paiement",
     "paymentsDesc": "Aucun export bancaire ou DAMANCOM n’est certifié dans cette version.",
+    "missingRibCount": "{count} salarié(s) sans RIB. Complétez les profils RH avant l'approbation ou l'export.",
     "selectPostedRun": "Sélectionner une paie comptabilisée",
     "btnPrepareBatch": "Préparer le lot",
     "noPaymentBatches": "Aucun lot de paiement.",

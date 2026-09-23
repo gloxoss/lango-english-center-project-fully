@@ -7,6 +7,7 @@ import { requireAddon } from '@/libs/api/entitlements';
 import { recordAudit } from '@/libs/api/audit';
 import { parseJson } from '@/libs/api/validation';
 import { getEventDetail, updateEvent } from '@/features/events/services/event-operations-service';
+import { isFamilyEventViewerRole, resolveEventViewerContext } from '@/features/events/services/audience-service';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -36,7 +37,10 @@ export async function GET(request: Request, { params }: Params) {
     await requireCapability(context, 'events.read');
 
     const { id } = await params;
-    const detail = await getEventDetail(tenantId, id);
+    const viewer = isFamilyEventViewerRole(context.role)
+      ? await resolveEventViewerContext(context.userId, context.role)
+      : undefined;
+    const detail = await getEventDetail(tenantId, id, viewer);
     return NextResponse.json({ success: true, data: detail });
   } catch (error) {
     return apiErrorResponse(error);

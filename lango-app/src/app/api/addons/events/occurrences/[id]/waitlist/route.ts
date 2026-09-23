@@ -12,7 +12,7 @@ export async function GET(request: Request, { params }: Params) {
     const context = await requireRequestContext(request);
     const tenantId = requireTenant(context);
     await requireAddon(tenantId, 'event-management');
-    await requireCapability(context, 'events.read');
+    await requireCapability(context, 'events.registration.manage');
 
     const { id } = await params;
     const entries = await listWaitlist(tenantId, id);

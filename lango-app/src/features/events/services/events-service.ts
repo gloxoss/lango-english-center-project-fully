@@ -5,7 +5,7 @@ import {
   eventAudienceRules, eventRegistrations, eventWaitlistEntries
 } from '@/features/events/models/events-schema';
 import { ApiError } from '@/libs/api/errors';
-import { isEventVisibleToUser, resolveEventViewerContext, type EventTargetRow } from './audience-service';
+import { canViewPublishedEvent, isEventVisibleToUser, isFamilyEventViewerRole, resolveEventViewerContext, type EventTargetRow } from './audience-service';
 import { buildOccurrenceRows } from './event-operations-service';
 import type { AppRole } from '@/libs/api/context';
 
@@ -153,7 +153,7 @@ export async function listVisibleEvents(
   const viewer = await resolveEventViewerContext(userId, role);
 
   let eventRows = await db.select().from(events).where(eq(events.tenantId, tenantId));
-  if (opts?.publishedOnly) {
+  if (opts?.publishedOnly || isFamilyEventViewerRole(role)) {
     eventRows = eventRows.filter(r => r.lifecycle === 'published');
   }
   if (eventRows.length === 0) return [];
@@ -221,7 +221,9 @@ export async function listVisibleEvents(
       targetRefId: r.targetRefId,
     })) as EventTargetRow[];
 
-    if (event.visibility === 'targeted' && !isEventVisibleToUser(targets, viewer)) {
+    if (isFamilyEventViewerRole(role)
+      ? !canViewPublishedEvent(event, targets, viewer)
+      : event.visibility === 'targeted' && !isEventVisibleToUser(targets, viewer)) {
       return [];
     }
 
