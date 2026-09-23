@@ -212,6 +212,7 @@ describe.skipIf(!dbReachable)('session copy P0 — DB-backed', () => {
       studentId,
       classSectionId,
       studentGroupId: classId,
+      academicYearId: sourceYear,
       period: 1,
       date: '2026-10-05',
       status: 'present',

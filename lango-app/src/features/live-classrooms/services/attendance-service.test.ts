@@ -1,3 +1,6 @@
+import type { CreateLiveSessionInput } from './session-service';
+import type { LiveClassPolicy } from '@/features/live-classrooms/models/live-classrooms-schema';
+import type { RequestContext } from '@/libs/api/context';
 // DB-backed tests for the attendance evidence chain (P1-5 / P1-6):
 //  - interval union, reconnect counting, late/early grace, presence threshold
 //  - deterministic re-derivation for the same immutable event set
@@ -8,16 +11,11 @@
 // applied) — same convention as live-classrooms-db.test.ts.
 import { and, eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { RequestContext } from '@/libs/api/context';
 import { db } from '@/libs/DB';
-import {
-  attendance, attendanceRegisters, classSections, classSubjects, classes,
-  liveClassAttendanceSummaries, liveClassParticipantEvents, liveClassProviderProfiles,
-  liveClassSessions, mediums, sections, subjectTeachers, subjects, tenants, user,
-} from '@/models/Schema';
-import type { LiveClassPolicy } from '@/features/live-classrooms/models/live-classrooms-schema';
-import { createLiveSession, type CreateLiveSessionInput } from './session-service';
+
+import { attendance, attendanceRegisters, classes, classSections, classSubjects, liveClassAttendanceSummaries, liveClassParticipantEvents, liveClassProviderProfiles, liveClassSessions, mediums, sections, sessionYears, subjects, subjectTeachers, tenants, user } from '@/models/Schema';
 import { getSummaries, postAttendance, reconcileAttendance } from './attendance-service';
+import { createLiveSession } from './session-service';
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 
@@ -26,8 +24,12 @@ function ctx(userId: string, tenantId: string, role: RequestContext['role'] = 's
 }
 
 const policy: LiveClassPolicy = {
-  recordingEnabled: false, waitingRoom: false, chat: true, screenShare: true,
-  guestPolicy: 'deny', maxParticipants: null,
+  recordingEnabled: false,
+  waitingRoom: false,
+  chat: true,
+  screenShare: true,
+  guestPolicy: 'deny',
+  maxParticipants: null,
 };
 
 describe.skipIf(!hasDb)('attendance-service (P1-5 calculations, P1-6 posting)', () => {
@@ -113,6 +115,13 @@ describe.skipIf(!hasDb)('attendance-service (P1-5 calculations, P1-6 posting)', 
 
   beforeAll(async () => {
     await db.insert(tenants).values({ id: tenantId, name: 'Attendance Tenant', slug: `attendance-${suffix}` });
+    await db.insert(sessionYears).values({
+      tenantId,
+      name: `2025-2026-${suffix}`,
+      startDate: '2025-09-01T00:00:00.000Z',
+      endDate: '2026-08-31T00:00:00.000Z',
+      isDefault: true,
+    });
     await db.insert(user).values([
       { id: ids.admin, tenantId, name: 'Admin', email: `${ids.admin}@test.local`.toLowerCase(), role: 'school_admin', userStatus: 'active' },
       { id: ids.teacher, tenantId, name: 'Teacher', email: `${ids.teacher}@test.local`.toLowerCase(), role: 'teacher', userStatus: 'active' },
@@ -136,7 +145,12 @@ describe.skipIf(!hasDb)('attendance-service (P1-5 calculations, P1-6 posting)', 
     await db.insert(subjectTeachers).values({ tenantId, classSectionId: sectionId, subjectId: subject!.id, classSubjectId, teacherId: ids.teacher });
 
     const [profile] = await db.insert(liveClassProviderProfiles).values({
-      tenantId, name: 'Dev Attendance', providerType: 'dev', scope: 'tenant', capabilities: [], enabled: true,
+      tenantId,
+      name: 'Dev Attendance',
+      providerType: 'dev',
+      scope: 'tenant',
+      capabilities: [],
+      enabled: true,
     }).returning();
     profileId = profile!.id;
   }, 60_000);
@@ -156,6 +170,7 @@ describe.skipIf(!hasDb)('attendance-service (P1-5 calculations, P1-6 posting)', 
       await seedEvents(session, ids.sPresent, [{ type: 'joined', at: 0 }, { type: 'left', at: 3600 }]);
       await reconcileAttendance(ctx(ids.admin, tenantId), tenantId, session.id, {});
       const [row] = await getSummaries(tenantId, session.id);
+
       expect(row?.status).toBe('present');
       expect(row?.totalPresenceSeconds).toBe(3600);
       expect(row?.reconnectCount).toBe(0);
@@ -166,6 +181,7 @@ describe.skipIf(!hasDb)('attendance-service (P1-5 calculations, P1-6 posting)', 
       await seedEvents(session, ids.sLate, [{ type: 'joined', at: GRACE + 100 }, { type: 'left', at: 3600 }]);
       await reconcileAttendance(ctx(ids.admin, tenantId), tenantId, session.id, {});
       const [row] = await getSummaries(tenantId, session.id);
+
       expect(row?.status).toBe('late');
       // lateJoinSeconds is the raw offset from scheduledStart, not the
       // overage past the grace window.
@@ -177,6 +193,7 @@ describe.skipIf(!hasDb)('attendance-service (P1-5 calculations, P1-6 posting)', 
       await seedEvents(session, ids.sEarly, [{ type: 'joined', at: 0 }, { type: 'left', at: 3600 - GRACE - 100 }]);
       await reconcileAttendance(ctx(ids.admin, tenantId), tenantId, session.id, {});
       const [row] = await getSummaries(tenantId, session.id);
+
       expect(row?.status).toBe('early');
       // earlyLeaveSeconds is the raw offset from scheduledEnd, not the
       // overage past the grace window.
@@ -189,11 +206,14 @@ describe.skipIf(!hasDb)('attendance-service (P1-5 calculations, P1-6 posting)', 
       // leave both fall inside grace, but the union of presence time is well
       // under the 60% threshold.
       await seedEvents(session, ids.sUnknown, [
-        { type: 'joined', at: 0 }, { type: 'left', at: 200 },
-        { type: 'joined', at: 3400 }, { type: 'left', at: 3600 },
+        { type: 'joined', at: 0 },
+        { type: 'left', at: 200 },
+        { type: 'joined', at: 3400 },
+        { type: 'left', at: 3600 },
       ]);
       await reconcileAttendance(ctx(ids.admin, tenantId), tenantId, session.id, {});
       const [row] = await getSummaries(tenantId, session.id);
+
       expect(row?.status).toBe('unknown');
       expect(row?.totalPresenceSeconds).toBe(400);
     });
@@ -203,6 +223,7 @@ describe.skipIf(!hasDb)('attendance-service (P1-5 calculations, P1-6 posting)', 
       await seedEvents(session, ids.sAbsentEvidence, [{ type: 'left', at: 500 }]);
       await reconcileAttendance(ctx(ids.admin, tenantId), tenantId, session.id, {});
       const [row] = await getSummaries(tenantId, session.id);
+
       expect(row?.status).toBe('absent');
       expect(row?.totalPresenceSeconds).toBe(0);
     });
@@ -210,10 +231,13 @@ describe.skipIf(!hasDb)('attendance-service (P1-5 calculations, P1-6 posting)', 
     it('a join while already open (reconnect) closes and reopens the interval without losing presence time', async () => {
       const session = await createSession();
       await seedEvents(session, ids.sReconnect, [
-        { type: 'joined', at: 0 }, { type: 'joined', at: 1000 }, { type: 'left', at: 3600 },
+        { type: 'joined', at: 0 },
+        { type: 'joined', at: 1000 },
+        { type: 'left', at: 3600 },
       ]);
       await reconcileAttendance(ctx(ids.admin, tenantId), tenantId, session.id, {});
       const [row] = await getSummaries(tenantId, session.id);
+
       expect(row?.reconnectCount).toBe(1);
       expect(row?.totalPresenceSeconds).toBe(3600); // union is contiguous — no gap, no double count
       expect(row?.status).toBe('present');
@@ -226,6 +250,7 @@ describe.skipIf(!hasDb)('attendance-service (P1-5 calculations, P1-6 posting)', 
       const first = await getSummaries(tenantId, session.id);
       await reconcileAttendance(ctx(ids.admin, tenantId), tenantId, session.id, {});
       const second = await getSummaries(tenantId, session.id);
+
       expect(second[0]?.status).toBe(first[0]?.status);
       expect(second[0]?.totalPresenceSeconds).toBe(first[0]?.totalPresenceSeconds);
       expect(second[0]?.intervals).toEqual(first[0]?.intervals);
@@ -234,13 +259,16 @@ describe.skipIf(!hasDb)('attendance-service (P1-5 calculations, P1-6 posting)', 
     it('a manual override requires a reason', async () => {
       const session = await createSession();
       await seedEvents(session, ids.sPresent, [{ type: 'joined', at: 0 }, { type: 'left', at: 3600 }]);
+
       await expect(reconcileAttendance(ctx(ids.admin, tenantId), tenantId, session.id, {
         manual: [{ userId: ids.sPresent, status: 'absent' }],
       })).rejects.toMatchObject({ status: 422, code: 'REASON_REQUIRED' });
 
       const result = await reconcileAttendance(ctx(ids.admin, tenantId), tenantId, session.id, {
-        manual: [{ userId: ids.sPresent, status: 'absent' }], note: 'Vérification manuelle',
+        manual: [{ userId: ids.sPresent, status: 'absent' }],
+        note: 'Vérification manuelle',
       });
+
       expect(result.find(r => r.userId === ids.sPresent)?.status).toBe('absent');
     });
 
@@ -254,6 +282,7 @@ describe.skipIf(!hasDb)('attendance-service (P1-5 calculations, P1-6 posting)', 
 
       await reconcileAttendance(ctx(ids.admin, tenantId), tenantId, session.id, {});
       const [row] = await getSummaries(tenantId, session.id);
+
       expect(row?.reconciliationState).toBe('approved');
     });
   });
@@ -267,18 +296,21 @@ describe.skipIf(!hasDb)('attendance-service (P1-5 calculations, P1-6 posting)', 
       await reconcileAttendance(ctx(ids.admin, tenantId), tenantId, session.id, {});
 
       const result = await postAttendance(ctx(ids.admin, tenantId), tenantId, session.id, {});
+
       expect(result.posted).toBe(2); // sPresent + sAbsentEvidence (teacher is not a student)
 
       const rows = await db.select().from(attendance).where(and(
-        eq(attendance.tenantId, tenantId), eq(attendance.date, session.date),
+        eq(attendance.tenantId, tenantId),
+        eq(attendance.date, session.date),
       ));
       const byStudent = new Map(rows.map(r => [r.studentId, r]));
+
       expect(byStudent.get(ids.sPresent)?.status).toBe('present');
       expect(byStudent.get(ids.sAbsentEvidence)?.status).toBe('absent');
       expect(byStudent.has(ids.teacher)).toBe(false);
 
-      const [summary] = await db.select().from(liveClassAttendanceSummaries)
-        .where(and(eq(liveClassAttendanceSummaries.sessionId, session.id), eq(liveClassAttendanceSummaries.userId, ids.sPresent)));
+      const [summary] = await db.select().from(liveClassAttendanceSummaries).where(and(eq(liveClassAttendanceSummaries.sessionId, session.id), eq(liveClassAttendanceSummaries.userId, ids.sPresent)));
+
       expect(summary?.reconciliationState).toBe('posted');
     });
 
@@ -289,19 +321,25 @@ describe.skipIf(!hasDb)('attendance-service (P1-5 calculations, P1-6 posting)', 
       await postAttendance(ctx(ids.admin, tenantId), tenantId, session.id, {});
 
       await expect(postAttendance(ctx(ids.admin, tenantId), tenantId, session.id, {}))
-        .rejects.toMatchObject({ status: 409, code: 'NOTHING_TO_POST' });
+        .rejects
+        .toMatchObject({ status: 409, code: 'NOTHING_TO_POST' });
 
       const rows = await db.select().from(attendance).where(and(
-        eq(attendance.tenantId, tenantId), eq(attendance.studentId, ids.sPresent), eq(attendance.date, session.date),
+        eq(attendance.tenantId, tenantId),
+        eq(attendance.studentId, ids.sPresent),
+        eq(attendance.date, session.date),
       ));
+
       expect(rows).toHaveLength(1); // no duplicate row from the rejected re-post
     });
 
     it('refuses to post a session that was never reconciled', async () => {
       const session = await createSession();
       await seedEvents(session, ids.sPresent, [{ type: 'joined', at: 0 }, { type: 'left', at: 3600 }]);
+
       await expect(postAttendance(ctx(ids.admin, tenantId), tenantId, session.id, {}))
-        .rejects.toMatchObject({ status: 409, code: 'NOTHING_TO_POST' });
+        .rejects
+        .toMatchObject({ status: 409, code: 'NOTHING_TO_POST' });
     });
 
     it('concurrent posting of the same reconciled session converges without duplicate rows', async () => {
@@ -314,11 +352,15 @@ describe.skipIf(!hasDb)('attendance-service (P1-5 calculations, P1-6 posting)', 
         postAttendance(ctx(ids.admin, tenantId), tenantId, session.id, {}),
       ]);
       const fulfilled = results.filter(r => r.status === 'fulfilled');
+
       expect(fulfilled.length).toBeGreaterThanOrEqual(1);
 
       const rows = await db.select().from(attendance).where(and(
-        eq(attendance.tenantId, tenantId), eq(attendance.studentId, ids.sPresent), eq(attendance.date, session.date),
+        eq(attendance.tenantId, tenantId),
+        eq(attendance.studentId, ids.sPresent),
+        eq(attendance.date, session.date),
       ));
+
       expect(rows).toHaveLength(1);
     });
   });

@@ -1,3 +1,4 @@
+import type { RequestContext } from '@/libs/api/context';
 // Attendance evidence chain: immutable participant events -> derived summaries
 // (interval union, reconnect-aware) -> reviewed reconciliation -> explicit post
 // to the core attendance register.
@@ -5,18 +6,22 @@
 // Raw events are never mutated; re-derivation only refreshes the derived
 // projection. A reconciliation that has been proposed/approved/posted is
 // preserved across re-derivation so an approved outcome is not silently reset.
-import { and, eq, inArray } from 'drizzle-orm';
-import { ApiError } from '@/libs/api/errors';
-import type { RequestContext } from '@/libs/api/context';
-import { db } from '@/libs/DB';
-import {
-  attendance, classSections, liveClassAttendanceSummaries, liveClassParticipantEvents,
-  liveClassSessions, user,
-} from '@/models/Schema';
-import { recordAudit } from '@/libs/api/audit';
+import { and, eq, inArray, sql } from 'drizzle-orm';
+import { detectAndRecordFlags } from '@/libs/api/attendance-flags';
 import { resolveRegisterForSubmission } from '@/libs/api/attendance-registers';
 import { recalculateStudentAttendanceSummary } from '@/libs/api/attendance-summary';
-import { detectAndRecordFlags } from '@/libs/api/attendance-flags';
+import { recordAudit } from '@/libs/api/audit';
+import { ApiError } from '@/libs/api/errors';
+import { db } from '@/libs/DB';
+import {
+  attendance,
+  classSections,
+  liveClassAttendanceSummaries,
+  liveClassParticipantEvents,
+  sessionYears,
+  user,
+} from '@/models/Schema';
+
 import { loadSession } from './session-service';
 
 const PRESENCE_THRESHOLD = 0.6; // >= 60% of session duration counts as present
@@ -75,7 +80,9 @@ function computeFromEvents(
     }
   }
   // Still present at the end of the recorded evidence: close at session end.
-  if (open !== null) intervals.push({ start: open, end: endMs });
+  if (open !== null) {
+    intervals.push({ start: open, end: endMs });
+  }
 
   const totalPresenceSeconds = intervals.reduce((sum, i) => sum + Math.max(0, i.end - i.start), 0) / 1000;
   const firstJoinAt = intervals.length > 0 ? new Date(intervals[0]!.start).toISOString() : null;
@@ -111,7 +118,9 @@ function computeFromEvents(
 
 async function computeSummariesForSession(tenantId: string, sessionId: string): Promise<ComputedSummary[]> {
   const session = await loadSession(tenantId, sessionId);
-  if (!session) throw new ApiError(404, 'NOT_FOUND', 'Session introuvable.');
+  if (!session) {
+    throw new ApiError(404, 'NOT_FOUND', 'Session introuvable.');
+  }
   const startMs = new Date(session.scheduledStart).getTime();
   const endMs = new Date(session.scheduledEnd).getTime();
 
@@ -123,7 +132,9 @@ async function computeSummariesForSession(tenantId: string, sessionId: string): 
 
   const byUser = new Map<string, Array<typeof liveClassParticipantEvents.$inferSelect>>();
   for (const ev of events) {
-    if (!ev.userId) continue;
+    if (!ev.userId) {
+      continue;
+    }
     const list = byUser.get(ev.userId) ?? [];
     list.push(ev);
     byUser.set(ev.userId, list);
@@ -211,7 +222,9 @@ export async function reconcileAttendance(
   opts: { note?: string; manual?: Array<{ userId: string; status: SummaryStatus }> },
 ): Promise<Awaited<ReturnType<typeof getSummaries>>> {
   const session = await loadSession(tenantId, sessionId);
-  if (!session) throw new ApiError(404, 'NOT_FOUND', 'Session introuvable.');
+  if (!session) {
+    throw new ApiError(404, 'NOT_FOUND', 'Session introuvable.');
+  }
 
   if (opts.manual && opts.manual.length > 0 && !opts.note?.trim()) {
     throw new ApiError(422, 'REASON_REQUIRED', 'Une raison est requise pour une réconciliation manuelle.');
@@ -219,9 +232,10 @@ export async function reconcileAttendance(
   const manualStatuses = new Map((opts.manual ?? []).map(m => [m.userId, m.status]));
   if (opts.manual) {
     for (const m of opts.manual) {
-      const [u] = await db.select({ id: user.id }).from(user)
-        .where(and(eq(user.id, m.userId), eq(user.tenantId, tenantId))).limit(1);
-      if (!u) throw new ApiError(422, 'INVALID_REFERENCE', `Utilisateur inconnu: ${m.userId}.`);
+      const [u] = await db.select({ id: user.id }).from(user).where(and(eq(user.id, m.userId), eq(user.tenantId, tenantId))).limit(1);
+      if (!u) {
+        throw new ApiError(422, 'INVALID_REFERENCE', `Utilisateur inconnu: ${m.userId}.`);
+      }
     }
   }
 
@@ -232,7 +246,9 @@ export async function reconcileAttendance(
   }
 
   recordAudit(ctx, 'update', 'live_class_session', sessionId, {
-    action: 'reconcile', participants: computed.length, manual: opts.manual?.length ?? 0,
+    action: 'reconcile',
+    participants: computed.length,
+    manual: opts.manual?.length ?? 0,
   });
   return getSummaries(tenantId, sessionId);
 }
@@ -283,13 +299,14 @@ export async function postAttendance(
   opts: { note?: string },
 ): Promise<{ posted: number; skipped: number }> {
   const session = await loadSession(tenantId, sessionId);
-  if (!session) throw new ApiError(404, 'NOT_FOUND', 'Session introuvable.');
+  if (!session) {
+    throw new ApiError(404, 'NOT_FOUND', 'Session introuvable.');
+  }
 
-  const summaries = await db.select().from(liveClassAttendanceSummaries)
-    .where(and(
-      eq(liveClassAttendanceSummaries.sessionId, sessionId),
-      inArray(liveClassAttendanceSummaries.reconciliationState, ['proposed', 'approved']),
-    ));
+  const summaries = await db.select().from(liveClassAttendanceSummaries).where(and(
+    eq(liveClassAttendanceSummaries.sessionId, sessionId),
+    inArray(liveClassAttendanceSummaries.reconciliationState, ['proposed', 'approved']),
+  ));
   if (summaries.length === 0) {
     throw new ApiError(409, 'NOTHING_TO_POST', 'Aucune présence réconciliée à reporter. Lancez d\'abord une réconciliation.');
   }
@@ -304,22 +321,40 @@ export async function postAttendance(
   const summaryUserIds = summaries.map(s => s.userId);
   const studentUserIds = summaryUserIds.length === 0
     ? []
-    : await db.select({ id: user.id }).from(user)
-      .where(and(eq(user.tenantId, tenantId), inArray(user.id, summaryUserIds), eq(user.role, 'student')));
+    : await db.select({ id: user.id }).from(user).where(and(eq(user.tenantId, tenantId), inArray(user.id, summaryUserIds), eq(user.role, 'student')));
   const studentIdSet = new Set(studentUserIds.map(r => r.id));
   const students = summaries.filter(s => studentIdSet.has(s.userId));
   const skipped = summaries.length - students.length + students.filter(s => s.status === 'unknown').length;
 
   if (students.length > 0) {
-    const [section] = await db.select({ classId: classSections.classId }).from(classSections)
-      .where(and(eq(classSections.id, session.classSectionId!), eq(classSections.tenantId, tenantId))).limit(1);
-    if (!section) throw new ApiError(422, 'INVALID_REFERENCE', 'La classe de cette session est introuvable.');
+    const [section] = await db.select({ classId: classSections.classId }).from(classSections).where(and(eq(classSections.id, session.classSectionId!), eq(classSections.tenantId, tenantId))).limit(1);
+    if (!section) {
+      throw new ApiError(422, 'INVALID_REFERENCE', 'La classe de cette session est introuvable.');
+    }
 
     const date = session.scheduledStart.slice(0, 10);
-    const register = await resolveRegisterForSubmission(tenantId, section.classId, date, REGISTER_PERIOD, ctx.userId, opts.note, db);
+
+    // SESSION TRUTH (Phase 4): resolve the academic session by the attendance
+    // date — fail closed with a domain error, never a raw NOT NULL violation.
+    const [sessionYear] = await db
+      .select({ id: sessionYears.id })
+      .from(sessionYears)
+      .where(and(
+        eq(sessionYears.tenantId, tenantId),
+        sql`${sessionYears.startDate}::date <= ${date}::date`,
+        sql`${sessionYears.endDate}::date >= ${date}::date`,
+      ))
+      .limit(1);
+    if (!sessionYear) {
+      throw new ApiError(422, 'DATE_OUTSIDE_SESSION', 'Cette date ne fait partie d\'aucune année scolaire de cet établissement.');
+    }
+
+    const register = await resolveRegisterForSubmission(tenantId, section.classId, date, REGISTER_PERIOD, ctx.userId, opts.note, db, session.classSectionId!, sessionYear.id);
 
     for (const s of students) {
-      if (s.status === 'unknown') continue; // leave unknown for manual review
+      if (s.status === 'unknown') {
+        continue;
+      } // leave unknown for manual review
       const status = toRegisterStatus(s.status as SummaryStatus);
       await db.delete(attendance).where(and(
         eq(attendance.tenantId, tenantId),
@@ -331,6 +366,8 @@ export async function postAttendance(
         tenantId,
         studentId: s.userId,
         studentGroupId: section.classId,
+        classSectionId: session.classSectionId!,
+        academicYearId: sessionYear.id,
         subjectId: null,
         period: REGISTER_PERIOD,
         date,
@@ -355,7 +392,9 @@ export async function postAttendance(
     ));
 
   recordAudit(ctx, 'update', 'live_class_session', sessionId, {
-    action: 'post_attendance', posted: students.length, skipped,
+    action: 'post_attendance',
+    posted: students.length,
+    skipped,
   });
   return { posted: students.length, skipped };
 }
