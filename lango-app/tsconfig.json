@@ -83,7 +83,8 @@
   "exclude": [
     "node_modules",
     "src/scripts/seed-full.ts",
-    "future-implementation/_archived-ui"
+    "future-implementation/_archived-ui",
+    ".next-*"
   ],
   "include": [
     "next-env.d.ts",

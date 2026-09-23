@@ -1,0 +1,7 @@
+/dashboard/communication
+/dashboard/communication/campaign-composer
+/dashboard/communication/delivery-reports
+/dashboard/communication/crm
+/dashboard/communication/events
+/dashboard/communication/reminders
+/dashboard/communication/templates
