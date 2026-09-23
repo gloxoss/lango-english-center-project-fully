@@ -1,0 +1,12 @@
+[
+  {
+    "route": "/dashboard/portals/leadership/approvals",
+    "finalPath": "/fr/dashboard/portals/leadership/approvals",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 470,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-portals__leadership__approvals.png"
+  }
+]

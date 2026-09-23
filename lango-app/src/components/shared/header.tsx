@@ -8,6 +8,7 @@ import { LocaleSwitcher } from './locale-switcher';
 import { HeaderCampusSwitcher } from './header-campus-switcher';
 import { HeaderTenantSwitcher } from './header-tenant-switcher';
 import { ImpersonationBanner } from './impersonation-banner';
+import { CndpStatusBadge } from '@/features/settings/ui/cndp-status-badge';
 import {
   Bell,
   Menu,
@@ -207,6 +208,12 @@ export function Header({ locale }: { locale: string }) {
         )}
 
         {/* Campus Switcher (strictly for school staff or super_admin inspecting a tenant) */}
+        {/* CNDP filing status, read from the registry. Hides itself for viewers
+            who may not read it (parents and students). */}
+        <div className="hidden lg:flex">
+          <CndpStatusBadge />
+        </div>
+
         {(displayRole !== 'super_admin' || hasSelectedTenant) && (
           <div className="hidden lg:flex">
             <HeaderCampusSwitcher />

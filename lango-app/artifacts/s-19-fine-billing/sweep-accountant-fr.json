@@ -1,0 +1,12 @@
+[
+  {
+    "route": "/dashboard/finance/fine-policies",
+    "finalPath": "/fr/dashboard/finance/fine-policies",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 561,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-finance__fine-policies.png"
+  }
+]

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ShieldCheck, AlertCircle, CheckCircle2, FileText } from 'lucide-react';
+import { cndpStatusOf } from '@/features/settings/cndp-status';
 
 type FilingData = {
   id: string;
@@ -21,6 +22,9 @@ export function CndpComplianceView() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  // Shared with the header badge so the two can never describe the same filing
+  // differently.
+  const filingStatus = cndpStatusOf(filing?.status);
 
   const [reference, setReference] = useState('');
   const [filedAt, setFiledAt] = useState('');
@@ -182,10 +186,10 @@ export function CndpComplianceView() {
             <div className="flex justify-between items-center">
               <span className="text-slate-500 font-medium">Statut actuel :</span>
               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${
-                filing?.status === 'approved' ? 'bg-emerald-100 text-emerald-800' :
-                filing?.status === 'submitted' ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-700'
+                filingStatus.tone === 'good' ? 'bg-emerald-100 text-emerald-800' :
+                filingStatus.tone === 'progress' ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-700'
               }`}>
-                {filing?.status === 'approved' ? 'Conforme / Récépissé' : filing?.status === 'submitted' ? 'En cours' : 'Non déposé'}
+                {filingStatus.label}
               </span>
             </div>
           </div>

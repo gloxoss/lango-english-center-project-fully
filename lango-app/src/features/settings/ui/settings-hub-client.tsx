@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { cndpStatusOf } from '@/features/settings/cndp-status';
 import {
   Building2, Users, ShieldCheck, Globe, FileText, Languages, Clock, ArrowRightLeft,
   Sliders, Layers, MapPin, Shield, FileCheck2, Hash, Tags, CalendarClock, Search, ArrowRight, CheckCircle2, History,
@@ -65,9 +66,12 @@ export function SettingsHubClient({
     }
   };
 
+  // Unknown conformity must not read as conforming. The old default here was
+  // "PCG 2026 & CNDP conformes", so a missing label claimed compliance the
+  // tenant may not have.
   const resolvedConformity = conformityCode
     ? safeT(`compliance_${conformityCode}`, conformityLabel || '')
-    : (conformityLabel || t('compliance_both'));
+    : (conformityLabel || cndpStatusOf(null, true).label);
 
   const filteredModules = SETTINGS_MODULES.filter(m => {
     const matchesCategory = selectedCategory === 'all' || m.category === selectedCategory;

@@ -204,9 +204,10 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
               <p className="text-xs font-extrabold text-[#16212B]">
                 {t('socialProof')}
               </p>
-              <p className="text-[10px] font-bold text-[#2487B8] uppercase tracking-widest flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3" /> {t('complianceBadge')}
-              </p>
+              {/* A CNDP badge used to claim "Conforme CNDP F211 Maroc" here. There
+                  is no filing data at sign-in, so that asserted something the
+                  school may not have done. The real declaration status is in the
+                  header badge and on /settings/cndp. */}
             </div>
           </div>
 

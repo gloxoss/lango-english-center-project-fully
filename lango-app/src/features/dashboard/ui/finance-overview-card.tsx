@@ -146,7 +146,7 @@ export function FinanceOverviewCard({ data, locale }: FinanceOverviewCardProps) 
 
       {/* Footer Info */}
       <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-400 font-medium">
-        <span>Conforme aux normes de facturation et encaissements marocains</span>
+        <span>Facturation et encaissements en dirham marocain</span>
         <span className="font-bold text-slate-600">Devise : MAD (Dirham marocain)</span>
       </div>
     </div>
