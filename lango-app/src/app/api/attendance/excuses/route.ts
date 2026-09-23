@@ -340,6 +340,8 @@ export async function PATCH(request: Request) {
             eq(attendance.date, existingExcuse.date),
             eq(attendance.period, existingExcuse.period),
             eq(attendance.isVoided, false),
+            // SESSION TRUTH: an excuse never mutates a mark from another year.
+            ...(existingExcuse.sessionYearId ? [eq(attendance.academicYearId, existingExcuse.sessionYearId)] : []),
           ));
 
         for (const mark of marks) {

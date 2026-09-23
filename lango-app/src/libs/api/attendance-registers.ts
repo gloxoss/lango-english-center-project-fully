@@ -38,6 +38,8 @@ export async function resolveRegisterForSubmission(
       classSectionId
         ? eq(attendanceRegisters.classSectionId, classSectionId)
         : isNull(attendanceRegisters.classSectionId),
+      // SESSION TRUTH: a register from another session is never reused.
+      ...(sessionYearId ? [eq(attendanceRegisters.sessionYearId, sessionYearId)] : []),
     ))
     .limit(1);
 

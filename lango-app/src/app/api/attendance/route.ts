@@ -4,7 +4,6 @@ import { z } from 'zod';
 
 import { detectAndRecordFlags } from '@/libs/api/attendance-flags';
 import { resolveRegisterForSubmission } from '@/libs/api/attendance-registers';
-import { getDefaultSessionYearId } from '@/libs/services/subject-teacher-assignment';
 import { recalculateStudentAttendanceSummary } from '@/libs/api/attendance-summary';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
@@ -13,7 +12,7 @@ import { requireCapability } from '@/libs/api/permissions';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { attendance, classes, classSections, guardians, guardianStudents, smsMessages, user } from '@/models/Schema';
+import { attendance, classes, classSections, guardians, guardianStudents, sessionYears, smsMessages, user } from '@/models/Schema';
 
 const attendanceRecordItemSchema = z.object({
   studentId: z.string().min(1),
@@ -128,6 +127,17 @@ export async function POST(request: Request) {
     await requireCapability(context, 'attendance.manage');
     const body = await parseJson(request, batchAttendanceSchema);
 
+    // Fail fast: a tenant with no academic sessions at all cannot take
+    // attendance anywhere (checked before any reference resolution).
+    const tenantSession = await db
+      .select({ id: sessionYears.id })
+      .from(sessionYears)
+      .where(eq(sessionYears.tenantId, tenantId))
+      .limit(1);
+    if (tenantSession.length === 0) {
+      throw new ApiError(422, 'MISSING_SESSION', 'Aucune année scolaire n\'est définie pour cet établissement.');
+    }
+
     // SECTION SCOPE (migration 0147 + P0 lock-bypass fix): `studentGroupId`
     // carries the operating class section. It is resolved strictly — a forged
     // or unknown section is refused, never downgraded into an unlocked write.
@@ -185,12 +195,21 @@ export async function POST(request: Request) {
       }
     }
 
-    // SESSION TRUTH (Phase 4): every mark and register is explicitly scoped to
-    // the tenant's current academic session. Never inferred per-row later.
-    const sessionYearId = await getDefaultSessionYearId(tenantId);
-    if (!sessionYearId) {
-      throw new ApiError(422, 'MISSING_SESSION', 'Aucune année scolaire active n\'est définie pour cet établissement.');
+    // SESSION TRUTH (Phase 4): the mark's session is the one whose date bounds
+    // contain the attendance date — never a "today" default.
+    const [sessionForDate] = await db
+      .select({ id: sessionYears.id })
+      .from(sessionYears)
+      .where(and(
+        eq(sessionYears.tenantId, tenantId),
+        sql`${sessionYears.startDate}::date <= ${body.date}::date`,
+        sql`${sessionYears.endDate}::date >= ${body.date}::date`,
+      ))
+      .limit(1);
+    if (!sessionForDate) {
+      throw new ApiError(422, 'DATE_OUTSIDE_SESSION', 'Cette date ne fait partie d\'aucune année scolaire de cet établissement.');
     }
+    const sessionYearId = sessionForDate.id;
 
     const savedRecords = await db.transaction(async (tx) => {
       const register = await resolveRegisterForSubmission(tenantId, attendanceClassId, body.date, body.period, context.userId, body.correctionNote, tx, attendanceSectionId, sessionYearId);
