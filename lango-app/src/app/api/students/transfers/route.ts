@@ -1,20 +1,21 @@
-import { and, count, eq, ne } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { recordAudit } from '@/libs/api/audit';
+import { executeStudentTransfer } from '@/features/students/services/transfer-service';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
-import { recordStudentPlacement } from '@/libs/services/student-placement';
 import { db } from '@/libs/DB';
-import { classSections, invoices, sessionYears, user } from '@/models/Schema';
+import { branches, classes, classSections, user } from '@/models/Schema';
 
 const studentTransferSchema = z.object({
   studentId: z.string().min(1),
-  targetClassSectionId: z.string().uuid(),
+  targetClassSectionId: z.string().uuid().optional(),
+  branchId: z.string().uuid().optional(),
   sessionYearId: z.string().uuid().optional(),
   reason: z.string().trim().max(500).optional(),
+  effectiveDate: z.string().optional(),
   transferType: z.enum(['Changement de classe', 'Changement de campus', 'Sortie définitive']).optional(),
 }).strict();
 
@@ -58,99 +59,69 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
-    await requireCapability(context, 'students.placements.manage');
+    // Allow either students.placements.manage or students.update for unified compatibility
+    await requireCapability(context, 'students.update');
     const body = await parseJson(request, studentTransferSchema);
 
-    // Verify student belongs to tenant
-    const [student] = await db
-      .select({ id: user.id, name: user.name, classSectionId: user.classSectionId })
-      .from(user)
-      .where(and(eq(user.id, body.studentId), eq(user.tenantId, tenantId), eq(user.role, 'student')))
-      .limit(1);
+    // Resolve target branch id
+    let resolvedBranchId = body.branchId;
 
-    if (!student) {
-      throw new ApiError(422, 'INVALID_REFERENCE', 'L\'élève indiqué n\'existe pas.');
-    }
-
-    // Verify target class section belongs to tenant
-    const [targetSection] = await db
-      .select({ id: classSections.id })
-      .from(classSections)
-      .where(and(eq(classSections.id, body.targetClassSectionId), eq(classSections.tenantId, tenantId)))
-      .limit(1);
-
-    if (!targetSection) {
-      throw new ApiError(422, 'INVALID_REFERENCE', 'La section de classe cible n\'existe pas.');
-    }
-
-    // Capacity check — classSections has no maxStudents column, so we return a soft warning
-    // ponytail: count-only, no hard block — add migration + hard limit when school asks for it
-    const enrolledCountResult = await db
-      .select({ enrolledCount: count() })
-      .from(user)
-      .where(and(
-        eq(user.tenantId, tenantId),
-        eq(user.role, 'student'),
-        eq(user.classSectionId, body.targetClassSectionId),
-      ));
-    const enrolledCount = enrolledCountResult[0]?.enrolledCount ?? 0;
-
-
-    // Unpaid invoice check — advisory warning only, not a hard block
-    const [unpaidInvoice] = await db
-      .select({ id: invoices.id, amount: invoices.netAmount, paidAmount: invoices.paidAmount })
-      .from(invoices)
-      .where(and(
-        eq(invoices.tenantId, tenantId),
-        eq(invoices.studentId, body.studentId),
-        ne(invoices.status, 'paid'),
-      ))
-      .limit(1);
-
-    // Get session year id
-    let sessionYearId = body.sessionYearId;
-    if (!sessionYearId) {
-      const [activeYear] = await db
-        .select({ id: sessionYears.id })
-        .from(sessionYears)
-        .where(and(eq(sessionYears.tenantId, tenantId), eq(sessionYears.isDefault, true)))
+    if (!resolvedBranchId && body.targetClassSectionId) {
+      const [sec] = await db
+        .select({ branchId: classes.branchId })
+        .from(classSections)
+        .innerJoin(classes, eq(classSections.classId, classes.id))
+        .where(and(eq(classSections.id, body.targetClassSectionId), eq(classSections.tenantId, tenantId)))
         .limit(1);
-      sessionYearId = activeYear?.id;
+
+      resolvedBranchId = sec?.branchId || undefined;
     }
 
-    if (!sessionYearId) {
-      throw new ApiError(422, 'INVALID_REFERENCE', 'Aucune année scolaire active trouvée.');
+    if (!resolvedBranchId) {
+      // Fall back to student's current branch or default branch
+      const [stu] = await db
+        .select({ branchId: user.branchId })
+        .from(user)
+        .where(and(eq(user.id, body.studentId), eq(user.tenantId, tenantId)))
+        .limit(1);
+
+      resolvedBranchId = stu?.branchId || undefined;
     }
 
-    // Execute placement transition using canonical service
-    const newPlacement = await recordStudentPlacement({
+    if (!resolvedBranchId) {
+      const [defBranch] = await db
+        .select({ id: branches.id })
+        .from(branches)
+        .where(and(eq(branches.tenantId, tenantId), eq(branches.isActive, true)))
+        .limit(1);
+
+      resolvedBranchId = defBranch?.id;
+    }
+
+    if (!resolvedBranchId) {
+      throw new ApiError(422, 'INVALID_REFERENCE', 'Aucun campus valide n\'a pu être déterminé pour cette mutation.');
+    }
+
+    const result = await executeStudentTransfer({
       tenantId,
       studentId: body.studentId,
-      sessionYearId,
-      classSectionId: body.targetClassSectionId,
-      notes: `Transfert (${body.transferType || 'Changement de classe'}): ${body.reason || 'Aucun motif renseigné'}`,
-    });
-
-    if (!newPlacement) {
-      throw new ApiError(500, 'INTERNAL_ERROR', 'Impossible d enregistrer le placement de l élève.');
-    }
-
-    recordAudit(context, 'update', 'student', body.studentId, {
-      previousClassSectionId: student.classSectionId,
-      newClassSectionId: body.targetClassSectionId,
-      reason: body.reason,
-      transferType: body.transferType,
-      placementId: newPlacement.id,
+      targetBranchId: resolvedBranchId,
+      targetClassSectionId: body.targetClassSectionId,
+      reason: body.reason || body.transferType || 'Mutation administrative',
+      effectiveDate: body.effectiveDate,
+      actor: {
+        userId: context.userId,
+        branchId: context.branchId,
+        role: context.role,
+        name: context.name,
+      },
     });
 
     return NextResponse.json({
       success: true,
-      data: newPlacement,
-      warnings: [
-        ...(enrolledCount >= 30 ? [`La section cible compte déjà ${enrolledCount} élèves.`] : []),
-        ...(unpaidInvoice ? [`Cet élève a des factures impayées (solde dû).`] : []),
-      ],
-      message: `Le transfert de ${student.name} a été exécuté avec succès.`,
+      data: result,
+      warnings: result.warnings,
+      message: result.message,
     });
   } catch (error) {
     return apiErrorResponse(error);

@@ -1,37 +1,36 @@
-import { and, asc, desc, eq, gt } from 'drizzle-orm';
+import type { PromotionDecisionInput } from '@/features/students/services/promotion-service';
+import { desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { recordAudit } from '@/libs/api/audit';
+import { executePromotionBatch } from '@/features/students/services/promotion-service';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
-import { closeStudentPlacement, recordStudentPlacement } from '@/libs/services/student-placement';
 import { db } from '@/libs/DB';
-import { classSections, promotionBatches, promotionDecisions, sessionYears, user } from '@/models/Schema';
+import { promotionBatches, sessionYears } from '@/models/Schema';
 
 const decisionSchema = z.object({
   studentId: z.string().min(1),
   decision: z.enum(['promote', 'repeat', 'graduate', 'transfer', 'withdraw', 'hold']),
-  targetClassSectionId: z.string().uuid().optional(),
+  targetClassSectionId: z.string().uuid().optional().nullable(),
   averagePercentage: z.number().min(0).max(100).nullable().optional(),
-  reason: z.string().trim().max(500).optional(),
+  reason: z.string().trim().max(500).optional().nullable(),
 }).strict();
 
 const commitSchema = z.object({
   sourceClassSectionId: z.string().uuid(),
-  targetSessionYearId: z.string().uuid().optional(),
+  targetSessionYearId: z.string().uuid().optional().nullable(),
   idempotencyKey: z.string().trim().min(1).max(100),
   decisions: z.array(decisionSchema).min(1).max(500),
 }).strict();
 
-// Bridges the pre-ledger caller shape (bulk move, no per-student decision)
-// while other in-flight UI work still targets it - drop once promotions-view.tsx
-// is wired to the decisions-based contract above.
+// Bridges the legacy caller shape (bulk move all to single target section)
 const legacyBulkSchema = z.object({
   sourceClassSectionId: z.string().uuid(),
   targetClassSectionId: z.string().uuid(),
-  targetSessionYearId: z.string().uuid().optional(),
+  targetSessionYearId: z.string().uuid().optional().nullable(),
+  idempotencyKey: z.string().trim().min(1).max(100).optional(),
   studentIds: z.array(z.string().min(1)).optional(),
 }).strict();
 
@@ -68,141 +67,49 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
-    const tenantId = requireTenant(context);
+    requireTenant(context);
     await requireCapability(context, 'students.placements.manage');
     const rawBody = await parseJson(request, requestSchema);
 
-    const [sourceSection] = await db.select({ id: classSections.id }).from(classSections)
-      .where(and(eq(classSections.id, rawBody.sourceClassSectionId), eq(classSections.tenantId, tenantId))).limit(1);
-    if (!sourceSection) {
-      throw new ApiError(422, 'INVALID_REFERENCE', 'La section source n\'existe pas.');
+    let idempotencyKey: string;
+    let decisions: PromotionDecisionInput[];
+    let sourceClassSectionId: string;
+    let targetSessionYearId: string | null | undefined;
+
+    if ('decisions' in rawBody) {
+      idempotencyKey = rawBody.idempotencyKey;
+      decisions = rawBody.decisions as PromotionDecisionInput[];
+      sourceClassSectionId = rawBody.sourceClassSectionId;
+      targetSessionYearId = rawBody.targetSessionYearId;
+    } else {
+      sourceClassSectionId = rawBody.sourceClassSectionId;
+      targetSessionYearId = rawBody.targetSessionYearId;
+      idempotencyKey = rawBody.idempotencyKey || crypto.randomUUID();
+      const studentIds = rawBody.studentIds || [];
+      decisions = studentIds.map(studentId => ({
+        studentId,
+        decision: 'promote' as const,
+        targetClassSectionId: rawBody.targetClassSectionId,
+      }));
     }
 
-    if ('idempotencyKey' in rawBody) {
-      const [alreadyCommitted] = await db.select().from(promotionBatches)
-        .where(and(eq(promotionBatches.tenantId, tenantId), eq(promotionBatches.idempotencyKey, rawBody.idempotencyKey)))
-        .limit(1);
-      if (alreadyCommitted) {
-        const decisions = await db.select().from(promotionDecisions)
-          .where(and(eq(promotionDecisions.tenantId, tenantId), eq(promotionDecisions.batchId, alreadyCommitted.id)));
-        return NextResponse.json({ success: true, data: { batch: alreadyCommitted, decisions }, idempotent: true });
-      }
-    }
-
-    const [sourceYear] = await db.select({ id: sessionYears.id, startDate: sessionYears.startDate }).from(sessionYears)
-      .where(and(eq(sessionYears.tenantId, tenantId), eq(sessionYears.isDefault, true))).limit(1);
-    if (!sourceYear) throw new ApiError(422, 'NO_SOURCE_SESSION', 'Configurez une année scolaire active avant la promotion.');
-
-    let targetSessionYearId = rawBody.targetSessionYearId;
-    if (!targetSessionYearId) {
-      const [nextYear] = await db.select({ id: sessionYears.id }).from(sessionYears)
-        .where(and(eq(sessionYears.tenantId, tenantId), gt(sessionYears.startDate, sourceYear.startDate)))
-        .orderBy(asc(sessionYears.startDate)).limit(1);
-      targetSessionYearId = nextYear?.id;
-    }
-    if (!targetSessionYearId) {
-      throw new ApiError(422, 'NO_TARGET_SESSION', 'Configurez l’année scolaire suivante avant la promotion.');
-    }
-
-    // Students eligible for this batch (must currently sit in the source section).
-    const eligibleIds = new Set((await db.select({ id: user.id }).from(user)
-      .where(and(eq(user.tenantId, tenantId), eq(user.role, 'student'), eq(user.classSectionId, rawBody.sourceClassSectionId))))
-      .map(s => s.id));
-
-    const body = 'decisions' in rawBody
-      ? rawBody
-      : {
-          sourceClassSectionId: rawBody.sourceClassSectionId,
-          targetSessionYearId,
-          idempotencyKey: crypto.randomUUID(),
-          decisions: (rawBody.studentIds && rawBody.studentIds.length > 0 ? rawBody.studentIds : Array.from(eligibleIds))
-            .map(studentId => ({
-              studentId,
-              decision: 'promote' as const,
-              targetClassSectionId: rawBody.targetClassSectionId,
-              averagePercentage: undefined,
-              reason: undefined,
-            })),
-        };
-
-    const [targetYear] = await db.select({ startDate: sessionYears.startDate }).from(sessionYears)
-      .where(and(eq(sessionYears.id, targetSessionYearId), eq(sessionYears.tenantId, tenantId))).limit(1);
-    if (!targetYear || targetYear.startDate <= sourceYear.startDate) {
-      throw new ApiError(422, 'INVALID_TARGET_SESSION', 'La session cible doit commencer après l’année scolaire active.');
-    }
-    if (body.decisions.some(decision => decision.decision === 'hold')) {
-      throw new ApiError(409, 'PENDING_DECISIONS', 'Traitez toutes les décisions en attente avant de confirmer la promotion.');
-    }
-
-    const decisionRows: (typeof promotionDecisions.$inferInsert)[] = [];
-
-    for (const decision of body.decisions) {
-      if (!eligibleIds.has(decision.studentId)) {
-        throw new ApiError(422, 'INVALID_REFERENCE', `L'élève ${decision.studentId} ne fait pas partie de la section source.`);
-      }
-
-      let placementId: string | null = null;
-
-      if (decision.decision === 'promote' || decision.decision === 'repeat') {
-        if (!decision.targetClassSectionId) {
-          throw new ApiError(422, 'MISSING_TARGET_SECTION', `Une section cible est requise pour l'élève ${decision.studentId}.`);
-        }
-        const placement = await recordStudentPlacement({
-          tenantId,
-          studentId: decision.studentId,
-          sessionYearId: targetSessionYearId,
-          classSectionId: decision.targetClassSectionId,
-          promotedFromPlacementId: undefined,
-          notes: decision.reason ?? (decision.decision === 'promote' ? 'Promotion' : 'Redoublement'),
-        });
-        placementId = placement.id;
-      } else if (decision.decision === 'graduate') {
-        const closed = await closeStudentPlacement({ tenantId, studentId: decision.studentId, status: 'graduated', notes: decision.reason });
-        placementId = closed?.id ?? null;
-      } else if (decision.decision === 'transfer' || decision.decision === 'withdraw') {
-        const closed = await closeStudentPlacement({ tenantId, studentId: decision.studentId, status: 'dropped', notes: decision.reason });
-        placementId = closed?.id ?? null;
-      }
-      // 'hold': no placement change, decision recorded only for follow-up.
-
-      decisionRows.push({
-        tenantId,
-        batchId: '', // filled in after the batch row is inserted below
-        studentId: decision.studentId,
-        decision: decision.decision,
-        targetClassSectionId: decision.targetClassSectionId ?? null,
-        placementId,
-        averagePercentageAtDecision: decision.averagePercentage != null ? String(decision.averagePercentage) : null,
-        reason: decision.reason ?? null,
-      });
-    }
-
-    // Batch + decision rows are written last, atomically, only once every
-    // per-student operation above succeeded - see student-placement.ts's
-    // per-student idempotent design: a failure mid-loop leaves no batch row,
-    // so retrying the same idempotencyKey safely resumes (already-applied
-    // placements no-op, the rest proceed) rather than double-applying.
-    const [batch] = await db.insert(promotionBatches).values({
-      tenantId,
-      sourceClassSectionId: body.sourceClassSectionId,
+    const result = await executePromotionBatch({
+      context,
+      sourceClassSectionId,
       targetSessionYearId,
-      idempotencyKey: body.idempotencyKey,
-      operatorId: context.userId,
-    }).returning();
-
-    const insertedDecisions = decisionRows.length > 0
-      ? await db.insert(promotionDecisions).values(decisionRows.map(row => ({ ...row, batchId: batch!.id }))).returning()
-      : [];
-
-    recordAudit(context, 'create', 'promotion_batch', batch!.id, {
-      sourceClassSectionId: body.sourceClassSectionId,
-      targetSessionYearId,
-      decisionCount: decisionRows.length,
+      idempotencyKey,
+      decisions,
     });
 
     return NextResponse.json({
       success: true,
-      data: { batch, decisions: insertedDecisions },
+      data: {
+        batch: result.batch,
+        decisions: result.decisions,
+      },
+      batch: result.batch,
+      decisions: result.decisions,
+      idempotent: result.idempotent,
     });
   } catch (error) {
     return apiErrorResponse(error);

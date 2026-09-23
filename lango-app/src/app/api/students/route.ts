@@ -9,6 +9,8 @@ import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, studentCreateSchema, studentUpdateSchema } from '@/libs/api/validation';
 import { csvSafeCell } from '@/libs/csv-safe';
 import { db } from '@/libs/DB';
+import { invoicedInvoiceCondition, overdueInvoiceCondition } from '@/libs/finance/definitions';
+import { casablancaTodayIso } from '@/libs/finance/today';
 import { reserveMatricule } from '@/libs/services/matricule';
 import { hardDeleteStudent, transitionStudentLifecycle } from '@/libs/services/student-lifecycle';
 import {
@@ -196,7 +198,7 @@ async function getStudentDetail(tenantId: string, id: string, branchId?: string 
   }
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = casablancaTodayIso();
 
   const [
     guardianRows,
@@ -248,11 +250,13 @@ async function getStudentDetail(tenantId: string, id: string, branchId?: string 
         totalInvoiced: sql<number>`coalesce(sum(${invoices.netAmount}), 0)::float`,
         totalPaidOnInvoices: sql<number>`coalesce(sum(${invoices.paidAmount}), 0)::float`,
         balanceDue: sql<number>`coalesce(sum(greatest(0, ${invoices.netAmount} - ${invoices.paidAmount})), 0)::float`,
-        overdueAmount: sql<number>`coalesce(sum(case when ${invoices.dueDate} < ${today} and ${invoices.status} != 'paid' then greatest(0, ${invoices.netAmount} - ${invoices.paidAmount}) else 0 end), 0)::float`,
-        overdueCount: sql<number>`coalesce(sum(case when ${invoices.dueDate} < ${today} and ${invoices.status} != 'paid' then 1 else 0 end), 0)::int`,
+        overdueAmount: sql<number>`coalesce(sum(case when ${overdueInvoiceCondition(invoices.status, invoices.dueDate, today)} then greatest(0, ${invoices.netAmount} - ${invoices.paidAmount}) else 0 end), 0)::float`,
+        overdueCount: sql<number>`coalesce(sum(case when ${overdueInvoiceCondition(invoices.status, invoices.dueDate, today)} then 1 else 0 end), 0)::int`,
       })
       .from(invoices)
-      .where(and(eq(invoices.tenantId, tenantId), eq(invoices.studentId, id), ne(invoices.status, 'cancelled'))),
+      // Same definitions as the finance screens: drafts and credited invoices are
+      // not owed, so they count neither in the balance nor as overdue.
+      .where(and(eq(invoices.tenantId, tenantId), eq(invoices.studentId, id), invoicedInvoiceCondition(invoices.status))),
     db
       .select({
         totalPaid: sql<number>`coalesce(sum(${payments.amount}), 0)::float`,

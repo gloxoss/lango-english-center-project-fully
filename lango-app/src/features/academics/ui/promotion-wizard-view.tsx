@@ -1,36 +1,46 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import {
+  AlertCircle,
+  ArrowRight,
+  CheckCircle2,
+  GraduationCap,
+  Loader2,
+  RotateCcw,
+  Scale,
+  Send,
+  ShieldCheck,
+  Shuffle,
+  Sparkles,
+  Users,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  AlertCircle, CheckCircle2, RotateCcw, ShieldCheck, Sparkles, Send, Loader2,
-  ArrowRight, Users, GraduationCap, Scale, Shuffle
-} from 'lucide-react';
-import { toast } from 'sonner';
 
-interface ClassSection {
+type ClassSection = {
   id: string;
   className: string;
   sectionName: string;
   cycle?: string | null;
-}
+};
 
-interface SessionYear {
+type SessionYear = {
   id: string;
   name: string;
   isDefault: boolean;
   startDate: string;
-}
+};
 
 type DecisionType = 'promote' | 'repeat' | 'graduate' | 'transfer' | 'withdraw' | 'hold';
 
-interface StudentDecisionState {
+type StudentDecisionState = {
   studentId: string;
   fullName: string;
   matricule: string;
@@ -41,21 +51,26 @@ interface StudentDecisionState {
   isBorderline?: boolean;
   reason?: string;
   userStatus?: string;
-}
+  hasUnpaidFees?: boolean;
+  unpaidBalance?: number;
+};
 
-interface CapacityBreakdown {
-  offeringId: string | null;
+type CapacityBreakdown = {
+  offeringId?: string | null;
   classSectionId: string | null;
   className: string;
   sectionName: string;
-  capacity: number | null;
+  maxStudents?: number | null;
   currentStudentsCount: number;
   proposedStudentsCount: number;
+  projectedOccupancy?: number;
+  remainingAfter?: number | null;
   headroom: number | null;
+  isConfigured?: boolean;
   isExceeded: boolean;
-}
+};
 
-interface PromotionBatchHistory {
+type PromotionBatchHistory = {
   id: string;
   sourceClassSectionId: string;
   targetSessionYearId: string;
@@ -63,9 +78,9 @@ interface PromotionBatchHistory {
   status: 'committed' | 'reverted';
   operatorId: string;
   createdAt: string;
-}
+};
 
-interface PreviewMeta {
+type PreviewMeta = {
   sourceSection?: {
     id: string;
     classId: string;
@@ -86,7 +101,7 @@ interface PreviewMeta {
   availableSections?: ClassSection[];
   nextClassSections?: ClassSection[];
   currentClassSections?: ClassSection[];
-}
+};
 
 export function PromotionWizardView({ locale: _locale }: { locale?: string } = {}) {
   const t = useTranslations('Academics');
@@ -98,6 +113,7 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
 
   const [selectedSourceSection, setSelectedSourceSection] = useState<string>('');
   const [selectedTargetSession, setSelectedTargetSession] = useState<string>('');
+  const [batchIdempotencyKey, setBatchIdempotencyKey] = useState<string>(() => crypto.randomUUID());
 
   const [studentsDecisions, setStudentsDecisions] = useState<StudentDecisionState[]>([]);
   const [previewMeta, setPreviewMeta] = useState<PreviewMeta | null>(null);
@@ -108,6 +124,7 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
 
   const [capacityBreakdown, setCapacityBreakdown] = useState<CapacityBreakdown[]>([]);
   const [hasCapacityExceeded, setHasCapacityExceeded] = useState(false);
+  const [hasCapacityUnconfigured, setHasCapacityUnconfigured] = useState(false);
   const [_checkingCapacity, setCheckingCapacity] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
@@ -121,8 +138,8 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
   // Initial fetch: sections & session years
   useEffect(() => {
     Promise.all([
-      fetch('/api/academics/class-sections?pageSize=100').then((r) => r.json()),
-      fetch('/api/academics/session-years?pageSize=100').then((r) => r.json()),
+      fetch('/api/academics/class-sections?pageSize=100').then(r => r.json()),
+      fetch('/api/academics/session-years?pageSize=100').then(r => r.json()),
     ]).then(([clsRes, sessRes]) => {
       if (clsRes.success && Array.isArray(clsRes.data)) {
         const flattened: ClassSection[] = clsRes.data.map((s: any) => ({
@@ -150,10 +167,12 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
 
   // Fetch real grade-based student recommendations and metadata when source section changes
   useEffect(() => {
-    if (!selectedSourceSection) return;
+    if (!selectedSourceSection) {
+      return;
+    }
     setLoadingStudents(true);
     fetch(`/api/students/promotions/preview?sourceSectionId=${selectedSourceSection}`)
-      .then((r) => r.json())
+      .then(r => r.json())
       .then((res) => {
         if (res.success && Array.isArray(res.data)) {
           setPreviewMeta(res.meta || null);
@@ -163,10 +182,12 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
             matricule: item.matricule || 'N/A',
             decision: item.decision || (item.recommendation === 'promote' ? 'promote' : item.recommendation === 'retain' ? 'repeat' : 'hold'),
             targetClassSectionId: item.recommendedTargetSectionId || null,
-            averagePercentage: item.averagePercentage != null ? item.averagePercentage : undefined,
-            grade20: item.grade20 != null ? item.grade20 : undefined,
+            averagePercentage: item.averagePercentage ?? undefined,
+            grade20: item.grade20 ?? undefined,
             isBorderline: !!item.isBorderline,
             userStatus: item.currentStatus,
+            hasUnpaidFees: !!item.hasUnpaidFees,
+            unpaidBalance: item.unpaidBalance || 0,
           }));
           setStudentsDecisions(mapped);
         } else {
@@ -179,7 +200,9 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
 
   // Capacity check query when target session or decisions change
   useEffect(() => {
-    if (!selectedTargetSession || studentsDecisions.length === 0) return;
+    if (!selectedTargetSession || studentsDecisions.length === 0) {
+      return;
+    }
 
     const targetCounts: Record<string, number> = {};
     studentsDecisions.forEach((s) => {
@@ -196,6 +219,7 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
     if (assignmentsPayload.length === 0) {
       setCapacityBreakdown([]);
       setHasCapacityExceeded(false);
+      setHasCapacityUnconfigured(false);
       return;
     }
 
@@ -208,11 +232,12 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
         assignments: assignmentsPayload,
       }),
     })
-      .then((r) => r.json())
+      .then(r => r.json())
       .then((res) => {
         if (res.success && res.data) {
           setCapacityBreakdown(res.data.breakdown || []);
           setHasCapacityExceeded(res.data.hasCapacityExceeded || false);
+          setHasCapacityUnconfigured(res.data.hasCapacityUnconfigured || false);
         }
       })
       .finally(() => setCheckingCapacity(false));
@@ -241,9 +266,11 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
   }, [activeTab]);
 
   const handleDecisionChange = (studentId: string, decision: DecisionType) => {
-    setStudentsDecisions((prev) =>
+    setStudentsDecisions(prev =>
       prev.map((s) => {
-        if (s.studentId !== studentId) return s;
+        if (s.studentId !== studentId) {
+          return s;
+        }
         let newTargetSectionId = s.targetClassSectionId;
 
         // Auto-assign appropriate target if switching to promote vs repeat vs graduate
@@ -261,13 +288,13 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
         }
 
         return { ...s, decision, targetClassSectionId: newTargetSectionId };
-      })
+      }),
     );
   };
 
   const handleTargetSectionChange = (studentId: string, targetClassSectionId: string) => {
-    setStudentsDecisions((prev) =>
-      prev.map((s) => (s.studentId === studentId ? { ...s, targetClassSectionId } : s))
+    setStudentsDecisions(prev =>
+      prev.map(s => (s.studentId === studentId ? { ...s, targetClassSectionId } : s)),
     );
   };
 
@@ -278,7 +305,7 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
     const defaultPromoteSec = previewMeta?.nextClassSections?.[0]?.id || null;
     const defaultRepeatSec = previewMeta?.sourceSection?.id || null;
 
-    setStudentsDecisions((prev) =>
+    setStudentsDecisions(prev =>
       prev.map((s) => {
         if (s.averagePercentage == null) {
           return { ...s, decision: 'hold', targetClassSectionId: null };
@@ -295,18 +322,18 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
           decision: 'repeat',
           targetClassSectionId: defaultRepeatSec,
         };
-      })
+      }),
     );
-    toast.success('Seuil automatique (≥ 10/20) appliqué avec succès.');
+    toast.success(t('toastAutoThresholdSuccess'));
   };
 
-  // Bulk Action 2: Deliberation Repêchage (Promote students with GPA ≥ 9.50/20)
-  const handleDeliberateRepêchage = () => {
+  // Bulk Action 2: Deliberation Rescue (Promote students with GPA ≥ 9.50/20)
+  const handleDeliberateRescue = () => {
     const defaultPromoteSec = previewMeta?.nextClassSections?.[0]?.id || null;
     const isTerminal = previewMeta?.isTerminalClass ?? false;
     let count = 0;
 
-    setStudentsDecisions((prev) =>
+    setStudentsDecisions(prev =>
       prev.map((s) => {
         const score = s.grade20 ?? (s.averagePercentage != null ? s.averagePercentage / 5 : null);
         if (score !== null && score >= 9.5 && score < 10 && s.decision !== 'promote') {
@@ -315,17 +342,17 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
             ...s,
             decision: isTerminal ? 'graduate' : 'promote',
             targetClassSectionId: isTerminal ? null : (s.targetClassSectionId || defaultPromoteSec),
-            reason: 'Admis par délibération du conseil de classe (Repêchage ≥ 9.50/20)',
+            reason: t('reasonCouncilDeliberationRescue'),
           };
         }
         return s;
-      })
+      }),
     );
 
     if (count > 0) {
-      toast.success(`${count} élève(s) repêché(s) avec succès par le Conseil de Classe.`);
+      toast.success(t('toastRescueCountSuccess', { count }));
     } else {
-      toast.info('Aucun élève en zone de repêchage (9.50 - 9.99/20) trouvé.');
+      toast.info(t('toastNoRescueFound'));
     }
   };
 
@@ -333,14 +360,14 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
   const handleBalanceTargetSections = () => {
     const nextSections = previewMeta?.nextClassSections || [];
     if (nextSections.length === 0) {
-      toast.error('Aucune section cible disponible pour la classe supérieure.');
+      toast.error(t('toastNoTargetSectionForBalance'));
       return;
     }
 
     let nextSecIndex = 0;
     let count = 0;
 
-    setStudentsDecisions((prev) =>
+    setStudentsDecisions(prev =>
       prev.map((s) => {
         if (s.decision === 'promote') {
           const assignedSection = nextSections[nextSecIndex % nextSections.length]!;
@@ -352,15 +379,21 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
           };
         }
         return s;
-      })
+      }),
     );
 
-    toast.success(`${count} élèves promus répartis équitablement sur ${nextSections.length} sections (${nextSections.map(s => s.sectionName).join(', ')}).`);
+    toast.success(t('toastBalanceSuccess', {
+      count,
+      sectionsCount: nextSections.length,
+      sectionNames: nextSections.map(s => s.sectionName).join(', '),
+    }));
   };
 
   // Commit promotion to backend
   const handleCommitPromotion = async () => {
-    if (!selectedSourceSection || !selectedTargetSession || studentsDecisions.length === 0 || studentsDecisions.some(s => s.decision === 'hold')) return;
+    if (!selectedSourceSection || !selectedTargetSession || studentsDecisions.length === 0 || studentsDecisions.some(s => s.decision === 'hold')) {
+      return;
+    }
     setSubmitting(true);
     setMessage(null);
 
@@ -368,13 +401,13 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
       const payload = {
         sourceClassSectionId: selectedSourceSection,
         targetSessionYearId: selectedTargetSession,
-        idempotencyKey: `prom-${selectedSourceSection}-${Date.now()}`,
-        decisions: studentsDecisions.map((s) => ({
+        idempotencyKey: batchIdempotencyKey,
+        decisions: studentsDecisions.map(s => ({
           studentId: s.studentId,
           decision: s.decision,
           targetClassSectionId: (s.decision === 'promote' || s.decision === 'repeat') ? (s.targetClassSectionId || undefined) : undefined,
           averagePercentage: s.averagePercentage,
-          reason: s.reason || `Délibération du Conseil de Classe`,
+          reason: s.reason || t('defaultDeliberationReason'),
         })),
       };
 
@@ -390,13 +423,14 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
         setMessage({ type: 'success', text: t('promotionSuccess') });
         toast.success(t('promotionSuccess'));
         setStudentsDecisions([]);
+        setBatchIdempotencyKey(crypto.randomUUID());
       } else {
-        setMessage({ type: 'error', text: data.error?.message || 'Erreur lors de la validation.' });
-        toast.error(data.error?.message || 'Erreur lors de la validation.');
+        setMessage({ type: 'error', text: data.error?.message || t('errorValidationFailed') });
+        toast.error(data.error?.message || t('errorValidationFailed'));
       }
     } catch {
-      setMessage({ type: 'error', text: 'Erreur réseau lors de la validation.' });
-      toast.error('Erreur réseau lors de la validation.');
+      setMessage({ type: 'error', text: t('errorNetworkValidation') });
+      toast.error(t('errorNetworkValidation'));
     } finally {
       setSubmitting(false);
     }
@@ -418,11 +452,11 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
         toast.success(t('revertSuccess'));
         await loadHistory();
       } else {
-        setMessage({ type: 'error', text: data.error?.message || 'Impossible d\'annuler ce lot.' });
-        toast.error(data.error?.message || 'Impossible d\'annuler ce lot.');
+        setMessage({ type: 'error', text: data.error?.message || t('errorCannotRevertBatch') });
+        toast.error(data.error?.message || t('errorCannotRevertBatch'));
       }
     } catch {
-      setMessage({ type: 'error', text: 'Erreur réseau lors de l\'annulation.' });
+      setMessage({ type: 'error', text: t('errorNetworkRevert') });
     } finally {
       setRevertingId(null);
     }
@@ -436,7 +470,7 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
     const toHold = studentsDecisions.filter(s => s.decision === 'hold').length;
     const assessed = studentsDecisions.filter(s => s.averagePercentage != null).length;
     const passedAssessed = studentsDecisions.filter(s => s.averagePercentage != null && (s.decision === 'promote' || s.decision === 'graduate')).length;
-    const borderline = studentsDecisions.filter(s => {
+    const borderline = studentsDecisions.filter((s) => {
       const score = s.grade20 ?? (s.averagePercentage != null ? s.averagePercentage / 5 : null);
       return score !== null && score >= 9.0 && score < 10.0;
     }).length;
@@ -447,12 +481,20 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
 
   // Filtered Students List
   const filteredStudents = useMemo(() => {
-    if (reviewFilter === 'all') return studentsDecisions;
-    if (reviewFilter === 'promote') return studentsDecisions.filter(s => s.decision === 'promote' || s.decision === 'graduate');
-    if (reviewFilter === 'repeat') return studentsDecisions.filter(s => s.decision === 'repeat');
-    if (reviewFilter === 'hold') return studentsDecisions.filter(s => s.decision === 'hold');
+    if (reviewFilter === 'all') {
+      return studentsDecisions;
+    }
+    if (reviewFilter === 'promote') {
+      return studentsDecisions.filter(s => s.decision === 'promote' || s.decision === 'graduate');
+    }
+    if (reviewFilter === 'repeat') {
+      return studentsDecisions.filter(s => s.decision === 'repeat');
+    }
+    if (reviewFilter === 'hold') {
+      return studentsDecisions.filter(s => s.decision === 'hold');
+    }
     if (reviewFilter === 'borderline') {
-      return studentsDecisions.filter(s => {
+      return studentsDecisions.filter((s) => {
         const score = s.grade20 ?? (s.averagePercentage != null ? s.averagePercentage / 5 : null);
         return score !== null && score >= 9.0 && score < 10.0;
       });
@@ -473,101 +515,195 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
   const groupedSections = useMemo(() => {
     const list = previewMeta?.availableSections || sectionsList;
     const groups: Record<string, ClassSection[]> = {};
-    list.forEach(sec => {
-      if (!groups[sec.className]) groups[sec.className] = [];
+    list.forEach((sec) => {
+      if (!groups[sec.className]) {
+        groups[sec.className] = [];
+      }
       groups[sec.className]!.push(sec);
     });
     return groups;
   }, [previewMeta, sectionsList]);
 
+  const selectedTargetObj = useMemo(
+    () => sessionYears.find(s => s.id === selectedTargetSession),
+    [sessionYears, selectedTargetSession],
+  );
+
+  const isTargetPremature = useMemo(() => {
+    if (!selectedTargetObj) {
+      return false;
+    }
+    const todayStr = new Date().toISOString().slice(0, 10);
+    return todayStr < selectedTargetObj.startDate;
+  }, [selectedTargetObj]);
+
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto text-start">
+    <div className="mx-auto max-w-[1600px] space-y-6 text-start">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="
+        flex flex-col justify-between gap-4
+        sm:flex-row sm:items-center
+      "
+      >
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">
+            <h1 className="
+              text-2xl font-extrabold tracking-tight text-[#16212B]
+            "
+            >
               {t('promotionWizardTitle')}
             </h1>
-            <Badge className="bg-[#EBF5FB] text-[#2487B8] border-none text-[11px] font-bold">
-              Conseil de Classe & Délibérations
+            <Badge className="
+              border-none bg-[#EBF5FB] text-[11px] font-bold text-[#2487B8]
+            "
+            >
+              {t('councilOfClass')}
             </Badge>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Délibération automatisée avec seuil réglementaire (/20), repêchage assisté et validation des capacités d&apos;accueil.
+          <p className="mt-1 text-xs text-slate-500">
+            {t('promotionHeaderSubtitle')}
           </p>
         </div>
       </div>
 
       {message && (
         <div
-          className={`p-4 rounded-xl text-xs flex items-center gap-2 border ${
-            message.type === 'success'
-              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-              : 'bg-red-50 text-red-700 border-red-200'
-          }`}
+          className={`
+            flex items-center gap-2 rounded-xl border p-4 text-xs
+            ${
+        message.type === 'success'
+          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+          : 'border-red-200 bg-red-50 text-red-700'
+        }
+          `}
         >
-          {message.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+          {message.type === 'success'
+            ? (
+                <CheckCircle2 className="size-4 shrink-0" />
+              )
+            : (
+                <AlertCircle className="size-4 shrink-0" />
+              )}
           {message.text}
         </div>
       )}
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-        <TabsList className="bg-slate-100 p-1 rounded-xl">
-          <TabsTrigger value="wizard" className="rounded-lg text-xs font-bold px-4">
-            <Sparkles className="w-3.5 h-3.5 me-1.5" />
+      <Tabs
+        value={activeTab}
+        onValueChange={v => setActiveTab(v as any)}
+        className="w-full"
+      >
+        <TabsList className="rounded-xl bg-slate-100 p-1">
+          <TabsTrigger
+            value="wizard"
+            className="rounded-lg px-4 text-xs font-bold"
+          >
+            <Sparkles className="me-1.5 size-3.5" />
             {t('tabPromotionWizard')}
           </TabsTrigger>
-          <TabsTrigger value="history" className="rounded-lg text-xs font-bold px-4">
-            <RotateCcw className="w-3.5 h-3.5 me-1.5" />
+          <TabsTrigger
+            value="history"
+            className="rounded-lg px-4 text-xs font-bold"
+          >
+            <RotateCcw className="me-1.5 size-3.5" />
             {t('tabHistoryRevert')}
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="wizard" className="space-y-6 mt-4">
+        <TabsContent value="wizard" className="mt-4 space-y-6">
           {/* Progression Banner & Configuration */}
-          <Card className="rounded-2xl border border-slate-200/80 shadow-xs bg-white">
+          <Card className="
+            rounded-2xl border border-slate-200/80 bg-white shadow-xs
+          "
+          >
             <CardHeader className="pb-3">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="
+                flex flex-col justify-between gap-4
+                lg:flex-row lg:items-center
+              "
+              >
                 <div>
                   <CardTitle className="text-base font-bold text-[#16212B]">{t('promotionConfigTitle')}</CardTitle>
                   <CardDescription className="text-xs text-slate-500">
-                    Sélectionnez la section d&apos;origine. Le système détecte automatiquement le niveau supérieur et les sections cibles.
+                    {t('promotionConfigDesc')}
                   </CardDescription>
                 </div>
 
                 {/* Progression Route Indicator */}
                 {previewMeta?.sourceSection && (
-                  <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-2 text-xs">
+                  <div className="
+                    flex items-center gap-2 rounded-xl border
+                    border-slate-200/80 bg-slate-50 px-3 py-2 text-xs
+                  "
+                  >
                     <span className="font-bold text-[#16212B]">
-                      {previewMeta.sourceSection.className} - {previewMeta.sourceSection.sectionName}
+                      {previewMeta.sourceSection.className}
+                      {' '}
+                      -
+                      {previewMeta.sourceSection.sectionName}
                     </span>
-                    <ArrowRight className="w-3.5 h-3.5 text-[#2487B8]" />
+                    <ArrowRight className="size-3.5 text-[#2487B8]" />
                     <span className="font-bold text-[#2487B8]">
                       {previewMeta.isTerminalClass
-                        ? '🎓 Baccalauréat / Alumni (Diplômés)'
+                        ? t('terminalClassTarget')
                         : previewMeta.nextClassName
-                        ? `${previewMeta.nextClassName} (Niveau Supérieur)`
-                        : 'Classe Cible'}
+                          ? t('nextClassLevelWithSuffix', { className: previewMeta.nextClassName })
+                          : t('defaultTargetClassLabel')}
                     </span>
-                    <Badge variant="neutral" className="ms-2 text-[10px] font-bold">
-                      Seuil : ≥ {previewMeta.passThresholdRaw ?? 10}/20
+                    <Badge
+                      variant="neutral"
+                      className="ms-2 text-[10px] font-bold"
+                    >
+                      {t('thresholdBadge', { threshold: previewMeta.passThresholdRaw ?? 10 })}
                     </Badge>
                   </div>
                 )}
               </div>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-0">
+            <CardContent className="
+              grid grid-cols-1 gap-4 pt-0
+              sm:grid-cols-2
+              lg:grid-cols-3
+            "
+            >
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-700">{t('sourceSessionYearLabel')}</label>
+                <div className="
+                  flex h-10 items-center justify-between rounded-xl border
+                  border-slate-200 bg-slate-50 px-3 text-xs font-bold
+                  text-[#16212B]
+                "
+                >
+                  <span>{sessionYears.find(y => y.isDefault)?.name || t('sessionNotConfigured')}</span>
+                  <Badge className="
+                    border-emerald-200 bg-emerald-50 text-[10px] font-bold
+                    text-emerald-700
+                  "
+                  >
+                    {t('sessionActiveBadge')}
+                  </Badge>
+                </div>
+              </div>
+
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-700">{t('sourceSectionLabel')}</label>
-                <Select value={selectedSourceSection} onValueChange={setSelectedSourceSection}>
-                  <SelectTrigger className="rounded-xl h-10 border-slate-200">
+                <Select
+                  value={selectedSourceSection}
+                  onValueChange={(val) => {
+                    setSelectedSourceSection(val);
+                    setBatchIdempotencyKey(crypto.randomUUID());
+                  }}
+                >
+                  <SelectTrigger className="h-10 rounded-xl border-slate-200">
                     <SelectValue placeholder={t('chooseSectionPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {sectionsList.map((s) => (
+                    {sectionsList.map(s => (
                       <SelectItem key={s.id} value={s.id}>
-                        {s.className} - {s.sectionName}
+                        {s.className}
+                        {' '}
+                        -
+                        {s.sectionName}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -575,109 +711,336 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">{t('targetSessionLabel')}</label>
+                <label className="text-xs font-medium text-slate-700">
+                  {t('targetSessionLabel')}
+                </label>
                 <Select value={selectedTargetSession} onValueChange={setSelectedTargetSession}>
-                  <SelectTrigger className="rounded-xl h-10 border-slate-200">
+                  <SelectTrigger className="h-10 rounded-xl border-slate-200">
                     <SelectValue placeholder={t('chooseTargetSessionPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {sessionYears.filter(s => {
+                    {sessionYears.filter((s) => {
                       const source = sessionYears.find(y => y.isDefault);
                       return source && s.startDate > source.startDate;
-                    }).map((s) => (
+                    }).map(s => (
                       <SelectItem key={s.id} value={s.id}>
-                        {s.name} {s.isDefault ? t('sessionActiveTag') : ''}
+                        {s.name}
+                        {' '}
+                        {s.isDefault ? t('sessionActiveTag') : ''}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </CardContent>
+            {sessionYears.length > 0 && !sessionYears.some((s) => {
+              const source = sessionYears.find(y => y.isDefault);
+              return source && s.startDate > source.startDate;
+            }) && (
+              <div className="
+                mx-6 mb-4 flex items-center gap-2 rounded-xl border
+                border-amber-200 bg-amber-50 p-3 text-xs font-medium
+                text-amber-900
+              "
+              >
+                <AlertCircle className="size-4 shrink-0 text-amber-700" />
+                <span>{t('noTargetSessionWarning')}</span>
+              </div>
+            )}
+            {isTargetPremature && selectedTargetObj && (
+              <div className="
+                mx-6 mb-4 flex items-center gap-2 rounded-xl border
+                border-sky-200 bg-sky-50 p-3 text-xs font-medium text-sky-900
+              "
+              >
+                <Sparkles className="size-4 shrink-0 text-sky-600" />
+                <span>{t('prematureActivationWarning', { date: selectedTargetObj.startDate })}</span>
+              </div>
+            )}
           </Card>
 
           {/* Conseil de Classe KPI Summary */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+          <div className="
+            grid grid-cols-1 gap-4
+            sm:grid-cols-2
+            lg:grid-cols-4
+          "
+          >
+            <Card className="
+              flex items-center justify-between rounded-2xl border
+              border-slate-200/80 bg-white p-4 shadow-xs
+            "
+            >
               <div className="space-y-0.5">
-                <p className="text-xs font-bold text-slate-500">Effectif de la Section</p>
+                <p className="text-xs font-bold text-slate-500">{t('kpiSectionEnrollment')}</p>
                 <p className="text-2xl font-extrabold text-[#16212B]">{stats.total}</p>
-                <p className="text-[11px] font-semibold text-slate-400">{stats.assessed} élève(s) évalué(s)</p>
+                <p className="text-[11px] font-semibold text-slate-400">
+                  {t('kpiEvaluatedStudents', { count: stats.assessed })}
+                </p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2487B8] flex items-center justify-center">
-                <Users className="w-5 h-5" />
+              <div className="
+                flex size-10 items-center justify-center rounded-xl bg-blue-50
+                text-[#2487B8]
+              "
+              >
+                <Users className="size-5" />
               </div>
             </Card>
 
-            <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+            <Card className="
+              flex items-center justify-between rounded-2xl border
+              border-slate-200/80 bg-white p-4 shadow-xs
+            "
+            >
               <div className="space-y-0.5">
-                <p className="text-xs font-bold text-slate-500">Admis au Niveau Supérieur</p>
+                <p className="text-xs font-bold text-slate-500">{t('kpiAdmittedToNextLevel')}</p>
                 <p className="text-2xl font-extrabold text-emerald-600">{stats.toPromote}</p>
-                <p className="text-[11px] font-bold text-emerald-600">Taux de réussite : {stats.passRate === null ? '—' : `${stats.passRate}%`}</p>
+                <p className="text-[11px] font-bold text-emerald-600">
+                  {t('kpiSuccessRate')}
+                  {' '}
+                  {stats.passRate === null ? '—' : `${stats.passRate}%`}
+                </p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5" />
+              <div className="
+                flex size-10 items-center justify-center rounded-xl
+                bg-emerald-50 text-emerald-600
+              "
+              >
+                <CheckCircle2 className="size-5" />
               </div>
             </Card>
 
-            <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+            <Card className="
+              flex items-center justify-between rounded-2xl border
+              border-slate-200/80 bg-white p-4 shadow-xs
+            "
+            >
               <div className="space-y-0.5">
-                <p className="text-xs font-bold text-slate-500">Cas à Délibérer (Repêchage)</p>
+                <p className="text-xs font-bold text-slate-500">{t('kpiCasesToDeliberate')}</p>
                 <p className="text-2xl font-extrabold text-amber-600">{stats.borderline}</p>
-                <p className="text-[11px] font-semibold text-amber-600">Moyenne entre 9.00 et 9.99</p>
+                <p className="text-[11px] font-semibold text-amber-600">{t('kpiDeliberateThresholdRange')}</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                <Scale className="w-5 h-5" />
+              <div className="
+                flex size-10 items-center justify-center rounded-xl bg-amber-50
+                text-amber-600
+              "
+              >
+                <Scale className="size-5" />
               </div>
             </Card>
 
-            <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+            <Card className="
+              flex items-center justify-between rounded-2xl border
+              border-slate-200/80 bg-white p-4 shadow-xs
+            "
+            >
               <div className="space-y-0.5">
-                <p className="text-xs font-bold text-slate-500">Redoublements Décidés</p>
+                <p className="text-xs font-bold text-slate-500">{t('kpiDecidedRepeats')}</p>
                 <p className="text-2xl font-extrabold text-rose-600">{stats.toRepeat}</p>
-                <p className="text-[11px] font-semibold text-rose-600">Maintien en {previewMeta?.sourceSection?.className || 'niveau'}</p>
+                <p className="text-[11px] font-semibold text-rose-600">
+                  {t('kpiRetentionIn', { level: previewMeta?.sourceSection?.className || 'niveau' })}
+                </p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-                <RotateCcw className="w-5 h-5" />
+              <div className="
+                flex size-10 items-center justify-center rounded-xl bg-rose-50
+                text-rose-600
+              "
+              >
+                <RotateCcw className="size-5" />
               </div>
             </Card>
           </div>
 
-          {/* Live Capacity Check Banner */}
+          {/* Live Capacity Check Banner & Transparent Reconciled Arithmetic */}
           {capacityBreakdown.length > 0 && (
-            <Card className="rounded-2xl border border-slate-200/80 shadow-xs bg-white">
-              <CardContent className="p-4 flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2.5 rounded-xl ${hasCapacityExceeded ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                    <ShieldCheck className="w-5 h-5" />
+            <Card className="
+              rounded-2xl border border-slate-200/80 bg-white shadow-xs
+            "
+            >
+              <CardContent className="space-y-3 p-4">
+                <div className="
+                  flex flex-wrap items-center justify-between gap-4
+                "
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`
+                      rounded-xl p-2.5
+                      ${
+            hasCapacityExceeded
+              ? 'bg-red-50 text-red-600'
+              : hasCapacityUnconfigured
+                ? 'bg-amber-50 text-amber-600'
+                : 'bg-emerald-50 text-emerald-600'
+            }
+                    `}
+                    >
+                      <ShieldCheck className="size-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-[#16212B]">{t('capacityCheckTitle')}</p>
+                      <p className="text-xs text-slate-500">
+                        {hasCapacityExceeded ? t('badgeCapacityExceeded') : hasCapacityUnconfigured ? t('capacityUnconfiguredTag') : t('badgeCapacityValid')}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#16212B]">{t('capacityCheckTitle')}</p>
-                    <p className="text-xs text-slate-500">
-                      {capacityBreakdown.map((b) => `${b.className} ${b.sectionName}: ${b.proposedStudentsCount} élèves (Places restantes: ${b.headroom != null ? b.headroom : '∞'})`).join(' | ')}
-                    </p>
+                  <div className="flex items-center gap-2">
+                    {hasCapacityUnconfigured && (
+                      <Badge
+                        variant="warning"
+                        className="
+                          border-amber-200 bg-amber-50 text-xs font-bold
+                          text-amber-800
+                        "
+                      >
+                        {t('capacityUnconfiguredTag')}
+                      </Badge>
+                    )}
+                    {hasCapacityExceeded
+                      ? (
+                          <Badge variant="danger" className="text-xs font-bold">
+                            {t('badgeCapacityExceeded')}
+                          </Badge>
+                        )
+                      : !hasCapacityUnconfigured
+                          ? (
+                              <Badge
+                                variant="success"
+                                className="text-xs font-bold"
+                              >
+                                {t('badgeCapacityValid')}
+                              </Badge>
+                            )
+                          : null}
                   </div>
                 </div>
-                <Badge variant={hasCapacityExceeded ? 'danger' : 'success'} className="text-xs font-bold">
-                  {hasCapacityExceeded ? t('badgeCapacityExceeded') : t('badgeCapacityValid')}
-                </Badge>
+
+                {/* Arithmetic Reconciliation Breakdown Table / Cards */}
+                <div className="
+                  grid grid-cols-1 gap-3 border-t border-slate-100 pt-2
+                  md:grid-cols-2
+                "
+                >
+                  {capacityBreakdown.map((b) => {
+                    const projected = b.projectedOccupancy ?? (b.currentStudentsCount + b.proposedStudentsCount);
+                    const remaining = b.remainingAfter ?? b.headroom;
+                    const max = b.maxStudents;
+                    return (
+                      <div
+                        key={b.classSectionId}
+                        className="
+                          space-y-1.5 rounded-xl border border-slate-200/70
+                          bg-slate-50/70 p-3 text-xs
+                        "
+                      >
+                        <div className="
+                          flex items-center justify-between font-bold
+                          text-[#16212B]
+                        "
+                        >
+                          <span>
+                            {b.className}
+                            {' '}
+                            -
+                            {' '}
+                            {b.sectionName}
+                          </span>
+                          <span className={b.isExceeded
+                            ? `font-extrabold text-red-600`
+                            : `font-semibold text-emerald-700`}
+                          >
+                            {b.isConfigured ? `${remaining} ${t('capacityRemaining')}` : t('capacityUnconfiguredTag')}
+                          </span>
+                        </div>
+                        <div className="
+                          flex flex-wrap items-center justify-between gap-1
+                          rounded-lg border border-slate-200/50 bg-white p-2
+                          font-mono text-[11px] text-slate-600
+                        "
+                        >
+                          <span>
+                            {t('capacityCurrentOccupancy')}
+                            :
+                            {' '}
+                            <strong>{b.currentStudentsCount}</strong>
+                          </span>
+                          <span>+</span>
+                          <span>
+                            {t('capacityIncomingBatch')}
+                            :
+                            {' '}
+                            <strong>{b.proposedStudentsCount}</strong>
+                          </span>
+                          <span>=</span>
+                          <span>
+                            {t('capacityProjected')}
+                            :
+                            {' '}
+                            <strong>{projected}</strong>
+                          </span>
+                          <span>/</span>
+                          <span>
+                            {t('capacityMaxPlaces')}
+                            :
+                            {' '}
+                            <strong>{max ?? '—'}</strong>
+                          </span>
+                        </div>
+                        {b.isConfigured && (
+                          <p className="
+                            text-end font-mono text-[10px] text-slate-500
+                          "
+                          >
+                            {t('capacityMathFormula', { max: max ?? 0, projected, remaining: remaining ?? 0 })}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </CardContent>
             </Card>
           )}
 
           {/* Student Decision Matrix & Deliberation Engine */}
-          {!selectedTargetSession && <Card className="border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-900">{t('promotionNeedsNextSession')}</Card>}
-          {stats.toHold > 0 && <Card className="border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-900">{t('promotionPendingDecisions', { count: stats.toHold })}</Card>}
-          <Card className="rounded-2xl border border-slate-200/80 shadow-xs bg-white">
-            <CardHeader className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          {!selectedTargetSession && (
+            <Card className="
+              border-amber-200 bg-amber-50 p-4 text-xs font-semibold
+              text-amber-900
+            "
+            >
+              {t('promotionNeedsNextSession')}
+            </Card>
+          )}
+          {stats.toHold > 0 && (
+            <Card className="
+              border-amber-200 bg-amber-50 p-4 text-xs font-semibold
+              text-amber-900
+            "
+            >
+              {t('promotionPendingDecisions', { count: stats.toHold })}
+            </Card>
+          )}
+          <Card className="
+            rounded-2xl border border-slate-200/80 bg-white shadow-xs
+          "
+          >
+            <CardHeader className="
+              flex flex-col justify-between gap-4 border-b border-slate-100 pb-4
+              xl:flex-row xl:items-center
+            "
+            >
               <div>
-                <CardTitle className="text-base font-bold text-[#16212B] flex items-center gap-2">
+                <CardTitle className="
+                  flex items-center gap-2 text-base font-bold text-[#16212B]
+                "
+                >
                   <span>{t('studentDecisionMatrixTitle')}</span>
                   <Badge variant="neutral" className="text-xs font-bold">
-                    {studentsDecisions.length} élèves
+                    {t('studentsCountBadge', { count: studentsDecisions.length })}
                   </Badge>
                 </CardTitle>
-                <CardDescription className="text-xs text-slate-500 mt-0.5">
-                  Examinez les notes, délibérez en conseil de classe et ajustez individuellement ou en lot.
+                <CardDescription className="mt-0.5 text-xs text-slate-500">
+                  {t('studentDecisionMatrixDesc')}
                 </CardDescription>
               </div>
 
@@ -687,22 +1050,29 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
                   variant="outline"
                   onClick={handleApplyAutoThreshold}
                   disabled={studentsDecisions.length === 0}
-                  className="rounded-xl h-9 text-xs gap-1.5 border-slate-200 hover:bg-slate-50"
-                  title="Appliquer le seuil automatique officiel (≥ 10/20)"
+                  className="
+                    h-9 gap-1.5 rounded-xl border-slate-200 text-xs
+                    hover:bg-slate-50
+                  "
+                  title={t('tooltipAutoThreshold')}
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-[#2487B8]" />
-                  <span>Seuil Auto (≥ 10/20)</span>
+                  <Sparkles className="size-3.5 text-[#2487B8]" />
+                  <span>{t('btnAutoThreshold')}</span>
                 </Button>
 
                 <Button
                   variant="outline"
-                  onClick={handleDeliberateRepêchage}
+                  onClick={handleDeliberateRescue}
                   disabled={studentsDecisions.length === 0}
-                  className="rounded-xl h-9 text-xs gap-1.5 border-amber-200 bg-amber-50/50 hover:bg-amber-100/60 text-amber-800"
-                  title="Repêcher les élèves ayant une moyenne entre 9.50 et 10.00/20"
+                  className="
+                    h-9 gap-1.5 rounded-xl border-amber-200 bg-amber-50/50
+                    text-xs text-amber-800
+                    hover:bg-amber-100/60
+                  "
+                  title={t('tooltipRescueCandidates')}
                 >
-                  <Scale className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Repêcher (≥ 9.50)</span>
+                  <Scale className="size-3.5 text-amber-600" />
+                  <span>{t('btnRescueCandidates')}</span>
                 </Button>
 
                 {!previewMeta?.isTerminalClass && (
@@ -710,229 +1080,832 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
                     variant="outline"
                     onClick={handleBalanceTargetSections}
                     disabled={studentsDecisions.length === 0}
-                    className="rounded-xl h-9 text-xs gap-1.5 border-slate-200 hover:bg-slate-50 text-slate-700"
-                    title="Répartir équitablement les élèves promus entre les sections A, B, C de la classe cible"
+                    className="
+                      h-9 gap-1.5 rounded-xl border-slate-200 text-xs
+                      text-slate-700
+                      hover:bg-slate-50
+                    "
+                    title={t('tooltipBalanceSections')}
                   >
-                    <Shuffle className="w-3.5 h-3.5 text-slate-600" />
-                    <span>Équilibrer Sections (A, B, C)</span>
+                    <Shuffle className="size-3.5 text-slate-600" />
+                    <span>{t('btnBalanceSections')}</span>
                   </Button>
                 )}
 
                 <Button
                   onClick={handleCommitPromotion}
-                  disabled={submitting || studentsDecisions.length === 0 || !selectedTargetSession || stats.toHold > 0 || hasCapacityExceeded}
-                  className="rounded-xl h-9 text-xs bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5 shadow-2xs"
+                  disabled={submitting || studentsDecisions.length === 0 || !selectedTargetSession || stats.toHold > 0 || hasCapacityExceeded || hasCapacityUnconfigured}
+                  className="
+                    h-9 gap-1.5 rounded-xl bg-[#2487B8] text-xs text-white
+                    shadow-2xs
+                    hover:bg-[#1B6C93]
+                  "
                 >
-                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  {submitting
+                    ? <Loader2 className="size-4 animate-spin" />
+                    : (
+                        <Send className="size-3.5" />
+                      )}
                   <span>{t('btnCommitPromotion')}</span>
                 </Button>
               </div>
             </CardHeader>
 
             {/* Filter Pills Toolbar */}
-            <div className="px-6 pt-4 pb-2 flex items-center gap-2 flex-wrap border-b border-slate-50">
-              <span className="text-xs font-bold text-slate-400 me-1">Filtrer l&apos;examen :</span>
+            <div className="
+              flex flex-wrap items-center gap-2 border-b border-slate-50 px-6
+              pt-4 pb-2
+            "
+            >
+              <span className="me-1 text-xs font-bold text-slate-400">{t('filterExamsLabel')}</span>
               <Button
                 size="sm"
                 variant={reviewFilter === 'all' ? 'default' : 'ghost'}
                 onClick={() => setReviewFilter('all')}
-                className={`h-8 rounded-full text-xs font-bold px-3 ${reviewFilter === 'all' ? 'bg-[#16212B] text-white' : 'text-slate-600'}`}
+                className={`
+                  h-8 rounded-full px-3 text-xs font-bold
+                  ${reviewFilter === 'all'
+      ? `bg-[#16212B] text-white`
+      : `text-slate-600`}
+                `}
               >
-                Tous ({studentsDecisions.length})
+                {t('filterAllStudents')}
+                {' '}
+                (
+                {studentsDecisions.length}
+                )
               </Button>
               <Button
                 size="sm"
                 variant={reviewFilter === 'promote' ? 'default' : 'ghost'}
                 onClick={() => setReviewFilter('promote')}
-                className={`h-8 rounded-full text-xs font-bold px-3 ${reviewFilter === 'promote' ? 'bg-emerald-600 text-white' : 'text-emerald-700 hover:bg-emerald-50'}`}
+                className={`
+                  h-8 rounded-full px-3 text-xs font-bold
+                  ${reviewFilter === 'promote'
+      ? `bg-emerald-600 text-white`
+      : `
+        text-emerald-700
+        hover:bg-emerald-50
+      `}
+                `}
               >
-                Admis / Diplômés ({stats.toPromote})
+                {t('filterAdmitted')}
+                {' '}
+                (
+                {stats.toPromote}
+                )
               </Button>
               <Button
                 size="sm"
                 variant={reviewFilter === 'borderline' ? 'default' : 'ghost'}
                 onClick={() => setReviewFilter('borderline')}
-                className={`h-8 rounded-full text-xs font-bold px-3 ${reviewFilter === 'borderline' ? 'bg-amber-600 text-white' : 'text-amber-700 hover:bg-amber-50'}`}
+                className={`
+                  h-8 rounded-full px-3 text-xs font-bold
+                  ${reviewFilter === 'borderline'
+      ? `bg-amber-600 text-white`
+      : `
+        text-amber-700
+        hover:bg-amber-50
+      `}
+                `}
               >
-                À Délibérer (Repêchage) ({stats.borderline})
+                {t('filterBorderline')}
+                {' '}
+                (
+                {stats.borderline}
+                )
               </Button>
               <Button
                 size="sm"
                 variant={reviewFilter === 'repeat' ? 'default' : 'ghost'}
                 onClick={() => setReviewFilter('repeat')}
-                className={`h-8 rounded-full text-xs font-bold px-3 ${reviewFilter === 'repeat' ? 'bg-rose-600 text-white' : 'text-rose-700 hover:bg-rose-50'}`}
+                className={`
+                  h-8 rounded-full px-3 text-xs font-bold
+                  ${reviewFilter === 'repeat'
+      ? `bg-rose-600 text-white`
+      : `
+        text-rose-700
+        hover:bg-rose-50
+      `}
+                `}
               >
-                Redoublants ({stats.toRepeat})
+                {t('filterRepeats')}
+                {' '}
+                (
+                {stats.toRepeat}
+                )
               </Button>
               {stats.toHold > 0 && (
                 <Button
                   size="sm"
                   variant={reviewFilter === 'hold' ? 'default' : 'ghost'}
                   onClick={() => setReviewFilter('hold')}
-                  className={`h-8 rounded-full text-xs font-bold px-3 ${reviewFilter === 'hold' ? 'bg-slate-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+                  className={`
+                    h-8 rounded-full px-3 text-xs font-bold
+                    ${reviewFilter === 'hold'
+                  ? `bg-slate-600 text-white`
+                  : `
+                    text-slate-600
+                    hover:bg-slate-50
+                  `}
+                  `}
                 >
-                  En attente ({stats.toHold})
+                  {t('filterHold')}
+                  {' '}
+                  (
+                  {stats.toHold}
+                  )
                 </Button>
               )}
             </div>
 
             <CardContent className="pt-2">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-slate-100 hover:bg-transparent">
-                    <TableHead className="text-xs font-bold text-slate-700 text-start w-28">{t('colMatricule')}</TableHead>
-                    <TableHead className="text-xs font-bold text-slate-700 text-start">{t('colFullName')}</TableHead>
-                    <TableHead className="text-xs font-bold text-slate-700 text-start w-40">{t('colAverageScore')}</TableHead>
-                    <TableHead className="text-xs font-bold text-slate-700 text-start w-48">{t('colDecision')}</TableHead>
-                    <TableHead className="text-xs font-bold text-slate-700 text-start">{t('colTargetSection')}</TableHead>
-                    <TableHead className="text-xs font-bold text-slate-700 text-end w-28">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loadingStudents ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center text-xs text-slate-400 py-12">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <Loader2 className="w-5 h-5 animate-spin text-[#2487B8]" />
-                          <span>{t('loadingStudents')}</span>
-                        </div>
-                      </TableCell>
+              {/* Desktop Table View (hidden md:block) */}
+              <div className="
+                hidden
+                md:block
+              "
+              >
+                <Table>
+                  <TableHeader>
+                    <TableRow className="
+                      border-slate-100
+                      hover:bg-transparent
+                    "
+                    >
+                      <TableHead className="
+                        w-28 text-start text-xs font-bold text-slate-700
+                      "
+                      >
+                        {t('colMatricule')}
+                      </TableHead>
+                      <TableHead className="
+                        text-start text-xs font-bold text-slate-700
+                      "
+                      >
+                        {t('colFullName')}
+                      </TableHead>
+                      <TableHead className="
+                        w-36 text-start text-xs font-bold text-slate-700
+                      "
+                      >
+                        {t('colAverageScore')}
+                      </TableHead>
+                      <TableHead className="
+                        w-32 text-start text-xs font-bold text-slate-700
+                      "
+                      >
+                        {t('colTuitionFees')}
+                      </TableHead>
+                      <TableHead className="
+                        w-44 text-start text-xs font-bold text-slate-700
+                      "
+                      >
+                        {t('colDecision')}
+                      </TableHead>
+                      <TableHead className="
+                        text-start text-xs font-bold text-slate-700
+                      "
+                      >
+                        {t('colTargetSection')}
+                      </TableHead>
+                      <TableHead className="
+                        w-28 text-end text-xs font-bold text-slate-700
+                      "
+                      >
+                        {t('colAction')}
+                      </TableHead>
                     </TableRow>
-                  ) : filteredStudents.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center text-xs text-slate-400 py-12">
-                        {t('noStudentsInSection')}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredStudents.map((stu) => {
-                      const score20 = stu.grade20 ?? (stu.averagePercentage != null ? Math.round((stu.averagePercentage / 5) * 100) / 100 : null);
-                      const isPassing = score20 !== null && score20 >= (previewMeta?.passThresholdRaw ?? 10);
-                      const isCandidate = score20 !== null && score20 >= 9.0 && score20 < 10.0;
-
-                      return (
-                        <TableRow key={stu.studentId} className="border-slate-100 hover:bg-slate-50/50">
-                          <TableCell className="text-xs font-mono font-semibold text-[#16212B] text-start">
-                            {stu.matricule}
-                          </TableCell>
-                          <TableCell className="text-start">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-7 h-7 rounded-full bg-slate-100 text-[#16212B] font-bold text-[11px] flex items-center justify-center shrink-0">
-                                {stu.fullName.slice(0, 2).toUpperCase()}
-                              </div>
-                              <div>
-                                <p className="text-xs font-bold text-[#16212B] leading-snug">{stu.fullName}</p>
-                                {stu.reason && (
-                                  <p className="text-[10px] text-amber-700 font-medium">{stu.reason}</p>
-                                )}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-start">
-                            {score20 !== null ? (
-                              <div className="flex items-center gap-1.5">
-                                <Badge
-                                  className={`text-xs font-bold px-2 py-0.5 rounded-lg border ${
-                                    isPassing
-                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                      : isCandidate
-                                      ? 'bg-amber-50 text-amber-800 border-amber-200'
-                                      : 'bg-rose-50 text-rose-700 border-rose-200'
-                                  }`}
-                                >
-                                  {score20.toFixed(2)} / 20
-                                </Badge>
-                                <span className="text-[11px] text-slate-400 font-medium">
-                                  ({stu.averagePercentage}%)
-                                </span>
-                              </div>
-                            ) : (
-                              <Badge variant="neutral" className="text-[11px] text-slate-400">
-                                Non évalué
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-start">
-                            <Select
-                              value={stu.decision}
-                              onValueChange={(val) => handleDecisionChange(stu.studentId, val as DecisionType)}
+                  </TableHeader>
+                  <TableBody>
+                    {loadingStudents
+                      ? (
+                          <TableRow>
+                            <TableCell
+                              colSpan={7}
+                              className="
+                                py-12 text-center text-xs text-slate-400
+                              "
                             >
-                              <SelectTrigger className="rounded-xl h-8 text-xs border-slate-200 w-44 font-semibold">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="promote">
-                                  <span className="text-emerald-700 font-bold">{decisionLabels.promote}</span>
-                                </SelectItem>
-                                <SelectItem value="repeat">
-                                  <span className="text-rose-700 font-bold">{decisionLabels.repeat}</span>
-                                </SelectItem>
-                                <SelectItem value="graduate">
-                                  <span className="text-blue-700 font-bold">{decisionLabels.graduate} (Alumni)</span>
-                                </SelectItem>
-                                <SelectItem value="transfer">{decisionLabels.transfer}</SelectItem>
-                                <SelectItem value="withdraw">{decisionLabels.withdraw}</SelectItem>
-                                <SelectItem value="hold">{decisionLabels.hold}</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell className="text-start">
-                            {stu.decision === 'graduate' ? (
-                              <Badge className="bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold gap-1 py-1">
-                                <GraduationCap className="w-3.5 h-3.5" />
-                                <span>Alumni / Lauréat du Bac</span>
-                              </Badge>
-                            ) : (stu.decision === 'promote' || stu.decision === 'repeat') ? (
-                              <Select
-                                value={stu.targetClassSectionId || ''}
-                                onValueChange={(val) => handleTargetSectionChange(stu.studentId, val)}
+                              <div className="
+                                flex flex-col items-center justify-center gap-2
+                              "
                               >
-                                <SelectTrigger className="rounded-xl h-8 text-xs border-slate-200 w-52 font-medium">
-                                  <SelectValue placeholder={t('chooseSectionPlaceholder')} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {Object.entries(groupedSections).map(([className, secs]) => (
-                                    <SelectGroup key={className}>
-                                      <SelectLabel className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-2">
-                                        {className}
-                                      </SelectLabel>
-                                      {secs.map((sec) => (
-                                        <SelectItem key={sec.id} value={sec.id} className="text-xs">
-                                          {sec.className} - Section {sec.sectionName}
+                                <Loader2 className="
+                                  size-5 animate-spin text-[#2487B8]
+                                "
+                                />
+                                <span>{t('loadingStudents')}</span>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      : filteredStudents.length === 0
+                        ? (
+                            <TableRow>
+                              <TableCell
+                                colSpan={7}
+                                className="
+                                  py-12 text-center text-xs text-slate-400
+                                "
+                              >
+                                {t('noStudentsInSection')}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        : (
+                            filteredStudents.map((stu) => {
+                              const score20 = stu.grade20 ?? (stu.averagePercentage != null ? Math.round((stu.averagePercentage / 5) * 100) / 100 : null);
+                              const isPassing = score20 !== null && score20 >= (previewMeta?.passThresholdRaw ?? 10);
+                              const isCandidate = score20 !== null && score20 >= 9.0 && score20 < 10.0;
+
+                              return (
+                                <TableRow
+                                  key={stu.studentId}
+                                  className="
+                                    border-slate-100
+                                    hover:bg-slate-50/50
+                                  "
+                                >
+                                  <TableCell className="
+                                    text-start font-mono text-xs font-semibold
+                                    text-[#16212B]
+                                  "
+                                  >
+                                    {stu.matricule}
+                                  </TableCell>
+                                  <TableCell className="text-start">
+                                    <div className="flex items-center gap-2.5">
+                                      <div className="
+                                        flex size-7 shrink-0 items-center
+                                        justify-center rounded-full bg-slate-100
+                                        text-[11px] font-bold text-[#16212B]
+                                      "
+                                      >
+                                        {stu.fullName.slice(0, 2).toUpperCase()}
+                                      </div>
+                                      <div>
+                                        <p className="
+                                          text-xs/snug font-bold text-[#16212B]
+                                        "
+                                        >
+                                          {stu.fullName}
+                                        </p>
+                                        {stu.reason && (
+                                          <p className="
+                                            text-[10px] font-medium
+                                            text-amber-700
+                                          "
+                                          >
+                                            {stu.reason}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-start">
+                                    {score20 !== null
+                                      ? (
+                                          <div className="
+                                            flex items-center gap-1.5
+                                          "
+                                          >
+                                            <Badge
+                                              className={`
+                                                rounded-lg border px-2 py-0.5
+                                                text-xs font-bold
+                                                ${
+                                          isPassing
+                                            ? `
+                                              border-emerald-200 bg-emerald-50
+                                              text-emerald-700
+                                            `
+                                            : isCandidate
+                                              ? `
+                                                border-amber-200 bg-amber-50
+                                                text-amber-800
+                                              `
+                                              : `
+                                                border-rose-200 bg-rose-50
+                                                text-rose-700
+                                              `
+                                          }
+                                              `}
+                                            >
+                                              {score20.toFixed(2)}
+                                              {' '}
+                                              / 20
+                                            </Badge>
+                                            <span className="
+                                              text-[11px] font-medium
+                                              text-slate-400
+                                            "
+                                            >
+                                              (
+                                              {stu.averagePercentage}
+                                              %)
+                                            </span>
+                                          </div>
+                                        )
+                                      : (
+                                          <Badge
+                                            variant="neutral"
+                                            className="
+                                              text-[11px] text-slate-400
+                                            "
+                                          >
+                                            {t('badgeNotAssessed')}
+                                          </Badge>
+                                        )}
+                                  </TableCell>
+                                  <TableCell className="text-start">
+                                    {stu.hasUnpaidFees
+                                      ? (
+                                          <Badge className="
+                                            border border-amber-200 bg-amber-50
+                                            text-[11px] font-bold text-amber-800
+                                          "
+                                          >
+                                            {t('badgeUnpaid', { amount: stu.unpaidBalance ?? 0 })}
+                                          </Badge>
+                                        )
+                                      : (
+                                          <Badge className="
+                                            border border-emerald-200
+                                            bg-emerald-50 text-[11px] font-bold
+                                            text-emerald-700
+                                          "
+                                          >
+                                            {t('badgeUpToDate')}
+                                          </Badge>
+                                        )}
+                                  </TableCell>
+                                  <TableCell className="text-start">
+                                    <Select
+                                      value={stu.decision}
+                                      onValueChange={val => handleDecisionChange(stu.studentId, val as DecisionType)}
+                                    >
+                                      <SelectTrigger className="
+                                        h-8 w-44 rounded-xl border-slate-200
+                                        text-xs font-semibold
+                                      "
+                                      >
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="promote">
+                                          <span className="
+                                            font-bold text-emerald-700
+                                          "
+                                          >
+                                            {decisionLabels.promote}
+                                          </span>
                                         </SelectItem>
-                                      ))}
-                                    </SelectGroup>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            ) : (
-                              <span className="text-xs text-slate-400">— Non assigné</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-end">
-                            {isCandidate && stu.decision !== 'promote' && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleDecisionChange(stu.studentId, 'promote')}
-                                className="h-7 text-[11px] font-bold px-2 rounded-lg border-amber-200 text-amber-800 bg-amber-50 hover:bg-amber-100"
+                                        <SelectItem value="repeat">
+                                          <span className="
+                                            font-bold text-rose-700
+                                          "
+                                          >
+                                            {decisionLabels.repeat}
+                                          </span>
+                                        </SelectItem>
+                                        <SelectItem value="graduate">
+                                          <span className="
+                                            font-bold text-blue-700
+                                          "
+                                          >
+                                            {decisionLabels.graduate}
+                                            {' '}
+                                            {t('alumniParentheses')}
+                                          </span>
+                                        </SelectItem>
+                                        <SelectItem value="transfer">{decisionLabels.transfer}</SelectItem>
+                                        <SelectItem value="withdraw">{decisionLabels.withdraw}</SelectItem>
+                                        <SelectItem value="hold">{decisionLabels.hold}</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </TableCell>
+                                  <TableCell className="text-start">
+                                    {stu.decision === 'graduate'
+                                      ? (
+                                          <Badge className="
+                                            gap-1 border border-blue-200
+                                            bg-blue-50 py-1 text-xs font-bold
+                                            text-blue-700
+                                          "
+                                          >
+                                            <GraduationCap className="size-3.5" />
+                                            <span>{t('alumniBacGraduate')}</span>
+                                          </Badge>
+                                        )
+                                      : (stu.decision === 'promote' || stu.decision === 'repeat')
+                                          ? (
+                                              <Select
+                                                value={stu.targetClassSectionId || ''}
+                                                onValueChange={val => handleTargetSectionChange(stu.studentId, val)}
+                                              >
+                                                <SelectTrigger className="
+                                                  h-8 w-52 rounded-xl
+                                                  border-slate-200 text-xs
+                                                  font-medium
+                                                "
+                                                >
+                                                  <SelectValue placeholder={t('chooseSectionPlaceholder')} />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                  {Object.entries(groupedSections).map(([className, secs]) => (
+                                                    <SelectGroup key={className}>
+                                                      <SelectLabel className="
+                                                        px-2 text-[11px]
+                                                        font-bold tracking-wider
+                                                        text-slate-400 uppercase
+                                                      "
+                                                      >
+                                                        {className}
+                                                      </SelectLabel>
+                                                      {secs.map(sec => (
+                                                        <SelectItem
+                                                          key={sec.id}
+                                                          value={sec.id}
+                                                          className="text-xs"
+                                                        >
+                                                          {sec.className}
+                                                          {' '}
+                                                          - Section
+                                                          {sec.sectionName}
+                                                        </SelectItem>
+                                                      ))}
+                                                    </SelectGroup>
+                                                  ))}
+                                                </SelectContent>
+                                              </Select>
+                                            )
+                                          : (
+                                              <span className="
+                                                text-xs text-slate-400
+                                              "
+                                              >
+                                                —
+                                                {' '}
+                                                {t('statusUnassigned')}
+                                              </span>
+                                            )}
+                                  </TableCell>
+                                  <TableCell className="text-end">
+                                    {isCandidate && stu.decision !== 'promote' && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleDecisionChange(stu.studentId, 'promote')}
+                                        className="
+                                          h-7 rounded-lg border-amber-200
+                                          bg-amber-50 px-2 text-[11px] font-bold
+                                          text-amber-800
+                                          hover:bg-amber-100
+                                        "
+                                      >
+                                        {t('rescueActionBtn')}
+                                      </Button>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })
+                          )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile 390px Card View (block md:hidden) */}
+              <div className="
+                block space-y-3 pb-2
+                md:hidden
+              "
+              >
+                {loadingStudents
+                  ? (
+                      <div className="
+                        flex flex-col items-center justify-center gap-2 py-12
+                        text-center text-xs text-slate-400
+                      "
+                      >
+                        <Loader2 className="size-5 animate-spin text-[#2487B8]" />
+                        <span>{t('loadingStudents')}</span>
+                      </div>
+                    )
+                  : filteredStudents.length === 0
+                    ? (
+                        <div className="
+                          py-12 text-center text-xs text-slate-400
+                        "
+                        >
+                          {t('noStudentsInSection')}
+                        </div>
+                      )
+                    : (
+                        filteredStudents.map((stu) => {
+                          const score20 = stu.grade20 ?? (stu.averagePercentage != null ? Math.round((stu.averagePercentage / 5) * 100) / 100 : null);
+                          const isPassing = score20 !== null && score20 >= (previewMeta?.passThresholdRaw ?? 10);
+                          const isCandidate = score20 !== null && score20 >= 9.0 && score20 < 10.0;
+
+                          return (
+                            <div
+                              key={stu.studentId}
+                              className="
+                                space-y-3 rounded-2xl border border-slate-200/90
+                                bg-white p-3.5 shadow-xs
+                              "
+                            >
+                              {/* Top Row: Identity & Average */}
+                              <div className="
+                                flex items-start justify-between gap-2
+                              "
                               >
-                                Repêcher
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
+                                <div className="
+                                  flex min-w-0 items-center gap-2.5
+                                "
+                                >
+                                  <div className="
+                                    flex size-9 shrink-0 items-center
+                                    justify-center rounded-full bg-slate-100
+                                    text-xs font-bold text-[#16212B]
+                                  "
+                                  >
+                                    {stu.fullName.slice(0, 2).toUpperCase()}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="
+                                      truncate text-sm font-bold text-[#16212B]
+                                    "
+                                    >
+                                      {stu.fullName}
+                                    </p>
+                                    <span className="
+                                      font-mono text-[11px] font-semibold
+                                      text-slate-500
+                                    "
+                                    >
+                                      {stu.matricule}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {score20 !== null
+                                  ? (
+                                      <div className="shrink-0 text-end">
+                                        <Badge className={`
+                                          rounded-lg border px-2 py-0.5 text-xs
+                                          font-bold
+                                          ${
+                                      isPassing
+                                        ? `
+                                          border-emerald-200 bg-emerald-50
+                                          text-emerald-700
+                                        `
+                                        : isCandidate
+                                          ? `
+                                            border-amber-200 bg-amber-50
+                                            text-amber-800
+                                          `
+                                          : `
+                                            border-rose-200 bg-rose-50
+                                            text-rose-700
+                                          `
+                                      }
+                                        `}
+                                        >
+                                          {score20.toFixed(2)}
+                                          {' '}
+                                          / 20
+                                        </Badge>
+                                        <p className="
+                                          mt-0.5 text-[10px] text-slate-400
+                                        "
+                                        >
+                                          (
+                                          {stu.averagePercentage}
+                                          %)
+                                        </p>
+                                      </div>
+                                    )
+                                  : (
+                                      <Badge
+                                        variant="neutral"
+                                        className="
+                                          shrink-0 text-[10px] text-slate-400
+                                        "
+                                      >
+                                        {t('badgeNotAssessed')}
+                                      </Badge>
+                                    )}
+                              </div>
+
+                              {/* Second Row: Tuition Fees & Deliberation Reason */}
+                              <div className="
+                                flex flex-wrap items-center justify-between
+                                gap-2 border-t border-slate-100 pt-1 text-xs
+                              "
+                              >
+                                <span className="
+                                  text-[11px] font-semibold text-slate-500
+                                "
+                                >
+                                  {t('colTuitionFees')}
+                                  {' '}
+                                  :
+                                </span>
+                                {stu.hasUnpaidFees
+                                  ? (
+                                      <Badge className="
+                                        border border-amber-200 bg-amber-50
+                                        text-[11px] font-bold text-amber-800
+                                      "
+                                      >
+                                        {t('badgeUnpaid', { amount: stu.unpaidBalance ?? 0 })}
+                                      </Badge>
+                                    )
+                                  : (
+                                      <Badge className="
+                                        border border-emerald-200 bg-emerald-50
+                                        text-[11px] font-bold text-emerald-700
+                                      "
+                                      >
+                                        {t('badgeUpToDate')}
+                                      </Badge>
+                                    )}
+                              </div>
+
+                              {stu.reason && (
+                                <p className="
+                                  rounded-lg border border-amber-100
+                                  bg-amber-50/70 p-2 text-[11px] font-medium
+                                  text-amber-800
+                                "
+                                >
+                                  {stu.reason}
+                                </p>
+                              )}
+
+                              {/* Third Row: Editable Decision (min-h-[44px] touch target) */}
+                              <div className="space-y-1">
+                                <label className="
+                                  text-xs font-bold text-slate-700
+                                "
+                                >
+                                  {t('mobileStudentDecisionLabel')}
+                                </label>
+                                <Select
+                                  value={stu.decision}
+                                  onValueChange={val => handleDecisionChange(stu.studentId, val as DecisionType)}
+                                >
+                                  <SelectTrigger className="
+                                    min-h-[44px] w-full rounded-xl
+                                    border-slate-200 text-xs font-semibold
+                                  "
+                                  >
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="promote">
+                                      <span className="
+                                        font-bold text-emerald-700
+                                      "
+                                      >
+                                        {decisionLabels.promote}
+                                      </span>
+                                    </SelectItem>
+                                    <SelectItem value="repeat">
+                                      <span className="font-bold text-rose-700">
+                                        {decisionLabels.repeat}
+                                      </span>
+                                    </SelectItem>
+                                    <SelectItem value="graduate">
+                                      <span className="font-bold text-blue-700">
+                                        {decisionLabels.graduate}
+                                        {' '}
+                                        {t('alumniParentheses')}
+                                      </span>
+                                    </SelectItem>
+                                    <SelectItem value="transfer">{decisionLabels.transfer}</SelectItem>
+                                    <SelectItem value="withdraw">{decisionLabels.withdraw}</SelectItem>
+                                    <SelectItem value="hold">{decisionLabels.hold}</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              {/* Fourth Row: Target Section (min-h-[44px] touch target) */}
+                              <div className="space-y-1">
+                                <label className="
+                                  text-xs font-bold text-slate-700
+                                "
+                                >
+                                  {t('mobileStudentTargetSectionLabel')}
+                                </label>
+                                {stu.decision === 'graduate'
+                                  ? (
+                                      <div className="
+                                        flex min-h-[44px] items-center gap-1.5
+                                        rounded-xl border border-blue-200
+                                        bg-blue-50 px-3 text-xs font-bold
+                                        text-blue-700
+                                      "
+                                      >
+                                        <GraduationCap className="size-4" />
+                                        <span>{t('alumniBacGraduate')}</span>
+                                      </div>
+                                    )
+                                  : (stu.decision === 'promote' || stu.decision === 'repeat')
+                                      ? (
+                                          <Select
+                                            value={stu.targetClassSectionId || ''}
+                                            onValueChange={val => handleTargetSectionChange(stu.studentId, val)}
+                                          >
+                                            <SelectTrigger className="
+                                              min-h-[44px] w-full rounded-xl
+                                              border-slate-200 text-xs
+                                              font-medium
+                                            "
+                                            >
+                                              <SelectValue placeholder={t('chooseSectionPlaceholder')} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {Object.entries(groupedSections).map(([className, secs]) => (
+                                                <SelectGroup key={className}>
+                                                  <SelectLabel className="
+                                                    px-2 text-[11px] font-bold
+                                                    tracking-wider
+                                                    text-slate-400 uppercase
+                                                  "
+                                                  >
+                                                    {className}
+                                                  </SelectLabel>
+                                                  {secs.map(sec => (
+                                                    <SelectItem
+                                                      key={sec.id}
+                                                      value={sec.id}
+                                                      className="text-xs"
+                                                    >
+                                                      {sec.className}
+                                                      {' '}
+                                                      - Section
+                                                      {sec.sectionName}
+                                                    </SelectItem>
+                                                  ))}
+                                                </SelectGroup>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        )
+                                      : (
+                                          <div className="
+                                            flex min-h-[44px] items-center
+                                            rounded-xl border border-slate-200
+                                            bg-slate-50 px-3 text-xs
+                                            text-slate-400
+                                          "
+                                          >
+                                            —
+                                            {' '}
+                                            {t('statusUnassigned')}
+                                          </div>
+                                        )}
+                              </div>
+
+                              {/* Fifth Row: Action Button if eligible for rescue */}
+                              {isCandidate && stu.decision !== 'promote' && (
+                                <Button
+                                  variant="outline"
+                                  onClick={() => handleDecisionChange(stu.studentId, 'promote')}
+                                  className="
+                                    min-h-[44px] w-full rounded-xl
+                                    border-amber-200 bg-amber-50 text-xs
+                                    font-bold text-amber-800
+                                    hover:bg-amber-100
+                                  "
+                                >
+                                  <Scale className="
+                                    me-1.5 size-4 text-amber-600
+                                  "
+                                  />
+                                  {t('rescueActionBtn')}
+                                  {' '}
+                                  {t('admitAtCouncilSuffix')}
+                                </Button>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="history" className="mt-4">
-          <Card className="rounded-2xl border border-slate-200/80 shadow-xs bg-white">
+          <Card className="
+            rounded-2xl border border-slate-200/80 bg-white shadow-xs
+          "
+          >
             <CardHeader>
               <CardTitle className="text-base font-bold text-[#16212B]">{t('historyBatchesTitle')}</CardTitle>
               <CardDescription className="text-xs text-slate-500">
@@ -940,56 +1913,93 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {loadingHistory ? (
-                <p className="text-xs text-slate-400 py-6 text-center">{t('loadingHistory')}</p>
-              ) : historyBatches.length === 0 ? (
-                <p className="text-xs text-slate-400 py-6 text-center">{t('noHistoryBatches')}</p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-slate-100">
-                      <TableHead className="text-xs font-bold text-slate-700 text-start">{t('colPromotionDate')}</TableHead>
-                      <TableHead className="text-xs font-bold text-slate-700 text-start">{t('targetSessionLabel')}</TableHead>
-                      <TableHead className="text-xs font-bold text-slate-700 text-start">{tCommon('status')}</TableHead>
-                      <TableHead className="text-xs font-bold text-slate-700 text-end">{tCommon('actions')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {historyBatches.map((batch) => (
-                      <TableRow key={batch.id} className="border-slate-100">
-                        <TableCell className="text-xs text-slate-600 text-start">
-                          {new Date(batch.createdAt).toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-xs font-semibold text-[#16212B] text-start">
-                          {batch.targetSessionYearName || t('targetSessionLabel')}
-                        </TableCell>
-                        <TableCell className="text-start">
-                          <Badge
-                            variant={batch.status === 'committed' ? 'success' : 'neutral'}
-                            className="text-xs capitalize"
-                          >
-                            {batch.status === 'committed' ? t('statusCommitted') : t('statusReverted')}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-end">
-                          {batch.status === 'committed' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleRevertBatch(batch.id)}
-                              disabled={revertingId === batch.id}
-                              className="h-8 text-xs rounded-xl gap-1 text-red-600 border-red-200 hover:bg-red-50"
+              {loadingHistory
+                ? (
+                    <p className="py-6 text-center text-xs text-slate-400">{t('loadingHistory')}</p>
+                  )
+                : historyBatches.length === 0
+                  ? (
+                      <p className="py-6 text-center text-xs text-slate-400">{t('noHistoryBatches')}</p>
+                    )
+                  : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="border-slate-100">
+                            <TableHead className="
+                              text-start text-xs font-bold text-slate-700
+                            "
                             >
-                              <RotateCcw className="w-3.5 h-3.5" />
-                              {revertingId === batch.id ? t('reverting') : t('btnRevertBatch')}
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+                              {t('colPromotionDate')}
+                            </TableHead>
+                            <TableHead className="
+                              text-start text-xs font-bold text-slate-700
+                            "
+                            >
+                              {t('targetSessionLabel')}
+                            </TableHead>
+                            <TableHead className="
+                              text-start text-xs font-bold text-slate-700
+                            "
+                            >
+                              {tCommon('status')}
+                            </TableHead>
+                            <TableHead className="
+                              text-end text-xs font-bold text-slate-700
+                            "
+                            >
+                              {tCommon('actions')}
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {historyBatches.map(batch => (
+                            <TableRow
+                              key={batch.id}
+                              className="border-slate-100"
+                            >
+                              <TableCell className="
+                                text-start text-xs text-slate-600
+                              "
+                              >
+                                {new Date(batch.createdAt).toLocaleString()}
+                              </TableCell>
+                              <TableCell className="
+                                text-start text-xs font-semibold text-[#16212B]
+                              "
+                              >
+                                {batch.targetSessionYearName || t('targetSessionLabel')}
+                              </TableCell>
+                              <TableCell className="text-start">
+                                <Badge
+                                  variant={batch.status === 'committed' ? 'success' : 'neutral'}
+                                  className="text-xs capitalize"
+                                >
+                                  {batch.status === 'committed' ? t('statusCommitted') : t('statusReverted')}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-end">
+                                {batch.status === 'committed' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleRevertBatch(batch.id)}
+                                    disabled={revertingId === batch.id}
+                                    className="
+                                      h-8 gap-1 rounded-xl border-red-200
+                                      text-xs text-red-600
+                                      hover:bg-red-50
+                                    "
+                                  >
+                                    <RotateCcw className="size-3.5" />
+                                    {revertingId === batch.id ? t('reverting') : t('btnRevertBatch')}
+                                  </Button>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
             </CardContent>
           </Card>
         </TabsContent>

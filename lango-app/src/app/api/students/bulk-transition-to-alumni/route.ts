@@ -13,9 +13,9 @@ const bulkTransitionSchema = z.object({
   graduationCohortSessionYearId: z.string().uuid().optional(),
 }).strict();
 
-type ItemResult =
-  | { studentId: string; success: true; tempPassword: string | null; loginAccessDeliveryStatus: string | null }
-  | { studentId: string; success: false; error: string };
+type ItemResult
+  = | { studentId: string; success: true; tempPassword: string | null; loginAccessDeliveryStatus: string | null }
+    | { studentId: string; success: false; error: string };
 
 // Real bulk transition for a whole graduating cohort at once (Phase 4
 // refinement, future-implementation/alumni-portal) - reuses the exact

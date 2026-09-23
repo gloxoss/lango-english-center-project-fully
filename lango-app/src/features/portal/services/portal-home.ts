@@ -1,6 +1,8 @@
 import { and, eq, gt, isNull, lte, or, sql } from 'drizzle-orm';
 import type { RequestContext } from '@/libs/api/context';
 import { db } from '@/libs/DB';
+import { overdueInvoiceCondition } from '@/libs/finance/definitions';
+import { casablancaTodayIso } from '@/libs/finance/today';
 import {
   classScheduleSlots, classes, classSections, classSubjects, guardianStudents,
   guardians, inquiries, invoices, sections, sessionYears, subjects, timetableVersions,
@@ -46,7 +48,7 @@ export async function getPortalHome(ctx: RequestContext) {
         data = await schoolAdminHome(tenantId);
         break;
       case 'accountant':
-        data = await accountantHome(tenantId);
+        data = await accountantHome(tenantId, ctx.branchId ?? null);
         break;
       case 'teacher':
         data = await teacherHome(tenantId, ctx.userId);
@@ -102,8 +104,8 @@ async function schoolAdminHome(tenantId: string) {
   };
 }
 
-async function accountantHome(tenantId: string) {
-  const today = new Date().toISOString().split('T')[0];
+async function accountantHome(tenantId: string, branchId: string | null) {
+  const today = casablancaTodayIso();
   const [paymentsToday, overdue] = await Promise.all([
     db
       .select({
@@ -115,10 +117,17 @@ async function accountantHome(tenantId: string) {
     db
       .select({
         count: sql<number>`count(*)`,
-        totalAmount: sql<number>`coalesce(sum(${invoices.amount} - ${invoices.paidAmount}), 0)`,
+        totalAmount: sql<number>`coalesce(sum(${invoices.netAmount} - ${invoices.paidAmount}), 0)`,
       })
       .from(invoices)
-      .where(and(eq(invoices.tenantId, tenantId), sql`${invoices.status} in ('pending', 'overdue', 'partial')`)),
+      // Same overdue definition, net balance and campus scope as
+      // /api/accountant/me/home, so the two can never disagree (audit V-1).
+      .innerJoin(user, and(eq(invoices.studentId, user.id), eq(user.tenantId, tenantId)))
+      .where(and(
+        eq(invoices.tenantId, tenantId),
+        overdueInvoiceCondition(invoices.status, invoices.dueDate, today),
+        ...(branchId ? [eq(user.branchId, branchId)] : []),
+      )),
   ]);
 
   return {

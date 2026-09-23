@@ -1,5 +1,5 @@
-import { and, eq } from 'drizzle-orm';
 import type { NextRequest } from 'next/server';
+import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
@@ -25,7 +25,13 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     const [updated] = await db
       .update(user)
-      .set({ role: 'student', alumniTransitionedAt: null, alumniTransitionedBy: null })
+      .set({
+        role: 'student',
+        alumniTransitionedAt: null,
+        alumniTransitionedBy: null,
+        graduationCohortSessionYearId: null,
+        updatedAt: new Date().toISOString(),
+      })
       .where(and(eq(user.id, alumnusId), eq(user.tenantId, tenantId), eq(user.role, 'alumni')))
       .returning({ id: user.id });
 

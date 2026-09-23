@@ -1,42 +1,62 @@
-import { and, eq } from 'drizzle-orm';
 import type { NextRequest } from 'next/server';
+import { and, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { getClassReportCards } from '@/features/academics/services/report-card-service';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
-import { passingScoreToPercentage } from '@/libs/grading/pass-threshold';
 import { db } from '@/libs/DB';
+import { passingScoreToPercentage } from '@/libs/grading/pass-threshold';
 import { getEffectiveValueWithLegacyFallback } from '@/libs/settings/registry';
-import { getClassReportCards } from '@/features/academics/services/report-card-service';
 import {
   classes,
   classSections,
+  invoices,
   sections,
   sessionYears,
   user,
 } from '@/models/Schema';
 
 const MOROCCAN_PROGRESSION: string[] = [
-  '1ère AP', '1AP', 'CP',
-  '2ème AP', '2AP', 'CE1',
-  '3ème AP', '3AP', 'CE2',
-  '4ème AP', '4AP', 'CM1',
-  '5ème AP', '5AP', 'CM2',
-  '6ème AP', '6AP',
-  '1AC', '7ème',
-  '2AC', '8ème',
-  '3AC', '9ème', '3ème',
-  'Tronc Commun', 'TC', '2nde',
-  '1BAC', '1ère',
-  '2BAC', 'Terminale',
+  '1ère AP',
+  '1AP',
+  'CP',
+  '2ème AP',
+  '2AP',
+  'CE1',
+  '3ème AP',
+  '3AP',
+  'CE2',
+  '4ème AP',
+  '4AP',
+  'CM1',
+  '5ème AP',
+  '5AP',
+  'CM2',
+  '6ème AP',
+  '6AP',
+  '1AC',
+  '7ème',
+  '2AC',
+  '8ème',
+  '3AC',
+  '9ème',
+  '3ème',
+  'Tronc Commun',
+  'TC',
+  '2nde',
+  '1BAC',
+  '1ère',
+  '2BAC',
+  'Terminale',
 ];
 
 function findNextClassName(currentClassName: string, availableClassNames: string[]): string | null {
   const normCurrent = currentClassName.trim().toLowerCase();
-  
+
   // Find index in standard Moroccan progression
   const progIndex = MOROCCAN_PROGRESSION.findIndex(
-    p => p.toLowerCase() === normCurrent
+    p => p.toLowerCase() === normCurrent,
   );
 
   if (progIndex !== -1) {
@@ -44,7 +64,9 @@ function findNextClassName(currentClassName: string, availableClassNames: string
     for (let i = progIndex + 1; i < MOROCCAN_PROGRESSION.length; i++) {
       const candidate = MOROCCAN_PROGRESSION[i]!.toLowerCase();
       const match = availableClassNames.find(c => c.trim().toLowerCase() === candidate);
-      if (match) return match;
+      if (match) {
+        return match;
+      }
     }
   }
 
@@ -57,11 +79,17 @@ function recommend(
   passThresholdPct: number,
   bulletinStatus: 'Admis' | 'Ajourné' | null,
 ): 'promote' | 'retain' | 'defer' {
-  if (avgPct === null) return 'defer'; // no grades recorded yet
+  if (avgPct === null) {
+    return 'defer';
+  } // no grades recorded yet
   // The bulletin decision already applies the eliminatory mark; a student
   // above the pass mark but under an eliminatory subject mark is retained.
-  if (bulletinStatus === 'Ajourné') return 'retain';
-  if (avgPct >= passThresholdPct) return 'promote';
+  if (bulletinStatus === 'Ajourné') {
+    return 'retain';
+  }
+  if (avgPct >= passThresholdPct) {
+    return 'promote';
+  }
   return 'retain';
 }
 
@@ -128,8 +156,8 @@ export async function GET(req: NextRequest) {
     const distinctClassNames = Array.from(new Set(allSections.map(s => s.className)));
     const nextClassName = findNextClassName(sourceSection.className, distinctClassNames);
     const isTerminalClass = !nextClassName && (
-      sourceSection.className.toLowerCase().includes('term') ||
-      sourceSection.className.toLowerCase().includes('2bac')
+      sourceSection.className.toLowerCase().includes('term')
+      || sourceSection.className.toLowerCase().includes('2bac')
     );
 
     const nextClassSections = nextClassName
@@ -198,6 +226,34 @@ export async function GET(req: NextRequest) {
     );
     const statusMap = new Map(studentIds.map(id => [id, cardByStudent.get(id)?.status ?? null]));
 
+    // 5. Authoritative Finance ledger read: open invoices per student
+    const studentInvoices = studentIds.length > 0
+      ? await db
+          .select({
+            studentId: invoices.studentId,
+            netAmount: invoices.netAmount,
+            paidAmount: invoices.paidAmount,
+          })
+          .from(invoices)
+          .where(
+            and(
+              eq(invoices.tenantId, tenantId),
+              inArray(invoices.studentId, studentIds),
+              inArray(invoices.status, ['pending', 'partial', 'overdue']),
+            ),
+          )
+      : [];
+
+    const unpaidBalanceByStudent = new Map<string, number>();
+    for (const inv of studentInvoices) {
+      const net = Number(inv.netAmount || 0);
+      const paid = Number(inv.paidAmount || 0);
+      const rem = Math.max(0, net - paid);
+      if (rem > 0) {
+        unpaidBalanceByStudent.set(inv.studentId, (unpaidBalanceByStudent.get(inv.studentId) || 0) + rem);
+      }
+    }
+
     // Default target section for repeaters: same section or first section of current class
     const defaultRepeatSectionId = sourceSection.id;
 
@@ -206,13 +262,16 @@ export async function GET(req: NextRequest) {
       ?? nextClassSections[0]
       ?? null;
 
-    const preview = students.map(s => {
+    const preview = students.map((s) => {
       const avgPct = gradeMap.get(s.id) ?? null;
       const rec = recommend(avgPct, passThresholdPct, statusMap.get(s.id) ?? null);
       const grade20 = avgPct !== null ? Math.round((avgPct / 5) * 100) / 100 : null;
-      
+
       // Borderline deliberation flag (within 1 point on /20 scale, e.g. 9.00 - 9.99/20)
       const isBorderline = avgPct !== null && avgPct >= (passThresholdPct - 5) && avgPct < passThresholdPct;
+
+      const unpaidBalance = unpaidBalanceByStudent.get(s.id) || 0;
+      const hasUnpaidFees = unpaidBalance > 0;
 
       let decision: 'promote' | 'repeat' | 'graduate' | 'hold' = 'hold';
       let recommendedTargetSectionId: string | null = null;
@@ -244,6 +303,8 @@ export async function GET(req: NextRequest) {
         recommendedTargetSectionId,
         isBorderline,
         currentStatus: s.userStatus,
+        hasUnpaidFees,
+        unpaidBalance,
       };
     });
 

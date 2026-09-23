@@ -13,7 +13,7 @@ import { centsToMoney } from '@/libs/finance/money';
 import { validatePaymentMethod } from '@/libs/finance/payment-methods';
 import { moneyInput } from '@/libs/finance/validation';
 import { createPayment } from '@/libs/services/payment-create';
-import { accountingAdapterExceptions, cashierSessions, invoices, payments, user } from '@/models/Schema';
+import { accountingAdapterExceptions, cashierSessions, chartOfAccounts, invoices, payments, user } from '@/models/Schema';
 
 const allocationItemSchema = z.object({
   invoiceId: z.string().uuid(),
@@ -152,7 +152,16 @@ export async function POST(request: Request) {
       postingReason = 'gl_post_failed';
       console.error('Payment GL posting failed', { tenantId, paymentId: payment.id, code: (error as { code?: string })?.code ?? 'UNKNOWN' });
     }
-    if (!glPosted) {
+    // Same rule as refunds (refund-approval.ts): a skipped posting is only an
+    // exception for a school that keeps a general ledger. Schools with no chart
+    // of accounts would otherwise get one open exception per payment. Retry
+    // finds unposted payments by their missing journal entry, not by these
+    // rows, so a school that adopts accounting later still catches up.
+    const raiseException = !glPosted && (postingReason === 'gl_post_failed' || Boolean((await db.select({ id: chartOfAccounts.id })
+      .from(chartOfAccounts)
+      .where(and(eq(chartOfAccounts.tenantId, tenantId), eq(chartOfAccounts.isActive, true)))
+      .limit(1))[0]));
+    if (raiseException) {
       try {
         await db.insert(accountingAdapterExceptions).values({
           tenantId,

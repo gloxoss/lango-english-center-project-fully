@@ -2,8 +2,9 @@ import { and, eq, ilike, or } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
-import { isEligibleForDirectoryAndMentoring } from '@/libs/services/alumni-safeguarding';
+import { parsePagination } from '@/libs/api/pagination';
 import { db } from '@/libs/DB';
+import { isEligibleForDirectoryAndMentoring } from '@/libs/services/alumni-safeguarding';
 import { alumniDirectoryConsent, sessionYears, user } from '@/models/Schema';
 
 // Real, alumni-to-alumni directory search (future-implementation
@@ -15,11 +16,13 @@ export async function GET(req: Request) {
     const context = await requireRequestContext(req, ['alumni']);
     const tenantId = requireTenant(context);
     const { searchParams } = new URL(req.url);
+    const pagination = parsePagination(searchParams);
     const search = searchParams.get('search');
     const cohort = searchParams.get('cohort');
 
     const conditions = [
       eq(user.tenantId, tenantId),
+      eq(alumniDirectoryConsent.tenantId, tenantId),
       eq(user.role, 'alumni'),
       or(
         eq(alumniDirectoryConsent.showName, true),
@@ -52,7 +55,9 @@ export async function GET(req: Request) {
       .from(alumniDirectoryConsent)
       .innerJoin(user, eq(alumniDirectoryConsent.alumnusId, user.id))
       .leftJoin(sessionYears, eq(user.graduationCohortSessionYearId, sessionYears.id))
-      .where(and(...conditions));
+      .where(and(...conditions))
+      .limit(pagination.limit)
+      .offset(pagination.offset);
 
     const results = rows
       .filter(r => isEligibleForDirectoryAndMentoring(r.dateOfBirth))
@@ -65,7 +70,12 @@ export async function GET(req: Request) {
         phone: r.showContactInfo ? r.phone : null,
       }));
 
-    return NextResponse.json({ success: true, data: results });
+    return NextResponse.json({
+      success: true,
+      data: results,
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+    });
   } catch (error) {
     return apiErrorResponse(error);
   }

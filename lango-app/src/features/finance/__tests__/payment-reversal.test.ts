@@ -4,7 +4,7 @@ import { POST as postPayment } from '@/app/api/finance/payments/route';
 import { POST as reversePayment } from '@/app/api/finance/payments/[id]/reverse/route';
 import { decidePaymentReversal } from '@/libs/services/payment-reversal';
 import { db } from '@/libs/DB';
-import { invoiceEvents, invoices, payments, tenants, user } from '@/models/Schema';
+import { accountingAdapterExceptions, invoiceEvents, invoices, payments, tenants, user } from '@/models/Schema';
 import { paymentReversals } from '@/features/finance/models/student-accounting-schema';
 import type { RequestContext } from '@/libs/api/context';
 
@@ -63,6 +63,8 @@ describe.skipIf(!hasDb)('payment reversal (Phase E)', () => {
   });
 
   afterAll(async () => {
+    // Unposted payments leave ledger exceptions that reference the tenant.
+    await db.delete(accountingAdapterExceptions).where(eq(accountingAdapterExceptions.tenantId, tenantId));
     await db.delete(tenants).where(eq(tenants.id, tenantId));
   });
 

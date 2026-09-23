@@ -2,6 +2,18 @@
 
 **Status: NEEDS FIX (P1)** · Module: `settings` · Source: [`src/app/[locale]/(dashboard)/dashboard/settings/values/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/settings/values/page.tsx>)
 
+**Progress (2026-09-23):** S-32 PARTIAL
+
+
+
+
+
+
+
+
+
+
+
 Guard: `requireServerPage` · capability `settings.organization.manage`
 
 **Verdict:** 1 finding(s), worst P1. 1 sweep run(s): 1 clean or expected, 0 flagged. 1 screenshot(s).
@@ -37,7 +49,7 @@ Guard: `requireServerPage` · capability `settings.organization.manage`
 
 - [S-7](../../findings/S-7.md) (P1) ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French)
 - [S-14](../../findings/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
-- [S-18](../../findings/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
-- [S-25](../../findings/S-25.md) (P2) Header shows a fake identity when the session call is slow
+- [S-18](../../findings/done/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
+- [S-25](../../findings/done/S-25.md) (P2) Header shows a fake identity when the session call is slow
 - [S-37](../../findings/S-37.md) (P2) Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL
-- [S-41](../../findings/S-41.md) (P1) Auth rate limit counts every page's session check, per IP
+- [S-41](../../findings/done/S-41.md) (P1) Auth rate limit counts every page's session check, per IP

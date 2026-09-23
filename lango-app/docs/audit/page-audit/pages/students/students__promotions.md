@@ -2,6 +2,18 @@
 
 **Status: NEEDS FIX (P1)** · Module: `students` · Source: [`src/app/[locale]/(dashboard)/dashboard/students/promotions/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/students/promotions/page.tsx>)
 
+**Progress (2026-09-23):** S-9 DONE · S-32 PARTIAL
+
+
+
+
+
+
+
+
+
+
+
 Guard: `requireServerPage` · capability `students.update`
 
 **Verdict:** 2 finding(s), worst P1. 1 sweep run(s): 1 clean or expected, 0 flagged. 1 screenshot(s).
@@ -10,7 +22,7 @@ Guard: `requireServerPage` · capability `students.update`
 
 | ID | Sev | Problem | Fix | Code now |
 |---|---|---|---|---|
-| [S-9](../../findings/S-9.md) | P1 | Promotion wizard: wrong defaults and misleading numbers | Target = next year; "—" with no marks; confirm disabled while decisions are pending; correct the label. | Not re-checked since the sweep. |
+| [S-9](../../findings/done/S-9.md) | P1 | Promotion wizard: wrong defaults and misleading numbers | Target = next year; "—" with no marks; confirm disabled while decisions are pending; correct the label. | Not re-checked since the sweep. |
 | [S-32](../../findings/S-32.md) | P1 | Sidebar links looser than their page; denied users land on the public homepage | Derive the sidebar permission from the page guard; denial renders in-app "Accès refusé"; remove dead links; test that walks sidebar vs guards. | Not re-checked since the sweep. |
 
 ## Sweep results
@@ -43,7 +55,7 @@ Guard: `requireServerPage` · capability `students.update`
 
 - [S-7](../../findings/S-7.md) (P1) ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French)
 - [S-14](../../findings/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
-- [S-18](../../findings/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
-- [S-25](../../findings/S-25.md) (P2) Header shows a fake identity when the session call is slow
+- [S-18](../../findings/done/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
+- [S-25](../../findings/done/S-25.md) (P2) Header shows a fake identity when the session call is slow
 - [S-37](../../findings/S-37.md) (P2) Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL
-- [S-41](../../findings/S-41.md) (P1) Auth rate limit counts every page's session check, per IP
+- [S-41](../../findings/done/S-41.md) (P1) Auth rate limit counts every page's session check, per IP

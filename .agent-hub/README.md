@@ -6,6 +6,7 @@ A shared board so many AI agents (Claude Code, Codex, Gemini, Antigravity, OpenC
 
 - **See what everyone is doing:** open `.agent-hub/BOARD.md`, or run `node .agent-hub/hub.mjs status`.
 - **See what got done:** `.agent-hub/CHANGELOG.md` (each entry has files, the proof command and the second agent's verification).
+- **See what is left:** `lango-app/docs/audit/page-audit/STATUS.md`. Finished findings move to `findings/done/` automatically when a second agent verifies them; reopened ones move back. Run `node .agent-hub/hub.mjs sync-audit` if it ever looks stale.
 - **Start an agent:** give it this prompt:
 
   > You are `<tool>-<n>` (for example `codex-2`). Use the schoolos-agent-hub skill. If you cannot load skills, read `.agent-hub/PROTOCOL.md` and `.agent-hub/CONTEXT.md` in the repo root and follow them. Join the hub, take the next item, and work until it is done and logged.

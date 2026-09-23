@@ -2,6 +2,18 @@
 
 **Status: NEEDS FIX (P1)** · Module: `homework` · Source: [`src/app/[locale]/(dashboard)/dashboard/homework/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/homework/page.tsx>)
 
+**Progress (2026-09-23):** S-32 PARTIAL · S-10 DONE
+
+
+
+
+
+
+
+
+
+
+
 Guard: `requireServerPage` · capability `grading.manage`
 
 **Verdict:** 2 finding(s), worst P1. 3 sweep run(s): 1 clean or expected, 2 flagged. 3 screenshot(s).
@@ -11,7 +23,7 @@ Guard: `requireServerPage` · capability `grading.manage`
 | ID | Sev | Problem | Fix | Code now |
 |---|---|---|---|---|
 | [S-32](../../findings/S-32.md) | P1 | Sidebar links looser than their page; denied users land on the public homepage | Derive the sidebar permission from the page guard; denial renders in-app "Accès refusé"; remove dead links; test that walks sidebar vs guards. | Not re-checked since the sweep. |
-| [S-10](../../findings/S-10.md) | P2 | Homework page shows developer copy and "0 %" for 0/0 | Remove developer copy, fix the button label, "—" for 0/0. | Not re-checked since the sweep. |
+| [S-10](../../findings/done/S-10.md) | P2 | Homework page shows developer copy and "0 %" for 0/0 | Remove developer copy, fix the button label, "—" for 0/0. | Not re-checked since the sweep. |
 
 ## Sweep results
 
@@ -50,10 +62,10 @@ Guard: `requireServerPage` · capability `grading.manage`
 
 ## Cross-cutting findings that also show here
 
-- [S-41](../../findings/S-41.md) (P1) Auth rate limit counts every page's session check, per IP
+- [S-41](../../findings/done/S-41.md) (P1) Auth rate limit counts every page's session check, per IP
 - [S-7](../../findings/S-7.md) (P1) ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French)
 - [S-14](../../findings/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
-- [S-18](../../findings/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
-- [S-25](../../findings/S-25.md) (P2) Header shows a fake identity when the session call is slow
+- [S-18](../../findings/done/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
+- [S-25](../../findings/done/S-25.md) (P2) Header shows a fake identity when the session call is slow
 - [S-37](../../findings/S-37.md) (P2) Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL
 - [S-44](../../findings/S-44.md) (P2) Staff campus switcher renders for parents, students and super admin (403 on every page)

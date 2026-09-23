@@ -42,7 +42,7 @@ export async function POST(request: Request) {
       .from(promotionDecisions)
       .where(and(eq(promotionDecisions.batchId, batch.id), eq(promotionDecisions.tenantId, tenantId)));
 
-    const studentIds = decisions.map((d) => d.studentId);
+    const studentIds = decisions.map(d => d.studentId);
     const batchCreatedAt = batch.createdAt;
 
     if (studentIds.length > 0) {
@@ -90,10 +90,13 @@ export async function POST(request: Request) {
             .limit(1);
 
           if (currentPlacement) {
-            // Deactivate new placement created by promotion
+            // Deactivate new placement created by promotion (must set endDate when isCurrent is false)
+            const cancelDate = new Date(Math.max(Date.now(), Date.parse(currentPlacement.startDate) + 86400000))
+              .toISOString()
+              .slice(0, 10);
             await tx
               .update(studentPlacements)
-              .set({ isCurrent: false, status: 'dropped', updatedAt: new Date().toISOString() })
+              .set({ isCurrent: false, endDate: cancelDate, status: 'dropped', updatedAt: new Date().toISOString() })
               .where(and(eq(studentPlacements.id, d.placementId), eq(studentPlacements.tenantId, tenantId)));
 
             // Restore predecessor placement if present

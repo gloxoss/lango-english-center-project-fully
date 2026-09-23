@@ -2,6 +2,18 @@
 
 **Status: NEEDS FIX (P3)** · Module: `public-site` · Source: [`src/app/[locale]/(school-site)/[tenantSlug]/faq/page.tsx`](<../../../../../src/app/[locale]/(school-site)/[tenantSlug]/faq/page.tsx>)
 
+**Progress (2026-09-23):** S-55 OPEN
+
+
+
+
+
+
+
+
+
+
+
 Guard: no guard in page.tsx (public page, or protected by its layout or client)
 
 **Verdict:** 1 finding(s), worst P3. 2 sweep run(s): 2 clean or expected, 0 flagged. 2 screenshot(s).

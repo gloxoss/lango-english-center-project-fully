@@ -1,17 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { AlertTriangle, CheckCircle2, GraduationCap, Search, XCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Card } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from '@/components/ui/dialog';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
-import { Search, GraduationCap, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
 import { usePermissions } from '@/hooks/use-permissions';
 
 type StudentRow = { id: string; fullName: string; matricule: string | null; className: string | null };
@@ -76,11 +84,15 @@ export function BulkAlumniTransitionView({ locale: _locale }: { locale?: string 
   // "Promouvoir la classe sortante" — one-click select of every student in the
   // chosen graduating class (Terminale / 3ème), then the same single confirmation.
   const handlePromoteGraduatingClass = async () => {
-    if (!terminalClassSectionId) return;
+    if (!terminalClassSectionId) {
+      return;
+    }
     try {
       const res = await fetch(`/api/students?classSectionId=${terminalClassSectionId}&pageSize=200`).then(r => r.json());
       const ids: string[] = (res?.data ?? []).map((s: StudentRow) => s.id).filter(Boolean);
-      if (ids.length === 0) return;
+      if (ids.length === 0) {
+        return;
+      }
       setSelected(new Set(ids));
       setShowConfirm(true);
     } catch {
@@ -92,32 +104,53 @@ export function BulkAlumniTransitionView({ locale: _locale }: { locale?: string 
 
   if (!canManage) {
     return (
-      <div className="max-w-lg mx-auto mt-12 p-6 bg-slate-50 border border-slate-200 rounded-2xl text-slate-500 text-sm font-semibold text-center">
+      <div className="
+        mx-auto mt-12 max-w-lg rounded-2xl border border-slate-200 bg-slate-50
+        p-6 text-center text-sm font-semibold text-slate-500
+      "
+      >
         {tCommon('error')}
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-[1000px] mx-auto">
+    <div className="mx-auto max-w-[1000px] space-y-6">
       <div>
-        <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('bulkAlumniTitle')}</h1>
-        <p className="text-xs text-slate-500 mt-1">{t('bulkAlumniSubtitle')}</p>
+        <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('bulkAlumniTitle')}</h1>
+        <p className="mt-1 text-xs text-slate-500">{t('bulkAlumniSubtitle')}</p>
       </div>
 
-      <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <Card className="
+        flex flex-col items-start justify-between gap-3 rounded-2xl border
+        border-slate-200/80 bg-white p-4 shadow-2xs
+        sm:flex-row sm:items-center
+      "
+      >
         <div className="flex flex-col gap-1">
           <span className="text-xs font-bold text-[#16212B]">{t('promoteGraduatingClassTitle')}</span>
           <span className="text-[11px] text-slate-500">{t('promoteGraduatingClassDesc')}</span>
         </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="
+          flex w-full items-center gap-2
+          sm:w-auto
+        "
+        >
           <Select value={terminalClassSectionId} onValueChange={setTerminalClassSectionId}>
-            <SelectTrigger className="h-9 text-xs rounded-xl bg-slate-50 border-slate-200 flex-1 sm:w-64">
+            <SelectTrigger className="
+              h-9 flex-1 rounded-xl border-slate-200 bg-slate-50 text-xs
+              sm:w-64
+            "
+            >
               <SelectValue placeholder={t('chooseGraduatingClass')} />
             </SelectTrigger>
             <SelectContent>
               {classSections.map(cs => (
-                <SelectItem key={cs.id} value={cs.id}>{cs.className} {cs.sectionName}</SelectItem>
+                <SelectItem key={cs.id} value={cs.id}>
+                  {cs.className}
+                  {' '}
+                  {cs.sectionName}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -125,57 +158,128 @@ export function BulkAlumniTransitionView({ locale: _locale }: { locale?: string 
             size="sm"
             disabled={!terminalClassSectionId}
             onClick={handlePromoteGraduatingClass}
-            className="h-9 rounded-xl bg-[#17A673] hover:bg-[#12845B] text-white text-xs font-bold gap-1.5"
+            className="
+              h-9 gap-1.5 rounded-xl bg-[#17A673] text-xs font-bold text-white
+              hover:bg-[#12845B]
+            "
           >
-            <GraduationCap className="w-3.5 h-3.5" />
+            <GraduationCap className="size-3.5" />
             {t('selectBtn')}
           </Button>
         </div>
       </Card>
 
-      <Card className="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <Input placeholder={t('searchStudentPlaceholder')} value={search} onChange={e => setSearch(e.target.value)} className="ps-9 h-9 text-xs rounded-xl bg-slate-50 border-none text-start" />
+      <Card className="
+        flex items-center justify-between gap-3 rounded-2xl border
+        border-slate-200/80 bg-white p-3 shadow-2xs
+      "
+      >
+        <div className="relative max-w-md flex-1">
+          <Search className="
+            absolute inset-s-3 top-1/2 size-4 -translate-y-1/2 text-slate-400
+          "
+          />
+          <Input
+            placeholder={t('searchStudentPlaceholder')}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="
+              h-9 rounded-xl border-none bg-slate-50 ps-9 text-start text-xs
+            "
+          />
         </div>
         <Button
           size="sm"
           disabled={selected.size === 0}
           onClick={() => setShowConfirm(true)}
-          className="h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold gap-1.5"
+          className="
+            h-9 gap-1.5 rounded-xl bg-[#2487B8] text-xs font-bold text-white
+            hover:bg-[#1B6C93]
+          "
         >
-          <GraduationCap className="w-3.5 h-3.5" />
+          <GraduationCap className="size-3.5" />
           {t('transitionCountBtn', { count: selected.size })}
         </Button>
       </Card>
 
-      <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-        <table className="w-full text-start text-xs">
-          <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
-            <tr>
-              <th className="py-3 px-4 w-10" />
-              <th className="py-3 px-4">{t('student')}</th>
-              <th className="py-3 px-4">{t('matricule')}</th>
-              <th className="py-3 px-4">{t('classSection')}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filtered.map(s => (
-              <tr key={s.id} className={`hover:bg-slate-50/80 transition cursor-pointer ${selected.has(s.id) ? 'bg-[#DCEBF4]/20' : ''}`} onClick={() => toggle(s.id)}>
-                <td className="py-2.5 px-4"><input type="checkbox" checked={selected.has(s.id)} onChange={() => toggle(s.id)} onClick={e => e.stopPropagation()} className="rounded border-slate-300" /></td>
-                <td className="py-2.5 px-4 font-bold text-[#16212B]">{s.fullName}</td>
-                <td className="py-2.5 px-4 font-mono text-slate-400">{s.matricule ?? '—'}</td>
-                <td className="py-2.5 px-4 text-slate-600">{s.className ?? t('unassigned')}</td>
+      <Card className="
+        overflow-hidden rounded-2xl border border-slate-200/80 bg-white
+        shadow-2xs
+      "
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full text-start text-xs">
+            <thead className="
+              border-b border-slate-200/80 bg-[#F6F9FC] font-extrabold
+              text-[#16212B]
+            "
+            >
+              <tr>
+                <th className="w-10 px-4 py-3 text-start" />
+                <th className="px-4 py-3 text-start">{t('student')}</th>
+                <th className="px-4 py-3 text-start">{t('matricule')}</th>
+                <th className="px-4 py-3 text-start">{t('classSection')}</th>
               </tr>
-            ))}
-            {filtered.length === 0 && <tr><td colSpan={4} className="py-8 text-center text-slate-400">{t('emptyRosterFound')}</td></tr>}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filtered.map(s => (
+                <tr
+                  key={s.id}
+                  className={`
+                    cursor-pointer transition
+                    hover:bg-slate-50/80
+                    ${selected.has(s.id)
+                  ? `bg-[#DCEBF4]/20`
+                  : ''}
+                  `}
+                  onClick={() => toggle(s.id)}
+                >
+                  <td className="px-4 py-2.5">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(s.id)}
+                      onChange={() => toggle(s.id)}
+                      onClick={e => e.stopPropagation()}
+                      className="rounded-sm border-slate-300"
+                    />
+                  </td>
+                  <td className="
+                    px-4 py-2.5 text-start font-bold text-[#16212B]
+                  "
+                  >
+                    {s.fullName}
+                  </td>
+                  <td className="
+                    px-4 py-2.5 text-start font-mono text-slate-400
+                  "
+                  >
+                    {s.matricule ?? '—'}
+                  </td>
+                  <td className="px-4 py-2.5 text-start text-slate-600">{s.className ?? t('unassigned')}</td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="py-8 text-center text-slate-400"
+                  >
+                    {t('emptyRosterFound')}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </Card>
 
       {results && (
-        <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-          <div className="p-4 border-b border-slate-100">
+        <Card className="
+          overflow-hidden rounded-2xl border border-slate-200/80 bg-white
+          shadow-2xs
+        "
+        >
+          <div className="border-b border-slate-100 p-4">
             <p className="text-xs font-bold text-[#16212B]">
               {t('bulkTransitionResultSummary', {
                 successCount: results.filter(r => r.success).length,
@@ -184,35 +288,75 @@ export function BulkAlumniTransitionView({ locale: _locale }: { locale?: string 
             </p>
           </div>
           <div className="divide-y divide-slate-100">
-            {results.map(r => (
-              <div key={r.studentId} className="p-3 flex items-center gap-2 text-xs">
-                {r.success ? <CheckCircle2 className="w-3.5 h-3.5 text-[#17A673] shrink-0" /> : <XCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />}
-                <span className="font-mono text-slate-400">{r.studentId}</span>
-                {r.success
-                  ? <span className="text-[#17A673] font-semibold">{r.tempPassword ? t('passwordLabel', { password: r.tempPassword }) : t('accountCreated')}</span>
-                  : <span className="text-rose-600 font-semibold">{r.error}</span>}
-              </div>
-            ))}
+            {results.map((r) => {
+              const student = students.find(s => s.id === r.studentId);
+              return (
+                <div
+                  key={r.studentId}
+                  className="
+                    flex items-center justify-between gap-2 p-3 text-xs
+                  "
+                >
+                  <div className="flex items-center gap-2">
+                    {r.success
+                      ? (
+                          <CheckCircle2 className="
+                            size-3.5 shrink-0 text-[#17A673]
+                          "
+                          />
+                        )
+                      : (
+                          <XCircle className="size-3.5 shrink-0 text-rose-600" />
+                        )}
+                    <span className="font-bold text-[#16212B]">{student?.fullName ?? r.studentId}</span>
+                    {student?.matricule && (
+                      <span className="font-mono text-[10px] text-slate-400">
+                        (
+                        {student.matricule}
+                        )
+                      </span>
+                    )}
+                  </div>
+                  {r.success
+                    ? <span className="font-semibold text-[#17A673]">{r.tempPassword ? t('passwordLabel', { password: r.tempPassword }) : t('accountCreated')}</span>
+                    : <span className="font-semibold text-rose-600">{r.error}</span>}
+                </div>
+              );
+            })}
           </div>
         </Card>
       )}
 
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
-        <DialogContent className="max-w-md bg-white rounded-2xl p-6">
+        <DialogContent className="max-w-md rounded-2xl bg-white p-6">
           <DialogHeader>
-            <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber-500" />
+            <DialogTitle className="
+              flex items-center gap-2 text-base font-extrabold text-[#16212B]
+            "
+            >
+              <AlertTriangle className="size-5 text-amber-500" />
               {t('bulkTransitionConfirmTitle')}
             </DialogTitle>
           </DialogHeader>
-          <p className="text-xs text-slate-600 mt-2">
+          <p className="mt-2 text-xs text-slate-600">
             {t('bulkTransitionConfirmDesc', { count: selected.size })}
           </p>
-          <DialogFooter className="gap-2 mt-4">
-            <Button variant="outline" onClick={() => setShowConfirm(false)} className="rounded-full text-xs h-9">
+          <DialogFooter className="mt-4 gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirm(false)}
+              className="h-9 rounded-full text-xs"
+            >
               {tCommon('cancel')}
             </Button>
-            <Button disabled={submitting} onClick={handleConfirm} className="rounded-full text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white border-0">
+            <Button
+              disabled={submitting}
+              onClick={handleConfirm}
+              className="
+                h-9 rounded-full border-0 bg-[#2487B8] text-xs text-white
+                hover:bg-[#1B6C93]
+              "
+            >
               {submitting ? t('transitionInProgress') : tCommon('confirm')}
             </Button>
           </DialogFooter>
@@ -221,4 +365,3 @@ export function BulkAlumniTransitionView({ locale: _locale }: { locale?: string 
     </div>
   );
 }
-

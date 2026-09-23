@@ -7,6 +7,6 @@ export default async function AlumniEventsAdminPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { requiredCapability: 'events.read' });
+  await requireServerPage(locale, { requiredCapability: 'admissions.manage' });
   return <AlumniEventsView />;
 }

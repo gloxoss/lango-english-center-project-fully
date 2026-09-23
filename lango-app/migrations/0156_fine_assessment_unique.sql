@@ -1,0 +1,40 @@
+-- Keep every historical assessment. Link duplicates to the oldest assessment
+-- for the same tenant, invoice and policy before protecting future inserts.
+ALTER TABLE "fine_assessments" ADD COLUMN IF NOT EXISTS "superseded_by_id" uuid;
+ALTER TABLE "fine_assessments" ADD COLUMN IF NOT EXISTS "superseded_at" timestamp;
+--> statement-breakpoint
+WITH ranked AS (
+  SELECT "id",
+         FIRST_VALUE("id") OVER (PARTITION BY "tenant_id", "invoice_id", "fine_policy_id"
+           ORDER BY "assessed_at", "id") AS keeper_id,
+         ROW_NUMBER() OVER (PARTITION BY "tenant_id", "invoice_id", "fine_policy_id"
+           ORDER BY "assessed_at", "id") AS row_number
+  FROM "fine_assessments"
+  WHERE "invoice_id" IS NOT NULL
+)
+UPDATE "fine_assessments" AS assessment
+SET "superseded_by_id" = ranked.keeper_id,
+    "superseded_at" = now()
+FROM ranked
+WHERE assessment."id" = ranked."id"
+  AND ranked.row_number > 1
+  AND assessment."superseded_by_id" IS NULL;
+--> statement-breakpoint
+DROP INDEX IF EXISTS "fine_assessments_invoice_policy_unique";
+--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "fine_assessments_invoice_policy_unique"
+  ON "fine_assessments" ("tenant_id", "invoice_id", "fine_policy_id")
+  WHERE "invoice_id" IS NOT NULL AND "superseded_by_id" IS NULL;
+--> statement-breakpoint
+ALTER TABLE "invoice_items" ADD COLUMN IF NOT EXISTS "fine_assessment_id" uuid;
+--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "invoice_items_fine_assessment_unique"
+  ON "invoice_items" ("tenant_id", "fine_assessment_id")
+  WHERE "fine_assessment_id" IS NOT NULL;
+--> statement-breakpoint
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'invoice_items_fine_assessment_fk') THEN
+    ALTER TABLE "invoice_items" ADD CONSTRAINT "invoice_items_fine_assessment_fk"
+      FOREIGN KEY ("fine_assessment_id") REFERENCES "fine_assessments" ("id") ON DELETE RESTRICT;
+  END IF;
+END $$;

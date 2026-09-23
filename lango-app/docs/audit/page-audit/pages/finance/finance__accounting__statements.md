@@ -1,6 +1,18 @@
 # `/dashboard/finance/accounting/statements`
 
-**Status: NEEDS FIX (P1)** · Module: `finance` · Source: [`src/app/[locale]/(dashboard)/dashboard/finance/accounting/statements/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/finance/accounting/statements/page.tsx>)
+**Status: FIXED, pending re-sweep** · Module: `finance` · Source: [`src/app/[locale]/(dashboard)/dashboard/finance/accounting/statements/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/finance/accounting/statements/page.tsx>)
+
+**Progress (2026-09-23):** S-3 DONE · S-31 DONE
+
+
+
+
+
+
+
+
+
+
 
 Guard: `requireServerPage` · capability `accounting.statement.read`
 
@@ -10,8 +22,8 @@ Guard: `requireServerPage` · capability `accounting.statement.read`
 
 | ID | Sev | Problem | Fix | Code now |
 |---|---|---|---|---|
-| [S-3](../../findings/S-3.md) | P1 | General ledger silently empty, reports say "Équilibré" | Raise an `accounting_adapter_exceptions` row for skipped payment postings (refunds already do). Setup banner when no period is open. Never show "Équilibré" while source documents are unposted. | Not re-checked since the sweep. |
-| [S-31](../../findings/S-31.md) | P2 | Developer copy on finance screens | User-facing wording; distinct titles. | Not re-checked since the sweep. |
+| [S-3](../../findings/done/S-3.md) | P1 | General ledger silently empty, reports say "Équilibré" | Raise an `accounting_adapter_exceptions` row for skipped payment postings (refunds already do). Setup banner when no period is open. Never show "Équilibré" while source documents are unposted. | Not re-checked since the sweep. |
+| [S-31](../../findings/done/S-31.md) | P2 | Developer copy on finance screens | User-facing wording; distinct titles. | Not re-checked since the sweep. |
 
 ## Sweep results
 
@@ -47,7 +59,7 @@ Guard: `requireServerPage` · capability `accounting.statement.read`
 
 - [S-7](../../findings/S-7.md) (P1) ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French)
 - [S-14](../../findings/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
-- [S-18](../../findings/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
-- [S-25](../../findings/S-25.md) (P2) Header shows a fake identity when the session call is slow
+- [S-18](../../findings/done/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
+- [S-25](../../findings/done/S-25.md) (P2) Header shows a fake identity when the session call is slow
 - [S-37](../../findings/S-37.md) (P2) Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL
-- [S-41](../../findings/S-41.md) (P1) Auth rate limit counts every page's session check, per IP
+- [S-41](../../findings/done/S-41.md) (P1) Auth rate limit counts every page's session check, per IP

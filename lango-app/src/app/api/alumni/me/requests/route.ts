@@ -36,7 +36,11 @@ export async function POST(req: Request) {
 
     if (body.relatedDocumentId) {
       const [doc] = await db.select({ id: alumniDocuments.id }).from(alumniDocuments)
-        .where(and(eq(alumniDocuments.id, body.relatedDocumentId), eq(alumniDocuments.alumnusId, context.userId)))
+        .where(and(
+          eq(alumniDocuments.id, body.relatedDocumentId),
+          eq(alumniDocuments.tenantId, tenantId),
+          eq(alumniDocuments.alumnusId, context.userId),
+        ))
         .limit(1);
       if (!doc) {
         throw new ApiError(422, 'INVALID_REFERENCE', 'Ce document ne vous appartient pas.');

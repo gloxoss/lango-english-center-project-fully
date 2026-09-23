@@ -2,6 +2,18 @@
 
 **Status: NEEDS FIX (P1)** · Module: `certificates` · Source: [`src/app/[locale]/(dashboard)/dashboard/certificates/requests/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/certificates/requests/page.tsx>)
 
+**Progress (2026-09-23):** S-6 DONE · S-32 PARTIAL · S-42 DONE
+
+
+
+
+
+
+
+
+
+
+
 Guard: `requireServerPage` · capability `certificates.approve`
 
 **Verdict:** 3 finding(s), worst P1. 2 sweep run(s): 1 clean or expected, 1 flagged. 2 screenshot(s).
@@ -10,9 +22,9 @@ Guard: `requireServerPage` · capability `certificates.approve`
 
 | ID | Sev | Problem | Fix | Code now |
 |---|---|---|---|---|
-| [S-6](../../findings/S-6.md) | P1 | Translation keys used in code are missing (users see raw keys or blanks) | Add every missing key in fr, ar, en; fix formatting calls that omit their values. | LIKELY FIXED in the working tree |
+| [S-6](../../findings/done/S-6.md) | P1 | Translation keys used in code are missing (users see raw keys or blanks) | Add every missing key in fr, ar, en; fix formatting calls that omit their values. | LIKELY FIXED in the working tree |
 | [S-32](../../findings/S-32.md) | P1 | Sidebar links looser than their page; denied users land on the public homepage | Derive the sidebar permission from the page guard; denial renders in-app "Accès refusé"; remove dead links; test that walks sidebar vs guards. | Not re-checked since the sweep. |
-| [S-42](../../findings/S-42.md) | P2 | Certificates module untranslated; raw keys on screen | Add all Certificates.* keys (fr/ar/en). | LIKELY FIXED in the working tree |
+| [S-42](../../findings/done/S-42.md) | P2 | Certificates module untranslated; raw keys on screen | Add all Certificates.* keys (fr/ar/en). | LIKELY FIXED in the working tree |
 
 ## Sweep results
 
@@ -53,7 +65,7 @@ Guard: `requireServerPage` · capability `certificates.approve`
 
 - [S-7](../../findings/S-7.md) (P1) ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French)
 - [S-14](../../findings/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
-- [S-18](../../findings/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
-- [S-25](../../findings/S-25.md) (P2) Header shows a fake identity when the session call is slow
+- [S-18](../../findings/done/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
+- [S-25](../../findings/done/S-25.md) (P2) Header shows a fake identity when the session call is slow
 - [S-37](../../findings/S-37.md) (P2) Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL
-- [S-41](../../findings/S-41.md) (P1) Auth rate limit counts every page's session check, per IP
+- [S-41](../../findings/done/S-41.md) (P1) Auth rate limit counts every page's session check, per IP

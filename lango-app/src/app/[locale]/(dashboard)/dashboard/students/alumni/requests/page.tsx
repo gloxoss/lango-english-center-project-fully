@@ -7,6 +7,6 @@ export default async function AlumniRequestsAdminPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { requiredCapability: 'students.read' });
+  await requireServerPage(locale, { requiredCapability: 'admissions.manage' });
   return <AlumniRequestsView />;
 }

@@ -57,10 +57,12 @@ type PlacementHistoryItem = {
 type RecentAssessmentItem = {
   id: string;
   title: string;
-  subject: string;
-  score: number | null;
-  maxScore: number;
-  termName: string | null;
+  subject?: string;
+  score?: number | null;
+  maxScore?: number;
+  finalPercentage?: number | string | null;
+  gradeCode?: string | null;
+  termName?: string | null;
   date: string;
 };
 
@@ -1242,11 +1244,17 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                 <div key={a.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center justify-between text-xs">
                   <div>
                     <p className="font-extrabold text-[#16212B]">{a.title}</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">{a.subject} · {a.termName || 'Trimestre 1'}</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">
+                      {[a.subject, a.termName || (a.gradeCode ? `Mention ${a.gradeCode}` : 'Évaluation')].filter(Boolean).join(' · ')}
+                    </p>
                   </div>
                   <div className="text-end">
                     <span className="font-mono text-sm font-extrabold text-[#1B6C93]">
-                      {a.score !== null ? `${a.score} / ${a.maxScore}` : '—'}
+                      {a.score != null && a.maxScore != null
+                        ? `${a.score} / ${a.maxScore}`
+                        : a.finalPercentage != null
+                          ? `${(Number(a.finalPercentage) * 0.2).toFixed(1)} / 20`
+                          : a.gradeCode || '—'}
                     </span>
                     <p className="text-[10px] text-slate-400 mt-0.5">{a.date?.slice(0, 10)}</p>
                   </div>

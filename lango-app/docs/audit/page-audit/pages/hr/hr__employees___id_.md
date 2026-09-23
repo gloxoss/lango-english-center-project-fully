@@ -1,6 +1,18 @@
 # `/dashboard/hr/employees/[id]`
 
-**Status: NEEDS FIX (P1)** · Module: `hr` · Source: [`src/app/[locale]/(dashboard)/dashboard/hr/employees/[id]/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/hr/employees/[id]/page.tsx>)
+**Status: NEEDS FIX (P3)** · Module: `hr` · Source: [`src/app/[locale]/(dashboard)/dashboard/hr/employees/[id]/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/hr/employees/[id]/page.tsx>)
+
+**Progress (2026-09-23):** S-6 DONE · S-57 OPEN
+
+
+
+
+
+
+
+
+
+
 
 Guard: `requireServerPage` · capability `hr.manage`
 
@@ -10,7 +22,7 @@ Guard: `requireServerPage` · capability `hr.manage`
 
 | ID | Sev | Problem | Fix | Code now |
 |---|---|---|---|---|
-| [S-6](../../findings/S-6.md) | P1 | Translation keys used in code are missing (users see raw keys or blanks) | Add every missing key in fr, ar, en; fix formatting calls that omit their values. | LIKELY FIXED in the working tree |
+| [S-6](../../findings/done/S-6.md) | P1 | Translation keys used in code are missing (users see raw keys or blanks) | Add every missing key in fr, ar, en; fix formatting calls that omit their values. | LIKELY FIXED in the working tree |
 | [S-57](../../findings/S-57.md) | P3 | Raw enum values, two money formats, stale "current" year, overlapping widget | Translate enums; one MAD formatter; check active year; move the widget. | Not re-checked since the sweep. |
 
 ## Sweep results
@@ -52,8 +64,8 @@ Guard: `requireServerPage` · capability `hr.manage`
 
 - [S-7](../../findings/S-7.md) (P1) ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French)
 - [S-14](../../findings/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
-- [S-18](../../findings/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
-- [S-25](../../findings/S-25.md) (P2) Header shows a fake identity when the session call is slow
+- [S-18](../../findings/done/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
+- [S-25](../../findings/done/S-25.md) (P2) Header shows a fake identity when the session call is slow
 - [S-37](../../findings/S-37.md) (P2) Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL
-- [S-41](../../findings/S-41.md) (P1) Auth rate limit counts every page's session check, per IP
+- [S-41](../../findings/done/S-41.md) (P1) Auth rate limit counts every page's session check, per IP
 - [S-44](../../findings/S-44.md) (P2) Staff campus switcher renders for parents, students and super admin (403 on every page)

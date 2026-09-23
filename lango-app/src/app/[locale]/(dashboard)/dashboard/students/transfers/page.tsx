@@ -8,5 +8,5 @@ export default async function TransfersPage({
 }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'students.update' });
-  return <StudentTransfersView />;
+  return <StudentTransfersView locale={locale} />;
 }

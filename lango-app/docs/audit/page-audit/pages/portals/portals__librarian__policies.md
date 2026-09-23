@@ -2,6 +2,18 @@
 
 **Status: NEEDS FIX (P1)** · Module: `portals` · Source: [`src/app/[locale]/(dashboard)/dashboard/portals/librarian/policies/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/portals/librarian/policies/page.tsx>)
 
+**Progress (2026-09-23):** S-32 PARTIAL
+
+
+
+
+
+
+
+
+
+
+
 Guard: `requireLibraryPage` · capability `library.policy.manage`
 
 **Verdict:** 1 finding(s), worst P1. 1 sweep run(s): 0 clean or expected, 1 flagged. 1 screenshot(s).
@@ -36,7 +48,7 @@ Guard: `requireLibraryPage` · capability `library.policy.manage`
 ## Cross-cutting findings that also show here
 
 - [S-7](../../findings/S-7.md) (P1) ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French)
-- [S-18](../../findings/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
-- [S-25](../../findings/S-25.md) (P2) Header shows a fake identity when the session call is slow
+- [S-18](../../findings/done/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
+- [S-25](../../findings/done/S-25.md) (P2) Header shows a fake identity when the session call is slow
 - [S-37](../../findings/S-37.md) (P2) Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL
-- [S-41](../../findings/S-41.md) (P1) Auth rate limit counts every page's session check, per IP
+- [S-41](../../findings/done/S-41.md) (P1) Auth rate limit counts every page's session check, per IP

@@ -2,6 +2,18 @@
 
 **Status: NEEDS FIX (P2)** · Module: `finance` · Source: [`src/app/[locale]/(dashboard)/dashboard/finance/invoices/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/finance/invoices/page.tsx>)
 
+**Progress (2026-09-23):** S-31 DONE · S-36 OPEN
+
+
+
+
+
+
+
+
+
+
+
 Guard: `requireServerPage` · capability `finance.read`
 
 **Verdict:** 2 finding(s), worst P2. 4 sweep run(s): 4 clean or expected, 0 flagged. 4 screenshot(s).
@@ -10,7 +22,7 @@ Guard: `requireServerPage` · capability `finance.read`
 
 | ID | Sev | Problem | Fix | Code now |
 |---|---|---|---|---|
-| [S-31](../../findings/S-31.md) | P2 | Developer copy on finance screens | User-facing wording; distinct titles. | Not re-checked since the sweep. |
+| [S-31](../../findings/done/S-31.md) | P2 | Developer copy on finance screens | User-facing wording; distinct titles. | Not re-checked since the sweep. |
 | [S-36](../../findings/S-36.md) | P2 | Invoices on phone: desktop table squeezed, status off-screen | Card layout like the students list. | Not re-checked since the sweep. |
 
 ## Sweep results
@@ -54,7 +66,7 @@ Guard: `requireServerPage` · capability `finance.read`
 
 - [S-7](../../findings/S-7.md) (P1) ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French)
 - [S-14](../../findings/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
-- [S-18](../../findings/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
-- [S-25](../../findings/S-25.md) (P2) Header shows a fake identity when the session call is slow
+- [S-18](../../findings/done/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
+- [S-25](../../findings/done/S-25.md) (P2) Header shows a fake identity when the session call is slow
 - [S-37](../../findings/S-37.md) (P2) Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL
-- [S-41](../../findings/S-41.md) (P1) Auth rate limit counts every page's session check, per IP
+- [S-41](../../findings/done/S-41.md) (P1) Auth rate limit counts every page's session check, per IP

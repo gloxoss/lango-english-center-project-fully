@@ -2076,9 +2076,12 @@ export const invoiceItems = pgTable('invoice_items', {
   tenantId: uuid('tenant_id').notNull(),
   invoiceId: uuid('invoice_id').notNull(),
   feeCategoryId: uuid('fee_category_id'),
+  fineAssessmentId: uuid('fine_assessment_id'),
   description: varchar({ length: 255 }).notNull(),
   amount: numeric({ precision: 14, scale: 2, mode: 'number' }).notNull(),
 }, table => [
+  uniqueIndex('invoice_items_fine_assessment_unique').on(table.tenantId, table.fineAssessmentId)
+    .where(sql`${table.fineAssessmentId} IS NOT NULL`),
   foreignKey({
     columns: [table.tenantId],
     foreignColumns: [tenants.id],

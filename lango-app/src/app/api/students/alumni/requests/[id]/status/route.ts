@@ -1,5 +1,5 @@
-import { and, eq } from 'drizzle-orm';
 import type { NextRequest } from 'next/server';
+import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
@@ -57,8 +57,8 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       }
 
       if (body.status === 'accepted' && item.type === 'deletion') {
-        await tx.delete(alumniDirectoryConsent).where(eq(alumniDirectoryConsent.alumnusId, item.alumnusId));
-        await tx.delete(alumniMentorListings).where(eq(alumniMentorListings.alumnusId, item.alumnusId));
+        await tx.delete(alumniDirectoryConsent).where(and(eq(alumniDirectoryConsent.alumnusId, item.alumnusId), eq(alumniDirectoryConsent.tenantId, tenantId)));
+        await tx.delete(alumniMentorListings).where(and(eq(alumniMentorListings.alumnusId, item.alumnusId), eq(alumniMentorListings.tenantId, tenantId)));
       }
 
       const isDecision = body.status === 'accepted' || body.status === 'refused';

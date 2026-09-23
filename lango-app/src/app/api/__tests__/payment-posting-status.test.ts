@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { tryPostPaymentGLEntry } from '@/libs/finance/gl-auto-post';
@@ -32,6 +32,12 @@ describe.skipIf(!available)('payment ledger status', () => {
     ]);
     const [invoice] = await db.insert(invoices).values({ tenantId, studentId, invoiceNumber: 'GL-TEST-1', amount: 120, netAmount: 120, paidAmount: 0, status: 'pending', dueDate: '2026-12-31' }).returning({ id: invoices.id });
     invoiceId = invoice!.id;
+    // A school that keeps a ledger but has no open fiscal period: the S-3 case.
+    await db.insert(chartOfAccounts).values([
+      { tenantId, code: '512', name: 'Bank', accountType: 'asset' },
+      { tenantId, code: '411', name: 'Receivables', accountType: 'asset' },
+      { tenantId, code: '516', name: 'Cash', accountType: 'asset' },
+    ]);
   });
 
   it('records a visible exception when a posted payment cannot enter the ledger', async () => {
@@ -55,11 +61,6 @@ describe.skipIf(!available)('payment ledger status', () => {
     const blockedRetry = await retryPosting(new Request('http://localhost/api/finance/accounting/posting-status', { method: 'POST' }));
     expect(blockedRetry.status).toBe(409);
 
-    await db.insert(chartOfAccounts).values([
-      { tenantId, code: '512', name: 'Bank', accountType: 'asset' },
-      { tenantId, code: '411', name: 'Receivables', accountType: 'asset' },
-      { tenantId, code: '516', name: 'Cash', accountType: 'asset' },
-    ]);
     await db.insert(fiscalPeriods).values({ tenantId, name: '2026', startDate: '2026-01-01', endDate: '2026-12-31', status: 'open' });
 
     const retry = await retryPosting(new Request('http://localhost/api/finance/accounting/posting-status', { method: 'POST' }));
@@ -121,5 +122,40 @@ describe.skipIf(!available)('payment ledger status', () => {
     expect(refundLines).toContainEqual(expect.objectContaining({ code: '516', credit: '20.00' }));
     const cleanStatus = await getPostingStatus(new Request('http://localhost/api/finance/accounting/posting-status'));
     expect((await cleanStatus.json()).data).toMatchObject({ unpostedAdjustmentsCount: 0 });
+  });
+});
+
+describe.skipIf(!available)('payment posting for a school without a ledger', () => {
+  const tenantId = randomUUID();
+  const actorId = `GL-NOLEDGER-ACTOR-${tenantId}`;
+  const studentId = `GL-NOLEDGER-STUDENT-${tenantId}`;
+
+  beforeAll(async () => {
+    await db.insert(tenants).values({ id: tenantId, name: 'GL No Ledger Test', slug: `gl-noledger-${tenantId}` });
+    await db.insert(user).values([
+      { id: actorId, tenantId, name: 'Actor', email: `${actorId}@example.test`, role: 'school_admin' },
+      { id: studentId, tenantId, name: 'Student', email: `${studentId}@example.test`, role: 'student' },
+    ]);
+  });
+
+  afterAll(async () => {
+    await db.delete(accountingAdapterExceptions).where(eq(accountingAdapterExceptions.tenantId, tenantId));
+    await db.delete(tenants).where(eq(tenants.id, tenantId));
+  });
+
+  it('raises no exception without a chart of accounts, yet still counts the payment as unposted', async () => {
+    authState.tenantId = tenantId;
+    authState.userId = actorId;
+    const [invoice] = await db.insert(invoices).values({ tenantId, studentId, invoiceNumber: 'GL-NL-1', amount: 80, netAmount: 80, paidAmount: 0, status: 'pending', dueDate: '2026-12-31' }).returning({ id: invoices.id });
+    const response = await createPayment(new Request('http://localhost/api/finance/payments', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invoiceId: invoice!.id, amount: '80.00', paymentMethod: 'card', idempotencyKey: randomUUID() }),
+    }));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ success: true, glPosted: false });
+    const exceptions = await db.select().from(accountingAdapterExceptions).where(eq(accountingAdapterExceptions.tenantId, tenantId));
+    expect(exceptions).toHaveLength(0);
+    const status = await getPostingStatus(new Request('http://localhost/api/finance/accounting/posting-status'));
+    expect((await status.json()).data).toMatchObject({ unpostedPaymentsCount: 1, unpostedPaymentsAmount: 80 });
   });
 });

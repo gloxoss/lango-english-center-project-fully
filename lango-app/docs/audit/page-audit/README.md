@@ -1,5 +1,7 @@
 # SchoolOS page-by-page audit
 
+> **What is left:** see [STATUS.md](STATUS.md). Finished findings live in [findings/done/](findings/done/); everything still in `findings/` is partial or open.
+
 Generated 2026-09-23 from the sweep logs, screenshots and findings of the 2026-09-22/23 audits. One file per app page (`pages/`), one per finding (`findings/`), screenshots in `shots/` (JPEG, 900 px wide, cropped at ~2 600 px).
 
 **337 pages:** 164 need a fix · 1 need triage · 172 pass · 0 screenshot only · 0 not swept.
@@ -15,66 +17,66 @@ Generated 2026-09-23 from the sweep logs, screenshots and findings of the 2026-0
 
 ## Findings
 
-| ID | Sev | Problem | Pages | Code now |
+| ID | Sev | Problem | Pages | Status |
 |---|---|---|---|---|
-| [S-1](findings/S-1.md) | P0 | Five Communication pages ran entirely on invented data | 0 | LIKELY FIXED |
-| [S-2](findings/S-2.md) | P1 | SMS reminders page shows a false all-clear | 1 | Not re-checked since the sweep. |
-| [S-3](findings/S-3.md) | P1 | General ledger silently empty, reports say "Équilibré" | 3 | Not re-checked since the sweep. |
-| [S-4](findings/S-4.md) | P1 | Empty checks scored as 100 % (readiness, attendance, collection, SMS) | 1 | Not re-checked since the sweep. |
-| [S-5](findings/S-5.md) | P1 | Report card generator: "Moyenne générale 0.00/20" with no marks, print enabled | 1 | Not re-checked since the sweep. |
-| [S-6](findings/S-6.md) | P1 | Translation keys used in code are missing (users see raw keys or blanks) | 18 | LIKELY FIXED in the working tree |
-| [S-7](findings/S-7.md) | P1 | ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French) | 0 + global | Not re-checked since the sweep. |
-| [S-8](findings/S-8.md) | P1 | Gate pickup does not re-check guardianship at release | 2 | Not re-checked since the sweep. |
-| [S-9](findings/S-9.md) | P1 | Promotion wizard: wrong defaults and misleading numbers | 2 | Not re-checked since the sweep. |
-| [S-18](findings/S-18.md) | P1 | Header claims CNDP compliance on every page; the school has not filed | 1 + global | Not re-checked since the sweep. |
-| [S-19](findings/S-19.md) | P1 | Late fees are assessed but never billed, and can double | 1 | Not re-checked since the sweep. |
-| [S-20](findings/S-20.md) | P1 | Emergency headcount ignores manual attendance | 1 | Not re-checked since the sweep. |
-| [S-21](findings/S-21.md) | P1 | Approvals inbox shows "0 en attente" when the director has no approval authority | 1 | Not re-checked since the sweep. |
-| [S-32](findings/S-32.md) | P1 | Sidebar links looser than their page; denied users land on the public homepage | 91 | Not re-checked since the sweep. |
-| [S-35](findings/S-35.md) | P1 | Accountant gets 403 on class sections and semesters on the cash desk | 4 | Not re-checked since the sweep. |
-| [S-38](findings/S-38.md) | P1 | HR self-service locked for every employee | 1 | STILL OPEN |
-| [S-39](findings/S-39.md) | P1 | Super-admin dashboard shows invented numbers | 1 | STILL OPEN |
-| [S-40](findings/S-40.md) | P1 | Super-admin revenue: collected > billed, "Reste dû 0" | 1 | STILL OPEN |
-| [S-41](findings/S-41.md) | P1 | Auth rate limit counts every page's session check, per IP | 0 + global | STILL OPEN |
-| [V-1](findings/V-1.md) | P1 | Finance home shows 6 000 MAD overdue, every other screen shows 3 000 | 1 | Not re-checked since the sweep. |
-| [S-10](findings/S-10.md) | P2 | Homework page shows developer copy and "0 %" for 0/0 | 2 | Not re-checked since the sweep. |
-| [S-11](findings/S-11.md) | P2 | Marksheet and grade entry: no title or link back to the exam list | 2 | Not re-checked since the sweep. |
-| [S-12](findings/S-12.md) | P2 | Timetable: duplicate generate buttons, 2-hour grid | 1 | Not re-checked since the sweep. |
-| [S-13](findings/S-13.md) | P2 | Exam planning exists twice | 2 | Not re-checked since the sweep. |
-| [S-14](findings/S-14.md) | P2 | Sidebar lists add-on modules the tenant has not enabled | 0 + global | Not re-checked since the sweep. |
-| [S-15](findings/S-15.md) | P2 | Two director dashboards with overlapping KPIs; IGP unexplained | 3 | Not re-checked since the sweep. |
-| [S-16](findings/S-16.md) | P2 | Academics index redirects the director to the teacher schedule | 1 | Not re-checked since the sweep. |
-| [S-17](findings/S-17.md) | P2 | Classes page developer copy; Filière/Cycle empty for lycée classes | 1 | Not re-checked since the sweep. |
-| [S-22](findings/S-22.md) | P2 | Leadership admin calls HR API when HR add-on is off | 1 | Not re-checked since the sweep. |
-| [S-23](findings/S-23.md) | P2 | Audit log shows internal names and writes rows on view | 1 | Not re-checked since the sweep. |
-| [S-24](findings/S-24.md) | P2 | Three matricule formats in one tenant | 2 | Not re-checked since the sweep. |
-| [S-25](findings/S-25.md) | P2 | Header shows a fake identity when the session call is slow | 0 + global | Not re-checked since the sweep. |
-| [S-26](findings/S-26.md) | P2 | Settings page: wrong "Configuré" state, raw English actions, spec codes | 1 | Not re-checked since the sweep. |
-| [S-27](findings/S-27.md) | P2 | Cashier sessions: green "Écart cumulé 0 MAD" with zero sessions | 1 | Not re-checked since the sweep. |
-| [S-28](findings/S-28.md) | P2 | Receivables aging treats not-yet-due invoices as late and offers an SMS reminder | 1 | Not re-checked since the sweep. |
-| [S-30](findings/S-30.md) | P2 | No payment history screen; payments routes land on the cash desk | 2 | Not re-checked since the sweep. |
-| [S-31](findings/S-31.md) | P2 | Developer copy on finance screens | 4 | Not re-checked since the sweep. |
-| [S-33](findings/S-33.md) | P2 | "{count} demandes" rendered without a value | 1 | Not re-checked since the sweep. |
-| [S-34](findings/S-34.md) | P2 | Student photos: broken files counted, upload hint names a format nobody has | 1 | Not re-checked since the sweep. |
-| [S-36](findings/S-36.md) | P2 | Invoices on phone: desktop table squeezed, status off-screen | 1 | Not re-checked since the sweep. |
-| [S-37](findings/S-37.md) | P2 | Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL | 1 + global | Not re-checked since the sweep. |
-| [S-42](findings/S-42.md) | P2 | Certificates module untranslated; raw keys on screen | 12 | LIKELY FIXED in the working tree |
-| [S-43](findings/S-43.md) | P2 | `HR.colStatus` missing on 3 HR pages | 3 | LIKELY FIXED in the working tree |
-| [S-44](findings/S-44.md) | P2 | Staff campus switcher renders for parents, students and super admin (403 on every page) | 0 + global | Not re-checked since the sweep. |
-| [S-45](findings/S-45.md) | P2 | Parent sidebar reuses staff labels | 7 | Not re-checked since the sweep. |
-| [S-46](findings/S-46.md) | P2 | Seed data contradicts itself (library loans, live-class dates) | 3 | Not re-checked since the sweep. |
-| [S-52](findings/S-52.md) | P2 | Parents and students can read any event by ID (drafts, staff-only) | 1 | STILL OPEN |
-| [S-53](findings/S-53.md) | P2 | Salary payment batches skip the RIB check; no bank export | 3 | STILL OPEN |
-| [S-54](findings/S-54.md) | P2 | Expired hostel stays stay "checked_in" forever | 5 | Not re-checked since the sweep. |
-| [S-56](findings/S-56.md) | P2 | Inventory quantities read as thousands ("+12.000" for 12) | 3 | Not re-checked since the sweep. |
-| [S-29](findings/S-29.md) | P3 | Overdue totals agree everywhere except the finance home (confirms V-1) | 1 | Not re-checked since the sweep. |
-| [S-47](findings/S-47.md) | P3 | Empty subtitle rendered as "—" (teacher class card, parent child picker) | 8 | Not re-checked since the sweep. |
-| [S-48](findings/S-48.md) | P3 | Parent amounts unformatted ("24000 MAD") | 2 | Not re-checked since the sweep. |
-| [S-49](findings/S-49.md) | P3 | Super-admin dashboard text glitches | 1 | Not re-checked since the sweep. |
-| [S-50](findings/S-50.md) | P3 | Transport allocations list without React keys | 2 | Not re-checked since the sweep. |
-| [S-51](findings/S-51.md) | P3 | Cards "Émissions récentes" never shows the recipient | 1 | Not re-checked since the sweep. |
-| [S-55](findings/S-55.md) | P3 | Public school site: no menu, home ignores news, low-contrast hero | 9 | Not re-checked since the sweep. |
-| [S-57](findings/S-57.md) | P3 | Raw enum values, two money formats, stale "current" year, overlapping widget | 6 | Not re-checked since the sweep. |
+| [S-1](findings/done/S-1.md) | P0 | Five Communication pages ran entirely on invented data | 0 | DONE |
+| [S-2](findings/done/S-2.md) | P1 | SMS reminders page shows a false all-clear | 1 | DONE |
+| [S-3](findings/done/S-3.md) | P1 | General ledger silently empty, reports say "Équilibré" | 3 | DONE |
+| [S-4](findings/done/S-4.md) | P1 | Empty checks scored as 100 % (readiness, attendance, collection, SMS) | 1 | DONE |
+| [S-5](findings/done/S-5.md) | P1 | Report card generator: "Moyenne générale 0.00/20" with no marks, print enabled | 1 | DONE |
+| [S-6](findings/done/S-6.md) | P1 | Translation keys used in code are missing (users see raw keys or blanks) | 18 | DONE |
+| [S-7](findings/S-7.md) | P1 | ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French) | 0 + global | OPEN |
+| [S-8](findings/done/S-8.md) | P1 | Gate pickup does not re-check guardianship at release | 2 | DONE |
+| [S-9](findings/done/S-9.md) | P1 | Promotion wizard: wrong defaults and misleading numbers | 2 | DONE |
+| [S-18](findings/done/S-18.md) | P1 | Header claims CNDP compliance on every page; the school has not filed | 1 + global | DONE |
+| [S-19](findings/S-19.md) | P1 | Late fees are assessed but never billed, and can double | 1 | PARTIAL |
+| [S-20](findings/done/S-20.md) | P1 | Emergency headcount ignores manual attendance | 1 | DONE |
+| [S-21](findings/done/S-21.md) | P1 | Approvals inbox shows "0 en attente" when the director has no approval authority | 1 | DONE |
+| [S-32](findings/S-32.md) | P1 | Sidebar links looser than their page; denied users land on the public homepage | 91 | PARTIAL |
+| [S-35](findings/done/S-35.md) | P1 | Accountant gets 403 on class sections and semesters on the cash desk | 4 | DONE |
+| [S-38](findings/done/S-38.md) | P1 | HR self-service locked for every employee | 1 | DONE |
+| [S-39](findings/done/S-39.md) | P1 | Super-admin dashboard shows invented numbers | 1 | DONE |
+| [S-40](findings/done/S-40.md) | P1 | Super-admin revenue: collected > billed, "Reste dû 0" | 1 | DONE |
+| [S-41](findings/done/S-41.md) | P1 | Auth rate limit counts every page's session check, per IP | 0 + global | DONE |
+| [V-1](findings/V-1.md) | P1 | Finance home shows 6 000 MAD overdue, every other screen shows 3 000 | 1 | PARTIAL |
+| [S-10](findings/done/S-10.md) | P2 | Homework page shows developer copy and "0 %" for 0/0 | 2 | DONE |
+| [S-11](findings/S-11.md) | P2 | Marksheet and grade entry: no title or link back to the exam list | 2 | REVIEW |
+| [S-12](findings/S-12.md) | P2 | Timetable: duplicate generate buttons, 2-hour grid | 1 | OPEN |
+| [S-13](findings/S-13.md) | P2 | Exam planning exists twice | 2 | OPEN |
+| [S-14](findings/S-14.md) | P2 | Sidebar lists add-on modules the tenant has not enabled | 0 + global | PARTIAL |
+| [S-15](findings/S-15.md) | P2 | Two director dashboards with overlapping KPIs; IGP unexplained | 3 | OPEN |
+| [S-16](findings/done/S-16.md) | P2 | Academics index redirects the director to the teacher schedule | 1 | DONE |
+| [S-17](findings/S-17.md) | P2 | Classes page developer copy; Filière/Cycle empty for lycée classes | 1 | PARTIAL |
+| [S-22](findings/S-22.md) | P2 | Leadership admin calls HR API when HR add-on is off | 1 | OPEN |
+| [S-23](findings/S-23.md) | P2 | Audit log shows internal names and writes rows on view | 1 | PARTIAL |
+| [S-24](findings/S-24.md) | P2 | Three matricule formats in one tenant | 2 | OPEN |
+| [S-25](findings/done/S-25.md) | P2 | Header shows a fake identity when the session call is slow | 0 + global | DONE |
+| [S-26](findings/S-26.md) | P2 | Settings page: wrong "Configuré" state, raw English actions, spec codes | 1 | OPEN |
+| [S-27](findings/done/S-27.md) | P2 | Cashier sessions: green "Écart cumulé 0 MAD" with zero sessions | 1 | DONE |
+| [S-28](findings/done/S-28.md) | P2 | Receivables aging treats not-yet-due invoices as late and offers an SMS reminder | 1 | DONE |
+| [S-30](findings/S-30.md) | P2 | No payment history screen; payments routes land on the cash desk | 2 | PARTIAL |
+| [S-31](findings/done/S-31.md) | P2 | Developer copy on finance screens | 4 | DONE |
+| [S-33](findings/S-33.md) | P2 | "{count} demandes" rendered without a value | 1 | OPEN |
+| [S-34](findings/S-34.md) | P2 | Student photos: broken files counted, upload hint names a format nobody has | 1 | OPEN |
+| [S-36](findings/S-36.md) | P2 | Invoices on phone: desktop table squeezed, status off-screen | 1 | OPEN |
+| [S-37](findings/S-37.md) | P2 | Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL | 1 + global | PARTIAL |
+| [S-42](findings/done/S-42.md) | P2 | Certificates module untranslated; raw keys on screen | 12 | DONE |
+| [S-43](findings/done/S-43.md) | P2 | `HR.colStatus` missing on 3 HR pages | 3 | DONE |
+| [S-44](findings/S-44.md) | P2 | Staff campus switcher renders for parents, students and super admin (403 on every page) | 0 + global | OPEN |
+| [S-45](findings/S-45.md) | P2 | Parent sidebar reuses staff labels | 7 | OPEN |
+| [S-46](findings/S-46.md) | P2 | Seed data contradicts itself (library loans, live-class dates) | 3 | OPEN |
+| [S-52](findings/done/S-52.md) | P2 | Parents and students can read any event by ID (drafts, staff-only) | 1 | DONE |
+| [S-53](findings/done/S-53.md) | P2 | Salary payment batches skip the RIB check; no bank export | 3 | DONE |
+| [S-54](findings/S-54.md) | P2 | Expired hostel stays stay "checked_in" forever | 5 | OPEN |
+| [S-56](findings/S-56.md) | P2 | Inventory quantities read as thousands ("+12.000" for 12) | 3 | OPEN |
+| [S-29](findings/S-29.md) | P3 | Overdue totals agree everywhere except the finance home (confirms V-1) | 1 | PARTIAL |
+| [S-47](findings/S-47.md) | P3 | Empty subtitle rendered as "—" (teacher class card, parent child picker) | 8 | OPEN |
+| [S-48](findings/S-48.md) | P3 | Parent amounts unformatted ("24000 MAD") | 2 | OPEN |
+| [S-49](findings/S-49.md) | P3 | Super-admin dashboard text glitches | 1 | OPEN |
+| [S-50](findings/S-50.md) | P3 | Transport allocations list without React keys | 2 | OPEN |
+| [S-51](findings/S-51.md) | P3 | Cards "Émissions récentes" never shows the recipient | 1 | OPEN |
+| [S-55](findings/S-55.md) | P3 | Public school site: no menu, home ignores news, low-contrast hero | 9 | OPEN |
+| [S-57](findings/S-57.md) | P3 | Raw enum values, two money formats, stale "current" year, overlapping widget | 6 | OPEN |
 
 ## Pages by module
 

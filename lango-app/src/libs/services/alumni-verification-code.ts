@@ -1,5 +1,5 @@
-import { and, eq, sql } from 'drizzle-orm';
 import type { db as dbClient } from '@/libs/DB';
+import { and, eq, sql } from 'drizzle-orm';
 import { namingSeries } from '@/models/Schema';
 
 // Real, sequential VER-{year}-###### verification code via the same

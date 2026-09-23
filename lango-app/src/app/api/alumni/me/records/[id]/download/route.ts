@@ -1,7 +1,7 @@
-import { and, eq } from 'drizzle-orm';
 import type { NextRequest } from 'next/server';
+import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
-import { requireRequestContext } from '@/libs/api/context';
+import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { contentTypeFor, readUploadedFile } from '@/libs/api/uploads';
 import { db } from '@/libs/DB';
@@ -14,12 +14,18 @@ type RouteParams = { params: Promise<{ id: string }> };
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const context = await requireRequestContext(req, ['alumni']);
+    const tenantId = requireTenant(context);
     const { id: documentId } = await params;
 
     const [doc] = await db
       .select()
       .from(alumniDocuments)
-      .where(and(eq(alumniDocuments.id, documentId), eq(alumniDocuments.alumnusId, context.userId), eq(alumniDocuments.status, 'active')))
+      .where(and(
+        eq(alumniDocuments.id, documentId),
+        eq(alumniDocuments.tenantId, tenantId),
+        eq(alumniDocuments.alumnusId, context.userId),
+        eq(alumniDocuments.status, 'active'),
+      ))
       .limit(1);
 
     if (!doc) {

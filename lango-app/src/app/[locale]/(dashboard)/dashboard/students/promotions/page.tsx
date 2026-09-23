@@ -1,4 +1,4 @@
-import { PromotionsPlayground } from '@/features/students/ui/promotions-playground';
+import { PromotionWizardView } from '@/features/academics/ui/promotion-wizard-view';
 import { requireServerPage } from '@/libs/api/page-guard';
 
 export default async function PromotionsPage({
@@ -7,6 +7,6 @@ export default async function PromotionsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { requiredCapability: 'students.update' });
-  return <PromotionsPlayground locale={locale} />;
+  await requireServerPage(locale, { requiredCapability: 'students.placements.manage' });
+  return <PromotionWizardView locale={locale} />;
 }

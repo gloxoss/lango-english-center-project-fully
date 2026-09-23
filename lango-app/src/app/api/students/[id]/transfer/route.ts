@@ -1,28 +1,20 @@
-import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { recordAudit } from '@/libs/api/audit';
+import { executeStudentTransfer } from '@/features/students/services/transfer-service';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
-import { db } from '@/libs/DB';
-import { branches, classSections, user } from '@/models/Schema';
 
 const transferSchema = z.object({
   branchId: z.string().uuid(),
-  classSectionId: z.string().uuid().optional(),
+  classSectionId: z.string().uuid().nullable().optional(),
   reason: z.string().trim().max(500).optional(),
   effectiveDate: z.string().optional(),
   notifyGuardian: z.boolean().optional(),
   generateCertificate: z.boolean().optional(),
 }).strict();
 
-// Real branch-to-branch student transfer. `user.branchId` is a real, already
-// -active field (it scopes GET /api/students for branch-scoped staff) - this
-// is the first route that actually changes it after admission. The old
-// classSectionId belongs to the old branch, so it's cleared unless a real
-// section in the new branch is provided in the same request.
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
@@ -31,49 +23,29 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const { id: studentId } = await params;
     const body = await parseJson(request, transferSchema);
 
-    const [student] = await db.select({ id: user.id, name: user.name, branchId: user.branchId, classSectionId: user.classSectionId }).from(user)
-      .where(and(eq(user.id, studentId), eq(user.tenantId, tenantId), eq(user.role, 'student')))
-      .limit(1);
-    if (!student) {
-      throw new ApiError(422, 'INVALID_REFERENCE', 'Élève introuvable pour cet établissement.');
-    }
-
-    const [branch] = await db.select({ id: branches.id, name: branches.name }).from(branches)
-      .where(and(eq(branches.id, body.branchId), eq(branches.tenantId, tenantId)))
-      .limit(1);
-    if (!branch) {
-      throw new ApiError(422, 'INVALID_REFERENCE', 'La branche indiquée n\'existe pas pour cet établissement.');
-    }
-
-    if (body.classSectionId) {
-      const [section] = await db.select({ id: classSections.id }).from(classSections)
-        .where(and(eq(classSections.id, body.classSectionId), eq(classSections.tenantId, tenantId)))
-        .limit(1);
-      if (!section) {
-        throw new ApiError(422, 'INVALID_REFERENCE', 'La classe indiquée n\'existe pas pour cet établissement.');
-      }
-    }
-
-    if (student.branchId === body.branchId && (!body.classSectionId || body.classSectionId === student.classSectionId)) {
-      throw new ApiError(409, 'SAME_BRANCH', 'Cet élève est déjà affecté à ce campus et à cette section.');
-    }
-
-    const [updated] = await db.update(user)
-      .set({ branchId: body.branchId, classSectionId: body.classSectionId ?? null })
-      .where(and(eq(user.id, studentId), eq(user.tenantId, tenantId)))
-      .returning();
-
-    recordAudit(context, 'update', 'student_transfer', studentId, {
-      fromBranchId: student.branchId,
-      toBranchId: body.branchId,
-      toBranchName: branch.name,
-      classSectionId: body.classSectionId ?? null,
-      reason: body.reason ?? 'Mutation administrative',
-      effectiveDate: body.effectiveDate ?? new Date().toISOString(),
-      studentName: student.name,
+    const result = await executeStudentTransfer({
+      tenantId,
+      studentId,
+      targetBranchId: body.branchId,
+      targetClassSectionId: body.classSectionId,
+      reason: body.reason,
+      effectiveDate: body.effectiveDate,
+      actor: {
+        userId: context.userId,
+        branchId: context.branchId,
+        role: context.role,
+        name: context.name,
+      },
+      notifyGuardian: body.notifyGuardian,
+      generateCertificate: body.generateCertificate,
     });
 
-    return NextResponse.json({ success: true, data: updated, message: 'Élève transféré avec succès.' });
+    return NextResponse.json({
+      success: true,
+      data: result,
+      warnings: result.warnings,
+      message: result.message,
+    });
   } catch (error) {
     return apiErrorResponse(error);
   }

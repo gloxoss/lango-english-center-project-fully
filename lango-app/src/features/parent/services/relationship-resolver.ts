@@ -12,8 +12,8 @@
 // ---------------------------------------------------------------------------
 
 import { and, eq } from 'drizzle-orm';
-import { db } from '@/libs/DB';
 import { ApiError } from '@/libs/api/errors';
+import { db } from '@/libs/DB';
 import { guardians, guardianStudents, user } from '@/models/Schema';
 
 export type RelationshipRights = {
@@ -92,9 +92,15 @@ export async function resolveGuardianIdentity(
 /** Pure effective-state predicate — unit-tested. */
 export function isRelationshipEffective(status: string, effectiveFrom: string | null, effectiveTo: string | null): boolean {
   const now = Date.now();
-  if (status !== 'active') return false;
-  if (effectiveFrom && new Date(effectiveFrom).getTime() > now) return false;
-  if (effectiveTo && new Date(effectiveTo).getTime() <= now) return false;
+  if (status !== 'active') {
+    return false;
+  }
+  if (effectiveFrom && new Date(effectiveFrom).getTime() > now) {
+    return false;
+  }
+  if (effectiveTo && new Date(effectiveTo).getTime() <= now) {
+    return false;
+  }
   return true;
 }
 
@@ -152,6 +158,7 @@ export async function resolveEffectiveChildren(
       className: user.className,
       level: user.level,
       studentStatus: user.userStatus,
+      studentRole: user.role,
     })
     .from(guardianStudents)
     .innerJoin(user, eq(guardianStudents.studentId, user.id))
@@ -162,8 +169,8 @@ export async function resolveEffectiveChildren(
     .orderBy(guardianStudents.isPrimaryContact, guardianStudents.id);
 
   return rows
-    .filter((r) => isRelationshipEffective(r.status, r.effectiveFrom, r.effectiveTo) && r.studentStatus === 'active')
-    .map((r) => ({
+    .filter(r => isRelationshipEffective(r.status, r.effectiveFrom, r.effectiveTo) && r.studentStatus === 'active' && r.studentRole === 'student')
+    .map(r => ({
       relationshipId: r.relationshipId,
       studentId: r.studentId,
       name: r.name,
@@ -230,11 +237,14 @@ export async function assertRelationshipAccess(
   }
 
   const [student] = await db
-    .select({ status: user.userStatus })
+    .select({ status: user.userStatus, role: user.role })
     .from(user)
-    .where(eq(user.id, row.studentId))
+    .where(and(
+      eq(user.id, row.studentId),
+      eq(user.tenantId, tenantId),
+    ))
     .limit(1);
-  if (!student || student.status !== 'active') {
+  if (!student || student.status !== 'active' || student.role !== 'student') {
     throw notAuthorized();
   }
 
@@ -256,7 +266,7 @@ export async function assertRelationshipAccess(
 /** 403 when a requested right is not granted on an otherwise-effective link. */
 export function requireRights(auth: RelationshipAuth, required: RequiredRights): void {
   const denied = (Object.keys(required) as (keyof RelationshipRights)[]).find(
-    (k) => required[k] && !auth.rights[k],
+    k => required[k] && !auth.rights[k],
   );
   if (denied) {
     throw new ApiError(403, 'FORBIDDEN', 'Accès refusé pour cet enfant.');

@@ -45,7 +45,9 @@ export async function GET(request: Request) {
       : [];
     const countsByEvent = new Map<string, Record<string, number>>();
     for (const r of rsvpCounts) {
-      if (!eventIds.includes(r.eventId)) continue;
+      if (!eventIds.includes(r.eventId)) {
+        continue;
+      }
       const existing = countsByEvent.get(r.eventId) ?? {};
       existing[r.status] = r.count;
       countsByEvent.set(r.eventId, existing);

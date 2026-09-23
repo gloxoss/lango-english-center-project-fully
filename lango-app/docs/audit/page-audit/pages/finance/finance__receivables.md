@@ -1,6 +1,18 @@
 # `/dashboard/finance/receivables`
 
-**Status: NEEDS FIX (P2)** · Module: `finance` · Source: [`src/app/[locale]/(dashboard)/dashboard/finance/receivables/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/finance/receivables/page.tsx>)
+**Status: FIXED, pending re-sweep** · Module: `finance` · Source: [`src/app/[locale]/(dashboard)/dashboard/finance/receivables/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/finance/receivables/page.tsx>)
+
+**Progress (2026-09-23):** S-28 DONE
+
+
+
+
+
+
+
+
+
+
 
 Guard: `requireServerPage` · capability `finance.read`
 
@@ -10,7 +22,7 @@ Guard: `requireServerPage` · capability `finance.read`
 
 | ID | Sev | Problem | Fix | Code now |
 |---|---|---|---|---|
-| [S-28](../../findings/S-28.md) | P2 | Receivables aging treats not-yet-due invoices as late and offers an SMS reminder | "Non échu" bucket; no reminder for not-due invoices; hide placeholder emails. | Not re-checked since the sweep. |
+| [S-28](../../findings/done/S-28.md) | P2 | Receivables aging treats not-yet-due invoices as late and offers an SMS reminder | "Non échu" bucket; no reminder for not-due invoices; hide placeholder emails. | Not re-checked since the sweep. |
 
 ## Sweep results
 
@@ -42,7 +54,7 @@ Guard: `requireServerPage` · capability `finance.read`
 
 - [S-7](../../findings/S-7.md) (P1) ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French)
 - [S-14](../../findings/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
-- [S-18](../../findings/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
-- [S-25](../../findings/S-25.md) (P2) Header shows a fake identity when the session call is slow
+- [S-18](../../findings/done/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
+- [S-25](../../findings/done/S-25.md) (P2) Header shows a fake identity when the session call is slow
 - [S-37](../../findings/S-37.md) (P2) Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL
-- [S-41](../../findings/S-41.md) (P1) Auth rate limit counts every page's session check, per IP
+- [S-41](../../findings/done/S-41.md) (P1) Auth rate limit counts every page's session check, per IP

@@ -1,6 +1,18 @@
 # `/dashboard/academics`
 
-**Status: NEEDS FIX (P2)** · Module: `academics` · Source: [`src/app/[locale]/(dashboard)/dashboard/academics/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/academics/page.tsx>)
+**Status: FIXED, pending re-sweep** · Module: `academics` · Source: [`src/app/[locale]/(dashboard)/dashboard/academics/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/academics/page.tsx>)
+
+**Progress (2026-09-23):** S-16 DONE
+
+
+
+
+
+
+
+
+
+
 
 Guard: `requireServerPage` · capability `academics.read` · redirect-only page
 
@@ -10,7 +22,7 @@ Guard: `requireServerPage` · capability `academics.read` · redirect-only page
 
 | ID | Sev | Problem | Fix | Code now |
 |---|---|---|---|---|
-| [S-16](../../findings/S-16.md) | P2 | Academics index redirects the director to the teacher schedule | Land on an academics overview or classes. | Not re-checked since the sweep. |
+| [S-16](../../findings/done/S-16.md) | P2 | Academics index redirects the director to the teacher schedule | Land on an academics overview or classes. | Not re-checked since the sweep. |
 
 ## Sweep results
 
@@ -35,7 +47,7 @@ Guard: `requireServerPage` · capability `academics.read` · redirect-only page
 
 - [S-7](../../findings/S-7.md) (P1) ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French)
 - [S-14](../../findings/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
-- [S-18](../../findings/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
-- [S-25](../../findings/S-25.md) (P2) Header shows a fake identity when the session call is slow
+- [S-18](../../findings/done/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
+- [S-25](../../findings/done/S-25.md) (P2) Header shows a fake identity when the session call is slow
 - [S-37](../../findings/S-37.md) (P2) Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL
-- [S-41](../../findings/S-41.md) (P1) Auth rate limit counts every page's session check, per IP
+- [S-41](../../findings/done/S-41.md) (P1) Auth rate limit counts every page's session check, per IP

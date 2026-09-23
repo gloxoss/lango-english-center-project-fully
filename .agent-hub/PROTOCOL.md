@@ -51,6 +51,23 @@ claim S-38 --files lango-app/src/libs/api/permissions.ts,lango-app/src/features/
 2. Re-run their verify command, and the finding's "Done when" check yourself.
 3. `verify S-38 --ok --note "what you checked"`, or `--fail --note "what is still wrong"`. A failed item goes back to the board; anyone can `claim S-38 --reopen`.
 
+## 6b. Audit folder bookkeeping (done automatically; never move files by hand)
+
+The audit folder `lango-app/docs/audit/page-audit/` always shows what is left: open and partial findings sit in `findings/`, finished ones in `findings/done/`, and `STATUS.md` lists everything. The hub keeps it in sync:
+
+| Step | Command | What the hub does to the audit folder |
+|---|---|---|
+| Fix logged | `done S-33 ...` | finding status becomes **REVIEW** (fixed, waiting for a second agent) |
+| Verified OK | `verify S-33 --ok --note ...` | moves `findings/S-33.md` to `findings/done/`, stamps it **DONE** with fixer, verifier and proof, rewrites every link, updates page statuses and `STATUS.md` |
+| Verification failed | `verify S-33 --fail --note ...` | finding stays or returns to `findings/` as **PARTIAL** with the rejection note; listed under "Needs attention" |
+| Part of a finding done | `progress S-26 --partial --note "done: X / left: Y"` | status **PARTIAL** with your note (use `--open` to reset). DONE is only reachable through `verify` |
+| Regression found | `claim S-33 --reopen --note "why"` | moves it back from `findings/done/` to `findings/` as **OPEN** |
+| Page re-checked on screen | `swept page:/dashboard/x --ok --note "role + sweep -> result"` | page shows **CONFIRMED ON SCREEN** once all its findings are done (`--fail` removes the confirmation) |
+| Anything looks out of date | `sync-audit` | rebuilds links, page Status/Progress lines, the README status column and `STATUS.md` |
+
+- **Never edit** `STATUS.md`, the `<!-- status -->` block in a finding, or the Status/Progress lines of a page by hand. They are rebuilt from the folder layout and the hub log.
+- After fixing a finding, re-sweep its pages as the right role and record it with `swept`. A finding in `findings/done/` means fixed and verified in code; `CONFIRMED ON SCREEN` means a person or agent also saw it work.
+
 ## 7. Talking to each other
 
 - `say "text"` to everyone, `say "text" --to gemini-1` to one agent. Start with the item id: `"S-39: I also need summary/route.ts, can you release it after your change?"`
@@ -67,5 +84,6 @@ claim S-38 --files lango-app/src/libs/api/permissions.ts,lango-app/src/features/
 ```
 join --tool T --note N | status | next | claim ITEM --files F | files ITEM --add F
 heartbeat --note N | done ITEM --summary S --files F --verify V | verify ITEM --ok|--fail --note N
-say TEXT [--to ID] | inbox | log | release ITEM | leave
+progress FINDING --partial|--open --note N | swept page:/route --ok|--fail --note N | sync-audit
+claim ITEM --reopen --note N | say TEXT [--to ID] | inbox | log | release ITEM | leave
 ```

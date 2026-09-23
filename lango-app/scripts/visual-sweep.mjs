@@ -8,6 +8,10 @@
 //
 // Usage: node scripts/visual-sweep.mjs <role> <routes-file> [out-dir]
 // Env: AUDIT_BASE (default http://localhost:3111), ACCOUNT_EMAIL, VIEWPORT=desktop|phone, LOCALE=fr|ar
+//
+// Seed accounts below are the schoolos_audit logins. One is stale: the teacher
+// entry fz.idrissi@atlas.ma is not present in that seed, so a teacher sweep has
+// to pass ACCOUNT_EMAIL=prof.01@atlas.ma or it aborts with "LOGIN FAILED".
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 import path from 'node:path';

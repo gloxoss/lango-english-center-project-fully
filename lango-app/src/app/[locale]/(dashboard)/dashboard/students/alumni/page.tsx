@@ -3,6 +3,6 @@ import { requireServerPage } from '@/libs/api/page-guard';
 
 export default async function AlumniAdminPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireServerPage(locale, { requiredCapability: 'students.read' });
+  await requireServerPage(locale, { requiredCapability: 'admissions.manage' });
   return <AlumniAdminView locale={locale} />;
 }

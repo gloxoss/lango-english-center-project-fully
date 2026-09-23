@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { POST } from '@/app/api/finance/payments/route';
 import { db } from '@/libs/DB';
-import { invoiceEvents, invoices, payments, tenants, user } from '@/models/Schema';
+import { accountingAdapterExceptions, invoiceEvents, invoices, payments, tenants, user } from '@/models/Schema';
 import type { RequestContext } from '@/libs/api/context';
 
 vi.mock('@/libs/env/server', () => ({
@@ -59,6 +59,8 @@ describe.skipIf(!hasDb)('payment idempotency (Phase A)', () => {
   });
 
   afterAll(async () => {
+    // Unposted payments leave ledger exceptions that reference the tenant.
+    await db.delete(accountingAdapterExceptions).where(eq(accountingAdapterExceptions.tenantId, tenantId));
     await db.delete(tenants).where(eq(tenants.id, tenantId));
   });
 

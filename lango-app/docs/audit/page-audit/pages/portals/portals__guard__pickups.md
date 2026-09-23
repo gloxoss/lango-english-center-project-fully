@@ -1,6 +1,18 @@
 # `/dashboard/portals/guard/pickups`
 
-**Status: NEEDS FIX (P1)** · Module: `portals` · Source: [`src/app/[locale]/(dashboard)/dashboard/portals/guard/pickups/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/portals/guard/pickups/page.tsx>)
+**Status: FIXED, pending re-sweep** · Module: `portals` · Source: [`src/app/[locale]/(dashboard)/dashboard/portals/guard/pickups/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/portals/guard/pickups/page.tsx>)
+
+**Progress (2026-09-23):** S-8 DONE
+
+
+
+
+
+
+
+
+
+
 
 Guard: `requireServerPage` · capability `guard.pickup.release` · roles `guard`
 
@@ -10,7 +22,7 @@ Guard: `requireServerPage` · capability `guard.pickup.release` · roles `guard`
 
 | ID | Sev | Problem | Fix | Code now |
 |---|---|---|---|---|
-| [S-8](../../findings/S-8.md) | P1 | Gate pickup does not re-check guardianship at release | Re-check the live guardian link (active, canPickup) inside the release transaction. | Not re-checked since the sweep. |
+| [S-8](../../findings/done/S-8.md) | P1 | Gate pickup does not re-check guardianship at release | Re-check the live guardian link (active, canPickup) inside the release transaction. | Not re-checked since the sweep. |
 
 ## Sweep results
 
@@ -35,7 +47,7 @@ Guard: `requireServerPage` · capability `guard.pickup.release` · roles `guard`
 ## Cross-cutting findings that also show here
 
 - [S-7](../../findings/S-7.md) (P1) ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French)
-- [S-18](../../findings/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
-- [S-25](../../findings/S-25.md) (P2) Header shows a fake identity when the session call is slow
+- [S-18](../../findings/done/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
+- [S-25](../../findings/done/S-25.md) (P2) Header shows a fake identity when the session call is slow
 - [S-37](../../findings/S-37.md) (P2) Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL
-- [S-41](../../findings/S-41.md) (P1) Auth rate limit counts every page's session check, per IP
+- [S-41](../../findings/done/S-41.md) (P1) Auth rate limit counts every page's session check, per IP

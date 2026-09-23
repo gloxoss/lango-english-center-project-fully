@@ -1,6 +1,6 @@
+import type { NextRequest } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq } from 'drizzle-orm';
-import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
@@ -56,9 +56,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       throw new ApiError(422, 'VALIDATION_ERROR', 'Fichier requis.');
     }
 
-    const [alumnus] = await db.select({ id: user.id }).from(user)
-      .where(and(eq(user.id, alumnusId), eq(user.tenantId, tenantId), eq(user.role, 'alumni')))
-      .limit(1);
+    const [alumnus] = await db.select({ id: user.id }).from(user).where(and(eq(user.id, alumnusId), eq(user.tenantId, tenantId), eq(user.role, 'alumni'))).limit(1);
     if (!alumnus) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'L\'ancien(ne) élève indiqué(e) n\'existe pas pour cet établissement.');
     }
