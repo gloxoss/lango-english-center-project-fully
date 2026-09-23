@@ -1,13 +1,13 @@
 import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { requireParentContext } from '@/features/parent/api/guard';
+import { requireRelationship } from '@/features/parent/services/relationship-resolver';
 import { recordAudit } from '@/libs/api/audit';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { attendanceExcuses } from '@/models/Schema';
-import { requireParentContext } from '@/features/parent/api/guard';
-import { requireRelationship } from '@/features/parent/services/relationship-resolver';
 
 // GET/POST /api/guardian/me/children/[relationshipId]/excuses — the child's
 // justification (excuse) requests, relationship-scoped. The child is
@@ -20,6 +20,12 @@ type RouteParams = { params: Promise<{ relationshipId: string }> };
 
 const createExcuseSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD attendu'),
+  // EXACT SCOPE (P0): the guardian portal targets the same authoritative mark
+  // context as the admin route. Optional here only for backward compatibility
+  // with clients that have not yet selected a section/period; such rows stay
+  // unscoped and are never auto-applied.
+  classSectionId: z.string().uuid().optional(),
+  period: z.number().int().min(1).max(12).optional(),
   reason: z.string().trim().min(3).max(500),
 }).strict();
 
@@ -67,6 +73,8 @@ export async function POST(request: Request, { params }: RouteParams) {
       .values({
         tenantId: ctx.tenantId as string,
         studentId: auth.studentId,
+        classSectionId: body.classSectionId ?? null,
+        period: body.period ?? null,
         date: body.date,
         reason: body.reason,
         status: 'pending',

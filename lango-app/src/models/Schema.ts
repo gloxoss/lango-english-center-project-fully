@@ -1420,6 +1420,10 @@ export const attendanceExcuses = pgTable('attendance_excuses', {
   id: uuid().defaultRandom().primaryKey().notNull(),
   tenantId: uuid('tenant_id').notNull(),
   studentId: text('student_id').notNull(),
+  // EXACT SCOPE (migration 0150): the authoritative mark context this excuse
+  // justifies. Nullable only for pre-0150 legacy rows.
+  classSectionId: uuid('class_section_id'),
+  period: integer('period'),
   date: date().notNull(),
   reason: text().notNull(),
   documentUrl: varchar('document_url', { length: 500 }),
@@ -4466,11 +4470,11 @@ export const processedStripeEvents = pgTable('processed_stripe_events', {
   processedAt: timestamp('processed_at', { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 });
 
-// Student Accounting add-on exports
-export * from '@/features/finance/models/student-accounting-schema';
-
 // Advanced Reporting Add-on exports
 export * from '@/addons/advanced-reporting/models/reporting-schema';
+
+// Office Accounting core ledger extensions
+export * from '@/features/accounting/models/accounting-schema';
 
 // Assessment & Examination exports
 export * from '@/features/assessment/models/assessment-schema';
@@ -4478,16 +4482,25 @@ export * from '@/features/assessment/models/assessment-schema';
 // Attachments Book Add-on exports
 export * from '@/features/attachments/models/attachments-schema';
 
+export * from '@/features/attendance/models/attendance-qr-schema';
+// Broadcast Messaging Add-on exports
+export * from '@/features/broadcast/models/broadcast-schema';
+export * from '@/features/cards/models/cards-schema';
+
 // Attendance QR Enhancement exports
 export * from '@/features/certificates/models/certificates-schema';
-export * from '@/features/cards/models/cards-schema';
-export * from '@/features/attendance/models/attendance-qr-schema';
 
 // Event Management exports
 export * from '@/features/events/models/events-schema';
 
-// Platform exports
-export * from '@/features/platform/models/domains-schema';
+// Student Accounting add-on exports
+export * from '@/features/finance/models/student-accounting-schema';
+
+// Guard & Security Portal exports (core role feature)
+export * from '@/features/guard/models/guard-schema';
+
+// Hostel Management Add-on exports
+export * from '@/features/hostel/models/hostel-schema';
 
 // Advanced HR & Employee Management Add-on exports
 export * from '@/features/hr/models/hr-schema';
@@ -4495,23 +4508,14 @@ export * from '@/features/hr/models/hr-schema';
 // Inventory Management Add-on exports
 export * from '@/features/inventory/models/inventory-schema';
 
-// Broadcast Messaging Add-on exports
-export * from '@/features/broadcast/models/broadcast-schema';
-
-// Hostel Management Add-on exports
-export * from '@/features/hostel/models/hostel-schema';
-
-// Guard & Security Portal exports (core role feature)
-export * from '@/features/guard/models/guard-schema';
-
 // Library Management Add-on exports
 export * from '@/features/library/models/library-schema';
 
 // Live Classrooms Add-on exports
 export * from '@/features/live-classrooms/models/live-classrooms-schema';
 
-// Student Transport Add-on exports
-export * from '@/features/transport/models/transport-schema';
+// Platform exports
+export * from '@/features/platform/models/domains-schema';
 
 // Role Portals Foundation exports
 export * from '@/features/portal/models/portal-schema';
@@ -4519,15 +4523,15 @@ export * from '@/features/portal/models/portal-schema';
 // Receptionist Portal — front-desk appointments, handoffs, identity verifications
 export * from '@/features/reception/models/reception-schema';
 
-// Office Accounting core ledger extensions
-export * from '@/features/accounting/models/accounting-schema';
-
-// Payroll & Workforce Operations add-on
-export * from '@/features/workforce/models/workforce-schema';
-
 // Settings Platform (DB-backed catalog, drafts/approvals, secrets, numbering,
 // custom fields, scheduled jobs, login events)
 export * from '@/features/settings/models/settings-schema';
 
+// Student Transport Add-on exports
+export * from '@/features/transport/models/transport-schema';
+
 // School Website CMS Add-on (public per-tenant marketing site)
 export * from '@/features/website/models/website-schema';
+
+// Payroll & Workforce Operations add-on
+export * from '@/features/workforce/models/workforce-schema';

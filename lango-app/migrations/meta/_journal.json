@@ -1030,6 +1030,13 @@
       "when": 1790116023878,
       "tag": "0149_attendance_active_mark_unique",
       "breakpoints": true
+    },
+    {
+      "idx": 147,
+      "version": "7",
+      "when": 1790117023878,
+      "tag": "0150_attendance_excuse_scope",
+      "breakpoints": true
     }
   ]
 }

@@ -6,17 +6,22 @@ import { resolveUnjustifiedAbsenceFlagsForDate } from '@/libs/api/attendance-fla
 import { recalculateStudentAttendanceSummary } from '@/libs/api/attendance-summary';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse } from '@/libs/api/errors';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { getGuardianChildIds } from '@/libs/api/guardian-scope';
 import { assertStudentAccess } from '@/libs/api/student-access';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { attendance, attendanceExcuses, guardians, guardianStudents, user } from '@/models/Schema';
+import { attendance, attendanceExcuses, attendanceRegisters, classSections, guardians, guardianStudents, user } from '@/models/Schema';
 
 const createExcuseSchema = z.object({
   studentId: z.string().min(1),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD attendu'),
+  // EXACT SCOPE (P0): the excuse justifies one authoritative mark context —
+  // (student, section, date, period). Broad student+date justification is no
+  // longer accepted for new excuses.
+  classSectionId: z.string().uuid(),
+  period: z.number().int().min(1).max(12),
   reason: z.string().trim().min(3).max(500),
   documentUrl: z.string().url().optional().or(z.literal('')),
 }).strict();
@@ -25,6 +30,9 @@ const reviewExcuseSchema = z.object({
   excuseId: z.string().uuid(),
   status: z.enum(['approved', 'rejected']),
   rejectionReason: z.string().trim().min(3).max(500).optional(),
+  // Re-reviewing an already-reviewed excuse is a deliberate authorized
+  // correction, never an accidental status flip.
+  allowRereview: z.boolean().optional(),
 }).strict().refine(
   data => data.status !== 'rejected' || !!data.rejectionReason,
   { message: 'Un motif de refus est requis.', path: ['rejectionReason'] },
@@ -90,6 +98,8 @@ export async function GET(request: Request) {
         id: attendanceExcuses.id,
         studentId: attendanceExcuses.studentId,
         studentName: user.name,
+        classSectionId: attendanceExcuses.classSectionId,
+        period: attendanceExcuses.period,
         date: attendanceExcuses.date,
         reason: attendanceExcuses.reason,
         documentUrl: attendanceExcuses.documentUrl,
@@ -180,11 +190,23 @@ export async function POST(request: Request) {
       targetStudentId = body.studentId;
     }
 
+    // The target section must belong to this tenant (never trust the id).
+    const [targetSection] = await db
+      .select({ id: classSections.id })
+      .from(classSections)
+      .where(and(eq(classSections.tenantId, tenantId), eq(classSections.id, body.classSectionId)))
+      .limit(1);
+    if (!targetSection) {
+      throw new ApiError(422, 'INVALID_REFERENCE', 'Section de classe introuvable pour cet établissement.');
+    }
+
     const [inserted] = await db
       .insert(attendanceExcuses)
       .values({
         tenantId,
         studentId: targetStudentId,
+        classSectionId: body.classSectionId,
+        period: body.period,
         date: body.date,
         reason: body.reason,
         documentUrl: body.documentUrl || null,
@@ -237,6 +259,16 @@ export async function PATCH(request: Request) {
       );
     }
 
+    // LIFECYCLE (P0): pending -> approved/rejected only. Re-reviewing an
+    // already-reviewed excuse is an explicit authorized correction.
+    if (existingExcuse.status !== 'pending' && !body.allowRereview) {
+      throw new ApiError(
+        409,
+        'ALREADY_REVIEWED',
+        'Cette justification a déjà été traitée. Confirmez une relecture explicite (allowRereview) pour la modifier.',
+      );
+    }
+
     const updatedExcuse = await db.transaction(async (tx) => {
       const [excuse] = await tx
         .update(attendanceExcuses)
@@ -251,23 +283,75 @@ export async function PATCH(request: Request) {
         .returning();
 
       if (body.status === 'approved') {
-        // Update existing attendance records for this student and date to 'excused'
-        await tx
-          .update(attendance)
-          .set({
-            status: 'excused',
-            note: `Excuse validée: ${existingExcuse.reason}`,
-            updatedAt: new Date().toISOString(),
-          })
-          .where(
-            and(
-              eq(attendance.tenantId, tenantId),
-              eq(attendance.studentId, existingExcuse.studentId),
-              eq(attendance.date, existingExcuse.date),
-            ),
+        // EXACT-SCOPE MUTATION (P0): only the authoritative mark for this
+        // excuse's (student, section, date, period) may change. Never another
+        // period, section, student or branch.
+        if (!existingExcuse.classSectionId || !existingExcuse.period) {
+          throw new ApiError(
+            422,
+            'EXCUSE_SCOPE_REQUIRED',
+            'Cette justification historique n\'a pas de portée (section/période) : elle ne peut pas être appliquée automatiquement.',
           );
+        }
 
-        // Recalculate summary
+        // REGISTER LOCK (P0): a locked register is corrected through the
+        // explicit reopen flow, never silently rewritten by an approval.
+        const [register] = await tx
+          .select({ status: attendanceRegisters.status })
+          .from(attendanceRegisters)
+          .where(and(
+            eq(attendanceRegisters.tenantId, tenantId),
+            eq(attendanceRegisters.classSectionId, existingExcuse.classSectionId),
+            eq(attendanceRegisters.date, existingExcuse.date),
+            eq(attendanceRegisters.period, existingExcuse.period),
+          ))
+          .limit(1);
+        if (register?.status === 'LOCKED') {
+          throw new ApiError(
+            409,
+            'REGISTER_LOCKED',
+            'Le registre de cette séance est verrouillé : rouvrez-le pour correction avant de valider la justification.',
+          );
+        }
+
+        const marks = await tx
+          .select({ id: attendance.id, status: attendance.status, lateMinutes: attendance.lateMinutes, note: attendance.note })
+          .from(attendance)
+          .where(and(
+            eq(attendance.tenantId, tenantId),
+            eq(attendance.studentId, existingExcuse.studentId),
+            eq(attendance.classSectionId, existingExcuse.classSectionId),
+            eq(attendance.date, existingExcuse.date),
+            eq(attendance.period, existingExcuse.period),
+            eq(attendance.isVoided, false),
+          ));
+
+        for (const mark of marks) {
+          if (mark.status === 'excused') {
+            continue;
+          }
+          await tx
+            .update(attendance)
+            .set({
+              status: 'excused',
+              note: `Excuse validée: ${existingExcuse.reason}`,
+              updatedAt: new Date().toISOString(),
+            })
+            .where(eq(attendance.id, mark.id));
+
+          // History stays answerable: before/after + the excuse that caused it.
+          recordAudit(context, 'update', 'attendance', mark.id, {
+            studentId: existingExcuse.studentId,
+            date: existingExcuse.date,
+            period: existingExcuse.period,
+            classSectionId: existingExcuse.classSectionId,
+            before: { status: mark.status, lateMinutes: mark.lateMinutes, note: mark.note },
+            after: { status: 'excused' },
+            reason: 'excuse_approved',
+            excuseId: existingExcuse.id,
+          });
+        }
+
         await recalculateStudentAttendanceSummary(tenantId, existingExcuse.studentId, tx);
         await resolveUnjustifiedAbsenceFlagsForDate(tenantId, existingExcuse.studentId, existingExcuse.date, tx);
       }
@@ -277,7 +361,10 @@ export async function PATCH(request: Request) {
 
     recordAudit(context, 'update', 'attendance_excuses', body.excuseId, {
       status: body.status,
+      previousStatus: existingExcuse.status,
       studentId: existingExcuse.studentId,
+      classSectionId: existingExcuse.classSectionId,
+      period: existingExcuse.period,
     });
 
     return NextResponse.json({
