@@ -1,8 +1,9 @@
+import type { BroadcastProvider } from '../providers/provider';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { communicationConnections, smsMessages } from '@/models/Schema';
+import { getProvider } from '../providers/provider';
 import { getConnectionWithSecrets } from './connections-service';
-import { getProvider, type BroadcastProvider } from '../providers/provider';
 import '../providers';
 
 // Shared SMS send path for the smsMessages-based notifications (attendance
@@ -37,9 +38,13 @@ async function resolveSms(tenantId: string): Promise<ResolvedSms> {
     .from(communicationConnections)
     .where(and(eq(communicationConnections.tenantId, tenantId), eq(communicationConnections.channel, 'sms' as any)))
     .limit(1);
-  if (!connection) return null;
+  if (!connection) {
+    return null;
+  }
   const provider = getProvider(connection.provider);
-  if (!provider) return null;
+  if (!provider) {
+    return null;
+  }
   const isReal = !LOG_ONLY_PROVIDERS.has(provider.provider);
   const config = isReal
     ? ((await getConnectionWithSecrets(tenantId, connection.id)).configJson as Record<string, unknown> | null)
@@ -48,11 +53,14 @@ async function resolveSms(tenantId: string): Promise<ResolvedSms> {
 }
 
 async function dispatch(tenantId: string, resolved: ResolvedSms, input: SmsInput): Promise<SendSmsResult> {
-  let status: 'queued' | 'sent' | 'failed' = 'sent';
+  // NOTIFICATION TRUTH (Phase 6): without a real provider this is a QUEUED
+  // intent, never a fabricated "sent". `sent`/`sentAt` require provider
+  // evidence; `delivered` additionally requires a delivery acknowledgement.
+  let status: 'queued' | 'sent' | 'failed' = 'queued';
   let delivery: SendSmsResult['delivery'] = 'simulated';
   let providerRef: string | null = null;
   let failureReason: string | null = null;
-  let sentAt: string | null = new Date().toISOString();
+  let sentAt: string | null = null;
 
   if (resolved?.isReal) {
     const result = await resolved.provider.send({
@@ -65,6 +73,7 @@ async function dispatch(tenantId: string, resolved: ResolvedSms, input: SmsInput
       status = 'sent';
       delivery = result.status === 'delivered' ? 'delivered' : 'sent';
       providerRef = result.providerRef ?? null;
+      sentAt = new Date().toISOString();
     } else {
       status = 'failed';
       delivery = 'failed';

@@ -2,6 +2,7 @@ import { and, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { sendSmsMessage } from '@/features/broadcast/services/sms-delivery';
 import { detectAndRecordFlags } from '@/libs/api/attendance-flags';
 import { resolveRegisterForSubmission } from '@/libs/api/attendance-registers';
 import { recalculateStudentAttendanceSummary } from '@/libs/api/attendance-summary';
@@ -350,39 +351,53 @@ export async function POST(request: Request) {
         }
       }
 
-      for (const studentId of absentStudentIds) {
-        // Prefer the primary contact, but fall back to any linked guardian -
-        // isPrimaryContact isn't always set (e.g. links made before that default
-        // existed), and a real student having no SMS destination at all because
-        // of that would be a silent, confusing failure.
-        const [guardian] = await tx
-          .select({ phone: guardians.phone })
-          .from(guardianStudents)
-          .innerJoin(guardians, eq(guardianStudents.guardianId, guardians.id))
-          .where(and(
-            eq(guardianStudents.tenantId, tenantId),
-            eq(guardianStudents.studentId, studentId),
-          ))
-          .orderBy(desc(guardianStudents.isPrimaryContact))
-          .limit(1);
+      return { results, register, absentStudentIds: [...absentStudentIds] };
+    });
 
-        if (guardian?.phone) {
-          const [student] = await tx.select({ name: user.name }).from(user).where(eq(user.id, studentId)).limit(1);
-          const now = new Date().toISOString();
-          await tx.insert(smsMessages).values({
-            tenantId,
-            recipientPhone: guardian.phone,
-            studentId,
-            body: `Absence non justifiée signalée pour ${student?.name ?? 'votre enfant'} le ${body.date}.`,
-            status: 'sent',
-            sentAt: now,
-            createdById: context.userId,
-          });
-        }
+    // NOTIFICATION TRUTH (Phase 6): intents are requested AFTER the attendance
+    // transaction commits, through the authoritative SMS dispatch service —
+    // never as a raw 'sent' row inside the transaction. No provider success
+    // means no 'sent'. A dispatcher failure can never roll back attendance.
+    // Dedupe identity: (tenant, student, deterministic absence body per date).
+    for (const studentId of savedRecords.absentStudentIds) {
+      const [guardian] = await db
+        .select({ phone: guardians.phone })
+        .from(guardianStudents)
+        .innerJoin(guardians, eq(guardianStudents.guardianId, guardians.id))
+        .where(and(
+          eq(guardianStudents.tenantId, tenantId),
+          eq(guardianStudents.studentId, studentId),
+        ))
+        .orderBy(desc(guardianStudents.isPrimaryContact))
+        .limit(1);
+
+      if (!guardian?.phone) {
+        continue;
       }
 
-      return { results, register };
-    });
+      const [student] = await db.select({ name: user.name }).from(user).where(eq(user.id, studentId)).limit(1);
+      const noticeBody = `Absence non justifiée signalée pour ${student?.name ?? 'votre enfant'} le ${body.date}.`;
+
+      const [existingIntent] = await db
+        .select({ id: smsMessages.id })
+        .from(smsMessages)
+        .where(and(
+          eq(smsMessages.tenantId, tenantId),
+          eq(smsMessages.studentId, studentId),
+          eq(smsMessages.body, noticeBody),
+        ))
+        .limit(1);
+      if (existingIntent) {
+        continue;
+      }
+
+      await sendSmsMessage(tenantId, {
+        to: guardian.phone,
+        body: noticeBody,
+        studentId,
+        createdById: context.userId,
+      });
+    }
 
     recordAudit(context, 'update', 'attendance', body.date, {
       count: body.records.length,

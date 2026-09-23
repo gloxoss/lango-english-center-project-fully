@@ -47,7 +47,10 @@ const STUDENT_NOT_MINE = `USR-SN-${crypto.randomUUID()}`;
 
 let sectionMine = '';
 let sectionNotMine = '';
-const today = new Date().toISOString().slice(0, 10);
+// Deterministic instructional date inside the fixture session (a Monday).
+// Runtime "today" became a latent weekend flake once the Phase-5 calendar
+// guard went live; the guard itself is NOT bypassed.
+const today = '2026-10-05';
 
 async function asRole(userId: string, role: string) {
   const { requireRequestContext } = await import('@/libs/api/context');
