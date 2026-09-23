@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { asc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { recordAudit } from '@/libs/api/audit';
 import { z } from 'zod';
 import { requireRequestContext } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
@@ -30,6 +31,7 @@ export async function POST(req: NextRequest) {
     await requireCapability(ctx, 'accounting.account.manage');
     const body = await parseJson(req, journalSchema);
     const [record] = await db.insert(accountingJournals).values({ tenantId: ctx.tenantId!, ...body }).returning();
+    recordAudit(ctx, 'create', 'accounting_journal', record!.id, { code: record?.code ?? null });
     return NextResponse.json({ success: true, data: record }, { status: 201 });
   } catch (error) { return apiErrorResponse(error); }
 }

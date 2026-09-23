@@ -84,6 +84,21 @@ export function getMoroccanMention(average: number): MentionType {
   return 'Insuffisant';
 }
 
+export type MentionBand = {
+  mention: MentionType;
+  minScore: number;
+  maxScore: number;
+};
+
+/** The national /20 mention bands, derived from getMoroccanMention itself — a UI can render this as the reference scale and stay correct by construction. */
+export const MOROCCAN_MENTION_BANDS: MentionBand[] = [
+  { mention: 'Très Bien', minScore: 16, maxScore: 20 },
+  { mention: 'Bien', minScore: 14, maxScore: 16 },
+  { mention: 'Assez Bien', minScore: 12, maxScore: 14 },
+  { mention: 'Passable', minScore: 10, maxScore: 12 },
+  { mention: 'Insuffisant', minScore: 0, maxScore: 10 },
+];
+
 /**
  * Computes the General Weighted Average (Moyenne Générale) for a list of subject grades.
  * M = sum(Grade * Coefficient) / sum(Coefficient)

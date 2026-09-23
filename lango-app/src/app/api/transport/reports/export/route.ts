@@ -7,6 +7,7 @@ import { apiErrorResponse } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
 import { transportVehicles, transportRoutes, transportStops } from '@/features/transport/models/transport-schema';
 import { recordAudit } from '@/libs/api/audit';
+import { csvSafeRow } from '@/libs/csv-safe';
 
 export async function GET(request: Request) {
   try {
@@ -29,7 +30,7 @@ export async function GET(request: Request) {
 
       csvContent = 'Code,Registration,Capacity,Type,Status,InsuranceExpiry,InspectionExpiry\n';
       csvContent += vehicles
-        .map(v => `${v.vehicleCode},${v.registrationNumber},${v.capacity},${v.vehicleType},${v.status},${v.insuranceExpiry || ''},${v.inspectionExpiry || ''}`)
+        .map(v => csvSafeRow([v.vehicleCode, v.registrationNumber, v.capacity, v.vehicleType, v.status, v.insuranceExpiry || '', v.inspectionExpiry || '']))
         .join('\n');
     } else if (type === 'stops') {
       const stops = await db
@@ -39,7 +40,7 @@ export async function GET(request: Request) {
 
       csvContent = 'Code,Name,Address,Latitude,Longitude,Status\n';
       csvContent += stops
-        .map(s => `${s.stopCode},"${s.stopName}","${s.address || ''}",${s.latitude || ''},${s.longitude || ''},${s.status}`)
+        .map(s => csvSafeRow([s.stopCode, s.stopName, s.address || '', s.latitude || '', s.longitude || '', s.status]))
         .join('\n');
     } else if (type === 'routes') {
       const routes = await db
@@ -49,7 +50,7 @@ export async function GET(request: Request) {
 
       csvContent = 'Code,Name,Direction,Status\n';
       csvContent += routes
-        .map(r => `${r.routeCode},"${r.routeName}",${r.serviceDirection},${r.status}`)
+        .map(r => csvSafeRow([r.routeCode, r.routeName, r.serviceDirection, r.status]))
         .join('\n');
     }
 

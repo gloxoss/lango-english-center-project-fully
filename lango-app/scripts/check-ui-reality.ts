@@ -10,8 +10,8 @@ import path from 'node:path';
 //   1. DEAD CONTROLS — a <Button>/<button> with no onClick, no submit, no link
 //      and no trigger parent. Pagination bars that paginate nothing, row `⋮`
 //      menus, "see all" links going nowhere.
-//   2. MOCK SCREENS — a component rendering module-level arrays of invented
-//      records with no fetch anywhere in the file. The worst case found was
+//   2. MOCK SCREENS — a component rendering module-level arrays or seeding
+//      state from imported data/* fixtures with no fetch in the file. The worst case found was
 //      `/academics/grades/entry`, which served a hardcoded exam paper with
 //      pre-filled answers while a real grading API sat unused.
 //   3. UNLINKED PAGES — a dashboard page on disk that no nav entry points at.
@@ -208,6 +208,26 @@ export function findRecordConsts(src: string): string[] {
   return found;
 }
 
+/** Client state seeded from imported data can hide invented records from the
+ * same-file array detector. Type-only imports and unused lookups are ignored. */
+export function findImportedFixtureSeeds(src: string): string[] {
+  const found: string[] = [];
+  const imports = /import\s*\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]/g;
+  let match: RegExpExecArray | null;
+  while ((match = imports.exec(src))) {
+    if (!match[2]?.includes('/data/')) continue;
+    for (const specifier of match[1]!.split(',')) {
+      const part = specifier.trim();
+      if (!part || part.startsWith('type ')) continue;
+      const localName = (part.split(/\s+as\s+/)[1] ?? part).trim();
+      if (!/^[A-Za-z_$][\w$]*$/.test(localName)) continue;
+      const seed = new RegExp(`\\buseState(?:<[^;\\n]{0,160}>)?\\s*\\(\\s*${localName}\\s*\\)`);
+      if (seed.test(src)) found.push(localName);
+    }
+  }
+  return found;
+}
+
 /** Whether any nav source links the given dashboard route. */
 export function routeIsLinked(route: string, navSources: string): boolean {
   const tail = route.replace(/^dashboard\//, '');
@@ -282,8 +302,9 @@ function findMockScreens(): Finding[] {
 
     const recordConsts = findRecordConsts(src);
 
-    if (recordConsts.length > 0) {
-      findings.push({ file: rel(file), line: 1, detail: recordConsts.join(', ') });
+    const importedSeeds = findImportedFixtureSeeds(src);
+    if (recordConsts.length > 0 || importedSeeds.length > 0) {
+      findings.push({ file: rel(file), line: 1, detail: [...recordConsts, ...importedSeeds].join(', ') });
     }
   }
 
@@ -315,6 +336,10 @@ function findUnlinkedPages(): Finding[] {
   for (const file of walk(APP, name => name === 'page.tsx')) {
     const route = routeOf(file);
     if (!route.startsWith('dashboard/')) {
+      continue;
+    }
+    // Reached only by the server page guard after a denied request.
+    if (route === 'dashboard/access-denied') {
       continue;
     }
     // A dynamic segment is reached from its parent list, never linked directly.
@@ -440,7 +465,7 @@ export function runCheck(): void {
 
   const results = [
     report('Dead controls (no handler, no link, no trigger parent)', deadControls, baseline.deadControls),
-    report('Mock screens (invented records, no fetch in file)', mockScreens, baseline.mockScreens),
+    report('Mock screens (invented records or imported fixture state, no fetch)', mockScreens, baseline.mockScreens),
     report('Unlinked dashboard pages (no nav entry points at them)', unlinkedPages, baseline.unlinkedPages),
     report('Orphaned components (nothing in src imports them)', orphanedComponents, baseline.orphanedComponents),
   ];

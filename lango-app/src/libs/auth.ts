@@ -5,6 +5,7 @@ import { createAuthMiddleware } from 'better-auth/api';
 import { nextCookies } from 'better-auth/next-js';
 import { twoFactor } from 'better-auth/plugins/two-factor';
 import { enforceEmailPasswordLockout, trackEmailPasswordResult } from '@/libs/auth/lockout';
+import { deliverOtpEmail } from '@/libs/auth/otp-email';
 import { captureSignInLoginEvent } from '@/features/settings/services/login-events-service';
 import { scopeSignInToTenant } from '@/libs/auth/tenant-scope';
 import { listApprovedDomains } from '@/features/platform/services/domains-service';
@@ -84,12 +85,12 @@ export const auth = betterAuth({
   plugins: [
     twoFactor({
       otpOptions: {
-        // Log-only email delivery (no SMTP gateway, same convention as SMS).
-        // Records the code so the verify script can prove delivery and complete
-        // a login with the emailed code. Replace with a real email provider in
-        // production; do NOT keep writing plaintext OTPs to disk there.
+        // Real email via Resend when PLATFORM_RESEND_API_KEY is set. Without it,
+        // production refuses with a clear message (TOTP + backup codes still
+        // work) and dev falls back to log-only. Only a hash of the code is stored.
         sendOTP: async ({ user, otp }) => {
           const tenantId = (user as { tenantId?: string | null }).tenantId ?? null;
+          await deliverOtpEmail(user.email, otp);
           if (process.env.NODE_ENV !== 'production') {
             // `email` is a redacted key in the logger config (Law 09-08).
             logger.info({ event: '2fa_otp_dispatched', userId: user.id, email: user.email });

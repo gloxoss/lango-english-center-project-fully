@@ -19,7 +19,7 @@ const createReconciliationDraftSchema = z.object({
 
 export async function GET(req: NextRequest) {
   try {
-    const ctx = await requireRequestContext(req);
+    const ctx = await requireRequestContext(req, ['school_admin', 'accountant']);
     await requireCapability(ctx, 'finance.read');
     const bankAccountId = new URL(req.url).searchParams.get('bankAccountId');
 
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const ctx = await requireRequestContext(req);
+    const ctx = await requireRequestContext(req, ['school_admin', 'accountant']);
     await requireCapability(ctx, 'finance.manage');
 
     const body = await parseJson(req, createReconciliationDraftSchema);

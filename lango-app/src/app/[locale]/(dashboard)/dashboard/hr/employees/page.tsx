@@ -1,4 +1,4 @@
-import { PersonnelPlayground } from '@/features/hr/ui/personnel-playground';
+import { EmployeeDirectoryView } from '@/features/hr/ui/employee-directory-view';
 import { requireServerPage } from '@/libs/api/page-guard';
 
 export const metadata = {
@@ -12,7 +12,8 @@ export default async function HrEmployeesPage({ params }: { params: Promise<{ lo
   const isRtl = locale === 'ar';
   return (
     <main dir={isRtl ? 'rtl' : 'ltr'} lang={locale}>
-      <PersonnelPlayground locale={locale} />
+      <EmployeeDirectoryView />
     </main>
   );
 }
+

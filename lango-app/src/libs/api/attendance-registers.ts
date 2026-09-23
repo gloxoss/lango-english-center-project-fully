@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { ApiError } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
-import { attendanceRegisters } from '@/models/Schema';
+import { attendanceRegisters, classSections } from '@/models/Schema';
 
 function generateReference(classId: string, date: string, period: number) {
   return `REG-${date}-P${period}-${classId.slice(0, 8).toUpperCase()}`;
@@ -19,12 +19,24 @@ export async function resolveRegisterForSubmission(
   correctionNote: string | undefined,
   executor: any = db,
 ) {
+  // If the provided classId is actually a class_sections id, resolve to its parent classes.id
+  let actualClassId = classId;
+  const [section] = await executor
+    .select({ classId: classSections.classId })
+    .from(classSections)
+    .where(and(eq(classSections.tenantId, tenantId), eq(classSections.id, classId)))
+    .limit(1);
+
+  if (section?.classId) {
+    actualClassId = section.classId;
+  }
+
   const [existing] = await executor
     .select()
     .from(attendanceRegisters)
     .where(and(
       eq(attendanceRegisters.tenantId, tenantId),
-      eq(attendanceRegisters.classId, classId),
+      eq(attendanceRegisters.classId, actualClassId),
       eq(attendanceRegisters.date, date),
       eq(attendanceRegisters.period, period),
     ))
@@ -35,10 +47,10 @@ export async function resolveRegisterForSubmission(
       .insert(attendanceRegisters)
       .values({
         tenantId,
-        classId,
+        classId: actualClassId,
         date,
         period,
-        reference: generateReference(classId, date, period),
+        reference: generateReference(actualClassId, date, period),
         status: 'LOCKED',
         submittedAt: new Date().toISOString(),
         submittedById,

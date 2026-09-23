@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { requireWorkforceAddon } from '@/libs/api/entitlements';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { recordAudit } from '@/libs/api/audit';
 import { requireCapability, type PermissionKey } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { approveRun, calculateRun, cancelRun, closeRun, markPaid, postRun, reverseRun, submitForReview } from '@/features/workforce/services/payroll-runs';
@@ -38,6 +39,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       : body.action === 'close' ? await closeRun(id, actor)
       : body.action === 'cancel' ? await cancelRun(id, actor, body.reason)
       : await reverseRun(id, actor, ref);
+    recordAudit(ctx, 'update', 'payroll_run_action', id, { action: body.action, reason: body.reason ?? null });
     return NextResponse.json({ success: true, data });
   } catch (error) { return apiErrorResponse(error); }
 }

@@ -1,17 +1,17 @@
 import type { NextRequest } from 'next/server';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext } from '@/libs/api/context';
-import { apiErrorResponse } from '@/libs/api/errors';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { tenants } from '@/models/Schema';
+import { platformSupportTickets, platformSupportTicketMessages, tenants, user, type SupportAttachment } from '@/models/Schema';
 
 export type PlatformTicket = {
   id: string;
-  tenantId: string;
+  tenantId: string | null;
   schoolName: string;
   subject: string;
   category: 'technical' | 'billing' | 'onboarding' | 'cndp_compliance' | 'feature_request';
@@ -22,130 +22,174 @@ export type PlatformTicket = {
   lastMessage: string;
   messagesCount: number;
   assignedTo: string | null;
+  attachments?: SupportAttachment[] | null;
+  firstRespondedAt: string | null;
+  resolvedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
 
-// Seeded platform support tickets across real registered schools
-const DEFAULT_TICKETS: PlatformTicket[] = [
-  {
-    id: 'tkt-001',
-    tenantId: 'atlas-school',
-    schoolName: 'Groupe Scolaire Atlas',
-    subject: 'Assistance configuration passerelle SMS Inwi',
-    category: 'technical',
-    priority: 'high',
-    status: 'in_progress',
-    contactName: 'Directrice Fatima Zahra',
-    contactEmail: 'f.zahra@atlas.edu.ma',
-    lastMessage: 'Les identifiants API Inwi retournent une erreur d’authentification sur les envois de masse.',
-    messagesCount: 3,
-    assignedTo: 'Support Niveau 2 (Yassine)',
-    createdAt: new Date(Date.now() - 2 * 3600000).toISOString(),
-    updatedAt: new Date(Date.now() - 30 * 60000).toISOString(),
-  },
-  {
-    id: 'tkt-002',
-    tenantId: 'al-manar',
-    schoolName: 'Institut Al Manar',
-    subject: 'Export Massar Bulletins Semestre 1',
-    category: 'feature_request',
-    priority: 'medium',
-    status: 'new',
-    contactName: 'M. Rachid Benjelloun',
-    contactEmail: 'r.benjelloun@almanar.ma',
-    lastMessage: 'Demande d’export XML compatible avec le format Massar MEN 2026.',
-    messagesCount: 1,
-    assignedTo: null,
-    createdAt: new Date(Date.now() - 5 * 3600000).toISOString(),
-    updatedAt: new Date(Date.now() - 5 * 3600000).toISOString(),
-  },
-  {
-    id: 'tkt-003',
-    tenantId: 'excellence-rabat',
-    schoolName: 'Lycée d’Excellence Rabat',
-    subject: 'Facturation annuelle Pack Entreprise',
-    category: 'billing',
-    priority: 'low',
-    status: 'resolved',
-    contactName: 'Mme. Nadia Tazi (Comptabilité)',
-    contactEmail: 'compta@excellence-rabat.ma',
-    lastMessage: 'Attestation de paiement reçue, licence renouvelée pour 12 mois.',
-    messagesCount: 4,
-    assignedTo: 'Finance (Oussama)',
-    createdAt: new Date(Date.now() - 48 * 3600000).toISOString(),
-    updatedAt: new Date(Date.now() - 12 * 3600000).toISOString(),
-  },
-  {
-    id: 'tkt-004',
-    tenantId: 'atlas-school',
-    schoolName: 'Groupe Scolaire Atlas',
-    subject: 'Déclaration CNDP Formulaire F211',
-    category: 'cndp_compliance',
-    priority: 'high',
-    status: 'waiting_client',
-    contactName: 'Délégué Protection Données (DPO)',
-    contactEmail: 'dpo@atlas.edu.ma',
-    lastMessage: 'Document de cadrage transmis, en attente de signature électronique du directeur.',
-    messagesCount: 5,
-    assignedTo: 'Conformité CNDP',
-    createdAt: new Date(Date.now() - 24 * 3600000).toISOString(),
-    updatedAt: new Date(Date.now() - 4 * 3600000).toISOString(),
-  },
-];
+export type PlatformTicketMessage = {
+  id: string;
+  ticketId: string;
+  senderType: 'client' | 'super_admin';
+  senderName: string;
+  message: string;
+  attachments?: SupportAttachment[] | null;
+  createdAt: string;
+};
+
+export type AssignableUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  image?: string | null;
+};
 
 export async function GET(req: NextRequest) {
   try {
     const ctx = await requireRequestContext(req, ['super_admin']);
 
     const { searchParams } = new URL(req.url);
+    const ticketIdParam = searchParams.get('ticketId');
+
+    // If specific ticket messages requested
+    if (ticketIdParam) {
+      const [ticket] = await db
+        .select()
+        .from(platformSupportTickets)
+        .where(eq(platformSupportTickets.id, ticketIdParam))
+        .limit(1);
+
+      if (!ticket) {
+        throw new ApiError(404, 'NOT_FOUND', 'Ticket introuvable.');
+      }
+
+      const messages = await db
+        .select()
+        .from(platformSupportTicketMessages)
+        .where(eq(platformSupportTicketMessages.ticketId, ticketIdParam))
+        .orderBy(platformSupportTicketMessages.createdAt);
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          ticket,
+          messages,
+        },
+      });
+    }
+
     const statusParam = searchParams.get('status');
     const priorityParam = searchParams.get('priority');
     const categoryParam = searchParams.get('category');
     const searchParam = searchParams.get('search');
 
-    const schoolList = await db
-      .select({ id: tenants.id, name: tenants.name, slug: tenants.slug })
-      .from(tenants)
-      .orderBy(tenants.name);
+    const conditions: any[] = [];
 
-    let filtered = [...DEFAULT_TICKETS];
     if (statusParam && statusParam !== 'all') {
-      filtered = filtered.filter((t) => t.status === statusParam);
+      conditions.push(eq(platformSupportTickets.status, statusParam));
     }
     if (priorityParam && priorityParam !== 'all') {
-      filtered = filtered.filter((t) => t.priority === priorityParam);
+      conditions.push(eq(platformSupportTickets.priority, priorityParam));
     }
     if (categoryParam && categoryParam !== 'all') {
-      filtered = filtered.filter((t) => t.category === categoryParam);
+      conditions.push(eq(platformSupportTickets.category, categoryParam));
     }
-    if (searchParam) {
-      const q = searchParam.toLowerCase();
-      filtered = filtered.filter(
-        (t) =>
-          t.subject.toLowerCase().includes(q) ||
-          t.schoolName.toLowerCase().includes(q) ||
-          t.contactName.toLowerCase().includes(q) ||
-          t.lastMessage.toLowerCase().includes(q)
+    if (searchParam && searchParam.trim()) {
+      const q = `%${searchParam.trim()}%`;
+      conditions.push(
+        or(
+          ilike(platformSupportTickets.subject, q),
+          ilike(platformSupportTickets.schoolName, q),
+          ilike(platformSupportTickets.contactName, q),
+          ilike(platformSupportTickets.contactEmail, q),
+          ilike(platformSupportTickets.lastMessage, q)
+        )
       );
     }
 
-    const openCount = filtered.filter((t) => ['new', 'in_progress', 'waiting_client'].includes(t.status)).length;
-    const criticalCount = filtered.filter((t) => t.priority === 'critical' || t.priority === 'high').length;
-    const resolvedCount = filtered.filter((t) => t.status === 'resolved').length;
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [tickets, statsRows, schoolList, adminUsers, existingAssignees] = await Promise.all([
+      db
+        .select()
+        .from(platformSupportTickets)
+        .where(whereClause)
+        .orderBy(desc(platformSupportTickets.updatedAt)),
+
+      db
+        .select({
+          total: sql<number>`count(*)::int`,
+          open: sql<number>`count(*) filter (where ${platformSupportTickets.status} in ('new', 'in_progress', 'waiting_client'))::int`,
+          critical: sql<number>`count(*) filter (where ${platformSupportTickets.priority} in ('critical', 'high'))::int`,
+          resolved: sql<number>`count(*) filter (where ${platformSupportTickets.status} = 'resolved')::int`,
+          avgMinutes: sql<number>`coalesce(round(avg(extract(epoch from (${platformSupportTickets.firstRespondedAt} - ${platformSupportTickets.createdAt})) / 60) filter (where ${platformSupportTickets.firstRespondedAt} is not null))::int, 18)`,
+        })
+        .from(platformSupportTickets),
+
+      db
+        .select({ id: tenants.id, name: tenants.name, slug: tenants.slug })
+        .from(tenants)
+        .orderBy(tenants.name),
+
+      db
+        .select({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          image: user.image,
+        })
+        .from(user)
+        .where(and(eq(user.role, 'super_admin'), eq(user.userStatus, 'active'))),
+
+      db
+        .selectDistinct({ assignedTo: platformSupportTickets.assignedTo })
+        .from(platformSupportTickets)
+        .where(sql`${platformSupportTickets.assignedTo} IS NOT NULL AND ${platformSupportTickets.assignedTo} != ''`),
+    ]);
+
+    const assignableUsers = adminUsers.map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      image: u.image || null,
+    }));
+
+    const assigneesSet = new Set<string>();
+    for (const u of adminUsers) {
+      if (u.name) assigneesSet.add(u.name);
+    }
+    for (const a of existingAssignees) {
+      if (a.assignedTo) assigneesSet.add(a.assignedTo);
+    }
+    const assigneesList = Array.from(assigneesSet);
+
+    const stats = statsRows[0] || {
+      total: 0,
+      open: 0,
+      critical: 0,
+      resolved: 0,
+      avgMinutes: 18,
+    };
 
     return NextResponse.json({
       success: true,
       data: {
         stats: {
-          total: filtered.length,
-          open: openCount,
-          critical: criticalCount,
-          resolved: resolvedCount,
-          avgResponseTime: '18 min',
+          total: stats.total,
+          open: stats.open,
+          critical: stats.critical,
+          resolved: stats.resolved,
+          avgResponseTime: `${stats.avgMinutes} min`,
         },
-        tickets: filtered,
+        tickets,
         schools: schoolList,
+        assignees: assigneesList,
+        assignableUsers,
       },
     });
   } catch (error) {
@@ -153,30 +197,160 @@ export async function GET(req: NextRequest) {
   }
 }
 
-const updateTicketSchema = z.object({
-  ticketId: z.string(),
+const postTicketSchema = z.object({
+  action: z.enum(['update', 'create', 'assign']).default('update'),
+  // Create payload
+  tenantId: z.string().uuid().optional(),
+  schoolName: z.string().min(2).max(255).optional(),
+  subject: z.string().min(3).max(255).optional(),
+  category: z.enum(['technical', 'billing', 'onboarding', 'cndp_compliance', 'feature_request']).optional(),
+  priority: z.enum(['critical', 'high', 'medium', 'low']).default('medium'),
+  contactName: z.string().min(2).max(255).optional(),
+  contactEmail: z.string().email().optional(),
+  initialMessage: z.string().min(2).max(4000).optional(),
+  // Update & Assign payload
+  ticketId: z.string().uuid().optional(),
   status: z.enum(['new', 'in_progress', 'waiting_client', 'resolved', 'closed']).optional(),
-  assignedTo: z.string().optional(),
-  replyMessage: z.string().max(2000).optional(),
+  assignedTo: z.string().nullable().optional(),
+  replyMessage: z.string().max(4000).optional(),
+  attachments: z
+    .array(
+      z.object({
+        name: z.string(),
+        url: z.string(),
+        size: z.number(),
+        mimeType: z.string(),
+        type: z.enum(['image', 'video', 'file']),
+      })
+    )
+    .optional(),
 }).strict();
 
 export async function POST(req: NextRequest) {
   try {
     const ctx = await requireRequestContext(req, ['super_admin']);
-    const body = await parseJson(req, updateTicketSchema);
+    const body = await parseJson(req, postTicketSchema);
+
+    // 1. Create a new support ticket
+    if (body.action === 'create') {
+      if (!body.schoolName || !body.subject || !body.category || !body.contactName || !body.contactEmail || !body.initialMessage) {
+        throw new ApiError(400, 'BAD_REQUEST', 'Tous les champs obligatoires doivent être renseignés.');
+      }
+
+      const attachmentsList = body.attachments || [];
+
+      const [newTicket] = await db
+        .insert(platformSupportTickets)
+        .values({
+          tenantId: body.tenantId || null,
+          schoolName: body.schoolName,
+          subject: body.subject,
+          category: body.category,
+          priority: body.priority,
+          status: 'new',
+          contactName: body.contactName,
+          contactEmail: body.contactEmail,
+          lastMessage: body.initialMessage,
+          messagesCount: 1,
+          assignedTo: body.assignedTo || null,
+          attachments: attachmentsList,
+        })
+        .returning();
+
+      if (newTicket) {
+        await db.insert(platformSupportTicketMessages).values({
+          ticketId: newTicket.id,
+          senderType: 'client',
+          senderName: body.contactName,
+          message: body.initialMessage,
+          attachments: attachmentsList,
+        });
+      }
+
+      recordAudit(ctx, 'create', 'support_ticket', newTicket?.id || 'unknown', {
+        schoolName: body.schoolName,
+        subject: body.subject,
+        priority: body.priority,
+      });
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          ticket: newTicket,
+          message: 'Ticket créé et enregistré avec succès dans la base de données.',
+        },
+      });
+    }
+
+    // 2. Update or Assign an existing support ticket
+    if (!body.ticketId) {
+      throw new ApiError(400, 'BAD_REQUEST', 'L’identifiant du ticket est requis.');
+    }
+
+    const [existingTicket] = await db
+      .select()
+      .from(platformSupportTickets)
+      .where(eq(platformSupportTickets.id, body.ticketId))
+      .limit(1);
+
+    if (!existingTicket) {
+      throw new ApiError(404, 'NOT_FOUND', 'Ticket introuvable en base de données.');
+    }
+
+    const updates: Record<string, any> = {
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (body.status) {
+      updates.status = body.status;
+      if (body.status === 'resolved' && !existingTicket.resolvedAt) {
+        updates.resolvedAt = new Date().toISOString();
+      }
+    }
+
+    if (body.assignedTo !== undefined) {
+      updates.assignedTo = body.assignedTo;
+    }
+
+    const hasReplyText = Boolean(body.replyMessage && body.replyMessage.trim());
+    const hasAttachments = Boolean(body.attachments && body.attachments.length > 0);
+
+    if (hasReplyText || hasAttachments) {
+      const trimmedReply = body.replyMessage?.trim() || '';
+      updates.lastMessage = trimmedReply || '📎 Pièces jointes partagées par le support';
+      updates.messagesCount = sql`${platformSupportTickets.messagesCount} + 1`;
+
+      if (!existingTicket.firstRespondedAt) {
+        updates.firstRespondedAt = new Date().toISOString();
+      }
+
+      // Record message in thread
+      await db.insert(platformSupportTicketMessages).values({
+        ticketId: existingTicket.id,
+        senderType: 'super_admin',
+        senderName: ctx.name || 'Support SuperAdmin',
+        message: trimmedReply || 'Pièces jointes fournies par l’équipe support.',
+        attachments: body.attachments || [],
+      });
+    }
+
+    const [updatedTicket] = await db
+      .update(platformSupportTickets)
+      .set(updates)
+      .where(eq(platformSupportTickets.id, body.ticketId))
+      .returning();
 
     recordAudit(ctx, 'update', 'support_ticket', body.ticketId, {
       status: body.status,
       assignedTo: body.assignedTo,
-      hasReply: Boolean(body.replyMessage),
+      hasReply: hasReplyText || hasAttachments,
     });
 
     return NextResponse.json({
       success: true,
       data: {
-        ticketId: body.ticketId,
-        status: body.status,
-        message: 'Ticket mis à jour et réponse envoyée à l\'école.',
+        ticket: updatedTicket,
+        message: 'Ticket mis à jour et persisté avec succès.',
       },
     });
   } catch (error) {

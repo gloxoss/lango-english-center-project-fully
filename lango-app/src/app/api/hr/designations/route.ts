@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { recordAudit } from '@/libs/api/audit';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
@@ -47,6 +48,7 @@ export async function POST(request: Request) {
     const body = await parseJson(request, designationSchema);
     const data = await createDesignation(tenantId, body);
 
+    recordAudit(ctx, 'create', 'designation', data?.id ?? 'designation', { title: data?.title ?? null });
     return NextResponse.json({ success: true, data }, { status: 201 });
   } catch (error) {
     return apiErrorResponse(error);

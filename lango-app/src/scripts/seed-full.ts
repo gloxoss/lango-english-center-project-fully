@@ -348,6 +348,7 @@ async function run() {
       'transport', 'library', 'hostel', 'human-resources', 'payroll-workforce',
       'advanced-reporting', 'card-management', 'certificate-management',
       'event-management', 'inventory', 'lead-crm', 'live-classrooms',
+      'broadcast-messaging', 'multi-branch',
     ];
     await tx
       .insert(addonEntitlements)

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { requireWorkforceAddon } from '@/libs/api/entitlements';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { recordAudit } from '@/libs/api/audit';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';

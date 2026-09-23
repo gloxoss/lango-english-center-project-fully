@@ -3,7 +3,7 @@
 // index on guardReleaseEvents(authorizationId) is the DB backstop, and the
 // consumed status fails a replay. Release evidence is an immutable snapshot —
 // never a credential secret.
-import { and, desc, eq, ilike, or } from 'drizzle-orm';
+import { and, desc, eq, gt, ilike, isNull, lte, or, sql } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { ApiError } from '@/libs/api/errors';
 import { recordAudit } from '@/libs/api/audit';
@@ -19,6 +19,22 @@ import { requireTenantGate } from '@/features/guard/services/visitors-service';
 function requireTenantId(context: RequestContext): string {
   if (!context.tenantId) throw new ApiError(403, 'TENANT_REQUIRED', 'Un établissement est requis.');
   return context.tenantId;
+}
+
+// The relationship can change after an authorization was issued. Keep this
+// predicate identical for creation and release, and lock the row at release.
+function livePickupLink(tenantId: string, studentId: string, guardianId: string) {
+  return and(
+    eq(guardianStudents.tenantId, tenantId),
+    eq(guardianStudents.studentId, studentId),
+    eq(guardianStudents.guardianId, guardianId),
+    eq(guardianStudents.status, 'active'),
+    eq(guardianStudents.canPickup, true),
+    eq(guardianStudents.hasPickupAuthority, true),
+    isNull(guardianStudents.custodyRestriction),
+    or(isNull(guardianStudents.effectiveFrom), lte(guardianStudents.effectiveFrom, sql`now()`)),
+    or(isNull(guardianStudents.effectiveTo), gt(guardianStudents.effectiveTo, sql`now()`)),
+  );
 }
 
 async function requireTenantStudent(tenantId: string, studentId: string) {
@@ -64,43 +80,61 @@ export async function listStudentPickups(context: RequestContext, studentId: str
   const student = await requireTenantStudent(tenantId, studentId);
   if (!student) throw new ApiError(404, 'STUDENT_NOT_FOUND', 'Élève introuvable.');
 
-  const linked = await db
-    .select({
-      pickupPersonId: guardianStudents.guardianId,
-      firstName: guardians.firstName,
-      lastName: guardians.lastName,
-      relationshipType: guardianStudents.relationshipType,
-      isPrimaryContact: guardianStudents.isPrimaryContact,
-      isEmergencyContact: guardianStudents.isEmergencyContact,
-      canPickup: guardianStudents.canPickup,
-    })
-    .from(guardianStudents)
-    .innerJoin(guardians, eq(guardianStudents.guardianId, guardians.id))
-    .where(and(
-      eq(guardianStudents.tenantId, tenantId),
-      eq(guardianStudents.studentId, studentId),
-    ))
-    .orderBy(desc(guardianStudents.isPrimaryContact));
+    const now = Date.now();
 
-  const authorizations = await db
-    .select()
-    .from(guardPickupAuthorizations)
-    .where(and(
-      eq(guardPickupAuthorizations.tenantId, tenantId),
-      eq(guardPickupAuthorizations.studentId, studentId),
-      eq(guardPickupAuthorizations.status, 'active'),
-    ));
+    const linked = await db
+      .select({
+        pickupPersonId: guardianStudents.guardianId,
+        firstName: guardians.firstName,
+        lastName: guardians.lastName,
+        relationshipType: guardianStudents.relationshipType,
+        isPrimaryContact: guardianStudents.isPrimaryContact,
+        isEmergencyContact: guardianStudents.isEmergencyContact,
+        canPickup: guardianStudents.canPickup,
+        hasPickupAuthority: guardianStudents.hasPickupAuthority,
+        custodyRestriction: guardianStudents.custodyRestriction,
+        status: guardianStudents.status,
+        effectiveFrom: guardianStudents.effectiveFrom,
+        effectiveTo: guardianStudents.effectiveTo,
+      })
+      .from(guardianStudents)
+      .innerJoin(guardians, eq(guardianStudents.guardianId, guardians.id))
+      .where(and(
+        eq(guardianStudents.tenantId, tenantId),
+        eq(guardianStudents.studentId, studentId),
+      ))
+      .orderBy(desc(guardianStudents.isPrimaryContact));
 
-  return {
-    student: { id: student.id, matricule: student.matricule, name: student.name },
-    pickups: linked.map(link => ({
-      ...link,
-      activeAuthorizations: authorizations
-        .filter(a => a.pickupPersonId === link.pickupPersonId)
-        .map(a => ({ id: a.id, authorizedFrom: a.authorizedFrom, authorizedUntil: a.authorizedUntil, reason: a.reason })),
-    })),
-  };
-}
+    const authorizations = await db
+      .select()
+      .from(guardPickupAuthorizations)
+      .where(and(
+        eq(guardPickupAuthorizations.tenantId, tenantId),
+        eq(guardPickupAuthorizations.studentId, studentId),
+        eq(guardPickupAuthorizations.status, 'active'),
+      ));
+
+    return {
+      student: { id: student.id, matricule: student.matricule, name: student.name },
+      pickups: linked.map((link) => {
+        const isAuthorized = Boolean(
+          link.canPickup
+          && link.hasPickupAuthority
+          && !link.custodyRestriction
+          && link.status === 'active'
+          && (!link.effectiveFrom || new Date(link.effectiveFrom).getTime() <= now)
+          && (!link.effectiveTo || new Date(link.effectiveTo).getTime() > now),
+        );
+        return {
+          ...link,
+          canPickup: isAuthorized,
+          activeAuthorizations: authorizations
+            .filter(a => a.pickupPersonId === link.pickupPersonId)
+            .map(a => ({ id: a.id, authorizedFrom: a.authorizedFrom, authorizedUntil: a.authorizedUntil, reason: a.reason })),
+        };
+      }),
+    };
+  }
 
 // Create an effective-dated, one-time pickup authorization. The pickup person
 // must already be linked to the student as a guardian in this tenant.
@@ -119,14 +153,10 @@ export async function createPickupAuthorization(context: RequestContext, input: 
   const [link] = await db
     .select({ id: guardianStudents.id })
     .from(guardianStudents)
-    .where(and(
-      eq(guardianStudents.tenantId, tenantId),
-      eq(guardianStudents.guardianId, input.pickupPersonId),
-      eq(guardianStudents.studentId, input.studentId),
-    ))
+    .where(livePickupLink(tenantId, input.studentId, input.pickupPersonId))
     .limit(1);
   if (!link) {
-    throw new ApiError(422, 'PICKUP_PERSON_NOT_LINKED', 'Cette personne n\'est pas liée à l\'élève.');
+    throw new ApiError(422, 'PICKUP_RIGHT_INACTIVE', 'Cette personne ne peut pas récupérer cet élève.');
   }
 
   if (new Date(input.authorizedUntil).getTime() <= new Date(input.authorizedFrom).getTime()) {
@@ -255,6 +285,16 @@ export async function releaseStudent(context: RequestContext, input: {
       .where(and(eq(guardians.id, auth.pickupPersonId), eq(guardians.tenantId, tenantId)))
       .limit(1);
     if (!pickupPerson) throw new ApiError(404, 'PICKUP_PERSON_NOT_FOUND', 'Personne autorisée introuvable.');
+
+    const [liveLink] = await tx
+      .select({ id: guardianStudents.id })
+      .from(guardianStudents)
+      .where(livePickupLink(tenantId, input.studentId, auth.pickupPersonId))
+      .for('update')
+      .limit(1);
+    if (!liveLink) {
+      throw new ApiError(409, 'PICKUP_RIGHT_REVOKED', 'Le droit de récupération de cette personne a été révoqué.');
+    }
 
     const releasedAt = now.toISOString();
     await tx.insert(guardReleaseEvents).values({

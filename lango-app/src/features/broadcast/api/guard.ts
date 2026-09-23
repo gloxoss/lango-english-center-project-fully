@@ -13,7 +13,9 @@ export type BroadcastGuard = { context: RequestContext; tenantId: string };
 export async function broadcastGuard(request: Request, permission: PermissionKey): Promise<BroadcastGuard> {
   const context = await requireRequestContext(request);
   const tenantId = requireTenant(context);
-  await requireAddon(tenantId, BROADCAST_ADDON);
+  if (context.role !== 'super_admin') {
+    await requireAddon(tenantId, BROADCAST_ADDON);
+  }
   await requireCapability(context, permission);
   return { context, tenantId };
 }

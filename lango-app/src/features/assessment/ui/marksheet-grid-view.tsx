@@ -1,7 +1,7 @@
 'use client';
 
 import type { MarkRow, MarkStatus, NavigationKey } from '../services/marksheet-grid';
-import { AlertCircle, CheckCircle2, Keyboard, Loader2, Save } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Download, Keyboard, Loader2, Save, Upload } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
@@ -74,6 +74,39 @@ export function MarksheetGridView({
   };
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [importingMassar, setImportingMassar] = useState(false);
+
+  const handleExportMassar = () => {
+    window.open(`/api/academics/massar/export/marksheet?assessmentDefId=${assessmentDefinitionId}`, '_blank');
+  };
+
+  const handleImportMassar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportingMassar(true);
+    try {
+      const fd = new FormData();
+      fd.append('assessmentDefId', assessmentDefinitionId);
+      fd.append('file', file);
+      const res = await fetch('/api/academics/massar/import/marks', {
+        method: 'POST',
+        body: fd,
+      });
+      const json = await res.json();
+      if (json.success) {
+        alert(json.message);
+        void load();
+      } else {
+        alert(json.message || 'Erreur lors de l’import Massar');
+      }
+    } catch {
+      alert('Erreur réseau lors de l’import Massar');
+    } finally {
+      setImportingMassar(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -255,6 +288,45 @@ export function MarksheetGridView({
               {t('savedAtTime', { time: savedAt })}
             </span>
           )}
+
+          {/* Massar Official Moroccan Actions */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImportMassar}
+            accept=".xlsx"
+            className="hidden"
+          />
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleExportMassar}
+            className="h-9 gap-1.5 rounded-xl border-emerald-300 bg-emerald-50 text-emerald-800 text-xs font-bold hover:bg-emerald-100"
+            title="Exporter la feuille de notes au format officiel Massar (.xlsx)"
+          >
+            <Download className="size-3.5 text-emerald-600" />
+            <span>Export Massar</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={importingMassar}
+            onClick={() => fileInputRef.current?.click()}
+            className="h-9 gap-1.5 rounded-xl border-blue-200 bg-white text-slate-700 text-xs font-bold hover:bg-blue-50"
+            title="Importer les notes depuis un fichier Excel Massar"
+          >
+            {importingMassar ? (
+              <Loader2 className="size-3.5 animate-spin text-[#0066FF]" />
+            ) : (
+              <Upload className="size-3.5 text-[#0066FF]" />
+            )}
+            <span>Import Massar</span>
+          </Button>
+
           <Button
             onClick={() => void save()}
             disabled={saving || summary.invalidCount > 0 || buildSavePayload(rows, maximumScore).length === 0}

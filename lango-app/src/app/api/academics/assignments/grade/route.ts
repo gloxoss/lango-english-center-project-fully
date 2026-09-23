@@ -36,10 +36,16 @@ export async function POST(request: Request) {
     }
 
     const [assignment] = await db
-      .select({ maxScore: assignments.maxScore })
+      .select({ maxScore: assignments.maxScore, createdById: assignments.createdById })
       .from(assignments)
       .where(eq(assignments.id, sub.assignmentId))
       .limit(1);
+
+    // Audit 3, P1-I: a teacher may only grade their own assignment's
+    // submissions. school_admin keeps full oversight.
+    if (context.role === 'teacher' && assignment && assignment.createdById !== context.userId) {
+      throw new ApiError(403, 'FORBIDDEN', 'Vous ne pouvez noter que les soumissions de vos propres devoirs.');
+    }
 
     if (assignment && body.score > Number(assignment.maxScore)) {
       throw new ApiError(422, 'VALIDATION_ERROR', `La note ne peut pas dépasser la note maximale (${assignment.maxScore}).`);

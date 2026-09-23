@@ -44,16 +44,21 @@ export function CashierSessionsView({ locale: _locale }: { locale?: string }) {
 
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [filter, setFilter] = useState<'all' | SessionRow['status']>('all');
 
   const fetchSessions = async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const res = await fetch('/api/finance/cashier-sessions');
       const json = await res.json();
-      if (json.success) setSessions(json.data);
+      if (!res.ok || !json.success) throw new Error(json.error?.message || 'Cashier sessions unavailable');
+      setSessions(json.data);
     } catch (e) {
       console.error('Failed to load cashier sessions', e);
+      setSessions([]);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -69,6 +74,7 @@ export function CashierSessionsView({ locale: _locale }: { locale?: string }) {
   );
 
   const openCount = sessions.filter(s => s.status === 'open').length;
+  const closedCount = sessions.filter(s => s.status !== 'open' && s.actualCash !== null).length;
   const totalVariance = sessions.reduce((sum, s) => {
     if (s.status === 'open' || s.actualCash === null) return sum;
     return sum + (Number(s.actualCash) - Number(s.expectedCash));
@@ -119,7 +125,7 @@ export function CashierSessionsView({ locale: _locale }: { locale?: string }) {
         {[
           { icon: <Wallet className="w-5 h-5 text-[#2487B8]" />, color: 'bg-[#DCEBF4]', label: t('sessionsCount'), value: String(sessions.length) },
           { icon: <Clock className="w-5 h-5 text-amber-600" />, color: 'bg-amber-100', label: t('openSessions'), value: String(openCount) },
-          { icon: <CheckCircle2 className="w-5 h-5 text-[#17A673]" />, color: 'bg-[#DDF5EC]', label: t('cumulativeVariance'), value: `${totalVariance.toLocaleString('fr-FR')} MAD` },
+          { icon: <CheckCircle2 className={`w-5 h-5 ${closedCount > 0 ? 'text-[#17A673]' : 'text-slate-400'}`} />, color: closedCount > 0 ? 'bg-[#DDF5EC]' : 'bg-slate-100', label: t('cumulativeVariance'), value: !loading && !loadError && closedCount > 0 ? `${totalVariance.toLocaleString('fr-FR')} MAD` : '—' },
           { icon: <Lock className="w-5 h-5 text-slate-500" />, color: 'bg-slate-100', label: t('reconciledSessions'), value: String(sessions.filter(s => s.status === 'reconciled').length) },
         ].map((stat, i) => (
           <Card key={i} className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center gap-3">
@@ -164,7 +170,7 @@ export function CashierSessionsView({ locale: _locale }: { locale?: string }) {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {!loading && filtered.length === 0 && (
-                <tr><td colSpan={9} className="py-8 text-center text-slate-400">{t('noSessionsFound')}</td></tr>
+                <tr><td colSpan={9} className="py-8 text-center text-slate-500">{loadError ? t('loadCashierSessionsError') : sessions.length === 0 ? t('noSessionsToReconcile') : t('noSessionsFound')}</td></tr>
               )}
               {filtered.map(s => {
                 const variance = s.status === 'open' || s.actualCash === null ? 0 : Number(s.actualCash) - Number(s.expectedCash);

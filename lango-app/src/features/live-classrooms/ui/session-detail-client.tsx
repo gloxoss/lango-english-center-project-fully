@@ -8,6 +8,7 @@ import {
   Users, ListChecks, AlertTriangle, Clock, ExternalLink, Trash2, Plus, CircleCheck,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { LiveClassroomStudio } from './live-classroom-studio';
 import {
   getSessionDetail, getAttendance, getRecordings, getMaterials, joinSession, redeemJoin,
   startSession, endSession, cancelSession, reconcileAttendance, postAttendance,
@@ -27,6 +28,7 @@ export function SessionDetailClient({ sessionId, locale }: { sessionId: string; 
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [joinUrl, setJoinUrl] = useState<string | null>(null);
+  const [isLiveRoomOpen, setIsLiveRoomOpen] = useState(false);
   const [reconcileNote, setReconcileNote] = useState('');
   const [newAssetId, setNewAssetId] = useState('');
 
@@ -97,15 +99,28 @@ export function SessionDetailClient({ sessionId, locale }: { sessionId: string; 
     setError(null);
     setNotice(null);
     try {
+      // If session is scheduled/waiting, start it first so it becomes live
+      if (s.status === 'scheduled' || s.status === 'waiting') {
+        try {
+          await startSession(sessionId);
+          await loadAll();
+        } catch {
+          // non-fatal if already started
+        }
+      }
       const grant = await joinSession(sessionId);
       const redeemed = await redeemJoin(sessionId, grant.token);
       setJoinUrl(redeemed.url);
+      setIsLiveRoomOpen(true);
       setNotice(t('tokenIssuedNotice', {
         role: redeemed.role === 'moderator' ? t('roleModerator') : t('roleParticipant'),
         devNotice: redeemed.providerType === 'dev' ? `(${t('devProvider')})` : '',
       }));
     } catch (err) {
       setError(errorMessage(err));
+      if (detail?.providerType === 'dev') {
+        setIsLiveRoomOpen(true);
+      }
     } finally {
       setBusy(null);
     }
@@ -199,28 +214,74 @@ export function SessionDetailClient({ sessionId, locale }: { sessionId: string; 
             </h2>
             <p className="text-[11px] text-slate-500 mt-0.5">
               {detail!.providerType === 'dev'
-                ? t('devProviderDesc')
+                ? 'Salle Virtuelle Instantanée WebRTC (Caméra, micro, tableau blanc & partage d\'écran sans configuration)'
                 : t('providerLabelPrefix', { provider: detail!.profileName ?? detail!.providerType ?? '' })}
             </p>
           </div>
-          <button onClick={handleJoin} disabled={busy === 'join' || !canHost}
-            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-[#2487B8] px-4 text-xs font-bold text-white hover:bg-[#1B6C93] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer">
-            <Video className="h-3.5 w-3.5" /> {busy === 'join' ? t('generatingToken') : t('joinSessionBtn')}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                if (!joinUrl) {
+                  handleJoin();
+                } else {
+                  setIsLiveRoomOpen(prev => !prev);
+                }
+              }}
+              disabled={busy === 'join' || !canHost}
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-slate-900 px-4 text-xs font-bold text-white hover:bg-black disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer shadow-xs"
+            >
+              <Video className="h-3.5 w-3.5 text-emerald-400" />
+              {busy === 'join' ? t('generatingToken') : isLiveRoomOpen ? 'Masquer la caméra' : '🎥 Démarrer la Visio Directe'}
+            </button>
+            <button
+              onClick={handleJoin}
+              disabled={busy === 'join' || !canHost}
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-[#2487B8] px-4 text-xs font-bold text-white hover:bg-[#1B6C93] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer"
+            >
+              {t('joinSessionBtn')}
+            </button>
+          </div>
         </div>
         {joinUrl && (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2 text-start">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 space-y-2.5 text-start">
             <p className="text-[11px] font-bold text-slate-500">{t('devLinkWarning')}</p>
             <div className="flex flex-col sm:flex-row gap-2">
               <code className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] text-slate-700 break-all">{joinUrl}</code>
-              <a href={joinUrl} target="_blank" rel="noreferrer"
-                className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-[#2487B8] px-3 text-xs font-bold text-white hover:bg-[#1B6C93] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer">
+              <a
+                href={joinUrl.startsWith('http') ? joinUrl : `https://meet.jit.si/SchoolOS-Live-${sessionId}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-[#2487B8] px-3 text-xs font-bold text-white hover:bg-[#1B6C93] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer"
+              >
                 {t('actionOpen')}
               </a>
+            </div>
+            <div className="rounded-lg bg-amber-50 border border-amber-200 p-2.5 text-[11px] text-amber-900 leading-relaxed">
+              <strong>💡 Comment être accepté dans la réunion :</strong>
+              <ul className="mt-1 list-disc list-inside space-y-0.5 text-amber-800">
+                <li><strong>Dans SchoolOS :</strong> La visio directe s&apos;ouvre automatiquement ci-dessous (caméra, micro, écran 100% direct, 0 compte requis).</li>
+                <li><strong>Dans l&apos;onglet Jitsi externe :</strong> Si vous voyez <em>&quot;The conference has not yet started...&quot;</em>, cliquez sur le bouton bleu <strong>&quot;I am the host&quot; / &quot;Je suis l&apos;hôte&quot;</strong> et connectez-vous avec votre compte Google. La salle s&apos;ouvrira instantanément pour tous les participants.</li>
+              </ul>
             </div>
           </div>
         )}
       </div>
+
+      {/* Embedded Live Classroom Studio */}
+      {isLiveRoomOpen && (
+        <LiveClassroomStudio
+          sessionTitle={s.title}
+          teacherName={detail!.teacherName ?? 'Enseignant'}
+          className={detail!.className ? `${detail!.className} ${detail!.sectionName ?? ''}`.trim() : undefined}
+          onClose={() => setIsLiveRoomOpen(false)}
+          externalJoinUrl={joinUrl?.startsWith('http') ? joinUrl : `https://meet.jit.si/SchoolOS-Live-${sessionId}`}
+          roster={(detail!.invitations ?? []).map(inv => ({
+            userId: inv.userId,
+            name: inv.userName ?? inv.userId,
+            role: inv.participantRole,
+          }))}
+        />
+      )}
 
       {/* Info cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

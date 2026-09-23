@@ -96,12 +96,21 @@ export function FeeStructuresView({ locale: _locale }: { locale?: string } = {})
 
   useEffect(() => {
     load();
-    fetch('/api/academics/semesters?pageSize=200')
-      .then(res => (res.ok ? res.json() : null))
-      .then((json) => {
-        if (json?.success) setTerms(json.data ?? []);
-      })
-      .catch(() => {});
+    void (async () => {
+      try {
+        const all: NamedScope[] = [];
+        for (let page = 1; ; page++) {
+          const res = await fetch(`/api/finance/lookups?resource=semesters&page=${page}&pageSize=100`);
+          const json = await res.json();
+          if (!res.ok || !json.success) throw new Error(json.error?.message || 'Impossible de charger les semestres.');
+          all.push(...json.data);
+          if (all.length >= json.total) break;
+        }
+        setTerms(all);
+      } catch (err) {
+        setStructError(err instanceof Error ? err.message : 'Impossible de charger les semestres.');
+      }
+    })();
     fetch('/api/settings/branches')
       .then(res => (res.ok ? res.json() : null))
       .then((json) => {

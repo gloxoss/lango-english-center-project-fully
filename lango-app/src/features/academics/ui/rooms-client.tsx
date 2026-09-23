@@ -488,7 +488,7 @@ export function RoomsClient({ locale: _locale }: { locale?: string } = {}) {
               </div>
 
               <div>
-                <label className="mb-1 block font-bold text-slate-700" htmlFor="room-capacity">{t('roomCapacityLabel')}</label>
+                <label className="mb-1 block font-bold text-slate-700" htmlFor="room-capacity">{t('roomCapacityFieldLabel')}</label>
                 <Input
                   id="room-capacity"
                   type="number"
@@ -525,7 +525,7 @@ export function RoomsClient({ locale: _locale }: { locale?: string } = {}) {
             </div>
 
             <div>
-              <label className="mb-1 block font-bold text-slate-700" htmlFor="room-type">{t('roomTypeLabel')}</label>
+              <label className="mb-1 block font-bold text-slate-700" htmlFor="room-type">{t('roomTypeFieldLabel')}</label>
               <Select value={newRoom.roomType} onValueChange={val => setNewRoom({ ...newRoom, roomType: val as RoomType })}>
                 <SelectTrigger id="room-type" className="h-9 rounded-xl text-xs">
                   <SelectValue />
@@ -572,4 +572,3 @@ export function RoomsClient({ locale: _locale }: { locale?: string } = {}) {
     </div>
   );
 }
-

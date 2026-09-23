@@ -105,6 +105,9 @@ export const homeworkDetails = pgTable('homework_details', {
   maxAttachments: integer('max_attachments').default(3).notNull(),
   lateSubmissionPolicy: text('late_submission_policy').default('accept_flag').notNull(),
   closeAt: timestamp('close_at', { mode: 'string' }),
+  attachments: jsonb('attachments')
+    .$type<Array<{ name: string; url: string; size?: number; type?: string }>>()
+    .default([]),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
 });
 

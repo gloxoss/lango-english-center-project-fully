@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { postApprovedAccountingDocument } from '@/features/accounting/services/document-service';
 import { requireRequestContext } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { recordAudit } from '@/libs/api/audit';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 
@@ -13,6 +14,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const ctx = await requireRequestContext(req); await requireCapability(ctx, 'accounting.voucher.post');
     const [{ id }, body] = await Promise.all([params, parseJson(req, schema)]);
     const data = await postApprovedAccountingDocument({ tenantId: ctx.tenantId!, documentId: id, actorId: ctx.userId, ...body });
+    recordAudit(ctx, 'update', 'accounting_expense_post', id, { idempotent: (data as unknown as Record<string, unknown>)?.idempotent ?? null });
     return NextResponse.json({ success: true, data });
   } catch (error) { return apiErrorResponse(error); }
 }

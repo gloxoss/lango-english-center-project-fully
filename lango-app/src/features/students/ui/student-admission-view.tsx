@@ -36,9 +36,12 @@ type FormState = {
   city: string;
   bloodGroup: string;
   academicYearId: string;
+  branchId: string;
+  nationalId: string;
   guardianName: string;
   guardianPhone: string;
   guardianEmail: string;
+  guardianRelation: string;
   guardianOccupation: string;
   guardianAddress: string;
   guardianEmailOptIn: boolean;
@@ -60,9 +63,12 @@ const EMPTY_FORM: FormState = {
   city: '',
   bloodGroup: '',
   academicYearId: '',
+  branchId: '',
+  nationalId: '',
   guardianName: '',
   guardianPhone: '',
   guardianEmail: '',
+  guardianRelation: 'Parent',
   guardianOccupation: '',
   guardianAddress: '',
   guardianEmailOptIn: true,
@@ -73,6 +79,7 @@ const EMPTY_FORM: FormState = {
 const BLOOD_GROUP_OPTIONS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 type AcademicYear = { id: string; name: string };
+type Branch = { id: string; name: string; isDefault?: boolean };
 type GuardianResult = { id: string; name: string; phone: string; email: string; relation: string };
 
 function isStep1Valid(f: FormState) {
@@ -100,6 +107,19 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
   const [step1Error, setStep1Error] = useState<string | null>(null);
 
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
+  const [branchesList, setBranchesList] = useState<Branch[]>([]);
+  const [duplicateWarning, setDuplicateWarning] = useState<{
+    id: string;
+    name: string;
+    status: string;
+    isEnrolledStudent?: boolean;
+    severity?: 'strong' | 'medium' | 'advisory';
+    matchType?: 'massar' | 'contact' | 'identity';
+  } | null>(null);
+  const [massarConflict, setMassarConflict] = useState<{
+    message: string;
+    duplicate?: { id: string; name: string; status: string; isEnrolledStudent?: boolean };
+  } | null>(null);
 
   // Step 2: guardian search-first.
   const [guardianSearch, setGuardianSearch] = useState('');
@@ -110,10 +130,12 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
   const [selectedGuardian, setSelectedGuardian] = useState<GuardianResult | null>(null);
   const [showCreateGuardianForm, setShowCreateGuardianForm] = useState(false);
 
-  // Step 3: real document uploads.
+  // Step 3: real document uploads & consents.
   const [uploadedDocTypes, setUploadedDocTypes] = useState<Set<string>>(new Set());
   const [uploadingDocType, setUploadingDocType] = useState<string | null>(null);
   const [docUploadErrors, setDocUploadErrors] = useState<Record<string, string>>({});
+  const [consentAccuracy, setConsentAccuracy] = useState(true);
+  const [consentCndp, setConsentCndp] = useState(true);
 
   const set = (field: StringField) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm(prev => ({ ...prev, [field]: e.target.value }));
@@ -148,6 +170,15 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
       .then(res => (res.ok ? res.json() : null))
       .then(json => json?.success && setAcademicYears(json.data))
       .catch(() => {});
+
+    fetch('/api/settings/branches')
+      .then(res => (res.ok ? res.json() : null))
+      .then(json => {
+        if (json?.success && Array.isArray(json.data)) {
+          setBranchesList(json.data);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -173,13 +204,14 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
     return () => clearTimeout(handle);
   }, [guardianSearch, t]);
 
-  async function handleGoToStep2() {
+  async function handleGoToStep2(override: boolean = false) {
     if (applicantId) {
       setStep(2);
       return;
     }
     setCreatingApplicant(true);
     setStep1Error(null);
+    setMassarConflict(null);
     try {
       const res = await fetch('/api/students/admissions', {
         method: 'POST',
@@ -196,13 +228,27 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
           city: form.city || undefined,
           bloodGroup: form.bloodGroup || undefined,
           academicYearId: form.academicYearId || undefined,
+          branchId: form.branchId || undefined,
+          nationalId: form.nationalId ? form.nationalId.trim().toUpperCase() : undefined,
+          overrideDuplicate: override || undefined,
+          overrideReason: override ? 'Autorisation administrative explicite (dérogation doublon Massar)' : undefined,
         }),
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
+        if (res.status === 409 && json.error?.code === 'MASSAR_DUPLICATE_CONFLICT') {
+          setMassarConflict({
+            message: json.error.message,
+            duplicate: json.error.details?.duplicate,
+          });
+          return;
+        }
         throw new Error(json.error?.message || json.message || (locale === 'ar' ? 'فشل إنشاء طلب القبول.' : 'Échec de la création de la demande.'));
       }
       setApplicantId(json.data.id);
+      if (json.duplicateWarning) {
+        setDuplicateWarning(json.duplicateWarning);
+      }
       setStep(2);
     } catch (err) {
       setStep1Error(err instanceof Error ? err.message : (locale === 'ar' ? 'حدث خطأ غير متوقع.' : 'Erreur inconnue.'));
@@ -247,17 +293,25 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
           selectedGuardian
-            ? { id: applicantId, guardianId: selectedGuardian.id }
+            ? {
+                id: applicantId,
+                guardianId: selectedGuardian.id,
+                consentAccuracy,
+                consentCndp,
+              }
             : {
                 id: applicantId,
                 guardianName: form.guardianName || undefined,
                 guardianPhone: form.guardianPhone || undefined,
                 guardianEmail: form.guardianEmail || undefined,
+                guardianRelation: form.guardianRelation || undefined,
                 occupation: form.guardianOccupation || undefined,
                 address: form.guardianAddress || undefined,
                 emailOptIn: form.guardianEmailOptIn,
                 smsOptIn: form.guardianSmsOptIn,
                 preferredLanguage: form.guardianPreferredLanguage || undefined,
+                consentAccuracy,
+                consentCndp,
               },
         ),
       });
@@ -284,6 +338,9 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
     setGuardianResults([]);
     setGuardianSearchAttempted(false);
     setUploadedDocTypes(new Set());
+    setDuplicateWarning(null);
+    setConsentAccuracy(true);
+    setConsentCndp(true);
   }
 
   // POST /api/students/admissions is school_admin-only server-side - show
@@ -343,6 +400,100 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
           <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('admissionTitle')}</h1>
           <p className="mt-1 text-xs text-slate-500">{t('admissionSubtitle')}</p>
         </div>
+
+        {/* Intake Semantics Disclaimer Banner */}
+        <div className="flex items-start gap-3 rounded-2xl border border-sky-200 bg-sky-50/70 p-4 text-xs text-sky-900 shadow-2xs">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
+            <FileText className="size-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-extrabold text-[#16212B]">{t('intakeDisclaimerTitle')}</p>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
+              {t('intakeDisclaimerDesc')}
+            </p>
+          </div>
+        </div>
+
+        {/* Massar Duplicate Conflict Alert (Blocking with Administrative Override) */}
+        {massarConflict && (
+          <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50/90 p-4 text-xs text-rose-900 shadow-2xs">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-700">
+              <AlertTriangle className="size-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-extrabold text-[#16212B]">{t('massarDuplicateTitle')}</p>
+              <p className="mt-0.5 text-[11px] leading-relaxed text-rose-800">
+                {t('massarDuplicateDesc', {
+                  name: massarConflict.duplicate?.name || form.nationalId,
+                  status: massarConflict.duplicate?.status || 'active',
+                })}
+              </p>
+              <div className="mt-3 flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  disabled={creatingApplicant}
+                  onClick={() => handleGoToStep2(true)}
+                  className="h-8 rounded-full bg-rose-600 px-4 text-[11px] text-white hover:bg-rose-700"
+                >
+                  {creatingApplicant ? <Loader2 className="size-3 animate-spin me-1.5" /> : null}
+                  {t('btnConfirmOverride')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={creatingApplicant}
+                  onClick={() => setMassarConflict(null)}
+                  className="h-8 rounded-full px-3 text-[11px]"
+                >
+                  {t('btnCancelConflict')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Duplicate Candidate / Student Warning Alert */}
+        {duplicateWarning && (
+          <div className={`flex items-start gap-3 rounded-2xl border p-4 text-xs shadow-2xs ${
+            duplicateWarning.severity === 'strong'
+              ? 'border-rose-200 bg-rose-50/80 text-rose-900'
+              : duplicateWarning.severity === 'medium'
+                ? 'border-amber-200 bg-amber-50/80 text-amber-900'
+                : 'border-sky-200 bg-sky-50/80 text-sky-900'
+          }`}>
+            <div className={`flex size-8 shrink-0 items-center justify-center rounded-xl ${
+              duplicateWarning.severity === 'strong'
+                ? 'bg-rose-100 text-rose-700'
+                : duplicateWarning.severity === 'medium'
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'bg-sky-100 text-sky-700'
+            }`}>
+              <AlertTriangle className="size-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <p className="font-extrabold text-[#16212B]">{t('duplicateWarningTitle')}</p>
+                {duplicateWarning.severity === 'strong' && (
+                  <Badge variant="danger" className="text-[9px] py-0 px-2">
+                    {locale === 'ar' ? 'ترخيص إداري' : 'Dérogation administrative'}
+                  </Badge>
+                )}
+              </div>
+              <p className={`mt-0.5 text-[11px] leading-relaxed ${
+                duplicateWarning.severity === 'strong'
+                  ? 'text-rose-800'
+                  : duplicateWarning.severity === 'medium'
+                    ? 'text-amber-800'
+                    : 'text-sky-800'
+              }`}>
+                {t('duplicateWarningDesc', { name: duplicateWarning.name, status: duplicateWarning.status })}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Steps */}
         <div className="
@@ -441,6 +592,23 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
                     <option value="">{t('selectPlaceholder')}</option>
                     {academicYears.map(y => <option key={y.id} value={y.id}>{y.name}</option>)}
                   </select>
+                </div>
+              </div>
+              <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="admission-branch" className="text-[10px] font-bold text-slate-500">{t('branch')}</label>
+                  <select id="admission-branch" value={form.branchId} onChange={set('branchId')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs bg-white">
+                    <option value="">{t('branchPlaceholder')}</option>
+                    {branchesList.map(b => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}{b.isDefault ? ` (${locale === 'ar' ? 'افتراضي' : 'Par défaut'})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="admission-massar" className="text-[10px] font-bold text-slate-500">{t('massarCode')}</label>
+                  <Input id="admission-massar" value={form.nationalId} onChange={set('nationalId')} placeholder="Ex. G134567890" className="mt-1 h-10 rounded-xl text-xs uppercase" />
                 </div>
               </div>
               <div className="mb-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -566,9 +734,21 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
                       <Input id="admission-guardian-phone" value={form.guardianPhone} onChange={set('guardianPhone')} className="mt-1 h-10 rounded-xl text-xs" />
                     </div>
                   </div>
-                  <div className="mb-3">
-                    <label htmlFor="admission-guardian-email" className="text-[10px] font-bold text-slate-500">{t('guardianEmailField')}</label>
-                    <Input id="admission-guardian-email" type="email" value={form.guardianEmail} onChange={set('guardianEmail')} className="mt-1 h-10 rounded-xl text-xs" />
+                  <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="admission-guardian-email" className="text-[10px] font-bold text-slate-500">{t('guardianEmailField')}</label>
+                      <Input id="admission-guardian-email" type="email" value={form.guardianEmail} onChange={set('guardianEmail')} className="mt-1 h-10 rounded-xl text-xs" />
+                    </div>
+                    <div>
+                      <label htmlFor="admission-guardian-relation" className="text-[10px] font-bold text-slate-500">{t('guardianRelationField')}</label>
+                      <select id="admission-guardian-relation" value={form.guardianRelation} onChange={set('guardianRelation')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs bg-white">
+                        <option value="Parent">{t('summaryGuardian')}</option>
+                        <option value="Père">{t('relationFather')}</option>
+                        <option value="Mère">{t('relationMother')}</option>
+                        <option value="Tuteur">{t('relationGuardian')}</option>
+                        <option value="Autre">{t('relationOther')}</option>
+                      </select>
+                    </div>
                   </div>
                   <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -607,7 +787,10 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
           {step === 3 && (
             <div>
               <h2 className="mb-1 text-sm font-extrabold text-[#16212B]">{t('documentsSectionTitle')}</h2>
-              <p className="mb-4 text-[10px] text-slate-500">{t('documentsSectionSubtitle')}</p>
+              <p className="mb-2 text-[10px] text-slate-500">{t('documentsSectionSubtitle')}</p>
+              <div className="mb-4 rounded-xl border border-slate-200/60 bg-slate-50/80 p-3 text-[11px] leading-relaxed text-slate-600">
+                {t('docIntakeNotice')}
+              </div>
               <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {documents.map((doc) => {
                   const uploaded = uploadedDocTypes.has(doc.type);
@@ -619,11 +802,14 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
                         {uploaded ? <CheckCircle2 className="size-4 text-[#17A673]" /> : <FileText className="size-4 text-slate-400" />}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <label htmlFor={`admission-doc-${doc.type}`} className="block truncate text-[11px] font-bold text-[#16212B]">
-                          {doc.name}
-                          {' '}
-                          {doc.required && <span className="text-[#E5544B]">*</span>}
-                        </label>
+                        <div className="flex items-center gap-2">
+                          <label htmlFor={`admission-doc-${doc.type}`} className="block truncate text-[11px] font-bold text-[#16212B]">
+                            {doc.name}
+                          </label>
+                          <Badge variant={doc.required ? 'warning' : 'neutral'} className={`text-[8px] font-bold px-1.5 py-0 border-0 ${doc.required ? 'bg-amber-100/70 text-amber-800' : 'bg-slate-200/60 text-slate-600'}`}>
+                            {doc.required ? t('docRequiredBeforeApproval') : t('docOptional')}
+                          </Badge>
+                        </div>
                         <p className="text-[9px] text-slate-400">{error ? <span className="text-rose-600">{error}</span> : doc.format}</p>
                       </div>
                       <input
@@ -657,22 +843,30 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
               </div>
               <div>
                 <h3 className="mb-3 text-xs font-bold text-[#16212B]">{t('consentsTitle')}</h3>
-                {[
-                  t('consentAccuracy'),
-                  t('consentCndp'),
-                ].map((c, i) => (
-                  <div key={i} className="flex items-start gap-2 py-1">
-                    <input
-                      id={`admission-consent-${i}`}
-                      type="checkbox"
-                      defaultChecked
-                      className="mt-0.5 rounded-sm text-[#2487B8]"
-                    />
-                    <label htmlFor={`admission-consent-${i}`} className="text-[11px] text-slate-600">
-                      {c}
-                    </label>
-                  </div>
-                ))}
+                <div className="flex items-start gap-2 py-1">
+                  <input
+                    id="admission-consent-accuracy"
+                    type="checkbox"
+                    checked={consentAccuracy}
+                    onChange={e => setConsentAccuracy(e.target.checked)}
+                    className="mt-0.5 rounded-sm text-[#2487B8]"
+                  />
+                  <label htmlFor="admission-consent-accuracy" className="text-[11px] text-slate-600 cursor-pointer">
+                    {t('consentAccuracy')}
+                  </label>
+                </div>
+                <div className="flex items-start gap-2 py-1">
+                  <input
+                    id="admission-consent-cndp"
+                    type="checkbox"
+                    checked={consentCndp}
+                    onChange={e => setConsentCndp(e.target.checked)}
+                    className="mt-0.5 rounded-sm text-[#2487B8]"
+                  />
+                  <label htmlFor="admission-consent-cndp" className="text-[11px] text-slate-600 cursor-pointer">
+                    {t('consentCndp')}
+                  </label>
+                </div>
               </div>
             </div>
           )}
@@ -690,6 +884,28 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
                     {form.lastName}
                   </span>
                 </div>
+                {form.nationalId && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">{t('massarCode')}</span>
+                    <span className="font-bold text-[#16212B]">{form.nationalId}</span>
+                  </div>
+                )}
+                {form.branchId && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">{t('branch')}</span>
+                    <span className="font-bold text-[#16212B]">
+                      {branchesList.find(b => b.id === form.branchId)?.name || '—'}
+                    </span>
+                  </div>
+                )}
+                {form.academicYearId && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">{t('academicYear')}</span>
+                    <span className="font-bold text-[#16212B]">
+                      {academicYears.find(y => y.id === form.academicYearId)?.name || '—'}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-slate-500">{t('summaryEmail')}</span>
                   <span className="font-bold text-[#16212B]">{form.email || '—'}</span>
@@ -710,6 +926,10 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
                     /
                     {' '}
                     {documents.length}
+                    {' '}
+                    <span className="text-[10px] font-normal text-slate-400">
+                      ({t('summaryDocsNotice')})
+                    </span>
                   </span>
                 </div>
               </div>
@@ -740,7 +960,7 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
                   variant="primary"
                   size="sm"
                   disabled={!canGoNext || creatingApplicant}
-                  onClick={handleGoToStep2}
+                  onClick={() => handleGoToStep2(false)}
                   className="h-10 gap-2 rounded-full bg-[#0066FF] px-5 text-xs"
                 >
                   {creatingApplicant ? <Loader2 className="size-4 animate-spin" /> : null}
@@ -805,6 +1025,23 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
               <p className="text-[10px] text-slate-400">{form.dateOfBirth || t('dobNotSpecified')}</p>
             </div>
           </div>
+
+          {(form.branchId || form.academicYearId) && (
+            <div className="mb-4 rounded-xl border border-slate-100 bg-slate-50 p-2.5 text-[10px] space-y-1">
+              {form.branchId && (
+                <div className="flex justify-between">
+                  <span className="text-slate-400">{t('branch')}</span>
+                  <span className="font-bold text-[#16212B]">{branchesList.find(b => b.id === form.branchId)?.name || '—'}</span>
+                </div>
+              )}
+              {form.academicYearId && (
+                <div className="flex justify-between">
+                  <span className="text-slate-400">{t('academicYear')}</span>
+                  <span className="font-bold text-[#16212B]">{academicYears.find(y => y.id === form.academicYearId)?.name || '—'}</span>
+                </div>
+              )}
+            </div>
+          )}
 
           <h4 className="mb-2 text-xs font-bold text-[#16212B]">{t('summaryGuardian')}</h4>
           {(selectedGuardian || form.guardianName)

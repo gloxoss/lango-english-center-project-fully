@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { recordAudit } from '@/libs/api/audit';
+
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { reverseAccountingVoucher } from '@/features/accounting/services/posting-service';
@@ -35,6 +37,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       voucherTypeCode: body.voucherTypeCode,
       eventReason: body.reason,
     });
+    recordAudit(ctx, 'update', 'accounting_transaction_reverse', id, { idempotent: result.idempotent, originalEntryId: id, reason: body.reason ?? null });
     return NextResponse.json({ success: true, data: result }, { status: result.idempotent ? 200 : 201 });
   } catch (error) { return apiErrorResponse(error); }
 }

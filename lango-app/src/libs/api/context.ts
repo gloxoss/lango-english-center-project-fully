@@ -18,10 +18,19 @@ export type RequestContext = {
   name: string;
   email: string;
   sessionId?: string | null;
+  /** True when a super_admin is acting inside a selected tenant — audit rows written in this scope are marked (Law 09-08 / CNDP, audit 2026-09-22 P1-2). Set by requireRequestContext; defaults to false for hand-built contexts. */
+  impersonated?: boolean;
 };
 
 export function isAppRole(value: string): value is AppRole {
   return (APP_ROLES as readonly string[]).includes(value);
+}
+
+function getCookieValue(request: Request, name: string): string | null {
+  const cookieHeader = request.headers.get('cookie');
+  if (!cookieHeader) return null;
+  const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`));
+  return match?.[1] ? decodeURIComponent(match[1].trim()) : null;
 }
 
 export async function requireRequestContext(
@@ -84,13 +93,32 @@ export async function requireRequestContext(
   });
   const effectiveRole = activeCtx?.activeRole ?? principal.role;
 
-  if (allowedRoles && !allowedRoles.includes(effectiveRole)) {
-    throw new ApiError(403, 'FORBIDDEN', 'Vous ne disposez pas des autorisations nécessaires.');
+  let resolvedTenantId = principal.tenantId;
+  const customTenantId = request.headers.get('x-tenant-id');
+
+  if (effectiveRole === 'super_admin') {
+    // Impersonation is server-owned: the ONLY path into a tenant scope is the
+    // httpOnly cookie set by POST /api/super-admin/tenant-context (tenant
+    // validated, audit row written, 8h expiry). The x-tenant-id header (set by
+    // middleware for custom domains) and a ?tenantId= query param are IGNORED
+    // for super admins — both previously bypassed the audited switch, so a
+    // platform admin could read a school's data with no start row and no time
+    // bound (visual audit pass 2; security audit P1-C).
+    const cookieTenantId = getCookieValue(request, 'schoolos_active_tenant_id');
+    resolvedTenantId =
+      cookieTenantId && cookieTenantId !== 'none' && cookieTenantId !== 'all'
+        ? cookieTenantId
+        : null;
+  } else if (customTenantId && principal.tenantId !== customTenantId) {
+    throw new ApiError(403, 'FORBIDDEN', 'Accès refusé : Ce compte n\'appartient pas à cet établissement.');
   }
 
-  const customTenantId = request.headers.get('x-tenant-id');
-  if (customTenantId && effectiveRole !== 'super_admin' && principal.tenantId !== customTenantId) {
-    throw new ApiError(403, 'FORBIDDEN', 'Accès refusé : Ce compte n\'appartient pas à cet établissement.');
+  const isRoleAllowed = !allowedRoles
+    || allowedRoles.includes(effectiveRole)
+    || (effectiveRole === 'super_admin' && resolvedTenantId !== null && allowedRoles.includes('school_admin'));
+
+  if (!isRoleAllowed) {
+    throw new ApiError(403, 'FORBIDDEN', 'Vous ne disposez pas des autorisations nécessaires.');
   }
 
   // Authoritative-only branch scope. resolveActiveContext has already
@@ -103,13 +131,14 @@ export async function requireRequestContext(
 
   return {
     userId: principal.id,
-    tenantId: principal.tenantId,
+    tenantId: resolvedTenantId,
     branchId: activeBranchId,
     role: effectiveRole,
     baseRole: principal.role,
     name: principal.name,
     email: principal.email,
     sessionId,
+    impersonated: effectiveRole === 'super_admin' && resolvedTenantId !== null,
   };
 }
 

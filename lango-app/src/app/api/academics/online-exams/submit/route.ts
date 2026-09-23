@@ -6,7 +6,7 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { onlineExamAnswers, onlineExamAttempts, onlineExamQuestionOptions, onlineExamQuestions, onlineExams } from '@/models/Schema';
+import { classSections, classSubjects, onlineExamAnswers, onlineExamAttempts, onlineExamQuestionOptions, onlineExamQuestions, onlineExams, user } from '@/models/Schema';
 
 const submitExamSchema = z.object({
   examId: z.string().uuid(),
@@ -18,7 +18,9 @@ const submitExamSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const context = await requireRequestContext(request);
+    // Security audit P1-D: submissions are for students only, only once the
+    // exam has opened, and only for students placed in the exam's class.
+    const context = await requireRequestContext(request, ['student']);
     const tenantId = requireTenant(context);
     const body = await parseJson(request, submitExamSchema);
 
@@ -33,8 +35,36 @@ export async function POST(request: Request) {
     }
 
     const now = new Date();
+    if (now < new Date(exam.startsAt)) {
+      throw new ApiError(422, 'EXAM_NOT_OPEN', 'Cet examen n\'est pas encore ouvert.');
+    }
     if (now > new Date(exam.endsAt)) {
       throw new ApiError(422, 'EXAM_EXPIRED', 'Cet examen est expiré.');
+    }
+
+    // Enrollment check (mirrors the take route): the submitting student must
+    // be placed in a section of the exam's class.
+    const [studentRow] = await db
+      .select({ classSectionId: user.classSectionId })
+      .from(user)
+      .where(and(eq(user.id, context.userId), eq(user.tenantId, tenantId)))
+      .limit(1);
+    const studentSectionId = studentRow?.classSectionId ?? null;
+    if (!studentSectionId) {
+      throw new ApiError(403, 'EXAM_NOT_ASSIGNED', 'Aucune classe attribuée : cet examen ne vous est pas destiné.');
+    }
+    const [enrollment] = await db
+      .select({ id: classSections.id })
+      .from(classSections)
+      .innerJoin(classSubjects, and(eq(classSubjects.classId, classSections.classId), eq(classSubjects.tenantId, tenantId)))
+      .where(and(
+        eq(classSections.id, studentSectionId),
+        eq(classSections.tenantId, tenantId),
+        eq(classSubjects.id, exam.classSubjectId),
+      ))
+      .limit(1);
+    if (!enrollment) {
+      throw new ApiError(403, 'EXAM_NOT_ASSIGNED', 'Cet examen ne concerne pas votre classe.');
     }
 
     // Real per-attempt deadline: the FIRST time this student's attempt row is

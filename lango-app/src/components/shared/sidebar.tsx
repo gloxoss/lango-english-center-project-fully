@@ -96,6 +96,8 @@ type SubMenuItem = {
    * visible to every role that passes `permission`.
    */
   roles?: string[];
+  /** Addon ID from src/addons/registry.ts. If set, requires this addon to be active for the school. */
+  addon?: string;
 };
 
 type NavItem = {
@@ -106,6 +108,8 @@ type NavItem = {
   permission?: string;
   /** See SubMenuItem.roles. */
   roles?: string[];
+  /** Addon ID from src/addons/registry.ts. If set, requires this addon to be active for the school. */
+  addon?: string;
   subItems?: SubMenuItem[];
 };
 
@@ -115,6 +119,7 @@ type ManifestItem = {
   label: string;
   icon: string;
   href: string;
+  addonId?: string;
   children?: ManifestItem[];
 };
 
@@ -183,6 +188,7 @@ function manifestToNav(item: ManifestItem, locale: string, tNav?: any): NavItem 
     label,
     href: `/${locale}${item.href}`,
     icon: MANIFEST_ICONS[item.icon] ?? LayoutDashboard,
+    addon: item.addonId,
     subItems: item.children?.map(c => {
       let subLabel = c.label;
       if (tNav) {
@@ -194,7 +200,7 @@ function manifestToNav(item: ManifestItem, locale: string, tNav?: any): NavItem 
           // fallback
         }
       }
-      return { label: subLabel, href: `/${locale}${c.href}` };
+      return { label: subLabel, href: `/${locale}${c.href}`, addon: c.addonId };
     }),
   };
 }
@@ -213,7 +219,7 @@ export function Sidebar({ locale }: { locale: string }) {
   const tReports = useTranslations('Reports');
   const tSuperAdmin = useTranslations('SuperAdmin');
   const { data: session } = authClient.useSession();
-  const userRole = (session?.user as any)?.role || 'school_admin';
+  const userRole = (session?.user as any)?.role || '';
 
   // Capability-driven nav visibility (GET /api/me/permissions) - replaces the
   // earlier accountant-only hardcoded href check, which only stripped
@@ -224,26 +230,30 @@ export function Sidebar({ locale }: { locale: string }) {
   // school_admin's DEFAULT_ROLE_PERMISSIONS is ALL_PERMISSIONS), so this is
   // a no-op filter for them.
   const [myPermissions, setMyPermissions] = useState<Set<string> | null>(null);
+  const [activeAddons, setActiveAddons] = useState<Set<string> | null>(null);
   // Server-owned active-role context (GET /api/portal/me) and the manifest nav
   // (GET /api/portal/manifest). The server is the source of truth for the
   // effective role and available roles; the session cookie only supplies the
   // base role. Refetched on `portal:role-changed` so stale nav/permissions are
   // dropped after a role switch.
-  const [portalMe, setPortalMe] = useState<{ role: string; availableRoles: string[] } | null>(null);
+  const [portalMe, setPortalMe] = useState<{ role: string; availableRoles: string[]; tenantId?: string | null } | null>(null);
   const [manifestNav, setManifestNav] = useState<NavItem[] | null>(null);
   const [hasEmployeeProfile, setHasEmployeeProfile] = useState<boolean | null>(null);
+  const [hasActiveEmergency, setHasActiveEmergency] = useState(false);
 
   const loadPortalContext = async () => {
     try {
-      const [meRes, manifestRes, eligRes] = await Promise.all([
+      const [meRes, manifestRes, eligRes, emergencyRes] = await Promise.all([
         fetch('/api/portal/me'),
         fetch('/api/portal/manifest'),
         fetch('/api/hr/me/self-service-eligibility'),
+        fetch('/api/guard/emergency/procedures').catch(() => null),
       ]);
       const meJson = await meRes.json();
       if (meJson.success) {
         setPortalMe(meJson.data);
         setMyPermissions(new Set<string>(meJson.data.permissions ?? []));
+        setActiveAddons(new Set<string>(meJson.data.activeAddons ?? []));
       }
       const manifestJson = await manifestRes.json();
       if (manifestJson.success && Array.isArray(manifestJson.data.navigation)) {
@@ -251,9 +261,18 @@ export function Sidebar({ locale }: { locale: string }) {
       }
       const eligJson = await eligRes.json().catch(() => ({}));
       setHasEmployeeProfile(Boolean(eligJson?.data?.eligible));
+
+      if (emergencyRes && emergencyRes.ok) {
+        const emergencyJson = await emergencyRes.json().catch(() => ({}));
+        setHasActiveEmergency(Boolean(emergencyJson?.data?.emergency?.active));
+      } else {
+        setHasActiveEmergency(false);
+      }
     } catch {
       setMyPermissions(new Set());
+      setActiveAddons(new Set());
       setHasEmployeeProfile(false);
+      setHasActiveEmergency(false);
     }
   };
 
@@ -269,11 +288,24 @@ export function Sidebar({ locale }: { locale: string }) {
   // the session base role until /api/portal/me resolves.
   const effectiveRole = portalMe?.role ?? userRole;
   const isSuperAdmin = effectiveRole === 'super_admin';
+  const hasSelectedTenant = Boolean(portalMe?.tenantId);
   const roleLabel = (tRoles as any).has(effectiveRole) ? tRoles(effectiveRole) : (ROLE_LABELS[effectiveRole] ?? effectiveRole);
+
+  const canSeeAddon = (addon?: string) => {
+    if (!addon) return true;
+    if (isSuperAdmin && !hasSelectedTenant) return true;
+    if (activeAddons === null) return false;
+    return activeAddons.has(addon);
+  };
 
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
     'super-admin': true,
     'school-modules': true,
+    'section-daily': true,
+    'section-academics': true,
+    'section-finance': true,
+    'section-communication': true,
+    'section-administration': true,
   });
 
   const toggleMenu = (key: string) => {
@@ -390,8 +422,6 @@ export function Sidebar({ locale }: { locale: string }) {
         { label: tNav('promotions'), href: `/${locale}/dashboard/academics/promotions`, permission: 'academics.manage' },
         { label: tNav('readiness'), href: `/${locale}/dashboard/academics/readiness`, permission: 'academics.read' },
         { label: tNav('rooms'), href: `/${locale}/dashboard/academics/rooms`, permission: 'academics.manage' },
-        { label: tNav('class-subjects'), href: `/${locale}/dashboard/academics/class-subjects`, permission: 'academics.manage' },
-        { label: tNav('class-section-teachers'), href: `/${locale}/dashboard/academics/class-section-teachers`, permission: 'academics.manage' },
         { label: tNav('teacher-availability'), href: `/${locale}/dashboard/academics/teacher-availability`, permission: 'academics.read' },
         { label: tNav('syllabus'), href: `/${locale}/dashboard/academics/syllabus`, permission: 'academics.manage' },
         { label: tNav('calendar'), href: `/${locale}/dashboard/academics/calendar`, permission: 'academics.manage' },
@@ -403,9 +433,10 @@ export function Sidebar({ locale }: { locale: string }) {
       href: `/${locale}/dashboard/academics/live-class`,
       icon: Video,
       permission: 'live.read',
+      addon: 'live-classrooms',
       subItems: [
-        { label: tNav('live-virtual'), href: `/${locale}/dashboard/academics/live-class`, permission: 'live.read' },
-        { label: tNav('live-reports'), href: `/${locale}/dashboard/academics/live-class-reports`, permission: 'live.reports.read' },
+        { label: tNav('live-virtual'), href: `/${locale}/dashboard/academics/live-class`, permission: 'live.read', addon: 'live-classrooms' },
+        { label: tNav('live-reports'), href: `/${locale}/dashboard/academics/live-class-reports`, permission: 'live.reports.read', addon: 'live-classrooms' },
       ],
     },
 
@@ -429,7 +460,7 @@ export function Sidebar({ locale }: { locale: string }) {
         { label: tNav('attendance-badges'), href: `/${locale}/dashboard/attendance/badges`, permission: 'attendance.read' },
         { label: tNav('attendance-qr-reports'), href: `/${locale}/dashboard/attendance/qr-reports`, permission: 'attendance.read' },
         { label: tAttendance('qrKiosk'), href: `/${locale}/dashboard/attendance/scanner`, permission: 'attendance.manage' },
-        { label: tNav('attendance-timeclock'), href: `/${locale}/dashboard/workforce/timeclock`, permission: 'attendance.read' },
+        { label: tNav('attendance-timeclock'), href: `/${locale}/dashboard/workforce/timeclock`, permission: 'attendance.read', addon: 'payroll-workforce' },
         { label: tAttendance('excuseDocument'), href: `/${locale}/dashboard/attendance/excuses`, permission: 'attendance.read' },
         { label: tNav('attendance-flags'), href: `/${locale}/dashboard/attendance/flags`, permission: 'attendance.read' },
         { label: tNav('attendance-audit'), href: `/${locale}/dashboard/attendance/audit`, permission: 'attendance.read' },
@@ -440,14 +471,15 @@ export function Sidebar({ locale }: { locale: string }) {
       href: `/${locale}/dashboard/cards/templates`,
       icon: IdCard,
       permission: 'cards.templates.manage',
+      addon: 'card-management',
       subItems: [
-        { label: tNav('cards-overview'), href: `/${locale}/dashboard/cards`, permission: 'cards.issue' },
-        { label: tNav('cards-templates'), href: `/${locale}/dashboard/cards/templates`, permission: 'cards.templates.manage' },
-        { label: tNav('cards-students'), href: `/${locale}/dashboard/cards/students`, permission: 'cards.issue' },
-        { label: tNav('cards-employees'), href: `/${locale}/dashboard/cards/employees`, permission: 'cards.issue' },
-        { label: tNav('cards-admit'), href: `/${locale}/dashboard/cards/admit-cards`, permission: 'cards.issue' },
-        { label: tNav('cards-jobs'), href: `/${locale}/dashboard/cards/jobs`, permission: 'cards.issue' },
-        { label: tNav('cards-issued'), href: `/${locale}/dashboard/cards/issued`, permission: 'cards.issue' },
+        { label: tNav('cards-overview'), href: `/${locale}/dashboard/cards`, permission: 'cards.issue', addon: 'card-management' },
+        { label: tNav('cards-templates'), href: `/${locale}/dashboard/cards/templates`, permission: 'cards.templates.manage', addon: 'card-management' },
+        { label: tNav('cards-students'), href: `/${locale}/dashboard/cards/students`, permission: 'cards.issue', addon: 'card-management' },
+        { label: tNav('cards-employees'), href: `/${locale}/dashboard/cards/employees`, permission: 'cards.issue', addon: 'card-management' },
+        { label: tNav('cards-admit'), href: `/${locale}/dashboard/cards/admit-cards`, permission: 'cards.issue', addon: 'card-management' },
+        { label: tNav('cards-jobs'), href: `/${locale}/dashboard/cards/jobs`, permission: 'cards.issue', addon: 'card-management' },
+        { label: tNav('cards-issued'), href: `/${locale}/dashboard/cards/issued`, permission: 'cards.issue', addon: 'card-management' },
       ],
     },
     {
@@ -455,16 +487,17 @@ export function Sidebar({ locale }: { locale: string }) {
       href: `/${locale}/dashboard/certificates`,
       icon: ScrollText,
       permission: 'certificates.issue',
+      addon: 'certificate-management',
       subItems: [
-        { label: tNav('certificates-overview'), href: `/${locale}/dashboard/certificates`, permission: 'certificates.issue' },
-        { label: tNav('certificates-definitions'), href: `/${locale}/dashboard/certificates/definitions`, permission: 'certificates.templates.manage' },
-        { label: tNav('certificates-templates'), href: `/${locale}/dashboard/certificates/templates`, permission: 'certificates.templates.manage' },
-        { label: tNav('certificates-issue-students'), href: `/${locale}/dashboard/certificates/issue/students`, permission: 'certificates.issue' },
-        { label: tNav('certificates-issue-employees'), href: `/${locale}/dashboard/certificates/issue/employees`, permission: 'certificates.issue' },
-        { label: tNav('certificates-requests'), href: `/${locale}/dashboard/certificates/requests`, permission: 'certificates.issue' },
-        { label: tNav('certificates-issued'), href: `/${locale}/dashboard/certificates/issued`, permission: 'certificates.issue' },
-        { label: tNav('certificates-jobs'), href: `/${locale}/dashboard/certificates/jobs`, permission: 'certificates.issue' },
-        { label: tNav('certificates-settings'), href: `/${locale}/dashboard/certificates/settings`, permission: 'certificates.templates.manage' },
+        { label: tNav('certificates-overview'), href: `/${locale}/dashboard/certificates`, permission: 'certificates.issue', addon: 'certificate-management' },
+        { label: tNav('certificates-definitions'), href: `/${locale}/dashboard/certificates/definitions`, permission: 'certificates.templates.manage', addon: 'certificate-management' },
+        { label: tNav('certificates-templates'), href: `/${locale}/dashboard/certificates/templates`, permission: 'certificates.templates.manage', addon: 'certificate-management' },
+        { label: tNav('certificates-issue-students'), href: `/${locale}/dashboard/certificates/issue/students`, permission: 'certificates.issue', addon: 'certificate-management' },
+        { label: tNav('certificates-issue-employees'), href: `/${locale}/dashboard/certificates/issue/employees`, permission: 'certificates.issue', addon: 'certificate-management' },
+        { label: tNav('certificates-requests'), href: `/${locale}/dashboard/certificates/requests`, permission: 'certificates.issue', addon: 'certificate-management' },
+        { label: tNav('certificates-issued'), href: `/${locale}/dashboard/certificates/issued`, permission: 'certificates.issue', addon: 'certificate-management' },
+        { label: tNav('certificates-jobs'), href: `/${locale}/dashboard/certificates/jobs`, permission: 'certificates.issue', addon: 'certificate-management' },
+        { label: tNav('certificates-settings'), href: `/${locale}/dashboard/certificates/settings`, permission: 'certificates.templates.manage', addon: 'certificate-management' },
       ],
     },
     {
@@ -475,7 +508,7 @@ export function Sidebar({ locale }: { locale: string }) {
       subItems: [
         { label: 'Devoirs & Évaluations', href: `/${locale}/dashboard/academics/assessment/homework`, permission: 'academics.read' },
         { label: 'Exam Master & Salles', href: `/${locale}/dashboard/academics/assessment/exam-master`, permission: 'academics.read' },
-        { label: 'Examens en Ligne (Add-on)', href: `/${locale}/dashboard/academics/assessment/online-exams`, permission: 'academics.read' },
+        { label: 'Examens en Ligne (Add-on)', href: `/${locale}/dashboard/academics/assessment/online-exams`, permission: 'academics.read', addon: 'online-examinations' },
         // The grade-entry path had no nav entry at all: a teacher could not reach
         // the screen they enter marks on.
         { label: tGrading('entry'), href: `/${locale}/dashboard/academics/grades/entry`, permission: 'grading.manage' },
@@ -491,8 +524,9 @@ export function Sidebar({ locale }: { locale: string }) {
       href: `/${locale}/dashboard/events`,
       icon: CalendarDays,
       permission: 'events.read',
+      addon: 'event-management',
       subItems: [
-        { label: tNav('events-calendar'), href: `/${locale}/dashboard/events`, permission: 'events.read' },
+        { label: tNav('events-calendar'), href: `/${locale}/dashboard/events`, permission: 'events.read', addon: 'event-management' },
       ],
     },
 
@@ -501,9 +535,10 @@ export function Sidebar({ locale }: { locale: string }) {
       href: `/${locale}/dashboard/content/library`,
       icon: FolderOpen,
       permission: 'academics.read',
+      addon: 'attachments-book',
       subItems: [
-        { label: tNav('content-library'), href: `/${locale}/dashboard/content/library`, permission: 'academics.read' },
-        { label: tNav('content-types'), href: `/${locale}/dashboard/content/types`, permission: 'content.types.manage' },
+        { label: tNav('content-library'), href: `/${locale}/dashboard/content/library`, permission: 'academics.read', addon: 'attachments-book' },
+        { label: tNav('content-types'), href: `/${locale}/dashboard/content/types`, permission: 'content.types.manage', addon: 'attachments-book' },
       ],
     },
 
@@ -512,14 +547,15 @@ export function Sidebar({ locale }: { locale: string }) {
       href: `/${locale}/dashboard/portals/librarian`,
       icon: BookOpen,
       permission: 'library.catalog.read',
+      addon: 'library',
       subItems: [
-        { label: tNav('library-home'), href: `/${locale}/dashboard/portals/librarian`, permission: 'library.report.read' },
+        { label: tNav('library-home'), href: `/${locale}/dashboard/portals/librarian`, permission: 'library.report.read', addon: 'library' },
         // "Comptoir de prêt" (the operational checkout counter) is a librarian
         // self-service action, not an admin oversight surface — deliberately
         // absent here so school_admin/super_admin don't get the raw circulation
         // desk in their everyday nav (PRODUCT-REVIEW §12.5). Librarians still
         // see it via the portal manifest.
-        { label: tNav('library-catalog'), href: `/${locale}/dashboard/library/catalog`, permission: 'library.catalog.read' },
+        { label: tNav('library-catalog'), href: `/${locale}/dashboard/library/catalog`, permission: 'library.catalog.read', addon: 'library' },
       ],
     },
 
@@ -565,19 +601,20 @@ export function Sidebar({ locale }: { locale: string }) {
       href: `/${locale}/dashboard/inventory`,
       icon: Package,
       permission: 'inventory.read',
+      addon: 'inventory',
       subItems: [
-        { label: tNav('inventory-overview'), href: `/${locale}/dashboard/inventory/overview`, permission: 'inventory.read' },
-        { label: tNav('inventory-products'), href: `/${locale}/dashboard/inventory/products`, permission: 'inventory.read' },
-        { label: tNav('inventory-categories'), href: `/${locale}/dashboard/inventory/categories`, permission: 'inventory.catalog.manage' },
-        { label: tNav('inventory-units'), href: `/${locale}/dashboard/inventory/units`, permission: 'inventory.catalog.manage' },
-        { label: tNav('inventory-stores'), href: `/${locale}/dashboard/inventory/stores`, permission: 'inventory.catalog.manage' },
-        { label: tNav('inventory-suppliers'), href: `/${locale}/dashboard/inventory/suppliers`, permission: 'inventory.catalog.manage' },
-        { label: tNav('inventory-purchases'), href: `/${locale}/dashboard/inventory/purchases`, permission: 'inventory.read' },
-        { label: tNav('inventory-sales'), href: `/${locale}/dashboard/inventory/sales`, permission: 'inventory.read' },
-        { label: tNav('inventory-issues'), href: `/${locale}/dashboard/inventory/issues`, permission: 'inventory.read' },
-        { label: tNav('inventory-adjustments'), href: `/${locale}/dashboard/inventory/adjustments`, permission: 'inventory.read' },
-        { label: tNav('inventory-transfers'), href: `/${locale}/dashboard/inventory/transfers`, permission: 'inventory.read' },
-        { label: tNav('inventory-stock'), href: `/${locale}/dashboard/inventory/stock`, permission: 'inventory.read' },
+        { label: tNav('inventory-overview'), href: `/${locale}/dashboard/inventory/overview`, permission: 'inventory.read', addon: 'inventory' },
+        { label: tNav('inventory-products'), href: `/${locale}/dashboard/inventory/products`, permission: 'inventory.read', addon: 'inventory' },
+        { label: tNav('inventory-categories'), href: `/${locale}/dashboard/inventory/categories`, permission: 'inventory.catalog.manage', addon: 'inventory' },
+        { label: tNav('inventory-units'), href: `/${locale}/dashboard/inventory/units`, permission: 'inventory.catalog.manage', addon: 'inventory' },
+        { label: tNav('inventory-stores'), href: `/${locale}/dashboard/inventory/stores`, permission: 'inventory.catalog.manage', addon: 'inventory' },
+        { label: tNav('inventory-suppliers'), href: `/${locale}/dashboard/inventory/suppliers`, permission: 'inventory.catalog.manage', addon: 'inventory' },
+        { label: tNav('inventory-purchases'), href: `/${locale}/dashboard/inventory/purchases`, permission: 'inventory.read', addon: 'inventory' },
+        { label: tNav('inventory-sales'), href: `/${locale}/dashboard/inventory/sales`, permission: 'inventory.read', addon: 'inventory' },
+        { label: tNav('inventory-issues'), href: `/${locale}/dashboard/inventory/issues`, permission: 'inventory.read', addon: 'inventory' },
+        { label: tNav('inventory-adjustments'), href: `/${locale}/dashboard/inventory/adjustments`, permission: 'inventory.read', addon: 'inventory' },
+        { label: tNav('inventory-transfers'), href: `/${locale}/dashboard/inventory/transfers`, permission: 'inventory.read', addon: 'inventory' },
+        { label: tNav('inventory-stock'), href: `/${locale}/dashboard/inventory/stock`, permission: 'inventory.read', addon: 'inventory' },
       ],
     },
     {
@@ -596,14 +633,14 @@ export function Sidebar({ locale }: { locale: string }) {
       icon: Megaphone,
       permission: 'broadcast.read',
       subItems: [
-        { label: tNav('broadcast-crm'), href: `/${locale}/dashboard/communication/crm`, permission: 'crm.manage' },
-        { label: tNav('broadcast-overview'), href: `/${locale}/dashboard/broadcast`, permission: 'broadcast.read' },
-        { label: tNav('broadcast-connections'), href: `/${locale}/dashboard/broadcast/connections`, permission: 'broadcast.read' },
-        { label: tNav('broadcast-segments'), href: `/${locale}/dashboard/broadcast/segments`, permission: 'broadcast.read' },
-        { label: tNav('broadcast-templates'), href: `/${locale}/dashboard/broadcast/templates`, permission: 'broadcast.read' },
-        { label: tNav('broadcast-campaigns'), href: `/${locale}/dashboard/broadcast/campaigns`, permission: 'broadcast.read' },
-        { label: tNav('broadcast-reports'), href: `/${locale}/dashboard/broadcast/reports`, permission: 'broadcast.read' },
-        { label: tNav('broadcast-automations'), href: `/${locale}/dashboard/broadcast/automations`, permission: 'broadcast.read' },
+        { label: tNav('broadcast-crm'), href: `/${locale}/dashboard/communication/crm`, permission: 'crm.manage', addon: 'lead-crm' },
+        { label: tNav('broadcast-overview'), href: `/${locale}/dashboard/broadcast`, permission: 'broadcast.read', addon: 'broadcast-messaging' },
+        { label: tNav('broadcast-connections'), href: `/${locale}/dashboard/broadcast/connections`, permission: 'broadcast.read', addon: 'broadcast-messaging' },
+        { label: tNav('broadcast-segments'), href: `/${locale}/dashboard/broadcast/segments`, permission: 'broadcast.read', addon: 'broadcast-messaging' },
+        { label: tNav('broadcast-templates'), href: `/${locale}/dashboard/broadcast/templates`, permission: 'broadcast.read', addon: 'broadcast-messaging' },
+        { label: tNav('broadcast-campaigns'), href: `/${locale}/dashboard/broadcast/campaigns`, permission: 'broadcast.read', addon: 'broadcast-messaging' },
+        { label: tNav('broadcast-reports'), href: `/${locale}/dashboard/broadcast/reports`, permission: 'broadcast.read', addon: 'broadcast-messaging' },
+        { label: tNav('broadcast-automations'), href: `/${locale}/dashboard/broadcast/automations`, permission: 'broadcast.read', addon: 'broadcast-messaging' },
       ],
     },
     { label: tGrading('reportCards'), href: `/${locale}/dashboard/documents/generator`, icon: FileText, permission: 'grading.read' },
@@ -612,13 +649,14 @@ export function Sidebar({ locale }: { locale: string }) {
       href: `/${locale}/dashboard/hr`,
       icon: Users,
       permission: 'hr.employee.read',
+      addon: 'human-resources',
       subItems: [
-        { label: tNav('hr-dashboard'), href: `/${locale}/dashboard/hr/overview`, permission: 'hr.employee.read' },
-        { label: tNav('hr-employees'), href: `/${locale}/dashboard/hr/employees`, permission: 'hr.employee.read' },
-        { label: tNav('hr-new-employee'), href: `/${locale}/dashboard/hr/employees/new`, permission: 'hr.employee.manage' },
-        { label: tNav('hr-departments'), href: `/${locale}/dashboard/hr/departments`, permission: 'hr.organization.manage' },
-        { label: tNav('hr-designations'), href: `/${locale}/dashboard/hr/designations`, permission: 'hr.organization.manage' },
-        { label: tNav('hr-access'), href: `/${locale}/dashboard/hr/access`, permission: 'hr.access.manage' },
+        { label: tNav('hr-dashboard'), href: `/${locale}/dashboard/hr/overview`, permission: 'hr.employee.read', addon: 'human-resources' },
+        { label: tNav('hr-employees'), href: `/${locale}/dashboard/hr/employees`, permission: 'hr.employee.read', addon: 'human-resources' },
+        { label: tNav('hr-new-employee'), href: `/${locale}/dashboard/hr/employees/new`, permission: 'hr.employee.manage', addon: 'human-resources' },
+        { label: tNav('hr-departments'), href: `/${locale}/dashboard/hr/departments`, permission: 'hr.organization.manage', addon: 'human-resources' },
+        { label: tNav('hr-designations'), href: `/${locale}/dashboard/hr/designations`, permission: 'hr.organization.manage', addon: 'human-resources' },
+        { label: tNav('hr-access'), href: `/${locale}/dashboard/hr/access`, permission: 'hr.access.manage', addon: 'human-resources' },
       ],
     },
     {
@@ -626,20 +664,21 @@ export function Sidebar({ locale }: { locale: string }) {
       href: `/${locale}/dashboard/workforce`,
       icon: Briefcase,
       permission: 'payroll.review',
+      addon: 'payroll-workforce',
       subItems: [
-        { label: tNav('workforce-overview'), href: `/${locale}/dashboard/workforce`, permission: 'payroll.review' },
-        { label: tNav('hr-payroll'), href: `/${locale}/dashboard/workforce/payroll/runs`, permission: 'payroll.review' },
-        { label: tNav('workforce-components'), href: `/${locale}/dashboard/workforce/payroll/components`, permission: 'payroll.configure' },
-        { label: tNav('workforce-structures'), href: `/${locale}/dashboard/workforce/payroll/structures`, permission: 'payroll.configure' },
-        { label: tNav('workforce-assignments'), href: `/${locale}/dashboard/workforce/payroll/assignments`, permission: 'payroll.configure' },
-        { label: tNav('workforce-adjustments'), href: `/${locale}/dashboard/workforce/payroll/adjustments`, permission: 'payroll.review' },
-        { label: tNav('workforce-payments'), href: `/${locale}/dashboard/workforce/payroll/payments`, permission: 'payroll.payment.prepare' },
-        { label: tNav('hr-leave'), href: `/${locale}/dashboard/workforce/leave`, permission: 'payroll.leave.manage' },
-        { label: tNav('workforce-advances'), href: `/${locale}/dashboard/workforce/advances`, permission: 'payroll.advances.manage' },
-        { label: tNav('workforce-awards'), href: `/${locale}/dashboard/workforce/awards`, permission: 'payroll.awards.manage' },
+        { label: tNav('workforce-overview'), href: `/${locale}/dashboard/workforce`, permission: 'payroll.review', addon: 'payroll-workforce' },
+        { label: tNav('hr-payroll'), href: `/${locale}/dashboard/workforce/payroll/runs`, permission: 'payroll.review', addon: 'payroll-workforce' },
+        { label: tNav('workforce-components'), href: `/${locale}/dashboard/workforce/payroll/components`, permission: 'payroll.configure', addon: 'payroll-workforce' },
+        { label: tNav('workforce-structures'), href: `/${locale}/dashboard/workforce/payroll/structures`, permission: 'payroll.configure', addon: 'payroll-workforce' },
+        { label: tNav('workforce-assignments'), href: `/${locale}/dashboard/workforce/payroll/assignments`, permission: 'payroll.configure', addon: 'payroll-workforce' },
+        { label: tNav('workforce-adjustments'), href: `/${locale}/dashboard/workforce/payroll/adjustments`, permission: 'payroll.review', addon: 'payroll-workforce' },
+        { label: tNav('workforce-payments'), href: `/${locale}/dashboard/workforce/payroll/payments`, permission: 'payroll.payment.prepare', addon: 'payroll-workforce' },
+        { label: tNav('hr-leave'), href: `/${locale}/dashboard/workforce/leave`, permission: 'payroll.leave.manage', addon: 'payroll-workforce' },
+        { label: tNav('workforce-advances'), href: `/${locale}/dashboard/workforce/advances`, permission: 'payroll.advances.manage', addon: 'payroll-workforce' },
+        { label: tNav('workforce-awards'), href: `/${locale}/dashboard/workforce/awards`, permission: 'payroll.awards.manage', addon: 'payroll-workforce' },
       ],
     },
-    ...(hasEmployeeProfile ? [{ label: tNav('hr-self-service'), href: `/${locale}/dashboard/hr/self-service`, icon: UserCheck }] : []),
+    ...(hasEmployeeProfile ? [{ label: tNav('hr-self-service'), href: `/${locale}/dashboard/hr/self-service`, icon: UserCheck, addon: 'human-resources' }] : []),
     {
       label: tNav('guard'),
       href: `/${locale}/dashboard/portals/guard`,
@@ -668,19 +707,20 @@ export function Sidebar({ locale }: { locale: string }) {
       href: `/${locale}/dashboard/hostel`,
       icon: BedDouble,
       permission: 'hostel.read',
+      addon: 'hostel',
       subItems: [
-        { label: tNav('hostel-tonight'), href: `/${locale}/dashboard/hostel`, permission: 'hostel.read' },
-        { label: tNav('hostel-residences'), href: `/${locale}/dashboard/hostel/hostels`, permission: 'hostel.read' },
-        { label: tNav('hostel-zones'), href: `/${locale}/dashboard/hostel/zones`, permission: 'hostel.read' },
-        { label: tNav('hostel-categories'), href: `/${locale}/dashboard/hostel/categories`, permission: 'hostel.read' },
-        { label: tNav('hostel-rooms'), href: `/${locale}/dashboard/hostel/rooms`, permission: 'hostel.read' },
-        { label: tNav('hostel-occupancy'), href: `/${locale}/dashboard/hostel/board`, permission: 'hostel.allocation.read' },
-        { label: tNav('hostel-applications'), href: `/${locale}/dashboard/hostel/applications`, permission: 'hostel.allocation.read' },
-        { label: tNav('hostel-allocations'), href: `/${locale}/dashboard/hostel/allocations`, permission: 'hostel.allocation.manage' },
-        { label: tNav('hostel-rollcall'), href: `/${locale}/dashboard/hostel/roll-call`, permission: 'hostel.supervision.read' },
-        { label: tNav('hostel-leavepasses'), href: `/${locale}/dashboard/hostel/leave-passes`, permission: 'hostel.supervision.manage' },
-        { label: tNav('hostel-policies'), href: `/${locale}/dashboard/hostel/policies`, permission: 'hostel.policies.manage' },
-        { label: tNav('hostel-reports'), href: `/${locale}/dashboard/hostel/reports`, permission: 'hostel.read' },
+        { label: tNav('hostel-tonight'), href: `/${locale}/dashboard/hostel`, permission: 'hostel.read', addon: 'hostel' },
+        { label: tNav('hostel-residences'), href: `/${locale}/dashboard/hostel/hostels`, permission: 'hostel.read', addon: 'hostel' },
+        { label: tNav('hostel-zones'), href: `/${locale}/dashboard/hostel/zones`, permission: 'hostel.read', addon: 'hostel' },
+        { label: tNav('hostel-categories'), href: `/${locale}/dashboard/hostel/categories`, permission: 'hostel.read', addon: 'hostel' },
+        { label: tNav('hostel-rooms'), href: `/${locale}/dashboard/hostel/rooms`, permission: 'hostel.read', addon: 'hostel' },
+        { label: tNav('hostel-occupancy'), href: `/${locale}/dashboard/hostel/board`, permission: 'hostel.allocation.read', addon: 'hostel' },
+        { label: tNav('hostel-applications'), href: `/${locale}/dashboard/hostel/applications`, permission: 'hostel.allocation.read', addon: 'hostel' },
+        { label: tNav('hostel-allocations'), href: `/${locale}/dashboard/hostel/allocations`, permission: 'hostel.allocation.manage', addon: 'hostel' },
+        { label: tNav('hostel-rollcall'), href: `/${locale}/dashboard/hostel/roll-call`, permission: 'hostel.supervision.read', addon: 'hostel' },
+        { label: tNav('hostel-leavepasses'), href: `/${locale}/dashboard/hostel/leave-passes`, permission: 'hostel.supervision.manage', addon: 'hostel' },
+        { label: tNav('hostel-policies'), href: `/${locale}/dashboard/hostel/policies`, permission: 'hostel.policies.manage', addon: 'hostel' },
+        { label: tNav('hostel-reports'), href: `/${locale}/dashboard/hostel/reports`, permission: 'hostel.read', addon: 'hostel' },
       ],
     },
     {
@@ -688,18 +728,19 @@ export function Sidebar({ locale }: { locale: string }) {
       href: `/${locale}/dashboard/transport`,
       icon: Bus,
       permission: 'transport.read',
+      addon: 'transport',
       subItems: [
-        { label: tNav('transport-dashboard'), href: `/${locale}/dashboard/transport`, permission: 'transport.read' },
-        { label: tNav('transport-routes'), href: `/${locale}/dashboard/transport/routes`, permission: 'transport.route.manage' },
-        { label: tNav('transport-stops'), href: `/${locale}/dashboard/transport/stops`, permission: 'transport.route.manage' },
-        { label: tNav('transport-vehicles'), href: `/${locale}/dashboard/transport/vehicles`, permission: 'transport.vehicle.manage' },
-        { label: tNav('transport-drivers'), href: `/${locale}/dashboard/transport/drivers`, permission: 'transport.driver.manage' },
-        { label: tNav('transport-allocations'), href: `/${locale}/dashboard/transport/allocations`, permission: 'transport.assignment.read' },
-        { label: tNav('transport-trips'), href: `/${locale}/dashboard/transport/trips`, permission: 'transport.trip.read' },
-        { label: tNav('transport-boarding'), href: `/${locale}/dashboard/transport/boarding`, permission: 'transport.boarding.manage' },
-        { label: tNav('transport-incidents'), href: `/${locale}/dashboard/transport/incidents`, permission: 'transport.incident.read' },
-        { label: tNav('transport-reports'), href: `/${locale}/dashboard/transport/reports`, permission: 'transport.report' },
-        { label: tNav('transport-policies'), href: `/${locale}/dashboard/transport/policies`, permission: 'transport.policy.manage' },
+        { label: tNav('transport-dashboard'), href: `/${locale}/dashboard/transport`, permission: 'transport.read', addon: 'transport' },
+        { label: tNav('transport-routes'), href: `/${locale}/dashboard/transport/routes`, permission: 'transport.route.manage', addon: 'transport' },
+        { label: tNav('transport-stops'), href: `/${locale}/dashboard/transport/stops`, permission: 'transport.route.manage', addon: 'transport' },
+        { label: tNav('transport-vehicles'), href: `/${locale}/dashboard/transport/vehicles`, permission: 'transport.vehicle.manage', addon: 'transport' },
+        { label: tNav('transport-drivers'), href: `/${locale}/dashboard/transport/drivers`, permission: 'transport.driver.manage', addon: 'transport' },
+        { label: tNav('transport-allocations'), href: `/${locale}/dashboard/transport/allocations`, permission: 'transport.assignment.read', addon: 'transport' },
+        { label: tNav('transport-trips'), href: `/${locale}/dashboard/transport/trips`, permission: 'transport.trip.read', addon: 'transport' },
+        { label: tNav('transport-boarding'), href: `/${locale}/dashboard/transport/boarding`, permission: 'transport.boarding.manage', addon: 'transport' },
+        { label: tNav('transport-incidents'), href: `/${locale}/dashboard/transport/incidents`, permission: 'transport.incident.read', addon: 'transport' },
+        { label: tNav('transport-reports'), href: `/${locale}/dashboard/transport/reports`, permission: 'transport.report', addon: 'transport' },
+        { label: tNav('transport-policies'), href: `/${locale}/dashboard/transport/policies`, permission: 'transport.policy.manage', addon: 'transport' },
       ],
     },
     {
@@ -707,11 +748,12 @@ export function Sidebar({ locale }: { locale: string }) {
       href: `/${locale}/dashboard/reports`,
       icon: BarChart3,
       permission: 'reports.read',
+      addon: 'advanced-reporting',
       subItems: [
-        { label: tReports('reportCenter'), href: `/${locale}/dashboard/reports`, permission: 'reports.read' },
-        { label: tReports('myRuns'), href: `/${locale}/dashboard/reports/runs`, permission: 'reports.read' },
-        { label: tReports('schedules'), href: `/${locale}/dashboard/reports/schedules`, permission: 'reports.schedule' },
-        { label: tReports('adminConsole'), href: `/${locale}/dashboard/reports/admin`, permission: 'reports.manage' },
+        { label: tReports('reportCenter'), href: `/${locale}/dashboard/reports`, permission: 'reports.read', addon: 'advanced-reporting' },
+        { label: tReports('myRuns'), href: `/${locale}/dashboard/reports/runs`, permission: 'reports.read', addon: 'advanced-reporting' },
+        { label: tReports('schedules'), href: `/${locale}/dashboard/reports/schedules`, permission: 'reports.schedule', addon: 'advanced-reporting' },
+        { label: tReports('adminConsole'), href: `/${locale}/dashboard/reports/admin`, permission: 'reports.manage', addon: 'advanced-reporting' },
       ],
     },
     {
@@ -728,7 +770,7 @@ export function Sidebar({ locale }: { locale: string }) {
         { label: 'Journal de connexion', href: `/${locale}/dashboard/settings/security/login-events`, permission: 'settings.security.manage' },
         { label: 'Dispositifs de Scan', href: `/${locale}/dashboard/settings/scanner-devices`, permission: 'settings.attendance.manage' },
         { label: 'Connexions Externes', href: `/${locale}/dashboard/settings/providers`, permission: 'settings.read' },
-        { label: 'Classes en Direct — Fournisseurs', href: `/${locale}/dashboard/settings/live-classrooms`, permission: 'live.providers.manage' },
+        { label: 'Classes en Direct — Fournisseurs', href: `/${locale}/dashboard/settings/live-classrooms`, permission: 'live.providers.manage', addon: 'live-classrooms' },
         { label: 'Liaisons Comptables', href: `/${locale}/dashboard/settings/accounting-defaults`, permission: 'finance.manage' },
         { label: tNav('payment-methods'), href: `/${locale}/dashboard/settings/payment-methods`, permission: 'finance.manage' },
         { label: 'Traductions & Champs', href: `/${locale}/dashboard/settings/translations`, permission: 'settings.localization.manage' },
@@ -743,17 +785,18 @@ export function Sidebar({ locale }: { locale: string }) {
         { label: tNav('settings-permissions'), href: `/${locale}/dashboard/settings/permissions`, permission: 'users.permissions.manage' },
         { label: 'Boîte notifications', href: `/${locale}/dashboard/settings/notifications`, permission: 'settings.read' },
         { label: 'Exports & téléchargements', href: `/${locale}/dashboard/settings/exports`, permission: 'settings.read' },
-        { label: tNav('settings-branches'), href: `/${locale}/dashboard/settings/branches`, permission: 'settings.organization.manage' },
+        { label: tNav('settings-branches'), href: `/${locale}/dashboard/settings/branches`, permission: 'settings.organization.manage', addon: 'multi-branch' },
         { label: 'Domaine Personnalisé', href: `/${locale}/dashboard/settings/domain`, permission: 'settings.organization.manage' },
-        { label: 'Site Web — Thème & Identité', href: `/${locale}/dashboard/settings/website`, permission: 'website.read' },
-        { label: 'Site Web — Pages', href: `/${locale}/dashboard/settings/website/pages`, permission: 'website.pages.manage' },
-        { label: 'Site Web — Menu', href: `/${locale}/dashboard/settings/website/menu`, permission: 'website.menu.manage' },
-        { label: 'Site Web — Actualités', href: `/${locale}/dashboard/settings/website/news`, permission: 'website.news.manage' },
+        { label: 'Site Web — Thème & Identité', href: `/${locale}/dashboard/settings/website`, permission: 'website.read', addon: 'school-website-cms' },
+        { label: 'Site Web — Pages', href: `/${locale}/dashboard/settings/website/pages`, permission: 'website.pages.manage', addon: 'school-website-cms' },
+        { label: 'Site Web — Menu', href: `/${locale}/dashboard/settings/website/menu`, permission: 'website.menu.manage', addon: 'school-website-cms' },
+        { label: 'Site Web — Actualités', href: `/${locale}/dashboard/settings/website/news`, permission: 'website.news.manage', addon: 'school-website-cms' },
         { label: 'Réinitialisation Accès', href: `/${locale}/dashboard/settings/access-reset`, permission: 'users.manage' },
         { label: tNav('cndp'), href: `/${locale}/dashboard/settings/cndp`, permission: 'settings.read' },
       ],
     },
     { label: tNav('cndp'), href: `/${locale}/dashboard/settings/cndp`, icon: ShieldCheck, permission: 'settings.read' },
+    { label: 'Assistance & Support', href: `/${locale}/dashboard/support`, icon: Headphones, permission: 'settings.read' },
   ];
 
   // Capability-driven: an item is visible if its own permission is granted,
@@ -764,10 +807,10 @@ export function Sidebar({ locale }: { locale: string }) {
   const canSeeRole = (roles?: string[]) => !roles || roles.includes(effectiveRole);
 
   const visibleSchoolNavItems = schoolNavItems
-    .filter(item => canSee(item.permission) && canSeeRole(item.roles))
+    .filter(item => canSee(item.permission) && canSeeRole(item.roles) && canSeeAddon(item.addon))
     .map((item) => {
       const subItems = item.subItems
-        ? item.subItems.filter(sub => canSee(sub.permission) && canSeeRole(sub.roles))
+        ? item.subItems.filter(sub => canSee(sub.permission) && canSeeRole(sub.roles) && canSeeAddon(sub.addon))
         : undefined;
 
       // The group label is a Link to item.href. When that landing page is one
@@ -777,7 +820,7 @@ export function Sidebar({ locale }: { locale: string }) {
       // the kiosk home, which is guard-only, but an admin still uses the
       // group for Incidents/Urgence/Configuration.
       const ownLandingHidden = Boolean(item.subItems?.some(
-        sub => sub.href === item.href && (!canSee(sub.permission) || !canSeeRole(sub.roles)),
+        sub => sub.href === item.href && (!canSee(sub.permission) || !canSeeRole(sub.roles) || !canSeeAddon(sub.addon)),
       ));
       const href = ownLandingHidden ? (subItems?.[0]?.href ?? item.href) : item.href;
 
@@ -847,6 +890,7 @@ export function Sidebar({ locale }: { locale: string }) {
                     ? `/${locale}/dashboard/hostel/me`
                     : `/${locale}/dashboard/hostel/guardian`,
                   icon: BedDouble,
+                  addon: 'hostel',
                 },
                 {
                   label: userRole === 'student' ? 'Mes classes en direct' : 'Classes en direct de mon enfant',
@@ -854,10 +898,11 @@ export function Sidebar({ locale }: { locale: string }) {
                     ? `/${locale}/dashboard/student/live-classes`
                     : `/${locale}/dashboard/parent/live-classes`,
                   icon: Video,
+                  addon: 'live-classrooms',
                 },
               ]
             : []),
-        ]
+        ].filter(item => canSeeAddon(item.addon))
       : [];
 
   // Nav selection: admin roles keep the existing capability-filtered school
@@ -887,6 +932,61 @@ export function Sidebar({ locale }: { locale: string }) {
       pathname === sub.href || pathname.startsWith(`${sub.href}/`),
     ),
   )?.label;
+
+  const getCategoryForNavItem = (item: NavItem): 'daily' | 'academics' | 'finance' | 'communication' | 'administration' => {
+    const h = item.href.toLowerCase();
+    if (
+      h.endsWith('/dashboard')
+      || h.includes('/dashboard/attendance')
+      || h.includes('/schedule')
+      || h.includes('/timetable')
+      || h.includes('/events')
+      || h.includes('/calendar')
+    ) {
+      return 'daily';
+    }
+    if (
+      h.includes('/students')
+      || h.includes('/admissions')
+      || h.includes('/academics')
+      || h.includes('/teachers')
+      || h.includes('/grading')
+      || h.includes('/cards')
+      || h.includes('/certificates')
+      || h.includes('/live-class')
+    ) {
+      return 'academics';
+    }
+    if (
+      h.includes('/finance')
+      || h.includes('/invoices')
+      || h.includes('/payments')
+      || h.includes('/expenses')
+      || h.includes('/accounting')
+      || h.includes('/fee')
+      || h.includes('/reports')
+    ) {
+      return 'finance';
+    }
+    if (
+      h.includes('/communication')
+      || h.includes('/broadcast')
+      || h.includes('/crm')
+      || h.includes('/parents')
+      || h.includes('/messages')
+    ) {
+      return 'communication';
+    }
+    return 'administration';
+  };
+
+  const conceptualSections: { id: string; label: string; items: NavItem[] }[] = [
+    { id: 'section-daily', label: tNav('sectionDaily'), items: navItems.filter(i => getCategoryForNavItem(i) === 'daily') },
+    { id: 'section-academics', label: tNav('sectionAcademics'), items: navItems.filter(i => getCategoryForNavItem(i) === 'academics') },
+    { id: 'section-finance', label: tNav('sectionFinance'), items: navItems.filter(i => getCategoryForNavItem(i) === 'finance') },
+    { id: 'section-communication', label: tNav('sectionCommunication'), items: navItems.filter(i => getCategoryForNavItem(i) === 'communication') },
+    { id: 'section-administration', label: tNav('sectionAdministration'), items: navItems.filter(i => getCategoryForNavItem(i) === 'administration') },
+  ];
 
   return (
     <aside className="
@@ -925,36 +1025,36 @@ export function Sidebar({ locale }: { locale: string }) {
         className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
         data-sidebar-scroll
       >
-        {canSee('guard.portal.use') && (
+        {(!isSuperAdmin || hasSelectedTenant) && canSee('guard.portal.use') && (
           <div className="border-b border-slate-800 p-3">
             <Link
               href={`/${locale}/dashboard/portals/guard/emergency`}
-              className="
-                flex items-center gap-3 rounded-xl border border-[#E5544B]/50
-                bg-[#E5544B]/15 px-3 py-2.5 text-xs font-extrabold text-white
-                shadow-sm transition
-                hover:bg-[#E5544B]/25
-              "
+              className={`flex items-center gap-3 rounded-xl px-3 py-2 text-xs transition-all ${
+                hasActiveEmergency
+                  ? 'border border-[#E5544B]/50 bg-[#E5544B]/15 font-extrabold text-white shadow-xs hover:bg-[#E5544B]/25'
+                  : 'font-semibold text-slate-300 hover:bg-slate-800/60 hover:text-white'
+              }`}
             >
-              <span className="
-                flex size-7 items-center justify-center rounded-lg bg-[#E5544B]
-                text-white
-              "
+              <span
+                className={`flex size-6 items-center justify-center rounded-lg ${
+                  hasActiveEmergency
+                    ? 'bg-[#E5544B] text-white shadow-2xs'
+                    : 'text-slate-400'
+                }`}
               >
                 <Siren className="size-4" />
               </span>
-              <span>{tNav('emergencySecurity')}</span>
-              <span className="
-                ml-auto size-2 animate-pulse rounded-full bg-[#E5544B]
-              "
-              />
+              <span>{hasActiveEmergency ? 'Urgence active' : 'Sécurité & urgence'}</span>
+              {hasActiveEmergency && (
+                <span className="ml-auto size-2 animate-pulse rounded-full bg-[#E5544B]" />
+              )}
             </Link>
           </div>
         )}
 
         {/* Section 1: Super Admin Suite (Super Admin Role Only) */}
         {isSuperAdmin && (
-          <div className="space-y-1 border-b border-slate-800/80 p-3">
+          <div className="space-y-1 p-3">
             <div
               onClick={() => toggleMenu('super-admin')}
               className="
@@ -1062,101 +1162,117 @@ export function Sidebar({ locale }: { locale: string }) {
           </div>
         )}
 
-        {/* Section 2: School OS Operational Modules */}
-        <div className="space-y-1 p-3">
-          <div
-            onClick={() => toggleMenu('school-modules')}
-            className="
-              flex cursor-pointer items-center justify-between px-3 py-1.5
-              text-[11px] font-extrabold tracking-wider text-slate-400 uppercase
-              transition-colors
-              hover:text-white
-            "
-          >
-            <span>{tNav('schoolModules')}</span>
-            {openMenus['school-modules']
-              ? (
-                  <ChevronDown className="size-3.5" />
-                )
-              : (
-                  <ChevronRight className="size-3.5" />
-                )}
-          </div>
-
-          {openMenus['school-modules'] && (
-            <div className="space-y-0.5 pt-1">
-              {navItems.map((item) => {
-                const isActive = pathname === item.href;
-                const Icon = item.icon;
-                const hasSubItems = item.subItems && item.subItems.length > 0;
-                const isSubOpen = openMenus[item.label]
-                  || activeMenuLabel === item.label;
+        {/* Section 2: School OS Operational Modules (Grouped into 5 Conceptual Domains) */}
+        {(!isSuperAdmin || hasSelectedTenant) && (
+          <div className="space-y-3 p-3">
+            {conceptualSections
+              .filter(sec => sec.items.length > 0)
+              .map((section) => {
+                const isOpen = openMenus[section.id] ?? true;
+                const hasActiveChild = section.items.some(
+                  i => pathname === i.href || (i.subItems && i.subItems.some(s => pathname === s.href)),
+                );
 
                 return (
-                  <div key={item.href}>
-                    <div className="flex items-center justify-between">
-                      <Link
-                        href={item.href}
-                        className={`
-                          flex flex-1 items-center gap-3 rounded-lg px-3 py-2
-                          text-xs font-semibold transition-all
-                          ${
-                  isActive
-                    ? 'bg-[#2487B8] font-bold text-white shadow-xs'
-                    : `
-                      text-slate-300
-                      hover:bg-slate-800/60 hover:text-white
-                    `
-                  }
-                        `}
-                      >
-                        <Icon className="size-4" />
-                        <span>{item.label}</span>
-                      </Link>
-                      {hasSubItems && (
-                        <button
-                          onClick={() => toggleMenu(item.label)}
-                          className="
-                            p-2 text-slate-400
-                            hover:text-white
-                          "
-                        >
-                          {isSubOpen
-                            ? <ChevronDown className="size-3" />
-                            : (
-                                <ChevronRight className="size-3" />
-                              )}
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Submenu Items */}
-                    {hasSubItems && isSubOpen && (
-                      <div className="
-                        my-1 ml-7 space-y-1 border-l border-slate-700/60 pl-2
+                  <div key={section.id} className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleMenu(section.id)}
+                      className="
+                        flex w-full cursor-pointer items-center justify-between px-3 py-1.5
+                        text-[11px] font-extrabold tracking-wider text-slate-400 uppercase
+                        transition-colors hover:text-white
                       "
-                      >
-                        {item.subItems?.map((sub) => {
-                          const isSubActive = pathname === sub.href;
+                    >
+                      <span className={hasActiveChild ? 'font-bold text-[#2487B8]' : ''}>
+                        {section.label}
+                      </span>
+                      {isOpen ? (
+                        <ChevronDown className="size-3.5" />
+                      ) : (
+                        <ChevronRight className="size-3.5" />
+                      )}
+                    </button>
+
+                    {isOpen && (
+                      <div className="space-y-0.5 pt-0.5">
+                        {section.items.map((item) => {
+                          const isActive = pathname === item.href;
+                          const Icon = item.icon;
+                          const hasSubItems = item.subItems && item.subItems.length > 0;
+                          const isSubOpen = openMenus[item.label]
+                            || activeMenuLabel === item.label;
+
                           return (
-                            <Link
-                              key={sub.href}
-                              href={sub.href}
-                              className={`
-                                block rounded-md px-2.5 py-1.5 text-[11px]
-                                font-medium transition-all
-                                ${
-                            isSubActive
-                              ? 'bg-[#2487B8]/10 font-bold text-[#2487B8]'
+                            <div key={item.href}>
+                              <div className="flex items-center justify-between">
+                                <Link
+                                  href={item.href}
+                                  className={`
+                                    flex flex-1 items-center gap-3 rounded-lg px-3 py-2
+                                    text-xs font-semibold transition-all
+                                    ${
+                            isActive
+                              ? 'bg-[#2487B8] font-bold text-white shadow-xs'
                               : `
-                                text-slate-400
-                                hover:bg-slate-800/40 hover:text-white
+                                text-slate-300
+                                hover:bg-slate-800/60 hover:text-white
                               `
                             }
-                              `}
-                            >
-                              {sub.label}
-                            </Link>
+                                  `}
+                                >
+                                  <Icon className="size-4" />
+                                  <span>{item.label}</span>
+                                </Link>
+                                {hasSubItems && (
+                                  <button
+                                    onClick={() => toggleMenu(item.label)}
+                                    className="
+                                      p-2 text-slate-400
+                                      hover:text-white
+                                    "
+                                  >
+                                    {isSubOpen
+                                      ? <ChevronDown className="size-3" />
+                                      : (
+                                          <ChevronRight className="size-3" />
+                                        )}
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Submenu Items */}
+                              {hasSubItems && isSubOpen && (
+                                <div className="
+                                  my-1 ml-7 space-y-1 border-l border-slate-700/60 pl-2
+                                "
+                                >
+                                  {item.subItems?.map((sub) => {
+                                    const isSubActive = pathname === sub.href;
+                                    return (
+                                      <Link
+                                        key={sub.href}
+                                        href={sub.href}
+                                        className={`
+                                          block rounded-md px-2.5 py-1.5 text-[11px]
+                                          font-medium transition-all
+                                          ${
+                                      isSubActive
+                                        ? 'bg-[#2487B8]/10 font-bold text-[#2487B8]'
+                                        : `
+                                          text-slate-400
+                                          hover:bg-slate-800/40 hover:text-white
+                                        `
+                                      }
+                                        `}
+                                      >
+                                        {sub.label}
+                                      </Link>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
                           );
                         })}
                       </div>
@@ -1164,9 +1280,8 @@ export function Sidebar({ locale }: { locale: string }) {
                   </div>
                 );
               })}
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* User Profile & Role Footer */}

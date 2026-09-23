@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
@@ -14,20 +14,27 @@ const createSchema = z.object({
   tags: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
 }).strict();
 
-export async function GET(req: NextRequest) {
+export async function GET(req: Request) {
   try {
     const context = await requireRequestContext(req, ['school_admin', 'teacher']);
     const tenantId = requireTenant(context);
     await requireCapability(context, 'grading.manage');
 
-    const items = await TeacherQuestionBankService.list(tenantId);
+    let items = await TeacherQuestionBankService.list(tenantId);
+
+    const autoSeed = new URL(req.url).searchParams.get('autoSeed') === 'true';
+    if (items.length === 0 && autoSeed) {
+      await TeacherQuestionBankService.seedDefaultTemplates(tenantId, context.userId);
+      items = await TeacherQuestionBankService.list(tenantId);
+    }
+
     return NextResponse.json({ success: true, data: items });
   } catch (error) {
     return apiErrorResponse(error);
   }
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
     const context = await requireRequestContext(req, ['school_admin', 'teacher']);
     const tenantId = requireTenant(context);

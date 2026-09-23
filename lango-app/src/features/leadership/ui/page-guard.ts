@@ -16,6 +16,7 @@ function asRequestContext(ctx: ServerUserContext): RequestContext {
     name: ctx.name ?? '',
     email: ctx.email ?? '',
     sessionId: ctx.sessionId,
+    impersonated: ctx.impersonated,
   };
 }
 

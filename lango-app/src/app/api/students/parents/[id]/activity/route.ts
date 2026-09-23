@@ -5,17 +5,13 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
-import { auditLogs, guardianStudents } from '@/models/Schema';
+import { auditLogs, guardianStudents, user } from '@/models/Schema';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
-// Real recent-activity log for a guardian, reusing the already-real auditLogs
-// table (future-implementation/dropped-features-rebuild) - no new table, no
-// fabricated ip/oldValue/newValue columns, matching this app's existing
-// audit-log-reader precedent.
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
-    const ctx = await requireRequestContext(req);
+    const ctx = await requireRequestContext(req, ['school_admin', 'teacher', 'receptionist']);
     const tenantId = requireTenant(ctx);
     await requireCapability(ctx, 'guardians.read');
 
@@ -34,20 +30,80 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     const entries = await db
       .select({
+        id: auditLogs.id,
         action: auditLogs.action,
         entityType: auditLogs.entityType,
+        entityId: auditLogs.entityId,
         actorId: auditLogs.actorId,
+        metadata: auditLogs.metadata,
         createdAt: auditLogs.createdAt,
       })
       .from(auditLogs)
-      .where(and(
-        eq(auditLogs.tenantId, tenantId),
-        or(...entityConditions),
-      ))
+      .where(
+        and(
+          eq(auditLogs.tenantId, tenantId),
+          or(...entityConditions),
+        ),
+      )
       .orderBy(desc(auditLogs.createdAt))
-      .limit(20);
+      .limit(50);
 
-    return NextResponse.json({ success: true, data: entries });
+    // Resolve actor names
+    const actorIds = Array.from(new Set(entries.map(e => e.actorId).filter(Boolean))) as string[];
+    const actorMap = new Map<string, string>();
+    if (actorIds.length > 0) {
+      const actors = await db
+        .select({ id: user.id, name: user.name })
+        .from(user)
+        .where(inArray(user.id, actorIds));
+      for (const a of actors) {
+        actorMap.set(a.id, a.name);
+      }
+    }
+
+    const formatted = entries.map((e) => {
+      const meta = (e.metadata as Record<string, any>) || {};
+      let description = '';
+      if (e.entityType === 'guardian') {
+        if (e.action === 'create') description = 'Création de la fiche tuteur';
+        else if (e.action === 'update') description = 'Mise à jour des coordonnées personnelles';
+        else if (e.action === 'delete') description = 'Suppression de la fiche';
+      } else if (e.entityType === 'guardian_student') {
+        if (meta.event === 'unlinked') {
+          description = 'Clôture de la liaison avec l\'élève (archivée)';
+        } else if (meta.event === 'reactivated') {
+          description = 'Réactivation de la liaison élève';
+        } else if (e.action === 'create') {
+          description = `Rattachement de l'élève${meta.studentName ? ` ${meta.studentName}` : ''} (${meta.relationshipType || 'Parent'})`;
+        } else if (e.action === 'update') {
+          const studentSuffix = meta.studentName ? ` pour ${meta.studentName}` : '';
+          const changed = Object.keys(meta.patch || {});
+          if (changed.includes('canPickup')) {
+            description = `Modification de l'autorisation de récupération (${meta.patch.canPickup ? 'Autorisé' : 'Révoqué'})${studentSuffix}`;
+          } else if (changed.includes('emergencyPriority')) {
+            description = `Modification de la priorité d'urgence (${meta.patch.emergencyPriority ?? 'Aucune'})${studentSuffix}`;
+          } else if (changed.includes('isPrimaryContact')) {
+            description = `Définition comme contact principal (${meta.patch.isPrimaryContact ? 'Oui' : 'Non'})${studentSuffix}`;
+          } else if (changed.includes('isFinanciallyResponsible')) {
+            description = `Mise à jour de la responsabilité financière (${meta.patch.isFinanciallyResponsible ? 'Oui' : 'Non'})${studentSuffix}`;
+          } else {
+            description = `Mise à jour des paramètres de la liaison élève${studentSuffix}`;
+          }
+        }
+      }
+
+      return {
+        id: e.id,
+        action: e.action,
+        entityType: e.entityType,
+        actorName: e.actorId ? (actorMap.get(e.actorId) || 'Personnel scolaire') : 'Système',
+        description: description || `${e.action} sur ${e.entityType}`,
+        metadata: e.metadata,
+        createdAt: e.createdAt,
+      };
+    });
+
+    return NextResponse.json({ success: true, data: formatted });
   } catch (error) {
     return apiErrorResponse(error);
   }

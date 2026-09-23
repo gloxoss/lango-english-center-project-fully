@@ -8,6 +8,7 @@ import { parseJson, smsMessageCreateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { smsMessages } from '@/models/Schema';
 import { sendSmsMessage } from '@/features/broadcast/services/sms-delivery';
+import { assertAndConsumeWhatsAppQuota } from '@/features/broadcast/services/whatsapp-anti-spam-service';
 
 // POST records the message row and, when the tenant has a real SMS connection
 // (e.g. a webhook provider), attempts a real outbound send. Without one it stays
@@ -40,24 +41,43 @@ export async function POST(request: Request) {
     const tenantId = requireTenant(context);
     const body = await parseJson(request, smsMessageCreateSchema);
 
+    const channel = body.channel ?? 'sms';
+    let whatsappQuota;
+    if (channel === 'whatsapp') {
+      whatsappQuota = await assertAndConsumeWhatsAppQuota(tenantId, 1);
+    }
+
     const result = await sendSmsMessage(tenantId, {
       to: body.recipientPhone,
       body: body.body,
       studentId: body.studentId,
       createdById: context.userId,
-    });
+      channel,
+    }, channel);
 
     recordAudit(context, 'create', 'sms_message', result.id);
 
+    const channelLabel = channel === 'whatsapp' ? 'WhatsApp' : 'SMS';
     const message = result.delivery === 'simulated'
-      ? `Message enregistré pour ${body.recipientPhone} (mode simulation, aucun SMS réel envoyé).`
+      ? `Message ${channelLabel} enregistré pour ${body.recipientPhone} (mode simulation, aucun envoi externe).`
       : result.delivery === 'failed'
-        ? `Échec de l'envoi vers ${body.recipientPhone}${result.failureReason ? ` (${result.failureReason})` : ''}.`
-        : `Message envoyé vers ${body.recipientPhone}.`;
+        ? `Échec de l'envoi ${channelLabel} vers ${body.recipientPhone}${result.failureReason ? ` (${result.failureReason})` : ''}.`
+        : `Message ${channelLabel} envoyé vers ${body.recipientPhone}.`;
 
     return NextResponse.json({
       success: true,
-      data: { id: result.id, delivery: result.delivery, simulated: result.delivery === 'simulated' },
+      data: {
+        id: result.id,
+        channel,
+        delivery: result.delivery,
+        simulated: result.delivery === 'simulated',
+        provider: result.provider,
+        quota: whatsappQuota ? {
+          remainingToday: whatsappQuota.remainingToday,
+          dailyLimit: whatsappQuota.dailyLimit,
+          usedToday: whatsappQuota.usedToday,
+        } : undefined,
+      },
       message,
     });
   } catch (error) {

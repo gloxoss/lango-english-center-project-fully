@@ -224,16 +224,26 @@ export function PaymentMethodsView() {
               <label className="font-bold text-slate-600">{t('onlineGatewayLabel')}</label>
               <select value={form.provider} onChange={e => setForm({ ...form, provider: e.target.value })} className="w-full h-9 rounded-xl border border-slate-200 bg-white px-2 text-xs">
                 <option value="">{t('noGatewayOffline')}</option>
-                <option value="cmi-naps">CMI NAPS</option>
+                {/* Audit P0-C: CMI live is not implemented (provider throws 501) —
+                    offered for sandbox testing only, labelled as such. */}
+                <option value="cmi-naps">CMI NAPS (sandbox uniquement)</option>
                 <option value="stripe">Stripe</option>
               </select>
             </div>
             <div className="space-y-1">
               <label className="font-bold text-slate-600">{t('gatewayModeLabel')}</label>
-              <select value={form.gatewayMode} onChange={e => setForm({ ...form, gatewayMode: e.target.value })} className="w-full h-9 rounded-xl border border-slate-200 bg-white px-2 text-xs">
+              <select
+                value={form.gatewayMode}
+                onChange={e => setForm({ ...form, gatewayMode: e.target.value })}
+                disabled={form.provider === 'cmi-naps'}
+                className="w-full h-9 rounded-xl border border-slate-200 bg-white px-2 text-xs disabled:opacity-60"
+              >
                 <option value="sandbox">Sandbox</option>
-                <option value="live">Production</option>
+                {form.provider !== 'cmi-naps' && <option value="live">Production</option>}
               </select>
+              {form.provider === 'cmi-naps' && (
+                <p className="text-[10px] text-amber-700 font-semibold">CMI production n'est pas encore disponible : la passerelle reste en mode test.</p>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">

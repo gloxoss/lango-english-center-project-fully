@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { recordAudit } from '@/libs/api/audit';
 import { z } from 'zod';
 import { requireRequestContext } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
@@ -58,6 +59,7 @@ export async function POST(req: NextRequest) {
         { accountId: body.offsetAccountId, debitAmount: '0', creditAmount: body.amount, memo: body.reference },
       ],
     });
+    recordAudit(ctx, 'create', 'accounting_deposit', String(result.entry?.id ?? 'deposit'), { idempotent: result.idempotent, entryNumber: result.entry?.entryNumber ?? null });
     return NextResponse.json({ success: true, data: result }, { status: result.idempotent ? 200 : 201 });
   } catch (error) { return apiErrorResponse(error); }
 }

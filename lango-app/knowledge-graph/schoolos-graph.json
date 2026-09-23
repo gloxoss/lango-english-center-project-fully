@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-09-12T14:03:39.545Z",
+  "generatedAt": "2026-09-16T15:22:32.216Z",
   "stats": {
-    "totalNodes": 2083,
-    "totalEdges": 1211,
+    "totalNodes": 2087,
+    "totalEdges": 1214,
     "nodeCounts": {
       "DbTable": 420,
       "Role": 9,
-      "ApiRoute": 794,
+      "ApiRoute": 798,
       "Capability": 130,
       "Page": 344,
       "Service": 347,
@@ -58,7 +58,7 @@
       ],
       "apiRoutes": [
         "GET /api/academics/academic-years",
-        "GET /api/academics/assessment-definitions",
+        "GET|POST /api/academics/assessment-definitions",
         "GET|POST /api/academics/assessment-plans",
         "GET|POST /api/academics/assessment-sessions",
         "GET|POST /api/academics/assessments",
@@ -89,6 +89,7 @@
         "GET|POST /api/academics/homework/upload",
         "GET /api/academics/homework/[id]/attempts",
         "POST /api/academics/homework/[id]/grade",
+        "GET|PUT|DELETE /api/academics/homework/[id]",
         "POST /api/academics/homework/[id]/submit",
         "GET|POST|PUT|DELETE /api/academics/mediums",
         "POST /api/academics/meeting-slots/book",
@@ -115,8 +116,10 @@
         "GET|POST|PUT|DELETE /api/academics/streams",
         "GET|POST|DELETE /api/academics/subject-teachers",
         "GET|POST|PUT|DELETE /api/academics/subjects",
+        "GET|POST /api/academics/syllabus",
         "GET|POST|DELETE /api/academics/teacher-availability",
         "GET|POST /api/academics/teacher-question-bank",
+        "POST /api/academics/teacher-question-bank/seed",
         "PUT|DELETE /api/academics/teacher-question-bank/[id]",
         "POST /api/academics/timetable-conflicts/resolve",
         "GET /api/academics/timetable-conflicts",
@@ -258,6 +261,7 @@
         "GET /api/students/parents/[id]/payments",
         "GET|PATCH /api/students/parents/[id]",
         "GET|POST|PUT /api/students/photos",
+        "POST /api/students/placements/auto",
         "GET|POST /api/students/placements",
         "GET /api/students/promotions/preview",
         "GET|POST /api/students/promotions",
@@ -553,7 +557,7 @@
         "departments-view",
         "designations-view",
         "employee-wizard-view",
-        "personnel-playground",
+        "employee-directory-view",
         "employee-profile-view",
         "hr-overview-view",
         "employee-portal-view",
@@ -6030,15 +6034,16 @@
     {
       "id": "api:/api/academics/assessment-definitions",
       "type": "ApiRoute",
-      "label": "GET /api/academics/assessment-definitions",
+      "label": "GET|POST /api/academics/assessment-definitions",
       "module": "academics",
       "file": "src\\app\\api\\academics\\assessment-definitions\\route.ts",
       "metadata": {
         "methods": [
-          "GET"
+          "GET",
+          "POST"
         ],
         "capability": "grading.manage",
-        "hasAudit": false,
+        "hasAudit": true,
         "hasTenant": true
       }
     },
@@ -6548,6 +6553,23 @@
       }
     },
     {
+      "id": "api:/api/academics/homework/[id]",
+      "type": "ApiRoute",
+      "label": "GET|PUT|DELETE /api/academics/homework/[id]",
+      "module": "academics",
+      "file": "src\\app\\api\\academics\\homework\\[id]\\route.ts",
+      "metadata": {
+        "methods": [
+          "GET",
+          "PUT",
+          "DELETE"
+        ],
+        "capability": "grading.manage",
+        "hasAudit": true,
+        "hasTenant": true
+      }
+    },
+    {
       "id": "api:/api/academics/homework/[id]/submit",
       "type": "ApiRoute",
       "label": "POST /api/academics/homework/[id]/submit",
@@ -6972,6 +6994,22 @@
       }
     },
     {
+      "id": "api:/api/academics/syllabus",
+      "type": "ApiRoute",
+      "label": "GET|POST /api/academics/syllabus",
+      "module": "academics",
+      "file": "src\\app\\api\\academics\\syllabus\\route.ts",
+      "metadata": {
+        "methods": [
+          "GET",
+          "POST"
+        ],
+        "capability": "academics.manage",
+        "hasAudit": true,
+        "hasTenant": true
+      }
+    },
+    {
       "id": "api:/api/academics/teacher-availability",
       "type": "ApiRoute",
       "label": "GET|POST|DELETE /api/academics/teacher-availability",
@@ -6997,6 +7035,21 @@
       "metadata": {
         "methods": [
           "GET",
+          "POST"
+        ],
+        "capability": "grading.manage",
+        "hasAudit": true,
+        "hasTenant": true
+      }
+    },
+    {
+      "id": "api:/api/academics/teacher-question-bank/seed",
+      "type": "ApiRoute",
+      "label": "POST /api/academics/teacher-question-bank/seed",
+      "module": "academics",
+      "file": "src\\app\\api\\academics\\teacher-question-bank\\seed\\route.ts",
+      "metadata": {
+        "methods": [
           "POST"
         ],
         "capability": "grading.manage",
@@ -17769,6 +17822,27 @@
       }
     },
     {
+      "id": "api:/api/students/placements/auto",
+      "type": "ApiRoute",
+      "label": "POST /api/students/placements/auto",
+      "module": "students",
+      "file": "src\\app\\api\\students\\placements\\auto\\route.ts",
+      "metadata": {
+        "methods": [
+          "POST"
+        ],
+        "capability": "students.placements.manage",
+        "hasAudit": true,
+        "hasTenant": true
+      }
+    },
+    {
+      "id": "capability:students.placements.manage",
+      "type": "Capability",
+      "label": "students.placements.manage",
+      "module": "students"
+    },
+    {
       "id": "api:/api/students/placements",
       "type": "ApiRoute",
       "label": "GET|POST /api/students/placements",
@@ -17798,12 +17872,6 @@
         "hasAudit": false,
         "hasTenant": true
       }
-    },
-    {
-      "id": "capability:students.placements.manage",
-      "type": "Capability",
-      "label": "students.placements.manage",
-      "module": "students"
     },
     {
       "id": "api:/api/students/promotions",
@@ -21540,15 +21608,15 @@
       "module": "hr",
       "file": "src\\app\\[locale]\\(dashboard)\\dashboard\\hr\\employees\\page.tsx",
       "metadata": {
-        "viewComponent": "personnel-playground"
+        "viewComponent": "employee-directory-view"
       }
     },
     {
-      "id": "view:hr/personnel-playground",
+      "id": "view:hr/employee-directory-view",
       "type": "Service",
-      "label": "personnel-playground",
+      "label": "employee-directory-view",
       "module": "hr",
-      "file": "src/features/hr/ui/personnel-playground.tsx"
+      "file": "src/features/hr/ui/employee-directory-view.tsx"
     },
     {
       "id": "page:/dashboard/hr/employees/[id]",
@@ -21625,7 +21693,7 @@
       "module": "hr",
       "file": "src\\app\\[locale]\\(dashboard)\\dashboard\\hr\\page.tsx",
       "metadata": {
-        "viewComponent": "personnel-playground"
+        "viewComponent": null
       }
     },
     {
@@ -27027,6 +27095,12 @@
       "description": "Route requires capability grading.manage"
     },
     {
+      "from": "api:/api/academics/homework/[id]",
+      "to": "capability:grading.manage",
+      "type": "guards",
+      "description": "Route requires capability grading.manage"
+    },
+    {
       "from": "api:/api/academics/mediums",
       "to": "capability:academics.manage",
       "type": "guards",
@@ -27153,7 +27227,19 @@
       "description": "Route requires capability academics.manage"
     },
     {
+      "from": "api:/api/academics/syllabus",
+      "to": "capability:academics.manage",
+      "type": "guards",
+      "description": "Route requires capability academics.manage"
+    },
+    {
       "from": "api:/api/academics/teacher-question-bank",
+      "to": "capability:grading.manage",
+      "type": "guards",
+      "description": "Route requires capability grading.manage"
+    },
+    {
+      "from": "api:/api/academics/teacher-question-bank/seed",
       "to": "capability:grading.manage",
       "type": "guards",
       "description": "Route requires capability grading.manage"
@@ -29907,6 +29993,12 @@
       "description": "Route requires capability students.read"
     },
     {
+      "from": "api:/api/students/placements/auto",
+      "to": "capability:students.placements.manage",
+      "type": "guards",
+      "description": "Route requires capability students.placements.manage"
+    },
+    {
       "from": "api:/api/students/placements",
       "to": "capability:students.read",
       "type": "guards",
@@ -30862,9 +30954,9 @@
     },
     {
       "from": "page:/dashboard/hr/employees",
-      "to": "view:hr/personnel-playground",
+      "to": "view:hr/employee-directory-view",
       "type": "renders",
-      "description": "Page renders personnel-playground"
+      "description": "Page renders employee-directory-view"
     },
     {
       "from": "page:/dashboard/hr/employees/[id]",
@@ -30889,12 +30981,6 @@
       "to": "view:hr/hr-overview-view",
       "type": "renders",
       "description": "Page renders hr-overview-view"
-    },
-    {
-      "from": "page:/dashboard/hr",
-      "to": "view:hr/personnel-playground",
-      "type": "renders",
-      "description": "Page renders personnel-playground"
     },
     {
       "from": "page:/dashboard/hr/salary-advances",

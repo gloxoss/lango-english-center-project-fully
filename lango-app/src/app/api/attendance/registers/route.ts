@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
-import { attendanceRegisters, user } from '@/models/Schema';
+import { attendanceRegisters, classSections, user } from '@/models/Schema';
 
 export async function GET(request: Request) {
   try {
@@ -19,6 +19,16 @@ export async function GET(request: Request) {
     }
 
     const period = periodParam ? Number.parseInt(periodParam, 10) : 1;
+
+    let actualClassId = classId;
+    const [sec] = await db
+      .select({ classId: classSections.classId })
+      .from(classSections)
+      .where(and(eq(classSections.tenantId, tenantId), eq(classSections.id, classId)))
+      .limit(1);
+    if (sec?.classId) {
+      actualClassId = sec.classId;
+    }
 
     const [row] = await db
       .select({
@@ -36,7 +46,7 @@ export async function GET(request: Request) {
       .leftJoin(user, eq(attendanceRegisters.submittedById, user.id))
       .where(and(
         eq(attendanceRegisters.tenantId, tenantId),
-        eq(attendanceRegisters.classId, classId),
+        eq(attendanceRegisters.classId, actualClassId),
         eq(attendanceRegisters.date, date),
         eq(attendanceRegisters.period, period),
       ))

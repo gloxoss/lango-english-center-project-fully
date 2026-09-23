@@ -16,7 +16,7 @@
  */
 
 import { compileFormula, evaluateFormula, referencedVariables, FormulaError, Money, mulBp, divInt } from './expression-engine';
-import { MoroccoV1RuleConfig, computeStatutory, MOROCCO_V1_DEFAULT_RULE_CONFIG, parseRegulationConfig } from './ma-regulation-adapter';
+import { MoroccoV1RuleConfig, computeStatutory, MOROCCO_V1_DEFAULT_RULE_CONFIG, parseRegulationConfig, requiresCertificationWarning } from './ma-regulation-adapter';
 import { moneyToCents } from '@/libs/finance/money';
 
 // ─────────────────────────────────────────────────────────
@@ -120,6 +120,9 @@ export type EngineResult = {
   trace: TraceStep[];
   ruleKey: string;
   roundingOrder: string[];
+  /** Provenance of the regulation pack used — payslip surfaces must show the "barème non certifié" warning while this is not 'validated_by_professional' (audit P0-D). */
+  regulationValidationStatus: string;
+  regulationCertificationWarning: boolean;
 };
 
 export type JsonSafe<T> = T extends bigint
@@ -448,6 +451,8 @@ export function runPayrollEngine(input: EngineInput): EngineResult {
     trace,
     ruleKey: stat.ruleKey,
     roundingOrder: regulation.roundingOrder,
+    regulationValidationStatus: regulation.provenance.validationStatus,
+    regulationCertificationWarning: requiresCertificationWarning(regulation),
   };
 }
 

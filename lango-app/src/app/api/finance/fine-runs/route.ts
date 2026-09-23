@@ -1,4 +1,4 @@
-import { and, eq, inArray, lt, ne, sql } from 'drizzle-orm';
+import { and, eq, inArray, lt, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
@@ -8,6 +8,7 @@ import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { classSections, fineAssessments, finePolicies, invoiceEvents, invoices, user } from '@/models/Schema';
+import { casablancaTodayIso } from '@/libs/finance/today';
 
 const runSchema = z.object({
   finePolicyId: z.string().uuid().optional(),
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
       if ((err as { code?: string }).code !== 'INVALID_JSON') throw err;
     }
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = casablancaTodayIso();
 
     const policies = await db
       .select()
@@ -65,12 +66,14 @@ export async function POST(request: Request) {
         sectionId: user.classSectionId,
       })
       .from(invoices)
-      .innerJoin(user, eq(invoices.studentId, user.id))
-      .leftJoin(classSections, eq(user.classSectionId, classSections.id))
+      .innerJoin(user, and(eq(invoices.studentId, user.id), eq(user.tenantId, tenantId)))
+      .leftJoin(classSections, and(eq(user.classSectionId, classSections.id), eq(classSections.tenantId, tenantId)))
       .where(and(
         eq(invoices.tenantId, tenantId),
-        ne(invoices.status, 'paid'),
+        inArray(invoices.status, ['pending', 'partial', 'overdue']),
         lt(invoices.dueDate, today),
+        sql`${invoices.netAmount} > ${invoices.paidAmount}`,
+        ...(context.branchId ? [eq(user.branchId, context.branchId)] : []),
       ));
 
     // Existing assessments per invoice+policy to keep runs idempotent.
@@ -95,6 +98,7 @@ export async function POST(request: Request) {
         if (existing.has(key)) continue;
 
         const daysOverdue = Math.max(0, daysBetween(today, inv.dueDate) - p.graceDays);
+        if (daysOverdue === 0) continue;
         let amount = 0;
         if (p.formula === 'flat') amount = p.flatAmount;
         else if (p.formula === 'per_day') amount = p.perDayAmount * daysOverdue;
@@ -107,32 +111,59 @@ export async function POST(request: Request) {
       }
     }
 
-    if (created.length > 0) {
-      await db.insert(fineAssessments).values(created.map(c => ({
+    const inserted = created.length > 0 ? await db.transaction(async (tx) => {
+      // Serialize runs for this tenant. Recheck within the lock because the
+      // preflight list can become stale while another run or payment commits.
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${`fine-run:${tenantId}`}))`);
+      const currentInvoices = await tx.select({ id: invoices.id })
+        .from(invoices)
+        .innerJoin(user, and(eq(invoices.studentId, user.id), eq(user.tenantId, tenantId)))
+        .where(and(
+          eq(invoices.tenantId, tenantId),
+          inArray(invoices.id, created.map((c) => c.invoiceId)),
+          inArray(invoices.status, ['pending', 'partial', 'overdue']),
+          lt(invoices.dueDate, today),
+          sql`${invoices.netAmount} > ${invoices.paidAmount}`,
+          ...(context.branchId ? [eq(user.branchId, context.branchId)] : []),
+        ))
+        .for('update', { of: invoices });
+      const currentIds = new Set(currentInvoices.map((row) => row.id));
+      const already = await tx.select({ invoiceId: fineAssessments.invoiceId, policyId: fineAssessments.finePolicyId })
+        .from(fineAssessments)
+        .where(and(
+          eq(fineAssessments.tenantId, tenantId),
+          inArray(fineAssessments.invoiceId, created.map((c) => c.invoiceId)),
+        ));
+      const existingKeys = new Set(already.map((row) => `${row.invoiceId}:${row.policyId}`));
+      const toInsert = created.filter((candidate) => currentIds.has(candidate.invoiceId)
+        && !existingKeys.has(`${candidate.invoiceId}:${candidate.finePolicyId}`));
+      if (toInsert.length === 0) return [];
+      await tx.insert(fineAssessments).values(toInsert.map((candidate) => ({
         tenantId,
-        studentId: c.studentId,
-        finePolicyId: c.finePolicyId,
-        invoiceId: c.invoiceId,
-        amount: c.amount,
+        studentId: candidate.studentId,
+        finePolicyId: candidate.finePolicyId,
+        invoiceId: candidate.invoiceId,
+        amount: candidate.amount,
         reason: 'Pénalité de retard automatique',
         status: 'assessed',
       })));
-      await db.insert(invoiceEvents).values(created.map(c => ({
+      await tx.insert(invoiceEvents).values(toInsert.map((candidate) => ({
         tenantId,
-        invoiceId: c.invoiceId,
+        invoiceId: candidate.invoiceId,
         eventType: 'fine_assessed',
-        payload: { finePolicyId: c.finePolicyId, amount: c.amount },
+        payload: { finePolicyId: candidate.finePolicyId, amount: candidate.amount },
         actorUserId: context.userId,
       })));
-    }
+      return toInsert;
+    }) : [];
 
-    const total = created.reduce((sum, c) => sum + c.amount, 0);
-    recordAudit(context, 'create', 'fine_run', 'batch', { count: created.length, total });
+    const total = inserted.reduce((sum, c) => sum + c.amount, 0);
+    recordAudit(context, 'create', 'fine_run', 'batch', { count: inserted.length, total });
 
     return NextResponse.json({
       success: true,
-      data: { assessed: created.length, total, finePolicyId: active[0]?.id ?? null },
-      message: `${created.length} amende(s) évaluée(s) pour un total de ${total.toFixed(2)} MAD.`,
+      data: { assessed: inserted.length, total, finePolicyId: active[0]?.id ?? null },
+      message: `${inserted.length} amende(s) évaluée(s) pour un total de ${total.toFixed(2)} MAD.`,
     });
   } catch (error) {
     return apiErrorResponse(error);

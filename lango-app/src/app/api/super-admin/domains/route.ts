@@ -19,6 +19,7 @@ export async function GET(request: Request) {
           id: tenants.id,
           name: tenants.name,
           slug: tenants.slug,
+          planTier: tenants.planTier,
         }
       })
       .from(tenantDomains)

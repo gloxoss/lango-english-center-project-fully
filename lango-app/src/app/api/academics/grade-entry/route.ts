@@ -6,6 +6,7 @@ import { ExamMasterService } from '@/features/assessment/services/exam-master-se
 import { loadScopedMarksheet, writableStudentIds } from '@/features/assessment/services/marksheet-access';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { requireExamTermStage } from '@/features/assessment/services/exam-term-guard';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
     const body = await parseJson(request, saveGradesSchema);
 
     const [definition] = await db
-      .select({ id: assessmentDefinitions.id, maximumScore: assessmentDefinitions.maximumScore })
+      .select({ id: assessmentDefinitions.id, maximumScore: assessmentDefinitions.maximumScore, termId: assessmentDefinitions.termId })
       .from(assessmentDefinitions)
       .where(and(
         eq(assessmentDefinitions.id, body.assessmentDefinitionId),
@@ -75,6 +76,13 @@ export async function POST(request: Request) {
 
     if (!definition) {
       throw new ApiError(404, 'NOT_FOUND', 'Épreuve introuvable.');
+    }
+
+    // Audit 3, P1-H: once a term is closed (locked/published) its marks are
+    // final. Edits behind a published bulletin are refused with 409, exactly
+    // like the exam-terms marksheet route.
+    if (definition.termId) {
+      await requireExamTermStage(tenantId, definition.termId, 'enter_marks');
     }
 
     const studentIds = [...new Set(body.marks.map(m => m.studentId))];

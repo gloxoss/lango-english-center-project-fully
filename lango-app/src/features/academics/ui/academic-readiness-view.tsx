@@ -23,7 +23,7 @@ interface ReadinessCheck {
   id: string;
   title: string;
   score: number;
-  status: 'conforme' | 'attention' | 'critique';
+  status: 'conforme' | 'attention' | 'critique' | 'bloque';
   detail: string;
   deepLink?: string;
   deepLinkLabel?: string;
@@ -82,7 +82,7 @@ export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {
 
   const checkDeepLinks = useMemo<Record<string, { href: string; label: string }>>(() => ({
     class_offerings: { href: '/dashboard/academics/classes', label: t('dlManageClassOfferings') },
-    primary_teachers: { href: '/dashboard/academics/class-section-teachers', label: t('dlAssignMissingHomerooms') },
+    primary_teachers: { href: '/dashboard/academics/classes', label: t('dlAssignMissingHomerooms') },
     subject_teachers: { href: '/dashboard/academics/assignments', label: t('dlAssignSubjectTeachers') },
     timetable_published: { href: '/dashboard/academics/schedule', label: t('dlGeneratePublishTimetable') },
     rooms_allocated: { href: '/dashboard/academics/rooms', label: t('dlAllocateClassrooms') },
@@ -93,6 +93,7 @@ export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {
     if (status === 'conforme') return t('statusConforme');
     if (status === 'attention') return t('statusAttention');
     if (status === 'critique') return t('statusCritique');
+    if (status === 'bloque') return t('statusBloque');
     return status;
   };
 

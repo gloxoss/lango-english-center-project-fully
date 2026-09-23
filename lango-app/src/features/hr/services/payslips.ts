@@ -103,11 +103,18 @@ export async function getPayslip(tenantId: string, payslipId: string, userId?: s
  * `[id]/pdf` route and the employee self-service download route so both always
  * show the same layout.
  */
-export function renderPayslipHtml(row: Pick<PayslipRow, 'employeeName' | 'employeeEmail' | 'issuedAt' | 'year' | 'month' | 'grossSalary' | 'cnssEmployee' | 'amoEmployee' | 'irTax' | 'netSalary' | 'cnssEmployer' | 'amoEmployer' | 'totalEmployerCost'>): string {
+export function renderPayslipHtml(row: Pick<PayslipRow, 'employeeName' | 'employeeEmail' | 'issuedAt' | 'year' | 'month' | 'grossSalary' | 'cnssEmployee' | 'amoEmployee' | 'irTax' | 'netSalary' | 'cnssEmployer' | 'amoEmployer' | 'totalEmployerCost' | 'snapshot'>): string {
   const monthLabel = `${MONTH_NAMES_FR[(row.month ?? 1) - 1]} ${row.year}`;
   const escapeHtml = (value: unknown) => String(value ?? '')
     .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+
+  // Audit P0-D: the statutory pack must be signed off by an accountant. Until
+  // the pack's provenance says 'validated_by_professional', every bulletin
+  // carries a visible warning. Snapshots from before the field existed default
+  // to the warning being shown (truthful default).
+  const snapshotStatus = (row.snapshot as { regulationValidationStatus?: unknown } | null | undefined)?.regulationValidationStatus;
+  const showCertificationWarning = snapshotStatus !== 'validated_by_professional';
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -129,6 +136,7 @@ export function renderPayslipHtml(row: Pick<PayslipRow, 'employeeName' | 'employ
 <body>
   <h1>Bulletin de Paie</h1>
   <p class="subtitle">${monthLabel}</p>
+  ${showCertificationWarning ? `<p style="background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:8px 12px;border-radius:6px;font-weight:bold;text-align:center;margin:0 0 16px;">⚠ Barème réglementaire non certifié — chiffres produits par un barème en attente de validation par un expert-comptable.</p>` : ''}
   <table>
     <tr><th colspan="2">Employé</th></tr>
     <tr><td>Nom</td><td>${escapeHtml(row.employeeName)}</td></tr>

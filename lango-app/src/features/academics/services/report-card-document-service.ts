@@ -160,8 +160,9 @@ export async function issueReportCardPdf(params: {
   templateVersionId: string;
   studentId: string;
   issuedBy: string;
+  termWindow?: { termStart?: string; termEnd?: string };
 }): Promise<IssuedReportCard> {
-  const { tenantId, templateVersionId, studentId, issuedBy } = params;
+  const { tenantId, templateVersionId, studentId, issuedBy, termWindow } = params;
 
   const [student] = await db
     .select({ classSectionId: user.classSectionId })
@@ -171,10 +172,12 @@ export async function issueReportCardPdf(params: {
   if (!student) throw new ApiError(404, 'NOT_FOUND', 'Élève introuvable.');
   if (!student.classSectionId) throw new ApiError(422, 'NOT_ASSIGNED', 'Élève non affecté à une classe.');
 
-  const version = await resolveReportCardVersion(tenantId, templateVersionId);
-  const { cards } = await getClassReportCards(tenantId, student.classSectionId);
+  const { cards } = await getClassReportCards(tenantId, student.classSectionId, termWindow);
   const card = cards.find(c => c.student.id === studentId);
   if (!card) throw new ApiError(404, 'NOT_FOUND', 'Bulletin introuvable pour cet élève.');
+  if (card.subjects.length === 0) throw new ApiError(409, 'NO_GRADED_SUBJECTS', 'Aucune matière notée pour cette période. Le bulletin ne peut pas être émis.');
+
+  const version = await resolveReportCardVersion(tenantId, templateVersionId);
 
   return issueReportCardDocument({ tenantId, version, card, issuedBy });
 }

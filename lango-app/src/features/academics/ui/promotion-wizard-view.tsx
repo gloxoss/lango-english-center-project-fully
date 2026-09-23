@@ -25,6 +25,7 @@ interface SessionYear {
   id: string;
   name: string;
   isDefault: boolean;
+  startDate: string;
 }
 
 type DecisionType = 'promote' | 'repeat' | 'graduate' | 'transfer' | 'withdraw' | 'hold';
@@ -120,8 +121,8 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
   // Initial fetch: sections & session years
   useEffect(() => {
     Promise.all([
-      fetch('/api/academics/class-sections?pageSize=200').then((r) => r.json()),
-      fetch('/api/academics/session-years').then((r) => r.json()),
+      fetch('/api/academics/class-sections?pageSize=100').then((r) => r.json()),
+      fetch('/api/academics/session-years?pageSize=100').then((r) => r.json()),
     ]).then(([clsRes, sessRes]) => {
       if (clsRes.success && Array.isArray(clsRes.data)) {
         const flattened: ClassSection[] = clsRes.data.map((s: any) => ({
@@ -139,8 +140,10 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
       if (sessRes.success && Array.isArray(sessRes.data)) {
         setSessionYears(sessRes.data);
         const def = sessRes.data.find((s: SessionYear) => s.isDefault);
-        if (def) setSelectedTargetSession(def.id);
-        else if (sessRes.data.length > 0) setSelectedTargetSession(sessRes.data[0].id);
+        const next = (sessRes.data as SessionYear[])
+          .filter(s => def && s.startDate > def.startDate)
+          .sort((a, b) => a.startDate.localeCompare(b.startDate))[0];
+        setSelectedTargetSession(next?.id ?? '');
       }
     });
   }, []);
@@ -357,7 +360,7 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
 
   // Commit promotion to backend
   const handleCommitPromotion = async () => {
-    if (!selectedSourceSection || !selectedTargetSession || studentsDecisions.length === 0) return;
+    if (!selectedSourceSection || !selectedTargetSession || studentsDecisions.length === 0 || studentsDecisions.some(s => s.decision === 'hold')) return;
     setSubmitting(true);
     setMessage(null);
 
@@ -431,13 +434,15 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
     const toPromote = studentsDecisions.filter(s => s.decision === 'promote' || s.decision === 'graduate').length;
     const toRepeat = studentsDecisions.filter(s => s.decision === 'repeat').length;
     const toHold = studentsDecisions.filter(s => s.decision === 'hold').length;
+    const assessed = studentsDecisions.filter(s => s.averagePercentage != null).length;
+    const passedAssessed = studentsDecisions.filter(s => s.averagePercentage != null && (s.decision === 'promote' || s.decision === 'graduate')).length;
     const borderline = studentsDecisions.filter(s => {
       const score = s.grade20 ?? (s.averagePercentage != null ? s.averagePercentage / 5 : null);
       return score !== null && score >= 9.0 && score < 10.0;
     }).length;
-    const passRate = total > 0 ? Math.round((toPromote / total) * 100) : 0;
+    const passRate = assessed > 0 ? Math.round((passedAssessed / assessed) * 100) : null;
 
-    return { total, toPromote, toRepeat, toHold, borderline, passRate };
+    return { total, assessed, toPromote, toRepeat, toHold, borderline, passRate };
   }, [studentsDecisions]);
 
   // Filtered Students List
@@ -576,7 +581,10 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
                     <SelectValue placeholder={t('chooseTargetSessionPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {sessionYears.map((s) => (
+                    {sessionYears.filter(s => {
+                      const source = sessionYears.find(y => y.isDefault);
+                      return source && s.startDate > source.startDate;
+                    }).map((s) => (
                       <SelectItem key={s.id} value={s.id}>
                         {s.name} {s.isDefault ? t('sessionActiveTag') : ''}
                       </SelectItem>
@@ -593,7 +601,7 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
               <div className="space-y-0.5">
                 <p className="text-xs font-bold text-slate-500">Effectif de la Section</p>
                 <p className="text-2xl font-extrabold text-[#16212B]">{stats.total}</p>
-                <p className="text-[11px] font-semibold text-slate-400">Élèves évalués</p>
+                <p className="text-[11px] font-semibold text-slate-400">{stats.assessed} élève(s) évalué(s)</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2487B8] flex items-center justify-center">
                 <Users className="w-5 h-5" />
@@ -604,7 +612,7 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
               <div className="space-y-0.5">
                 <p className="text-xs font-bold text-slate-500">Admis au Niveau Supérieur</p>
                 <p className="text-2xl font-extrabold text-emerald-600">{stats.toPromote}</p>
-                <p className="text-[11px] font-bold text-emerald-600">Taux de réussite : {stats.passRate}%</p>
+                <p className="text-[11px] font-bold text-emerald-600">Taux de réussite : {stats.passRate === null ? '—' : `${stats.passRate}%`}</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
                 <CheckCircle2 className="w-5 h-5" />
@@ -657,6 +665,8 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
           )}
 
           {/* Student Decision Matrix & Deliberation Engine */}
+          {!selectedTargetSession && <Card className="border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-900">{t('promotionNeedsNextSession')}</Card>}
+          {stats.toHold > 0 && <Card className="border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-900">{t('promotionPendingDecisions', { count: stats.toHold })}</Card>}
           <Card className="rounded-2xl border border-slate-200/80 shadow-xs bg-white">
             <CardHeader className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-slate-100 pb-4">
               <div>
@@ -710,7 +720,7 @@ export function PromotionWizardView({ locale: _locale }: { locale?: string } = {
 
                 <Button
                   onClick={handleCommitPromotion}
-                  disabled={submitting || studentsDecisions.length === 0 || hasCapacityExceeded}
+                  disabled={submitting || studentsDecisions.length === 0 || !selectedTargetSession || stats.toHold > 0 || hasCapacityExceeded}
                   className="rounded-xl h-9 text-xs bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5 shadow-2xs"
                 >
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-3.5 h-3.5" />}

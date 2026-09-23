@@ -13,15 +13,21 @@ const linkGuardianStudentSchema = z.object({
   guardianId: z.string().uuid(),
   studentId: z.string().min(1),
   relationshipType: z.string().trim().max(100).optional(),
+  isPrimaryContact: z.boolean().optional(),
+  isFinanciallyResponsible: z.boolean().optional(),
+  canPickup: z.boolean().optional(),
+  isEmergencyContact: z.boolean().optional(),
+  emergencyPriority: z.number().int().min(1).optional().nullable(),
 }).strict();
 
 const updateGuardianStudentLinkSchema = z.object({
   guardianId: z.string().uuid(),
   studentId: z.string().min(1),
-  emergencyPriority: z.number().int().nullable().optional(),
+  emergencyPriority: z.number().int().min(1).nullable().optional(),
   canPickup: z.boolean().optional(),
   isPrimaryContact: z.boolean().optional(),
   isEmergencyContact: z.boolean().optional(),
+  isFinanciallyResponsible: z.boolean().optional(),
   relationshipType: z.string().trim().max(100).optional(),
 }).strict();
 
@@ -58,9 +64,11 @@ export async function POST(request: Request) {
       throw new ApiError(403, 'FORBIDDEN', 'Accès non autorisé pour cette succursale.');
     }
 
+    const today = new Date().toISOString().split('T')[0];
+
     // Check if link already exists
     const [existingLink] = await db
-      .select({ id: guardianStudents.id })
+      .select()
       .from(guardianStudents)
       .where(
         and(
@@ -74,15 +82,58 @@ export async function POST(request: Request) {
     let resultId: string;
     if (existingLink) {
       resultId = existingLink.id;
+      // Reactivate if inactive
+      if (existingLink.status !== 'active') {
+        await db
+          .update(guardianStudents)
+          .set({
+            status: 'active',
+            effectiveFrom: today,
+            effectiveTo: null,
+            relationshipType: body.relationshipType || existingLink.relationshipType || 'Parent',
+            isPrimaryContact: body.isPrimaryContact ?? existingLink.isPrimaryContact,
+            isFinanciallyResponsible: body.isFinanciallyResponsible ?? existingLink.isFinanciallyResponsible,
+            canPickup: body.canPickup ?? existingLink.canPickup,
+            hasPickupAuthority: body.canPickup ?? existingLink.canPickup,
+            isEmergencyContact: body.isEmergencyContact ?? existingLink.isEmergencyContact,
+            emergencyPriority: body.emergencyPriority ?? existingLink.emergencyPriority,
+          })
+          .where(eq(guardianStudents.id, existingLink.id));
+
+        recordAudit(context, 'update', 'guardian_student', existingLink.id, {
+          event: 'reactivated',
+          studentId: body.studentId,
+          guardianId: body.guardianId,
+        });
+      }
     } else {
-      // First guardian linked to this student becomes their primary contact by
-      // default (nothing else in the app sets this yet) - it's what SMS-on-absence
-      // and reminder features resolve against.
-      const [anyExistingLink] = await db
+      // Determine default primary contact if first link
+      const [anyActiveLink] = await db
         .select({ id: guardianStudents.id })
         .from(guardianStudents)
-        .where(and(eq(guardianStudents.tenantId, tenantId), eq(guardianStudents.studentId, body.studentId)))
+        .where(
+          and(
+            eq(guardianStudents.tenantId, tenantId),
+            eq(guardianStudents.studentId, body.studentId),
+            eq(guardianStudents.status, 'active'),
+          ),
+        )
         .limit(1);
+
+      const isPrimary = body.isPrimaryContact ?? !anyActiveLink;
+
+      if (isPrimary) {
+        // Demote previous primary if setting new primary
+        await db
+          .update(guardianStudents)
+          .set({ isPrimaryContact: false })
+          .where(
+            and(
+              eq(guardianStudents.tenantId, tenantId),
+              eq(guardianStudents.studentId, body.studentId),
+            ),
+          );
+      }
 
       const [inserted] = await db
         .insert(guardianStudents)
@@ -91,13 +142,25 @@ export async function POST(request: Request) {
           guardianId: body.guardianId,
           studentId: body.studentId,
           relationshipType: body.relationshipType || 'Parent',
-          isPrimaryContact: !anyExistingLink,
+          isPrimaryContact: isPrimary,
+          isFinanciallyResponsible: body.isFinanciallyResponsible ?? true,
+          canPickup: body.canPickup ?? false,
+          hasPickupAuthority: body.canPickup ?? false,
+          isEmergencyContact: body.isEmergencyContact ?? false,
+          emergencyPriority: body.emergencyPriority ?? null,
+          status: 'active',
+          effectiveFrom: today,
         })
         .returning();
-      resultId = inserted!.id;
-    }
 
-    recordAudit(context, 'create', 'guardian_student', resultId);
+      resultId = inserted!.id;
+
+      recordAudit(context, 'create', 'guardian_student', resultId, {
+        studentId: body.studentId,
+        guardianId: body.guardianId,
+        relationshipType: body.relationshipType || 'Parent',
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -107,7 +170,7 @@ export async function POST(request: Request) {
         guardianId: body.guardianId,
         relationshipType: body.relationshipType || 'Parent',
       },
-      message: 'Tuteur associé avec succès',
+      message: 'Élève rattaché avec succès',
     });
   } catch (error) {
     return apiErrorResponse(error);
@@ -137,7 +200,7 @@ export async function PATCH(request: Request) {
     }
 
     const [link] = await db
-      .select({ id: guardianStudents.id })
+      .select()
       .from(guardianStudents)
       .where(and(
         eq(guardianStudents.tenantId, tenantId),
@@ -156,6 +219,7 @@ export async function PATCH(request: Request) {
       hasPickupAuthority?: boolean;
       isPrimaryContact?: boolean;
       isEmergencyContact?: boolean;
+      isFinanciallyResponsible?: boolean;
       relationshipType?: string;
     } = {};
 
@@ -175,6 +239,9 @@ export async function PATCH(request: Request) {
         patch.emergencyPriority = null;
       }
     }
+    if (body.isFinanciallyResponsible !== undefined) {
+      patch.isFinanciallyResponsible = body.isFinanciallyResponsible;
+    }
     if (body.isPrimaryContact !== undefined) {
       patch.isPrimaryContact = body.isPrimaryContact;
       if (body.isPrimaryContact) {
@@ -193,7 +260,12 @@ export async function PATCH(request: Request) {
 
     await db.update(guardianStudents).set(patch).where(eq(guardianStudents.id, link.id));
 
-    recordAudit(context, 'update', 'guardian_student', link.id, patch);
+    // Audit safety-sensitive changes
+    recordAudit(context, 'update', 'guardian_student', link.id, {
+      patch,
+      guardianId: body.guardianId,
+      studentId: body.studentId,
+    });
 
     return NextResponse.json({ success: true, message: 'Liaison mise à jour avec succès' });
   } catch (error) {
@@ -201,6 +273,11 @@ export async function PATCH(request: Request) {
   }
 }
 
+/**
+ * Non-destructive relationship closure:
+ * Marks link as inactive and sets effectiveTo = today.
+ * Preserves audit history, historical reports, and does NOT delete the student or guardian.
+ */
 export async function DELETE(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
@@ -229,21 +306,47 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ success: false, message: 'Accès non autorisé pour cette succursale.' }, { status: 403 });
     }
 
-    await db
-      .delete(guardianStudents)
+    const today = new Date().toISOString().split('T')[0];
+
+    const [existingLink] = await db
+      .select({ id: guardianStudents.id })
+      .from(guardianStudents)
       .where(
         and(
           eq(guardianStudents.tenantId, tenantId),
           eq(guardianStudents.guardianId, guardianId),
           eq(guardianStudents.studentId, studentId),
         ),
-      );
+      )
+      .limit(1);
 
-    recordAudit(context, 'delete', 'guardian_student', `${guardianId}:${studentId}`);
+    if (!existingLink) {
+      return NextResponse.json({ success: false, message: 'Liaison introuvable' }, { status: 404 });
+    }
+
+    await db
+      .update(guardianStudents)
+      .set({
+        status: 'inactive',
+        effectiveTo: today,
+        isPrimaryContact: false,
+        canPickup: false,
+        hasPickupAuthority: false,
+        isEmergencyContact: false,
+      })
+      .where(eq(guardianStudents.id, existingLink.id));
+
+    recordAudit(context, 'update', 'guardian_student', existingLink.id, {
+      event: 'unlinked',
+      guardianId,
+      studentId,
+      status: 'inactive',
+      effectiveTo: today,
+    });
 
     return NextResponse.json({
       success: true,
-      message: 'Liaison supprimée avec succès',
+      message: 'Liaison clôturée avec succès (lien archivé)',
     });
   } catch (error) {
     return apiErrorResponse(error);

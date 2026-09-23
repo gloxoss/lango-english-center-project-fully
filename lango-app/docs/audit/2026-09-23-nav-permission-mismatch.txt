@@ -1,0 +1,94 @@
+Sidebar link permission vs page guard (page stricter => user sees a link that bounces to the public homepage)
+Generated 2026-09-23 from src/components/shared/sidebar.tsx and page.tsx requireServerPage options.
+
+Dead links (no page):
+  /dashboard/academics/class-subjects
+  /dashboard/academics/class-section-teachers
+
+Mismatches (86):
+  /dashboard/analytics                             sidebar: settings.organization.manage       page: analytics.read
+  /dashboard/students/admissions                   sidebar: admissions.view                    page: admissions.manage
+  /dashboard/students/matricules                   sidebar: students.read                      page: students.update
+  /dashboard/students/photos                       sidebar: students.read                      page: students.update
+  /dashboard/students/promotions                   sidebar: students.placements.manage         page: students.update
+  /dashboard/students/alumni                       sidebar: admissions.manage                  page: students.read
+  /dashboard/students/alumni/events                sidebar: admissions.manage                  page: events.read
+  /dashboard/students/alumni/requests              sidebar: admissions.manage                  page: students.read
+  /dashboard/academics/classes                     sidebar: academics.read                     page: academics.manage
+  /dashboard/academics/mediums                     sidebar: academics.read                     page: academics.manage
+  /dashboard/academics/sections                    sidebar: academics.read                     page: academics.manage
+  /dashboard/academics/subjects                    sidebar: academics.read                     page: academics.manage
+  /dashboard/academics/semesters                   sidebar: academics.read                     page: academics.manage
+  /dashboard/academics/streams                     sidebar: academics.read                     page: academics.manage
+  /dashboard/academics/shifts                      sidebar: academics.read                     page: academics.manage
+  /dashboard/academics/optional-subjects           sidebar: academics.read                     page: academics.manage
+  /dashboard/academics/question-bank               sidebar: academics.read                     page: academics.manage
+  /dashboard/academics/schedule                    sidebar: academics.read                     page: academics.manage
+  /dashboard/academics/conflicts                   sidebar: academics.read                     page: academics.manage
+  /dashboard/academics/assignments                 sidebar: academics.read                     page: academics.manage
+  /dashboard/academics/readiness                   sidebar: academics.read                     page: academics.manage
+  /dashboard/attendance/badges                     sidebar: attendance.read                    page: attendance.manage
+  /dashboard/workforce/timeclock                   sidebar: attendance.read                    page: payroll.review
+  /dashboard/attendance/excuses                    sidebar: attendance.read                    page: attendance.manage
+  /dashboard/attendance/flags                      sidebar: attendance.read                    page: attendance.manage
+  /dashboard/certificates/requests                 sidebar: certificates.issue                 page: certificates.approve
+  /dashboard/academics/assessment/homework         sidebar: academics.read                     page: grading.manage
+  /dashboard/academics/assessment/exam-master      sidebar: academics.read                     page: academics.manage
+  /dashboard/academics/assessment/online-exams     sidebar: academics.read                     page: academics.manage
+  /dashboard/content/library                       sidebar: academics.read                     page: content.manage
+  /dashboard/finance/collection-desk               sidebar: finance.read                       page: finance.manage
+  /dashboard/finance/statements                    sidebar: finance.read                       page: accounting.statement.read
+  /dashboard/finance/payments/new                  sidebar: finance.read                       page: finance.manage
+  /dashboard/finance/fee-structures                sidebar: finance.read                       page: finance.manage
+  /dashboard/finance/fee-types                     sidebar: finance.read                       page: finance.manage
+  /dashboard/finance/fine-policies                 sidebar: finance.read                       page: finance.manage
+  /dashboard/finance/fee-assignments               sidebar: finance.read                       page: finance.manage
+  /dashboard/finance/allocation                    sidebar: finance.read                       page: finance.manage
+  /dashboard/finance/allocations                   sidebar: finance.read                       page: finance.manage
+  /dashboard/finance/credit-notes                  sidebar: finance.read                       page: finance.manage
+  /dashboard/finance/refunds                       sidebar: finance.read                       page: finance.manage
+  /dashboard/finance/approvals                     sidebar: finance.read                       page: finance.approve
+  /dashboard/inventory/products                    sidebar: inventory.read                     page: inventory.catalog.manage
+  /dashboard/inventory/purchases                   sidebar: inventory.read                     page: inventory.purchase.manage
+  /dashboard/inventory/sales                       sidebar: inventory.read                     page: inventory.sell
+  /dashboard/inventory/issues                      sidebar: inventory.read                     page: inventory.issue.manage
+  /dashboard/inventory/adjustments                 sidebar: inventory.read                     page: inventory.adjust.manage
+  /dashboard/inventory/transfers                   sidebar: inventory.read                     page: inventory.adjust.manage
+  /dashboard/communication/reminders               sidebar: communication.read                 page: communication.send
+  /dashboard/communication/templates               sidebar: communication.read                 page: communication.send
+  /dashboard/broadcast/connections                 sidebar: broadcast.read                     page: broadcast.connections.manage
+  /dashboard/broadcast/segments                    sidebar: broadcast.read                     page: broadcast.manage
+  /dashboard/broadcast/templates                   sidebar: broadcast.read                     page: broadcast.manage
+  /dashboard/broadcast/automations                 sidebar: broadcast.read                     page: broadcast.automations.manage
+  /dashboard/documents/generator                   sidebar: grading.read                       page: cards.templates.manage
+  /dashboard/hr                                    sidebar: hr.employee.read                   page: hr.read
+  /dashboard/hr/overview                           sidebar: hr.employee.read                   page: hr.read
+  /dashboard/hr/employees                          sidebar: hr.employee.read                   page: hr.manage
+  /dashboard/hr/employees/new                      sidebar: hr.employee.manage                 page: hr.manage
+  /dashboard/workforce/payroll/components          sidebar: payroll.configure                  page: payroll.review
+  /dashboard/workforce/payroll/assignments         sidebar: payroll.configure                  page: payroll.review
+  /dashboard/workforce/payroll/payments            sidebar: payroll.payment.prepare            page: payroll.review
+  /dashboard/hostel/hostels                        sidebar: hostel.read                        page: hostel.manage
+  /dashboard/hostel/zones                          sidebar: hostel.read                        page: hostel.manage
+  /dashboard/hostel/categories                     sidebar: hostel.read                        page: hostel.manage
+  /dashboard/hostel/rooms                          sidebar: hostel.read                        page: hostel.manage
+  /dashboard/hostel/board                          sidebar: hostel.allocation.read             page: hostel.read
+  /dashboard/hostel/applications                   sidebar: hostel.allocation.read             page: hostel.allocation.manage
+  /dashboard/hostel/allocations                    sidebar: hostel.allocation.manage           page: hostel.allocation.read
+  /dashboard/hostel/roll-call                      sidebar: hostel.supervision.read            page: hostel.supervision.manage
+  /dashboard/settings                              sidebar: settings.read                      page: settings.organization.manage
+  /dashboard/settings/migration                    sidebar: settings.read                      page: settings.organization.manage
+  /dashboard/settings/policies                     sidebar: settings.read                      page: settings.organization.manage
+  /dashboard/settings/providers                    sidebar: settings.read                      page: settings.integrations.manage
+  /dashboard/settings/accounting-defaults          sidebar: finance.manage                     page: settings.finance_mapping.manage
+  /dashboard/settings/translations                 sidebar: settings.localization.manage       page: settings.translation.manage
+  /dashboard/settings/jobs                         sidebar: audit.read                         page: settings.jobs.manage
+  /dashboard/settings/subscription                 sidebar: settings.read                      page: settings.organization.manage
+  /dashboard/settings/values                       sidebar: settings.read                      page: settings.organization.manage
+  /dashboard/settings/drafts                       sidebar: settings.read                      page: settings.organization.manage
+  /dashboard/settings/numbering                    sidebar: settings.read                      page: settings.numbering.manage
+  /dashboard/settings/custom-fields                sidebar: settings.read                      page: settings.custom_field.manage
+  /dashboard/settings/scheduled-jobs               sidebar: settings.read                      page: settings.jobs.manage
+  /dashboard/settings/notifications                sidebar: settings.read                      page: settings.organization.manage
+  /dashboard/settings/exports                      sidebar: settings.read                      page: reports.export
+  /dashboard/settings/cndp                         sidebar: settings.read                      page: settings.organization.manage

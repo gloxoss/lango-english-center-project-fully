@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, gt } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
@@ -78,14 +78,30 @@ export async function POST(request: Request) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'La section source n\'existe pas.');
     }
 
+    if ('idempotencyKey' in rawBody) {
+      const [alreadyCommitted] = await db.select().from(promotionBatches)
+        .where(and(eq(promotionBatches.tenantId, tenantId), eq(promotionBatches.idempotencyKey, rawBody.idempotencyKey)))
+        .limit(1);
+      if (alreadyCommitted) {
+        const decisions = await db.select().from(promotionDecisions)
+          .where(and(eq(promotionDecisions.tenantId, tenantId), eq(promotionDecisions.batchId, alreadyCommitted.id)));
+        return NextResponse.json({ success: true, data: { batch: alreadyCommitted, decisions }, idempotent: true });
+      }
+    }
+
+    const [sourceYear] = await db.select({ id: sessionYears.id, startDate: sessionYears.startDate }).from(sessionYears)
+      .where(and(eq(sessionYears.tenantId, tenantId), eq(sessionYears.isDefault, true))).limit(1);
+    if (!sourceYear) throw new ApiError(422, 'NO_SOURCE_SESSION', 'Configurez une année scolaire active avant la promotion.');
+
     let targetSessionYearId = rawBody.targetSessionYearId;
     if (!targetSessionYearId) {
-      const [activeYear] = await db.select({ id: sessionYears.id }).from(sessionYears)
-        .where(and(eq(sessionYears.tenantId, tenantId), eq(sessionYears.isDefault, true))).limit(1);
-      targetSessionYearId = activeYear?.id;
+      const [nextYear] = await db.select({ id: sessionYears.id }).from(sessionYears)
+        .where(and(eq(sessionYears.tenantId, tenantId), gt(sessionYears.startDate, sourceYear.startDate)))
+        .orderBy(asc(sessionYears.startDate)).limit(1);
+      targetSessionYearId = nextYear?.id;
     }
     if (!targetSessionYearId) {
-      throw new ApiError(422, 'INVALID_REFERENCE', 'Aucune année scolaire active trouvée.');
+      throw new ApiError(422, 'NO_TARGET_SESSION', 'Configurez l’année scolaire suivante avant la promotion.');
     }
 
     // Students eligible for this batch (must currently sit in the source section).
@@ -109,16 +125,13 @@ export async function POST(request: Request) {
             })),
         };
 
-    // Idempotent retry: an already-committed batch for this key is returned as-is,
-    // not reprocessed - recordStudentPlacement/closeStudentPlacement calls that
-    // already landed must never be repeated once the batch row exists. Legacy
-    // callers get a fresh key every call (no retry protection, same as before).
-    const [existingBatch] = await db.select().from(promotionBatches)
-      .where(and(eq(promotionBatches.tenantId, tenantId), eq(promotionBatches.idempotencyKey, body.idempotencyKey)))
-      .limit(1);
-    if (existingBatch) {
-      const decisions = await db.select().from(promotionDecisions).where(eq(promotionDecisions.batchId, existingBatch.id));
-      return NextResponse.json({ success: true, data: { batch: existingBatch, decisions } });
+    const [targetYear] = await db.select({ startDate: sessionYears.startDate }).from(sessionYears)
+      .where(and(eq(sessionYears.id, targetSessionYearId), eq(sessionYears.tenantId, tenantId))).limit(1);
+    if (!targetYear || targetYear.startDate <= sourceYear.startDate) {
+      throw new ApiError(422, 'INVALID_TARGET_SESSION', 'La session cible doit commencer après l’année scolaire active.');
+    }
+    if (body.decisions.some(decision => decision.decision === 'hold')) {
+      throw new ApiError(409, 'PENDING_DECISIONS', 'Traitez toutes les décisions en attente avant de confirmer la promotion.');
     }
 
     const decisionRows: (typeof promotionDecisions.$inferInsert)[] = [];

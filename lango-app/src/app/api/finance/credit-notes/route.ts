@@ -31,7 +31,7 @@ const decideCreditNoteSchema = z.object({
 
 export async function GET(req: NextRequest) {
   try {
-    const ctx = await requireRequestContext(req);
+    const ctx = await requireRequestContext(req, ['school_admin', 'accountant']);
     await requireCapability(ctx, 'finance.read');
 
     const { searchParams } = new URL(req.url);
@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
       .from(creditNotes)
       .innerJoin(user, eq(creditNotes.studentId, user.id))
       .where(and(...conditions))
-      .orderBy(desc(creditNotes.createdAt));
+      .orderBy(desc(creditNotes.createdAt)).limit(200);
 
     return NextResponse.json({ success: true, data: records });
   } catch (error) {
@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const ctx = await requireRequestContext(req);
+    const ctx = await requireRequestContext(req, ['school_admin', 'accountant']);
     // Propose: finance.manage (accountant has this). Whether it lands
     // pending or auto-approved depends on whether the creator can also
     // approve - see the auto-approve check below, not a second capability
@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const ctx = await requireRequestContext(req);
+    const ctx = await requireRequestContext(req, ['school_admin', 'accountant']);
     await requireCapability(ctx, 'finance.approve');
     const body = await parseJson(req, decideCreditNoteSchema);
 

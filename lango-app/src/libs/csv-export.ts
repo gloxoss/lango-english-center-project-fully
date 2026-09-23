@@ -1,3 +1,5 @@
+import { csvSafeCell } from '@/libs/csv-safe';
+
 export function exportToCsv<T extends object>(
   rows: T[],
   filename: string
@@ -9,11 +11,7 @@ export function exportToCsv<T extends object>(
     headers.join(','),
     ...rows.map(row =>
       headers
-        .map((header) => {
-          const val = (row as Record<string, any>)[header];
-          const escaped = String(val ?? '').replace(/"/g, '""');
-          return `"${escaped}"`;
-        })
+        .map((header) => csvSafeCell((row as Record<string, any>)[header]))
         .join(',')
     ),
   ].join('\n');

@@ -1,5 +1,7 @@
 # SchoolOS — AI Agent Development Rules & Context
 
+> **Multi-agent rule:** other agents edit this tree at the same time. Before changing files, follow `../.agent-hub/PROTOCOL.md` (skill: `schoolos-agent-hub`): join, claim, log with proof, never `git stash`/`reset --hard`/`checkout --`/`clean`.
+
 ## 1. Project Architecture & Migration Philosophy
 This project is an enterprise multi-tenant school operating system (SchoolOS) built with Next.js 15 App Router, TypeScript, Tailwind CSS, and shadcn/ui.
 

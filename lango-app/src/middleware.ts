@@ -6,11 +6,13 @@ export async function middleware(request: NextRequest) {
   const host = request.headers.get('host') || '';
 
   const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-pathname', pathname);
 
   // Exclude local dev and main platform domains from custom domain lookup
   const isPlatformDomain = 
     host.includes('localhost') || 
     host.includes('127.0.0.1') || 
+    host.includes('schoolos.epioso.com') ||
     host === 'app.schoolos.ma' ||
     host === 'schoolos.ma';
 

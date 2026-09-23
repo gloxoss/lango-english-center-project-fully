@@ -1,5 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { recordAudit } from '@/libs/api/audit';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
@@ -87,6 +88,7 @@ export async function PATCH(
       return updated;
     });
 
+    recordAudit(ctx, 'update', 'leave_request', id, { status: result?.status ?? null });
     return NextResponse.json({ success: true, data: result });
   } catch (err) {
     return apiErrorResponse(err);

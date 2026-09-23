@@ -10,6 +10,7 @@ import { Printer, Eye, Layers, Loader2, Download } from 'lucide-react';
 
 type ClassSectionOption = { id: string; className: string; sectionName: string };
 type StudentOption = { id: string; fullName: string; matricule?: string };
+type ExamTermOption = { id: string; name: string; code: string; startDate: string; endDate: string };
 type ReportCard = {
   student: { id: string; name: string; matricule: string | null; className: string | null };
   subjects: { subjectId: string; subjectName: string; coefficient: number; average: number; assessmentCount: number }[];
@@ -26,7 +27,10 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
   const [classSectionId, setClassSectionId] = useState<string>('');
   const [students, setStudents] = useState<StudentOption[]>([]);
   const [studentId, setStudentId] = useState<string>('');
+  const [examTerms, setExamTerms] = useState<ExamTermOption[]>([]);
+  const [examTermId, setExamTermId] = useState('');
   const [card, setCard] = useState<ReportCard | null>(null);
+  const [cardKey, setCardKey] = useState('');
   const [loading, setLoading] = useState(false);
   const [batchCards, setBatchCards] = useState<ReportCard[] | null>(null);
   const [batchLoading, setBatchLoading] = useState(false);
@@ -64,32 +68,57 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
   }, [classSectionId]);
 
   useEffect(() => {
+    fetch('/api/academics/exam-terms')
+      .then(async res => {
+        const json = await res.json();
+        if (res.ok && json.success && Array.isArray(json.data)) {
+          setExamTerms(json.data);
+          setExamTermId(json.data[0]?.id ?? '');
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     if (!studentId) {
       setCard(null);
       return;
     }
+    if (!examTermId) {
+      setCard(null);
+      return;
+    }
+    let cancelled = false;
+    const key = `${studentId}:${examTermId}`;
     setLoading(true);
-    fetch(`/api/students/report-card?studentId=${studentId}`)
+    fetch(`/api/students/report-card?studentId=${encodeURIComponent(studentId)}&examTermId=${encodeURIComponent(examTermId)}`)
       .then(res => (res.ok ? res.json() : null))
       .then((json) => {
+        if (cancelled) return;
         if (json?.success) {
           setCard(json.data);
+          setCardKey(key);
         } else {
           setCard(null);
         }
       })
-      .catch(() => setCard(null))
-      .finally(() => setLoading(false));
-  }, [studentId]);
+      .catch(() => { if (!cancelled) setCard(null); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [studentId, examTermId]);
+
+  const currentCard = cardKey === `${studentId}:${examTermId}` ? card : null;
+  const hasGradedCard = Boolean(currentCard && currentCard.subjects.length > 0);
+  const printableBatch = batchCards?.filter(c => c.subjects.length > 0) ?? [];
 
   async function generateAll() {
-    if (!classSectionId) {
+    if (!classSectionId || !examTermId) {
       return;
     }
     setBatchLoading(true);
     setBatchCards(null);
     try {
-      const res = await fetch(`/api/students/report-card?classSectionId=${classSectionId}`);
+      const res = await fetch(`/api/students/report-card?classSectionId=${classSectionId}&examTermId=${examTermId}`);
       const json = res.ok ? await res.json() : null;
       if (json?.success && Array.isArray(json.data)) {
         setBatchCards(json.data);
@@ -120,13 +149,13 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
   }
 
   async function downloadPdf() {
-    if (!studentId) return;
+    if (!studentId || !examTermId || !hasGradedCard) return;
     setIssueLoading(true);
     try {
       const res = await fetch('/api/students/report-card/issue', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studentId }),
+        body: JSON.stringify({ studentId, examTermId }),
       });
       const json = res.ok ? await res.json() : null;
       if (json?.success && json.data?.pdfBase64) {
@@ -140,14 +169,14 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
   }
 
   async function generatePdfs() {
-    if (!classSectionId) return;
+    if (!classSectionId || !examTermId || printableBatch.length === 0) return;
     setBatchIssueLoading(true);
     setBatchIssueResult(null);
     try {
       const res = await fetch('/api/students/report-card/issue', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ classSectionId }),
+        body: JSON.stringify({ classSectionId, examTermId }),
       });
       const json = res.ok ? await res.json() : null;
       setBatchIssueResult({ count: json?.success ? Number(json.data?.count) || 0 : 0 });
@@ -181,7 +210,7 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
             size="sm"
             className="gap-2 h-9 text-xs rounded-xl"
             onClick={generateAll}
-            disabled={batchLoading || !classSectionId}
+            disabled={batchLoading || !classSectionId || !examTermId}
           >
             {batchLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Layers className="w-3.5 h-3.5" />}
             <span>{batchLoading ? t('generating') : t('generateAllReportCards')}</span>
@@ -191,7 +220,7 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
             size="sm"
             className="gap-2 h-9 text-xs rounded-xl"
             onClick={downloadPdf}
-            disabled={issueLoading || !studentId}
+            disabled={issueLoading || !hasGradedCard || !examTermId}
           >
             {issueLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
             <span>{issueLoading ? t('generating') : t('downloadPdf')}</span>
@@ -201,12 +230,12 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
             size="sm"
             className="gap-2 h-9 text-xs rounded-xl"
             onClick={generatePdfs}
-            disabled={batchIssueLoading || !classSectionId}
+            disabled={batchIssueLoading || printableBatch.length === 0 || !examTermId}
           >
             {batchIssueLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Layers className="w-3.5 h-3.5" />}
             <span>{batchIssueLoading ? t('generating') : t('generatePdfsClass')}</span>
           </Button>
-          <Button variant="outline" size="sm" className="gap-2 h-9 text-xs rounded-xl" onClick={() => window.print()}>
+          <Button variant="outline" size="sm" className="gap-2 h-9 text-xs rounded-xl" disabled={printableBatch.length === 0 && !hasGradedCard} onClick={() => window.print()}>
             <Printer className="w-3.5 h-3.5" />
             <span>{t('printPdf')}</span>
           </Button>
@@ -217,10 +246,17 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
         <div className="space-y-6">
           <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('stepSelection')}</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-slate-600">{t('examTermLabel')}</label>
+                <Select value={examTermId} onValueChange={(value) => { setExamTermId(value); setBatchCards(null); setCard(null); }}>
+                  <SelectTrigger className="w-full rounded-xl h-9 bg-white"><SelectValue placeholder={t('chooseExamTerm')} /></SelectTrigger>
+                  <SelectContent>{examTerms.map(term => <SelectItem key={term.id} value={term.id}>{term.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1">
                 <label className="text-[11px] font-bold text-slate-600">{t('classLabel')}</label>
-                <Select value={classSectionId} onValueChange={setClassSectionId}>
+                <Select value={classSectionId} onValueChange={(value) => { setClassSectionId(value); setBatchCards(null); setCard(null); }}>
                   <SelectTrigger className="w-full rounded-xl h-9 bg-white">
                     <SelectValue placeholder={t('chooseClass')} />
                   </SelectTrigger>
@@ -234,7 +270,7 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
 
               <div className="space-y-1">
                 <label className="text-[11px] font-bold text-slate-600">{t('studentLabel')}</label>
-                <Select value={studentId} onValueChange={setStudentId}>
+                <Select value={studentId} onValueChange={(value) => { setStudentId(value); setBatchCards(null); setCard(null); }}>
                   <SelectTrigger className="w-full rounded-xl h-9 bg-white">
                     <SelectValue placeholder={t('chooseStudent')} />
                   </SelectTrigger>
@@ -252,9 +288,9 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{t('stepStatus')}</h3>
             {loading && <p className="text-xs text-slate-500">{t('loading')}</p>}
             {!loading && !card && !batchCards && <p className="text-xs text-slate-500">{t('noGradesForStudent')}</p>}
-            {!loading && card && !batchCards && (
+            {!loading && currentCard && !batchCards && (
               <p className="text-xs font-bold text-[#16212B]">
-                {t('studentGradesSummary', { subjects: card.subjects.length, average: card.generalAverage.toFixed(2) })}
+                {currentCard.subjects.length > 0 ? t('studentGradesSummary', { subjects: currentCard.subjects.length, average: currentCard.generalAverage.toFixed(2) }) : t('noGradesForStudent')}
               </p>
             )}
             {batchCards && (
@@ -272,9 +308,11 @@ export function ReportCardGeneratorView({ locale }: { locale: string }) {
 
         <div className="space-y-4" id="report-cards-print">
           {batchCards
-            ? batchCards.map(c => <ReportCardSheet key={c.student.id} card={c} t={t} />)
-            : card
-              ? <ReportCardSheet card={card} t={t} />
+            ? printableBatch.length > 0
+              ? printableBatch.map(c => <ReportCardSheet key={c.student.id} card={c} t={t} />)
+              : <Card className="p-8 text-center text-sm text-slate-500">{t('noGradesForStudent')}</Card>
+            : currentCard
+              ? <ReportCardSheet card={currentCard} t={t} />
               : (
                   <Card className="p-8 bg-white rounded-2xl border border-slate-200/80 shadow-md flex items-center justify-center text-xs text-slate-400 min-h-[300px]">
                     <div className="text-center space-y-2">
@@ -350,7 +388,7 @@ function ReportCardSheet({ card, t }: { card: ReportCard; t: ReturnType<typeof u
       <div className="p-4 bg-slate-50 rounded-xl flex justify-between items-center">
         <div>
           <p className="text-[10px] text-slate-400 font-bold">{t('average')}</p>
-          <p className="text-xl font-extrabold text-[#2487B8]">{card.generalAverage.toFixed(2)} /20</p>
+          <p className="text-xl font-extrabold text-[#2487B8]">{card.subjects.length > 0 ? card.generalAverage.toFixed(2) : '—'} /20</p>
         </div>
         {card.mention && <Badge className="bg-[#DCEBF4] text-[#1B6C93] text-xs px-3 py-1">{t('mentionBadge', { mention: card.mention })}</Badge>}
       </div>

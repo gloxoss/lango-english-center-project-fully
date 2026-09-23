@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { ApiError } from '@/libs/api/errors';
@@ -9,10 +10,24 @@ export const UPLOADS_ROOT = process.env.UPLOADS_DIR || '/app/uploads';
 
 export function contentTypeFor(ext: string): string {
   const cleanExt = ext.toLowerCase().replace(/^\./, '');
-  if (cleanExt === 'png') return 'image/png';
-  if (cleanExt === 'pdf') return 'application/pdf';
-  if (cleanExt === 'jpg' || cleanExt === 'jpeg') return 'image/jpeg';
-  if (cleanExt === 'webp') return 'image/webp';
+  if (cleanExt === 'png') {
+    return 'image/png';
+  }
+  if (cleanExt === 'pdf') {
+    return 'application/pdf';
+  }
+  if (cleanExt === 'jpg' || cleanExt === 'jpeg') {
+    return 'image/jpeg';
+  }
+  if (cleanExt === 'webp') {
+    return 'image/webp';
+  }
+  if (cleanExt === 'docx') {
+    return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  }
+  if (cleanExt === 'doc') {
+    return 'application/msword';
+  }
   return 'application/octet-stream';
 }
 
@@ -25,16 +40,190 @@ export function resolveTenantPath(tenantId: string, subpath: string): string {
   return targetPath;
 }
 
+export type ImageInspectionResult = {
+  width: number;
+  height: number;
+  format: 'png' | 'jpeg' | 'webp';
+};
+
+export function inspectImageBuffer(
+  bytes: Buffer,
+  claimedExt: string,
+  options: {
+    minWidth?: number;
+    minHeight?: number;
+    maxWidth?: number;
+    maxHeight?: number;
+    minRatio?: number;
+    maxRatio?: number;
+  } = {},
+): ImageInspectionResult {
+  if (!bytes || bytes.length === 0) {
+    throw new ApiError(422, 'EMPTY_FILE', 'Le fichier est vide (0 octet).');
+  }
+
+  const cleanExt = claimedExt.toLowerCase().replace(/^\./, '');
+  const {
+    minWidth = 64,
+    minHeight = 64,
+    maxWidth = 5000,
+    maxHeight = 5000,
+    minRatio = 0.35,
+    maxRatio = 2.8,
+  } = options;
+
+  let width = 0;
+  let height = 0;
+  let format: 'png' | 'jpeg' | 'webp' = 'png';
+
+  if (cleanExt === 'png') {
+    if (bytes.length < 24) {
+      throw new ApiError(422, 'CORRUPTED_IMAGE', 'Fichier PNG incomplet ou corrompu.');
+    }
+    if (
+      bytes[0] !== 0x89 || bytes[1] !== 0x50 || bytes[2] !== 0x4E || bytes[3] !== 0x47
+      || bytes[4] !== 0x0D || bytes[5] !== 0x0A || bytes[6] !== 0x1A || bytes[7] !== 0x0A
+    ) {
+      throw new ApiError(422, 'INVALID_FILE_HEADER', 'Header PNG non valide ou format usurpé.');
+    }
+    const chunkType = bytes.toString('ascii', 12, 16);
+    if (chunkType !== 'IHDR') {
+      throw new ApiError(422, 'CORRUPTED_IMAGE', 'En-tête IHDR introuvable dans le fichier PNG.');
+    }
+    width = bytes.readUInt32BE(16);
+    height = bytes.readUInt32BE(20);
+    format = 'png';
+  } else if (cleanExt === 'jpg' || cleanExt === 'jpeg') {
+    if (bytes.length < 4) {
+      throw new ApiError(422, 'CORRUPTED_IMAGE', 'Fichier JPEG incomplet ou corrompu.');
+    }
+    if (bytes[0] !== 0xFF || bytes[1] !== 0xD8) {
+      throw new ApiError(422, 'INVALID_FILE_HEADER', 'Header JPEG non valide ou format usurpé.');
+    }
+
+    let offset = 2;
+    let foundSof = false;
+    while (offset < bytes.length) {
+      if (bytes[offset] !== 0xFF) {
+        offset++;
+        continue;
+      }
+      const marker = bytes[offset + 1];
+      if (marker === undefined) {
+        break;
+      }
+
+      if (marker === 0xD8 || marker === 0xD9 || (marker >= 0xD0 && marker <= 0xD7)) {
+        offset += 2;
+        continue;
+      }
+
+      if (offset + 4 > bytes.length) {
+        break;
+      }
+      const length = bytes.readUInt16BE(offset + 2);
+
+      if (
+        marker === 0xC0 || marker === 0xC1 || marker === 0xC2 || marker === 0xC3
+        || marker === 0xC5 || marker === 0xC6 || marker === 0xC7
+        || marker === 0xC9 || marker === 0xCA || marker === 0xCB
+        || marker === 0xCD || marker === 0xCE || marker === 0xCF
+      ) {
+        if (offset + 9 > bytes.length) {
+          throw new ApiError(422, 'CORRUPTED_IMAGE', 'En-tête SOF JPEG corrompu.');
+        }
+        height = bytes.readUInt16BE(offset + 5);
+        width = bytes.readUInt16BE(offset + 7);
+        foundSof = true;
+        break;
+      }
+
+      offset += 2 + length;
+    }
+
+    if (!foundSof || width === 0 || height === 0) {
+      throw new ApiError(422, 'CORRUPTED_IMAGE', 'Impossible de décoder les dimensions du fichier JPEG.');
+    }
+    format = 'jpeg';
+  } else if (cleanExt === 'webp') {
+    if (bytes.length < 30) {
+      throw new ApiError(422, 'CORRUPTED_IMAGE', 'Fichier WebP incomplet ou corrompu.');
+    }
+    const riff = bytes.toString('ascii', 0, 4);
+    const webp = bytes.toString('ascii', 8, 12);
+    if (riff !== 'RIFF' || webp !== 'WEBP') {
+      throw new ApiError(422, 'INVALID_FILE_HEADER', 'Header WebP non valide ou format usurpé.');
+    }
+
+    const chunkHeader = bytes.toString('ascii', 12, 16);
+    if (chunkHeader === 'VP8 ') {
+      width = bytes.readUInt16LE(26) & 0x3FFF;
+      height = bytes.readUInt16LE(28) & 0x3FFF;
+    } else if (chunkHeader === 'VP8L') {
+      if (bytes.length < 25) {
+        throw new ApiError(422, 'CORRUPTED_IMAGE', 'Fichier WebP VP8L tronqué.');
+      }
+      const b1 = bytes[21]!;
+      const b2 = bytes[22]!;
+      const b3 = bytes[23]!;
+      const b4 = bytes[24]!;
+      width = 1 + (((b2 & 0x3F) << 8) | b1);
+      height = 1 + (((b4 & 0x0F) << 10) | (b3 << 2) | ((b2 & 0xC0) >> 6));
+    } else if (chunkHeader === 'VP8X') {
+      width = 1 + bytes.readUIntLE(24, 3);
+      height = 1 + bytes.readUIntLE(27, 3);
+    } else {
+      throw new ApiError(422, 'CORRUPTED_IMAGE', 'Format de compression WebP non supporté.');
+    }
+    format = 'webp';
+  } else {
+    throw new ApiError(422, 'VALIDATION_ERROR', `Format d'image ${cleanExt} non supporté.`);
+  }
+
+  if (width < minWidth || height < minHeight) {
+    throw new ApiError(422, 'IMAGE_TOO_SMALL', `Dimensions trop petites (${width}x${height} px, minimum ${minWidth}x${minHeight} px).`);
+  }
+  if (width > maxWidth || height > maxHeight) {
+    throw new ApiError(422, 'IMAGE_TOO_LARGE', `Dimensions trop grandes (${width}x${height} px, maximum ${maxWidth}x${maxHeight} px).`);
+  }
+
+  const ratio = width / height;
+  if (ratio < minRatio || ratio > maxRatio) {
+    throw new ApiError(
+      422,
+      'INVALID_ASPECT_RATIO',
+      `Ratio d'aspect inadapté (${ratio.toFixed(2)}:1). Les captures panoramiques et bandeaux sont rejetés.`,
+    );
+  }
+
+  return { width, height, format };
+}
+
+export async function deleteUploadedFile(tenantId: string, subpath: string): Promise<boolean> {
+  try {
+    const fullPath = resolveTenantPath(tenantId, subpath);
+    const { unlink } = await import('node:fs/promises');
+    await unlink(fullPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function saveUploadedFile(
   tenantId: string,
   subpath: string,
   file: File,
   allowedTypes: Record<string, string>,
   maxBytes: number,
+  options?: { validateImageDimensions?: boolean },
 ): Promise<string> {
   const ext = allowedTypes[file.type];
   if (!ext) {
     throw new ApiError(422, 'VALIDATION_ERROR', 'Format de fichier non supporté.');
+  }
+  if (file.size <= 0) {
+    throw new ApiError(422, 'EMPTY_FILE', 'Le fichier est vide (0 octet).');
   }
   if (file.size > maxBytes) {
     throw new ApiError(422, 'VALIDATION_ERROR', `Fichier trop volumineux (${Math.round(maxBytes / (1024 * 1024))} Mo maximum).`);
@@ -42,14 +231,10 @@ export async function saveUploadedFile(
 
   const bytes = Buffer.from(await file.arrayBuffer());
 
-  // Validate magic bytes against claimed type
-  if (ext === 'png') {
-    if (bytes.length < 4 || bytes[0] !== 0x89 || bytes[1] !== 0x50 || bytes[2] !== 0x4E || bytes[3] !== 0x47) {
-      throw new ApiError(422, 'INVALID_FILE_HEADER', 'Header PNG non valide.');
-    }
-  } else if (ext === 'jpg' || ext === 'jpeg') {
-    if (bytes.length < 3 || bytes[0] !== 0xFF || bytes[1] !== 0xD8 || bytes[2] !== 0xFF) {
-      throw new ApiError(422, 'INVALID_FILE_HEADER', 'Header JPEG non valide.');
+  // Deep inspection for image types
+  if (ext === 'png' || ext === 'jpg' || ext === 'jpeg' || ext === 'webp') {
+    if (options?.validateImageDimensions !== false) {
+      inspectImageBuffer(bytes, ext);
     }
   } else if (ext === 'pdf') {
     if (bytes.length < 4 || bytes[0] !== 0x25 || bytes[1] !== 0x50 || bytes[2] !== 0x44 || bytes[3] !== 0x46) {

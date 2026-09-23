@@ -7,7 +7,7 @@ import { requireRequestContext, requireSuperAdmin } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parseJson, waitlistConvertSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { account, schoolAccessRequests, tenants, user } from '@/models/Schema';
+import { account, addonEntitlements, branches, planLimits, schoolAccessRequests, schoolSettings, sessionYears, tenants, user } from '@/models/Schema';
 
 function slugify(name: string): string {
   return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'school';
@@ -75,6 +75,63 @@ export async function POST(request: Request) {
         createdAt: now,
         updatedAt: now,
       });
+
+      // 1. Default Campus / Branch
+      await tx.insert(branches).values({
+        tenantId: tenant!.id,
+        name: 'Siège Principal',
+        code: 'SIEGE',
+        isDefault: true,
+        isActive: true,
+      });
+
+      // 2. Default Academic Session Year
+      await tx.insert(sessionYears).values({
+        tenantId: tenant!.id,
+        name: '2025-2026',
+        startDate: '2025-09-01',
+        endDate: '2026-06-30',
+        isDefault: true,
+      });
+
+      // 3. Default School Configuration
+      await tx.insert(schoolSettings).values({
+        tenantId: tenant!.id,
+        establishmentName: entry.schoolName,
+        country: 'Maroc',
+        academicYear: '2025-2026',
+      });
+
+      // 4. Plan-defined Modules Activation (dynamically loaded from plan configuration)
+      const [planConfig] = await tx
+        .select({ includedAddons: planLimits.includedAddons })
+        .from(planLimits)
+        .where(eq(planLimits.planTier, body.planTier ?? 'trial'))
+        .limit(1);
+
+      const targetAddons = (planConfig?.includedAddons && planConfig.includedAddons.length > 0)
+        ? planConfig.includedAddons
+        : [
+            'transport',
+            'library',
+            'human-resources',
+            'advanced-reporting',
+            'card-management',
+            'certificate-management',
+            'lead-crm',
+          ];
+
+      if (targetAddons.length > 0) {
+        await tx.insert(addonEntitlements).values(
+          targetAddons.map(addonId => ({
+            tenantId: tenant!.id,
+            addonId,
+            isEnabled: true,
+            grantedById: adminUserId,
+            note: `Attribution automatique selon la formule "${body.planTier ?? 'trial'}"`,
+          })),
+        );
+      }
 
       await tx
         .update(schoolAccessRequests)

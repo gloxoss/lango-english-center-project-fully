@@ -2,6 +2,7 @@ import { desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { csvSafeRow } from '@/libs/csv-safe';
 import { db } from '@/libs/DB';
 import { auditLogs, user } from '@/models/Schema';
 
@@ -27,8 +28,7 @@ export async function GET(request: Request) {
 
     const csvHeaders = 'ID,Date,Acteur,Action,Module,ElementID\n';
     const csvRows = rows.map((r) => {
-      const actor = (r.actorName || r.actorId).replace(/,/g, ' ');
-      return `"${r.id}","${r.createdAt}","${actor}","${r.action}","${r.entityType}","${r.entityId}"`;
+      return csvSafeRow([r.id, r.createdAt, r.actorName || r.actorId, r.action, r.entityType, r.entityId]);
     }).join('\n');
 
     return new NextResponse(csvHeaders + csvRows, {

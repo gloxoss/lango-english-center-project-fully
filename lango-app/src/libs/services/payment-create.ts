@@ -41,9 +41,16 @@ export async function createPayment(input: CreatePaymentInput): Promise<CreatePa
   const paymentDate = input.paymentDate ?? new Date().toISOString().slice(0, 10);
 
   const { payment, updatedInvoices, receipt, idempotent } = await db.transaction(async (tx) => {
-    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${tenantId}:${allocations[0]!.invoiceId}`}, 0))`);
-
     const invoiceIds = [...new Set(allocations.map((a) => a.invoiceId))];
+
+    // Security audit P1-F: lock EVERY allocated invoice, in sorted order, so a
+    // multi-invoice payment serializes against a concurrent payment that only
+    // touches invoice #2. (Previously only allocations[0] was locked — sorted
+    // ordering prevents the classic AB/BA deadlock.)
+    for (const invoiceId of [...invoiceIds].sort()) {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${tenantId}:${invoiceId}`}, 0))`);
+    }
+
     const invoiceRows = await tx
       .select()
       .from(invoices)
@@ -60,7 +67,7 @@ export async function createPayment(input: CreatePaymentInput): Promise<CreatePa
     }
 
     // Idempotent replay: same tenant + idempotencyKey returns the original
-    // payment instead of double-posting. Serialized by the invoice lock, so
+    // payment instead of double-posting. Serialized by the invoice locks, so
     // concurrent duplicates can't both pass this check.
     if (idempotencyKey) {
       const [existing] = await tx.select().from(payments)
@@ -73,10 +80,18 @@ export async function createPayment(input: CreatePaymentInput): Promise<CreatePa
 
     // Strict overpay policy (user decision): the sum of allocated amounts may
     // never exceed the total outstanding balance — no auto-credit for excess.
+    // Draft invoices were never issued and credited invoices are no longer
+    // owed: neither may take a payment.
     let totalOutstandingCents = BigInt(0);
     for (const inv of invoiceRows) {
       if (inv.status === 'cancelled') {
         throw new ApiError(409, 'INVOICE_CANCELLED', 'Une facture annulée ne peut pas être réglée.');
+      }
+      if (inv.status === 'draft') {
+        throw new ApiError(409, 'INVOICE_DRAFT', 'Une facture brouillon ne peut pas être réglée : émettez-la d\'abord.');
+      }
+      if (inv.status === 'credited') {
+        throw new ApiError(409, 'INVOICE_CREDITED', 'Une facture crédée ne peut pas être réglée.');
       }
       totalOutstandingCents += moneyToCents(String(inv.netAmount)) - moneyToCents(String(inv.paidAmount));
     }

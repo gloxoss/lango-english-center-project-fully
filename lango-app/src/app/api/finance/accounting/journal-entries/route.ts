@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { recordAudit } from '@/libs/api/audit';
+
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { postAccountingVoucher } from '@/features/accounting/services/posting-service';
@@ -30,6 +32,7 @@ export async function POST(req: NextRequest) {
     const result = await postAccountingVoucher({
       tenantId: ctx.tenantId!, actorId: ctx.userId, sourceModule: 'manual_journal', ...body,
     });
+    recordAudit(ctx, 'create', 'journal_entry', String(result.entry?.id ?? 'manual_journal'), { idempotent: result.idempotent, entryNumber: result.entry?.entryNumber ?? null });
     return NextResponse.json({ success: true, data: result }, { status: result.idempotent ? 200 : 201 });
   } catch (error) { return apiErrorResponse(error); }
 }

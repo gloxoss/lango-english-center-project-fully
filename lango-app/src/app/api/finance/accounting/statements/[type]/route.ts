@@ -6,6 +6,7 @@ import { requireRequestContext } from '@/libs/api/context';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
 import { accountingClosingBalances, accountingClosingRuns, chartOfAccounts, journalEntries, journalEntryLines } from '@/models/Schema';
+import { csvSafeRow } from '@/libs/csv-safe';
 
 type StatementRow = { accountCode: string; accountName: string; accountType: string; debit: string; credit: string };
 type AccountType = 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
@@ -241,9 +242,5 @@ function rowsToCsv(rows: Record<string, unknown>[]): string {
   const first = rows[0];
   if (!first) return '';
   const headers = Object.keys(first);
-  const escape = (value: unknown) => {
-    const text = String(value ?? '');
-    return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-  };
-  return [headers.join(','), ...rows.map(row => headers.map(h => escape(row[h])).join(','))].join('\n');
+  return [headers.join(','), ...rows.map(row => csvSafeRow(headers.map(h => row[h])))].join('\n');
 }

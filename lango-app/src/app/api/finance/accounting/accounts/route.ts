@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { recordAudit } from '@/libs/api/audit';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
@@ -74,6 +75,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: false, error: { code: 'ACCOUNT_NOT_FOUND', message: 'Compte introuvable.' } }, { status: 404 });
     }
     if (!account.isActive) return NextResponse.json({ success: true, data: account, meta: { idempotent: true } });
+    // (archive mutation audited after the update below)
 
     const [[children], [balance]] = await Promise.all([
       db.select({ count: sql<number>`count(*)::int` }).from(chartOfAccounts).where(and(
@@ -97,6 +99,7 @@ export async function PATCH(req: NextRequest) {
       eq(chartOfAccounts.id, body.id),
       eq(chartOfAccounts.isActive, true),
     )).returning();
+    recordAudit(ctx, 'update', 'chart_of_account_archive', body.id, { archived: Boolean(archived) });
     return NextResponse.json({ success: true, data: archived ?? account });
   } catch (error) {
     return apiErrorResponse(error);

@@ -8,5 +8,5 @@ export default async function AdmissionRequestsPage({
 }) {
   const { locale } = await params;
   await requireServerPage(locale, { requiredCapability: 'admissions.manage' });
-  return <AdmissionRequestsView />;
+  return <AdmissionRequestsView locale={locale} />;
 }

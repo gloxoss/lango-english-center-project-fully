@@ -11,6 +11,7 @@ import {
   liveClassParticipantEvents, liveClassProviderProfiles, liveClassRecordings,
   liveClassSessions, sections, subjects, classSubjects, user,
 } from '@/models/Schema';
+import { csvSafeCell } from '@/libs/csv-safe';
 
 export type ReportFilters = {
   from?: string; // ISO scheduled-start lower bound
@@ -215,11 +216,7 @@ export async function listSessionReports(tenantId: string, filters: ReportFilter
 // CSV export
 // ---------------------------------------------------------------------------
 
-function csvEscape(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  const s = String(value);
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-}
+const csvEscape = csvSafeCell;
 
 export async function exportSessionReportsCsv(tenantId: string, filters: ReportFilters = {}) {
   const rows = await listSessionReports(tenantId, filters);

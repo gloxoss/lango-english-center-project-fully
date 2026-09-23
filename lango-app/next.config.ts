@@ -77,6 +77,18 @@ const nextConfig: NextConfig = {
       ],
     },
   ],
+  redirects: async () => [
+    {
+      source: '/:locale/dashboard/communication/sms-reminders',
+      destination: '/:locale/dashboard/communication/reminders',
+      permanent: true,
+    },
+    {
+      source: '/dashboard/communication/sms-reminders',
+      destination: '/dashboard/communication/reminders',
+      permanent: true,
+    },
+  ],
 };
 
 export default withNextIntl(nextConfig);

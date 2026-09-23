@@ -14,7 +14,6 @@ import {
   Mail,
   ShieldCheck,
   Sparkles,
-  Users,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { authClient } from '@/libs/auth-client';
@@ -104,8 +103,8 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
     }
   };
 
-  // Send a 2FA code by email (log-only delivery; the code is recorded in the
-  // two_factor_otps table). Shown when the server reports the 'otp' method.
+  // Send a 2FA code by email (real delivery when the platform mail key is set;
+  // otherwise the server answers with a clear error shown below).
   const handleSendEmailOtp = async () => {
     setLoading(true);
     setError(null);
@@ -122,12 +121,6 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDemoFill = (demoEmail: string, demoPass: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    setError(null);
   };
 
   const handleForgotPassword = () => {
@@ -346,9 +339,8 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
                 </form>
               )
             : (
-                <>
-                  {/* Main Login Form */}
-                  <form onSubmit={handleLogin} className="space-y-4">
+                /* Main Login Form */
+                <form onSubmit={handleLogin} className="space-y-4">
             {/* Email Field */}
             <div className="space-y-1.5">
               <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700">
@@ -438,46 +430,7 @@ export function LoginClient({ tenantSlug, tenantData }: { tenantSlug?: string, t
               )}
             </button>
           </form>
-
-          {/* Quick Demo Credentials Switcher */}
-          <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-2.5">
-            <p className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-              <Users className="w-3.5 h-3.5 text-[#0066FF]" />
-              <span>{t('demoAccountsTitle')}</span>
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <button
-                type="button"
-                onClick={() => handleDemoFill('y.elamrani@atlas.ma', 'Admin123!')}
-                className="px-2 py-1.5 bg-white border border-slate-200 hover:border-[#0066FF] hover:text-[#0066FF] rounded-lg text-[10px] font-bold text-slate-700 transition-colors text-center truncate"
-              >
-                {t('demoDirector')}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoFill('admin@lango.ma', 'Admin123!')}
-                className="px-2 py-1.5 bg-white border border-slate-200 hover:border-[#0066FF] hover:text-[#0066FF] rounded-lg text-[10px] font-bold text-slate-700 transition-colors text-center truncate"
-              >
-                {t('demoAdminLango')}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoFill('fz.idrissi@atlas.ma', 'Admin123!')}
-                className="px-2 py-1.5 bg-white border border-slate-200 hover:border-[#0066FF] hover:text-[#0066FF] rounded-lg text-[10px] font-bold text-slate-700 transition-colors text-center truncate"
-              >
-                {t('demoTeacher')}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoFill('superadmin@schoolos.ma', 'Admin123!')}
-                className="px-2 py-1.5 bg-white border border-slate-200 hover:border-[#0066FF] hover:text-[#0066FF] rounded-lg text-[10px] font-bold text-slate-700 transition-colors text-center truncate"
-              >
-                {t('demoSuperAdmin')}
-              </button>
-            </div>
-                  </div>
-                </>
-              )}
+        )}
 
           {/* Toggle to Signup */}
           <div className="pt-2 text-center border-t border-slate-100">

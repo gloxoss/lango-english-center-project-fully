@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { detectAndRecordFlags } from '@/libs/api/attendance-flags';
+import { casablancaTodayIso } from '@/libs/finance/today';
 import { resolveRegisterForSubmission } from '@/libs/api/attendance-registers';
 import { recalculateStudentAttendanceSummary } from '@/libs/api/attendance-summary';
 import { recordAudit } from '@/libs/api/audit';
@@ -12,7 +13,7 @@ import { requireCapability } from '@/libs/api/permissions';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { attendance, guardians, guardianStudents, smsMessages, user } from '@/models/Schema';
+import { attendance, classSections, guardians, guardianStudents, smsMessages, user } from '@/models/Schema';
 
 const attendanceRecordItemSchema = z.object({
   studentId: z.string().min(1),
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
     const context = await requireRequestContext(request, ['school_admin', 'teacher']);
     const tenantId = requireTenant(context);
     const { searchParams } = new URL(request.url);
-    const dateParam = searchParams.get('date') || new Date().toISOString().slice(0, 10);
+    const dateParam = searchParams.get('date') || casablancaTodayIso();
     const classIdParam = searchParams.get('classId') || searchParams.get('studentGroupId');
     const subjectIdParam = searchParams.get('subjectId');
     const periodParam = searchParams.get('period');
@@ -47,13 +48,27 @@ export async function GET(request: Request) {
     ];
 
     if (classIdParam) {
-      conditions.push(eq(attendance.studentGroupId, classIdParam));
+      let actualClassId = classIdParam;
+      const [sec] = await db
+        .select({ classId: classSections.classId })
+        .from(classSections)
+        .where(and(eq(classSections.tenantId, tenantId), eq(classSections.id, classIdParam)))
+        .limit(1);
+      if (sec?.classId) {
+        actualClassId = sec.classId;
+      }
+      conditions.push(eq(attendance.studentGroupId, actualClassId));
     }
     if (subjectIdParam) {
       conditions.push(eq(attendance.subjectId, subjectIdParam));
     }
     if (periodParam) {
       conditions.push(eq(attendance.period, parseInt(periodParam, 10)));
+    }
+
+    // Security audit P1-A: a branch-scoped principal only sees their campus.
+    if (context.branchId) {
+      conditions.push(eq(user.branchId, context.branchId));
     }
 
     if (context.role === 'teacher') {
@@ -123,13 +138,26 @@ export async function POST(request: Request) {
       }
     }
 
+    // Resolve studentGroupId to classes.id if a class_sections.id was passed
+    let resolvedClassId = body.studentGroupId;
+    if (resolvedClassId) {
+      const [sec] = await db
+        .select({ classId: classSections.classId })
+        .from(classSections)
+        .where(and(eq(classSections.tenantId, tenantId), eq(classSections.id, resolvedClassId)))
+        .limit(1);
+      if (sec?.classId) {
+        resolvedClassId = sec.classId;
+      }
+    }
+
     const savedRecords = await db.transaction(async (tx) => {
       // Registers are keyed per (class, date, period) - only enforced when a
       // class is actually selected (studentGroupId), matching how the real
       // intake UI always submits. Ad hoc submissions without a class context
       // stay unregistered rather than being blocked.
-      const register = body.studentGroupId
-        ? await resolveRegisterForSubmission(tenantId, body.studentGroupId, body.date, body.period, context.userId, body.correctionNote, tx)
+      const register = resolvedClassId
+        ? await resolveRegisterForSubmission(tenantId, resolvedClassId, body.date, body.period, context.userId, body.correctionNote, tx)
         : null;
 
       const results = [];
@@ -152,7 +180,7 @@ export async function POST(request: Request) {
           .values({
             tenantId,
             studentId: rec.studentId,
-            studentGroupId: body.studentGroupId || null,
+            studentGroupId: resolvedClassId || null,
             subjectId: body.subjectId || null,
             period: body.period,
             date: body.date,

@@ -200,6 +200,17 @@ export function IssueCertificateDialog(props: Props) {
                   {t('noPublishedVersionWarning')}
                 </p>
               )}
+              {selectedDefinitionId && publishedVersionId && (
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600 space-y-1 mt-2">
+                  <div className="flex items-center gap-1.5 font-bold text-[#16212B]">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Incrustation officielle automatique (Loi 06-00)</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500">
+                    Le document généré intègre le cachet d'établissement, la signature du directeur, l'agrément MEN et le QR code de vérification instantanée.
+                  </p>
+                </div>
+              )}
             </div>
             {error && <p className="text-xs font-semibold text-rose-600">{error}</p>}
           </div>

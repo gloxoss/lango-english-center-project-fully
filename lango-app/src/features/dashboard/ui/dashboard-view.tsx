@@ -1,347 +1,235 @@
 'use client';
 
-import {
-  AlertTriangle,
-  ArrowUpRight,
-  CheckCircle2,
-  Lock,
-} from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { AlertCircle, AlertTriangle, Building2, RefreshCw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { AnnualFeeSummaryChart, type MonthlyFeePoint } from './annual-fee-summary-chart';
-import { AttendanceInspectionChart, type AttendanceInspectionPoint } from './attendance-inspection-chart';
-import { BirthdayTrackerWidget, type BirthdayPerson } from './birthday-tracker-widget';
-import { DashboardCalendarWidget } from './dashboard-calendar-widget';
-import { IncomeExpenseDonut, type IncomeExpenseData } from './income-expense-donut';
-import { StrengthMetricCards } from './strength-metric-cards';
-import { StudentQuantityDonut, type StudentDistributionItem } from './student-quantity-donut';
+import type { FullDashboardSummary } from '../model/types';
+import { ActionCenter } from './action-center';
+import { DailyPulseKpi } from './daily-pulse-kpi';
+import { FinanceOverviewCard } from './finance-overview-card';
+import { AttendanceTrendCard } from './attendance-trend-card';
+import { UpcomingEventsCard } from './upcoming-events-card';
+import { RecentPaymentsCard } from './recent-payments-card';
+import { StudentWatchlistCard } from './student-watchlist-card';
+import { StudentDistributionCard } from './student-distribution-card';
+import { DashboardSkeleton } from './dashboard-skeleton';
 
-type AtRiskStudent = {
-  id: string;
-  name: string;
-  className: string;
-  indicators: number;
-  riskLevel: string;
-  badge: 'danger' | 'warning';
-};
-
-type FullDashboardSummary = {
-  totalStudents: number;
-  totalTeachers: number;
-  totalParents: number;
-  totalEmployees: number;
-  admissions30Days: number;
-  vouchersCount: number;
-  activeClassesCount: number;
-  totalSectionsCount: number;
-  todayAttendance: { presentCount: number; absentCount: number; totalMarked: number; rate: number } | null;
-  weeklyTrend: { date: string; rate: number | null }[];
-  incomeVsExpense: IncomeExpenseData;
-  annualFeeSummary: MonthlyFeePoint[];
-  studentQuantityByLevel: StudentDistributionItem[];
-  weeklyAttendanceInspection: AttendanceInspectionPoint[];
-  recentPayments: { studentName: string; className: string; amount: number; date: string }[];
-  overdueInvoicesCount: number;
-  unjustifiedAbsencesToday: number;
-  atRiskStudents: AtRiskStudent[];
-  todayBirthdays?: {
-    studentBirthdays: BirthdayPerson[];
-    employeeBirthdays: BirthdayPerson[];
-  };
-};
-
-function formatMad(amount: number): string {
-  return `${Math.round(amount).toLocaleString('fr-FR')} MAD`;
+interface DashboardViewProps {
+  locale: string;
+  notice?: string | null;
 }
 
-export function DashboardView({ locale, notice }: { locale: string; notice?: string | null }) {
+export function DashboardView({ locale, notice }: DashboardViewProps) {
   const t = useTranslations('Dashboard');
   const tCommon = useTranslations('Common');
-  const router = useRouter();
-  const [pendingNav, setPendingNav] = useState<{ title: string; route: string } | null>(null);
-  const [dontShowAgain, setDontShowAgain] = useState(false);
+
   const [summary, setSummary] = useState<FullDashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [calendarEvents, setCalendarEvents] = useState([]);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedBranchId, setSelectedBranchId] = useState<string>('all');
   const [noticeDismissed, setNoticeDismissed] = useState(false);
 
+  async function loadSummary(branchIdToFetch?: string) {
+    setLoading(true);
+    setError(null);
+    try {
+      const targetBranch = branchIdToFetch ?? selectedBranchId;
+      const url = targetBranch && targetBranch !== 'all'
+        ? `/api/dashboard/summary?branchId=${encodeURIComponent(targetBranch)}`
+        : '/api/dashboard/summary';
+
+      const res = await fetch(url);
+      if (!res.ok) {
+        const errorJson = await res.json().catch(() => ({}));
+        throw new Error(errorJson.error?.message || 'Erreur lors du chargement du tableau de bord.');
+      }
+      const json = await res.json();
+      setSummary(json.data);
+    } catch (err: any) {
+      console.error('Failed to load dashboard summary', err);
+      setError(err.message || 'Impossible de charger le tableau de bord.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch('/api/dashboard/summary');
-        if (res.ok) {
-          const json = await res.json();
-          setSummary(json.data);
-        }
-      } catch (err) {
-        console.error('Failed to load dashboard summary', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    async function loadEvents() {
-      try {
-        const res = await fetch('/api/addons/events/calendar');
-        if (res.ok) {
-          const json = await res.json();
-          setCalendarEvents(json.data || []);
-        }
-      } catch (err) {
-        console.error('Failed to load events', err);
-      }
-    }
-    load();
-    loadEvents();
+    const stored = typeof window !== 'undefined' ? localStorage.getItem('schoolos_active_branch_id') : null;
+    const initialBranch = stored || 'all';
+    setSelectedBranchId(initialBranch);
+    loadSummary(initialBranch);
+
+    const onBranchChanged = (e: Event) => {
+      const customEvent = e as CustomEvent<{ branchId: string | null }>;
+      const newId = customEvent.detail?.branchId || 'all';
+      setSelectedBranchId(newId);
+      loadSummary(newId);
+    };
+    window.addEventListener('schoolos:branch-changed', onBranchChanged);
+    return () => window.removeEventListener('schoolos:branch-changed', onBranchChanged);
   }, []);
 
-  const handleConfirmNav = () => {
-    if (dontShowAgain && typeof window !== 'undefined') {
-      localStorage.setItem('schoolos_skip_card_confirm', 'true');
+  const handleBranchChange = (newBranchId: string) => {
+    if (newBranchId && newBranchId !== 'all') {
+      localStorage.setItem('schoolos_active_branch_id', newBranchId);
+    } else {
+      localStorage.removeItem('schoolos_active_branch_id');
     }
-    if (pendingNav) {
-      const target = pendingNav.route;
-      setPendingNav(null);
-      router.push(target);
-    }
+    setSelectedBranchId(newBranchId);
+    loadSummary(newBranchId);
+    window.dispatchEvent(new CustomEvent('schoolos:branch-changed', { detail: { branchId: newBranchId === 'all' ? null : newBranchId } }));
   };
 
-  const statusBanners = summary
-    ? [
-        {
-          id: 'attendance',
-          title: summary.todayAttendance ? t('attendancePresent', { rate: summary.todayAttendance.rate }) : t('attendanceNo'),
-          sub: summary.todayAttendance ? t('attendanceSubPresent', { present: summary.todayAttendance.presentCount, total: summary.todayAttendance.totalMarked }) : t('attendanceSubNo'),
-          icon: CheckCircle2,
-          route: `/${locale}/dashboard/attendance`,
-        },
-        {
-          id: 'overdue',
-          title: t('overdueTitle', { count: summary.overdueInvoicesCount }),
-          sub: summary.overdueInvoicesCount > 0 ? t('overdueSub') : t('overdueOk'),
-          icon: Lock,
-          route: `/${locale}/dashboard/finance/invoices`,
-        },
-        {
-          id: 'absences',
-          title: t('absencesTitle', { count: summary.unjustifiedAbsencesToday }),
-          sub: t('absencesSub'),
-          icon: AlertTriangle,
-          route: `/${locale}/dashboard/attendance`,
-        },
-      ]
-    : [];
+  if (loading && !summary) {
+    return <DashboardSkeleton />;
+  }
+
+  if (error && !summary) {
+    return (
+      <div className="mx-auto flex min-h-[420px] max-w-[800px] flex-col items-center justify-center rounded-2xl border border-rose-200 bg-rose-50/50 p-8 text-center shadow-xs">
+        <div className="flex size-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
+          <AlertCircle className="size-6" />
+        </div>
+        <h2 className="mt-4 text-base font-extrabold text-slate-900">
+          Impossible de charger le tableau de bord
+        </h2>
+        <p className="mt-1 max-w-md text-xs text-slate-600 font-medium">
+          {error}
+        </p>
+        <Button
+          onClick={() => loadSummary()}
+          className="mt-5 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 active:scale-[0.99]"
+        >
+          <RefreshCw className="mr-1.5 size-3.5" />
+          Réessayer
+        </Button>
+      </div>
+    );
+  }
+
+  if (!summary) return null;
+
+  const { institution, actionCenter, dailyPulse, financeOverview, attendanceTrend, upcomingEvents, recentPayments, watchlist, studentDistribution } = summary;
 
   return (
-    <div className="mx-auto max-w-[1600px] space-y-6">
+    <div className="mx-auto max-w-[1600px] space-y-4 sm:space-y-6 pb-8 sm:pb-12">
+      {/* Notice Banner */}
       {notice === 'employee_portal_unavailable' && !noticeDismissed && (
         <div className="flex items-start justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <AlertTriangle className="size-4 shrink-0 text-amber-600" />
             <span>{t('employeePortalNotice')}</span>
           </div>
-          <button onClick={() => setNoticeDismissed(true)} aria-label={tCommon('close')} className="text-amber-600 transition hover:text-amber-900">×</button>
+          <button
+            onClick={() => setNoticeDismissed(true)}
+            aria-label={tCommon('close')}
+            className="text-amber-600 transition hover:text-amber-900"
+          >
+            ×
+          </button>
         </div>
       )}
-      {/* Top Header Bar Title & Quick Actions */}
-      <div className="flex flex-col gap-4 border-b border-slate-200/80 pb-3 lg:flex-row lg:items-center lg:justify-between">
+
+      {/* A. PAGE HEADER (Redesigned per Approved IA) */}
+      <header className="flex flex-col gap-3 border-b border-slate-200/80 pb-3.5 sm:pb-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">
-              {t('title')}
-            </h1>
-            <span className="rounded-full bg-[#0EA5C4]/10 px-3 py-1 text-xs font-bold text-[#0EA5C4] border border-[#0EA5C4]/20">
-              Icon School & College Branch Dashboard
-            </span>
-          </div>
-          <p className="mt-1 text-xs font-medium text-slate-500">
-            {t('tagline')}
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">
+            Tableau de bord
+          </h1>
+          <p className="mt-1 text-xs font-semibold text-slate-500">
+            <span>{institution.name}</span>
+            <span className="mx-1.5 text-slate-300">·</span>
+            <span className="text-blue-600">{institution.activeBranchName}</span>
+            <span className="mx-1.5 text-slate-300">·</span>
+            <span className="capitalize">{institution.currentDateFormatted}</span>
           </p>
         </div>
-      </div>
 
-      {/* Status Health Banners */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {statusBanners.map(b => (
-          <Link
-            key={b.id}
-            href={b.route}
-            className="flex items-center justify-between p-3.5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs hover:bg-slate-50 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-slate-100 text-[#2487B8]">
-                <b.icon className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-[#16212B]">{b.title}</p>
-                <p className="text-[11px] text-slate-400 font-medium">{b.sub}</p>
-              </div>
+        {/* Global Controls: Branch Switcher & Refresh */}
+        <div className="flex items-center gap-2.5">
+          {institution.availableBranches.length > 1 && (
+            <div className="flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-3 py-1.5 shadow-2xs">
+              <Building2 className="size-3.5 text-slate-400" />
+              <select
+                aria-label="Sélectionner une succursale"
+                value={selectedBranchId}
+                onChange={e => handleBranchChange(e.target.value)}
+                className="bg-transparent text-xs font-bold text-slate-700 outline-hidden cursor-pointer"
+              >
+                <option value="all">Toutes les succursales</option>
+                {institution.availableBranches.map(b => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
             </div>
-            <ArrowUpRight className="w-4 h-4 text-slate-400" />
-          </Link>
-        ))}
-      </div>
+          )}
 
-      {/* 1. Ramom School Strength Metric Cards (8 Cards Grid) */}
-      <StrengthMetricCards
-        data={{
-          totalEmployees: summary?.totalEmployees ?? 0,
-          totalStudents: summary?.totalStudents ?? 0,
-          totalParents: summary?.totalParents ?? 0,
-          totalTeachers: summary?.totalTeachers ?? 0,
-          admissions30Days: summary?.admissions30Days ?? 0,
-          vouchersCount: summary?.vouchersCount ?? 0,
-          activeClassesCount: summary?.activeClassesCount ?? 0,
-          totalSectionsCount: summary?.totalSectionsCount ?? 0,
-        }}
-      />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => loadSummary()}
+            className="rounded-xl border-slate-200/80 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50"
+          >
+            <RefreshCw className="mr-1.5 size-3 text-slate-400" />
+            Actualiser
+          </Button>
+        </div>
+      </header>
 
-      {/* 2. Top Charts Row: Income vs Expense Donut & Annual Fee Summary Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-4 min-h-[360px]">
-          <IncomeExpenseDonut
-            data={summary?.incomeVsExpense ?? { collected: 0, remaining: 0, invoiced: 0 }}
-          />
-        </div>
-        <div className="lg:col-span-8 min-h-[360px]">
-          <AnnualFeeSummaryChart data={summary?.annualFeeSummary ?? []} />
-        </div>
-      </div>
+      {/* B. ACTION CENTER (First Dashboard Content) */}
+      <ActionCenter data={actionCenter} locale={locale} />
 
-      {/* 3. Middle Charts Row: Student Quantity Donut & Attendance Inspection Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-4 min-h-[350px]">
-          <StudentQuantityDonut
-            data={summary?.studentQuantityByLevel ?? []}
-            title={t('studentQuantityTitle')}
-          />
+      {/* C. DAILY PULSE (4 Primary KPI Cards) */}
+      <DailyPulseKpi data={dailyPulse} locale={locale} />
+
+      {/* D & E. FINANCE OVERVIEW + ATTENDANCE TREND (Bento Grid Row) */}
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12 lg:items-start">
+        <div className="lg:col-span-7">
+          <FinanceOverviewCard data={financeOverview} locale={locale} />
         </div>
-        <div className="lg:col-span-8 min-h-[350px]">
-          <AttendanceInspectionChart
-            data={summary?.weeklyAttendanceInspection ?? []}
-          />
+        <div className="lg:col-span-5">
+          <AttendanceTrendCard data={attendanceTrend} locale={locale} />
         </div>
       </div>
 
-      {/* 4. Bottom Row: Interactive Calendar & Birthday Tracker */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-8 min-h-[420px]">
-          <DashboardCalendarWidget events={calendarEvents} />
+      {/* F & G. UPCOMING EVENTS + RECENT PAYMENTS (Bento Grid Row) */}
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12 lg:items-start">
+        <div className="lg:col-span-6">
+          <UpcomingEventsCard
+            events={upcomingEvents.events}
+            todayBirthdaysCount={upcomingEvents.todayBirthdaysCount}
+            birthdaysPreview={upcomingEvents.birthdaysPreview}
+            locale={locale}
+          />
         </div>
-        <div className="lg:col-span-4 min-h-[420px]">
-          <BirthdayTrackerWidget
-            studentBirthdays={summary?.todayBirthdays?.studentBirthdays}
-            employeeBirthdays={summary?.todayBirthdays?.employeeBirthdays}
+        <div className="lg:col-span-6">
+          <RecentPaymentsCard
+            payments={recentPayments}
+            locale={locale}
           />
         </div>
       </div>
 
-      {/* Recent Activity Feeds & At-Risk Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Transactions Feed */}
-        <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="text-sm font-extrabold text-[#16212B]">{t('recentPayments')}</h3>
-            <Link
-              href={`/${locale}/dashboard/finance/invoices`}
-              className="text-xs font-bold text-[#2487B8] flex items-center gap-1 hover:underline"
-            >
-              {tCommon('viewAll')} <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-          <div className="space-y-2">
-            {!summary?.recentPayments || summary.recentPayments.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">{t('noPayments')}</p>
-            ) : (
-              summary.recentPayments.map((p, i) => (
-                <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-                  <div>
-                    <p className="text-xs font-bold text-[#16212B]">{p.studentName}</p>
-                    <p className="text-[10px] text-slate-400">{p.className} • {p.date}</p>
-                  </div>
-                  <span className="text-xs font-extrabold text-emerald-600">+{formatMad(p.amount)}</span>
-                </div>
-              ))
-            )}
-          </div>
-        </Card>
-
-        {/* At Risk Students */}
-        <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="text-sm font-extrabold text-[#16212B]">{t('atRiskTitle')}</h3>
-            <Link
-              href={`/${locale}/dashboard/students`}
-              className="text-xs font-bold text-[#2487B8] flex items-center gap-1 hover:underline"
-            >
-              {t('viewDirectory')} <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-          <div className="space-y-2">
-            {!summary?.atRiskStudents || summary.atRiskStudents.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">{t('noStudentAlerts')}</p>
-            ) : (
-              summary.atRiskStudents.map(s => (
-                <div key={s.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-                  <div>
-                    <p className="text-xs font-bold text-[#16212B]">{s.name}</p>
-                    <p className="text-[10px] text-slate-400">{s.className}</p>
-                  </div>
-                  <span
-                    className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${
-                      s.badge === 'danger'
-                        ? 'bg-rose-100 text-rose-700 border border-rose-200'
-                        : 'bg-amber-100 text-amber-800 border border-amber-200'
-                    }`}
-                  >
-                    {s.riskLevel}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-        </Card>
+      {/* H & I. WATCHLIST + STUDENT DISTRIBUTION (Bento Grid Row) */}
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12 lg:items-start">
+        <div className="lg:col-span-6">
+          <StudentWatchlistCard
+            students={watchlist.students}
+            totalWatchlistCount={watchlist.totalWatchlistCount}
+            locale={locale}
+          />
+        </div>
+        <div className="lg:col-span-6">
+          <StudentDistributionCard
+            items={studentDistribution.items}
+            totalActiveStudents={studentDistribution.totalActiveStudents}
+            locale={locale}
+          />
+        </div>
       </div>
-
-      {/* Navigation Confirm Dialog */}
-      <Dialog open={Boolean(pendingNav)} onOpenChange={open => !open && setPendingNav(null)}>
-        <DialogContent className="sm:max-w-md bg-white rounded-2xl border border-slate-200 shadow-xl">
-          <DialogHeader>
-            <DialogTitle className="text-base font-extrabold text-[#16212B]">
-              {t('dialogTitle')}
-            </DialogTitle>
-            <DialogDescription className="text-xs text-slate-500">
-              {t('dialogDescription', { name: pendingNav?.title ?? '' })}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex items-center space-x-2 py-2">
-            <Checkbox id="skipConfirm" checked={dontShowAgain} onCheckedChange={c => setDontShowAgain(Boolean(c))} />
-            <label htmlFor="skipConfirm" className="text-xs font-medium text-slate-600">
-              {t('dontAskAgain')}
-            </label>
-          </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" size="sm" onClick={() => setPendingNav(null)} className="rounded-xl">
-              {tCommon('cancel')}
-            </Button>
-            <Button size="sm" onClick={handleConfirmNav} className="rounded-xl bg-[#2487B8] hover:bg-[#1B6C93]">
-              {tCommon('confirm')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

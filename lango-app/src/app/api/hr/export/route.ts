@@ -4,6 +4,7 @@ import { apiErrorResponse } from '@/libs/api/errors';
 import { requireAddon } from '@/libs/api/entitlements';
 import { hasCapability, requireCapability } from '@/libs/api/permissions';
 import { listEmployees } from '@/features/hr/services/employees-service';
+import { csvSafeCell } from '@/libs/csv-safe';
 
 const BASE_COLUMNS = [
   'employeeId', 'firstName', 'lastName', 'displayName', 'email', 'phone',
@@ -12,11 +13,7 @@ const BASE_COLUMNS = [
 ];
 const SENSITIVE_COLUMNS = ['salary', 'nationalId', 'bankRib', 'cnssNumber', 'amoNumber', 'contractType'];
 
-function csvEscape(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  const s = String(value);
-  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-}
+const csvEscape = csvSafeCell;
 
 // CSV export honoring the same filters + tenant boundary as GET /api/hr/employees.
 // Sensitive columns are only included when the caller holds hr.sensitive.read (§5).

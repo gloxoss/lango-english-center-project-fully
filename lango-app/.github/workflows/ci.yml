@@ -54,6 +54,9 @@ jobs:
       - name: Stage 2 — Code Linting
         run: npm run lint
 
+      - name: Stage 2b — Referenced Translation Keys
+        run: npm run check:i18n:keys
+
       - name: Stage 3 — Multi-Tenant Isolation AST Security Scanner
         run: npx tsx scripts/check-tenant-isolation.ts
 

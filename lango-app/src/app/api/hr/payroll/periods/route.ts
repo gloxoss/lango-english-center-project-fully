@@ -1,5 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { recordAudit } from '@/libs/api/audit';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
@@ -59,6 +60,7 @@ export async function POST(request: Request) {
       .values({ tenantId, year: body.year, month: body.month, status: 'draft' })
       .returning();
 
+    recordAudit(ctx, 'create', 'payroll_period', period?.id ?? 'period', { year: period?.year ?? null, month: period?.month ?? null });
     return NextResponse.json({ success: true, data: period }, { status: 201 });
   } catch (err) {
     return apiErrorResponse(err);

@@ -1,13 +1,14 @@
 # Archived UI
 
-Screens parked here were **orphaned**: nothing in `src/app` imported them, so no
-user could reach them. They are kept because the layouts are worth reusing, not
-because they worked.
+Most screens parked here were **orphaned**: nothing in `src/app` imported them.
+Five Communication screens were reachable by direct URL and were archived after
+the 2026-09-23 visual sweep found invented contacts and metrics. The layouts are
+kept for reuse, not because the workflows worked.
 
 Each one renders **hardcoded constants, not API data**. That is the main reason
 they were never wired up, and it is the work any restore has to do.
 
-Moved with `git mv`, so `git log --follow` on a file still shows its full history.
+Keep the original filenames so `git log --follow` can find their history after commit.
 
 ## What is here
 
@@ -20,6 +21,7 @@ Moved with `git mv`, so `git log --follow` on a file still shows its full histor
 | `features/finance/ui/financial-reports-view.tsx` | Financial reports | `INITIAL_CHECKLIST_ITEMS`, `ANOMALIES`, `GENERAL_LEDGER_BALANCES`, `RECENT_CLOSE_EVENTS`, `AVAILABLE_STATEMENTS` |
 | `components/teacher/GradeEntryGrid.tsx` | A second grade-entry grid | 4 students inline in `useState`; `handleSave` sets a flag for 3s and calls no API |
 | `components/teacher/TeacherTodaySchedule.tsx` | Teacher's day view | class list inline in `useState` |
+| `features/crm/{ui,data}/{lead-pipeline,audience-segments,form-intake,milestone-triggers,templates-automation}*` | Five direct-URL Communication pages | Imported fixture records used as live client state |
 
 Between them they hold ~44 controls with no handler at all — pagination bars that
 paginate nothing, row `⋮` menus, and "see all" links that go nowhere. Treat every

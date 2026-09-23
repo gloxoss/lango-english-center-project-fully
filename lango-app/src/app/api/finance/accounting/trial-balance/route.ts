@@ -6,6 +6,7 @@ import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
 import { chartOfAccounts, journalEntries, journalEntryLines } from '@/models/Schema';
+import { csvSafeRow } from '@/libs/csv-safe';
 
 export async function GET(req: NextRequest) {
   try {
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
     const result = { success: true, data: rows, totals: { debit: totals.debit.toFixed(2), credit: totals.credit.toFixed(2), balanced: totals.debit.toFixed(2) === totals.credit.toFixed(2) }, filters: { from, to } };
     if (csv) {
       const body = [['accountCode', 'accountName', 'accountType', 'debit', 'credit', 'balance'], ...rows.map(row => [row.accountCode, row.accountName, row.accountType, row.debit, row.credit, row.balance])]
-        .map(row => row.map(cell => /[",\n]/.test(String(cell)) ? `"${String(cell).replace(/"/g, '""')}"` : String(cell)).join(','))
+        .map(row => csvSafeRow(row))
         .join('\n');
       return new NextResponse(body, {
         headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="trial-balance-${Date.now()}.csv"` },

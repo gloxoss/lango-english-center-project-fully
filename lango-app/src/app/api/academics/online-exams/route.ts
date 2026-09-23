@@ -20,7 +20,7 @@ const createExamSchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    const context = await requireRequestContext(request);
+    const context = await requireRequestContext(request, ['school_admin', 'teacher']);
     const tenantId = requireTenant(context);
 
     // Real audience scoping (future-implementation/assessment-and-examination

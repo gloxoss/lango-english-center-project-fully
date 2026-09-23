@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { recordAudit } from '@/libs/api/audit';
 import { requireAddon } from '@/libs/api/entitlements';
 import { hasCapability, requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -78,6 +79,7 @@ export async function POST(request: Request) {
     const sensitive = await hasCapability(ctx.userId, tenantId, ctx.role, 'hr.sensitive.read');
     const data = await getEmployee(tenantId, profile!.id, sensitive);
 
+    recordAudit(ctx, 'create', 'employee', data?.id ?? 'employee', {});
     return NextResponse.json({ success: true, data }, { status: 201 });
   } catch (error) {
     return apiErrorResponse(error);

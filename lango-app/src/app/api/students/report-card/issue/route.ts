@@ -1,3 +1,4 @@
+import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
@@ -12,11 +13,15 @@ import {
   issueReportCardPdf,
   resolveReportCardVersion,
 } from '@/features/academics/services/report-card-document-service';
+import { examTerms } from '@/features/assessment/models/assessment-schema';
+import { db } from '@/libs/DB';
+import { sessionYears } from '@/models/Schema';
 
 const issueSchema = z.object({
   templateVersionId: z.string().uuid().optional(),
   studentId: z.string().trim().min(1).optional(),
   classSectionId: z.string().uuid().optional(),
+  examTermId: z.string().uuid().optional(),
 }).strict();
 
 // POST /api/students/report-card/issue — issues bulletins as real report_card
@@ -34,6 +39,28 @@ export async function POST(request: Request) {
       throw new ApiError(400, 'VALIDATION_ERROR', 'studentId ou classSectionId requis.');
     }
 
+    // Audit 3, P0-F: resolve the bulletin window (explicit exam term, else the
+    // tenant's default session year) so issued bulletins never mix terms or years.
+    let termWindow: { termStart?: string; termEnd?: string } = {};
+    if (body.examTermId) {
+      const [term] = await db
+        .select({ startDate: examTerms.startDate, endDate: examTerms.endDate })
+        .from(examTerms)
+        .where(and(eq(examTerms.id, body.examTermId), eq(examTerms.tenantId, tenantId)))
+        .limit(1);
+      if (!term) {
+        throw new ApiError(404, 'NOT_FOUND', "Session d'examen introuvable.");
+      }
+      termWindow = { termStart: term.startDate, termEnd: term.endDate };
+    } else {
+      const [year] = await db
+        .select({ startDate: sessionYears.startDate, endDate: sessionYears.endDate })
+        .from(sessionYears)
+        .where(and(eq(sessionYears.tenantId, tenantId), eq(sessionYears.isDefault, true)))
+        .limit(1);
+      if (year) termWindow = { termStart: year.startDate, termEnd: year.endDate };
+    }
+
     const templateVersionId = body.templateVersionId
       ?? await ensureDefaultReportCardTemplate(tenantId, context.userId);
 
@@ -43,13 +70,16 @@ export async function POST(request: Request) {
         templateVersionId,
         studentId: body.studentId,
         issuedBy: context.userId,
+        termWindow,
       });
       recordAudit(context, 'create', 'issued_document', issuedDocument.id, { type: 'report_card', studentId: body.studentId });
       return NextResponse.json({ success: true, data: { issuedDocument, pdfBase64 } }, { status: 201 });
     }
 
     const version = await resolveReportCardVersion(tenantId, templateVersionId);
-    const { cards } = await getClassReportCards(tenantId, body.classSectionId!);
+    // Audit 3, P0-F: issued bulletins are scoped to the requested exam term
+    // (or the active session year) — never the student's entire history.
+    const { cards } = await getClassReportCards(tenantId, body.classSectionId!, termWindow);
     const toIssue = cards.filter(c => c.subjects.length > 0);
 
     const issuedIds: string[] = [];

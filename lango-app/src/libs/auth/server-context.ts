@@ -1,5 +1,5 @@
 import { and, eq } from 'drizzle-orm';
-import { headers } from 'next/headers';
+import { headers, cookies } from 'next/headers';
 import { auth } from '@/libs/auth';
 import { db } from '@/libs/DB';
 import { tenants, user } from '@/models/Schema';
@@ -15,6 +15,8 @@ export type ServerUserContext = {
   name: string | null;
   email: string | null;
   sessionId: string | null;
+  /** True when a super_admin is acting inside a selected tenant. */
+  impersonated?: boolean;
 };
 
 function isAppRole(value: string): value is AppRole {
@@ -64,14 +66,27 @@ export async function getServerUserContext(): Promise<ServerUserContext | null> 
     branchId: principal.branchId,
   });
 
+  let resolvedTenantId = principal.tenantId;
+  const effectiveRole = activeCtx?.activeRole ?? principal.role;
+  if (effectiveRole === 'super_admin') {
+    const cookieStore = await cookies();
+    const cookieTenantId = cookieStore.get('schoolos_active_tenant_id')?.value;
+    if (cookieTenantId && cookieTenantId !== 'none' && cookieTenantId !== 'all') {
+      resolvedTenantId = cookieTenantId;
+    } else {
+      resolvedTenantId = null;
+    }
+  }
+
   return {
     userId: principal.id,
-    tenantId: principal.tenantId,
+    tenantId: resolvedTenantId,
     branchId: activeCtx?.activeBranchId ?? principal.branchId,
-    role: activeCtx?.activeRole ?? principal.role,
+    role: effectiveRole,
     baseRole: principal.role,
     name: principal.name,
     email: principal.email,
     sessionId,
+    impersonated: effectiveRole === 'super_admin' && resolvedTenantId !== null,
   };
 }

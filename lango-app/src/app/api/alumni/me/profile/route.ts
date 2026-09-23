@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse } from '@/libs/api/errors';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { alumniDirectoryConsent, sessionYears, user } from '@/models/Schema';
@@ -53,7 +53,20 @@ export async function PATCH(req: Request) {
     const tenantId = requireTenant(context);
     const body = await parseJson(req, updateProfileSchema);
 
-    const [updated] = await db.update(user).set(body).where(and(eq(user.id, context.userId), eq(user.tenantId, tenantId))).returning({ id: user.id, email: user.email, phone: user.phone });
+    // The email is the login identifier. Changing it here would skip any
+    // verification, so a real change goes through the school; an unchanged
+    // email (the form always sends it) is accepted and ignored.
+    const [current] = await db.select({ email: user.email }).from(user)
+      .where(and(eq(user.id, context.userId), eq(user.tenantId, tenantId))).limit(1);
+    if (body.email && body.email.trim().toLowerCase() !== (current?.email ?? '').toLowerCase()) {
+      throw new ApiError(422, 'EMAIL_CHANGE_NOT_ALLOWED', 'Pour changer votre email de connexion, contactez l\'établissement.');
+    }
+    const { email: _ignored, ...changes } = body;
+    if (Object.keys(changes).length === 0) {
+      return NextResponse.json({ success: true, data: { id: context.userId, email: current?.email ?? null } });
+    }
+
+    const [updated] = await db.update(user).set(changes).where(and(eq(user.id, context.userId), eq(user.tenantId, tenantId))).returning({ id: user.id, email: user.email, phone: user.phone });
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {

@@ -7,11 +7,11 @@ import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, studentCreateSchema, studentUpdateSchema } from '@/libs/api/validation';
+import { csvSafeCell } from '@/libs/csv-safe';
 import { db } from '@/libs/DB';
 import { reserveMatricule } from '@/libs/services/matricule';
 import { hardDeleteStudent, transitionStudentLifecycle } from '@/libs/services/student-lifecycle';
 import {
-  academicYears,
   alumniDirectoryConsent,
   alumniRequests,
   assessmentResults,
@@ -34,21 +34,21 @@ import { toDbStatus, toUiStatus } from '@/models/userMapping';
 type StudentRow = typeof user.$inferSelect;
 type ClassSectionDisplay = { className: string | null; sectionName: string | null } | null;
 
-export interface StudentFinanceSnapshot {
+export type StudentFinanceSnapshot = {
   financialStatus: 'À jour' | 'Partiel' | 'En retard';
   outstandingAmount: number;
   overdueAmount: number;
   overdueCount: number;
   academicYearName?: string | null;
-}
+};
 
-export interface StudentGuardianProjection {
+export type StudentGuardianProjection = {
   guardianName: string | null;
   guardianPhone: string | null;
   relationshipType?: string | null;
   isVerified: boolean;
   isLegacyFallback: boolean;
-}
+};
 
 export function resolveStudentGuardianProjection(
   relationalGuardians?: Array<{
@@ -161,7 +161,9 @@ async function loadClassSectionDisplay(classSectionId: string | null | undefined
 }
 
 function isSyntheticEmail(email: string | null | undefined): boolean {
-  if (!email) return false;
+  if (!email) {
+    return false;
+  }
   const lower = email.toLowerCase().trim();
   return lower.endsWith('@placeholder.local') || lower.endsWith('@demo.schoolos.internal') || (lower.startsWith('stu-') && lower.includes('placeholder'));
 }
@@ -200,7 +202,7 @@ async function getStudentDetail(tenantId: string, id: string, branchId?: string 
     guardianRows,
     attendanceRows,
     paymentRows,
-    invoiceRows,
+    _invoiceRows,
     invoiceTotals,
     paymentTotals,
     activePlacement,
@@ -389,15 +391,17 @@ async function getStudentDetail(tenantId: string, id: string, branchId?: string 
   // Reusable guardian projection: relational guardian takes precedence; legacy fields marked unverified / à confirmer
   const guardianProj = resolveStudentGuardianProjection(
     guardianRows,
-    { guardianName: row.student.guardianName, guardianPhone: row.student.guardianPhone }
+    { guardianName: row.student.guardianName, guardianPhone: row.student.guardianPhone },
   );
 
-  const legacyGuardian = guardianProj.isLegacyFallback ? {
-    name: guardianProj.guardianName,
-    phone: guardianProj.guardianPhone,
-    isLegacyFallback: true,
-    verified: false,
-  } : null;
+  const legacyGuardian = guardianProj.isLegacyFallback
+    ? {
+        name: guardianProj.guardianName,
+        phone: guardianProj.guardianPhone,
+        isLegacyFallback: true,
+        verified: false,
+      }
+    : null;
 
   return {
     ...toApiStudent(row.student, resolvedClassSection, financeSnapshot, guardianProj),
@@ -441,13 +445,15 @@ async function getStudentDetail(tenantId: string, id: string, branchId?: string 
     overdueAmount,
     alumniTransitionedAt: row.student.alumniTransitionedAt ?? null,
     cohortName: cohortRow[0]?.name ?? null,
-    alumniDirectory: directoryRow[0] ? {
-      currentEmployer: directoryRow[0].currentEmployer ?? null,
-      showName: directoryRow[0].showName ?? false,
-      showCohort: directoryRow[0].showCohort ?? false,
-      showCurrentEmployer: directoryRow[0].showCurrentEmployer ?? false,
-      showContactInfo: directoryRow[0].showContactInfo ?? false,
-    } : null,
+    alumniDirectory: directoryRow[0]
+      ? {
+          currentEmployer: directoryRow[0].currentEmployer ?? null,
+          showName: directoryRow[0].showName ?? false,
+          showCohort: directoryRow[0].showCohort ?? false,
+          showCurrentEmployer: directoryRow[0].showCurrentEmployer ?? false,
+          showContactInfo: directoryRow[0].showContactInfo ?? false,
+        }
+      : null,
     alumniRequests: alumniRequestRows ?? [],
   };
 }
@@ -551,6 +557,22 @@ export async function GET(request: Request) {
       filters.push(eq(user.userStatus, toDbStatus(status)));
     }
 
+    const identifierFilter = searchParams.get('identifierFilter') || searchParams.get('filterType');
+    if (identifierFilter === 'missing_matricule') {
+      filters.push(or(isNull(user.matricule), eq(user.matricule, ''))!);
+    } else if (identifierFilter === 'missing_massar') {
+      filters.push(or(isNull(user.nationalId), eq(user.nationalId, ''))!);
+    } else if (identifierFilter === 'incomplete') {
+      filters.push(
+        or(
+          isNull(user.matricule),
+          eq(user.matricule, ''),
+          isNull(user.nationalId),
+          eq(user.nationalId, ''),
+        )!,
+      );
+    }
+
     const pagination = parsePagination(searchParams);
     const where = and(...filters);
     const today = new Date().toISOString().slice(0, 10);
@@ -620,8 +642,8 @@ export async function GET(request: Request) {
             eq(invoices.status, 'overdue'),
             and(
               sql`${invoices.dueDate} < ${today}`,
-              sql`${invoices.status} NOT IN ('paid', 'cancelled', 'draft')`
-            )
+              sql`${invoices.status} NOT IN ('paid', 'cancelled', 'draft')`,
+            ),
           ),
           institutionalBranchFilter,
         )),
@@ -727,11 +749,11 @@ export async function GET(request: Request) {
       });
     }
 
-    const mappedStudents = rows.map(row => {
+    const mappedStudents = rows.map((row) => {
       const fin = financeByStudent.get(row.student.id);
       const guardianProj = resolveStudentGuardianProjection(
         guardiansByStudent.get(row.student.id),
-        { guardianName: row.student.guardianName, guardianPhone: row.student.guardianPhone }
+        { guardianName: row.student.guardianName, guardianPhone: row.student.guardianPhone },
       );
       return toApiStudent(row.student, row.className ? { className: row.className, sectionName: row.sectionName } : null, fin, guardianProj);
     });
@@ -758,16 +780,16 @@ export async function GET(request: Request) {
       const csvLines = [
         csvHeaders.join(';'),
         ...roleFilteredData.map(st => [
-          `"${st.matricule || ''}"`,
-          `"${(st.fullName || '').replace(/"/g, '""')}"`,
-          `"${st.className || 'Non assigne'}"`,
-          `"${(st.guardianName || '').replace(/"/g, '""')}"`,
-          `"${st.guardianPhone || ''}"`,
-          `"${st.status}"`,
-          `"${st.paymentStatus}"`,
+          st.matricule || '',
+          st.fullName || '',
+          st.className || 'Non assigne',
+          st.guardianName || '',
+          st.guardianPhone || '',
+          st.status,
+          st.paymentStatus,
           st.outstandingAmount || 0,
           st.overdueAmount || 0,
-        ].join(';')),
+        ].map(csvSafeCell).join(';')),
       ];
 
       return new NextResponse(csvLines.join('\n'), {
@@ -800,7 +822,39 @@ export async function POST(request: Request) {
     await requireCapability(context, 'students.create');
     const body = await parseJson(request, studentCreateSchema);
     const id = `STU-${Date.now()}`;
-    const matricule = body.matricule || await reserveMatricule(db, tenantId);
+
+    // Authoritative sequential matricule: use provided or generate via reserveMatricule
+    let matricule = body.matricule?.trim().toUpperCase() || null;
+    if (matricule) {
+      const [dupMatricule] = await db
+        .select({ id: user.id })
+        .from(user)
+        .where(and(eq(user.tenantId, tenantId), eq(user.role, 'student'), eq(user.matricule, matricule)))
+        .limit(1);
+      if (dupMatricule) {
+        throw new ApiError(409, 'MATRICULE_CONFLICT', `Le matricule "${matricule}" est déjà attribué à un autre élève dans votre établissement.`);
+      }
+    } else {
+      matricule = await reserveMatricule(db, tenantId);
+    }
+
+    // Code Massar validation & normalization
+    const rawMassar = (body.codeMassar || body.nationalId)?.trim().toUpperCase() || null;
+    let cleanMassar: string | null = null;
+    if (rawMassar) {
+      if (!/^[A-Z]\d{9}$/i.test(rawMassar)) {
+        throw new ApiError(422, 'FORMAT_INVALID', `Le Code Massar "${rawMassar}" est invalide (format attendu : 1 lettre suivie de 9 chiffres, ex: G134567890).`);
+      }
+      const [dupMassar] = await db
+        .select({ id: user.id })
+        .from(user)
+        .where(and(eq(user.tenantId, tenantId), eq(user.role, 'student'), eq(user.nationalId, rawMassar)))
+        .limit(1);
+      if (dupMassar) {
+        throw new ApiError(409, 'MASSAR_CONFLICT', `Le Code Massar "${rawMassar}" est déjà attribué à un autre élève dans votre établissement.`);
+      }
+      cleanMassar = rawMassar;
+    }
 
     // Resolve Authoritative Branch
     let branchId = context.branchId;
@@ -826,6 +880,7 @@ export async function POST(request: Request) {
         tenantId,
         branchId,
         matricule,
+        nationalId: cleanMassar,
         name: body.fullName,
         email: body.email || `${id.toLowerCase()}@placeholder.local`,
         role: 'student',
@@ -840,6 +895,8 @@ export async function POST(request: Request) {
 
     recordAudit(context, 'create', 'student', inserted!.id, {
       branchId,
+      matricule,
+      nationalId: cleanMassar,
       classSectionId: body.classSectionId || null,
     });
 
@@ -880,26 +937,98 @@ export async function PUT(request: Request) {
     }
 
     const updateData: Record<string, any> = {};
-    if (body.fullName !== undefined) updateData.name = body.fullName;
-    if (body.matricule !== undefined) updateData.matricule = body.matricule;
-    if (body.firstName !== undefined) updateData.firstName = body.firstName;
-    if (body.lastName !== undefined) updateData.lastName = body.lastName;
-    if (body.email !== undefined) updateData.email = body.email;
-    if (body.phone !== undefined) updateData.phone = body.phone;
-    if (body.guardianName !== undefined) updateData.guardianName = body.guardianName;
-    if (body.guardianPhone !== undefined) updateData.guardianPhone = body.guardianPhone;
-    if (body.classSectionId !== undefined) updateData.classSectionId = body.classSectionId;
-    if (body.status !== undefined) updateData.userStatus = toDbStatus(body.status);
-    if (body.paymentStatus !== undefined) updateData.paymentStatus = body.paymentStatus;
-    if (body.dateOfBirth !== undefined) updateData.dateOfBirth = body.dateOfBirth;
-    if (body.gender !== undefined) updateData.gender = body.gender;
-    if (body.address !== undefined) updateData.address = body.address;
-    if (body.nationality !== undefined) updateData.nationality = body.nationality;
-    if (body.motherTongue !== undefined) updateData.motherTongue = body.motherTongue;
-    if (body.city !== undefined) updateData.city = body.city;
-    if (body.bloodGroup !== undefined) updateData.bloodGroup = body.bloodGroup;
-    if (body.nationalId !== undefined) updateData.nationalId = body.nationalId;
-    if (body.academicYearId !== undefined) updateData.academicYearId = body.academicYearId;
+    if (body.fullName !== undefined) {
+      updateData.name = body.fullName;
+    }
+
+    // Validate and check duplicate matricule within tenant
+    if (body.matricule !== undefined) {
+      const normMat = body.matricule?.trim().toUpperCase() || null;
+      if (normMat) {
+        const [dupMat] = await db
+          .select({ id: user.id })
+          .from(user)
+          .where(and(eq(user.tenantId, tenantId), eq(user.role, 'student'), eq(user.matricule, normMat), ne(user.id, body.id)))
+          .limit(1);
+        if (dupMat) {
+          throw new ApiError(409, 'MATRICULE_CONFLICT', `Le matricule "${normMat}" est déjà attribué à un autre élève dans votre établissement.`);
+        }
+      }
+      updateData.matricule = normMat;
+    }
+
+    // Validate and check duplicate Code Massar within tenant
+    const rawUpdateMassar = (body.codeMassar !== undefined || body.nationalId !== undefined)
+      ? ((body.codeMassar || body.nationalId)?.trim().toUpperCase() || null)
+      : undefined;
+    if (rawUpdateMassar !== undefined) {
+      if (rawUpdateMassar) {
+        if (!/^[A-Z]\d{9}$/i.test(rawUpdateMassar)) {
+          throw new ApiError(422, 'FORMAT_INVALID', `Le Code Massar "${rawUpdateMassar}" est invalide (format attendu : 1 lettre suivie de 9 chiffres, ex: G134567890).`);
+        }
+        const [dupMassar] = await db
+          .select({ id: user.id })
+          .from(user)
+          .where(and(eq(user.tenantId, tenantId), eq(user.role, 'student'), eq(user.nationalId, rawUpdateMassar), ne(user.id, body.id)))
+          .limit(1);
+        if (dupMassar) {
+          throw new ApiError(409, 'MASSAR_CONFLICT', `Le Code Massar "${rawUpdateMassar}" est déjà attribué à un autre élève dans votre établissement.`);
+        }
+      }
+      updateData.nationalId = rawUpdateMassar;
+    }
+
+    if (body.firstName !== undefined) {
+      updateData.firstName = body.firstName;
+    }
+    if (body.lastName !== undefined) {
+      updateData.lastName = body.lastName;
+    }
+    if (body.email !== undefined) {
+      updateData.email = body.email;
+    }
+    if (body.phone !== undefined) {
+      updateData.phone = body.phone;
+    }
+    if (body.guardianName !== undefined) {
+      updateData.guardianName = body.guardianName;
+    }
+    if (body.guardianPhone !== undefined) {
+      updateData.guardianPhone = body.guardianPhone;
+    }
+    if (body.classSectionId !== undefined) {
+      updateData.classSectionId = body.classSectionId;
+    }
+    if (body.status !== undefined) {
+      updateData.userStatus = toDbStatus(body.status);
+    }
+    if (body.paymentStatus !== undefined) {
+      updateData.paymentStatus = body.paymentStatus;
+    }
+    if (body.dateOfBirth !== undefined) {
+      updateData.dateOfBirth = body.dateOfBirth;
+    }
+    if (body.gender !== undefined) {
+      updateData.gender = body.gender;
+    }
+    if (body.address !== undefined) {
+      updateData.address = body.address;
+    }
+    if (body.nationality !== undefined) {
+      updateData.nationality = body.nationality;
+    }
+    if (body.motherTongue !== undefined) {
+      updateData.motherTongue = body.motherTongue;
+    }
+    if (body.city !== undefined) {
+      updateData.city = body.city;
+    }
+    if (body.bloodGroup !== undefined) {
+      updateData.bloodGroup = body.bloodGroup;
+    }
+    if (body.academicYearId !== undefined) {
+      updateData.academicYearId = body.academicYearId;
+    }
     updateData.updatedAt = sql`now()`;
 
     const [updated] = await db
@@ -908,7 +1037,10 @@ export async function PUT(request: Request) {
       .where(and(eq(user.id, body.id), eq(user.tenantId, tenantId)))
       .returning();
 
-    recordAudit(context, 'update', 'student', body.id);
+    recordAudit(context, 'update', 'student', body.id, {
+      matricule: updateData.matricule,
+      nationalId: updateData.nationalId,
+    });
     const detail = await getStudentDetail(tenantId, body.id, context.branchId);
 
     return NextResponse.json({
@@ -993,7 +1125,7 @@ export async function DELETE(request: Request) {
     }
 
     // Default safe lifecycle transition: Archive without wiping classSectionId!
-    const archiveResult = await transitionStudentLifecycle({
+    const _archiveResult = await transitionStudentLifecycle({
       tenantId,
       branchId: context.branchId,
       studentId: id,

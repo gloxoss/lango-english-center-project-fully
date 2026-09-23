@@ -1,5 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { recordAudit } from '@/libs/api/audit';
 import { randomUUID } from 'node:crypto';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
@@ -194,6 +195,7 @@ export async function POST(
       };
     });
 
+    recordAudit(ctx, 'update', 'payroll_period_lock', periodId, {});
     return NextResponse.json({ success: true, data: result });
   } catch (err) {
     return apiErrorResponse(err);

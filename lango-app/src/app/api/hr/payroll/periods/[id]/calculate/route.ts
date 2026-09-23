@@ -1,5 +1,6 @@
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
@@ -107,6 +108,7 @@ export async function POST(
         },
       });
 
+    recordAudit(ctx, 'update', 'payroll_period_calculate', periodId, { linesCalculated: lines.length });
     return NextResponse.json({ success: true, data: { periodId, linesCalculated: lines.length } });
   } catch (err) {
     return apiErrorResponse(err);

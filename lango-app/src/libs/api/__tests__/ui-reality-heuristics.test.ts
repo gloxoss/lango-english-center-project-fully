@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   fileFetchesData,
+  findImportedFixtureSeeds,
   findRecordConsts,
   isControlWired,
   readOpeningTag,
@@ -155,6 +156,23 @@ describe('findRecordConsts', () => {
     const src = '  const STUDENTS = [{ a: 1 }, { b: 2 }];\nexport function V() { return STUDENTS; }';
 
     expect(findRecordConsts(src)).toEqual([]);
+  });
+});
+
+describe('findImportedFixtureSeeds', () => {
+  it('finds fixture data imported into client state, including typed state', () => {
+    const src = `
+      'use client';
+      import { KANBAN_COLUMNS as INITIAL_COLUMNS, type Lead } from '../data/lead-pipeline-config';
+      const [columns] = useState<Lead[]>(INITIAL_COLUMNS);
+    `;
+    expect(findImportedFixtureSeeds(src)).toEqual(['INITIAL_COLUMNS']);
+  });
+
+  it('ignores unused data imports and type-only imports', () => {
+    const src = `import { type Lead, LABELS } from '../data/lead-pipeline-config';
+      const label = LABELS[0];`;
+    expect(findImportedFixtureSeeds(src)).toEqual([]);
   });
 });
 

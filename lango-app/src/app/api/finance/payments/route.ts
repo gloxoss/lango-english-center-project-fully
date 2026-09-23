@@ -13,7 +13,7 @@ import { centsToMoney } from '@/libs/finance/money';
 import { validatePaymentMethod } from '@/libs/finance/payment-methods';
 import { moneyInput } from '@/libs/finance/validation';
 import { createPayment } from '@/libs/services/payment-create';
-import { cashierSessions, invoices, payments, user } from '@/models/Schema';
+import { accountingAdapterExceptions, cashierSessions, invoices, payments, user } from '@/models/Schema';
 
 const allocationItemSchema = z.object({
   invoiceId: z.string().uuid(),
@@ -49,6 +49,9 @@ export async function GET(request: Request) {
     const tenantId = requireTenant(context);
     await requireCapability(context, 'finance.manage');
     const pagination = parsePagination(new URL(request.url).searchParams);
+    // Security audit P1-A: branch-scoped staff see only their campus
+    // (money follows the student's current branch — same rule as the dashboard).
+    const branchFilter = context.branchId ? eq(user.branchId, context.branchId) : undefined;
     const rows = await db.select({
       id: payments.id,
       invoiceId: payments.invoiceId,
@@ -60,7 +63,7 @@ export async function GET(request: Request) {
       paymentDate: payments.paymentDate,
       referenceId: payments.referenceId,
       status: payments.status,
-    }).from(payments).innerJoin(user, eq(payments.studentId, user.id)).innerJoin(invoices, eq(payments.invoiceId, invoices.id)).where(eq(payments.tenantId, tenantId)).orderBy(desc(payments.paymentDate)).limit(pagination.limit).offset(pagination.offset);
+    }).from(payments).innerJoin(user, eq(payments.studentId, user.id)).innerJoin(invoices, eq(payments.invoiceId, invoices.id)).where(and(eq(payments.tenantId, tenantId), branchFilter)).orderBy(desc(payments.paymentDate)).limit(pagination.limit).offset(pagination.offset);
     return NextResponse.json({ success: true, data: rows, total: rows.length, page: pagination.page, pageSize: pagination.pageSize });
   } catch (error) {
     return apiErrorResponse(error);
@@ -133,21 +136,47 @@ export async function POST(request: Request) {
       statuses: updatedInvoices.map(i => i.status),
     });
 
-    // GL auto-posting: fail-open — skips silently if CoA not configured or no open fiscal period
-    const glEntry = await tryPostPaymentGLEntry({
-      tenantId,
-      actorId: context.userId,
-      paymentId: payment.id,
-      invoiceNumber: updatedInvoices[0]?.invoiceNumber ?? '',
-      amount: String(centsToMoney(totalPaymentCents)),
-      paymentDate: payment.paymentDate,
-    });
+    let glPosted = false;
+    let postingReason = 'gl_post_skipped';
+    try {
+      glPosted = Boolean(await tryPostPaymentGLEntry({
+        tenantId,
+        actorId: context.userId,
+        paymentId: payment.id,
+        invoiceNumber: updatedInvoices[0]?.invoiceNumber ?? '',
+        amount: String(centsToMoney(totalPaymentCents)),
+        paymentDate: payment.paymentDate,
+      }));
+    } catch (error) {
+      postingReason = 'gl_post_failed';
+      console.error('Payment GL posting failed', { tenantId, paymentId: payment.id, code: (error as { code?: string })?.code ?? 'UNKNOWN' });
+    }
+    if (!glPosted) {
+      try {
+        await db.insert(accountingAdapterExceptions).values({
+          tenantId,
+          sourceModule: 'payment',
+          sourceDocumentType: 'payment',
+          sourceDocumentId: payment.id,
+          version: 1,
+          reason: postingReason,
+          detail: 'Paiement enregistré mais non passé au grand livre. Vérifiez la période et les comptes 11/34.',
+          payload: { amount: centsToMoney(totalPaymentCents), paymentDate: payment.paymentDate },
+          status: 'open',
+          createdBy: context.userId,
+        }).onConflictDoNothing();
+      } catch (error) {
+        console.error('Payment posting exception could not be recorded', { tenantId, paymentId: payment.id, code: (error as { code?: string })?.code ?? 'UNKNOWN' });
+      }
+    }
 
     return NextResponse.json({
       success: true,
       data: { payment, invoices: updatedInvoices, receipt },
-      glPosted: glEntry !== null,
-      message: `Paiement de ${centsToMoney(totalPaymentCents)} MAD enregistré — reçu ${receipt?.receiptNumber ?? ''}.`,
+      glPosted,
+      message: glPosted
+        ? `Paiement de ${centsToMoney(totalPaymentCents)} MAD enregistré — reçu ${receipt?.receiptNumber ?? ''}.`
+        : `Paiement de ${centsToMoney(totalPaymentCents)} MAD enregistré — reçu ${receipt?.receiptNumber ?? ''}. Écriture comptable en attente : vérifiez les exceptions.`,
     });
   } catch (error) {
     return apiErrorResponse(error);

@@ -6,7 +6,7 @@ describe('employee payslip rendering', () => {
     const html = renderPayslipHtml({
       employeeName: '<img src=x onerror=alert(1)>', employeeEmail: 'a&b@example.test', issuedAt: '2026-08-01',
       year: 2026, month: 7, grossSalary: '1000', cnssEmployee: '10', amoEmployee: '20', irTax: '30',
-      netSalary: '940', cnssEmployer: '40', amoEmployer: '50', totalEmployerCost: '1090',
+      netSalary: '940', cnssEmployer: '40', amoEmployer: '50', totalEmployerCost: '1090', snapshot: null,
     });
     expect(html).not.toContain('<img src=x');
     expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');

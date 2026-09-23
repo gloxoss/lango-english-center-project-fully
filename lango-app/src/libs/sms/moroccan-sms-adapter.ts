@@ -1,15 +1,8 @@
 /**
  * Moroccan SMS Adapter & Phone Number Normalizer (+212)
- * Handles phone normalization, template generation, and multi-provider dispatch.
+ * Phone normalization and SMS templates. Sending goes through
+ * features/broadcast/services/sms-delivery (real providers, STOP enforced).
  */
-
-export type SmsDispatchResult = {
-  success: boolean;
-  messageId: string;
-  normalizedPhone: string;
-  provider: 'IAM_SMS' | 'ORANGE_SMS' | 'INWI_SMS' | 'MOCK_GATEWAY';
-  sentAt: string;
-};
 
 /**
  * Normalizes a Moroccan phone number to E.164 (+212) format.
@@ -50,29 +43,4 @@ export function formatAbsenceSms(studentName: string, dateStr: string): string {
  */
 export function formatPaymentReminderSms(studentName: string, amountMad: number, dueDateStr: string): string {
   return `SchoolOS Center: Rappel de paiement de la scolarité pour ${studentName} d'un montant de ${amountMad} MAD à régler avant le ${dueDateStr}.`;
-}
-
-/**
- * Dispatches an SMS to a Moroccan recipient phone number.
- */
-export async function sendMoroccanSms(
-  recipientPhone: string,
-  messageText: string,
-): Promise<SmsDispatchResult> {
-  const normalizedPhone = normalizeMoroccanPhone(recipientPhone);
-
-  if (!normalizedPhone || normalizedPhone.length < 12) {
-    throw new Error(`Numéro de téléphone marocain invalide: ${recipientPhone}`);
-  }
-
-  // Simulated provider dispatch with unique message ID
-  const messageId = `SMS-MA-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
-
-  return {
-    success: true,
-    messageId,
-    normalizedPhone,
-    provider: 'MOCK_GATEWAY',
-    sentAt: new Date().toISOString(),
-  };
 }

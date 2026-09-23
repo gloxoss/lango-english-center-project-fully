@@ -1,4 +1,4 @@
-import { and, desc, eq, lt, ne } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
@@ -9,6 +9,8 @@ import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { invoices, user } from '@/models/Schema';
 import { sendSingleInvoiceReminder } from '@/libs/services/finance-reminders';
+import { overdueInvoiceCondition } from '@/libs/finance/definitions';
+import { casablancaTodayIso } from '@/libs/finance/today';
 
 // GET /api/finance/reminders — real overdue-invoice list (dueDate passed,
 // not fully paid), tenant-scoped.
@@ -18,7 +20,7 @@ export async function GET(request: Request) {
     const tenantId = requireTenant(context);
     await requireCapability(context, 'finance.manage');
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = casablancaTodayIso();
     const rows = await db
       .select({
         id: invoices.id,
@@ -34,8 +36,9 @@ export async function GET(request: Request) {
       .innerJoin(user, eq(invoices.studentId, user.id))
       .where(and(
         eq(invoices.tenantId, tenantId),
-        lt(invoices.dueDate, today),
-        ne(invoices.status, 'paid'),
+        overdueInvoiceCondition(invoices.status, invoices.dueDate, today),
+        sql`${invoices.netAmount} > ${invoices.paidAmount}`,
+        context.branchId ? eq(user.branchId, context.branchId) : undefined,
       ))
       .orderBy(desc(invoices.dueDate));
 
@@ -59,11 +62,11 @@ export async function POST(request: Request) {
     await requireCapability(context, 'finance.manage');
     const body = await parseJson(request, sendReminderSchema);
 
-    const reminder = await sendSingleInvoiceReminder(tenantId, body.invoiceId, context.userId);
+    const reminder = await sendSingleInvoiceReminder(tenantId, body.invoiceId, context.userId, context.branchId);
 
     recordAudit(context, 'create', 'payment_reminder', body.invoiceId, { campaignId: reminder.id });
 
-    return NextResponse.json({ success: true, data: reminder, message: 'Rappel envoyé (SMS simulé).' });
+    return NextResponse.json({ success: true, data: reminder, message: reminder.status === 'sent' || reminder.status === 'delivered' ? 'Rappel transmis.' : `Rappel enregistré : ${reminder.status}.` });
   } catch (error) {
     return apiErrorResponse(error);
   }

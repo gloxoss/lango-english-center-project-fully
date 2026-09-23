@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireAddon } from '@/libs/api/entitlements';
@@ -65,6 +66,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       expiryDate: typeof expiryDate === 'string' && expiryDate ? expiryDate : null,
     });
 
+    recordAudit(ctx, 'create', 'employee_document', data?.id ?? id, { documentType: data?.documentType ?? null });
     return NextResponse.json({ success: true, data }, { status: 201 });
   } catch (error) {
     return apiErrorResponse(error);

@@ -8,7 +8,7 @@ import { chartOfAccounts } from '@/models/Schema';
 
 export async function GET(req: NextRequest) {
   try {
-    const ctx = await requireRequestContext(req);
+    const ctx = await requireRequestContext(req, ['school_admin', 'accountant']);
     await requireCapability(ctx, 'finance.read');
 
     const accounts = await db
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const ctx = await requireRequestContext(req);
+    const ctx = await requireRequestContext(req, ['school_admin', 'accountant']);
     await requireCapability(ctx, 'finance.manage');
 
     const body = await req.json();

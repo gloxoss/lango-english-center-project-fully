@@ -58,7 +58,7 @@ export default function AlumniProfilePage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-slate-500 uppercase">Email</label>
-            <Input value={editFields.email} onChange={e => setEditFields({ ...editFields, email: e.target.value })} className="h-9 rounded-xl text-xs" />
+            <Input value={editFields.email} readOnly title="Contactez l'établissement pour changer l'email de connexion" className="h-9 rounded-xl text-xs bg-slate-50" />
           </div>
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-slate-500 uppercase">Téléphone</label>

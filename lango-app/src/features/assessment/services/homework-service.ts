@@ -58,6 +58,7 @@ export class HomeworkService {
     classOfferingIds?: string[];
     sectionIds?: string[];
     studentIds?: string[];
+    attachments?: Array<{ name: string; url: string; size?: number; type?: string }>;
     createdBy: string;
   }) {
     const {
@@ -77,6 +78,7 @@ export class HomeworkService {
       classOfferingIds = [],
       sectionIds = [],
       studentIds = [],
+      attachments = [],
       createdBy,
     } = params;
 
@@ -110,6 +112,7 @@ export class HomeworkService {
       maxAttachments,
       lateSubmissionPolicy,
       closeAt,
+      attachments,
     });
 
     // 3. Create Audience Scope Rows
@@ -157,6 +160,7 @@ export class HomeworkService {
         allowAttachments: homeworkDetails.allowAttachments,
         closeAt: homeworkDetails.closeAt,
         latePolicy: homeworkDetails.lateSubmissionPolicy,
+        attachments: homeworkDetails.attachments,
       })
       .from(assessmentDefinitions)
       .innerJoin(homeworkDetails, eq(assessmentDefinitions.id, homeworkDetails.assessmentDefinitionId))
@@ -228,6 +232,7 @@ export class HomeworkService {
     return visibleHomeworks.map((hw) => ({
       ...hw,
       submission: attemptsMap.get(hw.id) || null,
+      attachments: (hw.attachments as Array<{ name: string; url: string; size?: number; type?: string }>) || [],
       linkedResources: linksByHomework.get(hw.id) ?? [],
     }));
   }
@@ -256,6 +261,7 @@ export class HomeworkService {
         instructions: homeworkDetails.instructions,
         allowAttachments: homeworkDetails.allowAttachments,
         closeAt: homeworkDetails.closeAt,
+        attachments: homeworkDetails.attachments,
       })
       .from(assessmentDefinitions)
       .innerJoin(homeworkDetails, eq(assessmentDefinitions.id, homeworkDetails.assessmentDefinitionId))
@@ -296,6 +302,7 @@ export class HomeworkService {
       ...row,
       subjectName: row.subjectName ?? null,
       className: row.className ?? null,
+      attachments: (row.attachments as Array<{ name: string; url: string; size?: number; type?: string }>) || [],
       submittedCount: counts.get(row.id)?.submitted ?? 0,
       gradedCount: counts.get(row.id)?.graded ?? 0,
     }));
@@ -462,5 +469,135 @@ export class HomeworkService {
     });
 
     return updatedAttempt;
+  }
+
+  /**
+   * Get single homework with details and attachments.
+   */
+  static async getHomeworkById(tenantId: string, homeworkId: string) {
+    const [row] = await db
+      .select({
+        id: assessmentDefinitions.id,
+        title: assessmentDefinitions.title,
+        description: assessmentDefinitions.description,
+        maximumScore: assessmentDefinitions.maximumScore,
+        coefficient: assessmentDefinitions.coefficient,
+        status: assessmentDefinitions.status,
+        createdAt: assessmentDefinitions.createdAt,
+        createdBy: assessmentDefinitions.createdBy,
+        subjectName: subjects.name,
+        className: classes.name,
+        instructions: homeworkDetails.instructions,
+        allowAttachments: homeworkDetails.allowAttachments,
+        maxAttachments: homeworkDetails.maxAttachments,
+        lateSubmissionPolicy: homeworkDetails.lateSubmissionPolicy,
+        closeAt: homeworkDetails.closeAt,
+        attachments: homeworkDetails.attachments,
+      })
+      .from(assessmentDefinitions)
+      .innerJoin(homeworkDetails, eq(assessmentDefinitions.id, homeworkDetails.assessmentDefinitionId))
+      .leftJoin(classSubjects, eq(assessmentDefinitions.classSubjectId, classSubjects.id))
+      .leftJoin(subjects, eq(classSubjects.subjectId, subjects.id))
+      .leftJoin(classes, eq(classSubjects.classId, classes.id))
+      .where(
+        and(
+          eq(assessmentDefinitions.id, homeworkId),
+          eq(assessmentDefinitions.tenantId, tenantId),
+        ),
+      )
+      .limit(1);
+
+    if (!row) return null;
+    return {
+      ...row,
+      attachments: (row.attachments as Array<{ name: string; url: string; size?: number; type?: string }>) || [],
+    };
+  }
+
+  /**
+   * Update an existing homework and its details/attachments.
+   */
+  static async updateHomework(params: {
+    tenantId: string;
+    homeworkId: string;
+    title?: string;
+    description?: string;
+    instructions?: string;
+    maximumScore?: number;
+    closeAt?: string | null;
+    allowAttachments?: boolean;
+    attachments?: Array<{ name: string; url: string; size?: number; type?: string }>;
+  }) {
+    const {
+      tenantId,
+      homeworkId,
+      title,
+      description,
+      instructions,
+      maximumScore,
+      closeAt,
+      allowAttachments,
+      attachments,
+    } = params;
+
+    const [existing] = await db
+      .select({ id: assessmentDefinitions.id })
+      .from(assessmentDefinitions)
+      .where(and(eq(assessmentDefinitions.id, homeworkId), eq(assessmentDefinitions.tenantId, tenantId)))
+      .limit(1);
+
+    if (!existing) {
+      throw new Error('Devoir introuvable.');
+    }
+
+    if (title !== undefined || description !== undefined || maximumScore !== undefined) {
+      await db
+        .update(assessmentDefinitions)
+        .set({
+          ...(title !== undefined ? { title } : {}),
+          ...(description !== undefined ? { description } : {}),
+          ...(maximumScore !== undefined ? { maximumScore: String(maximumScore) } : {}),
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(assessmentDefinitions.id, homeworkId));
+    }
+
+    if (instructions !== undefined || closeAt !== undefined || allowAttachments !== undefined || attachments !== undefined) {
+      await db
+        .update(homeworkDetails)
+        .set({
+          ...(instructions !== undefined ? { instructions } : {}),
+          ...(closeAt !== undefined ? { closeAt: closeAt || null } : {}),
+          ...(allowAttachments !== undefined ? { allowAttachments } : {}),
+          ...(attachments !== undefined ? { attachments } : {}),
+        })
+        .where(eq(homeworkDetails.assessmentDefinitionId, homeworkId));
+    }
+
+    return { id: homeworkId, success: true };
+  }
+
+  /**
+   * Delete a homework definition.
+   * Cascade deletes homework_details, assessment_audiences, assessment_outcomes,
+   * homework_attempts, and homework_attempt_files automatically via foreign keys.
+   */
+  static async deleteHomework(tenantId: string, homeworkId: string) {
+    const [existing] = await db
+      .select({ id: assessmentDefinitions.id })
+      .from(assessmentDefinitions)
+      .where(and(eq(assessmentDefinitions.id, homeworkId), eq(assessmentDefinitions.tenantId, tenantId)))
+      .limit(1);
+
+    if (!existing) {
+      throw new Error('Devoir introuvable.');
+    }
+
+    const [deleted] = await db
+      .delete(assessmentDefinitions)
+      .where(and(eq(assessmentDefinitions.id, homeworkId), eq(assessmentDefinitions.tenantId, tenantId)))
+      .returning();
+
+    return deleted;
   }
 }

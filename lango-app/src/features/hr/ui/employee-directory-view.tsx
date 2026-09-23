@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  AlertCircle, Loader2, Lock, Plus, Search, UserPlus, UserX, Users, UserRoundCheck,
+  AlertCircle, ChevronRight, Loader2, Lock, Plus, RotateCcw, Search, UserPlus, UserRoundCheck, UserX, Users, X,
 } from 'lucide-react';
 import {
   Avatar, AvatarFallback, AvatarImage,
@@ -52,6 +52,14 @@ export function EmployeeDirectoryView() {
   const [employmentStatus, setEmploymentStatus] = useState<string>('all');
   const [loginStatus, setLoginStatus] = useState<string>('all');
 
+  const isFiltered = search.trim().length > 0 || employmentStatus !== 'all' || loginStatus !== 'all';
+
+  const clearFilters = () => {
+    setSearch('');
+    setEmploymentStatus('all');
+    setLoginStatus('all');
+  };
+
   const getStatusLabel = (st: EmploymentStatus) => {
     switch (st) {
       case 'active': return t('statusActive');
@@ -92,7 +100,7 @@ export function EmployeeDirectoryView() {
     setLoading(false);
   }, [search, employmentStatus, loginStatus, t]);
 
-  useEffect(() => { load().catch(() => {}); }, [load]);
+  useEffect(() => { load().catch(() => setError(t('loadError'))); }, [load]);
 
   if (addonDisabled) {
     return (
@@ -128,119 +136,198 @@ export function EmployeeDirectoryView() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
+      {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#16212B]">{t('directoryTitle')}</h1>
-          <p className="text-sm text-slate-500">{t('directorySubtitle')}</p>
+          <h1 className="text-2xl font-bold text-[#16212B] tracking-tight">{t('directoryTitle')}</h1>
+          <p className="text-sm text-slate-500 mt-0.5">{t('directorySubtitle')}</p>
         </div>
-        <Button onClick={() => router.push(`/${locale}/dashboard/hr/employees/new`)} className="cursor-pointer">
+        <Button
+          onClick={() => router.push(`/${locale}/dashboard/hr/employees/new`)}
+          className="cursor-pointer bg-[#2487B8] hover:bg-[#1C6D96] text-white shadow-xs active:scale-[0.98] transition-all rounded-xl font-medium"
+        >
           <Plus className="me-2 h-4 w-4" /> {t('btnNewEmployee')}
         </Button>
       </div>
 
+      {/* KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {kpis.map(kpi => (
-          <Card key={kpi.label} className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-            <div className="flex items-center gap-3">
+          <Card key={kpi.label} className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs hover:border-slate-300 transition-all">
+            <div className="flex items-center gap-3.5">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#D1F5E8] text-[#16212B]">
                 <kpi.icon className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-slate-500">{kpi.label}</p>
-                <p className="text-2xl font-bold text-[#16212B]">{kpi.value}</p>
+                <p className="text-xs font-medium text-slate-500">{kpi.label}</p>
+                <p className="text-2xl font-bold text-[#16212B] tracking-tight mt-0.5">{kpi.value}</p>
               </div>
             </div>
           </Card>
         ))}
       </div>
 
-      <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
-        <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 p-4">
-          <div className="relative w-full max-w-sm">
-            <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <Input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder={t('searchPlaceholder')}
-              className="ps-9"
-            />
+      {/* Filter bar and Table Container */}
+      <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-4 bg-white">
+          <div className="flex flex-wrap items-center gap-3 flex-1 min-w-[280px]">
+            <div className="relative w-full max-w-sm">
+              <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <Input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder={t('searchPlaceholder')}
+                className="ps-9 pe-8 rounded-xl border-slate-200 focus-visible:ring-1 focus-visible:ring-[#2487B8]"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="absolute end-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100"
+                  title="Effacer"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            <Select value={employmentStatus} onValueChange={setEmploymentStatus}>
+              <SelectTrigger className="w-44 rounded-xl border-slate-200"><SelectValue placeholder={t('colStatus')} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('filterAllStatuses')}</SelectItem>
+                {allStatuses.map(s => (
+                  <SelectItem key={s} value={s}>{getStatusLabel(s)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={loginStatus} onValueChange={setLoginStatus}>
+              <SelectTrigger className="w-44 rounded-xl border-slate-200"><SelectValue placeholder={t('colAccount')} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('filterAllAccounts')}</SelectItem>
+                <SelectItem value="linked">{t('filterWithAccount')}</SelectItem>
+                <SelectItem value="unlinked">{t('filterWithoutAccount')}</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {isFiltered && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="text-xs text-slate-500 hover:text-slate-800 gap-1.5 h-9 rounded-xl"
+              >
+                <RotateCcw className="h-3.5 w-3.5" /> Réinitialiser
+              </Button>
+            )}
           </div>
-          <Select value={employmentStatus} onValueChange={setEmploymentStatus}>
-            <SelectTrigger className="w-44"><SelectValue placeholder={t('colStatus')} /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('filterAllStatuses')}</SelectItem>
-              {allStatuses.map(s => (
-                <SelectItem key={s} value={s}>{getStatusLabel(s)}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={loginStatus} onValueChange={setLoginStatus}>
-            <SelectTrigger className="w-44"><SelectValue placeholder={t('colAccount')} /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('filterAllAccounts')}</SelectItem>
-              <SelectItem value="linked">{t('filterWithAccount')}</SelectItem>
-              <SelectItem value="unlinked">{t('filterWithoutAccount')}</SelectItem>
-            </SelectContent>
-          </Select>
+
           {error && (
-            <p className="flex items-center gap-1 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error}</p>
+            <p className="flex items-center gap-1.5 text-xs text-red-600 bg-red-50 px-3 py-1.5 rounded-lg border border-red-100">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              {error}
+            </p>
           )}
         </div>
 
         <div className="overflow-x-auto">
           {loading ? (
-            <div className="flex items-center justify-center gap-2 p-10 text-sm text-slate-500">
-              <Loader2 className="h-4 w-4 animate-spin" /> {tCommon('loading')}
+            <div className="flex flex-col items-center justify-center gap-2 p-16 text-sm text-slate-500">
+              <Loader2 className="h-6 w-6 animate-spin text-[#2487B8]" />
+              <span className="text-xs font-medium text-slate-400">{tCommon('loading')}</span>
             </div>
           ) : rows.length === 0 ? (
-            <div className="p-10 text-center text-sm text-slate-500">{t('noEmployeesFound')}</div>
+            <div className="flex flex-col items-center justify-center p-16 text-center space-y-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                {isFiltered ? <Search className="h-6 w-6" /> : <Users className="h-6 w-6" />}
+              </div>
+              <div>
+                <p className="font-semibold text-slate-700 text-base">
+                  {isFiltered ? 'Aucun employé correspondant' : t('noEmployeesFound')}
+                </p>
+                <p className="text-xs text-slate-400 max-w-sm mt-1">
+                  {isFiltered
+                    ? 'Aucun profil ne correspond aux critères de recherche actuels. Essayez de réinitialiser vos filtres.'
+                    : 'Le registre du personnel est actuellement vide. Vous pouvez inscrire un premier collaborateur dès maintenant.'}
+                </p>
+              </div>
+              {isFiltered ? (
+                <Button variant="outline" size="sm" onClick={clearFilters} className="rounded-xl text-xs mt-1">
+                  <RotateCcw className="me-1.5 h-3.5 w-3.5" /> Réinitialiser les filtres
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={() => router.push(`/${locale}/dashboard/hr/employees/new`)}
+                  className="rounded-xl text-xs mt-1 bg-[#2487B8] hover:bg-[#1C6D96] text-white"
+                >
+                  <Plus className="me-1.5 h-3.5 w-3.5" /> {t('btnNewEmployee')}
+                </Button>
+              )}
+            </div>
           ) : (
             <table className="w-full text-start text-sm">
               <thead>
-                <tr className="border-b border-slate-100 text-start text-xs uppercase tracking-wide text-slate-400">
-                  <th className="px-4 py-3 text-start font-medium">{t('colEmployee')}</th>
-                  <th className="px-4 py-3 text-start font-medium">{t('colMatricule')}</th>
-                  <th className="px-4 py-3 text-start font-medium">{t('colDepartment')}</th>
-                  <th className="px-4 py-3 text-start font-medium">{t('colDesignation')}</th>
-                  <th className="px-4 py-3 text-start font-medium">{t('colType')}</th>
-                  <th className="px-4 py-3 text-start font-medium">{t('colStatus')}</th>
-                  <th className="px-4 py-3 text-start font-medium">{t('colAccount')}</th>
+                <tr className="border-b border-slate-100 bg-slate-50/50 text-start text-xs uppercase tracking-wider text-slate-400 font-semibold">
+                  <th className="px-4 py-3 text-start">{t('colEmployee')}</th>
+                  <th className="px-4 py-3 text-start">{t('colMatricule')}</th>
+                  <th className="px-4 py-3 text-start">{t('colDepartment')}</th>
+                  <th className="px-4 py-3 text-start">{t('colDesignation')}</th>
+                  <th className="px-4 py-3 text-start">{t('colType')}</th>
+                  <th className="px-4 py-3 text-start">{t('colStatus')}</th>
+                  <th className="px-4 py-3 text-start">{t('colAccount')}</th>
+                  <th className="w-10 px-2 py-3"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {rows.map(row => (
                   <tr
                     key={row.id}
-                    className="cursor-pointer transition-colors hover:bg-slate-50"
+                    className="group cursor-pointer transition-colors hover:bg-slate-50/80"
                     onClick={() => router.push(`/${locale}/dashboard/hr/employees/${row.id}`)}
                   >
                     <td className="px-4 py-3 text-start">
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9 shrink-0">
+                        <Avatar className="h-9 w-9 shrink-0 border border-slate-100">
                           <AvatarImage src={row.photoUrl ?? undefined} alt={row.displayName} />
-                          <AvatarFallback className="bg-[#D1F5E8] text-xs font-semibold text-[#16212B]">{initials(row.displayName)}</AvatarFallback>
+                          <AvatarFallback className="bg-[#D1F5E8] text-xs font-bold text-[#16212B]">{initials(row.displayName)}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-semibold text-[#16212B]">{row.displayName}</p>
-                          <p className="text-xs text-slate-500">{row.email || '—'}</p>
+                          <p className="font-semibold text-[#16212B] group-hover:text-[#2487B8] transition-colors">{row.displayName}</p>
+                          <p className="text-xs text-slate-400">{row.email || '—'}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-start text-slate-600">{row.employeeId || '—'}</td>
-                    <td className="px-4 py-3 text-start text-slate-600">{row.departmentName || '—'}</td>
-                    <td className="px-4 py-3 text-start text-slate-600">{row.designationTitle || '—'}</td>
-                    <td className="px-4 py-3 text-start text-slate-600">{row.employmentType ? getTypeLabel(row.employmentType) : '—'}</td>
                     <td className="px-4 py-3 text-start">
-                      <Badge className={EMPLOYMENT_STATUS_STYLES[row.employmentStatus]}>
+                      {row.employeeId ? (
+                        <span className="font-mono text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200/60 font-medium">
+                          {row.employeeId}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-xs">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-start text-slate-600 font-medium text-xs">{row.departmentName || '—'}</td>
+                    <td className="px-4 py-3 text-start text-slate-600 text-xs">{row.designationTitle || '—'}</td>
+                    <td className="px-4 py-3 text-start text-slate-600 text-xs font-medium">{row.employmentType ? getTypeLabel(row.employmentType) : '—'}</td>
+                    <td className="px-4 py-3 text-start">
+                      <Badge className={`${EMPLOYMENT_STATUS_STYLES[row.employmentStatus]} rounded-md text-[11px] font-semibold px-2 py-0.5`}>
                         {getStatusLabel(row.employmentStatus)}
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-start">
                       {row.userId ? (
-                        <Badge className="bg-slate-100 text-slate-600">{row.accountRole || t('colAccount')}</Badge>
+                        <Badge className="bg-slate-100 text-slate-700 border border-slate-200/70 font-medium text-[11px] rounded-md">
+                          {row.accountRole || t('colAccount')}
+                        </Badge>
                       ) : (
-                        <Badge className="bg-amber-50 text-amber-700">{t('kpiUnlinked')}</Badge>
+                        <Badge className="bg-amber-50 text-amber-700 border border-amber-200/60 font-medium text-[11px] rounded-md">
+                          {t('kpiUnlinked')}
+                        </Badge>
                       )}
+                    </td>
+                    <td className="px-2 py-3 text-end">
+                      <ChevronRight className="h-4 w-4 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity inline-block me-2" />
                     </td>
                   </tr>
                 ))}
@@ -248,8 +335,9 @@ export function EmployeeDirectoryView() {
             </table>
           )}
         </div>
-        <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-400">
-          {t('clickRowHint', { count: rows.length })}
+        <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-400 bg-slate-50/30 flex items-center justify-between">
+          <span>{t('clickRowHint', { count: rows.length })}</span>
+          <span className="font-mono text-[11px] text-slate-400">SchoolOS HR v2.6</span>
         </div>
       </Card>
     </div>

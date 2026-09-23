@@ -7,7 +7,7 @@ import { getReconciliationDetail } from '@/features/accounting/services/reconcil
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const ctx = await requireRequestContext(req);
+    const ctx = await requireRequestContext(req, ['school_admin', 'accountant']);
     const tenantId = requireTenant(ctx);
     await requireCapability(ctx, 'finance.read');
     const { id } = await params;

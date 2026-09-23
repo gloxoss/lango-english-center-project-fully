@@ -7,7 +7,7 @@ import { classScheduleSlots } from '@/models/Schema';
 
 export async function GET(request: Request) {
   try {
-    const context = await requireRequestContext(request);
+    const context = await requireRequestContext(request, ['school_admin', 'teacher']);
     const tenantId = requireTenant(context);
 
     const roomStats = await db

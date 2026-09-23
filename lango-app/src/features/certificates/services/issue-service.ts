@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { ApiError } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
-import { user } from '@/models/Schema';
+import { user, schoolSettings } from '@/models/Schema';
 import {
   certificateDefinitions,
   certificateDefinitionVersions,
@@ -149,11 +149,23 @@ export async function issueCertificate(params: IssueCertificateParams): Promise<
     throw new ApiError(500, 'ISSUE_FAILED', 'Certificat introuvable après émission.');
   }
 
+  const [settings] = await db.select().from(schoolSettings).where(eq(schoolSettings.tenantId, tenantId)).limit(1);
+
   const renderData: Record<string, string> = {
     ...data,
     serial: issuedCertificate.serialNumber,
     issueDate: issuedCertificate.issuedAt,
     qrCode: `${VERIFY_BASE_URL}/fr/verify/certificate/${result.token}`,
+    establishmentName: settings?.establishmentName ?? '',
+    directorName: settings?.directorName ?? '',
+    menAuthorizationNumber: settings?.menAuthorizationNumber ?? '',
+    regionalAcademy: settings?.regionalAcademy ?? '',
+    provincialDirection: settings?.provincialDirection ?? '',
+    officialStampUrl: settings?.officialStampUrl ?? '',
+    directorSignatureUrl: settings?.directorSignatureUrl ?? '',
+    legalFooter: settings?.menAuthorizationNumber
+      ? `Conforme à la loi 06-00 portant statut de l'enseignement privé au Maroc - Autorisation MEN N° ${settings.menAuthorizationNumber}`
+      : `Conforme à la législation scolaire marocaine en vigueur`,
   };
 
   await db.insert(certificateEvents).values({

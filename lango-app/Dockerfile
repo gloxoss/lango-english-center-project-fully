@@ -50,10 +50,11 @@ RUN mkdir -p public
 # Next evaluates route modules while collecting build metadata. These sentinels
 # exist only for that process; the runner requires real runtime environment values.
 # CI verifies that neither sentinel is embedded in the standalone output.
-# NEXT_IGNORE_TYPES=1 skips the type-check phase (see next.config.ts): the same
-# production build passes type-checking on the host, and the tsc worker's heap
-# is the peak that can OOM Docker Desktop's VM. Host/CI builds still typecheck.
-ENV NEXT_IGNORE_TYPES=1
+# Type-checking runs INSIDE the image build: NEXT_IGNORE_TYPES is no longer set
+# here (audit pass 2, item 5 — type errors must block deploy). The 4 GiB heap
+# above is sized so the tsc worker does not OOM BuildKit. If a future build
+# OOMs in the type-check phase, raise --max-old-space-size rather than
+# re-adding NEXT_IGNORE_TYPES=1.
 RUN DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build \
     BETTER_AUTH_SECRET=build-only-sentinel-secret-never-use-at-runtime \
     BETTER_AUTH_URL=http://build.invalid \

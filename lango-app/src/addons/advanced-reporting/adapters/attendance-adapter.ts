@@ -77,8 +77,8 @@ export class AttendanceAdapter {
       const total = Number(o.totalSessions || 0);
       const present = Number(o.presentSessions || 0);
       const unexcused = Number(o.unexcusedAbsences || 0);
-      const rate = total > 0 ? Math.round((present / total) * 100) : 100;
-      let alert = 'Normal';
+      const rate = total > 0 ? Math.round((present / total) * 100) : null;
+      let alert = total > 0 ? 'Normal' : 'À configurer';
       if (unexcused >= 5) alert = 'Critique';
       else if (unexcused >= 3) alert = 'Élevé';
 

@@ -21,7 +21,7 @@ export const publicSignupSchema = z
       .optional(),
     adminName: z.string().trim().min(2, "Nom de l'administrateur requis").max(255),
     adminEmail: z.string().trim().email('Adresse email invalide').max(255),
-    adminPassword: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
+    adminPassword: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères').max(128),
   })
   .strict();
 

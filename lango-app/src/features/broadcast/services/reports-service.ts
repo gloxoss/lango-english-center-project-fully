@@ -11,6 +11,7 @@ import {
   communicationDeliveries,
 } from '@/models/Schema';
 import { ApiError } from '@/libs/api/errors';
+import { csvSafeCell } from '@/libs/csv-safe';
 
 export type CampaignReport = {
   campaignId: string;
@@ -148,11 +149,7 @@ export async function exportCampaignRows(tenantId: string, campaignId: string): 
 
 export function exportToCsv(rows: ExportRow[]): string {
   const header = ['name', 'phone', 'email', 'status', 'skip_reason', 'provider_status', 'sent_at'];
-  const esc = (v: string | null) => {
-    if (v === null || v === undefined) return '';
-    const s = String(v);
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  };
+  const esc = (v: string | null) => csvSafeCell(v);
   const lines = [header.join(',')];
   for (const r of rows) {
     lines.push([r.name, r.phone, r.email, r.status, r.skipReason, r.providerStatus, r.sentAt].map(esc).join(','));

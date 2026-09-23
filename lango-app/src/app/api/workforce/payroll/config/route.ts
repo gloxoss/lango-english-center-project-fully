@@ -1,5 +1,6 @@
 import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { recordAudit } from '@/libs/api/audit';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { requireWorkforceAddon } from '@/libs/api/entitlements';
@@ -78,6 +79,7 @@ export async function POST(request: Request) {
       if (!employee) throw new ApiError(422, 'PAYROLL_EMPLOYEE_NOT_FOUND', 'Employé introuvable.');
       [data] = await db.insert(payrollAdjustments).values({ tenantId, employeeId: body.employeeId, userId: body.userId, adjustmentType: body.adjustmentType, amount: body.amount, reason: body.reason, effectivePeriodYear: body.year, effectivePeriodMonth: body.month, status: 'submitted', requesterId: ctx.userId }).returning();
     }
+    recordAudit(ctx, 'create', 'payroll_config', 'config', {});
     return NextResponse.json({ success: true, data }, { status: 201 });
   } catch (error) { return apiErrorResponse(error); }
 }

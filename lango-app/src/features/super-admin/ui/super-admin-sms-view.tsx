@@ -45,7 +45,7 @@ interface SmsStats {
   sent: number;
   queued: number;
   failed: number;
-  successRate: number;
+  successRate: number | null;
 }
 
 interface SchoolOption {
@@ -60,7 +60,7 @@ export function SuperAdminSmsView() {
   const locale = useLocale();
 
   const [logs, setLogs] = useState<SmsLog[]>([]);
-  const [stats, setStats] = useState<SmsStats>({ total: 0, sent: 0, queued: 0, failed: 0, successRate: 100 });
+  const [stats, setStats] = useState<SmsStats>({ total: 0, sent: 0, queued: 0, failed: 0, successRate: null });
   const [schools, setSchools] = useState<SchoolOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSchool, setSelectedSchool] = useState('all');
@@ -87,7 +87,7 @@ export function SuperAdminSmsView() {
       const json = await res.json();
       if (json.success) {
         setLogs(json.data.logs || []);
-        setStats(json.data.stats || { total: 0, sent: 0, queued: 0, failed: 0, successRate: 100 });
+        setStats(json.data.stats || { total: 0, sent: 0, queued: 0, failed: 0, successRate: null });
         if (json.data.schools) setSchools(json.data.schools);
       }
     } catch (e) {
@@ -210,7 +210,7 @@ export function SuperAdminSmsView() {
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-extrabold text-[#17A673]">{stats.successRate}%</div>
+          <div className="text-2xl font-extrabold text-[#17A673]">{stats.successRate === null ? '—' : `${stats.successRate}%`}</div>
           <p className="text-[11px] text-slate-400">{t('deliveredCountDesc', { count: stats.sent.toLocaleString(locale) })}</p>
         </Card>
 

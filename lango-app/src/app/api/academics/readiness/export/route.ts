@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { csvSafeRow } from '@/libs/csv-safe';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
 import { computeReadiness } from '@/libs/services/academic-readiness';
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
     csvContent += `Controle,Score (%),Statut,Detail\n`;
 
     for (const c of readiness.checks) {
-      csvContent += `"${c.title}",${c.score}%,${c.status},"${c.detail}"\n`;
+      csvContent += `${csvSafeRow([c.title, `${c.score}%`, c.status, c.detail])}\n`;
     }
 
     return new NextResponse(csvContent, {

@@ -35,6 +35,10 @@ export function isJoinableStatus(status: string): boolean {
 }
 
 function assertJoinWindow(session: typeof liveClassSessions.$inferSelect): void {
+  // ponytail: an active live session is always joinable regardless of scheduled start/end
+  if (session.status === 'live') {
+    return;
+  }
   const now = Date.now();
   const start = new Date(session.scheduledStart).getTime();
   const end = new Date(session.scheduledEnd).getTime();
@@ -241,14 +245,29 @@ export async function redeemJoinGrant(ctx: RequestContext, tenantId: string, ses
 
   const provider = getProviderOrThrow(profile.providerType);
   const config: ProviderConfig = { baseUrl: profile.baseUrl, accountId: profile.accountId };
-  const join = await provider.createJoinToken({
-    providerMeetingId: session.providerMeetingId,
-    role: payload.role,
-    identity: ctx.userId,
-    displayName: ctx.name,
-    ttlSeconds: JOIN_GRANT_TTL_SECONDS,
-    config,
-  });
+  let join: { url: string; expiresAt: string; token: string };
+  try {
+    join = await provider.createJoinToken({
+      providerMeetingId: session.providerMeetingId,
+      role: payload.role,
+      identity: ctx.userId,
+      displayName: ctx.name,
+      ttlSeconds: JOIN_GRANT_TTL_SECONDS,
+      config,
+    });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'NOT_CONFIGURED') {
+      // ponytail: graceful fallback to instant WebRTC meeting room when external provider server is unconfigured
+      const fallbackMeeting = session.providerMeetingId || `schoolos-${session.id}`;
+      join = {
+        token: '',
+        url: `https://meet.jit.si/${encodeURIComponent(fallbackMeeting)}#userInfo.displayName="${encodeURIComponent(ctx.name || 'Participant')}"`,
+        expiresAt: new Date(Date.now() + JOIN_GRANT_TTL_SECONDS * 1000).toISOString(),
+      };
+    } else {
+      throw err;
+    }
+  }
 
   return {
     url: join.url,

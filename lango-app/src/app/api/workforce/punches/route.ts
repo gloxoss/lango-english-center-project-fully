@@ -1,7 +1,7 @@
 import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import crypto from 'crypto';
+import { computeHmacHash } from '@/libs/api/badge-crypto';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
@@ -9,12 +9,6 @@ import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { identityBadgeCredentials, user, workforcePunchEvents } from '@/models/Schema';
-
-const HMAC_SECRET = process.env.BETTER_AUTH_SECRET || 'schoolos-qr-secret-key-sentinel';
-
-function computeHmacHash(rawToken: string): string {
-  return crypto.createHmac('sha256', HMAC_SECRET).update(rawToken).digest('hex');
-}
 
 const punchSchema = z.object({
   rawToken: z.string().trim().min(1),

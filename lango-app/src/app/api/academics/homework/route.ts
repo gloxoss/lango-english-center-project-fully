@@ -23,11 +23,19 @@ const createHomeworkSchema = z.object({
   classOfferingIds: z.array(z.string().uuid()).optional(),
   sectionIds: z.array(z.string().uuid()).optional(),
   studentIds: z.array(z.string()).optional(),
+  attachments: z.array(
+    z.object({
+      name: z.string(),
+      url: z.string(),
+      size: z.number().optional(),
+      type: z.string().optional(),
+    })
+  ).optional(),
 }).strict();
 
 export async function GET(req: NextRequest) {
   try {
-    const context = await requireRequestContext(req);
+    const context = await requireRequestContext(req, ['school_admin', 'teacher']);
     const tenantId = requireTenant(context);
 
     // Students only ever see their own audience-matched assignments.

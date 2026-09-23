@@ -70,6 +70,7 @@ export function HeaderCampusSwitcher() {
       localStorage.removeItem('schoolos_active_branch_id');
     }
     setSelectedBranchId(id);
+    window.dispatchEvent(new CustomEvent('schoolos:branch-changed', { detail: { branchId: id } }));
     window.location.reload();
   };
 

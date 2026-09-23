@@ -14,6 +14,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const [{ id }, body] = await Promise.all([params, parseJson(req, z.object({ reason: z.string().trim().min(3).max(1000) }).strict())]);
     const { period, closingRun, alreadyClosed } = await closePeriod({ tenantId: ctx.tenantId!, userId: ctx.userId }, id, body.reason);
     recordAudit(ctx, 'update', 'fiscal_period', id, { action: 'close', reason: body.reason, closingRunId: closingRun?.id, alreadyClosed });
+    recordAudit(ctx, 'update', 'fiscal_period_close', id, { alreadyClosed });
     return NextResponse.json({ success: true, data: { period, closingRun, alreadyClosed } });
   } catch (error) { return apiErrorResponse(error); }
 }

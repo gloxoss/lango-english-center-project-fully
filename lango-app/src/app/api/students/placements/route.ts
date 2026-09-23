@@ -22,7 +22,7 @@ const postPlacementSchema = z.object({
 
 export async function GET(req: NextRequest) {
   try {
-    const ctx = await requireRequestContext(req);
+    const ctx = await requireRequestContext(req, ['school_admin', 'accountant']);
     await requireCapability(ctx, 'students.read');
 
     const { searchParams } = new URL(req.url);
@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const ctx = await requireRequestContext(req);
+    const ctx = await requireRequestContext(req, ['school_admin', 'accountant']);
     await requireCapability(ctx, 'students.update');
 
     const body = await req.json();

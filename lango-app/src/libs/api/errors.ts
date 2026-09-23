@@ -7,6 +7,7 @@ export class ApiError extends Error {
     public readonly status: number,
     public readonly code: string,
     message: string,
+    public readonly details?: unknown,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -25,7 +26,14 @@ function pgErrorCode(error: unknown): string | undefined {
 export function apiErrorResponse(error: unknown): NextResponse {
   if (error instanceof ApiError) {
     return NextResponse.json(
-      { success: false, error: { code: error.code, message: error.message } },
+      {
+        success: false,
+        error: {
+          code: error.code,
+          message: error.message,
+          ...(error.details !== undefined ? { details: error.details } : {}),
+        },
+      },
       { status: error.status },
     );
   }
@@ -46,6 +54,7 @@ export function apiErrorResponse(error: unknown): NextResponse {
       );
     }
     if (code === '23503') {
+      logger.warn({ err: error }, 'PostgreSQL 23503 foreign key violation');
       return NextResponse.json(
         { success: false, error: { code: 'IN_USE', message: 'Cet enregistrement est référencé ailleurs et ne peut pas être supprimé ou modifié ainsi.' } },
         { status: 409 },

@@ -41,6 +41,8 @@ export function StatementsView({ locale: _locale }: { locale?: string } = {}) {
   const [totals, setTotals] = useState<{ debit: string; credit: string; balanced: boolean } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [postingStatus, setPostingStatus] = useState<{ openFiscalPeriod: boolean; unpostedPaymentsCount: number; unpostedPaymentsAmount: number } | null>(null);
+  const [postingStatusError, setPostingStatusError] = useState(false);
 
   const [accounts, setAccounts] = useState<Array<{ id: string; code: string; name: string }>>([]);
   const [drill, setDrill] = useState<Drill | null>(null);
@@ -104,6 +106,8 @@ export function StatementsView({ locale: _locale }: { locale?: string } = {}) {
       setLoading(true);
       setError(null);
       setDrill(null);
+      setPostingStatus(null);
+      setPostingStatusError(false);
       try {
         const url =
           typeToLoad === 'trial-balance'
@@ -111,13 +115,17 @@ export function StatementsView({ locale: _locale }: { locale?: string } = {}) {
             : typeToLoad === 'profit-loss' || typeToLoad === 'balance-sheet'
               ? `/api/finance/accounting/statements/${typeToLoad}?asOf=${to}`
               : `/api/finance/accounting/statements/${typeToLoad}?from=${from}&to=${to}`;
-        const res = await fetch(url);
+        const [res, statusRes] = await Promise.all([fetch(url), fetch('/api/finance/accounting/posting-status')]);
         const json = await res.json();
+        const statusJson = await statusRes.json().catch(() => null);
+        if (statusRes.ok && statusJson?.success) setPostingStatus(statusJson.data);
+        else setPostingStatusError(true);
         if (!json.success) throw new Error(json.error?.message ?? t('loadingFailed'));
         setRows(json.data);
         setMeta(json.meta ?? null);
         setTotals(json.totals ?? null);
       } catch (cause) {
+        setPostingStatusError(true);
         setError(cause instanceof Error ? cause.message : t('loadingFailed'));
         setRows([]);
       } finally {
@@ -252,6 +260,20 @@ export function StatementsView({ locale: _locale }: { locale?: string } = {}) {
         </div>
       )}
 
+      {postingStatusError && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
+          {t('postingStatusUnavailable')}
+        </div>
+      )}
+      {postingStatus && (!postingStatus.openFiscalPeriod || postingStatus.unpostedPaymentsCount > 0) && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          {!postingStatus.openFiscalPeriod && <p className="font-bold">{t('noOpenFiscalPeriod')}</p>}
+          {postingStatus.unpostedPaymentsCount > 0 && (
+            <p className="font-bold">{t('unpostedPayments', { count: postingStatus.unpostedPaymentsCount, amount: postingStatus.unpostedPaymentsAmount })}</p>
+          )}
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 text-xs font-semibold">
         {STATEMENT_TYPES.map(key => (
           <button
@@ -268,21 +290,25 @@ export function StatementsView({ locale: _locale }: { locale?: string } = {}) {
         ))}
       </div>
 
-      {totals && (
+      {totals && (() => {
+        const complete = Boolean(postingStatus?.openFiscalPeriod && postingStatus.unpostedPaymentsCount === 0 && rows.length > 0);
+        const balanced = totals.balanced && complete;
+        return (
         <div
           className={`flex items-center gap-3 rounded-xl border p-3.5 text-xs font-bold ${
-            totals.balanced
+            balanced
               ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-              : 'border-red-200 bg-red-50 text-red-700'
+              : totals.balanced ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-red-200 bg-red-50 text-red-700'
           }`}
         >
           <FileSpreadsheet className="size-4 shrink-0" />
           <span>
             {t('totalDebitLabel')} : {totals.debit} · {t('totalCreditLabel')} : {totals.credit} —{' '}
-            {totals.balanced ? t('stmtBalancedBadge') : t('stmtUnbalancedBadge')}
+            {balanced ? t('stmtBalancedBadge') : totals.balanced ? t('stmtIncompleteBadge') : t('stmtUnbalancedBadge')}
           </span>
         </div>
-      )}
+        );
+      })()}
 
       {drill ? (
         <Card className="p-0 overflow-hidden rounded-2xl border-slate-200/80">

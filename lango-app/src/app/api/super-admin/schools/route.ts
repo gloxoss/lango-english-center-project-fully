@@ -7,7 +7,7 @@ import { requireRequestContext, requireSuperAdmin } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parseJson, schoolCreateSchema, schoolUpdateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { account, tenants, user } from '@/models/Schema';
+import { account, addonEntitlements, branches, planLimits, schoolSettings, sessionYears, tenants, user } from '@/models/Schema';
 
 // ponytail: super-admin routes check role === 'super_admin' and deliberately
 // never call requireTenant - a super_admin manages every tenant, not one.
@@ -109,6 +109,63 @@ export async function POST(request: Request) {
         updatedAt: now,
       });
 
+      // 1. Default Campus / Branch
+      await tx.insert(branches).values({
+        tenantId: tenant!.id,
+        name: 'Siège Principal',
+        code: 'SIEGE',
+        isDefault: true,
+        isActive: true,
+      });
+
+      // 2. Default Academic Session Year
+      await tx.insert(sessionYears).values({
+        tenantId: tenant!.id,
+        name: '2025-2026',
+        startDate: '2025-09-01',
+        endDate: '2026-06-30',
+        isDefault: true,
+      });
+
+      // 3. Default School Configuration
+      await tx.insert(schoolSettings).values({
+        tenantId: tenant!.id,
+        establishmentName: body.name,
+        country: 'Maroc',
+        academicYear: '2025-2026',
+      });
+
+      // 4. Plan-defined Modules Activation (dynamically loaded from plan configuration)
+      const [planConfig] = await tx
+        .select({ includedAddons: planLimits.includedAddons })
+        .from(planLimits)
+        .where(eq(planLimits.planTier, body.planTier ?? 'trial'))
+        .limit(1);
+
+      const targetAddons = (planConfig?.includedAddons && planConfig.includedAddons.length > 0)
+        ? planConfig.includedAddons
+        : [
+            'transport',
+            'library',
+            'human-resources',
+            'advanced-reporting',
+            'card-management',
+            'certificate-management',
+            'lead-crm',
+          ];
+
+      if (targetAddons.length > 0) {
+        await tx.insert(addonEntitlements).values(
+          targetAddons.map(addonId => ({
+            tenantId: tenant!.id,
+            addonId,
+            isEnabled: true,
+            grantedById: adminUserId,
+            note: `Attribution automatique selon la formule "${body.planTier ?? 'trial'}"`,
+          })),
+        );
+      }
+
       return { tenant, admin };
     });
 
@@ -130,6 +187,12 @@ export async function PUT(request: Request) {
     requireSuperAdmin(context);
     const body = await parseJson(request, schoolUpdateSchema);
 
+    const [existing] = await db
+      .select({ planTier: tenants.planTier })
+      .from(tenants)
+      .where(eq(tenants.id, body.id))
+      .limit(1);
+
     const [updated] = await db
       .update(tenants)
       .set({
@@ -143,6 +206,34 @@ export async function PUT(request: Request) {
 
     if (!updated) {
       throw new ApiError(404, 'NOT_FOUND', 'École non trouvée');
+    }
+
+    if (body.planTier && existing && existing.planTier !== body.planTier) {
+      const [newPlan] = await db
+        .select({ includedAddons: planLimits.includedAddons })
+        .from(planLimits)
+        .where(eq(planLimits.planTier, body.planTier))
+        .limit(1);
+
+      if (newPlan?.includedAddons && newPlan.includedAddons.length > 0) {
+        const schoolGrants = await db
+          .select({ addonId: addonEntitlements.addonId })
+          .from(addonEntitlements)
+          .where(eq(addonEntitlements.tenantId, body.id));
+        const grantedSet = new Set(schoolGrants.map(g => g.addonId));
+        const toAdd = newPlan.includedAddons.filter(a => !grantedSet.has(a));
+        if (toAdd.length > 0) {
+          await db.insert(addonEntitlements).values(
+            toAdd.map(addonId => ({
+              tenantId: body.id,
+              addonId,
+              isEnabled: true,
+              grantedById: context.userId,
+              note: `Attribution automatique lors du passage à la formule "${body.planTier}"`,
+            })),
+          );
+        }
+      }
     }
 
     recordAudit(context, 'update', 'tenant', body.id);

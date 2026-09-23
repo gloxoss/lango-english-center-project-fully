@@ -75,7 +75,7 @@ export const tenants = pgTable('tenants', {
   logoUrl: text('logo_url'),
   faviconUrl: text('favicon_url'),
   isActive: boolean('is_active').default(true).notNull(),
-  planTier: planTier('plan_tier').default('trial').notNull(),
+  planTier: varchar('plan_tier', { length: 50 }).default('trial').notNull(),
   subscriptionStatus: subscriptionStatus('subscription_status').default('active').notNull(),
   stripeCustomerId: text('stripe_customer_id'),
   stripeSubscriptionId: text('stripe_subscription_id'),
@@ -137,6 +137,63 @@ export const schoolAccessRequests = pgTable('school_access_requests', {
     name: 'school_access_requests_converted_tenant_id_tenants_id_fk',
   }).onDelete('set null'),
   index('school_access_requests_status_idx').on(table.status),
+]);
+
+// Super-admin platform support tickets: real multi-institution ticket management
+// for technical support, Massar exports, CNDP compliance, and billing.
+export type SupportAttachment = {
+  name: string;
+  url: string;
+  size: number;
+  mimeType: string;
+  type: 'image' | 'video' | 'file';
+};
+
+export const platformSupportTickets = pgTable('platform_support_tickets', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id'),
+  schoolName: varchar('school_name', { length: 255 }).notNull(),
+  subject: varchar({ length: 255 }).notNull(),
+  category: varchar({ length: 50 }).notNull(), // technical, billing, onboarding, cndp_compliance, feature_request
+  priority: varchar({ length: 20 }).notNull(), // critical, high, medium, low
+  status: varchar({ length: 20 }).default('new').notNull(), // new, in_progress, waiting_client, resolved, closed
+  contactName: varchar('contact_name', { length: 255 }).notNull(),
+  contactEmail: varchar('contact_email', { length: 255 }).notNull(),
+  lastMessage: text('last_message').notNull(),
+  messagesCount: integer('messages_count').default(1).notNull(),
+  assignedTo: varchar('assigned_to', { length: 255 }),
+  attachments: jsonb().$type<SupportAttachment[]>().default([]),
+  firstRespondedAt: timestamp('first_responded_at', { mode: 'string' }),
+  resolvedAt: timestamp('resolved_at', { mode: 'string' }),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'platform_support_tickets_tenant_id_tenants_id_fk',
+  }).onDelete('set null'),
+  index('platform_support_tickets_tenant_id_idx').on(table.tenantId),
+  index('platform_support_tickets_status_idx').on(table.status),
+  index('platform_support_tickets_priority_idx').on(table.priority),
+  index('platform_support_tickets_category_idx').on(table.category),
+]);
+
+export const platformSupportTicketMessages = pgTable('platform_support_ticket_messages', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  ticketId: uuid('ticket_id').notNull(),
+  senderType: varchar('sender_type', { length: 20 }).notNull(), // client, super_admin
+  senderName: varchar('sender_name', { length: 255 }).notNull(),
+  message: text().notNull(),
+  attachments: jsonb().$type<SupportAttachment[]>().default([]),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.ticketId],
+    foreignColumns: [platformSupportTickets.id],
+    name: 'platform_support_ticket_messages_ticket_id_fk',
+  }).onDelete('cascade'),
+  index('platform_support_ticket_messages_ticket_id_idx').on(table.ticketId),
 ]);
 
 // ==========================================================================
@@ -677,8 +734,16 @@ export const user = pgTable('user', {
     name: 'user_alumni_transitioned_by_user_id_fk',
   }).onDelete('set null'),
   unique('user_email_unique').on(table.email),
-  unique('user_matricule_unique').on(table.matricule),
+  // Matricules are per-school identifiers: two tenants may both hold
+  // "STD-2026-0001". The old global unique(matricule) made a leftover row in
+  // any tenant permanently block every other school's first reservation
+  // (audit pass 2 — gate2 behavioral suite root cause). Scope to the tenant.
+  uniqueIndex('user_tenant_matricule_unique').on(table.tenantId, table.matricule),
   unique('user_employee_id_unique').on(table.employeeId),
+  index('user_tenant_role_created_idx').on(table.tenantId, table.role, table.createdAt),
+  index('user_tenant_role_status_idx').on(table.tenantId, table.role, table.userStatus),
+  index('user_tenant_branch_role_idx').on(table.tenantId, table.branchId, table.role),
+  index('user_tenant_class_section_idx').on(table.tenantId, table.classSectionId),
 ]);
 
 // Alumni portal (future-implementation/alumni-portal). Real issuance history
@@ -942,7 +1007,19 @@ export const applicants = pgTable('applicants', {
   motherTongue: varchar('mother_tongue', { length: 50 }),
   city: varchar({ length: 100 }),
   bloodGroup: varchar('blood_group', { length: 10 }),
+  // @deprecated Use sessionYearId instead. Preserved for backward read compatibility.
   academicYearId: uuid('academic_year_id'),
+  // Authoritative branch & academic session year context (Inscriptions & Admissions Hardening)
+  branchId: uuid('branch_id'),
+  sessionYearId: uuid('session_year_id'),
+  nationalId: varchar('national_id', { length: 100 }),
+  approvedAt: timestamp('approved_at', { mode: 'string' }),
+  approvedById: text('approved_by_id'),
+  rejectedAt: timestamp('rejected_at', { mode: 'string' }),
+  rejectedById: text('rejected_by_id'),
+  rejectionReason: text('rejection_reason'),
+  enrolledAt: timestamp('enrolled_at', { mode: 'string' }),
+  enrolledById: text('enrolled_by_id'),
   // Set when Step 2 links an existing guardian via search; left null when the
   // fallback "create new guardian" form is used instead (guardianName/Phone/
   // Email above carry that case, same as before this feature existed).
@@ -985,11 +1062,40 @@ export const applicants = pgTable('applicants', {
     name: 'applicants_academic_year_id_academic_years_id_fk',
   }).onDelete('set null'),
   foreignKey({
+    columns: [table.branchId],
+    foreignColumns: [branches.id],
+    name: 'applicants_branch_id_branches_id_fk',
+  }).onDelete('set null'),
+  foreignKey({
+    columns: [table.sessionYearId],
+    foreignColumns: [sessionYears.id],
+    name: 'applicants_session_year_id_session_years_id_fk',
+  }).onDelete('set null'),
+  foreignKey({
+    columns: [table.approvedById],
+    foreignColumns: [user.id],
+    name: 'applicants_approved_by_id_user_id_fk',
+  }).onDelete('set null'),
+  foreignKey({
+    columns: [table.rejectedById],
+    foreignColumns: [user.id],
+    name: 'applicants_rejected_by_id_user_id_fk',
+  }).onDelete('set null'),
+  foreignKey({
+    columns: [table.enrolledById],
+    foreignColumns: [user.id],
+    name: 'applicants_enrolled_by_id_user_id_fk',
+  }).onDelete('set null'),
+  foreignKey({
     columns: [table.guardianId],
     foreignColumns: [guardians.id],
     name: 'applicants_guardian_id_guardians_id_fk',
   }).onDelete('set null'),
   index('applicants_guardian_id_idx').on(table.guardianId),
+  index('applicants_tenant_branch_idx').on(table.tenantId, table.branchId),
+  index('applicants_tenant_session_idx').on(table.tenantId, table.sessionYearId),
+  index('applicants_tenant_status_idx').on(table.tenantId, table.status),
+  index('applicants_national_id_idx').on(table.tenantId, table.nationalId),
 ]);
 
 // One real interview per applicant (future-implementation/dropped-features-rebuild).
@@ -2319,6 +2425,12 @@ export const schoolSettings = pgTable('school_settings', {
   ice: varchar({ length: 50 }),
   taxId: varchar('tax_id', { length: 100 }),
   legalStatus: varchar('legal_status', { length: 100 }),
+  // Moroccan Ministry of National Education (MEN) compliance
+  menAuthorizationNumber: varchar('men_authorization_number', { length: 100 }),
+  regionalAcademy: varchar('regional_academy', { length: 255 }),
+  provincialDirection: varchar('provincial_direction', { length: 255 }),
+  officialStampUrl: text('official_stamp_url'),
+  directorSignatureUrl: text('director_signature_url'),
   // Director contact
   directorName: varchar('director_name', { length: 255 }),
   directorEmail: varchar('director_email', { length: 255 }),
@@ -3137,10 +3249,22 @@ export const addonDefinitions = pgTable('addon_definitions', {
 // "unlimited" for that tier.
 // ==========================================================================
 export const planLimits = pgTable('plan_limits', {
-  planTier: planTier('plan_tier').primaryKey().notNull(),
+  planTier: varchar('plan_tier', { length: 50 }).primaryKey().notNull(),
   label: varchar({ length: 100 }).notNull(),
+  description: text(),
   maxStudents: integer('max_students'),
   maxStorageMb: integer('max_storage_mb'),
+  maxBranches: integer('max_branches').default(1).notNull(),
+  priceMonthly: numeric('price_monthly', { precision: 10, scale: 2 }).default('0').notNull(),
+  priceYearly: numeric('price_yearly', { precision: 10, scale: 2 }).default('0').notNull(),
+  currency: varchar('currency', { length: 10 }).default('MAD').notNull(),
+  trialDays: integer('trial_days').default(0).notNull(),
+  isTrial: boolean('is_trial').default(false).notNull(),
+  includedAddons: text('included_addons').array().default(sql`'{}'::text[]`).notNull(),
+  features: text('features').array().default(sql`'{}'::text[]`).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  isPopular: boolean('is_popular').default(false).notNull(),
+  sortOrder: integer('sort_order').default(0).notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
 });
@@ -3218,7 +3342,7 @@ export const licensePayments = pgTable('license_payments', {
   id: uuid().defaultRandom().primaryKey().notNull(),
   tenantId: uuid('tenant_id').notNull(),
   licenseId: uuid('license_id'),
-  planTier: planTier('plan_tier').default('trial').notNull(),
+  planTier: varchar('plan_tier', { length: 50 }).default('trial').notNull(),
   amount: numeric('amount', { precision: 12, scale: 2 }).default('0').notNull(),
   currency: varchar('currency', { length: 3 }).default('MAD').notNull(),
   method: varchar('method', { length: 20 }).default('bank_transfer').notNull(),
@@ -4487,3 +4611,6 @@ export * from '@/features/settings/models/settings-schema';
 
 // School Website CMS Add-on (public per-tenant marketing site)
 export * from '@/features/website/models/website-schema';
+
+// Academics Syllabus Progression Schema
+export * from '@/features/academics/model/syllabus-schema';

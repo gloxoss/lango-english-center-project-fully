@@ -1,5 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { recordAudit } from '@/libs/api/audit';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
@@ -16,7 +17,7 @@ const createCategorySchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    const ctx = await requireRequestContext(request);
+    const ctx = await requireRequestContext(request, ['school_admin', 'accountant', 'teacher']);
     const tenantId = requireTenant(ctx);
 
     const categories = await db
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
       .values({ tenantId, name: body.name, daysPerYear: body.daysPerYear ?? null, isPaid: body.isPaid })
       .returning();
 
+    recordAudit(ctx, 'create', 'leave_category', category?.id ?? 'category', {});
     return NextResponse.json({ success: true, data: category }, { status: 201 });
   } catch (err) {
     return apiErrorResponse(err);

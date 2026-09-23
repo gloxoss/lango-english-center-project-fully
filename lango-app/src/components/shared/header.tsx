@@ -6,11 +6,12 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { LocaleSwitcher } from './locale-switcher';
 import { HeaderCampusSwitcher } from './header-campus-switcher';
+import { HeaderTenantSwitcher } from './header-tenant-switcher';
+import { ImpersonationBanner } from './impersonation-banner';
 import {
   Bell,
   Menu,
   Search,
-  ShieldCheck,
   User,
   Building2,
   LogOut,
@@ -39,7 +40,7 @@ export function Header({ locale }: { locale: string }) {
   const tNav = useTranslations('Navigation');
   const tRoles = useTranslations('Roles');
   const { available: drawerAvailable, open: drawerOpen, setOpen: setDrawerOpen } = useSidebarDrawer();
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending: sessionPending } = authClient.useSession();
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [unreadList, setUnreadList] = useState<Array<{ id: string; title: string; createdAt: string }>>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -77,7 +78,7 @@ export function Header({ locale }: { locale: string }) {
   }, []);
 
   useEffect(() => {
-    if (!session?.user) return;
+    if (!session?.user || (session.user as any).role === 'super_admin') return;
 
     const fetchUnreadAnnouncements = () => {
       fetch('/api/communication/announcements/unread-count')
@@ -96,23 +97,29 @@ export function Header({ locale }: { locale: string }) {
     return () => clearInterval(interval);
   }, [session?.user]);
 
-  const userName = session?.user?.name || 'Utilisateur';
-  const userEmail = session?.user?.email || 'user@ecole.ma';
-  const userRole = (session?.user as any)?.role || 'school_admin';
+  const userName = session?.user?.name || (sessionPending ? 'Chargement…' : 'Session indisponible');
+  const userEmail = session?.user?.email || '';
+  const userRole = (session?.user as any)?.role || '';
 
   // Active-role badge from the server-owned context (shows the effective role,
   // not just the session base role). Falls back to the session role until the
   // request resolves.
-  const [portalMe, setPortalMe] = useState<{ role: string } | null>(null);
-  useEffect(() => {
+  const [portalMe, setPortalMe] = useState<{ role: string; tenantId?: string | null } | null>(null);
+  const loadPortalMe = () => {
     fetch('/api/portal/me')
       .then(res => (res.ok ? res.json() : null))
       .then((json) => {
         if (json?.success) setPortalMe(json.data);
       })
       .catch(() => {});
+  };
+  useEffect(() => {
+    loadPortalMe();
+    window.addEventListener('portal:role-changed', loadPortalMe);
+    return () => window.removeEventListener('portal:role-changed', loadPortalMe);
   }, []);
   const displayRole = portalMe?.role ?? userRole;
+  const hasSelectedTenant = Boolean(portalMe?.tenantId);
 
   const initials = userName
     .split(' ')
@@ -129,7 +136,10 @@ export function Header({ locale }: { locale: string }) {
   };
 
   return (
-    <header className="h-16 border-b border-slate-200/90 bg-white px-4 lg:px-6 flex items-center justify-between gap-3 sticky top-0 z-40 shadow-2xs">
+    <div className="sticky top-0 z-40">
+      {/* Super-admin impersonation notice — always visible while inside a school (audit 2026-09-22, P1-2) */}
+      <ImpersonationBanner locale={locale} />
+      <header className="h-16 border-b border-slate-200/90 bg-white px-4 lg:px-6 flex items-center justify-between gap-3 shadow-2xs">
       {drawerAvailable && (
         <button
           type="button"
@@ -142,108 +152,113 @@ export function Header({ locale }: { locale: string }) {
         </button>
       )}
 
-      {/* Search Input */}
-      <div className="hidden lg:flex items-center gap-3 w-80 relative">
-        <div className="relative w-full flex items-center">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setSearchOpen(true); }}
-            onFocus={() => setSearchOpen(true)}
-            onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
-            placeholder={tCommon('search')}
-            className="w-full bg-[#EDF3F8]/50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs text-[#16212B] placeholder-slate-400 focus:outline-none focus:border-[#2487B8] focus:bg-white transition-all shadow-2xs"
-          />
-        </div>
-
-        {searchOpen && searchResults && (
-          <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-80 overflow-y-auto">
-            {searchResults.students.length === 0 && searchResults.teachers.length === 0 && searchResults.invoices.length === 0 ? (
-              <div className="p-3 text-center text-xs text-slate-500 font-medium">{tCommon('empty')}</div>
-            ) : (
-              <>
-                {searchResults.students.map(s => (
-                  <Link key={`s-${s.id}`} href={`/${locale}/dashboard/students?id=${s.id}`} className="block px-3 py-2 hover:bg-slate-50 text-xs">
-                    <span className="font-bold text-[#16212B]">{s.name}</span>
-                    <span className="text-slate-400 ml-2">{(tRoles as any).has('student') ? tRoles('student') : 'Élève'}</span>
-                  </Link>
-                ))}
-                {searchResults.teachers.map(t => (
-                  <Link key={`t-${t.id}`} href={`/${locale}/dashboard/teachers/manage?id=${t.id}`} className="block px-3 py-2 hover:bg-slate-50 text-xs">
-                    <span className="font-bold text-[#16212B]">{t.name}</span>
-                    <span className="text-slate-400 ml-2">{(tRoles as any).has('teacher') ? tRoles('teacher') : 'Enseignant'}</span>
-                  </Link>
-                ))}
-                {searchResults.invoices.map(i => (
-                  <Link key={`i-${i.id}`} href={`/${locale}/dashboard/finance/invoices?id=${i.id}`} className="block px-3 py-2 hover:bg-slate-50 text-xs">
-                    <span className="font-bold text-[#16212B]">{i.invoiceNumber}</span>
-                    <span className="text-slate-400 ml-2">{(tNav as any).has('invoices') ? tNav('invoices') : 'Facture'}</span>
-                  </Link>
-                ))}
-              </>
-            )}
+      {/* Search Input (School staff or Super Admin with selected school) */}
+      {(displayRole !== 'super_admin' || hasSelectedTenant) && (
+        <div className="hidden lg:flex items-center gap-3 w-80 relative">
+          <div className="relative w-full flex items-center">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setSearchOpen(true); }}
+              onFocus={() => setSearchOpen(true)}
+              onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
+              placeholder={tCommon('search')}
+              className="w-full bg-[#EDF3F8]/50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs text-[#16212B] placeholder-slate-400 focus:outline-none focus:border-[#2487B8] focus:bg-white transition-all shadow-2xs"
+            />
           </div>
-        )}
-      </div>
+
+          {searchOpen && searchResults && (
+            <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-80 overflow-y-auto">
+              {searchResults.students.length === 0 && searchResults.teachers.length === 0 && searchResults.invoices.length === 0 ? (
+                <div className="p-3 text-center text-xs text-slate-500 font-medium">{tCommon('empty')}</div>
+              ) : (
+                <>
+                  {searchResults.students.map(s => (
+                    <Link key={`s-${s.id}`} href={`/${locale}/dashboard/students?id=${s.id}`} className="block px-3 py-2 hover:bg-slate-50 text-xs">
+                      <span className="font-bold text-[#16212B]">{s.name}</span>
+                      <span className="text-slate-400 ml-2">{(tRoles as any).has('student') ? tRoles('student') : 'Élève'}</span>
+                    </Link>
+                  ))}
+                  {searchResults.teachers.map(t => (
+                    <Link key={`t-${t.id}`} href={`/${locale}/dashboard/teachers/manage?id=${t.id}`} className="block px-3 py-2 hover:bg-slate-50 text-xs">
+                      <span className="font-bold text-[#16212B]">{t.name}</span>
+                      <span className="text-slate-400 ml-2">{(tRoles as any).has('teacher') ? tRoles('teacher') : 'Enseignant'}</span>
+                    </Link>
+                  ))}
+                  {searchResults.invoices.map(i => (
+                    <Link key={`i-${i.id}`} href={`/${locale}/dashboard/finance/invoices?id=${i.id}`} className="block px-3 py-2 hover:bg-slate-50 text-xs">
+                      <span className="font-bold text-[#16212B]">{i.invoiceNumber}</span>
+                      <span className="text-slate-400 ml-2">{(tNav as any).has('invoices') ? tNav('invoices') : 'Facture'}</span>
+                    </Link>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Right Controls */}
       <div className="flex items-center gap-3">
-        {/* Campus Switcher (hidden on small screens — redundant context on a phone) */}
-        <div className="hidden lg:flex">
-          <HeaderCampusSwitcher />
-        </div>
+        {/* Super Admin Tenant Scope Switcher */}
+        {displayRole === 'super_admin' && (
+          <HeaderTenantSwitcher locale={locale} />
+        )}
 
-        {/* CNDP Compliance Status Badge per BRAND.md */}
-        <div className="hidden md:flex items-center gap-1.5 bg-[#E4EDFD] text-[#2487B8] border border-[#C3DAFB] px-3 py-1 rounded-full text-[11px] font-bold">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#2487B8]" />
-          <span>{(tNav as any).has('cndp') ? tNav('cndp') : 'Conforme CNDP F211'}</span>
-        </div>
+        {/* Campus Switcher (strictly for school staff or super_admin inspecting a tenant) */}
+        {(displayRole !== 'super_admin' || hasSelectedTenant) && (
+          <div className="hidden lg:flex">
+            <HeaderCampusSwitcher />
+          </div>
+        )}
 
-        {/* Notifications Dropdown Menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="relative p-2 rounded-xl text-slate-500 hover:bg-[#EDF3F8] hover:text-[#16212B] transition-colors focus:outline-none cursor-pointer">
-              <Bell className="w-4 h-4 text-slate-600" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#E5544B] ring-2 ring-white"></span>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" sideOffset={8} className="w-80 p-0 overflow-hidden rounded-2xl shadow-xl border border-slate-200">
-            <div className="p-3 bg-[#EDF3F8]/80 border-b border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Bell className="w-4 h-4 text-[#2487B8]" />
-                <span className="text-xs font-bold text-[#16212B]">{(tNav as any).has('communication') ? tNav('communication') : 'Notifications'}</span>
-              </div>
-              <span className="text-[10px] font-bold text-white bg-[#E5544B] px-1.5 py-0.5 rounded-full">
-                {unreadCount}
-              </span>
-            </div>
-
-            <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
-              {unreadList.length === 0 ? (
-                <div className="p-4 text-center text-xs text-slate-500 font-medium">
-                  {tCommon('empty')}
+        {/* Notifications Dropdown Menu (School staff only) */}
+        {displayRole !== 'super_admin' && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="relative p-2 rounded-xl text-slate-500 hover:bg-[#EDF3F8] hover:text-[#16212B] transition-colors focus:outline-none cursor-pointer">
+                <Bell className="w-4 h-4 text-slate-600" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#E5544B] ring-2 ring-white"></span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={8} className="w-80 p-0 overflow-hidden rounded-2xl shadow-xl border border-slate-200">
+              <div className="p-3 bg-[#EDF3F8]/80 border-b border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Bell className="w-4 h-4 text-[#2487B8]" />
+                  <span className="text-xs font-bold text-[#16212B]">{(tNav as any).has('communication') ? tNav('communication') : 'Notifications'}</span>
                 </div>
-              ) : (
-                unreadList.map((item) => (
-                  <DropdownMenuItem key={item.id} asChild>
-                    <Link
-                      href={`/${locale}/dashboard/communication/announcements`}
-                      className="p-3 flex flex-col items-start gap-1 cursor-pointer hover:bg-slate-50"
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <span className="text-xs font-bold text-[#16212B] truncate max-w-[200px]">
-                          {item.title}
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-medium">{(tNav as any).has('communication') ? tNav('communication') : 'Annonce'}</span>
-                      </div>
-                    </Link>
-                  </DropdownMenuItem>
-                ))
-              )}
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
+                <span className="text-[10px] font-bold text-white bg-[#E5544B] px-1.5 py-0.5 rounded-full">
+                  {unreadCount}
+                </span>
+              </div>
+
+              <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
+                {unreadList.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-slate-500 font-medium">
+                    {tCommon('empty')}
+                  </div>
+                ) : (
+                  unreadList.map((item) => (
+                    <DropdownMenuItem key={item.id} asChild>
+                      <Link
+                        href={`/${locale}/dashboard/communication/announcements`}
+                        className="p-3 flex flex-col items-start gap-1 cursor-pointer hover:bg-slate-50"
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-xs font-bold text-[#16212B] truncate max-w-[200px]">
+                            {item.title}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-medium">{(tNav as any).has('communication') ? tNav('communication') : 'Annonce'}</span>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                  ))
+                )}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
 
         {/* Locale Switcher */}
         <LocaleSwitcher currentLocale={locale} />
@@ -253,7 +268,7 @@ export function Header({ locale }: { locale: string }) {
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2.5 pl-3 border-l border-slate-200 focus:outline-none cursor-pointer group">
               <div className="w-8 h-8 rounded-full bg-[#2487B8] text-white flex items-center justify-center text-xs font-extrabold shadow-xs group-hover:ring-2 group-hover:ring-[#2487B8]/30 transition-all">
-                {initials || 'US'}
+                {session?.user ? initials || '?' : '…'}
               </div>
               <div className="hidden lg:block text-left">
                 <p className="text-xs font-bold text-[#16212B] leading-tight">{userName}</p>
@@ -269,7 +284,7 @@ export function Header({ locale }: { locale: string }) {
               <p className="text-[10px] text-slate-500 font-medium">{userEmail}</p>
               <div className="mt-1.5 inline-flex items-center gap-1 bg-[#DCEBF4] text-[#1B6C93] px-2 py-0.5 rounded-md text-[10px] font-bold capitalize">
                 <Lock className="w-3 h-3" />
-                <span>{(tRoles as any).has(displayRole) ? tRoles(displayRole) : displayRole.replace('_', ' ')}</span>
+                <span>{displayRole ? ((tRoles as any).has(displayRole) ? tRoles(displayRole) : displayRole.replace('_', ' ')) : '—'}</span>
               </div>
             </div>
 
@@ -289,6 +304,7 @@ export function Header({ locale }: { locale: string }) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </header>
+      </header>
+    </div>
   );
 }

@@ -132,16 +132,31 @@ describe.skipIf(!hasDb)('Student placement PostgreSQL integration', () => {
     expect(after).toHaveLength(before.length);
   });
 
-  it('serializes concurrent transitions and preserves one current row', async () => {
+  it('serializes concurrent same-day transitions: no torn state, exactly one current row', async () => {
+    // Contract (documented in recordStudentPlacement): concurrent transitions
+    // for the same student serialize on the (tenant, student) advisory lock.
+    // A same-day transition to a DIFFERENT section is the supported
+    // "reassignment / rebalancing" operation and SUCCEEDS — the auto-placement
+    // commit depends on it — so a concurrent pair ends with the later call
+    // winning, never with a torn timeline. The invariants that matter:
+    //   1. both calls complete without corrupting the timeline,
+    //   2. exactly one isCurrent row survives,
+    //   3. the surviving row points at one of the two requested sections.
+    // If product ever wants concurrent same-day conflicts to 409 instead,
+    // that is a deliberate semantic change to make here AND in the service.
     const results = await Promise.allSettled([
       recordStudentPlacement({ tenantId, studentId, sessionYearId, classSectionId: classSectionA, startDate: '2026-03-01' }),
       recordStudentPlacement({ tenantId, studentId, sessionYearId, classSectionId: classSectionB, startDate: '2026-03-01' }),
     ]);
 
-    expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1);
+    for (const result of results) {
+      expect(result.status).toBe('fulfilled');
+    }
 
     const current = await db.select().from(studentPlacements).where(eq(studentPlacements.studentId, studentId));
 
-    expect(current.filter(row => row.isCurrent)).toHaveLength(1);
+    const currentRows = current.filter(row => row.isCurrent);
+    expect(currentRows).toHaveLength(1);
+    expect([classSectionA, classSectionB]).toContain(currentRows[0]!.classSectionId);
   });
 });

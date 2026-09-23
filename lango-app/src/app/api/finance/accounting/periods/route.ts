@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { recordAudit } from '@/libs/api/audit';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
@@ -15,6 +16,6 @@ export async function GET(req: NextRequest) {
   catch (error) { return apiErrorResponse(error); }
 }
 export async function POST(req: NextRequest) {
-  try { const ctx = await requireRequestContext(req); await requireCapability(ctx, 'accounting.period.close'); const body = await parseJson(req, schema); const [row] = await db.insert(fiscalPeriods).values({ tenantId: ctx.tenantId!, ...body, status: 'open' }).returning(); return NextResponse.json({ success: true, data: row }, { status: 201 }); }
+  try { const ctx = await requireRequestContext(req); await requireCapability(ctx, 'accounting.period.close'); const body = await parseJson(req, schema); const [row] = await db.insert(fiscalPeriods).values({ tenantId: ctx.tenantId!, ...body, status: 'open' }).returning(); recordAudit(ctx, 'create', 'fiscal_period', row!.id, { name: row?.name ?? null }); return NextResponse.json({ success: true, data: row }, { status: 201 }); }
   catch (error) { return apiErrorResponse(error); }
 }

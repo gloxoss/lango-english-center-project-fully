@@ -2,10 +2,13 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
+import Link from 'next/link';
 import { AlertTriangle, BadgeCheck, RefreshCw, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { usePermissions } from '@/hooks/use-permissions';
 
 type Scope = { assignmentId: string | null; type: 'tenant' | 'branch' | 'department'; branchId: string | null; departmentId: string | null };
 type Authority = { id: string; domain: string; action: string; maxAmount: string | null; delegatedFromAuthorityId: string | null; endsOn: string | null };
@@ -19,6 +22,8 @@ const money = (n: string) => `${Number(n).toLocaleString('fr-FR')} DH`;
 export function LeadershipApprovalsClient() {
   const t = useTranslations('Leadership');
   const tCommon = useTranslations('Common');
+  const locale = useLocale();
+  const { can } = usePermissions();
 
   const [data, setData] = useState<Approvals | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -44,11 +49,18 @@ export function LeadershipApprovalsClient() {
     {error ? <Card className="p-10 text-center"><AlertTriangle className="mx-auto mb-3 h-8 w-8 text-amber-500" /><p className="font-medium">{error}</p></Card> : !data ? <Card className="p-10 text-center text-sm text-slate-500">{tCommon('loading')}</Card> : <>
       {data.scope.assignmentId && <div className="flex flex-wrap items-center gap-2"><Badge variant="info">Périmètre : {SCOPE_LABELS[data.scope.type] ?? data.scope.type}</Badge>{data.scope.branchId && <span className="text-xs text-slate-500">Filiale</span>}{data.scope.departmentId && <span className="text-xs text-slate-500">Département</span>}<span className="text-xs text-slate-400">Mis à jour le {new Date(data.generatedAt).toLocaleString('fr-FR')}</span></div>}
 
+      {data.authorities.length === 0 && (
+        <Card className="border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <p className="font-bold">{t('approvalsNoAuthoritySetup')}</p>
+          {can('leadership.scope.manage') && <Link href={`/${locale}/dashboard/portals/leadership/admin`} className="mt-2 inline-block font-semibold underline">{t('configureAuthorities')}</Link>}
+        </Card>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="p-4"><p className="text-sm text-slate-500">{t('activeAuthorities')}</p><p className="text-2xl font-bold">{data.authorities.length}</p></Card>
-        <Card className="p-4"><p className="text-sm text-slate-500">{t('pendingCreditNotes')}</p><p className="text-2xl font-bold">{finance?.pendingCreditNotes ?? 0}</p>{finance && finance.pendingCreditNotes > 0 && <p className="text-xs text-slate-500">{money(finance.pendingCreditNoteAmount)}</p>}</Card>
-        <Card className="p-4"><p className="text-sm text-slate-500">{t('pendingRefunds')}</p><p className="text-2xl font-bold">{finance?.pendingRefunds ?? 0}</p>{finance && finance.pendingRefunds > 0 && <p className="text-xs text-slate-500">{money(finance.pendingRefundAmount)}</p>}</Card>
-        <Card className="p-4"><p className="text-sm text-slate-500">{t('periodReopenings')}</p><p className="text-2xl font-bold">{finance?.pendingPeriodReopens ?? 0}</p></Card>
+        <Card className="p-4"><p className="text-sm text-slate-500">{t('pendingCreditNotes')}</p><p className="text-2xl font-bold">{finance?.pendingCreditNotes ?? '—'}</p>{finance && finance.pendingCreditNotes > 0 && <p className="text-xs text-slate-500">{money(finance.pendingCreditNoteAmount)}</p>}</Card>
+        <Card className="p-4"><p className="text-sm text-slate-500">{t('pendingRefunds')}</p><p className="text-2xl font-bold">{finance?.pendingRefunds ?? '—'}</p>{finance && finance.pendingRefunds > 0 && <p className="text-xs text-slate-500">{money(finance.pendingRefundAmount)}</p>}</Card>
+        <Card className="p-4"><p className="text-sm text-slate-500">{t('periodReopenings')}</p><p className="text-2xl font-bold">{finance?.pendingPeriodReopens ?? '—'}</p></Card>
       </div>
 
       {!finance && <Card className="p-4"><p className="flex items-center gap-2 text-sm text-slate-500"><ShieldCheck className="h-4 w-4 text-slate-400" />Le flux financier est visible uniquement avec une autorité « finance » active ou en tant que responsable d’établissement.</p></Card>}

@@ -10,6 +10,7 @@ import {
   Search,
   Unlock,
   User,
+  Users,
   Wallet,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
@@ -77,6 +78,14 @@ export default function CollectionDeskPage() {
 
   const searchParams = useSearchParams();
   const studentIdParam = searchParams.get('studentId');
+  const parentIdParam = searchParams.get('parentId') || searchParams.get('guardianId');
+
+  const [parentContext, setParentContext] = useState<{
+    id: string;
+    name: string;
+    phone: string | null;
+    linkedStudents: Array<{ studentId: string; studentName: string; studentMatricule: string | null }>;
+  } | null>(null);
 
   const [sessionData, setSessionData] = useState<{ activeSession: CashierSession | null; recentSessions: any[] }>({
     activeSession: null,
@@ -135,15 +144,43 @@ export default function CollectionDeskPage() {
 
   useEffect(() => {
     fetchSession();
-    fetch('/api/academics/class-sections?pageSize=200').then(r => r.json()).then(j => j.success && setClassSections(j.data)).catch(() => {});
+    void (async () => {
+      try {
+        const all: ClassSectionOption[] = [];
+        for (let page = 1; ; page++) {
+          const res = await fetch(`/api/finance/lookups?resource=class-sections&page=${page}&pageSize=100`);
+          const json = await res.json();
+          if (!res.ok || !json.success) throw new Error(json.error?.message || 'Impossible de charger les classes.');
+          all.push(...json.data);
+          if (all.length >= json.total) break;
+        }
+        setClassSections(all);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Impossible de charger les classes.');
+      }
+    })();
     fetch('/api/accountant/me/receivables').then(r => r.json()).then(j => j.success && setAgingRows(j.data.invoices || [])).catch(() => {});
   }, []);
 
   const loadRoster = async (classSectionId: string) => {
     setSelectedClassSection(classSectionId);
     if (!classSectionId) { setRoster([]); return; }
-    const json = await fetch(`/api/students?classSectionId=${encodeURIComponent(classSectionId)}&pageSize=200`).then(r => r.json());
-    if (json.success) setRoster(json.data.map((s: any) => ({ id: s.id, name: s.fullName || s.name, email: s.email || null, matricule: s.matricule || null })));
+    try {
+      const all: StudentResult[] = [];
+      for (let page = 1; ; page++) {
+        const res = await fetch(`/api/students?classSectionId=${encodeURIComponent(classSectionId)}&status=active&page=${page}&pageSize=100`);
+        const json = await res.json();
+        if (!res.ok || !json.success) throw new Error(json.error?.message || 'Impossible de charger la classe.');
+        all.push(...json.data.map((s: { id: string; fullName?: string; name?: string; email?: string | null; matricule?: string | null }) => ({
+          id: s.id, name: s.fullName || s.name || '', email: s.email || null, matricule: s.matricule || null,
+        })));
+        if (all.length >= json.total) break;
+      }
+      setRoster(all);
+    } catch (err) {
+      setRoster([]);
+      setError(err instanceof Error ? err.message : 'Impossible de charger la classe.');
+    }
   };
 
   // Load tenant's configured payment methods
@@ -285,6 +322,38 @@ export default function CollectionDeskPage() {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studentIdParam]);
+
+  useEffect(() => {
+    if (!parentIdParam) return;
+    (async () => {
+      try {
+        const res = await fetch(`/api/students/parents/${encodeURIComponent(parentIdParam)}`);
+        const json = await res.json();
+        if (json.success && json.data) {
+          const p = json.data;
+          setParentContext({
+            id: p.id,
+            name: `${p.firstName} ${p.lastName}`,
+            phone: p.phone,
+            linkedStudents: p.linkedStudents || [],
+          });
+          // If no student is specified in URL, auto select the first child
+          if (!studentIdParam && Array.isArray(p.linkedStudents) && p.linkedStudents.length > 0) {
+            const firstChild = p.linkedStudents[0];
+            handleSelectStudent({
+              id: firstChild.studentId,
+              name: firstChild.studentName,
+              email: null,
+              matricule: firstChild.studentMatricule ?? null,
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load parent caisse context', err);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parentIdParam]);
 
   const openCollect = () => {
     setCollectRows(studentInvoices.map(inv => {
@@ -471,6 +540,54 @@ export default function CollectionDeskPage() {
 
       {/* Fast Receipt Desk Section */}
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
+        {parentContext && (
+          <div className="mb-5 p-4 rounded-2xl bg-gradient-to-r from-[#DCEBF4]/80 to-white border border-[#2487B8]/30 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#2487B8] text-white flex items-center justify-center font-bold text-base shrink-0 shadow-2xs">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-extrabold text-[#16212B]">
+                  {t('familyCollectionLabel')} : {parentContext.name}
+                  {parentContext.phone && <span className="font-normal text-slate-500 ms-2">({parentContext.phone})</span>}
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  {t('familyCollectionHint')}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {parentContext.linkedStudents.map(child => {
+                const isCurrent = selectedStudent?.id === child.studentId;
+                return (
+                  <button
+                    key={child.studentId}
+                    type="button"
+                    onClick={() => handleSelectStudent({
+                      id: child.studentId,
+                      name: child.studentName,
+                      email: null,
+                      matricule: child.studentMatricule ?? null,
+                    })}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      isCurrent
+                        ? 'bg-[#1B6C93] text-white shadow-xs'
+                        : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                    }`}
+                  >
+                    {child.studentName}
+                    {child.studentMatricule && (
+                      <span className="font-normal text-[10px] ml-1 opacity-80 font-mono">
+                        ({child.studentMatricule})
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <h3 className="text-base font-bold text-slate-900">{t('quickCollectTitle')}</h3>
         <p className="text-xs text-slate-500">{t('quickCollectSubtitle')}</p>
 

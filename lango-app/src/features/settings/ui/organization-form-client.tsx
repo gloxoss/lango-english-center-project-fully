@@ -1,4 +1,4 @@
-﻿// organization-form-client.tsx
+// organization-form-client.tsx
 // CLIENT ISLAND — owns all form state, save mutation, logo/favicon upload
 // Server Component (organization-page.tsx) fetches initial data and passes it as props.
 'use client';
@@ -31,6 +31,11 @@ export type OrganisationFormData = {
   ice: string;
   taxId: string;
   legalStatus: string;
+  menAuthorizationNumber: string;
+  regionalAcademy: string;
+  provincialDirection: string;
+  officialStampUrl: string;
+  directorSignatureUrl: string;
   directorName: string;
   directorEmail: string;
   directorPhone: string;
@@ -75,37 +80,57 @@ function SectionCard({ icon: Icon, title, children }: {
   );
 }
 
-function Field({ label, children, hint }: {
+function Field({ label, children, hint, error, required }: {
   label: string;
   children: React.ReactNode;
   hint?: string;
+  error?: string;
+  required?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium text-[#374151]">{label}</label>
+      <label className="text-xs font-medium text-[#374151] flex items-center justify-between">
+        <span>
+          {label}
+          {required && <span className="text-red-500 ml-1 font-bold">*</span>}
+        </span>
+      </label>
       {children}
-      {hint && <p className="text-xs text-[#9CA3AF]">{hint}</p>}
+      {error ? (
+        <p role="alert" className="text-xs text-red-600 font-medium flex items-center gap-1.5 mt-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0 text-red-500" />
+          <span>{error}</span>
+        </p>
+      ) : hint ? (
+        <p className="text-xs text-[#9CA3AF]">{hint}</p>
+      ) : null}
     </div>
   );
 }
 
-function Input({ value, onChange, placeholder, type = 'text', disabled }: {
+function Input({ value, onChange, placeholder, type = 'text', disabled, error, id }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   type?: string;
   disabled?: boolean;
+  error?: boolean | string;
+  id?: string;
 }) {
   return (
     <input
+      id={id}
       type={type}
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       disabled={disabled}
-      className="w-full px-3 py-2 text-sm bg-white border border-[#E5E7EB] rounded-lg text-[#111827]
-        placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#4B6BFB]/20
-        focus:border-[#4B6BFB] disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF] transition-all"
+      aria-invalid={Boolean(error)}
+      className={`w-full px-3 py-2 text-sm rounded-lg transition-all focus:outline-none disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF] ${
+        error
+          ? 'bg-red-50/40 border border-red-400 text-red-900 placeholder:text-red-300 focus:ring-2 focus:ring-red-400/20 focus:border-red-500'
+          : 'bg-white border border-[#E5E7EB] text-[#111827] placeholder:text-[#9CA3AF] focus:ring-2 focus:ring-[#4B6BFB]/20 focus:border-[#4B6BFB]'
+      }`}
     />
   );
 }
@@ -236,6 +261,7 @@ const DOC_STYLES: Array<{ key: 'classique' | 'minimal' | 'moderne'; label: strin
 
 export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Props) {
   const [form, setForm] = useState<OrganisationFormData>(initialData);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [logoTs, setLogoTs] = useState(Date.now());
   const [faviconTs, setFaviconTs] = useState(Date.now());
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -243,7 +269,16 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
   const [isPending, startTransition] = useTransition();
 
   function field<K extends keyof OrganisationFormData>(key: K) {
-    return (value: string) => setForm(prev => ({ ...prev, [key]: value }));
+    return (value: string) => {
+      setForm(prev => ({ ...prev, [key]: value }));
+      if (fieldErrors[key as string]) {
+        setFieldErrors(prev => {
+          const next = { ...prev };
+          delete next[key as string];
+          return next;
+        });
+      }
+    };
   }
 
   function toggleJsonb(section: 'presenceModes' | 'languages' | 'security', key: string) {
@@ -253,18 +288,78 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
     }));
   }
 
+  function validateClient(): Record<string, string> {
+    const errs: Record<string, string> = {};
+    if (!form.establishmentName.trim()) {
+      errs.establishmentName = "Le nom de l'établissement est obligatoire.";
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (form.email.trim() && !emailRegex.test(form.email.trim())) {
+      errs.email = "Adresse email invalide (ex: contact@ecole.ma).";
+    }
+    if (form.directorEmail.trim() && !emailRegex.test(form.directorEmail.trim())) {
+      errs.directorEmail = "Adresse email invalide (ex: direction@ecole.ma).";
+    }
+    if (form.financialContactEmail.trim() && !emailRegex.test(form.financialContactEmail.trim())) {
+      errs.financialContactEmail = "Adresse email invalide (ex: finance@ecole.ma).";
+    }
+    if (form.admissionsContactEmail.trim() && !emailRegex.test(form.admissionsContactEmail.trim())) {
+      errs.admissionsContactEmail = "Adresse email invalide (ex: admissions@ecole.ma).";
+    }
+    return errs;
+  }
+
   async function handleSave() {
     startTransition(async () => {
       setSaveStatus('idle');
+      const clientErrors = validateClient();
+      if (Object.keys(clientErrors).length > 0) {
+        setFieldErrors(clientErrors);
+        setSaveStatus('error');
+        const count = Object.keys(clientErrors).length;
+        setErrorMsg(`${count} champ${count > 1 ? 's contiennent des erreurs' : ' contient une erreur'}. Veuillez corriger les informations surlignées en rouge ci-dessous.`);
+        return;
+      }
+
+      setFieldErrors({});
+      setErrorMsg('');
+
       try {
+        const payload = {
+          ...form,
+          email: form.email.trim() || null,
+          directorEmail: form.directorEmail.trim() || null,
+          financialContactEmail: form.financialContactEmail.trim() || null,
+          admissionsContactEmail: form.admissionsContactEmail.trim() || null,
+          startDate: form.startDate.trim() || null,
+          endDate: form.endDate.trim() || null,
+        };
+
         const res = await fetch('/api/settings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form),
+          body: JSON.stringify(payload),
         });
         const data = await res.json();
         if (!res.ok || !data.success) {
-          throw new Error(data.error?.message ?? 'Erreur inconnue');
+          const extracted: Record<string, string> = {};
+          if (data.error?.details?.fieldErrors) {
+            Object.assign(extracted, data.error.details.fieldErrors);
+          } else if (typeof data.error?.message === 'string') {
+            const parts = data.error.message.split(';');
+            for (const part of parts) {
+              const [fName, ...msgParts] = part.split(':');
+              if (fName && msgParts.length > 0) {
+                extracted[fName.trim()] = msgParts.join(':').trim();
+              }
+            }
+          }
+          if (Object.keys(extracted).length > 0) {
+            setFieldErrors(extracted);
+            const count = Object.keys(extracted).length;
+            throw new Error(`${count} champ${count > 1 ? 's contiennent des erreurs' : ' contient une erreur'}. Veuillez corriger les informations surlignées en rouge ci-dessous.`);
+          }
+          throw new Error(data.error?.message ?? 'Erreur lors de l\'enregistrement des paramètres.');
         }
         setSaveStatus('success');
         setTimeout(() => setSaveStatus('idle'), 3000);
@@ -311,8 +406,8 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
       )}
       {saveStatus === 'error' && (
         <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          {errorMsg}
+          <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+          <span>{errorMsg}</span>
         </div>
       )}
 
@@ -343,29 +438,29 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
       {/* ── Section 2: Informations Générales ── */}
       <SectionCard icon={Building2} title="Informations Générales">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Nom complet de l'établissement *">
-            <Input value={form.establishmentName} onChange={field('establishmentName')} placeholder="ex: SchoolOS English Center" />
+          <Field label="Nom complet de l'établissement" required error={fieldErrors.establishmentName}>
+            <Input value={form.establishmentName} onChange={field('establishmentName')} placeholder="ex: SchoolOS English Center" error={!!fieldErrors.establishmentName} />
           </Field>
-          <Field label="Nom abrégé" hint="Utilisé dans les documents compacts">
-            <Input value={form.shortName} onChange={field('shortName')} placeholder="ex: LEC" />
+          <Field label="Nom abrégé" hint="Utilisé dans les documents compacts" error={fieldErrors.shortName}>
+            <Input value={form.shortName} onChange={field('shortName')} placeholder="ex: LEC" error={!!fieldErrors.shortName} />
           </Field>
-          <Field label="Ville">
-            <Input value={form.city} onChange={field('city')} placeholder="ex: Casablanca" />
+          <Field label="Ville" error={fieldErrors.city}>
+            <Input value={form.city} onChange={field('city')} placeholder="ex: Casablanca" error={!!fieldErrors.city} />
           </Field>
-          <Field label="Pays">
-            <Input value={form.country} onChange={field('country')} placeholder="ex: Maroc" />
+          <Field label="Pays" error={fieldErrors.country}>
+            <Input value={form.country} onChange={field('country')} placeholder="ex: Maroc" error={!!fieldErrors.country} />
           </Field>
-          <Field label="Adresse complète">
-            <Input value={form.address} onChange={field('address')} placeholder="ex: 12, rue Allal Ben Abdellah" />
+          <Field label="Adresse complète" error={fieldErrors.address}>
+            <Input value={form.address} onChange={field('address')} placeholder="ex: 12, rue Allal Ben Abdellah" error={!!fieldErrors.address} />
           </Field>
-          <Field label="Site web">
-            <Input value={form.website} onChange={field('website')} type="url" placeholder="https://" />
+          <Field label="Site web" error={fieldErrors.website}>
+            <Input value={form.website} onChange={field('website')} type="url" placeholder="https://" error={!!fieldErrors.website} />
           </Field>
-          <Field label="Téléphone">
-            <Input value={form.phone} onChange={field('phone')} type="tel" placeholder="+212 5 22 00 00 00" />
+          <Field label="Téléphone" error={fieldErrors.phone}>
+            <Input value={form.phone} onChange={field('phone')} type="tel" placeholder="+212 5 22 00 00 00" error={!!fieldErrors.phone} />
           </Field>
-          <Field label="Email">
-            <Input value={form.email} onChange={field('email')} type="email" placeholder="contact@schoolos.ma" />
+          <Field label="Email" error={fieldErrors.email}>
+            <Input value={form.email} onChange={field('email')} type="email" placeholder="contact@schoolos.ma" error={!!fieldErrors.email} />
           </Field>
         </div>
       </SectionCard>
@@ -373,14 +468,14 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
       {/* ── Section 3: Année scolaire ── */}
       <SectionCard icon={GraduationCap} title="Année scolaire">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Field label="Année scolaire *" hint="Exemple : 2026-2027">
-            <Input value={form.academicYear} onChange={field('academicYear')} placeholder="2026-2027" />
+          <Field label="Année scolaire" required hint="Exemple : 2026-2027" error={fieldErrors.academicYear}>
+            <Input value={form.academicYear} onChange={field('academicYear')} placeholder="2026-2027" error={!!fieldErrors.academicYear} />
           </Field>
-          <Field label="Date de début">
-            <Input value={form.startDate} onChange={field('startDate')} type="date" />
+          <Field label="Date de début" error={fieldErrors.startDate}>
+            <Input value={form.startDate} onChange={field('startDate')} type="date" error={!!fieldErrors.startDate} />
           </Field>
-          <Field label="Date de fin">
-            <Input value={form.endDate} onChange={field('endDate')} type="date" />
+          <Field label="Date de fin" error={fieldErrors.endDate}>
+            <Input value={form.endDate} onChange={field('endDate')} type="date" error={!!fieldErrors.endDate} />
           </Field>
         </div>
       </SectionCard>
@@ -388,18 +483,110 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
       {/* ── Section 4: Informations Légales ── */}
       <SectionCard icon={FileText} title="Informations Légales">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Forme juridique">
-            <Input value={form.legalStatus} onChange={field('legalStatus')} placeholder="ex: SARL, SA, Association" />
+          <Field label="Forme juridique" error={fieldErrors.legalStatus}>
+            <Input value={form.legalStatus} onChange={field('legalStatus')} placeholder="ex: SARL, SA, Association" error={!!fieldErrors.legalStatus} />
           </Field>
-          <Field label="Registre de Commerce (RC)">
-            <Input value={form.rc} onChange={field('rc')} placeholder="ex: RC 123456" />
+          <Field label="Registre de Commerce (RC)" error={fieldErrors.rc}>
+            <Input value={form.rc} onChange={field('rc')} placeholder="ex: RC 123456" error={!!fieldErrors.rc} />
           </Field>
-          <Field label="ICE" hint="Identifiant Commun de l'Entreprise">
-            <Input value={form.ice} onChange={field('ice')} placeholder="ex: 001234567000012" />
+          <Field label="ICE" hint="Identifiant Commun de l'Entreprise" error={fieldErrors.ice}>
+            <Input value={form.ice} onChange={field('ice')} placeholder="ex: 001234567000012" error={!!fieldErrors.ice} />
           </Field>
-          <Field label="Identifiant Fiscal (IF)">
-            <Input value={form.taxId} onChange={field('taxId')} placeholder="ex: 12345678" />
+          <Field label="Identifiant Fiscal (IF)" error={fieldErrors.taxId}>
+            <Input value={form.taxId} onChange={field('taxId')} placeholder="ex: 12345678" error={!!fieldErrors.taxId} />
           </Field>
+        </div>
+      </SectionCard>
+
+      {/* ── Section 4b: Agrément MEN, Cachet & Signature (Maroc) ── */}
+      <SectionCard icon={FileText} title="Agrément MEN, Cachet Officiel & Signature (Maroc)">
+        <div className="space-y-4">
+          <div className="p-3 bg-blue-50/60 rounded-xl border border-blue-100 text-xs text-blue-900 leading-relaxed">
+            <p className="font-bold">Conformité Loi 06-00 (Enseignement Privé au Maroc)</p>
+            <p className="text-[11px] text-blue-800/80 mt-0.5">
+              Ces informations et visuels officiels sont automatiquement incrustés sur les attestations de scolarité,
+              relevés de notes, diplômes et certificats d'inscription générés par la plateforme.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Field label="N° d'Autorisation MEN" hint="Ex: 06/2018/EP ou réf. ministérielle" error={fieldErrors.menAuthorizationNumber}>
+              <Input
+                value={form.menAuthorizationNumber}
+                onChange={field('menAuthorizationNumber')}
+                placeholder="ex: 06/1234/EP"
+                error={!!fieldErrors.menAuthorizationNumber}
+              />
+            </Field>
+            <Field label="Académie Régionale (AREF)" hint="Ex: Casablanca-Settat" error={fieldErrors.regionalAcademy}>
+              <Input
+                value={form.regionalAcademy}
+                onChange={field('regionalAcademy')}
+                placeholder="ex: AREF Casablanca-Settat"
+                error={!!fieldErrors.regionalAcademy}
+              />
+            </Field>
+            <Field label="Direction Provinciale" hint="Ex: DP Anfa, DP Fès" error={fieldErrors.provincialDirection}>
+              <Input
+                value={form.provincialDirection}
+                onChange={field('provincialDirection')}
+                placeholder="ex: Direction Provinciale Anfa"
+                error={!!fieldErrors.provincialDirection}
+              />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+            <Field
+              label="URL du Cachet officiel (PNG transparent)"
+              hint="Tampon officiel de l'école (fond transparent recommandé)"
+              error={fieldErrors.officialStampUrl}
+            >
+              <Input
+                value={form.officialStampUrl}
+                onChange={field('officialStampUrl')}
+                placeholder="https://... ou /uploads/stamp.png"
+                error={!!fieldErrors.officialStampUrl}
+              />
+              {form.officialStampUrl && (
+                <div className="mt-2 p-2 bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white border border-slate-200 rounded flex items-center justify-center overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={form.officialStampUrl} alt="Cachet école" className="max-w-full max-h-full object-contain" />
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    <p className="font-bold text-[#16212B]">Aperçu du cachet</p>
+                    <p className="text-[10px]">Ce cachet sera apposé au bas des attestations.</p>
+                  </div>
+                </div>
+              )}
+            </Field>
+
+            <Field
+              label="URL de la Signature du Directeur (PNG transparent)"
+              hint="Signature numérisée du chef d'établissement"
+              error={fieldErrors.directorSignatureUrl}
+            >
+              <Input
+                value={form.directorSignatureUrl}
+                onChange={field('directorSignatureUrl')}
+                placeholder="https://... ou /uploads/signature.png"
+                error={!!fieldErrors.directorSignatureUrl}
+              />
+              {form.directorSignatureUrl && (
+                <div className="mt-2 p-2 bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white border border-slate-200 rounded flex items-center justify-center overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={form.directorSignatureUrl} alt="Signature directeur" className="max-w-full max-h-full object-contain" />
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    <p className="font-bold text-[#16212B]">Aperçu de la signature</p>
+                    <p className="text-[10px]">Apposée aux côtés du cachet officiel.</p>
+                  </div>
+                </div>
+              )}
+            </Field>
+          </div>
         </div>
       </SectionCard>
 
@@ -416,14 +603,31 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
                 <span className="text-sm font-medium text-[#374151]">{role.label}</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Field label="Nom complet">
-                  <Input value={form[role.nameField] as string} onChange={v => setForm(prev => ({ ...prev, [role.nameField]: v }))} placeholder="Nom Prénom" />
+                <Field label="Nom complet" error={fieldErrors[role.nameField]}>
+                  <Input
+                    value={form[role.nameField] as string}
+                    onChange={field(role.nameField)}
+                    placeholder="Nom Prénom"
+                    error={!!fieldErrors[role.nameField]}
+                  />
                 </Field>
-                <Field label="Email">
-                  <Input value={form[role.emailField] as string} onChange={v => setForm(prev => ({ ...prev, [role.emailField]: v }))} type="email" placeholder="email@..." />
+                <Field label="Email" error={fieldErrors[role.emailField]}>
+                  <Input
+                    value={form[role.emailField] as string}
+                    onChange={field(role.emailField)}
+                    type="email"
+                    placeholder="email@..."
+                    error={!!fieldErrors[role.emailField]}
+                  />
                 </Field>
-                <Field label="Téléphone">
-                  <Input value={form[role.phoneField] as string} onChange={v => setForm(prev => ({ ...prev, [role.phoneField]: v }))} type="tel" placeholder="+212..." />
+                <Field label="Téléphone" error={fieldErrors[role.phoneField]}>
+                  <Input
+                    value={form[role.phoneField] as string}
+                    onChange={field(role.phoneField)}
+                    type="tel"
+                    placeholder="+212..."
+                    error={!!fieldErrors[role.phoneField]}
+                  />
                 </Field>
               </div>
             </div>

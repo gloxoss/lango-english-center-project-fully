@@ -3,7 +3,6 @@ import {
   formatAbsenceSms,
   formatPaymentReminderSms,
   normalizeMoroccanPhone,
-  sendMoroccanSms,
 } from '../moroccan-sms-adapter';
 
 describe('Moroccan SMS Adapter & Phone Normalizer (+212)', () => {
@@ -29,14 +28,4 @@ describe('Moroccan SMS Adapter & Phone Normalizer (+212)', () => {
     expect(text).toContain('05 juin 2026');
   });
 
-  it('dispatches SMS successfully with valid phone', async () => {
-    const result = await sendMoroccanSms('06 61 22 33 44', 'Test message');
-    expect(result.success).toBe(true);
-    expect(result.normalizedPhone).toBe('+212661223344');
-    expect(result.messageId).toContain('SMS-MA-');
-  });
-
-  it('throws an error for invalid phone numbers', async () => {
-    await expect(sendMoroccanSms('123', 'Test')).rejects.toThrow();
-  });
 });

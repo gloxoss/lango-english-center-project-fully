@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { recordAudit } from '@/libs/api/audit';
 import { requireAddon } from '@/libs/api/entitlements';
 import { hasCapability, requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -25,6 +26,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const data = await getEmployee(tenantId, id, sensitive);
     if (!data) throw new ApiError(404, 'NOT_FOUND', 'Employé introuvable dans cet établissement.');
 
+    recordAudit(ctx, 'update', 'employee_offboard', id, {});
     return NextResponse.json({ success: true, data });
   } catch (error) {
     return apiErrorResponse(error);

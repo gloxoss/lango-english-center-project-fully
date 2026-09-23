@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { and, asc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { recordAudit } from '@/libs/api/audit';
 import { z } from 'zod';
 import { requireRequestContext } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
@@ -53,6 +54,7 @@ export async function POST(req: NextRequest) {
     )).limit(1);
     if (!journal.length) throw new ApiError(422, 'JOURNAL_NOT_FOUND', 'Journal actif introuvable.');
     const [record] = await db.insert(accountingVoucherTypes).values({ tenantId: ctx.tenantId!, ...body }).returning();
+    recordAudit(ctx, 'create', 'voucher_type', record!.id, { code: record?.code ?? null });
     return NextResponse.json({ success: true, data: record }, { status: 201 });
   } catch (error) {
     return apiErrorResponse(error);

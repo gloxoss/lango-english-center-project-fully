@@ -1,18 +1,18 @@
-import { and, avg, eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
+import { passingScoreToPercentage } from '@/libs/grading/pass-threshold';
 import { db } from '@/libs/DB';
 import { getEffectiveValueWithLegacyFallback } from '@/libs/settings/registry';
+import { getClassReportCards } from '@/features/academics/services/report-card-service';
 import {
-  assessmentPlans,
-  assessmentResults,
-  assessments,
   classes,
   classSections,
   sections,
+  sessionYears,
   user,
 } from '@/models/Schema';
 
@@ -52,8 +52,15 @@ function findNextClassName(currentClassName: string, availableClassNames: string
   return null;
 }
 
-function recommend(avgPct: number | null, passThresholdPct: number): 'promote' | 'retain' | 'defer' {
+function recommend(
+  avgPct: number | null,
+  passThresholdPct: number,
+  bulletinStatus: 'Admis' | 'Ajourné' | null,
+): 'promote' | 'retain' | 'defer' {
   if (avgPct === null) return 'defer'; // no grades recorded yet
+  // The bulletin decision already applies the eliminatory mark; a student
+  // above the pass mark but under an eliminatory subject mark is retained.
+  if (bulletinStatus === 'Ajourné') return 'retain';
   if (avgPct >= passThresholdPct) return 'promote';
   return 'retain';
 }
@@ -72,16 +79,18 @@ export async function GET(req: NextRequest) {
       throw new ApiError(400, 'MISSING_PARAM', 'sourceSectionId requis.');
     }
 
-    // Configurable pass threshold: academic.passThreshold is expressed on the
-    // school's grading scale (default 10/20); assessmentResults.finalPercentage
-    // is always a 0-100 percentage, so normalize before comparing.
+    // The pass threshold is the tenant's stored grading policy
+    // (academic.passThreshold — edited on /dashboard/academics/grading/policies,
+    // shared with report cards). assessmentResults.finalPercentage is always a
+    // 0-100 percentage, so the threshold goes through the one shared
+    // conversion before comparing.
     const [{ value: passThresholdValue }, { value: gradingScaleValue }] = await Promise.all([
       getEffectiveValueWithLegacyFallback(tenantId, null, 'academic.passThreshold'),
       getEffectiveValueWithLegacyFallback(tenantId, null, 'academic.gradingScale'),
     ]);
     const gradingScale = gradingScaleValue === '100' ? '100' : '20';
     const passThresholdRaw = Number(passThresholdValue) || 10;
-    const passThresholdPct = gradingScale === '20' ? passThresholdRaw * 5 : passThresholdRaw;
+    const passThresholdPct = passingScoreToPercentage(passThresholdRaw, gradingScale);
 
     // 1. Fetch source class section details
     const [sourceSection] = await db
@@ -166,26 +175,28 @@ export async function GET(req: NextRequest) {
 
     const studentIds = students.map(s => s.id);
 
-    // 4. Average finalPercentage per student across all assessments scoped to this tenant
-    const gradeRows = await db
-      .select({
-        studentId: assessmentResults.studentId,
-        avgPct: avg(assessmentResults.finalPercentage),
-      })
-      .from(assessmentResults)
-      .innerJoin(assessments, eq(assessmentResults.assessmentId, assessments.id))
-      .innerJoin(assessmentPlans, eq(assessments.assessmentPlanId, assessmentPlans.id))
-      .where(and(
-        eq(assessmentResults.tenantId, tenantId),
-      ))
-      .groupBy(assessmentResults.studentId);
-
-    // Build map for O(1) lookup
-    const gradeMap = new Map(
-      gradeRows
-        .filter(r => studentIds.includes(r.studentId))
-        .map(r => [r.studentId, r.avgPct !== null ? Number(r.avgPct) : null]),
+    // 4. Year result per student = the same computation as the bulletin
+    // (coefficient-weighted, current class subjects, default session-year
+    // window, stored pass mark AND eliminatory mark). Previously this averaged
+    // every mark the student ever had, unweighted, across all years.
+    const [year] = await db
+      .select({ startDate: sessionYears.startDate, endDate: sessionYears.endDate })
+      .from(sessionYears)
+      .where(and(eq(sessionYears.tenantId, tenantId), eq(sessionYears.isDefault, true)))
+      .limit(1);
+    const { cards } = await getClassReportCards(
+      tenantId,
+      sourceSection.id,
+      year ? { termStart: year.startDate, termEnd: year.endDate } : {},
     );
+    const cardByStudent = new Map(cards.map(c => [c.student.id, c]));
+    const gradeMap = new Map<string, number | null>(
+      studentIds.map((id) => {
+        const card = cardByStudent.get(id);
+        return [id, card && card.status !== null ? card.generalAverage * 5 : null];
+      }),
+    );
+    const statusMap = new Map(studentIds.map(id => [id, cardByStudent.get(id)?.status ?? null]));
 
     // Default target section for repeaters: same section or first section of current class
     const defaultRepeatSectionId = sourceSection.id;
@@ -197,7 +208,7 @@ export async function GET(req: NextRequest) {
 
     const preview = students.map(s => {
       const avgPct = gradeMap.get(s.id) ?? null;
-      const rec = recommend(avgPct, passThresholdPct);
+      const rec = recommend(avgPct, passThresholdPct, statusMap.get(s.id) ?? null);
       const grade20 = avgPct !== null ? Math.round((avgPct / 5) * 100) / 100 : null;
       
       // Borderline deliberation flag (within 1 point on /20 scale, e.g. 9.00 - 9.99/20)

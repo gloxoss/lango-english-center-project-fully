@@ -20,6 +20,8 @@ import {
   resolveRegulationVersions,
   MOROCCO_V1_DEFAULT_RULE_CONFIG,
   RegulationError,
+  MOROCCO_2025_PENDING_RULE_CONFIG,
+  requiresCertificationWarning,
 } from '../ma-regulation-adapter';
 
 const SALARY = {
@@ -82,10 +84,19 @@ describe('morocco regulation adapter', () => {
   });
 
   it('enforces effective-date boundaries', () => {
+    // The 2024 pack is deliberately bounded to 2024 (audit P0-D): 2025+ pay
+    // resolves to the explicitly-unvalidated 2025 pack so the payslip carries
+    // the "barème non certifié" warning instead of silently applying 2024
+    // figures.
     const cfg = parseRegulationConfig(MOROCCO_V1_DEFAULT_RULE_CONFIG);
-    expect(resolveRegulationVersions(cfg, '2025-06-01')).toBe(cfg);
+    expect(resolveRegulationVersions(cfg, '2024-06-01')).toBe(cfg);
     expect(() => resolveRegulationVersions(cfg, '2023-12-31')).toThrow(RegulationError);
-    expect(() => resolveRegulationVersions({ ...cfg, effectiveTo: '2024-12-31' }, '2025-06-01')).toThrow(RegulationError);
+    expect(() => resolveRegulationVersions(cfg, '2025-06-01')).toThrow(RegulationError);
+
+    const cfg2025 = parseRegulationConfig(MOROCCO_2025_PENDING_RULE_CONFIG);
+    expect(resolveRegulationVersions(cfg2025, '2025-06-01')).toBe(cfg2025);
+    expect(cfg2025.provenance.validationStatus).toBe('unvalidated');
+    expect(requiresCertificationWarning(cfg2025)).toBe(true);
   });
 
   it('reproduces the hand-verified statutory figures (gross 5000)', () => {

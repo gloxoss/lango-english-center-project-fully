@@ -166,6 +166,7 @@ export const FULL_NAVIGATION: NavItem[] = [
     icon: 'BarChart3',
     href: '/dashboard/reports',
     permission: 'reports.read',
+    addonId: 'advanced-reporting',
   },
   {
     id: 'hr',
@@ -173,12 +174,13 @@ export const FULL_NAVIGATION: NavItem[] = [
     icon: 'Briefcase',
     href: '/dashboard/hr',
     permission: 'hr.read',
+    addonId: 'human-resources',
     children: [
       { id: 'hr-dashboard', label: 'Tableau de bord RH', icon: 'LayoutDashboard', href: '/dashboard/hr', permission: 'hr.read' },
       { id: 'hr-self-service', label: 'Mon espace RH', icon: 'User', href: '/dashboard/hr/self-service' },
       { id: 'hr-employees', label: 'Profils employés', icon: 'Users', href: '/dashboard/hr/employees', permission: 'hr.manage' },
-      { id: 'hr-salary-templates', label: 'Gabarits salariaux', icon: 'DollarSign', href: '/dashboard/workforce/payroll/structures', permission: 'payroll.configure' },
-      { id: 'hr-payroll', label: 'Paie mensuelle', icon: 'CreditCard', href: '/dashboard/workforce/payroll/runs', permission: 'payroll.review' },
+      { id: 'hr-salary-templates', label: 'Gabarits salariaux', icon: 'DollarSign', href: '/dashboard/workforce/payroll/structures', permission: 'payroll.configure', addonId: 'payroll-workforce' },
+      { id: 'hr-payroll', label: 'Paie mensuelle', icon: 'CreditCard', href: '/dashboard/workforce/payroll/runs', permission: 'payroll.review', addonId: 'payroll-workforce' },
       { id: 'hr-leave', label: 'Congés', icon: 'CalendarOff', href: '/dashboard/hr/leave', permission: 'hr.read' },
     ],
   },
@@ -285,7 +287,7 @@ export const FULL_NAVIGATION: NavItem[] = [
     permission: 'settings.organization.manage',
     children: [
       { id: 'settings-general', label: 'Général', icon: 'Building2', href: '/dashboard/settings', permission: 'settings.organization.manage' },
-      { id: 'settings-branches', label: 'Filiales', icon: 'GitBranch', href: '/dashboard/settings/branches', permission: 'settings.organization.manage' },
+      { id: 'settings-branches', label: 'Filiales', icon: 'GitBranch', href: '/dashboard/settings/branches', permission: 'settings.organization.manage', addonId: 'multi-branch' },
       { id: 'settings-users', label: 'Utilisateurs', icon: 'UserCog', href: '/dashboard/settings/users', permission: 'users.manage' },
       { id: 'settings-permissions', label: 'Permissions', icon: 'Shield', href: '/dashboard/settings/permissions', permission: 'users.permissions.manage' },
       { id: 'settings-addons', label: 'Modules', icon: 'Puzzle', href: '/dashboard/settings/entitlements', permission: 'settings.read' },
@@ -369,6 +371,19 @@ export async function filterByPermission(
  * The client sidebar renders from this; APIs reauthorize independently.
  */
 export async function getPortalManifest(context: RequestContext): Promise<PortalManifest> {
+  const availableRoles = await listAvailableRoles(context.tenantId, context.baseRole, context.userId);
+
+  if (context.role === 'super_admin' && !context.tenantId) {
+    return {
+      role: context.role,
+      baseRole: context.baseRole,
+      navigation: [],
+      quickActions: [],
+      homeWidgets: [],
+      availableRoles,
+    };
+  }
+
   const tenantId = context.tenantId ?? '';
   const navigation = await filterByPermission(FULL_NAVIGATION, context.userId, tenantId, context.role);
   const quickActions = await filterByPermission(QUICK_ACTIONS, context.userId, tenantId, context.role);
@@ -376,7 +391,6 @@ export async function getPortalManifest(context: RequestContext): Promise<Portal
   // Widget contract: the exact same role → widgets map drives /api/portal/home,
   // so the manifest and the home endpoint agree by construction.
   const homeWidgets = HOME_WIDGETS[context.role] ?? [];
-  const availableRoles = await listAvailableRoles(context.tenantId, context.baseRole, context.userId);
 
   // A portal-confined role (guard, receptionist, librarian) has exactly one
   // portal home; drop the generic cross-module "Tableau de bord" item so its
@@ -417,6 +431,7 @@ export async function getPortalManifest(context: RequestContext): Promise<Portal
  * schedule), not the cross-module KPI overview.
  */
 const MODULE_HOME: Partial<Record<AppRole, string>> = {
+  super_admin: '/dashboard/super-admin',
   accountant: '/dashboard/finance',
   parent: '/dashboard/parent',
   student: '/dashboard/student',
@@ -428,6 +443,10 @@ export async function resolveLandingPath(context: {
   tenantId: string | null;
   role: AppRole;
 }): Promise<string | null> {
+  if (context.role === 'super_admin' && !context.tenantId) {
+    return '/dashboard/super-admin';
+  }
+
   const navigation = await filterByPermission(
     FULL_NAVIGATION,
     context.userId,
@@ -437,7 +456,7 @@ export async function resolveLandingPath(context: {
   const homes = navigation.filter((item) => item.portalHome);
 
   // A dedicated-portal role has exactly one portal home; a cross-module admin
-  // (school_admin/super_admin) matches several and a non-portal role matches
+  // (school_admin) matches several and a non-portal role matches
   // none — only the unambiguous single-portal case redirects.
   if (homes.length === 1) return homes[0]!.href;
 

@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import type { RequestContext } from '@/libs/api/context';
 import { db } from '@/libs/DB';
 import { getEffectivePermissions } from '@/libs/api/permissions';
+import { listEntitlements } from '@/libs/api/entitlements';
 import { tenants } from '@/models/Schema';
 import { listAvailableRoles } from './active-context';
 
@@ -25,6 +26,12 @@ export async function getPortalMe(ctx: RequestContext) {
     tenantName = t?.name ?? null;
   }
 
+  let activeAddons: string[] = [];
+  if (ctx.tenantId) {
+    const entitlements = await listEntitlements(ctx.tenantId);
+    activeAddons = entitlements.filter((e) => e.active).map((e) => e.addonId);
+  }
+
   const permissions = await getEffectivePermissions(ctx.userId, ctx.tenantId ?? '', ctx.role);
   const grantedKeys = Object.entries(permissions).filter(([, granted]) => granted).map(([key]) => key);
 
@@ -39,5 +46,6 @@ export async function getPortalMe(ctx: RequestContext) {
     baseRole: ctx.baseRole,
     availableRoles,
     permissions: grantedKeys,
+    activeAddons,
   };
 }

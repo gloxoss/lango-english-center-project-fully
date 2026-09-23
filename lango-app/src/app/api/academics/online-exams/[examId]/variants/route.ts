@@ -8,6 +8,7 @@ import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
+import { assertOnlineExamAuthoringAccess } from '@/features/assessment/services/online-exam-access';
 import { onlineExamQuestionOptions, onlineExamQuestions, onlineExams } from '@/models/Schema';
 
 type RouteParams = { params: Promise<{ examId: string }> };
@@ -49,6 +50,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (!source) {
       throw new ApiError(404, 'EXAM_NOT_FOUND', 'Examen introuvable.');
     }
+    // Teachers: only the exam's author or an assigned subject teacher.
+    await assertOnlineExamAuthoringAccess(ctx, tenantId, examId);
 
     const sourceQuestions = await db
       .select()

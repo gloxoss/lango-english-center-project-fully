@@ -1,5 +1,6 @@
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { recordAudit } from '@/libs/api/audit';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { requireWorkforceAddon } from '@/libs/api/entitlements';
@@ -38,6 +39,7 @@ export async function POST(request: Request) {
       await tx.update(payrollPeriods).set({ paymentBatchId: created.id }).where(and(eq(payrollPeriods.tenantId, tenantId), eq(payrollPeriods.id, body.runId)));
       return created;
     });
+    recordAudit(ctx, 'create', 'payroll_payment_batch', batch!.id, { runId: body.runId, method: body.method });
     return NextResponse.json({ success: true, data: batch }, { status: 201 });
   } catch (error) { return apiErrorResponse(error); }
 }

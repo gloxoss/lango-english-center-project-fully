@@ -12,16 +12,35 @@ export async function parseJson<T extends z.ZodType>(request: Request, schema: T
 
   const result = schema.safeParse(body);
   if (!result.success) {
+    const fieldErrors: Record<string, string> = {};
+    for (const issue of result.error.issues) {
+      const fieldPath = issue.path.join('.') || 'general';
+      if (!fieldErrors[fieldPath]) {
+        fieldErrors[fieldPath] = issue.message;
+      }
+    }
     const message = result.error.issues
       .slice(0, 3)
       .map(issue => `${issue.path.join('.') || 'body'}: ${issue.message}`)
       .join('; ');
-    throw new ApiError(422, 'VALIDATION_ERROR', message);
+    throw new ApiError(422, 'VALIDATION_ERROR', message, { fieldErrors, issues: result.error.issues });
   }
   return result.data;
 }
 
 const optionalText = (max: number) => z.string().trim().max(max).optional().nullable();
+
+export const optionalEmail = () =>
+  z.preprocess(
+    val => (typeof val === 'string' && val.trim() === '' ? null : val),
+    z.email('Adresse email invalide').max(255).nullable().optional(),
+  );
+
+export const optionalDate = () =>
+  z.preprocess(
+    val => (typeof val === 'string' && val.trim() === '' ? null : val),
+    z.iso.date('Date invalide (AAAA-MM-JJ attendu)').nullable().optional(),
+  );
 
 export const studentCreateSchema = z.object({
   fullName: z.string().trim().min(2).max(255),
@@ -37,6 +56,8 @@ export const studentCreateSchema = z.object({
   phone: optionalText(50),
   status: z.enum(['Actif', 'Inactif', 'Archivé', 'active', 'inactive', 'archived']).optional(),
   paymentStatus: optionalText(50),
+  nationalId: optionalText(100),
+  codeMassar: optionalText(100),
 }).strict();
 
 export const studentUpdateSchema = z.object({
@@ -60,6 +81,7 @@ export const studentUpdateSchema = z.object({
   city: optionalText(100),
   bloodGroup: optionalText(10),
   nationalId: optionalText(100),
+  codeMassar: optionalText(100),
   academicYearId: z.uuid().optional().nullable(),
 }).strict();
 
@@ -76,6 +98,9 @@ export const studentImportRowSchema = z.object({
   dateOfBirth: z.iso.date().optional(),
   guardianName: optionalText(255),
   guardianPhone: optionalText(50),
+  matricule: optionalText(50),
+  nationalId: optionalText(100),
+  codeMassar: optionalText(100),
 }).strict();
 
 export const studentImportSchema = z.object({
@@ -365,15 +390,15 @@ export const subjectTeacherCreateSchema = z.object({
 
 export const settingsUpdateSchema = z.object({
   // Core identity
-  establishmentName: z.string().trim().min(1).max(255),
+  establishmentName: z.string().trim().min(1, 'Le nom de l\'établissement est obligatoire').max(255),
   shortName: optionalText(100),
   city: optionalText(255),
   address: optionalText(2000),
   academicYear: optionalText(50),
-  startDate: z.iso.date().optional().nullable(),
-  endDate: z.iso.date().optional().nullable(),
+  startDate: optionalDate(),
+  endDate: optionalDate(),
   phone: optionalText(50),
-  email: z.email().max(255).optional().nullable(),
+  email: optionalEmail(),
   website: optionalText(500),
   country: optionalText(100),
   // Legal / fiscal
@@ -381,16 +406,22 @@ export const settingsUpdateSchema = z.object({
   ice: optionalText(50),
   taxId: optionalText(100),
   legalStatus: optionalText(100),
+  // Moroccan Ministry of National Education (MEN) compliance
+  menAuthorizationNumber: optionalText(100),
+  regionalAcademy: optionalText(255),
+  provincialDirection: optionalText(255),
+  officialStampUrl: optionalText(2000),
+  directorSignatureUrl: optionalText(2000),
   // Director contact
   directorName: optionalText(255),
-  directorEmail: z.email().max(255).optional().nullable(),
+  directorEmail: optionalEmail(),
   directorPhone: optionalText(50),
   // Institutional contacts
   financialContactName: optionalText(255),
-  financialContactEmail: z.email().max(255).optional().nullable(),
+  financialContactEmail: optionalEmail(),
   financialContactPhone: optionalText(50),
   admissionsContactName: optionalText(255),
-  admissionsContactEmail: z.email().max(255).optional().nullable(),
+  admissionsContactEmail: optionalEmail(),
   admissionsContactPhone: optionalText(50),
   // Operational flags
   allowOperations: z.boolean().optional(),
@@ -414,7 +445,7 @@ export const branchCreateSchema = z.object({
   city: optionalText(100),
   address: optionalText(2000),
   phone: optionalText(50),
-  email: z.email().max(255).optional().nullable(),
+  email: optionalEmail(),
 }).strict();
 
 // ==========================================================================
@@ -451,13 +482,71 @@ export const schoolUpdateSchema = z.object({
   isActive: z.boolean().optional(),
 }).strict();
 
+export const planTierSlugSchema = z
+  .string()
+  .trim()
+  .min(2)
+  .max(50)
+  .regex(/^[a-z0-9][a-z0-9-]*$/, 'Identifiant kebab-case attendu (minuscules, chiffres, tirets)');
+
+export const planCreateSchema = z.object({
+  planTier: planTierSlugSchema,
+  label: z.string().trim().min(1).max(100),
+  description: z.string().trim().max(2000).optional().nullable(),
+  maxStudents: z.number().int().min(0).max(1000000).nullable().optional(),
+  maxStorageMb: z.number().int().min(0).max(100000000).nullable().optional(),
+  maxBranches: z.number().int().min(1).max(1000).optional(),
+  priceMonthly: z.number().min(0).max(1000000).optional(),
+  priceYearly: z.number().min(0).max(10000000).optional(),
+  currency: z.string().trim().max(10).optional(),
+  trialDays: z.number().int().min(0).max(365).optional(),
+  isTrial: z.boolean().optional(),
+  includedAddons: z.array(z.string().trim()).optional(),
+  features: z.array(z.string().trim()).optional(),
+  isActive: z.boolean().optional(),
+  isPopular: z.boolean().optional(),
+  sortOrder: z.number().int().optional(),
+}).strict();
+
+export const planUpdateSchema = z.object({
+  label: z.string().trim().min(1).max(100).optional(),
+  description: z.string().trim().max(2000).optional().nullable(),
+  maxStudents: z.number().int().min(0).max(1000000).nullable().optional(),
+  maxStorageMb: z.number().int().min(0).max(100000000).nullable().optional(),
+  maxBranches: z.number().int().min(1).max(1000).optional(),
+  priceMonthly: z.number().min(0).max(1000000).optional(),
+  priceYearly: z.number().min(0).max(10000000).optional(),
+  currency: z.string().trim().max(10).optional(),
+  trialDays: z.number().int().min(0).max(365).optional(),
+  isTrial: z.boolean().optional(),
+  includedAddons: z.array(z.string().trim()).optional(),
+  features: z.array(z.string().trim()).optional(),
+  isActive: z.boolean().optional(),
+  isPopular: z.boolean().optional(),
+  sortOrder: z.number().int().optional(),
+  syncToExistingSchools: z.boolean().optional(),
+}).strict();
+
 // Per-plan capacity caps (max students, storage). `null` means "unlimited" for
 // that tier; a missing key means "leave unchanged".
 export const planLimitsUpdateSchema = z.object({
-  planTier: z.enum(['trial', 'basic', 'standard', 'premium']),
+  planTier: z.string().trim().min(2).max(50),
   label: z.string().trim().min(1).max(100).optional(),
-  maxStudents: z.number().int().min(0).max(100000).nullable().optional(),
-  maxStorageMb: z.number().int().min(0).max(10000000).nullable().optional(),
+  description: z.string().trim().max(2000).optional().nullable(),
+  maxStudents: z.number().int().min(0).max(1000000).nullable().optional(),
+  maxStorageMb: z.number().int().min(0).max(100000000).nullable().optional(),
+  maxBranches: z.number().int().min(1).max(1000).optional(),
+  priceMonthly: z.number().min(0).max(1000000).optional(),
+  priceYearly: z.number().min(0).max(10000000).optional(),
+  currency: z.string().trim().max(10).optional(),
+  trialDays: z.number().int().min(0).max(365).optional(),
+  isTrial: z.boolean().optional(),
+  includedAddons: z.array(z.string().trim()).optional(),
+  features: z.array(z.string().trim()).optional(),
+  isActive: z.boolean().optional(),
+  isPopular: z.boolean().optional(),
+  sortOrder: z.number().int().optional(),
+  syncToExistingSchools: z.boolean().optional(),
 }).strict();
 
 // Super-admin waitlist (bug 1.2). `waitlistSubmitSchema` is used by the PUBLIC
@@ -517,6 +606,7 @@ export const smsMessageCreateSchema = z.object({
   recipientPhone: z.string().trim().min(1).max(50),
   studentId: z.string().trim().min(1).max(100).optional(),
   body: z.string().trim().min(1).max(1000),
+  channel: z.enum(['sms', 'whatsapp']).optional(),
 }).strict();
 
 // ==========================================================================

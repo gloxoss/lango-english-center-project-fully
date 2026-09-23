@@ -147,6 +147,19 @@ function Execute-Deploy {
 
     # Step 4: Local Docker Build
     Log-Step 'Step 4: Building Release Container(s) Locally for Linux AMD64'
+    Log-Info 'Normalizing OneDrive file attributes across build directories...'
+    $dirs = @('src', 'locales', 'public', 'migrations')
+    $buildFiles = @(Get-ChildItem -Path $ProjectRoot -File) + @(Get-ChildItem -Path ($dirs | ForEach-Object { Join-Path $ProjectRoot $_ }) -Recurse -File -ErrorAction SilentlyContinue)
+    $reparseFiles = $buildFiles | Where-Object { $_.Attributes -band [System.IO.FileAttributes]::ReparsePoint }
+    if ($reparseFiles) {
+        Log-Info "Found $($reparseFiles.Count) files with OneDrive ReparsePoint attribute. Normalizing..."
+        foreach ($f in $reparseFiles) {
+            $b = [System.IO.File]::ReadAllBytes($f.FullName)
+            [System.IO.File]::Delete($f.FullName)
+            [System.IO.File]::WriteAllBytes($f.FullName, $b)
+        }
+        Log-Success 'File attributes normalized successfully'
+    }
     Log-Info 'Building schoolos-app:latest (standalone runner)...'
     docker build --platform linux/amd64 -t schoolos-app:latest .
     if ($LASTEXITCODE -ne 0) {
@@ -199,7 +212,7 @@ function Execute-Deploy {
     Invoke-Expression "$sshCmd `"mkdir -p ~/releases`""
     
     Log-Info 'Uploading app image via SCP...'
-    scp -B -q -i "$KeyPath" -o StrictHostKeyChecking=no "$appTar" "${SshUser}@${HostIp}:~/releases/release-schoolos-app.tar.gz"
+    scp -O -C -B -q -i "$KeyPath" -o StrictHostKeyChecking=no -o ServerAliveInterval=15 -o ServerAliveCountMax=10 -o ConnectTimeout=60 "$appTar" "${SshUser}@${HostIp}:~/releases/release-schoolos-app.tar.gz"
     if ($LASTEXITCODE -ne 0) {
         Log-Error 'SCP of schoolos-app failed!'
         exit 1
@@ -208,7 +221,7 @@ function Execute-Deploy {
 
     if ($shouldMigrate -and (Test-Path $migrateTar)) {
         Log-Info 'Uploading migrate image via SCP...'
-        scp -B -q -i "$KeyPath" -o StrictHostKeyChecking=no "$migrateTar" "${SshUser}@${HostIp}:~/releases/release-schoolos-migrate.tar.gz"
+        scp -O -C -B -q -i "$KeyPath" -o StrictHostKeyChecking=no -o ServerAliveInterval=15 -o ServerAliveCountMax=10 -o ConnectTimeout=60 "$migrateTar" "${SshUser}@${HostIp}:~/releases/release-schoolos-migrate.tar.gz"
         if ($LASTEXITCODE -ne 0) {
             Log-Error 'SCP of schoolos-migrate failed!'
             exit 1

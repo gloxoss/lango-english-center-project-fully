@@ -1,5 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { recordAudit } from '@/libs/api/audit';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { requireWorkforceAddon } from '@/libs/api/entitlements';
@@ -36,6 +37,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ res
       [data] = await db.update(payrollAdjustments).set({ status: body.action === 'approve' ? 'approved' : 'rejected', approverId: ctx.userId, approvedAt: body.action === 'approve' ? now : null }).where(and(eq(payrollAdjustments.tenantId, tenantId), eq(payrollAdjustments.id, p.id), eq(payrollAdjustments.status, 'submitted'))).returning();
     }
     if (!data) throw new ApiError(409, 'INVALID_TRANSITION', 'La ressource a déjà changé d’état.');
+    recordAudit(ctx, 'update', 'payroll_config_action', String(p.id), { resource: p.resource, action: body.action });
     return NextResponse.json({ success: true, data });
   } catch (error) { return apiErrorResponse(error); }
 }

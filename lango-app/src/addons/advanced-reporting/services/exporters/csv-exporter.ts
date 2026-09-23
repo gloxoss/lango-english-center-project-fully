@@ -1,3 +1,4 @@
+import { csvSafeCell } from '@/libs/csv-safe';
 import type { ColumnDefinition } from '../../types/reporting-types';
 
 export class CsvExporter {
@@ -35,9 +36,6 @@ export class CsvExporter {
   }
 
   private static escapeCsvCell(val: string): string {
-    if (val.includes(',') || val.includes('"') || val.includes('\n')) {
-      return `"${val.replace(/"/g, '""')}"`;
-    }
-    return val;
+    return csvSafeCell(val);
   }
 }

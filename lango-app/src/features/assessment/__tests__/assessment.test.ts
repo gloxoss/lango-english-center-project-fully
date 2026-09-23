@@ -84,4 +84,32 @@ describe('Assessment & Examination System Invariants', () => {
       expect(isHomeworkVisibleToStudent(audiences, { studentId: 'stu-2', sectionId: null, offeringIds: ['off-3'] })).toBe(false);
     });
   });
+
+  describe('Homework document attachments & types support', () => {
+    it('supports PDF, Word (.docx, .doc), and images in contentTypeFor', async () => {
+      const { contentTypeFor } = await import('@/libs/api/uploads');
+      expect(contentTypeFor('pdf')).toBe('application/pdf');
+      expect(contentTypeFor('.pdf')).toBe('application/pdf');
+      expect(contentTypeFor('docx')).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      expect(contentTypeFor('.docx')).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      expect(contentTypeFor('doc')).toBe('application/msword');
+      expect(contentTypeFor('.doc')).toBe('application/msword');
+      expect(contentTypeFor('png')).toBe('image/png');
+      expect(contentTypeFor('jpg')).toBe('image/jpeg');
+      expect(contentTypeFor('jpeg')).toBe('image/jpeg');
+    });
+
+    it('HomeworkService has updateHomework, deleteHomework, and getHomeworkById methods', async () => {
+      const { HomeworkService } = await import('../services/homework-service');
+      expect(typeof HomeworkService.updateHomework).toBe('function');
+      expect(typeof HomeworkService.deleteHomework).toBe('function');
+      expect(typeof HomeworkService.getHomeworkById).toBe('function');
+      expect(typeof HomeworkService.createHomework).toBe('function');
+    });
+
+    it('TeacherQuestionBankService has seedDefaultTemplates method', async () => {
+      const { TeacherQuestionBankService } = await import('../services/teacher-question-bank-service');
+      expect(typeof TeacherQuestionBankService.seedDefaultTemplates).toBe('function');
+    });
+  });
 });

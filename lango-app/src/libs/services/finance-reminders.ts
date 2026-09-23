@@ -1,6 +1,8 @@
-import { and, desc, eq, inArray, lt, ne, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { ApiError } from '@/libs/api/errors';
+import { overdueInvoiceCondition } from '@/libs/finance/definitions';
+import { casablancaTodayIso } from '@/libs/finance/today';
 import {
   communicationCampaignRecipients,
   communicationCampaigns,
@@ -10,6 +12,7 @@ import {
   guardians,
   guardianStudents,
   invoices,
+  user,
 } from '@/models/Schema';
 import { processBroadcastQueue } from '@/features/broadcast/services/outbox-worker';
 
@@ -48,8 +51,18 @@ async function getGuardianContact(tenantId: string, studentIds: string[]): Promi
       isPrimaryContact: guardianStudents.isPrimaryContact,
     })
     .from(guardianStudents)
-    .innerJoin(guardians, eq(guardianStudents.guardianId, guardians.id))
-    .where(and(eq(guardianStudents.tenantId, tenantId), inArray(guardianStudents.studentId, studentIds)));
+    .innerJoin(guardians, and(eq(guardianStudents.guardianId, guardians.id), eq(guardians.tenantId, tenantId)))
+    .where(and(
+      eq(guardianStudents.tenantId, tenantId),
+      inArray(guardianStudents.studentId, studentIds),
+      eq(guardianStudents.status, 'active'),
+      eq(guardianStudents.canAccessCommunication, true),
+      isNull(guardianStudents.custodyRestriction),
+      eq(guardianStudents.sensitiveContactHidden, false),
+      or(isNull(guardianStudents.effectiveFrom), sql`${guardianStudents.effectiveFrom} <= now()`),
+      or(isNull(guardianStudents.effectiveTo), sql`${guardianStudents.effectiveTo} > now()`),
+      eq(guardians.smsOptIn, true),
+    ));
   for (const g of rows) {
     const existing = map.get(g.studentId);
     if (!existing || g.isPrimaryContact) {
@@ -77,12 +90,12 @@ export async function runFinanceReminderRule(tenantId: string, rule: Rule, actor
       dueDate: invoices.dueDate,
       netAmount: invoices.netAmount,
       paidAmount: invoices.paidAmount,
+      status: invoices.status,
     })
     .from(invoices)
     .where(and(
       eq(invoices.tenantId, tenantId),
-      ne(invoices.status, 'paid'),
-      lt(invoices.dueDate, asOfDate),
+      overdueInvoiceCondition(invoices.status, invoices.dueDate, asOfDate),
       sql`(${invoices.netAmount} - ${invoices.paidAmount}) >= ${rule.minBalance}`,
     ));
 
@@ -218,7 +231,7 @@ export async function runAllActiveFinanceReminders(tenantId: string, actorId: st
  * Broadcast pipeline (campaign → recipient → delivery via the outbox worker),
  * replacing the previous direct `sms_messages` insert.
  */
-export async function sendSingleInvoiceReminder(tenantId: string, invoiceId: string, actorId: string | null) {
+export async function sendSingleInvoiceReminder(tenantId: string, invoiceId: string, actorId: string | null, branchId: string | null = null) {
   const [invoice] = await db
     .select({
       id: invoices.id,
@@ -226,11 +239,24 @@ export async function sendSingleInvoiceReminder(tenantId: string, invoiceId: str
       studentId: invoices.studentId,
       netAmount: invoices.netAmount,
       paidAmount: invoices.paidAmount,
+      status: invoices.status,
+      dueDate: invoices.dueDate,
     })
     .from(invoices)
-    .where(and(eq(invoices.id, invoiceId), eq(invoices.tenantId, tenantId)))
+    .innerJoin(user, and(eq(invoices.studentId, user.id), eq(user.tenantId, tenantId)))
+    .where(and(
+      eq(invoices.id, invoiceId),
+      eq(invoices.tenantId, tenantId),
+      branchId ? eq(user.branchId, branchId) : undefined,
+    ))
     .limit(1);
   if (!invoice) throw new ApiError(404, 'NOT_FOUND', 'Facture introuvable.');
+
+  if (!['pending', 'partial', 'overdue'].includes(invoice.status)
+      || invoice.dueDate >= casablancaTodayIso()
+      || Number(invoice.netAmount) <= Number(invoice.paidAmount)) {
+    throw new ApiError(409, 'INVOICE_NOT_OVERDUE', 'Cette facture n’est plus échue et impayée. Actualisez les créances.');
+  }
 
   const contact = await getGuardianContact(tenantId, [invoice.studentId]);
   const guardian = contact.get(invoice.studentId);
@@ -288,8 +314,8 @@ export async function sendSingleInvoiceReminder(tenantId: string, invoiceId: str
     invoiceNumber: invoice.invoiceNumber,
     recipientPhone: guardian.phone,
     body,
-    status: delivery?.status ?? 'sent',
-    sentAt: new Date().toISOString(),
+    status: delivery?.status ?? 'queued',
+    sentAt: delivery?.status === 'sent' || delivery?.status === 'delivered' ? new Date().toISOString() : null,
   };
 }
 

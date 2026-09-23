@@ -46,7 +46,7 @@ export function SessionCreateForm(props: {
   const startDefault = toLocalInput(nextHour());
   const endDefault = toLocalInput(new Date(nextHour().getTime() + 60 * 60 * 1000));
 
-  const [providerProfileId, setProviderProfileId] = useState('');
+  const [providerProfileId, setProviderProfileId] = useState(props.profiles[0]?.id ?? '');
   const [classSectionId, setClassSectionId] = useState('');
   const [classSubjectId, setClassSubjectId] = useState('');
   const [teacherUserId, setTeacherUserId] = useState(props.defaultTeacherId ?? '');

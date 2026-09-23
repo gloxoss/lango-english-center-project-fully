@@ -4,8 +4,13 @@ import { NextResponse } from 'next/server';
 import { requireRequestContext } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
+import {
+  collectedPaymentCondition,
+  overdueInvoiceCondition,
+} from '@/libs/finance/definitions';
+import { casablancaTodayIso } from '@/libs/finance/today';
 import { db } from '@/libs/DB';
-import { cashierSessions, expenses, invoices, payments } from '@/models/Schema';
+import { cashierSessions, expenses, invoices, payments, user } from '@/models/Schema';
 
 export async function GET(req: NextRequest) {
   try {
@@ -14,41 +19,56 @@ export async function GET(req: NextRequest) {
 
     const tenantId = ctx.tenantId!;
     const userId = ctx.userId;
-    const today = new Date().toISOString().split('T')[0]!;
+    const today = casablancaTodayIso();
 
-    // 1. Payments collected today (cash vs non-cash)
+    // Branch scope (visual runtime audit item 1): a branch-scoped accountant
+    // sees their campus only, via the same money-follows-the-student rule as
+    // the dashboard.
+    const branchFilter = ctx.branchId ? eq(user.branchId, ctx.branchId) : undefined;
+
+    // 1. Payments collected today (cash vs non-cash) — posted only, refunds
+    // netted per payment (same correlated-subquery shape as netCollectedSumSql)
+    // so a partially refunded payment contributes what the school kept.
+    const netOfRefunds = sql`(${payments.amount} - coalesce((select sum(r.amount) from refunds r where r.payment_id = "payments"."id" and r.tenant_id = "payments"."tenant_id" and r.status = 'approved'), 0))`;
     const [paymentsToday] = await db
       .select({
-        totalCash: sql<number>`coalesce(sum(case when ${payments.paymentMethod} = 'cash' then ${payments.amount} else 0 end), 0)`,
-        totalOnline: sql<number>`coalesce(sum(case when ${payments.paymentMethod} != 'cash' then ${payments.amount} else 0 end), 0)`,
-        totalCount: sql<number>`count(*)`,
+        totalCash: sql<string>`coalesce(sum(case when ${payments.paymentMethod} = 'cash' then ${netOfRefunds} else 0 end), 0)::numeric::text`,
+        totalOnline: sql<string>`coalesce(sum(case when ${payments.paymentMethod} != 'cash' then ${netOfRefunds} else 0 end), 0)::numeric::text`,
+        totalCount: sql<number>`count(*)::int`,
       })
       .from(payments)
+      .innerJoin(user, eq(payments.studentId, user.id))
       .where(
         and(
           eq(payments.tenantId, tenantId),
+          collectedPaymentCondition(payments.status),
           sql`date(${payments.paymentDate}) = ${today}::date`,
+          branchFilter,
         ),
       );
 
-    // 2. Overdue invoices count & sum
+    // 2. Overdue invoices count & sum — the authoritative definition: still
+    // owed (pending/partial/overdue) AND past due date. Drafts/credited/
+    // cancelled are never chased.
     const [overdueSummary] = await db
       .select({
-        count: sql<number>`count(*)`,
-        totalAmount: sql<number>`coalesce(sum(${invoices.amount} - ${invoices.paidAmount}), 0)`,
+        count: sql<number>`count(*)::int`,
+        totalAmount: sql<string>`coalesce(sum(${invoices.netAmount} - ${invoices.paidAmount}), 0)::numeric::text`,
       })
       .from(invoices)
+      .innerJoin(user, eq(invoices.studentId, user.id))
       .where(
         and(
           eq(invoices.tenantId, tenantId),
-          sql`${invoices.status} in ('pending', 'overdue', 'partial')`,
+          overdueInvoiceCondition(invoices.status, invoices.dueDate, today),
+          branchFilter,
         ),
       );
 
     // 3. Total expenses recorded
     const [expenseSummary] = await db
       .select({
-        count: sql<number>`count(*)`,
+        count: sql<number>`count(*)::int`,
       })
       .from(expenses)
       .where(eq(expenses.tenantId, tenantId));

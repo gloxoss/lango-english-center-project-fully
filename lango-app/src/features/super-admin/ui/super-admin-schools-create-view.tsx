@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
@@ -16,17 +16,27 @@ export function SuperAdminSchoolsCreateView({ locale }: { locale: string }) {
   const [name, setName] = useState('');
   const [adminName, setAdminName] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
-  const [planTier, setPlanTier] = useState<'trial' | 'basic' | 'standard' | 'premium'>('trial');
+  const [planTier, setPlanTier] = useState<string>('trial');
+  const [availablePlans, setAvailablePlans] = useState<Array<{ planTier: string; label: string; priceMonthly: number; currency: string }>>([
+    { planTier: 'trial', label: 'Essai', priceMonthly: 0, currency: 'MAD' },
+    { planTier: 'basic', label: 'Basique', priceMonthly: 490, currency: 'MAD' },
+    { planTier: 'standard', label: 'Standard', priceMonthly: 990, currency: 'MAD' },
+    { planTier: 'premium', label: 'Premium', priceMonthly: 1990, currency: 'MAD' },
+  ]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ tempPassword: string; adminEmail: string } | null>(null);
 
-  const planLabels: Record<'trial' | 'basic' | 'standard' | 'premium', string> = {
-    trial: locale === 'ar' ? 'تجريبي' : locale === 'en' ? 'Trial' : 'Essai',
-    basic: locale === 'ar' ? 'أساسي' : locale === 'en' ? 'Basic' : 'Basique',
-    standard: locale === 'ar' ? 'قياسي' : 'Standard',
-    premium: locale === 'ar' ? 'مميز' : 'Premium',
-  };
+  useEffect(() => {
+    fetch('/api/super-admin/plans')
+      .then(r => r.json())
+      .then(j => {
+        if (j.success && Array.isArray(j.data?.plans) && j.data.plans.length > 0) {
+          setAvailablePlans(j.data.plans);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleCreate() {
     if (!name || !adminName || !adminEmail) {
@@ -109,13 +119,18 @@ export function SuperAdminSchoolsCreateView({ locale }: { locale: string }) {
         </div>
         <div>
           <label className="text-xs font-bold text-slate-700">{t('pricingPlanField')}</label>
-          <Select value={planTier} onValueChange={v => setPlanTier(v as typeof planTier)}>
-            <SelectTrigger className="mt-1 text-xs"><SelectValue placeholder={planLabels[planTier]}>{planLabels[planTier]}</SelectValue></SelectTrigger>
+          <Select value={planTier} onValueChange={v => setPlanTier(v)}>
+            <SelectTrigger className="mt-1 text-xs">
+              <SelectValue placeholder={availablePlans.find(p => p.planTier === planTier)?.label ?? planTier}>
+                {availablePlans.find(p => p.planTier === planTier)?.label ?? planTier}
+              </SelectValue>
+            </SelectTrigger>
             <SelectContent>
-              <SelectItem value="trial">{planLabels.trial}</SelectItem>
-              <SelectItem value="basic">{planLabels.basic}</SelectItem>
-              <SelectItem value="standard">{planLabels.standard}</SelectItem>
-              <SelectItem value="premium">{planLabels.premium}</SelectItem>
+              {availablePlans.map(p => (
+                <SelectItem key={p.planTier} value={p.planTier}>
+                  {p.label} {p.priceMonthly > 0 ? `(${p.priceMonthly} ${p.currency}/mois)` : '(Gratuit)'}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

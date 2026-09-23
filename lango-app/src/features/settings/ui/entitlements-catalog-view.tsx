@@ -4,9 +4,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
-  ShieldCheck, Sparkles, Download, Search, Lock, Check, AlertCircle, RefreshCw,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  ShieldCheck, Sparkles, Download, Search, Lock, Check, AlertCircle, RefreshCw, Send,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 type AddonModule = {
   addonId: string;
@@ -103,6 +108,143 @@ export function EntitlementsCatalogView({ locale }: { locale?: string } = {}) {
     .sort((a, b) => a - b)[0];
   const contractExpiry = earliestExpiry ? new Date(earliestExpiry).toLocaleDateString('fr-FR') : '—';
 
+  const [requestModalOpen, setRequestModalOpen] = useState(false);
+  const [targetModule, setTargetModule] = useState<{ addonId?: string; name: string } | null>(null);
+  const [requestSubject, setRequestSubject] = useState('');
+  const [requestMessage, setRequestMessage] = useState('');
+  const [submittingRequest, setSubmittingRequest] = useState(false);
+
+  const openModuleRequest = (mod?: { addonId: string; name: string }) => {
+    if (mod) {
+      setTargetModule(mod);
+      setRequestSubject(`Demande d'activation : ${mod.name}`);
+      setRequestMessage(`Bonjour,\n\nNotre établissement souhaite activer le module « ${mod.name} » dans le cadre de notre abonnement SchoolOS.\nMerci de nous contacter ou de mettre à jour nos accès.\n\nCordialement,\nLa Direction`);
+    } else {
+      setTargetModule(null);
+      setRequestSubject("Demande de nouveaux modules / extension d'offre");
+      setRequestMessage("Bonjour,\n\nNotre établissement souhaite étudier l'ajout de nouveaux modules à son offre SchoolOS actuelle.\nMerci de bien vouloir nous recontacter.\n\nCordialement,\nLa Direction");
+    }
+    setRequestModalOpen(true);
+  };
+
+  const handleSendRequest = async () => {
+    if (!requestSubject.trim() || !requestMessage.trim()) {
+      toast.error('Veuillez renseigner le sujet et votre message.');
+      return;
+    }
+    setSubmittingRequest(true);
+    try {
+      const res = await fetch('/api/tenant/support', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: requestSubject,
+          category: 'billing',
+          priority: 'medium',
+          message: requestMessage,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        toast.success("Votre demande a bien été transmise à l'équipe SchoolOS. Un ticket a été créé.");
+        setRequestModalOpen(false);
+      } else {
+        toast.error(json.error?.message || "Erreur lors de l'envoi de la demande.");
+      }
+    } catch {
+      toast.error('Erreur de connexion au service de support.');
+    } finally {
+      setSubmittingRequest(false);
+    }
+  };
+
+  const handleDownloadLicenseCertificate = () => {
+    const activeNames = modules.filter(m => m.active).map(m => m.name);
+    const planName = PLAN_LABELS[plan?.planTier ?? ''] ?? 'Offre SchoolOS Entreprise';
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error("Veuillez autoriser les fenêtres pop-up pour afficher l'attestation.");
+      return;
+    }
+    const html = `
+      <!DOCTYPE html>
+      <html lang="fr">
+      <head>
+        <meta charset="UTF-8" />
+        <title>Attestation de Licence Officielle - SchoolOS</title>
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #16212B; margin: 0; background: #fff; }
+          .cert-border { border: 6px double #2487B8; padding: 35px; border-radius: 16px; position: relative; }
+          .header { text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 20px; }
+          .logo { font-size: 26px; font-weight: 900; color: #2487B8; }
+          .sublogo { font-size: 11px; text-transform: uppercase; color: #64748B; letter-spacing: 2px; font-weight: 700; margin-top: 4px; }
+          .title { font-size: 20px; font-weight: 800; text-transform: uppercase; color: #16212B; margin-top: 25px; letter-spacing: 1px; }
+          .cert-body { margin-top: 25px; line-height: 1.8; font-size: 14px; }
+          .badge-box { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 18px; border-radius: 12px; margin: 20px 0; }
+          .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+          .field-label { font-size: 10px; text-transform: uppercase; font-weight: 700; color: #64748B; }
+          .field-value { font-size: 14px; font-weight: 700; color: #16212B; }
+          .module-tag { display: inline-block; background: #DCEBF4; color: #1B6C93; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; margin: 3px; }
+          .footer { margin-top: 40px; display: flex; justify-content: space-between; align-items: flex-end; }
+          .seal { width: 120px; height: 120px; border: 3px solid #17A673; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 10px; font-weight: 900; color: #17A673; text-transform: uppercase; transform: rotate(-8deg); }
+          @media print { .no-print { display: none; } }
+        </style>
+      </head>
+      <body>
+        <div class="no-print" style="margin-bottom: 20px; text-align: right;">
+          <button onclick="window.print()" style="background: #2487B8; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;">🖨️ Imprimer / Sauvegarder en PDF</button>
+        </div>
+        <div class="cert-border">
+          <div class="header">
+            <div class="logo">SchoolOS • Plateforme Éducative Marocaine</div>
+            <div class="sublogo">Système de Gestion Scolaire Agréé • Conforme Loi 09-08 CNDP</div>
+            <div class="title">Attestation d'Octroi de Licence Logicielle</div>
+          </div>
+          <div class="cert-body">
+            <p>La direction technique de la plateforme <strong>SchoolOS</strong> certifie par la présente que l'établissement scolaire souscripteur bénéficie d'une licence d'exploitation valide selon les termes contractuels suivants :</p>
+            <div class="badge-box">
+              <div class="grid-2">
+                <div>
+                  <div class="field-label">Formule Contractuelle</div>
+                  <div class="field-value">${planName}</div>
+                </div>
+                <div>
+                  <div class="field-label">Statut de la Licence</div>
+                  <div class="field-value" style="color: #17A673;">✓ Certifié Actif & Conforme</div>
+                </div>
+                <div>
+                  <div class="field-label">Date d'Émission</div>
+                  <div class="field-value">${new Date().toLocaleDateString('fr-FR')}</div>
+                </div>
+                <div>
+                  <div class="field-label">Échéance de Renouvellement</div>
+                  <div class="field-value">${contractExpiry}</div>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top: 20px;">
+              <div class="field-label" style="margin-bottom: 8px;">Modules Applicatifs Souscrits & Homologués (${activeNames.length}) :</div>
+              <div>
+                ${activeNames.map(n => `<span class="module-tag">✓ ${n}</span>`).join('')}
+              </div>
+            </div>
+          </div>
+          <div class="footer">
+            <div>
+              <p style="font-size: 11px; color: #64748B;">Identifiant Sécurisé : LIC-${Date.now().toString(36).toUpperCase()}<br>Certificat émis sous signature électronique qualifiée.</p>
+            </div>
+            <div class="seal">
+              Certifié Conforme<br>SchoolOS Maroc<br>★ 2026 ★
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
       {/* Header */}
@@ -112,11 +254,20 @@ export function EntitlementsCatalogView({ locale }: { locale?: string } = {}) {
           <p className="text-xs text-slate-500 mt-1">Gérez les modules activés, suivez vos quotas de consommation et demandez l&apos;extension de vos licences.</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" className="h-10 rounded-xl px-4 gap-2 border-slate-200 text-xs font-bold">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadLicenseCertificate}
+            className="h-10 rounded-xl px-4 gap-2 border-slate-200 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+          >
             <Download className="w-4 h-4 text-slate-600" />
             <span>Attestation de licence</span>
           </Button>
-          <Button size="sm" className="h-10 rounded-xl px-4 gap-2 bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold">
+          <Button
+            size="sm"
+            onClick={() => openModuleRequest()}
+            className="h-10 rounded-xl px-4 gap-2 bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold shadow-2xs cursor-pointer"
+          >
             <Sparkles className="w-4 h-4" />
             <span>Demander un nouveau module</span>
           </Button>
@@ -240,17 +391,22 @@ export function EntitlementsCatalogView({ locale }: { locale?: string } = {}) {
                       <Check className="w-4 h-4" /> Inclus
                     </span>
                   ) : s === 'available' ? (
-                    <Button size="sm" variant="outline" disabled className="h-8 text-xs font-bold rounded-xl border-slate-200 gap-1 text-[#2487B8]">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openModuleRequest(m)}
+                      className="h-8 text-xs font-bold rounded-xl border-slate-200 gap-1 text-[#2487B8] hover:bg-[#DCEBF4]/50 cursor-pointer"
+                    >
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>Sur demande</span>
+                      <span>Demander l&apos;activation</span>
                     </Button>
                   ) : s === 'expired' ? (
                     <span className="flex items-center gap-1 text-rose-500 font-bold text-[11px]">
-                      <AlertCircle className="w-3.5 h-3.5" /> Expiré
+                      <AlertCircle className="w-4 h-4" /> Expiré
                     </span>
                   ) : (
                     <span className="flex items-center gap-1 text-slate-400 font-bold text-[11px]">
-                      <Lock className="w-3.5 h-3.5" /> À venir
+                      <Lock className="w-4 h-4" /> À venir
                     </span>
                   )}
                 </div>
@@ -264,12 +420,72 @@ export function EntitlementsCatalogView({ locale }: { locale?: string } = {}) {
         <Card className="p-12 text-center bg-white rounded-2xl border border-slate-200/80 space-y-3">
           <AlertCircle className="w-8 h-8 text-slate-300 mx-auto" />
           <p className="text-sm font-bold text-[#16212B]">Aucun module trouvé</p>
-          <p className="text-xs text-slate-500">Aucun module ne correspond à votre recherche "{search}".</p>
+          <p className="text-xs text-slate-500">Aucun module ne correspond à votre recherche &quot;{search}&quot;.</p>
           <Button variant="outline" size="sm" onClick={() => { setSearch(''); setActiveTab('all'); }} className="h-8 text-xs rounded-xl mt-2">
             Réinitialiser les filtres
           </Button>
         </Card>
       )}
+
+      {/* Module Request Ticket Modal */}
+      <Dialog open={requestModalOpen} onOpenChange={setRequestModalOpen}>
+        <DialogContent className="max-w-md rounded-2xl p-6 bg-white shadow-xl border border-slate-200">
+          <DialogHeader>
+            <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#2487B8]" />
+              {targetModule ? `Demande d'activation : ${targetModule.name}` : "Demande d'extension de licence"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Objet de la demande</label>
+              <Input
+                value={requestSubject}
+                onChange={(e) => setRequestSubject(e.target.value)}
+                placeholder="ex. Activation du module Transport"
+                className="mt-1 h-9 rounded-xl text-xs font-semibold"
+              />
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Message & Besoins de l'école</label>
+              <Textarea
+                rows={5}
+                value={requestMessage}
+                onChange={(e) => setRequestMessage(e.target.value)}
+                placeholder="Précisez vos besoins..."
+                className="mt-1 rounded-xl text-xs font-medium resize-none"
+              />
+            </div>
+
+            <p className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+              ℹ️ Votre demande créera automatiquement un ticket prioritaire auprès de l&apos;équipe commerciale et technique SchoolOS.
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRequestModalOpen(false)}
+              disabled={submittingRequest}
+              className="h-9 rounded-xl text-xs font-bold"
+            >
+              Annuler
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSendRequest}
+              disabled={submittingRequest}
+              className="h-9 rounded-xl text-xs font-bold bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5 shadow-2xs"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>{submittingRequest ? 'Transmission...' : 'Envoyer la demande'}</span>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

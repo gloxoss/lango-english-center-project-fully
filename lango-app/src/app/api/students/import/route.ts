@@ -1,14 +1,17 @@
-import { logger } from '@/libs/logger';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { assertStudentCapacity } from '@/features/subscriptions/services/plan-limits-service';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, studentImportSchema } from '@/libs/api/validation';
-import { assertStudentCapacity } from '@/features/subscriptions/services/plan-limits-service';
 import { db } from '@/libs/DB';
+import { logger } from '@/libs/logger';
+import { reserveMatricule } from '@/libs/services/matricule';
 import { classes, classSections, sections, user } from '@/models/Schema';
+
+const MASSAR_CODE_REGEX = /^[A-Z]\d{9}$/i;
 
 function normalizeLabel(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -45,6 +48,41 @@ export async function POST(request: Request) {
         const id = `STU-${Date.now()}-${index}`;
         const classSectionId = row.classLabel ? labelToClassSectionId.get(normalizeLabel(row.classLabel)) ?? null : null;
 
+        // Authoritative sequential matricule: use provided or generate via reserveMatricule
+        let matricule = row.matricule?.trim() || null;
+        if (!matricule) {
+          matricule = await reserveMatricule(db, tenantId);
+        } else {
+          // If provided, verify no duplicate inside this tenant
+          const [dupMat] = await db
+            .select({ id: user.id })
+            .from(user)
+            .where(and(eq(user.tenantId, tenantId), eq(user.role, 'student'), eq(user.matricule, matricule)))
+            .limit(1);
+          if (dupMat) {
+            results.push({ line, status: 'error', message: `Matricule "${matricule}" déjà utilisé dans cet établissement.` });
+            continue;
+          }
+        }
+
+        // Code Massar validation & normalization
+        const cleanMassar = (row.codeMassar || row.nationalId)?.trim().toUpperCase() || null;
+        if (cleanMassar) {
+          if (!MASSAR_CODE_REGEX.test(cleanMassar)) {
+            results.push({ line, status: 'error', message: `Code Massar "${cleanMassar}" invalide (format attendu : 1 lettre + 9 chiffres).` });
+            continue;
+          }
+          const [dupMassar] = await db
+            .select({ id: user.id })
+            .from(user)
+            .where(and(eq(user.tenantId, tenantId), eq(user.role, 'student'), eq(user.nationalId, cleanMassar)))
+            .limit(1);
+          if (dupMassar) {
+            results.push({ line, status: 'error', message: `Code Massar "${cleanMassar}" déjà attribué dans cet établissement.` });
+            continue;
+          }
+        }
+
         const [inserted] = await db
           .insert(user)
           .values({
@@ -52,6 +90,8 @@ export async function POST(request: Request) {
             tenantId,
             branchId: context.branchId || null,
             name: row.fullName,
+            matricule,
+            nationalId: cleanMassar,
             email: row.email || `${id.toLowerCase()}@placeholder.local`,
             role: 'student',
             classSectionId,
@@ -63,7 +103,7 @@ export async function POST(request: Request) {
           })
           .returning({ id: user.id });
 
-        recordAudit(context, 'create', 'student', inserted!.id, { source: 'import', line });
+        recordAudit(context, 'create', 'student', inserted!.id, { source: 'import', line, matricule, nationalId: cleanMassar });
         results.push({ line, status: 'inserted', id: inserted!.id });
       } catch (err) {
         logger.error({ err, line }, 'Import row failed');

@@ -1,4 +1,5 @@
-// Inbound provider webhook for delivery status (delivered/bounced/complained).
+// Inbound provider webhook for delivery status (delivered/bounced/complained)
+// and STOP replies (opt-out suppression).
 // Signature + timestamp verification with replay protection; state updates are
 // append-only via communication_delivery_events and restricted to valid
 // transitions, so a replayed or late webhook is a no-op rather than an error.
@@ -7,6 +8,7 @@ import { NextResponse } from 'next/server';
 import { and, eq, sql } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { handleInboundStop, isStopKeyword } from '@/features/broadcast/services/inbound-stop';
 import {
   communicationDeliveries,
   communicationDeliveryEvents,
@@ -14,7 +16,12 @@ import {
 
 type Ctx = { params: Promise<{ provider: string }> };
 
-const HMAC_SECRET = process.env.WEBHOOK_SIGNING_KEY || process.env.BETTER_AUTH_SECRET || 'schoolos-webhook-secret-sentinel';
+// No literal fallback: a public default secret would let anyone forge
+// delivery and STOP events. Unset key => every webhook is rejected.
+function signingSecret(): string | null {
+  return process.env.WEBHOOK_SIGNING_KEY || process.env.BETTER_AUTH_SECRET || null;
+}
+
 const MAX_AGE_MS = 5 * 60 * 1000;
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -35,7 +42,9 @@ function timingSafeEqualHex(a: string, b: string): boolean {
 
 function verifySignature(request: Request, rawBody: string, ts: string, signature: string): boolean {
   if (!signature.startsWith('sha256=')) return false;
-  const expected = crypto.createHmac('sha256', HMAC_SECRET).update(`${ts}.${rawBody}`).digest('hex');
+  const secret = signingSecret();
+  if (!secret) return false;
+  const expected = crypto.createHmac('sha256', secret).update(`${ts}.${rawBody}`).digest('hex');
   return timingSafeEqualHex(signature.slice('sha256='.length), expected);
 }
 
@@ -58,11 +67,26 @@ export async function POST(request: Request, { params }: Ctx) {
     }
 
     const event = JSON.parse(rawBody) as {
+      type?: string;
+      from?: string;
+      text?: string;
       providerRef?: string;
       status?: string;
       timestamp?: string;
       id?: string;
     };
+
+    if (event.type === 'inbound') {
+      if (!event.from || typeof event.text !== 'string') {
+        return NextResponse.json({ success: false, error: 'unprocessable' }, { status: 422 });
+      }
+      if (!isStopKeyword(event.text)) {
+        return NextResponse.json({ success: true, data: { inbound: 'ignored' } });
+      }
+      const suppressedTenants = await handleInboundStop(event.from, provider);
+      return NextResponse.json({ success: true, data: { inbound: 'stop', suppressedTenants } });
+    }
+
     const status = (event.status ?? '').toLowerCase();
     if (!event.providerRef || !['sent', 'delivered', 'bounced', 'complained'].includes(status)) {
       return NextResponse.json({ success: false, error: 'unprocessable' }, { status: 422 });

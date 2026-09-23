@@ -116,6 +116,11 @@ export async function GET(request: Request) {
 
     const studentId = searchParams.get('studentId');
 
+    // Security audit P1-A: a branch-scoped director/accountant sees only their
+    // campus. Money follows the student's CURRENT branch (same rule as the
+    // dashboard summary), so the filter rides the student join.
+    const branchFilter = context.branchId ? eq(user.branchId, context.branchId) : undefined;
+
     const rows = await db
       .select({
         id: invoices.id,
@@ -138,7 +143,11 @@ export async function GET(request: Request) {
       .leftJoin(classSections, eq(user.classSectionId, classSections.id))
       .leftJoin(classes, eq(classSections.classId, classes.id))
       .leftJoin(sections, eq(classSections.sectionId, sections.id))
-      .where(studentId ? and(eq(invoices.tenantId, tenantId), eq(invoices.studentId, studentId)) : eq(invoices.tenantId, tenantId));
+      .where(and(
+        eq(invoices.tenantId, tenantId),
+        studentId ? eq(invoices.studentId, studentId) : undefined,
+        branchFilter,
+      ));
 
     // One extra query to resolve a primary-guardian display name per student,
     // same "resolve names in one extra query, not N+1" pattern as

@@ -32,7 +32,7 @@ const decideRefundSchema = z.object({
 
 export async function GET(req: NextRequest) {
   try {
-    const ctx = await requireRequestContext(req);
+    const ctx = await requireRequestContext(req, ['school_admin', 'accountant']);
     await requireCapability(ctx, 'finance.read');
 
     const { searchParams } = new URL(req.url);
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
       .from(refunds)
       .innerJoin(user, eq(refunds.studentId, user.id))
       .where(and(...conditions))
-      .orderBy(desc(refunds.createdAt));
+      .orderBy(desc(refunds.createdAt)).limit(200);
 
     return NextResponse.json({ success: true, data: records });
   } catch (error) {
@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const ctx = await requireRequestContext(req);
+    const ctx = await requireRequestContext(req, ['school_admin', 'accountant']);
     // Propose: finance.manage (accountant has this). Whether it lands
     // pending or auto-approved depends on whether the creator can also
     // approve - same pattern as credit notes, not a second capability gate.
@@ -138,7 +138,7 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const ctx = await requireRequestContext(req);
+    const ctx = await requireRequestContext(req, ['school_admin', 'accountant']);
     await requireCapability(ctx, 'finance.approve');
     const body = await parseJson(req, decideRefundSchema);
 

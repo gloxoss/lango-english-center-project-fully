@@ -1,6 +1,8 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import {
+  admissionInterviews,
+  applicants,
   classes,
   classScheduleSlots,
   classSections,
@@ -162,6 +164,64 @@ export async function fetchScheduleByRoomLabel(
     } else {
       byLabel.set(key, [entry]);
     }
+  }
+
+  // Also integrate active scheduled admission interviews for room reservation
+  try {
+    const interviewRows = await db
+      .select({
+        location: admissionInterviews.location,
+        scheduledAt: admissionInterviews.scheduledAt,
+        applicantFirstName: applicants.firstName,
+        applicantLastName: applicants.lastName,
+      })
+      .from(admissionInterviews)
+      .innerJoin(applicants, eq(applicants.id, admissionInterviews.applicantId))
+      .where(
+        and(
+          eq(admissionInterviews.tenantId, tenantId),
+          eq(admissionInterviews.status, 'scheduled'),
+        ),
+      );
+
+    const nowIsoDay = new Date().toISOString().slice(0, 10);
+
+    for (const interview of interviewRows) {
+      if (!interview.location || !interview.scheduledAt) continue;
+      const key = normalizeLabel(interview.location);
+      if (!key) continue;
+
+      const interviewDate = new Date(interview.scheduledAt);
+      if (isNaN(interviewDate.getTime())) continue;
+
+      const interviewDay = interviewDate.toISOString().slice(0, 10);
+      const isToday = interviewDay === nowIsoDay;
+      const matchesWeekday = weekdayOf(interviewDate) === weekday;
+
+      if (!isToday && !matchesWeekday) continue;
+
+      const startH = String(interviewDate.getHours()).padStart(2, '0');
+      const startM = String(interviewDate.getMinutes()).padStart(2, '0');
+      const endH = String(Math.min(23, interviewDate.getHours() + 1)).padStart(2, '0');
+      const startTime = `${startH}:${startM}`;
+      const endTime = `${endH}:${startM}`;
+
+      const entry: RoomScheduleEntry = {
+        time: `${startTime} - ${endTime}`,
+        course: `Entretien : ${interview.applicantFirstName} ${interview.applicantLastName}`,
+        startTime,
+        endTime,
+      };
+
+      const existing = byLabel.get(key);
+      if (existing) {
+        existing.push(entry);
+      } else {
+        byLabel.set(key, [entry]);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to attach admission interview schedule to rooms', err);
   }
 
   return byLabel;

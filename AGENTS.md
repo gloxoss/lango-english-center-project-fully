@@ -2,15 +2,17 @@
 
 > **MANDATORY FOR ALL AI AGENTS**: Read this document first. This repository is **SchoolOS**, a multi-tenant Moroccan school management platform. All logic, database tables, and API routes are strictly regulated by the rules below.
 
+> **MULTI-AGENT RULE**: Other agents edit this working tree at the same time. Before changing any file, join the Agent Hub and claim your work: read `.agent-hub/PROTOCOL.md`, then run `node .agent-hub/hub.mjs join --agent <tool>-<n> --tool <tool>`. Claim files before editing, log finished work with proof (`hub.mjs done`), and never run `git stash`, `git reset --hard`, `git checkout -- <file>` or `git clean` here. App context for agents: `.agent-hub/CONTEXT.md`.
+
 # SchoolOS Ground Truth & System Knowledge Graph
 
-**Generated:** 2026-09-12T14:03:39.557Z  
+**Generated:** 2026-09-16T15:22:32.232Z  
 **Scope:** Complete Moroccan School Management & Multi-Tenant Platform Architecture  
 **Ground Truth Stats:**
-- **Total Graph Nodes:** 2083
-- **Total Architectural Edges:** 1211
+- **Total Graph Nodes:** 2087
+- **Total Architectural Edges:** 1214
 - **Database Tables:** 420
-- **API Endpoints:** 794
+- **API Endpoints:** 798
 - **Dashboard & Portal Pages:** 344
 - **Core Subsystems:** 16
 
@@ -92,9 +94,9 @@
   - `/dashboard/academics/syllabus`
   - `/dashboard/academics/teacher-availability`
   - `/dashboard/academics/teacher-schedule`
-- **API Routes (68):**  
+- **API Routes (71):**  
   - `GET /api/academics/academic-years`
-  - `GET /api/academics/assessment-definitions`
+  - `GET|POST /api/academics/assessment-definitions`
   - `GET|POST /api/academics/assessment-plans`
   - `GET|POST /api/academics/assessment-sessions`
   - `GET|POST /api/academics/assessments`
@@ -125,6 +127,7 @@
   - `GET|POST /api/academics/homework/upload`
   - `GET /api/academics/homework/[id]/attempts`
   - `POST /api/academics/homework/[id]/grade`
+  - `GET|PUT|DELETE /api/academics/homework/[id]`
   - `POST /api/academics/homework/[id]/submit`
   - `GET|POST|PUT|DELETE /api/academics/mediums`
   - `POST /api/academics/meeting-slots/book`
@@ -151,8 +154,10 @@
   - `GET|POST|PUT|DELETE /api/academics/streams`
   - `GET|POST|DELETE /api/academics/subject-teachers`
   - `GET|POST|PUT|DELETE /api/academics/subjects`
+  - `GET|POST /api/academics/syllabus`
   - `GET|POST|DELETE /api/academics/teacher-availability`
   - `GET|POST /api/academics/teacher-question-bank`
+  - `POST /api/academics/teacher-question-bank/seed`
   - `PUT|DELETE /api/academics/teacher-question-bank/[id]`
   - `POST /api/academics/timetable-conflicts/resolve`
   - `GET /api/academics/timetable-conflicts`
@@ -221,7 +226,7 @@
   - `/dashboard/students/promotions`
   - `/dashboard/students/transfers`
   - `/dashboard/students/[id]`
-- **API Routes (39):**  
+- **API Routes (40):**  
   - `GET /api/guard/students/search`
   - `GET /api/guard/students/[id]/pickups`
   - `GET /api/reception/pickups/students`
@@ -248,6 +253,7 @@
   - `GET /api/students/parents/[id]/payments`
   - `GET|PATCH /api/students/parents/[id]`
   - `GET|POST|PUT /api/students/photos`
+  - `POST /api/students/placements/auto`
   - `GET|POST /api/students/placements`
   - `GET /api/students/promotions/preview`
   - `GET|POST /api/students/promotions`
@@ -487,7 +493,7 @@
   - `salary_advance_transactions`
   - `employee_awards`
   - `employee_profile_edit_requests`
-- **Key Services:** `access-lifecycle-view`, `departments-view`, `designations-view`, `employee-wizard-view`, `personnel-playground`, `employee-profile-view`, `hr-overview-view`, `employee-portal-view`, `documents-service`, `employee-context`, `employee-id`, `employees-service`, `leave-requests`, `offboarding-service`, `organizations-service`, `payslips`, `profile-edit-requests`
+- **Key Services:** `access-lifecycle-view`, `departments-view`, `designations-view`, `employee-wizard-view`, `employee-directory-view`, `employee-profile-view`, `hr-overview-view`, `employee-portal-view`, `documents-service`, `employee-context`, `employee-id`, `employees-service`, `leave-requests`, `offboarding-service`, `organizations-service`, `payslips`, `profile-edit-requests`
 
 ---
 ### 2.7 WORKFORCE Subsystem

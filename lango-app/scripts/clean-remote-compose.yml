@@ -1,0 +1,90 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: schoolos-db
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-schoolos}
+      POSTGRES_USER: ${POSTGRES_USER:-schoolos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - schoolos_postgres_data:/var/lib/postgresql/data
+
+  clamav:
+    image: clamav/clamav:1.4
+    container_name: schoolos-clamav
+    restart: unless-stopped
+    volumes:
+      - schoolos_clamav_db:/var/lib/clamav
+    healthcheck:
+      test: ["CMD-SHELL", "clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+  app:
+    image: schoolos-app:latest
+    container_name: schoolos-app
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      clamav:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${APP_PORT:-3030}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-schoolos}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-schoolos}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required and must contain at least 32 characters}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      STRIPE_PLATFORM_SECRET_KEY: ${STRIPE_PLATFORM_SECRET_KEY:-}
+      STRIPE_PLATFORM_WEBHOOK_SECRET: ${STRIPE_PLATFORM_WEBHOOK_SECRET:-}
+      STRIPE_PLATFORM_PRICE_ID: ${STRIPE_PLATFORM_PRICE_ID:-}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+      CLAMAV_HOST: clamav
+      CLAMAV_PORT: "3310"
+      WAHA_ENDPOINT_URL: "http://schoolos-waha:3000"
+      WAHA_API_KEY: "${WAHA_API_KEY:-schoolos_waha_2026}"
+    volumes:
+      - schoolos_uploads:/app/uploads
+
+  migrate:
+    image: schoolos-migrate:latest
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-schoolos}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-schoolos}
+
+  waha:
+    image: devlikeapro/waha:latest
+    container_name: schoolos-waha
+    restart: unless-stopped
+    environment:
+      WHATSAPP_DEFAULT_ENGINE: NOWEB
+      WAHA_API_KEY: ${WAHA_API_KEY:-schoolos_waha_2026}
+      WAHA_DASHBOARD_ENABLED: "True"
+      WAHA_DASHBOARD_USERNAME: admin
+      WAHA_DASHBOARD_PASSWORD: ${WAHA_DASHBOARD_PASSWORD:-Admin123!}
+    ports:
+      - "127.0.0.1:3008:3000"
+    volumes:
+      - schoolos_waha_sessions:/app/.sessions
+
+volumes:
+  schoolos_postgres_data:
+  schoolos_uploads:
+  schoolos_clamav_db:
+  schoolos_waha_sessions:

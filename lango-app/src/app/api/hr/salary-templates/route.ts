@@ -1,5 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { recordAudit } from '@/libs/api/audit';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
@@ -137,6 +138,7 @@ export async function POST(request: Request) {
       return { template, components: createdComponents.map(c => c.component) };
     });
 
+    recordAudit(ctx, 'create', 'salary_template', String(result?.template?.id ?? 'template'), {});
     return NextResponse.json({ success: true, data: result }, { status: 201 });
   } catch (err) {
     return apiErrorResponse(err);

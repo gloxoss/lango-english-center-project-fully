@@ -1,5 +1,6 @@
 import { and, desc, eq, ilike, or } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { recordAudit } from '@/libs/api/audit';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
@@ -112,6 +113,7 @@ export async function POST(request: Request) {
       })
       .returning();
 
+    recordAudit(ctx, 'create', 'employee_profile', profile?.id ?? 'profile', {});
     return NextResponse.json({ success: true, data: profile }, { status: 201 });
   } catch (err) {
     return apiErrorResponse(err);

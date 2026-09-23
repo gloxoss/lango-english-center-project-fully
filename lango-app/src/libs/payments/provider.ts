@@ -44,6 +44,8 @@ export interface VerifyCallbackResult {
   status: GatewayCallbackStatus;
   amount: number;
   currency: string;
+  /** True when the event is validly signed but not one this provider acts on (e.g. a non-`checkout.session.completed` Stripe event). The callback route must acknowledge it WITHOUT changing session state. */
+  ignored?: boolean;
 }
 
 export interface PaymentGatewayProvider {

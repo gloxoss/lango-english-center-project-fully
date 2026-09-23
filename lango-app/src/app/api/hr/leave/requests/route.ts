@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { recordAudit } from '@/libs/api/audit';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
@@ -56,6 +57,7 @@ export async function POST(request: Request) {
       reason: body.reason,
     });
 
+    recordAudit(ctx, 'create', 'leave_request', leaveReq?.id ?? 'leave_request', {});
     return NextResponse.json({ success: true, data: leaveReq }, { status: 201 });
   } catch (err) {
     return apiErrorResponse(err);

@@ -73,7 +73,23 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-schoolos}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-schoolos}
 
+  waha:
+    image: devlikeapro/waha:latest
+    container_name: schoolos-waha
+    restart: unless-stopped
+    environment:
+      WHATSAPP_DEFAULT_ENGINE: NOWEB
+      WAHA_API_KEY: ${WAHA_API_KEY:?WAHA_API_KEY is required (rotate the old schoolos_waha_2026 key)}
+      WAHA_DASHBOARD_ENABLED: "True"
+      WAHA_DASHBOARD_USERNAME: admin
+      WAHA_DASHBOARD_PASSWORD: ${WAHA_DASHBOARD_PASSWORD:?WAHA_DASHBOARD_PASSWORD is required}
+    ports:
+      - "127.0.0.1:3008:3000"
+    volumes:
+      - schoolos_waha_sessions:/app/.sessions
+
 volumes:
   schoolos_postgres_data:
   schoolos_uploads:
   schoolos_clamav_db:
+  schoolos_waha_sessions:

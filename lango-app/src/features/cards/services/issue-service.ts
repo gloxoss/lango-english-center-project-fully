@@ -1,6 +1,7 @@
 import { and, desc, eq, isNotNull } from 'drizzle-orm';
 import { createHash, randomBytes } from 'node:crypto';
 import { ApiError } from '@/libs/api/errors';
+import { contentTypeFor, readUploadedFile } from '@/libs/api/uploads';
 import { hasAddon } from '@/libs/api/entitlements';
 import { getEffectiveValue } from '@/libs/settings/registry';
 import { db } from '@/libs/DB';
@@ -14,6 +15,7 @@ import {
 } from '@/features/cards/models/cards-schema';
 import { renderPdf } from '@/libs/document-studio/render';
 import type { DocumentTemplateSchema } from '@/libs/document-studio/types';
+import { mayUseStudentPhoto } from '@/features/students/services/media-consent';
 
 export type CardSubjectType = 'student' | 'employee' | 'exam_candidate';
 
@@ -52,6 +54,21 @@ export function templateRequiresPhoto(schemaJson: unknown): boolean {
   return false;
 }
 
+async function loadPhotoDataUri(tenantId: string, userId: string): Promise<string> {
+  const [row] = await db.select({ photoUrl: user.photoUrl, image: user.image }).from(user)
+    .where(and(eq(user.id, userId), eq(user.tenantId, tenantId)))
+    .limit(1);
+  if (row?.image?.startsWith('data:image/')) return row.image;
+  if (!row?.photoUrl) return '';
+  try {
+    const bytes = await readUploadedFile(tenantId, row.photoUrl);
+    const ext = row.photoUrl.split('.').pop() ?? 'jpg';
+    return `data:${contentTypeFor(ext)};base64,${bytes.toString('base64')}`;
+  } catch {
+    return '';
+  }
+}
+
 export async function resolveSubjectData(
   tenantId: string,
   subjectType: CardSubjectType,
@@ -76,7 +93,10 @@ export async function resolveSubjectData(
         program = [u.className ?? u.level, sec.label].filter(Boolean).join(' ');
       }
     }
-    const resolvedPhoto = u.photoUrl ? `/api/students/photos?id=${u.id}` : (u.image ?? '');
+    // CNDP: a guardian who refused media consent keeps the photo off the card;
+    // the card itself is still issued.
+    const photoAllowed = await mayUseStudentPhoto(tenantId, u.id);
+    const resolvedPhoto = !photoAllowed ? '' : u.photoUrl ? `/api/students/photos?id=${u.id}` : (u.image ?? '');
     return {
       subjectId: u.id,
       data: {
@@ -134,7 +154,8 @@ export async function resolveSubjectData(
   const [term] = await db.select().from(examTerms).where(eq(examTerms.id, seat.examTermId)).limit(1);
   const [hall] = await db.select().from(examHalls).where(eq(examHalls.id, seat.examHallId)).limit(1);
   const [firstName, lastName] = splitName(u?.name ?? '');
-  const resolvedPhoto = u?.photoUrl ? `/api/students/photos?id=${seat.studentId}` : (u?.image ?? '');
+  const examPhotoAllowed = await mayUseStudentPhoto(tenantId, seat.studentId);
+  const resolvedPhoto = !examPhotoAllowed ? '' : u?.photoUrl ? `/api/students/photos?id=${seat.studentId}` : (u?.image ?? '');
 
   return {
     subjectId: seat.studentId,
@@ -203,6 +224,9 @@ export async function issueDocument(params: IssueDocumentParams): Promise<Issued
   // If card template requires a photo, verify authoritative photo is present
   if (templateRequiresPhoto(version.schemaJson)) {
     const photoValue = data.photo?.trim();
+    if (!photoValue && subjectType !== 'employee' && !(await mayUseStudentPhoto(tenantId, resolvedSubjectId))) {
+      throw new ApiError(409, 'MEDIA_CONSENT_REFUSED', 'Le tuteur a refusé l\'utilisation de la photo (CNDP). Utilisez un modèle de carte sans photo.');
+    }
     if (!photoValue) {
       throw new ApiError(400, 'STUDENT_PHOTO_REQUIRED', 'Une photo d\'identité est requise pour émettre cette carte.');
     }
@@ -271,9 +295,12 @@ export async function issueDocument(params: IssueDocumentParams): Promise<Issued
 
   let pdfBase64: string | undefined;
   try {
+    // pdfme only accepts embedded images, so the stored photo is inlined as a
+    // data URI for rendering; the snapshot keeps the lightweight URL.
+    const photoDataUri = data.photo ? await loadPhotoDataUri(tenantId, resolvedSubjectId) : '';
     const pdf = await renderPdf({
       template: version.schemaJson as DocumentTemplateSchema,
-      inputs: [renderData],
+      inputs: [{ ...renderData, photo: photoDataUri, photoUrl: photoDataUri, image: photoDataUri }],
     });
     pdfBase64 = pdf.toString('base64');
   } catch (error) {

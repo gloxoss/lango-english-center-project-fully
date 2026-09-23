@@ -53,11 +53,30 @@ export function SuperAdminSubscriptionsListView({ locale: propLocale }: { locale
   const [issueMonths, setIssueMonths] = useState(12);
   const [confirmRevoke, setConfirmRevoke] = useState(false);
 
+  const [dynamicPlans, setDynamicPlans] = useState<Array<{ planTier: string; label: string }>>([
+    { planTier: 'trial', label: locale === 'ar' ? 'تجريبي' : locale === 'en' ? 'Trial' : 'Essai' },
+    { planTier: 'basic', label: locale === 'ar' ? 'أساسي' : locale === 'en' ? 'Basic' : 'Basique' },
+    { planTier: 'standard', label: locale === 'ar' ? 'قياسي' : 'Standard' },
+    { planTier: 'premium', label: locale === 'ar' ? 'مميز' : 'Premium' },
+  ]);
+
+  useEffect(() => {
+    fetch('/api/super-admin/plans')
+      .then(r => r.json())
+      .then(j => {
+        if (j.success && Array.isArray(j.data?.plans) && j.data.plans.length > 0) {
+          setDynamicPlans(j.data.plans);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const planLabels: Record<string, string> = {
     trial: locale === 'ar' ? 'تجريبي' : locale === 'en' ? 'Trial' : 'Essai',
     basic: locale === 'ar' ? 'أساسي' : locale === 'en' ? 'Basic' : 'Basique',
     standard: locale === 'ar' ? 'قياسي' : 'Standard',
     premium: locale === 'ar' ? 'مميز' : 'Premium',
+    ...Object.fromEntries(dynamicPlans.map(p => [p.planTier, p.label])),
   };
 
   const licStatus: Record<string, { label: string; cls: string }> = {
@@ -416,10 +435,11 @@ export function SuperAdminSubscriptionsListView({ locale: propLocale }: { locale
                       <SelectValue placeholder={planLabels[detail.tenant.planTier]}>{planLabels[detail.tenant.planTier]}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="trial">{planLabels.trial}</SelectItem>
-                      <SelectItem value="basic">{planLabels.basic}</SelectItem>
-                      <SelectItem value="standard">{planLabels.standard}</SelectItem>
-                      <SelectItem value="premium">{planLabels.premium}</SelectItem>
+                      {dynamicPlans.map(p => (
+                        <SelectItem key={p.planTier} value={p.planTier}>
+                          {p.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

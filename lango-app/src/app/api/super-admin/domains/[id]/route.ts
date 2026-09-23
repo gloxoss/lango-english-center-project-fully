@@ -10,6 +10,7 @@ import { eq } from 'drizzle-orm';
 
 const updateDomainSchema = z.object({
   status: z.enum(['pending', 'verified', 'approved', 'rejected']),
+  reason: z.string().max(500).optional(),
 }).strict();
 
 export async function PATCH(
@@ -34,11 +35,15 @@ export async function PATCH(
 
     const updates: Partial<typeof tenantDomains.$inferInsert> = {
       status: parsed.status,
+      updatedAt: new Date().toISOString(),
     };
 
     if (parsed.status === 'approved') {
       updates.approvedAt = new Date().toISOString();
       updates.approvedById = context.userId;
+    } else if (parsed.status === 'rejected') {
+      updates.approvedAt = null;
+      updates.approvedById = null;
     }
 
     const [updated] = await db
@@ -47,13 +52,13 @@ export async function PATCH(
       .where(eq(tenantDomains.id, resolvedParams.id))
       .returning();
 
-    // Context may not have a tenantId for super_admin routes, but we can pass existing.tenantId if needed
-    // However, recordAudit usually expects context to have a tenantId or it skips it if it's super_admin.
-    // The audit log for tenant_domain modification is useful.
     const auditContext = { ...context, tenantId: existing.tenantId };
     if (updated) {
-      // Fire and forget audit
-      recordAudit(auditContext, 'update', 'tenant_domain', updated?.id, { status: updated?.status });
+      recordAudit(auditContext, 'update', 'tenant_domain', updated.id, {
+        status: updated.status,
+        domain: updated.domain,
+        reason: parsed.reason,
+      });
     }
 
     return NextResponse.json({ success: true, data: updated });
@@ -61,3 +66,37 @@ export async function PATCH(
     return apiErrorResponse(error);
   }
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const context = await requireRequestContext(request, ['super_admin']);
+    const resolvedParams = await params;
+
+    const [existing] = await db
+      .select()
+      .from(tenantDomains)
+      .where(eq(tenantDomains.id, resolvedParams.id))
+      .limit(1);
+
+    if (!existing) {
+      throw new ApiError(404, 'NOT_FOUND', 'Domaine introuvable.');
+    }
+
+    await db
+      .delete(tenantDomains)
+      .where(eq(tenantDomains.id, resolvedParams.id));
+
+    const auditContext = { ...context, tenantId: existing.tenantId };
+    recordAudit(auditContext, 'delete', 'tenant_domain', resolvedParams.id, {
+      domain: existing.domain,
+    });
+
+    return NextResponse.json({ success: true, message: 'Domaine supprimé avec succès.' });
+  } catch (error) {
+    return apiErrorResponse(error);
+  }
+}
+

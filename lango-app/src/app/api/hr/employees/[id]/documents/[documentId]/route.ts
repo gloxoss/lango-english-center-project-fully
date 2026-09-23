@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireAddon } from '@/libs/api/entitlements';
@@ -55,6 +56,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     }
 
     const data = await setDocumentArchived(tenantId, id, documentId, archived);
+    recordAudit(ctx, 'update', 'employee_document', documentId, {});
     return NextResponse.json({ success: true, data });
   } catch (error) {
     return apiErrorResponse(error);

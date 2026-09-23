@@ -1,4 +1,4 @@
-﻿// organization-page.tsx
+// organization-page.tsx
 // SERVER COMPONENT — fetches initial settings + tenant logo status server-side,
 // and passes them to the OrganizationFormClient island.
 import { eq } from 'drizzle-orm';
@@ -25,6 +25,11 @@ const DEFAULT_FORM_DATA: OrganisationFormData = {
   ice: '',
   taxId: '',
   legalStatus: '',
+  menAuthorizationNumber: '',
+  regionalAcademy: '',
+  provincialDirection: '',
+  officialStampUrl: '',
+  directorSignatureUrl: '',
   directorName: '',
   directorEmail: '',
   directorPhone: '',
@@ -82,6 +87,11 @@ export async function OrganizationPage() {
         ice: settingRow.ice ?? '',
         taxId: settingRow.taxId ?? '',
         legalStatus: settingRow.legalStatus ?? '',
+        menAuthorizationNumber: settingRow.menAuthorizationNumber ?? '',
+        regionalAcademy: settingRow.regionalAcademy ?? '',
+        provincialDirection: settingRow.provincialDirection ?? '',
+        officialStampUrl: settingRow.officialStampUrl ?? '',
+        directorSignatureUrl: settingRow.directorSignatureUrl ?? '',
         directorName: settingRow.directorName ?? '',
         directorEmail: settingRow.directorEmail ?? '',
         directorPhone: settingRow.directorPhone ?? '',

@@ -3,3 +3,9 @@
 // the full adapter set.
 import './test-provider';
 import './webhook-provider';
+import './whatsapp-waha-provider';
+import './android-sms-provider';
+import './twilio-sms-provider';
+import './smsto-provider';
+import './resend-email-provider';
+import './brevo-email-provider';

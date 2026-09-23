@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { recordAudit } from '@/libs/api/audit';
 import { z } from 'zod';
 import { createAccountingDocument } from '@/features/accounting/services/document-service';
 import { requireRequestContext } from '@/libs/api/context';
@@ -44,6 +45,7 @@ export async function POST(req: NextRequest) {
         { accountId: body.settlementAccountId, debitAmount: '0', creditAmount: body.amount, memo: body.reference },
       ],
     });
+    recordAudit(ctx, 'create', 'accounting_expense', record!.id, {});
     return NextResponse.json({ success: true, data: record }, { status: 201 });
   } catch (error) { return apiErrorResponse(error); }
 }

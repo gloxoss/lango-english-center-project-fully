@@ -540,8 +540,14 @@ export async function GET(req: NextRequest) {
       .filter(s => s.maxStudents == null)
       .map(s => (s.className ? `${s.className} (${s.sectionName})` : s.id));
 
-    // 3. Occupancy from reconciled authoritative student placement
-    const sessionYearId = activeSession?.id ?? '';
+    // 3. Occupancy from reconciled authoritative student placement.
+    // A tenant with no default session year must get a clean 422 — the empty
+    // string used to flow into a uuid column and 500 the whole preflight
+    // (root cause of the recurring tenant-isolation failure).
+    if (!activeSession?.id) {
+      throw new ApiError(422, 'MISSING_SESSION', 'Aucune année scolaire par défaut trouvée : configurez l\'année scolaire avant le placement.');
+    }
+    const sessionYearId = activeSession.id;
     const { students: allActiveStudents, integrityWarnings } = await resolveAuthoritativeStudents(
       tenantId,
       sessionYearId,

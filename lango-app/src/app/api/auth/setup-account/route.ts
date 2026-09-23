@@ -34,6 +34,17 @@ export async function POST(request: Request) {
 
     const hashed = await hashPassword(body.password);
 
+    // Claim the token atomically before creating the credential: two
+    // simultaneous submits of the same link must not create two passwords.
+    const [claimed] = await db
+      .update(accountSetupTokens)
+      .set({ usedAt: new Date().toISOString() })
+      .where(and(eq(accountSetupTokens.id, tokenRow.id), isNull(accountSetupTokens.usedAt)))
+      .returning({ id: accountSetupTokens.id });
+    if (!claimed) {
+      throw new ApiError(422, 'INVALID_TOKEN', 'Ce lien d\'activation est invalide, déjà utilisé, ou expiré.');
+    }
+
     await db.insert(account).values({
       id: randomUUID(),
       accountId: tokenRow.userId,
@@ -43,8 +54,6 @@ export async function POST(request: Request) {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-
-    await db.update(accountSetupTokens).set({ usedAt: new Date().toISOString() }).where(eq(accountSetupTokens.id, tokenRow.id));
 
     return NextResponse.json({ success: true, message: 'Compte activé avec succès.' });
   } catch (error) {

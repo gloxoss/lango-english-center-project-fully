@@ -272,6 +272,39 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     sensitivity: 'public',
     requiredPermission: 'settings.organization.manage',
   },
+  {
+    // Edited by /dashboard/academics/grading/policies (GET|PUT
+    // /api/academics/grading-policies). Read by the promotions preview engine
+    // and the report-card service so one threshold decides everywhere — before
+    // the policy page persisted to localStorage and nothing server-side ever
+    // saw its values (audit 2026-09-22, P0-3).
+    key: 'academic.eliminatoryScore',
+    label: 'Note éliminatoire',
+    description: 'Note en dessous de laquelle une matière est considérée éliminatoire (sur le barème configuré).',
+    namespace: 'academic',
+    valueSchema: z.number().min(0).max(100),
+    defaultValue: 5,
+    scope: 'tenant',
+    sensitivity: 'internal',
+    requiredPermission: 'settings.organization.manage',
+  },
+  {
+    key: 'academic.evaluationWeights',
+    label: 'Pondérations des évaluations',
+    description: 'Répartition officielle des pondérations entre épreuves (somme 100%). Utilisée par les bulletins.',
+    namespace: 'academic',
+    valueSchema: z.array(
+      z.object({
+        name: z.string().min(1).max(120),
+        weight: z.number().min(0).max(100),
+        description: z.string().max(255).optional(),
+      }).strict(),
+    ).max(20),
+    defaultValue: [],
+    scope: 'tenant',
+    sensitivity: 'internal',
+    requiredPermission: 'settings.organization.manage',
+  },
 
   // -- Portal access --
   {

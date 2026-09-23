@@ -26,7 +26,7 @@ const postJournalSchema = z.object({
 
 export async function GET(req: NextRequest) {
   try {
-    const ctx = await requireRequestContext(req);
+    const ctx = await requireRequestContext(req, ['school_admin', 'accountant']);
     await requireCapability(ctx, 'finance.read');
     const tenantId = ctx.tenantId!;
 
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
       .innerJoin(journalEntries, eq(journalEntryLines.journalEntryId, journalEntries.id))
       .innerJoin(chartOfAccounts, eq(journalEntryLines.accountId, chartOfAccounts.id))
       .where(eq(journalEntryLines.tenantId, tenantId))
-      .orderBy(desc(journalEntries.entryDate), desc(journalEntries.createdAt));
+      .orderBy(desc(journalEntries.entryDate), desc(journalEntries.createdAt)).limit(200);
 
     return NextResponse.json({ success: true, data: lines });
   } catch (error) {
@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const ctx = await requireRequestContext(req);
+    const ctx = await requireRequestContext(req, ['school_admin', 'accountant']);
     await requireCapability(ctx, 'finance.manage');
     const body = await parseJson(req, postJournalSchema);
     const result = await postBalancedJournal({

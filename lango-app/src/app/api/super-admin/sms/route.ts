@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
     ]);
 
     const stats = statsRows[0] ?? { total: 0, sent: 0, queued: 0, failed: 0 };
-    const successRate = stats.total > 0 ? Math.round((Number(stats.sent) / Number(stats.total)) * 100) : 100;
+    const successRate = stats.total > 0 ? Math.round((Number(stats.sent) / Number(stats.total)) * 100) : null;
 
     return NextResponse.json({
       success: true,

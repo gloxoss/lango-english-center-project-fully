@@ -4,7 +4,8 @@ import { NextRequest } from 'next/server';
 import { POST as postPayment } from '@/app/api/finance/payments/route';
 import { POST as postRefund } from '@/app/api/finance/refunds/route';
 import { db } from '@/libs/DB';
-import { invoiceEvents, invoices, payments, tenants, user } from '@/models/Schema';
+import { accountingAdapterExceptions, chartOfAccounts, invoiceEvents, invoices, payments, tenants, user } from '@/models/Schema';
+import { collectedPaymentCondition, netCollectedSumSql } from '@/libs/finance/definitions';
 import { studentCredits } from '@/features/finance/models/student-accounting-schema';
 import type { RequestContext } from '@/libs/api/context';
 
@@ -63,6 +64,7 @@ describe.skipIf(!hasDb)('refund linkage (Phase E)', () => {
   });
 
   afterAll(async () => {
+    await db.delete(accountingAdapterExceptions).where(eq(accountingAdapterExceptions.tenantId, tenantId));
     await db.delete(tenants).where(eq(tenants.id, tenantId));
   });
 
@@ -82,7 +84,7 @@ describe.skipIf(!hasDb)('refund linkage (Phase E)', () => {
     }));
   }
 
-  it('approving a refund marks the payment refunded and reduces the invoice paidAmount', async () => {
+  it('a PARTIAL refund keeps the payment posted (still collected) and reduces the invoice paidAmount', async () => {
     const [inv] = await db.insert(invoices).values(createInvoiceRow(tenantId, studentId, 100)).returning();
     const payRes = await pay({ allocations: [{ invoiceId: inv!.id, amount: '100.00' }], paymentMethod: 'card' });
     const paymentId = (await payRes.json()).data.payment.id;
@@ -97,8 +99,11 @@ describe.skipIf(!hasDb)('refund linkage (Phase E)', () => {
     expect(refundRes.status).toBe(201);
     expect((await refundRes.json()).success).toBe(true);
 
+    // Audit 3, P1-J: a partially refunded payment is still 40 MAD collected —
+    // flipping it to 'refunded' used to erase the WHOLE payment from the
+    // dashboard's collected total and blocked any second partial refund.
     const [payment] = await db.select().from(payments).where(eq(payments.id, paymentId));
-    expect(payment!.status).toBe('refunded');
+    expect(payment!.status).toBe('posted');
 
     const [inv2] = await db.select().from(invoices).where(eq(invoices.id, inv!.id));
     expect(Number(inv2!.paidAmount)).toBe(40);
@@ -133,5 +138,39 @@ describe.skipIf(!hasDb)('refund linkage (Phase E)', () => {
     const credits = await db.select().from(studentCredits)
       .where(and(eq(studentCredits.tenantId, tenantId), eq(studentCredits.studentId, studentId), eq(studentCredits.source, 'refund')));
     expect(credits).toHaveLength(0);
+  });
+
+  it('net collected subtracts an approved partial refund exactly once', async () => {
+    const [inv] = await db.insert(invoices).values(createInvoiceRow(tenantId, studentId, 200)).returning();
+    const payRes = await pay({ allocations: [{ invoiceId: inv!.id, amount: '200.00' }], paymentMethod: 'card' });
+    const paymentId = (await payRes.json()).data.payment.id;
+    await refund({ studentId, paymentId, amount: '50.00', refundMethod: 'cash', reason: 'Partiel' });
+
+    const [row] = await db.select({ total: netCollectedSumSql(payments) }).from(payments)
+      .where(and(eq(payments.id, paymentId), collectedPaymentCondition(payments.status)));
+    expect(Number(row!.total)).toBe(150);
+  });
+
+  it('no ledger configured: a refund raises no GL exception', async () => {
+    const rows = await db.select().from(accountingAdapterExceptions).where(eq(accountingAdapterExceptions.tenantId, tenantId));
+    expect(rows).toHaveLength(0);
+  });
+
+  it('ledger configured but posting impossible: the refund raises a visible GL exception', async () => {
+    await db.insert(chartOfAccounts).values([
+      { tenantId, code: '3421', name: 'Clients', accountType: 'asset' },
+      { tenantId, code: '1110', name: 'Caisse', accountType: 'asset' },
+    ]);
+    const [inv] = await db.insert(invoices).values(createInvoiceRow(tenantId, studentId, 80)).returning();
+    const payRes = await pay({ allocations: [{ invoiceId: inv!.id, amount: '80.00' }], paymentMethod: 'card' });
+    const paymentId = (await payRes.json()).data.payment.id;
+    const refundRes = await refund({ studentId, paymentId, amount: '80.00', refundMethod: 'cash', reason: 'Sans période ouverte' });
+    const refundId = (await refundRes.json()).data?.id;
+
+    const rows = await db.select().from(accountingAdapterExceptions)
+      .where(and(eq(accountingAdapterExceptions.tenantId, tenantId), eq(accountingAdapterExceptions.sourceModule, 'refund')));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.reason).toBe('gl_post_skipped');
+    if (refundId) expect(rows[0]!.sourceDocumentId).toBe(refundId);
   });
 });

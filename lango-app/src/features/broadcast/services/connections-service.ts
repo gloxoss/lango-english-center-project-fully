@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/libs/DB';
-import { communicationConnections } from '@/models/Schema';
+import { communicationConnections, smsMessages } from '@/models/Schema';
 import { ApiError } from '@/libs/api/errors';
 import { decryptSecret, encryptSecret, isEncrypted } from '@/libs/api/secrets';
 import { getProvider } from '../providers/provider';
@@ -10,7 +10,10 @@ import type { broadcastChannel } from '../models/broadcast-schema';
 type Channel = (typeof broadcastChannel.enumValues)[number];
 
 // Secret config keys are encrypted at rest and never returned to the browser.
-const SECRET_CONFIG_KEYS = ['apiKey', 'apiSecret', 'token', 'accessToken', 'phoneNumberId', 'fromAddress', 'password'];
+const SECRET_CONFIG_KEYS = [
+  'apiKey', 'apiSecret', 'token', 'accessToken', 'phoneNumberId',
+  'fromAddress', 'password', 'authToken', 'secretKey', 'appSecret',
+];
 const MASK = '••••••••';
 
 /** Strip secret values before projecting to the browser; keep non-secret config. */
@@ -151,3 +154,42 @@ export async function testConnection(tenantId: string, id: string) {
     .where(and(eq(communicationConnections.id, id), eq(communicationConnections.tenantId, tenantId)));
   return result;
 }
+
+export async function sendTestMessage(tenantId: string, id: string, to: string, messageText?: string) {
+  const withSecrets = await getConnectionWithSecrets(tenantId, id);
+  const provider = getProvider(withSecrets.provider);
+  if (!provider) {
+    throw new ApiError(400, 'BAD_REQUEST', `Fournisseur « ${withSecrets.provider} » introuvable.`);
+  }
+
+  const text = messageText?.trim() || `Test SchoolOS en direct via ${withSecrets.name} (${withSecrets.provider}) à ${new Date().toLocaleTimeString('fr-FR')}.`;
+
+  let sendConfig = (withSecrets.configJson ? { ...withSecrets.configJson as Record<string, unknown> } : {}) as Record<string, unknown>;
+  if (withSecrets.provider === 'whatsapp-waha') {
+    const customSession = typeof sendConfig.session === 'string' && sendConfig.session.trim() && sendConfig.session !== 'default'
+      ? sendConfig.session.trim()
+      : `tenant_${tenantId.replace(/[^a-zA-Z0-9_]/g, '_')}`;
+    sendConfig.session = customSession;
+  }
+
+  const result = await provider.send({
+    channel: withSecrets.channel as Channel,
+    to: to.trim(),
+    subject: 'Test SchoolOS',
+    bodyText: text,
+    config: sendConfig,
+  });
+
+  if (withSecrets.channel === 'sms') {
+    await db.insert(smsMessages).values({
+      tenantId,
+      recipientPhone: to.trim(),
+      body: text,
+      status: result.ok ? 'sent' : 'failed',
+      sentAt: result.ok ? new Date().toISOString() : null,
+    }).catch(() => {});
+  }
+
+  return result;
+}
+

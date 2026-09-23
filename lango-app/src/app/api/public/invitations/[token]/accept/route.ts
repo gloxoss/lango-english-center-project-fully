@@ -10,7 +10,7 @@ import { account, auditLogs, tenantInvitations, user } from '@/models/Schema';
 const acceptInvitationSchema = z
   .object({
     name: z.string().trim().min(2, 'Le nom complet doit contenir au moins 2 caractères').max(255),
-    password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
+    password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères').max(128),
   })
   .strict();
 
@@ -59,6 +59,17 @@ export async function POST(
     const result = await db.transaction(async (tx) => {
       const email = invitation.email.toLowerCase().trim();
 
+      // 0. Claim the invitation atomically: a double submit of the same link
+      // must not create two accounts. Rolled back with the rest on failure.
+      const [claimed] = await tx
+        .update(tenantInvitations)
+        .set({ status: 'accepted', updatedAt: now.toISOString() })
+        .where(and(eq(tenantInvitations.id, invitation.id), eq(tenantInvitations.status, 'pending')))
+        .returning({ id: tenantInvitations.id });
+      if (!claimed) {
+        throw new ApiError(400, 'INVITATION_NOT_PENDING', 'Cette invitation a déjà été acceptée.');
+      }
+
       // Check if user already exists
       const [existingUser] = await tx
         .select({ id: user.id })
@@ -97,15 +108,6 @@ export async function POST(
         createdAt: now,
         updatedAt: now,
       });
-
-      // 3. Mark Invitation Accepted
-      await tx
-        .update(tenantInvitations)
-        .set({
-          status: 'accepted',
-          updatedAt: now.toISOString(),
-        })
-        .where(eq(tenantInvitations.id, invitation.id));
 
       // 4. Record Audit Log
       await tx.insert(auditLogs).values({

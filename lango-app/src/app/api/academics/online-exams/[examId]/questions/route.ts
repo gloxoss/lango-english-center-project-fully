@@ -8,6 +8,7 @@ import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
+import { assertOnlineExamAuthoringAccess } from '@/features/assessment/services/online-exam-access';
 import { onlineExamQuestionOptions, onlineExamQuestions, onlineExams } from '@/models/Schema';
 
 const createQuestionSchema = z.object({
@@ -28,7 +29,12 @@ type RouteParams = { params: Promise<{ examId: string }> };
 
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
-    const ctx = await requireRequestContext(req);
+    // Security audit P0-B: this is the AUTHORING view — it includes isCorrect
+    // on every option, i.e. the full answer key. Students and parents hold
+    // grading.read, so an unguarded capability check handed them the answer
+    // key of any exam in the school. Staff only; students take exams through
+    // GET [examId]/take, which never returns isCorrect.
+    const ctx = await requireRequestContext(req, ['school_admin', 'teacher']);
     const tenantId = requireTenant(ctx);
     await requireCapability(ctx, 'grading.read');
 
@@ -44,6 +50,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     if (!exam) {
       throw new ApiError(404, 'EXAM_NOT_FOUND', 'Examen introuvable.');
     }
+    // Teachers: only the exam's author or an assigned subject teacher.
+    await assertOnlineExamAuthoringAccess(ctx, tenantId, examId);
 
     const questions = await db
       .select()
@@ -97,6 +105,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (!exam) {
       throw new ApiError(404, 'EXAM_NOT_FOUND', 'Examen introuvable.');
     }
+    // Teachers: only the exam's author or an assigned subject teacher.
+    await assertOnlineExamAuthoringAccess(ctx, tenantId, examId);
 
     // Validate MCQ: at least one correct answer required if options provided
     if (body.options && body.options.length > 0) {

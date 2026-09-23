@@ -1002,6 +1002,55 @@
       "when": 1789400034000,
       "tag": "0141_filiere_structure",
       "breakpoints": true
+    },
+    {
+      "idx": 143,
+      "version": "7",
+      "when": 1789400035000,
+      "tag": "0142_homework_attachments_and_syllabus",
+      "breakpoints": true
+    },
+    {
+      "idx": 144,
+      "version": "7",
+      "when": 1789400036000,
+      "tag": "0143_platform_support_tickets",
+      "breakpoints": true
+    },
+    {
+      "idx": 145,
+      "version": "7",
+      "when": 1789400037000,
+      "tag": "0144_school_official_seal_and_men_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 146,
+      "version": "7",
+      "when": 1789400038000,
+      "tag": "0145_dynamic_subscription_plans_and_modules",
+      "breakpoints": true
+    },
+    {
+      "idx": 147,
+      "version": "7",
+      "when": 1789400039000,
+      "tag": "0146_support_ticket_attachments",
+      "breakpoints": true
+    },
+    {
+      "idx": 148,
+      "version": "7",
+      "when": 1789400040000,
+      "tag": "0147_applicants_branch_session_and_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 149,
+      "version": "7",
+      "when": 1789400040000,
+      "tag": "0148_matricule_tenant_scope",
+      "breakpoints": true
     }
   ]
 }

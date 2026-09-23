@@ -1,7 +1,16 @@
 import crypto from 'node:crypto';
 
 export class SecureDownloadService {
-  private static SECRET_KEY = process.env.REPORTING_SIGNING_SECRET || 'schoolos-default-reporting-secret-key-2026';
+  // No public fallback in production: a known key would let anyone mint valid
+  // download links. BETTER_AUTH_SECRET (required at boot) is the fallback.
+  private static get SECRET_KEY(): string {
+    const secret = process.env.REPORTING_SIGNING_SECRET || process.env.BETTER_AUTH_SECRET;
+    if (secret) return secret;
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('REPORTING_SIGNING_SECRET or BETTER_AUTH_SECRET is required in production.');
+    }
+    return 'schoolos-dev-reporting-secret';
+  }
 
   /**
    * Generates an HMAC SHA-256 signature for a report run download URL.

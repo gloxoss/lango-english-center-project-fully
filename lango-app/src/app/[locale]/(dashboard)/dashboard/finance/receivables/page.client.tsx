@@ -25,10 +25,12 @@ interface InvoiceReceivable {
   dueDate: string;
   issueDate: string;
   daysOverdue: number;
+  isOverdue: boolean;
 }
 
 interface ReceivablesSummary {
   totalOutstanding: number;
+  notDue: number;
   current030: number;
   overdue3160: number;
   overdue6190: number;
@@ -55,9 +57,11 @@ export default function ReceivablesPage() {
       if (json.success) {
         setData(json.data);
       } else {
+        setData(null);
         setError(json.error?.message || t('loadReceivablesError'));
       }
     } catch (err: any) {
+      setData(null);
       setError(err.message || tCommon('error'));
     } finally {
       setLoading(false);
@@ -69,6 +73,7 @@ export default function ReceivablesPage() {
   }, []);
 
   const handleSendSms = async (inv: InvoiceReceivable) => {
+    if (!inv.isOverdue || inv.balance <= 0) return;
     setSendingSms(inv.id);
     try {
       const res = await fetch('/api/finance/reminders', {
@@ -137,13 +142,20 @@ export default function ReceivablesPage() {
       )}
 
       {/* Summary Buckets */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
           <span className="text-[11px] font-bold text-slate-500 uppercase">{t('totalReceivablesCard')}</span>
           <div className="mt-2 text-xl font-extrabold text-slate-900">
             {loading ? '...' : `${(data?.summary.totalOutstanding || 0).toLocaleString()} ${tCommon('currency')}`}
           </div>
           <span className="text-xs text-slate-500">{t('invoicesCount', { count: data?.summary.totalCount || 0 })}</span>
+        </div>
+
+        <div className="rounded-xl border border-sky-200 bg-sky-50/40 p-4 shadow-xs">
+          <span className="text-[11px] font-bold text-sky-700 uppercase">{t('bracketNotDue')}</span>
+          <div className="mt-2 text-xl font-extrabold text-sky-800">
+            {loading ? '...' : `${(data?.summary.notDue || 0).toLocaleString()} ${tCommon('currency')}`}
+          </div>
         </div>
 
         <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 shadow-xs">
@@ -218,25 +230,25 @@ export default function ReceivablesPage() {
                   <td className="px-4 py-3 font-bold text-slate-900">{inv.invoiceNumber}</td>
                   <td className="px-4 py-3">
                     <div className="font-semibold text-slate-900">{inv.studentName || t('studentFallback')}</div>
-                    <div className="text-[11px] text-slate-400">{inv.studentEmail}</div>
+                    {inv.studentEmail && <div className="text-[11px] text-slate-400">{inv.studentEmail}</div>}
                   </td>
                   <td className="px-4 py-3">{inv.dueDate}</td>
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${inv.daysOverdue > 60 ? 'bg-red-100 text-red-800' : inv.daysOverdue > 30 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'}`}>
-                      {t('daysShort', { days: inv.daysOverdue })}
+                      {inv.isOverdue ? t('daysShort', { days: inv.daysOverdue }) : t('notDueLabel')}
                     </span>
                   </td>
                   <td className="px-4 py-3">{inv.amount} {tCommon('currency')}</td>
                   <td className="px-4 py-3 font-extrabold text-red-700">{inv.balance} {tCommon('currency')}</td>
                   <td className="px-4 py-3 text-end">
-                    <button
+                    {inv.isOverdue && inv.balance > 0 && <button
                       onClick={() => handleSendSms(inv)}
                       disabled={sendingSms === inv.id}
                       className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-semibold text-[#0066FF] hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <MessageSquare className="size-3" />
                       {sendingSms === inv.id ? t('sendingSmsBtn') : t('sendSmsBtn')}
-                    </button>
+                    </button>}
                   </td>
                 </tr>
               ))

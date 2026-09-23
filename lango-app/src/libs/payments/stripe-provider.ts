@@ -74,7 +74,11 @@ export class StripeProvider implements PaymentGatewayProvider {
 
     const event = verifyStripeSignature(input.rawPayload, input.signature, input.webhookSecret);
     if (event.type !== 'checkout.session.completed') {
-      return { externalReference: '', status: 'failed', amount: 0, currency: 'MAD' };
+      // Validly signed but irrelevant (payment_intent.created, charge.refunded…):
+      // the callback route must acknowledge without changing session state —
+      // previously this returned status:'failed', so a later legitimate
+      // success hit "Déjà traité" on a session the webhook itself had failed.
+      return { externalReference: '', status: 'failed', amount: 0, currency: 'MAD', ignored: true };
     }
 
     const session = event.data.object as {

@@ -105,7 +105,7 @@ const DEFAULT_PROVENANCE: Provenance = {
 export const MOROCCO_V1_DEFAULT_RULE_CONFIG: MoroccoV1RuleConfig = {
   jurisdiction: 'MA',
   effectiveFrom: '2024-01-01',
-  effectiveTo: null,
+  effectiveTo: '2024-12-31',
   monthly: true,
   currency: 'MAD',
   cnss: { employeeRateBp: 448, employerRateBp: 898, monthlyCapCents: 600_000 },
@@ -129,6 +129,49 @@ export const MOROCCO_V1_DEFAULT_RULE_CONFIG: MoroccoV1RuleConfig = {
   netProtection: { minMonthlyCents: null },
   provenance: DEFAULT_PROVENANCE,
 };
+
+/**
+ * 2025 regulation pack — STRUCTURAL PLACEHOLDER ONLY (security audit P0-D).
+ *
+ * The 2025 Finance Law changed the salary IR scale. Until a Moroccan
+ * accountant confirms the exact brackets / abatement / family-charge figures,
+ * this pack deliberately carries the 2024 values, is marked
+ * `validationStatus: 'unvalidated'`, and every payslip computed with it
+ * displays the "barème non certifié" warning (see
+ * `requiresCertificationWarning` and renderPayslipHtml).
+ *
+ * DO NOT fill these TODO values from memory. Required to activate:
+ *   1. Confirm 2025/2026 IR brackets + exemption threshold with an accountant.
+ *   2. Confirm employer CNSS decomposition (family allowances + vocational
+ *      training are separate, uncapped contributions) and AMO employer rate.
+ *   3. Replace the values below, set effectiveFrom: '2025-01-01', flip
+ *      validationStatus to 'validated_by_professional' and record the
+ *      reviewer/source in provenance.
+ * The 2024 pack above stays for back-pay recalculation (its effectiveTo now
+ * bounds it to 2024).
+ */
+export const MOROCCO_2025_PENDING_RULE_CONFIG: MoroccoV1RuleConfig = {
+  ...MOROCCO_V1_DEFAULT_RULE_CONFIG,
+  effectiveFrom: '2025-01-01',
+  effectiveTo: null,
+  provenance: {
+    source: 'TODO — Loi de Finances 2025 : barème IR 2025 À CONFIRMER par expert-comptable (valeurs 2024 reportées en attendant).',
+    sourceUrl: null,
+    sourceDocumentRef: null,
+    publicationDate: null,
+    validationStatus: 'unvalidated',
+    reviewerNotes: 'Placeholder P0-D : ne PAS utiliser pour des paies réelles tant que le signoff n\'est pas enregistré.',
+  },
+};
+
+/**
+ * True while the pack backing a payslip has not been signed off. Payslip
+ * rendering must surface a visible "barème non certifié" warning whenever
+ * this returns true (audit P0-D).
+ */
+export function requiresCertificationWarning(config: Pick<MoroccoV1RuleConfig, 'provenance'>): boolean {
+  return config.provenance.validationStatus !== 'validated_by_professional';
+}
 
 function isNonNegInt(v: unknown): v is number {
   return typeof v === 'number' && Number.isInteger(v) && v >= 0;

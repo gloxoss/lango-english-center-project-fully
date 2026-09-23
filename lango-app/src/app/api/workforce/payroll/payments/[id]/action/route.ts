@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { requireWorkforceAddon } from '@/libs/api/entitlements';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { recordAudit } from '@/libs/api/audit';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
@@ -38,6 +39,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       await tx.update(salaryPayments).set({ status: 'reversed' }).where(and(eq(salaryPayments.tenantId, tenantId), eq(salaryPayments.batchId, id)));
       return (await tx.update(salaryPaymentBatches).set({ status: 'reversed', reversedById: ctx.userId, reversedAt: new Date().toISOString() }).where(eq(salaryPaymentBatches.id, id)).returning())[0];
     });
+    recordAudit(ctx, 'update', 'payroll_payment_batch_action', id, { action: body.action, reference: body.reference ?? null });
     return NextResponse.json({ success: true, data: result });
   } catch (error) { return apiErrorResponse(error); }
 }
