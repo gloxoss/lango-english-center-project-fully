@@ -569,12 +569,25 @@ export const subjectTeachers = pgTable('subject_teachers', {
   classSubjectId: uuid('class_subject_id').notNull(),
   teacherId: text('teacher_id').notNull(),
   offeringId: uuid('offering_id'),
+  // TEACHER SUBJECT ASSIGNMENT HISTORY (migration 0146): explicit session-year
+  // scoping and close semantics replace destructive delete+recreate. A row is
+  // CURRENT when status='active' and endsOn is null (or in the future) and its
+  // session year matches the target session (null = legacy/not year-scoped).
+  sessionYearId: uuid('session_year_id'),
+  startsOn: date('starts_on'),
+  endsOn: date('ends_on'),
+  status: status('status').default('active').notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
   foreignKey({
     columns: [table.offeringId],
     foreignColumns: [academicClassOfferings.id],
     name: 'subject_teachers_offering_id_academic_class_offerings_id_fk',
+  }).onDelete('set null'),
+  foreignKey({
+    columns: [table.sessionYearId],
+    foreignColumns: [sessionYears.id],
+    name: 'subject_teachers_session_year_id_session_years_id_fk',
   }).onDelete('set null'),
   foreignKey({
     columns: [table.tenantId],
@@ -602,7 +615,12 @@ export const subjectTeachers = pgTable('subject_teachers', {
     foreignColumns: [user.id],
     name: 'subject_teachers_teacher_id_user_id_fk',
   }),
-  unique('subject_teachers_class_section_id_class_subject_id_teacher_id_unique').on(table.classSectionId, table.classSubjectId, table.teacherId),
+  // Only ACTIVE assignments are unique per (section, class-subject, teacher);
+  // closed historical rows for the same trio must be allowed to coexist.
+  uniqueIndex('subject_teachers_active_unique')
+    .on(table.classSectionId, table.classSubjectId, table.teacherId)
+    .where(sql`${table.status} = 'active' AND ${table.endsOn} IS NULL`),
+  index('subject_teachers_tenant_teacher_idx').on(table.tenantId, table.teacherId, table.status),
 ]);
 
 export const academicTerms = pgTable('academic_terms', {
@@ -1354,6 +1372,13 @@ export const attendanceRegisters = pgTable('attendance_registers', {
   id: uuid().defaultRandom().primaryKey().notNull(),
   tenantId: uuid('tenant_id').notNull(),
   classId: uuid('class_id').notNull(),
+  // ATTENDANCE SECTION SCOPE (migration 0147): new registers are keyed by the
+  // operating class section so Section A can no longer lock/read Section B's
+  // register. Legacy rows keep null (their section identity is unknowable).
+  classSectionId: uuid('class_section_id'),
+  // SESSION TRUTH (migration 0151): every new register carries its session.
+  // Nullable only for legacy rows whose date no session covers (reported).
+  sessionYearId: uuid('session_year_id'),
   subjectId: uuid('subject_id'),
   date: date().notNull(),
   period: integer('period').notNull().default(1),
@@ -1368,8 +1393,16 @@ export const attendanceRegisters = pgTable('attendance_registers', {
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
-  unique('attendance_registers_class_date_period_unique').on(table.tenantId, table.classId, table.date, table.period),
+  // Section-aware uniqueness for new registers; legacy rows (null section)
+  // keep the old class-level key so they cannot collide with section rows.
+  uniqueIndex('attendance_registers_section_date_period_unique')
+    .on(table.tenantId, table.classSectionId, table.date, table.period)
+    .where(sql`${table.classSectionId} IS NOT NULL`),
+  uniqueIndex('attendance_registers_legacy_class_date_period_unique')
+    .on(table.tenantId, table.classId, table.date, table.period)
+    .where(sql`${table.classSectionId} IS NULL`),
   index('attendance_registers_tenant_date_idx').on(table.tenantId, table.date),
+  index('attendance_registers_tenant_section_idx').on(table.tenantId, table.classSectionId, table.date),
   foreignKey({
     columns: [table.tenantId],
     foreignColumns: [tenants.id],
@@ -1380,6 +1413,11 @@ export const attendanceRegisters = pgTable('attendance_registers', {
     foreignColumns: [classes.id],
     name: 'attendance_registers_class_id_fk',
   }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.classSectionId],
+    foreignColumns: [classSections.id],
+    name: 'attendance_registers_class_section_id_fk',
+  }).onDelete('set null'),
   foreignKey({
     columns: [table.submittedById],
     foreignColumns: [user.id],
@@ -1397,6 +1435,9 @@ export const attendance = pgTable('attendance', {
   tenantId: uuid('tenant_id').notNull(),
   studentId: text('student_id').notNull(),
   studentGroupId: uuid('student_group_id'),
+  // ATTENDANCE SECTION SCOPE (migration 0147): the operating class section a
+  // mark belongs to. Legacy rows keep null (section identity was never stored).
+  classSectionId: uuid('class_section_id'),
   subjectId: uuid('subject_id'),
   period: integer('period').notNull().default(1),
   academicYearId: uuid('academic_year_id'),
@@ -1417,8 +1458,14 @@ export const attendance = pgTable('attendance', {
 }, table => [
   index('attendance_student_date_idx').using('btree', table.studentId.asc().nullsLast().op('date_ops'), table.date.asc().nullsLast().op('text_ops')),
   index('attendance_tenant_date_idx').using('btree', table.tenantId.asc().nullsLast().op('uuid_ops'), table.date.asc().nullsLast().op('date_ops')),
+  index('attendance_tenant_section_date_idx').on(table.tenantId, table.classSectionId, table.date),
   index('attendance_register_idx').on(table.registerId),
   index('attendance_scan_event_idx').on(table.scanEventId),
+  foreignKey({
+    columns: [table.classSectionId],
+    foreignColumns: [classSections.id],
+    name: 'attendance_class_section_id_class_sections_id_fk',
+  }).onDelete('set null'),
   foreignKey({
     columns: [table.tenantId],
     foreignColumns: [tenants.id],
@@ -1461,7 +1508,9 @@ export const attendanceSummary = pgTable('attendance_summary', {
   totalLate: integer('total_late').notNull().default(0),
   totalExcused: integer('total_excused').notNull().default(0),
   totalSessions: integer('total_sessions').notNull().default(0),
-  attendanceRate: numeric('attendance_rate', { precision: 5, scale: 2 }).notNull().default('100.00'),
+  // ZERO DENOMINATOR TRUTH (migration 0155): NULL means "not calculated";
+  // a student with no recorded sessions must never read as 100%.
+  attendanceRate: numeric('attendance_rate', { precision: 5, scale: 2 }),
   lastUpdated: timestamp('last_updated', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
   index('attendance_summary_student_idx').on(table.studentId),
@@ -1482,6 +1531,13 @@ export const attendanceExcuses = pgTable('attendance_excuses', {
   id: uuid().defaultRandom().primaryKey().notNull(),
   tenantId: uuid('tenant_id').notNull(),
   studentId: text('student_id').notNull(),
+  // EXACT SCOPE (migration 0150): the authoritative mark context this excuse
+  // justifies. Nullable only for pre-0150 legacy rows.
+  classSectionId: uuid('class_section_id'),
+  period: integer('period'),
+  // SESSION TRUTH (migration 0151): excuses are session-scoped; the DB column
+  // is NOT NULL (source of truth) and the API always writes it.
+  sessionYearId: uuid('session_year_id'),
   date: date().notNull(),
   reason: text().notNull(),
   documentUrl: varchar('document_url', { length: 500 }),
@@ -4549,28 +4605,40 @@ export const processedStripeEvents = pgTable('processed_stripe_events', {
   processedAt: timestamp('processed_at', { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 });
 
-// Student Accounting add-on exports
-export * from '@/features/finance/models/student-accounting-schema';
-
 // Advanced Reporting Add-on exports
 export * from '@/addons/advanced-reporting/models/reporting-schema';
+
+// Academics Syllabus Progression Schema
+export * from '@/features/academics/model/syllabus-schema';
+
+// Office Accounting core ledger extensions
+export * from '@/features/accounting/models/accounting-schema';
 
 // Assessment & Examination exports
 export * from '@/features/assessment/models/assessment-schema';
 
 // Attachments Book Add-on exports
 export * from '@/features/attachments/models/attachments-schema';
+export * from '@/features/attendance/models/attendance-qr-schema';
+// Broadcast Messaging Add-on exports
+export * from '@/features/broadcast/models/broadcast-schema';
+
+export * from '@/features/cards/models/cards-schema';
 
 // Attendance QR Enhancement exports
 export * from '@/features/certificates/models/certificates-schema';
-export * from '@/features/cards/models/cards-schema';
-export * from '@/features/attendance/models/attendance-qr-schema';
 
 // Event Management exports
 export * from '@/features/events/models/events-schema';
 
-// Platform exports
-export * from '@/features/platform/models/domains-schema';
+// Student Accounting add-on exports
+export * from '@/features/finance/models/student-accounting-schema';
+
+// Guard & Security Portal exports (core role feature)
+export * from '@/features/guard/models/guard-schema';
+
+// Hostel Management Add-on exports
+export * from '@/features/hostel/models/hostel-schema';
 
 // Advanced HR & Employee Management Add-on exports
 export * from '@/features/hr/models/hr-schema';
@@ -4578,23 +4646,14 @@ export * from '@/features/hr/models/hr-schema';
 // Inventory Management Add-on exports
 export * from '@/features/inventory/models/inventory-schema';
 
-// Broadcast Messaging Add-on exports
-export * from '@/features/broadcast/models/broadcast-schema';
-
-// Hostel Management Add-on exports
-export * from '@/features/hostel/models/hostel-schema';
-
-// Guard & Security Portal exports (core role feature)
-export * from '@/features/guard/models/guard-schema';
-
 // Library Management Add-on exports
 export * from '@/features/library/models/library-schema';
 
 // Live Classrooms Add-on exports
 export * from '@/features/live-classrooms/models/live-classrooms-schema';
 
-// Student Transport Add-on exports
-export * from '@/features/transport/models/transport-schema';
+// Platform exports
+export * from '@/features/platform/models/domains-schema';
 
 // Role Portals Foundation exports
 export * from '@/features/portal/models/portal-schema';
@@ -4602,18 +4661,15 @@ export * from '@/features/portal/models/portal-schema';
 // Receptionist Portal — front-desk appointments, handoffs, identity verifications
 export * from '@/features/reception/models/reception-schema';
 
-// Office Accounting core ledger extensions
-export * from '@/features/accounting/models/accounting-schema';
-
-// Payroll & Workforce Operations add-on
-export * from '@/features/workforce/models/workforce-schema';
-
 // Settings Platform (DB-backed catalog, drafts/approvals, secrets, numbering,
 // custom fields, scheduled jobs, login events)
 export * from '@/features/settings/models/settings-schema';
 
+// Student Transport Add-on exports
+export * from '@/features/transport/models/transport-schema';
+
 // School Website CMS Add-on (public per-tenant marketing site)
 export * from '@/features/website/models/website-schema';
 
-// Academics Syllabus Progression Schema
-export * from '@/features/academics/model/syllabus-schema';
+// Payroll & Workforce Operations add-on
+export * from '@/features/workforce/models/workforce-schema';

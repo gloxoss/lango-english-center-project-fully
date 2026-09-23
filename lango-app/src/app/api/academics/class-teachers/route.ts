@@ -1,4 +1,4 @@
-import { and, count, eq } from 'drizzle-orm';
+import { and, count, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
@@ -6,9 +6,9 @@ import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { classTeacherCreateSchema, parseJson } from '@/libs/api/validation';
-import { reassignClassTeacher } from '@/libs/services/class-teacher-assignment';
 import { db } from '@/libs/DB';
-import { classSections, classTeachers, user } from '@/models/Schema';
+import { reassignClassTeacher } from '@/libs/services/class-teacher-assignment';
+import { classes, classSections, classTeachers, user } from '@/models/Schema';
 
 function toApiClassTeacher(row: typeof classTeachers.$inferSelect) {
   return {
@@ -42,6 +42,16 @@ export async function GET(request: Request) {
     if (classSectionId) {
       conditions.push(eq(classTeachers.classSectionId, classSectionId));
     }
+    // Branch inheritance: campus-limited principals only read assignments of
+    // classes on their campus.
+    if (context.branchId) {
+      const scopedSections = db
+        .select({ id: classSections.id })
+        .from(classSections)
+        .innerJoin(classes, eq(classSections.classId, classes.id))
+        .where(and(eq(classSections.tenantId, tenantId), eq(classes.branchId, context.branchId)));
+      conditions.push(inArray(classTeachers.classSectionId, scopedSections));
+    }
 
     const where = and(...conditions);
 
@@ -70,8 +80,9 @@ export async function POST(request: Request) {
     const body = await parseJson(request, classTeacherCreateSchema);
 
     const [sectionRow] = await db
-      .select({ id: classSections.id })
+      .select({ id: classSections.id, branchId: classes.branchId })
       .from(classSections)
+      .innerJoin(classes, eq(classSections.classId, classes.id))
       .where(and(eq(classSections.id, body.classSectionId), eq(classSections.tenantId, tenantId)))
       .limit(1);
 
@@ -80,13 +91,26 @@ export async function POST(request: Request) {
     }
 
     const [teacherRow] = await db
-      .select({ id: user.id })
+      .select({ id: user.id, branchId: user.branchId })
       .from(user)
       .where(and(eq(user.id, body.teacherId), eq(user.tenantId, tenantId), eq(user.role, 'teacher')))
       .limit(1);
 
     if (!teacherRow) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'L\'enseignant indiqué n\'existe pas pour cet établissement.');
+    }
+
+    // Cross-campus teaching needs an explicit model; until one exists, a
+    // branch-pinned teacher cannot be assigned to another branch's class.
+    // A null branch means "whole-school / not yet assigned" and stays allowed.
+    if (teacherRow.branchId && sectionRow.branchId && teacherRow.branchId !== sectionRow.branchId) {
+      throw new ApiError(422, 'CROSS_BRANCH_ASSIGNMENT', 'Cet enseignant appartient à un autre campus que cette classe.');
+    }
+
+    // Branch scope: a campus-limited admin only assigns within their campus;
+    // an ambiguous legacy class (no campus) is whole-school-admin territory.
+    if (context.branchId && sectionRow.branchId !== context.branchId) {
+      throw new ApiError(403, 'FORBIDDEN', 'Vous ne pouvez affecter des enseignants que pour les classes de votre campus.');
     }
 
     const assigned = await reassignClassTeacher({
@@ -117,6 +141,23 @@ export async function DELETE(request: Request) {
 
     if (!id) {
       return NextResponse.json({ success: false, message: 'ID non fourni' }, { status: 400 });
+    }
+
+    // Branch scope through the section's class.
+    if (context.branchId) {
+      const [row] = await db
+        .select({ branchId: classes.branchId })
+        .from(classTeachers)
+        .innerJoin(classSections, eq(classTeachers.classSectionId, classSections.id))
+        .innerJoin(classes, eq(classSections.classId, classes.id))
+        .where(and(eq(classTeachers.id, id), eq(classTeachers.tenantId, tenantId)))
+        .limit(1);
+      if (!row) {
+        return NextResponse.json({ success: false, message: 'Introuvable' }, { status: 404 });
+      }
+      if (row.branchId !== context.branchId) {
+        throw new ApiError(403, 'FORBIDDEN', 'Vous ne pouvez modifier que les affectations de votre campus.');
+      }
     }
 
     await db.delete(classTeachers).where(and(eq(classTeachers.id, id), eq(classTeachers.tenantId, tenantId)));

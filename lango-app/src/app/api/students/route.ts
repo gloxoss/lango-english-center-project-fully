@@ -233,7 +233,7 @@ async function getStudentDetail(tenantId: string, id: string, branchId?: string 
     db
       .select({ date: attendance.date, status: attendance.status, lateMinutes: attendance.lateMinutes })
       .from(attendance)
-      .where(and(eq(attendance.tenantId, tenantId), eq(attendance.studentId, id), gte(attendance.date, thirtyDaysAgo)))
+      .where(and(eq(attendance.tenantId, tenantId), eq(attendance.studentId, id), eq(attendance.isVoided, false), gte(attendance.date, thirtyDaysAgo)))
       .orderBy(desc(attendance.date)),
     db
       .select({ id: payments.id, amount: payments.amount, paymentMethod: payments.paymentMethod, paymentDate: payments.paymentDate })
@@ -362,7 +362,12 @@ async function getStudentDetail(tenantId: string, id: string, branchId?: string 
   const excusedCount = attendanceRows.filter(a => a.status === 'excused').length;
   const lateCount = attendanceRows.filter(a => a.status === 'late').length;
   const recordedCount = attendanceRows.length;
-  const attendanceRate = recordedCount > 0 ? Math.round((presentCount / recordedCount) * 1000) / 10 : null;
+  // CANONICAL PRESENCE (Phase 7B): present + late + excused count as attended,
+  // exactly like attendanceSummary/attendanceRate; NULL (never 100) when
+  // nothing was recorded.
+  const attendanceRate = recordedCount > 0
+    ? Math.round(((presentCount + lateCount + excusedCount) / recordedCount) * 1000) / 10
+    : null;
 
   const totalInvoiced = Number(invoiceTotals[0]?.totalInvoiced ?? 0);
   const totalPaid = Number(paymentTotals[0]?.totalPaid ?? invoiceTotals[0]?.totalPaidOnInvoices ?? 0);

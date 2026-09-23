@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { assertStudentAccess } from '@/libs/api/student-access';
 import { contentTypeFor, readUploadedFile, saveUploadedFile } from '@/libs/api/uploads';
 import { db } from '@/libs/DB';
 import { attendanceExcuses } from '@/models/Schema';
@@ -22,18 +23,21 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: false, message: 'excuseId requis.' }, { status: 400 });
     }
 
-    const conditions = [eq(attendanceExcuses.id, excuseId), eq(attendanceExcuses.tenantId, tenantId)];
-    if (context.role === 'student') {
-      conditions.push(eq(attendanceExcuses.studentId, context.userId));
-    }
-
     const [excuse] = await db
-      .select({ documentFileExt: attendanceExcuses.documentFileExt })
+      .select({ studentId: attendanceExcuses.studentId, documentFileExt: attendanceExcuses.documentFileExt })
       .from(attendanceExcuses)
-      .where(and(...conditions))
+      .where(and(eq(attendanceExcuses.id, excuseId), eq(attendanceExcuses.tenantId, tenantId)))
       .limit(1);
 
-    if (!excuse?.documentFileExt) {
+    if (!excuse) {
+      return NextResponse.json({ success: false, message: 'Document non trouvé' }, { status: 404 });
+    }
+
+    // AUTHORITATIVE SCOPE (P0): student self / linked children / teacher
+    // sections / campus — not tenant-wide.
+    await assertStudentAccess(context, tenantId, excuse.studentId);
+
+    if (!excuse.documentFileExt) {
       return NextResponse.json({ success: false, message: 'Document non trouvé' }, { status: 404 });
     }
 
@@ -64,14 +68,18 @@ export async function POST(request: Request) {
       throw new ApiError(422, 'VALIDATION_ERROR', 'Fichier requis.');
     }
 
-    const conditions = [eq(attendanceExcuses.id, excuseId), eq(attendanceExcuses.tenantId, tenantId)];
-    if (context.role === 'student') {
-      conditions.push(eq(attendanceExcuses.studentId, context.userId));
-    }
-    const [excuse] = await db.select({ id: attendanceExcuses.id }).from(attendanceExcuses).where(and(...conditions)).limit(1);
+    const [excuse] = await db
+      .select({ id: attendanceExcuses.id, studentId: attendanceExcuses.studentId })
+      .from(attendanceExcuses)
+      .where(and(eq(attendanceExcuses.id, excuseId), eq(attendanceExcuses.tenantId, tenantId)))
+      .limit(1);
     if (!excuse) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'Justification introuvable.');
     }
+
+    // AUTHORITATIVE SCOPE (P0): uploading evidence follows the same rule as
+    // reading it — linked children / teacher sections / campus.
+    await assertStudentAccess(context, tenantId, excuse.studentId);
 
     const ext = await saveUploadedFile(tenantId, `excuses/${excuseId}.{ext}`, file, ALLOWED_TYPES, MAX_SIZE_BYTES);
 

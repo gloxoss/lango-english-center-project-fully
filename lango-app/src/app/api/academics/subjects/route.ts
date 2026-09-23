@@ -7,7 +7,7 @@ import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, subjectCreateSchema, subjectUpdateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { mediums, subjects } from '@/models/Schema';
+import { classSubjects, mediums, subjects, subjectTeachers } from '@/models/Schema';
 
 function toApiSubject(row: typeof subjects.$inferSelect) {
   return {
@@ -110,6 +110,27 @@ export async function PUT(request: Request) {
   }
 }
 
+/**
+ * Reference safety: a subject is the authoritative catalogue row behind
+ * class_subjects (curriculum + coefficients) and teacher assignments.
+ * Assessments and grades hang off class_subjects, so deleting a referenced
+ * subject would orphan that whole context.
+ *
+ * attendance.subject_id references the legacy `courses` table in the current
+ * schema, NOT the subjects catalogue — it is deliberately not claimed here.
+ */
+async function subjectDependencyBlockers(tenantId: string, subjectId: string) {
+  const [classSubjectRows, subjectTeacherRows] = await Promise.all([
+    db.select({ n: count() }).from(classSubjects).where(and(eq(classSubjects.tenantId, tenantId), eq(classSubjects.subjectId, subjectId))),
+    db.select({ n: count() }).from(subjectTeachers).where(and(eq(subjectTeachers.tenantId, tenantId), eq(subjectTeachers.subjectId, subjectId))),
+  ]);
+
+  return [
+    { key: 'class_subjects', count: Number(classSubjectRows[0]?.n ?? 0) },
+    { key: 'subject_teacher_assignments', count: Number(subjectTeacherRows[0]?.n ?? 0) },
+  ].filter(blocker => blocker.count > 0);
+}
+
 export async function DELETE(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
@@ -120,6 +141,26 @@ export async function DELETE(request: Request) {
 
     if (!id) {
       return NextResponse.json({ success: false, message: 'ID non fourni' }, { status: 400 });
+    }
+
+    const [existing] = await db.select({ id: subjects.id }).from(subjects).where(and(eq(subjects.id, id), eq(subjects.tenantId, tenantId))).limit(1);
+    if (!existing) {
+      return NextResponse.json({ success: false, message: 'Introuvable' }, { status: 404 });
+    }
+
+    const blockers = await subjectDependencyBlockers(tenantId, id);
+    if (blockers.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'SUBJECT_IN_USE',
+            message: 'Cette matière est utilisée par le curriculum, des affectations ou des présences et ne peut pas être supprimée.',
+          },
+          blockers,
+        },
+        { status: 409 },
+      );
     }
 
     await db.delete(subjects).where(and(eq(subjects.id, id), eq(subjects.tenantId, tenantId)));

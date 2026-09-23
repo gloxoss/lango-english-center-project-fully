@@ -6,11 +6,11 @@
 // Found during independent verification of Wave 1 (2026-08-27), not part of
 // the original D-5/D-12 findings.
 import { randomUUID } from 'node:crypto';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { eq, sql } from 'drizzle-orm';
-import { db } from '@/libs/DB';
-import { attendanceExcuses, guardianStudents, guardians, tenants, user } from '@/models/Schema';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { GET, POST } from '@/app/api/attendance/excuses/route';
+import { db } from '@/libs/DB';
+import { attendanceExcuses, classes, classSections, guardians, guardianStudents, mediums, sections, sessionYears, tenants, user } from '@/models/Schema';
 
 vi.mock('@/libs/env/server', () => ({
   serverEnv: {
@@ -56,14 +56,29 @@ describe.skipIf(!dbReachable)('D-13: attendance excuses IDOR (parent scoping)', 
   const parentUserId = `EXC-PARENT-${suffix}`;
   const ownChildId = `EXC-OWNCHILD-${suffix}`;
   const strangerChildId = `EXC-STRANGER-${suffix}`;
+  let sectionId = '';
+  let sessionYearId = '';
 
   beforeAll(async () => {
     await db.insert(tenants).values([{ id: tenantId, name: `Excuse School ${suffix}`, slug: `excuse-${suffix}` }]);
+    const [sessionYear] = await db.insert(sessionYears).values({
+      tenantId,
+      name: `2026-2027-${suffix}`,
+      startDate: '2026-09-01T00:00:00.000Z',
+      endDate: '2027-06-30T00:00:00.000Z',
+      isDefault: true,
+    }).returning();
+    sessionYearId = sessionYear!.id;
     await db.insert(user).values([
       { id: parentUserId, tenantId, name: 'Excuse Parent', email: `exc-parent-${suffix}@test.local`, role: 'parent', userStatus: 'active' },
       { id: ownChildId, tenantId, name: 'Own Child', email: `exc-own-${suffix}@test.local`, role: 'student', userStatus: 'active' },
       { id: strangerChildId, tenantId, name: 'Stranger Child', email: `exc-stranger-${suffix}@test.local`, role: 'student', userStatus: 'active' },
     ]);
+    const [medium] = await db.insert(mediums).values({ tenantId, name: `FR-${suffix}` }).returning();
+    const [cls] = await db.insert(classes).values({ tenantId, name: `1A-${suffix}`, mediumId: medium!.id }).returning();
+    const [label] = await db.insert(sections).values({ tenantId, name: `A-${suffix}` }).returning();
+    const [classSection] = await db.insert(classSections).values({ tenantId, classId: cls!.id, sectionId: label!.id, mediumId: medium!.id, maxStudents: 30 }).returning();
+    sectionId = classSection!.id;
     await db.insert(guardians).values([
       { id: guardianRowId, tenantId, userId: parentUserId, firstName: 'Excuse', lastName: 'Parent' },
     ]);
@@ -71,13 +86,18 @@ describe.skipIf(!dbReachable)('D-13: attendance excuses IDOR (parent scoping)', 
       { tenantId, guardianId: guardianRowId, studentId: ownChildId, relationshipType: 'parent' },
     ]);
     await db.insert(attendanceExcuses).values([
-      { tenantId, studentId: ownChildId, date: '2026-09-01', reason: 'Own child reason', status: 'pending' },
-      { tenantId, studentId: strangerChildId, date: '2026-09-01', reason: 'STRANGER FAMILY MEDICAL DETAIL', status: 'pending' },
+      { tenantId, studentId: ownChildId, sessionYearId, date: '2026-09-01', reason: 'Own child reason', status: 'pending' },
+      { tenantId, studentId: strangerChildId, sessionYearId, date: '2026-09-01', reason: 'STRANGER FAMILY MEDICAL DETAIL', status: 'pending' },
     ]);
   });
 
   afterAll(async () => {
     await db.delete(attendanceExcuses).where(eq(attendanceExcuses.tenantId, tenantId));
+    await db.delete(classSections).where(eq(classSections.tenantId, tenantId));
+    await db.delete(classes).where(eq(classes.tenantId, tenantId));
+    await db.delete(sections).where(eq(sections.tenantId, tenantId));
+    await db.delete(mediums).where(eq(mediums.tenantId, tenantId));
+    await db.delete(sessionYears).where(eq(sessionYears.tenantId, tenantId));
     await db.delete(guardianStudents).where(eq(guardianStudents.tenantId, tenantId));
     await db.delete(guardians).where(eq(guardians.tenantId, tenantId));
     await db.delete(user).where(eq(user.tenantId, tenantId));
@@ -88,9 +108,12 @@ describe.skipIf(!dbReachable)('D-13: attendance excuses IDOR (parent scoping)', 
     sessionUserId.value = parentUserId;
     const req = new Request('http://localhost:3000/api/attendance/excuses');
     const res = await GET(req);
+
     expect(res.status).toBe(200);
+
     const json = await res.json();
     const studentIds = json.data.map((r: { studentId: string }) => r.studentId);
+
     expect(studentIds).toContain(ownChildId);
     expect(studentIds).not.toContain(strangerChildId);
   });
@@ -99,8 +122,11 @@ describe.skipIf(!dbReachable)('D-13: attendance excuses IDOR (parent scoping)', 
     sessionUserId.value = parentUserId;
     const req = new Request(`http://localhost:3000/api/attendance/excuses?studentId=${strangerChildId}`);
     const res = await GET(req);
+
     expect(res.status).toBe(200);
+
     const json = await res.json();
+
     expect(json.data).toEqual([]);
   });
 
@@ -109,9 +135,10 @@ describe.skipIf(!dbReachable)('D-13: attendance excuses IDOR (parent scoping)', 
     const req = new Request('http://localhost:3000/api/attendance/excuses', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ studentId: strangerChildId, date: '2026-09-02', reason: 'Forged excuse attempt' }),
+      body: JSON.stringify({ studentId: strangerChildId, classSectionId: sectionId, period: 1, date: '2026-09-02', reason: 'Forged excuse attempt' }),
     });
     const res = await POST(req);
+
     expect(res.status).toBe(403);
   });
 
@@ -120,11 +147,14 @@ describe.skipIf(!dbReachable)('D-13: attendance excuses IDOR (parent scoping)', 
     const req = new Request('http://localhost:3000/api/attendance/excuses', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ studentId: ownChildId, date: '2026-09-03', reason: 'Legitimate excuse' }),
+      body: JSON.stringify({ studentId: ownChildId, classSectionId: sectionId, period: 1, date: '2026-09-03', reason: 'Legitimate excuse' }),
     });
     const res = await POST(req);
+
     expect(res.status).toBe(200);
+
     const json = await res.json();
+
     expect(json.success).toBe(true);
   });
 });

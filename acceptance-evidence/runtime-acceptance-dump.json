@@ -1,0 +1,269 @@
+{
+  "generatedAt": "2026-09-22T23:58:15.869Z",
+  "academicPeriodsConfigured": false,
+  "classes": [
+    {
+      "id": "2186a045-95a7-44fe-b3eb-43d7696ecc00",
+      "name": "1ère",
+      "includeSemesters": false,
+      "periodType": "semester",
+      "mediumId": "b1442009-3d8e-4e1b-bdc6-ab049c22f315",
+      "shiftId": null,
+      "streamId": null,
+      "branchId": "bcf5c806-359e-4141-9e45-af5f3122a52b",
+      "cycle": null,
+      "schoolId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "branchName": "Campus Principal",
+      "sectionCount": 1,
+      "studentCount": 1,
+      "capacityTotal": 30,
+      "capacityConfigured": true,
+      "subjectCount": 0
+    },
+    {
+      "id": "4562d92f-4b0f-4c23-835b-43c0147504ae",
+      "name": "2nde",
+      "includeSemesters": false,
+      "periodType": "semester",
+      "mediumId": "b1442009-3d8e-4e1b-bdc6-ab049c22f315",
+      "shiftId": null,
+      "streamId": null,
+      "branchId": "bcf5c806-359e-4141-9e45-af5f3122a52b",
+      "cycle": null,
+      "schoolId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "branchName": "Campus Principal",
+      "sectionCount": 2,
+      "studentCount": 5,
+      "capacityTotal": 60,
+      "capacityConfigured": true,
+      "subjectCount": 1
+    }
+  ],
+  "sections": [
+    {
+      "id": "bea9f301-ba75-474e-a9fe-66446ebcd39b",
+      "classId": "2186a045-95a7-44fe-b3eb-43d7696ecc00",
+      "sectionId": "c80e0a43-e65a-4c29-ad62-a875e3635fb2",
+      "mediumId": "b1442009-3d8e-4e1b-bdc6-ab049c22f315",
+      "maxStudents": 30,
+      "homeRoomId": null,
+      "schoolId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "branchId": "bcf5c806-359e-4141-9e45-af5f3122a52b",
+      "className": "1ère",
+      "periodType": "semester",
+      "sectionName": "B",
+      "enrolledCount": 1,
+      "homeroomTeacherId": null
+    },
+    {
+      "id": "48dc5a71-b2b3-42fa-83aa-8efad3ab2b36",
+      "classId": "4562d92f-4b0f-4c23-835b-43c0147504ae",
+      "sectionId": "d3e9a2dc-daf8-42b6-894b-f11536c4df22",
+      "mediumId": "b1442009-3d8e-4e1b-bdc6-ab049c22f315",
+      "maxStudents": 30,
+      "homeRoomId": null,
+      "schoolId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "branchId": "bcf5c806-359e-4141-9e45-af5f3122a52b",
+      "className": "2nde",
+      "periodType": "semester",
+      "sectionName": "A",
+      "enrolledCount": 4,
+      "homeroomTeacherId": "USR-002"
+    },
+    {
+      "id": "78f69ba3-4383-4a78-9382-fb626ce6fed4",
+      "classId": "4562d92f-4b0f-4c23-835b-43c0147504ae",
+      "sectionId": "7edf6038-5273-4d90-ad25-390c8369689a",
+      "mediumId": "b1442009-3d8e-4e1b-bdc6-ab049c22f315",
+      "maxStudents": 30,
+      "homeRoomId": null,
+      "schoolId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "branchId": "bcf5c806-359e-4141-9e45-af5f3122a52b",
+      "className": "2nde",
+      "periodType": "semester",
+      "sectionName": "C",
+      "enrolledCount": 1,
+      "homeroomTeacherId": null
+    }
+  ],
+  "mediums": [
+    {
+      "id": "b1442009-3d8e-4e1b-bdc6-ab049c22f315",
+      "name": "Français",
+      "schoolId": "06ab27c5-7862-4e07-93af-49ef1935bfe6"
+    }
+  ],
+  "subjects": [
+    {
+      "id": "4aa6381f-092d-4e0a-8a65-ad39ea4ee4e6",
+      "name": "Mathématiques",
+      "code": null,
+      "mediumId": "b1442009-3d8e-4e1b-bdc6-ab049c22f315",
+      "type": "theory",
+      "schoolId": "06ab27c5-7862-4e07-93af-49ef1935bfe6"
+    }
+  ],
+  "classSubjects": [
+    {
+      "id": "674664e1-82bb-4243-9198-cd30f7cd277f",
+      "classId": "4562d92f-4b0f-4c23-835b-43c0147504ae",
+      "subjectId": "4aa6381f-092d-4e0a-8a65-ad39ea4ee4e6",
+      "type": "compulsory",
+      "semesterId": null,
+      "offeringId": null,
+      "weeklyMinutes": null,
+      "displayOrder": 0,
+      "coefficient": "1.00",
+      "passThreshold": null,
+      "isActive": true,
+      "curriculumLabel": null,
+      "schoolId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "subjectName": "Mathématiques",
+      "className": "2nde"
+    }
+  ],
+  "semesters": [],
+  "streams": [],
+  "shifts": [],
+  "sectionLabels": [
+    {
+      "id": "d3e9a2dc-daf8-42b6-894b-f11536c4df22",
+      "name": "A",
+      "schoolId": "06ab27c5-7862-4e07-93af-49ef1935bfe6"
+    },
+    {
+      "id": "c80e0a43-e65a-4c29-ad62-a875e3635fb2",
+      "name": "B",
+      "schoolId": "06ab27c5-7862-4e07-93af-49ef1935bfe6"
+    },
+    {
+      "id": "7edf6038-5273-4d90-ad25-390c8369689a",
+      "name": "C",
+      "schoolId": "06ab27c5-7862-4e07-93af-49ef1935bfe6"
+    }
+  ],
+  "subjectTeachers": [
+    {
+      "id": "88b1747e-343b-4c4a-8e97-2a24a12d5ca2",
+      "classSectionId": "48dc5a71-b2b3-42fa-83aa-8efad3ab2b36",
+      "subjectId": "4aa6381f-092d-4e0a-8a65-ad39ea4ee4e6",
+      "classSubjectId": "674664e1-82bb-4243-9198-cd30f7cd277f",
+      "teacherId": "USR-002",
+      "sessionYearId": "d925db1e-b68e-448f-9571-af783bba6f60",
+      "startsOn": "2026-09-22",
+      "endsOn": null,
+      "status": "active",
+      "schoolId": "06ab27c5-7862-4e07-93af-49ef1935bfe6"
+    }
+  ],
+  "placements": [
+    {
+      "id": "2e13b385-90be-4aee-a455-673d4cff005c",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "studentId": "STD-14745779",
+      "sessionYearId": "d925db1e-b68e-448f-9571-af783bba6f60",
+      "classSectionId": "48dc5a71-b2b3-42fa-83aa-8efad3ab2b36",
+      "status": "enrolled",
+      "startDate": "2026-09-22",
+      "endDate": null,
+      "isCurrent": true,
+      "promotedFromPlacementId": null,
+      "notes": null,
+      "createdAt": "2026-09-22 22:05:45.766866",
+      "updatedAt": "2026-09-22 22:05:45.766866",
+      "studentName": "Salma Benjelloun-5728",
+      "studentMatricule": "STD-2026-0002",
+      "sessionYearName": "2026-2027"
+    },
+    {
+      "id": "84d06874-32f5-4fdf-816b-09092ce794fd",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "studentId": "STD-13749349",
+      "sessionYearId": "d925db1e-b68e-448f-9571-af783bba6f60",
+      "classSectionId": "48dc5a71-b2b3-42fa-83aa-8efad3ab2b36",
+      "status": "enrolled",
+      "startDate": "2026-09-22",
+      "endDate": null,
+      "isCurrent": true,
+      "promotedFromPlacementId": null,
+      "notes": null,
+      "createdAt": "2026-09-22 21:49:09.338825",
+      "updatedAt": "2026-09-22 21:49:09.338825",
+      "studentName": "Salma Benjelloun",
+      "studentMatricule": "STD-2026-0001",
+      "sessionYearName": "2026-2027"
+    },
+    {
+      "id": "292c967f-299c-4843-b961-b5db13af98d0",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "studentId": "s0000000-0000-4000-8000-000000000003",
+      "sessionYearId": "d925db1e-b68e-448f-9571-af783bba6f60",
+      "classSectionId": "48dc5a71-b2b3-42fa-83aa-8efad3ab2b36",
+      "status": "enrolled",
+      "startDate": "2026-09-01",
+      "endDate": null,
+      "isCurrent": true,
+      "promotedFromPlacementId": null,
+      "notes": null,
+      "createdAt": "2026-09-22 22:24:23.857685",
+      "updatedAt": "2026-09-22 22:24:23.857685",
+      "studentName": "Amina Tahiri",
+      "studentMatricule": "STD-2026-0042",
+      "sessionYearName": "2026-2027"
+    },
+    {
+      "id": "8b0a0314-6e86-4957-9f6e-18af9d194465",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "studentId": "STU-003",
+      "sessionYearId": "d925db1e-b68e-448f-9571-af783bba6f60",
+      "classSectionId": "78f69ba3-4383-4a78-9382-fb626ce6fed4",
+      "status": "enrolled",
+      "startDate": "2026-09-01",
+      "endDate": null,
+      "isCurrent": true,
+      "promotedFromPlacementId": null,
+      "notes": "Inscription initiale session 2026-2027",
+      "createdAt": "2026-09-22 14:42:07.088721",
+      "updatedAt": "2026-09-22 14:42:07.088721",
+      "studentName": "Omar Tazi",
+      "studentMatricule": "AAM-2425-0003",
+      "sessionYearName": "2026-2027"
+    },
+    {
+      "id": "826830b6-4a06-4428-9d79-cc304430306f",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "studentId": "STU-002",
+      "sessionYearId": "d925db1e-b68e-448f-9571-af783bba6f60",
+      "classSectionId": "bea9f301-ba75-474e-a9fe-66446ebcd39b",
+      "status": "enrolled",
+      "startDate": "2026-09-01",
+      "endDate": null,
+      "isCurrent": true,
+      "promotedFromPlacementId": null,
+      "notes": "Inscription initiale session 2026-2027",
+      "createdAt": "2026-09-22 14:42:07.085504",
+      "updatedAt": "2026-09-22 14:42:07.085504",
+      "studentName": "Salma Bennani",
+      "studentMatricule": "AAM-2425-0002",
+      "sessionYearName": "2026-2027"
+    },
+    {
+      "id": "0fbe812f-06d2-4bae-ba18-b6e83bd52395",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "studentId": "STU-001",
+      "sessionYearId": "d925db1e-b68e-448f-9571-af783bba6f60",
+      "classSectionId": "48dc5a71-b2b3-42fa-83aa-8efad3ab2b36",
+      "status": "enrolled",
+      "startDate": "2026-09-01",
+      "endDate": null,
+      "isCurrent": true,
+      "promotedFromPlacementId": null,
+      "notes": "Inscription initiale session 2026-2027",
+      "createdAt": "2026-09-22 14:42:07.055918",
+      "updatedAt": "2026-09-22 14:42:07.055918",
+      "studentName": "Yassine El Amrani",
+      "studentMatricule": "AAM-2425-0001",
+      "sessionYearName": "2026-2027"
+    }
+  ]
+}

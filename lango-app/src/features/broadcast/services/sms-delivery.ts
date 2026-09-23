@@ -161,11 +161,14 @@ async function dispatch(
   channel: 'sms' | 'whatsapp' = 'sms',
 ): Promise<SendSmsResult> {
   const normalizedPhone = normalizeMoroccanPhone(input.to) || input.to;
-  let status: 'queued' | 'sent' | 'failed' = 'sent';
+  // NOTIFICATION TRUTH (Phase 6): without a real provider this is a QUEUED
+  // intent, never a fabricated "sent". `sent`/`sentAt` require provider
+  // evidence; `delivered` additionally requires a delivery acknowledgement.
+  let status: 'queued' | 'sent' | 'failed' = 'queued';
   let delivery: SendSmsResult['delivery'] = 'simulated';
   let providerRef: string | null = null;
   let failureReason: string | null = null;
-  let sentAt: string | null = new Date().toISOString();
+  let sentAt: string | null = null;
 
   // Every direct send (attendance alerts, bulk send, reminders) honours STOP /
   // opt-out exactly like broadcast campaigns do. The blocked attempt is still
@@ -187,6 +190,7 @@ async function dispatch(
       status = 'sent';
       delivery = result.status === 'delivered' ? 'delivered' : 'sent';
       providerRef = result.providerRef ?? null;
+      sentAt = new Date().toISOString();
     } else {
       status = 'failed';
       delivery = 'failed';

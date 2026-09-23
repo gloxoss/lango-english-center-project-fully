@@ -54,7 +54,7 @@ export async function GET(request: Request) {
       db
         .select({ studentId: attendance.studentId, status: attendance.status })
         .from(attendance)
-        .where(and(eq(attendance.tenantId, tenantId), inArray(attendance.studentId, studentIds), gte(attendance.date, thirtyDaysAgo))),
+        .where(and(eq(attendance.tenantId, tenantId), inArray(attendance.studentId, studentIds), gte(attendance.date, thirtyDaysAgo), eq(attendance.isVoided, false))),
       canSeeFinance
         ? db
             .select({ studentId: invoices.studentId, netAmount: invoices.netAmount, paidAmount: invoices.paidAmount })
@@ -70,12 +70,13 @@ export async function GET(request: Request) {
         .where(and(eq(assessmentResults.tenantId, tenantId), inArray(assessmentResults.studentId, studentIds), eq(classSubjects.classId, id))),
     ]);
 
-    const attendanceByStudent = new Map<string, { present: number; total: number }>();
+    const attendanceByStudent = new Map<string, { attended: number; total: number }>();
     for (const row of attendanceRows) {
-      const entry = attendanceByStudent.get(row.studentId) ?? { present: 0, total: 0 };
+      const entry = attendanceByStudent.get(row.studentId) ?? { attended: 0, total: 0 };
       entry.total += 1;
-      if (row.status === 'present') {
-        entry.present += 1;
+      // CANONICAL PRESENCE (Phase 7B): present + late + excused are attended.
+      if (row.status === 'present' || row.status === 'late' || row.status === 'excused') {
+        entry.attended += 1;
       }
       attendanceByStudent.set(row.studentId, entry);
     }
@@ -108,7 +109,7 @@ export async function GET(request: Request) {
         name: s.name,
         matricule: s.matricule,
         sectionName: s.sectionName,
-        attendanceRate: att && att.total > 0 ? Math.round((att.present / att.total) * 1000) / 10 : null,
+        attendanceRate: att && att.total > 0 ? Math.round((att.attended / att.total) * 1000) / 10 : null,
         balanceDue: canSeeFinance ? (balanceByStudent.get(s.id) ?? 0) : null,
         average,
       };

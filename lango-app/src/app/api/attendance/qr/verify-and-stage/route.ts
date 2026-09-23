@@ -1,11 +1,14 @@
-import { and, eq, gte } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { computeHmacHash } from '@/libs/api/badge-crypto';
+import { detectAndRecordFlags } from '@/libs/api/attendance-flags';
+import { recalculateStudentAttendanceSummary } from '@/libs/api/attendance-summary';
 import { recordAudit } from '@/libs/api/audit';
+import { computeHmacHash } from '@/libs/api/badge-crypto';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
+import { resolveInstructionalDay } from '@/libs/api/school-day';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { getEffectiveValueWithLegacyFallback } from '@/libs/settings/registry';
@@ -13,6 +16,7 @@ import {
   attendance,
   attendanceRegisters,
   attendanceScanEvents,
+  classes,
   classSections,
   identityBadgeCredentials,
   scannerSessions,
@@ -56,6 +60,17 @@ const verifyQrSchema = z.object({
   idempotencyKey: z.string().max(255).optional(),
 }).strict();
 
+/**
+ * QR ATTENDANCE PARITY (G15): a badge scan is a canonical attendance write.
+ *
+ * It resolves the same authoritative context as POST /api/attendance — tenant,
+ * campus, section, academic session (date bounds), instructional day, register
+ * lock — and upserts the same active-mark shape (session + section + period)
+ * guarded by the canonical partial unique index. Corrections keep the mark's
+ * identity (update in place + before/after audit), and every accepted mark
+ * recalculates the summary cache and the flag engine exactly like a manual
+ * submission. No QR-specific shortcut around canonical attendance truth.
+ */
 export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'teacher']);
@@ -73,8 +88,8 @@ export async function POST(request: Request) {
       .where(
         and(
           eq(identityBadgeCredentials.tenantId, tenantId),
-          eq(identityBadgeCredentials.tokenHash, tokenHash)
-        )
+          eq(identityBadgeCredentials.tokenHash, tokenHash),
+        ),
       )
       .limit(1);
 
@@ -151,15 +166,27 @@ export async function POST(request: Request) {
     }
 
     // Validate the class section belongs to this tenant and resolve its classId
+    // and campus (branch scope is enforced below, exactly like the manual route).
     const [section] = await db
-      .select({ id: classSections.id, classId: classSections.classId })
+      .select({ id: classSections.id, classId: classSections.classId, branchId: classes.branchId })
       .from(classSections)
+      .innerJoin(classes, eq(classSections.classId, classes.id))
       .where(and(eq(classSections.id, resolvedClassSectionId), eq(classSections.tenantId, tenantId)))
       .limit(1);
 
     if (!section) {
       await recordRejected('INVALID_CLASS');
       throw new ApiError(404, 'CLASS_NOT_FOUND', 'Classe/section introuvable pour cet établissement.');
+    }
+
+    // BRANCH SCOPE: a branch-limited caller cannot stage marks for another campus.
+    if (context.branchId && section.branchId !== context.branchId) {
+      await recordRejected('WRONG_BRANCH', {
+        credentialId: badge.id,
+        studentId: scannedUser.id,
+        classSectionId: resolvedClassSectionId,
+      });
+      throw new ApiError(403, 'FORBIDDEN', 'Cette section appartient à un autre campus.');
     }
 
     // Roster check: the scanned student's real class-section must match the one
@@ -186,15 +213,40 @@ export async function POST(request: Request) {
     const targetDate = tenantNow.toISOString().slice(0, 10);
     const period = body.period;
 
-    // Locked-register check: a LOCKED register (outside a REOPENED window) cannot be mutated.
+    // CALENDAR + SESSION TRUTH (Phases 4/5): the date must fall inside an
+    // academic session AND be an instructional day for this section; the
+    // resolved session is written on the mark. Fails closed, never guesses.
+    const schoolDay = await resolveInstructionalDay({ tenantId, sectionId: resolvedClassSectionId, date: targetDate });
+    if (!schoolDay.instructional || !schoolDay.sessionYearId) {
+      const reason = schoolDay.reason === 'SESSION_OUT_OF_RANGE' ? 'DATE_OUTSIDE_SESSION' : 'NON_INSTRUCTIONAL_DAY';
+      await recordRejected(reason, {
+        credentialId: badge.id,
+        studentId: scannedUser.id,
+        classSectionId: resolvedClassSectionId,
+      });
+      throw new ApiError(
+        422,
+        reason,
+        reason === 'DATE_OUTSIDE_SESSION'
+          ? 'Cette date ne fait partie d\'aucune année scolaire de cet établissement.'
+          : 'Cette date n\'est pas un jour d\'enseignement pour cette section.',
+      );
+    }
+    const sessionYearId = schoolDay.sessionYearId;
+
+    // Locked-register check: the register is resolved at its exact scope
+    // (section + date + period + session). A LOCKED register cannot be mutated;
+    // a REOPENED register is an authorized correction window and stays writable.
     const [register] = await db
       .select({ id: attendanceRegisters.id, status: attendanceRegisters.status, reference: attendanceRegisters.reference })
       .from(attendanceRegisters)
       .where(and(
         eq(attendanceRegisters.tenantId, tenantId),
         eq(attendanceRegisters.classId, section.classId),
+        eq(attendanceRegisters.classSectionId, resolvedClassSectionId),
         eq(attendanceRegisters.date, targetDate),
         eq(attendanceRegisters.period, period),
+        eq(attendanceRegisters.sessionYearId, sessionYearId),
       ))
       .limit(1);
 
@@ -208,29 +260,50 @@ export async function POST(request: Request) {
       throw new ApiError(409, 'REGISTER_LOCKED', `Le registre (${register.reference}) est verrouillé.`);
     }
 
-    // Idempotency: an already-accepted scan of the same credential in the same
-    // session (or same class-section today) must not stage a second attendance row.
-    const dupConditions = [
-      eq(attendanceScanEvents.tenantId, tenantId),
-      eq(attendanceScanEvents.credentialId, badge.id),
-      eq(attendanceScanEvents.resultStatus, 'accepted'),
-    ];
+    // Idempotency (canonical):
+    //  * inside a scanner session: one accepted scan per credential per session;
+    //  * outside one: a re-scan over a mark that a previous SCAN already wrote
+    //    for this exact (student, date, period, section) is a duplicate. A
+    //    manual mark is NOT a duplicate — scanning over it is an authorized
+    //    in-place correction (G15.9), never a second row.
+    let isDuplicate = false;
+    let duplicateStagedStatus: string | null = null;
+
     if (body.sessionId) {
-      dupConditions.push(eq(attendanceScanEvents.sessionId, body.sessionId));
+      const [duplicateEvent] = await db
+        .select()
+        .from(attendanceScanEvents)
+        .where(and(
+          eq(attendanceScanEvents.tenantId, tenantId),
+          eq(attendanceScanEvents.credentialId, badge.id),
+          eq(attendanceScanEvents.resultStatus, 'accepted'),
+          eq(attendanceScanEvents.sessionId, body.sessionId),
+        ))
+        .limit(1);
+      if (duplicateEvent) {
+        isDuplicate = true;
+        duplicateStagedStatus = duplicateEvent.stagedStatus || null;
+      }
     } else {
-      dupConditions.push(
-        eq(attendanceScanEvents.classSectionId, resolvedClassSectionId),
-        gte(attendanceScanEvents.scannedAt, `${targetDate}T00:00:00.000Z`),
-      );
+      const [scanWrittenMark] = await db
+        .select({ status: attendance.status, scanEventId: attendance.scanEventId })
+        .from(attendance)
+        .where(and(
+          eq(attendance.tenantId, tenantId),
+          eq(attendance.studentId, scannedUser.id),
+          eq(attendance.date, targetDate),
+          eq(attendance.period, period),
+          eq(attendance.classSectionId, resolvedClassSectionId),
+          eq(attendance.isVoided, false),
+        ))
+        .limit(1);
+      if (scanWrittenMark?.scanEventId) {
+        isDuplicate = true;
+        duplicateStagedStatus = scanWrittenMark.status;
+      }
     }
 
-    const [duplicateEvent] = await db
-      .select()
-      .from(attendanceScanEvents)
-      .where(and(...dupConditions))
-      .limit(1);
-
-    if (duplicateEvent) {
+    if (isDuplicate) {
       // Log the duplicate attempt as its own scan event so the audit trail and
       // the "Déjà scannés" aggregate stay meaningful. No attendance row is
       // written and already_scanned events never feed the duplicate check
@@ -245,8 +318,11 @@ export async function POST(request: Request) {
           classSectionId: resolvedClassSectionId,
           registerId: register?.id ?? null,
           resultStatus: 'already_scanned',
-          stagedStatus: duplicateEvent.stagedStatus || null,
+          stagedStatus: duplicateStagedStatus,
           idempotencyKey: body.idempotencyKey || null,
+          // Tenant wall-clock time: the duplicate window compares against the
+          // same tenant-clock date as the attendance mark.
+          scannedAt: tenantNow.toISOString(),
         })
         .returning();
 
@@ -259,7 +335,7 @@ export async function POST(request: Request) {
             email: scannedUser.email,
             image: scannedUser.image,
           },
-          stagedStatus: duplicateEvent.stagedStatus || 'present',
+          stagedStatus: duplicateStagedStatus || 'present',
           scanEvent: duplicateScanEvent,
           resultStatus: 'already_scanned',
         },
@@ -281,59 +357,119 @@ export async function POST(request: Request) {
           resultStatus: 'accepted',
           stagedStatus,
           idempotencyKey: body.idempotencyKey || null,
+          // Tenant wall-clock time: the duplicate window compares against the
+          // same tenant-clock date as the attendance mark.
+          scannedAt: tenantNow.toISOString(),
         })
         .returning();
 
-      // Upsert the real attendance row for (classId, date, period) so a scan both
-      // stages and overwrites cleanly without duplicating rows.
+      // CANONICAL ACTIVE-MARK UPSERT: same key as POST /api/attendance
+      // (tenant, student, session, date, period, section). Corrections update in
+      // place with a before/after audit — nothing is deleted, no duplicate
+      // active marks can exist (partial unique index guards the race).
       const [existing] = await tx
-        .select({ id: attendance.id })
+        .select()
         .from(attendance)
         .where(and(
           eq(attendance.tenantId, tenantId),
           eq(attendance.studentId, scannedUser.id),
-          eq(attendance.studentGroupId, section.classId),
           eq(attendance.date, targetDate),
           eq(attendance.period, period),
+          eq(attendance.classSectionId, resolvedClassSectionId),
+          eq(attendance.isVoided, false),
         ))
         .limit(1);
 
-      const attendanceRow = existing
-        ? (await tx
-            .update(attendance)
-            .set({
+      const lateMinutes = stagedStatus === 'late' ? (existing?.lateMinutes ?? 0) : null;
+      let attendanceRow: typeof attendance.$inferSelect;
+      let changed = false;
+
+      if (existing && existing.status === stagedStatus && existing.lateMinutes === lateMinutes) {
+        // Unchanged re-scan: keep the authoritative mark untouched.
+        attendanceRow = existing;
+      } else if (existing) {
+        const [updated] = await tx
+          .update(attendance)
+          .set({
+            status: stagedStatus,
+            markedById: context.userId,
+            scanEventId: scanEvent!.id,
+            registerId: register?.id ?? existing.registerId,
+            lateMinutes,
+            updatedAt: new Date().toISOString(),
+          })
+          .where(eq(attendance.id, existing.id))
+          .returning();
+        attendanceRow = updated!;
+        changed = true;
+
+        recordAudit(context, 'update', 'attendance', existing.id, {
+          studentId: scannedUser.id,
+          classSectionId: resolvedClassSectionId,
+          date: targetDate,
+          period,
+          before: { status: existing.status, lateMinutes: existing.lateMinutes, note: existing.note },
+          after: { status: stagedStatus, lateMinutes, note: existing.note },
+          reason: 'qr_scan_correction',
+        });
+      } else {
+        const [inserted] = await tx
+          .insert(attendance)
+          .values({
+            tenantId,
+            studentId: scannedUser.id,
+            studentGroupId: section.classId,
+            classSectionId: resolvedClassSectionId,
+            academicYearId: sessionYearId,
+            period,
+            date: targetDate,
+            status: stagedStatus,
+            markedById: context.userId,
+            isVoided: false,
+            registerId: register?.id ?? null,
+            scanEventId: scanEvent!.id,
+            lateMinutes,
+          })
+          .onConflictDoUpdate({
+            target: [attendance.tenantId, attendance.studentId, attendance.academicYearId, attendance.date, attendance.period, attendance.classSectionId],
+            targetWhere: sql`${attendance.isVoided} = false AND ${attendance.classSectionId} IS NOT NULL`,
+            set: {
               status: stagedStatus,
               markedById: context.userId,
               scanEventId: scanEvent!.id,
-              isVoided: false,
-              lateMinutes: stagedStatus === 'late' ? 0 : null,
-              updatedAt: new Date().toISOString(),
-            })
-            .where(eq(attendance.id, existing.id))
-            .returning())[0]
-        : (await tx
-            .insert(attendance)
-            .values({
-              tenantId,
-              studentId: scannedUser.id,
-              studentGroupId: section.classId,
-              period,
-              date: targetDate,
-              status: stagedStatus,
-              markedById: context.userId,
-              isVoided: false,
               registerId: register?.id ?? null,
-              scanEventId: scanEvent!.id,
-            })
-            .returning())[0];
+              lateMinutes,
+              updatedAt: new Date().toISOString(),
+            },
+          })
+          .returning();
+        attendanceRow = inserted!;
+        changed = true;
+
+        recordAudit(context, 'create', 'attendance', inserted!.id, {
+          studentId: scannedUser.id,
+          classSectionId: resolvedClassSectionId,
+          date: targetDate,
+          period,
+          after: { status: stagedStatus, lateMinutes, note: null },
+          source: 'qr_scan',
+        });
+      }
+
+      // Side effects run only when the mark actually changed — the same
+      // summary/flag convergence as the manual route.
+      if (changed) {
+        await recalculateStudentAttendanceSummary(tenantId, scannedUser.id, tx);
+        await detectAndRecordFlags(tenantId, scannedUser.id, targetDate, stagedStatus, tx);
+      }
 
       // Complete the evidence chain: scan event -> attendance row.
       await tx
         .update(attendanceScanEvents)
-        .set({ attendanceRecordId: attendanceRow!.id })
+        .set({ attendanceRecordId: attendanceRow.id })
         .where(eq(attendanceScanEvents.id, scanEvent!.id));
 
-      return { scanEvent: scanEvent!, attendanceRow: attendanceRow! };
+      return { scanEvent: scanEvent!, attendanceRow };
     });
 
     recordAudit(context, 'create', 'attendance_scan', staged.scanEvent.id, {

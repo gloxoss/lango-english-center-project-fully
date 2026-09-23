@@ -315,6 +315,10 @@ export const classCreateSchema = z.object({
   mediumId: idSchema,
   shiftId: idSchema.optional().nullable(),
   streamId: idSchema.optional().nullable(),
+  // Authoritative campus. Branch-limited admins are pinned server-side; a
+  // whole-school admin may select one or leave it unassigned ("Campus non
+  // défini") for legacy-compatible creation.
+  branchId: idSchema.optional().nullable(),
   cycle: z.enum(['maternelle', 'primaire', 'college', 'lycee']).optional().nullable(),
   periodType: z.enum(['semester', 'trimester', 'month']).optional(),
   sectionCount: z.number().int().min(0).max(26).optional(),
