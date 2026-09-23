@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull, or } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -23,7 +23,10 @@ const attendanceRecordItemSchema = z.object({
 
 const batchAttendanceSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD attendu'),
-  studentGroupId: z.string().uuid().optional(),
+  // AUTHORITATIVE CONTEXT (P0): the operating class section is REQUIRED.
+  // There is no unlocked ad-hoc downgrade on this route; specialized writers
+  // (QR kiosk, live classrooms) have their own explicit paths.
+  studentGroupId: z.string().uuid(),
   subjectId: z.string().uuid().optional(),
   period: z.number().int().min(1).max(12).optional().default(1),
   records: z.array(attendanceRecordItemSchema).min(1),
@@ -124,149 +127,223 @@ export async function POST(request: Request) {
     await requireCapability(context, 'attendance.manage');
     const body = await parseJson(request, batchAttendanceSchema);
 
-    // D-16: GET scopes a teacher to their assigned sections, POST did not, so a
-    // teacher could mark attendance for any student in the tenant. Marking a
-    // student `absent` also sends an SMS to that child's guardian, so the write
-    // path reached families outside the teacher's classes. Checked before the
-    // transaction: the batch is refused whole rather than partially applied.
+    // SECTION SCOPE (migration 0147 + P0 lock-bypass fix): `studentGroupId`
+    // carries the operating class section. It is resolved strictly — a forged
+    // or unknown section is refused, never downgraded into an unlocked write.
+    const [sec] = await db
+      .select({ classId: classSections.classId, branchId: classes.branchId })
+      .from(classSections)
+      .innerJoin(classes, eq(classSections.classId, classes.id))
+      .where(and(eq(classSections.tenantId, tenantId), eq(classSections.id, body.studentGroupId)))
+      .limit(1);
+    if (!sec) {
+      throw new ApiError(422, 'INVALID_REFERENCE', 'Section de classe introuvable pour cet établissement.');
+    }
+    // BRANCH SCOPE (P0): a branch-limited admin cannot mark another campus's
+    // section, even with valid student ids.
+    if (context.branchId && sec.branchId !== context.branchId) {
+      throw new ApiError(403, 'FORBIDDEN', 'Cette section appartient à un autre campus.');
+    }
+    const attendanceClassId = sec.classId;
+    const attendanceSectionId = body.studentGroupId;
+
+    // PRE-FLIGHT BATCH VALIDATION (P0) — checked once, before the transaction,
+    // so a forged/unauthorized student refuses the WHOLE batch atomically:
+    //   1. every student exists in this tenant as an active student;
+    //   2. every student is currently placed in THIS section (placement truth);
+    //   3. teachers: the section must be one of their current assignments;
+    //   4. branch-limited admins: the section must be on their campus (already
+    //      enforced above) and students must be branch-resolvable.
+    const studentIds = body.records.map(r => r.studentId);
+    const studentRows = await db
+      .select({ id: user.id, branchId: user.branchId, classSectionId: user.classSectionId })
+      .from(user)
+      .where(and(eq(user.tenantId, tenantId), eq(user.role, 'student'), inArray(user.id, studentIds)));
+
+    const studentById = new Map(studentRows.map(row => [row.id, row]));
+    if (studentIds.some(id => !studentById.has(id))) {
+      throw new ApiError(422, 'INVALID_REFERENCE', 'Un ou plusieurs élèves sont introuvables pour cet établissement.');
+    }
+
+    const wrongSection = studentRows.some(row => row.classSectionId !== attendanceSectionId);
+    if (wrongSection) {
+      throw new ApiError(403, 'FORBIDDEN', 'Un ou plusieurs élèves n\'appartiennent pas à cette section.');
+    }
+
     if (context.role === 'teacher') {
       const assigned = new Set(await getTeacherClassSectionIds(tenantId, context.userId));
-      const studentIds = body.records.map(r => r.studentId);
-      const rows = await db
-        .select({ id: user.id, classSectionId: user.classSectionId })
-        .from(user)
-        .where(and(eq(user.tenantId, tenantId), inArray(user.id, studentIds)));
-
-      const known = new Set(rows.map(r => r.id));
-      const outOfScope = rows.some(r => !r.classSectionId || !assigned.has(r.classSectionId));
-      // An unknown id (other tenant, or nonexistent) is also out of scope.
-      if (outOfScope || studentIds.some(id => !known.has(id))) {
-        throw new ApiError(403, 'FORBIDDEN', 'Un ou plusieurs élèves ne font pas partie de vos classes.');
+      if (!assigned.has(attendanceSectionId)) {
+        throw new ApiError(403, 'FORBIDDEN', 'Cette section ne fait pas partie de vos classes.');
       }
     }
 
-    // SECTION SCOPE (migration 0147): `studentGroupId` carries the operating
-    // class section from the intake UI. Resolve its parent class for the
-    // legacy FK column and store the section explicitly, so Section A and
-    // Section B get independent registers instead of sharing (and locking)
-    // one class-level register.
-    let attendanceClassId: string | null = body.studentGroupId || null;
-    let attendanceSectionId: string | null = null;
-    if (body.studentGroupId) {
-      const [sec] = await db
-        .select({ classId: classSections.classId, branchId: classes.branchId })
-        .from(classSections)
-        .innerJoin(classes, eq(classSections.classId, classes.id))
-        .where(and(eq(classSections.tenantId, tenantId), eq(classSections.id, body.studentGroupId)))
-        .limit(1);
-      if (sec?.classId) {
-        // BRANCH SCOPE (P0): a branch-limited admin cannot mark another
-        // campus's section, even with valid student ids.
-        if (context.branchId && sec.branchId !== context.branchId) {
-          throw new ApiError(403, 'FORBIDDEN', 'Cette section appartient à un autre campus.');
-        }
-        attendanceClassId = sec.classId;
-        attendanceSectionId = body.studentGroupId;
-      }
-    }
-
-    // BRANCH SCOPE (P0): a branch-limited admin may only mark students of their
-    // own campus; ambiguous (branch-less) students are refused rather than
-    // silently mutated. Teachers are already scoped to assigned sections above.
     if (context.role === 'school_admin' && context.branchId) {
-      const studentIds = body.records.map(r => r.studentId);
-      const rows = await db
-        .select({ id: user.id, branchId: user.branchId })
-        .from(user)
-        .where(and(eq(user.tenantId, tenantId), inArray(user.id, studentIds)));
-
-      const known = new Set(rows.map(r => r.id));
-      const outOfScope = rows.some(r => !r.branchId || r.branchId !== context.branchId);
-      if (outOfScope || studentIds.some(id => !known.has(id))) {
+      const outOfScope = studentRows.some(row => !row.branchId || row.branchId !== context.branchId);
+      if (outOfScope) {
         throw new ApiError(403, 'FORBIDDEN', 'Un ou plusieurs élèves ne font pas partie de votre campus.');
       }
     }
 
     const savedRecords = await db.transaction(async (tx) => {
-      // Registers are keyed per (section, date, period) when a section is
-      // known — only enforced when a class context is actually selected,
-      // matching how the real intake UI always submits. Ad hoc submissions
-      // without a class context stay unregistered rather than being blocked.
-      const register = attendanceClassId
-        ? await resolveRegisterForSubmission(tenantId, attendanceClassId, body.date, body.period, context.userId, body.correctionNote, tx, attendanceSectionId)
-        : null;
+      const register = await resolveRegisterForSubmission(tenantId, attendanceClassId, body.date, body.period, context.userId, body.correctionNote, tx, attendanceSectionId);
 
-      const results = [];
-      for (const rec of body.records) {
-        // Delete existing attendance session for this student, date, and period under this tenant
-        const deleteConditions = [
+      const studentIds = body.records.map(r => r.studentId);
+
+      // Bulk-read the authoritative active marks for this exact context — one
+      // query, not one per student.
+      const existingRows = await tx
+        .select()
+        .from(attendance)
+        .where(and(
           eq(attendance.tenantId, tenantId),
-          eq(attendance.studentId, rec.studentId),
+          inArray(attendance.studentId, studentIds),
           eq(attendance.date, body.date),
           eq(attendance.period, body.period),
-        ];
+          eq(attendance.classSectionId, attendanceSectionId),
+          eq(attendance.isVoided, false),
+        ));
+      const existingByStudent = new Map(existingRows.map(row => [row.studentId, row]));
 
-        await tx
-          .delete(attendance)
-          .where(and(...deleteConditions));
+      const results = [];
+      const changedStudentIds = new Set<string>();
+      const absentStudentIds = new Set<string>();
 
-        // Insert fresh record
-        const [inserted] = await tx
-          .insert(attendance)
-          .values({
-            tenantId,
+      for (const rec of body.records) {
+        const lateMinutes = rec.status === 'late' ? (rec.lateMinutes ?? null) : null;
+        const note = rec.note || null;
+        const existing = existingByStudent.get(rec.studentId);
+
+        if (existing
+          && existing.status === rec.status
+          && existing.lateMinutes === lateMinutes
+          && (existing.note ?? null) === note) {
+          // No change: keep the authoritative mark untouched (no re-SMS, no
+          // summary churn, no history rewrite).
+          results.push(existing);
+          continue;
+        }
+
+        const after = { status: rec.status, lateMinutes, note };
+
+        if (existing) {
+          // CORRECTION (P0): update in place and audit before/after — the
+          // previous mark stays answerable in audit_logs; nothing is deleted.
+          const [updated] = await tx
+            .update(attendance)
+            .set({
+              status: rec.status,
+              lateMinutes,
+              note,
+              markedById: context.userId,
+              registerId: register?.id ?? null,
+              updatedAt: new Date().toISOString(),
+            })
+            .where(eq(attendance.id, existing.id))
+            .returning();
+
+          recordAudit(context, 'update', 'attendance', existing.id, {
             studentId: rec.studentId,
-            studentGroupId: attendanceClassId,
-            classSectionId: attendanceSectionId,
-            subjectId: body.subjectId || null,
-            period: body.period,
             date: body.date,
-            status: rec.status,
-            lateMinutes: rec.status === 'late' ? (rec.lateMinutes ?? null) : null,
-            markedById: context.userId,
-            note: rec.note || null,
-            isVoided: false,
-            registerId: register?.id ?? null,
-          })
-          .returning();
-
-        results.push(inserted);
-
-        // Recalculate summary cache for affected student
-        await recalculateStudentAttendanceSummary(tenantId, rec.studentId, tx);
-        await detectAndRecordFlags(tenantId, rec.studentId, body.date, rec.status, tx);
-
-        if (rec.status === 'absent') {
-          // Prefer the primary contact, but fall back to any linked guardian -
-          // isPrimaryContact isn't always set (e.g. links made before that default
-          // existed), and a real student having no SMS destination at all because
-          // of that would be a silent, confusing failure.
-          const [guardian] = await tx
-            .select({ phone: guardians.phone })
-            .from(guardianStudents)
-            .innerJoin(guardians, eq(guardianStudents.guardianId, guardians.id))
-            .where(and(
-              eq(guardianStudents.tenantId, tenantId),
-              eq(guardianStudents.studentId, rec.studentId),
-            ))
-            .orderBy(desc(guardianStudents.isPrimaryContact))
-            .limit(1);
-
-          if (guardian?.phone) {
-            const [student] = await tx.select({ name: user.name }).from(user).where(eq(user.id, rec.studentId)).limit(1);
-            const now = new Date().toISOString();
-            await tx.insert(smsMessages).values({
+            period: body.period,
+            classSectionId: attendanceSectionId,
+            before: { status: existing.status, lateMinutes: existing.lateMinutes, note: existing.note },
+            after,
+            reason: body.correctionNote ?? null,
+          });
+          results.push(updated);
+        } else {
+          // Insert path, race-safe via the partial unique index: two
+          // simultaneous submissions can never create duplicate active marks.
+          const [inserted] = await tx
+            .insert(attendance)
+            .values({
               tenantId,
-              recipientPhone: guardian.phone,
               studentId: rec.studentId,
-              body: `Absence non justifiée signalée pour ${student?.name ?? 'votre enfant'} le ${body.date}.`,
-              status: 'sent',
-              sentAt: now,
-              createdById: context.userId,
-            });
-          }
+              studentGroupId: attendanceClassId,
+              classSectionId: attendanceSectionId,
+              subjectId: body.subjectId || null,
+              period: body.period,
+              date: body.date,
+              status: rec.status,
+              lateMinutes,
+              markedById: context.userId,
+              note,
+              isVoided: false,
+              registerId: register?.id ?? null,
+            })
+            .onConflictDoUpdate({
+              target: [attendance.tenantId, attendance.studentId, attendance.date, attendance.period, attendance.classSectionId],
+              targetWhere: sql`${attendance.isVoided} = false AND ${attendance.classSectionId} IS NOT NULL`,
+              set: {
+                status: rec.status,
+                lateMinutes,
+                note,
+                markedById: context.userId,
+                registerId: register?.id ?? null,
+                updatedAt: new Date().toISOString(),
+              },
+            })
+            .returning();
+
+          recordAudit(context, 'create', 'attendance', inserted!.id, {
+            studentId: rec.studentId,
+            date: body.date,
+            period: body.period,
+            classSectionId: attendanceSectionId,
+            after,
+          });
+          results.push(inserted);
+        }
+
+        changedStudentIds.add(rec.studentId);
+        if (rec.status === 'absent') {
+          absentStudentIds.add(rec.studentId);
         }
       }
+
+      // Side effects run once per CHANGED student — not once per record, and
+      // never for unchanged re-submissions.
+      for (const studentId of changedStudentIds) {
+        await recalculateStudentAttendanceSummary(tenantId, studentId, tx);
+      }
+      for (const studentId of changedStudentIds) {
+        const rec = body.records.find(r => r.studentId === studentId);
+        if (rec) {
+          await detectAndRecordFlags(tenantId, studentId, body.date, rec.status, tx);
+        }
+      }
+
+      for (const studentId of absentStudentIds) {
+        // Prefer the primary contact, but fall back to any linked guardian -
+        // isPrimaryContact isn't always set (e.g. links made before that default
+        // existed), and a real student having no SMS destination at all because
+        // of that would be a silent, confusing failure.
+        const [guardian] = await tx
+          .select({ phone: guardians.phone })
+          .from(guardianStudents)
+          .innerJoin(guardians, eq(guardianStudents.guardianId, guardians.id))
+          .where(and(
+            eq(guardianStudents.tenantId, tenantId),
+            eq(guardianStudents.studentId, studentId),
+          ))
+          .orderBy(desc(guardianStudents.isPrimaryContact))
+          .limit(1);
+
+        if (guardian?.phone) {
+          const [student] = await tx.select({ name: user.name }).from(user).where(eq(user.id, studentId)).limit(1);
+          const now = new Date().toISOString();
+          await tx.insert(smsMessages).values({
+            tenantId,
+            recipientPhone: guardian.phone,
+            studentId,
+            body: `Absence non justifiée signalée pour ${student?.name ?? 'votre enfant'} le ${body.date}.`,
+            status: 'sent',
+            sentAt: now,
+            createdById: context.userId,
+          });
+        }
+      }
+
       return { results, register };
     });
 

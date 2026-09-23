@@ -41,6 +41,10 @@ export async function resolveRegisterForSubmission(
     .limit(1);
 
   if (!existing) {
+    // Race-safe creation: the partial unique indexes on
+    // (tenant, section|class, date, period) guarantee a single register even
+    // when two submissions arrive simultaneously; the loser re-reads the
+    // winner's row and continues through the normal lock path below.
     const [inserted] = await executor
       .insert(attendanceRegisters)
       .values({
@@ -54,8 +58,34 @@ export async function resolveRegisterForSubmission(
         submittedAt: new Date().toISOString(),
         submittedById,
       })
+      .onConflictDoNothing()
       .returning();
-    return inserted;
+
+    if (inserted) {
+      return inserted;
+    }
+
+    const [raced] = await executor
+      .select()
+      .from(attendanceRegisters)
+      .where(and(
+        eq(attendanceRegisters.tenantId, tenantId),
+        eq(attendanceRegisters.classId, classId),
+        eq(attendanceRegisters.date, date),
+        eq(attendanceRegisters.period, period),
+        classSectionId
+          ? eq(attendanceRegisters.classSectionId, classSectionId)
+          : isNull(attendanceRegisters.classSectionId),
+      ))
+      .limit(1);
+
+    if (!raced) {
+      throw new ApiError(500, 'REGISTER_RESOLVE_FAILED', 'Le registre n\'a pas pu être résolu.');
+    }
+    if (raced.status === 'LOCKED') {
+      throw new ApiError(409, 'REGISTER_LOCKED', `Ce registre (${raced.reference}) a été soumis et verrouillé. Une réouverture par l'administration est requise pour le modifier.`);
+    }
+    return raced;
   }
 
   if (existing.status === 'LOCKED') {

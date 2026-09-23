@@ -528,6 +528,7 @@ describe.skipIf(!hasDb)('teacher directory hardening', () => {
     const res = await attendanceRoutes.POST(jsonRequest('http://x/api/attendance', 'POST', {
       date: today,
       period: 1,
+      studentGroupId: sectionA1,
       records: [{ studentId: studentA, status: 'present' }],
     }));
 

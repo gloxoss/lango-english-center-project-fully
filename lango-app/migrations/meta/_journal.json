@@ -1023,6 +1023,13 @@
       "when": 1790115023878,
       "tag": "0148_attendance_register_section_cascade",
       "breakpoints": true
+    },
+    {
+      "idx": 146,
+      "version": "7",
+      "when": 1790116023878,
+      "tag": "0149_attendance_active_mark_unique",
+      "breakpoints": true
     }
   ]
 }

@@ -1,9 +1,9 @@
+import type { RequestContext } from '@/libs/api/context';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { GET, POST } from '@/app/api/attendance/route';
 import { db } from '@/libs/DB';
-import { attendance, classSections, classTeachers, classes, mediums, sections, tenants, user } from '@/models/Schema';
-import type { RequestContext } from '@/libs/api/context';
+import { attendance, attendanceRegisters, classes, classSections, classTeachers, mediums, sections, tenants, user } from '@/models/Schema';
 
 // D-16: asymmetric authorization on /api/attendance.
 //
@@ -69,7 +69,8 @@ describe.skipIf(!dbReachable)('POST /api/attendance — teacher section scope', 
     // class_sections is a join row: medium -> class + section -> class_section.
     const [medium] = await db.insert(mediums).values({ tenantId, name: 'FR' }).returning();
     const [klass] = await db.insert(classes)
-      .values({ tenantId, name: '1ere', mediumId: medium!.id }).returning();
+      .values({ tenantId, name: '1ere', mediumId: medium!.id })
+      .returning();
     const secRows = await db.insert(sections).values([
       { tenantId, name: 'A' },
       { tenantId, name: 'B' },
@@ -99,6 +100,7 @@ describe.skipIf(!dbReachable)('POST /api/attendance — teacher section scope', 
 
   afterAll(async () => {
     await db.delete(attendance).where(eq(attendance.tenantId, tenantId));
+    await db.delete(attendanceRegisters).where(eq(attendanceRegisters.tenantId, tenantId));
     await db.delete(classTeachers).where(eq(classTeachers.tenantId, tenantId));
     await db.delete(user).where(eq(user.tenantId, tenantId));
     await db.delete(classSections).where(eq(classSections.tenantId, tenantId));
@@ -113,11 +115,14 @@ describe.skipIf(!dbReachable)('POST /api/attendance — teacher section scope', 
     const res = await postAttendance({
       date: today,
       period: 1,
+      studentGroupId: sectionMine,
       records: [{ studentId: STUDENT_MINE, status: 'present' }],
     });
+
     expect(res.status).toBe(200);
 
     const rows = await db.select().from(attendance).where(eq(attendance.studentId, STUDENT_MINE));
+
     expect(rows).toHaveLength(1);
     expect(rows[0]!.status).toBe('present');
   });
@@ -127,6 +132,7 @@ describe.skipIf(!dbReachable)('POST /api/attendance — teacher section scope', 
     const res = await postAttendance({
       date: today,
       period: 2,
+      studentGroupId: sectionMine,
       records: [{ studentId: STUDENT_NOT_MINE, status: 'absent' }],
     });
 
@@ -135,6 +141,7 @@ describe.skipIf(!dbReachable)('POST /api/attendance — teacher section scope', 
     // Nothing may be written — an `absent` write also triggers a guardian SMS,
     // so a partial success here would notify an unrelated family.
     const rows = await db.select().from(attendance).where(eq(attendance.studentId, STUDENT_NOT_MINE));
+
     expect(rows).toHaveLength(0);
   });
 
@@ -143,6 +150,7 @@ describe.skipIf(!dbReachable)('POST /api/attendance — teacher section scope', 
     const res = await postAttendance({
       date: today,
       period: 3,
+      studentGroupId: sectionMine,
       records: [
         { studentId: STUDENT_MINE, status: 'present' },
         { studentId: STUDENT_NOT_MINE, status: 'absent' },
@@ -150,7 +158,9 @@ describe.skipIf(!dbReachable)('POST /api/attendance — teacher section scope', 
     });
 
     expect(res.status).toBe(403);
+
     const rows = await db.select().from(attendance).where(eq(attendance.period, 3));
+
     expect(rows).toHaveLength(0);
   });
 
@@ -159,17 +169,22 @@ describe.skipIf(!dbReachable)('POST /api/attendance — teacher section scope', 
     const res = await postAttendance({
       date: today,
       period: 4,
+      studentGroupId: sectionNotMine,
       records: [{ studentId: STUDENT_NOT_MINE, status: 'present' }],
     });
+
     expect(res.status).toBe(200);
   });
 
   it('GET already scopes a teacher to their sections', async () => {
     await asRole(TEACHER_OTHER, 'teacher');
     const res = await GET(new Request(`http://localhost/api/attendance?date=${today}`));
+
     expect(res.status).toBe(200);
+
     const json = await res.json();
     const ids = (json.data ?? []).map((r: { studentId: string }) => r.studentId);
+
     expect(ids).not.toContain(STUDENT_MINE);
   });
 });
