@@ -4,6 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import { POST as reopenRegister } from '@/app/api/attendance/registers/reopen/route';
 import { POST as postAttendance } from '@/app/api/attendance/route';
 import { db } from '@/libs/DB';
+import { setSettingValue } from '@/libs/settings/registry';
 import {
   attendance,
   attendanceRegisters,
@@ -220,6 +221,35 @@ describe.skipIf(!dbReachable)('attendance notification truth P0 — DB-backed', 
     const after = await intents();
 
     expect(after).toHaveLength(before.length); // deterministic identity: same student+date already notified
+  });
+
+  it('G13.7: disabled attendance.smsAlerts suppresses the absence intent (mark still commits)', async () => {
+    const { requireRequestContext } = await import('@/libs/api/context');
+    const ctx = { userId: ADMIN, tenantId, role: 'school_admin', branchId: null } as RequestContext;
+    vi.mocked(requireRequestContext).mockResolvedValue(ctx);
+
+    await setSettingValue(tenantId, null, 'attendance.smsAlerts', false, ctx as never);
+
+    const before = await intents();
+    const res = await post({ date, period: 5, studentGroupId: sectionId, records: [{ studentId: STUDENT, status: 'absent' }] });
+
+    expect(res.status).toBe(200); // attendance still commits
+
+    const [mark] = await db
+      .select({ status: attendance.status })
+      .from(attendance)
+      .where(and(
+        eq(attendance.tenantId, tenantId),
+        eq(attendance.studentId, STUDENT),
+        eq(attendance.date, date),
+        eq(attendance.period, 5),
+      ));
+
+    expect(mark!.status).toBe('absent');
+
+    expect(await intents()).toHaveLength(before.length); // zero new intents
+
+    await setSettingValue(tenantId, null, 'attendance.smsAlerts', true, ctx as never);
   });
 
   it('G13.6: a non-instructional day creates zero intents', async () => {

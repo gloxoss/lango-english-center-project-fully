@@ -14,6 +14,7 @@ import { resolveInstructionalDay } from '@/libs/api/school-day';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
+import { getEffectiveValue } from '@/libs/settings/registry';
 import { attendance, classes, classSections, guardians, guardianStudents, sessionYears, smsMessages, user } from '@/models/Schema';
 
 const attendanceRecordItemSchema = z.object({
@@ -359,7 +360,15 @@ export async function POST(request: Request) {
     // never as a raw 'sent' row inside the transaction. No provider success
     // means no 'sent'. A dispatcher failure can never roll back attendance.
     // Dedupe identity: (tenant, student, deterministic absence body per date).
+    // SETTINGS TRUTH: the existing tenant setting governs absence alerts; the
+    // default comes from the authoritative registry, never invented here.
+    const smsAlertsSetting = await getEffectiveValue(tenantId, context.branchId ?? null, 'attendance.smsAlerts');
+    const smsAlertsEnabled = smsAlertsSetting.value !== false;
+
     for (const studentId of savedRecords.absentStudentIds) {
+      if (smsAlertsEnabled === false) {
+        break;
+      }
       const [guardian] = await db
         .select({ phone: guardians.phone })
         .from(guardianStudents)
