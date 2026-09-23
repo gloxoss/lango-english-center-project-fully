@@ -2675,6 +2675,7 @@
     "passRateTile": "Taux de réussite",
     "excludingAbsents": "hors absents",
     "noAssessmentSelected": "Aucune épreuve sélectionnée",
+    "backToExamList": "Retour à la liste des épreuves",
     "noAssessmentSelectedDesc": "Ouvrez une feuille de notes depuis la liste des épreuves pour saisir les notes.",
     "homeworkTitle": "Devoirs & Travaux de Maison",
     "homeworkSubtitle": "Gérez, assignez et corrigez les devoirs et travaux de maison digitalisés.",

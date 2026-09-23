@@ -2675,6 +2675,7 @@
     "passRateTile": "نسبة النجاح",
     "excludingAbsents": "باستثناء الغائبين",
     "noAssessmentSelected": "لم يتم اختيار أي اختبار",
+    "backToExamList": "العودة إلى قائمة الاختبارات",
     "noAssessmentSelectedDesc": "افتح ورقة النقط من قائمة الاختبارات لإدخال النقط.",
     "homeworkTitle": "الواجبات والأعمال المنزلية",
     "homeworkSubtitle": "إدارة، وتعيين وتصحيح واجبات وأعمال الطلاب الرقمية.",
