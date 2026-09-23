@@ -25,6 +25,7 @@ export async function resolveRegisterForSubmission(
   correctionNote: string | undefined,
   executor: any = db,
   classSectionId: string | null = null,
+  sessionYearId: string | null = null,
 ) {
   const [existing] = await executor
     .select()
@@ -51,6 +52,7 @@ export async function resolveRegisterForSubmission(
         tenantId,
         classId,
         classSectionId,
+        sessionYearId,
         date,
         period,
         reference: generateReference(classSectionId, classId, date, period),

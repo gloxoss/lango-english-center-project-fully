@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { GET, POST } from '@/app/api/attendance/route';
 import { db } from '@/libs/DB';
-import { attendance, attendanceRegisters, classes, classSections, classTeachers, mediums, sections, tenants, user } from '@/models/Schema';
+import { attendance, attendanceRegisters, classes, classSections, classTeachers, mediums, sections, sessionYears, tenants, user } from '@/models/Schema';
 
 // D-16: asymmetric authorization on /api/attendance.
 //
@@ -65,6 +65,13 @@ function postAttendance(body: unknown): Promise<Response> {
 describe.skipIf(!dbReachable)('POST /api/attendance — teacher section scope', () => {
   beforeAll(async () => {
     await db.insert(tenants).values({ id: tenantId, name: 'Att Test', slug: `att-${tenantId}` });
+    await db.insert(sessionYears).values({
+      tenantId,
+      name: '2026-2027',
+      startDate: '2026-09-01T00:00:00.000Z',
+      endDate: '2027-06-30T00:00:00.000Z',
+      isDefault: true,
+    });
 
     // class_sections is a join row: medium -> class + section -> class_section.
     const [medium] = await db.insert(mediums).values({ tenantId, name: 'FR' }).returning();
@@ -107,6 +114,7 @@ describe.skipIf(!dbReachable)('POST /api/attendance — teacher section scope', 
     await db.delete(classes).where(eq(classes.tenantId, tenantId));
     await db.delete(sections).where(eq(sections.tenantId, tenantId));
     await db.delete(mediums).where(eq(mediums.tenantId, tenantId));
+    await db.delete(sessionYears).where(eq(sessionYears.tenantId, tenantId));
     await db.delete(tenants).where(eq(tenants.id, tenantId));
   });
 

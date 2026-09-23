@@ -10,7 +10,7 @@ import { eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { GET, POST } from '@/app/api/attendance/excuses/route';
 import { db } from '@/libs/DB';
-import { attendanceExcuses, classes, classSections, guardians, guardianStudents, mediums, sections, tenants, user } from '@/models/Schema';
+import { attendanceExcuses, classes, classSections, guardians, guardianStudents, mediums, sections, sessionYears, tenants, user } from '@/models/Schema';
 
 vi.mock('@/libs/env/server', () => ({
   serverEnv: {
@@ -57,9 +57,18 @@ describe.skipIf(!dbReachable)('D-13: attendance excuses IDOR (parent scoping)', 
   const ownChildId = `EXC-OWNCHILD-${suffix}`;
   const strangerChildId = `EXC-STRANGER-${suffix}`;
   let sectionId = '';
+  let sessionYearId = '';
 
   beforeAll(async () => {
     await db.insert(tenants).values([{ id: tenantId, name: `Excuse School ${suffix}`, slug: `excuse-${suffix}` }]);
+    const [sessionYear] = await db.insert(sessionYears).values({
+      tenantId,
+      name: `2026-2027-${suffix}`,
+      startDate: '2026-09-01T00:00:00.000Z',
+      endDate: '2027-06-30T00:00:00.000Z',
+      isDefault: true,
+    }).returning();
+    sessionYearId = sessionYear!.id;
     await db.insert(user).values([
       { id: parentUserId, tenantId, name: 'Excuse Parent', email: `exc-parent-${suffix}@test.local`, role: 'parent', userStatus: 'active' },
       { id: ownChildId, tenantId, name: 'Own Child', email: `exc-own-${suffix}@test.local`, role: 'student', userStatus: 'active' },
@@ -77,8 +86,8 @@ describe.skipIf(!dbReachable)('D-13: attendance excuses IDOR (parent scoping)', 
       { tenantId, guardianId: guardianRowId, studentId: ownChildId, relationshipType: 'parent' },
     ]);
     await db.insert(attendanceExcuses).values([
-      { tenantId, studentId: ownChildId, date: '2026-09-01', reason: 'Own child reason', status: 'pending' },
-      { tenantId, studentId: strangerChildId, date: '2026-09-01', reason: 'STRANGER FAMILY MEDICAL DETAIL', status: 'pending' },
+      { tenantId, studentId: ownChildId, sessionYearId, date: '2026-09-01', reason: 'Own child reason', status: 'pending' },
+      { tenantId, studentId: strangerChildId, sessionYearId, date: '2026-09-01', reason: 'STRANGER FAMILY MEDICAL DETAIL', status: 'pending' },
     ]);
   });
 
@@ -88,6 +97,7 @@ describe.skipIf(!dbReachable)('D-13: attendance excuses IDOR (parent scoping)', 
     await db.delete(classes).where(eq(classes.tenantId, tenantId));
     await db.delete(sections).where(eq(sections.tenantId, tenantId));
     await db.delete(mediums).where(eq(mediums.tenantId, tenantId));
+    await db.delete(sessionYears).where(eq(sessionYears.tenantId, tenantId));
     await db.delete(guardianStudents).where(eq(guardianStudents.tenantId, tenantId));
     await db.delete(guardians).where(eq(guardians.tenantId, tenantId));
     await db.delete(user).where(eq(user.tenantId, tenantId));

@@ -1270,6 +1270,9 @@ export const attendanceRegisters = pgTable('attendance_registers', {
   // operating class section so Section A can no longer lock/read Section B's
   // register. Legacy rows keep null (their section identity is unknowable).
   classSectionId: uuid('class_section_id'),
+  // SESSION TRUTH (migration 0151): every new register carries its session.
+  // Nullable only for legacy rows whose date no session covers (reported).
+  sessionYearId: uuid('session_year_id'),
   subjectId: uuid('subject_id'),
   date: date().notNull(),
   period: integer('period').notNull().default(1),
@@ -1424,6 +1427,9 @@ export const attendanceExcuses = pgTable('attendance_excuses', {
   // justifies. Nullable only for pre-0150 legacy rows.
   classSectionId: uuid('class_section_id'),
   period: integer('period'),
+  // SESSION TRUTH (migration 0151): excuses are session-scoped; the DB column
+  // is NOT NULL (source of truth) and the API always writes it.
+  sessionYearId: uuid('session_year_id'),
   date: date().notNull(),
   reason: text().notNull(),
   documentUrl: varchar('document_url', { length: 500 }),

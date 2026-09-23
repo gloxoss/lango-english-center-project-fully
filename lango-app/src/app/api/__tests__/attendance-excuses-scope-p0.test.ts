@@ -12,6 +12,7 @@ import {
   classSections,
   mediums,
   sections,
+  sessionYears,
   tenants,
   user,
 } from '@/models/Schema';
@@ -49,6 +50,7 @@ const date = '2026-10-07';
 
 let sectionA = '';
 let sectionB = '';
+let sessionYearId = '';
 
 async function asAdmin() {
   const { requireRequestContext } = await import('@/libs/api/context');
@@ -110,6 +112,15 @@ describe.skipIf(!dbReachable)('attendance excuse scope P0 — DB-backed', () => 
       { id: STUDENT_A, tenantId, branchId: branch!.id, name: 'Student A', email: `aex-sa-${suffix}@t.local`, role: 'student' },
       { id: STUDENT_B, tenantId, branchId: branch!.id, name: 'Student B', email: `aex-sb-${suffix}@t.local`, role: 'student' },
     ]);
+    const [sessionYear] = await db.insert(sessionYears).values({
+      tenantId,
+      name: `2026-2027-${suffix}`,
+      startDate: '2026-09-01T00:00:00.000Z',
+      endDate: '2027-06-30T00:00:00.000Z',
+      isDefault: true,
+    }).returning();
+    sessionYearId = sessionYear!.id;
+
     const [medium] = await db.insert(mediums).values({ tenantId, name: `FR-${suffix}` }).returning();
     const [cls] = await db.insert(classes).values({ tenantId, branchId: branch!.id, name: `1A-${suffix}`, mediumId: medium!.id }).returning();
     const labelRows = await db.insert(sections).values([
@@ -128,9 +139,9 @@ describe.skipIf(!dbReachable)('attendance excuse scope P0 — DB-backed', () => 
 
     // Authoritative marks: S1 has period 1 and 2 in section A; S2 has period 1 in section B.
     await db.insert(attendance).values([
-      { tenantId, studentId: STUDENT_A, classSectionId: sectionA, studentGroupId: cls!.id, date, period: 1, status: 'absent', isVoided: false },
-      { tenantId, studentId: STUDENT_A, classSectionId: sectionA, studentGroupId: cls!.id, date, period: 2, status: 'present', isVoided: false },
-      { tenantId, studentId: STUDENT_B, classSectionId: sectionB, studentGroupId: cls!.id, date, period: 1, status: 'present', isVoided: false },
+      { tenantId, studentId: STUDENT_A, classSectionId: sectionA, studentGroupId: cls!.id, academicYearId: sessionYearId, date, period: 1, status: 'absent', isVoided: false },
+      { tenantId, studentId: STUDENT_A, classSectionId: sectionA, studentGroupId: cls!.id, academicYearId: sessionYearId, date, period: 2, status: 'present', isVoided: false },
+      { tenantId, studentId: STUDENT_B, classSectionId: sectionB, studentGroupId: cls!.id, academicYearId: sessionYearId, date, period: 1, status: 'present', isVoided: false },
     ]);
   });
 
@@ -146,6 +157,7 @@ describe.skipIf(!dbReachable)('attendance excuse scope P0 — DB-backed', () => 
     await db.delete(classes).where(eq(classes.tenantId, tenantId));
     await db.delete(sections).where(eq(sections.tenantId, tenantId));
     await db.delete(mediums).where(eq(mediums.tenantId, tenantId));
+    await db.delete(sessionYears).where(eq(sessionYears.tenantId, tenantId));
     await db.delete(user).where(eq(user.tenantId, tenantId));
     await db.delete(branches).where(eq(branches.tenantId, tenantId));
     await db.delete(tenants).where(eq(tenants.id, tenantId));
@@ -267,6 +279,7 @@ describe.skipIf(!dbReachable)('attendance excuse scope P0 — DB-backed', () => 
     const [legacy] = await db.insert(attendanceExcuses).values({
       tenantId,
       studentId: STUDENT_A,
+      sessionYearId,
       date,
       reason: 'legacy unscoped',
       status: 'pending',

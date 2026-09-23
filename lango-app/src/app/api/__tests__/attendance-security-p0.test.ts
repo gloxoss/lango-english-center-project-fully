@@ -26,6 +26,7 @@ import {
   guardianStudents,
   mediums,
   sections,
+  sessionYears,
   tenants,
   user,
 } from '@/models/Schema';
@@ -68,6 +69,7 @@ const STUDENT_T2 = crypto.randomUUID();
 
 let sectionA = '';
 let sectionB = '';
+let sessionYearId = '';
 let registerB = '';
 let flagA = '';
 let flagB = '';
@@ -115,6 +117,15 @@ describe.skipIf(!dbReachable)('attendance security P0 — DB-backed', () => {
       { id: STUDENT_B, tenantId, branchId: branchB, name: 'Student B', email: `ats-sb-${suffix}@t.local`, role: 'student' },
       { id: STUDENT_T2, tenantId: otherTenantId, name: 'Student T2', email: `ats-st2-${suffix}@t.local`, role: 'student' },
     ]);
+
+    const [sessionYear] = await db.insert(sessionYears).values({
+      tenantId,
+      name: `2026-2027-${suffix}`,
+      startDate: '2026-09-01T00:00:00.000Z',
+      endDate: '2027-06-30T00:00:00.000Z',
+      isDefault: true,
+    }).returning();
+    sessionYearId = sessionYear!.id;
 
     const [medium] = await db.insert(mediums).values({ tenantId, name: `FR-${suffix}` }).returning();
     const classRows = await db.insert(classes).values([
@@ -166,15 +177,15 @@ describe.skipIf(!dbReachable)('attendance security P0 — DB-backed', () => {
     flagT2 = flagRows[2]!.id;
 
     const excuseRows = await db.insert(attendanceExcuses).values([
-      { tenantId, studentId: STUDENT_A, date: '2026-10-05', reason: `A-${suffix}`, status: 'pending' },
-      { tenantId, studentId: STUDENT_B, date: '2026-10-05', reason: `B-${suffix}`, status: 'pending' },
+      { tenantId, studentId: STUDENT_A, date: '2026-10-05', sessionYearId, reason: `A-${suffix}`, status: 'pending' },
+      { tenantId, studentId: STUDENT_B, date: '2026-10-05', sessionYearId, reason: `B-${suffix}`, status: 'pending' },
     ]).returning();
     excuseA = excuseRows[0]!.id;
     excuseB = excuseRows[1]!.id;
 
     await db.insert(attendance).values([
-      { tenantId, studentId: STUDENT_A, date: '2026-10-05', status: 'present', period: 1, isVoided: false, classSectionId: sectionA },
-      { tenantId, studentId: STUDENT_B, date: '2026-10-05', status: 'absent', period: 1, isVoided: false, classSectionId: sectionB },
+      { tenantId, studentId: STUDENT_A, date: '2026-10-05', status: 'present', period: 1, isVoided: false, classSectionId: sectionA, academicYearId: sessionYearId },
+      { tenantId, studentId: STUDENT_B, date: '2026-10-05', status: 'absent', period: 1, isVoided: false, classSectionId: sectionB, academicYearId: sessionYearId },
     ]);
 
     // Parent linked to STUDENT_A only.
@@ -206,6 +217,7 @@ describe.skipIf(!dbReachable)('attendance security P0 — DB-backed', () => {
     await db.delete(classes).where(eq(classes.tenantId, tenantId));
     await db.delete(sections).where(eq(sections.tenantId, tenantId));
     await db.delete(mediums).where(eq(mediums.tenantId, tenantId));
+    await db.delete(sessionYears).where(eq(sessionYears.tenantId, tenantId));
     await db.delete(user).where(eq(user.tenantId, tenantId));
     await db.delete(user).where(eq(user.tenantId, otherTenantId));
     await db.delete(branches).where(eq(branches.tenantId, tenantId));

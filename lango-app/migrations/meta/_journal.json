@@ -1037,6 +1037,13 @@
       "when": 1790117023878,
       "tag": "0150_attendance_excuse_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 148,
+      "version": "7",
+      "when": 1790118023878,
+      "tag": "0151_attendance_session_year_truth",
+      "breakpoints": true
     }
   ]
 }

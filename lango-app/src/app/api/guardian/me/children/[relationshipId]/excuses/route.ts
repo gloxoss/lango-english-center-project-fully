@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireParentContext } from '@/features/parent/api/guard';
@@ -7,7 +7,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { attendanceExcuses } from '@/models/Schema';
+import { attendanceExcuses, sessionYears } from '@/models/Schema';
 
 // GET/POST /api/guardian/me/children/[relationshipId]/excuses — the child's
 // justification (excuse) requests, relationship-scoped. The child is
@@ -68,6 +68,21 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     const body = await parseJson(request, createExcuseSchema);
 
+    // SESSION TRUTH (Phase 4): the excuse belongs to the session containing
+    // its date; a date outside every session is refused.
+    const [sessionForDate] = await db
+      .select({ id: sessionYears.id })
+      .from(sessionYears)
+      .where(and(
+        eq(sessionYears.tenantId, ctx.tenantId as string),
+        sql`${sessionYears.startDate}::date <= ${body.date}::date`,
+        sql`${sessionYears.endDate}::date >= ${body.date}::date`,
+      ))
+      .limit(1);
+    if (!sessionForDate) {
+      throw new Error('DATE_OUTSIDE_SESSION');
+    }
+
     const [inserted] = await db
       .insert(attendanceExcuses)
       .values({
@@ -75,6 +90,7 @@ export async function POST(request: Request, { params }: RouteParams) {
         studentId: auth.studentId,
         classSectionId: body.classSectionId ?? null,
         period: body.period ?? null,
+        sessionYearId: sessionForDate.id,
         date: body.date,
         reason: body.reason,
         status: 'pending',

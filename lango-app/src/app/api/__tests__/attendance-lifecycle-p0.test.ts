@@ -51,6 +51,7 @@ const date = '2026-10-06';
 
 let sectionId = '';
 let otherSectionId = '';
+let sessionYearId = '';
 
 async function asAdmin() {
   const { requireRequestContext } = await import('@/libs/api/context');
@@ -110,13 +111,14 @@ describe.skipIf(!dbReachable)('attendance lifecycle P0 — DB-backed', () => {
     await db.update(user).set({ classSectionId: sectionId }).where(eq(user.id, STUDENT_2));
     await db.update(user).set({ classSectionId: otherSectionId }).where(eq(user.id, STUDENT_ELSEWHERE));
 
-    await db.insert(sessionYears).values({
+    const [sessionYear] = await db.insert(sessionYears).values({
       tenantId,
       name: `2026-2027-${suffix}`,
       startDate: '2026-09-01T00:00:00.000Z',
       endDate: '2027-06-30T00:00:00.000Z',
       isDefault: true,
-    });
+    }).returning();
+    sessionYearId = sessionYear!.id;
   });
 
   beforeEach(async () => {
@@ -349,6 +351,7 @@ describe.skipIf(!dbReachable)('attendance lifecycle P0 — DB-backed', () => {
       studentId: STUDENT_1,
       studentGroupId: sectionId,
       classSectionId: sectionId,
+      academicYearId: sessionYearId,
       period: 6,
       date,
       status: 'absent',

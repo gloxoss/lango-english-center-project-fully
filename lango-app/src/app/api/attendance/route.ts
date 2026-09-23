@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import { detectAndRecordFlags } from '@/libs/api/attendance-flags';
 import { resolveRegisterForSubmission } from '@/libs/api/attendance-registers';
+import { getDefaultSessionYearId } from '@/libs/services/subject-teacher-assignment';
 import { recalculateStudentAttendanceSummary } from '@/libs/api/attendance-summary';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
@@ -184,8 +185,15 @@ export async function POST(request: Request) {
       }
     }
 
+    // SESSION TRUTH (Phase 4): every mark and register is explicitly scoped to
+    // the tenant's current academic session. Never inferred per-row later.
+    const sessionYearId = await getDefaultSessionYearId(tenantId);
+    if (!sessionYearId) {
+      throw new ApiError(422, 'MISSING_SESSION', 'Aucune année scolaire active n\'est définie pour cet établissement.');
+    }
+
     const savedRecords = await db.transaction(async (tx) => {
-      const register = await resolveRegisterForSubmission(tenantId, attendanceClassId, body.date, body.period, context.userId, body.correctionNote, tx, attendanceSectionId);
+      const register = await resolveRegisterForSubmission(tenantId, attendanceClassId, body.date, body.period, context.userId, body.correctionNote, tx, attendanceSectionId, sessionYearId);
 
       const studentIds = body.records.map(r => r.studentId);
 
@@ -262,6 +270,7 @@ export async function POST(request: Request) {
               studentGroupId: attendanceClassId,
               classSectionId: attendanceSectionId,
               subjectId: body.subjectId || null,
+              academicYearId: sessionYearId,
               period: body.period,
               date: body.date,
               status: rec.status,
@@ -272,7 +281,7 @@ export async function POST(request: Request) {
               registerId: register?.id ?? null,
             })
             .onConflictDoUpdate({
-              target: [attendance.tenantId, attendance.studentId, attendance.date, attendance.period, attendance.classSectionId],
+              target: [attendance.tenantId, attendance.studentId, attendance.academicYearId, attendance.date, attendance.period, attendance.classSectionId],
               targetWhere: sql`${attendance.isVoided} = false AND ${attendance.classSectionId} IS NOT NULL`,
               set: {
                 status: rec.status,

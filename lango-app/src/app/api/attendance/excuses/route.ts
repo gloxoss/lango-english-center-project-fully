@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -12,7 +12,7 @@ import { assertStudentAccess } from '@/libs/api/student-access';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { attendance, attendanceExcuses, attendanceRegisters, classSections, guardians, guardianStudents, user } from '@/models/Schema';
+import { attendance, attendanceExcuses, attendanceRegisters, classSections, guardians, guardianStudents, sessionYears, user } from '@/models/Schema';
 
 const createExcuseSchema = z.object({
   studentId: z.string().min(1),
@@ -200,6 +200,21 @@ export async function POST(request: Request) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'Section de classe introuvable pour cet établissement.');
     }
 
+    // SESSION TRUTH (Phase 4): the excuse belongs to the session whose date
+    // bounds contain its date; a date outside every session is refused.
+    const [sessionForDate] = await db
+      .select({ id: sessionYears.id })
+      .from(sessionYears)
+      .where(and(
+        eq(sessionYears.tenantId, tenantId),
+        sql`${sessionYears.startDate}::date <= ${body.date}::date`,
+        sql`${sessionYears.endDate}::date >= ${body.date}::date`,
+      ))
+      .limit(1);
+    if (!sessionForDate) {
+      throw new ApiError(422, 'DATE_OUTSIDE_SESSION', 'Cette date ne fait partie d\'aucune année scolaire de cet établissement.');
+    }
+
     const [inserted] = await db
       .insert(attendanceExcuses)
       .values({
@@ -207,6 +222,7 @@ export async function POST(request: Request) {
         studentId: targetStudentId,
         classSectionId: body.classSectionId,
         period: body.period,
+        sessionYearId: sessionForDate.id,
         date: body.date,
         reason: body.reason,
         documentUrl: body.documentUrl || null,
