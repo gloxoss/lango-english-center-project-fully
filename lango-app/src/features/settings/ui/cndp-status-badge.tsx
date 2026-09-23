@@ -15,14 +15,20 @@ const TONE: Record<CndpStatusView['tone'], string> = {
  * The tenant's real CNDP filing status, read from the registry instead of
  * asserted in copy.
  *
- * Renders nothing when the viewer may not read the filing (parents and students
- * are rejected by the API), and says the status is unavailable when the call
- * fails rather than falling back to a compliance claim.
+ * `enabled` decides whether the viewer may read the filing at all. It is false
+ * for everyone who cannot, so no request is made and no 403 is generated: the
+ * server still enforces the capability, this only avoids asking a question the
+ * answer must be no to. When the registry cannot be read the badge says so
+ * rather than falling back to a compliance claim.
  */
-export function CndpStatusBadge() {
+export function CndpStatusBadge({ enabled = false }: { enabled?: boolean } = {}) {
   const [status, setStatus] = useState<CndpStatusView | null>(null);
 
   useEffect(() => {
+    if (!enabled) {
+      setStatus(null);
+      return;
+    }
     let cancelled = false;
 
     fetch('/api/settings/cndp-filing', { cache: 'no-store' })
@@ -46,7 +52,7 @@ export function CndpStatusBadge() {
       });
 
     return () => { cancelled = true; };
-  }, []);
+  }, [enabled]);
 
   if (!status) return null;
 

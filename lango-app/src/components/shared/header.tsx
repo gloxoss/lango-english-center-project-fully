@@ -208,10 +208,11 @@ export function Header({ locale }: { locale: string }) {
         )}
 
         {/* Campus Switcher (strictly for school staff or super_admin inspecting a tenant) */}
-        {/* CNDP filing status, read from the registry. Hides itself for viewers
-            who may not read it (parents and students). */}
+        {/* CNDP filing status, read from the registry. Only asked for by roles
+            that may read the filing; everyone else renders nothing and makes no
+            request at all. */}
         <div className="hidden lg:flex">
-          <CndpStatusBadge />
+          <CndpStatusBadge enabled={displayRole === 'school_admin' || displayRole === 'super_admin'} />
         </div>
 
         {(displayRole !== 'super_admin' || hasSelectedTenant) && (
