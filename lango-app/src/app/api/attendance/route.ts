@@ -9,6 +9,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
+import { resolveInstructionalDay } from '@/libs/api/school-day';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
@@ -210,6 +211,14 @@ export async function POST(request: Request) {
       throw new ApiError(422, 'DATE_OUTSIDE_SESSION', 'Cette date ne fait partie d\'aucune année scolaire de cet établissement.');
     }
     const sessionYearId = sessionForDate.id;
+
+    // CALENDAR GUARD (Phase 5): normal roll-call only on confirmed
+    // instructional days (session bounds + timetable day / legacy weekend
+    // rule). Holiday/closure awareness is deferred — no such model exists.
+    const schoolDay = await resolveInstructionalDay({ tenantId, sectionId: attendanceSectionId, date: body.date });
+    if (!schoolDay.instructional) {
+      throw new ApiError(422, 'NON_INSTRUCTIONAL_DAY', 'Cette date n\'est pas un jour d\'enseignement pour cette section.');
+    }
 
     const savedRecords = await db.transaction(async (tx) => {
       const register = await resolveRegisterForSubmission(tenantId, attendanceClassId, body.date, body.period, context.userId, body.correctionNote, tx, attendanceSectionId, sessionYearId);

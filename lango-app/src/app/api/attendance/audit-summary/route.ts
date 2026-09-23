@@ -7,7 +7,7 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { attendance, attendanceFlags, attendanceSummary, classes, classScheduleSlots, classSections, classSubjects, sections, subjects, user } from '@/models/Schema';
+import { attendance, attendanceFlags, attendanceSummary, classes, classScheduleSlots, classSections, classSubjects, sections, sessionYears, subjects, user } from '@/models/Schema';
 
 const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
 
@@ -20,7 +20,8 @@ export async function GET(request: Request) {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
 
-    const today = new Date().toISOString().slice(0, 10);
+    const { searchParams } = new URL(request.url);
+    const today = searchParams.get('date') || new Date().toISOString().slice(0, 10);
     const todayDayOfWeek = DAY_NAMES[new Date(`${today}T00:00:00Z`).getUTCDay()]!;
 
     // BRANCH SCOPE (P0): every aggregate is scoped through the student row so
@@ -85,7 +86,21 @@ export async function GET(request: Request) {
       ));
     const submittedSectionIds = new Set(submittedRows.map(r => r.classSectionId).filter(Boolean));
 
-    const missingRegistersToday = todaySlots.filter(slot => !submittedSectionIds.has(slot.classSectionId));
+    // CALENDAR GUARD (Phase 5): a date outside every academic session can
+    // never produce a "missing register" expectation.
+    const [sessionForToday] = await db
+      .select({ id: sessionYears.id })
+      .from(sessionYears)
+      .where(and(
+        eq(sessionYears.tenantId, tenantId),
+        sql`${sessionYears.startDate}::date <= ${today}::date`,
+        sql`${sessionYears.endDate}::date >= ${today}::date`,
+      ))
+      .limit(1);
+
+    const missingRegistersToday = sessionForToday
+      ? todaySlots.filter(slot => !submittedSectionIds.has(slot.classSectionId))
+      : [];
 
     return NextResponse.json({
       success: true,

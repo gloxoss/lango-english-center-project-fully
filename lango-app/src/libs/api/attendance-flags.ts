@@ -1,6 +1,7 @@
 import { and, eq, gte, inArray, lte, sql } from 'drizzle-orm';
+import { resolveInstructionalDay } from '@/libs/api/school-day';
 import { db } from '@/libs/DB';
-import { attendance, attendanceExcuses, attendanceFlags } from '@/models/Schema';
+import { attendance, attendanceExcuses, attendanceFlags, user } from '@/models/Schema';
 
 type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
 type FlagType = 'UNJUSTIFIED_ABSENCE' | 'CONSECUTIVE_ABSENCE' | 'REPEATED_LATE';
@@ -11,20 +12,43 @@ const SEVERITY_BY_TYPE: Record<FlagType, 'CRITIQUE' | 'ELEVE' | 'MOYEN'> = {
   REPEATED_LATE: 'MOYEN',
 };
 
-function isWeekend(dateStr: string) {
-  const day = new Date(`${dateStr}T00:00:00Z`).getUTCDay();
-  return day === 0 || day === 6;
+/** The student's current section is the calendar context for their flags. */
+async function studentSectionId(tenantId: string, studentId: string, executor: any): Promise<string | null> {
+  const [row] = await executor
+    .select({ classSectionId: user.classSectionId })
+    .from(user)
+    .where(and(eq(user.tenantId, tenantId), eq(user.id, studentId)))
+    .limit(1);
+  return row?.classSectionId ?? null;
 }
 
-// Walks backward from `date` (inclusive) collecting the last `count` non-weekend
-// dates. ponytail: no holiday calendar exists anywhere in this app yet, so only
-// weekends are skipped - see ATTENDANCE-IMPLEMENTATION-PLAN.md Section 2.
-function lastSchoolDays(date: string, count: number): string[] {
+/**
+ * CANONICAL calendar predicate (Phase 5): delegates to the one school-day
+ * resolver. When the student has no section context, only the legacy
+ * weekend/session rule can apply (no timetable to consult).
+ */
+async function isInstructional(tenantId: string, sectionId: string | null, date: string): Promise<boolean> {
+  const result = await resolveInstructionalDay({
+    tenantId,
+    sectionId: sectionId ?? '00000000-0000-0000-0000-000000000000',
+    date,
+  });
+  return result.instructional;
+}
+
+/**
+ * Walks backward from `date` (inclusive) collecting the last `count`
+ * INSTRUCTIONAL dates — consecutive absence is about consecutive school days,
+ * never raw calendar days (Phase 5 correction).
+ */
+async function lastInstructionalDays(tenantId: string, sectionId: string | null, date: string, count: number): Promise<string[]> {
   const days: string[] = [];
   const cursor = new Date(`${date}T00:00:00Z`);
-  while (days.length < count) {
+  let guard = 0;
+  while (days.length < count && guard < 31) {
+    guard++;
     const iso = cursor.toISOString().slice(0, 10);
-    if (!isWeekend(iso)) {
+    if (await isInstructional(tenantId, sectionId, iso)) {
       days.push(iso);
     }
     cursor.setUTCDate(cursor.getUTCDate() - 1);
@@ -53,6 +77,13 @@ export async function detectAndRecordFlags(
   status: AttendanceStatus,
   executor: any = db,
 ) {
+  // CALENDAR GUARD (Phase 5): a confirmed non-instructional day never
+  // generates absence/late flags or escalations.
+  const sectionId = await studentSectionId(tenantId, studentId, executor);
+  if (!(await isInstructional(tenantId, sectionId, date))) {
+    return;
+  }
+
   if (status === 'absent') {
     const [approvedExcuse] = await executor
       .select({ id: attendanceExcuses.id })
@@ -69,7 +100,7 @@ export async function detectAndRecordFlags(
       await executor.insert(attendanceFlags).values({ tenantId, studentId, type: 'UNJUSTIFIED_ABSENCE', status: 'OPEN', severity: SEVERITY_BY_TYPE.UNJUSTIFIED_ABSENCE });
     }
 
-    const lastThreeDays = lastSchoolDays(date, 3);
+    const lastThreeDays = await lastInstructionalDays(tenantId, sectionId, date, 3);
     const rows = await executor
       .select({ date: attendance.date, status: attendance.status })
       .from(attendance)
