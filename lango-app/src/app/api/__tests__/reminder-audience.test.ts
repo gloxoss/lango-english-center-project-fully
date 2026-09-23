@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { eq, sql } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { casablancaTodayIso } from '@/libs/finance/today';
-import { attendance, guardianStudents, guardians, tenants, user } from '@/models/Schema';
+import { attendance, guardianStudents, guardians, sessionYears, tenants, user } from '@/models/Schema';
 import { GET, POST } from '@/app/api/communication/reminder-audience/route';
 
 const authState = vi.hoisted(() => ({ tenantId: '' }));
@@ -27,6 +27,7 @@ describe.skipIf(!available)('reminder audience uses full risk and consent truth'
   yesterday.setUTCDate(yesterday.getUTCDate() - 1);
   const priorDay = yesterday.toISOString().slice(0, 10);
   let linkId: string;
+  let sessionId: string;
 
   async function audience(mode: 'atRisk' | 'all' = 'atRisk') {
     const response = await GET(new Request(`http://localhost/api/communication/reminder-audience?mode=${mode}`));
@@ -52,10 +53,19 @@ describe.skipIf(!available)('reminder audience uses full risk and consent truth'
     const [guardian] = await db.insert(guardians).values({ tenantId, firstName: 'Parent', lastName: 'One', phone: '0612345678' }).returning({ id: guardians.id });
     const [link] = await db.insert(guardianStudents).values({ tenantId, guardianId: guardian!.id, studentId: firstId, relationshipType: 'parent', canAccessCommunication: true }).returning({ id: guardianStudents.id });
     linkId = link!.id;
+    // SESSION TRUTH (migration 0154): attendance marks carry an explicit
+    // academic session; the fixture supplies one covering both test days.
+    const [session] = await db.insert(sessionYears).values({
+      tenantId,
+      name: `Reminder ${today}`,
+      startDate: priorDay,
+      endDate: today,
+    }).returning({ id: sessionYears.id });
+    sessionId = session!.id;
     await db.insert(attendance).values([
-      { tenantId, studentId: firstId, date: today, status: 'absent' },
-      { tenantId, studentId: firstId, date: priorDay, status: 'absent' },
-      { tenantId, studentId: secondId, date: today, status: 'absent' },
+      { tenantId, studentId: firstId, date: today, status: 'absent', academicYearId: sessionId },
+      { tenantId, studentId: firstId, date: priorDay, status: 'absent', academicYearId: sessionId },
+      { tenantId, studentId: secondId, date: today, status: 'absent', academicYearId: sessionId },
     ]);
   });
 
