@@ -52,6 +52,31 @@ export async function getTonight(tenantId: string, opts: { hostelId: string; cal
       sql`${hostelAllocations.effectiveEndDate} > ${callDate}`,
     ));
 
+  // Stays whose end date has passed but were never checked out. The roster above
+  // drops them (it only covers stays that include tonight), so without this list
+  // a student can stay 'checked_in' forever and silently vanish from the board
+  // and the roll call (audit S-54).
+  const overdueCheckouts = await db
+    .select({
+      allocationId: hostelAllocations.id,
+      studentId: hostelAllocations.studentId,
+      studentName: user.name,
+      bedCode: hostelBeds.code,
+      roomCode: hostelRooms.code,
+      effectiveEndDate: hostelAllocations.effectiveEndDate,
+    })
+    .from(hostelAllocations)
+    .innerJoin(hostelBeds, eq(hostelAllocations.bedId, hostelBeds.id))
+    .innerJoin(hostelRooms, eq(hostelBeds.roomId, hostelRooms.id))
+    .leftJoin(user, and(eq(hostelAllocations.studentId, user.id), eq(user.tenantId, tenantId)))
+    .where(and(
+      eq(hostelAllocations.tenantId, tenantId),
+      eq(hostelRooms.hostelId, opts.hostelId),
+      eq(hostelAllocations.state, 'checked_in'),
+      sql`${hostelAllocations.effectiveEndDate} <= ${callDate}`,
+    ))
+    .orderBy(hostelAllocations.effectiveEndDate);
+
   // Roll-call entries for tonight (if the register is open).
   const entryRows = rollCall
     ? await db.select().from(hostelRollCallEntries)
@@ -125,6 +150,7 @@ export async function getTonight(tenantId: string, opts: { hostelId: string; cal
     missing: residents.filter(r => r.rollCallStatus === 'missing').length,
     unaccounted: residents.filter(r => !r.accounted).length,
     overdueReturns: residents.filter(r => r.overdueReturn).length,
+    overdueCheckouts: overdueCheckouts.length,
   };
 
   return {
@@ -137,6 +163,7 @@ export async function getTonight(tenantId: string, opts: { hostelId: string; cal
       closedAt: rollCall.closedAt,
     } : null,
     residents,
+    overdueCheckouts,
     summary,
     openEscalations,
   };

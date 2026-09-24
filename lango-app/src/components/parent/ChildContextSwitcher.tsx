@@ -64,7 +64,7 @@ export function ChildContextSwitcher({ children, activeRelationshipId, onChange 
             <ChevronDown className="w-3 h-3 text-slate-400" />
           </div>
           <div className="text-sm font-bold text-slate-900 leading-tight">{active?.name}</div>
-          <div className="text-[11px] text-[#0066FF]">{active?.className ?? active?.level ?? '—'}</div>
+          {(active?.className ?? active?.level) && <div className="text-[11px] text-[#0066FF]">{active?.className ?? active?.level}</div>}
         </div>
       </button>
 
@@ -101,8 +101,7 @@ export function ChildContextSwitcher({ children, activeRelationshipId, onChange 
                   <div>
                     <div className="text-sm font-semibold">{child.name}</div>
                     <div className="text-xs text-slate-500">
-                      {child.className ?? child.level ?? '—'}
-                      {child.isPrimaryContact ? ` · ${tParent('primaryContact')}` : ''}
+                      {[child.className ?? child.level, child.isPrimaryContact ? tParent('primaryContact') : null].filter(Boolean).join(' · ')}
                     </div>
                   </div>
                 </div>

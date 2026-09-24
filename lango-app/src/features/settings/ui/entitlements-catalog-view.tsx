@@ -298,7 +298,11 @@ export function EntitlementsCatalogView({ locale }: { locale?: string } = {}) {
           <div className="flex items-center gap-4 border-t md:border-t-0 md:border-l border-slate-100 pt-3 md:pt-0 md:pl-6 text-xs">
             <div>
               <p className="text-slate-400 font-bold">Campus Inclus</p>
-              <p className="font-extrabold text-[#16212B] text-sm">{plan?.branchCount ?? 0} / {plan?.maxBranches ?? 1}</p>
+              {/* Over quota used to look like a normal count (audit S-26). */}
+              <p className={`font-extrabold text-sm ${(plan?.branchCount ?? 0) > (plan?.maxBranches ?? 1) ? 'text-rose-600' : 'text-[#16212B]'}`}>{plan?.branchCount ?? 0} / {plan?.maxBranches ?? 1}</p>
+              {(plan?.branchCount ?? 0) > (plan?.maxBranches ?? 1) && (
+                <p className="mt-0.5 text-[10px] font-semibold text-rose-600">Au-delà du forfait : contactez l’éditeur ou désactivez un campus.</p>
+              )}
             </div>
             <div>
               <p className="text-slate-400 font-bold">Modules Actifs</p>

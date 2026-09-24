@@ -247,6 +247,14 @@ function lastWeekdays(count: number): string[] {
   return out.reverse();
 }
 const isoDays = (offsetDays: number) => new Date(Date.now() + offsetDays * 86400000).toISOString().slice(0, 10);
+// The seed was written for the 2025-2026 school year. Every calendar date is
+// shifted by whole years so the data always describes the school year that
+// is current when the seed runs (September start) rather than one that has
+// already ended: stays, sessions and terms stay live (audit S-46).
+const SEED_BASE_YEAR = 2025;
+const seedNow = new Date();
+const SCHOOL_START_YEAR = seedNow.getUTCMonth() >= 8 ? seedNow.getUTCFullYear() : seedNow.getUTCFullYear() - 1;
+const sy = (year: number) => year + (SCHOOL_START_YEAR - SEED_BASE_YEAR);
 const isoTs = (offsetDays: number) => new Date(Date.now() + offsetDays * 86400000).toISOString();
 
 async function run() {
@@ -336,7 +344,7 @@ async function run() {
           phone: '+212 6 64-445566',
           role: 'alumni',
           userStatus: 'active',
-          alumniTransitionedAt: '2025-06-30 11:30:00',
+          alumniTransitionedAt: `${sy(2025)}-06-30 11:30:00`,
           alumniTransitionedBy: 'USR-001',
         },
       ])
@@ -372,10 +380,10 @@ async function run() {
 
     const [defaultSession] = await tx
       .insert(sessionYears)
-      .values({ tenantId, name: '2025-2026', startDate: '2025-09-01', endDate: '2026-06-30', isDefault: true })
+      .values({ tenantId, name: `${sy(2025)}-${sy(2026)}`, startDate: `${sy(2025)}-09-01`, endDate: `${sy(2026)}-06-30`, isDefault: true })
       .returning();
     const sessionYearId = defaultSession!.id;
-    await tx.insert(sessionYears).values({ tenantId, name: '2026-2027', startDate: '2026-09-01', endDate: '2027-06-30', isDefault: false });
+    await tx.insert(sessionYears).values({ tenantId, name: `${sy(2026)}-${sy(2027)}`, startDate: `${sy(2026)}-09-01`, endDate: `${sy(2027)}-06-30`, isDefault: false });
 
     // Classes (3ème = college, others = lycee) + class-sections (A/B/C each).
     const CLASSES = ['3ème', '2nde', '1ère', 'Terminale'];
@@ -531,7 +539,7 @@ async function run() {
       sessionYearId,
       classSectionId: classSectionList[(parseInt(sid.slice(4), 10) - 1) % 12],
       status: 'enrolled' as const,
-      startDate: '2025-09-01',
+      startDate: `${sy(2025)}-09-01`,
       endDate: null, // current placements are open-ended (student_placements_current_date_check)
       isCurrent: true,
     }));
@@ -678,8 +686,8 @@ async function run() {
       const [r] = await tx.insert(assessmentDefinitions).values(def).returning();
       examDefIds.push(r!.id);
     }
-    const [term1] = await tx.insert(examTerms).values({ tenantId, sessionYearId, name: 'Semestre 1', code: 'S1', startDate: '2025-11-03', endDate: '2026-01-30', status: 'active', isPublished: true }).returning();
-    const [term2] = await tx.insert(examTerms).values({ tenantId, sessionYearId, name: 'Semestre 2', code: 'S2', startDate: '2026-03-02', endDate: '2026-06-26', status: 'setup', isPublished: true }).returning();
+    const [term1] = await tx.insert(examTerms).values({ tenantId, sessionYearId, name: 'Semestre 1', code: 'S1', startDate: `${sy(2025)}-11-03`, endDate: `${sy(2026)}-01-30`, status: 'active', isPublished: true }).returning();
+    const [term2] = await tx.insert(examTerms).values({ tenantId, sessionYearId, name: 'Semestre 2', code: 'S2', startDate: `${sy(2026)}-03-02`, endDate: `${sy(2026)}-06-26`, status: 'setup', isPublished: true }).returning();
     const hallIds: string[] = [];
     for (const h of [['Salle 1', 'H1'], ['Salle 2', 'H2'], ['Salle 3', 'H3']]) {
       const [r] = await tx.insert(examHalls).values({ tenantId, branchId, name: h[0], code: h[1], capacity: 30, isAccessible: true, isActive: true }).returning();
@@ -778,7 +786,7 @@ async function run() {
     for (let i = 0; i < subRows.length; i += 100) await tx.insert(assignmentSubmissions).values(subRows.slice(i, i + 100));
 
     const announceRows = [
-      { title: 'Bienvenue à la rentrée 2025-2026', body: 'L’équipe pédagogique souhaite une excellente année à tous les élèves.', targetRole: null as string | null, day: -30 },
+      { title: `Bienvenue à la rentrée ${sy(2025)}-${sy(2026)}`, body: 'L’équipe pédagogique souhaite une excellente année à tous les élèves.', targetRole: null as string | null, day: -30 },
       { title: 'Rappel : paiement des frais de scolarité', body: 'La première tranche des frais est exigible avant le 30 septembre.', targetRole: 'parent' as const, day: -20 },
       { title: 'Calendrier des examens du semestre 1', body: 'Les épreuves se dérouleront du 12 au 25 janvier.', targetRole: 'teacher' as const, day: -12 },
       { title: 'Sortie pédagogique au Musée', body: 'Les classes de 3ème visiteront le Musée de la Fondation.', targetRole: 'student' as const, day: -6 },
@@ -899,8 +907,8 @@ async function run() {
     const [leaveCat2] = await tx.insert(leaveCategories).values({ tenantId, name: 'Congé maladie', daysPerYear: 15, isPaid: true }).returning();
     await tx.insert(leaveCategories).values({ tenantId, name: 'Congé sans solde', daysPerYear: 0, isPaid: false });
     const balances = teacherIds.flatMap((tid) => [
-      { tenantId, userId: tid, categoryId: leaveCat1!.id, year: 2026, accruedDays: 30, usedDays: int(0, 8), reservedDays: 0 },
-      { tenantId, userId: tid, categoryId: leaveCat2!.id, year: 2026, accruedDays: 15, usedDays: int(0, 4), reservedDays: 0 },
+      { tenantId, userId: tid, categoryId: leaveCat1!.id, year: sy(2026), accruedDays: 30, usedDays: int(0, 8), reservedDays: 0 },
+      { tenantId, userId: tid, categoryId: leaveCat2!.id, year: sy(2026), accruedDays: 15, usedDays: int(0, 4), reservedDays: 0 },
     ]);
     for (let i = 0; i < balances.length; i += 100) await tx.insert(employeeLeaveBalances).values(balances.slice(i, i + 100));
     const leaveReqRows = teacherIds.slice(0, 6).map((tid, i) => {
@@ -941,7 +949,7 @@ async function run() {
           if (allocIndex < 15) {
             const studentId = studentIds[allocIndex + (h.gender === 'male_only' ? 0 : 15)];
             if (studentId) {
-              await tx.insert(hostelAllocations).values({ tenantId, studentId, bedId: bed!.id, effectiveStartDate: '2025-09-01', effectiveEndDate: '2026-06-30', state: 'checked_in', chargeSnapshot: { baseCharge: 3000 } });
+              await tx.insert(hostelAllocations).values({ tenantId, studentId, bedId: bed!.id, effectiveStartDate: `${sy(2025)}-09-01`, effectiveEndDate: `${sy(2026)}-06-30`, state: 'checked_in', chargeSnapshot: { baseCharge: 3000 } });
             }
           }
         }
@@ -966,7 +974,7 @@ async function run() {
     for (let i = 0; i < 3; i++) {
       const [route] = await tx.insert(transportRoutes).values({ tenantId, routeCode: `RTE-${i + 1}`, routeName: `Ligne ${i + 1}`, serviceDirection: 'bidirectional', assignedVehicleId: vehicleIds[i % 2], status: 'active' }).returning();
       routeIds.push(route!.id);
-      const [version] = await tx.insert(transportRouteVersions).values({ tenantId, routeId: route!.id, versionNumber: 1, effectiveStartDate: '2025-09-01', status: 'published' }).returning();
+      const [version] = await tx.insert(transportRouteVersions).values({ tenantId, routeId: route!.id, versionNumber: 1, effectiveStartDate: `${sy(2025)}-09-01`, status: 'published' }).returning();
       versionIds.push(version!.id);
       for (let s = 0; s < 2; s++) {
         const stopIdx = (i * 2 + s) % 6;
@@ -982,8 +990,8 @@ async function run() {
         pickupStopId: stopIds[(i * 2) % 6],
         dropoffStopId: stopIds[(i * 2 + 1) % 6],
         direction: 'both',
-        effectiveStartDate: '2025-09-01',
-        effectiveEndDate: '2026-06-30',
+        effectiveStartDate: `${sy(2025)}-09-01`,
+        effectiveEndDate: `${sy(2026)}-06-30`,
         status: 'active',
       });
     }
@@ -1041,6 +1049,10 @@ async function run() {
       note: null as string | null,
     }));
     await tx.insert(libraryLoans).values(loanRows);
+    // A copy on an open loan is checked out; leaving it 'available' made the
+    // librarian home report every copy on the shelf (audit S-46).
+    const loanedCopyIds = loanRows.filter((l) => !l.returnedAt).map((l) => l.copyId);
+    if (loanedCopyIds.length) await tx.update(libraryCopies).set({ state: 'checked_out' }).where(and(eq(libraryCopies.tenantId, tenantId), inArray(libraryCopies.id, loanedCopyIds)));
     console.log(`  · seeded library (${bookTitles.length} records, ${memberIds.length} members)`);
 
     // Inquiries (CRM).
@@ -1074,9 +1086,9 @@ async function run() {
       { tenantId, name: 'Salle informatique', capacity: 28, roomType: 'informatique', isActive: true },
       { tenantId, name: 'Salle des professeurs', capacity: 40, roomType: 'réunion', isActive: true },
     ]);
-    const [ay25] = await tx.insert(academicYears).values({ tenantId, name: '2025-2026', startDate: '2025-09-01T00:00:00.000Z', endDate: '2026-06-30T23:59:59.000Z', isActive: true }).returning();
-    const [ayTerm1] = await tx.insert(academicTerms).values({ tenantId, academicYearId: ay25!.id, name: 'Semestre 1', startDate: '2025-11-03T00:00:00.000Z', endDate: '2026-01-30T23:59:59.000Z', isCurrent: true }).returning();
-    const [ayTerm2] = await tx.insert(academicTerms).values({ tenantId, academicYearId: ay25!.id, name: 'Semestre 2', startDate: '2026-03-02T00:00:00.000Z', endDate: '2026-06-26T23:59:59.000Z', isCurrent: false }).returning();
+    const [ay25] = await tx.insert(academicYears).values({ tenantId, name: `${sy(2025)}-${sy(2026)}`, startDate: `${sy(2025)}-09-01T00:00:00.000Z`, endDate: `${sy(2026)}-06-30T23:59:59.000Z`, isActive: true }).returning();
+    const [ayTerm1] = await tx.insert(academicTerms).values({ tenantId, academicYearId: ay25!.id, name: 'Semestre 1', startDate: `${sy(2025)}-11-03T00:00:00.000Z`, endDate: `${sy(2026)}-01-30T23:59:59.000Z`, isCurrent: true }).returning();
+    const [ayTerm2] = await tx.insert(academicTerms).values({ tenantId, academicYearId: ay25!.id, name: 'Semestre 2', startDate: `${sy(2026)}-03-02T00:00:00.000Z`, endDate: `${sy(2026)}-06-26T23:59:59.000Z`, isCurrent: false }).returning();
     await tx.insert(semesters).values([
       { tenantId, name: 'Semestre 1', startMonth: 9, endMonth: 1 },
       { tenantId, name: 'Semestre 2', startMonth: 2, endMonth: 6 },
@@ -1102,7 +1114,7 @@ async function run() {
       return { tenantId, studentId: sid, electiveGroupId: electiveGroupIds[ci], subjectId: subjectIds[pick(['Espagnol', 'Informatique', 'Éducation Islamique', 'Arabe'])] };
     });
     for (let i = 0; i < electiveRows.length; i += 50) await tx.insert(studentElectiveChoices).values(electiveRows.slice(i, i + 50));
-    const [tv] = await tx.insert(timetableVersions).values({ tenantId, sessionYearId, status: 'published', versionNumber: 1, effectiveFrom: '2025-09-01', createdBy: 'USR-001', publishedBy: 'USR-001', publishedAt: isoTs(-60) }).returning();
+    const [tv] = await tx.insert(timetableVersions).values({ tenantId, sessionYearId, status: 'published', versionNumber: 1, effectiveFrom: `${sy(2025)}-09-01`, createdBy: 'USR-001', publishedBy: 'USR-001', publishedAt: isoTs(-60) }).returning();
     const timetableVersionId = tv!.id;
     console.log(`  · seeded academic config (buildings, terms, shifts, electives, timetable v1)`);
 
@@ -1150,9 +1162,9 @@ async function run() {
       { tenantId, courseId: cid, name: `Bibliographie ${ci + 1}.pdf`, url: `https://cdn.atlas.ma/biblio/${ci + 1}.pdf` },
     ]);
     for (let i = 0; i < courseAttachmentRows.length; i += 50) await tx.insert(courseAttachments).values(courseAttachmentRows.slice(i, i + 50));
-    const progEnrollRows = studentIds.slice(0, 120).map((sid) => ({ tenantId, studentId: sid, programId: programIds[studentClassOf[sid] === '3ème' ? 1 : 0], academicTermId: ayTerm1!.id, enrollmentDate: '2025-09-05T08:00:00.000Z', status: 'enrolled' }));
+    const progEnrollRows = studentIds.slice(0, 120).map((sid) => ({ tenantId, studentId: sid, programId: programIds[studentClassOf[sid] === '3ème' ? 1 : 0], academicTermId: ayTerm1!.id, enrollmentDate: `${sy(2025)}-09-05T08:00:00.000Z`, status: 'enrolled' }));
     for (let i = 0; i < progEnrollRows.length; i += 100) await tx.insert(programEnrollments).values(progEnrollRows.slice(i, i + 100));
-    const enrollmentRows = studentIds.slice(0, 120).map((sid) => ({ tenantId, studentId: sid, courseId: courseByClass[studentClassOf[sid]]!, status: 'enrolled', enrolledAt: '2025-09-05T08:00:00.000Z' }));
+    const enrollmentRows = studentIds.slice(0, 120).map((sid) => ({ tenantId, studentId: sid, courseId: courseByClass[studentClassOf[sid]]!, status: 'enrolled', enrolledAt: `${sy(2025)}-09-05T08:00:00.000Z` }));
     for (let i = 0; i < enrollmentRows.length; i += 100) await tx.insert(enrollments).values(enrollmentRows.slice(i, i + 100));
     // course_enrollments references program_enrollments -> insert after capturing program enrollment ids.
     const progEnrolled = await tx.select({ id: programEnrollments.id }).from(programEnrollments).where(eq(programEnrollments.tenantId, tenantId)).limit(120);
@@ -1285,9 +1297,9 @@ async function run() {
     const [coaRevenue] = await tx.insert(chartOfAccounts).values({ tenantId, code: '701', name: 'Ventes – scolarité', accountType: 'revenue', isActive: true }).returning();
     const [coaSalary] = await tx.insert(chartOfAccounts).values({ tenantId, code: '617', name: 'Salaires', accountType: 'expense', isActive: true }).returning();
     await tx.insert(fiscalPeriods).values([
-      { tenantId, name: 'Exercice 2025-2026', startDate: '2025-09-01', endDate: '2026-06-30', status: 'open' },
-      { tenantId, name: 'Vacances 2026', startDate: '2026-07-01', endDate: '2026-08-31', status: 'open' },
-      { tenantId, name: 'Exercice 2026-2027', startDate: '2026-09-01', endDate: '2027-06-30', status: 'open' },
+      { tenantId, name: `Exercice ${sy(2025)}-${sy(2026)}`, startDate: `${sy(2025)}-09-01`, endDate: `${sy(2026)}-06-30`, status: 'open' },
+      { tenantId, name: 'Vacances 2026', startDate: `${sy(2026)}-07-01`, endDate: `${sy(2026)}-08-31`, status: 'open' },
+      { tenantId, name: `Exercice ${sy(2026)}-${sy(2027)}`, startDate: `${sy(2026)}-09-01`, endDate: `${sy(2027)}-06-30`, status: 'open' },
     ]);
     await tx.insert(bankAccounts).values([
       { tenantId, bankName: 'Attijariwafa Bank', accountNumber: '0013 5000 2026 0000 1234', currency: 'MAD', currentBalance: 1250000 },
@@ -1300,7 +1312,7 @@ async function run() {
       ['transfer', 'Virement', 'تحويل بنكي', true, true, true, true],
       ['check', 'Chèque', 'شيك', true, true, true, true],
     ] as const) {
-      payMethods.push({ tenantId, methodCode: code, labelFr: fr, labelAr: ar, requiresReference: ref, requiresBank: bank, requiresDate: reqDate, requiresProof: proof, refundable: true, isActive: true, branchScopeId: null, accountingAccountId: coaCash!.id, effectiveFrom: '2025-09-01' });
+      payMethods.push({ tenantId, methodCode: code, labelFr: fr, labelAr: ar, requiresReference: ref, requiresBank: bank, requiresDate: reqDate, requiresProof: proof, refundable: true, isActive: true, branchScopeId: null, accountingAccountId: coaCash!.id, effectiveFrom: `${sy(2025)}-09-01` });
     }
     await tx.insert(paymentMethodConfigurations).values(payMethods);
     // Invoice items: rebuild each invoice's line items from its fee structure components.
@@ -1320,8 +1332,8 @@ async function run() {
     for (let i = 0; i < invItemRows.length; i += 100) await tx.insert(invoiceItems).values(invItemRows.slice(i, i + 100));
     // Fee schedules (per structure) + discounts.
     await tx.insert(feeSchedules).values([
-      { tenantId, name: 'Échéancier Lycée 2025-2026', academicTermId: ayTerm1!.id, feeStructureId: feeStructuresById.Lycee, postingDate: '2025-09-01T08:00:00.000Z', dueDate: '2025-09-30', status: 'active' },
-      { tenantId, name: 'Échéancier Collège 2025-2026', academicTermId: ayTerm1!.id, feeStructureId: feeStructuresById.College, postingDate: '2025-09-01T08:00:00.000Z', dueDate: '2025-09-30', status: 'active' },
+      { tenantId, name: `Échéancier Lycée ${sy(2025)}-${sy(2026)}`, academicTermId: ayTerm1!.id, feeStructureId: feeStructuresById.Lycee, postingDate: `${sy(2025)}-09-01T08:00:00.000Z`, dueDate: `${sy(2025)}-09-30`, status: 'active' },
+      { tenantId, name: `Échéancier Collège ${sy(2025)}-${sy(2026)}`, academicTermId: ayTerm1!.id, feeStructureId: feeStructuresById.College, postingDate: `${sy(2025)}-09-01T08:00:00.000Z`, dueDate: `${sy(2025)}-09-30`, status: 'active' },
     ]);
     const discRows = studentIds.slice(0, 14).map((sid, i) => {
       const dType = pick(['fixed', 'percentage']);
@@ -1334,13 +1346,13 @@ async function run() {
         amount: dType === 'percentage' ? '10.00' : '1000.00',
         approvalStatus: 'approved',
         approvedById: 'USR-001',
-        note: 'Remise accordée pour l’année 2025-2026',
+        note: `Remise accordée pour l’année ${sy(2025)}-${sy(2026)}`,
       };
     });
     for (let i = 0; i < discRows.length; i += 50) await tx.insert(feeDiscounts).values(discRows.slice(i, i + 50));
     // Fine policies + assessments.
-    const [fineLate] = await tx.insert(finePolicies).values({ tenantId, name: 'Retard de paiement', description: 'Pénalité de retard sur factures', graceDays: 15, formula: 'per_day', flatAmount: 0, perDayAmount: 20, maxAmount: 500, effectiveFrom: '2025-09-01', status: 'active' }).returning();
-    const [fineBroch] = await tx.insert(finePolicies).values({ tenantId, name: 'Documents perdus', description: 'Frais de réédition', graceDays: 0, formula: 'flat', flatAmount: 150, perDayAmount: 0, effectiveFrom: '2025-09-01', status: 'active' }).returning();
+    const [fineLate] = await tx.insert(finePolicies).values({ tenantId, name: 'Retard de paiement', description: 'Pénalité de retard sur factures', graceDays: 15, formula: 'per_day', flatAmount: 0, perDayAmount: 20, maxAmount: 500, effectiveFrom: `${sy(2025)}-09-01`, status: 'active' }).returning();
+    const [fineBroch] = await tx.insert(finePolicies).values({ tenantId, name: 'Documents perdus', description: 'Frais de réédition', graceDays: 0, formula: 'flat', flatAmount: 150, perDayAmount: 0, effectiveFrom: `${sy(2025)}-09-01`, status: 'active' }).returning();
     const fineRows = insertedInvoices.slice(160, 185).map((inv, i) => ({
       tenantId,
       studentId: inv.studentId,
@@ -1479,7 +1491,7 @@ async function run() {
       zoneIds.push(z!.id);
     }
     // Applications (a few for next session).
-    const appRows = studentIds.slice(40, 60).map((sid, i) => ({ tenantId, studentId: sid, sessionYearId, requestedStartDate: '2026-09-01', requestedEndDate: '2027-06-30', preferredCategoryIds: null, preferredRoomId: null, priorityReason: null, guardianConsentStatus: 'approved', decision: i % 2 === 0 ? 'accepted' : 'waitlisted', decisionReason: 'Selon disponibilité', decidedById: 'USR-001', decidedAt: i % 2 === 0 ? isoDays(-10) : null }));
+    const appRows = studentIds.slice(40, 60).map((sid, i) => ({ tenantId, studentId: sid, sessionYearId, requestedStartDate: `${sy(2026)}-09-01`, requestedEndDate: `${sy(2027)}-06-30`, preferredCategoryIds: null, preferredRoomId: null, priorityReason: null, guardianConsentStatus: 'approved', decision: i % 2 === 0 ? 'accepted' : 'waitlisted', decisionReason: 'Selon disponibilité', decidedById: 'USR-001', decidedAt: i % 2 === 0 ? isoDays(-10) : null }));
     for (let i = 0; i < appRows.length; i += 50) await tx.insert(hostelApplications).values(appRows.slice(i, i + 50));
     // Leave passes + approvals + returns.
     const leavePassRows = hostelAllocs.slice(0, 6).map((a, i) => ({ tenantId, allocationId: a.id, studentId: a.studentId, destination: 'Casablanca centre', reason: 'Sortie familiale', startDateTime: isoDays(-3), expectedReturnAt: isoDays(-2), actualReturnAt: isoDays(-2), guardianApprovalRequired: true, status: i % 2 === 0 ? 'approved' : 'pending', createdById: a.studentId }));
@@ -1511,11 +1523,11 @@ async function run() {
     const fareRows = allocRows.slice(0, 20).map((a, i) => ({ tenantId: tenantId.toString(), allocationId: a.id, feeStructureId: null, invoiceId: null, chargeAmount: 2500, currency: 'MAD', status: 'billed' as const }));
     await tx.insert(transportFareLinks).values(fareRows);
     const vehDocRows = vehicleIds.flatMap((vid, vi) => [
-      { tenantId: tenantId.toString(), vehicleId: vid, documentType: 'vignette', title: `Vignette ${vi + 1}`, attachmentId: null, expiryDate: '2026-12-31' },
-      { tenantId: tenantId.toString(), vehicleId: vid, documentType: 'insurance', title: `Assurance ${vi + 1}`, attachmentId: null, expiryDate: '2026-09-30' },
+      { tenantId: tenantId.toString(), vehicleId: vid, documentType: 'vignette', title: `Vignette ${vi + 1}`, attachmentId: null, expiryDate: `${sy(2026)}-12-31` },
+      { tenantId: tenantId.toString(), vehicleId: vid, documentType: 'insurance', title: `Assurance ${vi + 1}`, attachmentId: null, expiryDate: `${sy(2026)}-09-30` },
     ]);
     await tx.insert(transportVehicleDocuments).values(vehDocRows);
-    const crewRows = routeIds.map((rid, ri) => ({ tenantId: tenantId.toString(), routeId: rid, vehicleId: vehicleIds[ri % 2], driverEmployeeId: `EMP-${pad2((ri % 20) + 1)}`, attendantEmployeeId: ri % 2 === 0 ? `EMP-${pad2(((ri + 6) % 20) + 1)}` : null, effectiveStartDate: '2025-09-01', effectiveEndDate: '2026-06-30', recurringDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] }));
+    const crewRows = routeIds.map((rid, ri) => ({ tenantId: tenantId.toString(), routeId: rid, vehicleId: vehicleIds[ri % 2], driverEmployeeId: `EMP-${pad2((ri % 20) + 1)}`, attendantEmployeeId: ri % 2 === 0 ? `EMP-${pad2(((ri + 6) % 20) + 1)}` : null, effectiveStartDate: `${sy(2025)}-09-01`, effectiveEndDate: `${sy(2026)}-06-30`, recurringDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] }));
     await tx.insert(transportCrewAssignments).values(crewRows);
     const rosterRows = allocRows.slice(0, 12).flatMap((a, i) => ({ tenantId: tenantId.toString(), tripId: tripRows[i % tripRows.length]!.id, studentId: a.studentId, pickupStopId: a.pickupStopId!, dropoffStopId: a.dropoffStopId!, direction: a.direction, allocatedStatus: 'allocated' }));
     await tx.insert(transportTripRosterSnapshots).values(rosterRows);
@@ -1597,8 +1609,8 @@ async function run() {
     ]);
     for (let i = 0; i < empDocs.length; i += 50) await tx.insert(employeeDocuments).values(empDocs.slice(i, i + 50));
     const empEvents = empProfiles.flatMap((e) => [
-      { tenantId, employeeId: e.id, eventType: 'hired', actorId: 'USR-001', reason: 'Embauche', metadata: { source: 'seed' }, effectiveAt: '2025-09-01T00:00:00.000Z' },
-      { tenantId, employeeId: e.id, eventType: 'promotion', actorId: 'USR-001', reason: null, metadata: null, effectiveAt: '2026-01-05T00:00:00.000Z' },
+      { tenantId, employeeId: e.id, eventType: 'hired', actorId: 'USR-001', reason: 'Embauche', metadata: { source: 'seed' }, effectiveAt: `${sy(2025)}-09-01T00:00:00.000Z` },
+      { tenantId, employeeId: e.id, eventType: 'promotion', actorId: 'USR-001', reason: null, metadata: null, effectiveAt: `${sy(2026)}-01-05T00:00:00.000Z` },
     ]);
     for (let i = 0; i < empEvents.length; i += 50) await tx.insert(employeeEmploymentEvents).values(empEvents.slice(i, i + 50));
     const invRows = empProfiles.slice(0, 4).map((e) => ({ tenantId, employeeId: e.id, tokenHash: `tok-${Math.random().toString(36).slice(2, 12)}`, expiresAt: isoTs(30), invitedEmail: `${e.userId.toLowerCase()}@atlas.ma`, status: 'pending', consumedAt: null, createdBy: 'USR-001' }));
@@ -1606,7 +1618,7 @@ async function run() {
     await tx.insert(employeeInvitations).values(invRows.map((x) => ({ tenantId: x.tenantId, employeeId: x.employeeId, tokenHash: x.tokenHash, expiresAt: x.expiresAt, invitedEmail: x.invitedEmail, status: x.status, consumedAt: x.consumedAt, createdById: x.createdBy })));
     const payrollProfileRows = empProfiles.map((e, i) => ({ tenantId, employeeId: e.id, userId: e.userId, cnssNumber: `CNSS-${int(10000000, 99999999)}`, amoNumber: `AMO-${int(1000000, 9999999)}`, taxId: `IF-${int(100000, 999999)}`, bankRibEncrypted: null, bankName: pick(['Attijariwafa Bank', 'Banque Populaire', 'BMCE']), bankAccountName: 'Salarié', dependantsCount: int(0, 4), payFrequency: 'monthly', paymentMethod: 'bank_transfer', salaryCurrency: 'MAD', status: 'active' }));
     for (let i = 0; i < payrollProfileRows.length; i += 50) await tx.insert(employeePayrollProfiles).values(payrollProfileRows.slice(i, i + 50));
-    const salaryAssignRows = empProfiles.map((e) => ({ tenantId, userId: e.userId, templateId: tpl!.id, baseSalary: Number(e.salary), effectiveDate: '2025-09-01', createdAt: '2025-09-01T00:00:00.000Z' }));
+    const salaryAssignRows = empProfiles.map((e) => ({ tenantId, userId: e.userId, templateId: tpl!.id, baseSalary: Number(e.salary), effectiveDate: `${sy(2025)}-09-01`, createdAt: `${sy(2025)}-09-01T00:00:00.000Z` }));
     for (let i = 0; i < salaryAssignRows.length; i += 50) await tx.insert(employeeSalaryAssignments).values(salaryAssignRows.slice(i, i + 50));
     // Salary advances + policies.
     const [advPolicy] = await tx.insert(salaryAdvancePolicies).values({ tenantId, name: 'Avance sur salaire', maxAmount: 10000, maxOutstanding: 20000, minEmploymentMonths: 6, repaymentStartMonths: 1, maxInstallments: 6, minNetProtection: 3000, status: 'active' }).returning();
@@ -1619,12 +1631,12 @@ async function run() {
       advanceIds.push(a!.id);
       await tx.insert(salaryAdvanceTransactions).values({ tenantId, advanceId: a!.id, type: 'disbursement', amount: amt, referenceId: `ADV-TX-${i + 1}`, transactionDate: isoDays(-28), notes: 'Versement', createdAt: isoTs(-28) });
       for (let m = 1; m <= 4; m++) {
-        await tx.insert(salaryAdvanceRepaymentSchedules).values({ tenantId, advanceId: a!.id, installmentNo: m, duePeriodYear: 2026, duePeriodMonth: 9 + m, amount: Math.round(amt / 4), status: m === 1 && i % 2 === 0 ? 'allocated' : 'pending', payrollRunLineId: null, allocatedAt: null, notes: null });
+        await tx.insert(salaryAdvanceRepaymentSchedules).values({ tenantId, advanceId: a!.id, installmentNo: m, duePeriodYear: sy(2026), duePeriodMonth: 9 + m, amount: Math.round(amt / 4), status: m === 1 && i % 2 === 0 ? 'allocated' : 'pending', payrollRunLineId: null, allocatedAt: null, notes: null });
       }
     }
     console.log(`  · seeded HR extras (${empProfiles.length} employee records, advances)`);
     // Payroll run: one period (June 2026) + run lines + batch + payments + payslips.
-    const [ppId] = await tx.insert(payrollPeriods).values({ tenantId, year: 2026, month: 6, status: 'posted', version: 1, createdAt: '2026-06-25T00:00:00.000Z' }).returning();
+    const [ppId] = await tx.insert(payrollPeriods).values({ tenantId, year: sy(2026), month: 6, status: 'posted', version: 1, createdAt: `${sy(2026)}-06-25T00:00:00.000Z` }).returning();
     const periodId = ppId!.id;
     const runLines: Array<{ tenantId: string; periodId: string; userId: string; grossSalary: string; cnssEmployee: string; amoEmployee: string; irTax: string; netSalary: string; cnssEmployer: string; amoEmployer: string; totalEmployerCost: string; calculationSnapshot: null; calculationVersion: number; prorationFactor: string; netPayable: string | null; paymentMethod: string | null; paidAt: string | null; isFrozen: boolean; isReversed: boolean }> = empProfiles.map((e) => {
       const gross = Number(e.salary);
@@ -1634,19 +1646,19 @@ async function run() {
       const net = +(gross - cnssE - amoE - ir).toFixed(2);
       const cnssEr = +(gross * 0.1315).toFixed(2);
       const amoEr = +(gross * 0.0226).toFixed(2);
-      return { tenantId, periodId, userId: e.userId, grossSalary: gross.toFixed(2), cnssEmployee: cnssE.toFixed(2), amoEmployee: amoE.toFixed(2), irTax: ir.toFixed(2), netSalary: net.toFixed(2), cnssEmployer: cnssEr.toFixed(2), amoEmployer: amoEr.toFixed(2), totalEmployerCost: (gross + cnssEr + amoEr).toFixed(2), calculationSnapshot: null, calculationVersion: 1, prorationFactor: '1.00', netPayable: net.toFixed(2), paymentMethod: 'bank_transfer', paidAt: '2026-06-30T00:00:00.000Z', isFrozen: true, isReversed: false };
+      return { tenantId, periodId, userId: e.userId, grossSalary: gross.toFixed(2), cnssEmployee: cnssE.toFixed(2), amoEmployee: amoE.toFixed(2), irTax: ir.toFixed(2), netSalary: net.toFixed(2), cnssEmployer: cnssEr.toFixed(2), amoEmployer: amoEr.toFixed(2), totalEmployerCost: (gross + cnssEr + amoEr).toFixed(2), calculationSnapshot: null, calculationVersion: 1, prorationFactor: '1.00', netPayable: net.toFixed(2), paymentMethod: 'bank_transfer', paidAt: `${sy(2026)}-06-30T00:00:00.000Z`, isFrozen: true, isReversed: false };
     });
     const runLineIds: string[] = [];
     for (let i = 0; i < runLines.length; i += 50) {
       const ins = await tx.insert(payrollRunLines).values(runLines.slice(i, i + 50)).returning({ id: payrollRunLines.id });
       runLineIds.push(...ins.map((r) => r.id));
     }
-    const [batch] = await tx.insert(salaryPaymentBatches).values({ tenantId, runId: periodId, method: 'bank_transfer', status: 'approved', totalAmount: runLines.reduce((s, r) => s + Number(r.netSalary), 0), preparedById: 'USR-ACC-001', approvedById: 'USR-001', approvedAt: '2026-06-28T00:00:00.000Z', reconciliationStatus: 'reconciled', reconciledById: 'USR-ACC-001', reconciledAt: '2026-07-02T00:00:00.000Z' }).returning();
-    const payLines = empProfiles.map((e, i) => ({ tenantId, batchId: batch!.id, runLineId: runLineIds[i]!, userId: e.userId, amount: Number(runLines[i]!.netSalary), status: 'paid', bankReference: `VR-2026-${pad4(i + 1)}`, receiptReference: null, maskedBankDetails: '**** 1234', paidById: 'USR-ACC-001', paidAt: '2026-06-30T00:00:00.000Z' }));
+    const [batch] = await tx.insert(salaryPaymentBatches).values({ tenantId, runId: periodId, method: 'bank_transfer', status: 'approved', totalAmount: runLines.reduce((s, r) => s + Number(r.netSalary), 0), preparedById: 'USR-ACC-001', approvedById: 'USR-001', approvedAt: `${sy(2026)}-06-28T00:00:00.000Z`, reconciliationStatus: 'reconciled', reconciledById: 'USR-ACC-001', reconciledAt: `${sy(2026)}-07-02T00:00:00.000Z` }).returning();
+    const payLines = empProfiles.map((e, i) => ({ tenantId, batchId: batch!.id, runLineId: runLineIds[i]!, userId: e.userId, amount: Number(runLines[i]!.netSalary), status: 'paid', bankReference: `VR-2026-${pad4(i + 1)}`, receiptReference: null, maskedBankDetails: '**** 1234', paidById: 'USR-ACC-001', paidAt: `${sy(2026)}-06-30T00:00:00.000Z` }));
     await tx.insert(salaryPayments).values(payLines);
-    const payslipRows = empProfiles.map((e, i) => ({ tenantId, periodId, runLineId: runLineIds[i]!, userId: e.userId, issuedAt: '2026-06-30T00:00:00.000Z', pdfStorageKey: null, payslipNumber: `BULL-${periodId.slice(0, 8)}-${pad4(i + 1)}`, status: 'issued' }));
+    const payslipRows = empProfiles.map((e, i) => ({ tenantId, periodId, runLineId: runLineIds[i]!, userId: e.userId, issuedAt: `${sy(2026)}-06-30T00:00:00.000Z`, pdfStorageKey: null, payslipNumber: `BULL-${periodId.slice(0, 8)}-${pad4(i + 1)}`, status: 'issued' }));
     await tx.insert(payslips).values(payslipRows);
-    const adjRows = empProfiles.slice(0, 5).map((e, i) => ({ tenantId, employeeId: e.id, userId: e.userId, periodId, adjustmentType: 'bonus', componentId: null, amount: int(300, 1000), units: null, rate: null, reason: 'Prime de performance', evidenceKey: null, taxTreatment: 'taxable', recurring: false, recurrenceStart: null, recurrenceEnd: null, remainingOccurrences: null, effectivePeriodYear: 2026, effectivePeriodMonth: 6, status: 'approved', requesterId: 'USR-001', approverId: 'USR-001', approvedAt: '2026-06-20T00:00:00.000Z' }));
+    const adjRows = empProfiles.slice(0, 5).map((e, i) => ({ tenantId, employeeId: e.id, userId: e.userId, periodId, adjustmentType: 'bonus', componentId: null, amount: int(300, 1000), units: null, rate: null, reason: 'Prime de performance', evidenceKey: null, taxTreatment: 'taxable', recurring: false, recurrenceStart: null, recurrenceEnd: null, remainingOccurrences: null, effectivePeriodYear: 2026, effectivePeriodMonth: 6, status: 'approved', requesterId: 'USR-001', approverId: 'USR-001', approvedAt: `${sy(2026)}-06-20T00:00:00.000Z` }));
     await tx.insert(payrollAdjustments).values(adjRows);
     const resultLines = empProfiles.flatMap((e) => [
       { tenantId, runId: periodId, userId: e.userId, lineCode: 'BASE', componentId: compBase!.id, componentVersionId: null, label: 'Salaire de base', lineType: 'earning', amount: String(Number(e.salary)), base: null, rate: null, quantity: null, formulaVersion: 'v1', sortOrder: 1 },
@@ -1658,13 +1670,13 @@ async function run() {
       { tenantId, name: 'Enseignant de l’année', category: 'performance', description: 'Récompense les meilleurs enseignants', eligibility: 'Enseignants actifs', approvalRequired: true, monetaryDefault: 3000, monetaryComponentId: null, visibility: 'internal', status: 'active' },
       { tenantId, name: 'Ancienneté 10 ans', category: 'longevity', description: 'Fidélité au poste', eligibility: '10 ans d’ancienneté', approvalRequired: false, monetaryDefault: 5000, monetaryComponentId: null, visibility: 'internal', status: 'active' },
     ]);
-    const empAwardRows = empProfiles.slice(0, 4).map((e, i) => ({ tenantId, employeeId: e.id, userId: e.userId, title: 'Enseignant de l’année', category: 'performance', monetaryReward: 3000, giftDescription: 'Médaille + certificat', awardDate: '2026-06-20', summary: 'Excellence pédagogique', presentedBy: 'Direction', status: 'approved' }));
+    const empAwardRows = empProfiles.slice(0, 4).map((e, i) => ({ tenantId, employeeId: e.id, userId: e.userId, title: 'Enseignant de l’année', category: 'performance', monetaryReward: 3000, giftDescription: 'Médaille + certificat', awardDate: `${sy(2026)}-06-20`, summary: 'Excellence pédagogique', presentedBy: 'Direction', status: 'approved' }));
     await tx.insert(employeeAwards).values(empAwardRows);
     // Leave policies + assignments + balance transactions.
-    const [leavePol] = await tx.insert(employeeLeavePolicies).values({ tenantId, name: 'Politique congés 2026', categoryId: leaveCat1!.id, accrualType: 'annual', annualDays: 30, monthlyAccrualDays: null, carryoverLimit: 5, maxBalance: 35, allowNegative: false, probationRestrictionDays: 90, effectiveFrom: '2026-01-01', effectiveTo: null, status: 'active' }).returning();
-    const polAssignRows = empProfiles.map((e) => ({ tenantId, employeeId: e.id, policyId: leavePol!.id, effectiveFrom: '2026-01-01', effectiveTo: null, status: 'active' }));
+    const [leavePol] = await tx.insert(employeeLeavePolicies).values({ tenantId, name: 'Politique congés 2026', categoryId: leaveCat1!.id, accrualType: 'annual', annualDays: 30, monthlyAccrualDays: null, carryoverLimit: 5, maxBalance: 35, allowNegative: false, probationRestrictionDays: 90, effectiveFrom: `${sy(2026)}-01-01`, effectiveTo: null, status: 'active' }).returning();
+    const polAssignRows = empProfiles.map((e) => ({ tenantId, employeeId: e.id, policyId: leavePol!.id, effectiveFrom: `${sy(2026)}-01-01`, effectiveTo: null, status: 'active' }));
     for (let i = 0; i < polAssignRows.length; i += 50) await tx.insert(employeeLeavePolicyAssignments).values(polAssignRows.slice(i, i + 50));
-    const balTxRows = empProfiles.slice(0, 6).map((e, i) => ({ tenantId, employeeId: e.id, userId: e.userId, categoryId: leaveCat1!.id, policyId: leavePol!.id, year: 2026, txType: 'accrual', units: 30, refType: 'opening_balance', refId: null, occurredAt: '2026-01-01T00:00:00.000Z', createdById: 'USR-001', notes: 'Solde d’ouverture', createdAt: '2026-01-01T00:00:00.000Z' }));
+    const balTxRows = empProfiles.slice(0, 6).map((e, i) => ({ tenantId, employeeId: e.id, userId: e.userId, categoryId: leaveCat1!.id, policyId: leavePol!.id, year: sy(2026), txType: 'accrual', units: 30, refType: 'opening_balance', refId: null, occurredAt: `${sy(2026)}-01-01T00:00:00.000Z`, createdById: 'USR-001', notes: 'Solde d’ouverture', createdAt: `${sy(2026)}-01-01T00:00:00.000Z` }));
     await tx.insert(employeeLeaveBalanceTransactions).values(balTxRows);
     console.log(`  · seeded payroll run (${runLines.length} lines) + ${payslipRows.length} payslips + awards + leave policies`);
 
@@ -1780,7 +1792,7 @@ async function run() {
     const autoRows = ['Souhaits d’anniversaire – élèves', 'Souhaits d’anniversaire – personnel'].map((name, i) => ({ tenantId, branchId, name, kind: (i === 0 ? 'birthday_student' : 'birthday_staff') as const, channel: 'sms' as const, connectionId: connIds[0], templateId: tplIds[0], audienceKind: i === 0 ? 'students' : 'staff', timezone: 'Africa/Casablanca', sendTime: '08:00', quietHoursStart: null, quietHoursEnd: null, approvalMode: 'auto', isActive: true, nextRunAt: isoTs(1), createdBy: 'USR-001', createdAt: isoTs(-40), updatedAt: isoTs(-40) }));
     const autoIds: string[] = [];
     for (const a of autoRows) { const [r] = await tx.insert(communicationAutomations).values(a).returning(); autoIds.push(r!.id); }
-    const runRows = autoIds.map((aid, i) => ({ tenantId, automationId: aid, runDate: '2026-08-10', status: (i === 0 ? 'completed' : 'pending') as const, createdCount: i === 0 ? 12 : 0, queuedCount: 12, skippedCount: 2, failedCount: 0, startedAt: i === 0 ? isoTs(0) : null, completedAt: i === 0 ? isoTs(0) : null, createdAt: isoTs(0) }));
+    const runRows = autoIds.map((aid, i) => ({ tenantId, automationId: aid, runDate: `${sy(2026)}-08-10`, status: (i === 0 ? 'completed' : 'pending') as const, createdCount: i === 0 ? 12 : 0, queuedCount: 12, skippedCount: 2, failedCount: 0, startedAt: i === 0 ? isoTs(0) : null, completedAt: i === 0 ? isoTs(0) : null, createdAt: isoTs(0) }));
     const runIds: string[] = [];
     for (const r of runRows) { const [rr] = await tx.insert(communicationAutomationRuns).values(r).returning(); runIds.push(rr!.id); }
     const autoRecRows = runIds.flatMap((rid) => studentIds.slice(0, 6).map((sid, k) => ({ tenantId, runId: rid, personId: sid, channel: 'sms' as const, status: (k === 5 ? 'skipped' : 'sent') as const, skipReason: k === 5 ? 'NO_CONSENT' : null, createdAt: isoTs(0) })));
@@ -1824,7 +1836,7 @@ async function run() {
     for (const t of docTplRows) { const [r] = await tx.insert(documentTemplates).values(t).returning(); docTplIds.push(r!.id); }
     const docTplVerIds: string[] = [];
     for (const tid of docTplIds) { const [r] = await tx.insert(documentTemplateVersions).values({ tenantId, templateId: tid, versionNumber: 1, pageWidthMm: 86, pageHeightMm: 54, orientation: 'landscape', schemaJson: { basePdf: { width: 86, height: 54, padding: [0, 0, 0, 0] }, schemas: [[{ name: 'nom', type: 'text', position: { x: 10, y: 10 }, width: 66, height: 10, content: '{nom}', fontName: 'Roboto', fontSize: 12, alignment: 'left' }]] }, storageKey: null, publishedById: 'USR-001', publishedAt: isoTs(-40), createdAt: isoTs(-40) }).returning(); docTplVerIds.push(r!.id); }
-    const issuedDocRows = studentIds.slice(0, 12).map((sid, i) => ({ tenantId, type: (i % 3 === 2 ? 'admit_card' : 'student_id') as const, templateVersionId: docTplVerIds[i % 3 === 2 ? 2 : 0], subjectType: 'student' as const, subjectId: sid, examCandidateId: null, publicTokenHash: `doc-${i}-${sid.slice(0, 6)}`, status: (i % 6 === 0 ? 'revoked' : 'active') as const, validFrom: '2025-09-01T00:00:00.000Z', validUntil: '2026-08-31T00:00:00.000Z', renderDataSnapshot: { nom: sid }, issuedById: 'USR-001', issuedAt: isoTs(-90), replacedDocumentId: null, revokedAt: i % 6 === 0 ? isoTs(-3) : null, revokedById: i % 6 === 0 ? 'USR-001' : null, revokeReason: i % 6 === 0 ? 'perdu' : null }));
+    const issuedDocRows = studentIds.slice(0, 12).map((sid, i) => ({ tenantId, type: (i % 3 === 2 ? 'admit_card' : 'student_id') as const, templateVersionId: docTplVerIds[i % 3 === 2 ? 2 : 0], subjectType: 'student' as const, subjectId: sid, examCandidateId: null, publicTokenHash: `doc-${i}-${sid.slice(0, 6)}`, status: (i % 6 === 0 ? 'revoked' : 'active') as const, validFrom: `${sy(2025)}-09-01T00:00:00.000Z`, validUntil: `${sy(2026)}-08-31T00:00:00.000Z`, renderDataSnapshot: { nom: sid }, issuedById: 'USR-001', issuedAt: isoTs(-90), replacedDocumentId: null, revokedAt: i % 6 === 0 ? isoTs(-3) : null, revokedById: i % 6 === 0 ? 'USR-001' : null, revokeReason: i % 6 === 0 ? 'perdu' : null }));
     const issuedDocIds: string[] = [];
     for (let i = 0; i < issuedDocRows.length; i += 50) { const rows = await tx.insert(issuedDocuments).values(issuedDocRows.slice(i, i + 50)).returning({ id: issuedDocuments.id }); issuedDocIds.push(...rows.map((r) => r.id)); }
     const genJobs = [{ type: 'student_id' as const, total: 200 }, { type: 'admit_card' as const, total: 80 }].map((g, i) => ({ tenantId, type: g.type, templateVersionId: docTplVerIds[i * 2 === 0 ? 0 : 2], filtersSnapshot: { classes: ['2nde', 'Terminale'] }, status: (i === 0 ? 'completed' : 'processing') as const, totalCount: g.total, successCount: i === 0 ? g.total : 0, errorCount: i === 0 ? 0 : 3, startedAt: isoTs(-4), completedAt: i === 0 ? isoTs(-4) : null, createdAt: isoTs(-4), createdBy: 'USR-001' }));
@@ -1842,7 +1854,7 @@ async function run() {
     // Admissions / alumni / student extras: campaigns, applicants, alumni
     // directory, promotions, discipline, leaves, parent requests.
     // -----------------------------------------------------------------------
-    const [camp] = await tx.insert(admissionCampaigns).values({ tenantId, name: 'Rentrée 2026-2027', startDate: '2026-03-01', endDate: '2026-08-31', academicTermId: ayTerm1!.id, isActive: true, createdAt: isoTs(-60), updatedAt: isoTs(-1) }).returning();
+    const [camp] = await tx.insert(admissionCampaigns).values({ tenantId, name: `Rentrée ${sy(2026)}-${sy(2027)}`, startDate: `${sy(2026)}-03-01`, endDate: `${sy(2026)}-08-31`, academicTermId: ayTerm1!.id, isActive: true, createdAt: isoTs(-60), updatedAt: isoTs(-1) }).returning();
     const appFirst = ['Sara', 'Yassine', 'Imane', 'Karim', 'Salma', 'Mehdi', 'Nadia', 'Omar'];
     const appLast = ['Bennani', 'Alaoui', 'Cherkaoui', 'El Fassi', 'Tazi', 'Berrada', 'Idrissi', 'Rahmani'];
     const applicantRows = Array.from({ length: 20 }, (_, i) => ({ tenantId, campaignId: camp!.id, firstName: appFirst[i % 8], lastName: appLast[i % 8], email: `candidat.${i + 1}@atlas.ma`, phone: `+2126${String(50000000 + i).slice(0, 8)}`, dateOfBirth: `${2008 + (i % 5)}-0${(i % 9) + 1}-15`, targetProgramId: programIds[i % 2], status: pick(['new', 'contacted', 'qualified', 'converted', 'lost']), guardianName: `Parent ${appLast[i % 8]}`, guardianPhone: `+2126${String(60000000 + i).slice(0, 8)}`, guardianEmail: null, applicationDate: isoTs(-int(5, 60)), convertedUserId: i % 5 === 3 ? studentIds[i % 200] : null, gender: i % 2 === 0 ? ('female' as const) : ('male' as const), nationality: 'Marocaine', motherTongue: 'Français', city: 'Casablanca', bloodGroup: pick(['A+', 'O+', 'B+', 'AB+']), academicYearId: ay25!.id, guardianId: null, checklistDocumentsReceived: i % 3 !== 0, checklistInterviewDone: i % 4 === 0, checklistFileComplete: i % 5 === 0 }));
@@ -1884,11 +1896,11 @@ async function run() {
       { tenantId, studentId: sid, documentType: 'birth_certificate' as const, fileExt: 'pdf', uploadedAt: isoTs(-100) },
     ]);
     for (let i = 0; i < studDocRows.length; i += 50) await tx.insert(studentDocuments).values(studDocRows.slice(i, i + 50));
-    const discipRows = studentIds.slice(0, 10).map((sid, i) => ({ tenantId, studentId: sid, date: `${2026}-0${(i % 6) + 1}-${(i % 27) + 1}`, infraction: pick(['Retard répété', 'Non-respect du règlement', 'Absence non justifiée']), actionTaken: i % 2 === 0 ? 'Avertissement oral' : 'Avertissement écrit', reportedById: teacherIds[i % 20], createdAt: isoTs(-15) }));
+    const discipRows = studentIds.slice(0, 10).map((sid, i) => ({ tenantId, studentId: sid, date: `${sy(2026)}-0${(i % 6) + 1}-${(i % 27) + 1}`, infraction: pick(['Retard répété', 'Non-respect du règlement', 'Absence non justifiée']), actionTaken: i % 2 === 0 ? 'Avertissement oral' : 'Avertissement écrit', reportedById: teacherIds[i % 20], createdAt: isoTs(-15) }));
     await tx.insert(studentDiscipline).values(discipRows);
-    const leaveRows = studentIds.slice(0, 12).map((sid, i) => ({ tenantId, studentId: sid, startDate: '2026-03-10', endDate: '2026-03-12', reason: pick(['Voyage familial', 'Rendez-vous médical', 'Événement familial']), status: pick(['pending', 'approved', 'rejected'] as const), createdAt: isoTs(-25), updatedAt: isoTs(-20) }));
+    const leaveRows = studentIds.slice(0, 12).map((sid, i) => ({ tenantId, studentId: sid, startDate: `${sy(2026)}-03-10`, endDate: `${sy(2026)}-03-12`, reason: pick(['Voyage familial', 'Rendez-vous médical', 'Événement familial']), status: pick(['pending', 'approved', 'rejected'] as const), createdAt: isoTs(-25), updatedAt: isoTs(-20) }));
     await tx.insert(studentLeaves).values(leaveRows);
-    const [promoBatch] = await tx.insert(promotionBatches).values({ tenantId, sourceClassSectionId: classInfo['3ème']!.sections[0], targetSessionYearId: sessionYearId, status: 'committed' as const, idempotencyKey: 'promo-2026-01', operatorId: 'USR-001', revertedAt: null, createdAt: isoTs(-30) }).returning();
+    const [promoBatch] = await tx.insert(promotionBatches).values({ tenantId, sourceClassSectionId: classInfo['3ème']!.sections[0], targetSessionYearId: sessionYearId, status: 'committed' as const, idempotencyKey: `promo-${sy(2026)}-01`, operatorId: 'USR-001', revertedAt: null, createdAt: isoTs(-30) }).returning();
     const promoRows = studentIds.slice(0, 12).map((sid, i) => ({ tenantId, batchId: promoBatch!.id, studentId: sid, decision: (i % 6 === 0 ? 'repeat' : i % 7 === 0 ? 'withdraw' : 'promote') as const, targetClassSectionId: i % 6 === 0 ? null : classInfo['2nde']!.sections[i % 3], placementId: null, averagePercentageAtDecision: int(55, 96), reason: i % 6 === 0 ? 'Échec aux examens' : null, createdAt: isoTs(-30) }));
     await tx.insert(promotionDecisions).values(promoRows);
     const parentReqRows = studentIds.slice(0, 10).map((sid, i) => ({ tenantId, guardianId: guardianIds[i % 130], studentId: sid, requestType: 'absence', subject: 'Autorisation d’absence', body: 'Merci d’accepter l’absence de mon enfant.', status: pick(['pending', 'approved', 'rejected']), decidedById: i % 2 === 0 ? 'USR-001' : null, decisionNotes: i % 2 === 0 ? 'OK' : null, createdAt: isoTs(-12), updatedAt: isoTs(-8) }));
@@ -1905,13 +1917,13 @@ async function run() {
     const gShiftRows = [['Matin', '06:00', '14:00'], ['Après-midi', '14:00', '22:00'], ['Nuit', '22:00', '06:00']].map((s) => ({ tenantId, branchId, name: s[0], startTime: s[1], endTime: s[2], isActive: true, createdAt: isoTs(-90), updatedAt: isoTs(-90) }));
     const gShiftIds: string[] = [];
     for (const s of gShiftRows) { const [r] = await tx.insert(guardShifts).values(s).returning(); gShiftIds.push(r!.id); }
-    const gAssignRows = [0, 1, 2, 3].map((i) => ({ tenantId, branchId, guardUserId: i === 0 ? 'USR-GUARD-001' : teacherIds[i % 20], gateId: gateIds[i % 2], shiftId: gShiftIds[i % 3], deviceId: null, effectiveFrom: '2025-09-01T00:00:00.000Z', effectiveUntil: i % 2 === 0 ? null : '2026-12-31T00:00:00.000Z', status: 'active', createdAt: isoTs(-90), updatedAt: isoTs(-90) }));
+    const gAssignRows = [0, 1, 2, 3].map((i) => ({ tenantId, branchId, guardUserId: i === 0 ? 'USR-GUARD-001' : teacherIds[i % 20], gateId: gateIds[i % 2], shiftId: gShiftIds[i % 3], deviceId: null, effectiveFrom: `${sy(2025)}-09-01T00:00:00.000Z`, effectiveUntil: i % 2 === 0 ? null : `${sy(2026)}-12-31T00:00:00.000Z`, status: 'active', createdAt: isoTs(-90), updatedAt: isoTs(-90) }));
     await tx.insert(guardAssignments).values(gAssignRows);
     const gInvRows = [0, 1, 2, 3, 4].map((i) => ({ tenantId, branchId, visitorFirstName: pick(['Ahmed', 'Samira', 'Hassan', 'Khadija', 'Rachid']), visitorLastName: 'Visiteur', visitorPhone: `+2126${String(40000000 + i).slice(0, 8)}`, visitorEmail: null, purpose: pick(['Entretien admission', 'Réunion parents', 'Livraison']), hostId: teacherIds[i % 20], expectedDate: isoTs(int(1, 10)), expectedStart: '10:00', expectedEnd: '12:00', status: i % 2 === 0 ? 'approved' : 'pending', approvedById: i % 2 === 0 ? 'USR-001' : null, approvedAt: i % 2 === 0 ? isoTs(-1) : null, createdById: 'USR-RECEPT-001', createdAt: isoTs(-5), updatedAt: isoTs(-1) }));
     await tx.insert(guardVisitorInvitations).values(gInvRows);
     const gVisitRows = [0, 1, 2].map((i) => ({ tenantId, branchId, invitationId: null, visitorFirstName: pick(['Youssef', 'Latifa', 'Brahim']), visitorLastName: 'Visiteur', visitorPhone: `+2126${String(30000000 + i).slice(0, 8)}`, visitorEmail: null, purpose: 'Rencontre administrative', hostId: null, hostName: 'Direction', passNumber: `PASS-${pad4(i + 1)}`, badgeCredentialId: null, status: i === 0 ? 'checked_in' : 'checked_out', checkInAt: i === 0 ? isoTs(-1) : isoTs(-2), checkOutAt: i === 0 ? null : isoTs(-1), checkInBy: 'USR-GUARD-001', checkOutBy: i === 0 ? null : 'USR-GUARD-001', gateId: gateIds[0], createdById: 'USR-GUARD-001', createdAt: isoTs(-2), updatedAt: isoTs(-1) }));
     await tx.insert(guardVisits).values(gVisitRows);
-    const gAuthRows = studentIds.slice(0, 8).map((sid, i) => ({ tenantId, studentId: sid, pickupPersonId: guardianIds[i % 130], relationshipType: 'parent', authorizedFrom: '2025-09-01T00:00:00.000Z', authorizedUntil: '2026-08-31T00:00:00.000Z', reason: null, status: i % 3 === 0 ? 'cancelled' : 'active', consumedAt: null, createdById: 'USR-001', createdAt: isoTs(-80), updatedAt: isoTs(-80) }));
+    const gAuthRows = studentIds.slice(0, 8).map((sid, i) => ({ tenantId, studentId: sid, pickupPersonId: guardianIds[i % 130], relationshipType: 'parent', authorizedFrom: `${sy(2025)}-09-01T00:00:00.000Z`, authorizedUntil: `${sy(2026)}-08-31T00:00:00.000Z`, reason: null, status: i % 3 === 0 ? 'cancelled' : 'active', consumedAt: null, createdById: 'USR-001', createdAt: isoTs(-80), updatedAt: isoTs(-80) }));
     const gAuthIds: string[] = [];
     for (const a of gAuthRows) { const [r] = await tx.insert(guardPickupAuthorizations).values(a).returning(); gAuthIds.push(r!.id); }
     const gRelRows = gAuthIds.slice(0, 4).map((aid, i) => ({ tenantId, studentId: studentIds[i], authorizationId: aid, releaseMethod: 'manual', operatorId: 'USR-GUARD-001', gateId: gateIds[i % 2], deviceId: null, kioskSessionId: null, idempotencyKey: `rel-${aid.slice(0, 8)}`, releasedAt: isoTs(-1), evidence: { gate: 'PORT-A' } }));
@@ -1939,7 +1951,7 @@ async function run() {
     const handHistRows = handIds.map((hid, i) => ({ tenantId, handoffId: hid, fromStatus: null, toStatus: 'open', changedById: 'USR-RECEPT-001', reason: null, createdAt: isoTs(-3) }));
     await tx.insert(receptionHandoffStatusHistory).values(handHistRows);
     await tx.insert(tenantDomains).values([{ tenantId, domain: 'atlas.schoolos.app', domainType: 'subdomain' as const, status: 'approved' as const, verificationToken: 'vt-1', requestedAt: isoTs(-60), requestedById: 'USR-001', approvedAt: isoTs(-60), approvedById: 'USR-001', createdAt: isoTs(-60), updatedAt: isoTs(-60) }, { tenantId, domain: 'groupe-atlas.ma', domainType: 'custom' as const, status: 'pending' as const, verificationToken: 'vt-2', requestedAt: isoTs(-5), requestedById: 'USR-001', approvedAt: null, approvedById: null, createdAt: isoTs(-5), updatedAt: isoTs(-5) }]);
-    await tx.insert(schoolSettings).values({ tenantId, establishmentName: 'Groupe Scolaire Atlas', city: 'Casablanca', address: '12, Avenue Mohammed V', phone: '+212522000000', email: 'contact@atlas.ma', academicYear: '2025-2026', startDate: '2025-09-01', endDate: '2026-06-30', allowOperations: true, presenceModes: ['morning', 'afternoon'], languages: ['fr', 'ar'], security: { twoFactor: true }, createdAt: isoTs(-180), updatedAt: isoTs(-1), ice: 'ICE-001234567', legalStatus: 'Privé', directorName: 'Youssef El Amrani', shortName: 'Atlas', website: 'https://atlas.ma', country: 'Maroc', rc: 'RC-12345', taxId: 'IF-123456', directorEmail: 'y.elamrani@atlas.ma', directorPhone: '+212522000001', financialContactName: 'Fatima Zahra', financialContactEmail: 'finance@atlas.ma', financialContactPhone: '+212522000002', admissionsContactName: 'Samira', admissionsContactEmail: 'admissions@atlas.ma', admissionsContactPhone: '+212522000003', localeTimezone: 'Africa/Casablanca', dateFormat: 'DD/MM/YYYY', documentHeaderStyle: 'classic', loginAccessMethod: 'username', attendanceLateGraceMinutes: 15, attendancePeriodStartTime: '08:00' });
+    await tx.insert(schoolSettings).values({ tenantId, establishmentName: 'Groupe Scolaire Atlas', city: 'Casablanca', address: '12, Avenue Mohammed V', phone: '+212522000000', email: 'contact@atlas.ma', academicYear: `${sy(2025)}-${sy(2026)}`, startDate: `${sy(2025)}-09-01`, endDate: `${sy(2026)}-06-30`, allowOperations: true, presenceModes: ['morning', 'afternoon'], languages: ['fr', 'ar'], security: { twoFactor: true }, createdAt: isoTs(-180), updatedAt: isoTs(-1), ice: 'ICE-001234567', legalStatus: 'Privé', directorName: 'Youssef El Amrani', shortName: 'Atlas', website: 'https://atlas.ma', country: 'Maroc', rc: 'RC-12345', taxId: 'IF-123456', directorEmail: 'y.elamrani@atlas.ma', directorPhone: '+212522000001', financialContactName: 'Fatima Zahra', financialContactEmail: 'finance@atlas.ma', financialContactPhone: '+212522000002', admissionsContactName: 'Samira', admissionsContactEmail: 'admissions@atlas.ma', admissionsContactPhone: '+212522000003', localeTimezone: 'Africa/Casablanca', dateFormat: 'DD/MM/YYYY', documentHeaderStyle: 'classic', loginAccessMethod: 'username', attendanceLateGraceMinutes: 15, attendancePeriodStartTime: '08:00' });
     const cfRows = ([['matricule', 'N° matricule', 'student', 'text'], ['sport', 'Sport pratiqué', 'student', 'select']] as const).map((c, i) => ({ tenantId, key: c[0], label: c[1], entityType: c[2], fieldType: c[3], options: c[3] === 'select' ? ['football', 'basket', 'natation'] : null, required: false, defaultValue: null, sortOrder: i + 1, isActive: true, createdAt: isoTs(-70), updatedAt: isoTs(-70) }));
     const cfIds: string[] = [];
     for (const c of cfRows) { const [r] = await tx.insert(customFieldDefinitions).values(c).returning(); cfIds.push(r!.id); }
@@ -1980,7 +1992,9 @@ async function run() {
     const [devProf] = await tx.insert(liveClassProviderProfiles).values({ tenantId, name: 'Environnement dev', providerType: 'dev', scope: 'tenant', capabilities: ['recording', 'chat'], enabled: true }).returning();
     const slotRows = await tx.select({ id: classScheduleSlots.id, classSectionId: classScheduleSlots.classSectionId, classSubjectId: classScheduleSlots.classSubjectId, teacherId: classScheduleSlots.teacherId }).from(classScheduleSlots).where(eq(classScheduleSlots.tenantId, tenantId)).limit(6);
     const lcRows = slotRows.map((slot, i) => {
-      const off = int(3, 25);
+      // Dates must agree with the status: the live session started minutes ago,
+      // ended ones are in the past, the cancelled one was planned ahead (audit S-46).
+      const off = i === 0 ? -0.01 : i === 5 ? int(3, 25) : -int(3, 25);
       return {
         tenantId,
         providerProfileId: (i % 2 === 0 ? bbb : devProf)!.id,
@@ -1995,7 +2009,7 @@ async function run() {
         scheduledEnd: isoTs(off + 0.02),
         timezone: 'Africa/Casablanca',
         actualStart: i < 4 ? isoTs(off) : null,
-        actualEnd: i < 4 ? isoTs(off + 0.02) : null,
+        actualEnd: i > 0 && i < 4 ? isoTs(off + 0.02) : null,
         status: (i === 0 ? 'live' : i === 5 ? 'cancelled' : 'ended') as const,
         policy: { recordingEnabled: true, waitingRoom: true, chat: true, screenShare: true, guestPolicy: 'allow', maxParticipants: 60 },
         sourceTimetableSlotId: slot.id,
@@ -2018,14 +2032,14 @@ async function run() {
     // Finance extras: reconciliations, fee-structure versions, allocation runs
     // -----------------------------------------------------------------------
     const baRow = await tx.select({ id: bankAccounts.id }).from(bankAccounts).where(eq(bankAccounts.tenantId, tenantId)).limit(1);
-    const [bankRecon] = await tx.insert(bankReconciliations).values({ tenantId, bankAccountId: baRow[0]!.id, statementDate: '2026-07-31', statementBalance: '1250000.00', reconciledBalance: '1250000.00', status: 'completed', reconciledById: 'USR-ACC-001', reconciledAt: isoTs(-5) }).returning();
+    const [bankRecon] = await tx.insert(bankReconciliations).values({ tenantId, bankAccountId: baRow[0]!.id, statementDate: `${sy(2026)}-07-31`, statementBalance: '1250000.00', reconciledBalance: '1250000.00', status: 'completed', reconciledById: 'USR-ACC-001', reconciledAt: isoTs(-5) }).returning();
     const fsVerRows: Array<{ k: string; id: string }> = [];
     for (const [k, sid] of Object.entries(feeStructuresById)) {
-      const [fsv] = await tx.insert(feeStructureVersions).values({ tenantId, feeStructureId: sid, versionNumber: 1, status: 'published', publishedById: 'USR-001', publishedAt: isoTs(-30), componentsSnapshot: { name: k, version: 1 }, effectiveFrom: '2025-09-01' }).returning();
+      const [fsv] = await tx.insert(feeStructureVersions).values({ tenantId, feeStructureId: sid, versionNumber: 1, status: 'published', publishedById: 'USR-001', publishedAt: isoTs(-30), componentsSnapshot: { name: k, version: 1 }, effectiveFrom: `${sy(2025)}-09-01` }).returning();
       fsVerRows.push({ k, id: fsv!.id });
     }
     const feeSchRows = await tx.select({ id: feeSchedules.id }).from(feeSchedules).where(eq(feeSchedules.tenantId, tenantId));
-    const [allocRun] = await tx.insert(feeAllocationRuns).values({ tenantId, period: '2025-09', feeStructureVersionId: fsVerRows[0]!.id, feeScheduleId: feeSchRows[0]?.id ?? null, branchId, dueDate: '2025-09-30', status: 'approved', previewSummary: { students: 200, total: 0 }, runById: 'USR-001', approvedById: 'USR-001', approvedAt: isoTs(-90), createdAt: isoTs(-90), completedAt: isoTs(-90) }).returning();
+    const [allocRun] = await tx.insert(feeAllocationRuns).values({ tenantId, period: `${sy(2025)}-09`, feeStructureVersionId: fsVerRows[0]!.id, feeScheduleId: feeSchRows[0]?.id ?? null, branchId, dueDate: `${sy(2025)}-09-30`, status: 'approved', previewSummary: { students: 200, total: 0 }, runById: 'USR-001', approvedById: 'USR-001', approvedAt: isoTs(-90), createdAt: isoTs(-90), completedAt: isoTs(-90) }).returning();
     const farTargetRows = studentIds.map((sid) => ({ tenantId, runId: allocRun!.id, studentId: sid, amount: studentClassOf[sid] === '3ème' ? 20000 : 24000, status: 'processed', reason: null, invoiceId: null, error: null, processedAt: isoTs(-90) }));
     await tx.insert(feeAllocationTargets).values(farTargetRows);
     await tx.insert(invoiceEvents).values([
@@ -2102,13 +2116,13 @@ async function run() {
     // -----------------------------------------------------------------------
     const notifRows = teacherIds.slice(0, 12).flatMap((tid, i) => ([
       { tenantId, recipientId: tid, channel: 'in_app', template: 'attendance.absence', data: { count: int(1, 5) }, status: 'sent' as const, readAt: i % 2 === 0 ? isoTs(-1) : null, sentAt: isoTs(-2) },
-      { tenantId, recipientId: tid, channel: 'in_app', template: 'finance.invoice_due', data: { due: '2026-09-30' }, status: 'pending' as const, readAt: null, sentAt: null },
+      { tenantId, recipientId: tid, channel: 'in_app', template: 'finance.invoice_due', data: { due: `${sy(2026)}-09-30` }, status: 'pending' as const, readAt: null, sentAt: null },
     ])).concat(studentIds.slice(0, 8).map((sid, i) => ({ tenantId, recipientId: sid, channel: 'in_app', template: 'events.reminder', data: { title: 'Réunion parents' }, status: 'sent' as const, readAt: i % 3 === 0 ? isoTs(-1) : null, sentAt: isoTs(-1) })));
     for (let i = 0; i < notifRows.length; i += 100) await tx.insert(notifications).values(notifRows.slice(i, i + 100));
     await tx.insert(files).values([0, 1, 2, 3].map((i) => ({ tenantId, branchId, module: 'students', fileName: `inscription-${i + 1}.pdf`, mimeType: 'application/pdf', sizeBytes: 100000 + i * 5000, storagePath: `files/students/inscription-${i + 1}.pdf`, uploadedBy: 'USR-001', isDeleted: false, createdAt: isoTs(-40) })));
     const expTypes = ['students', 'invoices', 'attendance'];
     await tx.insert(exportJobs).values([0, 1, 2].map((i) => ({ tenantId, reportType: expTypes[i]!, params: { format: 'xlsx' }, status: i === 2 ? 'failed' as const : 'complete' as const, resultPath: i === 2 ? null : `exports/${expTypes[i]}.xlsx`, requestedBy: 'USR-001', createdAt: isoTs(-3), completedAt: i === 2 ? null : isoTs(-2) })));
-    await tx.insert(cndpFilings).values([{ tenantId, filingReference: 'CNDP-2026-001', filedAt: '2026-03-15', status: 'approved', documentUploadPath: 'cndp/f211-2026.pdf', notes: 'Dossier complet', createdAt: isoTs(-30), updatedAt: isoTs(-30) }]);
+    await tx.insert(cndpFilings).values([{ tenantId, filingReference: 'CNDP-2026-001', filedAt: `${sy(2026)}-03-15`, status: 'approved', documentUploadPath: 'cndp/f211-2026.pdf', notes: 'Dossier complet', createdAt: isoTs(-30), updatedAt: isoTs(-30) }]);
     const [lic] = await tx.insert(schoolLicenses).values({ tenantId, licenseKey: 'ATL-2026-LIC-001', status: 'active', issuedAt: isoTs(-150), expiresAt: isoTs(365), lastUpgradeAt: isoTs(-30), notes: 'Licence standard', issuedById: 'USR-SUPER-001', createdAt: isoTs(-150), updatedAt: isoTs(-30) }).returning();
     await tx.insert(licensePayments).values([{ tenantId, licenseId: lic!.id, planTier: 'standard' as const, amount: '15000.00', currency: 'MAD', method: 'bank_transfer', status: 'completed', transactionRef: 'TX-2026-0001', purchasedAt: isoTs(-150), expiresAtAtPurchase: isoTs(365), requestedMonths: 12, requestedById: 'USR-001', recordedById: 'USR-ACC-001' }]);
     await tx.insert(schoolAccessRequests).values([
@@ -2174,9 +2188,9 @@ async function run() {
     if (repDefs.length > 0) {
       await tx.insert(reportSavedViews).values([{ tenantId, reportKey: repDefs[0]!.key, name: 'Vue principale', description: 'Vue par défaut', ownerId: 'USR-001', isShared: true, parameters: {}, createdAt: isoTs(-10), updatedAt: isoTs(-10) }]);
       await tx.insert(reportFavorites).values(repDefs.map((r, i) => ({ tenantId, userId: i === 0 ? 'USR-001' : teacherIds[i - 1]!, reportKey: r.key, createdAt: isoTs(-8) })));
-      await tx.insert(reportRuns).values(repDefs.slice(0, 2).map((r, i) => ({ tenantId, branchId, reportKey: r.key, version: 1, requesterId: 'USR-001', status: i === 0 ? 'completed' as const : 'running' as const, parameters: { scope: '2025-2026' }, asOfDate: isoTs(-1), sourceWatermarks: {}, rowCount: i === 0 ? 200 : 0, executionTimeMs: i === 0 ? 2400 : null, errorMessage: null, createdAt: isoTs(-2), finishedAt: i === 0 ? isoTs(-2) : null })));
+      await tx.insert(reportRuns).values(repDefs.slice(0, 2).map((r, i) => ({ tenantId, branchId, reportKey: r.key, version: 1, requesterId: 'USR-001', status: i === 0 ? 'completed' as const : 'running' as const, parameters: { scope: `${sy(2025)}-${sy(2026)}` }, asOfDate: isoTs(-1), sourceWatermarks: {}, rowCount: i === 0 ? 200 : 0, executionTimeMs: i === 0 ? 2400 : null, errorMessage: null, createdAt: isoTs(-2), finishedAt: i === 0 ? isoTs(-2) : null })));
       await tx.insert(reportSchedules).values([{ tenantId, branchId, reportKey: repDefs[0]!.key, name: 'Rapport mensuel', cronExpression: '0 7 1 * *', timezone: 'Africa/Casablanca', format: 'xlsx' as const, parameters: {}, isActive: true, createdById: 'USR-001', lastRunAt: isoTs(-30), nextRunAt: isoTs(20), createdAt: isoTs(-60), updatedAt: isoTs(-30) }]);
-      await tx.insert(reportSnapshots).values([{ tenantId, reportKey: repDefs[0]!.key, periodKey: '2025-2026', snapshotData: { students: 200, invoices: 200 }, checksumSha256: 'b'.repeat(64), createdAt: isoTs(-5), createdById: 'USR-001' }]);
+      await tx.insert(reportSnapshots).values([{ tenantId, reportKey: repDefs[0]!.key, periodKey: `${sy(2025)}-${sy(2026)}`, snapshotData: { students: 200, invoices: 200 }, checksumSha256: 'b'.repeat(64), createdAt: isoTs(-5), createdById: 'USR-001' }]);
       await tx.insert(reportProjectionWatermarks).values([{ tenantId, projectionName: 'student-enrollment', lastWatermark: isoTs(-1), rowCount: 200, updatedAt: isoTs(-1) }, { tenantId, projectionName: 'invoice-ledger', lastWatermark: isoTs(-1), rowCount: 200, updatedAt: isoTs(-1) }]);
     }
     console.log(`  · seeded reporting (views/favorites/runs/schedules/snapshots/watermarks)`);
@@ -2202,14 +2216,14 @@ async function run() {
     ];
     const compVerIds: string[] = [];
     for (const cv of compVerRows) {
-      const [r] = await tx.insert(salaryComponentVersions).values({ tenantId, componentId: cv.componentId, versionNo: 1, code: cv.code, name: cv.name, componentType: cv.componentType, valueType: cv.valueType, fixedValue: cv.fixedValue, percentOf: null, percentBp: cv.percentBp, formula: null, taxable: cv.taxable, contributable: cv.contributable, side: cv.side, proratable: true, recurring: true, roundingMode: 'half_up', sortOrder: cv.sortOrder, status: 'published', effectiveFrom: '2025-09-01', effectiveTo: null, publishedAt: isoTs(-200), publishedById: 'USR-001' }).returning();
+      const [r] = await tx.insert(salaryComponentVersions).values({ tenantId, componentId: cv.componentId, versionNo: 1, code: cv.code, name: cv.name, componentType: cv.componentType, valueType: cv.valueType, fixedValue: cv.fixedValue, percentOf: null, percentBp: cv.percentBp, formula: null, taxable: cv.taxable, contributable: cv.contributable, side: cv.side, proratable: true, recurring: true, roundingMode: 'half_up', sortOrder: cv.sortOrder, status: 'published', effectiveFrom: `${sy(2025)}-09-01`, effectiveTo: null, publishedAt: isoTs(-200), publishedById: 'USR-001' }).returning();
       compVerIds.push(r!.id);
     }
-    const [ssv] = await tx.insert(salaryStructureVersions).values({ tenantId, templateId: tpl!.id, versionNo: 1, name: 'Structure Enseignant v1', status: 'published', effectiveFrom: '2025-09-01', effectiveTo: null, publishedAt: isoTs(-200), publishedById: 'USR-001' }).returning();
+    const [ssv] = await tx.insert(salaryStructureVersions).values({ tenantId, templateId: tpl!.id, versionNo: 1, name: 'Structure Enseignant v1', status: 'published', effectiveFrom: `${sy(2025)}-09-01`, effectiveTo: null, publishedAt: isoTs(-200), publishedById: 'USR-001' }).returning();
     await tx.insert(salaryStructureComponents).values(compVerIds.map((cvid, i) => ({ tenantId, structureVersionId: ssv!.id, componentId: compVerRows[i]!.componentId, componentVersionId: cvid, sortOrder: i + 1, baseValue: null })));
     await tx.insert(payrollSettingsVersions).values([{ tenantId, versionNo: 1, settings: { currency: 'MAD', payFrequency: 'monthly', cutoffDay: 25, paymentDay: 1, defaultRounding: 'half_up', employerCnssId: 'CNSS-ATLAS-01', accountingMappings: { salaryAccount: coaSalary!.id } }, status: 'published', publishedAt: isoTs(-200), publishedById: 'USR-001' }]);
     const [regPack] = await tx.insert(payrollRegulationPacks).values({ tenantId, jurisdiction: 'MA', code: 'MA-2024', name: 'Réglementation Maroc 2024', status: 'published', sourceUrl: null, sourceDocumentRef: 'CGI 2024', publicationDate: '2024-01-01', validationStatus: 'validated_by_professional', validatedById: 'USR-001', validatedAt: isoTs(-300), reviewerNotes: null, notes: 'Bareme CNSS et IR', createdById: 'USR-001', createdAt: isoTs(-300), updatedAt: isoTs(-300) }).returning();
-    const [regVer] = await tx.insert(payrollRegulationVersions).values({ tenantId, packId: regPack!.id, versionLabel: 'MA-2024.1', effectiveFrom: '2025-09-01', effectiveTo: null, status: 'published', ruleConfig: { cnssEmployeeRateBp: 488, cnssCeiling: '6000', irThresholds: [] }, roundingOrder: [{ key: 'cnss_employee', round: 'half_up', places: 2 }], monthlyDefault: true, publishedAt: isoTs(-300), publishedById: 'USR-001' }).returning();
+    const [regVer] = await tx.insert(payrollRegulationVersions).values({ tenantId, packId: regPack!.id, versionLabel: 'MA-2024.1', effectiveFrom: `${sy(2025)}-09-01`, effectiveTo: null, status: 'published', ruleConfig: { cnssEmployeeRateBp: 488, cnssCeiling: '6000', irThresholds: [] }, roundingOrder: [{ key: 'cnss_employee', round: 'half_up', places: 2 }], monthlyDefault: true, publishedAt: isoTs(-300), publishedById: 'USR-001' }).returning();
     const fpRow = await tx.select({ id: fiscalPeriods.id }).from(fiscalPeriods).where(eq(fiscalPeriods.tenantId, tenantId)).limit(1);
     await tx.insert(payrollCalculationTraces).values(empWithUser.slice(0, 3).map((e, i) => ({ tenantId, runId: periodId, userId: e.userId!, version: 1, regulationVersionId: regVer!.id, trace: { steps: [{ key: 'base', amount: e.salary }] }, inputSnapshot: { salary: e.salary }, createdAt: isoTs(-5) })));
     await tx.insert(payrollPostings).values([{ tenantId, runId: periodId, journalEntryId: je2!.id, postingRequestId: null, payloadDigest: 'd'.repeat(64), sourceVersion: 1, postingType: 'settlement', status: 'succeeded', idempotencyKey: `payroll-${periodId.slice(0, 8)}`, fiscalPeriodId: fpRow[0]?.id ?? null, postedById: 'USR-ACC-001', postedAt: isoTs(-5) }]);
@@ -2218,10 +2232,10 @@ async function run() {
     // -----------------------------------------------------------------------
     // Leadership scope + approval authorities
     // -----------------------------------------------------------------------
-    const [scope1] = await tx.insert(leadershipScopeAssignments).values({ tenantId, userId: 'USR-001', scopeType: 'tenant', branchId: null, departmentId: null, startsOn: '2025-09-01', endsOn: null, status: 'active', createdById: 'USR-001', createdAt: isoTs(-200), updatedAt: isoTs(-200) }).returning();
+    const [scope1] = await tx.insert(leadershipScopeAssignments).values({ tenantId, userId: 'USR-001', scopeType: 'tenant', branchId: null, departmentId: null, startsOn: `${sy(2025)}-09-01`, endsOn: null, status: 'active', createdById: 'USR-001', createdAt: isoTs(-200), updatedAt: isoTs(-200) }).returning();
     await tx.insert(leadershipApprovalAuthorities).values([
-      { tenantId, assignmentId: scope1!.id, domain: 'finance', action: 'approve.invoice', maxAmount: '50000.00', startsOn: '2025-09-01', endsOn: null, delegatedFromAuthorityId: null, status: 'active', createdById: 'USR-001', createdAt: isoTs(-200) },
-      { tenantId, assignmentId: scope1!.id, domain: 'attendance', action: 'approve.exception', maxAmount: null, startsOn: '2025-09-01', endsOn: null, delegatedFromAuthorityId: null, status: 'active', createdById: 'USR-001', createdAt: isoTs(-200) },
+      { tenantId, assignmentId: scope1!.id, domain: 'finance', action: 'approve.invoice', maxAmount: '50000.00', startsOn: `${sy(2025)}-09-01`, endsOn: null, delegatedFromAuthorityId: null, status: 'active', createdById: 'USR-001', createdAt: isoTs(-200) },
+      { tenantId, assignmentId: scope1!.id, domain: 'attendance', action: 'approve.exception', maxAmount: null, startsOn: `${sy(2025)}-09-01`, endsOn: null, delegatedFromAuthorityId: null, status: 'active', createdById: 'USR-001', createdAt: isoTs(-200) },
     ]);
     console.log(`  · seeded leadership (1 scope, 2 approval authorities)`);
 
@@ -2229,7 +2243,7 @@ async function run() {
     // Portal preferences, active contexts, activity events
     // -----------------------------------------------------------------------
     await tx.insert(portalPreferences).values([0, 1].map((i) => ({ tenantId, userId: i === 0 ? 'USR-001' : teacherIds[0]!, prefKey: 'notifications', value: { email: true, sms: false, inApp: true }, createdAt: isoTs(-60), updatedAt: isoTs(-60) })));
-    const [seedSession] = await tx.insert(session).values({ id: 'seed-session-001', expiresAt: new Date('2027-12-31T23:59:59Z'), token: `seed-token-${tenantId.slice(0, 8)}`, createdAt: new Date('2026-08-13T00:00:00Z'), updatedAt: new Date('2026-08-13T00:00:00Z'), ipAddress: '127.0.0.1', userAgent: 'seed', userId: 'USR-001' }).returning();
+    const [seedSession] = await tx.insert(session).values({ id: 'seed-session-001', expiresAt: new Date(`${sy(2027)}-12-31T23:59:59Z`), token: `seed-token-${tenantId.slice(0, 8)}`, createdAt: new Date(`${sy(2026)}-08-13T00:00:00Z`), updatedAt: new Date(`${sy(2026)}-08-13T00:00:00Z`), ipAddress: '127.0.0.1', userAgent: 'seed', userId: 'USR-001' }).returning();
     await tx.insert(portalActiveContexts).values([{ sessionId: seedSession!.id, userId: 'USR-001', tenantId, activeRole: 'school_admin', activeBranchId: branchId, createdAt: isoTs(-1), updatedAt: isoTs(-1) }]);
     await tx.insert(portalActivityEvents).values([0, 1, 2].map((i) => ({ tenantId, userId: 'USR-001', role: 'school_admin', action: 'role.switch', entityType: 'portal', entityId: 'USR-001', metadata: { from: 'school_admin', to: 'school_admin' }, createdAt: isoTs(-2) })));
     console.log(`  · seeded portal (preferences, active contexts, activity events)`);
@@ -2242,34 +2256,34 @@ async function run() {
     const [vtOD] = await tx.insert(accountingVoucherTypes).values({ tenantId, journalId: accJournal!.id, code: 'OD', name: 'Opérations diverses', sourceModule: 'finance', requiresApproval: false, isSystem: false, isActive: true, createdAt: isoTs(-300), updatedAt: isoTs(-300) }).returning();
     const [vtBQ] = await tx.insert(accountingVoucherTypes).values({ tenantId, journalId: accJournal2!.id, code: 'BQ', name: 'Relevé bancaire', sourceModule: 'bank', requiresApproval: false, isSystem: false, isActive: true, createdAt: isoTs(-300), updatedAt: isoTs(-300) }).returning();
     await tx.insert(accountingNumberingSeries).values([
-      { tenantId, journalId: accJournal!.id, fiscalYear: 2026, prefix: 'OD-2026-', nextValue: 1, padding: 6, updatedAt: isoTs(-300) },
-      { tenantId, journalId: accJournal2!.id, fiscalYear: 2026, prefix: 'BQ-2026-', nextValue: 1, padding: 6, updatedAt: isoTs(-300) },
+      { tenantId, journalId: accJournal!.id, fiscalYear: sy(2026), prefix: 'OD-2026-', nextValue: 1, padding: 6, updatedAt: isoTs(-300) },
+      { tenantId, journalId: accJournal2!.id, fiscalYear: sy(2026), prefix: 'BQ-2026-', nextValue: 1, padding: 6, updatedAt: isoTs(-300) },
     ]);
-    const [accDoc] = await tx.insert(accountingDocuments).values({ tenantId, documentType: 'deposit', status: 'posted', documentDate: '2026-07-15', reference: 'INV-2026-0001', counterparty: 'Groupe Scolaire Atlas', description: 'Facture de scolarité 2025-2026', currency: 'MAD', totalAmount: '120000.00', sourceVersion: 1, createdById: 'USR-ACC-001', approvedById: 'USR-001', journalEntryId: je!.id, submittedAt: isoTs(-10), approvedAt: isoTs(-9), postedAt: isoTs(-8), createdAt: isoTs(-10), updatedAt: isoTs(-8) }).returning();
+    const [accDoc] = await tx.insert(accountingDocuments).values({ tenantId, documentType: 'deposit', status: 'posted', documentDate: `${sy(2026)}-07-15`, reference: 'INV-2026-0001', counterparty: 'Groupe Scolaire Atlas', description: `Facture de scolarité ${sy(2025)}-${sy(2026)}`, currency: 'MAD', totalAmount: '120000.00', sourceVersion: 1, createdById: 'USR-ACC-001', approvedById: 'USR-001', journalEntryId: je!.id, submittedAt: isoTs(-10), approvedAt: isoTs(-9), postedAt: isoTs(-8), createdAt: isoTs(-10), updatedAt: isoTs(-8) }).returning();
     await tx.insert(accountingDocumentLines).values([
       { tenantId, documentId: accDoc!.id, accountId: coaReceivable!.id, debitAmount: '120000.00', creditAmount: '0.00', memo: 'Créances élèves' },
       { tenantId, documentId: accDoc!.id, accountId: coaRevenue!.id, debitAmount: '0.00', creditAmount: '120000.00', memo: 'Revenus scolarité' },
     ]);
     const [postReq1] = await tx.insert(accountingPostingRequests).values({ tenantId, sourceModule: 'finance', sourceDocumentId: 'INV-2026-0001', sourceVersion: 1, idempotencyKey: `post-${je!.id.slice(0, 8)}`, payloadDigest: 'e'.repeat(64), status: 'succeeded', journalEntryId: je!.id, errorCode: null, createdById: 'USR-ACC-001', createdAt: isoTs(-8), completedAt: isoTs(-8) }).returning();
-    const [postReq2] = await tx.insert(accountingPostingRequests).values({ tenantId, sourceModule: 'payroll', sourceDocumentId: 'PAY-2026-06', sourceVersion: 1, idempotencyKey: `post-${je2!.id.slice(0, 8)}`, payloadDigest: 'f'.repeat(64), status: 'succeeded', journalEntryId: je2!.id, errorCode: null, createdById: 'USR-ACC-001', createdAt: isoTs(-5), completedAt: isoTs(-5) }).returning();
+    const [postReq2] = await tx.insert(accountingPostingRequests).values({ tenantId, sourceModule: 'payroll', sourceDocumentId: `PAY-${sy(2026)}-06`, sourceVersion: 1, idempotencyKey: `post-${je2!.id.slice(0, 8)}`, payloadDigest: 'f'.repeat(64), status: 'succeeded', journalEntryId: je2!.id, errorCode: null, createdById: 'USR-ACC-001', createdAt: isoTs(-5), completedAt: isoTs(-5) }).returning();
     await tx.insert(accountingJournalLinks).values([
       { tenantId, journalEntryId: je!.id, journalId: accJournal!.id, voucherTypeId: vtOD!.id, postingRequestId: postReq1!.id, reversalOfEntryId: null, createdAt: isoTs(-8) },
       { tenantId, journalEntryId: je2!.id, journalId: accJournal!.id, voucherTypeId: vtOD!.id, postingRequestId: postReq2!.id, reversalOfEntryId: null, createdAt: isoTs(-5) },
     ]);
     const fpRows = await tx.select({ id: fiscalPeriods.id, name: fiscalPeriods.name }).from(fiscalPeriods).where(eq(fiscalPeriods.tenantId, tenantId));
     await tx.update(fiscalPeriods).set({ status: 'closed' }).where(eq(fiscalPeriods.id, fpRows[0]!.id));
-    const [closing] = await tx.insert(accountingClosingRuns).values({ tenantId, fiscalPeriodId: fpRows[0]!.id, reason: 'Clôture exercice', closedById: 'USR-ACC-001', periodEndDate: '2026-06-30', postedEntryCount: 2, debitTotal: '216000.00', creditTotal: '216000.00', netBalance: '0.00', superseded: false, supersededById: null, supersededAt: null, createdAt: isoTs(-3) }).returning();
+    const [closing] = await tx.insert(accountingClosingRuns).values({ tenantId, fiscalPeriodId: fpRows[0]!.id, reason: 'Clôture exercice', closedById: 'USR-ACC-001', periodEndDate: `${sy(2026)}-06-30`, postedEntryCount: 2, debitTotal: '216000.00', creditTotal: '216000.00', netBalance: '0.00', superseded: false, supersededById: null, supersededAt: null, createdAt: isoTs(-3) }).returning();
     await tx.insert(accountingClosingBalances).values([
       { tenantId, closingRunId: closing!.id, accountId: coaCash!.id, accountCode: '512', accountName: 'Banque', accountType: 'asset' as const, debitTotal: '120000.00', creditTotal: '96000.00', netBalance: '24000.00', createdAt: isoTs(-3) },
       { tenantId, closingRunId: closing!.id, accountId: coaRevenue!.id, accountCode: '701', accountName: 'Ventes – scolarité', accountType: 'revenue' as const, debitTotal: '0.00', creditTotal: '120000.00', netBalance: '-120000.00', createdAt: isoTs(-3) },
     ]);
     await tx.insert(accountingPeriodReopenRequests).values([{ tenantId, fiscalPeriodId: fpRows[1]!.id, requestedById: 'USR-ACC-001', reason: 'Saisie complémentaire', status: 'approved', decidedById: 'USR-001', decidedAt: isoTs(-2), decisionNote: 'Approuvé', createdAt: isoTs(-3) }]);
-    const [reconOpen] = await tx.insert(bankReconciliations).values({ tenantId, bankAccountId: baRow[0]!.id, statementDate: '2026-08-05', statementBalance: '75000.00', reconciledBalance: '75000.00', status: 'draft', reconciledById: 'USR-ACC-001', reconciledAt: null }).returning();
+    const [reconOpen] = await tx.insert(bankReconciliations).values({ tenantId, bankAccountId: baRow[0]!.id, statementDate: `${sy(2026)}-08-05`, statementBalance: '75000.00', reconciledBalance: '75000.00', status: 'draft', reconciledById: 'USR-ACC-001', reconciledAt: null }).returning();
     const reconId = reconOpen!.id;
     await tx.insert(accountingStatementImports).values([{ tenantId, reconciliationId: reconId, filename: 'releve-juillet.csv', contentFingerprint: 'g'.repeat(64), rowsImported: 2, importedById: 'USR-ACC-001', createdAt: isoTs(-6) }]);
     await tx.insert(accountingStatementLines).values([
-      { tenantId, reconciliationId: reconId, lineDate: '2026-07-10', description: 'Virement parents', reference: 'VIR-001', debitAmount: '0.00', creditAmount: '50000.00', status: 'matched' },
-      { tenantId, reconciliationId: reconId, lineDate: '2026-07-12', description: 'Chèque 0001', reference: 'CHEQ-001', debitAmount: '0.00', creditAmount: '25000.00', status: 'unmatched' },
+      { tenantId, reconciliationId: reconId, lineDate: `${sy(2026)}-07-10`, description: 'Virement parents', reference: 'VIR-001', debitAmount: '0.00', creditAmount: '50000.00', status: 'matched' },
+      { tenantId, reconciliationId: reconId, lineDate: `${sy(2026)}-07-12`, description: 'Chèque 0001', reference: 'CHEQ-001', debitAmount: '0.00', creditAmount: '25000.00', status: 'unmatched' },
     ]);
     await tx.insert(accountingSourceMappings).values([
       { tenantId, sourceModule: 'finance', sourceKeyType: 'fee_category', sourceKey: 'Scolarité', accountId: coaRevenue!.id, createdBy: 'USR-001', createdAt: isoTs(-200), updatedBy: 'USR-001', updatedAt: isoTs(-200) },

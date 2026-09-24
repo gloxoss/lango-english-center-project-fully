@@ -108,7 +108,7 @@ export function AlumniRequestsView() {
             text-[11px] font-bold tracking-wider text-slate-400 uppercase
           "
           >
-            {t('totalRequests')}
+            {t('totalRequestsLabel')}
           </span>
           <div className="text-2xl font-extrabold text-[#16212B]">{rows.length}</div>
         </Card>

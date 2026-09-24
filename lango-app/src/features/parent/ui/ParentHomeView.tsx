@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { formatAmount } from '@/libs/finance/format-money';
 import {
   BellRing,
   CalendarClock,
@@ -204,7 +205,7 @@ export function ParentHomeView() {
                     : tParent('availableSoon')}
                 </div>
               ) : (
-                <div><div className="text-2xl font-bold text-slate-900">{widget?.value ?? 0}</div><div className="text-sm text-slate-500">{widget?.label}</div></div>
+                <div><div className="text-2xl font-bold text-slate-900">{card.key === 'balances' ? formatAmount(widget?.value) : widget?.value ?? 0}</div><div className="text-sm text-slate-500">{widget?.label}</div></div>
               )}
             </div>
           );

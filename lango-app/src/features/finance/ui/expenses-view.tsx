@@ -44,7 +44,8 @@ const EMPTY_FORM = {
   receiptUrl: '',
 };
 
-const money = new Intl.NumberFormat('fr-MA', { maximumFractionDigits: 2 });
+// fr-FR grouping like every other money screen (fr-MA prints 146.746,00).
+const money = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
 
 export function ExpensesManagementView({ locale: _locale }: { locale?: string } = {}) {
   const t = useTranslations('Finance');

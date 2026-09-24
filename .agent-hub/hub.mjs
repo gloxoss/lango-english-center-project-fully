@@ -110,6 +110,7 @@ function pagesOf(it, bl) {
 const norm = p => p.replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+$/, '');
 const overlap = (a, b) => { a = norm(a); b = norm(b); return a === b || a.startsWith(b + '/') || b.startsWith(a + '/'); };
 
+const pageNotes = [];
 function conflicts(item, files, st, bl) {
   const out = [];
   const myPages = pagesOf(item, bl);
@@ -118,7 +119,13 @@ function conflicts(item, files, st, bl) {
     if (c.item === item) out.push(`${item} is claimed by ${c.agent} since ${c.since}`);
     const theirPages = pagesOf(c.item, bl);
     const shared = myPages.filter(p => theirPages.includes(p));
-    if (c.item !== item && shared.length) out.push(`page(s) ${shared.join(', ')} are inside ${c.item}, claimed by ${c.agent}`);
+    // Pages only block when the other claim locks no files: then its edits are
+    // unknown. A claim that declares its files (e.g. a read-only sweep holding
+    // only artifacts/) cannot collide on a page; file overlap is checked below.
+    if (c.item !== item && shared.length) {
+      if (c.files.length === 0) out.push(`page(s) ${shared.join(', ')} are inside ${c.item}, claimed by ${c.agent} with no declared files`);
+      else pageNotes.push(`page(s) ${shared.join(', ')} also belong to ${c.item} (${c.agent}); its declared files do not overlap yours, keep to your own files`);
+    }
     const f = files.filter(x => c.files.some(y => overlap(x, y)));
     if (f.length) out.push(`file(s) ${f.join(', ')} are being edited by ${c.agent} (${c.item})`);
   }
@@ -297,6 +304,7 @@ const commands = {
       if (opts.reopen) syncAudit(state());
     });
     console.log(`claimed ${item}${files.length ? ` with files ${files.join(', ')}` : ''}. Heartbeat at least every ${Math.floor(TTL_MIN / 2)} min.`);
+    [...new Set(pageNotes)].forEach(n => console.log(`note: ${n}`));
   },
   files() {
     needAgent(); const item = pos[0]; const files = list(opts.add ?? pos.slice(1).join(','));

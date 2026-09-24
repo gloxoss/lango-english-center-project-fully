@@ -14,6 +14,7 @@ import {
   inspectImageBuffer,
   readUploadedFile,
   saveUploadedFile,
+  uploadedFileExists,
 } from '@/libs/api/uploads';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
@@ -205,6 +206,16 @@ export async function GET(request: Request) {
       .where(and(...listConditions))
       .orderBy(user.name);
 
+    // Counts stay in step with the with_photo filter (same rows). Photos whose
+    // file is gone are reported apart so the page can say so instead of showing
+    // a broken image as a real photo (audit S-34). Runs after the list query.
+    const photoRows = await db
+      .select({ photoUrl: user.photoUrl })
+      .from(user)
+      .where(and(...baseConditions, sql`${user.photoUrl} is not null and ${user.photoUrl} != ''`));
+    const photoChecks = await Promise.all(photoRows.map(r => uploadedFileExists(tenantId, r.photoUrl!).catch(() => false)));
+    const missingPhotoFiles = photoChecks.filter(ok => !ok).length;
+
     return NextResponse.json({
       success: true,
       data: rows,
@@ -213,6 +224,7 @@ export async function GET(request: Request) {
         total: totalStudents,
         withPhoto: withPhotoStudents,
         withoutPhoto: withoutPhotoStudents,
+        missingFiles: missingPhotoFiles,
       },
     });
   } catch (error) {

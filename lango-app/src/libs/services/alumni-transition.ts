@@ -46,6 +46,22 @@ export async function transitionStudentToAlumni(
   graduationCohortSessionYearId?: string,
   options?: TransitionOptions,
 ): Promise<TransitionResult> {
+  if (typeof (tx as any).transaction === 'function') {
+    return (tx as any).transaction(async (innerTx: Tx) => {
+      return executeTransition(innerTx, tenantId, studentId, actorUserId, graduationCohortSessionYearId, options);
+    });
+  }
+  return executeTransition(tx, tenantId, studentId, actorUserId, graduationCohortSessionYearId, options);
+}
+
+async function executeTransition(
+  tx: Tx,
+  tenantId: string,
+  studentId: string,
+  actorUserId: string,
+  graduationCohortSessionYearId?: string,
+  options?: TransitionOptions,
+): Promise<TransitionResult> {
   // AL15: Concurrency serialization per student
   if (typeof tx.execute === 'function') {
     await tx.execute(
@@ -169,6 +185,23 @@ export async function transitionStudentToAlumni(
     .returning({ id: user.id, name: user.name, phone: user.phone });
 
   if (!updated) {
+    // If concurrent transaction already transitioned this student, return idempotent AL2 result
+    const [fresh] = await tx
+      .select({ role: user.role })
+      .from(user)
+      .where(and(eq(user.id, studentId), eq(user.tenantId, tenantId)))
+      .limit(1);
+
+    if (fresh?.role === 'alumni') {
+      return {
+        studentId,
+        tempPassword: null,
+        loginAccessMethod: 'none',
+        loginAccessDeliveryStatus: 'already_alumni',
+        idempotent: true,
+      };
+    }
+
     throw new ApiError(409, 'NOT_TRANSITIONABLE', 'Cet utilisateur n\'est plus un élève actif (concurrence détectée).');
   }
 

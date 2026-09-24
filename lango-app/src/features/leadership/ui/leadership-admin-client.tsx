@@ -24,7 +24,7 @@ const DOMAINS: [string, string][] = [['academics', 'Académique'], ['attendance'
 const money = (n: string) => `${Number(n).toLocaleString('fr-FR')} DH`;
 const dateLabel = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString('fr-FR');
 
-function ScopeForm({ users, branches, departments, onCreated }: { users: UserOption[]; branches: BranchOption[]; departments: DepartmentOption[]; onCreated: () => void }) {
+function ScopeForm({ users, branches, departments, allowDepartments, onCreated }: { users: UserOption[]; branches: BranchOption[]; departments: DepartmentOption[]; allowDepartments: boolean; onCreated: () => void }) {
   const [userId, setUserId] = useState('');
   const [scopeType, setScopeType] = useState<ScopeRow['scopeType']>('tenant');
   const [branchId, setBranchId] = useState('');
@@ -54,7 +54,7 @@ function ScopeForm({ users, branches, departments, onCreated }: { users: UserOpt
       <DialogHeader><DialogTitle>Nouveau périmètre de direction</DialogTitle></DialogHeader>
       <div className="grid gap-4">
         <div className="grid gap-2"><Label>Utilisateur</Label><Select value={userId} onValueChange={setUserId}><SelectTrigger><SelectValue placeholder="Choisir un utilisateur" /></SelectTrigger><SelectContent>{users.map(u => <SelectItem key={u.id} value={u.id}>{u.fullName}</SelectItem>)}</SelectContent></Select></div>
-        <div className="grid gap-2"><Label>Périmètre</Label><Select value={scopeType} onValueChange={v => setScopeType(v as ScopeRow['scopeType'])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{(['tenant', 'branch', 'department'] as const).map(t => <SelectItem key={t} value={t}>{SCOPE_LABELS[t]}</SelectItem>)}</SelectContent></Select></div>
+        <div className="grid gap-2"><Label>Périmètre</Label><Select value={scopeType} onValueChange={v => setScopeType(v as ScopeRow['scopeType'])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{(allowDepartments ? (['tenant', 'branch', 'department'] as const) : (['tenant', 'branch'] as const)).map(t => <SelectItem key={t} value={t}>{SCOPE_LABELS[t]}</SelectItem>)}</SelectContent></Select></div>
         {scopeType === 'branch' && <div className="grid gap-2"><Label>Filiale</Label><Select value={branchId} onValueChange={setBranchId}><SelectTrigger><SelectValue placeholder="Choisir une filiale" /></SelectTrigger><SelectContent>{branches.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}</SelectContent></Select></div>}
         {scopeType === 'department' && <div className="grid gap-2"><Label>Département</Label><Select value={departmentId} onValueChange={setDepartmentId}><SelectTrigger><SelectValue placeholder="Choisir un département" /></SelectTrigger><SelectContent>{departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>}
         <div className="grid grid-cols-2 gap-3">
@@ -118,7 +118,7 @@ function AuthorityForm({ scopes, authorities, onCreated }: { scopes: ScopeRow[];
   </Dialog>;
 }
 
-export function LeadershipAdminClient() {
+export function LeadershipAdminClient({ hrEnabled = true }: { hrEnabled?: boolean } = {}) {
   const t = useTranslations('Leadership');
   const tCommon = useTranslations('Common');
 
@@ -148,12 +148,12 @@ export function LeadershipAdminClient() {
     const [u, b, d] = await Promise.all([
       fetch('/api/users?status=active', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
       fetch('/api/settings/branches', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
-      fetch('/api/hr/departments?status=active', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
+      hrEnabled ? fetch('/api/hr/departments?status=active', { cache: 'no-store' }).then(r => r.json()).catch(() => null) : Promise.resolve(null),
     ]);
     if (u?.success) setUsers(u.data.map((x: { id: string; fullName: string }) => ({ id: x.id, fullName: x.fullName })));
     if (b?.success) setBranches(b.data);
     if (d?.success) setDepartments(d.data);
-  }, []);
+  }, [hrEnabled]);
 
   useEffect(() => { void load(); void loadOptions(); }, [load, loadOptions]);
 
@@ -167,7 +167,7 @@ export function LeadershipAdminClient() {
       <TabsList><TabsTrigger value="scopes">{t('tabPerimeters')}</TabsTrigger><TabsTrigger value="authorities">{t('tabAuthorities')}</TabsTrigger></TabsList>
 
       <TabsContent value="scopes" className="space-y-4">
-        <div className="flex justify-end"><ScopeForm users={users} branches={branches} departments={departments} onCreated={() => void load()} /></div>
+        <div className="flex justify-end"><ScopeForm users={users} branches={branches} departments={departments} allowDepartments={hrEnabled} onCreated={() => void load()} /></div>
         <Card className="p-2">
           {loading ? <div className="py-12 text-center text-sm text-slate-500">{tCommon('loading')}</div> : scopes.length === 0 ? <div className="py-12 text-center"><ShieldCheck className="mx-auto mb-3 h-8 w-8 text-slate-300" /><p className="font-medium">{tCommon('empty')}</p></div> :
             <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b text-slate-500"><th className="p-3">{t('colLeader')}</th><th className="p-3">{t('colPerimeter')}</th><th className="p-3">{t('colTarget')}</th><th className="p-3">{t('colValidity')}</th><th className="p-3">{tCommon('status')}</th></tr></thead><tbody>{scopes.map(s => <tr key={s.id} className="border-b last:border-0"><td className="p-3 font-medium">{s.userName}</td><td className="p-3">{scopeBadge(s)}</td><td className="p-3">{scopeTarget(s) ?? "Tout l'établissement"}</td><td className="p-3 text-slate-600">{dateLabel(s.startsOn)}{s.endsOn ? ` → ${dateLabel(s.endsOn)}` : ' → illimité'}</td><td className="p-3"><Badge variant={s.status === 'active' ? 'success' : 'neutral'}>{s.status}</Badge></td></tr>)}</tbody></table></div>}

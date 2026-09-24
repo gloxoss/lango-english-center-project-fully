@@ -100,7 +100,7 @@ export function StudentPhotosView() {
   const t = useTranslations('Students');
   const { can } = usePermissions();
   const [students, setStudents] = useState<ApiStudentPhoto[]>([]);
-  const [kpi, setKpi] = useState({ total: 0, withPhoto: 0, withoutPhoto: 0 });
+  const [kpi, setKpi] = useState({ total: 0, withPhoto: 0, withoutPhoto: 0, missingFiles: 0 });
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'with_photo' | 'without_photo'>('all');
   const [view, setView] = useState<'grid' | 'list'>('grid');
@@ -178,7 +178,7 @@ export function StudentPhotosView() {
       if (json.success) {
         setStudents(json.data);
         if (json.kpi) {
-          setKpi(json.kpi);
+          setKpi({ missingFiles: 0, ...json.kpi });
         }
       }
     } catch (err) {
@@ -485,6 +485,12 @@ export function StudentPhotosView() {
         >
           <CheckCircle2 className="size-4 shrink-0" />
           <span>{success}</span>
+        </div>
+      )}
+
+      {kpi.missingFiles > 0 && (
+        <div role="status" className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+          {t('photosMissingFiles', { count: kpi.missingFiles })}
         </div>
       )}
 

@@ -711,10 +711,12 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
               </div>
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Statut de placement
+                  {t('placementStatusLabel')}
                 </span>
                 <p className="font-extrabold text-emerald-700 mt-0.5 capitalize">
-                  {student.currentPlacement?.status ?? 'Actif'}
+                  {student.currentPlacement?.status
+                    ? (t.has(`placementStatuses.${student.currentPlacement.status}`) ? t(`placementStatuses.${student.currentPlacement.status}`) : student.currentPlacement.status)
+                    : '—'}
                 </p>
               </div>
             </div>

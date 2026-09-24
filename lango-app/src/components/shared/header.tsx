@@ -34,6 +34,9 @@ import { useSidebarDrawer } from './sidebar-drawer-context';
 type SearchResult = { id: string; name: string; email?: string; matricule?: string | null };
 type SearchResponse = { students: SearchResult[]; teachers: SearchResult[]; invoices: { id: string; invoiceNumber: string }[] };
 
+// Roles GET /api/settings/branches serves; keep in step with that route.
+const CAMPUS_SWITCHER_ROLES = new Set(['school_admin', 'super_admin', 'teacher', 'accountant', 'receptionist', 'guard', 'librarian']);
+
 export function Header({ locale }: { locale: string }) {
   const router = useRouter();
   const tCommon = useTranslations('Common');
@@ -215,7 +218,10 @@ export function Header({ locale }: { locale: string }) {
           <CndpStatusBadge enabled={displayRole === 'school_admin' || displayRole === 'super_admin'} />
         </div>
 
-        {(displayRole !== 'super_admin' || hasSelectedTenant) && (
+        {/* Same roles as GET /api/settings/branches: families and alumni have no
+            campus to switch, and asking would 403 on every page (audit S-44). */}
+        {displayRole && CAMPUS_SWITCHER_ROLES.has(displayRole)
+          && (displayRole !== 'super_admin' || hasSelectedTenant) && (
           <div className="hidden lg:flex">
             <HeaderCampusSwitcher />
           </div>

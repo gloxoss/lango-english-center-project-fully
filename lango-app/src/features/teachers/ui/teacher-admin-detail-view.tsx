@@ -336,7 +336,7 @@ export function TeacherAdminDetailView({ id, locale }: { id: string; locale: str
               <Field icon={ShieldCheck} label={t('qualification')} value={data.qualification} />
               <Field icon={BookOpen} label={t('cycle')} value={data.cycle} />
               <Field icon={Briefcase} label={t('contractType')} value={data.employment?.contractType?.toUpperCase() ?? '—'} />
-              <Field icon={Briefcase} label={t('employmentType')} value={data.employment?.employmentType ?? '—'} />
+              <Field icon={Briefcase} label={t('employmentType')} value={data.employment?.employmentType ? (t.has(`employmentTypes.${data.employment.employmentType}`) ? t(`employmentTypes.${data.employment.employmentType}`) : data.employment.employmentType) : '—'} />
               <Field icon={CalendarClock} label={t('contractStart')} value={formatDate(data.employment?.contractStartDate, locale)} />
               <Field icon={CalendarClock} label={t('contractEnd')} value={formatDate(data.employment?.contractEndDate, locale)} />
               <Field icon={Briefcase} label={t('employmentStatusLabel')} value={data.employment?.employmentStatus ?? '—'} />

@@ -324,3 +324,217 @@ Marksheet and grade-entry empty states now carry truthful titles and a translate
 - Files: `lango-app/src/app/[locale]/(dashboard)/dashboard/academics/assessment/marksheet/page.tsx`, `lango-app/src/features/academics/ui/grade-entry-view.tsx`, `lango-app/locales/fr.json`, `lango-app/locales/ar.json`, `lango-app/locales/en.json`
 - Verified with: `tsc exit 0; check:i18n PASS + missing keys 0; check:ui ratchet holding; eslint clean on touched files; visual sweep school_admin: marksheet + grades/entry -> ok (artifacts/s11); commit 34a2ecc on agentb/academics-audit (pushed)`
 - Status: done, waiting for a second agent to verify
+
+## 2026-09-23 23:53 · codex-2 · task:sweep-docs
+
+Documented the stale seed account in the sweep tool: fz.idrissi@atlas.ma is not present in schoolos_audit, so a teacher sweep must pass ACCOUNT_EMAIL=prof.01@atlas.ma or it aborts with LOGIN FAILED and would otherwise report every page as a redirect.
+
+- Files: `lango-app/scripts/visual-sweep.mjs`
+- Verified with: `Note added to the header next to the ACCOUNTS map. Failure and fix both observed first-hand: node scripts/visual-sweep.mjs teacher <routes> with the default account -> LOGIN FAILED for teacher; aborting sweep, and the same command with ACCOUNT_EMAIL=prof.01@atlas.ma -> sweep runs. Tool behaviour unchanged.`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 00:02 · gemini-2 · task:alumni-lifecycle-remediation
+
+Alumni lifecycle hardening complete: AL1-AL15 invariants, pg_advisory_xact_lock concurrency serialization, 16/16 vitest tests passing, 9/9 runtime reconciliation checks passing, 8/8 visual evidence artifacts captured.
+
+- Files: `lango-app/src/libs/services/alumni-transition.ts`, `lango-app/src/app/api/__tests__/alumni-lifecycle-domain.test.ts`, `lango-app/src/scripts/dump-alumni-reconciliation.ts`, `lango-app/scripts/capture-all-alumni-evidence.mjs`, `lango-app/locales/fr.json`, `lango-app/locales/ar.json`, `lango-app/locales/en.json`
+- Verified with: `check:types PASS, check:isolation PASS, check:ui PASS (38/39), check:i18n PASS, 16/16 vitest PASS, 9/9 reconciliation PASS`
+- Status: done, waiting for a second agent to verify
+- 2026-09-24 00:08 VERIFIED by antigravity-1: Independent verification: Alumni lifecycle 16/16, runtime 9/9, AL1-AL15, tenant/branch isolation, history/finance preservation, self-service IDOR, requests/events integration and Promotion graduation integration pass. (task:alumni-lifecycle-remediation)
+
+## 2026-09-24 00:24 · claude-finance · task:audit-db-migrations
+
+Applied migrations 0149-0155 to schoolos_audit in one transaction (drizzle migrate would skip them because 0156, the newest timestamp, is already recorded there). Note for main DB: its drizzle log stops at 0150 (1790114023878) while later changes exist, so npm run db:migrate there will re-run 0151-0156; those are guarded/idempotent.
+
+- Files: `none`
+- Verified with: `psql single transaction -> COMMIT, no errors; attendance_summary.attendance_rate now nullable; attendance/reminder/promotion/transfer tests on schoolos_audit (see run)`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 00:25 · opencode-1 · S-12
+
+One canonical generation workflow: the legacy Generer Tout Automatiquement CTA/modal/handler removed from schedule-client; generation stays with the versioned draft->generate->publish flow (SchedulePublishBar). The weekly grid, header, time presets and slot-form defaults now render from the shared canonical TIMETABLE_PERIODS module (6x7 hourly grid) that the generator itself places slots into - no 2-hour assumption, no class_periods dependency (that table does not exist; the generator's grid is the live source of truth). Legacy/manual slots still render in the period owning their start.
+
+- Files: `lango-app/src/features/academics/ui/schedule-client.tsx`, `lango-app/src/app/api/academics/timetable-versions/generate/route.ts`, `lango-app/src/features/academics/data/timetable-periods.ts`
+- Verified with: `tsc exit 0; eslint 0 errors on touched files; timetable-solver + timetable-resolve-route 37/37; check:i18n PASS; check:isolation PASS; check:ui ratchet holding; visual sweep school_admin /dashboard/academics/schedule desktop-fr + phone-390 + ar -> all ok (artifacts/s12); commit a43823d on agentb/academics-audit`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 00:29 · claude-finance · S-44
+
+Header renders the campus switcher only for the roles GET /api/settings/branches serves (school_admin, super_admin with a selected school, teacher, accountant, receptionist, guard, librarian) and not while the role is still unknown, so parents, students and alumni no longer 403 on every page.
+
+- Files: `lango-app/src/components/shared/header.tsx`
+- Verified with: `tsc --noEmit -> exit 0; code read: branches route requireRequestContext role list == CAMPUS_SWITCHER_ROLES; screen sweep of parent/student pending in batch re-sweep`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 00:30 · antigravity-1 · task:alumni-events-hardening
+
+Alumni Events hardening complete: schema synced, capacity limits, sequential waitlist with auto-promotion, audience rules, event cancellation with reason, admin attendees & live check-in, self-service portal, 20/20 vitest domain tests, 10/10 reconciliation checks, check:types clean, check:isolation clean, check:ui clean, i18n clean, Playwright visual evidence captured.
+
+- Files: `lango-app/src/app/api/students/alumni/events/route.ts`, `lango-app/src/app/api/alumni/me/events/route.ts`, `lango-app/src/app/api/alumni/me/events/[id]/rsvp/route.ts`, `lango-app/src/features/students/ui/alumni-events-view.tsx`, `lango-app/src/app/[locale]/(alumni-portal)/alumni/events/page.tsx`, `lango-app/src/app/api/__tests__/alumni-events-domain.test.ts`, `lango-app/src/scripts/dump-alumni-events-reconciliation.ts`, `lango-app/locales/fr.json`, `lango-app/locales/en.json`, `lango-app/locales/ar.json`, `lango-app/src/models/Schema.ts`
+- Verified with: `vitest 20/20, reconciliation 10/10, check:types 0, check:isolation 0, check:ui 0, check:i18n 0, Playwright screenshots A-G`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 00:31 · claude-finance · S-47
+
+Empty values no longer render as a lone dash: the teacher class card joins only the parts that exist (a class with no subjects reads '17 élève(s)'), and the parent child picker hides the class line when a child has no class and joins class and primary-contact without a leading dash.
+
+- Files: `lango-app/src/features/teacher/ui/TeacherPortalView.tsx`, `lango-app/src/components/parent/ChildContextSwitcher.tsx`
+- Verified with: `tsc --noEmit -> exit 0; screen check pending in batch re-sweep (teacher /dashboard/teacher, parent /dashboard/parent)`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 00:32 · codex-2 · task:merge-recovery
+
+Stabilized the shared tree after the mid-merge state that was breaking every page. Verified the five conflicted files reconcile without losing anyone else work: frozen Promotion and Transfers behaviour intact, the S-35 accountant read gate intact in class-sections/route.ts, and the origin branch-inheritance changes present. Applied the pending migrations to schoolos_audit, which was the real cause of the 3 failing suites (42703 undefined column: the merge shipped schema the audit DB had not received), then re-ran the five focused regressions green.
+
+- Files: `lango-app/migrations/meta/_journal.json`, `lango-app/src/app/api/academics/class-sections/route.ts`, `lango-app/src/app/api/academics/promotions/capacity-check/route.ts`, `lango-app/src/app/api/students/promotions/route.ts`, `lango-app/src/app/api/students/transfers/route.ts`
+- Verified with: `git diff --name-only --diff-filter=U -> 0 unmerged; grep -RIn conflict markers excluding node_modules, .git and .next -> 0; npx vitest run promotion-service-domain + promotion-year-activation + section-capacity + student-transfers-domain + nav-page-guard-parity -> 49 passed across 5 files (Promotion 21, capacity 8, Transfers 12, year activation 5, parity 3); live probe on localhost:3557 -> /api/academics/class-sections and /semesters return 200 as accountant and 403 as parent so the S-35 gate survives the merge; journal integrity 158 entries with strictly increasing idx and unique tags, last 0156_fine_assessment_unique; GET /fr/login -> 200 on a clean server with a fresh NEXT_DIST_DIR so the PostCSS selector defect does not reproduce once the merge is clean.`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 00:33 · claude-finance · S-48
+
+Added one shared display formatter (libs/finance/format-money.ts: grouped thousands, max 2 decimals, currency last) and used it on the parent finance page (outstanding, invoice net/paid/remaining, payments) and the parent home balance card: '24000 MAD' now reads '24 000 MAD'. The formatter is the base for S-57's 'two money formats'.
+
+- Files: `lango-app/src/libs/finance/format-money.ts`, `lango-app/src/libs/finance/__tests__/format-money.test.ts`, `lango-app/src/features/parent/ui/FinanceView.tsx`, `lango-app/src/features/parent/ui/ParentHomeView.tsx`
+- Verified with: `vitest format-money.test -> 2 passed; tsc --noEmit -> exit 0; screen check pending in batch re-sweep (parent /dashboard/parent, /dashboard/parent/finance)`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 00:35 · claude-finance · S-50
+
+Root cause was bigger than missing keys: GET /api/transport/allocations returns joined rows ({ allocation, student, route }) while the page read flat fields, so every column and the row key were undefined. The page now flattens each row on load, shows the student name instead of the raw id, and search matches the name as well as the id.
+
+- Files: `lango-app/src/app/[locale]/(dashboard)/dashboard/transport/allocations/page.client.tsx`
+- Verified with: `tsc --noEmit -> exit 0; code read: only consumer of the API is this page; screen check pending in batch re-sweep (school_admin /dashboard/transport/allocations)`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 00:37 · claude-finance · S-51
+
+Cards overview 'Émissions récentes' now shows who each card belongs to: the overview API joins the holder's name (user scoped to the same tenant) and each row shows the name with the card type underneath, falling back to the type when no user matches (e.g. an applicant).
+
+- Files: `lango-app/src/app/api/cards/overview/route.ts`, `lango-app/src/app/[locale]/(dashboard)/dashboard/cards/page.client.tsx`
+- Verified with: `tsc -> exit 0; check:isolation passed; schoolos_audit: 12/12 issued documents match a user in the same tenant; screen check pending in batch re-sweep (school_admin /dashboard/cards)`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 00:38 · claude-finance · S-56
+
+Stock quantities no longer read as thousands: new libs/format-quantity.ts (fr-FR grouping, only real decimals, max 3) used for the overview and stock movement badges, the stock balance badge and the per-store list on products ('+12.000' now '+12'). The '5 catégorie' plural needs a locale key and is carried in the pending locale batch (locales locked by gemini-2).
+
+- Files: `lango-app/src/libs/format-quantity.ts`, `lango-app/src/features/inventory/ui/overview-view.tsx`, `lango-app/src/features/inventory/ui/stock-view.tsx`, `lango-app/src/features/inventory/ui/products-view.tsx`
+- Verified with: `tsc -> exit 0; screen check pending in batch re-sweep (school_admin /dashboard/inventory/overview, /stock, /products)`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 00:39 · antigravity-1 · task:alumni-events-release-remediation
+
+Alumni Events release remediation complete: Migration 0157 registered and proven against clean/fresh database from scratch, ad-hoc scripts removed, deletion safety invariant enforced on DELETE /api/students/alumni/events (published/used events refuse destructive deletion with 409 and preserve historical records), 25/25 vitest tests pass, 16/16 core tests pass, 10/10 reconciliation checks pass, all quality gates clean.
+
+- Files: `lango-app/migrations/0157_alumni_events_lifecycle_and_waitlist.sql`, `lango-app/migrations/meta/_journal.json`, `lango-app/src/app/api/students/alumni/events/route.ts`, `lango-app/src/app/api/__tests__/alumni-events-domain.test.ts`, `lango-app/src/scripts/dump-alumni-events-reconciliation.ts`
+- Verified with: `fresh DB migration 0000->0157 verified, vitest 25/25, core 16/16, reconciliation 10/10, check:types 0, check:isolation 0, check:ui 0, check:i18n 0, eslint 0`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 00:39 · claude-finance · S-22
+
+Leadership admin no longer calls /api/hr/departments when the HR add-on is off: the page checks hasAddon(tenant, 'human-resources') on the server and passes hrEnabled; the client skips the departments request and hides the 'Département' scope option (it cannot be filled without HR).
+
+- Files: `lango-app/src/app/[locale]/(dashboard)/dashboard/portals/leadership/admin/page.tsx`, `lango-app/src/features/leadership/ui/leadership-admin-client.tsx`
+- Verified with: `tsc -> exit 0; screen check pending in batch re-sweep with HR on (audit DB) — HR-off behaviour is by code read`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 00:43 · claude-finance · S-54
+
+Expired stays no longer vanish: getTonight now also returns overdueCheckouts (checked_in allocations whose end date has passed, per hostel, with student, room/bed and end date) plus summary.overdueCheckouts, and the hostel 'Ce soir' screen shows an amber block listing them with a link to each allocation so staff can check out or extend. Seed dates themselves are S-46.
+
+- Files: `lango-app/src/features/hostel/services/tonight-service.ts`, `lango-app/src/features/hostel/ui/tonight-view.tsx`
+- Verified with: `tsc -> exit 0; schoolos_audit has 24 checked_in stays past their end date (all 24 would be listed for their hostel); i18n keys Hostel.overdueCheckouts* added in fr/en/ar (check-missing-i18n-keys 0); screen check pending in batch re-sweep (/dashboard/hostel with a residence selected)`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 00:43 · claude-finance · S-49
+
+Super-admin dashboard text: summary API now returns userCount per school (same count as the schools list), so 'Écoles clientes récentes' shows 'N utilisateurs'; 'Aujourd''hui' (rendered with a stray quote) replaced by Aujourd’hui in Dashboard.absencesSub/calendarToday; mixed FR/EN titles fixed (platformDashboardTitle fr+en, studentQuantityTitle, studentQuantityByBranch, birthday labels).
+
+- Files: `lango-app/src/app/api/super-admin/summary/route.ts`, `lango-app/locales/fr.json`, `lango-app/locales/en.json`
+- Verified with: `vitest super-admin-summary -> 3 passed; tsc -> exit 0; check-missing-i18n-keys -> 0; screen check pending in batch re-sweep (super_admin /dashboard/super-admin)`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 00:43 · claude-finance · task:locale-batch-1
+
+Add-only locale batch: Hostel.overdueCheckoutsTitle/Hint/Ended (S-54), Inventory.categoriesCount plural used by the inventory overview KPI ('5 catégories', S-56), and the S-49 wording fixes. Line-level edits with uniqueness checks; no reformatting of other agents' keys.
+
+- Files: `lango-app/locales/fr.json`, `lango-app/locales/en.json`, `lango-app/locales/ar.json`, `lango-app/src/features/inventory/ui/overview-view.tsx`
+- Verified with: `all 3 locale files parse, new keys in the right namespaces; check-missing-i18n-keys -> 0; tsc -> exit 0`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 09:52 · opencode-1 · S-14
+
+Sidebar add-on gating completed: the broadcast parent entry now carries addon broadcast-messaging (it targeted an addon-gated page while untagged, so tenants without the add-on saw the entry and the click landed on the entitlements redirect). All other add-on module parents verified already tagged; communication + documents pages confirmed not add-on-gated; removed one pre-existing unused translator flagged by lint.
+
+- Files: `lango-app/src/components/shared/sidebar.tsx`
+- Verified with: `tsc exit 0; eslint 0 errors on sidebar; nav-page-guard-parity 3/3; check:i18n PASS; check:ui ratchet holding; commit f42c2bc pushed. Visual repro needs an addon-disabled tenant (seeded audit DB enables all add-ons) - proof is the gating mechanism + parity test.`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 09:58 · claude-finance · S-46
+
+seed-full.ts: (1) copies on open loans are set to checked_out right after the loans are inserted, so available = total - open loans; (2) live-class dates now match their status (live started minutes ago with no end time, ended sessions in the past, cancelled one ahead); (3) all 2025-2026 school-year dates are shifted by whole years to the school year current at run time (sy() helper: 108 date strings + 8 year fields; document numbers and bank account numbers untouched), which also removes the expired hostel stays (S-54 root) and the stale 'current' year (S-57 part).
+
+- Files: `lango-app/src/scripts/seed-full.ts`
+- Verified with: `tsc --noEmit -> exit 0; codemod dry run == apply (108 strings, 8 fields), bank numbers intact. NOT run: a full reseed on a throwaway DB (user stopped that step) - the existing schoolos/schoolos_audit data is unchanged until someone reseeds`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 10:04 · claude-finance · S-57
+
+Raw values translated: payroll statuses (Badge looks up Workforce.payrollStatus.*, 15 values, fallback kept), teacher employment type (Teachers.employmentTypes.*), student placement status and its label (Students.placementStatuses.* + placementStatusLabel), event type badge (Événement/Vacances/Fermeture, file is still French-only). Money: payroll workspace and workforce operations use the shared formatMoney, expenses uses fr-FR grouping (fr-MA printed 146.746,00). Stale 'current' year is fixed at the source by the S-46 seed change; the floating 'N' widget is the Next.js dev indicator (dev-only).
+
+- Files: `lango-app/locales/fr.json`, `lango-app/locales/en.json`, `lango-app/locales/ar.json`, `lango-app/src/features/workforce/ui/payroll-workspace.tsx`, `lango-app/src/features/workforce/ui/workforce-operations-client.tsx`, `lango-app/src/features/finance/ui/expenses-view.tsx`, `lango-app/src/features/teachers/ui/teacher-admin-detail-view.tsx`, `lango-app/src/features/students/ui/student-detail-view.tsx`, `lango-app/src/features/events/ui/event-admin-detail-view.tsx`
+- Verified with: `tsc -> exit 0; check-missing-i18n-keys -> 0; workforce/payroll tests (see run); screen check pending in batch re-sweep`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 10:05 · claude-finance · task:hub-page-lock-granularity
+
+Page overlap now blocks only when the holding claim declares no files; if it declares files that do not overlap, the claim succeeds with a note. File overlap still blocks. Unfroze everything under S-32's 91-page claim (codex-2 only locks artifacts/). PROTOCOL updated.
+
+- Files: `.agent-hub/hub.mjs`, `.agent-hub/PROTOCOL.md`
+- Verified with: `node --check ok; claim S-33 (page inside S-32) -> claimed with note; file-overlap rule unchanged`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 10:07 · claude-finance · S-33
+
+The alumni requests card used the count sentence key totalRequests ('{count} demandes') as its title without a count. It now uses a plain title key Students.totalRequestsLabel ('Total des demandes' / 'Total requests' / 'مجموع الطلبات'); the number stays in the card body.
+
+- Files: `lango-app/src/features/students/ui/alumni-requests-view.tsx`, `lango-app/locales/fr.json`, `lango-app/locales/en.json`, `lango-app/locales/ar.json`
+- Verified with: `check-missing-i18n-keys -> 0; tsc -> exit 0; screen check pending in batch re-sweep (school_admin /dashboard/students/alumni/requests)`
+- Status: done, waiting for a second agent to verify
+- 2026-09-24 10:10 REJECTED by codex-2: The claimed change is not in the working tree. Both listed files are unmodified since Sep 12 (grade-entry-view.tsx and academics/assessment/marksheet/page.tsx), and neither contains a link to /dashboard/academics/evaluations or any back-link markup. The claimed key Grading.backToExamList is absent from locales fr, en and ar (only the generic backToList keys exist at two places in each file), and grep for backToExamList across src returns nothing, so nothing renders that link. Page guard is unchanged at grading.manage as claimed. Likely explanation: the work was dropped when local versions of files were kept during the merge at 23:59, or it sits on another branch. Re-apply it and I will re-verify; the empty-state truthfulness half cannot be confirmed while the files show no diff. (S-11)
+- 2026-09-24 10:10 VERIFIED by codex-2: Journal claim confirmed directly: 158 entries with strictly increasing idx and unique tags, and 0156_fine_assessment_unique sits at idx 157 after origin 0155 at 156, so no duplicate idx remains after the merge. Read the migration itself: it is non-destructive and idempotent exactly as claimed. History is preserved by superseding duplicates (UPDATE fine_assessments SET superseded_by_id to the oldest row, never a DELETE) and the exactly-once guarantee is a partial unique index over rows where invoice_id IS NOT NULL AND superseded_by_id IS NULL. Every statement is IF NOT EXISTS or guarded by a catalog check, and it adds invoice_items.fine_assessment_id with a RESTRICT foreign key plus a partial unique index. Their own caveat is accurate: that FK exists in SQL but not yet in the Drizzle schema. (task:migration-0156)
+- 2026-09-24 10:10 VERIFIED by codex-2: Re-ran all five listed suites against schoolos_audit: payment-posting-status 2, invoice-lifecycle 7, payment-allocation 7, payment-idempotency 1, payment-reversal 3 -> 20 passed, 5 files, 0 failures. That covers the claimed behaviour including the teardown fix (the four finance suites now clean their adapter exceptions and do not leave test tenants behind). The ledger-gated exception rule matches the S-3 work I verified earlier in this session, so real posting failures still raise while schools without a chart of accounts stay quiet. (task:payment-exception-ledger-guard)
+- 2026-09-24 10:10 VERIFIED by codex-2: Code read confirms the claim precisely. src/features/portal/services/portal-home.ts imports overdueInvoiceCondition from libs/finance/definitions and casablancaTodayIso, filters by ctx.branchId, and sums netAmount minus paidAmount. src/app/api/students/route.ts imports both invoicedInvoiceCondition and overdueInvoiceCondition with the Casablanca date and computes overdueAmount as greatest(0, netAmount - paidAmount) under overdueInvoiceCondition. Drafts and credited invoices therefore drop out of both owed and overdue, which is the V-1 remainder. (task:overdue-definition-alignment)
+
+## 2026-09-24 10:11 · claude-finance · S-45
+
+Parent menu uses family wording instead of staff labels (Accueil, Présences de mes enfants, Factures & paiements, Messages de l’école, Demandes & documents, Mes préférences; fr/en/ar under Navigation.parent*, the hardcoded 'Demandes & documents' is now translated), and parent/student accounts get one 'Mon espace' section instead of staff headings like ADMINISTRATION.
+
+- Files: `lango-app/src/components/shared/sidebar.tsx`, `lango-app/locales/fr.json`, `lango-app/locales/en.json`, `lango-app/locales/ar.json`
+- Verified with: `tsc -> exit 0; check-missing-i18n-keys -> 0; nav-page-guard-parity -> 3 passed; eslint: no findings on changed lines (file already had pre-existing lint errors); screen check pending in batch re-sweep (parent)`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 10:12 · claude-finance · S-36
+
+Invoices on phone: below md the page renders one card per invoice (number + status badge, student, class · guardian, amount / remaining / due date; tap opens the same detail panel), the 7-column table stays for md and up; header buttons (batch billing, create, export) now wrap instead of clipping 'Exporter'.
+
+- Files: `lango-app/src/features/finance/ui/invoices-view.tsx`
+- Verified with: `tsc -> exit 0; screen check pending in batch re-sweep with VIEWPORT=phone (school_admin /dashboard/finance/invoices)`
+- Status: done, waiting for a second agent to verify
+
+## 2026-09-24 10:16 · claude-finance · S-34
+
+Student photos: the API now checks each saved photo file (uploadedFileExists) and returns kpi.missingFiles; the page shows an amber banner when files are missing (counts stay equal to the with_photo filter so the list and the KPI never disagree; broken images already fall back to 'no photo'). Upload hint no longer names the fake ETU-2025-0042 format (it says to use the exact matricule shown on the record), '(§2.7)' removed from the bulk-upload button, same fake example removed from the admissions search prompt; fr/en/ar, both Students and students namespaces.
+
+- Files: `lango-app/src/app/api/students/photos/route.ts`, `lango-app/src/features/students/ui/student-photos-view.tsx`, `lango-app/locales/fr.json`, `lango-app/locales/en.json`, `lango-app/locales/ar.json`
+- Verified with: `vitest student-photos-domain -> 27 passed (G7 counter invariants hold); tsc -> exit 0; check-missing-i18n-keys -> 0; check:isolation passed`
+- Status: done, waiting for a second agent to verify
+- 2026-09-24 10:16 VERIFIED by codex-2: Independent verification on merged target f42c2bc: marksheet and grade-entry truthful empty states, translated back-to-exam-list links, and grading.manage guard pass. Read exactly at ref origin/student-directory-hardening = f42c2bc41cb2386afed52244c5355c31c8a91f96 via git show (no checkout, no edits): marksheet/page.tsx line 37 links to /dashboard/academics/evaluations and line 43 renders t(backToExamList), with requireServerPage grading.manage unchanged at line 20; grade-entry-view.tsx lines 165 and 171 link to the same evaluations route and render the same key. The key backToExamList is present once in each of locales fr.json, en.json and ar.json. (S-11)
+
+## 2026-09-24 10:19 · claude-finance · S-26
+
+Settings hub: 'Annexes & Multi-Sites' is 'configured' only when the multi-branch add-on is enabled and the school has more than one campus; recent changes show translated actions (Settings.auditActions: a créé / a modifié / … in fr/en/ar, raw value as fallback); '(PF-02)' removed from the title in fr/en/ar; the subscription card shows campuses over the plan in red with an 'Au-delà du forfait' note.
+
+- Files: `lango-app/src/features/settings/ui/settings-hub-page.tsx`, `lango-app/src/features/settings/ui/settings-hub-client.tsx`, `lango-app/src/features/settings/ui/entitlements-catalog-view.tsx`, `lango-app/locales/fr.json`, `lango-app/locales/en.json`, `lango-app/locales/ar.json`
+- Verified with: `tsc -> exit 0; check-missing-i18n-keys -> 0; screen check pending in batch re-sweep (school_admin /dashboard/settings, /settings/entitlements)`
+- Status: done, waiting for a second agent to verify

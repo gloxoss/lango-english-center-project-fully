@@ -2,7 +2,28 @@
 
 **Status: NEEDS FIX (P2)** · Module: `portals` · Source: [`src/app/[locale]/(dashboard)/dashboard/portals/leadership/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/portals/leadership/page.tsx>)
 
-**Progress (2026-09-23):** S-15 OPEN
+**Progress (2026-09-24):** S-15 OPEN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

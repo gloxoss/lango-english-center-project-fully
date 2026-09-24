@@ -268,7 +268,7 @@ export function SettingsHubClient({
                   </div>
                   <div>
                     <p className="font-bold text-[#111827]">
-                      {aud.userName} <span className="font-normal text-[#374151]">{aud.action}</span>
+                      {aud.userName} <span className="font-normal text-[#374151]">{t.has(`auditActions.${aud.action}`) ? t(`auditActions.${aud.action}`) : aud.action}</span>
                     </p>
                     <p className="text-[11px] text-[#6B7280] mt-0.5">{aud.timestamp}</p>
                   </div>

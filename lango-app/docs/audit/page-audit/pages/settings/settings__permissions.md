@@ -2,7 +2,28 @@
 
 **Status: NEEDS FIX (P3)** · Module: `settings` · Source: [`src/app/[locale]/(dashboard)/dashboard/settings/permissions/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/settings/permissions/page.tsx>)
 
-**Progress (2026-09-23):** S-50 OPEN
+**Progress (2026-09-24):** S-50 REVIEW
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -212,7 +212,7 @@ export function TeacherPortalView() {
                   <div key={c.classSectionId} className="px-5 py-3">
                     <p className="text-sm font-semibold text-slate-800">{c.name}</p>
                     <p className="text-xs text-slate-500">
-                      {c.subjects.join(' · ') || '—'} · {tTeacher('studentsCount', { count: c.students })}
+                      {[c.subjects.join(' · '), tTeacher('studentsCount', { count: c.students })].filter(Boolean).join(' · ')}
                     </p>
                   </div>
                 ))}

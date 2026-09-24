@@ -72,6 +72,9 @@ export async function GET(request: Request) {
         isActive: tenants.isActive,
         planTier: tenants.planTier,
         subscriptionStatus: tenants.subscriptionStatus,
+        // Same count as the schools list; the dashboard card read an absent field
+        // and printed ' utilisateurs' with no number (audit S-49).
+        userCount: sql<number>`(select count(*)::int from ${user} where ${user.tenantId} = ${tenants.id})`,
       }).from(tenants),
       db.select({ count: sql<number>`count(*)::int` }).from(user).where(eq(user.role, 'student')),
       db.select({ count: sql<number>`count(*)::int` }).from(user).where(eq(user.role, 'teacher')),

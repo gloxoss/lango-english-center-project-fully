@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { formatMoney } from '@/libs/finance/format-money';
 import { useTranslations } from 'next-intl';
 
 type Row = Record<string, unknown>;
@@ -12,7 +13,7 @@ async function call<T>(url: string, init?: RequestInit): Promise<T> {
   return p.data as T;
 }
 
-const amount = (v: unknown) => Number(v ?? 0).toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' });
+const amount = (v: unknown) => formatMoney(v as number | string | null | undefined);
 
 export function AdvancesOperationsClient() {
   const t = useTranslations('Workforce');

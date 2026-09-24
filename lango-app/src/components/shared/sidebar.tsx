@@ -306,6 +306,7 @@ export function Sidebar({ locale }: { locale: string }) {
     'section-finance': true,
     'section-communication': true,
     'section-administration': true,
+    'section-my-space': true,
   });
 
   const toggleMenu = (key: string) => {
@@ -838,12 +839,13 @@ export function Sidebar({ locale }: { locale: string }) {
       href: `/${locale}/dashboard/parent`,
       icon: LayoutDashboard,
       subItems: [
-        { label: tNav('dashboard'), href: `/${locale}/dashboard/parent` },
-        { label: tNav('attendance'), href: `/${locale}/dashboard/parent/attendance` },
-        { label: tNav('finance'), href: `/${locale}/dashboard/parent/finance` },
-        { label: tNav('communication'), href: `/${locale}/dashboard/parent/communication` },
-        { label: 'Demandes & documents', href: `/${locale}/dashboard/parent/requests` },
-        { label: tNav('settings'), href: `/${locale}/dashboard/parent/settings` },
+        // Family wording, not the staff menu labels (audit S-45).
+        { label: tNav('parentHome'), href: `/${locale}/dashboard/parent` },
+        { label: tNav('parentAttendance'), href: `/${locale}/dashboard/parent/attendance` },
+        { label: tNav('parentFinance'), href: `/${locale}/dashboard/parent/finance` },
+        { label: tNav('parentMessages'), href: `/${locale}/dashboard/parent/communication` },
+        { label: tNav('parentRequests'), href: `/${locale}/dashboard/parent/requests` },
+        { label: tNav('parentSettings'), href: `/${locale}/dashboard/parent/settings` },
       ],
     },
   ];
@@ -980,7 +982,12 @@ export function Sidebar({ locale }: { locale: string }) {
     return 'administration';
   };
 
-  const conceptualSections: { id: string; label: string; items: NavItem[] }[] = [
+  // Families get one self-service section instead of staff headings such as
+  // 'ADMINISTRATION' over their own pages (audit S-45).
+  const isFamilyRole = userRole === 'parent' || userRole === 'student';
+  const conceptualSections: { id: string; label: string; items: NavItem[] }[] = isFamilyRole
+    ? [{ id: 'section-my-space', label: tNav('sectionMySpace'), items: navItems }]
+    : [
     { id: 'section-daily', label: tNav('sectionDaily'), items: navItems.filter(i => getCategoryForNavItem(i) === 'daily') },
     { id: 'section-academics', label: tNav('sectionAcademics'), items: navItems.filter(i => getCategoryForNavItem(i) === 'academics') },
     { id: 'section-finance', label: tNav('sectionFinance'), items: navItems.filter(i => getCategoryForNavItem(i) === 'finance') },

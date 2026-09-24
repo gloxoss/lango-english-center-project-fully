@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import { formatMoney } from '@/libs/finance/format-money';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 type Json = Record<string, unknown>;
 type ApiResult<T> = { success: boolean; data: T; error?: { message?: string } };
-const money = (value: unknown) => Number(value ?? 0).toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' });
+const money = (value: unknown) => formatMoney(value as number | string | null | undefined);
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, { ...init, headers: { 'Content-Type': 'application/json', ...init?.headers } });
@@ -366,7 +367,7 @@ function componentValue(v: Json | null): string {
   if (!v) return '—';
   const type = str(v.valueType);
   if (type === 'fixed') return money(v.fixedValue);
-  if (type === 'percent') return `${(Number(v.percentBp ?? 0) / 100).toLocaleString('fr-MA')}%${v.percentOf ? ` de ${str(v.percentOf)}` : ''}`;
+  if (type === 'percent') return `${(Number(v.percentBp ?? 0) / 100).toLocaleString('fr-FR')}%${v.percentOf ? ` de ${str(v.percentOf)}` : ''}`;
   if (type === 'formula') return str(v.formula);
   return '—';
 }
@@ -1018,7 +1019,10 @@ function Empty({ label }: { label?: string }) {
 }
 
 function Badge({ value }: { value: string }) {
-  return <span className="inline-flex rounded-full bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-800">{value.replaceAll('_', ' ')}</span>;
+  // Show the translated status; unknown values keep the old readable fallback (audit S-57).
+  const t = useTranslations('Workforce');
+  const key = `payrollStatus.${value}`;
+  return <span className="inline-flex rounded-full bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-800">{t.has(key) ? t(key) : value.replaceAll('_', ' ')}</span>;
 }
 
 function Th({ children }: { children?: React.ReactNode }) {

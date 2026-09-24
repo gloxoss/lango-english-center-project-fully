@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { formatMoney } from '@/libs/finance/format-money';
 import { ReceiptText, Wallet, AlertTriangle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { ParentPageShell, type ParentPageShellContext } from './ParentPageShell';
@@ -108,7 +109,7 @@ function FinanceContent({ relationshipId, loading: shellLoading }: Partial<Paren
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
               <div className="text-sm text-slate-500">{tParent('totalOutstanding')}</div>
-              <div className="mt-1 text-3xl font-bold text-[#0066FF]">{finance.totalOutstanding} MAD</div>
+              <div className="mt-1 text-3xl font-bold text-[#0066FF]">{formatMoney(finance.totalOutstanding)}</div>
             </div>
             <div className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
               <div className="text-sm text-slate-500">{tParent('invoicesCount')}</div>
@@ -154,9 +155,9 @@ function FinanceContent({ relationshipId, loading: shellLoading }: Partial<Paren
                               {getStatusLabel(inv.status)}
                             </span>
                           </td>
-                          <td className="px-5 py-3 text-end">{Number(inv.netAmount)} MAD</td>
-                          <td className="px-5 py-3 text-end">{Number(inv.paidAmount)} MAD</td>
-                          <td className="px-5 py-3 text-end font-semibold text-slate-900">{restant} MAD</td>
+                          <td className="px-5 py-3 text-end">{formatMoney(inv.netAmount)}</td>
+                          <td className="px-5 py-3 text-end">{formatMoney(inv.paidAmount)}</td>
+                          <td className="px-5 py-3 text-end font-semibold text-slate-900">{formatMoney(restant)}</td>
                         </tr>
                       );
                     })}
@@ -187,7 +188,7 @@ function FinanceContent({ relationshipId, loading: shellLoading }: Partial<Paren
                       <tr key={pay.id}>
                         <td className="px-5 py-3">{pay.paymentDate ? new Date(pay.paymentDate).toLocaleDateString() : '—'}</td>
                         <td className="px-5 py-3">{pay.paymentMethod ? getMethodLabel(pay.paymentMethod) : '—'}</td>
-                        <td className="px-5 py-3 text-end font-medium">{Number(pay.amount)} MAD</td>
+                        <td className="px-5 py-3 text-end font-medium">{formatMoney(pay.amount)}</td>
                       </tr>
                     ))}
                   </tbody>

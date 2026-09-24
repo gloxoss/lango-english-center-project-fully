@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { formatQuantity } from '@/libs/format-quantity';
 import { useLocale, useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -221,7 +222,7 @@ export function StockView({ locale: initialLocale }: { locale?: string } = {}) {
                     <p className="text-xs text-slate-400">{t('updatedAtLabel', { date: fmtDate(b.updatedAt) })}</p>
                   </div>
                 </div>
-                <Badge variant={Number(b.quantity) > 0 ? 'info' : 'neutral'}>{b.quantity}</Badge>
+                <Badge variant={Number(b.quantity) > 0 ? 'info' : 'neutral'}>{formatQuantity(b.quantity)}</Badge>
               </div>
             ))
           )}
@@ -253,7 +254,7 @@ export function StockView({ locale: initialLocale }: { locale?: string } = {}) {
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <Badge variant={positive ? 'success' : 'danger'}>
-                      {positive ? '+' : ''}{m.qty}
+                      {positive ? '+' : ''}{formatQuantity(m.qty)}
                     </Badge>
                     <p className="text-xs text-slate-400">{fmtDate(m.recordedAt)}</p>
                   </div>

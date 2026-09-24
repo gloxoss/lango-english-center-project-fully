@@ -2,7 +2,28 @@
 
 **Status: NEEDS FIX (P3)** · Module: `public-site` · Source: [`src/app/[locale]/(school-site)/[tenantSlug]/news/page.tsx`](<../../../../../src/app/[locale]/(school-site)/[tenantSlug]/news/page.tsx>)
 
-**Progress (2026-09-23):** S-55 OPEN
+**Progress (2026-09-24):** S-55 OPEN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

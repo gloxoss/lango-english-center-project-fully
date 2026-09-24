@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 interface Allocation {
   id: string;
   studentId: string;
+  studentName?: string | null;
   routeId: string;
   pickupStopId: string;
   dropoffStopId: string;
@@ -62,7 +63,13 @@ export default function AllocationsPage() {
       const routesData = await routesRes.json();
       const stopsData = await stopsRes.json();
 
-      if (allocData.success) setAllocations(allocData.data || []);
+      // The API returns joined rows ({ allocation, student, route }); flatten them
+      // so every column (and the row key) reads the allocation itself (audit S-50).
+      if (allocData.success) {
+        setAllocations((allocData.data || []).map((row: { allocation?: Allocation; student?: { name?: string | null } } & Partial<Allocation>) => (
+          row.allocation ? { ...row.allocation, studentName: row.student?.name ?? null } : (row as Allocation)
+        )));
+      }
       if (routesData.success) setRoutes(routesData.data || []);
       if (stopsData.success) setStops(stopsData.data || []);
     } catch (err) {
@@ -144,7 +151,8 @@ export default function AllocationsPage() {
   };
 
   const filteredAllocations = allocations.filter(a => {
-    const matchesSearch = (a.studentId ?? '').toLowerCase().includes(search.toLowerCase());
+    const needle = search.toLowerCase();
+    const matchesSearch = (a.studentName ?? '').toLowerCase().includes(needle) || (a.studentId ?? '').toLowerCase().includes(needle);
     const matchesStatus = statusFilter === 'all' || a.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -229,7 +237,7 @@ export default function AllocationsPage() {
 
                   return (
                     <tr key={alloc.id} className="hover:bg-slate-50/50 transition">
-                      <td className="p-4 font-mono font-semibold text-slate-900">{alloc.studentId}</td>
+                      <td className="p-4 font-semibold text-slate-900">{alloc.studentName ?? alloc.studentId}</td>
                       <td className="p-4 font-medium text-slate-800">{rName}</td>
                       <td className="p-4 text-slate-600">{pName}</td>
                       <td className="p-4 text-slate-600">{dName}</td>

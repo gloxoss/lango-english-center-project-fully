@@ -18,6 +18,7 @@ type Overview = {
     type: 'student_id' | 'employee_id' | 'admit_card';
     subjectType: string;
     status: string;
+    holderName?: string | null;
     issuedAt: string;
   }>;
 };
@@ -142,7 +143,8 @@ export default function CardsOverviewPage() {
               {data.recent.map(doc => (
                 <div key={doc.id} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100">
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-700 truncate">{TYPE_LABELS[doc.type] || doc.type}</p>
+                    <p className="text-xs font-bold text-slate-700 truncate">{doc.holderName || TYPE_LABELS[doc.type] || doc.type}</p>
+                    {doc.holderName && <p className="text-[10px] font-semibold text-slate-500 truncate">{TYPE_LABELS[doc.type] || doc.type}</p>}
                     <p className="text-[10px] text-slate-400">{new Date(doc.issuedAt).toLocaleDateString(locale === 'ar' ? 'ar-EG' : locale === 'en' ? 'en-US' : 'fr-FR')}</p>
                   </div>
                   <Badge variant={STATUS_BADGE[doc.status]?.variant || 'neutral'}>

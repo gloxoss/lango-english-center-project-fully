@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { formatQuantity } from '@/libs/format-quantity';
 import { useLocale, useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -257,7 +258,7 @@ export function ProductsView({ locale: initialLocale }: { locale?: string } = {}
                   </div>
                   {row.stockByStore.length > 0 && (
                     <p className="max-w-md truncate text-end text-xs text-slate-400">
-                      {row.stockByStore.map(b => `${b.storeName}: ${b.quantity}`).join(' · ')}
+                      {row.stockByStore.map(b => `${b.storeName}: ${formatQuantity(b.quantity)}`).join(' · ')}
                     </p>
                   )}
                 </div>

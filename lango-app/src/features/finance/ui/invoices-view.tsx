@@ -238,7 +238,7 @@ export function InvoicesFinanceView({ locale = 'fr' }: { locale?: string }) {
           <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{tFinance('invoicesManagement')}</h1>
           <p className="text-xs text-slate-500 mt-1">{tFinance('invoicesSubtitle', { count: invoices.length })}</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
           <Link href={`/${locale}/dashboard/finance/allocations`}>
             <Button variant="outline" size="sm" className="h-9 text-xs rounded-xl border-slate-200 bg-white gap-1.5 hover:border-[#0066FF] hover:text-[#0066FF]">
               <Layers className="w-3.5 h-3.5" />
@@ -288,7 +288,38 @@ export function InvoicesFinanceView({ locale = 'fr' }: { locale?: string }) {
             </select>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Phone: one card per invoice. At 390 px the 7-column table pushed the
+              status off-screen (audit S-36); the table stays for md and up. */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {!loading && filtered.length === 0 && (
+              <p className="py-8 text-center text-[11px] text-slate-400">{tFinance('noInvoicesFound')}</p>
+            )}
+            {filtered.map((inv) => {
+              const balance = Number(inv.netAmount) - Number(inv.paidAmount);
+              return (
+                <button
+                  type="button"
+                  key={inv.id}
+                  onClick={() => setSelectedId(inv.id)}
+                  className={`w-full px-4 py-3 text-left transition-colors ${selectedId === inv.id ? 'bg-[#DCEBF4]/30' : 'hover:bg-slate-50/80'}`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-[11px] font-semibold text-[#2487B8]">{inv.invoiceNumber}</span>
+                    <Badge className={`text-[9px] border-none font-bold ${STATUS_BADGE[inv.status]}`}>{tStatus(inv.status)}</Badge>
+                  </div>
+                  <p className="mt-1 text-xs font-bold text-[#16212B]">{inv.studentName}</p>
+                  <p className="text-[10px] text-slate-400">{[inv.className, inv.guardianName].filter(Boolean).join(' · ')}</p>
+                  <div className="mt-2 grid grid-cols-3 gap-2 text-[10px]">
+                    <div><p className="text-slate-400">{tFinance('amount')}</p><p className="font-bold text-[#16212B]">{Number(inv.netAmount).toLocaleString('fr-FR')} {tCommon('currency')}</p></div>
+                    <div><p className="text-slate-400">{tFinance('balance')}</p><p className={`font-bold ${balance > 0 ? 'text-rose-600' : 'text-slate-400'}`}>{balance.toLocaleString('fr-FR')} {tCommon('currency')}</p></div>
+                    <div><p className="text-slate-400">{tFinance('dueDate')}</p><p className="font-mono text-slate-500">{inv.dueDate}</p></div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-[11px]">
               <thead>
                 <tr className="text-slate-400 font-bold border-b border-slate-100 bg-slate-50/50">

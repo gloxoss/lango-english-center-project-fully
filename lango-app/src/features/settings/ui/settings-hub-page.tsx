@@ -4,6 +4,7 @@
 import { and, count, desc, eq, inArray } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { getServerUserContext } from '@/libs/auth/server-context';
+import { hasAddon } from '@/libs/api/entitlements';
 import {
   addonEntitlements, auditLogs, branches, cndpFilings, chartOfAccounts,
   files, schoolSettings, settingValues, tenants, user,
@@ -159,7 +160,10 @@ export async function SettingsHubPage({ locale }: { locale?: string } = {}) {
         'attendance.presenceModes', 'attendance.smsAlerts', 'attendance.lateGraceMinutes', 'attendance.periodStartTime',
       ),
       entitlements: addonRow.length > 0,
-      branches: (branchCount[0]?.value ?? 0) > 1,
+      // Several campuses only count as configured when the multi-branch add-on
+      // is actually on; otherwise the card claimed 'Configuré' for a module
+      // the school cannot use (audit S-26).
+      branches: (branchCount[0]?.value ?? 0) > 1 && Boolean(tenantId) && await hasAddon(tenantId!, 'multi-branch'),
       cndp: cndpDone,
     };
 

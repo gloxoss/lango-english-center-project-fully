@@ -40,43 +40,43 @@ Generated 2026-09-23 from the sweep logs, screenshots and findings of the 2026-0
 | [S-41](findings/done/S-41.md) | P1 | Auth rate limit counts every page's session check, per IP | 0 + global | DONE |
 | [V-1](findings/V-1.md) | P1 | Finance home shows 6 000 MAD overdue, every other screen shows 3 000 | 1 | PARTIAL |
 | [S-10](findings/done/S-10.md) | P2 | Homework page shows developer copy and "0 %" for 0/0 | 2 | DONE |
-| [S-11](findings/S-11.md) | P2 | Marksheet and grade entry: no title or link back to the exam list | 2 | REVIEW |
-| [S-12](findings/S-12.md) | P2 | Timetable: duplicate generate buttons, 2-hour grid | 1 | OPEN |
+| [S-11](findings/done/S-11.md) | P2 | Marksheet and grade entry: no title or link back to the exam list | 2 | DONE |
+| [S-12](findings/S-12.md) | P2 | Timetable: duplicate generate buttons, 2-hour grid | 1 | REVIEW |
 | [S-13](findings/S-13.md) | P2 | Exam planning exists twice | 2 | OPEN |
-| [S-14](findings/S-14.md) | P2 | Sidebar lists add-on modules the tenant has not enabled | 0 + global | PARTIAL |
+| [S-14](findings/S-14.md) | P2 | Sidebar lists add-on modules the tenant has not enabled | 0 + global | REVIEW |
 | [S-15](findings/S-15.md) | P2 | Two director dashboards with overlapping KPIs; IGP unexplained | 3 | OPEN |
 | [S-16](findings/done/S-16.md) | P2 | Academics index redirects the director to the teacher schedule | 1 | DONE |
 | [S-17](findings/S-17.md) | P2 | Classes page developer copy; Filière/Cycle empty for lycée classes | 1 | PARTIAL |
-| [S-22](findings/S-22.md) | P2 | Leadership admin calls HR API when HR add-on is off | 1 | OPEN |
+| [S-22](findings/S-22.md) | P2 | Leadership admin calls HR API when HR add-on is off | 1 | REVIEW |
 | [S-23](findings/S-23.md) | P2 | Audit log shows internal names and writes rows on view | 1 | PARTIAL |
 | [S-24](findings/S-24.md) | P2 | Three matricule formats in one tenant | 2 | OPEN |
 | [S-25](findings/done/S-25.md) | P2 | Header shows a fake identity when the session call is slow | 0 + global | DONE |
-| [S-26](findings/S-26.md) | P2 | Settings page: wrong "Configuré" state, raw English actions, spec codes | 1 | OPEN |
+| [S-26](findings/S-26.md) | P2 | Settings page: wrong "Configuré" state, raw English actions, spec codes | 1 | REVIEW |
 | [S-27](findings/done/S-27.md) | P2 | Cashier sessions: green "Écart cumulé 0 MAD" with zero sessions | 1 | DONE |
 | [S-28](findings/done/S-28.md) | P2 | Receivables aging treats not-yet-due invoices as late and offers an SMS reminder | 1 | DONE |
 | [S-30](findings/S-30.md) | P2 | No payment history screen; payments routes land on the cash desk | 2 | PARTIAL |
 | [S-31](findings/done/S-31.md) | P2 | Developer copy on finance screens | 4 | DONE |
-| [S-33](findings/S-33.md) | P2 | "{count} demandes" rendered without a value | 1 | OPEN |
-| [S-34](findings/S-34.md) | P2 | Student photos: broken files counted, upload hint names a format nobody has | 1 | OPEN |
-| [S-36](findings/S-36.md) | P2 | Invoices on phone: desktop table squeezed, status off-screen | 1 | OPEN |
+| [S-33](findings/S-33.md) | P2 | "{count} demandes" rendered without a value | 1 | REVIEW |
+| [S-34](findings/S-34.md) | P2 | Student photos: broken files counted, upload hint names a format nobody has | 1 | REVIEW |
+| [S-36](findings/S-36.md) | P2 | Invoices on phone: desktop table squeezed, status off-screen | 1 | REVIEW |
 | [S-37](findings/S-37.md) | P2 | Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL | 1 + global | PARTIAL |
 | [S-42](findings/done/S-42.md) | P2 | Certificates module untranslated; raw keys on screen | 12 | DONE |
 | [S-43](findings/done/S-43.md) | P2 | `HR.colStatus` missing on 3 HR pages | 3 | DONE |
-| [S-44](findings/S-44.md) | P2 | Staff campus switcher renders for parents, students and super admin (403 on every page) | 0 + global | OPEN |
-| [S-45](findings/S-45.md) | P2 | Parent sidebar reuses staff labels | 7 | OPEN |
-| [S-46](findings/S-46.md) | P2 | Seed data contradicts itself (library loans, live-class dates) | 3 | OPEN |
+| [S-44](findings/S-44.md) | P2 | Staff campus switcher renders for parents, students and super admin (403 on every page) | 0 + global | REVIEW |
+| [S-45](findings/S-45.md) | P2 | Parent sidebar reuses staff labels | 7 | REVIEW |
+| [S-46](findings/S-46.md) | P2 | Seed data contradicts itself (library loans, live-class dates) | 3 | REVIEW |
 | [S-52](findings/done/S-52.md) | P2 | Parents and students can read any event by ID (drafts, staff-only) | 1 | DONE |
 | [S-53](findings/done/S-53.md) | P2 | Salary payment batches skip the RIB check; no bank export | 3 | DONE |
-| [S-54](findings/S-54.md) | P2 | Expired hostel stays stay "checked_in" forever | 5 | OPEN |
-| [S-56](findings/S-56.md) | P2 | Inventory quantities read as thousands ("+12.000" for 12) | 3 | OPEN |
+| [S-54](findings/S-54.md) | P2 | Expired hostel stays stay "checked_in" forever | 5 | REVIEW |
+| [S-56](findings/S-56.md) | P2 | Inventory quantities read as thousands ("+12.000" for 12) | 3 | REVIEW |
 | [S-29](findings/S-29.md) | P3 | Overdue totals agree everywhere except the finance home (confirms V-1) | 1 | PARTIAL |
-| [S-47](findings/S-47.md) | P3 | Empty subtitle rendered as "—" (teacher class card, parent child picker) | 8 | OPEN |
-| [S-48](findings/S-48.md) | P3 | Parent amounts unformatted ("24000 MAD") | 2 | OPEN |
-| [S-49](findings/S-49.md) | P3 | Super-admin dashboard text glitches | 1 | OPEN |
-| [S-50](findings/S-50.md) | P3 | Transport allocations list without React keys | 2 | OPEN |
-| [S-51](findings/S-51.md) | P3 | Cards "Émissions récentes" never shows the recipient | 1 | OPEN |
+| [S-47](findings/S-47.md) | P3 | Empty subtitle rendered as "—" (teacher class card, parent child picker) | 8 | REVIEW |
+| [S-48](findings/S-48.md) | P3 | Parent amounts unformatted ("24000 MAD") | 2 | REVIEW |
+| [S-49](findings/S-49.md) | P3 | Super-admin dashboard text glitches | 1 | REVIEW |
+| [S-50](findings/S-50.md) | P3 | Transport allocations list without React keys | 2 | REVIEW |
+| [S-51](findings/S-51.md) | P3 | Cards "Émissions récentes" never shows the recipient | 1 | REVIEW |
 | [S-55](findings/S-55.md) | P3 | Public school site: no menu, home ignores news, low-contrast hero | 9 | OPEN |
-| [S-57](findings/S-57.md) | P3 | Raw enum values, two money formats, stale "current" year, overlapping widget | 6 | OPEN |
+| [S-57](findings/S-57.md) | P3 | Raw enum values, two money formats, stale "current" year, overlapping widget | 6 | REVIEW |
 
 ## Pages by module
 

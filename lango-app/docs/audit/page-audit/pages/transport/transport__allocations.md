@@ -2,7 +2,28 @@
 
 **Status: NEEDS FIX (P3)** · Module: `transport` · Source: [`src/app/[locale]/(dashboard)/dashboard/transport/allocations/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/transport/allocations/page.tsx>)
 
-**Progress (2026-09-23):** S-50 OPEN
+**Progress (2026-09-24):** S-50 REVIEW
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

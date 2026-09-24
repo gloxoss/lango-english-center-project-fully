@@ -100,6 +100,10 @@
     ".next-codex-2/types/**/*.ts",
     ".next-codex-2/dev/types/**/*.ts",
     ".next-codex-2b/types/**/*.ts",
-    ".next-codex-2b/dev/types/**/*.ts"
+    ".next-codex-2b/dev/types/**/*.ts",
+    ".next-codex-2c/types/**/*.ts",
+    ".next-codex-2c/dev/types/**/*.ts",
+    ".next-codex-2d/types/**/*.ts",
+    ".next-codex-2d/dev/types/**/*.ts"
   ]
 }

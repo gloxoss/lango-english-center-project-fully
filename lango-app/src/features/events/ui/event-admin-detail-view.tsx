@@ -40,6 +40,9 @@ import {
   Paperclip,
 } from 'lucide-react';
 
+// events.event_type values; this view is still French-only like its other badges (audit S-57).
+const EVENT_TYPE_LABELS: Record<string, string> = { event: 'Événement', holiday: 'Vacances', closure: 'Fermeture' };
+
 interface EventDetail {
   id: string;
   title: string;
@@ -619,7 +622,7 @@ export function EventAdminDetailView({ eventId, locale = 'fr' }: { eventId: stri
               </Badge>
             )}
             <Badge variant="neutral" className="text-[10px] font-bold">
-              {event?.eventType || 'Général'}
+              {EVENT_TYPE_LABELS[event?.eventType ?? ''] ?? event?.eventType ?? 'Général'}
             </Badge>
           </div>
         </div>

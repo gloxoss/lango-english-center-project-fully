@@ -24,7 +24,8 @@ claim S-38 --files lango-app/src/libs/api/permissions.ts,lango-app/src/features/
 - List **every file or folder you expect to edit**. A folder locks everything under it, so prefer exact files.
 - Exit code 3 means a conflict: another agent holds the item, a page inside it, or one of your files. **Do not work around it.** Pick another item, or `say --to <owner>` and wait.
 - Need another file later? `files S-38 --add path` **before** touching it. If it is locked, ask the owner.
-- Claiming a finding also locks its pages. A migration number, a port, a seed change: claim them as `task:` items.
+- Claiming a finding also covers its pages. A page blocks another agent only when the claim holding it declares **no files** (its edits are unknown). If it declares files that do not overlap yours, you get a `note:` instead: go ahead, but edit only your own declared files. Always declare files, so large findings (like S-32 with 91 pages) do not freeze everyone.
+- A migration number, a port, a seed change: claim them as `task:` items.
 
 ## 4. While working
 

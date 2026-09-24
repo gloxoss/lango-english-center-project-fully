@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { formatQuantity } from '@/libs/format-quantity';
 import { useLocale, useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -113,7 +114,7 @@ export function OverviewView({ locale: initialLocale }: { locale?: string } = {}
       ) : overview ? (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Kpi icon={<Package className="h-5 w-5" />} label={t('activeProducts')} value={overview.counts.products} sub={`${overview.counts.categories} ${t('categoryLabel').toLowerCase()}`} />
+            <Kpi icon={<Package className="h-5 w-5" />} label={t('activeProducts')} value={overview.counts.products} sub={t('categoriesCount', { count: overview.counts.categories })} />
             <Kpi icon={<Banknote className="h-5 w-5" />} label={t('totalStockValue')} value={fmtMoney(overview.stockValueCents)} />
             <Kpi icon={<TrendingDown className="h-5 w-5" />} label={t('lowStockAlerts')} value={overview.lowStockCount} />
             <Kpi icon={<ClipboardList className="h-5 w-5" />} label={t('openIssues')} value={overview.counts.openIssues} sub={`${overview.counts.overdueIssues} ${t('statusOverdue')}`} />
@@ -168,7 +169,7 @@ export function OverviewView({ locale: initialLocale }: { locale?: string } = {}
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-1">
-                        <Badge variant={positive ? 'success' : 'danger'}>{positive ? '+' : ''}{m.qty}</Badge>
+                        <Badge variant={positive ? 'success' : 'danger'}>{positive ? '+' : ''}{formatQuantity(m.qty)}</Badge>
                         <p className="text-xs text-slate-400">{fmtDate(m.recordedAt)}</p>
                       </div>
                     </div>

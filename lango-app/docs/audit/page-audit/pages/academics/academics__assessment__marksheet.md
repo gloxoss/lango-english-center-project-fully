@@ -1,8 +1,29 @@
 # `/dashboard/academics/assessment/marksheet`
 
-**Status: NEEDS FIX (P2)** · Module: `academics` · Source: [`src/app/[locale]/(dashboard)/dashboard/academics/assessment/marksheet/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/academics/assessment/marksheet/page.tsx>)
+**Status: FIXED, pending re-sweep** · Module: `academics` · Source: [`src/app/[locale]/(dashboard)/dashboard/academics/assessment/marksheet/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/academics/assessment/marksheet/page.tsx>)
 
-**Progress (2026-09-23):** S-11 REVIEW
+**Progress (2026-09-24):** S-11 DONE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -22,7 +43,7 @@ Guard: `requireServerPage` · capability `grading.manage`
 
 | ID | Sev | Problem | Fix | Code now |
 |---|---|---|---|---|
-| [S-11](../../findings/S-11.md) | P2 | Marksheet and grade entry: no title or link back to the exam list | Add a title and a link to the exam list in the empty state. | Not re-checked since the sweep. |
+| [S-11](../../findings/done/S-11.md) | P2 | Marksheet and grade entry: no title or link back to the exam list | Add a title and a link to the exam list in the empty state. | Not re-checked since the sweep. |
 
 ## Sweep results
 

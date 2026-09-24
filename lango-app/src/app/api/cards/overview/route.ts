@@ -10,6 +10,7 @@ import {
   documentTemplates,
   issuedDocuments,
 } from '@/features/cards/models/cards-schema';
+import { user } from '@/models/Schema';
 
 export async function GET(request: Request) {
   try {
@@ -46,10 +47,13 @@ export async function GET(request: Request) {
       type: issuedDocuments.type,
       subjectType: issuedDocuments.subjectType,
       subjectId: issuedDocuments.subjectId,
+      // Who the card belongs to, so the list is readable (audit S-51).
+      holderName: user.name,
       status: issuedDocuments.status,
       issuedAt: issuedDocuments.issuedAt,
     })
       .from(issuedDocuments)
+      .leftJoin(user, and(eq(user.id, issuedDocuments.subjectId), eq(user.tenantId, tenantId)))
       .where(eq(issuedDocuments.tenantId, tenantId))
       .orderBy(desc(issuedDocuments.issuedAt))
       .limit(8);
