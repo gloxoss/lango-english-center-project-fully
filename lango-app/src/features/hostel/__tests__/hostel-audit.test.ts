@@ -51,6 +51,7 @@ import {
   decideLeavePass,
   listLeavePassesForSelf,
 } from '@/features/hostel/services/leave-passes-service';
+import { getResidentProjection } from '@/features/hostel/services/projections-service';
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 
@@ -477,6 +478,45 @@ describe.skipIf(!hasDb)('Hostel audit fixes', () => {
       expect(first.state).toBe('cancelled');
       const second = await cancelAllocation(tenantAId, adminAId, allocated.id);
       expect(second.state).toBe('cancelled');
+    });
+  });
+
+  // 11. Overdue return is decided by the expected return instant. The old code
+  // compared Postgres timestamp text ('2026-09-24 23:00:00') to an ISO string
+  // ('2026-09-24T12:00:00.000Z'); ' ' sorts before 'T', so every same-day return
+  // read as already late and the supervision board cried wolf.
+  describe('11. Overdue return boundary', () => {
+    it('is not overdue while the expected return is still ahead', async () => {
+      const { id } = await makeCheckedInAllocation(tenantAId, studentAId, bedB1);
+      const pass = await createLeavePass(tenantAId, adminAId, {
+        allocationId: id,
+        destination: 'Casablanca',
+        reason: 'Sortie familiale',
+        startDateTime: new Date(Date.now() - 3_600_000).toISOString(),
+        expectedReturnAt: new Date(Date.now() + 5 * 3_600_000).toISOString(),
+      });
+      await decideLeavePass(tenantAId, adminAId, pass.id, { decision: 'approved', approverRole: 'warden' });
+
+      const projection = await getResidentProjection(tenantAId, studentAId);
+      expect(projection.enrolled).toBe(true);
+      expect(projection.tonight?.onLeaveTonight).toBe(true);
+      expect(projection.tonight?.overdueReturn).toBe(false);
+    });
+
+    it('is overdue once the expected return instant has passed', async () => {
+      const { id } = await makeCheckedInAllocation(tenantAId, studentAId, bedB1);
+      const pass = await createLeavePass(tenantAId, adminAId, {
+        allocationId: id,
+        destination: 'Casablanca',
+        reason: 'Sortie familiale',
+        startDateTime: new Date(Date.now() - 6 * 3_600_000).toISOString(),
+        expectedReturnAt: new Date(Date.now() - 2 * 3_600_000).toISOString(),
+      });
+      await decideLeavePass(tenantAId, adminAId, pass.id, { decision: 'approved', approverRole: 'warden' });
+
+      const projection = await getResidentProjection(tenantAId, studentAId);
+      expect(projection.tonight?.onLeaveTonight).toBe(true);
+      expect(projection.tonight?.overdueReturn).toBe(true);
     });
   });
 });

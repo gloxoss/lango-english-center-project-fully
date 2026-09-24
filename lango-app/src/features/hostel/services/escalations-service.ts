@@ -13,7 +13,7 @@ import {
   hostelRollCalls,
 } from '@/features/hostel/models/hostel-schema';
 import { firstRow } from '@/features/hostel/server/db-utils';
-import { dateString } from '@/features/hostel/services/inventory-service';
+import { dateString, storedInstant } from '@/features/hostel/services/inventory-service';
 
 export async function listEscalations(tenantId: string, opts?: {
   type?: string | null;
@@ -142,14 +142,18 @@ export async function runEscalations(tenantId: string, _actorId: string, opts?: 
       lt(hostelLeavePasses.expectedReturnAt, now),
     ));
   for (const pass of overdue) {
+    // A return due at 00:30 Casablanca is a midnight return, not an afternoon
+    // one the day before: parse the stored value as an instant, then take the
+    // Casablanca day it belongs to.
+    const dueDate = dateString(storedInstant(pass.expectedReturnAt));
     await insertEscalationIfAbsent(tenantId, {
       allocationId: pass.allocationId,
       escalationType: 'overdue_return',
-      triggerDate: dateString(new Date(pass.expectedReturnAt)),
+      triggerDate: dueDate,
       tier: 3,
       recipientType: 'guardian',
       channel: 'log',
-      idempotencyKey: `overdue_return:${pass.id}:${dateString(new Date(pass.expectedReturnAt))}`,
+      idempotencyKey: `overdue_return:${pass.id}:${dueDate}`,
     });
     created.overdue_return += 1;
   }

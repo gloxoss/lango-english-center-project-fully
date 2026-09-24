@@ -23,6 +23,7 @@ import {
   user,
 } from '@/models/Schema';
 import { ApiError } from '@/libs/api/errors';
+import { casablancaTodayIso } from '@/libs/finance/today';
 
 // ---------------------------------------------------------------------------
 // Pure Validation & Helper Logic (Unit Testable)
@@ -410,7 +411,7 @@ export const TransportService = {
           tenantId,
           routeId: createdRoute.id,
           versionNumber: 1,
-          effectiveStartDate: data.effectiveStartDate || new Date().toISOString().split('T')[0]!,
+          effectiveStartDate: data.effectiveStartDate || casablancaTodayIso(),
           distanceKm: data.distanceKm !== undefined ? String(data.distanceKm) : null,
           durationMinutes: data.durationMinutes || null,
           status: 'published',
@@ -657,7 +658,7 @@ export const TransportService = {
         if (alloc.direction === 'both' || direction === 'both' || alloc.direction === direction) {
           const start1 = alloc.effectiveStartDate;
           const end1 = alloc.effectiveEndDate || '9999-12-31';
-          const start2 = data.effectiveStartDate || new Date().toISOString().split('T')[0]!;
+          const start2 = data.effectiveStartDate || casablancaTodayIso();
           const end2 = data.effectiveEndDate || '9999-12-31';
           return doTimeRangesOverlap(start1, end1, start2, end2);
         }
@@ -732,7 +733,7 @@ export const TransportService = {
           pickupStopId: data.pickupStopId,
           dropoffStopId: data.dropoffStopId,
           direction,
-          effectiveStartDate: data.effectiveStartDate || new Date().toISOString().split('T')[0]!,
+          effectiveStartDate: data.effectiveStartDate || casablancaTodayIso(),
           effectiveEndDate: data.effectiveEndDate || null,
           serviceDays: data.serviceDays || null,
           assistanceNotes: data.assistanceNotes || null,
@@ -952,7 +953,7 @@ export const TransportService = {
         throw new ApiError(400, 'NO_ACTIVE_ROUTE_VERSION', 'L\'itinéraire n\'a pas de version active publiée.');
       }
 
-      const serviceDate = data.serviceDate || new Date().toISOString().split('T')[0]!;
+      const serviceDate = data.serviceDate || casablancaTodayIso();
       const direction = data.direction || 'pickup';
 
       const [existingTrip] = await tx
