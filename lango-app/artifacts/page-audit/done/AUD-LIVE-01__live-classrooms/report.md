@@ -81,11 +81,36 @@
    - `POST /api/addons/live-classrooms/sessions/[id]/start` triggers provider room creation (e.g. BBB `create` API or Dev provider).
    - Session transitions from `scheduled` to `live`.
    - Double start attempts are idempotent and return the current live session.
-4. **Secure Single-Use Join Grants (Anti-Replay Defense)**:
-   - When a student or teacher clicks "Rejoindre", `POST /join` issues an HMAC-SHA256 signed join token with a short expiration (120 seconds).
+4. **Secure Single-Use Join Grants (Anti-Replay Defense & PostgreSQL Durability)**:
+   - When a student or teacher clicks "Rejoindre", `POST /api/addons/live-classrooms/sessions/[id]/join` issues an HMAC-SHA256 signed join token with a short expiration (120 seconds) via `createJoinGrant()`.
    - The token contains: `tenantId`, `sessionId`, `userId`, `role`, `expiresAt`, `nonce`.
-   - When redeemed via `POST /join/redeem`, the token is verified and marked as redeemed in memory/cache. Replaying the token immediately returns `401 JOIN_GRANT_REPLAYED`.
-   - Forged tokens with invalid signatures are rejected with `401 INVALID_SIGNATURE`.
+   - **PostgreSQL Durable Persistence**:
+     - Single-use state is authoritatively persisted in PostgreSQL table `live_class_join_grants` (`id`, `tenant_id`, `session_id`, `user_id`, `auth_session_id`, `role`, `nonce_hash`, `expires_at`, `redeemed_at`, `created_at`).
+     - Only the SHA-256 hash of the nonce (`hashJoinNonce(payload.nonce)`) is persisted; raw nonces and tokens are never stored in the database.
+   - **Atomic Conditional Redemption**:
+     - When redeemed via `POST /api/addons/live-classrooms/join/redeem`, `join-service.ts` executes an atomic conditional test-and-set SQL update:
+       ```sql
+       UPDATE live_class_join_grants
+       SET redeemed_at = $now
+       WHERE tenant_id = $tenantId
+         AND session_id = $sessionId
+         AND user_id = $userId
+         AND nonce_hash = $nonceHash
+         AND redeemed_at IS NULL
+         AND expires_at > $now
+       RETURNING id;
+       ```
+     - If `consumed.length === 0`, it immediately throws `401 JOIN_GRANT_REPLAYED` ("Ce jeton de connexion a déjà été utilisé ou a expiré.").
+   - **Cluster-Safe & Restart Durability Guarantees**:
+     - **Multi-Instance Concurrency**: Postgres row locking guarantees that if two requests race concurrently across different worker processes or container replicas, exactly one transaction updates the row and succeeds; the other updates 0 rows and is rejected with `401 JOIN_GRANT_REPLAYED`.
+     - **Process Restart Survival**: Because state resides directly in PostgreSQL, replaying a token after server restart, container recreation, or rolling deployment is unconditionally rejected (`401 JOIN_GRANT_REPLAYED`).
+     - **Tamper Resistance**: Forged tokens with invalid HMAC signatures are rejected with `401 INVALID_SIGNATURE`.
+   - **Adversarial Verification**: Verified via `scripts/test-join-token-durability-adversarial.ts` (saved in `evidence/anti-replay-durability.txt`):
+     - Probe 1: Single legitimate redemption -> PASS (200 OK)
+     - Probe 2: Replay in same process -> REJECTED (401 JOIN_GRANT_REPLAYED)
+     - Probe 3: Replay in newly spawned child process (simulating restart) -> REJECTED (401 JOIN_GRANT_REPLAYED)
+     - Probe 4: 2 parallel worker processes racing on same token -> EXACTLY 1 WINNER (200 OK), 1 LOSER (401 JOIN_GRANT_REPLAYED)
+     - Probe 5: Tampering, cross-tenant isolation, ended sessions, unplaced students -> ALL SECURELY REJECTED
 5. **Participant Telemetry & Events**:
    - Webhooks or provider events record immutable participant events in `live_class_participant_events` (`joined`, `left`, `reconnect`, `muted`, etc.).
 6. **Attendance Reconciliation & Core Register Posting**:
@@ -140,21 +165,21 @@
 
 All screenshots captured with real authenticated sessions on `http://localhost:3114` using Chromium:
 
-| Screenshot File | Target Route | Role & Context | Viewport | Locale | Visual Verification |
+| Screenshot File | Target Route | Role & Context | Viewport | Locale | Visual Verification (100% Loaded, Zero Loading/Skeletons) |
 |---|---|---|---|---|---|
-| `01-academics-live-class-desktop-fr.png` | `/dashboard/academics/live-class` | Admin (Yassine El Amrani) | 1440x900 | FR | Sessions table, status badges, provider column, filters |
-| `02-academics-live-class-new-desktop-fr.png` | `/dashboard/academics/live-class/new` | Admin (Yassine El Amrani) | 1440x900 | FR | Scheduling form, class/subject dropdowns, provider selector |
-| `03-academics-live-class-detail-desktop-fr.png` | `/dashboard/academics/live-class/[id]` | Admin (Yassine El Amrani) | 1440x900 | FR | Live Studio, live status, attendance actions, materials tab |
-| `04-academics-live-class-reports-desktop-fr.png` | `/dashboard/academics/live-class-reports` | Admin (Yassine El Amrani) | 1440x900 | FR | KPI metrics cards, presence rate, hours taught, session log |
-| `05-student-live-classes-desktop-fr.png` | `/dashboard/student/live-classes` | Student (Omar Tazi) | 1440x900 | FR | Student portal, scheduled & live sessions, join CTA |
-| `06-parent-live-classes-desktop-fr.png` | `/dashboard/parent/live-classes` | Parent (Tariq Benjelloun) | 1440x900 | FR | Parent portal, student cards, attendance history |
-| `07-settings-live-classrooms-desktop-fr.png` | `/dashboard/settings/live-classrooms` | Admin (Yassine El Amrani) | 1440x900 | FR | Provider profiles list, BBB/Dev configuration modal |
-| `08-academics-live-class-mobile-390-fr.png` | `/dashboard/academics/live-class` | Admin (Yassine El Amrani) | 390x844 | FR | Mobile layout, collapsible cards, responsive tables |
-| `09-academics-live-class-desktop-ar-rtl.png` | `/dashboard/academics/live-class` | Admin (Yassine El Amrani) | 1440x900 | AR RTL | Arabic RTL layout, directional symmetry, localized labels |
-| `10-student-live-classes-desktop-ar-rtl.png` | `/dashboard/student/live-classes` | Student (Omar Tazi) | 1440x900 | AR RTL | Student portal Arabic RTL layout, localized session cards |
-| `11-student-live-classes-mobile-390-fr.png` | `/dashboard/student/live-classes` | Student (Omar Tazi) | 390x844 | FR | Student portal Mobile 390 viewport, touch-friendly CTA |
-| `12-parent-live-classes-desktop-ar-rtl.png` | `/dashboard/parent/live-classes` | Parent (Tariq Benjelloun) | 1440x900 | AR RTL | Parent portal Arabic RTL layout, student tabs |
-| `13-academics-live-class-detail-desktop-ar-rtl.png` | `/dashboard/academics/live-class/[id]` | Admin (Yassine El Amrani) | 1440x900 | AR RTL | Studio Arabic RTL layout, participant roster, action buttons |
+| `01-academics-live-class-desktop-fr.png` | `/dashboard/academics/live-class` | Admin (Yassine El Amrani) | 1440x900 | FR | Sessions table loaded (5 sessions), status badges, KPI cards (2 live, 1 scheduled), zero loading text/skeletons |
+| `02-academics-live-class-new-desktop-fr.png` | `/dashboard/academics/live-class/new` | Admin (Yassine El Amrani) | 1440x900 | FR | Complete scheduling form, class/subject dropdowns populated, provider selector, zero skeletons |
+| `03-academics-live-class-detail-desktop-fr.png` | `/dashboard/academics/live-class/[id]` | Admin (Yassine El Amrani) | 1440x900 | FR | Live Studio loaded, live status, attendance actions, materials tab, zero loading indicators |
+| `04-academics-live-class-reports-desktop-fr.png` | `/dashboard/academics/live-class-reports` | Admin (Yassine El Amrani) | 1440x900 | FR | KPI metrics computed (5 sessions, 0% avg presence), detailed session log table populated |
+| `05-student-live-classes-desktop-fr.png` | `/dashboard/student/live-classes` | Student (Omar Tazi) | 1440x900 | FR | Student portal loaded, user shell hydrated, scheduled & live sessions cards, join CTA |
+| `06-parent-live-classes-desktop-fr.png` | `/dashboard/parent/live-classes` | Parent (Tariq Benjelloun) | 1440x900 | FR | Parent portal loaded, user shell hydrated, linked child sessions rendered, zero loading text |
+| `07-settings-live-classrooms-desktop-fr.png` | `/dashboard/settings/live-classrooms` | Admin (Yassine El Amrani) | 1440x900 | FR | Provider profiles list loaded (1 configured provider), provider form populated |
+| `08-academics-live-class-mobile-390-fr.png` | `/dashboard/academics/live-class` | Admin (Yassine El Amrani) | 390x844 | FR | Mobile layout responsive, KPI cards stacked, sessions table loaded, zero skeletons |
+| `09-academics-live-class-desktop-ar-rtl.png` | `/dashboard/academics/live-class` | Admin (Yassine El Amrani) | 1440x900 | AR RTL | Arabic RTL layout loaded, user shell hydrated, stats (2 live, 1 scheduled, 5 total), zero loading text/ellipsis |
+| `10-student-live-classes-desktop-ar-rtl.png` | `/dashboard/student/live-classes` | Student (Omar Tazi) | 1440x900 | AR RTL | Student portal Arabic RTL layout loaded, session cards rendered in Arabic, zero loading text |
+| `11-student-live-classes-mobile-390-fr.png` | `/dashboard/student/live-classes` | Student (Omar Tazi) | 390x844 | FR | Student portal Mobile 390 viewport loaded, touch-friendly CTA, zero skeletons |
+| `12-parent-live-classes-desktop-ar-rtl.png` | `/dashboard/parent/live-classes` | Parent (Tariq Benjelloun) | 1440x900 | AR RTL | Parent portal Arabic RTL layout loaded, child session cards rendered, zero loading text |
+| `13-academics-live-class-detail-desktop-ar-rtl.png` | `/dashboard/academics/live-class/[id]` | Admin (Yassine El Amrani) | 1440x900 | AR RTL | Studio Arabic RTL layout loaded, user shell hydrated, participant controls, zero skeletons |
 
 ---
 

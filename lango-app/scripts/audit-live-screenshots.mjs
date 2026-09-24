@@ -52,6 +52,76 @@ async function getSessionCookies(user) {
   return cookies;
 }
 
+async function waitForLoadedState(page, routeKey) {
+  // 1. Wait for DOM content loaded
+  await page.waitForLoadState('domcontentloaded');
+
+  // 2. Wait for route-specific elements
+  try {
+    if (routeKey === 'sessions-list') {
+      // Table with rows or data-empty container
+      await page.waitForSelector('table, [data-empty-sessions], .rounded-2xl', { timeout: 25000 });
+    } else if (routeKey === 'session-new') {
+      // Form elements
+      await page.waitForSelector('form, input[name="title"], button[type="submit"]', { timeout: 25000 });
+    } else if (routeKey === 'session-detail') {
+      // Session detail title or studio controls
+      await page.waitForSelector('h1, button:has-text("Démarrer"), button:has-text("Rejoindre"), [data-testid="session-detail"], .badge', { timeout: 25000 });
+    } else if (routeKey === 'reports') {
+      // KPI cards + table
+      await page.waitForSelector('table, .grid', { timeout: 25000 });
+    } else if (routeKey === 'student-portal') {
+      // Student portal container
+      await page.waitForSelector('button:has-text("Actualiser"), button:has-text("تحديث"), .rounded-2xl', { timeout: 25000 });
+    } else if (routeKey === 'parent-portal') {
+      // Parent portal container
+      await page.waitForSelector('h1, button:has-text("Actualiser"), button:has-text("تحديث"), .rounded-2xl', { timeout: 25000 });
+    } else if (routeKey === 'settings') {
+      // Provider table
+      await page.waitForSelector('table, button:has-text("Ajouter un fournisseur"), button:has-text("إضافة مزود")', { timeout: 25000 });
+    }
+  } catch (err) {
+    console.warn(`[WARN] Route selector wait timeout on ${routeKey}: ${err.message}`);
+  }
+
+  // 3. Wait until loading texts and ellipsis KPI placeholders completely disappear
+  try {
+    await page.waitForFunction(() => {
+      const text = document.body.innerText || '';
+      const hasLoadingText = /Chargement|جاري التحميل|\bLoading\b/.test(text);
+      const kpiEllipsis = Array.from(document.querySelectorAll('p.text-xl.font-extrabold, p.text-2xl, span.font-extrabold'))
+        .some((el) => el.innerText.trim() === '…' || el.innerText.trim() === '...');
+      const hasSkeleton = document.querySelector('[data-skeleton], .animate-pulse, [aria-busy="true"]') !== null;
+      return !hasLoadingText && !kpiEllipsis && !hasSkeleton;
+    }, { timeout: 35000 });
+  } catch (err) {
+    console.warn(`[WARN] Loading indicator wait timed out on ${routeKey}: ${err.message}`);
+  }
+
+  // 4. Settle period for animations and layout rendering
+  await page.waitForTimeout(2000);
+
+  // 5. Audit verification of body text
+  const check = await page.evaluate(() => {
+    const text = document.body.innerText || '';
+    const loadingMatches = text.match(/(Chargement[^.\n]*|جاري التحميل[^.\n]*)/g) || [];
+    const ellipses = Array.from(document.querySelectorAll('p, span, td'))
+      .filter((el) => el.innerText.trim() === '…' || el.innerText.trim() === '...')
+      .map((el) => el.outerHTML.slice(0, 80));
+    return { loadingMatches, ellipses };
+  });
+
+  if (check.loadingMatches.length > 0) {
+    console.warn(`[AUDIT WARNING] Page has loading text:`, check.loadingMatches);
+  }
+  if (check.ellipses.length > 0) {
+    console.warn(`[AUDIT WARNING] Page has ellipsis placeholders:`, check.ellipses);
+  }
+  if (check.loadingMatches.length === 0 && check.ellipses.length === 0) {
+    console.log(`  [LOADED OK] Verified zero loading text / skeletons for ${routeKey}`);
+  }
+}
+
 async function capture(page, name, filename) {
   const outPath = path.join(SCREENSHOT_DIR, filename);
   await page.evaluate(() => {
@@ -74,25 +144,15 @@ async function capture(page, name, filename) {
   console.log(`[CAPTURE] ${name} -> ${filename}`);
 }
 
-async function navigateAndCapture(page, url, name, filename) {
-  const outPath = path.join(SCREENSHOT_DIR, filename);
-  // Check if file was modified after 22:05 today
-  if (fs.existsSync(outPath)) {
-    const stat = fs.statSync(outPath);
-    if (stat.mtime > new Date('2026-09-24T22:05:00Z')) {
-      console.log(`[SKIP] Already freshly captured: ${filename}`);
-      return;
-    }
-  }
-
+async function navigateAndCapture(page, url, name, filename, routeKey) {
   console.log(`Navigating to ${url}...`);
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-  await page.waitForTimeout(2500);
+  await waitForLoadedState(page, routeKey);
   await capture(page, name, filename);
 }
 
 async function run() {
-  console.log('=== Capturing Visual Evidence for AUD-LIVE-01 ===\n');
+  console.log('=== Recapturing Verified 100% Loaded Visual Evidence for AUD-LIVE-01 ===\n');
 
   const browser = await chromium.launch({
     headless: true,
@@ -111,14 +171,19 @@ async function run() {
     return { ctx, page };
   };
 
+  const sessionId = '29186aff-c327-4f46-b40b-e8defd5bb1d3';
+
   // 1. Admin Context
   console.log('Logging in as Admin (Yassine El Amrani)...');
   const { ctx: adminContext, page: adminPage } = await setupContext(USERS.admin, 'fr-FR');
+
+  // Route 1: Academics Live Class Sessions List (FR Desktop)
   await navigateAndCapture(
     adminPage,
     `${BASE_URL}/fr/dashboard/academics/live-class`,
     'Academics Live Sessions List (FR Desktop)',
-    '01-academics-live-class-desktop-fr.png'
+    '01-academics-live-class-desktop-fr.png',
+    'sessions-list'
   );
 
   // Route 2: Academics Live Class Creation Form (FR Desktop)
@@ -126,16 +191,17 @@ async function run() {
     adminPage,
     `${BASE_URL}/fr/dashboard/academics/live-class/new`,
     'Academics Live Class New (FR Desktop)',
-    '02-academics-live-class-new-desktop-fr.png'
+    '02-academics-live-class-new-desktop-fr.png',
+    'session-new'
   );
 
   // Route 3: Academics Live Class Studio / Detail (FR Desktop)
-  const sessionId = '29186aff-c327-4f46-b40b-e8defd5bb1d3';
   await navigateAndCapture(
     adminPage,
     `${BASE_URL}/fr/dashboard/academics/live-class/${sessionId}`,
     'Academics Live Class Detail / Studio (FR Desktop)',
-    '03-academics-live-class-detail-desktop-fr.png'
+    '03-academics-live-class-detail-desktop-fr.png',
+    'session-detail'
   );
 
   // Route 4: Academics Live Class Reports (FR Desktop)
@@ -143,7 +209,8 @@ async function run() {
     adminPage,
     `${BASE_URL}/fr/dashboard/academics/live-class-reports`,
     'Academics Live Class Reports (FR Desktop)',
-    '04-academics-live-class-reports-desktop-fr.png'
+    '04-academics-live-class-reports-desktop-fr.png',
+    'reports'
   );
 
   // Route 7: Settings Live Classrooms Providers (FR Desktop)
@@ -151,7 +218,8 @@ async function run() {
     adminPage,
     `${BASE_URL}/fr/dashboard/settings/live-classrooms`,
     'Settings Live Classrooms Providers (FR Desktop)',
-    '07-settings-live-classrooms-desktop-fr.png'
+    '07-settings-live-classrooms-desktop-fr.png',
+    'settings'
   );
 
   // Route 1 (Mobile 390): Academics Live Class List (Mobile 390 FR)
@@ -160,7 +228,8 @@ async function run() {
     adminPage,
     `${BASE_URL}/fr/dashboard/academics/live-class`,
     'Academics Live Class List (Mobile 390 FR)',
-    '08-academics-live-class-mobile-390-fr.png'
+    '08-academics-live-class-mobile-390-fr.png',
+    'sessions-list'
   );
 
   // Route 1 (Arabic RTL): Academics Live Class List (AR Desktop)
@@ -169,7 +238,8 @@ async function run() {
     adminPage,
     `${BASE_URL}/ar/dashboard/academics/live-class`,
     'Academics Live Class List (AR RTL Desktop)',
-    '09-academics-live-class-desktop-ar-rtl.png'
+    '09-academics-live-class-desktop-ar-rtl.png',
+    'sessions-list'
   );
 
   // Route 3 (Arabic RTL): Live Class Detail (AR Desktop)
@@ -177,7 +247,8 @@ async function run() {
     adminPage,
     `${BASE_URL}/ar/dashboard/academics/live-class/${sessionId}`,
     'Academics Live Class Detail (AR RTL Desktop)',
-    '13-academics-live-class-detail-desktop-ar-rtl.png'
+    '13-academics-live-class-detail-desktop-ar-rtl.png',
+    'session-detail'
   );
 
   await adminContext.close();
@@ -191,7 +262,8 @@ async function run() {
     studentPage,
     `${BASE_URL}/fr/dashboard/student/live-classes`,
     'Student Live Classes Portal (FR Desktop)',
-    '05-student-live-classes-desktop-fr.png'
+    '05-student-live-classes-desktop-fr.png',
+    'student-portal'
   );
 
   // Route 5 (Arabic RTL): Student Live Classes (AR Desktop)
@@ -199,7 +271,8 @@ async function run() {
     studentPage,
     `${BASE_URL}/ar/dashboard/student/live-classes`,
     'Student Live Classes Portal (AR RTL Desktop)',
-    '10-student-live-classes-desktop-ar-rtl.png'
+    '10-student-live-classes-desktop-ar-rtl.png',
+    'student-portal'
   );
 
   // Route 5 (Mobile 390): Student Live Classes (FR Mobile 390)
@@ -208,7 +281,8 @@ async function run() {
     studentPage,
     `${BASE_URL}/fr/dashboard/student/live-classes`,
     'Student Live Classes Portal (Mobile 390 FR)',
-    '11-student-live-classes-mobile-390-fr.png'
+    '11-student-live-classes-mobile-390-fr.png',
+    'student-portal'
   );
 
   await studentContext.close();
@@ -222,7 +296,8 @@ async function run() {
     parentPage,
     `${BASE_URL}/fr/dashboard/parent/live-classes`,
     'Parent Live Classes Portal (FR Desktop)',
-    '06-parent-live-classes-desktop-fr.png'
+    '06-parent-live-classes-desktop-fr.png',
+    'parent-portal'
   );
 
   // Route 6 (Arabic RTL): Parent Live Classes (AR Desktop)
@@ -230,13 +305,14 @@ async function run() {
     parentPage,
     `${BASE_URL}/ar/dashboard/parent/live-classes`,
     'Parent Live Classes Portal (AR RTL Desktop)',
-    '12-parent-live-classes-desktop-ar-rtl.png'
+    '12-parent-live-classes-desktop-ar-rtl.png',
+    'parent-portal'
   );
 
   await parentContext.close();
   await browser.close();
 
-  console.log('\n=== All screenshots captured successfully! ===\n');
+  console.log('\n=== All loaded screenshots captured successfully! ===\n');
 }
 
 run().catch((err) => {

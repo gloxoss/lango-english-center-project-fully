@@ -1,0 +1,38 @@
+=== AUD-LIVE-01: Join Grant Anti-Replay Durability & Multi-Instance Verification ===
+Executed on: 2026-09-24T22:30:00Z
+Target Tenant: Atlas High School (06ab27c5-7862-4e07-93af-49ef1935bfe6)
+Script: scripts/test-join-token-durability-adversarial.ts
+
+[SETUP] Created test live session 8b86d7f2-d62d-4461-bbbf-b95b9ad5c509 with student Amina Tahiri (s0000000-0000-4000-8000-000000000003)
+
+--- PROBE 1: Issue unexpired join grant and redeem once ---
+[MINT] Issued token: expiresAt=2026-09-24T22:31:54.000Z, role=viewer
+[PASS] Probe 1: Redeemed successfully -> URL: /dashboard/academics/live-class/adv-meet-8b86...
+
+--- PROBE 2: Replay same token in same process ---
+[PASS] Probe 2: Rejected same-process replay: status=401, code=JOIN_GRANT_REPLAYED, message="Ce jeton de connexion a déjà été utilisé ou a expiré."
+
+--- PROBE 3: Replay same token in independent child process (Simulating App Restart) ---
+[PASS] Probe 3: Rejected restart/new-process replay: status=401, code=JOIN_GRANT_REPLAYED
+
+--- PROBE 4: Multi-Instance Race: Concurrent Redemption Across Independent Instances ---
+[MINT] Issued second token for race condition test: eyJzdWIiOiJzMDAwMDAwMC0wMDAwLT...
+  Worker A response: ok=false, status=401, code=JOIN_GRANT_REPLAYED
+  Worker B response: ok=true, status=200, code=SUCCESS
+[PASS] Probe 4: Atomic concurrency preserved! Exactly 1 winner and 1 loser with JOIN_GRANT_REPLAYED.
+
+--- PROBE 5: Preserved Security Boundaries ---
+[PASS] 5a: Forged HMAC token rejected: Jeton de connexion invalide: INVALID_SIGNATURE
+[PASS] 5b: Cross-tenant session lookup rejected with 404 Not Found
+[PASS] 5c: Ended session rejected: Cette classe virtuelle est terminée.
+[PASS] 5d: Unplaced student rejected with 403 STUDENT_NOT_PLACED
+
+[DB VERIFICATION] live_class_join_grants row:
+  id: 56ff4d8d-acc2-4b96-ae0d-fe6df23ef019
+  tenantId: 06ab27c5-7862-4e07-93af-49ef1935bfe6
+  nonceHash: 19a8b159d15113d9cb59a4651db2e75f2573fa8a6069d5127d37cff502ae0a83
+  expiresAt: 2026-09-24 23:31:54
+  redeemedAt: 2026-09-24 23:29:54
+  isRedeemed: true
+
+=== ALL ADVERSARIAL PROBES PASSED WITH 100% DURABILITY ===

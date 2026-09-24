@@ -117,6 +117,17 @@ async function main() {
     console.log(`Seeded 2 live sessions for Atlas: live=${s1Id}, scheduled=${s2Id}`);
   }
 
+  const allSessions = await pool.query('SELECT id FROM live_class_sessions WHERE tenant_id = $1', [tenantId]);
+  for (const row of allSessions.rows) {
+    await pool.query(`
+      INSERT INTO live_class_invitations (
+        id, tenant_id, session_id, user_id, participant_role, join_eligible, delivery_state, created_at, updated_at
+      ) VALUES ($1, $2, $3, 'STU-003', 'viewer', true, 'delivered', NOW(), NOW())
+      ON CONFLICT DO NOTHING
+    `, [crypto.randomUUID(), tenantId, row.id]);
+  }
+  console.log(`Ensured invitations for STU-003 across ${allSessions.rows.length} sessions.`);
+
   const finalSessions = await pool.query('SELECT id, title, status FROM live_class_sessions WHERE tenant_id = $1', [tenantId]);
   console.log('Atlas live sessions now:', finalSessions.rows);
 
