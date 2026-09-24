@@ -1,0 +1,3 @@
+/dashboard/events
+/dashboard/events/5ce0efda-44ba-48ab-a57d-d365da56bb2c
+/dashboard/academics/calendar

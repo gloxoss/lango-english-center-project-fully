@@ -1,0 +1,12 @@
+[
+  {
+    "route": "/dashboard/events",
+    "finalPath": "/fr/dashboard/events",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 743,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-phone-events.png"
+  }
+]

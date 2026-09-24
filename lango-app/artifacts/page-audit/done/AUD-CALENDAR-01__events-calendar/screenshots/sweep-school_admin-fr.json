@@ -1,0 +1,32 @@
+[
+  {
+    "route": "/dashboard/events",
+    "finalPath": "/fr/dashboard/events",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 743,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-events.png"
+  },
+  {
+    "route": "/dashboard/events/5ce0efda-44ba-48ab-a57d-d365da56bb2c",
+    "finalPath": "/fr/dashboard/events/5ce0efda-44ba-48ab-a57d-d365da56bb2c",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 582,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-events__5ce0efda-44ba-48ab-a57d-d365da56bb2c.png"
+  },
+  {
+    "route": "/dashboard/academics/calendar",
+    "finalPath": "/fr/dashboard/academics/calendar",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 550,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-academics__calendar.png"
+  }
+]
