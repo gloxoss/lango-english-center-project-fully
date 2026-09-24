@@ -1,0 +1,14 @@
+[
+  {
+    "route": "/dashboard/hostel/me",
+    "finalPath": "/fr/dashboard/hostel/me",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 225,
+    "failures": [
+      "403 /api/settings/branches"
+    ],
+    "textDefects": [],
+    "file": "student-fr-hostel__me.png"
+  }
+]

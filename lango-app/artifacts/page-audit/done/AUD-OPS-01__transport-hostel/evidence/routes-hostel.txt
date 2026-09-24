@@ -1,0 +1,16 @@
+/dashboard/hostel
+/dashboard/hostel/allocations
+/dashboard/hostel/allocations/12e00e8b-e0c8-4874-a934-0c48606993d0
+/dashboard/hostel/applications
+/dashboard/hostel/board
+/dashboard/hostel/categories
+/dashboard/hostel/guardian
+/dashboard/hostel/hostels
+/dashboard/hostel/hostels/a2a356ec-d8ee-4534-99e7-82b0ecd12d17
+/dashboard/hostel/leave-passes
+/dashboard/hostel/me
+/dashboard/hostel/policies
+/dashboard/hostel/reports
+/dashboard/hostel/roll-call
+/dashboard/hostel/rooms
+/dashboard/hostel/zones

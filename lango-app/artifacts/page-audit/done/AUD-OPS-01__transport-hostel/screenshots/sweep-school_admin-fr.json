@@ -1,0 +1,294 @@
+[
+  {
+    "route": "/dashboard/transport",
+    "finalPath": "/fr/dashboard/transport",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 570,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-transport.png"
+  },
+  {
+    "route": "/dashboard/transport/vehicles",
+    "finalPath": "/fr/dashboard/transport/vehicles",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 538,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-transport__vehicles.png"
+  },
+  {
+    "route": "/dashboard/transport/drivers",
+    "finalPath": "/fr/dashboard/transport/drivers",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 965,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-transport__drivers.png"
+  },
+  {
+    "route": "/dashboard/transport/routes",
+    "finalPath": "/fr/dashboard/transport/routes",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 551,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-transport__routes.png"
+  },
+  {
+    "route": "/dashboard/transport/stops",
+    "finalPath": "/fr/dashboard/transport/stops",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 598,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-transport__stops.png"
+  },
+  {
+    "route": "/dashboard/transport/allocations",
+    "finalPath": "/fr/dashboard/transport/allocations",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 1254,
+    "failures": [
+      "console: Each child in a list should have a unique \"key\" prop.%s%s See https://react.dev/link/warning-keys for more information. \n\nCheck the render m"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-transport__allocations.png"
+  },
+  {
+    "route": "/dashboard/transport/boarding",
+    "finalPath": "/fr/dashboard/transport/boarding",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 525,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-transport__boarding.png"
+  },
+  {
+    "route": "/dashboard/transport/trips",
+    "finalPath": "/fr/dashboard/transport/trips",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 480,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-transport__trips.png"
+  },
+  {
+    "route": "/dashboard/transport/incidents",
+    "finalPath": "/fr/dashboard/transport/incidents",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 507,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-transport__incidents.png"
+  },
+  {
+    "route": "/dashboard/transport/reports",
+    "finalPath": "/fr/dashboard/transport/reports",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 509,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-transport__reports.png"
+  },
+  {
+    "route": "/dashboard/transport/policies",
+    "finalPath": "/fr/dashboard/transport/policies",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 493,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-transport__policies.png"
+  },
+  {
+    "route": "/dashboard/transport/guardian",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 450,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-transport__guardian.png"
+  },
+  {
+    "route": "/dashboard/transport/student",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 450,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-transport__student.png"
+  },
+  {
+    "route": "/dashboard/hostel",
+    "finalPath": "/fr/dashboard/hostel",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 469,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel.png"
+  },
+  {
+    "route": "/dashboard/hostel/allocations",
+    "finalPath": "/fr/dashboard/hostel/allocations",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 749,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__allocations.png"
+  },
+  {
+    "route": "/dashboard/hostel/allocations/12e00e8b-e0c8-4874-a934-0c48606993d0",
+    "finalPath": "/fr/dashboard/hostel/allocations/12e00e8b-e0c8-4874-a934-0c48606993d0",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 524,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__allocations__12e00e8b-e0c8-4874-a934-0c48606993d0.png"
+  },
+  {
+    "route": "/dashboard/hostel/applications",
+    "finalPath": "/fr/dashboard/hostel/applications",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 749,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__applications.png"
+  },
+  {
+    "route": "/dashboard/hostel/board",
+    "finalPath": "/fr/dashboard/hostel/board",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 648,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__board.png"
+  },
+  {
+    "route": "/dashboard/hostel/categories",
+    "finalPath": "/fr/dashboard/hostel/categories",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 524,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__categories.png"
+  },
+  {
+    "route": "/dashboard/hostel/guardian",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 450,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__guardian.png"
+  },
+  {
+    "route": "/dashboard/hostel/hostels",
+    "finalPath": "/fr/dashboard/hostel/hostels",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 543,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__hostels.png"
+  },
+  {
+    "route": "/dashboard/hostel/hostels/a2a356ec-d8ee-4534-99e7-82b0ecd12d17",
+    "finalPath": "/fr/dashboard/hostel/hostels/a2a356ec-d8ee-4534-99e7-82b0ecd12d17",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 543,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__hostels__a2a356ec-d8ee-4534-99e7-82b0ecd12d17.png"
+  },
+  {
+    "route": "/dashboard/hostel/leave-passes",
+    "finalPath": "/fr/dashboard/hostel/leave-passes",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 607,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__leave-passes.png"
+  },
+  {
+    "route": "/dashboard/hostel/me",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 450,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__me.png"
+  },
+  {
+    "route": "/dashboard/hostel/policies",
+    "finalPath": "/fr/dashboard/hostel/policies",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 583,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__policies.png"
+  },
+  {
+    "route": "/dashboard/hostel/reports",
+    "finalPath": "/fr/dashboard/hostel/reports",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 545,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__reports.png"
+  },
+  {
+    "route": "/dashboard/hostel/roll-call",
+    "finalPath": "/fr/dashboard/hostel/roll-call",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 503,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__roll-call.png"
+  },
+  {
+    "route": "/dashboard/hostel/rooms",
+    "finalPath": "/fr/dashboard/hostel/rooms",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 633,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__rooms.png"
+  },
+  {
+    "route": "/dashboard/hostel/zones",
+    "finalPath": "/fr/dashboard/hostel/zones",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 538,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__zones.png"
+  }
+]

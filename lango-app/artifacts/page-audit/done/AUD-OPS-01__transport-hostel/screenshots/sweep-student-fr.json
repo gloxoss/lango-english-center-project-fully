@@ -1,0 +1,26 @@
+[
+  {
+    "route": "/dashboard/transport/student",
+    "finalPath": "/fr/dashboard/transport/student",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 169,
+    "failures": [
+      "403 /api/settings/branches"
+    ],
+    "textDefects": [],
+    "file": "student-fr-transport__student.png"
+  },
+  {
+    "route": "/dashboard/hostel/me",
+    "finalPath": "/fr/dashboard/hostel/me",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 159,
+    "failures": [
+      "403 /api/settings/branches"
+    ],
+    "textDefects": [],
+    "file": "student-fr-hostel__me.png"
+  }
+]

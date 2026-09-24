@@ -1,0 +1,32 @@
+[
+  {
+    "route": "/dashboard/hostel",
+    "finalPath": "/fr/dashboard/hostel",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 469,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel.png"
+  },
+  {
+    "route": "/dashboard/hostel/board",
+    "finalPath": "/fr/dashboard/hostel/board",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 648,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__board.png"
+  },
+  {
+    "route": "/dashboard/hostel/leave-passes",
+    "finalPath": "/fr/dashboard/hostel/leave-passes",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 607,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__leave-passes.png"
+  }
+]

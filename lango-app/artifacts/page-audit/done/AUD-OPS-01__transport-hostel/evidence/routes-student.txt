@@ -1,0 +1,2 @@
+/dashboard/transport/student
+/dashboard/hostel/me
