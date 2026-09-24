@@ -1,0 +1,39 @@
+[2026-09-24T20:20:42.956Z] =================================================================
+[2026-09-24T20:20:42.956Z] S-19 MIGRATION SAFETY & LEGACY REPLAY VERIFICATION
+[2026-09-24T20:20:42.957Z] Proving migration 0156 safe historical preservation and idempotency
+[2026-09-24T20:20:42.957Z] =================================================================
+[2026-09-24T20:20:42.957Z] 
+--- Step 1: Isolating test environment ---
+[2026-09-24T20:20:43.018Z] PASS: test_fine_assessments created and empty
+[2026-09-24T20:20:43.018Z] 
+--- Scenario A: Fresh Database Migration ---
+[2026-09-24T20:20:43.030Z] PASS: Migration executed cleanly on empty table. Unique index active.
+[2026-09-24T20:20:43.030Z] 
+--- Scenario B: Existing Database with Normal Fine Assessments ---
+[2026-09-24T20:20:43.056Z] Pre-migration row count in Scenario B: 3
+[2026-09-24T20:20:43.072Z] PASS: Scenario B complete. All 3 records preserved, 0 superseded, index created.
+[2026-09-24T20:20:43.072Z] 
+--- Scenario C: Existing Database with Duplicate Legacy Assessments ---
+[2026-09-24T20:20:43.091Z] Pre-migration row count in Scenario C: 6 (includes 3 duplicates across 2 invoices)
+[2026-09-24T20:20:43.092Z] Running 0156 migration script with historical preservation...
+[2026-09-24T20:20:43.102Z] Post-migration row count in Scenario C: 6
+[2026-09-24T20:20:43.102Z] VERIFIED: Zero financial records were deleted. 100% historical data preserved.
+[2026-09-24T20:20:43.103Z] Row 66666666-6666-6666-6666-666666666666 for invoice inv-other -> superseded_by_id: NULL (active keeper)
+[2026-09-24T20:20:43.103Z] Row 11111111-1111-1111-1111-111111111111 for invoice inv-s19-001 -> superseded_by_id: NULL (active keeper)
+[2026-09-24T20:20:43.103Z] Row 22222222-2222-2222-2222-222222222222 for invoice inv-s19-001 -> superseded_by_id: 11111111-1111-1111-1111-111111111111
+[2026-09-24T20:20:43.103Z] Row 33333333-3333-3333-3333-333333333333 for invoice inv-s19-001 -> superseded_by_id: 11111111-1111-1111-1111-111111111111
+[2026-09-24T20:20:43.103Z] Row 44444444-4444-4444-4444-444444444444 for invoice inv-s19-002 -> superseded_by_id: NULL (active keeper)
+[2026-09-24T20:20:43.103Z] Row 55555555-5555-5555-5555-555555555555 for invoice inv-s19-002 -> superseded_by_id: 44444444-4444-4444-4444-444444444444
+[2026-09-24T20:20:43.103Z] VERIFIED: Linkages between superseded rows and oldest keeper are exact.
+[2026-09-24T20:20:43.103Z] 
+--- Verifying Future Unique Constraint Enforcement ---
+[2026-09-24T20:20:43.105Z] PASS: Future duplicate insert correctly rejected by unique constraint: Failed query: 
+      INSERT INTO test_fine_assessments (tenant_id, student_id, fine_policy_id, invoice_id, amount, assessed_at, assessment_period)
+      VALUES ($1, $2, $3, $4, 50.00, NOW(), '2026-09');
+    
+params: t-s19-test-migration,stu-s19-001,pol-s19-late-fee,inv-s19-001
+[2026-09-24T20:20:43.117Z] 
+--- Test cleanup completed ---
+[2026-09-24T20:20:43.117Z] =================================================================
+[2026-09-24T20:20:43.117Z] ALL S-19 MIGRATION SAFETY SCENARIOS PASSED: 100% HISTORICAL RECORD PRESERVATION
+[2026-09-24T20:20:43.117Z] =================================================================

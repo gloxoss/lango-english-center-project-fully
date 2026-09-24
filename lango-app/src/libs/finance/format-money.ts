@@ -3,7 +3,7 @@
 // to mix "24000 MAD", "146.746,00" and "146 746,00" for the same kind of value.
 // Latin digits and fr-FR grouping are the Moroccan convention on invoices, so
 // the Arabic UI keeps them too.
-const amountFormat = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const amountFormat = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export function formatAmount(value: number | string | null | undefined): string {
   const n = typeof value === 'string' ? Number(value) : value;

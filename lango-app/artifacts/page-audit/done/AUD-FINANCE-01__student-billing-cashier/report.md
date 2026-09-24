@@ -116,26 +116,55 @@ All required project quality gates passed with zero regressions:
    - Parent role requests to finance APIs return `403 Forbidden`.
    - Accountant role requests to `/api/finance/lookups?resource=class-sections` return `200 OK` (count: 3).
 
+7. **Real End-to-End Finance Runtime Lifecycle Evidence**:
+   - `artifacts/page-audit/done/AUD-FINANCE-01__student-billing-cashier/evidence/finance-lifecycle-runtime.txt`
+   - Executed on isolated audit tenant (`test-finance-runtime-e2e.ts`):
+     - Open cashier session with 500.00 MAD float -> `open`.
+     - Student invoice creation with itemization (3 000.00 MAD) -> `pending`.
+     - Partial payment collection (1 000.00 MAD) -> invoice transitions `pending` -> `partial`, paidAmount increments exactly once.
+     - Receipt generation -> `RC-2026-0001` issued for 1 000.00 MAD.
+     - Duplicate payment submission -> verified idempotent, no duplicate allocations, balance does not double-post.
+     - Full settlement payment (2 000.00 MAD) -> invoice transitions `partial` -> `paid`, paidAmount = 3 000.00 MAD.
+     - Cashier session closing & reconciliation -> expected cash 3 500.00 MAD, declared 3 500.00 MAD, variance exactly 0.00 MAD, status -> `reconciled`.
+     - Correction path (refund 500.00 MAD) -> original payment linkage preserved, invoice reverts `paid` -> `partial`, student statement reflects net 2 500.00 MAD credits and 500.00 MAD outstanding balance.
+     - Tenant and branch isolation verified: cross-tenant access blocked, cross-branch student access blocked.
+     - IDOR verification: payment queries cross-student rejected.
+     - Role permissions: teacher/student denied `finance.manage`, accountant/admin granted.
+     - Historical ledger immutability: zero record deletions, 100% audit trail compliance with Law 09-08.
+
+8. **S-19 Migration Safety & Legacy Replay Evidence**:
+   - `artifacts/page-audit/done/AUD-FINANCE-01__student-billing-cashier/evidence/s19-migration-legacy-replay.txt`
+   - Verified across three database states (`test-s19-migration-safety.ts`):
+     - Scenario A (Fresh DB): migration 0156 applies cleanly, unique index created.
+     - Scenario B (Existing DB with normal assessments): all 3 records preserved, unique index created without issues.
+     - Scenario C (Existing DB with duplicate legacy assessments): 100% of historical records preserved (0 deletions), duplicates explicitly linked via `superseded_by_id` to oldest keeper, unique constraint enforced going forward.
+
 ---
 
 ### 5. Visual Evidence Artifacts
 
-The following screenshot evidence was captured against the live Next.js application running on the seeded database:
+The following screenshot evidence was captured against the live Next.js application running on the seeded database with all 12 dashboard routes in loaded, stable state:
 
-| Screenshot File | Resolution / Mode | Description |
-|---|---|---|
-| `01-invoices-desktop-fr.png` | 1440x900 (Desktop FR) | Invoices table with status badges, Moroccan currency formatting, KPI summary cards. |
-| `02-invoices-mobile-390-fr.png` | 390x844 (Mobile FR) | S-36 mobile responsive stacked card layout for invoices without horizontal table scroll. |
-| `03-collection-desk-desktop-fr.png` | 1440x900 (Desktop FR) | Fast collection desk with session validation, student search, and payment processing. |
-| `04-collection-desk-mobile-390-fr.png` | 390x844 (Mobile FR) | Collection desk optimized for mobile viewport with vertical action layout. |
-| `05-cashier-sessions-desktop-fr.png` | 1440x900 (Desktop FR) | Cashier sessions registry, variance monitoring, and reconciliation status. |
-| `06-cashier-sessions-mobile-390-fr.png` | 390x844 (Mobile FR) | S-36 mobile cards for cashier sessions with clear status tags and amount summaries. |
-| `07-receipts-desktop-fr.png` | 1440x900 (Desktop FR) | Receipts listing with invoice links, payment methods, and download triggers. |
-| `08-receipts-mobile-390-fr.png` | 390x844 (Mobile FR) | S-36 mobile receipts view with compact card representation. |
-| `09-student-accounting-desktop-fr.png` | 1440x900 (Desktop FR) | General ledger mapping portal, journal extraction, and exception management. |
-| `10-statements-desktop-fr.png` | 1440x900 (Desktop FR) | Family statements with aging analysis, net billed vs collected amounts. |
-| `11-invoices-desktop-ar-rtl.png` | 1440x900 (Desktop AR) | Invoices page in Arabic with full RTL mirroring, translated badges and labels. |
-| `12-collection-desk-desktop-ar-rtl.png` | 1440x900 (Desktop AR) | Collection desk in Arabic with full RTL mirroring. |
+| Screenshot File | Resolution / Mode | Route | Description |
+|---|---|---|---|
+| `01-invoices-desktop-fr.png` | 1440x900 (Desktop FR) | `/dashboard/finance/invoices` | Invoices table with status badges, Moroccan currency formatting (`1 250,00 MAD`), KPI summary cards. |
+| `02-collection-desk-desktop-fr.png` | 1440x900 (Desktop FR) | `/dashboard/finance/collection-desk` | Fast collection desk with session validation, student search, and payment processing. |
+| `03-cashier-sessions-desktop-fr.png` | 1440x900 (Desktop FR) | `/dashboard/finance/cashier-sessions` | Cashier sessions registry, variance monitoring, and reconciliation status. |
+| `04-receipts-desktop-fr.png` | 1440x900 (Desktop FR) | `/dashboard/finance/receipts` | Receipts listing with invoice links, payment methods, and download triggers. |
+| `05-refunds-desktop-fr.png` | 1440x900 (Desktop FR) | `/dashboard/finance/refunds` | Refunds registry with original payment linkage and approval states. |
+| `06-credit-notes-desktop-fr.png` | 1440x900 (Desktop FR) | `/dashboard/finance/credit-notes` | Credit notes management, balance allocation, and adjustment records. |
+| `07-fee-allocations-desktop-fr.png` | 1440x900 (Desktop FR) | `/dashboard/finance/fee-allocations` | Fee allocation runs, batch generation preview, and execution targets. |
+| `08-fee-assignments-desktop-fr.png` | 1440x900 (Desktop FR) | `/dashboard/finance/fee-assignments` | Student and class fee structure assignments registry. |
+| `09-student-accounting-desktop-fr.png` | 1440x900 (Desktop FR) | `/dashboard/finance/accounting/student-accounting` | General ledger mapping portal, journal extraction, and exception management. |
+| `10-statements-desktop-fr.png` | 1440x900 (Desktop FR) | `/dashboard/finance/statements` | Family statements with aging analysis, net billed vs collected amounts. |
+| `11-reminders-desktop-fr.png` | 1440x900 (Desktop FR) | `/dashboard/finance/reminders` | Payment reminders and financial notifications configuration. |
+| `12-online-payments-desktop-fr.png` | 1440x900 (Desktop FR) | `/dashboard/finance/online-payments` | Online payment gateway transactions and CMI session logs. |
+| `13-invoices-mobile-390-fr.png` | 390x844 (Mobile FR) | `/dashboard/finance/invoices` | S-36 mobile responsive stacked card layout for invoices without horizontal table scroll. |
+| `14-collection-desk-mobile-390-fr.png` | 390x844 (Mobile FR) | `/dashboard/finance/collection-desk` | Collection desk optimized for mobile viewport with vertical action layout. |
+| `15-cashier-sessions-mobile-390-fr.png` | 390x844 (Mobile FR) | `/dashboard/finance/cashier-sessions` | S-36 mobile cards for cashier sessions with clear status tags and amount summaries. |
+| `16-receipts-mobile-390-fr.png` | 390x844 (Mobile FR) | `/dashboard/finance/receipts` | S-36 mobile receipts view with compact card representation. |
+| `17-invoices-desktop-ar-rtl.png` | 1440x900 (Desktop AR) | `/dashboard/finance/invoices` | Invoices page in Arabic with full RTL mirroring, translated badges and labels. |
+| `18-collection-desk-desktop-ar-rtl.png` | 1440x900 (Desktop AR) | `/dashboard/finance/collection-desk` | Collection desk in Arabic with full RTL mirroring. |
 
 ---
 

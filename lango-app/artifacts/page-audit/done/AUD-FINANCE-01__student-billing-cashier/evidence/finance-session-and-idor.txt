@@ -1,39 +1,46 @@
-[2026-09-24T20:03:00.416Z] Starting AUD-FINANCE-01 evidence runner against http://localhost:3111
-[2026-09-24T20:03:00.491Z] --- Starting Admin Desktop Captures ---
-[2026-09-24T20:03:04.727Z] Already captured: 01-invoices-desktop-fr.png (122275 bytes)
-[2026-09-24T20:03:04.728Z] Already captured: 03-collection-desk-desktop-fr.png (101242 bytes)
-[2026-09-24T20:03:04.728Z] Already captured: 05-cashier-sessions-desktop-fr.png (47834 bytes)
-[2026-09-24T20:03:04.728Z] Already captured: 07-receipts-desktop-fr.png (80507 bytes)
-[2026-09-24T20:03:04.728Z] Already captured: 09-student-accounting-desktop-fr.png (53557 bytes)
-[2026-09-24T20:03:04.729Z] Already captured: 10-statements-desktop-fr.png (72322 bytes)
-[2026-09-24T20:03:04.729Z] --- Starting Admin Mobile (390px) Captures ---
-[2026-09-24T20:03:08.943Z] Already captured: 02-invoices-mobile-390-fr.png (78009 bytes)
-[2026-09-24T20:03:08.944Z] Already captured: 04-collection-desk-mobile-390-fr.png (49008 bytes)
-[2026-09-24T20:03:08.944Z] Already captured: 06-cashier-sessions-mobile-390-fr.png (33494 bytes)
-[2026-09-24T20:03:08.944Z] Already captured: 08-receipts-mobile-390-fr.png (25824 bytes)
-[2026-09-24T20:03:08.944Z] --- Starting Admin Arabic RTL Captures ---
-[2026-09-24T20:03:11.359Z] Already captured: 11-invoices-desktop-ar-rtl.png (96083 bytes)
-[2026-09-24T20:03:11.359Z] Already captured: 12-collection-desk-desktop-ar-rtl.png (56549 bytes)
-[2026-09-24T20:03:11.359Z] --- Testing Accountant Role Access ---
-[2026-09-24T20:03:18.891Z] Accountant Collection Desk loaded: Heading="School
+[2026-09-24T20:35:46.521Z] Starting AUD-FINANCE-01 evidence runner against http://localhost:3111
+[2026-09-24T20:35:46.687Z] --- Starting Admin Desktop FR Captures (12/12 Audited Finance Routes) ---
+[2026-09-24T20:36:05.563Z] Already captured valid shot: 01-invoices-desktop-fr.png (126160 bytes)
+[2026-09-24T20:36:05.566Z] Already captured valid shot: 02-collection-desk-desktop-fr.png (101738 bytes)
+[2026-09-24T20:36:05.568Z] Already captured valid shot: 03-cashier-sessions-desktop-fr.png (85518 bytes)
+[2026-09-24T20:36:05.569Z] Already captured valid shot: 04-receipts-desktop-fr.png (41459 bytes)
+[2026-09-24T20:36:05.569Z] Already captured valid shot: 05-refunds-desktop-fr.png (73204 bytes)
+[2026-09-24T20:36:05.570Z] Already captured valid shot: 06-credit-notes-desktop-fr.png (72937 bytes)
+[2026-09-24T20:36:05.570Z] Navigating to /fr/dashboard/finance/fee-allocations for 07-fee-allocations-desktop-fr.png...
+[2026-09-24T20:36:53.074Z] Captured: 07-fee-allocations-desktop-fr.png (49015 bytes, Title: "SchoolOS — Moroccan School Management Platform", Heading: "School OS")
+[2026-09-24T20:36:53.075Z] Already captured valid shot: 08-fee-assignments-desktop-fr.png (44837 bytes)
+[2026-09-24T20:36:53.076Z] Already captured valid shot: 09-student-accounting-desktop-fr.png (51078 bytes)
+[2026-09-24T20:36:53.076Z] Already captured valid shot: 10-statements-desktop-fr.png (72322 bytes)
+[2026-09-24T20:36:53.077Z] Already captured valid shot: 11-reminders-desktop-fr.png (31879 bytes)
+[2026-09-24T20:36:53.078Z] Already captured valid shot: 12-online-payments-desktop-fr.png (52999 bytes)
+[2026-09-24T20:36:53.078Z] --- Starting Admin Mobile (390px) Captures ---
+[2026-09-24T20:37:37.517Z] Already captured valid shot: 13-invoices-mobile-390-fr.png (41511 bytes)
+[2026-09-24T20:37:37.517Z] Already captured valid shot: 14-collection-desk-mobile-390-fr.png (49419 bytes)
+[2026-09-24T20:37:37.518Z] Already captured valid shot: 15-cashier-sessions-mobile-390-fr.png (31550 bytes)
+[2026-09-24T20:37:37.518Z] Already captured valid shot: 16-receipts-mobile-390-fr.png (26368 bytes)
+[2026-09-24T20:37:37.518Z] --- Starting Admin Arabic RTL Captures ---
+[2026-09-24T20:37:48.774Z] Already captured valid shot: 17-invoices-desktop-ar-rtl.png (49430 bytes)
+[2026-09-24T20:37:48.775Z] Already captured valid shot: 18-collection-desk-desktop-ar-rtl.png (50065 bytes)
+[2026-09-24T20:37:48.775Z] --- Testing Accountant Role Access ---
+[2026-09-24T20:38:30.883Z] Accountant Collection Desk loaded: Heading="School
 OS"
-[2026-09-24T20:03:21.086Z] Accountant class-sections lookup via /api/finance/lookups: status=200, count=3
-[2026-09-24T20:03:21.086Z] --- Testing IDOR & Role Boundary Assertions ---
-[2026-09-24T20:03:21.351Z] UNAUTH GET /api/finance/invoices -> status 401 PASS (401 Unauthorized)
-[2026-09-24T20:03:25.436Z] UNAUTH GET /api/finance/cashier-sessions -> status 401 PASS (401 Unauthorized)
-[2026-09-24T20:03:25.580Z] UNAUTH GET /api/finance/receipts -> status 401 PASS (401 Unauthorized)
-[2026-09-24T20:03:30.014Z] UNAUTH GET /api/finance/fee-allocations -> status 401 PASS (401 Unauthorized)
-[2026-09-24T20:03:32.724Z] UNAUTH GET /api/finance/refunds -> status 401 PASS (401 Unauthorized)
-[2026-09-24T20:03:35.662Z] UNAUTH GET /api/finance/credit-notes -> status 401 PASS (401 Unauthorized)
-[2026-09-24T20:03:38.948Z] UNAUTH GET /api/finance/accounting/student-accounting/mappings -> status 401 PASS (401 Unauthorized)
-[2026-09-24T20:03:38.948Z] Testing Student Role Access Refusal:
-[2026-09-24T20:03:45.893Z] STUDENT GET /api/finance/invoices -> status 403 PASS (403 Forbidden)
-[2026-09-24T20:03:46.007Z] STUDENT GET /api/finance/cashier-sessions -> status 403 PASS (403 Forbidden)
-[2026-09-24T20:03:46.093Z] STUDENT GET /api/finance/receipts -> status 403 PASS (403 Forbidden)
-[2026-09-24T20:03:46.178Z] STUDENT GET /api/finance/fee-allocations -> status 403 PASS (403 Forbidden)
-[2026-09-24T20:03:46.179Z] Testing Parent Role Access Refusal:
-[2026-09-24T20:04:00.520Z] PARENT GET /api/finance/invoices -> status 403 PASS (403 Forbidden)
-[2026-09-24T20:04:00.653Z] PARENT GET /api/finance/cashier-sessions -> status 403 PASS (403 Forbidden)
-[2026-09-24T20:04:00.734Z] PARENT GET /api/finance/receipts -> status 403 PASS (403 Forbidden)
-[2026-09-24T20:04:00.783Z] PARENT GET /api/finance/fee-allocations -> status 403 PASS (403 Forbidden)
-[2026-09-24T20:04:03.364Z] --- All tests and captures completed successfully! ---
+[2026-09-24T20:38:31.361Z] Accountant class-sections lookup via /api/finance/lookups: status=200, count=3
+[2026-09-24T20:38:31.361Z] --- Testing IDOR & Role Boundary Assertions ---
+[2026-09-24T20:38:31.475Z] UNAUTH GET /api/finance/invoices -> status 401 PASS (401 Unauthorized)
+[2026-09-24T20:38:31.492Z] UNAUTH GET /api/finance/cashier-sessions -> status 401 PASS (401 Unauthorized)
+[2026-09-24T20:38:31.512Z] UNAUTH GET /api/finance/receipts -> status 401 PASS (401 Unauthorized)
+[2026-09-24T20:38:31.530Z] UNAUTH GET /api/finance/fee-allocations -> status 401 PASS (401 Unauthorized)
+[2026-09-24T20:38:36.381Z] UNAUTH GET /api/finance/refunds -> status 401 PASS (401 Unauthorized)
+[2026-09-24T20:38:44.077Z] UNAUTH GET /api/finance/credit-notes -> status 401 PASS (401 Unauthorized)
+[2026-09-24T20:38:44.362Z] UNAUTH GET /api/finance/accounting/student-accounting/mappings -> status 401 PASS (401 Unauthorized)
+[2026-09-24T20:38:44.362Z] Testing Student Role Access Refusal:
+[2026-09-24T20:38:48.954Z] STUDENT GET /api/finance/invoices -> status 403 PASS (403 Forbidden)
+[2026-09-24T20:38:49.098Z] STUDENT GET /api/finance/cashier-sessions -> status 403 PASS (403 Forbidden)
+[2026-09-24T20:38:49.264Z] STUDENT GET /api/finance/receipts -> status 403 PASS (403 Forbidden)
+[2026-09-24T20:38:49.468Z] STUDENT GET /api/finance/fee-allocations -> status 403 PASS (403 Forbidden)
+[2026-09-24T20:38:49.468Z] Testing Parent Role Access Refusal:
+[2026-09-24T20:38:58.458Z] PARENT GET /api/finance/invoices -> status 403 PASS (403 Forbidden)
+[2026-09-24T20:38:58.617Z] PARENT GET /api/finance/cashier-sessions -> status 403 PASS (403 Forbidden)
+[2026-09-24T20:38:58.763Z] PARENT GET /api/finance/receipts -> status 403 PASS (403 Forbidden)
+[2026-09-24T20:38:58.828Z] PARENT GET /api/finance/fee-allocations -> status 403 PASS (403 Forbidden)
+[2026-09-24T20:39:01.363Z] --- All tests and captures completed successfully! ---

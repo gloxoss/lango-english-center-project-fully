@@ -52,21 +52,51 @@ async function createAuthContext(email, password, { viewport = { width: 1440, he
 
 async function captureShot(page, route, filename, waitMs = 2500) {
   const shotPath = path.join(SHOTS_DIR, filename);
-  if (fs.existsSync(shotPath) && fs.statSync(shotPath).size > 1000) {
-    log(`Already captured: ${filename} (${fs.statSync(shotPath).size} bytes)`);
-    return;
-  }
   log(`Navigating to ${route} for ${filename}...`);
-  await page.goto(`${BASE}${route}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-  await page.waitForTimeout(waitMs);
-  await page.screenshot({ path: shotPath, fullPage: true });
-  const title = await page.title();
-  const heading = await page.locator('h1, h2').first().innerText().catch(() => '(no heading)');
-  log(`Captured: ${filename} (Title: "${title}", Heading: "${heading.replace(/\s+/g, ' ')}")`);
+  try {
+    await page.goto(`${BASE}${route}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+    
+    // Wait until loading shells ("Chargement...", spinners) disappear
+    await page.waitForFunction(() => {
+      const text = document.body.innerText;
+      return !text.includes('Chargement…') && !text.includes('Chargement...');
+    }, { timeout: 15000 }).catch(() => {});
+
+    // Wait for main content and h1
+    await page.waitForSelector('main', { timeout: 15000 }).catch(() => {});
+    await page.waitForSelector('h1', { timeout: 15000 }).catch(() => {});
+
+    // Wait until pulse skeletons disappear
+    await page.waitForFunction(() => !document.querySelector('.animate-pulse'), { timeout: 10000 }).catch(() => {});
+
+    // Hide Next.js dev overlay badges
+    await page.addStyleTag({
+      content: 'nextjs-portal, #__next-build-watcher, [data-nextjs-toast], nextjs-portal * { display: none !important; opacity: 0 !important; pointer-events: none !important; }'
+    }).catch(() => {});
+
+    await page.waitForTimeout(waitMs);
+
+    await page.screenshot({ path: shotPath, fullPage: true });
+    const title = await page.title();
+    const heading = await page.locator('h1, h2').first().innerText().catch(() => '(no heading)');
+    const size = fs.statSync(shotPath).size;
+    log(`Captured: ${filename} (${size} bytes, Title: "${title}", Heading: "${heading.replace(/\s+/g, ' ')}")`);
+  } catch (err) {
+    log(`Warning on ${filename}: ${err.message}. Retrying...`);
+    await page.waitForTimeout(2000);
+    await page.goto(`${BASE}${route}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.addStyleTag({
+      content: 'nextjs-portal, #__next-build-watcher, [data-nextjs-toast], nextjs-portal * { display: none !important; opacity: 0 !important; pointer-events: none !important; }'
+    }).catch(() => {});
+    await page.waitForTimeout(waitMs);
+    await page.screenshot({ path: shotPath, fullPage: true });
+    log(`Captured on retry: ${filename} (${fs.statSync(shotPath).size} bytes)`);
+  }
 }
 
-// 1. Desktop captures as school_admin (1440x900, fr)
-log('--- Starting Admin Desktop Captures ---');
+// 1. Desktop FR captures for all 12 audited Finance routes as school_admin (1440x900, fr)
+log('--- Starting Admin Desktop FR Captures (12/12 Audited Finance Routes) ---');
 const { ctx: adminCtx, page: adminDesktop } = await createAuthContext('y.elamrani@atlas.ma', PASSWORD, {
   viewport: { width: 1440, height: 900 },
   locale: 'fr-FR',
@@ -76,12 +106,41 @@ const { ctx: adminCtx, page: adminDesktop } = await createAuthContext('y.elamran
 await adminDesktop.goto(`${BASE}/fr/dashboard/finance/invoices`, { waitUntil: 'domcontentloaded', timeout: 60000 });
 await adminDesktop.waitForTimeout(2000);
 
+// Route 1: Invoices
 await captureShot(adminDesktop, '/fr/dashboard/finance/invoices', '01-invoices-desktop-fr.png');
-await captureShot(adminDesktop, '/fr/dashboard/finance/collection-desk', '03-collection-desk-desktop-fr.png');
-await captureShot(adminDesktop, '/fr/dashboard/finance/cashier-sessions', '05-cashier-sessions-desktop-fr.png');
-await captureShot(adminDesktop, '/fr/dashboard/finance/receipts', '07-receipts-desktop-fr.png');
+
+// Route 2: Fast Collection Desk
+await captureShot(adminDesktop, '/fr/dashboard/finance/collection-desk', '02-collection-desk-desktop-fr.png');
+
+// Route 3: Cashier Sessions
+await captureShot(adminDesktop, '/fr/dashboard/finance/cashier-sessions', '03-cashier-sessions-desktop-fr.png');
+
+// Route 4: Receipts
+await captureShot(adminDesktop, '/fr/dashboard/finance/receipts', '04-receipts-desktop-fr.png');
+
+// Route 5: Refunds
+await captureShot(adminDesktop, '/fr/dashboard/finance/refunds', '05-refunds-desktop-fr.png');
+
+// Route 6: Credit Notes
+await captureShot(adminDesktop, '/fr/dashboard/finance/credit-notes', '06-credit-notes-desktop-fr.png');
+
+// Route 7: Fee Allocations
+await captureShot(adminDesktop, '/fr/dashboard/finance/allocations', '07-fee-allocations-desktop-fr.png');
+
+// Route 8: Fee Assignments
+await captureShot(adminDesktop, '/fr/dashboard/finance/fee-assignments', '08-fee-assignments-desktop-fr.png');
+
+// Route 9: Student Accounting Portal (Plan Comptable / GL)
 await captureShot(adminDesktop, '/fr/dashboard/finance/accounting/student-accounting', '09-student-accounting-desktop-fr.png');
+
+// Route 10: Statements
 await captureShot(adminDesktop, '/fr/dashboard/finance/statements', '10-statements-desktop-fr.png');
+
+// Route 11: Reminders & Statements
+await captureShot(adminDesktop, '/fr/dashboard/finance/reminders', '11-reminders-desktop-fr.png');
+
+// Route 12: Online Payments
+await captureShot(adminDesktop, '/fr/dashboard/finance/online-payments', '12-online-payments-desktop-fr.png');
 
 // 2. Mobile captures as school_admin (390x844 iPhone 13/14/15 size, fr)
 log('--- Starting Admin Mobile (390px) Captures ---');
@@ -90,10 +149,10 @@ const { page: adminMobile } = await createAuthContext('y.elamrani@atlas.ma', PAS
   locale: 'fr-FR',
 });
 
-await captureShot(adminMobile, '/fr/dashboard/finance/invoices', '02-invoices-mobile-390-fr.png');
-await captureShot(adminMobile, '/fr/dashboard/finance/collection-desk', '04-collection-desk-mobile-390-fr.png');
-await captureShot(adminMobile, '/fr/dashboard/finance/cashier-sessions', '06-cashier-sessions-mobile-390-fr.png');
-await captureShot(adminMobile, '/fr/dashboard/finance/receipts', '08-receipts-mobile-390-fr.png');
+await captureShot(adminMobile, '/fr/dashboard/finance/invoices', '13-invoices-mobile-390-fr.png');
+await captureShot(adminMobile, '/fr/dashboard/finance/collection-desk', '14-collection-desk-mobile-390-fr.png');
+await captureShot(adminMobile, '/fr/dashboard/finance/cashier-sessions', '15-cashier-sessions-mobile-390-fr.png');
+await captureShot(adminMobile, '/fr/dashboard/finance/receipts', '16-receipts-mobile-390-fr.png');
 
 // 3. Arabic RTL captures as school_admin (1440x900, ar)
 log('--- Starting Admin Arabic RTL Captures ---');
@@ -102,8 +161,8 @@ const { page: adminAr } = await createAuthContext('y.elamrani@atlas.ma', PASSWOR
   locale: 'ar-MA',
 });
 
-await captureShot(adminAr, '/ar/dashboard/finance/invoices', '11-invoices-desktop-ar-rtl.png');
-await captureShot(adminAr, '/ar/dashboard/finance/collection-desk', '12-collection-desk-desktop-ar-rtl.png');
+await captureShot(adminAr, '/ar/dashboard/finance/invoices', '17-invoices-desktop-ar-rtl.png');
+await captureShot(adminAr, '/ar/dashboard/finance/collection-desk', '18-collection-desk-desktop-ar-rtl.png');
 
 // 4. Accountant Verification
 log('--- Testing Accountant Role Access ---');
