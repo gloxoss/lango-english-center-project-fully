@@ -1,0 +1,132 @@
+[
+  {
+    "route": "/",
+    "finalPath": "/fr",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 783,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-__.png"
+  },
+  {
+    "route": "/atlas",
+    "finalPath": "/fr/atlas",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 61,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-__atlas.png"
+  },
+  {
+    "route": "/atlas/about",
+    "finalPath": "/fr/atlas/about",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 60,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-__atlas__about.png"
+  },
+  {
+    "route": "/atlas/contact",
+    "finalPath": "/fr/atlas/contact",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 61,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-__atlas__contact.png"
+  },
+  {
+    "route": "/atlas/events",
+    "finalPath": "/fr/atlas/events",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 61,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-__atlas__events.png"
+  },
+  {
+    "route": "/atlas/faq",
+    "finalPath": "/fr/atlas/faq",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 61,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-__atlas__faq.png"
+  },
+  {
+    "route": "/atlas/gallery",
+    "finalPath": "/fr/atlas/gallery",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 61,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-__atlas__gallery.png"
+  },
+  {
+    "route": "/atlas/news",
+    "finalPath": "/fr/atlas/news",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 65,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-__atlas__news.png"
+  },
+  {
+    "route": "/atlas/news/aucun-article-cet-slug",
+    "finalPath": "/fr/atlas/news/aucun-article-cet-slug",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 41,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-__atlas__news__aucun-article-cet-slug.png"
+  },
+  {
+    "route": "/atlas/services",
+    "finalPath": "/fr/atlas/services",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 61,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-__atlas__services.png"
+  },
+  {
+    "route": "/verify-document",
+    "finalPath": "/fr/verify-document",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 51,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-__verify-document.png"
+  },
+  {
+    "route": "/verify/card/jeton-invalide-demo",
+    "finalPath": "/fr/verify/card/jeton-invalide-demo",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 61,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-__verify__card__jeton-invalide-demo.png"
+  },
+  {
+    "route": "/verify/certificate/jeton-invalide-demo",
+    "finalPath": "/fr/verify/certificate/jeton-invalide-demo",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 60,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-__verify__certificate__jeton-invalide-demo.png"
+  }
+]
