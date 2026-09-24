@@ -1,73 +1,69 @@
-# Migration Order & Database Safety Audit — REL-INTEGRATION-01
-**Target Base:** `origin/student-directory-hardening` (`f42c2bc4`)  
-**Base Migration Count:** 157 migrations (`0000_...` through `0155_attendance_rate_nullable.sql`)  
+# REL-INTEGRATION-01: Database Migration Execution Order
+
 **Generated:** 2026-09-24T23:55:00Z  
+**Release Base:** `origin/student-directory-hardening` (`f42c2bc`)  
+**Auditor:** Agent B (REL-INTEGRATION-01 Replacement Executor)
 
 ---
 
-## 1. Migration Inventory Across All 24 Campaigns
+## 1. Migration Inventory
+Across all 24 inventoried campaign branches, exactly **one campaign** introduces database migration files:
+- **Campaign**: `AUD-FINANCE-01` (`origin/audit/agent-a/AUD-FINANCE-01-student-billing-cashier`)
+- **Commit SHA**: `85f057148e59e5ee956e5d30cbec0eba43fd3773`
+- **Migration SQL**: `lango-app/migrations/0156_fine_assessment_unique.sql`
+- **Metadata Journal**: `lango-app/migrations/meta/_journal.json`
 
-Across all 24 campaigns examined, **exactly 1 campaign** introduces new schema migrations: **`AUD-FINANCE-01`**. All other 23 campaigns contain purely application-layer, API-layer, and UI-layer changes with zero database schema migrations.
-
-| Campaign ID | Branch | Migration File | Journal Entry | Numbering Collision | Safety Rating |
-|---|---|---|---|---|---|
-| **AUD-FINANCE-01** | `origin/audit/agent-a/AUD-FINANCE-01-student-billing-cashier` | `lango-app/migrations/0156_fine_assessment_unique.sql` | `tag: "0156_fine_assessment_unique"`, idx: 156 | **None (Next in sequence: 0155 -> 0156)** | **100% Safe (Non-destructive, Replay-safe)** |
-
----
-
-## 2. In-Depth Analysis of Migration 0156 (`0156_fine_assessment_unique.sql`)
-
-### 2.1 Purpose & S-19 Historical Preservation
-Migration 0156 resolves issue **S-19** (Fine assessment duplicate billing and race prevention).
-A naive implementation would delete duplicate historical assessments or wipe unlinked duplicates, destroying audit trails.
-Migration 0156 adheres strictly to SchoolOS Data Preservation Invariants:
-1. **Zero Deletions:** No `DELETE FROM fine_assessments` is executed.
-2. **Historical Duplicates Linked:** Adds `superseded_by_id uuid` and `superseded_at timestamp`.
-3. **Deterministic Keeper Selection:**
-   ```sql
-   WITH ranked AS (
-     SELECT "id",
-            FIRST_VALUE("id") OVER (PARTITION BY "tenant_id", "invoice_id", "fine_policy_id"
-              ORDER BY "assessed_at", "id") AS keeper_id,
-            ROW_NUMBER() OVER (PARTITION BY "tenant_id", "invoice_id", "fine_policy_id"
-              ORDER BY "assessed_at", "id") AS row_number
-     FROM "fine_assessments"
-     WHERE "invoice_id" IS NOT NULL
-   )
-   UPDATE "fine_assessments" AS assessment
-   SET "superseded_by_id" = ranked.keeper_id,
-       "superseded_at" = now()
-   FROM ranked
-   WHERE assessment."id" = ranked."id"
-     AND ranked.row_number > 1
-     AND assessment."superseded_by_id" IS NULL;
-   ```
-4. **Partial Unique Index:**
-   ```sql
-   CREATE UNIQUE INDEX IF NOT EXISTS "fine_assessments_invoice_policy_unique"
-     ON "fine_assessments" ("tenant_id", "invoice_id", "fine_policy_id")
-     WHERE "invoice_id" IS NOT NULL AND "superseded_by_id" IS NULL;
-   ```
-   This allows historical superseded records to remain untouched while strictly prohibiting future un-superseded duplicate assessments on the same invoice.
-5. **Foreign Key Integrity:**
-   Enforces `invoice_items_fine_assessment_fk` with `ON DELETE RESTRICT` inside an idempotent `DO $$ BEGIN ... END $$;` block.
-
-### 2.2 Replay Safety & Idempotency
-- Uses `ADD COLUMN IF NOT EXISTS` for all three added columns.
-- Uses `DROP INDEX IF EXISTS` prior to recreating index.
-- Uses `CREATE UNIQUE INDEX IF NOT EXISTS`.
-- Uses defensive `IF NOT EXISTS (SELECT 1 FROM pg_constraint ...)` before adding foreign keys.
-- Safe to run repeatedly against development, staging, or production databases without error.
+All other 23 branches contain **zero database migration files**.
 
 ---
 
-## 3. Required Execution Sequence
+## 2. Base & Target Sequence State
 
-1. **Pre-requisite:** Database must be at baseline `0155_attendance_rate_nullable.sql` (standard target base level).
-2. **Execution Timing:** Apply migration `0156_fine_assessment_unique.sql` simultaneously with the integration of `AUD-FINANCE-01` (Step 16 in the master integration order).
-3. **Verification Command:**
+| Step | Index | Tag | Origin / Branch | Status |
+|---|---|---|---|---|
+| Prior Base Top | `idx: 156` | `0155_attendance_rate_nullable` | `origin/student-directory-hardening` | **APPLIED IN BASE** |
+| **Next In Sequence** | **`idx: 157`** | **`0156_fine_assessment_unique`** | **`origin/audit/agent-a/AUD-FINANCE-01...`** | **PENDING EXECUTION** |
+
+---
+
+## 3. Migration Safety & Compliance Audit
+
+### 3.1 Numbering & Collision Check
+- **Base Top:** `0155`
+- **Pending Migration:** `0156`
+- **Numbering Collision:** **NONE**. Tag `0156` is strictly sequential. No other branch claims or creates tag `0156`.
+
+### 3.2 S-19 Historical Preservation Invariant
+- Finding S-19 forbids deleting historical duplicate fine assessments.
+- **Implementation Audit:**
+  - `ALTER TABLE "fine_assessments" ADD COLUMN IF NOT EXISTS "superseded_by_id" uuid;`
+  - `ALTER TABLE "fine_assessments" ADD COLUMN IF NOT EXISTS "superseded_at" timestamp;`
+  - An idempotent window function identifies duplicates partitioned by `(tenant_id, invoice_id, fine_policy_id)` and updates `superseded_by_id` to point to the earliest assessment ID.
+  - Future uniqueness is enforced via a partial unique index:
+    ```sql
+    CREATE UNIQUE INDEX IF NOT EXISTS "fine_assessments_invoice_policy_unique"
+      ON "fine_assessments" ("tenant_id", "invoice_id", "fine_policy_id")
+      WHERE "invoice_id" IS NOT NULL AND "superseded_by_id" IS NULL;
+    ```
+- **Destructive Changes:** **0 DELETIONS, 0 DROPS**. Complete historical data is preserved.
+
+### 3.3 Replay Safety
+- Uses `IF NOT EXISTS` for all column additions, index creations, and foreign key constraints.
+- The window update applies only `WHERE assessment."superseded_by_id" IS NULL`, preventing churn on re-execution.
+- Fully replay-safe in staging and production CI environments.
+
+---
+
+## 4. Required Execution Order
+
+When integrating `AUD-FINANCE-01` into the release branch:
+1. Ensure the database has applied through `0155_attendance_rate_nullable`.
+2. Apply `0156_fine_assessment_unique.sql`:
    ```bash
-   cd lango-app && npm run db:migrate
-   # Run fine run idempotency verification:
-   npx vitest run src/features/finance/__tests__/payment-idempotency.test.ts
+   npm run db:migrate
    ```
+3. Verify index creation and foreign key linkage:
+   ```sql
+   SELECT indexname FROM pg_indexes WHERE tablename = 'fine_assessments' AND indexname = 'fine_assessments_invoice_policy_unique';
+   ```
+4. Verify historical fine assessment records retain `superseded_by_id` provenance linkage without record loss.

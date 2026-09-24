@@ -1,0 +1,307 @@
+[
+  {
+    "id": "AUD-PARENT-01",
+    "branch": "origin/audit/agent-a/AUD-PARENT-01-parent-portal",
+    "headSha": "8f7d9801cf6cc9a20121bb483cb63134690eefac",
+    "reportsCount": 1,
+    "reports": [
+      "lango-app/artifacts/page-audit/done/AUD-PARENT-01__parent-portal/report.md"
+    ],
+    "screenshotsCount": 37,
+    "diffFilesCount": 17,
+    "testFilesCount": 0,
+    "testFiles": [],
+    "migrationFiles": [],
+    "verifiedInChangelog": false,
+    "changelogNote": "NONE"
+  },
+  {
+    "id": "AUD-OPS-01",
+    "branch": "origin/audit/agent-c/AUD-OPS-01-transport-hostel",
+    "headSha": "c44d20f768c77eadb77363a9263fdf7f207ba8c1",
+    "reportsCount": 1,
+    "reports": [
+      "lango-app/artifacts/page-audit/done/AUD-OPS-01__transport-hostel/report.md"
+    ],
+    "screenshotsCount": 64,
+    "diffFilesCount": 64,
+    "testFilesCount": 2,
+    "testFiles": [
+      "lango-app/src/features/hostel/__tests__/hostel-audit.test.ts",
+      "lango-app/src/features/hostel/__tests__/hostel-date-boundaries.test.ts"
+    ],
+    "migrationFiles": [],
+    "verifiedInChangelog": false,
+    "changelogNote": "NONE"
+  },
+  {
+    "id": "AUD-COMMS-01",
+    "branch": "origin/audit/agent-c/AUD-COMMS-01-communication-documents",
+    "headSha": "f8bee5f16182fcf768afb516c0997d735fa7825d",
+    "reportsCount": 1,
+    "reports": [
+      "lango-app/artifacts/page-audit/done/AUD-COMMS-01__communication-documents/report.md"
+    ],
+    "screenshotsCount": 65,
+    "diffFilesCount": 52,
+    "testFilesCount": 1,
+    "testFiles": [
+      "lango-app/src/features/broadcast/__tests__/delivery-truth.test.ts"
+    ],
+    "migrationFiles": [],
+    "verifiedInChangelog": false,
+    "changelogNote": "NONE"
+  },
+  {
+    "id": "AUD-STUDENT-01",
+    "branch": "origin/audit/agent-a/AUD-STUDENT-01-student-portal",
+    "headSha": "348630d8591da9859afa6a67c4f6c6dafb15769d",
+    "reportsCount": 1,
+    "reports": [
+      "lango-app/artifacts/page-audit/done/AUD-STUDENT-01__student-portal/report.md"
+    ],
+    "screenshotsCount": 34,
+    "diffFilesCount": 20,
+    "testFilesCount": 0,
+    "testFiles": [],
+    "migrationFiles": [],
+    "verifiedInChangelog": false,
+    "changelogNote": "NONE"
+  },
+  {
+    "id": "AUD-PUBLIC-01",
+    "branch": "origin/audit/agent-c/AUD-PUBLIC-01-public-admissions",
+    "headSha": "a50940263da2e2c337c10ea46604ca496d76e470",
+    "reportsCount": 1,
+    "reports": [
+      "lango-app/artifacts/page-audit/done/AUD-PUBLIC-01__public-website-admissions/report.md"
+    ],
+    "screenshotsCount": 36,
+    "diffFilesCount": 24,
+    "testFilesCount": 1,
+    "testFiles": [
+      "lango-app/src/features/website/__tests__/public-endpoint-hardening.test.ts"
+    ],
+    "migrationFiles": [],
+    "verifiedInChangelog": false,
+    "changelogNote": "NONE"
+  },
+  {
+    "id": "AUD-ADMISSIONS-02",
+    "branch": "origin/audit/agent-a/AUD-ADMISSIONS-02-admissions-enrollment",
+    "headSha": "5edc4ff47a6dfc2a58fd90eba7ae40c22d7c561a",
+    "reportsCount": 1,
+    "reports": [
+      "lango-app/artifacts/page-audit/done/AUD-ADMISSIONS-02__admissions-enrollment/report.md"
+    ],
+    "screenshotsCount": 35,
+    "diffFilesCount": 19,
+    "testFilesCount": 0,
+    "testFiles": [],
+    "migrationFiles": [],
+    "verifiedInChangelog": false,
+    "changelogNote": "NONE"
+  },
+  {
+    "id": "AUD-SETTINGS-01",
+    "branch": "origin/audit/agent-d/AUD-SETTINGS-01-users-roles-organization",
+    "headSha": "127d5beaab62503f32a513a06c908d938e8d6c48",
+    "reportsCount": 1,
+    "reports": [
+      "lango-app/artifacts/page-audit/done/AUD-SETTINGS-01__users-roles-organization/report.md"
+    ],
+    "screenshotsCount": 40,
+    "diffFilesCount": 50,
+    "testFilesCount": 1,
+    "testFiles": [
+      "lango-app/src/app/api/users/users-settings.test.ts"
+    ],
+    "migrationFiles": [],
+    "verifiedInChangelog": false,
+    "changelogNote": "NONE"
+  },
+  {
+    "id": "AUD-LIBINV-01",
+    "branch": "origin/audit/agent-c/AUD-LIBINV-01-library-inventory",
+    "headSha": "26a4f7bdb1cda52a6b73790593d10afbb227b7d9",
+    "reportsCount": 1,
+    "reports": [
+      "lango-app/artifacts/page-audit/done/AUD-LIBINV-01__library-inventory/report.md"
+    ],
+    "screenshotsCount": 44,
+    "diffFilesCount": 42,
+    "testFilesCount": 1,
+    "testFiles": [
+      "lango-app/src/features/library/__tests__/business-date.test.ts"
+    ],
+    "migrationFiles": [],
+    "verifiedInChangelog": false,
+    "changelogNote": "NONE"
+  },
+  {
+    "id": "AUD-TEACHER-01",
+    "branch": "origin/audit/agent-b/AUD-TEACHER-01",
+    "headSha": "05d907ae8a8d3176f709b6048477f9e7aa1cfcba",
+    "reportsCount": 1,
+    "reports": [
+      "lango-app/artifacts/page-audit/done/AUD-TEACHER-01__teacher-portal/report.md"
+    ],
+    "screenshotsCount": 106,
+    "diffFilesCount": 106,
+    "testFilesCount": 1,
+    "testFiles": [
+      "lango-app/src/app/api/__tests__/teacher-portal-scope.test.ts"
+    ],
+    "migrationFiles": [],
+    "verifiedInChangelog": false,
+    "changelogNote": "NONE"
+  },
+  {
+    "id": "AUD-SUPPORT-RECEPTION-01",
+    "branch": "origin/audit/agent-c/AUD-SUPPORT-RECEPTION-01-support-reception",
+    "headSha": "3298b138ff0a2716767ea372054642f57e48e8e0",
+    "reportsCount": 1,
+    "reports": [
+      "lango-app/artifacts/page-audit/done/AUD-SUPPORT-RECEPTION-01__support-reception/report.md"
+    ],
+    "screenshotsCount": 31,
+    "diffFilesCount": 18,
+    "testFilesCount": 1,
+    "testFiles": [
+      "lango-app/src/features/support/__tests__/support-attachment-security.test.ts"
+    ],
+    "migrationFiles": [],
+    "verifiedInChangelog": false,
+    "changelogNote": "NONE"
+  },
+  {
+    "id": "AUD-HR-01",
+    "branch": "origin/audit/agent-a/AUD-HR-01-hr-payroll",
+    "headSha": "c6fb4b312de4c1d87ef41e15f727f8be0885ea93",
+    "reportsCount": 1,
+    "reports": [
+      "lango-app/artifacts/page-audit/done/AUD-HR-01__hr-payroll/report.md"
+    ],
+    "screenshotsCount": 35,
+    "diffFilesCount": 22,
+    "testFilesCount": 0,
+    "testFiles": [],
+    "migrationFiles": [],
+    "verifiedInChangelog": false,
+    "changelogNote": "NONE"
+  },
+  {
+    "id": "AUD-ANALYTICS-01",
+    "branch": "origin/audit/agent-c/AUD-ANALYTICS-01-analytics-direction",
+    "headSha": "e8a9e3621e8483403b42d01f11e04d5f448eddfb",
+    "reportsCount": 1,
+    "reports": [
+      "lango-app/artifacts/page-audit/done/AUD-ANALYTICS-01__analytics-direction/report.md"
+    ],
+    "screenshotsCount": 36,
+    "diffFilesCount": 26,
+    "testFilesCount": 1,
+    "testFiles": [
+      "lango-app/src/features/dashboard/__tests__/executive-kpi-truth.test.ts"
+    ],
+    "migrationFiles": [],
+    "verifiedInChangelog": false,
+    "changelogNote": "NONE"
+  },
+  {
+    "id": "AUD-RECEPTION-01",
+    "branch": "origin/audit/agent-b/AUD-RECEPTION-01",
+    "headSha": "d38140dc37f601e9292d04cf39ea99c9cc0ad1a5",
+    "reportsCount": 1,
+    "reports": [
+      "lango-app/artifacts/page-audit/done/AUD-RECEPTION-01__reception-front-desk/report.md"
+    ],
+    "screenshotsCount": 71,
+    "diffFilesCount": 69,
+    "testFilesCount": 1,
+    "testFiles": [
+      "lango-app/src/app/api/__tests__/reception-portal-scope.test.ts"
+    ],
+    "migrationFiles": [],
+    "verifiedInChangelog": false,
+    "changelogNote": "NONE"
+  },
+  {
+    "id": "AUD-FINANCE-01",
+    "branch": "origin/audit/agent-a/AUD-FINANCE-01-student-billing-cashier",
+    "headSha": "85f057148e59e5ee956e5d30cbec0eba43fd3773",
+    "reportsCount": 1,
+    "reports": [
+      "lango-app/artifacts/page-audit/done/AUD-FINANCE-01__student-billing-cashier/report.md"
+    ],
+    "screenshotsCount": 41,
+    "diffFilesCount": 66,
+    "testFilesCount": 6,
+    "testFiles": [
+      "lango-app/src/app/api/__tests__/student-360-hardening.test.ts",
+      "lango-app/src/features/finance/__tests__/invoice-lifecycle.test.ts",
+      "lango-app/src/features/finance/__tests__/payment-allocation.test.ts",
+      "lango-app/src/features/finance/__tests__/payment-idempotency.test.ts",
+      "lango-app/src/features/finance/__tests__/payment-reversal.test.ts",
+      "lango-app/src/libs/finance/__tests__/format-money.test.ts"
+    ],
+    "migrationFiles": [
+      "lango-app/migrations/0156_fine_assessment_unique.sql",
+      "lango-app/migrations/meta/_journal.json"
+    ],
+    "verifiedInChangelog": false,
+    "changelogNote": "NONE"
+  },
+  {
+    "id": "AUD-CALENDAR-01",
+    "branch": "origin/audit/agent-c/AUD-CALENDAR-01-events-calendar",
+    "headSha": "a37ecc26c93a061bb29fb26608c122736c1508ae",
+    "reportsCount": 1,
+    "reports": [
+      "lango-app/artifacts/page-audit/done/AUD-CALENDAR-01__events-calendar/report.md"
+    ],
+    "screenshotsCount": 30,
+    "diffFilesCount": 19,
+    "testFilesCount": 1,
+    "testFiles": [
+      "lango-app/src/features/events/__tests__/schedule-boundaries.test.ts"
+    ],
+    "migrationFiles": [],
+    "verifiedInChangelog": false,
+    "changelogNote": "NONE"
+  },
+  {
+    "id": "AUD-SAFETY-01",
+    "branch": "origin/audit/agent-b/AUD-SAFETY-01",
+    "headSha": "a68d644b436d3b3c528bb334f0aebb6b92abf6c2",
+    "reportsCount": 1,
+    "reports": [
+      "lango-app/artifacts/page-audit/done/AUD-SAFETY-01__security-guard/report.md"
+    ],
+    "screenshotsCount": 70,
+    "diffFilesCount": 68,
+    "testFilesCount": 1,
+    "testFiles": [
+      "lango-app/src/app/api/__tests__/guard-safety-scope.test.ts"
+    ],
+    "migrationFiles": [],
+    "verifiedInChangelog": false,
+    "changelogNote": "NONE"
+  },
+  {
+    "id": "AUD-LIVE-01",
+    "branch": "origin/audit/agent-d/AUD-LIVE-01-live-classrooms",
+    "headSha": "7a2c36f2c6f3c5993a540932e51117280f8fb5ab",
+    "reportsCount": 1,
+    "reports": [
+      "lango-app/artifacts/page-audit/done/AUD-LIVE-01__live-classrooms/report.md"
+    ],
+    "screenshotsCount": 36,
+    "diffFilesCount": 23,
+    "testFilesCount": 0,
+    "testFiles": [],
+    "migrationFiles": [],
+    "verifiedInChangelog": false,
+    "changelogNote": "NONE"
+  }
+]
