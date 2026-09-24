@@ -1,46 +1,65 @@
-[2026-09-24T20:35:46.521Z] Starting AUD-FINANCE-01 evidence runner against http://localhost:3111
-[2026-09-24T20:35:46.687Z] --- Starting Admin Desktop FR Captures (12/12 Audited Finance Routes) ---
-[2026-09-24T20:36:05.563Z] Already captured valid shot: 01-invoices-desktop-fr.png (126160 bytes)
-[2026-09-24T20:36:05.566Z] Already captured valid shot: 02-collection-desk-desktop-fr.png (101738 bytes)
-[2026-09-24T20:36:05.568Z] Already captured valid shot: 03-cashier-sessions-desktop-fr.png (85518 bytes)
-[2026-09-24T20:36:05.569Z] Already captured valid shot: 04-receipts-desktop-fr.png (41459 bytes)
-[2026-09-24T20:36:05.569Z] Already captured valid shot: 05-refunds-desktop-fr.png (73204 bytes)
-[2026-09-24T20:36:05.570Z] Already captured valid shot: 06-credit-notes-desktop-fr.png (72937 bytes)
-[2026-09-24T20:36:05.570Z] Navigating to /fr/dashboard/finance/fee-allocations for 07-fee-allocations-desktop-fr.png...
-[2026-09-24T20:36:53.074Z] Captured: 07-fee-allocations-desktop-fr.png (49015 bytes, Title: "SchoolOS — Moroccan School Management Platform", Heading: "School OS")
-[2026-09-24T20:36:53.075Z] Already captured valid shot: 08-fee-assignments-desktop-fr.png (44837 bytes)
-[2026-09-24T20:36:53.076Z] Already captured valid shot: 09-student-accounting-desktop-fr.png (51078 bytes)
-[2026-09-24T20:36:53.076Z] Already captured valid shot: 10-statements-desktop-fr.png (72322 bytes)
-[2026-09-24T20:36:53.077Z] Already captured valid shot: 11-reminders-desktop-fr.png (31879 bytes)
-[2026-09-24T20:36:53.078Z] Already captured valid shot: 12-online-payments-desktop-fr.png (52999 bytes)
-[2026-09-24T20:36:53.078Z] --- Starting Admin Mobile (390px) Captures ---
-[2026-09-24T20:37:37.517Z] Already captured valid shot: 13-invoices-mobile-390-fr.png (41511 bytes)
-[2026-09-24T20:37:37.517Z] Already captured valid shot: 14-collection-desk-mobile-390-fr.png (49419 bytes)
-[2026-09-24T20:37:37.518Z] Already captured valid shot: 15-cashier-sessions-mobile-390-fr.png (31550 bytes)
-[2026-09-24T20:37:37.518Z] Already captured valid shot: 16-receipts-mobile-390-fr.png (26368 bytes)
-[2026-09-24T20:37:37.518Z] --- Starting Admin Arabic RTL Captures ---
-[2026-09-24T20:37:48.774Z] Already captured valid shot: 17-invoices-desktop-ar-rtl.png (49430 bytes)
-[2026-09-24T20:37:48.775Z] Already captured valid shot: 18-collection-desk-desktop-ar-rtl.png (50065 bytes)
-[2026-09-24T20:37:48.775Z] --- Testing Accountant Role Access ---
-[2026-09-24T20:38:30.883Z] Accountant Collection Desk loaded: Heading="School
+[2026-09-24T20:51:52.270Z] Starting AUD-FINANCE-01 evidence runner against http://localhost:3111
+[2026-09-24T20:51:52.447Z] --- Starting Admin Desktop FR Captures (12/12 Audited Finance Routes) ---
+[2026-09-24T20:52:03.116Z] Navigating to /fr/dashboard/finance/invoices for 01-invoices-desktop-fr.png...
+[2026-09-24T20:52:17.024Z] Captured: 01-invoices-desktop-fr.png (121965 bytes, Title: "SchoolOS — Moroccan School Management Platform", Heading: "School OS")
+[2026-09-24T20:52:17.024Z] Navigating to /fr/dashboard/finance/collection-desk for 02-collection-desk-desktop-fr.png...
+[2026-09-24T20:52:58.090Z] Captured: 02-collection-desk-desktop-fr.png (71256 bytes, Title: "SchoolOS — Moroccan School Management Platform", Heading: "School OS")
+[2026-09-24T20:52:58.090Z] Navigating to /fr/dashboard/finance/cashier-sessions for 03-cashier-sessions-desktop-fr.png...
+[2026-09-24T20:53:17.585Z] Captured: 03-cashier-sessions-desktop-fr.png (100576 bytes, Title: "SchoolOS — Moroccan School Management Platform", Heading: "School OS")
+[2026-09-24T20:53:17.585Z] Navigating to /fr/dashboard/finance/receipts for 04-receipts-desktop-fr.png...
+[2026-09-24T20:53:36.093Z] Captured: 04-receipts-desktop-fr.png (88379 bytes, Title: "SchoolOS — Moroccan School Management Platform", Heading: "School OS")
+[2026-09-24T20:53:36.093Z] Navigating to /fr/dashboard/finance/refunds for 05-refunds-desktop-fr.png...
+[2026-09-24T20:53:57.705Z] Captured: 05-refunds-desktop-fr.png (70414 bytes, Title: "SchoolOS — Moroccan School Management Platform", Heading: "School OS")
+[2026-09-24T20:53:57.705Z] Navigating to /fr/dashboard/finance/credit-notes for 06-credit-notes-desktop-fr.png...
+[2026-09-24T20:54:15.062Z] Captured: 06-credit-notes-desktop-fr.png (69929 bytes, Title: "SchoolOS — Moroccan School Management Platform", Heading: "School OS")
+[2026-09-24T20:54:15.062Z] Navigating to /fr/dashboard/finance/allocations for 07-fee-allocations-desktop-fr.png...
+[2026-09-24T20:54:42.067Z] Captured: 07-fee-allocations-desktop-fr.png (86747 bytes, Title: "SchoolOS — Moroccan School Management Platform", Heading: "School OS")
+[2026-09-24T20:54:42.068Z] Navigating to /fr/dashboard/finance/fee-assignments for 08-fee-assignments-desktop-fr.png...
+[2026-09-24T20:54:54.902Z] Captured: 08-fee-assignments-desktop-fr.png (71661 bytes, Title: "SchoolOS — Moroccan School Management Platform", Heading: "School OS")
+[2026-09-24T20:54:54.902Z] Navigating to /fr/dashboard/finance/accounting/student-accounting for 09-student-accounting-desktop-fr.png...
+[2026-09-24T20:55:13.350Z] Captured: 09-student-accounting-desktop-fr.png (86647 bytes, Title: "SchoolOS — Moroccan School Management Platform", Heading: "School OS")
+[2026-09-24T20:55:13.350Z] Navigating to /fr/dashboard/finance/statements for 10-statements-desktop-fr.png...
+[2026-09-24T20:55:26.635Z] Captured: 10-statements-desktop-fr.png (69987 bytes, Title: "SchoolOS — Moroccan School Management Platform", Heading: "School OS")
+[2026-09-24T20:55:26.635Z] Navigating to /fr/dashboard/finance/reminders for 11-reminders-desktop-fr.png...
+[2026-09-24T20:55:48.067Z] Captured: 11-reminders-desktop-fr.png (112656 bytes, Title: "SchoolOS — Moroccan School Management Platform", Heading: "School OS")
+[2026-09-24T20:55:48.068Z] Navigating to /fr/dashboard/finance/online-payments for 12-online-payments-desktop-fr.png...
+[2026-09-24T20:56:09.067Z] Captured: 12-online-payments-desktop-fr.png (99270 bytes, Title: "SchoolOS — Moroccan School Management Platform", Heading: "School OS")
+[2026-09-24T20:56:09.068Z] --- Starting Admin Mobile (390px) Captures ---
+[2026-09-24T20:56:17.953Z] Navigating to /fr/dashboard/finance/invoices for 13-invoices-mobile-390-fr.png...
+[2026-09-24T20:56:35.923Z] Captured: 13-invoices-mobile-390-fr.png (75758 bytes, Title: "SchoolOS — Moroccan School Management Platform", Heading: "School OS")
+[2026-09-24T20:56:35.923Z] Navigating to /fr/dashboard/finance/collection-desk for 14-collection-desk-mobile-390-fr.png...
+[2026-09-24T20:56:56.762Z] Captured: 14-collection-desk-mobile-390-fr.png (46948 bytes, Title: "SchoolOS — Moroccan School Management Platform", Heading: "School OS")
+[2026-09-24T20:56:56.763Z] Navigating to /fr/dashboard/finance/cashier-sessions for 15-cashier-sessions-mobile-390-fr.png...
+[2026-09-24T20:57:19.747Z] Captured: 15-cashier-sessions-mobile-390-fr.png (45116 bytes, Title: "SchoolOS — Moroccan School Management Platform", Heading: "School OS")
+[2026-09-24T20:57:19.747Z] Navigating to /fr/dashboard/finance/receipts for 16-receipts-mobile-390-fr.png...
+[2026-09-24T20:57:40.046Z] Captured: 16-receipts-mobile-390-fr.png (34932 bytes, Title: "SchoolOS — Moroccan School Management Platform", Heading: "School OS")
+[2026-09-24T20:57:40.047Z] --- Starting Admin Arabic RTL Captures ---
+[2026-09-24T20:57:49.348Z] Navigating to /ar/dashboard/finance/invoices for 17-invoices-desktop-ar-rtl.png...
+[2026-09-24T20:58:06.326Z] Warning on 17-invoices-desktop-ar-rtl.png: UNKNOWN: unknown error, open 'C:\Users\OMEN\OneDrive\Documents\projects\lango-english-center-project-fully\.worktrees\AUD-FINANCE-01\lango-app\artifacts\page-audit\done\AUD-FINANCE-01__student-billing-cashier\screenshots\17-invoices-desktop-ar-rtl.png'. Retrying...
+[2026-09-24T20:58:11.127Z] Captured on retry: 17-invoices-desktop-ar-rtl.png (46775 bytes)
+[2026-09-24T20:58:11.127Z] Navigating to /ar/dashboard/finance/collection-desk for 18-collection-desk-desktop-ar-rtl.png...
+[2026-09-24T20:58:20.584Z] Warning on 18-collection-desk-desktop-ar-rtl.png: UNKNOWN: unknown error, open 'C:\Users\OMEN\OneDrive\Documents\projects\lango-english-center-project-fully\.worktrees\AUD-FINANCE-01\lango-app\artifacts\page-audit\done\AUD-FINANCE-01__student-billing-cashier\screenshots\18-collection-desk-desktop-ar-rtl.png'. Retrying...
+[2026-09-24T20:58:25.326Z] Captured on retry: 18-collection-desk-desktop-ar-rtl.png (76753 bytes)
+[2026-09-24T20:58:25.326Z] --- Testing Accountant Role Access ---
+[2026-09-24T20:58:35.769Z] Accountant Collection Desk loaded: Heading="School
 OS"
-[2026-09-24T20:38:31.361Z] Accountant class-sections lookup via /api/finance/lookups: status=200, count=3
-[2026-09-24T20:38:31.361Z] --- Testing IDOR & Role Boundary Assertions ---
-[2026-09-24T20:38:31.475Z] UNAUTH GET /api/finance/invoices -> status 401 PASS (401 Unauthorized)
-[2026-09-24T20:38:31.492Z] UNAUTH GET /api/finance/cashier-sessions -> status 401 PASS (401 Unauthorized)
-[2026-09-24T20:38:31.512Z] UNAUTH GET /api/finance/receipts -> status 401 PASS (401 Unauthorized)
-[2026-09-24T20:38:31.530Z] UNAUTH GET /api/finance/fee-allocations -> status 401 PASS (401 Unauthorized)
-[2026-09-24T20:38:36.381Z] UNAUTH GET /api/finance/refunds -> status 401 PASS (401 Unauthorized)
-[2026-09-24T20:38:44.077Z] UNAUTH GET /api/finance/credit-notes -> status 401 PASS (401 Unauthorized)
-[2026-09-24T20:38:44.362Z] UNAUTH GET /api/finance/accounting/student-accounting/mappings -> status 401 PASS (401 Unauthorized)
-[2026-09-24T20:38:44.362Z] Testing Student Role Access Refusal:
-[2026-09-24T20:38:48.954Z] STUDENT GET /api/finance/invoices -> status 403 PASS (403 Forbidden)
-[2026-09-24T20:38:49.098Z] STUDENT GET /api/finance/cashier-sessions -> status 403 PASS (403 Forbidden)
-[2026-09-24T20:38:49.264Z] STUDENT GET /api/finance/receipts -> status 403 PASS (403 Forbidden)
-[2026-09-24T20:38:49.468Z] STUDENT GET /api/finance/fee-allocations -> status 403 PASS (403 Forbidden)
-[2026-09-24T20:38:49.468Z] Testing Parent Role Access Refusal:
-[2026-09-24T20:38:58.458Z] PARENT GET /api/finance/invoices -> status 403 PASS (403 Forbidden)
-[2026-09-24T20:38:58.617Z] PARENT GET /api/finance/cashier-sessions -> status 403 PASS (403 Forbidden)
-[2026-09-24T20:38:58.763Z] PARENT GET /api/finance/receipts -> status 403 PASS (403 Forbidden)
-[2026-09-24T20:38:58.828Z] PARENT GET /api/finance/fee-allocations -> status 403 PASS (403 Forbidden)
-[2026-09-24T20:39:01.363Z] --- All tests and captures completed successfully! ---
+[2026-09-24T20:58:37.356Z] Accountant class-sections lookup via /api/finance/lookups: status=200, count=3
+[2026-09-24T20:58:37.356Z] --- Testing IDOR & Role Boundary Assertions ---
+[2026-09-24T20:58:37.591Z] UNAUTH GET /api/finance/invoices -> status 401 PASS (401 Unauthorized)
+[2026-09-24T20:58:44.861Z] UNAUTH GET /api/finance/cashier-sessions -> status 401 PASS (401 Unauthorized)
+[2026-09-24T20:58:44.908Z] UNAUTH GET /api/finance/receipts -> status 401 PASS (401 Unauthorized)
+[2026-09-24T20:58:48.794Z] UNAUTH GET /api/finance/fee-allocations -> status 401 PASS (401 Unauthorized)
+[2026-09-24T20:58:57.627Z] UNAUTH GET /api/finance/refunds -> status 401 PASS (401 Unauthorized)
+[2026-09-24T20:59:07.199Z] UNAUTH GET /api/finance/credit-notes -> status 401 PASS (401 Unauthorized)
+[2026-09-24T20:59:13.932Z] UNAUTH GET /api/finance/accounting/student-accounting/mappings -> status 401 PASS (401 Unauthorized)
+[2026-09-24T20:59:13.932Z] Testing Student Role Access Refusal:
+[2026-09-24T20:59:28.157Z] STUDENT GET /api/finance/invoices -> status 403 PASS (403 Forbidden)
+[2026-09-24T20:59:30.273Z] STUDENT GET /api/finance/cashier-sessions -> status 403 PASS (403 Forbidden)
+[2026-09-24T20:59:31.120Z] STUDENT GET /api/finance/receipts -> status 403 PASS (403 Forbidden)
+[2026-09-24T20:59:31.787Z] STUDENT GET /api/finance/fee-allocations -> status 403 PASS (403 Forbidden)
+[2026-09-24T20:59:31.787Z] Testing Parent Role Access Refusal:
+[2026-09-24T21:00:28.793Z] PARENT GET /api/finance/invoices -> status 403 PASS (403 Forbidden)
+[2026-09-24T21:00:29.276Z] PARENT GET /api/finance/cashier-sessions -> status 403 PASS (403 Forbidden)
+[2026-09-24T21:00:29.399Z] PARENT GET /api/finance/receipts -> status 403 PASS (403 Forbidden)
+[2026-09-24T21:00:29.514Z] PARENT GET /api/finance/fee-allocations -> status 403 PASS (403 Forbidden)
+[2026-09-24T21:00:32.292Z] --- All tests and captures completed successfully! ---

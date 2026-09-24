@@ -163,8 +163,8 @@ The following screenshot evidence was captured against the live Next.js applicat
 | `14-collection-desk-mobile-390-fr.png` | 390x844 (Mobile FR) | `/dashboard/finance/collection-desk` | Collection desk optimized for mobile viewport with vertical action layout. |
 | `15-cashier-sessions-mobile-390-fr.png` | 390x844 (Mobile FR) | `/dashboard/finance/cashier-sessions` | S-36 mobile cards for cashier sessions with clear status tags and amount summaries. |
 | `16-receipts-mobile-390-fr.png` | 390x844 (Mobile FR) | `/dashboard/finance/receipts` | S-36 mobile receipts view with compact card representation. |
-| `17-invoices-desktop-ar-rtl.png` | 1440x900 (Desktop AR) | `/dashboard/finance/invoices` | Invoices page in Arabic with full RTL mirroring, translated badges and labels. |
-| `18-collection-desk-desktop-ar-rtl.png` | 1440x900 (Desktop AR) | `/dashboard/finance/collection-desk` | Collection desk in Arabic with full RTL mirroring. |
+| `17-invoices-desktop-ar-rtl.png` | 1440x900 (Desktop AR) | `/dashboard/finance/invoices` | Invoices page in Arabic with full RTL mirroring, real finance dataset (4 invoices matching FR), active role and branch context loaded. |
+| `18-collection-desk-desktop-ar-rtl.png` | 1440x900 (Desktop AR) | `/dashboard/finance/collection-desk` | Collection desk in Arabic with full RTL mirroring, stable loaded state, active role and branch context loaded. |
 
 ---
 

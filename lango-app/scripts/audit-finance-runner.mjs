@@ -70,6 +70,16 @@ async function captureShot(page, route, filename, waitMs = 2500) {
     // Wait until pulse skeletons disappear
     await page.waitForFunction(() => !document.querySelector('.animate-pulse'), { timeout: 10000 }).catch(() => {});
 
+    // Ensure table rows are loaded on invoices route
+    if (route.includes('/invoices')) {
+      await page.waitForFunction(() => document.querySelectorAll('table tbody tr').length > 0, { timeout: 20000 }).catch(() => {});
+    }
+
+    // Ensure branch switcher / role are loaded on Arabic routes
+    if (route.startsWith('/ar/')) {
+      await page.waitForFunction(() => document.body.innerText.includes('جميع الفروع') || document.body.innerText.includes('المدير'), { timeout: 20000 }).catch(() => {});
+    }
+
     // Hide Next.js dev overlay badges
     await page.addStyleTag({
       content: 'nextjs-portal, #__next-build-watcher, [data-nextjs-toast], nextjs-portal * { display: none !important; opacity: 0 !important; pointer-events: none !important; }'
