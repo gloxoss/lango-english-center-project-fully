@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
+import { formatMoney } from '@/libs/finance/format-money';
 
 type JournalLine = {
   lineId: string;
@@ -59,11 +60,11 @@ export function JournalExplorerView() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-1">
           <p className="text-xs font-bold text-slate-400">{t('totalDebit')}</p>
-          <p className="text-2xl font-extrabold text-[#16212B]">{totalDebit.toLocaleString('fr-FR')} MAD</p>
+          <p className="text-2xl font-extrabold text-[#16212B]">{formatMoney(totalDebit)}</p>
         </Card>
         <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-1">
           <p className="text-xs font-bold text-slate-400">{t('totalCredit')}</p>
-          <p className="text-2xl font-extrabold text-[#16212B]">{totalCredit.toLocaleString('fr-FR')} MAD</p>
+          <p className="text-2xl font-extrabold text-[#16212B]">{formatMoney(totalCredit)}</p>
         </Card>
       </div>
 

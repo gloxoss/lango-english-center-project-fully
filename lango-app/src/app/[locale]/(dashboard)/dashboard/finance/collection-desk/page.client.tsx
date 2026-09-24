@@ -16,6 +16,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { formatAmount } from '@/libs/finance/format-money';
 
 interface CashierSession {
   id: string;
@@ -523,15 +524,15 @@ export default function CollectionDeskPage() {
             <div className="grid grid-cols-3 gap-6 border-t border-emerald-200/60 pt-4 md:border-t-0 md:pt-0">
               <div>
                 <span className="text-[11px] font-semibold text-slate-500 uppercase">{t('initialFloatLabel')}</span>
-                <div className="text-base font-extrabold text-slate-900">{activeSession.startingFloat} {tCommon('currency')}</div>
+                <div className="text-base font-extrabold text-slate-900">{formatAmount(activeSession.startingFloat)} {tCommon('currency')}</div>
               </div>
               <div>
                 <span className="text-[11px] font-semibold text-slate-500 uppercase">{t('collectedTotalLabel')}</span>
-                <div className="text-base font-extrabold text-emerald-700">+{activeSession.totalCollected} {tCommon('currency')}</div>
+                <div className="text-base font-extrabold text-emerald-700">+{formatAmount(activeSession.totalCollected)} {tCommon('currency')}</div>
               </div>
               <div>
                 <span className="text-[11px] font-semibold text-slate-500 uppercase">{t('expectedCashLabel')}</span>
-                <div className="text-base font-extrabold text-blue-700">{activeSession.expectedCash} {tCommon('currency')}</div>
+                <div className="text-base font-extrabold text-blue-700">{formatAmount(activeSession.expectedCash)} {tCommon('currency')}</div>
               </div>
             </div>
           )}
@@ -674,7 +675,7 @@ export default function CollectionDeskPage() {
                     {t('dueOn', { date: row.dueDate })} · {t('overdueDaysCount', { days: row.daysOverdue })}
                   </p>
                 </div>
-                <span className="font-bold text-[#E5544B]">{Number(row.balance).toFixed(2)} {tCommon('currency')}</span>
+                <span className="font-bold text-[#E5544B]">{formatAmount(row.balance)} {tCommon('currency')}</span>
               </button>
             ))}
           </div>
@@ -727,7 +728,7 @@ export default function CollectionDeskPage() {
                         <div>
                           <div className="text-xs font-bold text-slate-900">{inv.invoiceNumber}</div>
                           <div className="text-[11px] text-slate-500">
-                            {t('dueOn', { date: inv.dueDate })} · {t('balanceRemaining', { balance: balance.toFixed(2) })} {tCommon('currency')}
+                            {t('dueOn', { date: inv.dueDate })} · {t('balanceRemaining', { balance: formatAmount(balance) })} {tCommon('currency')}
                           </div>
                         </div>
                         <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${inv.status === 'overdue' ? 'bg-red-100 text-red-700' : 'bg-blue-50 text-blue-700'}`}>
@@ -773,7 +774,7 @@ export default function CollectionDeskPage() {
                     <div className="min-w-0 flex-1">
                       <div className="text-xs font-bold text-slate-900">{r.invoiceNumber}</div>
                       <div className="text-[10px] text-slate-500">
-                        {t('balanceRemaining', { balance: r.balance.toFixed(2) })} {tCommon('currency')}
+                        {t('balanceRemaining', { balance: formatAmount(r.balance) })} {tCommon('currency')}
                       </div>
                     </div>
                     <input
@@ -792,7 +793,7 @@ export default function CollectionDeskPage() {
 
               <div className="flex items-center justify-between rounded-lg bg-slate-100 px-3 py-2.5">
                 <span className="text-xs font-bold text-slate-700">{t('totalToCollectLabel')}</span>
-                <span className="text-sm font-extrabold text-emerald-700">{collectTotal.toFixed(2)} {tCommon('currency')}</span>
+                <span className="text-sm font-extrabold text-emerald-700">{formatAmount(collectTotal)} {tCommon('currency')}</span>
               </div>
 
               <div>
@@ -833,11 +834,11 @@ export default function CollectionDeskPage() {
                 {receipt.allocations.map(a => (
                   <div key={a.invoiceId} className="flex justify-between py-0.5">
                     <span className="text-slate-500">{a.invoiceNumber}</span>
-                    <span className="font-bold text-slate-900">{Number(a.amount).toFixed(2)} {tCommon('currency')}</span>
+                    <span className="font-bold text-slate-900">{formatAmount(a.amount)} {tCommon('currency')}</span>
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between border-t border-slate-200 pt-1.5"><span className="text-slate-500">{t('totalAmountLabel')}</span><span className="font-bold text-emerald-700">{receipt.amount.toFixed(2)} {tCommon('currency')}</span></div>
+              <div className="flex justify-between border-t border-slate-200 pt-1.5"><span className="text-slate-500">{t('totalAmountLabel')}</span><span className="font-bold text-emerald-700">{formatAmount(receipt.amount)} {tCommon('currency')}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">{t('paymentMethodLabel')}</span><span className="font-bold text-slate-900">{paymentMethods.find(m => m.methodCode === receipt.method)?.labelFr ?? receipt.method}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">{tCommon('date')}</span><span className="font-bold text-slate-900">{receipt.paymentDate}</span></div>
             </div>

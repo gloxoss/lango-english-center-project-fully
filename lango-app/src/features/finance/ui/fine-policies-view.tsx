@@ -30,6 +30,7 @@ type FineAssessment = {
   amount: number;
   reason: string | null;
   status: string;
+  billingState: 'billed' | 'legacy_unbilled' | 'waived' | 'superseded';
   assessedAt: string;
 };
 
@@ -106,9 +107,16 @@ export function FinePoliciesView({ locale: _locale }: { locale?: string } = {}) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: a.id, waiveReason: reason }),
       });
-      if (res.ok) loadAssessments();
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setRunResult(json.message ?? null);
+        loadAssessments();
+      } else {
+        setRunResult(json.error?.message ?? json.message ?? t('runAssessmentFailure'));
+      }
     } catch (err) {
       console.error('Failed to waive fine', err);
+      setRunResult(t('runAssessmentError'));
     } finally {
       setWaivingId(null);
     }
@@ -302,6 +310,11 @@ export function FinePoliciesView({ locale: _locale }: { locale?: string } = {}) 
         </Card>
       )}
 
+      {assessments.some(a => a.billingState === 'legacy_unbilled') && (
+        <Card className="p-4 rounded-2xl border border-amber-300 bg-amber-50 text-sm font-semibold text-amber-900" role="status">
+          {t('legacyFinesNeedReview', { count: assessments.filter(a => a.billingState === 'legacy_unbilled').length })}
+        </Card>
+      )}
       <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
         <table className="w-full text-start text-xs">
           <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
@@ -378,13 +391,15 @@ export function FinePoliciesView({ locale: _locale }: { locale?: string } = {}) 
                 <td className="py-3.5 px-4 text-end font-extrabold text-[#16212B]">{a.amount.toFixed(2)} {tCommon('currency')}</td>
                 <td className="py-3.5 px-4 text-slate-500">{a.reason ?? '—'}</td>
                 <td className="py-3.5 px-4 text-center">
-                  <Badge className={`text-[10px] border-none font-bold ${a.status === 'waived' ? 'bg-violet-100 text-violet-700' : 'bg-amber-100 text-amber-700'}`}>
-                    {a.status === 'waived' ? t('assessmentWaived') : t('assessmentAssessed')}
+                  <Badge className={`text-[10px] border-none font-bold ${a.billingState === 'superseded' ? 'bg-slate-100 text-slate-600' : a.billingState === 'legacy_unbilled' ? 'bg-red-100 text-red-700' : a.status === 'waived' ? 'bg-violet-100 text-violet-700' : 'bg-amber-100 text-amber-700'}`}>
+                    {a.billingState === 'superseded' ? t('assessmentSuperseded')
+                      : a.billingState === 'legacy_unbilled' ? t('assessmentUnbilled')
+                        : a.status === 'waived' ? t('assessmentWaived') : t('assessmentAssessed')}
                   </Badge>
                 </td>
                 {canManage && (
                   <td className="py-3.5 px-4">
-                    {a.status !== 'waived' && (
+                    {a.status === 'assessed' && a.billingState !== 'superseded' && (
                       <button
                         onClick={() => handleWaive(a)}
                         disabled={waivingId === a.id}

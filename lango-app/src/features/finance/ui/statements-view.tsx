@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Download, Printer, RefreshCw, Search, User } from 'lucide-react';
 import { exportToCsv } from '@/libs/csv-export';
+import { formatMoney } from '@/libs/finance/format-money';
 
 type StudentResult = { id: string; name: string; email: string | null; matricule: string | null };
 
@@ -153,7 +154,7 @@ export function StatementsFinanceView({ locale: _locale }: { locale?: string }) 
             ].map((s, i) => (
               <Card key={i} className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
                 <p className="text-[10px] font-bold text-slate-400">{s.label}</p>
-                <p className={`text-xl font-extrabold ${s.cls}`}>{s.value.toLocaleString('fr-FR')} MAD</p>
+                <p className={`text-xl font-extrabold ${s.cls}`}>{formatMoney(s.value)}</p>
               </Card>
             ))}
           </div>
@@ -169,7 +170,7 @@ export function StatementsFinanceView({ locale: _locale }: { locale?: string }) 
                 </div>
                 <p className="text-[11px] text-slate-500 mt-0.5">{t('equationHint')}</p>
                 {creditsBalance > 0 && (
-                  <p className="text-[11px] font-bold text-violet-600 mt-0.5">{t('availableCredit', { amount: `${creditsBalance.toLocaleString('fr-FR')} MAD` })}</p>
+                  <p className="text-[11px] font-bold text-violet-600 mt-0.5">{t('availableCredit', { amount: formatMoney(creditsBalance) })}</p>
                 )}
               </div>
               <div className="flex items-center gap-2">
@@ -204,16 +205,16 @@ export function StatementsFinanceView({ locale: _locale }: { locale?: string }) 
                     <td className="py-2 px-3 text-slate-400">—</td>
                     <td className="py-2 px-3 text-end text-slate-400">—</td>
                     <td className="py-2 px-3 text-end text-slate-400">—</td>
-                    <td className="py-2 px-3 text-end font-extrabold text-[#2487B8]">{statement.openingBalance.toLocaleString('fr-FR')} MAD</td>
+                    <td className="py-2 px-3 text-end font-extrabold text-[#2487B8]">{formatMoney(statement.openingBalance)}</td>
                   </tr>
                   {statement.transactions.map(item => (
                     <tr key={`${item.type}-${item.id}`} className="hover:bg-slate-50/80">
                       <td className="py-2 px-3 font-mono text-[10px] text-slate-500">{item.date}</td>
                       <td className="py-2 px-3 font-semibold text-[#16212B]">{item.description}</td>
                       <td className="py-2 px-3 font-mono text-[10px] text-slate-400">{item.reference}</td>
-                      <td className={`py-2 px-3 text-end font-bold ${item.debit > 0 ? 'text-[#16212B]' : 'text-slate-300'}`}>{item.debit > 0 ? `${item.debit.toLocaleString('fr-FR')} MAD` : '—'}</td>
-                      <td className={`py-2 px-3 text-end font-bold ${item.credit > 0 ? 'text-[#17A673]' : 'text-slate-300'}`}>{item.credit > 0 ? `${item.credit.toLocaleString('fr-FR')} MAD` : '—'}</td>
-                      <td className="py-2 px-3 text-end font-extrabold text-[#16212B]">{item.balance.toLocaleString('fr-FR')} MAD</td>
+                      <td className={`py-2 px-3 text-end font-bold ${item.debit > 0 ? 'text-[#16212B]' : 'text-slate-300'}`}>{item.debit > 0 ? formatMoney(item.debit) : '—'}</td>
+                      <td className={`py-2 px-3 text-end font-bold ${item.credit > 0 ? 'text-[#17A673]' : 'text-slate-300'}`}>{item.credit > 0 ? formatMoney(item.credit) : '—'}</td>
+                      <td className="py-2 px-3 text-end font-extrabold text-[#16212B]">{formatMoney(item.balance)}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -12,6 +12,7 @@ import {
   RefreshCw,
   Send,
 } from 'lucide-react';
+import { formatMoney } from '@/libs/finance/format-money';
 
 type OverdueInvoice = {
   id: string;
@@ -49,7 +50,7 @@ function formatDate(date: string): string {
 export function RemindersStatementsView() {
   const locale = useLocale();
   const dateLocale = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR';
-  const mad = (value: number): string => `${value.toLocaleString(dateLocale, { minimumFractionDigits: 2 })} MAD`;
+  const mad = (value: number): string => formatMoney(value);
   const t = useTranslations('Finance');
   const tCommon = useTranslations('Common');
   const tStatus = useTranslations('Status');

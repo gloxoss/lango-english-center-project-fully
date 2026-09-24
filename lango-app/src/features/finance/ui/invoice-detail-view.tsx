@@ -29,13 +29,15 @@ type ApiInvoiceDetail = {
   guardian: { firstName: string; lastName: string; phone: string | null; email: string | null; relationshipType: string } | null;
 };
 
+import { formatMoney } from '@/libs/finance/format-money';
+
 export function InvoiceDetailView({ locale, invoiceId }: { locale: string; invoiceId: string }) {
   const t = useTranslations('Finance');
   const tCommon = useTranslations('Common');
   const tStatus = useTranslations('Status');
 
   const dateLocale = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR';
-  const formatMad = (amount: number): string => `${amount.toLocaleString(dateLocale)} MAD`;
+  const formatMad = (amount: number): string => formatMoney(amount);
 
   const statusLabels: Record<ApiInvoiceDetail['status'], string> = {
     paid: tStatus('paid'),

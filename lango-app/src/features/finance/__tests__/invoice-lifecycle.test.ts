@@ -8,7 +8,7 @@ import { PUT as cancelInvoice } from '@/app/api/finance/invoices/[id]/cancel/rou
 import { POST as creditInvoice } from '@/app/api/finance/invoices/[id]/credit/route';
 import { GET as getStatements } from '@/app/api/finance/statements/route';
 import { db } from '@/libs/DB';
-import { invoiceItems, invoices, tenants, user } from '@/models/Schema';
+import { accountingAdapterExceptions, invoiceItems, invoices, tenants, user } from '@/models/Schema';
 import { studentCredits } from '@/features/finance/models/student-accounting-schema';
 import type { RequestContext } from '@/libs/api/context';
 
@@ -67,6 +67,8 @@ describe.skipIf(!hasDb)('invoice lifecycle (Phase D)', () => {
   });
 
   afterAll(async () => {
+    // Unposted payments leave ledger exceptions that reference the tenant.
+    await db.delete(accountingAdapterExceptions).where(eq(accountingAdapterExceptions.tenantId, tenantId));
     await db.delete(tenants).where(eq(tenants.id, tenantId));
   });
 

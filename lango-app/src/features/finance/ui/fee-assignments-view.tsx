@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Trash2, Plus } from 'lucide-react';
 import { usePermissions } from '@/hooks/use-permissions';
+import { formatMoney } from '@/libs/finance/format-money';
 
 type ClassOption = { id: string; name: string };
 type FeeStructureOption = { id: string; name: string; amount: string };
@@ -118,7 +119,7 @@ export function FeeAssignmentsView() {
               <label className="font-bold text-slate-600">{t('feeStructureLabel')}</label>
               <select value={form.feeStructureId} onChange={e => setForm({ ...form, feeStructureId: e.target.value })} className="h-9 w-full rounded-xl border border-slate-200 px-3">
                 <option value="">{t('selectPlaceholder')}</option>
-                {feeStructures.map(fs => <option key={fs.id} value={fs.id}>{fs.name} ({Number(fs.amount).toLocaleString('fr-FR')} MAD)</option>)}
+                {feeStructures.map(fs => <option key={fs.id} value={fs.id}>{fs.name} ({formatMoney(fs.amount)})</option>)}
               </select>
             </div>
             <div className="space-y-1">
@@ -156,7 +157,7 @@ export function FeeAssignmentsView() {
               <tr key={a.id} className="hover:bg-slate-50/80 transition font-medium">
                 <td className="py-3.5 px-4 font-bold text-[#16212B]">{a.className}</td>
                 <td className="py-3.5 px-4 text-slate-600">{a.feeStructureName}</td>
-                <td className="py-3.5 px-4 text-end font-extrabold text-[#16212B]">{Number(a.feeAmount).toLocaleString('fr-FR')} MAD</td>
+                <td className="py-3.5 px-4 text-end font-extrabold text-[#16212B]">{formatMoney(a.feeAmount)}</td>
                 <td className="py-3.5 px-4 text-slate-500">{a.effectiveDate}</td>
                 {canManage && (
                   <td className="py-3.5 px-4 text-end">

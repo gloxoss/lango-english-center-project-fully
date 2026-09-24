@@ -73,9 +73,11 @@ const STATUS_STYLE: Record<string, string> = {
   cancelled: 'bg-slate-100 text-slate-600',
 };
 
+import { formatMoney } from '@/libs/finance/format-money';
+
 function formatMAD(cents?: number) {
   if (cents === undefined || cents === null) return '—';
-  return `${(cents / 100).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD`;
+  return formatMoney(cents / 100);
 }
 
 function runStudentCount(run: RunRow) {
