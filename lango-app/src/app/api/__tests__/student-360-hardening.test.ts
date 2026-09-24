@@ -1,7 +1,7 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { templateRequiresPhoto } from '@/features/cards/services/issue-service';
 import { ApiError } from '@/libs/api/errors';
 import { transitionStudentLifecycle } from '@/libs/services/student-lifecycle';
-import { issueDocument, templateRequiresPhoto } from '@/features/cards/services/issue-service';
 
 vi.mock('@/libs/env/server', () => ({
   serverEnv: {
@@ -62,6 +62,7 @@ describe('SchoolOS Student 360 Hardening — P0 & P1 Test Suite', () => {
 
       // Simulating query in getStudentDetail
       const result = await mockSelect().from({}).where({}).limit(1);
+
       expect(result).toHaveLength(0);
     });
 
@@ -226,8 +227,11 @@ describe('SchoolOS Student 360 Hardening — P0 & P1 Test Suite', () => {
       // When relational guardian exists, legacy guardian is suppressed
       expect(legacyGuardian).toBeNull();
       expect(relationalGuardians).toHaveLength(1);
+
       const primaryGuardian = relationalGuardians[0];
+
       expect(primaryGuardian).toBeDefined();
+
       if (primaryGuardian) {
         expect(primaryGuardian.relationshipType).toBe('Père');
       }
@@ -242,7 +246,7 @@ describe('SchoolOS Student 360 Hardening — P0 & P1 Test Suite', () => {
                 limit: vi.fn().mockResolvedValue([
                   {
                     id: 'STU-001',
-                    tenantId,
+                    tenantId: tenantA,
                     role: 'student',
                     userStatus: 'active',
                     branchId: branchCampusA,
@@ -285,6 +289,7 @@ describe('SchoolOS Student 360 Hardening — P0 & P1 Test Suite', () => {
 
       // In the new component, the badge is "Cadre CNDP" or neutral Law 09-08
       const neutralBadgeText = 'Cadre CNDP';
+
       expect(rawCndpClaims).not.toContain(neutralBadgeText);
     });
   });
@@ -304,6 +309,7 @@ describe('SchoolOS Student 360 Hardening — P0 & P1 Test Suite', () => {
       const userLegacyAcademicYearId = null; // empty or ignored
 
       const authoritativeYearName = activePlacement?.sessionYearName ?? userLegacyAcademicYearId ?? 'Non renseigné';
+
       expect(authoritativeYearName).toBe('2026-2027');
     });
 
@@ -359,10 +365,10 @@ describe('SchoolOS Student 360 Hardening — P0 & P1 Test Suite', () => {
         excused: 'مبرر',
       };
 
-      expect(frDict['present']).toBe('Présent');
-      expect(frDict['absent']).toBe('Absent');
-      expect(arDict['present']).toBe('حاضر');
-      expect(arDict['late']).toBe('متأخر');
+      expect(frDict.present).toBe('Présent');
+      expect(frDict.absent).toBe('Absent');
+      expect(arDict.present).toBe('حاضر');
+      expect(arDict.late).toBe('متأخر');
     });
   });
 
@@ -380,10 +386,12 @@ describe('SchoolOS Student 360 Hardening — P0 & P1 Test Suite', () => {
       // A preview limited to 10 would erroneously yield 10,000 MAD
       const paginatedSlice = allFifteenPayments.slice(0, 10);
       const flawedClientSum = paginatedSlice.reduce((sum, p) => sum + p.amount, 0);
+
       expect(flawedClientSum).toBe(10000); // Bad behavior before hardening
 
       // Authoritative DB aggregate sum yields 15,000 MAD
       const authoritativeDbSum = allFifteenPayments.reduce((sum, p) => sum + p.amount, 0);
+
       expect(authoritativeDbSum).toBe(15000); // Fixed behavior
     });
 
@@ -423,6 +431,7 @@ describe('SchoolOS Student 360 Hardening — P0 & P1 Test Suite', () => {
 
       // When reissue is true -> succeeds and revokes existing
       const reissueResult = validateCardIssuance(activeCard, true);
+
       expect(reissueResult.success).toBe(true);
       expect(reissueResult.reissued).toBe(true);
     });
@@ -481,6 +490,7 @@ describe('SchoolOS Student 360 Hardening — P0 & P1 Test Suite', () => {
 
       // 1. Missing photo when required -> throws STUDENT_PHOTO_REQUIRED
       expect(() => validatePhotoForTemplate(templateWithPhoto, '')).toThrowError(/Une photo d'identité est requise/);
+
       try {
         validatePhotoForTemplate(templateWithPhoto, null);
       } catch (e: any) {
@@ -503,8 +513,12 @@ describe('SchoolOS Student 360 Hardening — P0 & P1 Test Suite', () => {
   describe('Edge Cases — Contact Data & Lifecycle Display', () => {
     it('21. Filters out synthetic seed email addresses (@placeholder.local)', () => {
       const filterSyntheticEmail = (email: string | null) => {
-        if (!email) return null;
-        if (email.toLowerCase().endsWith('@placeholder.local')) return null;
+        if (!email) {
+          return null;
+        }
+        if (email.toLowerCase().endsWith('@placeholder.local')) {
+          return null;
+        }
         return email;
       };
 
@@ -535,7 +549,7 @@ describe('SchoolOS Student 360 Hardening — P0 & P1 Test Suite', () => {
     it('23. Authoritative studentPlacement overrides default sessionYear when they differ', () => {
       const defaultSessionYear = { id: 'SESSION-2025', name: '2025-2026', isDefault: true };
       const placementSessionYear = { id: 'SESSION-2026', name: '2026-2027', isDefault: false };
-      
+
       const activePlacement = [{
         sessionYearId: placementSessionYear.id,
         sessionYearName: placementSessionYear.name,
@@ -588,8 +602,12 @@ describe('SchoolOS Student 360 Hardening — P0 & P1 Test Suite', () => {
 
       // Unauthenticated attempt
       const attemptDownload = (authCtx: { tenantId?: string; branchId?: string; role?: string } | null) => {
-        if (!authCtx) throw new ApiError(401, 'UNAUTHORIZED', 'Session expirée');
-        if (authCtx.tenantId !== studentDocumentRecord.tenantId) throw new ApiError(404, 'NOT_FOUND', 'Document introuvable');
+        if (!authCtx) {
+          throw new ApiError(401, 'UNAUTHORIZED', 'Session expirée');
+        }
+        if (authCtx.tenantId !== studentDocumentRecord.tenantId) {
+          throw new ApiError(404, 'NOT_FOUND', 'Document introuvable');
+        }
         if (authCtx.branchId && studentDocumentRecord.branchId && authCtx.branchId !== studentDocumentRecord.branchId) {
           throw new ApiError(403, 'FORBIDDEN', 'Accès interdit à cette succursale');
         }
@@ -613,17 +631,18 @@ describe('SchoolOS Student 360 Hardening — P0 & P1 Test Suite', () => {
 
       // 5. Authorized admin -> 200 streamed
       const success = attemptDownload({ tenantId: tenantA, branchId: branchCampusA, role: 'school_admin' });
+
       expect(success.status).toBe(200);
       expect(studentDocumentRecord.isPublic).toBe(false);
     });
 
     // 4. Guardian Projection Consistency
     it('26. Guardian projection marks legacy snapshot as unverified / à confirmer when no relational guardian exists', async () => {
-      const { resolveStudentGuardianProjection } = await import('@/app/api/students/route');
+      const { resolveStudentGuardianProjection } = await import('@/libs/services/student-guardian-projection');
 
       const legacyOnly = resolveStudentGuardianProjection(
         [],
-        { guardianName: 'M. Karim El Amrani', guardianPhone: '+212 6 61 23 45 67' }
+        { guardianName: 'M. Karim El Amrani', guardianPhone: '+212 6 61 23 45 67' },
       );
 
       expect(legacyOnly.guardianName).toBe('M. Karim El Amrani');
@@ -633,7 +652,7 @@ describe('SchoolOS Student 360 Hardening — P0 & P1 Test Suite', () => {
     });
 
     it('27. Relational guardian fixture overrides legacy snapshot on both Directory and Student 360', async () => {
-      const { resolveStudentGuardianProjection } = await import('@/app/api/students/route');
+      const { resolveStudentGuardianProjection } = await import('@/libs/services/student-guardian-projection');
 
       const relationalGuardians = [
         {
@@ -647,7 +666,7 @@ describe('SchoolOS Student 360 Hardening — P0 & P1 Test Suite', () => {
 
       const projection = resolveStudentGuardianProjection(
         relationalGuardians,
-        { guardianName: 'M. Karim El Amrani', guardianPhone: '+212 6 61 23 45 67' }
+        { guardianName: 'M. Karim El Amrani', guardianPhone: '+212 6 61 23 45 67' },
       );
 
       expect(projection.guardianName).toBe('Fatima Zahra El Amrani');
@@ -692,6 +711,7 @@ describe('SchoolOS Student 360 Hardening — P0 & P1 Test Suite', () => {
       };
 
       const teacherView: any = projectForRole(fullStudentDetail, 'teacher');
+
       expect(teacherView.fullName).toBe('Yassine El Amrani');
       expect(teacherView.attendance).toBeDefined();
       expect(teacherView.payments).toBeUndefined();
@@ -724,6 +744,7 @@ describe('SchoolOS Student 360 Hardening — P0 & P1 Test Suite', () => {
       };
 
       const accountantView: any = projectForAccountant(fullStudentDetail);
+
       expect(accountantView.fullName).toBe('Yassine El Amrani');
       expect(accountantView.totalInvoiced).toBe(12000);
       expect(accountantView.payments).toHaveLength(1);

@@ -104,10 +104,10 @@ All required project quality gates passed with zero regressions:
    ```
 5. **Vitest Test Suite**:
    ```
-   npx vitest run src/features/finance src/app/api/finance src/libs/finance
-   Test Files: 22 passed (22)
-   Tests:      102 passed (102)
-   Duration:   3.89s
+   npx vitest run src/features/finance src/app/api/finance src/libs/finance src/app/api/__tests__/student-360-hardening.test.ts
+   Test Files: 23 passed (23)
+   Tests:      133 passed (133)
+   Duration:   6.23s
    ```
 6. **Runtime & IDOR Boundary Verification**:
    - `artifacts/page-audit/done/AUD-FINANCE-01__student-billing-cashier/evidence/finance-session-and-idor.txt`
@@ -204,6 +204,10 @@ The following screenshot evidence was captured against the live Next.js applicat
 - `lango-app/src/features/finance/__tests__/payment-idempotency.test.ts`
 - `lango-app/src/features/finance/__tests__/payment-reversal.test.ts`
 - `lango-app/scripts/audit-finance-runner.mjs`
+- `lango-app/scripts/recapture-arabic-screenshots.mjs`
+- `lango-app/src/libs/services/student-guardian-projection.ts`
+- `lango-app/src/app/api/students/route.ts`
+- `lango-app/src/app/api/__tests__/student-360-hardening.test.ts`
 
 ---
 
