@@ -1,0 +1,474 @@
+================================================================================
+SCHOOLOS HR, STAFF LIFECYCLE & PAYROLL AUDIT EVIDENCE (AUD-HR-01)
+Generated: 2026-09-24T19:30:38.122Z
+Target Host: http://localhost:3111
+Target Tenant: 06ab27c5-7862-4e07-93af-49ef1935bfe6 (Groupe Scolaire Atlas)
+================================================================================
+
+[1] ADMIN AUTHENTICATION (school_admin: y.elamrani@atlas.ma)
+Status: 200 OK
+Authenticated User: Yassine El Amrani (y.elamrani@atlas.ma) | Role: school_admin
+
+[2] GET /api/hr/overview (HR Command Center Metrics)
+Status: 200 OK
+Overview Payload:
+{
+  "success": true,
+  "data": {
+    "headcount": {
+      "active": 4,
+      "probation": 0,
+      "on_leave": 0,
+      "offboarded": 0,
+      "archived": 0,
+      "total": 4
+    },
+    "hiresThisMonth": 0,
+    "departuresThisMonth": 0,
+    "unlinkedAccounts": 0,
+    "expiringDocuments": [],
+    "salaryTotal": "45000.00"
+  }
+}
+
+[3] GET /api/hr/departments (Organizational Units)
+Status: 200 OK
+Departments (4):
+{
+  "success": true,
+  "data": [
+    {
+      "id": "b00cc600-1666-4c53-86f2-1fab7edd903c",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "branchId": "bcf5c806-359e-4141-9e45-af5f3122a52b",
+      "name": "Administration & Finances",
+      "code": "ADM-FIN",
+      "headEmployeeId": null,
+      "description": "Comptabilité, RH, accueil et intendance",
+      "status": "active",
+      "createdAt": "2026-09-24 19:25:39.551565",
+      "updatedAt": "2026-09-24 19:25:39.551565",
+      "employeeCount": "0"
+    },
+    {
+      "id": "ffecff69-a4a6-47a2-a1c8-aeb3129a7f01",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "branchId": "bcf5c806-359e-4141-9e45-af5f3122a52b",
+      "name": "Direction Pédagogique",
+      "code": "DIR-PED",
+      "headEmployeeId": null,
+      "description": "Coordination académique et direction des études",
+      "status": "active",
+      "createdAt": "2026-09-24 19:25:39.551565",
+      "updatedAt": "2026-09-24 19:25:39.551565",
+      "employeeCount": "0"
+    },
+    {
+      "id": "ae6cd287-754a-406f-99a8-a719e343cef1",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "branchId": "bcf5c806-359e-4141-9e45-af5f3122a52b",
+      "name": "Département des Lettres",
+      "code": "DEP-LET",
+      "headEmployeeId": null,
+      "description": "Langues (Arabe, Français, Anglais) et Histoire-Géo",
+      "status": "active",
+      "createdAt": "2026-09-24 19:25:39.551565",
+      "updatedAt": "2026-09-24 19:25:39.551565",
+      "employeeCount": "0"
+    },
+    {
+      "id": "712ec12e-b1e9-41ec-bd4a-e1ebafc04b5a",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "branchId": "bcf5c806-359e-4141-9e45-af5f3122a52b",
+      "name": "Département des Sciences",
+      "code": "DEP-SCI",
+      "headEmployeeId": null,
+      "description": "Mathématiques, Physique-Chimie et SVT",
+      "status": "active",
+      "createdAt": "2026-09-24 19:25:39.551565",
+      "updatedAt": "2026-09-24 19:25:39.551565",
+      "employeeCount": "0"
+    }
+  ]
+}
+
+[4] GET /api/hr/designations (Job Roles & Titles)
+Status: 200 OK
+Designations (5):
+{
+  "success": true,
+  "data": [
+    {
+      "id": "74f94f3c-30ac-4861-8876-e0997a8b5c2e",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "departmentId": "b00cc600-1666-4c53-86f2-1fab7edd903c",
+      "title": "Comptable Principal",
+      "code": "COMPT-PRIN",
+      "description": null,
+      "status": "active",
+      "createdAt": "2026-09-24 19:25:39.551565",
+      "updatedAt": "2026-09-24 19:25:39.551565",
+      "employeeCount": 1
+    },
+    {
+      "id": "cebe39c0-f479-4b13-a4f8-a4c7244fb806",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "departmentId": "ffecff69-a4a6-47a2-a1c8-aeb3129a7f01",
+      "title": "Directeur Général & Pédagogique",
+      "code": "DIR-GEN",
+      "description": null,
+      "status": "active",
+      "createdAt": "2026-09-24 19:25:39.551565",
+      "updatedAt": "2026-09-24 19:25:39.551565",
+      "employeeCount": 1
+    },
+    {
+      "id": "fc7bcd9a-3a32-4a60-b2e9-f7972ded6f06",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "departmentId": "ae6cd287-754a-406f-99a8-a719e343cef1",
+      "title": "Professeur de Français",
+      "code": "PROF-FR",
+      "description": null,
+      "status": "active",
+      "createdAt": "2026-09-24 19:25:39.551565",
+      "updatedAt": "2026-09-24 19:25:39.551565",
+      "employeeCount": 1
+    },
+    {
+      "id": "2be089d3-63a1-4c71-a660-3a4fa04f5e1b",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "departmentId": "712ec12e-b1e9-41ec-bd4a-e1ebafc04b5a",
+      "title": "Professeur de Mathématiques",
+      "code": "PROF-MATH",
+      "description": null,
+      "status": "active",
+      "createdAt": "2026-09-24 19:25:39.551565",
+      "updatedAt": "2026-09-24 19:25:39.551565",
+      "employeeCount": 1
+    },
+    {
+      "id": "74e2f8e9-c1aa-4278-8ea0-0df7335ebbb0",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "departmentId": "b00cc600-1666-4c53-86f2-1fab7edd903c",
+      "title": "Responsable Administratif & RH",
+      "code": "RESP-RH",
+      "description": null,
+      "status": "active",
+      "createdAt": "2026-09-24 19:25:39.551565",
+      "updatedAt": "2026-09-24 19:25:39.551565",
+      "employeeCount": 0
+    }
+  ]
+}
+
+[5] GET /api/hr/employees (Staff Directory)
+Status: 200 OK
+Employees Count: 4
+Employees Sample:
+[
+  {
+    "id": "b8682b49-3381-44a6-ad11-ef7508f44a47",
+    "userId": "USR-001",
+    "employeeId": "EMP-001",
+    "firstName": "Yassine",
+    "lastName": "El Amrani",
+    "email": "y.elamrani@atlas.ma",
+    "phone": "+212 6 61 00 11 22",
+    "profilePhotoUrl": null,
+    "displayName": "Yassine El Amrani",
+    "branchId": "bcf5c806-359e-4141-9e45-af5f3122a52b",
+    "departmentId": "ffecff69-a4a6-47a2-a1c8-aeb3129a7f01",
+    "designationId": "cebe39c0-f479-4b13-a4f8-a4c7244fb806",
+    "managerEmployeeId": null,
+    "employmentType": "full_time",
+    "employmentStatus": "active",
+    "hireDate": "2020-09-01",
+    "contractStartDate": null,
+    "contractEndDate": null,
+    "workloadHours": null,
+    "dependantsCount": 2,
+    "archivedAt": null,
+    "createdAt": "2026-09-24 19:25:39.551565+00",
+    "updatedAt": "2026-09-24 19:25:39.551565+00",
+    "accountName": "Yassine El Amrani",
+    "accountEmail": "y.elamrani@atlas.ma",
+    "accountRole": "school_admin",
+    "accountStatus": "active",
+    "photoUrl": null,
+    "cnssNumber": "198273645",
+    "amoNumber": "AMO-98273",
+    "bankRib": "011 780 0000123456789012 34",
+    "contractType": "cdi",
+    "archivedReason": null,
+    "nationalId": "A748291",
+    "salary": "16000.00",
+    "departmentName": "Direction Pédagogique",
+    "designationTitle": "Directeur Général & Pédagogique"
+  },
+  {
+    "id": "9aaaeb04-54c0-419f-9ca5-0a8cc1c96d10",
+    "userId": "USR-002",
+    "employeeId": "EMP-002",
+    "firstName": "Fatima Zahra",
+    "lastName": "Idrissi",
+    "email": "teacher.001@atlas.ma",
+    "phone": "+212 6 62 11 22 33",
+    "profilePhotoUrl": null,
+    "displayName": "Fatima Zahra Idrissi",
+    "branchId": "bcf5c806-359e-4141-9e45-af5f3122a52b",
+    "departmentId": "712ec12e-b1e9-41ec-bd4a-e1ebafc04b5a",
+    "designationId": "2be089d3-63a1-4c71-a660-3a4fa04f5e1b",
+    "managerEmployeeId": null,
+    "employmentType": "full_time",
+    "employmentStatus": "active",
+    "hireDate": "2021-09-01",
+    "contractStartDate": null,
+    "contractEndDate": null,
+    "workloadHours": null,
+    "dependantsCount": 1,
+    "archivedAt": null,
+    "createdAt": "2026-09-24 19:25:39.551565+00",
+    "updatedAt": "2026-09-24 19:25:39.551565+00",
+    "accountName": "Fatima Zahra Idrissi",
+    "accountEmail": "teacher.001@atlas.ma",
+    "accountRole": "teacher",
+    "accountStatus": "active",
+    "photoUrl": null,
+    "cnssNumber": "283746192",
+    "amoNumber": "AMO-83746",
+    "bankRib": "007 780 0000987654321098 76",
+    "contractType": "cdi",
+    "archivedReason": null,
+    "nationalId": "B192834",
+    "salary": "9500.00",
+    "departmentName": "Département des Sciences",
+    "designationTitle": "Professeur de Mathématiques"
+  }
+]
+
+[6] GET /api/hr/employees/9aaaeb04-54c0-419f-9ca5-0a8cc1c96d10 (Employee Dossier)
+Status: 200 OK
+Employee Dossier:
+{
+  "success": true,
+  "data": {
+    "id": "9aaaeb04-54c0-419f-9ca5-0a8cc1c96d10",
+    "userId": "USR-002",
+    "employeeId": "EMP-002",
+    "firstName": "Fatima Zahra",
+    "lastName": "Idrissi",
+    "email": "teacher.001@atlas.ma",
+    "phone": "+212 6 62 11 22 33",
+    "profilePhotoUrl": null,
+    "displayName": "Fatima Zahra Idrissi",
+    "branchId": "bcf5c806-359e-4141-9e45-af5f3122a52b",
+    "departmentId": "712ec12e-b1e9-41ec-bd4a-e1ebafc04b5a",
+    "designationId": "2be089d3-63a1-4c71-a660-3a4fa04f5e1b",
+    "managerEmployeeId": null,
+    "employmentType": "full_time",
+    "employmentStatus": "active",
+    "hireDate": "2021-09-01",
+    "contractStartDate": null,
+    "contractEndDate": null,
+    "workloadHours": null,
+    "dependantsCount": 1,
+    "archivedAt": null,
+    "createdAt": "2026-09-24 19:25:39.551565+00",
+    "updatedAt": "2026-09-24 19:25:39.551565+00",
+    "accountName": "Fatima Zahra Idrissi",
+    "accountEmail": "teacher.001@atlas.ma",
+    "accountRole": "teacher",
+    "accountStatus": "active",
+    "photoUrl": null,
+    "cnssNumber": "283746192",
+    "amoNumber": "AMO-83746",
+    "bankRib": "007 780 0000987654321098 76",
+    "contractType": "cdi",
+    "archivedReason": null,
+    "nationalId": "B192834",
+    "salary": "9500.00",
+    "departmentName": "Département des Sciences",
+    "designationTitle": "Professeur de Mathématiques"
+  }
+}
+
+[7] GET /api/hr/leave/requests (Staff Leave Queue)
+Status: 200 OK
+Leave Requests (2):
+{
+  "success": true,
+  "data": [
+    {
+      "id": "8da6e473-f094-4ef5-b2b5-9c7627ff2589",
+      "userId": "USR-002",
+      "employeeName": "Fatima Zahra Idrissi",
+      "categoryId": "54f6faa2-46d8-4ee1-b78d-70c318dd70d3",
+      "categoryName": "Congé Maladie",
+      "startDate": "2026-10-02",
+      "endDate": "2026-10-02",
+      "daysRequested": "1.00",
+      "status": "pending",
+      "reason": "Consultation médicale spécialisée",
+      "reviewedById": null,
+      "reviewedAt": null,
+      "createdAt": "2026-09-24 19:25:39.551565+00"
+    },
+    {
+      "id": "72140a8a-62f3-4bb9-b928-973b614fee79",
+      "userId": "USR-003-HR",
+      "employeeName": "Karim Tazi",
+      "categoryId": "e52d6d8d-cef6-4be5-ad69-2876e818961a",
+      "categoryName": "Congé Annuel Payé",
+      "startDate": "2026-10-15",
+      "endDate": "2026-10-17",
+      "daysRequested": "3.00",
+      "status": "approved",
+      "reason": "Congé de récupération personnel",
+      "reviewedById": "USR-001",
+      "reviewedAt": "2026-09-24 19:25:39.551565+00",
+      "createdAt": "2026-09-24 19:25:39.551565+00"
+    }
+  ]
+}
+
+[8] GET /api/hr/payroll/periods (Payroll Periods Lifecycle)
+Status: 200 OK
+Payroll Periods:
+{
+  "success": true,
+  "data": [
+    {
+      "id": "a8555824-f3d8-4fd9-9bac-49e41887ffcd",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "year": 2026,
+      "month": 9,
+      "status": "approved",
+      "lockedAt": "2026-09-24 19:25:39.551565+00",
+      "lockedById": "USR-001",
+      "journalEntryId": null,
+      "regulationVersionId": null,
+      "version": 1,
+      "frozenInputs": null,
+      "calculatedById": null,
+      "calculatedAt": null,
+      "approverId": null,
+      "approvedAt": null,
+      "posterId": null,
+      "postedAt": null,
+      "paymentBatchId": null,
+      "closedAt": null,
+      "cancelledById": null,
+      "cancelledAt": null,
+      "cancellationReason": null,
+      "reversalOfRunId": null,
+      "createdAt": "2026-09-24 19:25:39.551565+00"
+    },
+    {
+      "id": "ccd3f3a6-d689-4c48-a77a-2f84abc68bc8",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "year": 2026,
+      "month": 10,
+      "status": "draft",
+      "lockedAt": null,
+      "lockedById": null,
+      "journalEntryId": null,
+      "regulationVersionId": null,
+      "version": 1,
+      "frozenInputs": null,
+      "calculatedById": null,
+      "calculatedAt": null,
+      "approverId": null,
+      "approvedAt": null,
+      "posterId": null,
+      "postedAt": null,
+      "paymentBatchId": null,
+      "closedAt": null,
+      "cancelledById": null,
+      "cancelledAt": null,
+      "cancellationReason": null,
+      "reversalOfRunId": null,
+      "createdAt": "2026-09-24 19:25:39.551565+00"
+    }
+  ]
+}
+
+[9] GET /api/hr/payslips (Numbered Moroccan Payslips)
+Status: 200 OK
+Payslips (4):
+{
+  "success": true,
+  "data": [
+    {
+      "id": "cea13605-04a5-4073-b141-d3a6de0f9296",
+      "periodId": "a8555824-f3d8-4fd9-9bac-49e41887ffcd",
+      "userId": "USR-001",
+      "issuedAt": "2026-09-24 19:25:39.551565+00",
+      "employeeName": "Yassine El Amrani",
+      "year": 2026,
+      "month": 9,
+      "grossSalary": "16000.00",
+      "netSalary": "12487.27",
+      "cnssEmployee": "268.80",
+      "amoEmployee": "361.60",
+      "irTax": "2882.33"
+    },
+    {
+      "id": "6df96c2e-f388-47a1-8b4f-acaa8d5345b8",
+      "periodId": "a8555824-f3d8-4fd9-9bac-49e41887ffcd",
+      "userId": "USR-002",
+      "issuedAt": "2026-09-24 19:25:39.551565+00",
+      "employeeName": "Fatima Zahra Idrissi",
+      "year": 2026,
+      "month": 9,
+      "grossSalary": "9500.00",
+      "netSalary": "8060.22",
+      "cnssEmployee": "268.80",
+      "amoEmployee": "214.70",
+      "irTax": "956.28"
+    },
+    {
+      "id": "df6c6b03-08c8-47eb-9c8c-ecc065d42044",
+      "periodId": "a8555824-f3d8-4fd9-9bac-49e41887ffcd",
+      "userId": "USR-003-HR",
+      "issuedAt": "2026-09-24 19:25:39.551565+00",
+      "employeeName": "Karim Tazi",
+      "year": 2026,
+      "month": 9,
+      "grossSalary": "8500.00",
+      "netSalary": "7304.04",
+      "cnssEmployee": "268.80",
+      "amoEmployee": "192.10",
+      "irTax": "735.06"
+    },
+    {
+      "id": "0d818bdf-f021-42d9-87ba-75fdc4bfd9ec",
+      "periodId": "a8555824-f3d8-4fd9-9bac-49e41887ffcd",
+      "userId": "USR-004-HR",
+      "issuedAt": "2026-09-24 19:25:39.551565+00",
+      "employeeName": "Nadia Chraibi",
+      "year": 2026,
+      "month": 9,
+      "grossSalary": "11000.00",
+      "netSalary": "9129.85",
+      "cnssEmployee": "268.80",
+      "amoEmployee": "248.60",
+      "irTax": "1352.75"
+    }
+  ]
+}
+
+[10] IDOR & BOUNDARY ACCESS CONTROL CHECKS
+Unauthenticated GET /api/hr/employees -> Status: 401 (Expected: 401) -> PASS
+Unauthenticated GET /api/hr/payroll/periods -> Status: 401 (Expected: 401) -> PASS
+Student Login Status: 200 | Role: student
+Student GET /api/hr/employees -> Status: 403 (Expected: 403) -> PASS
+Student GET /api/hr/payroll/periods -> Status: 403 (Expected: 403) -> PASS
+Student GET /api/hr/departments -> Status: 403 (Expected: 403) -> PASS
+Student GET /api/hr/payslips/[id] (Teacher's payslip) -> Status: 403 (Expected: 403) -> PASS
+Parent Login Status: 200 | Role: parent
+Parent GET /api/hr/employees -> Status: 403 (Expected: 403) -> PASS
+Parent GET /api/hr/payroll/periods -> Status: 403 (Expected: 403) -> PASS
+
+================================================================================
+AUDIT VERIFICATION SUMMARY: ALL ACCESS CONTROL & DATA INTEGRITY GATES PASSED
+================================================================================
