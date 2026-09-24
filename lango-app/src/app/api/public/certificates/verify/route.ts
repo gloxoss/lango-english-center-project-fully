@@ -23,7 +23,7 @@ const verifySchema = z.object({
 // evidenceSnapshot (no DOB/NID/salary/guardian/internal notes).
 export async function POST(request: Request) {
   try {
-    const clientIp = request.headers.get('x-forwarded-for') || '127.0.0.1';
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
     checkRateLimit(`public-cert-verify:${clientIp}`, 10, 60 * 60 * 1000);
 
     const body = await parseJson(request, verifySchema);

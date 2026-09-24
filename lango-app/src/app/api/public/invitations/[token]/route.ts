@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { publicBrandingUrl } from '@/libs/api/uploads';
+import { checkRateLimit } from '@/libs/api/rate-limit';
 import { db } from '@/libs/DB';
 import { tenantInvitations, tenants } from '@/models/Schema';
 
@@ -11,6 +12,11 @@ export async function GET(
 ) {
   try {
     const { token } = await params;
+
+    // Unauthenticated token lookup: bound guesses per IP so invitation tokens
+    // cannot be brute-forced. Same shape as the public verify endpoints.
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
+    checkRateLimit('public-invite:' + clientIp, 10, 60 * 60 * 1000);
 
     const [row] = await db
       .select({
