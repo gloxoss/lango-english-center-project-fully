@@ -1,0 +1,9 @@
+/dashboard/analytics
+/dashboard/reports
+/dashboard/reports/admin
+/dashboard/reports/runs
+/dashboard/reports/schedules
+/dashboard/portals/leadership
+/dashboard/portals/leadership/admin
+/dashboard/portals/leadership/approvals
+/dashboard/portals/leadership/exceptions

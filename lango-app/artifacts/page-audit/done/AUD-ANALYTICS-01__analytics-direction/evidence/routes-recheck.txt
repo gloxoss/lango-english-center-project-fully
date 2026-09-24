@@ -1,0 +1,2 @@
+/dashboard/analytics
+/dashboard/portals/leadership
