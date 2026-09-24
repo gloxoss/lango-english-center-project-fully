@@ -175,6 +175,7 @@ export async function GET(request: Request) {
       weeklyAttendanceRows,
       classesAttendanceRows,
       scheduledDaysRows,
+      monthOpenRows,
     ] = await Promise.all([
       // 3.1 Active Students Count (Authoritative Rule: role='student' AND userStatus='active')
       db.select({ count: sql<number>`count(*)::int` })
@@ -316,6 +317,7 @@ export async function GET(request: Request) {
         yearNum: sql<number>`extract(year from date(${invoices.issueDate}))::int`,
         monthLabel: sql<string>`to_char(date(${invoices.issueDate}), 'Mon')`,
         invoiced: sql<string>`coalesce(sum(${invoices.netAmount}), 0)::numeric::text`,
+        open: sql<string>`coalesce(sum(greatest(${invoices.netAmount} - ${invoices.paidAmount}, 0)), 0)::numeric::text`,
       })
         .from(invoices)
         .innerJoin(user, and(eq(invoices.studentId, user.id), eq(user.tenantId, tenantId)))
@@ -519,6 +521,21 @@ export async function GET(request: Request) {
       db.selectDistinct({ dayOfWeek: classScheduleSlots.dayOfWeek })
         .from(classScheduleSlots)
         .where(eq(classScheduleSlots.tenantId, tenantId)),
+
+      // 3.22 Still owed on this month's invoices. The pulse rate is a share of
+      // what is EXPECTED (the card says so), so it must be invoice-based:
+      // (invoiced - outstanding) / invoiced. The old rate divided cash received
+      // this month by invoices raised this month, which mixes two populations -
+      // cash from earlier months settles earlier invoices - and could exceed 100%.
+      db.select({ total: sql<string>`coalesce(sum(greatest(${invoices.netAmount} - ${invoices.paidAmount}, 0)), 0)::numeric::text` })
+        .from(invoices)
+        .innerJoin(user, and(eq(invoices.studentId, user.id), eq(user.tenantId, tenantId)))
+        .where(and(
+          eq(invoices.tenantId, tenantId),
+          gte(invoices.issueDate, monthStart),
+          invoicedInvoiceCondition(invoices.status),
+          userBranchFilter,
+        )),
     ]);
 
     // =========================================================================
@@ -649,7 +666,13 @@ export async function GET(request: Request) {
 
     const monthInvoiced = Number(monthInvoicedRows[0]?.total ?? 0);
     const monthCollected = Number(monthCollectedRows[0]?.total ?? 0);
-    const monthRate = monthInvoiced > 0 ? Math.round((monthCollected / monthInvoiced) * 100) : null;
+    // Share of this month's invoicing that is settled. Outstanding is never
+    // negative, so paid-on-invoices <= invoiced and the rate cannot exceed 100
+    // without a clamp hiding a wrong numerator. Matches financeOverview and the
+    // verified Analytics semantics. Null (not 0) when nothing was invoiced.
+    const monthOpen = Number(monthOpenRows[0]?.total ?? 0);
+    const monthPaidOnInvoices = Math.max(0, monthInvoiced - monthOpen);
+    const monthRate = monthInvoiced > 0 ? Math.round((monthPaidOnInvoices / monthInvoiced) * 1000) / 10 : null;
 
     const dailyPulse: DailyPulseData = {
       activeStudents: {
@@ -679,8 +702,13 @@ export async function GET(request: Request) {
     // =========================================================================
     const MONTH_NAMES = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
     const invoicedByMonthMap = new Map<string, number>();
+    const openByMonthMap = new Map<string, number>();
     for (const row of periodInvoicesByMonth) {
       invoicedByMonthMap.set(`${row.yearNum}-${row.monthNum}`, Number(row.invoiced));
+      // Real balance still owed on that month's invoices (net - paid, floored at
+      // 0 per invoice in the query). Cash received in a month settles earlier
+      // invoices too, so it is not a valid measure of what is still owed.
+      openByMonthMap.set(`${row.yearNum}-${row.monthNum}`, Number(row.open));
     }
     const collectedByMonthMap = new Map<string, number>();
     for (const row of periodPaymentsByMonth) {
@@ -713,9 +741,17 @@ export async function GET(request: Request) {
     // Mathematical reconciliation: sum of breakdown exactly equals period totals
     const periodInvoicedTotal = monthlyBreakdown.reduce((sum, m) => sum + m.invoiced, 0);
     const periodCollectedTotal = monthlyBreakdown.reduce((sum, m) => sum + m.collected, 0);
-    const periodOutstandingTotal = Math.max(0, periodInvoicedTotal - periodCollectedTotal);
+    // OutstandING is what is still owed on THIS period's invoices, not
+    // (invoiced - cash): cash in a month settles earlier invoices, so the old
+    // subtraction read 0 due - and a recovery rate above 100% - while families
+    // still owed money on this year's bills.
+    const periodOutstandingTotal = monthlyBreakdown.reduce((sum, m) => sum + (openByMonthMap.get(`${m.yearNum}-${m.monthNum}`) ?? 0), 0);
+    // Recovery rate is a share of what was billed, so it is bounded by
+    // construction: outstanding >= 0 (summed as greatest(net - paid, 0)),
+    // therefore paid-on-invoices <= invoiced. No clamp is hiding anything.
+    const periodPaidOnInvoices = Math.max(0, periodInvoicedTotal - periodOutstandingTotal);
     const collectionRate = periodInvoicedTotal > 0
-      ? Math.round((periodCollectedTotal / periodInvoicedTotal) * 1000) / 10
+      ? Math.round((periodPaidOnInvoices / periodInvoicedTotal) * 1000) / 10
       : 0;
 
     // Runtime reconciliation assertion:
