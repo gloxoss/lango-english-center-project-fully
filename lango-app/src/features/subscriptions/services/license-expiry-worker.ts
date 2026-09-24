@@ -1,6 +1,7 @@
-import { and, eq, gt, isNotNull, lt } from 'drizzle-orm';
 import type { RequestContext } from '@/libs/api/context';
+import { and, eq, gt, isNotNull, lt } from 'drizzle-orm';
 import { recordAudit } from '@/libs/api/audit';
+import { isExpiredAt } from '@/libs/api/entitlements';
 import { db } from '@/libs/DB';
 import { licensePayments, schoolLicenses, tenants } from '@/models/Schema';
 
@@ -23,6 +24,10 @@ function systemContext(tenantId: string): RequestContext {
 // paid renewal extending it. Mirrors the settings-worker cross-tenant scan: a
 // background system process, not a user request.
 export async function runLicenseExpirySweep(): Promise<{ suspended: number }> {
+  // Candidate scan only: the suspend/no-suspend decision is made by
+  // isExpiredAt, the same rule the entitlement gate uses, so a tenant can never
+  // be suspended while requireAddon still lets it in. Comparing expires_at
+  // directly here was a second, differently-derived definition of "expired".
   const now = new Date().toISOString();
 
   const expired = await db
@@ -42,6 +47,12 @@ export async function runLicenseExpirySweep(): Promise<{ suspended: number }> {
 
   let suspended = 0;
   for (const license of expired) {
+    // The scan above is deliberately broad. Decide here with the same rule the
+    // entitlement gate uses, so a licence naming today is still paid for today
+    // and is only suspended once its day has passed.
+    if (!isExpiredAt(license.expiresAt)) {
+      continue;
+    }
     // Defensive: skip if a paid renewal already extends this tenant past now
     // (guards against a stale expiresAt on the license row).
     const [renewal] = await db
@@ -56,7 +67,9 @@ export async function runLicenseExpirySweep(): Promise<{ suspended: number }> {
         ),
       )
       .limit(1);
-    if (renewal) continue;
+    if (renewal) {
+      continue;
+    }
 
     const [updated] = await db
       .update(tenants)
