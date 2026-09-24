@@ -189,7 +189,7 @@ function manifestToNav(item: ManifestItem, locale: string, tNav?: any): NavItem 
     href: `/${locale}${item.href}`,
     icon: MANIFEST_ICONS[item.icon] ?? LayoutDashboard,
     addon: item.addonId,
-    subItems: item.children?.map(c => {
+    subItems: item.children?.map((c) => {
       let subLabel = c.label;
       if (tNav) {
         try {
@@ -215,7 +215,6 @@ export function Sidebar({ locale }: { locale: string }) {
   const tAttendance = useTranslations('Attendance');
   const tGrading = useTranslations('Grading');
   const tFinance = useTranslations('Finance');
-  const tSettings = useTranslations('Settings');
   const tReports = useTranslations('Reports');
   const tSuperAdmin = useTranslations('SuperAdmin');
   const { data: session } = authClient.useSession();
@@ -292,9 +291,15 @@ export function Sidebar({ locale }: { locale: string }) {
   const roleLabel = (tRoles as any).has(effectiveRole) ? tRoles(effectiveRole) : (ROLE_LABELS[effectiveRole] ?? effectiveRole);
 
   const canSeeAddon = (addon?: string) => {
-    if (!addon) return true;
-    if (isSuperAdmin && !hasSelectedTenant) return true;
-    if (activeAddons === null) return false;
+    if (!addon) {
+      return true;
+    }
+    if (isSuperAdmin && !hasSelectedTenant) {
+      return true;
+    }
+    if (activeAddons === null) {
+      return false;
+    }
     return activeAddons.has(addon);
   };
 
@@ -632,6 +637,10 @@ export function Sidebar({ locale }: { locale: string }) {
       href: `/${locale}/dashboard/broadcast`,
       icon: Megaphone,
       permission: 'broadcast.read',
+      // S-14: the parent entry targets an addon-gated page — without this tag
+      // the entry shows for tenants without broadcast-messaging and the click
+      // lands on the entitlements redirect.
+      addon: 'broadcast-messaging',
       subItems: [
         { label: tNav('broadcast-crm'), href: `/${locale}/dashboard/communication/crm`, permission: 'crm.manage', addon: 'lead-crm' },
         { label: tNav('broadcast-overview'), href: `/${locale}/dashboard/broadcast`, permission: 'broadcast.read', addon: 'broadcast-messaging' },
@@ -1029,24 +1038,41 @@ export function Sidebar({ locale }: { locale: string }) {
           <div className="border-b border-slate-800 p-3">
             <Link
               href={`/${locale}/dashboard/portals/guard/emergency`}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2 text-xs transition-all ${
-                hasActiveEmergency
-                  ? 'border border-[#E5544B]/50 bg-[#E5544B]/15 font-extrabold text-white shadow-xs hover:bg-[#E5544B]/25'
-                  : 'font-semibold text-slate-300 hover:bg-slate-800/60 hover:text-white'
-              }`}
+              className={`
+                flex items-center gap-3 rounded-xl px-3 py-2 text-xs
+                transition-all
+                ${
+          hasActiveEmergency
+            ? `
+              border border-[#E5544B]/50 bg-[#E5544B]/15 font-extrabold
+              text-white shadow-xs
+              hover:bg-[#E5544B]/25
+            `
+            : `
+              font-semibold text-slate-300
+              hover:bg-slate-800/60 hover:text-white
+            `
+          }
+              `}
             >
               <span
-                className={`flex size-6 items-center justify-center rounded-lg ${
-                  hasActiveEmergency
-                    ? 'bg-[#E5544B] text-white shadow-2xs'
-                    : 'text-slate-400'
-                }`}
+                className={`
+                  flex size-6 items-center justify-center rounded-lg
+                  ${
+          hasActiveEmergency
+            ? 'bg-[#E5544B] text-white shadow-2xs'
+            : 'text-slate-400'
+          }
+                `}
               >
                 <Siren className="size-4" />
               </span>
               <span>{hasActiveEmergency ? 'Urgence active' : 'Sécurité & urgence'}</span>
               {hasActiveEmergency && (
-                <span className="ml-auto size-2 animate-pulse rounded-full bg-[#E5544B]" />
+                <span className="
+                  ml-auto size-2 animate-pulse rounded-full bg-[#E5544B]
+                "
+                />
               )}
             </Link>
           </div>
@@ -1179,19 +1205,25 @@ export function Sidebar({ locale }: { locale: string }) {
                       type="button"
                       onClick={() => toggleMenu(section.id)}
                       className="
-                        flex w-full cursor-pointer items-center justify-between px-3 py-1.5
-                        text-[11px] font-extrabold tracking-wider text-slate-400 uppercase
-                        transition-colors hover:text-white
+                        flex w-full cursor-pointer items-center justify-between
+                        px-3 py-1.5 text-[11px] font-extrabold tracking-wider
+                        text-slate-400 uppercase transition-colors
+                        hover:text-white
                       "
                     >
-                      <span className={hasActiveChild ? 'font-bold text-[#2487B8]' : ''}>
+                      <span className={hasActiveChild
+                        ? `font-bold text-[#2487B8]`
+                        : ''}
+                      >
                         {section.label}
                       </span>
-                      {isOpen ? (
-                        <ChevronDown className="size-3.5" />
-                      ) : (
-                        <ChevronRight className="size-3.5" />
-                      )}
+                      {isOpen
+                        ? (
+                            <ChevronDown className="size-3.5" />
+                          )
+                        : (
+                            <ChevronRight className="size-3.5" />
+                          )}
                     </button>
 
                     {isOpen && (
@@ -1209,8 +1241,9 @@ export function Sidebar({ locale }: { locale: string }) {
                                 <Link
                                   href={item.href}
                                   className={`
-                                    flex flex-1 items-center gap-3 rounded-lg px-3 py-2
-                                    text-xs font-semibold transition-all
+                                    flex flex-1 items-center gap-3 rounded-lg
+                                    px-3 py-2 text-xs font-semibold
+                                    transition-all
                                     ${
                             isActive
                               ? 'bg-[#2487B8] font-bold text-white shadow-xs'
@@ -1244,7 +1277,8 @@ export function Sidebar({ locale }: { locale: string }) {
                               {/* Submenu Items */}
                               {hasSubItems && isSubOpen && (
                                 <div className="
-                                  my-1 ml-7 space-y-1 border-l border-slate-700/60 pl-2
+                                  my-1 ml-7 space-y-1 border-l
+                                  border-slate-700/60 pl-2
                                 "
                                 >
                                   {item.subItems?.map((sub) => {
@@ -1254,11 +1288,14 @@ export function Sidebar({ locale }: { locale: string }) {
                                         key={sub.href}
                                         href={sub.href}
                                         className={`
-                                          block rounded-md px-2.5 py-1.5 text-[11px]
-                                          font-medium transition-all
+                                          block rounded-md px-2.5 py-1.5
+                                          text-[11px] font-medium transition-all
                                           ${
                                       isSubActive
-                                        ? 'bg-[#2487B8]/10 font-bold text-[#2487B8]'
+                                        ? `
+                                          bg-[#2487B8]/10 font-bold
+                                          text-[#2487B8]
+                                        `
                                         : `
                                           text-slate-400
                                           hover:bg-slate-800/40 hover:text-white
