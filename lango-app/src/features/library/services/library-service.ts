@@ -19,6 +19,7 @@ import {
   libraryMembers,
   user,
 } from '@/models/Schema';
+import { casablancaTodayIso } from '@/libs/finance/today';
 
 type DbExecutor = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -27,14 +28,14 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 function addDays(date: Date, days: number): string {
   const result = new Date(date);
   result.setUTCDate(result.getUTCDate() + days);
-  return result.toISOString().slice(0, 10);
+  return casablancaTodayIso(result);
 }
 
 // Due date = start + durationDays open days, skipping branch-scoped and
 // tenant-wide (branchId NULL) closure dates. With no closures this matches
 // addDays exactly, so existing behavior is preserved.
 async function computeDueDate(tx: DbExecutor, tenantId: string, branchId: string, start: Date, durationDays: number): Promise<string> {
-  if (durationDays <= 0) return start.toISOString().slice(0, 10);
+  if (durationDays <= 0) return casablancaTodayIso(start);
   const days = await tx.select({ closedOn: libraryClosureDays.closedOn }).from(libraryClosureDays)
     .where(and(eq(libraryClosureDays.tenantId, tenantId), or(eq(libraryClosureDays.branchId, branchId), isNull(libraryClosureDays.branchId))));
   const closed = new Set(days.map(d => d.closedOn));
@@ -42,9 +43,9 @@ async function computeDueDate(tx: DbExecutor, tenantId: string, branchId: string
   let remaining = durationDays;
   while (remaining > 0) {
     due.setUTCDate(due.getUTCDate() + 1);
-    if (!closed.has(due.toISOString().slice(0, 10))) remaining -= 1;
+    if (!closed.has(casablancaTodayIso(due))) remaining -= 1;
   }
-  return due.toISOString().slice(0, 10);
+  return casablancaTodayIso(due);
 }
 
 // Drizzle wraps pg errors in DrizzleQueryError; the SQLSTATE lives on `.cause`.
@@ -204,7 +205,7 @@ async function resolveMemberPolicy(tx: DbExecutor, tenantId: string, memberId: s
     .from(libraryMembers).innerJoin(user, eq(libraryMembers.userId, user.id))
     .where(and(eq(libraryMembers.id, memberId), eq(libraryMembers.tenantId, tenantId), eq(user.tenantId, tenantId))).limit(1);
   if (!member) throw new ApiError(422, 'INVALID_MEMBER', 'Adhérent introuvable.');
-  const today = new Date().toISOString().slice(0, 10);
+  const today = casablancaTodayIso();
   const blocked = member.state !== 'active' || Boolean(member.blockUntil && member.blockUntil >= today);
   // Prefer the branch-specific policy: sort non-null branchId first, then the
   // branch id. Postgres DESC would put NULL (generic) first - that is wrong.
@@ -380,7 +381,7 @@ export async function returnLoan(tenantId: string, actorId: string, input: { loa
 }
 
 export async function libraryOverview(tenantId: string) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = casablancaTodayIso();
   const [copies, loans, overdue, holds, members] = await Promise.all([
     db.select({ total: sql<number>`count(*)::int`, available: sql<number>`count(*) filter (where ${libraryCopies.state} = 'available')::int` }).from(libraryCopies).where(eq(libraryCopies.tenantId, tenantId)),
     db.select({ n: sql<number>`count(*)::int` }).from(libraryLoans).where(and(eq(libraryLoans.tenantId, tenantId), isNull(libraryLoans.returnedAt))),
@@ -416,7 +417,7 @@ async function requireOwnMember(tenantId: string, userId: string) {
 
 export async function ownLibraryHome(tenantId: string, userId: string) {
   const member = await requireOwnMember(tenantId, userId);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = casablancaTodayIso();
   const [active, overdue, waitingHolds, openCharges] = await Promise.all([
     db.select({ n: sql<number>`count(*)::int` }).from(libraryLoans).where(and(eq(libraryLoans.tenantId, tenantId), eq(libraryLoans.memberId, member.id), isNull(libraryLoans.returnedAt))),
     db.select({ n: sql<number>`count(*)::int` }).from(libraryLoans).where(and(eq(libraryLoans.tenantId, tenantId), eq(libraryLoans.memberId, member.id), isNull(libraryLoans.returnedAt), sql`${libraryLoans.dueDate} < ${today}`)),

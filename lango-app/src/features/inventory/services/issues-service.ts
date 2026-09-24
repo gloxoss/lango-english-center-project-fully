@@ -18,6 +18,7 @@ import {
 import { qtyToMilli } from './inventory-math';
 import { reserveInventoryNumber } from './inventory-sequence';
 import { isIdempotencyViolation, postStockMovements } from './inventory-transactions';
+import { casablancaTodayIso } from '@/libs/finance/today';
 
 export type IssueLineInput = { productId: string; qty: string };
 export type IssueInput = {
@@ -32,7 +33,7 @@ export type IssueInput = {
 };
 
 const isOverdue = (row: { status: string; dueDate: string | null; returnDate: string | null }) =>
-  row.status === 'issued' && !!row.dueDate && !row.returnDate && row.dueDate < new Date().toISOString().slice(0, 10);
+  row.status === 'issued' && !!row.dueDate && !row.returnDate && row.dueDate < casablancaTodayIso();
 
 async function verifyProducts(tenantId: string, productIds: string[]): Promise<Map<string, string>> {
   if (productIds.length === 0) return new Map();
@@ -266,7 +267,7 @@ export async function returnIssue(
     await tx.update(inventoryIssues)
       .set({
         status: disposition,
-        returnDate: new Date().toISOString().slice(0, 10),
+        returnDate: casablancaTodayIso(),
         updatedAt: sql`now()`,
       })
       .where(and(eq(inventoryIssues.id, id), eq(inventoryIssues.tenantId, tenantId)))

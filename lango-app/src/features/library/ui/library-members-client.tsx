@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { casablancaTodayIso } from '@/libs/finance/today';
 
 type Member = { id: string; memberNumber: string; state: string; blockReason: string | null; blockUntil: string | null; name: string; email: string | null; role: string; branchId: string | null };
 
@@ -88,7 +89,7 @@ export function LibraryMembersClient() {
               <tbody>
                 {members.map(member => {
                   const s = stateLabels[member.state] ?? { label: member.state, cls: 'bg-slate-100 text-slate-500' };
-                  const today = new Date().toISOString().slice(0, 10);
+                  const today = casablancaTodayIso();
                   const blockedUntil = member.blockUntil && member.blockUntil >= today;
                   return (
                     <tr key={member.id} className="border-b last:border-0">

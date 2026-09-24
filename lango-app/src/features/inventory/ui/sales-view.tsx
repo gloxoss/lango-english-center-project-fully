@@ -15,6 +15,7 @@ import {
 import {
   AlertCircle, GraduationCap, Loader2, Plus, Receipt, Search, ShoppingCart, Undo2, Wallet,
 } from 'lucide-react';
+import { casablancaTodayIso } from '@/libs/finance/today';
 
 type Row = {
   id: string; saleNumber: string; storeId: string; storeName: string;
@@ -86,7 +87,7 @@ export function SalesView({ locale: initialLocale }: { locale?: string } = {}) {
 
   const [form, setForm] = useState({
     storeId: '', saleToRole: 'student', studentId: '', customerName: '',
-    saleDate: new Date().toISOString().slice(0, 10),
+    saleDate: casablancaTodayIso(),
     paidAmount: '', paymentMethod: '', paymentReference: '',
   });
   const [lines, setLines] = useState<LineForm[]>([{ productId: '', qty: '1', unitPrice: '' }]);
@@ -143,7 +144,7 @@ export function SalesView({ locale: initialLocale }: { locale?: string } = {}) {
   };
 
   const openCreate = () => {
-    setForm({ storeId: '', saleToRole: 'student', studentId: '', customerName: '', saleDate: new Date().toISOString().slice(0, 10), paidAmount: '', paymentMethod: '', paymentReference: '' });
+    setForm({ storeId: '', saleToRole: 'student', studentId: '', customerName: '', saleDate: casablancaTodayIso(), paidAmount: '', paymentMethod: '', paymentReference: '' });
     setLines([{ productId: '', qty: '1', unitPrice: '' }]);
     setModalOpen(true);
   };

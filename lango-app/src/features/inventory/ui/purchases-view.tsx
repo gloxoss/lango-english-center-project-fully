@@ -27,6 +27,7 @@ import {
   Wallet,
   Wand2,
 } from 'lucide-react';
+import { casablancaTodayIso } from '@/libs/finance/today';
 
 type Row = {
   id: string; purchaseNumber: string; supplierId: string; supplierName: string;
@@ -116,7 +117,7 @@ export function PurchasesView({ locale: initialLocale }: { locale?: string } = {
   const [selectedSuggestions, setSelectedSuggestions] = useState<Record<string, boolean>>({});
 
   const [form, setForm] = useState({
-    supplierId: '', storeId: '', orderDate: new Date().toISOString().slice(0, 10), notes: '',
+    supplierId: '', storeId: '', orderDate: casablancaTodayIso(), notes: '',
     paidAmount: '', paymentMethod: '', paymentReference: '',
   });
   const [lines, setLines] = useState<LineForm[]>([{ productId: '', qtyInPurchaseUnit: '1', unitCost: '' }]);
@@ -176,7 +177,7 @@ export function PurchasesView({ locale: initialLocale }: { locale?: string } = {
   };
 
   const openCreate = () => {
-    setForm({ supplierId: '', storeId: '', orderDate: new Date().toISOString().slice(0, 10), notes: '', paidAmount: '', paymentMethod: '', paymentReference: '' });
+    setForm({ supplierId: '', storeId: '', orderDate: casablancaTodayIso(), notes: '', paidAmount: '', paymentMethod: '', paymentReference: '' });
     setLines([{ productId: '', qtyInPurchaseUnit: '1', unitCost: '' }]);
     setModalOpen(true);
   };
