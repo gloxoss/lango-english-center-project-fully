@@ -1,0 +1,192 @@
+[
+  {
+    "route": "/dashboard/library",
+    "finalPath": "/fr/dashboard/portals/librarian",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 497,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-library.png"
+  },
+  {
+    "route": "/dashboard/library/catalog",
+    "finalPath": "/fr/dashboard/library/catalog",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 643,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-library__catalog.png"
+  },
+  {
+    "route": "/dashboard/library/catalog/7490535a-bb8b-415f-8f76-fd5d4f5efbd6",
+    "finalPath": "/fr/dashboard/library/catalog/7490535a-bb8b-415f-8f76-fd5d4f5efbd6",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 537,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-library__catalog__7490535a-bb8b-415f-8f76-fd5d4f5efbd6.png"
+  },
+  {
+    "route": "/dashboard/library/categories",
+    "finalPath": "/fr/dashboard/library/categories",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 532,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-library__categories.png"
+  },
+  {
+    "route": "/dashboard/content/library",
+    "finalPath": "/fr/dashboard/content/library",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 615,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-content__library.png"
+  },
+  {
+    "route": "/dashboard/content/types",
+    "finalPath": "/fr/dashboard/content/types",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 511,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-content__types.png"
+  },
+  {
+    "route": "/dashboard/inventory",
+    "finalPath": "/fr/dashboard/inventory/overview",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 693,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-inventory.png"
+  },
+  {
+    "route": "/dashboard/inventory/overview",
+    "finalPath": "/fr/dashboard/inventory/overview",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 693,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-inventory__overview.png"
+  },
+  {
+    "route": "/dashboard/inventory/products",
+    "finalPath": "/fr/dashboard/inventory/products",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 966,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-inventory__products.png"
+  },
+  {
+    "route": "/dashboard/inventory/categories",
+    "finalPath": "/fr/dashboard/inventory/categories",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 652,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-inventory__categories.png"
+  },
+  {
+    "route": "/dashboard/inventory/units",
+    "finalPath": "/fr/dashboard/inventory/units",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 587,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-inventory__units.png"
+  },
+  {
+    "route": "/dashboard/inventory/stores",
+    "finalPath": "/fr/dashboard/inventory/stores",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 545,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-inventory__stores.png"
+  },
+  {
+    "route": "/dashboard/inventory/suppliers",
+    "finalPath": "/fr/dashboard/inventory/suppliers",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 627,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-inventory__suppliers.png"
+  },
+  {
+    "route": "/dashboard/inventory/stock",
+    "finalPath": "/fr/dashboard/inventory/stock",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 836,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-inventory__stock.png"
+  },
+  {
+    "route": "/dashboard/inventory/purchases",
+    "finalPath": "/fr/dashboard/inventory/purchases",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 642,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-inventory__purchases.png"
+  },
+  {
+    "route": "/dashboard/inventory/sales",
+    "finalPath": "/fr/dashboard/inventory/sales",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 625,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-inventory__sales.png"
+  },
+  {
+    "route": "/dashboard/inventory/issues",
+    "finalPath": "/fr/dashboard/inventory/issues",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 596,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-inventory__issues.png"
+  },
+  {
+    "route": "/dashboard/inventory/transfers",
+    "finalPath": "/fr/dashboard/inventory/transfers",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 530,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-inventory__transfers.png"
+  },
+  {
+    "route": "/dashboard/inventory/adjustments",
+    "finalPath": "/fr/dashboard/inventory/adjustments",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 581,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-inventory__adjustments.png"
+  }
+]

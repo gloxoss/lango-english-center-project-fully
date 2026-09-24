@@ -1,0 +1,17 @@
+[
+  {
+    "route": "/dashboard/library/me",
+    "finalPath": "/fr/dashboard/library/me",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 221,
+    "failures": [
+      "404 /api/addons/library/me/holds",
+      "404 /api/addons/library/me/home",
+      "404 /api/addons/library/me/charges",
+      "404 /api/addons/library/me/history"
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-library__me.png"
+  }
+]
