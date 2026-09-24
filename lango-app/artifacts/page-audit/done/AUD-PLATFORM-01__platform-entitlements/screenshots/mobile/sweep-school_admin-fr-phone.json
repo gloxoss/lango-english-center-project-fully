@@ -1,0 +1,12 @@
+[
+  {
+    "route": "/dashboard/super-admin/subscriptions",
+    "finalPath": "/fr/dashboard",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 981,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-phone-super-admin__subscriptions.png"
+  }
+]
