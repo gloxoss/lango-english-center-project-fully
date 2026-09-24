@@ -1,6 +1,7 @@
 import { and, eq, max } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { TIMETABLE_DAYS as DAYS, TIMETABLE_PERIODS as PERIODS } from '@/features/academics/data/timetable-periods';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
@@ -13,19 +14,10 @@ const generateSchema = z.object({
   sessionYearId: z.string().uuid({ message: 'L\'identifiant de la session est requis.' }),
 }).strict();
 
-// Canonical weekly grid: 6 teaching days x 7 one-hour periods. Rooms are
-// optional in classScheduleSlots (roomLabel is nullable), so a scarce room
+// Canonical weekly grid: the shared timetable-periods module is the single
+// source of truth for the 6 teaching days x 7 one-hour periods (S-12). Rooms
+// are optional in classScheduleSlots (roomLabel is nullable), so a scarce room
 // stock degrades to unassigned rooms rather than blocking placement.
-const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
-const PERIODS = [
-  { start: '08:00', end: '09:00' },
-  { start: '09:00', end: '10:00' },
-  { start: '10:00', end: '11:00' },
-  { start: '11:00', end: '12:00' },
-  { start: '14:00', end: '15:00' },
-  { start: '15:00', end: '16:00' },
-  { start: '16:00', end: '17:00' },
-] as const;
 
 type Requirement = {
   classSectionId: string;
@@ -157,19 +149,26 @@ export async function POST(request: Request) {
     }> = [];
     let unplaced = 0;
 
-    for (const req of requirements) {
-      let assigned = false;
-      outer: for (const day of DAYS) {
+    // First conflict-free (day, period, teacher, room) wins — returned to the
+    // caller instead of a labeled break, same greedy semantics.
+    const findPlacement = (req: Requirement) => {
+      for (const day of DAYS) {
         for (const period of PERIODS) {
           const cell = getCell(occupancy, day, period.start);
-          if (cell.sections.has(req.classSectionId)) continue;
+          if (cell.sections.has(req.classSectionId)) {
+            continue;
+          }
           for (const teacherId of req.teachers) {
-            if (cell.teachers.has(teacherId)) continue;
+            if (cell.teachers.has(teacherId)) {
+              continue;
+            }
             const room = roomNames.find(r => !cell.rooms.has(r)) ?? null;
             cell.teachers.add(teacherId);
             cell.sections.add(req.classSectionId);
-            if (room) cell.rooms.add(room);
-            placed.push({
+            if (room) {
+              cell.rooms.add(room);
+            }
+            return {
               classSectionId: req.classSectionId,
               classSubjectId: req.classSubjectId,
               teacherId,
@@ -178,13 +177,18 @@ export async function POST(request: Request) {
               endTime: period.end,
               roomLabel: room,
               offeringId: req.offeringId,
-            });
-            assigned = true;
-            break outer;
+            };
           }
         }
       }
-      if (!assigned) {
+      return null;
+    };
+
+    for (const req of requirements) {
+      const placement = findPlacement(req);
+      if (placement) {
+        placed.push(placement);
+      } else {
         unplaced++;
       }
     }
