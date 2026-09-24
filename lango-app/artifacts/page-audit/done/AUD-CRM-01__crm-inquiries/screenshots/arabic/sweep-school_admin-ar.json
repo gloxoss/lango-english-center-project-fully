@@ -1,0 +1,12 @@
+[
+  {
+    "route": "/dashboard/communication/crm",
+    "finalPath": "/ar/dashboard/communication/crm",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 577,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-ar-communication__crm.png"
+  }
+]

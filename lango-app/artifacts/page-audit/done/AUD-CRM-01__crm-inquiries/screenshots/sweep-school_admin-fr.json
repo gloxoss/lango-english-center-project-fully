@@ -1,0 +1,32 @@
+[
+  {
+    "route": "/dashboard/communication/crm",
+    "finalPath": "/fr/dashboard/communication/crm",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 577,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-communication__crm.png"
+  },
+  {
+    "route": "/dashboard/communication/campaign-composer",
+    "finalPath": "/fr/dashboard/communication/campaign-composer",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 525,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-communication__campaign-composer.png"
+  },
+  {
+    "route": "/dashboard/communication/delivery-reports",
+    "finalPath": "/fr/dashboard/communication/delivery-reports",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 564,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-communication__delivery-reports.png"
+  }
+]
