@@ -1,13 +1,14 @@
-import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
-import { apiErrorResponse } from '@/libs/api/errors';
-import { db } from '@/libs/DB';
-import { rooms, studentGroups, timetableSlots } from '@/models/Schema';
 import { requireTeacherContext } from '@/features/teacher/api/guard';
+import { listTeacherSessions } from '@/features/teacher/server/teacher-portal';
+import { apiErrorResponse } from '@/libs/api/errors';
 
 // GET /api/teacher/me/timetable — the full weekly timetable for the session
-// teacher, grouped by day. Scoped by teacherId + tenantId.
-const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+// teacher, grouped by day. Scoped by teacherId + tenantId, read from the
+// canonical published class_schedule_slots (see teacher-portal.ts).
+// Monday-first: the Moroccan school week runs Monday-Saturday, and the
+// purpose-built schedule page renders the same order.
+const WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
 
 export async function GET(request: Request) {
   try {
@@ -15,30 +16,16 @@ export async function GET(request: Request) {
     const tenantId = ctx.tenantId as string;
     const teacherId = ctx.userId;
 
-    const rows = await db
-      .select({
-        dayOfWeek: timetableSlots.dayOfWeek,
-        startTime: timetableSlots.startTime,
-        endTime: timetableSlots.endTime,
-        groupName: studentGroups.name,
-        roomName: rooms.name,
-      })
-      .from(timetableSlots)
-      .innerJoin(studentGroups, eq(timetableSlots.studentGroupId, studentGroups.id))
-      .innerJoin(rooms, eq(timetableSlots.roomId, rooms.id))
-      .where(
-        and(
-          eq(timetableSlots.tenantId, tenantId),
-          eq(timetableSlots.teacherId, teacherId),
-        ),
-      )
-      .orderBy(timetableSlots.dayOfWeek, timetableSlots.startTime);
+    const rows = await listTeacherSessions(tenantId, teacherId);
 
-    const byDay = WEEKDAYS.map((day) => ({
+    const byDay = WEEKDAYS.map(day => ({
       day,
-      slots: rows
-        .filter((r) => r.dayOfWeek === day)
-        .map((r) => ({ startTime: r.startTime, endTime: r.endTime, group: r.groupName, room: r.roomName })),
+      slots: rows.filter(row => row.dayOfWeek === day).map(row => ({
+        startTime: row.startTime,
+        endTime: row.endTime,
+        group: row.group,
+        room: row.room,
+      })),
     }));
 
     return NextResponse.json({ success: true, data: { days: byDay } });

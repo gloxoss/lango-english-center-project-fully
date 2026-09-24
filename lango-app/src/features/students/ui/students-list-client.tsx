@@ -112,6 +112,11 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
   const tCommon = useTranslations('Common');
   const tStatus = useTranslations('Status');
   const { can } = usePermissions();
+  // Teachers hold students.read but not finance.read: the directory must not
+  // show them fees. The API zeroes per-student amounts for teachers, which
+  // would otherwise render every student as "À jour" and leak the school-wide
+  // overdue total through the KPI card.
+  const canSeeFinance = can('finance.read');
 
   const router = useRouter();
   const pathname = usePathname();
@@ -713,15 +718,17 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
               iconColor: 'text-[#E8A33D]',
               isActionable: stats.unassigned > 0 && can('students.placements.manage'),
             },
-            {
-              label: 'Impayés échus',
-              value: stats.totalOverdueMAD ? `${stats.totalOverdueMAD.toLocaleString('fr-FR')} MAD` : `${stats.overdue} ${stats.overdue > 1 ? 'dossiers' : 'dossier'}`,
-              sub: `${stats.overdueStudentsCount} ${stats.overdueStudentsCount > 1 ? 'élèves' : 'élève'} · ${stats.overdueFamiliesCount} ${stats.overdueFamiliesCount > 1 ? 'familles' : 'famille'}`,
-              color: stats.totalOverdueMAD > 0 ? 'text-rose-600' : 'text-emerald-600',
-              icon: Wallet,
-              iconBg: 'bg-[#FCE4E2]',
-              iconColor: 'text-[#E5544B]',
-            },
+            ...(canSeeFinance
+              ? [{
+                  label: 'Impayés échus',
+                  value: stats.totalOverdueMAD ? `${stats.totalOverdueMAD.toLocaleString('fr-FR')} MAD` : `${stats.overdue} ${stats.overdue > 1 ? 'dossiers' : 'dossier'}`,
+                  sub: `${stats.overdueStudentsCount} ${stats.overdueStudentsCount > 1 ? 'élèves' : 'élève'} · ${stats.overdueFamiliesCount} ${stats.overdueFamiliesCount > 1 ? 'familles' : 'famille'}`,
+                  color: stats.totalOverdueMAD > 0 ? 'text-rose-600' : 'text-emerald-600',
+                  icon: Wallet,
+                  iconBg: 'bg-[#FCE4E2]',
+                  iconColor: 'text-[#E5544B]',
+                }]
+              : []),
           ].map((kpi, i) => (
             <Card
               key={i}
@@ -942,7 +949,9 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                 <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">{t('student')}</TableHead>
                 <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">{t('levelClass')}</TableHead>
                 <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">{t('legalGuardian')}</TableHead>
-                <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">{t('financialStatus')}</TableHead>
+                {canSeeFinance && (
+                  <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">{t('financialStatus')}</TableHead>
+                )}
                 <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">{tCommon('status')}</TableHead>
                 <TableHead className="text-xs font-bold text-slate-600 h-10 px-4 text-end">{tCommon('actions')}</TableHead>
               </TableRow>
@@ -955,14 +964,14 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                     <TableCell className="p-3.5"><Skeleton className="h-8 w-40" /></TableCell>
                     <TableCell className="p-3.5"><Skeleton className="h-4 w-24" /></TableCell>
                     <TableCell className="p-3.5"><Skeleton className="h-8 w-32" /></TableCell>
-                    <TableCell className="p-3.5"><Skeleton className="h-4 w-16" /></TableCell>
+                    {canSeeFinance && <TableCell className="p-3.5"><Skeleton className="h-4 w-16" /></TableCell>}
                     <TableCell className="p-3.5"><Skeleton className="h-5 w-14" /></TableCell>
                     <TableCell className="p-3.5 text-end"><Skeleton className="h-8 w-20 ms-auto" /></TableCell>
                   </TableRow>
                 ))
               ) : students.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-48 text-center text-slate-500">
+                  <TableCell colSpan={canSeeFinance ? 7 : 6} className="h-48 text-center text-slate-500">
                     <div className="flex flex-col items-center justify-center space-y-2">
                       <Users className="w-8 h-8 text-slate-300" />
                       <p className="font-bold text-sm text-[#16212B]">Aucun élève trouvé</p>
@@ -1033,24 +1042,26 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                       </div>
                       <p className="text-[10px] text-slate-400 font-mono">{st.guardianPhone}</p>
                     </TableCell>
-                    <TableCell className="text-xs p-3.5">
-                      <span
-                        className={`font-bold px-2 py-0.5 rounded-full text-[11px] ${
-                          st.financialStatus === 'À jour'
-                            ? 'bg-emerald-50 text-[#17A673]'
-                            : st.financialStatus === 'Partiel'
-                              ? 'bg-amber-50 text-amber-700'
-                              : 'bg-rose-50 text-rose-700'
-                        }`}
-                      >
-                        {st.financialStatus}
-                      </span>
-                      {st.overdueAmount > 0 && (
-                        <p className="text-[10px] text-rose-600 font-semibold mt-0.5">
-                          {st.overdueAmount.toLocaleString('fr-FR')} MAD échus
-                        </p>
-                      )}
-                    </TableCell>
+                    {canSeeFinance && (
+                      <TableCell className="text-xs p-3.5">
+                        <span
+                          className={`font-bold px-2 py-0.5 rounded-full text-[11px] ${
+                            st.financialStatus === 'À jour'
+                              ? 'bg-emerald-50 text-[#17A673]'
+                              : st.financialStatus === 'Partiel'
+                                ? 'bg-amber-50 text-amber-700'
+                                : 'bg-rose-50 text-rose-700'
+                          }`}
+                        >
+                          {st.financialStatus}
+                        </span>
+                        {st.overdueAmount > 0 && (
+                          <p className="text-[10px] text-rose-600 font-semibold mt-0.5">
+                            {st.overdueAmount.toLocaleString('fr-FR')} MAD échus
+                          </p>
+                        )}
+                      </TableCell>
+                    )}
                     <TableCell className="text-xs p-3.5">
                       <Badge
                         className={`border-none font-bold text-[10px] px-2 py-0.5 ${
@@ -1213,12 +1224,14 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                     <span className="text-[10px] text-slate-400 block uppercase font-bold">Classe</span>
                     <span className="font-semibold text-slate-800">{st.classSection}</span>
                   </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block uppercase font-bold">Finance</span>
-                    <span className={`font-bold ${st.financialStatus === 'À jour' ? 'text-[#17A673]' : 'text-rose-600'}`}>
-                      {st.financialStatus}
-                    </span>
-                  </div>
+                  {canSeeFinance && (
+                    <div>
+                      <span className="text-[10px] text-slate-400 block uppercase font-bold">Finance</span>
+                      <span className={`font-bold ${st.financialStatus === 'À jour' ? 'text-[#17A673]' : 'text-rose-600'}`}>
+                        {st.financialStatus}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500">
@@ -1322,13 +1335,15 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                 <span className="text-slate-500">Tél. Tuteur</span>
                 <span className="font-mono text-[#16212B] font-bold">{activeStudent.guardianPhone}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">{t('financialStatus')}</span>
-                <span className={`font-bold ${activeStudent.financialStatus === 'À jour' ? 'text-[#17A673]' : 'text-rose-600'}`}>
-                  {activeStudent.financialStatus}
-                </span>
-              </div>
-              {activeStudent.overdueAmount > 0 && (
+              {canSeeFinance && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">{t('financialStatus')}</span>
+                  <span className={`font-bold ${activeStudent.financialStatus === 'À jour' ? 'text-[#17A673]' : 'text-rose-600'}`}>
+                    {activeStudent.financialStatus}
+                  </span>
+                </div>
+              )}
+              {canSeeFinance && activeStudent.overdueAmount > 0 && (
                 <div className="flex justify-between bg-rose-50 p-2 rounded-xl text-rose-800">
                   <span>Impayé échu</span>
                   <span className="font-extrabold">{activeStudent.overdueAmount.toLocaleString('fr-FR')} MAD</span>
@@ -1410,12 +1425,14 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                   <span className="text-slate-500">Téléphone Tuteur</span>
                   <span className="font-mono font-bold text-slate-800">{activeStudent.guardianPhone}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Situation financière</span>
-                  <span className={`font-bold ${activeStudent.financialStatus === 'À jour' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {activeStudent.financialStatus}
-                  </span>
-                </div>
+                {canSeeFinance && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Situation financière</span>
+                    <span className={`font-bold ${activeStudent.financialStatus === 'À jour' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {activeStudent.financialStatus}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-2 pt-2 flex-wrap">
