@@ -6,7 +6,8 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { announcements, smsMessages, user } from '@/models/Schema';
+import { announcements, user } from '@/models/Schema';
+import { sendSmsMessages, type SmsInput } from '@/features/broadcast/services/sms-delivery';
 
 const createAnnouncementSchema = z.object({
   title: z.string().trim().min(1).max(255),
@@ -65,27 +66,28 @@ export async function POST(request: Request) {
     if (item) {
       await recordAudit(context, 'create', 'announcement', item.id);
 
-      // Real SMS notification to opted-in alumni (future-implementation
-      // /alumni-portal, discovery decision) - reuses the existing log-only
-      // smsMessages pattern, no new notification infra.
+      // SMS notice to alumni, through the authoritative dispatch service. The
+      // raw insert this replaced wrote status 'sent' with sentAt set and never
+      // called a provider, which fabricated a send and skipped the consent and
+      // suppression checks. The dispatcher records 'queued' with sentAt null when
+      // no provider is configured, and only reports 'sent'/'delivered' on
+      // provider evidence (NOTIFICATION TRUTH, see attendance/route.ts).
       if (body.targetRole === 'alumni') {
         const recipients = await db
           .select({ id: user.id, phone: user.phone })
           .from(user)
           .where(and(eq(user.tenantId, tenantId), eq(user.role, 'alumni')));
+        const inputs: SmsInput[] = [];
         for (const recipient of recipients) {
-          if (recipient.phone) {
-            await db.insert(smsMessages).values({
-              tenantId,
-              recipientPhone: recipient.phone,
-              studentId: recipient.id,
-              body: `${body.title} : ${body.body}`.slice(0, 300),
-              status: 'sent',
-              sentAt: new Date().toISOString(),
-              createdById: context.userId,
-            });
-          }
+          if (!recipient.phone) continue;
+          inputs.push({
+            to: recipient.phone,
+            body: `${body.title} : ${body.body}`.slice(0, 300),
+            studentId: recipient.id,
+            createdById: context.userId,
+          });
         }
+        if (inputs.length > 0) await sendSmsMessages(tenantId, inputs);
       }
     }
 
