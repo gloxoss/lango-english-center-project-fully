@@ -41,7 +41,13 @@ export function isExpiredAt(expiresAt: string | null, now: Date = new Date()): b
   if (DATE_ONLY.test(expiresAt)) {
     return casablancaTodayIso(now) > expiresAt;
   }
-  return new Date(expiresAt).getTime() < now.getTime();
+  // A naive time-bearing value carries no offset, and `new Date(naive)` reads it
+  // as SERVER-LOCAL, moving the cut-off by the host offset. Normalise to UTC the
+  // way AUD-OPS-01 treats stored naive timestamps. Writers today send either a
+  // date-only string or a Z-suffixed instant, so this is defensive.
+  const isoish = expiresAt.trim().replace(' ', 'T');
+  const hasOffset = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(isoish);
+  return new Date(hasOffset ? isoish : `${isoish}Z`).getTime() < now.getTime();
 }
 
 export function isActive(row: { isEnabled: boolean; expiresAt: string | null }): boolean {

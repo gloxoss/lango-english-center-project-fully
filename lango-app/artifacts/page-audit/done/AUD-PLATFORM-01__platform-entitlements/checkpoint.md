@@ -81,3 +81,53 @@ real role. State this plainly in the report; do not fabricate super_admin shots.
    destructive ops (schools/anonymize, schools/backup), licence decisions
    (payments/[paymentId]/decision), plan limits, waitlist convert.
 5. commit -> push -> `hub done task:AUD-PLATFORM-01` -> release both -> stop.
+
+---
+
+# BLOCKED CLOSEOUT (2026-09-24)
+
+## CAMPAIGN STATE: BLOCKED — MISSING SUPER_ADMIN TOTP ACCESS
+Not READY FOR AGENT 5. Code/test work accepted provisionally:
+12/12 routes discovered, 26 APIs audited, 144/144 tests, types/isolation/i18n/ui/eslint all PASS.
+Branch `audit/agent-c/AUD-PLATFORM-01-platform-entitlements`, implementation `a0eedbc` (plus the classification commits below).
+
+## BLOCKER
+No valid Super Admin TOTP credential exists on disk, so `superadmin@schoolos.ma`
+cannot sign in. All 14 screenshots therefore show the access-denied boundary,
+not the platform screens. Nothing was faked.
+
+## WHILE BLOCKED — both classifications finished
+
+### 1. Plan downgrade guard — CLASSIFIED: genuine product/business-rule decision
+- `schools/route.ts:211-236` on `planTier` change: computes `toAdd` from the new
+  plan's `includedAddons` and INSERTS. **No revocation branch exists.** A
+  premium->basic school keeps premium modules until manually disabled.
+- Capacity IS enforced: `assertStudentCapacity` blocks new students over the new
+  `maxStudents`, never deletes existing ones. `null` = unlimited, missing row = no-op.
+- Not a security/data-integrity issue (no cross-tenant leak, no data loss). The
+  exposure is revenue.
+- Blocker to a mechanical fix: `addon_entitlements` has **no source column**, so a
+  plan-inherited grant cannot be distinguished from a bespoke one; auto-revoke
+  would destroy deliberate exceptions. `syncPlanModulesToSchools` says it adds
+  "without revoking custom grants".
+- Path to enforcement: add `granted_by` (plan|manual), revoke only `plan` rows
+  absent from the new plan, keep `manual`.
+- Pinned by `src/features/subscriptions/__tests__/plan-downgrade.test.ts` (5 cases).
+
+### 2. Naive instant parsing — three paths, individually classified
+- `deriveLicenseStatus` — **ACTIVE DEFECT, FIXED (F-02)**. Its own instant rule
+  showed 'expired' on the last paid day while `requireAddon` granted access.
+- `isExpiredAt` instant branch — harmless for current writers (date-only via
+  `z.iso.date()`, or Z-suffixed), **hardened** to normalise naive values to UTC and
+  regression-tested.
+- `monthsFromNow` — **technical debt**: `months`-based licences get a time-bearing
+  expiry while the screens set a whole day. Both shapes now handled consistently.
+- UI `toLocaleDateString` — harmless, display only.
+
+## WHAT REMAINS (once TOTP is available)
+1. Re-run the visual sweep authenticated as super_admin.
+2. Desktop FR for all 12 routes; Mobile 390 + Arabic RTL for important/changed.
+3. Prove visually: tenant directory, tenant detail/lifecycle, subscription/plan,
+   add-on entitlements, suspension/reactivation, dependency guard, settings/reports.
+4. Update report.md, checkpoint.md, screenshots/, evidence/.
+5. Push the same branch and return the UNBLOCKED closeout.

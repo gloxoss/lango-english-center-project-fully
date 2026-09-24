@@ -75,6 +75,8 @@ dependency graph; `tenants.isActive` plus the billing check in
 | ID | Severity | Surface | Problem | Evidence | Disposition |
 |---|---|---|---|---|---|
 | **F-01** | **High** | `entitlements.isActive` + `runLicenseExpirySweep` | Entitlement/licence expiry cut off ~23 hours early and the two paths disagreed on how to compute it. | See below | **FIXED** |
+| **F-02** | **High** | `deriveLicenseStatus` | A **third** expiry rule: compared `new Date(expiresAt)` as an instant, so the licence showed **'expired' on the customer's last paid day** while `requireAddon` still granted access. UI and enforcement disagreed. | `subscription-service.ts:54` | **FIXED** |
+| **F-03** | Low | `isExpiredAt` instant branch | A time-bearing value with no offset is read by `new Date` as **server-local**, shifting the cut-off by the host offset. | Writers today send date-only or Z-suffixed values | **Hardened + regression-tested** (classified: not a live bug) |
 
 ### F-01 in detail
 `expiresAt` is submitted by the entitlement and licence screens as a **date-only**
@@ -149,7 +151,7 @@ suspension and `requireAddon` can never drift apart.
 
 ### Focused tests
 ```text
-npx vitest run src/features/subscriptions src/libs/api  ->  137/137 PASS (15 files)
+npx vitest run src/features/subscriptions src/libs/api  ->  144/144 PASS (16 files)
   entitlement-expiry.test.ts (NEW, 7):
     - active through the whole of its expiry day
     - inactive once the expiry day has passed
@@ -218,7 +220,54 @@ lango-app/src/features/subscriptions/__tests__/entitlement-expiry.test.ts     (N
 + this done-folder package (report, checkpoint, screenshots, evidence)
 ```
 
-## 11. Unresolved / Follow-up Items
+## 11. Classification of the two open items (requested while blocked)
+
+### 11a. Plan downgrade guard — **CLASSIFIED: genuine product/business-rule decision**
+
+**Question:** can a school downgrade to a cheaper plan while still using add-ons or
+capacity the lower plan does not include?
+
+**Exact behaviour, from `src/app/api/super-admin/schools/route.ts:211-236`:** on a
+`planTier` change the handler reads the NEW plan's `includedAddons`, computes
+`toAdd` = missing ones, and **inserts** them. **There is no revocation branch at
+all.** So a `premium -> basic` school keeps every premium module until someone
+disables each one by hand.
+
+**Capacity is handled:** `assertStudentCapacity` blocks *new* students above the
+new plan's `maxStudents` and **never removes or deactivates existing ones**, so a
+downgraded school is over its cap and frozen from growing with all data intact.
+`maxStudents = null` is unlimited and a missing plan row is a no-op.
+
+**Why this is not fixed mechanically:** revoking access is a commercial policy
+(grandfathering vs immediate cut-off), and the code states the intent explicitly
+— `syncPlanModulesToSchools` adds "without revoking custom grants already given
+to specific schools". The obstacle is real: an entitlement row has **no source
+column**, so a plan-inherited grant cannot be told apart from a bespoke one.
+Automatically revoking would therefore take away deliberately-granted exceptions.
+
+**Not a security or data-integrity issue.** No cross-tenant leak, no data loss,
+no privilege escalation — the tenant is that tenant. The exposure is **revenue**:
+a downgraded school keeps premium modules.
+
+**To make it enforceable, in order:** (1) add `granted_by` (`plan` | `manual`) to
+`addon_entitlements`; (2) on downgrade revoke only `plan`-granted rows absent from
+the new plan; (3) keep `manual` rows. Until then the behaviour is pinned by
+`plan-downgrade.test.ts` (5 cases) so it cannot change silently.
+
+### 11b. Naive instant parsing — **three paths, classified individually**
+
+| Path | Shape written | Classification |
+|---|---|---|
+| `subscription-service.ts` `deriveLicenseStatus` | n/a (reader) | **ACTIVE DEFECT → FIXED (F-02)** — its own rule disagreed with the gate |
+| `libs/api/entitlements.ts` `isExpiredAt` instant branch | date-only via `z.iso.date()`, or Z-suffixed instant | **Harmless normalized input today → hardened**; naive values now normalise to UTC, regression-tested |
+| `subscription-service.ts` `monthsFromNow` | returns `.toISOString()` (time-bearing) | **Technical debt** — a `months`-based licence expires at an exact instant while the screens set a whole day. Both shapes are now handled consistently by `isExpiredAt`, so the behaviour is correct; the *inconsistency of authoring* is what remains |
+| `subscription-overview-view.tsx` `new Date(d).toLocaleDateString` | display only | **Harmless** |
+
+Regression coverage for entitlement/suspension timing is in
+`entitlement-expiry.test.ts` (9 cases), including the naive-value normalisation
+and the gate/UI agreement.
+
+## 11x. Still open
 
 - **Visual pass under super_admin** (needs `TOTP_SECRET_FILE`) — see §9.
 - **Plan downgrade behaviour** is only partially modelled: `plan_limits` are
@@ -246,9 +295,9 @@ subscription-enforcement, permission, page-guard and nav-parity suites.
 ## 13. Final Executor Verdict
 
 ```text
-TASK COMPLETE: YES
-READY FOR INDEPENDENT AGENT 5 VERIFICATION: YES
-CODE PUSHED: YES
+CAMPAIGN STATE: BLOCKED — MISSING SUPER_ADMIN TOTP ACCESS
+TASK COMPLETE: NO (visual evidence outstanding)
+READY FOR INDEPENDENT AGENT 5 VERIFICATION: NO
 IMPLEMENTATION SHA: a0eedbc1c5eeb38895c01e452dc86ade25c3b5f9
 OPEN CLAIMS: 0 / 2 released (task:AUD-PLATFORM-01, task:port-3462)
 READY FOR AGENT 5: YES

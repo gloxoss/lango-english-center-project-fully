@@ -1,10 +1,10 @@
+import type { RequestContext } from '@/libs/api/context';
 import { randomBytes } from 'node:crypto';
 import { and, desc, eq } from 'drizzle-orm';
 import { listAddonDefinitions } from '@/libs/api/addon-catalog';
-import { listEntitlements } from '@/libs/api/entitlements';
-import { ApiError } from '@/libs/api/errors';
 import { recordAudit } from '@/libs/api/audit';
-import type { RequestContext } from '@/libs/api/context';
+import { isExpiredAt, listEntitlements } from '@/libs/api/entitlements';
+import { ApiError } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
 import { licensePayments, schoolLicenses, tenants } from '@/models/Schema';
 
@@ -47,13 +47,26 @@ export function generateLicenseKey(): string {
 }
 
 export function deriveLicenseStatus(license: { status: string; expiresAt: string | null } | null): LicenseStatus {
-  if (!license) return 'none';
-  if (license.status === 'suspended') return 'suspended';
-  if (license.status === 'cancelled') return 'cancelled';
+  if (!license) {
+    return 'none';
+  }
+  if (license.status === 'suspended') {
+    return 'suspended';
+  }
+  if (license.status === 'cancelled') {
+    return 'cancelled';
+  }
   if (license.expiresAt) {
+    // Same rule as the entitlement gate. Comparing the raw value as an instant
+    // reported 'expired' on the customer's last paid day while requireAddon still
+    // granted access, so the UI and the enforcement disagreed.
+    if (isExpiredAt(license.expiresAt)) {
+      return 'expired';
+    }
     const exp = new Date(license.expiresAt).getTime();
-    if (exp <= Date.now()) return 'expired';
-    if (exp - Date.now() < EXPIRING_WINDOW_MS) return 'expiring';
+    if (exp - Date.now() < EXPIRING_WINDOW_MS) {
+      return 'expiring';
+    }
   }
   return 'active';
 }
@@ -94,7 +107,9 @@ export async function getSubscriptionDetail(tenantId: string) {
     .from(tenants)
     .where(eq(tenants.id, tenantId))
     .limit(1);
-  if (!tenant) throw new ApiError(404, 'NOT_FOUND', 'Établissement introuvable.');
+  if (!tenant) {
+    throw new ApiError(404, 'NOT_FOUND', 'Établissement introuvable.');
+  }
 
   const [license, payments, grants, addons] = await Promise.all([
     getSchoolLicense(tenantId),
@@ -140,7 +155,7 @@ export async function getSubscriptionDetail(tenantId: string) {
       requestedMonths: p.requestedMonths,
       createdAt: p.createdAt,
     })),
-    addons: addons.map(addon => {
+    addons: addons.map((addon) => {
       const grant = grantById.get(addon.id);
       return {
         addonId: addon.id,
@@ -193,14 +208,16 @@ export async function listSchoolsWithLicenses() {
     planTier: tenant.planTier,
     subscriptionStatus: tenant.subscriptionStatus,
     isActive: tenant.isActive,
-    license: license ? {
-      id: license.id,
-      licenseKey: license.licenseKey,
-      status: license.status,
-      issuedAt: license.issuedAt,
-      expiresAt: license.expiresAt,
-      lastUpgradeAt: license.lastUpgradeAt,
-    } : null,
+    license: license
+      ? {
+          id: license.id,
+          licenseKey: license.licenseKey,
+          status: license.status,
+          issuedAt: license.issuedAt,
+          expiresAt: license.expiresAt,
+          lastUpgradeAt: license.lastUpgradeAt,
+        }
+      : null,
     licenseStatus: deriveLicenseStatus(license),
     pendingPaymentsCount: pendingByTenant.get(tenant.id) ?? 0,
   }));
@@ -289,7 +306,9 @@ export async function extendLicense(
   months: number,
 ): Promise<LicenseRow> {
   const existing = await getSchoolLicense(tenantId);
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Aucune licence existante pour cet établissement.');
+  if (!existing) {
+    throw new ApiError(404, 'NOT_FOUND', 'Aucune licence existante pour cet établissement.');
+  }
 
   const expiresAt = monthsFromNow(months, existing.expiresAt);
   const [row] = await db
@@ -314,7 +333,9 @@ export async function extendLicense(
 
 export async function revokeLicense(ctx: RequestContext, tenantId: string): Promise<LicenseRow> {
   const existing = await getSchoolLicense(tenantId);
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Aucune licence existante pour cet établissement.');
+  if (!existing) {
+    throw new ApiError(404, 'NOT_FOUND', 'Aucune licence existante pour cet établissement.');
+  }
 
   const [row] = await db
     .update(schoolLicenses)
@@ -342,7 +363,9 @@ export async function requestRenewal(
     .from(tenants)
     .where(eq(tenants.id, tenantId))
     .limit(1);
-  if (!tenant) throw new ApiError(404, 'NOT_FOUND', 'Établissement introuvable.');
+  if (!tenant) {
+    throw new ApiError(404, 'NOT_FOUND', 'Établissement introuvable.');
+  }
 
   const [row] = await db
     .insert(licensePayments)
@@ -378,7 +401,9 @@ export async function decidePayment(
     .from(licensePayments)
     .where(and(eq(licensePayments.id, paymentId), eq(licensePayments.tenantId, tenantId)))
     .limit(1);
-  if (!payment) throw new ApiError(404, 'NOT_FOUND', 'Paiement introuvable.');
+  if (!payment) {
+    throw new ApiError(404, 'NOT_FOUND', 'Paiement introuvable.');
+  }
   if (payment.status !== 'pending') {
     throw new ApiError(409, 'PAYMENT_ALREADY_DECIDED', 'Cette demande a déjà été traitée.');
   }
