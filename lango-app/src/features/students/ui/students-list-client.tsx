@@ -112,6 +112,11 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
   const tCommon = useTranslations('Common');
   const tStatus = useTranslations('Status');
   const { can } = usePermissions();
+  // Teachers and receptionists hold students.read but not finance.read: the
+  // directory must not show them fees. The API zeroes per-student amounts for
+  // them, which would otherwise render every student as "À jour" and leak the
+  // school-wide overdue total through the KPI card.
+  const canSeeFinance = can('finance.read');
 
   const router = useRouter();
   const pathname = usePathname();
@@ -135,6 +140,8 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
   const [showMobileKpis, setShowMobileKpis] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [classesUnavailable, setClassesUnavailable] = useState(false);
   const [total, setTotal] = useState(0);
   const [stats, setStats] = useState<{
     total: number;
@@ -302,6 +309,10 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
       ]);
       if (cRes.success && Array.isArray(cRes.data)) {
         setClassesList(cRes.data.map((c: any) => ({ id: c.id, name: c.name })));
+      } else {
+        // Roles without academics.read (receptionist) cannot list classes: an
+        // empty class dropdown is a dead control, so it is hidden instead.
+        setClassesUnavailable(true);
       }
       if (sRes.success && Array.isArray(sRes.data)) {
         setSectionsList(sRes.data.map((s: any) => ({
@@ -328,18 +339,25 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
 
       const res = await fetch(`/api/students?${params}`);
       const json = await res.json();
-      if (json.success) {
-        const mapped = (json.data as ApiStudent[]).map(fromApiStudent);
-        setStudents(mapped);
-        setTotal(json.total ?? mapped.length);
-        if (json.stats) {
-          setStats(json.stats);
-        }
-        // Keep selected student or select first on page
-        setSelectedId(prev => (mapped.some(s => s.id === prev) ? prev : (mapped[0]?.id ?? '')));
+      if (!res.ok || !json.success) {
+        // A refused or failed request is NOT an empty directory: say so instead
+        // of rendering "Aucun élève trouvé" over zeroed KPIs.
+        setLoadError(true);
+        toast.error(json?.error?.message ?? 'Erreur lors du chargement des élèves.');
+        return;
       }
+      setLoadError(false);
+      const mapped = (json.data as ApiStudent[]).map(fromApiStudent);
+      setStudents(mapped);
+      setTotal(json.total ?? mapped.length);
+      if (json.stats) {
+        setStats(json.stats);
+      }
+      // Keep selected student or select first on page
+      setSelectedId(prev => (mapped.some(s => s.id === prev) ? prev : (mapped[0]?.id ?? '')));
     } catch (e) {
       console.error('Failed to load student directory', e);
+      setLoadError(true);
       toast.error('Erreur lors du chargement des élèves.');
     } finally {
       setLoading(false);
@@ -713,15 +731,17 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
               iconColor: 'text-[#E8A33D]',
               isActionable: stats.unassigned > 0 && can('students.placements.manage'),
             },
-            {
-              label: 'Impayés échus',
-              value: stats.totalOverdueMAD ? `${stats.totalOverdueMAD.toLocaleString('fr-FR')} MAD` : `${stats.overdue} ${stats.overdue > 1 ? 'dossiers' : 'dossier'}`,
-              sub: `${stats.overdueStudentsCount} ${stats.overdueStudentsCount > 1 ? 'élèves' : 'élève'} · ${stats.overdueFamiliesCount} ${stats.overdueFamiliesCount > 1 ? 'familles' : 'famille'}`,
-              color: stats.totalOverdueMAD > 0 ? 'text-rose-600' : 'text-emerald-600',
-              icon: Wallet,
-              iconBg: 'bg-[#FCE4E2]',
-              iconColor: 'text-[#E5544B]',
-            },
+            ...(canSeeFinance
+              ? [{
+                  label: 'Impayés échus',
+                  value: stats.totalOverdueMAD ? `${stats.totalOverdueMAD.toLocaleString('fr-FR')} MAD` : `${stats.overdue} ${stats.overdue > 1 ? 'dossiers' : 'dossier'}`,
+                  sub: `${stats.overdueStudentsCount} ${stats.overdueStudentsCount > 1 ? 'élèves' : 'élève'} · ${stats.overdueFamiliesCount} ${stats.overdueFamiliesCount > 1 ? 'familles' : 'famille'}`,
+                  color: stats.totalOverdueMAD > 0 ? 'text-rose-600' : 'text-emerald-600',
+                  icon: Wallet,
+                  iconBg: 'bg-[#FCE4E2]',
+                  iconColor: 'text-[#E5544B]',
+                }]
+              : []),
           ].map((kpi, i) => (
             <Card
               key={i}
@@ -772,17 +792,19 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
           </div>
 
           {/* Dynamic Class/Level Filter from Database */}
-          <Select value={levelFilter} onValueChange={(val) => { setLevelFilter(val); setPage(1); }}>
-            <SelectTrigger className="w-auto min-w-[140px] rounded-full h-10 bg-white border-slate-200/80 text-xs font-semibold">
-              <SelectValue placeholder="Classe / Niveau" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les classes</SelectItem>
-              {classesList.map(c => (
-                <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {!classesUnavailable && (
+            <Select value={levelFilter} onValueChange={(val) => { setLevelFilter(val); setPage(1); }}>
+              <SelectTrigger className="w-auto min-w-[140px] rounded-full h-10 bg-white border-slate-200/80 text-xs font-semibold">
+                <SelectValue placeholder="Classe / Niveau" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes les classes</SelectItem>
+                {classesList.map(c => (
+                  <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           {/* Official Lifecycle Status Filter */}
           <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val); setPage(1); }}>
@@ -927,6 +949,14 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
           </div>
         )}
 
+        {loadError && !loading && (
+          <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold text-amber-800" role="alert">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>Impossible de charger le répertoire des élèves — les valeurs affichées ne sont pas fiables.</span>
+            <Button variant="outline" size="sm" onClick={fetchStudents} className="ms-auto h-7 shrink-0 rounded-full text-[11px]">Réessayer</Button>
+          </div>
+        )}
+
         {/* DESKTOP TABLE VIEW (Visible on md and up) */}
         <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 bg-white">
           <Table>
@@ -942,7 +972,9 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                 <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">{t('student')}</TableHead>
                 <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">{t('levelClass')}</TableHead>
                 <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">{t('legalGuardian')}</TableHead>
-                <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">{t('financialStatus')}</TableHead>
+                {canSeeFinance && (
+                  <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">{t('financialStatus')}</TableHead>
+                )}
                 <TableHead className="text-xs font-bold text-slate-600 h-10 px-4">{tCommon('status')}</TableHead>
                 <TableHead className="text-xs font-bold text-slate-600 h-10 px-4 text-end">{tCommon('actions')}</TableHead>
               </TableRow>
@@ -955,26 +987,40 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                     <TableCell className="p-3.5"><Skeleton className="h-8 w-40" /></TableCell>
                     <TableCell className="p-3.5"><Skeleton className="h-4 w-24" /></TableCell>
                     <TableCell className="p-3.5"><Skeleton className="h-8 w-32" /></TableCell>
-                    <TableCell className="p-3.5"><Skeleton className="h-4 w-16" /></TableCell>
+                    {canSeeFinance && <TableCell className="p-3.5"><Skeleton className="h-4 w-16" /></TableCell>}
                     <TableCell className="p-3.5"><Skeleton className="h-5 w-14" /></TableCell>
                     <TableCell className="p-3.5 text-end"><Skeleton className="h-8 w-20 ms-auto" /></TableCell>
                   </TableRow>
                 ))
               ) : students.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-48 text-center text-slate-500">
+                  <TableCell colSpan={canSeeFinance ? 7 : 6} className="h-48 text-center text-slate-500">
                     <div className="flex flex-col items-center justify-center space-y-2">
-                      <Users className="w-8 h-8 text-slate-300" />
-                      <p className="font-bold text-sm text-[#16212B]">Aucun élève trouvé</p>
-                      <p className="text-xs text-slate-400">Aucun résultat ne correspond aux filtres ou à la recherche courante.</p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => { setSearch(''); setLevelFilter('all'); setStatusFilter('all'); }}
-                        className="rounded-full text-xs mt-2"
-                      >
-                        Réinitialiser les filtres
-                      </Button>
+                      {loadError && (
+                        <>
+                          <AlertTriangle className="w-8 h-8 text-amber-400" />
+                          <p className="font-bold text-sm text-[#16212B]">Chargement impossible</p>
+                          <p className="text-xs text-slate-400">Le répertoire n'a pas pu être chargé. Réessayez ou vérifiez vos droits d'accès.</p>
+                          <Button variant="outline" size="sm" onClick={fetchStudents} className="rounded-full text-xs mt-2">
+                            Réessayer
+                          </Button>
+                        </>
+                      )}
+                      {!loadError && (
+                        <>
+                          <Users className="w-8 h-8 text-slate-300" />
+                          <p className="font-bold text-sm text-[#16212B]">Aucun élève trouvé</p>
+                          <p className="text-xs text-slate-400">Aucun résultat ne correspond aux filtres ou à la recherche courante.</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => { setSearch(''); setLevelFilter('all'); setStatusFilter('all'); }}
+                            className="rounded-full text-xs mt-2"
+                          >
+                            Réinitialiser les filtres
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -1033,24 +1079,26 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                       </div>
                       <p className="text-[10px] text-slate-400 font-mono">{st.guardianPhone}</p>
                     </TableCell>
-                    <TableCell className="text-xs p-3.5">
-                      <span
-                        className={`font-bold px-2 py-0.5 rounded-full text-[11px] ${
-                          st.financialStatus === 'À jour'
-                            ? 'bg-emerald-50 text-[#17A673]'
-                            : st.financialStatus === 'Partiel'
-                              ? 'bg-amber-50 text-amber-700'
-                              : 'bg-rose-50 text-rose-700'
-                        }`}
-                      >
-                        {st.financialStatus}
-                      </span>
-                      {st.overdueAmount > 0 && (
-                        <p className="text-[10px] text-rose-600 font-semibold mt-0.5">
-                          {st.overdueAmount.toLocaleString('fr-FR')} MAD échus
-                        </p>
-                      )}
-                    </TableCell>
+                    {canSeeFinance && (
+                      <TableCell className="text-xs p-3.5">
+                        <span
+                          className={`font-bold px-2 py-0.5 rounded-full text-[11px] ${
+                            st.financialStatus === 'À jour'
+                              ? 'bg-emerald-50 text-[#17A673]'
+                              : st.financialStatus === 'Partiel'
+                                ? 'bg-amber-50 text-amber-700'
+                                : 'bg-rose-50 text-rose-700'
+                          }`}
+                        >
+                          {st.financialStatus}
+                        </span>
+                        {st.overdueAmount > 0 && (
+                          <p className="text-[10px] text-rose-600 font-semibold mt-0.5">
+                            {st.overdueAmount.toLocaleString('fr-FR')} MAD échus
+                          </p>
+                        )}
+                      </TableCell>
+                    )}
                     <TableCell className="text-xs p-3.5">
                       <Badge
                         className={`border-none font-bold text-[10px] px-2 py-0.5 ${
@@ -1166,16 +1214,29 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
             ))
           ) : students.length === 0 ? (
             <Card className="p-8 bg-white rounded-2xl border border-slate-200/80 text-center space-y-2">
-              <Users className="w-8 h-8 text-slate-300 mx-auto" />
-              <p className="font-bold text-sm text-[#16212B]">Aucun élève trouvé</p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => { setSearch(''); setLevelFilter('all'); setStatusFilter('all'); }}
-                className="rounded-full text-xs"
-              >
-                Réinitialiser
-              </Button>
+              {loadError && (
+                <>
+                  <AlertTriangle className="w-8 h-8 text-amber-400 mx-auto" />
+                  <p className="font-bold text-sm text-[#16212B]">Chargement impossible</p>
+                  <Button variant="outline" size="sm" onClick={fetchStudents} className="rounded-full text-xs">
+                    Réessayer
+                  </Button>
+                </>
+              )}
+              {!loadError && (
+                <>
+                  <Users className="w-8 h-8 text-slate-300 mx-auto" />
+                  <p className="font-bold text-sm text-[#16212B]">Aucun élève trouvé</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setSearch(''); setLevelFilter('all'); setStatusFilter('all'); }}
+                    className="rounded-full text-xs"
+                  >
+                    Réinitialiser
+                  </Button>
+                </>
+              )}
             </Card>
           ) : (
             students.map((st) => (
@@ -1213,12 +1274,14 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                     <span className="text-[10px] text-slate-400 block uppercase font-bold">Classe</span>
                     <span className="font-semibold text-slate-800">{st.classSection}</span>
                   </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block uppercase font-bold">Finance</span>
-                    <span className={`font-bold ${st.financialStatus === 'À jour' ? 'text-[#17A673]' : 'text-rose-600'}`}>
-                      {st.financialStatus}
-                    </span>
-                  </div>
+                  {canSeeFinance && (
+                    <div>
+                      <span className="text-[10px] text-slate-400 block uppercase font-bold">Finance</span>
+                      <span className={`font-bold ${st.financialStatus === 'À jour' ? 'text-[#17A673]' : 'text-rose-600'}`}>
+                        {st.financialStatus}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500">
@@ -1322,13 +1385,15 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                 <span className="text-slate-500">Tél. Tuteur</span>
                 <span className="font-mono text-[#16212B] font-bold">{activeStudent.guardianPhone}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">{t('financialStatus')}</span>
-                <span className={`font-bold ${activeStudent.financialStatus === 'À jour' ? 'text-[#17A673]' : 'text-rose-600'}`}>
-                  {activeStudent.financialStatus}
-                </span>
-              </div>
-              {activeStudent.overdueAmount > 0 && (
+              {canSeeFinance && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">{t('financialStatus')}</span>
+                  <span className={`font-bold ${activeStudent.financialStatus === 'À jour' ? 'text-[#17A673]' : 'text-rose-600'}`}>
+                    {activeStudent.financialStatus}
+                  </span>
+                </div>
+              )}
+              {canSeeFinance && activeStudent.overdueAmount > 0 && (
                 <div className="flex justify-between bg-rose-50 p-2 rounded-xl text-rose-800">
                   <span>Impayé échu</span>
                   <span className="font-extrabold">{activeStudent.overdueAmount.toLocaleString('fr-FR')} MAD</span>
@@ -1410,12 +1475,14 @@ export function StudentsListClient({ locale }: { locale?: string } = {}) {
                   <span className="text-slate-500">Téléphone Tuteur</span>
                   <span className="font-mono font-bold text-slate-800">{activeStudent.guardianPhone}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Situation financière</span>
-                  <span className={`font-bold ${activeStudent.financialStatus === 'À jour' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {activeStudent.financialStatus}
-                  </span>
-                </div>
+                {canSeeFinance && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Situation financière</span>
+                    <span className={`font-bold ${activeStudent.financialStatus === 'À jour' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {activeStudent.financialStatus}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-2 pt-2 flex-wrap">

@@ -1,12 +1,16 @@
+import type { RequestContext } from '@/libs/api/context';
+import { sendSmsMessage } from '@/features/broadcast/services/sms-delivery';
+import { requireTenant } from '@/libs/api/context';
 // Approved-template notifications. Only a fixed set of French template keys may
 // be sent; the body is rendered server-side from structured data, never from
-// user free text. Sent through the log-only SMS channel (smsMessages, status
-// 'sent'), so the receptionist can never craft arbitrary bulk messages
+// user free text, so the receptionist can never craft arbitrary bulk messages
 // (receptionist-portal plan §8: "approuvé uniquement via gabarit").
-import { db } from '@/libs/DB';
+//
+// Delivery truth: the message goes through the shared `sendSmsMessage` path,
+// which records `sent`/`sentAt` only on provider evidence and otherwise keeps
+// the row queued/simulated. The previous direct insert wrote status 'sent'
+// with no provider call — a fake success state on every appointment notice.
 import { ApiError } from '@/libs/api/errors';
-import { requireTenant, type RequestContext } from '@/libs/api/context';
-import { smsMessages } from '@/models/Schema';
 
 type TemplateData = {
   date?: string;
@@ -47,9 +51,10 @@ export function isApprovedTemplate(key: string): key is keyof typeof RECEPTION_N
 }
 
 /**
- * Log an approved-template SMS for the recipient. Log-only: no external
- * provider, status written 'sent' immediately. Returns null when there is no
- * recipient phone (silent no-op, never an error).
+ * Send an approved-template message for the recipient through the shared
+ * provider-aware path. Returns the recorded delivery outcome (queued when the
+ * tenant has no real provider), or null when there is no recipient phone
+ * (silent no-op, never an error).
  */
 export async function sendApprovedNotification(
   context: RequestContext,
@@ -59,25 +64,19 @@ export async function sendApprovedNotification(
     data: TemplateData;
     actorId: string;
   },
-): Promise<{ id: string; body: string; recipientPhone: string } | null> {
+): Promise<{ id: string; body: string; recipientPhone: string; delivery: string } | null> {
   const tenantId = requireTenant(context);
-  if (!input.recipientPhone) return null;
+  if (!input.recipientPhone) {
+    return null;
+  }
   if (!isApprovedTemplate(input.templateKey)) {
     throw new ApiError(422, 'TEMPLATE_NOT_ALLOWED', 'Ce gabarit de notification n\'est pas approuvé.');
   }
   const body = RECEPTION_NOTIFICATION_TEMPLATES[input.templateKey]!.render(input.data);
-  const now = new Date().toISOString();
-  const [row] = await db
-    .insert(smsMessages)
-    .values({
-      tenantId,
-      recipientPhone: input.recipientPhone,
-      body,
-      status: 'sent',
-      sentAt: now,
-      createdById: input.actorId,
-    })
-    .returning({ id: smsMessages.id, body: smsMessages.body, recipientPhone: smsMessages.recipientPhone });
-  if (!row) return null;
-  return { id: row.id, body: row.body, recipientPhone: row.recipientPhone };
+  const result = await sendSmsMessage(tenantId, {
+    to: input.recipientPhone,
+    body,
+    createdById: input.actorId,
+  });
+  return { id: result.id, body, recipientPhone: input.recipientPhone, delivery: result.delivery };
 }

@@ -11,7 +11,8 @@ import {
 } from 'lucide-react';
 import { PortalStateView } from '@/components/shared/portal-state';
 import {
-  api, fmtTime, APPOINTMENT_STATUS_KEYS, APPOINTMENT_STATUS_LABELS, type Appointment, type Handoff, type Visitor,
+  api, casablancaToday, fmtTime, APPOINTMENT_STATUS_KEYS, APPOINTMENT_STATUS_LABELS,
+  CATEGORY_KEYS, HANDOFF_PRIORITY_KEYS, type Appointment, type Handoff, type Visitor,
 } from './reception-api';
 import { ReceptionInquiryDialog } from './reception-inquiry-dialog';
 import { ReceptionLookupPanel } from './reception-lookup-panel';
@@ -41,7 +42,7 @@ export function ReceptionHomeView({ locale = 'fr' }: { locale?: string } = {}) {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const today = new Date().toISOString().split('T')[0];
+    const today = casablancaToday();
     const [h, a, v, ho] = await Promise.all([
       api<HomeData>('/api/reception/me/home'),
       api<Appointment[]>(`/api/reception/appointments?date=${today}&pageSize=8`),
@@ -65,7 +66,7 @@ export function ReceptionHomeView({ locale = 'fr' }: { locale?: string } = {}) {
       setActionError(res.error?.message ?? t('actionFailed'));
       return;
     }
-    const today = new Date().toISOString().split('T')[0];
+    const today = casablancaToday();
     const a = await api<Appointment[]>(`/api/reception/appointments?date=${today}&pageSize=8`);
     if (a.ok && Array.isArray(a.data)) setAppointments(a.data);
     if (home) setHome({ ...home, todayAppointmentsCount: Math.max(0, home.todayAppointmentsCount - (action === 'check-in' ? 0 : 1)) });
@@ -210,11 +211,12 @@ export function ReceptionHomeView({ locale = 'fr' }: { locale?: string } = {}) {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-[#16212B]">{h.title}</p>
                     <p className="truncate text-xs text-slate-500">
-                      {h.category}{h.assignedToName ? ` · ${h.assignedToName}` : ''}
+                      {CATEGORY_KEYS[h.category] ? t(CATEGORY_KEYS[h.category] as any) : h.category}
+                      {h.assignedToName ? ` · ${h.assignedToName}` : ''}
                     </p>
                   </div>
                   <Badge className={h.priority === 'urgent' || h.priority === 'high' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-500'}>
-                    {h.priority}
+                    {HANDOFF_PRIORITY_KEYS[h.priority] ? t(HANDOFF_PRIORITY_KEYS[h.priority] as any) : h.priority}
                   </Badge>
                 </li>
               ))}

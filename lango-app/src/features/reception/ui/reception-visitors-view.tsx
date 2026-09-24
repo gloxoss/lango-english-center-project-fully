@@ -171,7 +171,7 @@ export function ReceptionVisitorsView({ locale = 'fr' }: { locale?: string } = {
                   const statusKey = VISITOR_STATUS_KEYS[v.status];
                   const statusLabel = statusKey ? t(statusKey as any) : v.status;
                   return (
-                    <tr key={v.id} className="align-top">
+                    <tr key={v.id} id={`visit-${v.id}`} className="align-top">
                       <td className="py-2.5 pr-3">
                         <p className="font-semibold text-[#16212B]">{v.visitorFirstName} {v.visitorLastName}</p>
                         {v.visitorPhone ? <p className="font-mono text-xs text-slate-400">{v.visitorPhone}</p> : null}

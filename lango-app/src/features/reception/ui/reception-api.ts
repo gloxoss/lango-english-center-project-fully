@@ -96,18 +96,40 @@ export type Visitor = {
   createdAt: string;
 };
 
+/**
+ * The school's calendar day in Casablanca (same rule as libs/finance/today).
+ * `new Date().toISOString()` is the UTC day: during the first local hour after
+ * midnight it names yesterday and "today's appointments" come back empty.
+ */
+export function casablancaToday(): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Casablanca',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+}
+
 export function fmtDateTime(iso: string | null | undefined, locale = 'fr'): string {
-  if (!iso) return '';
+  if (!iso) {
+    return '';
+  }
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
+  if (Number.isNaN(d.getTime())) {
+    return '';
+  }
   const resolved = locale.startsWith('ar') ? 'ar-MA' : locale.startsWith('en') ? 'en-US' : 'fr-FR';
   return d.toLocaleString(resolved, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 export function fmtTime(iso: string | null | undefined, locale = 'fr'): string {
-  if (!iso) return '';
+  if (!iso) {
+    return '';
+  }
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
+  if (Number.isNaN(d.getTime())) {
+    return '';
+  }
   const resolved = locale.startsWith('ar') ? 'ar-MA' : locale.startsWith('en') ? 'en-US' : 'fr-FR';
   return d.toLocaleTimeString(resolved, { hour: '2-digit', minute: '2-digit' });
 }
@@ -199,4 +221,3 @@ export const HANDOFF_PRIORITY_LABELS: Record<string, string> = {
   high: 'Haute',
   urgent: 'Urgente',
 };
-

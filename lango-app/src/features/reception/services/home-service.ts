@@ -1,23 +1,26 @@
+import type { RequestContext } from '@/libs/api/context';
 // Receptionist home aggregates — real, tenant + branch scoped counts for the
 // three home widgets (inquiry intake, visitor log, appointments) plus handoffs.
 // A failing branch degrades to { degraded: true } rather than leaking or
 // erroring the whole request (mirrors the shared portal-home style).
 import { and, eq, sql } from 'drizzle-orm';
-import { db } from '@/libs/DB';
-import { requireTenant, type RequestContext } from '@/libs/api/context';
-import { inquiries } from '@/models/Schema';
 import { guardVisits } from '@/features/guard/models/guard-schema';
 import {
   receptionAppointments,
   receptionHandoffs,
 } from '@/features/reception/models/reception-schema';
+import { requireTenant } from '@/libs/api/context';
+import { db } from '@/libs/DB';
+import { casablancaTodayIso } from '@/libs/finance/today';
+import { inquiries } from '@/models/Schema';
 
 export async function getReceptionHome(ctx: RequestContext) {
   const tenantId = requireTenant(ctx);
   const branchConds = (table: { branchId: unknown }) =>
     ctx.branchId ? [sql`${table.branchId} = ${ctx.branchId}`] : [];
 
-  const today = new Date().toISOString().split('T')[0];
+  // Casablanca business day, not the server's UTC day.
+  const today = casablancaTodayIso();
 
   const [newInquiries, todayVisits, todayAppointments, openHandoffs, checkedInVisitors] = await Promise.all([
     db
@@ -29,6 +32,7 @@ export async function getReceptionHome(ctx: RequestContext) {
       .from(guardVisits)
       .where(and(
         eq(guardVisits.tenantId, tenantId),
+        ...branchConds(guardVisits),
         sql`date(${guardVisits.createdAt}) = ${today}::date`,
       )),
     db
@@ -52,6 +56,7 @@ export async function getReceptionHome(ctx: RequestContext) {
       .from(guardVisits)
       .where(and(
         eq(guardVisits.tenantId, tenantId),
+        ...branchConds(guardVisits),
         eq(guardVisits.status, 'checked_in'),
       )),
   ]);
