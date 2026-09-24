@@ -186,7 +186,7 @@ TEST SUMMARY: 42 / 42 PASSED (100%)
 
 ## 5. Visual Evidence (9 Screenshots)
 
-All screenshots were captured against the live Next.js application running on port `3115` with realistic seeded data for Atlas High School. Every screenshot exhibits a 100% loaded, stable final state (0 `Chargement...`, 0 `جاري التحميل...`, 0 skeletons).
+All screenshots were captured against the live Next.js application running on port `3115` with realistic seeded data for Atlas High School. Every screenshot exhibits a 100% loaded, stable final state (0 `Rendering...` indicator, 0 `Chargement...`, 0 `جاري التحميل...`, 0 skeletons, dev indicator fully settled). All modals and tab views settled before capture.
 
 | Artifact Filename | View Description | Locale / Device | Proof Status |
 |---|---|---|---|
