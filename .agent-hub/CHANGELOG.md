@@ -45,3 +45,11 @@ Ran isolated teacher visual sweep on port 3444 and preserved screenshot plus JSO
 - Verified with: `AUDIT_BASE=http://localhost:3444 ACCOUNT_EMAIL=prof.01@atlas.ma AUDIT_PASSWORD=Admin123! node scripts/visual-sweep.mjs teacher artifacts/visual-sweep-s38/routes.txt artifacts/visual-sweep-s38 -> ok /dashboard/hr/self-service`
 - Status: done, waiting for a second agent to verify
 - 2026-09-23 12:51 VERIFIED by codex-1: Reviewed permission and HR portal changes; employee roles receive payroll.self.read, section-level failures no longer lock the whole portal, tests pass, and the agent supplied a teacher sweep artifact. (S-38)
+
+## 2026-09-24 19:15 · antigravity-1 · task:AUD-SETTINGS-01
+
+AUD-SETTINGS-01 complete: users/roles salary leak and mass-assignment fixed, cross-tenant/branch boundaries enforced, admin self-protection added, permissions matrix sync fixed, organization save/reload verified, S-7 full FR/EN/AR localization, all static gates and tests PASS
+
+- Files: `lango-app/locales`, `lango-app/src/app/[locale]/(dashboard)/dashboard/settings`, `lango-app/src/app/api/settings`, `lango-app/src/app/api/users`, `lango-app/src/features/settings`, `lango-app/src/libs/api/validation.ts`, `lango-app/package.json`, `lango-app/tsconfig.json`, `lango-app/artifacts/page-audit`, `lango-app/scripts/check-hardcoded-french.mjs`, `lango-app/scripts/i18n-hardcoded-baseline.json`
+- Verified with: `npm run check:types (PASS) ; npm run check:isolation (PASS) ; npm run check:i18n (PASS) ; npm run check:i18n:keys (PASS) ; npm run check:ui (PASS) ; npx eslint touched (PASS) ; vitest 10 tests (PASS)`
+- Status: done, waiting for a second agent to verify
