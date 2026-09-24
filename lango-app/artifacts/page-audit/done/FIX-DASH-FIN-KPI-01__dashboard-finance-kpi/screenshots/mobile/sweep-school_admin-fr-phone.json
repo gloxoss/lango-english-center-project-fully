@@ -1,0 +1,12 @@
+[
+  {
+    "route": "/dashboard",
+    "finalPath": "/fr/dashboard",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 981,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-phone-home.png"
+  }
+]

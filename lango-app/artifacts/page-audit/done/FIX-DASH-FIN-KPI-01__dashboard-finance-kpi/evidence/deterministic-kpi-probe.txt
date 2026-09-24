@@ -1,0 +1,39 @@
+FIX-DASH-FIN-KPI-01 — deterministic KPI probe
+Database: schoolos_audit | Tenant: Groupe Scolaire Atlas | Period: 2026-09 (month start 2026-09-01)
+
+SOURCE FIGURES (canonical definitions from libs/finance/definitions.ts)
+  invoiced        = 2 162 000.00 MAD   sum(net_amount) where status IN (pending, partial, overdue, paid)
+  open            =   599 500.00 MAD   sum(greatest(net_amount - paid_amount, 0))  -- canonical balance
+  collected cash  = 2 553 500.00 MAD   posted payments NET OF approved refunds (netCollectedSumSql)
+
+OLD FORMULA (the defect)
+  rate = collected cash / invoiced
+       = 2 553 500 / 2 162 000
+       = 118.1 %                       <-- IMPOSSIBLE: > 100%
+
+  Why: it divides two different populations. Cash received in month M settles
+  invoices from EARLIER months. This school collected 2.55M in September,
+  most of it against earlier billing, while September's own invoicing was 2.16M.
+
+NEW FORMULA (invoice-based, bounded by construction)
+  rate = (invoiced - open) / invoiced
+       = (2 162 000 - 599 500) / 2 162 000
+       = 72.3 %                        <-- in range
+
+  Meaning, matching the card's own label "of expected": 72.3% of what was billed
+  in September has been settled.
+
+BOUNDING ARGUMENT (no cosmetic clamp)
+  `open` is summed as greatest(net - paid, 0) PER INVOICE, so open >= 0.
+  => paid-on-invoices = invoiced - open <= invoiced
+  => rate <= 100 for every possible data state, including legacy overpayments
+     (where a single invoice's paid > net contributes 0 to open and 100% coverage).
+  If the rate ever exceeds 100 it means the numerator or denominator regressed,
+  which is exactly what we want the number to reveal instead of hiding it.
+
+CROSS-CHECK
+  The verified Analytics route (/api/analytics) computes its collection rate from
+  the same canonical helpers (invoicedInvoiceCondition / overdueInvoiceCondition /
+  netCollectedSumSql) and the main dashboard now agrees with it for the same
+  tenant and month. The dashboard's financeOverview card already used the
+  invoice-based form; only the daily-pulse card was inconsistent with it.
