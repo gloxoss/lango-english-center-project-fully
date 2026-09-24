@@ -97,9 +97,16 @@ export function Header({ locale }: { locale: string }) {
     return () => clearInterval(interval);
   }, [session?.user]);
 
-  const userName = session?.user?.name || (sessionPending ? 'Chargement…' : 'Session indisponible');
-  const userEmail = session?.user?.email || '';
-  const userRole = (session?.user as any)?.role || '';
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const userName = isMounted
+    ? (session?.user?.name || (sessionPending ? 'Chargement…' : 'Session indisponible'))
+    : '…';
+  const userEmail = isMounted ? (session?.user?.email || '') : '';
+  const userRole = isMounted ? ((session?.user as any)?.role || '') : '';
 
   // Active-role badge from the server-owned context (shows the effective role,
   // not just the session base role). Falls back to the session role until the
@@ -267,12 +274,15 @@ export function Header({ locale }: { locale: string }) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2.5 pl-3 border-l border-slate-200 focus:outline-none cursor-pointer group">
-              <div className="w-8 h-8 rounded-full bg-[#2487B8] text-white flex items-center justify-center text-xs font-extrabold shadow-xs group-hover:ring-2 group-hover:ring-[#2487B8]/30 transition-all">
-                {session?.user ? initials || '?' : '…'}
+              <div
+                className="w-8 h-8 rounded-full bg-[#2487B8] text-white flex items-center justify-center text-xs font-extrabold shadow-xs group-hover:ring-2 group-hover:ring-[#2487B8]/30 transition-all"
+                suppressHydrationWarning
+              >
+                {isMounted && session?.user ? initials || '?' : '…'}
               </div>
               <div className="hidden lg:block text-left">
-                <p className="text-xs font-bold text-[#16212B] leading-tight">{userName}</p>
-                <p className="text-[10px] text-slate-500 font-medium">{userEmail}</p>
+                <p className="text-xs font-bold text-[#16212B] leading-tight" suppressHydrationWarning>{userName}</p>
+                <p className="text-[10px] text-slate-500 font-medium" suppressHydrationWarning>{userEmail}</p>
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-transform" />
             </button>
@@ -280,8 +290,8 @@ export function Header({ locale }: { locale: string }) {
 
           <DropdownMenuContent align="end" sideOffset={8} className="w-64 p-2 rounded-2xl shadow-xl border border-slate-200/90 bg-white">
             <div className="px-3 py-2.5 bg-slate-50 rounded-xl mb-1 border border-slate-100">
-              <p className="text-xs font-extrabold text-[#16212B]">{userName}</p>
-              <p className="text-[10px] text-slate-500 font-medium">{userEmail}</p>
+              <p className="text-xs font-extrabold text-[#16212B]" suppressHydrationWarning>{userName}</p>
+              <p className="text-[10px] text-slate-500 font-medium" suppressHydrationWarning>{userEmail}</p>
               <div className="mt-1.5 inline-flex items-center gap-1 bg-[#DCEBF4] text-[#1B6C93] px-2 py-0.5 rounded-md text-[10px] font-bold capitalize">
                 <Lock className="w-3 h-3" />
                 <span>{displayRole ? ((tRoles as any).has(displayRole) ? tRoles(displayRole) : displayRole.replace('_', ' ')) : '—'}</span>

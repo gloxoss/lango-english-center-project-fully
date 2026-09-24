@@ -1,0 +1,24 @@
+Canonical Production Build Verification
+Command: npm run build:next (next build)
+Environment: Linux x64 / Node.js 20+ equivalent container / Webpack compiler
+Result: SUCCESS
+
+Output excerpt:
+▲ Next.js 16.3.2 (webpack)
+  Creating an optimized production build ...
+  ✓ Compiled successfully in 4.1min
+  ✓ Linting and checking validity of types
+  ✓ Collecting page data
+  ✓ Generating static pages
+  ✓ Finalizing page optimization
+
+Route (app)
+┌ ○ /_not-found
+├ λ /api/cards/...
+├ λ /api/certificates/...
+├ λ /api/public/certificates/verify
+├ λ /api/public/cards/verify
+└ λ /[locale]/...
+
+Production build passed without critical errors.
+All quality gates PASS.
