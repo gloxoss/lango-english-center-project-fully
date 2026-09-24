@@ -1,15 +1,15 @@
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse, ApiError } from '@/libs/api/errors';
-import { requireCapability } from '@/libs/api/permissions';
-import { requireAddon } from '@/libs/api/entitlements';
+import { certificateDefinitions, certificateEvents, issuedCertificates } from '@/features/certificates/models/certificates-schema';
+import { issueCertificate } from '@/features/certificates/services/issue-service';
 import { recordAudit } from '@/libs/api/audit';
+import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { requireAddon } from '@/libs/api/entitlements';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { certificateEvents, issuedCertificates } from '@/features/certificates/models/certificates-schema';
-import { issueCertificate } from '@/features/certificates/services/issue-service';
 
 const replaceSchema = z.object({
   reason: z.string().trim().min(1).max(500).optional(),
@@ -25,9 +25,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     const body = await parseJson(request, replaceSchema);
 
-    const [original] = await db.select().from(issuedCertificates)
-      .where(and(eq(issuedCertificates.tenantId, tenantId), eq(issuedCertificates.id, id)))
-      .limit(1);
+    const [original] = await db.select().from(issuedCertificates).where(and(eq(issuedCertificates.tenantId, tenantId), eq(issuedCertificates.id, id))).limit(1);
     if (!original) {
       throw new ApiError(404, 'NOT_FOUND', 'Certificat émis introuvable pour cet établissement.');
     }
@@ -35,11 +33,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       throw new ApiError(400, 'CERT_REPLACED', 'Ce certificat a déjà été remplacé.');
     }
 
+    const [definition] = await db.select({ allowedTargetType: certificateDefinitions.allowedTargetType })
+      .from(certificateDefinitions)
+      .where(and(eq(certificateDefinitions.tenantId, tenantId), eq(certificateDefinitions.id, original.definitionId)))
+      .limit(1);
+
+    const recipientType = (definition?.allowedTargetType as 'student' | 'employee') || (original.recipientId.startsWith('STU-') ? 'student' : 'employee');
+
     const replacement = await issueCertificate({
       tenantId,
       definitionId: original.definitionId,
       definitionVersionId: original.versionId,
-      recipientType: original.recipientId.startsWith('STU-') ? 'student' : 'employee',
+      recipientType,
       recipientId: original.recipientId,
       issuedBy: context.userId,
       ruleType: 'manual_authorized',

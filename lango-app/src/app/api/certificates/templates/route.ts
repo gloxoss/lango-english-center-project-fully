@@ -1,17 +1,17 @@
 import { desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse, ApiError } from '@/libs/api/errors';
-import { requireCapability } from '@/libs/api/permissions';
-import { requireAddon } from '@/libs/api/entitlements';
-import { recordAudit } from '@/libs/api/audit';
-import { parseJson } from '@/libs/api/validation';
-import { db } from '@/libs/DB';
 import {
   certificateTemplates,
   certificateTemplateVersions,
 } from '@/features/certificates/models/certificates-schema';
+import { recordAudit } from '@/libs/api/audit';
+import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { requireAddon } from '@/libs/api/entitlements';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
+import { parseJson } from '@/libs/api/validation';
+import { db } from '@/libs/DB';
 
 const createSchema = z.object({
   name: z.string().trim().min(1).max(255),
@@ -25,9 +25,7 @@ export async function GET(request: Request) {
     await requireAddon(tenantId, 'certificate-management');
     await requireCapability(context, 'certificates.issue');
 
-    const rows = await db.select().from(certificateTemplates)
-      .where(eq(certificateTemplates.tenantId, tenantId))
-      .orderBy(desc(certificateTemplates.createdAt));
+    const rows = await db.select().from(certificateTemplates).where(eq(certificateTemplates.tenantId, tenantId)).orderBy(desc(certificateTemplates.createdAt));
 
     return NextResponse.json({ success: true, data: rows });
   } catch (error) {
@@ -58,8 +56,8 @@ export async function POST(request: Request) {
       tenantId,
       templateId: template.id,
       versionNumber: 1,
-      templateSchema: [],
-      pdfmeBasePdf: { width: 794, height: 1123 },
+      templateSchema: [[]],
+      pdfmeBasePdf: { width: 794, height: 1123, padding: [0, 0, 0, 0] },
       createdBy: context.userId,
     });
 

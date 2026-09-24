@@ -89,6 +89,31 @@ const nextConfig: NextConfig = {
       permanent: true,
     },
   ],
+  webpack: (config, { isServer, webpack }) => {
+    if (!isServer) {
+      config.resolve = config.resolve || {};
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        zlib: false,
+        'node:zlib': false,
+        fs: false,
+        'fs/promises': false,
+        'node:fs/promises': false,
+        module: false,
+        'node:module': false,
+        url: false,
+        'node:url': false,
+        stream: false,
+        'node:stream': false,
+      };
+      config.plugins.push(
+        new webpack.NormalModuleReplacementPlugin(/^node:/, (resource: { request: string }) => {
+          resource.request = resource.request.replace(/^node:/, '');
+        }),
+      );
+    }
+    return config;
+  },
 };
 
 export default withNextIntl(nextConfig);

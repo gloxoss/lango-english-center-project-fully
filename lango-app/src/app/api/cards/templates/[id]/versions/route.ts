@@ -1,14 +1,14 @@
-import { desc, eq, and } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse, ApiError } from '@/libs/api/errors';
-import { requireCapability } from '@/libs/api/permissions';
+import { documentTemplates, documentTemplateVersions } from '@/features/cards/models/cards-schema';
 import { recordAudit } from '@/libs/api/audit';
+import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { requireAddon } from '@/libs/api/entitlements';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { documentTemplates, documentTemplateVersions } from '@/features/cards/models/cards-schema';
 
 const createDocumentTemplateVersionSchema = z.object({
   schemaJson: z.record(z.string(), z.unknown()),
@@ -31,7 +31,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       .from(documentTemplateVersions)
       .where(and(
         eq(documentTemplateVersions.tenantId, tenantId),
-        eq(documentTemplateVersions.templateId, id)
+        eq(documentTemplateVersions.templateId, id),
       ))
       .orderBy(desc(documentTemplateVersions.versionNumber));
 
@@ -52,21 +52,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const body = await parseJson(request, createDocumentTemplateVersionSchema);
     const { schemaJson, pageWidthMm, pageHeightMm, orientation, publish } = body;
 
-    const [template] = await db.select().from(documentTemplates)
-      .where(and(eq(documentTemplates.tenantId, tenantId), eq(documentTemplates.id, id))).limit(1);
+    const [template] = await db.select().from(documentTemplates).where(and(eq(documentTemplates.tenantId, tenantId), eq(documentTemplates.id, id))).limit(1);
 
     if (!template) {
       throw new ApiError(404, 'NOT_FOUND', 'Modèle non trouvé');
     }
 
     // Find latest version number
-    const [latestVersion] = await db.select().from(documentTemplateVersions)
-      .where(and(
-        eq(documentTemplateVersions.tenantId, tenantId),
-        eq(documentTemplateVersions.templateId, id)
-      ))
-      .orderBy(desc(documentTemplateVersions.versionNumber))
-      .limit(1);
+    const [latestVersion] = await db.select().from(documentTemplateVersions).where(and(
+      eq(documentTemplateVersions.tenantId, tenantId),
+      eq(documentTemplateVersions.templateId, id),
+    )).orderBy(desc(documentTemplateVersions.versionNumber)).limit(1);
 
     const nextVersionNumber = latestVersion ? latestVersion.versionNumber + 1 : 1;
 
@@ -87,15 +83,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (publish && template.status === 'draft') {
       await db.update(documentTemplates)
         .set({ status: 'published' })
-        .where(eq(documentTemplates.id, template.id));
+        .where(and(eq(documentTemplates.tenantId, tenantId), eq(documentTemplates.id, template.id)));
     }
 
     recordAudit(context, 'create', 'document_template_version', newVersion!.id, { published: publish });
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       data: newVersion,
-      message: publish ? 'Modèle publié avec succès' : 'Brouillon enregistré avec succès'
+      message: publish ? 'Modèle publié avec succès' : 'Brouillon enregistré avec succès',
     });
   } catch (error) {
     return apiErrorResponse(error);

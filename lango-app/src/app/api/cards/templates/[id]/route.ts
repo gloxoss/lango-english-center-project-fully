@@ -1,14 +1,14 @@
-import { eq, and } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse, ApiError } from '@/libs/api/errors';
-import { requireCapability } from '@/libs/api/permissions';
+import { documentTemplates } from '@/features/cards/models/cards-schema';
 import { recordAudit } from '@/libs/api/audit';
+import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { requireAddon } from '@/libs/api/entitlements';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { documentTemplates } from '@/features/cards/models/cards-schema';
 
 const updateDocumentTemplateSchema = z.object({
   name: z.string().trim().min(1).max(255).optional(),
@@ -29,7 +29,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       .from(documentTemplates)
       .where(and(
         eq(documentTemplates.tenantId, tenantId),
-        eq(documentTemplates.id, id)
+        eq(documentTemplates.id, id),
       ))
       .limit(1);
 
@@ -62,7 +62,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       })
       .where(and(
         eq(documentTemplates.tenantId, tenantId),
-        eq(documentTemplates.id, id)
+        eq(documentTemplates.id, id),
       ))
       .returning();
 
@@ -89,8 +89,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     // Soft delete or check if it's published.
     // The spec says: "Published/in-use versions cannot be mutated or hard-deleted."
     // We can archive the template instead.
-    const [template] = await db.select().from(documentTemplates)
-      .where(and(eq(documentTemplates.tenantId, tenantId), eq(documentTemplates.id, id))).limit(1);
+    const [template] = await db.select().from(documentTemplates).where(and(eq(documentTemplates.tenantId, tenantId), eq(documentTemplates.id, id))).limit(1);
 
     if (!template) {
       throw new ApiError(404, 'NOT_FOUND', 'Modèle non trouvé');
@@ -100,13 +99,14 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       // Archive instead of delete
       await db.update(documentTemplates)
         .set({ status: 'archived' })
-        .where(eq(documentTemplates.id, template.id));
-      
+        .where(and(eq(documentTemplates.tenantId, tenantId), eq(documentTemplates.id, template.id)));
+
       recordAudit(context, 'update', 'document_template', template.id, { archived: true });
       return NextResponse.json({ success: true, message: 'Modèle archivé avec succès (les modèles publiés ne peuvent pas être supprimés)' });
     }
 
-    await db.delete(documentTemplates).where(eq(documentTemplates.id, template.id));
+    await db.delete(documentTemplates)
+      .where(and(eq(documentTemplates.tenantId, tenantId), eq(documentTemplates.id, template.id)));
     recordAudit(context, 'delete', 'document_template', template.id);
 
     return NextResponse.json({ success: true, message: 'Modèle supprimé avec succès' });

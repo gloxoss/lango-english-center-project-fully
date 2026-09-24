@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Designer } from '@pdfme/ui';
+import type { Designer } from '@pdfme/ui';
 import { text, image, barcodes } from '@pdfme/schemas';
 import { DocumentTemplateSchema, FieldAllowlist } from './types';
 import { validateTemplateFields } from './validators';

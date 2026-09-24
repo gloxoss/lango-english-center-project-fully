@@ -1,17 +1,17 @@
 import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse, ApiError } from '@/libs/api/errors';
-import { requireCapability } from '@/libs/api/permissions';
-import { requireAddon } from '@/libs/api/entitlements';
-import { recordAudit } from '@/libs/api/audit';
-import { parseJson } from '@/libs/api/validation';
-import { db } from '@/libs/DB';
 import {
   certificateDefinitions,
   certificateDefinitionVersions,
 } from '@/features/certificates/models/certificates-schema';
+import { recordAudit } from '@/libs/api/audit';
+import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { requireAddon } from '@/libs/api/entitlements';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
+import { parseJson } from '@/libs/api/validation';
+import { db } from '@/libs/DB';
 
 const createSchema = z.object({
   title: z.string().trim().min(1).max(255),
@@ -70,8 +70,8 @@ export async function POST(request: Request) {
       definitionId: definition.id,
       versionNumber: 1,
       fieldAllowlist: { allowedFields: [] },
-      templateSchema: [],
-      pdfmeBasePdf: { width: 794, height: 1123 },
+      templateSchema: [[]],
+      pdfmeBasePdf: { width: 794, height: 1123, padding: [0, 0, 0, 0] },
       createdBy: context.userId,
     });
 
