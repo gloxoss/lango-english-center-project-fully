@@ -177,7 +177,7 @@ export function NewsManagerView() {
                 <td className="py-3 font-bold text-[#16212B]">{item.title}</td>
                 <td className="py-3 text-slate-500 font-mono">{item.slug}</td>
                 <td className="py-3"><Badge variant={item.status === 'published' ? 'success' : 'neutral'}>{item.status === 'published' ? 'Publiée' : 'Brouillon'}</Badge></td>
-                <td className="py-3 text-slate-500">{item.publishedAt ? new Date(item.publishedAt).toLocaleDateString('fr-FR') : '—'}</td>
+                <td className="py-3 text-slate-500">{item.publishedAt ? new Date(item.publishedAt).toLocaleDateString('fr-FR', { timeZone: 'Africa/Casablanca' }) : '—'}</td>
                 <td className="py-3 text-right">
                   <button type="button" onClick={(e) => { e.stopPropagation(); remove(item.id); }} className="text-slate-400 hover:text-red-600 cursor-pointer">
                     <Trash2 className="w-4 h-4" />

@@ -1,9 +1,12 @@
 import Link from 'next/link';
+import { isHttpsUrl, MENU_LINK_PAGE_VALUES } from '@/features/website/models/website-validation';
 import type { ResolvedSite } from './site-resolver';
 
 function menuItemHref(item: ResolvedSite['menu'][number], locale: string, tenantSlug: string) {
   if (item.linkType === 'external') {
-    return item.linkValue;
+    // Defense in depth for rows written before the API enforced HTTPS: a
+    // javascript:/data: href is never rendered, even if it exists in the DB.
+    return isHttpsUrl(item.linkValue) ? item.linkValue : '#';
   }
   if (item.linkType === 'anchor') {
     return item.linkValue.startsWith('#') ? item.linkValue : `#${item.linkValue}`;
@@ -11,6 +14,9 @@ function menuItemHref(item: ResolvedSite['menu'][number], locale: string, tenant
   // linkType === 'page'
   const base = `/${locale}/${tenantSlug}`;
   if (item.linkValue === 'home') {
+    return base;
+  }
+  if (!(MENU_LINK_PAGE_VALUES as readonly string[]).includes(item.linkValue)) {
     return base;
   }
   return `${base}/${item.linkValue}`;

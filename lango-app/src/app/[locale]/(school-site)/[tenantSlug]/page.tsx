@@ -26,7 +26,9 @@ export default async function SchoolHomePage({ params }: { params: Promise<{ ten
     <div>
       <section style={{ backgroundColor: theme.colorPrimary }} className="px-6 py-20 text-white text-center">
         <div className="max-w-3xl mx-auto space-y-4">
-          <h1 className="text-3xl md:text-5xl font-extrabold">{content.heroTitle || page?.title || theme.siteTitle}</h1>
+          {/* Explicit white: the global h1..h6 ink color otherwise wins over
+              the section's intended light-on-primary hero text. */}
+          <h1 style={{ color: '#fff' }} className="text-3xl md:text-5xl font-extrabold">{content.heroTitle || page?.title || theme.siteTitle}</h1>
           {content.heroSubtitle && <p className="text-lg opacity-90">{content.heroSubtitle}</p>}
         </div>
       </section>

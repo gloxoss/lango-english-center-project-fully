@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse } from '@/libs/api/errors';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { requireAddon } from '@/libs/api/entitlements';
 import { parseJson } from '@/libs/api/validation';
-import { deleteMenuItem, updateMenuItem } from '@/features/website/services/website-service';
+import { deleteMenuItem, getMenuItem, updateMenuItem } from '@/features/website/services/website-service';
+import { menuLinkError } from '@/features/website/models/website-validation';
 
 const menuItemUpdateSchema = z.object({
   label: z.string().trim().min(1).max(100).optional(),
@@ -23,6 +24,20 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     await requireCapability(context, 'website.menu.manage');
 
     const body = await parseJson(request, menuItemUpdateSchema);
+
+    // The link rule depends on the resulting pair, and a update may change only
+    // one half - validate the merged row, not the fragment.
+    if (body.linkType !== undefined || body.linkValue !== undefined) {
+      const current = await getMenuItem(tenantId, id);
+      if (!current) {
+        throw new ApiError(404, 'NOT_FOUND', 'Élément de menu introuvable.');
+      }
+      const linkError = menuLinkError(body.linkType ?? current.linkType, body.linkValue ?? current.linkValue);
+      if (linkError) {
+        throw new ApiError(422, 'VALIDATION_ERROR', linkError);
+      }
+    }
+
     const item = await updateMenuItem(tenantId, id, body);
 
     return NextResponse.json({ success: true, data: item });

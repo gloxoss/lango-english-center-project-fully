@@ -29,7 +29,12 @@ export default async function SchoolSiteLayout({
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ color: site.theme.colorText }}>
+    <div
+      className="min-h-screen flex flex-col"
+      // Exposes the persisted button-hover color to public interactive
+      // elements (news pagination), so the theme field is not preview-only.
+      style={{ 'color': site.theme.colorText, '--site-button-hover': site.theme.colorButtonHover } as React.CSSProperties}
+    >
       <SiteHeader site={site} locale={locale} />
       <main className="flex-1">{children}</main>
       <SiteFooter site={site} />

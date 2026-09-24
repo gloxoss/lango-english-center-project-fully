@@ -28,7 +28,7 @@ export default async function SchoolNewsDetailPage({ params }: { params: Promise
         <h1 style={{ color: theme.colorText }} className="text-3xl font-extrabold">{item.title}</h1>
         {item.publishedAt && (
           <p style={{ color: theme.colorTextSecondary }} className="text-sm mt-1">
-            {new Date(item.publishedAt).toLocaleDateString('fr-FR')}
+            {new Date(item.publishedAt).toLocaleDateString('fr-FR', { timeZone: 'Africa/Casablanca' })}
           </p>
         )}
       </div>
