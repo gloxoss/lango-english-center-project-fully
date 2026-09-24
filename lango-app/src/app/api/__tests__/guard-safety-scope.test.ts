@@ -38,7 +38,7 @@ const {
 } = await import('@/features/guard/models/guard-schema');
 const { normalizeGateDirection } = await import('@/features/guard/services/gates-service');
 const { verifyGateCredential } = await import('@/features/guard/services/credential-adapter');
-const { checkInVisit } = await import('@/features/guard/services/visitors-service');
+const { checkInVisit, checkOutVisit } = await import('@/features/guard/services/visitors-service');
 const { getExpectedOverview } = await import('@/features/guard/services/home-service');
 const emergencyActivateRoute = await import('@/app/api/guard/emergency/activate/route');
 
@@ -56,6 +56,7 @@ describe.skipIf(!hasDb)('guard safety scope', () => {
   let branchA = '';
   let branchB = '';
   let gateA = '';
+  let gateB = '';
   let foreignGateId = '';
   let shiftId = '';
   let assignmentId = '';
@@ -92,6 +93,15 @@ describe.skipIf(!hasDb)('guard safety scope', () => {
       direction: 'in',
     }).returning();
     gateA = gate!.id;
+
+    const [gateBRow] = await db.insert(guardGates).values({
+      tenantId,
+      branchId: branchB,
+      gateCode: `GAB-${suffix}`,
+      gateName: 'Gate B',
+      direction: 'both',
+    }).returning();
+    gateB = gateBRow!.id;
 
     const [foreignGate] = await db.insert(guardGates).values({
       tenantId: otherTenantId,
@@ -240,6 +250,90 @@ describe.skipIf(!hasDb)('guard safety scope', () => {
     await expect(checkInVisit(ctx(), visit!.id, { gateId: foreignGateId }))
       .rejects
       .toMatchObject({ status: 403, code: 'GATE_INVALID' });
+  });
+
+  // ---------------------------------------------------------------------------
+  // S-08 — branch boundary on visitor check-in/check-out.
+  // Rule (platform branch model): a principal pinned to a branch may only
+  // reference that branch; a principal with no branch acts tenant-wide; a
+  // tenant-wide gate (branchId NULL) is shared infrastructure.
+  // ---------------------------------------------------------------------------
+
+  async function seedVisit(branchId: string | null, name: string) {
+    const [row] = await db.insert(guardVisits).values({
+      tenantId,
+      branchId,
+      visitorFirstName: name,
+      visitorLastName: 'Branch',
+      purpose: 'audit',
+      status: 'approved',
+      createdById: guardId,
+    }).returning();
+    return row!;
+  }
+
+  it('allows a branch-pinned actor to check in and out an own-branch visit, replay-safe', async () => {
+    const visit = await seedVisit(branchA, 'SameBranch');
+
+    const first = await checkInVisit(ctx({ branchId: branchA }), visit.id, { gateId: gateA, idempotencyKey: crypto.randomUUID() });
+
+    expect(first.replayed).toBe(false);
+
+    const [persisted] = await db.select({ branchId: guardVisits.branchId, gateId: guardVisits.gateId })
+      .from(guardVisits)
+      .where(eq(guardVisits.id, visit.id))
+      .limit(1);
+
+    expect(persisted!.branchId).toBe(branchA);
+    expect(persisted!.gateId).toBe(gateA);
+
+    const replay = await checkInVisit(ctx({ branchId: branchA }), visit.id, { gateId: gateA });
+
+    expect(replay.replayed).toBe(true);
+
+    const out = await checkOutVisit(ctx({ branchId: branchA }), visit.id, { gateId: gateA, idempotencyKey: crypto.randomUUID() });
+
+    expect(out.replayed).toBe(false);
+
+    const outReplay = await checkOutVisit(ctx({ branchId: branchA }), visit.id, { gateId: gateA });
+
+    expect(outReplay.replayed).toBe(true);
+
+    const [after] = await db.select({ branchId: guardVisits.branchId }).from(guardVisits).where(eq(guardVisits.id, visit.id)).limit(1);
+
+    expect(after!.branchId).toBe(branchA);
+  });
+
+  it('refuses a foreign-branch gate for a branch-pinned actor', async () => {
+    const visit = await seedVisit(branchA, 'GateTamper');
+
+    await expect(checkInVisit(ctx({ branchId: branchA }), visit.id, { gateId: gateB }))
+      .rejects
+      .toMatchObject({ status: 403, code: 'BRANCH_MISMATCH' });
+
+    const [unchanged] = await db.select({ status: guardVisits.status }).from(guardVisits).where(eq(guardVisits.id, visit.id)).limit(1);
+
+    expect(unchanged!.status).toBe('approved');
+  });
+
+  it('refuses a foreign-branch visit for a branch-pinned actor', async () => {
+    const visit = await seedVisit(branchB, 'VisitTamper');
+
+    await expect(checkInVisit(ctx({ branchId: branchA }), visit.id, { gateId: gateA }))
+      .rejects
+      .toMatchObject({ status: 403, code: 'BRANCH_MISMATCH' });
+
+    const [unchanged] = await db.select({ status: guardVisits.status }).from(guardVisits).where(eq(guardVisits.id, visit.id)).limit(1);
+
+    expect(unchanged!.status).toBe('approved');
+  });
+
+  it('lets a tenant-wide actor (no branch) operate across branches within the tenant', async () => {
+    const visit = await seedVisit(branchB, 'TenantWide');
+
+    const result = await checkInVisit(ctx({ branchId: null }), visit.id, { gateId: gateB });
+
+    expect(result.replayed).toBe(false);
   });
 
   it('branch-scopes the expected visitor list and keeps the guard assignment', async () => {

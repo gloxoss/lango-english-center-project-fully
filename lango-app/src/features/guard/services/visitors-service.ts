@@ -288,7 +288,8 @@ export async function checkInVisit(context: RequestContext, id: string, input: {
   // The gate id is client-supplied: it must belong to this tenant before it is
   // stamped on the visit and the scan evidence. Without this a foreign tenant's
   // gate id was accepted (FK only proves existence, not ownership).
-  await requireTenantGate(tenantId, input.gateId);
+  const gate = await requireTenantGate(tenantId, input.gateId);
+  assertGateBranch(context, gate);
   const now = new Date().toISOString();
 
   const result = await db.transaction(async (tx) => {
@@ -299,6 +300,7 @@ export async function checkInVisit(context: RequestContext, id: string, input: {
       .for('update')
       .limit(1);
     if (!visit) throw new ApiError(404, 'VISIT_NOT_FOUND', 'Visite introuvable.');
+    assertVisitBranch(context, visit);
 
     if (visit.status === 'checked_in') {
       return { replayed: true as const, checkInAt: visit.checkInAt };
@@ -338,7 +340,8 @@ export async function checkOutVisit(context: RequestContext, id: string, input: 
   idempotencyKey?: string | null;
 }) {
   const tenantId = requireTenantId(context);
-  await requireTenantGate(tenantId, input.gateId);
+  const gate = await requireTenantGate(tenantId, input.gateId);
+  assertGateBranch(context, gate);
   const now = new Date().toISOString();
 
   const result = await db.transaction(async (tx) => {
@@ -349,6 +352,7 @@ export async function checkOutVisit(context: RequestContext, id: string, input: 
       .for('update')
       .limit(1);
     if (!visit) throw new ApiError(404, 'VISIT_NOT_FOUND', 'Visite introuvable.');
+    assertVisitBranch(context, visit);
 
     if (visit.status === 'checked_out') {
       return { replayed: true as const, checkOutAt: visit.checkOutAt };
@@ -429,10 +433,32 @@ export async function issueVisitorPass(context: RequestContext, id: string) {
 // Used by the release flow to confirm a gate belongs to the tenant.
 export async function requireTenantGate(tenantId: string, gateId: string) {
   const [gate] = await db
-    .select({ id: guardGates.id, isActive: guardGates.isActive })
+    .select({ id: guardGates.id, isActive: guardGates.isActive, branchId: guardGates.branchId })
     .from(guardGates)
     .where(and(eq(guardGates.id, gateId), eq(guardGates.tenantId, tenantId)))
     .limit(1);
   if (!gate || !gate.isActive) throw new ApiError(403, 'GATE_INVALID', 'Portail invalide.');
   return gate;
+}
+
+/**
+ * Branch boundary for visitor gate operations, following the platform's
+ * authoritative branch model (libs/api/context.ts): a principal pinned to a
+ * branch (user.branchId) may only reference that branch — the same rule
+ * resolveClassBranch applies to branch-aware writes and the student routes
+ * apply to reads. A principal with no branch acts tenant-wide (school_admin
+ * semantics). A tenant-wide gate (branchId NULL) is shared infrastructure and
+ * stays usable by every branch; a gate owned by another branch is refused.
+ */
+export function assertGateBranch(context: RequestContext, gate: { branchId: string | null }): void {
+  if (context.branchId && gate.branchId && gate.branchId !== context.branchId) {
+    throw new ApiError(403, 'BRANCH_MISMATCH', 'Ce portail appartient à une autre succursale.');
+  }
+}
+
+/** See assertGateBranch: a branch-pinned actor may only mutate own-branch visits. */
+export function assertVisitBranch(context: RequestContext, visit: { branchId: string | null }): void {
+  if (context.branchId && visit.branchId !== context.branchId) {
+    throw new ApiError(403, 'BRANCH_MISMATCH', 'Cette visite appartient à une autre succursale.');
+  }
 }
