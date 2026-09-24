@@ -1,9 +1,10 @@
+import type { RequestContext } from '@/libs/api/context';
 import { and, arrayContains, asc, desc, eq, ilike, inArray, ne, or, sql } from 'drizzle-orm';
-import { db } from '@/libs/DB';
-import { applicants, inquiryFollowUps, inquiries, user } from '@/models/Schema';
-import { ApiError } from '@/libs/api/errors';
-import { requireTenant, type RequestContext } from '@/libs/api/context';
 import { recordAudit } from '@/libs/api/audit';
+import { requireTenant } from '@/libs/api/context';
+import { ApiError } from '@/libs/api/errors';
+import { db } from '@/libs/DB';
+import { applicants, inquiries, inquiryFollowUps, user } from '@/models/Schema';
 
 export const INQUIRY_STATUSES = ['new', 'contacted', 'qualified', 'converted', 'lost'] as const;
 export type InquiryStatus = (typeof INQUIRY_STATUSES)[number];
@@ -65,17 +66,27 @@ export async function getPipelineCounts(tenantId: string): Promise<Record<Inquir
   const counts: Record<InquiryStatus, number> = { new: 0, contacted: 0, qualified: 0, converted: 0, lost: 0 };
   for (const r of rows) {
     const status = r.status as InquiryStatus;
-    if (status in counts) counts[status] = r.count;
+    if (status in counts) {
+      counts[status] = r.count;
+    }
   }
   return counts;
 }
 
 export async function listInquiries(filters: InquiryListFilters): Promise<{ data: typeof inquiries.$inferSelect[]; total: number }> {
   const conditions = [eq(inquiries.tenantId, filters.tenantId)];
-  if (filters.status) conditions.push(eq(inquiries.status, filters.status as any));
-  if (filters.source) conditions.push(eq(inquiries.source, filters.source as any));
-  if (filters.assignedToId) conditions.push(eq(inquiries.assignedToId, filters.assignedToId));
-  if (filters.tag) conditions.push(arrayContains(inquiries.tags, [filters.tag]));
+  if (filters.status) {
+    conditions.push(eq(inquiries.status, filters.status as any));
+  }
+  if (filters.source) {
+    conditions.push(eq(inquiries.source, filters.source as any));
+  }
+  if (filters.assignedToId) {
+    conditions.push(eq(inquiries.assignedToId, filters.assignedToId));
+  }
+  if (filters.tag) {
+    conditions.push(arrayContains(inquiries.tags, [filters.tag]));
+  }
   if (filters.search) {
     const q = `%${filters.search}%`;
     conditions.push(
@@ -84,8 +95,8 @@ export async function listInquiries(filters: InquiryListFilters): Promise<{ data
   }
 
   const where = and(...conditions);
-  const orderColumn =
-    filters.sortBy === 'contactName'
+  const orderColumn
+    = filters.sortBy === 'contactName'
       ? inquiries.contactName
       : filters.sortBy === 'updatedAt'
         ? inquiries.updatedAt
@@ -293,11 +304,17 @@ export async function findDuplicateCandidates(
     return [];
   }
   const clauses: any[] = [];
-  if (opts.phone) clauses.push(eq(inquiries.phone, opts.phone));
-  if (opts.email) clauses.push(eq(inquiries.email, opts.email));
+  if (opts.phone) {
+    clauses.push(eq(inquiries.phone, opts.phone));
+  }
+  if (opts.email) {
+    clauses.push(eq(inquiries.email, opts.email));
+  }
 
   const conditions: any[] = [eq(inquiries.tenantId, tenantId)];
-  if (opts.excludeId) conditions.push(ne(inquiries.id, opts.excludeId));
+  if (opts.excludeId) {
+    conditions.push(ne(inquiries.id, opts.excludeId));
+  }
   conditions.push(or(...clauses) as any);
 
   return db
@@ -329,7 +346,7 @@ export async function mergeInquiries(
   secondaryIds: string[],
 ) {
   const tenantId = requireTenant(context);
-  const uniqueSecondary = [...new Set(secondaryIds)].filter((s) => s !== primaryId);
+  const uniqueSecondary = [...new Set(secondaryIds)].filter(s => s !== primaryId);
   if (uniqueSecondary.length === 0) {
     throw new ApiError(422, 'NO_SECONDARY', 'Aucune fiche à fusionner.');
   }
@@ -353,7 +370,7 @@ export async function mergeInquiries(
     if (secondaries.length !== uniqueSecondary.length) {
       throw new ApiError(404, 'NOT_FOUND', 'Certaines fiches à fusionner sont introuvables.');
     }
-    if (primary.convertedApplicantId || secondaries.some((s) => s.convertedApplicantId)) {
+    if (primary.convertedApplicantId || secondaries.some(s => s.convertedApplicantId)) {
       throw new ApiError(422, 'CONVERTED_CANNOT_MERGE', 'Une fiche déjà convertie ne peut pas être fusionnée.');
     }
 
@@ -362,8 +379,8 @@ export async function mergeInquiries(
       .set({ inquiryId: primaryId })
       .where(and(eq(inquiryFollowUps.tenantId, tenantId), inArray(inquiryFollowUps.inquiryId, uniqueSecondary)));
 
-    const mergedTags = [...new Set([...(primary.tags ?? []), ...secondaries.flatMap((s) => s.tags ?? [])])];
-    const mergedNotes = [primary.notes, ...secondaries.map((s) => s.notes).filter((n): n is string => Boolean(n))]
+    const mergedTags = [...new Set([...(primary.tags ?? []), ...secondaries.flatMap(s => s.tags ?? [])])];
+    const mergedNotes = [primary.notes, ...secondaries.map(s => s.notes).filter((n): n is string => Boolean(n))]
       .filter((n): n is string => Boolean(n))
       .join('\n---\n');
 
@@ -389,40 +406,46 @@ export async function mergeInquiries(
 export async function convertInquiryToApplicant(context: RequestContext, inquiryId: string) {
   const tenantId = requireTenant(context);
 
-  const [inquiry] = await db
-    .select()
-    .from(inquiries)
-    .where(and(eq(inquiries.id, inquiryId), eq(inquiries.tenantId, tenantId)))
-    .limit(1);
-  if (!inquiry) {
-    throw new ApiError(404, 'NOT_FOUND', 'Prospect introuvable.');
-  }
-  if (inquiry.status === 'converted' && inquiry.convertedApplicantId) {
-    throw new ApiError(422, 'ALREADY_CONVERTED', 'Ce prospect a déjà été converti en candidat.');
-  }
+  return db.transaction(async (tx) => {
+    // Lock the inquiry row: without it two concurrent submits (double-click,
+    // retry) both pass the read guard and each insert an applicant.
+    const [inquiry] = await tx
+      .select()
+      .from(inquiries)
+      .where(and(eq(inquiries.id, inquiryId), eq(inquiries.tenantId, tenantId)))
+      .for('update')
+      .limit(1);
+    if (!inquiry) {
+      throw new ApiError(404, 'NOT_FOUND', 'Prospect introuvable.');
+    }
+    if (inquiry.convertedApplicantId || inquiry.status === 'converted') {
+      throw new ApiError(422, 'ALREADY_CONVERTED', 'Ce prospect a déjà été converti en candidat.');
+    }
 
-  const nameParts = inquiry.contactName.trim().split(/\s+/);
-  const firstName = nameParts[0] || 'Candidat';
-  const lastName = nameParts.slice(1).join(' ') || 'Prospect';
+    const nameParts = inquiry.contactName.trim().split(/\s+/);
+    const firstName = nameParts[0] || 'Candidat';
+    const lastName = nameParts.slice(1).join(' ') || 'Prospect';
 
-  const [newApplicant] = await db
-    .insert(applicants)
-    .values({
-      tenantId,
-      firstName,
-      lastName,
-      email: inquiry.email || `prospect-${inquiry.id.slice(0, 8)}@schoolos.local`,
-      phone: inquiry.phone || '0600000000',
-      status: 'applied',
-    })
-    .returning();
+    const [newApplicant] = await tx
+      .insert(applicants)
+      .values({
+        tenantId,
+        firstName,
+        lastName,
+        email: inquiry.email || `prospect-${inquiry.id.slice(0, 8)}@schoolos.local`,
+        phone: inquiry.phone || '0600000000',
+        status: 'applied',
+      })
+      .returning();
 
-  await db
-    .update(inquiries)
-    .set({ status: 'converted', convertedApplicantId: newApplicant?.id, updatedAt: new Date().toISOString() })
-    .where(and(eq(inquiries.id, inquiryId), eq(inquiries.tenantId, tenantId)));
+    await tx
+      .update(inquiries)
+      .set({ status: 'converted', convertedApplicantId: newApplicant?.id, updatedAt: new Date().toISOString() })
+      .where(and(eq(inquiries.id, inquiryId), eq(inquiries.tenantId, tenantId)));
 
-  recordAudit(context, 'create', 'applicant_conversion', newApplicant!.id);
-
-  return { inquiryId: inquiry.id, applicant: newApplicant };
+    return { inquiryId: inquiry.id, applicant: newApplicant };
+  }).then((result) => {
+    recordAudit(context, 'create', 'applicant_conversion', result.applicant!.id);
+    return result;
+  });
 }
