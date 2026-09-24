@@ -1,5 +1,11 @@
 # AUD-SAFETY-01 — Security & Emergency + Guard / Entry Operations — Executor Report
 
+> **S-08 correction (final):** the branch boundary on visitor check-in/check-out
+> is now **enforced**, not merely noted. Guards are branch-scoped when pinned to
+> a branch (`user.branchId`), tenant-wide when not — the platform's own branch
+> model. Rule, runtime proof and persistence evidence:
+> `evidence/branch-boundary-s08.md`. Tests: 11/11.
+
 ## 1. Handoff Metadata
 
 - Executor: Agent B (opencode-1)
@@ -7,7 +13,7 @@
 - Target branch: `origin/student-directory-hardening`
 - Target/base SHA: `f42c2bc41cb2386afed52244c5355c31c8a91f96`
 - Implementation branch: `audit/agent-b/AUD-SAFETY-01`
-- Implementation SHA(s): `92c857b93113a7b127b2b858509124ec4ce21b3a`
+- Implementation SHA(s): `92c857b93113a7b127b2b858509124ec4ce21b3a` (initial fixes), `ffb9eae1f8ca4f394076f32921d11816dd13be07` (S-08 correction)
 - Hub item: `task:AUD-SAFETY-01` (+ `task:port-3449`)
 - Done folder: `lango-app/artifacts/page-audit/done/AUD-SAFETY-01__security-guard/`
 
@@ -29,6 +35,11 @@
 APIs audited: 35 route files under `/api/guard/**` + `/api/gate/credentials/verify`
 (the scan entry point) + the 9 guard services and 16 tables. Inventory:
 `evidence/route-inventory.md`.
+
+**S-08 correction pass:** visitor check-in/check-out branch boundary enforced
+(branch-pinned actor: own-branch visit + own-branch/tenant-wide gate;
+tenant-wide actor: tenant-wide authority), with a 12-check HTTP probe and 4 new
+regression tests — `evidence/branch-boundary-s08.md`.
 
 ### Explicitly out of scope
 
@@ -81,7 +92,7 @@ gate/assignment rows, and append-only evidence tables.
 | S-05 | Medium | Kiosk TTL | Shift-end clamp used `Date.setHours` (server TZ) → session could outlive the shift by the UTC offset | code trace + unit test | Fixed (Casablanca wall-clock conversion) |
 | S-06 | Low | Audit fixture | Seeded authorizations had no live guardian link, released ones stayed `active`, incident categories were outside the enum | DB queries | Fixed (seed + audit fixture) |
 | S-07 | Info | Incidents | Terminal transitions (`resolve/close/escalate`) are guard-accessible while notes/escalation target are leadership-gated; the UI intentionally shows those buttons to guards | code + UI trace | Logged for product review (not changed) |
-| S-08 | Info | Visitor check-in/out | Gate is tenant-verified but not branch-verified; pickers are branch-scoped already | code trace | Logged (avoid breaking cross-branch flows) |
+| S-08 | Medium | Visitor check-in/out | A branch-pinned actor could check in/out a visit or use a gate from another branch of the same tenant | runtime probe (`evidence/branch-boundary-s08.md`) | **Fixed** — branch equality enforced at the service boundary |
 | S-09 | Info | `/portals/guard/config` for guard | Direct URL lands on the in-app access-denied page; nav entry hidden | sweeps | Correct by design |
 | S-10 | Info | Kiosk outside shift hours | An assignment without `effectiveUntil` permits a session outside the shift window; TTL clamp applies only inside the window | code trace | Documented (assignment is the authority) |
 
@@ -117,13 +128,30 @@ gate/assignment rows, and append-only evidence tables.
 - Authorizations only for links made live at seed time; released authorizations
   are marked `consumed`; incident categories use the enum values.
 
+### S-08 — Branch boundary on visitor check-in/check-out
+- Rule derived from the platform branch model (`context.ts` comment
+  "user.branchId is the only branch this principal may reference"; the
+  `resolveClassBranch` write precedent; single-branch `resolveActiveContext`):
+  a branch-pinned actor may only touch own-branch visits, and gates that are
+  own-branch or tenant-wide (null); a branch-null actor keeps tenant-wide
+  authority; foreign tenant gates stay refused (S-02).
+- Fix: `requireTenantGate` returns the gate branch; `assertGateBranch` /
+  `assertVisitBranch` applied in `checkInVisit` and `checkOutVisit` (visit check
+  inside the `FOR UPDATE` transaction before any transition).
+- Proof: runtime probe (12/12) + DB persistence (visit branch preserved through
+  check-out) + 4 new regression tests. Fixture restored (guard branch NULL,
+  probe gate archived via the product API).
+
 ## 6. Security / Isolation / Permission Audit
 
 - Tenant isolation: every guard service re-verifies the entity AND each foreign
   id (gate/guard/device/shift/incident/student); `check:isolation` PASS with
   zero warnings in touched files. S-02 closed the one cross-tenant hole found.
 - Branch isolation: kiosk sessions/visits are branch-bound; the home expected
-  list is now branch-scoped; config list helpers accept a branch filter.
+  list is branch-scoped; config list helpers accept a branch filter; visitor
+  check-in/check-out now enforces the actor's branch against both the visit and
+  the gate (S-08), with tenant-wide actors keeping explicit tenant-wide
+  authority.
 - Page guard: verified per page; guard-only duty stations bounce school_admin
   in-app; config/incidents/emergency load only with the right capability.
 - API guard: allowlists + capabilities probed (finance/HR/teachers denied to
@@ -161,7 +189,7 @@ gate/assignment rows, and append-only evidence tables.
 
 ```text
 DATABASE_URL=…/schoolos_audit npx vitest run src/app/api/__tests__/guard-safety-scope.test.ts
-→ 7/7 PASS
+→ 11/11 PASS (S-01…S-06 + the S-08 branch matrix)
 ```
 
 ### Runtime reconciliation
@@ -224,8 +252,8 @@ lango-app/artifacts/page-audit/done/AUD-SAFETY-01__security-guard/**
 - **Legacy direction data migration:** read-tolerance is in place; a migration
   normalizing existing rows would remove the compatibility shim (needs a free
   migration number).
-- **S-08 branch equality on check-in/out:** decide whether a gate from another
-  branch of the same tenant may be used for a visit.
+- ~~**S-08 branch equality on check-in/out:**~~ resolved — enforced at the
+  service boundary (see §5 and `evidence/branch-boundary-s08.md`).
 - Seeded `guardian_students` links default to non-authorized; the seed now marks
   the pairs it authorizes. A richer fixture (more live links) would exercise
   more UI, logged only.
@@ -247,7 +275,7 @@ lango-app/artifacts/page-audit/done/AUD-SAFETY-01__security-guard/**
 TASK COMPLETE: YES
 READY FOR INDEPENDENT AGENT 5 VERIFICATION: YES
 CODE PUSHED: YES
-IMPLEMENTATION SHA: 92c857b93113a7b127b2b858509124ec4ce21b3a
+IMPLEMENTATION SHA: ffb9eae1f8ca4f394076f32921d11816dd13be07 (S-08 correction; initial 92c857b)
 OPEN CLAIMS: 0
 ```
 
