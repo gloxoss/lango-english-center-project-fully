@@ -6,6 +6,7 @@ import { and, eq, or, sql } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { ApiError } from '@/libs/api/errors';
 import type { RequestContext } from '@/libs/api/context';
+import { casablancaTodayIso, casablancaWallTimeUtc } from '@/libs/finance/today';
 import { scannerDevices } from '@/models/Schema';
 import {
   guardAssignments,
@@ -13,7 +14,7 @@ import {
   guardKioskSessions,
   guardShifts,
 } from '@/features/guard/models/guard-schema';
-import { expireElapsedAssignments } from '@/features/guard/services/gates-service';
+import { expireElapsedAssignments, normalizeGateDirection } from '@/features/guard/services/gates-service';
 
 // Owner decision §15.2: default TTL 240 min, clamped to the shift end.
 export const GUARD_KIOSK_TTL_MINUTES = 240;
@@ -96,9 +97,9 @@ export async function startKioskSession(context: RequestContext, input: {
   const startedAt = new Date();
   const ttlMs = GUARD_KIOSK_TTL_MINUTES * 60 * 1000;
   let expiresAt = new Date(startedAt.getTime() + ttlMs);
-  const [endHour = 0, endMinute = 0] = shift.endTime.split(':').map(Number);
-  const shiftEndToday = new Date(startedAt);
-  shiftEndToday.setHours(endHour, endMinute, 0, 0);
+  // Shift windows are school (Casablanca) wall-clock times; clamping with
+  // server-local setHours() let the session outlive the shift by the UTC offset.
+  const shiftEndToday = casablancaWallTimeUtc(casablancaTodayIso(startedAt), shift.endTime);
   if (shiftEndToday > startedAt && shiftEndToday < expiresAt) expiresAt = shiftEndToday;
 
   const branchId = gate.branchId ?? context.branchId ?? assignment.branchId;
@@ -259,7 +260,7 @@ export async function getMyShift(context: RequestContext) {
       effectiveUntil: assignment.effectiveUntil,
       status: assignment.status,
     },
-    gate,
+    gate: gate ? { ...gate, direction: normalizeGateDirection(gate.direction) } : gate,
     shift,
     kioskSession: session ?? null,
     now: nowIso,
@@ -280,7 +281,7 @@ export async function getMyGate(context: RequestContext) {
   if (!gate || !gate.isActive) throw new ApiError(403, 'NO_ACTIVE_GATE', 'Portail inactif.');
 
   return {
-    gate,
+    gate: { ...gate, direction: normalizeGateDirection(gate.direction) },
     branchId: assignment.branchId,
     deviceId: assignment.deviceId,
     now: nowIso,

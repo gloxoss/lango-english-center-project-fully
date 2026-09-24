@@ -14,6 +14,7 @@ import {
   guardPickupAuthorizations,
   guardVisits,
 } from '@/features/guard/models/guard-schema';
+import { normalizeGateDirection } from '@/features/guard/services/gates-service';
 
 export type PersonSummary = {
   id: string;
@@ -45,7 +46,8 @@ export type GateVerifyInput = {
   rawToken: string;
   tenantId: string;
   gateId: string;
-  gateDirection: 'entry' | 'exit' | 'both';
+  /** Canonical or legacy ('in'/'out') gate direction — normalized on read. */
+  gateDirection: string;
   direction: 'entry' | 'exit';
   deviceId?: string | null;
   kioskSessionId?: string | null;
@@ -111,7 +113,10 @@ async function recordScanEvent(
     subjectType: extra.subjectType ?? null,
     resultStatus,
     rejectionReason,
-    idempotencyKey: extra.idempotencyKey ?? null,
+    // The canonical first-outcome row keeps the caller's key so a retry is
+    // recognized as a replay. The replay row itself passes an explicit null
+    // (the partial unique index only allows one row per key).
+    idempotencyKey: extra.idempotencyKey !== undefined ? extra.idempotencyKey : (input.idempotencyKey ?? null),
     actorId: input.actorId,
   });
 }
@@ -126,7 +131,8 @@ export async function verifyGateCredential(input: GateVerifyInput): Promise<Gate
   };
 
   // Direction sanity: a gate configured as entry-only cannot admit an exit scan.
-  if (input.gateDirection !== 'both' && input.gateDirection !== input.direction) {
+  const gateDirection = normalizeGateDirection(input.gateDirection);
+  if (gateDirection !== 'both' && gateDirection !== input.direction) {
     return genericFail('WRONG_DIRECTION');
   }
 
@@ -299,5 +305,6 @@ export async function listScanEvidence(context: RequestContext, opts: {
     .orderBy(desc(guardGateScanEvents.scannedAt))
     .limit(100);
 
-  return rows.map(r => ({ ...r, direction: r.direction as 'entry' | 'exit' }));
+  // Legacy evidence rows stored 'in'/'out'; expose the canonical vocabulary.
+  return rows.map(r => ({ ...r, direction: r.direction === 'in' ? 'entry' : r.direction === 'out' ? 'exit' : r.direction as 'entry' | 'exit' }));
 }

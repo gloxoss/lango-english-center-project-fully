@@ -16,6 +16,26 @@ import {
 // Sentinel end of the effective window when effectiveUntil is open-ended.
 const OPEN_END = '9999-12-31T23:59:59.999Z';
 
+/**
+ * Legacy gate rows carry 'in'/'out' (the original seed) while the canonical
+ * vocabulary everywhere else is 'entry'|'exit'|'both'. Reading such a row raw
+ * made the scanner send an invalid direction and mislabel the gate, and made a
+ * legacy gate un-editable. Normalize at every read boundary; an update then
+ * persists the canonical value.
+ */
+export function normalizeGateDirection(direction: string | null | undefined): 'entry' | 'exit' | 'both' {
+  if (direction === 'in') {
+    return 'entry';
+  }
+  if (direction === 'out') {
+    return 'exit';
+  }
+  if (direction === 'entry' || direction === 'exit' || direction === 'both') {
+    return direction;
+  }
+  return 'both';
+}
+
 // `.returning()` always yields exactly one row for a single-row INSERT/UPDATE,
 // but under noUncheckedIndexedAccess the element type is `T | undefined`.
 function firstRow<T>(rows: readonly T[]): T {
@@ -42,7 +62,7 @@ function assignmentConflict(): never {
 // ---------------------------------------------------------------------------
 
 export async function listGates(tenantId: string, branchId?: string | null) {
-  return db
+  const rows = await db
     .select()
     .from(guardGates)
     .where(and(
@@ -50,6 +70,8 @@ export async function listGates(tenantId: string, branchId?: string | null) {
       branchId ? eq(guardGates.branchId, branchId) : undefined,
     ))
     .orderBy(asc(guardGates.gateName));
+
+  return rows.map(row => ({ ...row, direction: normalizeGateDirection(row.direction) }));
 }
 
 async function loadGate(tenantId: string, gateId: string) {

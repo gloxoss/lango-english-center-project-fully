@@ -1,9 +1,10 @@
 // Gate home overview: the guard's active shift + gate, today's expected
 // visitors, active pickup authorizations, and the handoff object (disabled
 // until addons expose stable APIs). Identity-minimized — no directory dumps.
-import { and, eq, gte, lte } from 'drizzle-orm';
+import { and, eq, gte, isNull, lte, or } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { requireTenant, type RequestContext } from '@/libs/api/context';
+import { casablancaDayBoundsUtc } from '@/libs/finance/today';
 import { user } from '@/models/Schema';
 import {
   guardVisitorInvitations,
@@ -16,8 +17,8 @@ export async function getExpectedOverview(context: RequestContext) {
   const tenantId = requireTenant(context);
   const now = new Date();
   const nowIso = now.toISOString();
-  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-  const dayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
+  // The school day is the Casablanca calendar day, not the server's local day.
+  const { start: dayStart, end: dayEnd } = casablancaDayBoundsUtc(now);
 
   const [shift, gate, handoffs] = await Promise.all([
     getMyShift(context),
@@ -40,8 +41,12 @@ export async function getExpectedOverview(context: RequestContext) {
     .where(and(
       eq(guardVisitorInvitations.tenantId, tenantId),
       eq(guardVisitorInvitations.status, 'approved'),
-      gte(guardVisitorInvitations.expectedDate, dayStart),
-      lte(guardVisitorInvitations.expectedDate, dayEnd),
+      // Branch-pinned staff see their branch plus tenant-wide invitations.
+      context.branchId
+        ? or(isNull(guardVisitorInvitations.branchId), eq(guardVisitorInvitations.branchId, context.branchId))!
+        : undefined,
+      gte(guardVisitorInvitations.expectedDate, dayStart.toISOString()),
+      lte(guardVisitorInvitations.expectedDate, dayEnd.toISOString()),
     ))
     .orderBy(guardVisitorInvitations.expectedStart)
     .limit(20);

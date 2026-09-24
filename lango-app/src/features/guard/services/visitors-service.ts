@@ -285,6 +285,10 @@ export async function checkInVisit(context: RequestContext, id: string, input: {
   idempotencyKey?: string | null;
 }) {
   const tenantId = requireTenantId(context);
+  // The gate id is client-supplied: it must belong to this tenant before it is
+  // stamped on the visit and the scan evidence. Without this a foreign tenant's
+  // gate id was accepted (FK only proves existence, not ownership).
+  await requireTenantGate(tenantId, input.gateId);
   const now = new Date().toISOString();
 
   const result = await db.transaction(async (tx) => {
@@ -334,6 +338,7 @@ export async function checkOutVisit(context: RequestContext, id: string, input: 
   idempotencyKey?: string | null;
 }) {
   const tenantId = requireTenantId(context);
+  await requireTenantGate(tenantId, input.gateId);
   const now = new Date().toISOString();
 
   const result = await db.transaction(async (tx) => {
