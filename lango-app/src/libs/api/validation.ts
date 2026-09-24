@@ -146,6 +146,7 @@ export const feeStructureUpdateSchema = feeStructureCreateSchema
   .strict();
 
 const staffRole = z.enum(['Admin', 'Enseignant', 'Comptable', 'school_admin', 'teacher', 'accountant']);
+const editableStaffRole = z.enum(['school_admin', 'teacher', 'accountant', 'receptionist', 'librarian', 'guard']);
 const staffStatus = z.enum(['Actif', 'Inactif', 'Archivé', 'active', 'inactive', 'archived']);
 
 export const userCreateSchema = z.object({
@@ -153,16 +154,17 @@ export const userCreateSchema = z.object({
   email: z.email().max(255),
   phone: optionalText(50),
   role: staffRole,
+  branchId: z.uuid().nullable().optional(),
   status: staffStatus.optional(),
   qualification: optionalText(255),
-  salary: z.coerce.number().finite().min(0).max(10000000).optional().nullable(),
 }).strict();
 
 export const userUpdateSchema = userCreateSchema
-  .omit({ qualification: true, salary: true })
+  .omit({ qualification: true })
   .partial()
-  .extend({ id: z.string().trim().min(1).max(100) })
-  .strict();
+  .extend({ id: z.string().trim().min(1).max(100), role: editableStaffRole.optional() })
+  .strict()
+  .refine(value => Object.keys(value).some(key => key !== 'id'), 'Aucune modification fournie.');
 
 export const guardianCreateSchema = z.object({
   name: z.string().trim().min(2).max(255),

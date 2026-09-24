@@ -1,0 +1,5 @@
+/dashboard/settings
+/dashboard/settings/users
+/dashboard/settings/permissions
+/dashboard/settings/onboarding
+/dashboard/settings/branches

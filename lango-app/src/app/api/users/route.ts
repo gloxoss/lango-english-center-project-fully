@@ -1,19 +1,19 @@
-import { and, count, eq, ilike, ne, or } from 'drizzle-orm';
+import { and, count, desc, eq, ilike, inArray, ne, or } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
-import { generateSetupToken, hashSetupToken, SETUP_TOKEN_TTL_MS } from '@/libs/setup-token';
-import { normalizeMoroccanPhone } from '@/libs/sms/moroccan-sms-adapter';
 import { parseJson, userCreateSchema, userUpdateSchema } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { accountSetupTokens, smsMessages, user } from '@/models/Schema';
+import { generateSetupToken, hashSetupToken, SETUP_TOKEN_TTL_MS } from '@/libs/setup-token';
+import { normalizeMoroccanPhone } from '@/libs/sms/moroccan-sms-adapter';
+import { accountSetupTokens, branches, smsMessages, twoFactor, user } from '@/models/Schema';
 import { toDbRole, toDbStatus, toUiRole, toUiStatus } from '@/models/userMapping';
 
 // ponytail: staff/guardian accounts are `user` rows with role != 'student'.
-// qualification, salary and last_login are stopgap columns - see MIGRATION-NOTES.md.
+// qualification and last_login are stopgap columns - see MIGRATION-NOTES.md.
 
 // Response shape matches the previous SQLite implementation exactly so the settings
 // and staff views keep working untouched.
@@ -26,10 +26,10 @@ function toApiUser(row: typeof user.$inferSelect) {
     phone: row.phone,
     role: toUiRole(row.role),
     status: toUiStatus(row.userStatus),
+    branchId: row.branchId,
     createdAt: row.createdAt,
     lastLogin: row.lastLogin,
     qualification: row.qualification,
-    salary: row.salary,
     employeeId: row.employeeId,
     specialization: row.specialization,
   };
@@ -39,6 +39,7 @@ export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
+    await requireCapability(context, 'users.manage');
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
     const role = searchParams.get('role');
@@ -46,8 +47,10 @@ export async function GET(request: Request) {
 
     const filters = [
       eq(user.tenantId, tenantId),
+      context.branchId ? eq(user.branchId, context.branchId) : undefined,
       // Students have their own endpoint; this list is staff and guardians.
       ne(user.role, 'student'),
+      ne(user.role, 'super_admin'),
     ];
 
     if (search) {
@@ -73,14 +76,21 @@ export async function GET(request: Request) {
     const where = and(...filters);
 
     const [rows, totalRows] = await Promise.all([
-      db.select().from(user).where(where).limit(pagination.limit).offset(pagination.offset),
+      db.select().from(user).where(where).orderBy(desc(user.createdAt), user.id).limit(pagination.limit).offset(pagination.offset),
       db.select({ total: count() }).from(user).where(where),
     ]);
     const total = totalRows[0]?.total ?? 0;
+    const tfaRows = rows.length
+      ? await db.select({ userId: twoFactor.userId, verified: twoFactor.verified })
+          .from(twoFactor)
+          .innerJoin(user, eq(twoFactor.userId, user.id))
+          .where(and(eq(user.tenantId, tenantId), inArray(user.id, rows.map(row => row.id))))
+      : [];
+    const tfaByUser = new Map(tfaRows.map(row => [row.userId, Boolean(row.verified)]));
 
     return NextResponse.json({
       success: true,
-      data: rows.map(toApiUser),
+      data: rows.map(row => ({ ...toApiUser(row), tfaVerified: tfaByUser.get(row.id) ?? false })),
       total,
       page: pagination.page,
       pageSize: pagination.pageSize,
@@ -96,6 +106,13 @@ export async function POST(request: Request) {
     const tenantId = requireTenant(context);
     await requireCapability(context, 'users.manage');
     const body = await parseJson(request, userCreateSchema);
+    const branchId = context.branchId ?? body.branchId ?? null;
+    if (branchId) {
+      const [branch] = await db.select({ id: branches.id }).from(branches).where(and(eq(branches.id, branchId), eq(branches.tenantId, tenantId))).limit(1);
+      if (!branch || (context.branchId && body.branchId && body.branchId !== context.branchId)) {
+        throw new ApiError(403, 'BRANCH_OUT_OF_SCOPE', 'Branche hors de votre périmètre.');
+      }
+    }
     const id = `USR-${Date.now()}`;
 
     const [inserted] = await db
@@ -103,14 +120,13 @@ export async function POST(request: Request) {
       .values({
         id,
         tenantId,
+        branchId,
         name: body.fullName || 'Nouvel Utilisateur',
         email: body.email || `${id.toLowerCase()}@schoolos.ma`,
         phone: body.phone || '+212 6 00-000000',
         role: toDbRole(body.role, 'teacher'),
         userStatus: toDbStatus(body.status),
         qualification: body.qualification || null,
-        // numeric() maps to string in drizzle, avoiding float precision loss.
-        salary: body.salary ? String(body.salary) : null,
       })
       .returning();
 
@@ -162,25 +178,67 @@ export async function PUT(request: Request) {
     const tenantId = requireTenant(context);
     await requireCapability(context, 'users.manage');
     const body = await parseJson(request, userUpdateSchema);
+    const [existing] = await db.select({ id: user.id, role: user.role, branchId: user.branchId })
+      .from(user)
+      .where(and(
+        eq(user.id, body.id),
+        eq(user.tenantId, tenantId),
+        context.branchId ? eq(user.branchId, context.branchId) : undefined,
+      ))
+      .limit(1);
+    if (!existing || existing.role === 'super_admin') {
+      throw new ApiError(404, 'USER_NOT_FOUND', 'Utilisateur introuvable.');
+    }
+    if (body.role !== undefined && !['school_admin', 'teacher', 'accountant', 'receptionist', 'librarian', 'guard'].includes(existing.role)) {
+      throw new ApiError(409, 'ROLE_CHANGE_FORBIDDEN', 'Ce type de compte ne peut pas changer de rôle ici.');
+    }
+    if (body.id === context.userId && (body.status === 'inactive' || body.status === 'archived' || body.status === 'Inactif' || body.status === 'Archivé')) {
+      throw new ApiError(409, 'SELF_DISABLE_FORBIDDEN', 'Vous ne pouvez pas désactiver votre propre compte.');
+    }
+    if (body.id === context.userId && ((body.role !== undefined && body.role !== existing.role) || (body.branchId !== undefined && body.branchId !== existing.branchId))) {
+      throw new ApiError(409, 'SELF_ACCESS_CHANGE_FORBIDDEN', 'Vous ne pouvez pas modifier votre propre rôle ou branche.');
+    }
+    const nextBranchId = body.branchId === undefined ? existing.branchId : body.branchId;
+    if (context.branchId && nextBranchId !== context.branchId) {
+      throw new ApiError(403, 'BRANCH_OUT_OF_SCOPE', 'Branche hors de votre périmètre.');
+    }
+    if (nextBranchId) {
+      const [branch] = await db.select({ id: branches.id }).from(branches).where(and(eq(branches.id, nextBranchId), eq(branches.tenantId, tenantId))).limit(1);
+      if (!branch) {
+        throw new ApiError(400, 'UNKNOWN_BRANCH', 'Branche inconnue.');
+      }
+    }
 
-    await db
+    const [updated] = await db
       .update(user)
       .set({
-        name: body.fullName,
-        email: body.email,
-        phone: body.phone,
-        role: toDbRole(body.role, 'teacher'),
-        userStatus: toDbStatus(body.status),
+        ...(body.fullName !== undefined ? { name: body.fullName } : {}),
+        ...(body.email !== undefined ? { email: body.email } : {}),
+        ...(body.phone !== undefined ? { phone: body.phone } : {}),
+        ...(body.role !== undefined ? { role: toDbRole(body.role, existing.role) } : {}),
+        ...(body.status !== undefined ? { userStatus: toDbStatus(body.status) } : {}),
+        ...(body.branchId !== undefined ? { branchId: nextBranchId } : {}),
       })
       .where(and(
         eq(user.id, body.id),
         eq(user.tenantId, tenantId),
-      ));
+        context.branchId ? eq(user.branchId, context.branchId) : undefined,
+      ))
+      .returning();
 
-    recordAudit(context, 'update', 'user', body.id);
+    if (!updated) {
+      throw new ApiError(404, 'USER_NOT_FOUND', 'Utilisateur introuvable.');
+    }
+
+    recordAudit(context, 'update', 'user', body.id, {
+      roleChanged: body.role !== undefined,
+      statusChanged: body.status !== undefined,
+      branchChanged: body.branchId !== undefined,
+    });
 
     return NextResponse.json({
       success: true,
+      data: toApiUser(updated),
       message: 'Utilisateur mis à jour en base de données',
     });
   } catch (error) {
@@ -200,10 +258,15 @@ export async function DELETE(request: Request) {
       if (id === context.userId) {
         throw new ApiError(409, 'SELF_DELETE_FORBIDDEN', 'Vous ne pouvez pas supprimer votre propre compte.');
       }
-      await db.delete(user).where(and(
+      const [deleted] = await db.delete(user).where(and(
         eq(user.id, id),
         eq(user.tenantId, tenantId),
-      ));
+        ne(user.role, 'super_admin'),
+        context.branchId ? eq(user.branchId, context.branchId) : undefined,
+      )).returning({ id: user.id });
+      if (!deleted) {
+        throw new ApiError(404, 'USER_NOT_FOUND', 'Utilisateur introuvable.');
+      }
       recordAudit(context, 'delete', 'user', id);
       return NextResponse.json({
         success: true,
