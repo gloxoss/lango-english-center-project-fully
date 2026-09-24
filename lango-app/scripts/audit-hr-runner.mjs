@@ -21,7 +21,10 @@ async function saveScreenshot(page, filename) {
   }
 }
 
+const FORCE = process.argv.includes('--force');
+
 function hasScreenshot(filename) {
+  if (FORCE) return false;
   const targetPath = path.join(SCREENSHOTS_DIR, filename);
   return fs.existsSync(targetPath) && fs.statSync(targetPath).size > 10000;
 }
@@ -34,14 +37,13 @@ async function main() {
   const page = await context.newPage();
 
   console.log('Logging in as School Admin (y.elamrani@atlas.ma)...');
-  await page.goto('http://localhost:3111/fr/login', { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(1000);
-  if (page.url().includes('/login')) {
-    await page.fill('input[type="email"], input[name="email"]', 'y.elamrani@atlas.ma');
-    await page.fill('input[type="password"], input[name="password"]', 'Admin123!');
-    await page.click('button[type="submit"]', { force: true });
-    await page.waitForTimeout(3000);
-  }
+  const loginRes = await context.request.post('http://localhost:3111/api/auth/sign-in/email', {
+    data: { email: 'y.elamrani@atlas.ma', password: 'Admin123!' },
+    headers: { Origin: 'http://localhost:3111' }
+  });
+  console.log('API sign-in status:', loginRes.status());
+  await page.goto('http://localhost:3111/fr/dashboard/hr/overview', { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(2000);
   console.log('Authenticated URL:', page.url());
 
   // 1. HR Overview (/fr/dashboard/hr/overview)
@@ -60,11 +62,15 @@ async function main() {
     await saveScreenshot(page, '02-hr-employees-directory-desktop-fr.png');
   }
 
-  // 3. Employee Profile (/fr/dashboard/hr/employees/USR-002)
-  if (!hasScreenshot('03-hr-employee-profile-desktop-fr.png')) {
+  // 3. Employee Profile (/fr/dashboard/hr/employees/[id])
+  if (FORCE || !hasScreenshot('03-hr-employee-profile-desktop-fr.png')) {
     console.log('Capturing 03-hr-employee-profile-desktop-fr.png...');
-    await page.goto('http://localhost:3111/fr/dashboard/hr/employees/USR-002', { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(2500);
+    const empRes = await page.request.get('http://localhost:3111/api/hr/employees');
+    const empJson = await empRes.json();
+    const profileId = empJson.data?.[0]?.id || 'b8682b49-3381-44a6-ad11-ef7508f44a47';
+    await page.goto(`http://localhost:3111/fr/dashboard/hr/employees/${profileId}`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('text=Yassine', { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(3000);
     await saveScreenshot(page, '03-hr-employee-profile-desktop-fr.png');
   }
 
@@ -93,10 +99,11 @@ async function main() {
   }
 
   // 7. Salary Advances (/fr/dashboard/hr/salary-advances)
-  if (!hasScreenshot('07-hr-salary-advances-desktop-fr.png')) {
+  if (FORCE || !hasScreenshot('07-hr-salary-advances-desktop-fr.png')) {
     console.log('Capturing 07-hr-salary-advances-desktop-fr.png...');
     await page.goto('http://localhost:3111/fr/dashboard/hr/salary-advances', { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(2500);
+    await page.waitForSelector('text=Karim Tazi', { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(3000);
     await saveScreenshot(page, '07-hr-salary-advances-desktop-fr.png');
   }
 

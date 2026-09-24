@@ -1,6 +1,6 @@
 ================================================================================
 SCHOOLOS HR, STAFF LIFECYCLE & PAYROLL AUDIT EVIDENCE (AUD-HR-01)
-Generated: 2026-09-24T19:30:38.122Z
+Generated: 2026-09-24T19:51:17.438Z
 Target Host: http://localhost:3111
 Target Tenant: 06ab27c5-7862-4e07-93af-49ef1935bfe6 (Groupe Scolaire Atlas)
 ================================================================================
@@ -47,7 +47,7 @@ Departments (4):
       "description": "Comptabilité, RH, accueil et intendance",
       "status": "active",
       "createdAt": "2026-09-24 19:25:39.551565",
-      "updatedAt": "2026-09-24 19:25:39.551565",
+      "updatedAt": "2026-09-24 19:42:28.4708",
       "employeeCount": "0"
     },
     {
@@ -60,7 +60,7 @@ Departments (4):
       "description": "Coordination académique et direction des études",
       "status": "active",
       "createdAt": "2026-09-24 19:25:39.551565",
-      "updatedAt": "2026-09-24 19:25:39.551565",
+      "updatedAt": "2026-09-24 19:42:28.4708",
       "employeeCount": "0"
     },
     {
@@ -73,7 +73,7 @@ Departments (4):
       "description": "Langues (Arabe, Français, Anglais) et Histoire-Géo",
       "status": "active",
       "createdAt": "2026-09-24 19:25:39.551565",
-      "updatedAt": "2026-09-24 19:25:39.551565",
+      "updatedAt": "2026-09-24 19:42:28.4708",
       "employeeCount": "0"
     },
     {
@@ -86,7 +86,7 @@ Departments (4):
       "description": "Mathématiques, Physique-Chimie et SVT",
       "status": "active",
       "createdAt": "2026-09-24 19:25:39.551565",
-      "updatedAt": "2026-09-24 19:25:39.551565",
+      "updatedAt": "2026-09-24 19:42:28.4708",
       "employeeCount": "0"
     }
   ]
@@ -107,7 +107,7 @@ Designations (5):
       "description": null,
       "status": "active",
       "createdAt": "2026-09-24 19:25:39.551565",
-      "updatedAt": "2026-09-24 19:25:39.551565",
+      "updatedAt": "2026-09-24 19:42:28.4708",
       "employeeCount": 1
     },
     {
@@ -119,7 +119,7 @@ Designations (5):
       "description": null,
       "status": "active",
       "createdAt": "2026-09-24 19:25:39.551565",
-      "updatedAt": "2026-09-24 19:25:39.551565",
+      "updatedAt": "2026-09-24 19:42:28.4708",
       "employeeCount": 1
     },
     {
@@ -131,7 +131,7 @@ Designations (5):
       "description": null,
       "status": "active",
       "createdAt": "2026-09-24 19:25:39.551565",
-      "updatedAt": "2026-09-24 19:25:39.551565",
+      "updatedAt": "2026-09-24 19:42:28.4708",
       "employeeCount": 1
     },
     {
@@ -143,7 +143,7 @@ Designations (5):
       "description": null,
       "status": "active",
       "createdAt": "2026-09-24 19:25:39.551565",
-      "updatedAt": "2026-09-24 19:25:39.551565",
+      "updatedAt": "2026-09-24 19:42:28.4708",
       "employeeCount": 1
     },
     {
@@ -155,7 +155,7 @@ Designations (5):
       "description": null,
       "status": "active",
       "createdAt": "2026-09-24 19:25:39.551565",
-      "updatedAt": "2026-09-24 19:25:39.551565",
+      "updatedAt": "2026-09-24 19:42:28.4708",
       "employeeCount": 0
     }
   ]
@@ -189,7 +189,7 @@ Employees Sample:
     "dependantsCount": 2,
     "archivedAt": null,
     "createdAt": "2026-09-24 19:25:39.551565+00",
-    "updatedAt": "2026-09-24 19:25:39.551565+00",
+    "updatedAt": "2026-09-24 19:42:28.4708+00",
     "accountName": "Yassine El Amrani",
     "accountEmail": "y.elamrani@atlas.ma",
     "accountRole": "school_admin",
@@ -228,7 +228,7 @@ Employees Sample:
     "dependantsCount": 1,
     "archivedAt": null,
     "createdAt": "2026-09-24 19:25:39.551565+00",
-    "updatedAt": "2026-09-24 19:25:39.551565+00",
+    "updatedAt": "2026-09-24 19:42:28.4708+00",
     "accountName": "Fatima Zahra Idrissi",
     "accountEmail": "teacher.001@atlas.ma",
     "accountRole": "teacher",
@@ -274,7 +274,7 @@ Employee Dossier:
     "dependantsCount": 1,
     "archivedAt": null,
     "createdAt": "2026-09-24 19:25:39.551565+00",
-    "updatedAt": "2026-09-24 19:25:39.551565+00",
+    "updatedAt": "2026-09-24 19:42:28.4708+00",
     "accountName": "Fatima Zahra Idrissi",
     "accountEmail": "teacher.001@atlas.ma",
     "accountRole": "teacher",
@@ -294,7 +294,7 @@ Employee Dossier:
 
 [7] GET /api/hr/leave/requests (Staff Leave Queue)
 Status: 200 OK
-Leave Requests (2):
+Leave Requests (4):
 {
   "success": true,
   "data": [
@@ -314,6 +314,21 @@ Leave Requests (2):
       "createdAt": "2026-09-24 19:25:39.551565+00"
     },
     {
+      "id": "165239e2-68c2-41b3-9f34-c5f551359bf0",
+      "userId": "USR-002",
+      "employeeName": "Fatima Zahra Idrissi",
+      "categoryId": "827ba94e-1836-4b84-afc3-4b60134f521d",
+      "categoryName": "Congé Maladie",
+      "startDate": "2026-10-02",
+      "endDate": "2026-10-02",
+      "daysRequested": "1.00",
+      "status": "pending",
+      "reason": "Consultation médicale spécialisée",
+      "reviewedById": null,
+      "reviewedAt": null,
+      "createdAt": "2026-09-24 19:42:28.4708+00"
+    },
+    {
       "id": "72140a8a-62f3-4bb9-b928-973b614fee79",
       "userId": "USR-003-HR",
       "employeeName": "Karim Tazi",
@@ -327,6 +342,21 @@ Leave Requests (2):
       "reviewedById": "USR-001",
       "reviewedAt": "2026-09-24 19:25:39.551565+00",
       "createdAt": "2026-09-24 19:25:39.551565+00"
+    },
+    {
+      "id": "00896ffd-b1ca-4f07-9853-2c31007c144d",
+      "userId": "USR-003-HR",
+      "employeeName": "Karim Tazi",
+      "categoryId": "f5162f8c-1ae7-426e-b476-bf3e33759300",
+      "categoryName": "Congé Annuel Payé",
+      "startDate": "2026-10-15",
+      "endDate": "2026-10-17",
+      "daysRequested": "3.00",
+      "status": "approved",
+      "reason": "Congé de récupération personnel",
+      "reviewedById": "USR-001",
+      "reviewedAt": "2026-09-24 19:42:28.4708+00",
+      "createdAt": "2026-09-24 19:42:28.4708+00"
     }
   ]
 }
@@ -337,32 +367,6 @@ Payroll Periods:
 {
   "success": true,
   "data": [
-    {
-      "id": "a8555824-f3d8-4fd9-9bac-49e41887ffcd",
-      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
-      "year": 2026,
-      "month": 9,
-      "status": "approved",
-      "lockedAt": "2026-09-24 19:25:39.551565+00",
-      "lockedById": "USR-001",
-      "journalEntryId": null,
-      "regulationVersionId": null,
-      "version": 1,
-      "frozenInputs": null,
-      "calculatedById": null,
-      "calculatedAt": null,
-      "approverId": null,
-      "approvedAt": null,
-      "posterId": null,
-      "postedAt": null,
-      "paymentBatchId": null,
-      "closedAt": null,
-      "cancelledById": null,
-      "cancelledAt": null,
-      "cancellationReason": null,
-      "reversalOfRunId": null,
-      "createdAt": "2026-09-24 19:25:39.551565+00"
-    },
     {
       "id": "ccd3f3a6-d689-4c48-a77a-2f84abc68bc8",
       "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
@@ -388,74 +392,132 @@ Payroll Periods:
       "cancellationReason": null,
       "reversalOfRunId": null,
       "createdAt": "2026-09-24 19:25:39.551565+00"
+    },
+    {
+      "id": "a8555824-f3d8-4fd9-9bac-49e41887ffcd",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "year": 2026,
+      "month": 9,
+      "status": "approved",
+      "lockedAt": "2026-09-24 19:25:39.551565+00",
+      "lockedById": "USR-001",
+      "journalEntryId": null,
+      "regulationVersionId": null,
+      "version": 1,
+      "frozenInputs": null,
+      "calculatedById": null,
+      "calculatedAt": null,
+      "approverId": null,
+      "approvedAt": null,
+      "posterId": null,
+      "postedAt": null,
+      "paymentBatchId": null,
+      "closedAt": null,
+      "cancelledById": null,
+      "cancelledAt": null,
+      "cancellationReason": null,
+      "reversalOfRunId": null,
+      "createdAt": "2026-09-24 19:25:39.551565+00"
     }
   ]
 }
 
-[9] GET /api/hr/payslips (Numbered Moroccan Payslips)
+[9] GET /api/workforce/payroll/payslips (Workforce Numbered Payslips & Net Payables)
 Status: 200 OK
-Payslips (4):
+Workforce Payslips (4):
 {
   "success": true,
   "data": [
     {
       "id": "cea13605-04a5-4073-b141-d3a6de0f9296",
-      "periodId": "a8555824-f3d8-4fd9-9bac-49e41887ffcd",
-      "userId": "USR-001",
+      "number": "BUL-2026-09-0001",
+      "status": "issued",
       "issuedAt": "2026-09-24 19:25:39.551565+00",
       "employeeName": "Yassine El Amrani",
+      "employeeEmail": "y.elamrani@atlas.ma",
       "year": 2026,
       "month": 9,
-      "grossSalary": "16000.00",
-      "netSalary": "12487.27",
-      "cnssEmployee": "268.80",
-      "amoEmployee": "361.60",
-      "irTax": "2882.33"
+      "gross": "16000.00",
+      "net": "12487.27"
     },
     {
       "id": "6df96c2e-f388-47a1-8b4f-acaa8d5345b8",
-      "periodId": "a8555824-f3d8-4fd9-9bac-49e41887ffcd",
-      "userId": "USR-002",
+      "number": "BUL-2026-09-0002",
+      "status": "issued",
       "issuedAt": "2026-09-24 19:25:39.551565+00",
       "employeeName": "Fatima Zahra Idrissi",
+      "employeeEmail": "teacher.001@atlas.ma",
       "year": 2026,
       "month": 9,
-      "grossSalary": "9500.00",
-      "netSalary": "8060.22",
-      "cnssEmployee": "268.80",
-      "amoEmployee": "214.70",
-      "irTax": "956.28"
+      "gross": "9500.00",
+      "net": "8060.22"
     },
     {
       "id": "df6c6b03-08c8-47eb-9c8c-ecc065d42044",
-      "periodId": "a8555824-f3d8-4fd9-9bac-49e41887ffcd",
-      "userId": "USR-003-HR",
+      "number": "BUL-2026-09-0003",
+      "status": "issued",
       "issuedAt": "2026-09-24 19:25:39.551565+00",
       "employeeName": "Karim Tazi",
+      "employeeEmail": "k.tazi@atlas.ma",
       "year": 2026,
       "month": 9,
-      "grossSalary": "8500.00",
-      "netSalary": "7304.04",
-      "cnssEmployee": "268.80",
-      "amoEmployee": "192.10",
-      "irTax": "735.06"
+      "gross": "8500.00",
+      "net": "7304.04"
     },
     {
       "id": "0d818bdf-f021-42d9-87ba-75fdc4bfd9ec",
-      "periodId": "a8555824-f3d8-4fd9-9bac-49e41887ffcd",
-      "userId": "USR-004-HR",
+      "number": "BUL-2026-09-0004",
+      "status": "issued",
       "issuedAt": "2026-09-24 19:25:39.551565+00",
       "employeeName": "Nadia Chraibi",
+      "employeeEmail": "n.chraibi@atlas.ma",
       "year": 2026,
       "month": 9,
-      "grossSalary": "11000.00",
-      "netSalary": "9129.85",
-      "cnssEmployee": "268.80",
-      "amoEmployee": "248.60",
-      "irTax": "1352.75"
+      "gross": "11000.00",
+      "net": "9129.85"
     }
   ]
 }
+
+[9b] GET /api/workforce/advances (Salary Advances Ledger)
+Status: 200 OK
+Salary Advances (2):
+{
+  "success": true,
+  "data": [
+    {
+      "id": "18114485-02cd-419d-96d1-e875138f704b",
+      "employeeId": "b3c755b0-c411-4d49-9e5d-e488ebfcbc9c",
+      "employeeName": "Karim Tazi",
+      "requestedAmount": 3000,
+      "approvedAmount": null,
+      "repaidAmount": 0,
+      "monthlyInstallment": 500,
+      "reason": "Frais de scolarité rentrée universitaire",
+      "status": "pending",
+      "requestedAt": "2026-09-20",
+      "rejectionReason": null
+    },
+    {
+      "id": "36d55951-b8e6-4da2-b9f8-e35abedbe900",
+      "employeeId": "b8682b49-3381-44a6-ad11-ef7508f44a47",
+      "employeeName": "Yassine El Amrani",
+      "requestedAmount": 4000,
+      "approvedAmount": 4000,
+      "repaidAmount": 1000,
+      "monthlyInstallment": 1000,
+      "reason": "Avance sur salaire — travaux urgents domicile",
+      "status": "approved",
+      "requestedAt": "2026-08-15",
+      "rejectionReason": null
+    }
+  ]
+}
+
+[9c] Employee Resolution by UUID, Matricule, and Invalid String
+By UUID (b8682b49-3381-44a6-ad11-ef7508f44a47) -> Status: 200 (Expected: 200) -> PASS
+By Matricule (EMP-001) -> Status: 200 (Expected: 200) -> PASS
+By Invalid Non-UUID -> Status: 404 (Expected: 404, No 500) -> PASS
 
 [10] IDOR & BOUNDARY ACCESS CONTROL CHECKS
 Unauthenticated GET /api/hr/employees -> Status: 401 (Expected: 401) -> PASS

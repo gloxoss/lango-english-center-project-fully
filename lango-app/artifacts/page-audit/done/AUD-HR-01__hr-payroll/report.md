@@ -83,23 +83,34 @@ Source of truth:
 - Payroll Run Lines: `payroll_run_lines` table (`id`, `tenant_id`, `period_id`, `user_id`, `gross_salary`, `cnss_employee`, `amo_employee`, `ir_tax`, `net_salary`, `cnss_employer`, `amo_employer`, `total_employer_cost`, `calculation_snapshot`).
 - Payslips: `payslips` table (`id`, `tenant_id`, `period_id`, `run_line_id`, `user_id`, `payslip_number`, `issued_at`, `status`).
 
-## 4. Findings
+## 4. Findings & Closeout Corrections
 
 | ID | Severity | Page/Workflow | Problem | Evidence | Disposition |
 |---|---|---|---|---|---|
-| F-01 | Low | Employee API (`/api/hr/employees/[id]`) | Route parameter `[id]` expects the `employee_profiles.id` UUID rather than `user.id`. Calling with non-UUID string triggers a Postgres syntax error if not intercepted by Zod UUID validation prior to DB query. | `src/app/api/hr/employees/[id]/route.ts:45` | Resolved in audit fixture by querying via profile UUID; added recommendation to add `z.string().uuid()` validation to `params` schema. |
-| F-02 | Low | Payslips API (`/api/hr/payslips`) | When called by non-administrative users (such as students), endpoint gracefully defaults to filtering by `userId: ctx.userId`, returning an empty array `[]` rather than throwing `403 Forbidden`. | `src/app/api/hr/payslips/route.ts:17` | Safe behavior (prevents any data leak); documented in evidence. Direct single payslip endpoint (`/api/hr/payslips/[id]`) strictly enforces 403 Forbidden for non-owners. |
+| F-01 | Medium | Employee API (`/api/hr/employees/[id]`) | Route parameter `[id]` expects `employee_profiles.id` UUID. Querying with a non-UUID string or user ID caused an unhandled Postgres casting error (500) rather than a clean 404 or resolving the employee by matricule. | `src/features/hr/services/employees-service.ts:216` | **Fixed**: Hardened `getEmployee`, `listEmploymentEvents`, and `payroll-attendance` routes to test `UUID_REGEX` and support lookup by employee matricule / user ID, safely returning 404 on unknown identifiers without DB crashes. Runner updated to canonical UUID. |
+| F-02 | Medium | Workforce Payslips (`/dashboard/workforce/payroll/payslips`) | Numbered payslips table rendered Net as "0 MAD" because the API route projected solely `payrollRunLines.netPayable`, which was null when run lines only populated `netSalary`. | `src/app/api/workforce/payroll/payslips/route.ts:14` | **Fixed**: Updated API route to `COALESCE(net_payable, net_salary)`. Updated payroll run line persistence to explicitly store both `net_salary` and `net_payable`. Re-captured screenshot confirms exact Moroccan net salaries (12.487,27 MAD, 8.060,22 MAD, etc.). |
+| F-03 | Low | Salary Advances (`/dashboard/hr/salary-advances`) | Initial visual capture rendered "Aucun enregistrement" because advances ledger had not been populated in the test fixture. | `07-hr-salary-advances-desktop-fr.png` | **Fixed**: Seeded active approved advance (4,000 MAD requested/approved, 1,000 MAD repaid) with transactions and pending advance (3,000 MAD) with manager review actions (Approuver / Refuser). Re-captured screenshot confirms complete advance lifecycle rendering. |
 
 ## 5. Fixes Implemented
 
-No invasive application code modifications were required. The HR services (`src/features/hr/services/`), Moroccan payroll engine (`src/features/workforce/services/payroll-engine.ts`), and UI components (`src/features/hr/ui/`) are robust, zero-mock, strictly tenant-isolated, and compliant with Moroccan labor and tax regulations.
+1. **Employee Identifier Resolution & Crash Prevention**:
+   - `src/features/hr/services/employees-service.ts`: Updated `getEmployee` and `listEmploymentEvents` to detect UUID syntax. If a non-UUID is supplied (such as `EMP-001` or `USR-001`), queries seamlessly match `employee_profiles.employee_id` or `employee_profiles.user_id` without unhandled PostgreSQL `invalid input syntax for type uuid` crashes.
+   - `src/app/api/hr/employees/[id]/payroll-attendance/route.ts`: Aligned profile lookup to support both UUID and matricule matching.
+2. **Workforce Payslip Net Amount Coalescing**:
+   - `src/app/api/workforce/payroll/payslips/route.ts`: Updated projection to `sql<string>\`COALESCE(\${payrollRunLines.netPayable}, \${payrollRunLines.netSalary})\`.as('net')\`.
+   - `scripts/seed-rich-hr.mjs`: Added `net_payable` to the `payroll_run_lines` insertion statement and updated existing rows so net compensation reflects source-of-truth calculated values.
+3. **Salary Advances Full Lifecycle Seeding**:
+   - `scripts/seed-rich-hr.mjs`: Added seeding for `salary_advances` and `salary_advance_transactions` with both approved and pending advances, repayment amounts, and recovery schedules.
+4. **Audit Runner Reliability**:
+   - `scripts/audit-hr-runner.mjs`: Switched to direct API session authentication with `Origin` header to eliminate Next.js client hydration race conditions. Added explicit wait conditions on dynamic employee profile dossier and salary advances cards.
 
-A reproducible audit fixture (`scripts/seed-rich-hr.mjs`) was created and executed against the live test database to verify:
+A reproducible audit fixture (`scripts/seed-rich-hr.mjs`) was executed against the database:
 - Active organizational structure: 4 departments, 5 designations.
 - 4 employee profiles spanning administration, mathematics, literature, and accounting.
 - Statutory leave categories and active leave approval requests.
 - Moroccan payroll period for September 2026 with exact statutory deductions (CNSS ceiling capped at 268.80 MAD, uncapped AMO 2.26%, and progressive IR brackets).
-- Numbered Moroccan payslips (`BUL-2026-09-0001` through `0004`).
+- Numbered Moroccan payslips (`BUL-2026-09-0001` through `0004`) displaying non-zero net payables.
+- Active and pending salary advances with repayment transactions.
 - Add-on entitlements (`human-resources`, `payroll-workforce`) activated and verified.
 
 ## 6. Security / Isolation / Permission Audit

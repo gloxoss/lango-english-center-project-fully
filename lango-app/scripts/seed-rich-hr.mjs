@@ -292,18 +292,19 @@ async function main() {
       const totalEmployerCost = Number((gross + cnssEmployer + amoEmployer).toFixed(2));
 
       const runLineId = crypto.randomUUID();
-      await client.query(`
+      const runLineRes = await client.query(`
         INSERT INTO payroll_run_lines (
           id, tenant_id, period_id, user_id, gross_salary, cnss_employee, amo_employee,
-          ir_tax, net_salary, cnss_employer, amo_employer, total_employer_cost,
+          ir_tax, net_salary, net_payable, cnss_employer, amo_employer, total_employer_cost,
           calculation_snapshot, is_frozen, created_at
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7,
-          $8, $9, $10, $11, $12,
+          $8, $9, $9, $10, $11, $12,
           $13, true, NOW()
         )
         ON CONFLICT (period_id, user_id) DO UPDATE SET
-          gross_salary = $5, net_salary = $9, ir_tax = $8
+          gross_salary = $5, net_salary = $9, net_payable = $9, ir_tax = $8
+        RETURNING id
       `, [
         runLineId, TENANT_ID, activeSepPeriod, s.userId, gross, cnssEmp, amoEmp,
         irNet, netSalary, cnssEmployer, amoEmployer, totalEmployerCost,
@@ -316,6 +317,8 @@ async function main() {
         })
       ]);
 
+      const effectiveRunLineId = runLineRes.rows[0].id;
+
       // Payslip record
       const payslipNum = `BUL-2026-09-${String(payslipCounter++).padStart(4, '0')}`;
       await client.query(`
@@ -325,8 +328,57 @@ async function main() {
         ) VALUES (
           $1, $2, $3, $4, $5, NOW(), $6, 'issued'
         )
+        ON CONFLICT (run_line_id) DO NOTHING
+      `, [crypto.randomUUID(), TENANT_ID, activeSepPeriod, effectiveRunLineId, s.userId, payslipNum]);
+    }
+
+    // Ensure all existing run lines have net_payable populated
+    await client.query(`UPDATE payroll_run_lines SET net_payable = net_salary WHERE tenant_id = $1 AND (net_payable IS NULL OR net_payable = 0)`, [TENANT_ID]);
+
+    // 6. Salary Advances
+    console.log('Seeding salary advances...');
+    const yassineProfile = (await client.query('SELECT id FROM employee_profiles WHERE tenant_id = $1 AND user_id = $2', [TENANT_ID, 'USR-001'])).rows[0]?.id;
+    const karimProfile = (await client.query('SELECT id FROM employee_profiles WHERE tenant_id = $1 AND user_id = $2', [TENANT_ID, 'USR-003-HR'])).rows[0]?.id;
+
+    if (yassineProfile) {
+      const adv1Id = crypto.randomUUID();
+      await client.query(`
+        INSERT INTO salary_advances (
+          id, tenant_id, employee_id, user_id, requested_amount, approved_amount,
+          repaid_amount, monthly_installment, reason, status, requested_at,
+          approved_at, approver_id, created_at, updated_at
+        ) VALUES (
+          $1, $2, $3, 'USR-001', 4000.00, 4000.00,
+          1000.00, 1000.00, 'Avance sur salaire — travaux urgents domicile', 'approved', '2026-08-15',
+          NOW(), 'USR-001', NOW(), NOW()
+        )
         ON CONFLICT (id) DO NOTHING
-      `, [crypto.randomUUID(), TENANT_ID, activeSepPeriod, runLineId, s.userId, payslipNum]);
+      `, [adv1Id, TENANT_ID, yassineProfile]);
+
+      await client.query(`
+        INSERT INTO salary_advance_transactions (
+          id, tenant_id, advance_id, type, amount, transaction_date, notes, created_at
+        ) VALUES
+          ($1, $2, $3, 'disbursement', 4000.00, '2026-08-16', 'Versement initial par virement bancaire', NOW()),
+          ($4, $2, $3, 'payroll_deduction', 1000.00, '2026-09-30', 'Retenue sur salaire Septembre 2026', NOW())
+        ON CONFLICT (id) DO NOTHING
+      `, [crypto.randomUUID(), TENANT_ID, adv1Id, crypto.randomUUID()]);
+    }
+
+    if (karimProfile) {
+      const adv2Id = crypto.randomUUID();
+      await client.query(`
+        INSERT INTO salary_advances (
+          id, tenant_id, employee_id, user_id, requested_amount, approved_amount,
+          repaid_amount, monthly_installment, reason, status, requested_at,
+          created_at, updated_at
+        ) VALUES (
+          $1, $2, $3, 'USR-003-HR', 3000.00, NULL,
+          0.00, 500.00, 'Frais de scolarité rentrée universitaire', 'pending', '2026-09-20',
+          NOW(), NOW()
+        )
+        ON CONFLICT (id) DO NOTHING
+      `, [adv2Id, TENANT_ID, karimProfile]);
     }
 
     await client.query('COMMIT');

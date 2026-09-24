@@ -86,13 +86,30 @@ async function main() {
   const payPerJson = await payPerRes.json();
   log(`Payroll Periods:\n${JSON.stringify(payPerJson, null, 2)}\n`);
 
-  // 9. Payslips (Moroccan CNSS/AMO/IR deductions)
-  log('[9] GET /api/hr/payslips (Numbered Moroccan Payslips)');
-  const slipRes = await fetch(`${BASE_URL}/api/hr/payslips`, { headers });
+  // 9. Numbered Payslips (Moroccan CNSS/AMO/IR deductions & Net salaries)
+  log('[9] GET /api/workforce/payroll/payslips (Workforce Numbered Payslips & Net Payables)');
+  const slipRes = await fetch(`${BASE_URL}/api/workforce/payroll/payslips`, { headers });
   log(`Status: ${slipRes.status} ${slipRes.statusText}`);
   const slipJson = await slipRes.json();
   const slipList = slipJson.data || [];
-  log(`Payslips (${slipList.length}):\n${JSON.stringify(slipJson, null, 2)}\n`);
+  log(`Workforce Payslips (${slipList.length}):\n${JSON.stringify(slipJson, null, 2)}\n`);
+
+  // 9b. Salary Advances (Active and Pending)
+  log('[9b] GET /api/workforce/advances (Salary Advances Ledger)');
+  const advRes = await fetch(`${BASE_URL}/api/workforce/advances`, { headers });
+  log(`Status: ${advRes.status} ${advRes.statusText}`);
+  const advJson = await advRes.json();
+  log(`Salary Advances (${advJson.data?.length || 0}):\n${JSON.stringify(advJson, null, 2)}\n`);
+
+  // 9c. Robust Employee Resolution (UUID, Matricule, Invalid)
+  log('[9c] Employee Resolution by UUID, Matricule, and Invalid String');
+  const firstUuid = empList[0]?.id;
+  const resUuid = await fetch(`${BASE_URL}/api/hr/employees/${firstUuid}`, { headers });
+  log(`By UUID (${firstUuid}) -> Status: ${resUuid.status} (Expected: 200) -> ${resUuid.status === 200 ? 'PASS' : 'FAIL'}`);
+  const resMat = await fetch(`${BASE_URL}/api/hr/employees/EMP-001`, { headers });
+  log(`By Matricule (EMP-001) -> Status: ${resMat.status} (Expected: 200) -> ${resMat.status === 200 ? 'PASS' : 'FAIL'}`);
+  const resInvalid = await fetch(`${BASE_URL}/api/hr/employees/non-existent-employee`, { headers });
+  log(`By Invalid Non-UUID -> Status: ${resInvalid.status} (Expected: 404, No 500) -> ${resInvalid.status === 404 ? 'PASS' : 'FAIL'}\n`);
 
   // 10. IDOR & Boundary Protections
   log('[10] IDOR & BOUNDARY ACCESS CONTROL CHECKS');
