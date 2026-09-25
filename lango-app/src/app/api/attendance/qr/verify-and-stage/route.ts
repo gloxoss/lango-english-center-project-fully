@@ -7,6 +7,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { computeHmacHash } from '@/libs/api/badge-crypto';
 import { isCredentialExpired } from '@/libs/api/badge-service';
 import { authenticateDevice } from '@/libs/attendance/device-auth';
+import { listSessionOccurrences } from '@/libs/attendance/session-occurrence';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
@@ -234,10 +235,33 @@ export async function POST(request: Request) {
     ]);
     const localeTimezone = (tzEff.value as string) || DEFAULT_TIMEZONE;
     const graceMinutes = typeof graceEff.value === 'number' ? graceEff.value : 15;
-    const periodStart = (periodEff.value as string) || '08:00';
+    const settingsPeriodStart = (periodEff.value as string) || '08:00';
 
     const tenantNow = nowInTimezone(localeTimezone);
     const targetDate = tenantNow.toISOString().slice(0, 10);
+
+    // LATENESS IS RELATIVE TO THE REAL LESSON (phase 7). A single school-wide
+    // start time judged a 14:00 lesson late against 08:00, so every afternoon
+    // scan was late and every morning scan was early. The scheduled occurrence
+    // for this section and day carries the actual start.
+    //
+    // Falls back to the configured period start when the timetable has nothing
+    // for that section and day — a legacy or unscheduled section still has to
+    // decide something, and the old behaviour is the honest default.
+    let periodStart = settingsPeriodStart;
+    try {
+      const occurrences = await listSessionOccurrences({
+        tenantId,
+        date: targetDate,
+        classSectionId: resolvedClassSectionId,
+      });
+      const scheduled = occurrences.find(o => o.period === body.period);
+      if (scheduled) {
+        periodStart = scheduled.startTime;
+      }
+    } catch {
+      // A timetable read must never block a scan; the fallback is the setting.
+    }
     const period = body.period;
 
     // CALENDAR + SESSION TRUTH (Phases 4/5): the date must fall inside an
