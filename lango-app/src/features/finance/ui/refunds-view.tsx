@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { usePermissions } from '@/hooks/use-permissions';
+import { formatMoney } from '@/libs/finance/format-money';
 
 type Refund = {
   id: string;
@@ -290,27 +291,14 @@ export function RefundsView() {
               <tr><td colSpan={7} className="py-8 text-center text-slate-400">{t('noRefundsRecorded')}</td></tr>
             )}
             {refunds.map(r => (
-              <tr
-                key={r.id}
-                className="
-                  font-medium transition
-                  hover:bg-slate-50/80
-                "
-              >
-                <td className="px-4 py-3.5 font-mono font-bold text-[#2487B8]">{r.refundNumber}</td>
-                <td className="px-4 py-3.5 font-bold text-[#16212B]">{r.studentName}</td>
-                <td className="px-4 py-3.5 text-slate-500">{methodLabel[r.refundMethod] ?? r.refundMethod}</td>
-                <td className="px-4 py-3.5 text-slate-500">{r.reason}</td>
-                <td className="
-                  px-4 py-3.5 text-end font-extrabold text-[#16212B]
-                "
-                >
-                  {Number(r.amount).toLocaleString('fr-FR')}
-                  {' '}
-                  MAD
-                </td>
-                <td className="px-4 py-3.5 text-center">{statusBadge(r.status)}</td>
-                <td className="px-4 py-3.5">
+              <tr key={r.id} className="hover:bg-slate-50/80 transition font-medium">
+                <td className="py-3.5 px-4 font-mono text-[#2487B8] font-bold">{r.refundNumber}</td>
+                <td className="py-3.5 px-4 font-bold text-[#16212B]">{r.studentName}</td>
+                <td className="py-3.5 px-4 text-slate-500">{methodLabel[r.refundMethod] ?? r.refundMethod}</td>
+                <td className="py-3.5 px-4 text-slate-500">{r.reason}</td>
+                <td className="py-3.5 px-4 text-end font-extrabold text-[#16212B]">{formatMoney(r.amount)}</td>
+                <td className="py-3.5 px-4 text-center">{statusBadge(r.status)}</td>
+                <td className="py-3.5 px-4">
                   {r.status === 'pending' && can('finance.approve') && (
                     <div className="flex items-center justify-end gap-1">
                       <button

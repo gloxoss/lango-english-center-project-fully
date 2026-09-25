@@ -1,0 +1,57 @@
+[2026-09-24T20:29:00.338Z] =================================================================
+[2026-09-24T20:29:00.339Z] AUD-FINANCE-01 REAL CASHIER & PAYMENT END-TO-END RUNTIME EVIDENCE
+[2026-09-24T20:29:00.339Z] Auditing session gating, cash payment, receipting, closing & reconciliation
+[2026-09-24T20:29:00.339Z] =================================================================
+[2026-09-24T20:29:00.339Z] 
+--- Step 1: Accountant Authentication ---
+[2026-09-24T20:29:00.659Z] PASS: Authenticated as accountant@atlas.ma
+[2026-09-24T20:29:00.770Z] 
+--- Step 2: Cash Accountability Barrier (No Open Session) ---
+[2026-09-24T20:29:00.832Z] Target invoice for payment: INV-2026-0003 (ID: 4553bc32-ebfe-47e7-b037-e754fa6b4be5, Net: 3000 MAD, Paid: 250 MAD)
+[2026-09-24T20:29:00.890Z] Cash payment without open drawer result: status 409, code: undefined
+[2026-09-24T20:29:00.890Z] PASS: Cash payment correctly blocked with 409 NO_OPEN_CASHIER_SESSION when drawer is closed.
+[2026-09-24T20:29:00.890Z] 
+--- Step 3: Open Cashier Session ---
+[2026-09-24T20:29:00.944Z] PASS: Cashier session opened: ID=92bb2d1d-1b21-44d0-8c36-3d06ad691759, startingFloat=500 MAD, status=open
+[2026-09-24T20:29:00.944Z] 
+--- Step 4: Record Real Cash Payment ---
+[2026-09-24T20:29:01.068Z] PASS: Payment recorded successfully:
+[2026-09-24T20:29:01.068Z]   Payment ID: 68ba66ab-aa22-4e21-80ef-b74aa45f691c
+[2026-09-24T20:29:01.068Z]   Amount: 250 MAD
+[2026-09-24T20:29:01.068Z]   Method: cash
+[2026-09-24T20:29:01.068Z]   Status: posted
+[2026-09-24T20:29:01.068Z]   Receipt Generated: Number=RC-2026-0002, Amount=250 MAD
+[2026-09-24T20:29:01.068Z] 
+--- Step 5: Verify Receipt Persistence ---
+[2026-09-24T20:29:01.139Z] PASS: Receipt verified in receipts registry: RC-2026-0002 (250 MAD, Student: Omar Tazi)
+[2026-09-24T20:29:01.139Z] 
+--- Step 6: Verify Invoice Balance Progression ---
+[2026-09-24T20:29:01.182Z] Invoice INV-2026-0003 paidAmount: 250 MAD -> 500 MAD (Delta: +250 MAD)
+[2026-09-24T20:29:01.182Z] PASS: Invoice balance reduced exactly by 250 MAD. Status=partial
+[2026-09-24T20:29:01.182Z] 
+--- Step 7: Verify Cash Drawer Accumulation ---
+[2026-09-24T20:29:01.230Z] Drawer check: startingFloat=500, totalCollected=250, expectedCash=750
+[2026-09-24T20:29:01.230Z] PASS: Cashier drawer correctly accumulated float (500 MAD) + payment (250 MAD) = 750 MAD.
+[2026-09-24T20:29:01.230Z] 
+--- Step 8: Close Cashier Session with Cash Count ---
+[2026-09-24T20:29:01.289Z] PASS: Cashier session closed. Variance = 0.00 MAD.
+[2026-09-24T20:29:01.289Z] 
+--- Step 9: Reconcile Cashier Session (Maker-Checker Segregation) ---
+[2026-09-24T20:29:01.467Z] PASS: Authenticated as y.elamrani@atlas.ma (School Admin with finance.approve capability)
+[2026-09-24T20:29:01.536Z] PASS: Cashier session reconciled successfully by School Admin.
+[2026-09-24T20:29:01.536Z] 
+--- Step 10: Final Verification in Cashier History ---
+[2026-09-24T20:29:04.813Z] Final session record in history:
+[2026-09-24T20:29:04.813Z]   ID: 92bb2d1d-1b21-44d0-8c36-3d06ad691759
+[2026-09-24T20:29:04.813Z]   Cashier: Karim Bennani (Comptable)
+[2026-09-24T20:29:04.813Z]   Status: reconciled
+[2026-09-24T20:29:04.813Z]   Starting Float: 500 MAD
+[2026-09-24T20:29:04.813Z]   Collected: 250 MAD
+[2026-09-24T20:29:04.813Z]   Expected Cash: 750 MAD
+[2026-09-24T20:29:04.813Z]   Actual Cash: 750 MAD
+[2026-09-24T20:29:04.813Z]   Reconciled At: 2026-09-24 20:29:01.527
+[2026-09-24T20:29:04.813Z] 
+=================================================================
+[2026-09-24T20:29:04.813Z] CASHIER & PAYMENT END-TO-END LIFECYCLE AUDIT: 100% PASS
+[2026-09-24T20:29:04.813Z] All assertions passed: barrier enforcement, cash payment, receipting, drawer tracking, closing, reconciliation.
+[2026-09-24T20:29:04.813Z] =================================================================

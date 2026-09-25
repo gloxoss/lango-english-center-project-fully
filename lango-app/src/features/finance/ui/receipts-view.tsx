@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { CheckCircle2, FileText, Printer, Search, TrendingUp } from 'lucide-react';
 import { printReceiptDocument } from './finance-document-print';
+import { formatMoney } from '@/libs/finance/format-money';
 
 type ReceiptAllocation = { invoiceId: string; invoiceNumber: string; amount: string };
 
@@ -76,7 +77,7 @@ export function ReceiptsFinanceView({ locale = 'fr' }: { locale?: string }) {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { icon: <FileText className="w-5 h-5 text-[#2487B8]" />, color: 'bg-[#DCEBF4]', label: t('receiptsIssued'), value: String(receipts.length) },
-          { icon: <CheckCircle2 className="w-5 h-5 text-[#17A673]" />, color: 'bg-[#DDF5EC]', label: t('collectedAmount'), value: `${totalAmount.toLocaleString('fr-FR')} MAD` },
+          { icon: <CheckCircle2 className="w-5 h-5 text-[#17A673]" />, color: 'bg-[#DDF5EC]', label: t('collectedAmount'), value: formatMoney(totalAmount) },
         ].map((stat, i) => (
           <Card key={i} className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ${stat.color}`}>{stat.icon}</div>
@@ -98,7 +99,33 @@ export function ReceiptsFinanceView({ locale = 'fr' }: { locale?: string }) {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Mobile: card list per receipt (S-36) */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {!loading && filtered.length === 0 && (
+              <p className="py-8 text-center text-xs text-slate-400">{t('noReceiptsFound')}</p>
+            )}
+            {filtered.map((r) => (
+              <button
+                type="button"
+                key={r.id}
+                onClick={() => setSelected(r)}
+                className={`w-full p-4 text-start transition-colors ${selected?.id === r.id ? 'bg-[#DCEBF4]/30' : 'hover:bg-slate-50/80'}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-bold text-[#2487B8]">{r.receiptNumber}</span>
+                  <span className="font-mono text-[10px] text-slate-400">{r.paymentDate}</span>
+                </div>
+                <p className="mt-1 text-xs font-bold text-[#16212B]">{r.studentName}</p>
+                <div className="mt-2 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400">{r.receivedByName ?? '—'}</span>
+                  <span className="font-extrabold text-[#17A673]">{formatMoney(r.amount)}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-[11px]">
               <thead>
                 <tr className="text-slate-400 font-bold border-b border-slate-100 bg-slate-50/50">
@@ -121,7 +148,7 @@ export function ReceiptsFinanceView({ locale = 'fr' }: { locale?: string }) {
                   >
                     <td className="py-2.5 px-3 font-mono font-semibold text-[#2487B8]">{r.receiptNumber}</td>
                     <td className="py-2.5 px-3 font-bold text-[#16212B]">{r.studentName}</td>
-                    <td className="py-2.5 px-3 text-end font-bold text-[#17A673]">{Number(r.amount).toLocaleString('fr-FR')} MAD</td>
+                    <td className="py-2.5 px-3 text-end font-bold text-[#17A673]">{formatMoney(r.amount)}</td>
                     <td className="py-2.5 px-3 text-center text-slate-500 font-mono text-[10px]">{r.paymentDate}</td>
                     <td className="py-2.5 px-3 text-start text-slate-500">{r.receivedByName ?? '—'}</td>
                   </tr>
@@ -155,14 +182,14 @@ export function ReceiptsFinanceView({ locale = 'fr' }: { locale?: string }) {
                 {selected.allocations.map(a => (
                   <div key={a.invoiceId} className="flex items-center justify-between py-1.5 text-[11px]">
                     <span className="font-semibold text-[#16212B]">{a.invoiceNumber}</span>
-                    <span className="font-bold text-[#17A673]">{Number(a.amount).toLocaleString('fr-FR')} MAD</span>
+                    <span className="font-bold text-[#17A673]">{formatMoney(a.amount)}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="flex justify-between text-sm font-extrabold text-[#16212B] border-t border-slate-200 pt-2">
-              <span>{t('totalLabel')}</span><span>{Number(selected.amount).toLocaleString('fr-FR')} MAD</span>
+              <span>{t('totalLabel')}</span><span>{formatMoney(selected.amount)}</span>
             </div>
 
             <Button variant="outline" size="sm" onClick={() => printReceiptDocument(selected, {

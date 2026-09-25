@@ -1490,4 +1490,10 @@ AUD-SETTINGS-01 complete: users/roles salary leak and mass-assignment fixed, cro
 
 - Files: `lango-app/locales`, `lango-app/src/app/[locale]/(dashboard)/dashboard/settings`, `lango-app/src/app/api/settings`, `lango-app/src/app/api/users`, `lango-app/src/features/settings`, `lango-app/src/libs/api/validation.ts`, `lango-app/package.json`, `lango-app/tsconfig.json`, `lango-app/artifacts/page-audit`, `lango-app/scripts/check-hardcoded-french.mjs`, `lango-app/scripts/i18n-hardcoded-baseline.json`
 - Verified with: `npm run check:types (PASS) ; npm run check:isolation (PASS) ; npm run check:i18n (PASS) ; npm run check:i18n:keys (PASS) ; npm run check:ui (PASS) ; npx eslint touched (PASS) ; vitest 10 tests (PASS)`
+## 2026-09-24 20:05 · antigravity-1 · task:AUD-FINANCE-01
+
+AUD-FINANCE-01 complete: student billing, family accounts, payments & cashier audited; S-7 Moroccan currency formatted; S-36 mobile responsive cards; S-19 unique fine assessment index; S-27 neutral cashier empty state; S-35 accountant class-sections lookups; 12 screenshots + evidence log generated; 102 vitest tests pass
+
+- Files: `lango-app/src/features/finance`, `lango-app/src/app/[locale]/(dashboard)/dashboard/finance`, `lango-app/src/app/api/finance`, `lango-app/locales`, `lango-app/artifacts/page-audit`, `lango-app/src/models/Schema.ts`, `lango-app/src/libs/finance`, `lango-app/migrations`
+- Verified with: `npm run check:types (0 errors); npm run check:isolation (0 errors); npm run check:i18n (0 errors); npm run check:ui (38/39 holding); npx vitest run src/features/finance (102 tests passed); node scripts/audit-finance-runner.mjs (12 screenshots, IDOR verified)`
 - Status: done, waiting for a second agent to verify

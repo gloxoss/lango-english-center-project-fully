@@ -23,13 +23,15 @@ type SessionRow = {
   createdAt: string;
 };
 
+import { formatMoney } from '@/libs/finance/format-money';
+
 const STATUS_BADGE: Record<SessionRow['status'], string> = {
   open: 'bg-[#DCEBF4] text-[#2487B8]',
   closed: 'bg-amber-100 text-amber-700',
   reconciled: 'bg-[#DDF5EC] text-[#17A673]',
 };
 
-const fmt = (n: number | null) => (n === null || n === undefined ? '—' : `${Number(n).toLocaleString('fr-FR')} MAD`);
+const fmt = (n: number | null) => (n === null || n === undefined ? '—' : formatMoney(n));
 const fmtDate = (d: string | null) => (d ? new Date(d).toLocaleString('fr-FR') : '—');
 
 export function CashierSessionsView({ locale: _locale }: { locale?: string }) {
@@ -125,7 +127,7 @@ export function CashierSessionsView({ locale: _locale }: { locale?: string }) {
         {[
           { icon: <Wallet className="w-5 h-5 text-[#2487B8]" />, color: 'bg-[#DCEBF4]', label: t('sessionsCount'), value: String(sessions.length) },
           { icon: <Clock className="w-5 h-5 text-amber-600" />, color: 'bg-amber-100', label: t('openSessions'), value: String(openCount) },
-          { icon: <CheckCircle2 className={`w-5 h-5 ${closedCount > 0 ? 'text-[#17A673]' : 'text-slate-400'}`} />, color: closedCount > 0 ? 'bg-[#DDF5EC]' : 'bg-slate-100', label: t('cumulativeVariance'), value: !loading && !loadError && closedCount > 0 ? `${totalVariance.toLocaleString('fr-FR')} MAD` : '—' },
+          { icon: <CheckCircle2 className={`w-5 h-5 ${closedCount > 0 ? 'text-[#17A673]' : 'text-slate-400'}`} />, color: closedCount > 0 ? 'bg-[#DDF5EC]' : 'bg-slate-100', label: t('cumulativeVariance'), value: !loading && !loadError && closedCount > 0 ? formatMoney(totalVariance) : '—' },
           { icon: <Lock className="w-5 h-5 text-slate-500" />, color: 'bg-slate-100', label: t('reconciledSessions'), value: String(sessions.filter(s => s.status === 'reconciled').length) },
         ].map((stat, i) => (
           <Card key={i} className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center gap-3">
@@ -153,7 +155,46 @@ export function CashierSessionsView({ locale: _locale }: { locale?: string }) {
       </div>
 
       <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile: card list per session (S-36) */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {!loading && filtered.length === 0 && (
+            <p className="py-8 text-center text-[11px] text-slate-500">{loadError ? t('loadCashierSessionsError') : sessions.length === 0 ? t('noSessionsToReconcile') : t('noSessionsFound')}</p>
+          )}
+          {filtered.map(s => {
+            const variance = s.status === 'open' || s.actualCash === null ? 0 : Number(s.actualCash) - Number(s.expectedCash);
+            return (
+              <div key={s.id} className="p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-[#16212B]">{s.cashierName}</span>
+                  <Badge className={`text-[9px] border-none font-bold ${STATUS_BADGE[s.status]}`}>{statusLabel[s.status]}</Badge>
+                </div>
+                <p className="font-mono text-[10px] text-slate-400">{fmtDate(s.openedAt)}</p>
+                <div className="grid grid-cols-3 gap-2 text-[10px]">
+                  <div><p className="text-slate-400">{t('startingFloatCol')}</p><p className="font-bold text-[#16212B]">{fmt(s.startingFloat)}</p></div>
+                  <div><p className="text-slate-400">{t('collectedCol')}</p><p className="font-bold text-[#16212B]">{fmt(s.totalCollected)}</p></div>
+                  <div><p className="text-slate-400">{t('varianceCol')}</p><p className={`font-bold ${variance === 0 ? 'text-slate-400' : variance > 0 ? 'text-[#17A673]' : 'text-rose-600'}`}>{s.status === 'open' ? '—' : `${variance >= 0 ? '+' : ''}${formatMoney(variance)}`}</p></div>
+                </div>
+                {(s.status === 'open' || s.status === 'closed') && (
+                  <div className="pt-1 flex justify-end gap-2">
+                    {s.status === 'open' && (
+                      <Button size="sm" onClick={() => handleClose(s)} className="h-7 text-[10px] rounded-lg bg-[#0066FF] hover:bg-[#0052CC]">
+                        {t('closeSessionBtn')}
+                      </Button>
+                    )}
+                    {s.status === 'closed' && (
+                      <Button size="sm" variant="outline" onClick={() => handleReconcile(s)} className="h-7 text-[10px] rounded-lg border-slate-200">
+                        {t('reconcileBtn')}
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop: multi-column table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-[11px]">
             <thead>
               <tr className="text-slate-400 font-bold border-b border-slate-100 bg-slate-50/50">
@@ -183,7 +224,7 @@ export function CashierSessionsView({ locale: _locale }: { locale?: string }) {
                     <td className="py-2.5 px-3 text-end font-semibold text-[#16212B]">{fmt(s.expectedCash)}</td>
                     <td className="py-2.5 px-3 text-end font-semibold text-[#16212B]">{fmt(s.actualCash)}</td>
                     <td className={`py-2.5 px-3 text-end font-extrabold ${variance === 0 ? 'text-slate-400' : variance > 0 ? 'text-[#17A673]' : 'text-rose-600'}`}>
-                      {s.status === 'open' ? '—' : `${variance >= 0 ? '+' : ''}${variance.toFixed(2)}`}
+                      {s.status === 'open' ? '—' : `${variance >= 0 ? '+' : ''}${formatMoney(variance)}`}
                     </td>
                     <td className="py-2.5 px-3 text-center">
                       <Badge className={`text-[9px] border-none font-bold ${STATUS_BADGE[s.status]}`}>{statusLabel[s.status]}</Badge>

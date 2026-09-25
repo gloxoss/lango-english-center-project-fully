@@ -53,9 +53,7 @@ async function getJson<T>(url: string): Promise<T | null> {
   }
 }
 
-function mad(value: number): string {
-  return `${value.toLocaleString(undefined, { minimumFractionDigits: 2 })} MAD`;
-}
+import { formatMoney } from '@/libs/finance/format-money';
 
 export function AccountantPortalView() {
   const tFinance = useTranslations('Finance');
@@ -170,7 +168,7 @@ export function AccountantPortalView() {
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-500">{tFinance('cashCollectedToday')}</p>
-            <p className="text-xl font-extrabold text-slate-900">{mad(home.cashCollectedToday)}</p>
+            <p className="text-xl font-extrabold text-slate-900">{formatMoney(home.cashCollectedToday)}</p>
             <p className="text-[11px] text-slate-400">{tFinance('paymentsCountSub', { count: home.totalPaymentsTodayCount })}</p>
           </div>
         </div>
@@ -180,7 +178,7 @@ export function AccountantPortalView() {
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-500">{tFinance('onlineCollectedToday')}</p>
-            <p className="text-xl font-extrabold text-slate-900">{mad(home.onlineCollectedToday)}</p>
+            <p className="text-xl font-extrabold text-slate-900">{formatMoney(home.onlineCollectedToday)}</p>
             <p className="text-[11px] text-slate-400">{tFinance('todaySub')}</p>
           </div>
         </div>
@@ -191,7 +189,7 @@ export function AccountantPortalView() {
           <div>
             <p className="text-xs font-semibold text-slate-500">{tFinance('pendingInvoices')}</p>
             <p className="text-xl font-extrabold text-slate-900">{home.pendingOverdueInvoicesCount}</p>
-            <p className="text-[11px] text-slate-400">{mad(home.pendingOverdueTotalAmount)}</p>
+            <p className="text-[11px] text-slate-400">{formatMoney(home.pendingOverdueTotalAmount)}</p>
           </div>
         </div>
         <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center gap-3">
@@ -235,13 +233,13 @@ export function AccountantPortalView() {
                       <td className="px-5 py-3 font-mono text-xs font-bold text-[#0066FF]">{inv.invoiceNumber}</td>
                       <td className="px-5 py-3 font-medium text-slate-800">{inv.studentName}</td>
                       <td className="px-5 py-3 text-xs text-slate-500">{inv.dueDate}</td>
-                      <td className="px-5 py-3 text-end font-semibold text-slate-800">{mad(Number(inv.netAmount))}</td>
-                      <td className="px-5 py-3 text-end text-slate-500">{mad(Number(inv.paidAmount))}</td>
+                      <td className="px-5 py-3 text-end font-semibold text-slate-800">{formatMoney(Number(inv.netAmount))}</td>
+                      <td className="px-5 py-3 text-end text-slate-500">{formatMoney(Number(inv.paidAmount))}</td>
                       <td className="px-5 py-3 text-end">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_BADGE[inv.status] ?? 'bg-slate-100 text-slate-600'}`}>
                           {getStatusLabel(inv.status)}
                         </span>
-                        {balance > 0 && <span className="ms-1 text-[11px] text-slate-400">{tFinance('balanceSub', { amount: mad(balance) })}</span>}
+                        {balance > 0 && <span className="ms-1 text-[11px] text-slate-400">{tFinance('balanceSub', { amount: formatMoney(balance) })}</span>}
                       </td>
                     </tr>
                   );

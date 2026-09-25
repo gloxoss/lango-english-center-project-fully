@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { usePermissions } from '@/hooks/use-permissions';
+import { formatMoney } from '@/libs/finance/format-money';
 
 type CreditNote = {
   id: string;
@@ -229,16 +230,8 @@ export function CreditNotesView() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              disabled={saving}
-              onClick={handleCreate}
-              className="
-                h-9 rounded-xl bg-[#2487B8] text-xs font-bold text-white
-                hover:bg-[#1B6C93]
-              "
-            >
-              {saving ? '...' : t('createCreditNoteBtn')}
+            <Button size="sm" disabled={saving} onClick={handleCreate} className="h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold">
+              {saving ? tCommon('loading') : t('createCreditNoteBtn')}
             </Button>
             <Button
               size="sm"
@@ -277,26 +270,13 @@ export function CreditNotesView() {
               <tr><td colSpan={6} className="py-8 text-center text-slate-400">{t('noCreditNotesRecorded')}</td></tr>
             )}
             {notes.map(n => (
-              <tr
-                key={n.id}
-                className="
-                  font-medium transition
-                  hover:bg-slate-50/80
-                "
-              >
-                <td className="px-4 py-3.5 font-mono font-bold text-[#2487B8]">{n.creditNoteNumber}</td>
-                <td className="px-4 py-3.5 font-bold text-[#16212B]">{n.studentName}</td>
-                <td className="px-4 py-3.5 text-slate-500">{n.reason}</td>
-                <td className="
-                  px-4 py-3.5 text-end font-extrabold text-[#16212B]
-                "
-                >
-                  {Number(n.amount).toLocaleString('fr-FR')}
-                  {' '}
-                  MAD
-                </td>
-                <td className="px-4 py-3.5 text-center">{statusBadge(n.status)}</td>
-                <td className="px-4 py-3.5">
+              <tr key={n.id} className="hover:bg-slate-50/80 transition font-medium">
+                <td className="py-3.5 px-4 font-mono text-[#2487B8] font-bold">{n.creditNoteNumber}</td>
+                <td className="py-3.5 px-4 font-bold text-[#16212B]">{n.studentName}</td>
+                <td className="py-3.5 px-4 text-slate-500">{n.reason}</td>
+                <td className="py-3.5 px-4 text-end font-extrabold text-[#16212B]">{formatMoney(n.amount)}</td>
+                <td className="py-3.5 px-4 text-center">{statusBadge(n.status)}</td>
+                <td className="py-3.5 px-4">
                   {n.status === 'pending' && can('finance.approve') && (
                     <div className="flex items-center justify-end gap-1">
                       <button
