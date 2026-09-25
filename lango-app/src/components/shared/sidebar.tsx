@@ -478,15 +478,19 @@ export function Sidebar({ locale }: { locale: string }) {
       icon: CalendarCheck,
       permission: 'attendance.read',
       subItems: [
-        { label: tAttendance('markAttendance'), href: `/${locale}/dashboard/attendance`, permission: 'attendance.read' },
-        { label: tNav('attendance-badges'), href: `/${locale}/dashboard/attendance/badges`, permission: 'attendance.read' },
-        { label: tNav('attendance-qr-reports'), href: `/${locale}/dashboard/attendance/qr-reports`, permission: 'attendance.read' },
-        { label: tAttendance('qrKiosk'), href: `/${locale}/dashboard/attendance/scanner`, permission: 'attendance.manage' },
-        { label: tNav('attendance-timeclock'), href: `/${locale}/dashboard/workforce/timeclock`, permission: 'attendance.read', addon: 'payroll-workforce' },
+        { label: tNav('attendance-appel'), href: `/${locale}/dashboard/attendance`, permission: 'attendance.read' },
+        { label: tNav('attendance-registres'), href: `/${locale}/dashboard/attendance/registres`, permission: 'attendance.read' },
         { label: tAttendance('excuseDocument'), href: `/${locale}/dashboard/attendance/excuses`, permission: 'attendance.read' },
         { label: tAttendance('suiviTitle'), href: `/${locale}/dashboard/attendance/suivi`, permission: 'attendance.read' },
         { label: tNav('attendance-flags'), href: `/${locale}/dashboard/attendance/flags`, permission: 'attendance.read' },
         { label: tNav('attendance-audit'), href: `/${locale}/dashboard/attendance/audit`, permission: 'attendance.read' },
+        { label: tNav('attendance-suivi'), href: `/${locale}/dashboard/attendance/suivi`, permission: 'attendance.read' },
+        { label: tAttendance('qrKiosk'), href: `/${locale}/dashboard/attendance/scanner`, permission: 'attendance.manage' },
+        // Kept on purpose. This is the only surface that shows SCANS, rejected
+        // ones included; Registres & historique reads marks, so a badge refused
+        // at the door never appears there. Removing it would lose that, so it
+        // stays until the scan journal is folded in properly.
+        { label: tNav('attendance-qr-reports'), href: `/${locale}/dashboard/attendance/qr-reports`, permission: 'attendance.read' },
       ],
     },
     {
@@ -499,6 +503,11 @@ export function Sidebar({ locale }: { locale: string }) {
         { label: tNav('cards-overview'), href: `/${locale}/dashboard/cards`, permission: 'cards.issue', addon: 'card-management' },
         { label: tNav('cards-templates'), href: `/${locale}/dashboard/cards/templates`, permission: 'cards.templates.manage', addon: 'card-management' },
         { label: tNav('cards-students'), href: `/${locale}/dashboard/cards/students`, permission: 'cards.issue', addon: 'card-management' },
+        // The credential lives with the card it is printed on. Permission is
+        // `attendance.manage` because that is what the identity-badge APIs
+        // behind this page require — a nav entry that differs from its page
+        // guard bounces the user straight back out.
+        { label: tNav('cards-badges'), href: `/${locale}/dashboard/cards/badges`, permission: 'attendance.manage' },
         { label: tNav('cards-employees'), href: `/${locale}/dashboard/cards/employees`, permission: 'cards.issue', addon: 'card-management' },
         { label: tNav('cards-admit'), href: `/${locale}/dashboard/cards/admit-cards`, permission: 'cards.issue', addon: 'card-management' },
         { label: tNav('cards-jobs'), href: `/${locale}/dashboard/cards/jobs`, permission: 'cards.issue', addon: 'card-management' },
@@ -699,6 +708,11 @@ export function Sidebar({ locale }: { locale: string }) {
       permission: 'payroll.review',
       addon: 'payroll-workforce',
       subItems: [
+        // Staff time belongs with HR, not with student attendance. Permission
+        // matches the page's own guard (`payroll.review` + addon); the entry
+        // used to say `attendance.read`, which is why this page bounced roles
+        // that could see the menu item but not open it.
+        { label: tNav('workforce-timeclock'), href: `/${locale}/dashboard/workforce/timeclock`, permission: 'payroll.review', addon: 'payroll-workforce' },
         { label: tNav('workforce-overview'), href: `/${locale}/dashboard/workforce`, permission: 'payroll.review', addon: 'payroll-workforce' },
         { label: tNav('hr-payroll'), href: `/${locale}/dashboard/workforce/payroll/runs`, permission: 'payroll.review', addon: 'payroll-workforce' },
         { label: tNav('workforce-payslips'), href: `/${locale}/dashboard/workforce/payroll/payslips`, permission: 'payroll.review', addon: 'payroll-workforce' },
