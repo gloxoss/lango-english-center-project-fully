@@ -19,14 +19,18 @@ export async function GET(request: Request) {
     const tenantId = requireTenant(context);
     const { searchParams } = new URL(request.url);
     const pagination = parsePagination(searchParams);
-    const statusParam = searchParams.get('status');
+    // Repeated params, so a caller can ask for "everything still open" in one
+    // request. `get` would have silently honoured only the first value, quietly
+    // hiding the other two states.
+    const ALLOWED = ['OPEN', 'ACKNOWLEDGED', 'CONTACTED', 'RESOLVED', 'DISMISSED'] as const;
+    const statusParams = searchParams.getAll('status').filter(s => (ALLOWED as readonly string[]).includes(s));
     const typeParam = searchParams.get('type');
     const severityParam = searchParams.get('severity');
     const assignedToParam = searchParams.get('assignedToId');
 
     const conditions = [eq(attendanceFlags.tenantId, tenantId)];
-    if (statusParam && ['OPEN', 'ACKNOWLEDGED', 'CONTACTED', 'RESOLVED', 'DISMISSED'].includes(statusParam)) {
-      conditions.push(eq(attendanceFlags.status, statusParam as 'OPEN' | 'ACKNOWLEDGED' | 'CONTACTED' | 'RESOLVED' | 'DISMISSED'));
+    if (statusParams.length > 0) {
+      conditions.push(inArray(attendanceFlags.status, statusParams as ('OPEN' | 'ACKNOWLEDGED' | 'CONTACTED' | 'RESOLVED' | 'DISMISSED')[]));
     }
     if (typeParam && (FLAG_TYPES as readonly string[]).includes(typeParam)) {
       conditions.push(eq(attendanceFlags.type, typeParam as typeof FLAG_TYPES[number]));
