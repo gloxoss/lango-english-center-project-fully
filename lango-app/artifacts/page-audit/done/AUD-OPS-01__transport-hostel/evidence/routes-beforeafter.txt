@@ -1,0 +1,3 @@
+/dashboard/hostel
+/dashboard/hostel/board
+/dashboard/hostel/leave-passes

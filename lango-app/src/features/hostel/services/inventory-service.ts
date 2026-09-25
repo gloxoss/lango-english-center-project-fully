@@ -8,6 +8,7 @@ import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { ApiError } from '@/libs/api/errors';
 import { branches, employeeProfiles, user } from '@/models/Schema';
+import { casablancaTodayIso } from '@/libs/finance/today';
 import { firstRow } from '@/features/hostel/server/db-utils';
 import {
   hostelAllocations,
@@ -31,11 +32,27 @@ import type {
 // Date helpers (allocation ranges are half-open [start, end), ISO 'YYYY-MM-DD')
 // ---------------------------------------------------------------------------
 
+// The school day is the Casablanca calendar day, never the server's local or
+// UTC date: on a UTC host the old getFullYear/getDate version answered
+// "yesterday" for the first hour of every Moroccan morning, which put stays,
+// roll calls and escalations on the wrong day. Same rule as money and attendance
+// (libs/finance/today.ts).
 export function dateString(d = new Date()): string {
-  const y = d.getFullYear();
-  const m = `${d.getMonth() + 1}`.padStart(2, '0');
-  const day = `${d.getDate()}`.padStart(2, '0');
-  return `${y}-${m}-${day}`;
+  return casablancaTodayIso(d);
+}
+
+// hostel_leave_passes.start_date_time / expected_return_at are
+// `timestamp without time zone` holding UTC wall clock: the UI posts ISO
+// instants and Postgres drops the offset on the way in. Drizzle hands them back
+// as 'YYYY-MM-DD HH:MM:SS' text (note the space, not 'T'), so comparing one to
+// new Date().toISOString() is a text comparison across two different formats
+// and never means what it looks like. Put the offset back before any instant
+// maths, and use this instead of new Date(naive) which reads the text as server
+// local time.
+export function storedInstant(naive: string): Date {
+  const isoish = naive.trim().replace(' ', 'T');
+  const hasOffset = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(isoish);
+  return new Date(hasOffset ? isoish : `${isoish}Z`);
 }
 
 // ---------------------------------------------------------------------------

@@ -18,6 +18,7 @@ import {
 import { firstRow } from '@/features/hostel/server/db-utils';
 import { getPolicies } from '@/features/hostel/services/policies-service';
 import { getStudentContext } from '@/features/hostel/services/eligibility-service';
+import { dateString } from '@/features/hostel/services/inventory-service';
 
 function ageOn(dob: string | null, today: string): number | null {
   if (!dob) return null;
@@ -33,7 +34,9 @@ function ageOn(dob: string | null, today: string): number | null {
 export async function isMinor(tenantId: string, studentId: string): Promise<boolean> {
   const { policies } = await getPolicies(tenantId);
   const { student } = await getStudentContext(tenantId, studentId);
-  const age = ageOn(student.dateOfBirth, new Date().toISOString().slice(0, 10));
+  // Majority is reached on the Casablanca school day, not the UTC one: this
+  // gates guardian consent (Law 09-08), so it has to flip on the right day.
+  const age = ageOn(student.dateOfBirth, dateString());
   return age !== null && age < policies.majorityAge;
 }
 
