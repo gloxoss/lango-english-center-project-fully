@@ -4478,6 +4478,11 @@
     "errorNetworkRevert": "Network error during cancellation."
   },
   "Attendance": {
+    "deviceUnpairBtn": "Unpair",
+    "devicePairBtn": "Pair",
+    "deviceSecretPlaceholder": "Terminal pairing secret",
+    "deviceUnpairedLabel": "Unpaired terminal",
+    "devicePairedLabel": "Paired terminal",
     "historyTitle": "Registers & history",
     "historySubtitle": "Recorded attendance, manual or by badge, over a period.",
     "historyFrom": "From",
