@@ -1,0 +1,130 @@
+[
+  {
+    "route": "/dashboard",
+    "finalPath": "/fr/dashboard/receptionist",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 305,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-fr-home.png"
+  },
+  {
+    "route": "/dashboard/receptionist",
+    "finalPath": "/fr/dashboard/receptionist",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 305,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-fr-receptionist.png"
+  },
+  {
+    "route": "/dashboard/receptionist/inquiries",
+    "finalPath": "/fr/dashboard/receptionist/inquiries",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 278,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-fr-receptionist__inquiries.png"
+  },
+  {
+    "route": "/dashboard/receptionist/appointments",
+    "finalPath": "/fr/dashboard/receptionist/appointments",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 223,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-fr-receptionist__appointments.png"
+  },
+  {
+    "route": "/dashboard/receptionist/visitors",
+    "finalPath": "/fr/dashboard/receptionist/visitors",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 234,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-fr-receptionist__visitors.png"
+  },
+  {
+    "route": "/dashboard/receptionist/pickups",
+    "finalPath": "/fr/dashboard/receptionist/pickups",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 162,
+    "failures": [
+      "403 /api/reception/pickups/authorizations"
+    ],
+    "textDefects": [],
+    "file": "receptionist-fr-receptionist__pickups.png"
+  },
+  {
+    "route": "/dashboard/receptionist/handoffs",
+    "finalPath": "/fr/dashboard/receptionist/handoffs",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 236,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-fr-receptionist__handoffs.png"
+  },
+  {
+    "route": "/dashboard/students",
+    "finalPath": "/fr/dashboard/students",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 267,
+    "failures": [
+      "403 /api/academics/classes",
+      "403 /api/academics/class-sections",
+      "403 /api/students"
+    ],
+    "textDefects": [],
+    "file": "receptionist-fr-students.png"
+  },
+  {
+    "route": "/dashboard/students/parents",
+    "finalPath": "/fr/dashboard/students/parents",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 845,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-fr-students__parents.png"
+  },
+  {
+    "route": "/dashboard/transport",
+    "finalPath": "/fr/dashboard/transport",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 265,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-fr-transport.png"
+  },
+  {
+    "route": "/dashboard/transport/allocations",
+    "finalPath": "/fr/dashboard/transport/allocations",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 949,
+    "failures": [
+      "console: Each child in a list should have a unique \"key\" prop.%s%s See https://react.dev/link/warning-keys for more information. \n\nCheck the render m"
+    ],
+    "textDefects": [],
+    "file": "receptionist-fr-transport__allocations.png"
+  },
+  {
+    "route": "/dashboard/transport/incidents",
+    "finalPath": "/fr/dashboard/transport/incidents",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 202,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-fr-transport__incidents.png"
+  }
+]

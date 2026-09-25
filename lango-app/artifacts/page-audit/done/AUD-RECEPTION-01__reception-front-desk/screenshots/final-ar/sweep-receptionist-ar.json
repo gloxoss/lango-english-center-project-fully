@@ -1,0 +1,127 @@
+[
+  {
+    "route": "/dashboard",
+    "finalPath": "/ar/dashboard/receptionist",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 322,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-ar-home.png"
+  },
+  {
+    "route": "/dashboard/receptionist",
+    "finalPath": "/ar/dashboard/receptionist",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 322,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-ar-receptionist.png"
+  },
+  {
+    "route": "/dashboard/receptionist/inquiries",
+    "finalPath": "/ar/dashboard/receptionist/inquiries",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 294,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-ar-receptionist__inquiries.png"
+  },
+  {
+    "route": "/dashboard/receptionist/appointments",
+    "finalPath": "/ar/dashboard/receptionist/appointments",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 276,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-ar-receptionist__appointments.png"
+  },
+  {
+    "route": "/dashboard/receptionist/visitors",
+    "finalPath": "/ar/dashboard/receptionist/visitors",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 253,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-ar-receptionist__visitors.png"
+  },
+  {
+    "route": "/dashboard/receptionist/pickups",
+    "finalPath": "/ar/dashboard/receptionist/pickups",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 162,
+    "failures": [
+      "403 /api/reception/pickups/authorizations"
+    ],
+    "textDefects": [],
+    "file": "receptionist-ar-receptionist__pickups.png"
+  },
+  {
+    "route": "/dashboard/receptionist/handoffs",
+    "finalPath": "/ar/dashboard/receptionist/handoffs",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 249,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-ar-receptionist__handoffs.png"
+  },
+  {
+    "route": "/dashboard/students",
+    "finalPath": "/ar/dashboard/students",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 816,
+    "failures": [
+      "403 /api/academics/classes",
+      "403 /api/academics/class-sections"
+    ],
+    "textDefects": [],
+    "file": "receptionist-ar-students.png"
+  },
+  {
+    "route": "/dashboard/students/parents",
+    "finalPath": "/ar/dashboard/students/parents",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 842,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-ar-students__parents.png"
+  },
+  {
+    "route": "/dashboard/transport",
+    "finalPath": "/ar/dashboard/transport",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 265,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-ar-transport.png"
+  },
+  {
+    "route": "/dashboard/transport/allocations",
+    "finalPath": "/ar/dashboard/transport/allocations",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 118,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-ar-transport__allocations.png"
+  },
+  {
+    "route": "/dashboard/transport/incidents",
+    "finalPath": "/ar/dashboard/transport/incidents",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 203,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-ar-transport__incidents.png"
+  }
+]
