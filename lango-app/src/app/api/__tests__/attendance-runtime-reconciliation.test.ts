@@ -217,7 +217,7 @@ describe.skipIf(!dbReachable)('attendance runtime DB reconciliation — DB-backe
     expect(aggregate.excusedCount).toBe(1);
     expect(aggregate.absentCount).toBe(1);
     expect(aggregate.recordedTotal).toBe(5); // voided period 6 never counts
-    expect(aggregate.presenceRate).toBe(80); // (2 + 1 + 1) / 5
+    expect(aggregate.presenceRate).toBe(60); // (2+1)/5 — physical presence only, excused excluded
 
     const rawActive = await db
       .select({ id: attendance.id })
