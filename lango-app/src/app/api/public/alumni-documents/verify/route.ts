@@ -20,7 +20,7 @@ const verifyDocumentSchema = z.object({
 // which codes were ever real).
 export async function POST(request: Request) {
   try {
-    const clientIp = request.headers.get('x-forwarded-for') || '127.0.0.1';
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
     // Tighter than the inquiry endpoint's 5/hour - this is a lookup, not a
     // submission, but still real friction against brute-forcing codes.
     checkRateLimit(`public-doc-verify:${clientIp}`, 10, 60 * 60 * 1000);

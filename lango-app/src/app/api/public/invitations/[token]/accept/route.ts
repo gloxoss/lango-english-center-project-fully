@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parseJson } from '@/libs/api/validation';
+import { checkRateLimit } from '@/libs/api/rate-limit';
 import { db } from '@/libs/DB';
 import { account, auditLogs, tenantInvitations, user } from '@/models/Schema';
 
@@ -21,6 +22,11 @@ export async function POST(
 ) {
   try {
     const { token } = await params;
+
+    // Unauthenticated and state-changing (it creates a user account), so bound
+    // token guesses per IP the same way the lookup endpoint does.
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
+    checkRateLimit('public-invite-accept:' + clientIp, 10, 60 * 60 * 1000);
     const body = await parseJson(request, acceptInvitationSchema);
 
     // Pre-flight: resolve the invitation and handle expiry outside the main

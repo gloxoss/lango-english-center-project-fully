@@ -1,0 +1,13 @@
+/
+/atlas
+/atlas/about
+/atlas/contact
+/atlas/events
+/atlas/faq
+/atlas/gallery
+/atlas/news
+/atlas/news/aucun-article-cet-slug
+/atlas/services
+/verify-document
+/verify/card/jeton-invalide-demo
+/verify/certificate/jeton-invalide-demo
