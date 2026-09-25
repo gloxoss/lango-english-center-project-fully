@@ -163,6 +163,41 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
     setDeviceSecretInput('');
   }
 
+  // FIXED KIOSK MODE. A paired terminal asks the server what it should be
+  // scanning, derived from its own campus and room against the timetable. The
+  // operator does not pick a class — the device already knows where it is.
+  const [kioskSession, setKioskSession] = useState<{
+    classSectionId: string;
+    subjectName: string | null;
+    className: string | null;
+    sectionName: string | null;
+    startTime: string;
+    endTime: string;
+    room: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    const secret = deviceSecretRef.current;
+    if (!secret) {
+      setKioskSession(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/attendance/kiosk/current-session?deviceSecret=${encodeURIComponent(secret)}`);
+        const json = await res.json();
+        // null is a normal answer: no lesson here right now.
+        if (!cancelled) {
+          setKioskSession(json?.data?.session ?? null);
+        }
+      } catch {
+        // A kiosk that cannot reach the timetable shows "no lesson", not an error.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [devicePaired]);
+
   // Fetch Class Sections on load
   const [sectionsError, setSectionsError] = useState<string | null>(null);
   const loadSections = useCallback(() => {
@@ -350,7 +385,9 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
         body: JSON.stringify({
           rawToken: trimmed,
           sessionId: activeSession || undefined,
-          classSectionId: selectedSectionId || undefined,
+          // The derived session wins over a hand-picked class: a paired kiosk
+          // scans for the lesson actually happening where it is.
+          classSectionId: kioskSession?.classSectionId ?? (selectedSectionId || undefined),
           // Sent by a PAIRED terminal so the server can verify this device and
           // use ITS branch. A browser operator without one still scans exactly
           // as before — the secret is an identity, not a new requirement.
