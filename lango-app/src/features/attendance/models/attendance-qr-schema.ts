@@ -63,7 +63,16 @@ export const scannerDevices = pgTable('scanner_devices', {
   pairedAt: timestamp('paired_at', { mode: 'string' }).defaultNow().notNull(),
   lastSeenAt: timestamp('last_seen_at', { mode: 'string' }),
   isDisabled: boolean('is_disabled').default(false).notNull(),
+  // Superseded by secret_hash (migration 0162). Kept so a mid-deploy read does
+  // not break; never written or verified again.
   secretKey: text('secret_key'),
+  // DEVICE IDENTITY (migration 0162). Only the hash is stored — the raw pairing
+  // secret exists solely in the response that created it, exactly like a badge
+  // token. A device with no hash cannot authenticate and must be re-paired.
+  secretHash: text('secret_hash'),
+  secretPrefix: varchar('secret_prefix', { length: 12 }),
+  roomLabel: varchar('room_label', { length: 100 }),
+  status: varchar('status', { length: 20 }).default('active').notNull(),
 }, table => [
   foreignKey({
     columns: [table.tenantId],

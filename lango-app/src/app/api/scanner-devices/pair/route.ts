@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import crypto from 'crypto';
 import { recordAudit } from '@/libs/api/audit';
+import { computeHmacHash } from '@/libs/api/badge-crypto';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
@@ -13,6 +14,9 @@ import { branches, scannerDevices } from '@/models/Schema';
 const pairDeviceSchema = z.object({
   deviceLabel: z.string().trim().min(1).max(255),
   branchId: z.string().uuid().optional().nullable(),
+  // Optional room binding: a fixed classroom kiosk then resolves its own session
+  // from the timetable instead of being told which class it is.
+  roomLabel: z.string().trim().min(1).max(100).optional().nullable(),
 }).strict();
 
 export async function POST(request: Request) {
@@ -33,6 +37,9 @@ export async function POST(request: Request) {
       }
     }
 
+    // The raw secret is returned exactly once and never stored: the row keeps
+    // only its hash, so a database read cannot impersonate a terminal. Same
+    // model as a badge token.
     const secretKey = crypto.randomBytes(32).toString('hex');
 
     const [device] = await db
@@ -41,16 +48,26 @@ export async function POST(request: Request) {
         tenantId,
         deviceLabel: body.deviceLabel,
         branchId: body.branchId || null,
+        roomLabel: body.roomLabel || null,
         pairedAt: new Date().toISOString(),
         isDisabled: false,
-        secretKey,
+        status: 'active',
+        secretHash: computeHmacHash(secretKey),
+        secretPrefix: secretKey.slice(0, 12),
       })
       .returning();
 
-    recordAudit(context, 'create', 'scanner_device', device!.id);
+    recordAudit(context, 'create', 'scanner_device', device!.id, {
+      deviceLabel: body.deviceLabel,
+      branchId: body.branchId || null,
+    });
+
+    // Never return the stored row wholesale: it carries the hash, which is not
+    // a secret an operator needs and not one they should see.
+    const { secretHash: _hash, secretKey: _legacy, ...safeDevice } = device!;
 
     return NextResponse.json(
-      { success: true, data: { device, secretKey } },
+      { success: true, data: { device: safeDevice, secretKey } },
       { status: 201 },
     );
   } catch (error) {
