@@ -1114,6 +1114,13 @@
       "when": 1790120000000,
       "tag": "0157_alumni_events_lifecycle_and_waitlist",
       "breakpoints": true
+    },
+    {
+      "idx": 159,
+      "version": "7",
+      "when": 1790342802428,
+      "tag": "0158_attendance_session_occurrence",
+      "breakpoints": true
     }
   ]
 }

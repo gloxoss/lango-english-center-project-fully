@@ -1,4 +1,4 @@
-import { and, avg, count, desc, eq, gte, isNull, lte, or, sql } from 'drizzle-orm';
+import { and, avg, count, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { sendSmsMessage } from '@/features/broadcast/services/sms-delivery';
@@ -7,9 +7,10 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { weekdayNameFor } from '@/libs/api/school-day';
 import { parseJson } from '@/libs/api/validation';
+import { listSessionOccurrences, loadRegisterIndex, missingOccurrences } from '@/libs/attendance/session-occurrence';
 import { db } from '@/libs/DB';
-import { casablancaTimeHm, casablancaTodayIso } from '@/libs/finance/today';
-import { attendance, attendanceFlags, attendanceSummary, classes, classScheduleSlots, classSections, classSubjects, sections, sessionYears, subjects, timetableVersions, user } from '@/models/Schema';
+import { casablancaTodayIso } from '@/libs/finance/today';
+import { attendance, attendanceFlags, attendanceSummary, classScheduleSlots, sessionYears, user } from '@/models/Schema';
 
 const reminderSchema = z.object({
   classScheduleSlotId: z.string().uuid(),
@@ -52,71 +53,16 @@ export async function GET(request: Request) {
       .where(and(...flagConditions))
       .groupBy(attendanceFlags.type);
 
-    // The timetable version that governs `today`: published, and effective on the
-    // date. Slots belonging to a draft or superseded version must never create an
-    // expectation of a register, so without a published version there are none.
-    const [effectiveVersion] = await db
-      .select({ id: timetableVersions.id })
-      .from(timetableVersions)
-      .where(and(
-        eq(timetableVersions.tenantId, tenantId),
-        eq(timetableVersions.status, 'published'),
-        or(isNull(timetableVersions.effectiveFrom), lte(timetableVersions.effectiveFrom, today))!,
-        or(isNull(timetableVersions.effectiveTo), gte(timetableVersions.effectiveTo, today))!,
-      ))
-      .orderBy(desc(timetableVersions.versionNumber))
-      .limit(1);
-
-    const todaySlots = await db
-      .select({
-        id: classScheduleSlots.id,
-        classSectionId: classScheduleSlots.classSectionId,
-        teacherId: classScheduleSlots.teacherId,
-        startTime: classScheduleSlots.startTime,
-        endTime: classScheduleSlots.endTime,
-        className: classes.name,
-        sectionName: sections.name,
-        subjectName: subjects.name,
-        teacherName: user.name,
-      })
-      .from(classScheduleSlots)
-      .innerJoin(classSections, eq(classScheduleSlots.classSectionId, classSections.id))
-      .innerJoin(classes, eq(classSections.classId, classes.id))
-      .innerJoin(sections, eq(classSections.sectionId, sections.id))
-      .innerJoin(classSubjects, eq(classScheduleSlots.classSubjectId, classSubjects.id))
-      .innerJoin(subjects, eq(classSubjects.subjectId, subjects.id))
-      .innerJoin(user, eq(classScheduleSlots.teacherId, user.id))
-      .where(and(
-        eq(classScheduleSlots.tenantId, tenantId),
-        eq(classScheduleSlots.dayOfWeek, todayDayOfWeek),
-        effectiveVersion ? eq(classScheduleSlots.versionId, effectiveVersion.id) : sql`false`,
-        ...(context.branchId ? [eq(classes.branchId, context.branchId)] : []),
-      ));
-
-    // DEFERRED TO PHASE 1 — exact session identity.
-    //
-    // The rule below answers "does this SECTION have any mark today?", not "does
-    // this SESSION have a register?". So one marked period still hides a
-    // different unmarked lesson in the same section. That is a known, accepted
-    // limitation of this phase, not an oversight:
-    //
-    //   attendance_registers.subject_id   populated on 0 of 32 rows
-    //   attendance.class_section_id       populated on 0 of 1600 rows
-    //   attendance.subject_id             populated on 0 of 1600 rows
-    //
-    // Keying on those columns would flag every slot in the school as missing.
-    // The exact per-session key arrives with the phase 1 session-occurrence
-    // model, which is an explicit phase 1 acceptance criterion.
-    const submittedRows = await db
-      .selectDistinct({ classSectionId: user.classSectionId })
-      .from(attendance)
-      .innerJoin(user, eq(attendance.studentId, user.id))
-      .where(and(
-        eq(attendance.tenantId, tenantId),
-        eq(attendance.date, today),
-        ...(context.branchId ? [eq(user.branchId, context.branchId)] : []),
-      ));
-    const submittedSectionIds = new Set(submittedRows.map(r => r.classSectionId).filter(Boolean));
+    // EXACT SESSION IDENTITY (phase 1). Expectations are scheduled session
+    // occurrences — a timetable slot on this date under the published effective
+    // version — and a lesson is answered by the register for THAT occurrence.
+    // One completed lesson can no longer hide a different missing one.
+    const occurrences = await listSessionOccurrences({
+      tenantId,
+      date: today,
+      branchId: context.branchId,
+    });
+    const registerIndex = await loadRegisterIndex(tenantId, today);
 
     // CALENDAR GUARD (Phase 5): a date outside every academic session can
     // never produce a "missing register" expectation.
@@ -130,27 +76,23 @@ export async function GET(request: Request) {
       ))
       .limit(1);
 
-    // The selected date is classified against the school's business day BEFORE
-    // any clock comparison. A lesson's "has it ended?" question only has an
-    // answer relative to the day it falls on:
-    //   past date    -> every lesson of that day has ended, whatever the clock
-    //                   says now. Comparing its end time against today's clock
-    //                   would wrongly report a whole historical day as unended.
-    //   today        -> a lesson is ended once the Casablanca wall clock passes
-    //                   its end time; ongoing and future lessons are not overdue.
-    //   future date  -> nothing is missing; this is a schedule preview only.
-    const businessToday = casablancaTodayIso();
-    const isPastDate = today < businessToday;
-    const isFutureDate = today > businessToday;
-
-    const endedSlots = isPastDate
-      ? todaySlots
-      : isFutureDate
-        ? []
-        : todaySlots.filter(slot => slot.endTime <= casablancaTimeHm());
-
+    // Exact-occurrence answer: a lesson counts as missing only when its own
+    // occurrence has ended and no register answers for it.
     const missingRegistersToday = sessionForToday
-      ? endedSlots.filter(slot => !submittedSectionIds.has(slot.classSectionId))
+      ? missingOccurrences(occurrences, registerIndex, today).map(occurrence => ({
+          id: occurrence.slotId,
+          classSectionId: occurrence.classSectionId,
+          classScheduleSlotId: occurrence.slotId,
+          teacherId: occurrence.teacherId,
+          startTime: occurrence.startTime,
+          endTime: occurrence.endTime,
+          period: occurrence.period,
+          room: occurrence.room,
+          className: occurrence.className,
+          sectionName: occurrence.sectionName,
+          subjectName: occurrence.subjectName,
+          teacherName: occurrence.teacherName,
+        }))
       : [];
 
     return NextResponse.json({

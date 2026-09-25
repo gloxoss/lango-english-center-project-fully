@@ -1402,6 +1402,11 @@ export const attendanceRegisters = pgTable('attendance_registers', {
   // Nullable only for legacy rows whose date no session covers (reported).
   sessionYearId: uuid('session_year_id'),
   subjectId: uuid('subject_id'),
+  // EXACT SESSION IDENTITY (migration 0157): the scheduled occurrence this
+  // register answers for — a timetable slot on a concrete date. Nullable so
+  // every legacy (section, date, period) register stays valid and readable.
+  classScheduleSlotId: uuid('class_schedule_slot_id'),
+  timetableVersionId: uuid('timetable_version_id'),
   date: date().notNull(),
   period: integer('period').notNull().default(1),
   reference: varchar('reference', { length: 50 }).notNull(),
