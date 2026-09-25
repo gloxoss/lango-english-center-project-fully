@@ -1,12 +1,14 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, or } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { listPayslips } from '@/features/hr/services/payslips';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireAddon } from '@/libs/api/entitlements';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
-import { listPayslips } from '@/features/hr/services/payslips';
 import { employeeProfiles, workforcePunchEvents } from '@/models/Schema';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // GET /api/hr/employees/[id]/payroll-attendance
 // Admin-facing Finance/Attendance data for a single employee dossier (§17.3).
@@ -24,10 +26,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     await requireAddon(tenantId, 'human-resources');
     await requireCapability(ctx, 'hr.employee.read');
 
+    const identifierCondition = UUID_REGEX.test(id)
+      ? eq(employeeProfiles.id, id)
+      : or(eq(employeeProfiles.employeeId, id), eq(employeeProfiles.userId, id));
+
     const [profile] = await db
       .select({ userId: employeeProfiles.userId })
       .from(employeeProfiles)
-      .where(and(eq(employeeProfiles.id, id), eq(employeeProfiles.tenantId, tenantId)))
+      .where(and(identifierCondition, eq(employeeProfiles.tenantId, tenantId)))
       .limit(1);
 
     if (!profile) {
