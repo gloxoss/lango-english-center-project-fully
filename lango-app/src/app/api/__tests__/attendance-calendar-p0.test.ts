@@ -5,6 +5,7 @@ import { GET as getAuditSummary } from '@/app/api/attendance/audit-summary/route
 import { POST as postAttendance } from '@/app/api/attendance/route';
 import { detectAndRecordFlags } from '@/libs/api/attendance-flags';
 import { db } from '@/libs/DB';
+import { setSettingValue } from '@/libs/settings/registry';
 import {
   attendance,
   attendanceFlags,
@@ -211,6 +212,31 @@ describe.skipIf(!dbReachable)('attendance calendar P0 — DB-backed', () => {
     const flags = await db.select({ type: attendanceFlags.type }).from(attendanceFlags).where(eq(attendanceFlags.tenantId, tenantId));
 
     expect(flags.map(f => f.type)).toContain('CONSECUTIVE_ABSENCE');
+  });
+
+  it('G12.6b: the consecutive-absence threshold is the school\'s setting, not a constant', async () => {
+    // Two instructional days apart, and only two absences: at the default
+    // threshold of 3 this must NOT fire. Lowering the setting to 2 must make it
+    // fire — which is the only way to tell a read setting from a hardcoded one.
+    await db.delete(attendanceFlags).where(eq(attendanceFlags.tenantId, tenantId));
+    await db.delete(attendance).where(eq(attendance.tenantId, tenantId));
+
+    await setSettingValue(tenantId, null, 'attendance.consecutiveAbsenceThreshold', 2, { userId: ADMIN, tenantId, role: 'school_admin', branchId: null } as never);
+
+    try {
+      await db.insert(attendance).values([
+        { tenantId, studentId: STUDENT, classSectionId: sectionId, academicYearId: sessionYearId, date: '2026-09-28', period: 1, status: 'absent', isVoided: false },
+        { tenantId, studentId: STUDENT, classSectionId: sectionId, academicYearId: sessionYearId, date: friday, period: 1, status: 'absent', isVoided: false },
+      ]);
+
+      await detectAndRecordFlags(tenantId, STUDENT, friday, 'absent');
+
+      const flags = await db.select({ type: attendanceFlags.type }).from(attendanceFlags).where(eq(attendanceFlags.tenantId, tenantId));
+
+      expect(flags.map(f => f.type)).toContain('CONSECUTIVE_ABSENCE');
+    } finally {
+      await setSettingValue(tenantId, null, 'attendance.consecutiveAbsenceThreshold', 3, { userId: ADMIN, tenantId, role: 'school_admin', branchId: null } as never);
+    }
   });
 
   it('G12.7: a date outside the academic session is rejected with DATE_OUTSIDE_SESSION', async () => {

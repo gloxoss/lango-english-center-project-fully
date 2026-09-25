@@ -1,6 +1,7 @@
 import { and, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import { resolveInstructionalDay } from '@/libs/api/school-day';
 import { db } from '@/libs/DB';
+import { getEffectiveValueWithLegacyFallback } from '@/libs/settings/registry';
 import { attendance, attendanceExcuses, attendanceFlags, user } from '@/models/Schema';
 
 type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
@@ -77,6 +78,21 @@ export async function detectAndRecordFlags(
   status: AttendanceStatus,
   executor: any = db,
 ) {
+  // THRESHOLDS (phase 4d): configurable per tenant, defaulting to the values
+  // that used to be hardcoded here, so behaviour is unchanged until a school
+  // chooses otherwise. A school's idea of "too many absences" is a policy
+  // decision, not a constant.
+  const [consecutiveEff, repeatedLateEff] = await Promise.all([
+    getEffectiveValueWithLegacyFallback(tenantId, null, 'attendance.consecutiveAbsenceThreshold'),
+    getEffectiveValueWithLegacyFallback(tenantId, null, 'attendance.repeatedLateThreshold'),
+  ]);
+  const consecutiveThreshold = typeof consecutiveEff.value === 'number' && consecutiveEff.value >= 2
+    ? consecutiveEff.value
+    : 3;
+  const repeatedLateThreshold = typeof repeatedLateEff.value === 'number' && repeatedLateEff.value >= 2
+    ? repeatedLateEff.value
+    : 5;
+
   // CALENDAR GUARD (Phase 5): a confirmed non-instructional day never
   // generates absence/late flags or escalations.
   const sectionId = await studentSectionId(tenantId, studentId, executor);
@@ -100,7 +116,7 @@ export async function detectAndRecordFlags(
       await executor.insert(attendanceFlags).values({ tenantId, studentId, type: 'UNJUSTIFIED_ABSENCE', status: 'OPEN', severity: SEVERITY_BY_TYPE.UNJUSTIFIED_ABSENCE });
     }
 
-    const lastThreeDays = await lastInstructionalDays(tenantId, sectionId, date, 3);
+    const lastThreeDays = await lastInstructionalDays(tenantId, sectionId, date, consecutiveThreshold);
     const rows = await executor
       .select({ date: attendance.date, status: attendance.status })
       .from(attendance)
@@ -111,8 +127,8 @@ export async function detectAndRecordFlags(
         eq(attendance.isVoided, false),
       ));
     const statusByDate = new Map(rows.map((r: { date: string; status: string }) => [r.date, r.status]));
-    const allThreeAbsent = lastThreeDays.every(d => statusByDate.get(d) === 'absent');
-    if (allThreeAbsent && !(await hasOpenFlag(tenantId, studentId, 'CONSECUTIVE_ABSENCE', executor))) {
+    const allConsecutiveAbsent = lastThreeDays.every(d => statusByDate.get(d) === 'absent');
+    if (allConsecutiveAbsent && !(await hasOpenFlag(tenantId, studentId, 'CONSECUTIVE_ABSENCE', executor))) {
       await executor.insert(attendanceFlags).values({ tenantId, studentId, type: 'CONSECUTIVE_ABSENCE', status: 'OPEN', severity: SEVERITY_BY_TYPE.CONSECUTIVE_ABSENCE });
     }
   }
@@ -130,7 +146,7 @@ export async function detectAndRecordFlags(
         lte(attendance.date, date),
         eq(attendance.isVoided, false),
       ));
-    if (count >= 5 && !(await hasOpenFlag(tenantId, studentId, 'REPEATED_LATE', executor))) {
+    if (count >= repeatedLateThreshold && !(await hasOpenFlag(tenantId, studentId, 'REPEATED_LATE', executor))) {
       await executor.insert(attendanceFlags).values({ tenantId, studentId, type: 'REPEATED_LATE', status: 'OPEN', severity: SEVERITY_BY_TYPE.REPEATED_LATE });
     }
   }
