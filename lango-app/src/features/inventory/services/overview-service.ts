@@ -12,6 +12,7 @@ import {
 import { qtyTimesPrice, qtyToMilli } from './inventory-math';
 import { listProducts } from './catalog-service';
 import { listMovements } from './reconcile-service';
+import { casablancaTodayIso } from '@/libs/finance/today';
 
 export async function getOverview(tenantId: string) {
   const products = await listProducts(tenantId);
@@ -36,7 +37,7 @@ export async function getOverview(tenantId: string) {
     db.select({ c: count() }).from(inventoryIssues).where(and(
       eq(inventoryIssues.tenantId, tenantId),
       eq(inventoryIssues.status, 'issued'),
-      sql`${inventoryIssues.dueDate} < ${new Date().toISOString().slice(0, 10)}`,
+      sql`${inventoryIssues.dueDate} < ${casablancaTodayIso()}`,
       sql`${inventoryIssues.returnDate} IS NULL`,
     )),
     db.select({ c: count() }).from(inventoryTransfers).where(and(eq(inventoryTransfers.tenantId, tenantId), eq(inventoryTransfers.status, 'pending'))),

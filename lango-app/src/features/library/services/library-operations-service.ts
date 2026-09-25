@@ -7,6 +7,7 @@ import {
   libraryLoanEvents, libraryLoanPolicies, libraryLoans, libraryMembers, libraryStocktakeAdjustments,
   libraryStocktakeObservations, libraryStocktakes, libraryTransferEvents, libraryTransfers, user,
 } from '@/models/Schema';
+import { casablancaTodayIso } from '@/libs/finance/today';
 
 type DbExecutor = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -272,7 +273,7 @@ export async function applyStocktakeAdjustments(tenantId: string, actorId: strin
   });
 }
 
-export async function overdueReport(tenantId: string) { const today = new Date().toISOString().slice(0, 10); return db.select({ loanId: libraryLoans.id, dueDate: libraryLoans.dueDate, memberNumber: libraryMembers.memberNumber, memberName: user.name, accessionNumber: libraryCopies.accessionNumber, title: libraryBibliographicRecords.title }).from(libraryLoans).innerJoin(libraryMembers, eq(libraryLoans.memberId, libraryMembers.id)).innerJoin(user, eq(libraryMembers.userId, user.id)).innerJoin(libraryCopies, eq(libraryLoans.copyId, libraryCopies.id)).innerJoin(libraryEditions, eq(libraryCopies.editionId, libraryEditions.id)).innerJoin(libraryBibliographicRecords, eq(libraryEditions.recordId, libraryBibliographicRecords.id)).where(and(eq(libraryLoans.tenantId, tenantId), isNull(libraryLoans.returnedAt), sql`${libraryLoans.dueDate} < ${today}`)).orderBy(asc(libraryLoans.dueDate)); }
+export async function overdueReport(tenantId: string) { const today = casablancaTodayIso(); return db.select({ loanId: libraryLoans.id, dueDate: libraryLoans.dueDate, memberNumber: libraryMembers.memberNumber, memberName: user.name, accessionNumber: libraryCopies.accessionNumber, title: libraryBibliographicRecords.title }).from(libraryLoans).innerJoin(libraryMembers, eq(libraryLoans.memberId, libraryMembers.id)).innerJoin(user, eq(libraryMembers.userId, user.id)).innerJoin(libraryCopies, eq(libraryLoans.copyId, libraryCopies.id)).innerJoin(libraryEditions, eq(libraryCopies.editionId, libraryEditions.id)).innerJoin(libraryBibliographicRecords, eq(libraryEditions.recordId, libraryBibliographicRecords.id)).where(and(eq(libraryLoans.tenantId, tenantId), isNull(libraryLoans.returnedAt), sql`${libraryLoans.dueDate} < ${today}`)).orderBy(asc(libraryLoans.dueDate)); }
 
 const COPY_STATE_KEYS = ['available', 'on_hold_shelf', 'checked_out', 'in_transit', 'repair', 'lost', 'missing', 'withdrawn'] as const;
 
@@ -319,7 +320,7 @@ export async function circulationReport(tenantId: string) {
     db.select({ day: sql<string>`to_char(${libraryLoanEvents.at}, 'YYYY-MM-DD')`, n: sql<number>`count(*)::int` }).from(libraryLoanEvents).where(and(eq(libraryLoanEvents.tenantId, tenantId), eq(libraryLoanEvents.eventType, 'renewed'), gte(libraryLoanEvents.at, cutoff30))).groupBy(sql`to_char(${libraryLoanEvents.at}, 'YYYY-MM-DD')`),
   ]);
   const days: string[] = [];
-  for (let i = 29; i >= 0; i--) days.push(new Date(Date.now() - i * 86_400_000).toISOString().slice(0, 10));
+  for (let i = 29; i >= 0; i--) days.push(casablancaTodayIso(new Date(Date.now() - i * 86_400_000)));
   const toMap = (rows: Array<{ day: string; n: number }>) => new Map(rows.map(r => [r.day, Number(r.n)]));
   const issuedMap = toMap(issuedDaily);
   const returnedMap = toMap(returnedDaily);
