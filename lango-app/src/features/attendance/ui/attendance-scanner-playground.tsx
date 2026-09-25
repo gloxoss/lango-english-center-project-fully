@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import jsQR from 'jsqr';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
@@ -416,31 +417,58 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
       scanningLoopRef.current = true;
       setCameraReady(true);
 
-      // Native BarcodeDetector loop if supported by Chromium/Android/iOS 17+
+      // DECODING (phase 7). BarcodeDetector is a fast native path but exists
+      // only on Chromium/Android/iOS 17+. On Windows Chrome, Firefox and desktop
+      // Safari the camera opened, the video played, and NO QR was ever read —
+      // the failure was silent because the old fallback branch was empty.
+      // jsQR decodes from a canvas and works everywhere, so it backs the native
+      // path and also covers a BarcodeDetector that throws on construction.
+      let nativeDetector: { detect: (source: HTMLVideoElement) => Promise<{ rawValue?: string }[]> } | null = null;
       if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
         try {
-          const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
-          const scanFrame = async () => {
-            if (!scanningLoopRef.current || !videoRef.current) return;
-            try {
-              if (videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
-                const barcodes = await detector.detect(videoRef.current);
-                if (barcodes.length > 0 && barcodes[0]?.rawValue) {
-                  processToken(barcodes[0].rawValue);
-                }
-              }
-            } catch {
-              // Frame decoding skip
-            }
-            if (scanningLoopRef.current) {
-              requestAnimationFrame(scanFrame);
-            }
-          };
-          requestAnimationFrame(scanFrame);
+          nativeDetector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
         } catch {
-          // BarcodeDetector fallback
+          nativeDetector = null;
         }
       }
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+      const scanFrame = async () => {
+        if (!scanningLoopRef.current || !videoRef.current) {
+          return;
+        }
+        const video = videoRef.current;
+
+        try {
+          if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            if (nativeDetector) {
+              const barcodes = await nativeDetector.detect(video);
+              if (barcodes.length > 0 && barcodes[0]?.rawValue) {
+                processToken(barcodes[0].rawValue);
+              }
+            } else if (ctx) {
+              canvas.width = video.videoWidth;
+              canvas.height = video.videoHeight;
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              const code = jsQR(frame.data, frame.width, frame.height);
+              if (code?.data) {
+                processToken(code.data);
+              }
+            }
+          }
+        } catch {
+          // A dropped frame is not a failed scan; keep going.
+        }
+
+        if (scanningLoopRef.current) {
+          requestAnimationFrame(() => { void scanFrame(); });
+        }
+      };
+
+      requestAnimationFrame(() => { void scanFrame(); });
     } catch {
       stopCamera();
       setCameraError(t('cameraPermissionError'));
