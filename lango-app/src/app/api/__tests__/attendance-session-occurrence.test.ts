@@ -1,6 +1,7 @@
 import type { RequestContext } from '@/libs/api/context';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { DELETE as deleteExceptionRoute, POST as postExceptionRoute } from '@/app/api/attendance/session-exceptions/route';
 import { GET as auditSummary } from '@/app/api/attendance/audit-summary/route';
 import {
   currentOccurrence,
@@ -257,6 +258,59 @@ describe.skipIf(!dbReachable)('session occurrence — DB-backed', () => {
     expect(changed.startTime).toBe('08:00');
     expect(changed.endTime).toBe('09:00');
   });
+
+  it('SC.23: the exceptions API replaces rather than accumulates, and demands the field its type is about', async () => {
+    const date = '2026-09-01';
+
+    await asAdmin();
+    const first = await postException({
+      classScheduleSlotId: slotMorning, date, type: 'CANCELLED', reason: 'Sortie scolaire',
+    });
+
+    expect(first.status).toBe(200);
+
+    // A second write for the SAME occurrence replaces the first: the row is the
+    // single answer for that lesson on that day, not a history of contradictions.
+    await asAdmin();
+    const second = await postException({
+      classScheduleSlotId: slotMorning, date, type: 'ROOM_CHANGE', roomLabel: 'Salle B12', reason: 'Travaux',
+    });
+
+    expect(second.status).toBe(200);
+
+    const rows = await db
+      .select({ type: classSessionExceptions.type, roomLabel: classSessionExceptions.roomLabel })
+      .from(classSessionExceptions)
+      .where(and(eq(classSessionExceptions.tenantId, tenantId), eq(classSessionExceptions.date, date)));
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.type).toBe('ROOM_CHANGE');
+    // The cancelled reason must not survive into the room change.
+    expect(rows[0]!.roomLabel).toBe('Salle B12');
+
+    // A substitution with nobody to substitute is refused.
+    await asAdmin();
+    const noSubstitute = await postException({
+      classScheduleSlotId: slotLateMorning, date, type: 'SUBSTITUTE', reason: 'Congé',
+    });
+
+    expect(noSubstitute.status).toBe(422);
+
+    // A reschedule whose end precedes its start is refused.
+    await asAdmin();
+    const backwards = await postException({
+      classScheduleSlotId: slotLateMorning, date, type: 'RESCHEDULE', reason: 'Déplacement',
+      startTime: '11:00', endTime: '10:00',
+    });
+
+    expect(backwards.status).toBe(422);
+
+    // And the exception can be cleared, returning the lesson to the timetable.
+    await asAdmin();
+    const cleared = await deleteException(slotMorning, date);
+
+    expect(cleared.status).toBe(200);
+  });
 });
 
 describe('session occurrence state', () => {
@@ -362,3 +416,17 @@ describe('attendance window', () => {
     expect(nextOccurrence([morning, afternoon], '2026-10-06', at('2026-10-06', '16:00'))).toBeNull();
   });
 });
+
+function postException(body: unknown): Promise<Response> {
+  return postExceptionRoute(new Request('http://x/api/attendance/session-exceptions', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  }));
+}
+
+function deleteException(classScheduleSlotId: string, date: string): Promise<Response> {
+  return deleteExceptionRoute(new Request(`http://x/api/attendance/session-exceptions?classScheduleSlotId=${classScheduleSlotId}&date=${date}`, {
+    method: 'DELETE',
+  }));
+}
