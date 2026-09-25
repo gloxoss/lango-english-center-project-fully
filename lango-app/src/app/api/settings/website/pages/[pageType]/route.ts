@@ -41,7 +41,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ page
     const body = await parseJson(request, websitePageUpdateSchema);
     let content = body.content;
     if (content !== undefined) {
-      content = websitePageContentSchemas[pageType].parse(content);
+      // safeParse so a bad content shape is a clean 422 with the field message,
+      // not the generic 400 a raw ZodError produces downstream.
+      const parsed = websitePageContentSchemas[pageType].safeParse(content);
+      if (!parsed.success) {
+        throw new ApiError(422, 'VALIDATION_ERROR', parsed.error.issues[0]?.message ?? 'Contenu de page invalide.');
+      }
+      content = parsed.data;
     }
 
     const page = await upsertPage(tenantId, pageType, { ...body, content });

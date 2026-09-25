@@ -1,3 +1,4 @@
+import { isHttpsUrl } from '@/features/website/models/website-validation';
 import { resolveSite } from '@/features/website/ui/public/site-resolver';
 import { getPublicPage } from '@/features/website/services/website-service';
 
@@ -24,7 +25,7 @@ export default async function SchoolContactPage({ params }: { params: Promise<{ 
           {theme.email && <li><strong style={{ color: theme.colorText }}>Email:</strong> {theme.email}</li>}
           {theme.workingHours && <li><strong style={{ color: theme.colorText }}>Horaires:</strong> {theme.workingHours}</li>}
         </ul>
-        {content.mapEmbedUrl && (
+        {content.mapEmbedUrl && isHttpsUrl(content.mapEmbedUrl) && (
           <iframe
             src={content.mapEmbedUrl}
             style={{ borderRadius: `${theme.borderRadius}px`, border: 0 }}

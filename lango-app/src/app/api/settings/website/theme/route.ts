@@ -6,6 +6,7 @@ import { requireCapability } from '@/libs/api/permissions';
 import { requireAddon } from '@/libs/api/entitlements';
 import { parseJson } from '@/libs/api/validation';
 import { getTheme, upsertTheme } from '@/features/website/services/website-service';
+import { optionalHttpsUrl } from '@/features/website/models/website-validation';
 
 const hexColor = z.string().trim().regex(/^#[0-9A-Fa-f]{6}$/, 'Couleur hexadécimale attendue (#RRGGBB)');
 const optionalText = (max: number) => z.string().trim().max(max).optional().nullable();
@@ -19,12 +20,12 @@ const themeUpdateSchema = z.object({
   workingHours: optionalText(255),
   footerAboutText: optionalText(2000),
   copyrightText: optionalText(500),
-  socialFacebook: optionalText(500),
-  socialTwitter: optionalText(500),
-  socialYoutube: optionalText(500),
-  socialLinkedin: optionalText(500),
-  socialInstagram: optionalText(500),
-  socialPinterest: optionalText(500),
+  socialFacebook: optionalHttpsUrl,
+  socialTwitter: optionalHttpsUrl,
+  socialYoutube: optionalHttpsUrl,
+  socialLinkedin: optionalHttpsUrl,
+  socialInstagram: optionalHttpsUrl,
+  socialPinterest: optionalHttpsUrl,
   colorPrimary: hexColor.optional(),
   colorMenuBackground: hexColor.optional(),
   colorButtonHover: hexColor.optional(),

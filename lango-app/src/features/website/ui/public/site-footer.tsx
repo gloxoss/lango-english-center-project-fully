@@ -1,3 +1,4 @@
+import { isHttpsUrl } from '@/features/website/models/website-validation';
 import type { ResolvedSite } from './site-resolver';
 
 const SOCIAL_LABELS: { key: keyof NonNullable<ResolvedSite['theme']>; label: string }[] = [
@@ -42,7 +43,7 @@ export function SiteFooter({ site }: { site: ResolvedSite }) {
               <ul className="space-y-1">
                 {socialLinks.map(s => (
                   <li key={s.label}>
-                    <a href={s.url ?? '#'} target="_blank" rel="noopener noreferrer" className="opacity-80 hover:opacity-100 underline">
+                    <a href={s.url && isHttpsUrl(s.url) ? s.url : '#'} target="_blank" rel="noopener noreferrer" className="opacity-80 hover:opacity-100 underline">
                       {s.label}
                     </a>
                   </li>

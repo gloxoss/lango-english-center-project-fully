@@ -121,6 +121,15 @@ export async function createMenuItem(tenantId: string, input: { label: string; l
   return row;
 }
 
+export async function getMenuItem(tenantId: string, id: string) {
+  const [row] = await db
+    .select()
+    .from(websiteMenuItems)
+    .where(and(eq(websiteMenuItems.id, id), eq(websiteMenuItems.tenantId, tenantId)))
+    .limit(1);
+  return row ?? null;
+}
+
 async function assertMenuItemOwnedByTenant(tenantId: string, id: string) {
   const [row] = await db
     .select({ id: websiteMenuItems.id })

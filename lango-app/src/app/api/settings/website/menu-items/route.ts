@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse } from '@/libs/api/errors';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { requireAddon } from '@/libs/api/entitlements';
 import { parseJson } from '@/libs/api/validation';
 import { createMenuItem, listMenuItems } from '@/features/website/services/website-service';
+import { menuLinkError } from '@/features/website/models/website-validation';
 
 const menuItemCreateSchema = z.object({
   label: z.string().trim().min(1).max(100),
@@ -36,6 +37,10 @@ export async function POST(request: Request) {
     await requireCapability(context, 'website.menu.manage');
 
     const body = await parseJson(request, menuItemCreateSchema);
+    const linkError = menuLinkError(body.linkType, body.linkValue);
+    if (linkError) {
+      throw new ApiError(422, 'VALIDATION_ERROR', linkError);
+    }
     const item = await createMenuItem(tenantId, body);
 
     return NextResponse.json({ success: true, data: item }, { status: 201 });

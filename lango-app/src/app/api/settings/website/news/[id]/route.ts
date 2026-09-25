@@ -6,6 +6,7 @@ import { requireCapability } from '@/libs/api/permissions';
 import { requireAddon } from '@/libs/api/entitlements';
 import { parseJson } from '@/libs/api/validation';
 import { deleteNews, getNewsById, updateNews } from '@/features/website/services/website-service';
+import { optionalContentUrl } from '@/features/website/models/website-validation';
 
 const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const optionalText = (max: number) => z.string().trim().max(max).optional().nullable();
@@ -14,7 +15,7 @@ const newsUpdateSchema = z.object({
   title: z.string().trim().min(1).max(255).optional(),
   slug: z.string().trim().min(1).max(255).regex(slugRegex, 'Slug: lettres minuscules, chiffres et tirets uniquement').optional(),
   excerpt: optionalText(1000),
-  coverImageUrl: optionalText(2000),
+  coverImageUrl: optionalContentUrl,
   body: optionalText(20000),
   status: z.enum(['draft', 'published']).optional(),
   publishedAt: z.iso.datetime().optional().nullable(),

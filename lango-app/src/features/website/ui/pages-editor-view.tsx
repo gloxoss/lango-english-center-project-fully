@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Loader2, Plus, Save, Trash2 } from 'lucide-react';
+import { FileText, Loader2, Plus, Save, Trash2, Upload } from 'lucide-react';
 
 type PageType = 'home' | 'about' | 'gallery' | 'faq' | 'contact' | 'services';
 
@@ -35,6 +35,63 @@ function Field({ label, value, onChange, textarea, placeholder }: { label: strin
       {textarea
         ? <Textarea value={value} onChange={e => onChange(e.target.value)} rows={4} className="text-sm" placeholder={placeholder} />
         : <Input value={value} onChange={e => onChange(e.target.value)} className="text-sm" placeholder={placeholder} />}
+    </div>
+  );
+}
+
+/**
+ * Image URL input with a real upload path. The upload endpoint existed but
+ * only the news manager used it, so page images could only be pasted URLs.
+ * Uploaded files land under the tenant's public website path and the field
+ * receives the same relative URL the news cover uses.
+ */
+function ImageField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const onUpload = async (file: File) => {
+    setUploading(true);
+    setError(null);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/settings/website/images', { method: 'POST', body: fd });
+      const j = await res.json();
+      if (!j.success) {
+        throw new Error(j.error?.message ?? 'Échec du téléversement');
+      }
+      onChange(j.data.url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur inconnue');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs font-bold text-slate-700">{label}</Label>
+      <div className="flex gap-2">
+        <Input value={value} onChange={e => onChange(e.target.value)} className="text-sm" placeholder="/api/public/… ou https://…" />
+        <label className="inline-flex items-center gap-1.5 px-3 h-9 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer shrink-0">
+          <input
+            type="file"
+            accept="image/png,image/jpeg"
+            className="hidden"
+            disabled={uploading}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                void onUpload(file);
+              }
+              e.target.value = '';
+            }}
+          />
+          {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+          Téléverser
+        </label>
+      </div>
+      {error && <p className="text-[11px] font-bold text-rose-600">{error}</p>}
     </div>
   );
 }
@@ -98,7 +155,7 @@ function HomeEditor({ content, onChange }: { content: Record<string, unknown>; o
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Field label="Titre du héros" value={(content.heroTitle as string) ?? ''} onChange={v => onChange({ ...content, heroTitle: v })} />
-        <Field label="Image du héros (URL)" value={(content.heroImageUrl as string) ?? ''} onChange={v => onChange({ ...content, heroImageUrl: v })} />
+        <ImageField label="Image du héros" value={(content.heroImageUrl as string) ?? ''} onChange={v => onChange({ ...content, heroImageUrl: v })} />
       </div>
       <Field label="Sous-titre du héros" value={(content.heroSubtitle as string) ?? ''} onChange={v => onChange({ ...content, heroSubtitle: v })} textarea />
 
@@ -112,7 +169,7 @@ function HomeEditor({ content, onChange }: { content: Record<string, unknown>; o
           emptyLabel="Aucune slide."
           renderItem={(item, update) => (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Field label="Image (URL)" value={(item.imageUrl as string) ?? ''} onChange={v => update({ imageUrl: v })} />
+              <ImageField label="Image" value={(item.imageUrl as string) ?? ''} onChange={v => update({ imageUrl: v })} />
               <Field label="Titre" value={(item.headline as string) ?? ''} onChange={v => update({ headline: v })} />
               <div className="md:col-span-2">
                 <Field label="Sous-texte" value={(item.subtext as string) ?? ''} onChange={v => update({ subtext: v })} />
@@ -202,7 +259,7 @@ function GalleryEditor({ content, onChange }: { content: Record<string, unknown>
           emptyLabel="Aucune photo."
           renderItem={(item, update) => (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <Field label="Image (URL)" value={(item.imageUrl as string) ?? ''} onChange={v => update({ imageUrl: v })} />
+              <ImageField label="Image" value={(item.imageUrl as string) ?? ''} onChange={v => update({ imageUrl: v })} />
               <Field label="Légende" value={(item.caption as string) ?? ''} onChange={v => update({ caption: v })} />
               <Field label="Catégorie" value={(item.category as string) ?? ''} onChange={v => update({ category: v })} />
             </div>
@@ -254,7 +311,7 @@ function ServicesEditor({ content, onChange }: { content: Record<string, unknown
       renderItem={(item, update) => (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Field label="Titre" value={(item.title as string) ?? ''} onChange={v => update({ title: v })} />
-          <Field label="Image (URL)" value={(item.imageUrl as string) ?? ''} onChange={v => update({ imageUrl: v })} />
+          <ImageField label="Image" value={(item.imageUrl as string) ?? ''} onChange={v => update({ imageUrl: v })} />
           <div className="md:col-span-2">
             <Field label="Description" value={(item.description as string) ?? ''} onChange={v => update({ description: v })} textarea />
           </div>

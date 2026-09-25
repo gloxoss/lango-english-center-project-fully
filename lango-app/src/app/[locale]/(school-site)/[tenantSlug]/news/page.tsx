@@ -42,7 +42,7 @@ export default async function SchoolNewsListPage({
               {item.excerpt && <p style={{ color: theme.colorTextSecondary }} className="text-sm">{item.excerpt}</p>}
               {item.publishedAt && (
                 <p style={{ color: theme.colorTextSecondary }} className="text-xs opacity-70">
-                  {new Date(item.publishedAt).toLocaleDateString('fr-FR')}
+                  {new Date(item.publishedAt).toLocaleDateString('fr-FR', { timeZone: 'Africa/Casablanca' })}
                 </p>
               )}
             </div>
@@ -57,7 +57,7 @@ export default async function SchoolNewsListPage({
               key={p}
               href={`/${locale}/${tenantSlug}/news?page=${p}`}
               style={p === page ? { backgroundColor: theme.colorPrimary, color: '#fff' } : undefined}
-              className="text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200"
+              className="text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-[var(--site-button-hover)] hover:text-white transition-colors"
             >
               {p}
             </Link>
