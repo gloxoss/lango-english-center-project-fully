@@ -187,6 +187,7 @@ export async function GET(request: Request) {
       weeklyAttendanceRows,
       classesAttendanceRows,
       scheduledDaysRows,
+      monthOpenRows,
     ] = await Promise.all([
       // 3.1 Active Students Count (Authoritative Rule: role='student' AND userStatus='active')
       db.select({ count: sql<number>`count(*)::int` })
@@ -532,6 +533,21 @@ export async function GET(request: Request) {
       db.selectDistinct({ dayOfWeek: classScheduleSlots.dayOfWeek })
         .from(classScheduleSlots)
         .where(eq(classScheduleSlots.tenantId, tenantId)),
+
+      // 3.22 Still owed on this month's invoices. The pulse rate is a share of
+      // what is EXPECTED (the card says so), so it must be invoice-based:
+      // (invoiced - outstanding) / invoiced. The old rate divided cash received
+      // this month by invoices raised this month, which mixes two populations -
+      // cash from earlier months settles earlier invoices - and could exceed 100%.
+      db.select({ total: sql<string>`coalesce(sum(greatest(${invoices.netAmount} - ${invoices.paidAmount}, 0)), 0)::numeric::text` })
+        .from(invoices)
+        .innerJoin(user, and(eq(invoices.studentId, user.id), eq(user.tenantId, tenantId)))
+        .where(and(
+          eq(invoices.tenantId, tenantId),
+          gte(invoices.issueDate, monthStart),
+          invoicedInvoiceCondition(invoices.status),
+          userBranchFilter,
+        )),
     ]);
 
     // =========================================================================
@@ -662,7 +678,13 @@ export async function GET(request: Request) {
 
     const monthInvoiced = Number(monthInvoicedRows[0]?.total ?? 0);
     const monthCollected = Number(monthCollectedRows[0]?.total ?? 0);
-    const monthRate = monthInvoiced > 0 ? Math.round((monthCollected / monthInvoiced) * 100) : null;
+    // Share of this month's invoicing that is settled. Outstanding is never
+    // negative, so paid-on-invoices <= invoiced and the rate cannot exceed 100
+    // without a clamp hiding a wrong numerator. Matches financeOverview and the
+    // verified Analytics semantics. Null (not 0) when nothing was invoiced.
+    const monthOpen = Number(monthOpenRows[0]?.total ?? 0);
+    const monthPaidOnInvoices = Math.max(0, monthInvoiced - monthOpen);
+    const monthRate = monthInvoiced > 0 ? Math.round((monthPaidOnInvoices / monthInvoiced) * 1000) / 10 : null;
 
     const dailyPulse: DailyPulseData = {
       activeStudents: {
