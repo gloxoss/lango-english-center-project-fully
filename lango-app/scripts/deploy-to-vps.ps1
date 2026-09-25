@@ -247,6 +247,13 @@ function Execute-Deploy {
         
         Log-Info 'Running database migrations...'
         Invoke-Expression "$sshCmd `"cd /home/ubuntu/schoolos-app && docker compose run --rm migrate`""
+        # Stop before restarting the app: new code on an unmigrated schema breaks
+        # pages, while the old container keeps working on the old schema.
+        # (2026-09-25: a refused backfill in 0154 was reported as success here.)
+        if ($LASTEXITCODE -ne 0) {
+            Log-Error "Database migrations FAILED (exit $LASTEXITCODE). App NOT restarted; old version still serving. Nothing was applied (the batch rolls back)."
+            exit 1
+        }
         Log-Success 'Database migrations applied successfully'
     }
 
