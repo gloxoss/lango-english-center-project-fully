@@ -1,6 +1,6 @@
-export type ActionCenterItemStatus = 'no_school' | 'all_clear' | 'warning';
+export type ActionCenterItemStatus = 'no_school' | 'all_clear' | 'warning' | 'incomplete';
 
-export interface ActionCenterAttendance {
+export type ActionCenterAttendance = {
   status: ActionCenterItemStatus;
   title: string;
   sub: string;
@@ -8,9 +8,9 @@ export interface ActionCenterAttendance {
   completedAttendanceClasses: number;
   missingAttendanceClasses: number;
   route: string;
-}
+};
 
-export interface ActionCenterOverdueInvoices {
+export type ActionCenterOverdueInvoices = {
   status: 'all_clear' | 'warning';
   title: string;
   sub: string;
@@ -19,24 +19,26 @@ export interface ActionCenterOverdueInvoices {
   affectedFamilies: number;
   oldestOverdueDays: number;
   route: string;
-}
+};
 
-export interface ActionCenterUnjustifiedAbsences {
-  status: 'all_clear' | 'warning';
+export type ActionCenterUnjustifiedAbsences = {
+  // 'incomplete' means attendance marking is not finished for the day: the
+  // absence picture is not yet known and must never read as a green success.
+  status: 'all_clear' | 'warning' | 'incomplete';
   title: string;
   sub: string;
   unjustifiedCount: number;
   affectedStudentCount: number;
   route: string;
-}
+};
 
-export interface ActionCenterData {
+export type ActionCenterData = {
   attendance: ActionCenterAttendance;
   overdueInvoices: ActionCenterOverdueInvoices;
   unjustifiedAbsences: ActionCenterUnjustifiedAbsences;
-}
+};
 
-export interface DailyPulseData {
+export type DailyPulseData = {
   activeStudents: {
     count: number;
     newRegistrationsThisMonth: number;
@@ -46,63 +48,75 @@ export interface DailyPulseData {
     presentCount: number;
     markedCount: number;
     status: ActionCenterItemStatus;
+    expectedClasses: number;
+    missingClasses: number;
   };
   periodCollected: {
+    // Posted cash receipts during the current calendar month. Deliberately
+    // carries no recovery percentage: mixing a cash month total with invoice
+    // cohorts produced misleading "153%" rates (ENH-ADMIN-DASH-01).
     amount: number;
-    rate: number | null;
-    periodInvoiced: number;
+    previousMonthCollected: number | null;
   };
   periodOverdue: {
     amount: number;
     invoiceCount: number;
     familiesCount: number;
   };
-}
+};
 
-export interface FinanceMonthlyBreakdown {
+export type FinanceMonthlyBreakdown = {
   month: string;
   monthNum: number;
   yearNum: number;
   invoiced: number;
   collected: number;
   remaining: number;
-}
+};
 
-export interface FinanceOverviewData {
+export type FinanceOverviewData = {
   periodLabel: string;
   invoiced: number;
   collected: number;
   outstanding: number;
   collectionRate: number;
   monthlyBreakdown: FinanceMonthlyBreakdown[];
-}
+};
 
-export interface AttendanceDayPoint {
+export type AttendanceDayCompletion = 'complete' | 'incomplete' | 'no_class' | 'no_data';
+
+export type AttendanceDayPoint = {
   dayLabel: string;
   date: string;
   studentRate: number | null;
   isToday: boolean;
   isNonInstructional?: boolean;
-}
+  completionState: AttendanceDayCompletion;
+  sectionsMarked?: number;
+  sectionsExpected?: number;
+};
 
-export interface AttendanceTrendData {
+export type AttendanceTrendData = {
   weeklyAverageRate: number | null;
   days: AttendanceDayPoint[];
   classesBelowThresholdCount: number;
   daysBelowThresholdCount: number;
   thresholdPercent: number;
-}
+  weekUnjustifiedCount: number;
+  weekLateCount: number;
+  todayMissingClasses: number;
+};
 
-export interface UpcomingEventItem {
+export type UpcomingEventItem = {
   id: string;
   title: string;
   startDate: string;
   endDate?: string;
   location?: string;
   timingGroup: 'today' | 'tomorrow' | 'this_week';
-}
+};
 
-export interface RecentPaymentItem {
+export type RecentPaymentItem = {
   id: string;
   studentId: string;
   studentName: string;
@@ -112,9 +126,9 @@ export interface RecentPaymentItem {
   paymentMethod: string;
   reason: string;
   invoiceId: string | null;
-}
+};
 
-export interface WatchlistStudent {
+export type WatchlistStudent = {
   id: string;
   studentId: string;
   name: string;
@@ -124,14 +138,32 @@ export interface WatchlistStudent {
   severity: 'critical' | 'warning';
   relevantMetric?: string;
   destinationRoute: string;
-}
+  unjustifiedWeek?: number;
+  unjustifiedMonth?: number;
+};
 
-export interface StudentDistributionItem {
+export type AdmissionsQueueItem = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  status: string;
+  programName: string | null;
+  applicationDate: string;
+};
+
+export type AdmissionsOverview = {
+  toReview: number;
+  interviewsToday: number;
+  convertedThisMonth: number;
+  recent: AdmissionsQueueItem[];
+};
+
+export type StudentDistributionItem = {
   name: string;
   count: number;
-}
+};
 
-export interface FullDashboardSummary {
+export type FullDashboardSummary = {
   // Institutional metadata
   institution: {
     name: string;
@@ -139,6 +171,8 @@ export interface FullDashboardSummary {
     activeBranchId: string | null;
     availableBranches: { id: string; name: string; code: string; isDefault: boolean }[];
     currentDateFormatted: string;
+    // 'pinned' = the principal is confined to activeBranchId by their account.
+    branchScope: 'all' | 'pinned';
   };
   // Decision-first Action Center
   actionCenter: ActionCenterData;
@@ -161,9 +195,11 @@ export interface FullDashboardSummary {
     students: WatchlistStudent[];
     totalWatchlistCount: number;
   };
-  // Student Distribution (reconciled with "Sans niveau")
+  // Admissions queue overview (actionable widget replacing student distribution)
+  admissions: AdmissionsOverview;
+  // Student Distribution (reconciled with "Sans niveau") - kept for analytics surfaces
   studentDistribution: {
     items: StudentDistributionItem[];
     totalActiveStudents: number;
   };
-}
+};

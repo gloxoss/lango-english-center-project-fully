@@ -1,5 +1,22 @@
 {
-  "AttendanceSettingsPage": {
+"GlobalSearch": {
+    "students": "Élèves",
+    "staff": "Personnel",
+    "invoices": "Factures",
+    "seeAll": "Voir tous les résultats",
+    "noResults": "Aucun résultat pour « {query} »"
+  },
+"NotificationCenter": {
+    "title": "Notifications",
+    "groupAction": "À traiter",
+    "groupUpdates": "Mises à jour",
+    "groupSystem": "Système",
+    "empty": "Aucune notification pour le moment",
+    "markAllRead": "Tout marquer comme lu"
+  },
+"ProfileMenu": {
+    "schoolSettings": "Paramètres de l'établissement"
+  },  "AttendanceSettingsPage": {
     "title": "Configuration des présences",
     "description": "Les règles de justification ne sont pas encore configurables. Le délai de retard et l’heure de début se règlent dans le registre des paramètres (section Présence), les SMS d’absence dans Règles académiques et alertes."
   },
@@ -1963,6 +1980,38 @@
     "invitationRevoked": "Invitation révoquée avec succès."
   },
   "DashboardHome": {
+    "poweredBySchoolOS": "Propulsé par SchoolOS",
+    "branchPinnedNote": "Votre compte est rattaché à cette succursale",
+    "kpiCashReceivedMonth": "Encaissements reçus ce mois",
+    "kpiVsPrevMonth": "{percent}% vs mois précédent",
+    "kpiNewSinceMonthStart": "+{count} depuis le début du mois",
+    "kpiMarkingIncomplete": "Pointage incomplet",
+    "kpiSectionsMarkedOf": "{done}/{total} classes pointées",
+    "acAssiduityPendingTitle": "Pointage incomplet",
+    "acAssiduityPendingSub": "Les données d'assiduité seront complètes après la saisie des {count} classes restantes.",
+    "acMarkingIncompleteBadge": "Pointage incomplet",
+    "financeCohortTitle": "Recouvrement des factures - {period}",
+    "financeCohortSubtitle": "Une seule cohorte de factures : les quatre montants se réconcilient.",
+    "collectedOnInvoices": "Encaissé sur ces factures",
+    "weekUnjustified": "{count} absence(s) injustifiée(s) cette semaine",
+    "weekLate": "{count} retard(s) cette semaine",
+    "todayMissingClasses": "{count} classe(s) sans pointage aujourd'hui",
+    "agendaTitle": "Agenda",
+    "noOperationalEvents": "Aucun événement opérationnel à venir",
+    "absenteeismTitle": "Absentéisme à surveiller",
+    "absenteeismSubtitle": "Absences injustifiées récentes, avec le détail semaine / mois",
+    "absenteeismReason": "{week} cette semaine · {month} ce mois",
+    "openAttendanceRegister": "Ouvrir le registre d'assiduité",
+    "admissionsTitle": "Admissions en attente",
+    "admissionsSubtitle": "Dossiers à examiner et entretiens à venir",
+    "admissionsToReview": "{count} dossier(s) à examiner",
+    "admissionsInterviewsToday": "{count} entretien(s) aujourd'hui",
+    "admissionsConverted": "{count} inscription(s) convertie(s) ce mois",
+    "admissionsEmpty": "Aucun dossier en attente — file admissions vide",
+    "seeAdmissions": "Voir les admissions",
+    "admissionsStatusNew": "Nouveau",
+    "admissionsStatusContacted": "Contacté",
+    "admissionsStatusQualified": "Qualifié",
     "kpiAria": "Indicateurs clés d’activité",
     "kpiActiveStudents": "Élèves actifs",
     "kpiNewThisMonth": "+{count} inscriptions ce mois",
@@ -2548,6 +2597,7 @@
     "footerRights": "Tous droits réservés."
   },
   "Dashboard": {
+    "markingIncompleteDay": "Pointage incomplet",
     "viewPaymentHistory": "Voir l’historique des encaissements",
     "recentPaymentsTitle": "Derniers règlements",
     "openCashDesk": "Ouvrir la caisse",

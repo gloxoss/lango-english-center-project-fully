@@ -1,11 +1,11 @@
 import { and, count, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
-import { apiErrorResponse } from '@/libs/api/errors';
-import { requireCapability } from '@/libs/api/permissions';
+import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { hasAddon } from '@/libs/api/entitlements';
-import { parseJson, branchCreateSchema } from '@/libs/api/validation';
-import { recordAudit } from '@/libs/api/audit';
+import { apiErrorResponse } from '@/libs/api/errors';
+import { requireCapability } from '@/libs/api/permissions';
+import { branchCreateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { branches, tenants } from '@/models/Schema';
 
@@ -31,9 +31,15 @@ export async function GET(request: Request) {
       .where(eq(branches.tenantId, tenantId))
       .orderBy(branches.name);
 
+    // Scope is server-derived: a branch-pinned principal cannot pick another
+    // campus (or "all"), so the switcher renders a static indicator for them.
     return NextResponse.json({
       success: true,
       data: branchList,
+      meta: {
+        branchScope: ctx.branchId ? ('pinned' as const) : ('all' as const),
+        pinnedBranchId: ctx.branchId ?? null,
+      },
     });
   } catch (err) {
     return apiErrorResponse(err);

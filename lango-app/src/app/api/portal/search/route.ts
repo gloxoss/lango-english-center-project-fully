@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
+import { searchPortal } from '@/features/portal/services/portal-search';
 import { requireRequestContext } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireTenantId } from '@/libs/api/portal-scope';
-import { searchPortal } from '@/features/portal/services/portal-search';
 
 // GET /api/portal/search?q= — role- and relationship-scoped search.
 // Min 2 chars; each entity group is capability-gated and scoped (parent sees
@@ -15,6 +15,7 @@ export async function GET(request: Request) {
     requireTenantId(context);
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q')?.trim();
+    const branchId = searchParams.get('branchId');
 
     if (!query || query.length < 2) {
       return NextResponse.json({
@@ -23,7 +24,7 @@ export async function GET(request: Request) {
       });
     }
 
-    const data = await searchPortal(context, query);
+    const data = await searchPortal(context, query, branchId);
     return NextResponse.json({ success: true, data });
   } catch (error) {
     return apiErrorResponse(error);

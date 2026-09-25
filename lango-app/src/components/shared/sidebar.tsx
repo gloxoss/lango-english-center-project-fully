@@ -209,6 +209,11 @@ export function Sidebar({ locale }: { locale: string }) {
   const pathname = usePathname();
   const tNav = useTranslations('Navigation');
   const th = useTranslations('DashboardHome');
+  // Tenant-driven branding: the daily admin shell must show the SCHOOL, not
+  // the platform. Name comes from the session's tenant (portal/me); the logo
+  // from the tenant branding endpoint with an initials fallback when none was
+  // uploaded.
+  const [logoFailed, setLogoFailed] = useState(false);
   const tAuth = useTranslations('Auth');
   const tRoles = useTranslations('Roles');
   const tStudents = useTranslations('Students');
@@ -236,7 +241,7 @@ export function Sidebar({ locale }: { locale: string }) {
   // effective role and available roles; the session cookie only supplies the
   // base role. Refetched on `portal:role-changed` so stale nav/permissions are
   // dropped after a role switch.
-  const [portalMe, setPortalMe] = useState<{ role: string; availableRoles: string[]; tenantId?: string | null } | null>(null);
+  const [portalMe, setPortalMe] = useState<{ role: string; availableRoles: string[]; tenantId?: string | null; tenantName?: string | null } | null>(null);
   const [manifestNav, setManifestNav] = useState<NavItem[] | null>(null);
   const [hasEmployeeProfile, setHasEmployeeProfile] = useState<boolean | null>(null);
   const [hasActiveEmergency, setHasActiveEmergency] = useState(false);
@@ -294,6 +299,7 @@ export function Sidebar({ locale }: { locale: string }) {
   const effectiveRole = isMounted ? (portalMe?.role ?? userRole) : '';
   const isSuperAdmin = isMounted && effectiveRole === 'super_admin';
   const hasSelectedTenant = Boolean(portalMe?.tenantId);
+  const tenantName = portalMe?.tenantName ?? null;
   const roleLabel = !isMounted
     ? ''
     : (tRoles as any).has(effectiveRole)
@@ -1015,12 +1021,12 @@ export function Sidebar({ locale }: { locale: string }) {
   const conceptualSections: { id: string; label: string; items: NavItem[] }[] = isFamilyRole
     ? [{ id: 'section-my-space', label: tNav('sectionMySpace'), items: navItems }]
     : [
-    { id: 'section-daily', label: tNav('sectionDaily'), items: navItems.filter(i => getCategoryForNavItem(i) === 'daily') },
-    { id: 'section-academics', label: tNav('sectionAcademics'), items: navItems.filter(i => getCategoryForNavItem(i) === 'academics') },
-    { id: 'section-finance', label: tNav('sectionFinance'), items: navItems.filter(i => getCategoryForNavItem(i) === 'finance') },
-    { id: 'section-communication', label: tNav('sectionCommunication'), items: navItems.filter(i => getCategoryForNavItem(i) === 'communication') },
-    { id: 'section-administration', label: tNav('sectionAdministration'), items: navItems.filter(i => getCategoryForNavItem(i) === 'administration') },
-  ];
+        { id: 'section-daily', label: tNav('sectionDaily'), items: navItems.filter(i => getCategoryForNavItem(i) === 'daily') },
+        { id: 'section-academics', label: tNav('sectionAcademics'), items: navItems.filter(i => getCategoryForNavItem(i) === 'academics') },
+        { id: 'section-finance', label: tNav('sectionFinance'), items: navItems.filter(i => getCategoryForNavItem(i) === 'finance') },
+        { id: 'section-communication', label: tNav('sectionCommunication'), items: navItems.filter(i => getCategoryForNavItem(i) === 'communication') },
+        { id: 'section-administration', label: tNav('sectionAdministration'), items: navItems.filter(i => getCategoryForNavItem(i) === 'administration') },
+      ];
 
   return (
     <aside className="
@@ -1028,32 +1034,50 @@ export function Sidebar({ locale }: { locale: string }) {
       border-r border-slate-200 bg-[#16212B] text-white
     "
     >
-      {/* Brand Header */}
+      {/* Brand Header - tenant identity, not platform identity */}
       <div className="
         flex shrink-0 items-center justify-between border-b border-slate-800 p-5
       "
       >
-        <div className="flex items-center gap-3">
-          <div className="
-            flex size-9 items-center justify-center rounded-xl bg-[#0066FF]
-            text-base font-extrabold text-white shadow-sm
-          "
-          >
-            S
-          </div>
-          <div>
-            {/* dir=ltr: the Latin brand is a flex row, which RTL would flip to "OSSchool" (audit S-37). */}
+        <div className="flex min-w-0 items-center gap-3">
+          {tenantName && !logoFailed
+            ? (
+              // Uploaded tenant logo (binary endpoint; falls back below on 404)
+                <img
+                  src="/api/settings/logo"
+                  alt={tenantName}
+                  onError={() => setLogoFailed(true)}
+                  className="
+                    size-9 shrink-0 rounded-xl bg-white object-contain p-0.5
+                  "
+                />
+              )
+            : (
+                <div className="
+                  flex size-9 shrink-0 items-center justify-center rounded-xl
+                  bg-[#0066FF] text-base font-extrabold text-white uppercase
+                  shadow-sm
+                "
+                >
+                  {((tenantName ?? 'S').trim().charAt(0))}
+                </div>
+              )}
+          <div className="min-w-0">
+            {/* dir=ltr keeps Latin/brand text from being visually flipped in RTL;
+                Arabic tenant names render correctly because dir=ltr only sets
+                base direction while Arabic runs RTL inside it. */}
             <h1
               dir="ltr"
               className="
-              flex items-center text-base font-extrabold tracking-tight
-              text-white
-            "
+                truncate text-sm font-extrabold tracking-tight text-white
+              "
+              title={tenantName ?? 'SchoolOS'}
             >
-              School
-              <span className="text-[#0066FF]">OS</span>
+              {tenantName ?? 'SchoolOS'}
             </h1>
-            <p className="text-[11px] font-medium text-slate-400">{tNav('platformTagline')}</p>
+            <p className="truncate text-[10px] font-medium text-slate-400">
+              {tenantName ? th('poweredBySchoolOS') : tNav('platformTagline')}
+            </p>
           </div>
         </div>
       </div>
@@ -1072,9 +1096,9 @@ export function Sidebar({ locale }: { locale: string }) {
                 ${
           hasActiveEmergency
             ? `
-              border border-[#E5544B]/50 bg-[#E5544B]/15 font-extrabold
+              border border-sos-danger/50 bg-sos-danger/15 font-extrabold
               text-white shadow-xs
-              hover:bg-[#E5544B]/25
+              hover:bg-sos-danger/25
             `
             : `
               font-semibold text-slate-300
@@ -1088,7 +1112,7 @@ export function Sidebar({ locale }: { locale: string }) {
                   flex size-6 items-center justify-center rounded-lg
                   ${
           hasActiveEmergency
-            ? 'bg-[#E5544B] text-white shadow-2xs'
+            ? 'bg-sos-danger text-white shadow-2xs'
             : 'text-slate-400'
           }
                 `}
@@ -1098,7 +1122,7 @@ export function Sidebar({ locale }: { locale: string }) {
               <span>{hasActiveEmergency ? th('emergencyActive') : th('securityEmergency')}</span>
               {hasActiveEmergency && (
                 <span className="
-                  ml-auto size-2 animate-pulse rounded-full bg-[#E5544B]
+                  ml-auto size-2 animate-pulse rounded-full bg-sos-danger
                 "
                 />
               )}

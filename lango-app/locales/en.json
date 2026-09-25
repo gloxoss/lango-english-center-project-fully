@@ -1,5 +1,22 @@
 {
-  "AttendanceSettingsPage": {
+"GlobalSearch": {
+    "students": "Students",
+    "staff": "Staff",
+    "invoices": "Invoices",
+    "seeAll": "See all results",
+    "noResults": "No results for \"{query}\""
+  },
+"NotificationCenter": {
+    "title": "Notifications",
+    "groupAction": "Needs action",
+    "groupUpdates": "Updates",
+    "groupSystem": "System",
+    "empty": "No notifications yet",
+    "markAllRead": "Mark all as read"
+  },
+"ProfileMenu": {
+    "schoolSettings": "School settings"
+  },  "AttendanceSettingsPage": {
     "title": "Attendance settings",
     "description": "Excuse rules can’t be configured yet. The late grace period and start time are in the settings registry (Attendance section), and absence SMS in Academic rules and alerts."
   },
@@ -1963,6 +1980,38 @@
     "invitationRevoked": "Invitation revoked successfully."
   },
   "DashboardHome": {
+    "poweredBySchoolOS": "Powered by SchoolOS",
+    "branchPinnedNote": "Your account is attached to this branch",
+    "kpiCashReceivedMonth": "Cash received this month",
+    "kpiVsPrevMonth": "{percent}% vs previous month",
+    "kpiNewSinceMonthStart": "+{count} since the start of the month",
+    "kpiMarkingIncomplete": "Marking incomplete",
+    "kpiSectionsMarkedOf": "{done}/{total} classes marked",
+    "acAssiduityPendingTitle": "Marking incomplete",
+    "acAssiduityPendingSub": "Attendance data will be complete once the remaining {count} classes are submitted.",
+    "acMarkingIncompleteBadge": "Marking incomplete",
+    "financeCohortTitle": "Invoice recovery - {period}",
+    "financeCohortSubtitle": "One invoice cohort: all four figures reconcile together.",
+    "collectedOnInvoices": "Collected on these invoices",
+    "weekUnjustified": "{count} unjustified absence(s) this week",
+    "weekLate": "{count} late this week",
+    "todayMissingClasses": "{count} class(es) unmarked today",
+    "agendaTitle": "Agenda",
+    "noOperationalEvents": "No operational events coming up",
+    "absenteeismTitle": "Absenteeism to watch",
+    "absenteeismSubtitle": "Recent unjustified absences, with week / month detail",
+    "absenteeismReason": "{week} this week · {month} this month",
+    "openAttendanceRegister": "Open the attendance register",
+    "admissionsTitle": "Pending admissions",
+    "admissionsSubtitle": "Files to review and upcoming interviews",
+    "admissionsToReview": "{count} file(s) to review",
+    "admissionsInterviewsToday": "{count} interview(s) today",
+    "admissionsConverted": "{count} enrolment(s) converted this month",
+    "admissionsEmpty": "No pending files — admissions queue is empty",
+    "seeAdmissions": "See admissions",
+    "admissionsStatusNew": "New",
+    "admissionsStatusContacted": "Contacted",
+    "admissionsStatusQualified": "Qualified",
     "kpiAria": "Key activity indicators",
     "kpiActiveStudents": "Active students",
     "kpiNewThisMonth": "+{count} enrolments this month",
@@ -2548,6 +2597,7 @@
     "footerRights": "All rights reserved."
   },
   "Dashboard": {
+    "markingIncompleteDay": "Marking incomplete",
     "viewPaymentHistory": "View payment history",
     "recentPaymentsTitle": "Recent payments",
     "openCashDesk": "Open collection desk",

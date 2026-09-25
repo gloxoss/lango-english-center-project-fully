@@ -1,5 +1,7 @@
 import type {
   ActionCenterData,
+  AdmissionsOverview,
+  AttendanceDayPoint,
   AttendanceTrendData,
   DailyPulseData,
   FinanceMonthlyBreakdown,
@@ -11,11 +13,8 @@ import type {
   WatchlistStudent,
 } from '@/features/dashboard/model/types';
 import { and, desc, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm';
-import { NextResponse } from 'next/server';
 import { createTranslator } from 'next-intl';
-import messagesAr from '../../../../../locales/ar.json';
-import messagesEn from '../../../../../locales/en.json';
-import messagesFr from '../../../../../locales/fr.json';
+import { NextResponse } from 'next/server';
 import { eventOccurrences, events, eventSchedules } from '@/features/events/models/events-schema';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
@@ -27,6 +26,8 @@ import {
   overdueInvoiceCondition,
 } from '@/libs/finance/definitions';
 import {
+  admissionInterviews,
+  applicants,
   attendance,
   attendanceExcuses,
   branches,
@@ -40,6 +41,9 @@ import {
   tenants,
   user,
 } from '@/models/Schema';
+import messagesAr from '../../../../../locales/ar.json';
+import messagesEn from '../../../../../locales/en.json';
+import messagesFr from '../../../../../locales/fr.json';
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -68,11 +72,11 @@ export async function GET(request: Request) {
     const requestedLocale = searchParams.get('locale');
     const locale: keyof typeof SUMMARY_MESSAGES = requestedLocale === 'ar' || requestedLocale === 'en' ? requestedLocale : 'fr';
     const tr = createTranslator({ locale, messages: SUMMARY_MESSAGES[locale], namespace: 'DashboardHome' });
-    const classSectionId = searchParams.get('classSectionId');
 
     const today = todayIso();
     const monthStart = monthStartIso();
     const currentYear = new Date().getFullYear();
+    const currentMonthIndex = new Date().getMonth(); // 0-based
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
     // =========================================================================
@@ -169,7 +173,6 @@ export async function GET(request: Request) {
       activeStudentCountRows,
       newAdmissionsMonthRows,
       todayAttendanceStatusRows,
-      monthInvoicedRows,
       monthCollectedRows,
       activeClassesRows,
       activeClassSectionsRows,
@@ -187,7 +190,13 @@ export async function GET(request: Request) {
       weeklyAttendanceRows,
       classesAttendanceRows,
       scheduledDaysRows,
-      monthOpenRows,
+      prevMonthCollectedRows,
+      weekStatusRows,
+      sectionsMarkedByDateRows,
+      weekUnjustifiedByStudentRows,
+      applicantsRows,
+      interviewsTodayRows,
+      admissionsConvertedRows,
     ] = await Promise.all([
       // 3.1 Active Students Count (Authoritative Rule: role='student' AND userStatus='active')
       db.select({ count: sql<number>`count(*)::int` })
@@ -228,17 +237,7 @@ export async function GET(request: Request) {
 
       // 3.4 Invoiced this month (issued invoices only: pending/partial/overdue/paid —
       // drafts were never billed; cancelled and credited are no longer owed)
-      db.select({ total: sql<string>`coalesce(sum(${invoices.netAmount}), 0)::numeric::text` })
-        .from(invoices)
-        .innerJoin(user, and(eq(invoices.studentId, user.id), eq(user.tenantId, tenantId)))
-        .where(and(
-          eq(invoices.tenantId, tenantId),
-          gte(invoices.issueDate, monthStart),
-          invoicedInvoiceCondition(invoices.status),
-          userBranchFilter,
-        )),
-
-      // 3.5 Collected this month (posted payments net of approved partial refunds)
+      // Collected this month (posted payments net of approved partial refunds)
       db.select({ total: netCollectedSumSql(payments) })
         .from(payments)
         .innerJoin(user, and(eq(payments.studentId, user.id), eq(user.tenantId, tenantId)))
@@ -534,19 +533,123 @@ export async function GET(request: Request) {
         .from(classScheduleSlots)
         .where(eq(classScheduleSlots.tenantId, tenantId)),
 
-      // 3.22 Still owed on this month's invoices. The pulse rate is a share of
-      // what is EXPECTED (the card says so), so it must be invoice-based:
-      // (invoiced - outstanding) / invoiced. The old rate divided cash received
-      // this month by invoices raised this month, which mixes two populations -
-      // cash from earlier months settles earlier invoices - and could exceed 100%.
-      db.select({ total: sql<string>`coalesce(sum(greatest(${invoices.netAmount} - ${invoices.paidAmount}, 0)), 0)::numeric::text` })
-        .from(invoices)
-        .innerJoin(user, and(eq(invoices.studentId, user.id), eq(user.tenantId, tenantId)))
+      // 3.22 Previous calendar month collected (honest "vs mois précédent"
+      // comparison for the cash-receipts KPI; never mixed with invoicing)
+      db.select({ total: netCollectedSumSql(payments) })
+        .from(payments)
+        .innerJoin(user, and(eq(payments.studentId, user.id), eq(user.tenantId, tenantId)))
         .where(and(
-          eq(invoices.tenantId, tenantId),
-          gte(invoices.issueDate, monthStart),
-          invoicedInvoiceCondition(invoices.status),
+          eq(payments.tenantId, tenantId),
+          gte(payments.paymentDate, new Date(currentYear, currentMonthIndex - 1, 1).toISOString().slice(0, 10)),
+          lte(payments.paymentDate, new Date(currentYear, currentMonthIndex, 0).toISOString().slice(0, 10)),
+          collectedPaymentCondition(payments.status),
           userBranchFilter,
+        )),
+
+      // 3.23 Week status counts (unjustified absences and late marks over the
+      // last 7 days, voided excluded, excuses reconciled at exact scope)
+      db.select({
+        status: attendance.status,
+        count: sql<number>`count(*)::int`,
+      })
+        .from(attendance)
+        .innerJoin(user, and(eq(attendance.studentId, user.id), eq(user.tenantId, tenantId)))
+        .where(and(
+          eq(attendance.tenantId, tenantId),
+          eq(attendance.isVoided, false),
+          gte(attendance.date, new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10)),
+          inArray(attendance.status, ['absent', 'late']),
+          userBranchFilter,
+          sql`(${attendance.status} <> 'absent' OR NOT EXISTS (
+            SELECT 1 FROM attendance_excuses ex
+            WHERE ex.tenant_id = ${attendance.tenantId}
+              AND ex.student_id = ${attendance.studentId}
+              AND ex.date = ${attendance.date}
+              AND ex.status = 'approved'
+              AND (ex.class_section_id IS NULL OR ex.class_section_id = ${attendance.classSectionId})
+              AND (ex.period IS NULL OR ex.period = ${attendance.period})
+          ))`,
+        ))
+        .groupBy(attendance.status),
+
+      // 3.24 Distinct class sections marked per day (last 6 days) - feeds the
+      // per-day completion state of the weekly attendance panel
+      db.select({
+        date: attendance.date,
+        sectionsMarked: sql<number>`count(distinct ${user.classSectionId})::int`,
+      })
+        .from(attendance)
+        .innerJoin(user, and(eq(attendance.studentId, user.id), eq(user.tenantId, tenantId)))
+        .where(and(
+          eq(attendance.tenantId, tenantId),
+          eq(attendance.isVoided, false),
+          gte(attendance.date, new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10)),
+          userBranchFilter,
+        ))
+        .groupBy(attendance.date),
+
+      // 3.25 Unjustified absences this week per student (absenteeism panel)
+      db.select({
+        studentId: attendance.studentId,
+        absentCount: sql<number>`count(*)::int`,
+      })
+        .from(attendance)
+        .innerJoin(user, and(eq(attendance.studentId, user.id), eq(user.tenantId, tenantId)))
+        .where(and(
+          eq(attendance.tenantId, tenantId),
+          eq(attendance.status, 'absent'),
+          eq(attendance.isVoided, false),
+          gte(attendance.date, new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10)),
+          eq(user.userStatus, 'active'),
+          userBranchFilter,
+          sql`NOT EXISTS (
+            SELECT 1 FROM attendance_excuses ex
+            WHERE ex.tenant_id = ${attendance.tenantId}
+              AND ex.student_id = ${attendance.studentId}
+              AND ex.date = ${attendance.date}
+              AND ex.status = 'approved'
+              AND (ex.class_section_id IS NULL OR ex.class_section_id = ${attendance.classSectionId})
+              AND (ex.period IS NULL OR ex.period = ${attendance.period})
+          )`,
+        ))
+        .groupBy(attendance.studentId),
+
+      // 3.26 Admissions queue (open applications only; branch-scoped.
+      // NOTE: applicants carries its own branchId — no user join here.)
+      db.select({
+        id: applicants.id,
+        firstName: applicants.firstName,
+        lastName: applicants.lastName,
+        status: applicants.status,
+        applicationDate: applicants.applicationDate,
+      })
+        .from(applicants)
+        .where(and(
+          eq(applicants.tenantId, tenantId),
+          inArray(applicants.status, ['new', 'applied', 'contacted', 'qualified']),
+          effectiveBranchId ? eq(applicants.branchId, effectiveBranchId) : undefined,
+        ))
+        .orderBy(desc(applicants.applicationDate))
+        .limit(50),
+
+      // 3.27 Admission interviews scheduled for today
+      db.select({ count: sql<number>`count(*)::int` })
+        .from(admissionInterviews)
+        .where(and(
+          eq(admissionInterviews.tenantId, tenantId),
+          eq(admissionInterviews.status, 'scheduled'),
+          gte(admissionInterviews.scheduledAt, `${today}T00:00:00`),
+          lte(admissionInterviews.scheduledAt, `${today}T23:59:59`),
+        )),
+
+      // 3.28 Conversions this month (applications turned into students)
+      db.select({ count: sql<number>`count(*)::int` })
+        .from(applicants)
+        .where(and(
+          eq(applicants.tenantId, tenantId),
+          eq(applicants.status, 'converted'),
+          gte(applicants.applicationDate, monthStart),
+          effectiveBranchId ? eq(applicants.branchId, effectiveBranchId) : undefined,
         )),
     ]);
 
@@ -635,13 +738,29 @@ export async function GET(request: Request) {
       route: '/dashboard/finance/invoices',
     };
 
-    // Unjustified Absences
+    // Unjustified Absences - business truth: while attendance marking is
+    // incomplete the absence picture is UNKNOWN, so this card must never read
+    // as a green "all clear" (ENH-ADMIN-DASH-01: it used to sit green next to
+    // "12 classes terminées sans pointage").
     const unjustifiedCount = unjustifiedAbsencesTodayRows.length;
     const unjustifiedStudentsCount = new Set(unjustifiedAbsencesTodayRows.map(r => r.studentId)).size;
+    const attendanceIncomplete = isSchoolDay && expectedClasses > 0 && missingAttendanceClasses > 0;
     const actionCenterAbsences = {
-      status: unjustifiedCount > 0 ? ('warning' as const) : ('all_clear' as const),
-      title: unjustifiedCount > 0 ? tr('acUnjustifiedTitle', { count: unjustifiedCount }) : tr('acNoUnjustifiedTitle'),
-      sub: unjustifiedCount > 0 ? tr('acUnjustifiedSub', { count: unjustifiedStudentsCount }) : tr('acNoUnjustifiedSub'),
+      status: attendanceIncomplete
+        ? ('incomplete' as const)
+        : unjustifiedCount > 0
+          ? ('warning' as const)
+          : ('all_clear' as const),
+      title: attendanceIncomplete
+        ? tr('acAssiduityPendingTitle')
+        : unjustifiedCount > 0
+          ? tr('acUnjustifiedTitle', { count: unjustifiedCount })
+          : tr('acNoUnjustifiedTitle'),
+      sub: attendanceIncomplete
+        ? tr('acAssiduityPendingSub', { count: missingAttendanceClasses })
+        : unjustifiedCount > 0
+          ? tr('acUnjustifiedSub', { count: unjustifiedStudentsCount })
+          : tr('acNoUnjustifiedSub'),
       unjustifiedCount,
       affectedStudentCount: unjustifiedStudentsCount,
       route: '/dashboard/attendance',
@@ -676,15 +795,8 @@ export async function GET(request: Request) {
       .reduce((sum, r) => sum + r.count, 0);
     const todayAttendanceRate = totalMarks > 0 ? Math.round((attendedMarks / totalMarks) * 1000) / 10 : null;
 
-    const monthInvoiced = Number(monthInvoicedRows[0]?.total ?? 0);
     const monthCollected = Number(monthCollectedRows[0]?.total ?? 0);
-    // Share of this month's invoicing that is settled. Outstanding is never
-    // negative, so paid-on-invoices <= invoiced and the rate cannot exceed 100
-    // without a clamp hiding a wrong numerator. Matches financeOverview and the
-    // verified Analytics semantics. Null (not 0) when nothing was invoiced.
-    const monthOpen = Number(monthOpenRows[0]?.total ?? 0);
-    const monthPaidOnInvoices = Math.max(0, monthInvoiced - monthOpen);
-    const monthRate = monthInvoiced > 0 ? Math.round((monthPaidOnInvoices / monthInvoiced) * 1000) / 10 : null;
+    const prevMonthCollected = Number(prevMonthCollectedRows[0]?.total ?? 0);
 
     const dailyPulse: DailyPulseData = {
       activeStudents: {
@@ -696,11 +808,12 @@ export async function GET(request: Request) {
         presentCount: presentMarks,
         markedCount: totalMarks,
         status: actionCenterAttendanceStatus,
+        expectedClasses,
+        missingClasses: missingAttendanceClasses,
       },
       periodCollected: {
         amount: monthCollected,
-        rate: monthRate,
-        periodInvoiced: monthInvoiced,
+        previousMonthCollected: prevMonthCollected,
       },
       periodOverdue: {
         amount: overdueAmount,
@@ -729,10 +842,14 @@ export async function GET(request: Request) {
     const endDate = new Date(periodEnd);
     const monthlyBreakdown: FinanceMonthlyBreakdown[] = [];
 
-    const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-    while (cursor <= endDate) {
-      const y = cursor.getFullYear();
-      const m = cursor.getMonth() + 1;
+    const startYear = startDate.getFullYear();
+    const startMonth = startDate.getMonth();
+    const endYear = endDate.getFullYear();
+    const endMonth = endDate.getMonth();
+    const monthCount = (endYear - startYear) * 12 + (endMonth - startMonth) + 1;
+    for (let offset = 0; offset < monthCount; offset++) {
+      const y = startYear + Math.floor((startMonth + offset) / 12);
+      const m = ((startMonth + offset) % 12) + 1;
       const key = `${y}-${m}`;
       const inv = invoicedByMonthMap.get(key) ?? 0;
       const col = collectedByMonthMap.get(key) ?? 0;
@@ -744,7 +861,6 @@ export async function GET(request: Request) {
         collected: col,
         remaining: Math.max(0, inv - col),
       });
-      cursor.setMonth(cursor.getMonth() + 1);
     }
 
     // Mathematical reconciliation: sum of breakdown exactly equals period totals
@@ -805,6 +921,10 @@ export async function GET(request: Request) {
 
     const scheduledDaysSet = new Set(scheduledDaysRows.map(r => r.dayOfWeek));
     const hasConfiguredSchedule = scheduledDaysSet.size > 0;
+    const sectionsMarkedByDate = new Map<string, number>();
+    for (const row of sectionsMarkedByDateRows) {
+      sectionsMarkedByDate.set(row.date, row.sectionsMarked);
+    }
 
     const trendDays = Array.from({ length: 6 }, (_, i) => {
       // Show instructional days for past week
@@ -822,12 +942,29 @@ export async function GET(request: Request) {
 
       const entry = attendanceByDate.get(iso);
       const sRate = entry && entry.total > 0 ? Math.round((entry.attended / entry.total) * 1000) / 10 : null;
+      const markedSections = sectionsMarkedByDate.get(iso) ?? 0;
+      // Per-day business truth: a scheduled day with marks but fewer marked
+      // sections than expected is 'incomplete'; with no marks at all it is
+      // 'no_data' (pointage incomplet), never a fabricated dash.
+      let completionState: AttendanceDayPoint['completionState'];
+      if (isNonInstructional) {
+        completionState = 'no_class';
+      } else if (!entry || entry.total === 0) {
+        completionState = 'no_data';
+      } else if (expectedClasses > 0 && markedSections < expectedClasses) {
+        completionState = 'incomplete';
+      } else {
+        completionState = 'complete';
+      }
       return {
         dayLabel: DAY_LABELS[dayIndex] ? tr(`day_${dayIndex}` as 'day_0') : '',
         date: `${iso.slice(8, 10)}/${iso.slice(5, 7)}`,
         studentRate: sRate,
         isToday: iso === today,
         isNonInstructional,
+        completionState,
+        sectionsMarked: markedSections,
+        sectionsExpected: expectedClasses,
       };
     });
 
@@ -837,6 +974,8 @@ export async function GET(request: Request) {
       : null;
 
     const daysBelowThresholdCount = trendDays.filter(d => d.studentRate !== null && d.studentRate < 85).length;
+    const weekUnjustifiedCount = weekStatusRows.find(r => r.status === 'absent')?.count ?? 0;
+    const weekLateCount = weekStatusRows.find(r => r.status === 'late')?.count ?? 0;
 
     const attendanceTrend: AttendanceTrendData = {
       weeklyAverageRate,
@@ -844,6 +983,9 @@ export async function GET(request: Request) {
       classesBelowThresholdCount: classesAttendanceRows.length,
       daysBelowThresholdCount,
       thresholdPercent: 85,
+      weekUnjustifiedCount,
+      weekLateCount,
+      todayMissingClasses: missingAttendanceClasses,
     };
 
     // =========================================================================
@@ -883,11 +1025,16 @@ export async function GET(request: Request) {
     }));
 
     // =========================================================================
-    // 11. Watchlist (Bounded Top 5 Priority Cases + Total Count)
+    // 11. Absenteeism Watchlist (Bounded Top 5 + Total Count)
     // =========================================================================
     const watchlistMap = new Map<string, WatchlistStudent>();
+    const weekUnjustifiedByStudent = new Map<string, number>();
+    for (const r of weekUnjustifiedByStudentRows) {
+      weekUnjustifiedByStudent.set(r.studentId, r.absentCount);
+    }
 
     for (const r of absenceRiskRows) {
+      const weekCount = weekUnjustifiedByStudent.get(r.studentId) ?? 0;
       watchlistMap.set(r.studentId, {
         id: `att-${r.studentId}`,
         studentId: r.studentId,
@@ -898,6 +1045,8 @@ export async function GET(request: Request) {
         severity: r.absentCount >= 4 ? 'critical' : 'warning',
         relevantMetric: tr('wlAbsShort', { count: r.absentCount }),
         destinationRoute: `/dashboard/attendance?studentId=${r.studentId}`,
+        unjustifiedWeek: weekCount,
+        unjustifiedMonth: r.absentCount,
       });
     }
 
@@ -921,18 +1070,40 @@ export async function GET(request: Request) {
       }
     }
 
-    const allWatchlist = [...watchlistMap.values()].sort((a, b) => {
-      if (a.severity === 'critical' && b.severity !== 'critical') {
-        return -1;
-      }
-      if (b.severity === 'critical' && a.severity !== 'critical') {
-        return 1;
-      }
-      return 0;
-    });
+    // The daily panel is explicitly the ABSENTEEISM queue: overdue-invoice
+    // cases have their own action card and the invoices console, and mixing
+    // them here made the panel vague ("Élèves à surveiller").
+    const absenteeismList = [...watchlistMap.values()]
+      .filter(s => s.category === 'attendance')
+      .sort((a, b) => {
+        if (a.severity === 'critical' && b.severity !== 'critical') {
+          return -1;
+        }
+        if (b.severity === 'critical' && a.severity !== 'critical') {
+          return 1;
+        }
+        return (b.unjustifiedMonth ?? 0) - (a.unjustifiedMonth ?? 0);
+      });
 
-    const totalWatchlistCount = allWatchlist.length;
-    const boundedWatchlist = allWatchlist.slice(0, 5);
+    const totalWatchlistCount = absenteeismList.length;
+    const boundedWatchlist = absenteeismList.slice(0, 5);
+
+    // =========================================================================
+    // 11b. Admissions Queue Overview (actionable, branch-scoped)
+    // =========================================================================
+    const admissions: AdmissionsOverview = {
+      toReview: applicantsRows.length,
+      interviewsToday: interviewsTodayRows[0]?.count ?? 0,
+      convertedThisMonth: admissionsConvertedRows[0]?.count ?? 0,
+      recent: applicantsRows.slice(0, 4).map(a => ({
+        id: a.id,
+        firstName: a.firstName,
+        lastName: a.lastName,
+        status: a.status,
+        programName: null,
+        applicationDate: a.applicationDate,
+      })),
+    };
 
     // =========================================================================
     // 12. Student Distribution Invariant: SUM(buckets) === activeStudentCount
@@ -969,6 +1140,7 @@ export async function GET(request: Request) {
           month: 'long',
           day: 'numeric',
         }),
+        branchScope: context.branchId ? 'pinned' : 'all',
       },
       actionCenter,
       dailyPulse,
@@ -984,6 +1156,7 @@ export async function GET(request: Request) {
         students: boundedWatchlist,
         totalWatchlistCount,
       },
+      admissions,
       studentDistribution: {
         items: studentDistributionItems,
         totalActiveStudents: activeStudentCount,

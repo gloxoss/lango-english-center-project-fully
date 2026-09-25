@@ -369,6 +369,14 @@ async function run() {
       .returning();
     const branchId = branchRow!.id;
 
+    // Second campus: without a real branch assignment on students/classes the
+    // per-branch dashboard reads zero rows (ENH-ADMIN-DASH-01 root cause).
+    const [branch2Row] = await tx
+      .insert(branches)
+      .values({ tenantId, name: 'Annexe Maarif', code: 'BR-2', city: 'Casablanca', address: '45, Rue Abdelmoumen', phone: '+212 5 22 44 55 66', isActive: true })
+      .returning();
+    const branch2Id = branch2Row!.id;
+
     const [medium] = await tx.insert(mediums).values({ tenantId, name: 'Français' }).returning();
     const mediumId = medium!.id;
 
@@ -387,11 +395,15 @@ async function run() {
 
     // Classes (3ème = college, others = lycee) + class-sections (A/B/C each).
     const CLASSES = ['3ème', '2nde', '1ère', 'Terminale'];
+    // Branch split mirrors the audit data fix: the 3rd class in name order
+    // ("3ème") lives on Annexe Maarif, the rest on the Siège.
+    const maarifClassName = [...CLASSES].sort()[2];
+    const classBranchOf = (className: string) => (className === maarifClassName ? branch2Id : branchId);
     const classInfo: Record<string, { id: string; sections: string[]; offerings: Record<string, string> }> = {};
     for (const className of CLASSES) {
       const [cls] = await tx
         .insert(classes)
-        .values({ tenantId, name: className, mediumId, cycle: className === '3ème' ? 'college' : 'lycee' })
+        .values({ tenantId, name: className, mediumId, cycle: className === '3ème' ? 'college' : 'lycee', branchId: classBranchOf(className) })
         .returning();
       classInfo[className] = { id: cls!.id, sections: [], offerings: {} };
       for (const s of ['A', 'B', 'C']) {
@@ -460,6 +472,8 @@ async function run() {
         gender: n.gender,
         phone: `+212 6 ${int(10, 99)}-${int(100000, 999999)}`,
         userStatus: 'active' as const,
+        // Every 4th teacher sits on the annex (matches the audit data fix).
+        branchId: i % 4 === 0 ? branch2Id : branchId,
         qualification: `${pick(['Licence', 'Master', 'Doctorat'])} ${specialization}`,
         salary: `${int(4000, 12000)}.00`,
         employeeId: `EMP-${pad2(i)}`,
@@ -522,6 +536,7 @@ async function run() {
         bloodGroup: pick(['A+', 'A-', 'B+', 'B-', 'AB+', 'O+', 'O-']),
         matricule: `ATL-2526-${pad4(i)}`,
         classSectionId: csId,
+        branchId: classBranchOf(classNameOf),
         guardianName: `${pick(['M.', 'Mme'])} ${pick(LAST)}`,
         guardianPhone: `+212 6 ${int(10, 99)}-${int(100000, 999999)}`,
         userStatus: 'active' as const,
@@ -1587,8 +1602,9 @@ async function run() {
     await tx.insert(libraryHoldEvents).values(holdIds.map((hid, i) => ({ tenantId, holdId: hid, eventType: 'placed', actorId: studentIds[i % studentIds.length], at: isoDays(-6), note: null })));
     const loans = await tx.select({ id: libraryLoans.id }).from(libraryLoans).where(eq(libraryLoans.tenantId, tenantId));
     await tx.insert(libraryLoanEvents).values(loans.map((l, i) => ({ tenantId, loanId: l.id, eventType: i % 3 === 0 ? 'returned' : 'issued', actorId: 'USR-001', at: isoDays(-int(1, 20)), note: null })));
-    const [branch2] = await tx.insert(branches).values({ tenantId, name: 'Annexe Maarif', code: 'BR-2', city: 'Casablanca', phone: '+212 5 22 44 55 66', isActive: true, address: '45, Rue Abdelmoumen' }).returning();
-    const [transfer] = await tx.insert(libraryTransfers).values({ tenantId, copyId: copyIds[0]!, fromBranchId: branchId, toBranchId: branch2!.id, state: 'received', requestedById: 'USR-001', dispatchedAt: isoDays(-5), dispatchedById: 'USR-001', receivedAt: isoDays(-3), receivedById: 'USR-001', note: 'Transfert de réserve' }).returning();
+    // Annexe Maarif already exists (created with the Siège above); reuse it
+    // instead of seeding a duplicate branch row.
+    const [transfer] = await tx.insert(libraryTransfers).values({ tenantId, copyId: copyIds[0]!, fromBranchId: branchId, toBranchId: branch2Id, state: 'received', requestedById: 'USR-001', dispatchedAt: isoDays(-5), dispatchedById: 'USR-001', receivedAt: isoDays(-3), receivedById: 'USR-001', note: 'Transfert de réserve' }).returning();
     await tx.insert(libraryTransferEvents).values({ tenantId, transferId: transfer!.id, eventType: 'dispatched', actorId: 'USR-001', at: isoDays(-5), note: 'Départ du magasin' });
     const chargeIds: string[] = [];
     for (let i = 0; i < 3; i++) {
@@ -1863,7 +1879,7 @@ async function run() {
     const [camp] = await tx.insert(admissionCampaigns).values({ tenantId, name: `Rentrée ${sy(2026)}-${sy(2027)}`, startDate: `${sy(2026)}-03-01`, endDate: `${sy(2026)}-08-31`, academicTermId: ayTerm1!.id, isActive: true, createdAt: isoTs(-60), updatedAt: isoTs(-1) }).returning();
     const appFirst = ['Sara', 'Yassine', 'Imane', 'Karim', 'Salma', 'Mehdi', 'Nadia', 'Omar'];
     const appLast = ['Bennani', 'Alaoui', 'Cherkaoui', 'El Fassi', 'Tazi', 'Berrada', 'Idrissi', 'Rahmani'];
-    const applicantRows = Array.from({ length: 20 }, (_, i) => ({ tenantId, campaignId: camp!.id, firstName: appFirst[i % 8], lastName: appLast[i % 8], email: `candidat.${i + 1}@atlas.ma`, phone: `+2126${String(50000000 + i).slice(0, 8)}`, dateOfBirth: `${2008 + (i % 5)}-0${(i % 9) + 1}-15`, targetProgramId: programIds[i % 2], status: pick(['new', 'contacted', 'qualified', 'converted', 'lost']), guardianName: `Parent ${appLast[i % 8]}`, guardianPhone: `+2126${String(60000000 + i).slice(0, 8)}`, guardianEmail: null, applicationDate: isoTs(-int(5, 60)), convertedUserId: i % 5 === 3 ? studentIds[i % 200] : null, gender: i % 2 === 0 ? ('female' as const) : ('male' as const), nationality: 'Marocaine', motherTongue: 'Français', city: 'Casablanca', bloodGroup: pick(['A+', 'O+', 'B+', 'AB+']), academicYearId: ay25!.id, guardianId: null, checklistDocumentsReceived: i % 3 !== 0, checklistInterviewDone: i % 4 === 0, checklistFileComplete: i % 5 === 0 }));
+    const applicantRows = Array.from({ length: 20 }, (_, i) => ({ tenantId, campaignId: camp!.id, branchId: i % 3 === 2 ? branch2Id : branchId, firstName: appFirst[i % 8], lastName: appLast[i % 8], email: `candidat.${i + 1}@atlas.ma`, phone: `+2126${String(50000000 + i).slice(0, 8)}`, dateOfBirth: `${2008 + (i % 5)}-0${(i % 9) + 1}-15`, targetProgramId: programIds[i % 2], status: pick(['new', 'contacted', 'qualified', 'converted', 'lost']), guardianName: `Parent ${appLast[i % 8]}`, guardianPhone: `+2126${String(60000000 + i).slice(0, 8)}`, guardianEmail: null, applicationDate: isoTs(-int(5, 60)), convertedUserId: i % 5 === 3 ? studentIds[i % 200] : null, gender: i % 2 === 0 ? ('female' as const) : ('male' as const), nationality: 'Marocaine', motherTongue: 'Français', city: 'Casablanca', bloodGroup: pick(['A+', 'O+', 'B+', 'AB+']), academicYearId: ay25!.id, guardianId: null, checklistDocumentsReceived: i % 3 !== 0, checklistInterviewDone: i % 4 === 0, checklistFileComplete: i % 5 === 0 }));
     const appIds: string[] = [];
     for (let i = 0; i < applicantRows.length; i += 50) { const rows = await tx.insert(applicants).values(applicantRows.slice(i, i + 50)).returning({ id: applicants.id }); appIds.push(...rows.map((r) => r.id)); }
     const interviewRows = appIds.slice(0, 8).map((aid, i) => ({ tenantId, applicantId: aid, scheduledAt: isoTs(int(3, 15)), interviewerId: teacherIds[i % 20], location: 'Salle des entretiens', status: pick(['scheduled', 'completed', 'cancelled'] as const), notes: i % 2 === 0 ? 'Bon dossier' : null, createdAt: isoTs(-7), updatedAt: isoTs(-1) }));

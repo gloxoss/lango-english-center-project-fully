@@ -1,5 +1,22 @@
 {
-  "AttendanceSettingsPage": {
+"GlobalSearch": {
+    "students": "التلاميذ",
+    "staff": "الموظفون",
+    "invoices": "الفواتير",
+    "seeAll": "عرض جميع النتائج",
+    "noResults": "لا توجد نتائج لـ \"{query}\""
+  },
+"NotificationCenter": {
+    "title": "الإشعارات",
+    "groupAction": "للمعالجة",
+    "groupUpdates": "تحديثات",
+    "groupSystem": "النظام",
+    "empty": "لا توجد إشعارات حالياً",
+    "markAllRead": "وضع علامة مقروء على الكل"
+  },
+"ProfileMenu": {
+    "schoolSettings": "إعدادات المؤسسة"
+  },  "AttendanceSettingsPage": {
     "title": "إعدادات الحضور",
     "description": "قواعد التبرير غير قابلة للضبط بعد. مهلة التأخر وساعة البداية في سجل الإعدادات (قسم الحضور)، ورسائل الغياب في القواعد الأكاديمية والتنبيهات."
   },
@@ -1963,6 +1980,38 @@
     "invitationRevoked": "تم إلغاء الدعوة بنجاح."
   },
   "DashboardHome": {
+    "poweredBySchoolOS": "مدعوم بـ SchoolOS",
+    "branchPinnedNote": "حسابك مرتبط بهذا الفرع",
+    "kpiCashReceivedMonth": "المقبوضات المستلمة هذا الشهر",
+    "kpiVsPrevMonth": "{percent}% مقارنة بالشهر الماضي",
+    "kpiNewSinceMonthStart": "+{count} منذ بداية الشهر",
+    "kpiMarkingIncomplete": "التسجيل غير مكتمل",
+    "kpiSectionsMarkedOf": "{done}/{total} أقسام مسجلة",
+    "acAssiduityPendingTitle": "التسجيل غير مكتمل",
+    "acAssiduityPendingSub": "ستكتمل بيانات الحضور بعد إدخال {count} أقسام المتبقية.",
+    "acMarkingIncompleteBadge": "التسجيل غير مكتمل",
+    "financeCohortTitle": "تحصيل الفواتير - {period}",
+    "financeCohortSubtitle": "دفعة فواتير واحدة: المبالغ الأربعة متطابقة ومتسقة.",
+    "collectedOnInvoices": "المحصّل على هذه الفواتير",
+    "weekUnjustified": "{count} غياب غير مبرر هذا الأسبوع",
+    "weekLate": "{count} تأخير هذا الأسبوع",
+    "todayMissingClasses": "{count} قسم بدون تسجيل حضور اليوم",
+    "agendaTitle": "الأجندة",
+    "noOperationalEvents": "لا توجد أحداث تشغيلية قادمة",
+    "absenteeismTitle": "الغيابات المطلوب متابعتها",
+    "absenteeismSubtitle": "الغيابات غير المبررة الأخيرة، مع تفصيل الأسبوع / الشهر",
+    "absenteeismReason": "{week} هذا الأسبوع · {month} هذا الشهر",
+    "openAttendanceRegister": "فتح سجل الحضور",
+    "admissionsTitle": "طلبات التسجيل المعلقة",
+    "admissionsSubtitle": "ملفات للمراجعة ومقابلات قادمة",
+    "admissionsToReview": "{count} ملف للمراجعة",
+    "admissionsInterviewsToday": "{count} مقابلة اليوم",
+    "admissionsConverted": "{count} تسجيل محوّل هذا الشهر",
+    "admissionsEmpty": "لا توجد ملفات معلقة — قائمة التسجيلات فارغة",
+    "seeAdmissions": "عرض التسجيلات",
+    "admissionsStatusNew": "جديد",
+    "admissionsStatusContacted": "تم التواصل",
+    "admissionsStatusQualified": "مؤهل",
     "kpiAria": "مؤشرات النشاط الرئيسية",
     "kpiActiveStudents": "التلاميذ النشطون",
     "kpiNewThisMonth": "+{count} تسجيلات هذا الشهر",
@@ -2548,6 +2597,7 @@
     "footerRights": "كل الحقوق محفوظة."
   },
   "Dashboard": {
+    "markingIncompleteDay": "التسجيل غير مكتمل",
     "viewPaymentHistory": "عرض سجل المدفوعات",
     "recentPaymentsTitle": "آخر المدفوعات",
     "openCashDesk": "فتح صندوق التحصيل",
