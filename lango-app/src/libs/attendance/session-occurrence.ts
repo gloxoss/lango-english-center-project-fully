@@ -1,4 +1,5 @@
 import { and, asc, eq, gte, isNull, lte, or } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { weekdayNameFor } from '@/libs/api/school-day';
 import { db } from '@/libs/DB';
 import { casablancaTimeHm, casablancaTodayIso } from '@/libs/finance/today';
@@ -8,11 +9,16 @@ import {
   classScheduleSlots,
   classSections,
   classSubjects,
+  classSessionExceptions,
   sections,
   subjects,
   timetableVersions,
   user,
 } from '@/models/Schema';
+
+// The substitute is a different user row from the slot's own teacher, so the
+// second join needs its own alias.
+const teacherUser = alias(user, 'substitute_teacher');
 
 /**
  * CANONICAL SESSION OCCURRENCE — the identity attendance is actually about.
@@ -28,6 +34,18 @@ import {
  * Exceptions (cancellation, substitution, room change, reschedule) attach to the
  * same identity in phase 6.
  */
+
+export type SessionExceptionType = 'CANCELLED' | 'SUBSTITUTE' | 'ROOM_CHANGE' | 'RESCHEDULE';
+
+export type SessionException = {
+  type: SessionExceptionType;
+  reason: string;
+  substituteTeacherId: string | null;
+  substituteTeacherName: string | null;
+  roomLabel: string | null;
+  startTime: string | null;
+  endTime: string | null;
+};
 
 export type SessionOccurrence = {
   slotId: string;
@@ -52,6 +70,8 @@ export type SessionOccurrence = {
    * a fabricated 1.
    */
   period: number;
+  /** The dated deviation applied to this occurrence, if any (phase 6). */
+  exception: SessionException | null;
 };
 
 export type OccurrenceState
@@ -63,6 +83,46 @@ export type OccurrenceState
     | 'ANNULE';
 
 type RegisterLike = { status: string } | null | undefined;
+
+/**
+ * Dated deviations for a whole day, keyed by slot. Loaded once per day view so
+ * the merge below costs one query rather than one per lesson.
+ */
+export async function loadSessionExceptions(
+  tenantId: string,
+  date: string,
+): Promise<Map<string, SessionException>> {
+  const rows = await db
+    .select({
+      slotId: classSessionExceptions.classScheduleSlotId,
+      type: classSessionExceptions.type,
+      reason: classSessionExceptions.reason,
+      substituteTeacherId: classSessionExceptions.substituteTeacherId,
+      substituteTeacherName: teacherUser.name,
+      roomLabel: classSessionExceptions.roomLabel,
+      startTime: classSessionExceptions.startTime,
+      endTime: classSessionExceptions.endTime,
+    })
+    .from(classSessionExceptions)
+    .leftJoin(teacherUser, eq(classSessionExceptions.substituteTeacherId, teacherUser.id))
+    .where(and(eq(classSessionExceptions.tenantId, tenantId), eq(classSessionExceptions.date, date)));
+
+  const bySlot = new Map<string, SessionException>();
+
+  for (const row of rows) {
+    bySlot.set(row.slotId, {
+      type: row.type as SessionExceptionType,
+      reason: row.reason,
+      substituteTeacherId: row.substituteTeacherId,
+      substituteTeacherName: row.substituteTeacherName,
+      roomLabel: row.roomLabel,
+      startTime: row.startTime,
+      endTime: row.endTime,
+    });
+  }
+
+  return bySlot;
+}
 
 /**
  * The timetable version that governs `date`: published, and effective on it.
@@ -113,9 +173,9 @@ export async function listSessionOccurrences(opts: {
   if (opts.branchId) {
     conditions.push(eq(classes.branchId, opts.branchId));
   }
-  if (opts.teacherId) {
-    conditions.push(eq(classScheduleSlots.teacherId, opts.teacherId));
-  }
+  // NOTE: the teacher filter is applied AFTER the exception merge, not here. A
+  // substitute is not the slot's teacher, so filtering in SQL would hide the
+  // very lesson they are covering.
   if (opts.classSectionId) {
     conditions.push(eq(classScheduleSlots.classSectionId, opts.classSectionId));
   }
@@ -147,15 +207,44 @@ export async function listSessionOccurrences(opts: {
     .where(and(...conditions))
     .orderBy(asc(classScheduleSlots.startTime));
 
+  const exceptions = await loadSessionExceptions(opts.tenantId, opts.date);
+
   // Period is an ordinal per section per day, so it stays meaningful for the
-  // legacy column without inventing a number.
+  // legacy column without inventing a number. Ordinals are assigned from the
+  // BASE order so a reschedule cannot renumber a lesson that already has a
+  // register against its period.
   const seqBySection = new Map<string, number>();
 
-  return rows.map((row) => {
+  const merged = rows.map((row) => {
     const next = (seqBySection.get(row.classSectionId) ?? 0) + 1;
     seqBySection.set(row.classSectionId, next);
-    return { ...row, date: opts.date, versionId: row.versionId ?? null, period: next };
+
+    const exception = exceptions.get(row.slotId) ?? null;
+
+    // An exception overrides only the field it is about. The base timetable row
+    // is never mutated — this is a view of one day.
+    return {
+      ...row,
+      date: opts.date,
+      versionId: row.versionId ?? null,
+      period: next,
+      teacherId: exception?.substituteTeacherId ?? row.teacherId,
+      teacherName: exception?.substituteTeacherName ?? row.teacherName,
+      room: exception?.roomLabel ?? row.room,
+      startTime: exception?.startTime ?? row.startTime,
+      endTime: exception?.endTime ?? row.endTime,
+      exception,
+    };
   });
+
+  // A substitute sees the lesson they are covering, and only that one.
+  const scoped = opts.teacherId
+    ? merged.filter(o => o.teacherId === opts.teacherId)
+    : merged;
+
+  // Order on the EFFECTIVE start time: a rescheduled lesson must appear where it
+  // actually happens, not where the weekly recurrence usually sits.
+  return scoped.sort((a, b) => a.startTime.localeCompare(b.startTime));
 }
 
 /** The scheduled lessons of `date` for one section. */
@@ -226,10 +315,13 @@ export function registerForOccurrence(
  * its END time has passed in Casablanca.
  */
 export function occurrenceState(
-  occurrence: Pick<SessionOccurrence, 'startTime' | 'endTime'>,
+  occurrence: Pick<SessionOccurrence, 'startTime' | 'endTime'> & { exception?: SessionException | null },
   register: RegisterLike,
   now: { date: string; hm: string; selectedDate: string },
-  cancelled = false,
+  // Derived from the occurrence by default, so a caller holding a real
+  // occurrence cannot forget to pass it. An explicit argument still wins, for
+  // callers holding only times.
+  cancelled: boolean = isCancelled(occurrence),
 ): OccurrenceState {
   if (cancelled) {
     return 'ANNULE';
@@ -262,10 +354,16 @@ export function occurrenceState(
   return 'EN_COURS';
 }
 
+/** A lesson cancelled for this date never becomes a missing register. */
+export function isCancelled(occurrence: { exception?: SessionException | null }): boolean {
+  return occurrence.exception?.type === 'CANCELLED';
+}
+
 /**
  * Occurrences whose lesson has ENDED and which still have no valid register.
  * This is the exact-session answer to "registres manquants": one completed
- * lesson can no longer hide a different missing one.
+ * lesson can no longer hide a different missing one, and a cancelled lesson is
+ * never expected to have one.
  */
 export function missingOccurrences(
   occurrences: SessionOccurrence[],
@@ -278,7 +376,7 @@ export function missingOccurrences(
   const hm = casablancaTimeHm(now);
 
   return occurrences.filter((occurrence) => {
-    if (cancelledSlotIds.has(occurrence.slotId)) {
+    if (cancelledSlotIds.has(occurrence.slotId) || isCancelled(occurrence)) {
       return false;
     }
     if (registerForOccurrence(index, occurrence)) {

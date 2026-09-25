@@ -15,6 +15,7 @@ import {
 import { db } from '@/libs/DB';
 import {
   attendanceRegisters,
+  classSessionExceptions,
   branches,
   classes,
   classScheduleSlots,
@@ -111,6 +112,7 @@ describe.skipIf(!dbReachable)('session occurrence — DB-backed', () => {
 
   afterAll(async () => {
     vi.useRealTimers();
+    await db.delete(classSessionExceptions).where(eq(classSessionExceptions.tenantId, tenantId));
     await db.delete(attendanceRegisters).where(eq(attendanceRegisters.tenantId, tenantId));
     await db.delete(classScheduleSlots).where(eq(classScheduleSlots.tenantId, tenantId));
     await db.delete(timetableVersions).where(eq(timetableVersions.tenantId, tenantId));
@@ -186,6 +188,75 @@ describe.skipIf(!dbReachable)('session occurrence — DB-backed', () => {
 
     expect(first?.reference).toBe(`SO-${suffix}-A`);
   });
+
+  it('SC.20: a cancelled lesson never becomes a missing register', async () => {
+    const date = '2026-09-15'; // a past Tuesday, neither lesson registered
+    await db.insert(classSessionExceptions).values({
+      tenantId,
+      classScheduleSlotId: slotMorning,
+      date,
+      type: 'CANCELLED',
+      reason: 'Sortie scolaire',
+      createdById: ADMIN,
+    });
+
+    // Cancelling the 08:00 lesson must not excuse the 10:00 one.
+    expect(await missingStarts(date)).toEqual(['10:00']);
+
+    const occurrences = await listSessionOccurrences({ tenantId, date });
+    const cancelled = occurrences.find(o => o.slotId === slotMorning)!;
+
+    expect(cancelled.exception?.type).toBe('CANCELLED');
+    expect(occurrenceState(cancelled, null, { date: '2026-10-06', hm: '13:00', selectedDate: date })).toBe('ANNULE');
+  });
+
+  it('SC.21: a substitute sees the lesson they are covering, and only that one', async () => {
+    const date = '2026-09-22';
+    const substitute = 'SUB-TEACHER-1';
+
+    await db.insert(classSessionExceptions).values({
+      tenantId,
+      classScheduleSlotId: slotMorning,
+      date,
+      type: 'SUBSTITUTE',
+      substituteTeacherId: substitute,
+      reason: 'Congé maladie',
+      createdById: ADMIN,
+    });
+
+    const forSubstitute = await listSessionOccurrences({ tenantId, date, teacherId: substitute });
+
+    // Without the exception merge this list would be empty: the substitute is
+    // not the slot's teacher.
+    expect(forSubstitute.map(o => o.slotId)).toEqual([slotMorning]);
+    expect(forSubstitute[0]!.teacherId).toBe(substitute);
+
+    // And the original teacher is not shown a lesson they are not covering.
+    const forOriginal = await listSessionOccurrences({ tenantId, date, teacherId: TEACHER });
+
+    expect(forOriginal.map(o => o.slotId)).toEqual([slotLateMorning]);
+  });
+
+  it('SC.22: a room change and a reschedule override only their own field', async () => {
+    const date = '2026-09-08';
+    await db.insert(classSessionExceptions).values({
+      tenantId,
+      classScheduleSlotId: slotMorning,
+      date,
+      type: 'ROOM_CHANGE',
+      roomLabel: 'Salle Z9',
+      reason: 'Travaux',
+      createdById: ADMIN,
+    });
+
+    const occurrences = await listSessionOccurrences({ tenantId, date });
+    const changed = occurrences.find(o => o.slotId === slotMorning)!;
+
+    expect(changed.room).toBe('Salle Z9');
+    // The times are untouched: a room change is not a reschedule.
+    expect(changed.startTime).toBe('08:00');
+    expect(changed.endTime).toBe('09:00');
+  });
 });
 
 describe('session occurrence state', () => {
@@ -226,7 +297,7 @@ describe('session occurrence state', () => {
     const future = '2027-01-05';
 
     expect(missingOccurrences(
-      [{ slotId: 'x', date: future, classSectionId: 's', classSubjectId: 'cs', subjectId: null, subjectName: null, teacherId: 't', teacherName: null, branchId: null, className: null, sectionName: null, room: null, startTime: '08:00', endTime: '09:00', versionId: null, period: 1 }],
+      [{ slotId: 'x', date: future, classSectionId: 's', classSubjectId: 'cs', subjectId: null, subjectName: null, teacherId: 't', teacherName: null, branchId: null, className: null, sectionName: null, room: null, startTime: '08:00', endTime: '09:00', versionId: null, period: 1, exception: null }],
       empty,
       future,
     )).toEqual([]);

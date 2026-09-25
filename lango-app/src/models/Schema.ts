@@ -1595,6 +1595,44 @@ export const attendanceExcuses = pgTable('attendance_excuses', {
   }),
 ]);
 
+/**
+ * A dated deviation from the weekly timetable (migration 0161).
+ *
+ * class_schedule_slots is a recurrence with no date, so it cannot say "this
+ * Tuesday is cancelled" or "Mme X is replaced today". An exception is keyed on
+ * the same occurrence identity attendance uses — (slot, date) — so every
+ * consumer sees the effective session without knowing exceptions exist. The base
+ * timetable is never mutated.
+ */
+export const classSessionExceptions = pgTable('class_session_exceptions', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  classScheduleSlotId: uuid('class_schedule_slot_id').notNull(),
+  date: date().notNull(),
+  type: varchar('type', { length: 20 }).notNull(),
+  substituteTeacherId: text('substitute_teacher_id'),
+  roomLabel: varchar('room_label', { length: 100 }),
+  startTime: varchar('start_time', { length: 5 }),
+  endTime: varchar('end_time', { length: 5 }),
+  reason: text().notNull(),
+  createdById: text('created_by_id'),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'class_session_exceptions_tenant_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.classScheduleSlotId],
+    foreignColumns: [classScheduleSlots.id],
+    name: 'class_session_exceptions_slot_id_fk',
+  }).onDelete('cascade'),
+  uniqueIndex('class_session_exceptions_occurrence_unique').on(table.tenantId, table.classScheduleSlotId, table.date),
+  index('class_session_exceptions_tenant_date_idx').on(table.tenantId, table.date),
+]);
+
 export const attendanceFlags = pgTable('attendance_flags', {
   id: uuid().defaultRandom().primaryKey().notNull(),
   tenantId: uuid('tenant_id').notNull(),

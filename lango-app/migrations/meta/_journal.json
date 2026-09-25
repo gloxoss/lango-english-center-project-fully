@@ -1128,6 +1128,13 @@
       "when": 1790348746461,
       "tag": "0159_attendance_flag_lifecycle",
       "breakpoints": true
+    },
+    {
+      "idx": 161,
+      "version": "7",
+      "when": 1790350146406,
+      "tag": "0161_class_session_exceptions",
+      "breakpoints": true
     }
   ]
 }
