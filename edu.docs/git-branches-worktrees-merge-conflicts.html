@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Branches, Worktrees, Merges and Conflicts · Edu Docs</title>
+
+<!-- KaTeX — math rendering -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{
+    delimiters:[
+      {left:'$$',right:'$$',display:true},
+      {left:'$',right:'$',display:false}
+    ],
+    throwOnError:false
+  })"></script>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth}
+:root{
+  --paper:#f8f7f3;--surface:#ffffff;--ink:#1c1b18;--ink2:#3d3c38;
+  --muted:#72716c;--accent:#1d4ed8;--accent-light:#eff6ff;
+  --accent-mid:#3b82f6;--accent-border:#bfdbfe;--rule:#e2e1dc;
+  --rule2:#d1cfc7;--code-bg:#f1f0ec;--sidebar-w:240px;
+  --topbar-h:48px;--content-max:800px;
+  --font-body:'Inter',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+}
+body{
+  font-family:var(--font-body);background:var(--paper);color:var(--ink);
+  line-height:1.75;
+  background-image:radial-gradient(circle,#c4c3bc 1px,transparent 1px);
+  background-size:24px 24px;min-height:100vh;
+}
+.topbar{
+  position:fixed;top:0;left:0;right:0;height:var(--topbar-h);
+  background:var(--surface);border-bottom:1.5px solid var(--rule2);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;z-index:200;
+}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.topbar-pill{
+  font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:#fff;background:var(--accent);padding:3px 10px;border-radius:3px;
+}
+.topbar-title{font-size:.82rem;font-weight:600;color:var(--ink)}
+.topbar-right{font-size:.72rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.layout{display:flex;padding-top:var(--topbar-h);min-height:100vh}
+.sb{
+  width:var(--sidebar-w);flex-shrink:0;position:sticky;top:var(--topbar-h);
+  height:calc(100vh - var(--topbar-h));overflow-y:auto;
+  background:var(--surface);border-right:1.5px solid var(--rule2);padding:24px 0;
+}
+.sb-label{
+  font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);padding:0 20px 6px;margin-top:16px;display:block;
+}
+.sb-link{
+  display:block;font-size:.77rem;color:var(--muted);text-decoration:none;
+  padding:5px 20px;border-left:2px solid transparent;
+  transition:color .12s,border-color .12s,background .12s;line-height:1.35;
+}
+.main{flex:1;padding:48px 64px 100px;max-width:calc(var(--content-max) + 128px)}
+.doc-header{margin-bottom:52px}
+.doc-eyebrow{
+  font-size:.67rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);display:flex;align-items:center;gap:8px;margin-bottom:14px;
+}
+.doc-eyebrow::before{content:'';display:block;width:18px;height:2px;background:var(--accent)}
+.doc-title{font-size:2.3rem;font-weight:700;line-height:1.15;letter-spacing:-.02em;color:var(--ink);margin-bottom:10px}
+.doc-subtitle{font-size:.95rem;color:var(--muted);font-weight:400;line-height:1.6;max-width:580px}
+.doc-meta{display:flex;gap:24px;margin-top:20px;padding-top:20px;border-top:1.5px solid var(--rule2);flex-wrap:wrap}
+.doc-meta-item{display:flex;flex-direction:column;gap:2px}
+.doc-meta-label{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.doc-meta-value{font-size:.8rem;font-weight:500;color:var(--ink2)}
+.part-header{margin:52px 0 32px;padding:14px 20px;background:var(--ink);color:#fff;border-radius:4px}
+.part-label{font-size:.6rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#9ca3af;margin-bottom:3px}
+.part-title{font-size:1.05rem;font-weight:700}
+.sec{margin-bottom:44px;scroll-margin-top:68px}
+.sec-head{display:flex;align-items:baseline;gap:10px;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--rule2)}
+.sec-num{
+  font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:#fff;background:var(--accent);padding:2px 8px;border-radius:2px;
+  flex-shrink:0;font-family:var(--font-mono);
+}
+.sec-title{font-size:1.05rem;font-weight:700;color:var(--ink);letter-spacing:-.01em}
+.sub-head{
+  font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin:22px 0 8px;display:flex;align-items:center;gap:8px;
+}
+.sub-head::after{content:'';flex:1;height:1px;background:var(--accent-border)}
+p{margin-bottom:12px;font-size:.92rem;color:var(--ink2)}
+strong{color:var(--ink);font-weight:600}
+ul,ol{padding-left:20px;margin-bottom:12px}
+li{font-size:.92rem;color:var(--ink2);margin-bottom:4px;line-height:1.6}
+.cblock{
+  background:var(--code-bg);border:1px solid var(--rule2);border-radius:4px;
+  padding:16px 18px;margin:14px 0;font-family:var(--font-mono);font-size:.78rem;
+  line-height:1.65;color:var(--ink);white-space:pre;overflow-x:auto;
+}
+.note-box{
+  background:#fffbeb;border:1px solid #fde68a;border-left:3px solid #f59e0b;
+  border-radius:0 4px 4px 0;padding:12px 18px;margin:14px 0;font-size:.86rem;color:#78350f;
+}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.card{background:var(--surface);border:1px solid var(--rule2);border-radius:4px;padding:16px}
+.card-title{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+@media (max-width:860px){
+  .sb{display:none}
+  .main{padding:32px 16px 80px}
+  .grid2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-pill">EDU DOC</span>
+    <span class="topbar-title">Branches, Worktrees, Merges and Conflicts</span>
+  </div>
+  <div class="topbar-left" style="gap:16px">
+    <span class="topbar-right">Epioso Engineering</span>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sb" id="sb">
+    <span class="sb-label">Part A — The Big Picture</span>
+    <a class="sb-link" href="#s-1">A.1 What we actually did</a>
+    <a class="sb-link" href="#s-2">A.2 The tree of branches</a>
+
+    <span class="sb-label">Part B — Core Concepts</span>
+    <a class="sb-link" href="#s-3">B.1 Commits and branches</a>
+    <a class="sb-link" href="#s-4">B.2 Worktrees</a>
+    <a class="sb-link" href="#s-5">B.3 Merge and merge-base</a>
+    <a class="sb-link" href="#s-6">B.4 Conflicts: reading the markers</a>
+    <a class="sb-link" href="#s-7">B.5 Cherry-pick</a>
+    <a class="sb-link" href="#s-8">B.6 Fast-forward</a>
+
+    <span class="sb-label">Part C — Practice</span>
+    <a class="sb-link" href="#s-9">C.1 Every conflict we fixed</a>
+    <a class="sb-link" href="#s-10">C.2 Migration number clash</a>
+    <a class="sb-link" href="#s-11">C.3 Gates after merging</a>
+    <a class="sb-link" href="#s-12">C.4 The recipe, step by step</a>
+    <a class="sb-link" href="#s-13">C.5 Best practices</a>
+    <a class="sb-link" href="#s-14">C.6 When things go wrong</a>
+  </nav>
+
+  <main class="main">
+
+    <div class="doc-header">
+      <div class="doc-eyebrow">SchoolOS — Release Integration</div>
+      <h1 class="doc-title">Branches, Worktrees, Merges and Conflicts</h1>
+      <p class="doc-subtitle">How we took the work of many AI agents, each on its own branch, joined it into one version of SchoolOS, fixed every place where two agents had changed the same lines, checked it, and made it ready to deploy. Written as a lesson, using the exact commands and conflicts from our session.</p>
+      <div class="doc-meta">
+        <div class="doc-meta-item"><span class="doc-meta-label">Date</span><span class="doc-meta-value">2026-09-25</span></div>
+        <div class="doc-meta-item"><span class="doc-meta-label">Tags</span><span class="doc-meta-value">Git, worktree, merge, cherry-pick, conflicts, Drizzle migrations</span></div>
+        <div class="doc-meta-item"><span class="doc-meta-label">Result</span><span class="doc-meta-value">fa94197d on student-directory-hardening</span></div>
+      </div>
+    </div>
+
+    <!-- PART A -->
+    <div class="part-header">
+      <div class="part-label">Part A</div>
+      <div class="part-title">The Big Picture</div>
+    </div>
+
+    <section class="sec" id="s-1">
+      <div class="sec-head"><span class="sec-num">A.1</span><span class="sec-title">What we actually did</span></div>
+      <p>Imagine eight builders renovating one house at the same time. One rewires the kitchen, one repaints the bedroom, one replaces the stairs. If they all worked on the same walls with no plan, they would paint over each other's wiring. So each builder worked on <strong>their own copy of the plans</strong>, and at the end someone had to combine all the copies into one final plan, deciding what to do wherever two builders touched the same wall.</p>
+      <p>That is exactly what happened with SchoolOS. Many agents (claude, codex, gemini, opencode, antigravity) each worked on a <strong>branch</strong>: a separate line of history. By the end of the day we had:</p>
+      <ul>
+        <li><strong>~600 uncommitted changes</strong> sitting in the main folder (work saved on disk but never recorded in git).</li>
+        <li><strong>26 audit branches</strong> (<code>audit/agent-a/...</code>, <code>audit/agent-c/...</code>), each fixing one module: finance, HR, teacher portal, settings, and so on.</li>
+        <li><strong>1 dashboard branch</strong> (<code>enhancement/agent-a/ENH-ADMIN-DASH-01</code>) built on top of a 543-file "snapshot" of other people's unfinished work.</li>
+        <li><strong>1 huge attendance branch</strong> (<code>IMPL-ATTENDANCE-REFORM-01-integrated</code>, 86 commits) whose database migrations reused numbers already taken on main.</li>
+      </ul>
+      <p>Our job was to produce <strong>one</strong> version containing all of it, that still compiles, still passes 3,532 tests, and can be deployed. The whole operation took five moves:</p>
+      <ol>
+        <li><strong>Checkpoint</strong>: commit the uncommitted work so nothing can be lost.</li>
+        <li><strong>Worktree</strong>: open a second, separate folder to do the merging in, so your running app is never disturbed.</li>
+        <li><strong>Merge one branch at a time</strong>, smallest first, fixing each conflict as it appears.</li>
+        <li><strong>Gates</strong>: typecheck, full test suite, security and UI checks.</li>
+        <li><strong>Fast-forward</strong> the real branch to the finished result, then deploy.</li>
+      </ol>
+      <div class="note-box"><strong>Why this order matters:</strong> every step is reversible until the last one. If a merge had gone badly, we could have deleted the worktree and the main folder would never have known. Safety first, speed second.</div>
+    </section>
+
+    <section class="sec" id="s-2">
+      <div class="sec-head"><span class="sec-num">A.2</span><span class="sec-title">The tree of branches</span></div>
+      <p>Git history is a tree (more precisely a graph). Each dot is a commit; each commit points back to its parent. A branch is just a label stuck on one dot. Here is a simplified picture of our situation before merging:</p>
+      <div class="cblock">                         o---o---o   audit/agent-a/AUD-FINANCE-01
+                        /
+   f42c2bc4 (S-11, S-12, S-14 fixes)---o---o   audit/agent-b/AUD-TEACHER-01
+                        \
+                         o---o   audit/agent-d/AUD-SETTINGS-01 ... (26 of these)
+
+   ...---17945212---6e13e293   student-directory-hardening   (our checkpoint)
+                        \
+                         (3d78a159 snapshot)---o---o---o---o---o  ENH-ADMIN-DASH-01
+
+   34c5ce10---o---o---...(86 commits)---o   IMPL-ATTENDANCE-REFORM-01-integrated</div>
+      <p>After merging, all of those lines join back into one line, with a <strong>merge commit</strong> at each join point:</p>
+      <div class="cblock">   6e13e293---M1---M2---M3--- ... ---M26---D1..D5---MA---fa94197d
+               /    /    /            /       |        /
+          (each audit branch)    (last audit)  |   (attendance)
+                                        (dashboard commits copied in)</div>
+      <p><code>M1..M26</code> are merge commits for the 26 audit branches, <code>D1..D5</code> are the five dashboard commits we <em>copied</em> (cherry-picked), <code>MA</code> is the attendance merge, and <code>fa94197d</code> is the last fix-up commit after the checks.</p>
+    </section>
+
+    <!-- PART B -->
+    <div class="part-header">
+      <div class="part-label">Part B</div>
+      <div class="part-title">Core Concepts</div>
+    </div>
+
+    <section class="sec" id="s-3">
+      <div class="sec-head"><span class="sec-num">B.1</span><span class="sec-title">Commits and branches</span></div>
+      <div class="sub-head">The Mental Model</div>
+      <p>A <strong>commit</strong> is a saved snapshot of the whole project plus a note ("message") and a pointer to the commit before it. It has an ID like <code>6e13e293</code> (a short form of a long fingerprint). Once made, it never changes.</p>
+      <p>A <strong>branch</strong> is not a copy of your files. It is only a <strong>movable name tag</strong> pointing to one commit. When you make a new commit "on" a branch, git moves the tag forward to the new commit. That is why branches are cheap: creating one is just writing a 40-character ID into a small file.</p>
+      <p>Files you edited but did not commit are <strong>not in any branch yet</strong>. They only exist on disk. That is why our first move was a checkpoint commit: 620 files of agent work were at risk as long as they only lived on disk.</p>
+      <div class="sub-head">What we ran</div>
+      <div class="cblock">git add -u                          # stage every change to files git already tracks
+git add lango-app/src lango-app/migrations lango-app/scripts ...   # stage chosen NEW files
+git status --short | grep '^??'     # check what is still untracked (left out on purpose)
+git commit -m "chore: checkpoint all agents' ... work before integration"</div>
+      <p><strong>Line by line:</strong> <code>git add -u</code> adds modifications and deletions of already-known files. The second <code>git add</code> names only the folders we wanted, so junk like <code>cookies.txt</code>, a <code>.rar</code> archive, zip files and scratch scripts stayed out. <code>git status --short</code> prints one line per file; <code>??</code> means "untracked". We read that list before committing so no secret or junk slipped in.</p>
+      <div class="note-box"><strong>Gotcha we hit:</strong> one of the add commands used a fancy exclude pattern and silently staged nothing. We noticed only because we counted the staged files (529, then 620 after retrying). Always count or list what you staged before committing.</div>
+    </section>
+
+    <section class="sec" id="s-4">
+      <div class="sec-head"><span class="sec-num">B.2</span><span class="sec-title">Worktrees: a second desk for the same project</span></div>
+      <div class="sub-head">The Mental Model</div>
+      <p>Normally one git project = one folder = one branch checked out at a time. A <strong>worktree</strong> lets the same project have <strong>several folders at once</strong>, each on a different branch, all sharing the same history. Think of it as a second desk in another room: same filing cabinet (history), different papers on the desk.</p>
+      <p>We needed this because your main folder was busy: your dev server on port 3111 was running from it, and other agents had their own worktrees too (we counted about 30 in <code>git worktree list</code>). Merging in the main folder would have changed files under a running app mid-way, and a half-finished merge would have left the app broken.</p>
+      <div class="sub-head">What we ran</div>
+      <div class="cblock">git worktree add -b integration/all-2026-09-25 .worktrees/INTEGRATE-ALL HEAD
+cmd /c mklink /J .worktrees\INTEGRATE-ALL\lango-app\node_modules lango-app\node_modules
+cp lango-app/.env .worktrees/INTEGRATE-ALL/lango-app/.env</div>
+      <ul>
+        <li><code>git worktree add</code> creates the folder <code>.worktrees/INTEGRATE-ALL</code>, creates the new branch <code>integration/all-2026-09-25</code> (<code>-b</code>) and starts it at <code>HEAD</code> (our checkpoint).</li>
+        <li><code>mklink /J</code> creates a Windows <strong>junction</strong> (a folder shortcut) so the worktree reuses the existing 1.5 GB of <code>node_modules</code> instead of reinstalling. Good enough for typecheck and tests.</li>
+        <li><code>.env</code> is never in git, so a fresh worktree does not have it. We copied it so tests find the database.</li>
+      </ul>
+      <div class="note-box"><strong>Limit of the junction trick:</strong> Next.js Turbopack refuses to run a dev server when <code>node_modules</code> is a link pointing outside the project. That is exactly the wall Agent B hit earlier. Junctions are fine for <code>tsc</code> and <code>vitest</code>; to <em>run</em> the app from a worktree, do a real <code>npm install</code> there. It is also why we deployed from the main folder, not the worktree.</div>
+    </section>
+
+    <section class="sec" id="s-5">
+      <div class="sec-head"><span class="sec-num">B.3</span><span class="sec-title">Merge and the merge-base</span></div>
+      <div class="sub-head">The Mental Model</div>
+      <p>To merge branch B into your branch A, git does a <strong>three-way merge</strong>. It finds the <strong>merge-base</strong>: the last commit both branches share (their common ancestor). Then, for each file, it compares three versions:</p>
+      <ul>
+        <li><strong>base</strong>: how the file looked at the common ancestor;</li>
+        <li><strong>ours</strong>: how it looks now on our branch (A);</li>
+        <li><strong>theirs</strong>: how it looks on the branch coming in (B).</li>
+      </ul>
+      <p>The rule is simple. If only one side changed a region, git takes that side automatically. If both sides changed the <strong>same lines differently</strong>, git cannot know who is right. That is a <strong>conflict</strong>, and a human (or careful agent) must decide.</p>
+      <div class="cblock">region changed by...    result
+------------------------------------------
+nobody                  keep base
+only ours               take ours      (automatic)
+only theirs             take theirs    (automatic)
+both, identically       take it        (automatic)
+both, differently       CONFLICT       (you decide)</div>
+      <div class="sub-head">What we ran</div>
+      <div class="cblock">git merge-base --is-ancestor "$b" HEAD && echo "already merged"
+git merge --no-ff -m "merge: $b into integration" "$b"</div>
+      <p><code>--is-ancestor</code> asks "is branch b already inside our history?". If yes, skip it. <code>--no-ff</code> ("no fast-forward") forces git to create a merge commit even when it could just slide the label forward. That gives every branch its own visible join point, so later you can see exactly what came from where, or undo one branch by reverting its merge commit.</p>
+      <p>We merged <strong>smallest first</strong>. Small branches rarely conflict and they settle the shared ground early; by the time the big finance and attendance branches arrived, most overlapping changes were already in place.</p>
+    </section>
+
+    <section class="sec" id="s-6">
+      <div class="sec-head"><span class="sec-num">B.4</span><span class="sec-title">Conflicts: reading the markers</span></div>
+      <div class="sub-head">The Mental Model</div>
+      <p>When git hits a conflict, it stops, writes <strong>both versions into the file</strong> between markers, and waits. The file will not compile until you remove the markers. Here is the very first real conflict we got, in the timetable screen:</p>
+      <div class="cblock">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+            onClick={printTimetable}
+            disabled={loading || slots.length === 0}
+=======
+            onClick={() =&gt; window.print()}
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; agentb/academics-audit</div>
+      <ul>
+        <li>Between <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> and <code>=======</code> is <strong>ours</strong>: the version on our integration branch (main's newer code, which prints a real PDF and disables the button when there is nothing to print).</li>
+        <li>Between <code>=======</code> and <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt; branch-name</code> is <strong>theirs</strong>: the version from the branch coming in (an older <code>window.print()</code>).</li>
+      </ul>
+      <p>Resolving means <strong>editing the file into the correct final code</strong> and deleting the three marker lines. You have four choices per conflict block (called a <strong>hunk</strong>):</p>
+      <div class="grid2">
+        <div class="card"><div class="card-title">Ours</div><p>Keep our side. We did this for the print button: main's version was newer and better.</p></div>
+        <div class="card"><div class="card-title">Theirs</div><p>Keep the incoming side. We did this for the website hero title, where the branch's inline white colour was more reliable.</p></div>
+        <div class="card"><div class="card-title">Both</div><p>Keep both, in order. We did this for import lines and for the agent-hub changelog, where each side only added entries.</p></div>
+        <div class="card"><div class="card-title">Hand-merge</div><p>Write a new version combining ideas from both. We did this in the header and sidebar.</p></div>
+      </div>
+      <div class="sub-head">Finishing a conflicted merge</div>
+      <div class="cblock">git diff --name-only --diff-filter=U     # list files still in conflict (U = unmerged)
+# ...edit each file, remove all markers...
+git add path/to/file.tsx                 # "I resolved this one"
+git commit --no-edit                     # finish the merge with its prepared message</div>
+      <div class="note-box"><strong>Golden rule:</strong> never choose a side blindly. Before resolving, ask <em>"what did each side mean to do?"</em>. Twice in our session both sides were the <strong>same fix written two ways</strong> (dashboard finance totals, website title colour). Choosing blindly there is harmless. But in settings, one side was translation work and the other a whole feature rewrite; a blind "ours" would have thrown away the feature.</div>
+    </section>
+
+    <section class="sec" id="s-7">
+      <div class="sec-head"><span class="sec-num">B.5</span><span class="sec-title">Cherry-pick: copying chosen commits</span></div>
+      <div class="sub-head">The Mental Model</div>
+      <p>Merging brings in a branch's <strong>entire history</strong>. Sometimes you do not want that. The dashboard branch was built on top of <code>3d78a159</code>, a 543-file snapshot of other agents' <em>unfinished</em> work. Merging the whole branch would have dragged those stale copies back in and overwritten newer code.</p>
+      <p><strong>Cherry-pick</strong> copies <em>only the changes of specific commits</em> onto your branch, as new commits. It is like photocopying five pages out of a book instead of taking the whole book.</p>
+      <div class="cblock">git log --oneline --reverse 3d78a159..enhancement/agent-a/ENH-ADMIN-DASH-01
+# cdf0dcc9 feat: admin shell + director dashboard
+# 4c9632a8 docs: final report
+# 8115a73f fix: announcements respect their audience
+# f1db14e8 docs: review follow-ups
+# e204088e fix: duplicated count on KPI card
+
+git cherry-pick -x cdf0dcc9     # conflicted in 3 files, we resolved them
+git cherry-pick --continue
+git cherry-pick -x 4c9632a8 8115a73f f1db14e8 e204088e   # all clean</div>
+      <p><code>A..B</code> means "commits reachable from B but not from A", so <code>3d78a159..branch</code> lists exactly the agent's own work above the snapshot. <code>-x</code> appends "(cherry picked from commit ...)" to the message so the origin stays traceable. Conflicts during a cherry-pick look and resolve exactly like merge conflicts; you finish with <code>git cherry-pick --continue</code>.</p>
+      <div class="note-box"><strong>Side effect to know:</strong> cherry-picked commits get new IDs. That is why, afterwards, git still reported <code>ENH-ADMIN-DASH-01</code> as "7 commits not merged". The content is in; the original IDs are not. Do not panic when you see that.</div>
+    </section>
+
+    <section class="sec" id="s-8">
+      <div class="sec-head"><span class="sec-num">B.6</span><span class="sec-title">Fast-forward: moving the label</span></div>
+      <p>When all the merging was done on <code>integration/all-2026-09-25</code>, the real branch <code>student-directory-hardening</code> was still pointing at the checkpoint. The integration branch was simply <strong>ahead</strong> of it on the same line. In that situation, git does not need to merge anything: it just moves the label forward. That is a <strong>fast-forward</strong>.</p>
+      <div class="cblock">git merge --ff-only integration/all-2026-09-25</div>
+      <p><code>--ff-only</code> means "only move the label; if a real merge would be needed, refuse". It is the safest way to update a shared branch, because it can never invent a merge commit or rewrite anything.</p>
+      <div class="sub-head">The snag we hit</div>
+      <p>The fast-forward refused: <em>"untracked working tree files would be overwritten"</em>. Agents had left untracked copies of audit reports in your main folder at the same paths the branches were bringing in as tracked files. Git will never silently overwrite a file it does not know about. We did not delete them. We <strong>moved</strong> all 282 untracked artifact files into a backup folder, fast-forwarded, then moved back the 199 that no longer collided. The other 83 now live in git, and your local copies stay in <code>schoolos-untracked-backup-2026-09-25</code>.</p>
+    </section>
+
+    <!-- PART C -->
+    <div class="part-header">
+      <div class="part-label">Part C</div>
+      <div class="part-title">Implementation & Practice</div>
+    </div>
+
+    <section class="sec" id="s-9">
+      <div class="sec-head"><span class="sec-num">C.1</span><span class="sec-title">Every conflict we fixed, and why</span></div>
+      <p>This is the heart of the lesson: the decision behind each conflict. Notice that most were not real disagreements.</p>
+      <div class="sub-head">1. Timetable print button (academics)</div>
+      <p><strong>Ours.</strong> Main had the newer PDF print with a disabled state; the branch had the older <code>window.print()</code>. Later, the typecheck caught a side effect: the branch had renamed the <code>locale</code> prop to <code>_locale</code> (the underscore means "unused"), but main's print code still used <code>locale</code>. We renamed it back. <strong>Lesson: a conflict you resolved can still break code outside the conflict block. Always typecheck after resolving.</strong></p>
+      <div class="sub-head">2. Dashboard finance totals</div>
+      <p><strong>Ours.</strong> Both sides fixed the same bug (collection rate above 100%) in two ways. Before choosing, we searched the file to make sure nothing else referenced the discarded side's variable (<code>openByMonthMap</code>).</p>
+      <div class="sub-head">3. tsconfig.json (many times)</div>
+      <p><strong>Ours, automatically.</strong> Every agent added its private build folder (<code>.next-aud-live</code>, <code>.next-agentb</code>…) to <code>tsconfig.json</code>. Pure noise. After seeing it twice we taught the merge loop: "if the <em>only</em> conflicted file is tsconfig.json, keep ours and continue". Automate only what you have understood by hand first.</p>
+      <div class="sub-head">4. Teacher portal and students list</div>
+      <p><strong>Ours.</strong> One comment wording and one line-wrapping difference. Main's comment was more complete (it mentioned receptionists too).</p>
+      <div class="sub-head">5. Settings (8 files, the hard one)</div>
+      <p>We did not decide by looking at the markers. We compared <em>how much</em> each side changed since the merge-base (<code>git diff --shortstat base HEAD -- file</code> versus <code>base branch -- file</code>). Main had ~100–170 lines of translation work; the branch had up to 1,300 lines of feature rewrite that also claimed to include the same translation (finding S-7). We read main's substance (<code>git diff -w</code>, ignoring whitespace) to confirm. Decision: <strong>theirs</strong> for the four rewritten screens (<code>git show :3:path &gt; path</code> writes the incoming version), <strong>hand-merge</strong> for the settings hub so main's S-26 fix survived. That produced duplicated imports, which we cleaned by hand.</p>
+      <div class="cblock">git show :1:path   # the base version
+git show :2:path   # ours
+git show :3:path   # theirs</div>
+      <div class="sub-head">6. Website title colour</div>
+      <p><strong>Theirs.</strong> Same fix both sides; the branch's inline <code>style={{color:'#fff'}}</code> beats any global CSS, so it is the more reliable one.</p>
+      <div class="sub-head">7. Finance (13 files)</div>
+      <p>A written rule, applied per hunk: import-only hunks → keep both (deduplicated); hunks where the branch introduced <code>formatMoney</code> (consistent money display, the point of the finance audit) → theirs; layout hunks where main used the correct <code>asChild</code> link button → ours. The shared money formatter itself → ours, because the rest of main was built on it.</p>
+      <div class="sub-head">8. Header and sidebar (dashboard cherry-pick)</div>
+      <p><strong>Hand-merge.</strong> Main had an <code>isMounted</code> guard (prevents a flicker/hydration mismatch on first load); the dashboard added a "mark announcements read" action, the school name, and moved the profile menu. Keeping both sides created duplicated declarations of <code>userName</code> and <code>roleLabel</code>, which we deleted by hand, and the typecheck confirmed zero errors.</p>
+    </section>
+
+    <section class="sec" id="s-10">
+      <div class="sec-head"><span class="sec-num">C.2</span><span class="sec-title">The migration number clash</span></div>
+      <p>This was the most dangerous part, because git did <strong>not</strong> report it as a conflict. Main had migrations <code>0158_refund_cap...</code>, <code>0159_salary_payment_retry</code>, <code>0161_timetable_no_overlap</code>. The attendance branch had <code>0158_attendance_session_occurrence</code>, <code>0159_attendance_flag_lifecycle</code>, <code>0161_class_session_exceptions</code>. Different file names, so git happily kept both. Two files numbered 0158 is a bug git cannot see.</p>
+      <p>Drizzle (our database migration tool) runs migrations listed in <code>migrations/meta/_journal.json</code>, and decides what is new by each entry's <code>when</code> timestamp: anything later than the last applied migration runs. So we:</p>
+      <ol>
+        <li>renamed the three attendance files to <code>0162</code>, <code>0163</code>, <code>0164</code> with <code>git mv</code> (so git records a rename, not a delete plus add);</li>
+        <li>rebuilt the journal from main's version and appended three entries with their original timestamps, which were all later than main's last one;</li>
+        <li>verified: 166 entries, indexes in order, every <code>.sql</code> file has a journal entry and vice versa;</li>
+        <li>applied them to the test database, then the dev database: <code>migrations applied successfully</code>, 166 recorded.</li>
+      </ol>
+      <div class="note-box"><strong>Lesson:</strong> "git merged it cleanly" does not mean "it is correct". Numbered files, generated files and lock files need their own check after every merge.</div>
+    </section>
+
+    <section class="sec" id="s-11">
+      <div class="sec-head"><span class="sec-num">C.3</span><span class="sec-title">Gates after merging</span></div>
+      <p>A merge can be textually clean and still broken. So after merging, we ran the <strong>gates</strong>, in order from fastest to slowest:</p>
+      <div class="cblock">npx tsc --noEmit -p .                       # types: 0 errors
+npx drizzle-kit migrate                     # on schoolos_audit (test DB)
+npx vitest run --project unit               # 3,528 / 3,532 passed at first
+npm run check:isolation                     # tenant-isolation rules: pass
+node scripts/check-missing-i18n-keys.mjs    # missing translations: 0
+npx tsx scripts/check-ui-reality.ts         # dead buttons / unlinked pages ratchet</div>
+      <p>The 4 failing tests were all <strong>stale tests</strong>, not bugs. A settings fix made "delete a user of another school" return 404 instead of 200, which is stricter, and the old test still expected 200. And a finance test was pinned to the exact text of code that the dashboard version had replaced with a different, still-correct formula. We rewrote those tests to check the <em>rule</em> (invoice-based rate; one tenant filter per query) instead of an exact line of code. The UI ratchet caught two real gaps from the attendance work: the new "Suivi & alertes" page had no menu entry (we added one), and a deliberately disabled button looked "dead" (we raised the baseline by one, with a written reason).</p>
+      <div class="note-box"><strong>How to tell a stale test from a real bug:</strong> read what the test protects. If the protected property still holds (the other school's user still exists; the rate is still invoice-based) and only the <em>shape</em> changed, update the test. If the property itself broke, fix the code.</div>
+    </section>
+
+    <section class="sec" id="s-12">
+      <div class="sec-head"><span class="sec-num">C.4</span><span class="sec-title">The recipe, step by step</span></div>
+      <p>This is the minimal version you can reuse any time. Comments explain each line.</p>
+      <div class="cblock"># 0. Where am I, and what is not saved?
+git status --short
+git worktree list
+
+# 1. Save everything real (review the list first!)
+git add -u
+git add &lt;the new folders you want&gt;
+git commit -m "chore: checkpoint before integration"
+
+# 2. Separate desk for merging
+git worktree add -b integration/today .worktrees/INTEGRATE HEAD
+cd .worktrees/INTEGRATE
+
+# 3. Which branches have work I don't have? (smallest first)
+for b in $(git for-each-ref --format='%(refname:short)' refs/heads); do
+  echo "$(git rev-list --count HEAD..$b) $b"
+done | sort -n
+
+# 4. Merge one at a time
+git merge --no-ff -m "merge: &lt;branch&gt;" &lt;branch&gt;
+#    conflict?  -&gt; git diff --name-only --diff-filter=U
+#               -&gt; understand each hunk, edit, remove markers
+#               -&gt; git add &lt;file&gt; ; git commit --no-edit
+#    typecheck after each hard one: npx tsc --noEmit
+
+# 5. Only want some commits of a branch?
+git cherry-pick -x &lt;commit&gt; ...
+
+# 6. Gates: types, migrations on the TEST db, full tests, checks
+
+# 7. Move the real branch forward (never rewrites anything)
+cd ../..
+git merge --ff-only integration/today</div>
+    </section>
+
+    <section class="sec" id="s-13">
+      <div class="sec-head"><span class="sec-num">C.5</span><span class="sec-title">Best practices</span></div>
+      <div class="grid2">
+        <div class="card"><div class="card-title">Commit early</div><p>Uncommitted work belongs to no branch and can be lost by one wrong command. Checkpoint before any big operation.</p></div>
+        <div class="card"><div class="card-title">Merge in a worktree</div><p>Your running app and your main folder stay untouched until the result is proven.</p></div>
+        <div class="card"><div class="card-title">One branch at a time</div><p>Small steps make every conflict explainable. Smallest branches first.</p></div>
+        <div class="card"><div class="card-title">Understand, then choose</div><p>Ask what each side meant. Compare sizes with <code>--shortstat</code>, substance with <code>diff -w</code>.</p></div>
+        <div class="card"><div class="card-title">Typecheck after resolving</div><p>Resolved blocks can break code elsewhere (the <code>_locale</code> rename).</p></div>
+        <div class="card"><div class="card-title">Check what git can't see</div><p>Migration numbers, journals, generated files, baselines.</p></div>
+        <div class="card"><div class="card-title">Never overwrite unknown files</div><p>Move them to a backup folder instead of deleting; restore what doesn't collide.</p></div>
+        <div class="card"><div class="card-title">Keep agents on fresh bases</div><p>Branches built on snapshots of unfinished work cause the worst conflicts. Start each agent from a real commit.</p></div>
+      </div>
+    </section>
+
+    <section class="sec" id="s-14">
+      <div class="sec-head"><span class="sec-num">C.6</span><span class="sec-title">When things go wrong</span></div>
+      <p><strong>"I'm in the middle of a merge and it's a mess."</strong> <code>git merge --abort</code> returns to exactly how things were before the merge started. For cherry-pick: <code>git cherry-pick --abort</code>. Nothing is lost.</p>
+      <p><strong>"index.lock: File exists".</strong> Another git process (often the editor's git panel) was running at the same moment. Wait a second and retry; delete the lock only if you are sure no git process is running.</p>
+      <p><strong>"untracked working tree files would be overwritten".</strong> Move those files aside (do not delete), retry, then compare and restore.</p>
+      <p><strong>"A branch still shows as unmerged but I merged it".</strong> Probably you cherry-picked it (new commit IDs) or merged a newer copy of it. Compare content: <code>git diff HEAD branch -- path</code>.</p>
+      <p><strong>"Everything merged but the app breaks".</strong> That is what gates are for. Run types, then migrations on the test database, then the full test suite, before touching the real branch or the server.</p>
+      <div class="note-box"><strong>The commands we avoided on purpose:</strong> <code>git stash</code>, <code>git reset --hard</code>, <code>git checkout -- file</code>, <code>git clean</code>. In a folder shared by many agents they can silently destroy someone else's work. Everything we did could be undone.</div>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>

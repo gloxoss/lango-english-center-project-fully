@@ -1,6 +1,12 @@
 node_modules
 .next
 .next-audit
+# Per-agent dev build folders (NEXT_DIST_DIR); several GB each.
+.next-*
+.capture-*
+cookies.txt
+*.rar
+*.zip
 .git
 .agents
 .github
