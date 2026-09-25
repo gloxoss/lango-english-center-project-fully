@@ -8,7 +8,7 @@ Updated: 2026-09-25
 | | |
 |---|---|
 | **Active branch** | `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01-integrated` |
-| **HEAD** | `a877fb6b` |
+| **HEAD** | `3e8c4ae7` |
 | **Worktree** | `.worktrees/IMPL-ATT-INTEGRATED` |
 | **Base (release)** | `origin/release/REL-INTEGRATE-01` = `8215bb6e` |
 | Original pre-integration branch | `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01` @ `383dc542` (Agent A reviewed `7ef7355e`) |
@@ -42,12 +42,12 @@ Updated: 2026-09-25
 | 1 — Admin Appel du jour | **COMPLETE** (RTL time-range cosmetic open) |
 | 2 — Teacher current lesson | **COMPLETE** |
 | 3 — Business truth / metrics | **COMPLETE** |
-| 4 — Justifications + Suivi & alertes | **COMPLETE** 4a 4b 4c 4d 4e. Sidebar wiring for the new suivi page deferred to the final navigation pass (task G) |
+| 4 — Justifications + Suivi & alertes | **COMPLETE.** 4a guardian notification, 4b admin recording, 4c lifecycle, 4d thresholds, 4e merged Suivi & alertes page. Sidebar wired in the navigation pass |
 | 5 — Cards + credentials | **COMPLETE.** Atomic replacement, wording, and the consolidated Cartes & badges destination under Cartes & Convocations |
 | 6 — Session exceptions | **COMPLETE.** Table (0161), resolver, upsert API, and the admin editor reached from the lesson itself |
-| 7 — Kiosk + device security | NOT STARTED (largest remaining; needs a QR decoder dependency) |
+| 7 — Kiosk + device security | **NOT STARTED — the only phase left.** Needs a QR decoder dependency |
 | 8 — Registers / historique | **COMPLETE.** Scoped marks history at /dashboard/attendance/registres with manual-vs-QR origin, filters, and technical ids behind Journal technique |
-| 9 — HR time clock | **PARTIAL.** Server-side punch state machine done. HR correction flow NOT STARTED |
+| 9 — HR time clock | **COMPLETE.** Server-side punch state machine + HR correction with reason and before/after audit |
 
 ## Running the app
 
