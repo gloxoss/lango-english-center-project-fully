@@ -51,6 +51,11 @@ export const PERMISSIONS = {
   // Attendance
   'attendance.read': 'Voir les présences',
   'attendance.manage': 'Gérer les présences',
+  // Pointing a badge at the gate or in a lesson. Deliberately separate from
+  // attendance.manage: reception and gate staff run the entrance terminal all
+  // day, and that must not also hand them the registers, justifications and
+  // alert-management surfaces. A scan stages evidence; it never writes a mark.
+  'attendance.scan': 'Pointer les arrivées par badge',
 
   // Finance
   'finance.read': 'Voir les finances',
@@ -305,7 +310,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<AppRole, readonly PermissionKey[]>
   teacher: [
     'students.read',
     'academics.read',
-    'attendance.read', 'attendance.manage',
+    'attendance.read', 'attendance.manage', 'attendance.scan',
     'grading.read', 'grading.manage',
     'payroll.self.read',
     'communication.read',
@@ -394,6 +399,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<AppRole, readonly PermissionKey[]>
     'reception.appointment.manage',
     'reception.handoff.manage',
     'reception.visitor.manage',
+    // The gate terminal is a front-desk job: reception runs the entrance pointage.
+    // attendance.scan reaches ONLY the QR scan routes, never the registers.
+    'attendance.scan',
     'payroll.self.read',
   ],
   guard: [
@@ -406,6 +414,10 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<AppRole, readonly PermissionKey[]>
     'guard.pickup.release',
     'guard.incidents.manage',
     'guard.evidence.read',
+    // The exception to the note above: the gate QR scan routes do allowlist
+    // guard, so this one is not inert, and the terminal page surfaces no
+    // directory link a guard cannot use. It reaches the scan routes only.
+    'attendance.scan',
     'payroll.self.read',
     'events.checkin',
     // Operational transport boarding & incidents

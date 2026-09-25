@@ -1,58 +1,165 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
 import jsQR from 'jsqr';
+import {
+  Activity,
+  AlertTriangle,
+  Camera,
+  CameraOff,
+  CheckCircle2,
+  ChevronDown,
+  Clock,
+  History,
+  KeyRound,
+  MapPin,
+  QrCode,
+  RefreshCw,
+  ScanLine,
+  ShieldCheck,
+  SlidersHorizontal,
+  UserRound,
+  Volume2,
+  VolumeX,
+  XCircle,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { casablancaTodayIso } from '@/libs/finance/today';
-import {
-  ScanLine, CheckCircle2, AlertCircle, XCircle, ShieldCheck, User,
-  History, Play, Square, Volume2, VolumeX, Smartphone, Monitor,
-  Camera, CameraOff, RefreshCw, Keyboard, Clock, AlertTriangle,
-  QrCode, Check, Bell, Flame, ShieldAlert, Sparkles, Send,
-  ArrowRight, ExternalLink, Activity, Radio
-} from 'lucide-react';
 
-type ClassSectionOption = {
-  id: string;
-  className: string;
-  sectionName: string;
+/* ==========================================================================
+ * THE GATE TERMINAL, REBUILT AROUND ONE IDEA (fix-plan-02, IMPL-ATT-*-01):
+ * a badge read at the door is an ARRIVAL, not a lesson mark.
+ *
+ * The screen used to open with "Classe / portique actif" and force the operator
+ * to pick a class before anything could be scanned, and the class it picked was
+ * then written onto every scan. A receptionist at 08:00 does not know, and must
+ * not have to know, which lesson a child is walking towards. So there is no
+ * class picker any more. The terminal opens the right session by itself:
+ *
+ *   unpaired, or paired with no room  -> ENTRANCE. Any student badges in, the
+ *                                       scan records a campus arrival, and no
+ *                                       lesson is ever marked present.
+ *   paired with a room                -> CLASSROOM. The lesson happening in
+ *                                       that room right now, resolved from the
+ *                                       timetable by the device's own identity.
+ *
+ * "Présent" in a lesson means the teacher saw the student in the lesson. A
+ * badge at the gate cannot say that, and this screen no longer pretends it can.
+ *
+ * The lesson shown on every card comes from the SERVER's response, never from
+ * anything this component chose. Showing the locally picked class was a real
+ * bug: the card named one lesson while the mark went to another.
+ * ========================================================================== */
+
+type ScannerMode = 'entrance' | 'classroom';
+
+/**
+ * A lesson as the server resolved it. `subject` and `room` may be missing on a
+ *  legacy or partly-filled timetable row; every renderer treats them as optional.
+ */
+type ServerLesson = {
+  slotId: string | null;
+  period: number | null;
+  subject: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  room: string | null;
 };
 
-type UnifiedScanEvent = {
+/**
+ * What this terminal is currently pointing at. Built from the device's own
+ *  resolution, or from an explicit admin choice. Never from a bare class.
+ */
+type ScanTarget = {
+  mode: ScannerMode;
+  sessionId: string | null;
+  slotId: string | null;
+  classSectionId: string | null;
+  subjectName: string | null;
+  className: string | null;
+  sectionName: string | null;
+  room: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  source: 'kiosk' | 'entrance' | 'override';
+};
+
+type Occurrence = {
+  slotId: string;
+  period: number | null;
+  startTime: string;
+  endTime: string;
+  subjectName: string | null;
+  className: string | null;
+  sectionName: string | null;
+  room: string | null;
+  classSectionId: string | null;
+};
+
+/**
+ * What the paired terminal's own room resolves to right now. No period: the
+ *  device knows where it is, the timetable knows what is in it, and the period
+ *  is the server's business when the badge is read.
+ */
+type KioskLesson = {
+  slotId: string | null;
+  classSectionId: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  subjectName: string | null;
+  className: string | null;
+  sectionName: string | null;
+  room: string | null;
+};
+
+type Outcome = 'arrived' | 'late' | 'arrival-only' | 'already' | 'rejected' | 'manual';
+
+type LastScan = {
   id: string;
-  scannedAt: string;
-  resultStatus: 'accepted' | 'rejected' | 'already_scanned';
-  rejectionReason?: string | null;
-  stagedStatus?: 'present' | 'late' | null;
+  at: string;
+  outcome: Outcome;
   studentName: string;
-  matricule: string;
-  className: string;
-  // Truthfulness (audit pass 2): guardian data and SMS dispatch are shown
-  // only when the API actually returns them. The scan APIs do not dispatch
-  // SMS and return no guardian fields, so these stay null/false — the UI
-  // shows "—" and "Notification non envoyée" instead of invented claims.
-  guardianName?: string | null;
-  guardianCin?: string | null;
-  smsDispatched?: boolean;
+  studentImage: string | null;
+  className: string | null;
+  lesson: ServerLesson | null;
+  reason: string | null;
 };
 
-type OnsiteHeadcount = {
+type JournalEntry = {
+  id: string;
+  at: string;
+  outcome: Outcome;
+  studentName: string;
+  className: string | null;
+  reason: string | null;
+};
+
+type CampusCounters = {
+  accepted: number;
+  rejected: number;
+  alreadyScanned: number;
+};
+
+type Headcount = {
   headcount: number;
   confirmedArrivals: number;
   manualUnverified: number;
   asOf: string;
 };
 
-// Web Audio API Synthesizer for instant audible confirmation
+// Web Audio confirmation. The operator is looking at a child, not at the screen,
+// so the beep is the primary feedback and the card is the record.
 function playBeep(type: 'accepted' | 'late' | 'rejected') {
   try {
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
+    const AudioCtx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) {
+      return;
+    }
     const ctx = new AudioCtx();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -60,22 +167,22 @@ function playBeep(type: 'accepted' | 'late' | 'rejected') {
     gain.connect(ctx.destination);
 
     if (type === 'accepted') {
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08); // A5
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08);
       gain.gain.setValueAtTime(0.15, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 0.22);
     } else if (type === 'late') {
-      osc.frequency.setValueAtTime(440, ctx.currentTime); // A4
-      osc.frequency.setValueAtTime(370, ctx.currentTime + 0.1); // F#4
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.setValueAtTime(370, ctx.currentTime + 0.1);
       gain.gain.setValueAtTime(0.15, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28);
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 0.28);
     } else {
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(220, ctx.currentTime); // A3
+      osc.frequency.setValueAtTime(220, ctx.currentTime);
       osc.frequency.linearRampToValueAtTime(130, ctx.currentTime + 0.25);
       gain.gain.setValueAtTime(0.2, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
@@ -83,60 +190,208 @@ function playBeep(type: 'accepted' | 'late' | 'rejected') {
       osc.stop(ctx.currentTime + 0.25);
     }
   } catch {
-    // Audio context blocked or unsupported
+    // Audio blocked or unsupported. A silent terminal still works.
   }
 }
 
+/**
+ * Server rejection codes, in words a receptionist can act on. Built with
+ *  literal translation calls, never a computed key, so the i18n checker can
+ *  still see every string this screen can put in front of a person.
+ */
+function rejectionLabels(t: (key: string) => string): Record<string, string> {
+  return {
+    BADGE_INVALID: t('scanReasonUnknownBadge'),
+    INVALID_CREDENTIAL: t('scanReasonUnknownBadge'),
+    USER_NOT_FOUND: t('scanReasonUnknownBadge'),
+    BADGE_REVOKED: t('scanReasonRevoked'),
+    BADGE_REPLACED: t('scanReasonReplaced'),
+    BADGE_EXPIRED: t('scanReasonExpired'),
+    WRONG_CLASS: t('scanReasonWrongClass'),
+    WRONG_BRANCH: t('scanReasonWrongBranch'),
+    NO_LESSON_NOW: t('scanReasonNoLesson'),
+    LESSON_NOT_SCHEDULED: t('scanReasonNoLesson'),
+    REGISTER_LOCKED: t('scanReasonRegisterLocked'),
+    NON_INSTRUCTIONAL_DAY: t('scanReasonNotInstructional'),
+    DATE_OUTSIDE_SESSION: t('scanReasonNotInstructional'),
+  };
+}
+
+/**
+ * Wall-clock in the school's timezone, so "is this lesson running now" answers
+ *  the same question the server answered when it resolved the lesson.
+ */
+function schoolMinutesNow(): number {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Africa/Casablanca',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date());
+  const hour = Number(parts.find(p => p.type === 'hour')?.value ?? '0');
+  const minute = Number(parts.find(p => p.type === 'minute')?.value ?? '0');
+  return hour * 60 + minute;
+}
+
+function minutesOf(time: string | null): number | null {
+  if (!time) {
+    return null;
+  }
+  const [hRaw, mRaw] = time.split(':');
+  const h = Number(hRaw);
+  const m = Number(mRaw);
+  if (Number.isNaN(h) || Number.isNaN(m)) {
+    return null;
+  }
+  return h * 60 + m;
+}
+
+function toOutcome(resultStatus: string, stagedStatus: string | null): Outcome {
+  if (resultStatus === 'rejected') {
+    return 'rejected';
+  }
+  if (resultStatus === 'already_scanned') {
+    return 'already';
+  }
+  if (stagedStatus === 'late') {
+    return 'late';
+  }
+  return 'arrived';
+}
+
+/** One tone per outcome, shared by the result card, its icon and the journal,
+ *  so the three can never disagree about what colour "late" is. */
+function outcomeTone(outcome: Outcome): 'danger' | 'warning' | 'success' {
+  if (outcome === 'rejected') {
+    return 'danger';
+  }
+  if (outcome === 'late') {
+    return 'warning';
+  }
+  return 'success';
+}
+
+const OUTCOME_BOX: Record<'danger' | 'warning' | 'success', string> = {
+  danger: 'border-rose-200 bg-rose-50 text-rose-900',
+  warning: 'border-amber-200 bg-amber-50 text-amber-900',
+  success: 'border-emerald-200 bg-emerald-50 text-emerald-900',
+};
+
+function OutcomeIcon({ outcome }: { outcome: Outcome }) {
+  const tone = outcomeTone(outcome);
+  if (tone === 'danger') {
+    return <XCircle className="size-6 shrink-0 text-rose-600" />;
+  }
+  if (tone === 'warning') {
+    return <Clock className="size-6 shrink-0 text-amber-600" />;
+  }
+  return <CheckCircle2 className="size-6 shrink-0 text-emerald-600" />;
+}
+
+/** The note stamped on a keypad entry, so the audit trail can tell a human
+ *  bypass from a badge read without depending on who is reading it. */
+const MANUAL_BYPASS_NOTE = 'Saisie manuelle au poste d\'accueil (élève sans badge)';
+
 export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string } = {}) {
   const t = useTranslations('Attendance');
-  const tCommon = useTranslations('Common');
-  const tStatus = useTranslations('Status');
 
-  // Academic Sections & Active Session
-  const [sections, setSections] = useState<ClassSectionOption[]>([]);
-  const [selectedSectionId, setSelectedSectionId] = useState('');
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const sessionIdRef = useRef<string | null>(null);
-  // The pairing secret of THIS terminal, if it is a paired kiosk. Kept in a ref
-  // rather than state so it never lands in a render tree or a log.
-  const deviceSecretRef = useRef<string>('');
-  const [sessionStarting, setSessionStarting] = useState(false);
-  const [sessionError, setSessionError] = useState<string | null>(null);
+  // Every effect below reads the translator through this ref instead of
+  // depending on it. `useTranslations` is not contractually stable across
+  // renders, and an effect that depends on it can re-arm on every render:
+  // for the bootstrap that would be an endless open-session loop, and for the
+  // journal an interval that never lives long enough to fire.
+  const tRef = useRef(t);
+  tRef.current = t;
 
-  // Hardware & Capture Modes
-  const [scanMode, setScanMode] = useState<'camera' | 'usb'>('camera');
+  const [target, setTarget] = useState<ScanTarget | null>(null);
+  const [bootState, setBootState] = useState<'loading' | 'ready' | 'no-lesson' | 'failed'>('loading');
+  const bootStateRef = useRef(bootState);
+  bootStateRef.current = bootState;
+  const [bootError, setBootError] = useState<string | null>(null);
+  const [retryTick, setRetryTick] = useState(0);
+
+  // Admin-only surfaces. Default false so a failed role lookup hides privileged
+  // controls rather than showing them to whoever is at the keyboard.
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
+  const [occurrencesState, setOccurrencesState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [overrideSlotId, setOverrideSlotId] = useState('');
+  const [overrideError, setOverrideError] = useState<string | null>(null);
+
+  // Terminal identity. The secret lives in a ref, never in state, so it cannot
+  // reach a render tree, a log or a crash report.
+  const deviceSecretRef = useRef('');
+  const [devicePaired, setDevicePaired] = useState(false);
+  const [deviceRoom, setDeviceRoom] = useState<string | null>(null);
+  const [deviceSecretInput, setDeviceSecretInput] = useState('');
+
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [cameraEnabled, setCameraEnabled] = useState(false);
   const [cameraFacing, setCameraFacing] = useState<'environment' | 'user'>('environment');
-  const [cameraActive, setCameraActive] = useState(true);
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [soundEnabled, setSoundEnabled] = useState(true);
 
-  // Inputs
-  const [rawTokenInput, setRawTokenInput] = useState('');
-  const [keypadInput, setKeypadInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [wedgeInput, setWedgeInput] = useState('');
+  const [lastScan, setLastScan] = useState<LastScan | null>(null);
+  const [journal, setJournal] = useState<JournalEntry[]>([]);
+  const [rosterCount, setRosterCount] = useState<number | null>(null);
+  const [campusCounters, setCampusCounters] = useState<CampusCounters | null>(null);
+  const [headcount, setHeadcount] = useState<Headcount | null>(null);
 
-  // Results & Feeds
-  const [lastScan, setLastScan] = useState<UnifiedScanEvent | null>(null);
-  const [events, setEvents] = useState<UnifiedScanEvent[]>([]);
-  const [emergencyLockdown, setEmergencyLockdown] = useState(false);
-  const [onsiteHeadcount, setOnsiteHeadcount] = useState<OnsiteHeadcount | null>(null);
-  const [headcountError, setHeadcountError] = useState(false);
+  const [keypadInput, setKeypadInput] = useState('');
+  const [manualState, setManualState] = useState<'idle' | 'searching'>('idle');
+  const [manualMessage, setManualMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
 
-  // References
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const usbInputRef = useRef<HTMLInputElement>(null);
-  const lastScannedTokenRef = useRef<{ token: string; time: number } | null>(null);
-  const scanningLoopRef = useRef<boolean>(false);
+  const scanningRef = useRef(false);
+  const wedgeRef = useRef<HTMLInputElement | null>(null);
+  const lastTokenRef = useRef<{ token: string; at: number } | null>(null);
+  const targetRef = useRef<ScanTarget | null>(null);
+  const processingRef = useRef(false);
+  const soundRef = useRef(true);
+  // True once a session is resolved, so a periodic re-check does not blank a
+  // screen that is already serving a queue at the door.
+  const hasTargetRef = useRef(false);
 
-  const [classRosterCount, setClassRosterCount] = useState<number | null>(null);
-  const [deviceSecretInput, setDeviceSecretInput] = useState('');
-  const [devicePaired, setDevicePaired] = useState(false);
+  useEffect(() => {
+    targetRef.current = target;
+  }, [target]);
+  useEffect(() => {
+    processingRef.current = isProcessing;
+  }, [isProcessing]);
+  useEffect(() => {
+    soundRef.current = soundEnabled;
+  }, [soundEnabled]);
 
-  // A paired terminal remembers its secret between reloads. Reading is guarded:
-  // a private window or blocked site data throws, and a scanner that will not
-  // start because localStorage is unavailable would be a worse failure.
+  /* ------------------------------------------------------------------ *
+   * Who is at the keyboard. An admin sees the terminal settings and the
+   * lesson override; an operator sees neither. Read from the server, never
+   * computed from anything the client holds.
+   * ------------------------------------------------------------------ */
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/portal/me')
+      .then(res => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (cancelled || !json?.success) {
+          return;
+        }
+        const role = json.data?.role;
+        setIsAdmin(role === 'school_admin' || role === 'super_admin');
+      })
+      .catch(() => { /* stays non-admin */ });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /* ------------------------------------------------------------------ *
+   * Terminal pairing, read once from storage. A private window or blocked
+   * site data throws on read; an unpaired terminal is a working terminal,
+   * so this never blocks the screen.
+   * ------------------------------------------------------------------ */
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem('schoolos.deviceSecret') ?? '';
@@ -161,297 +416,644 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
     deviceSecretRef.current = secret;
     setDevicePaired(secret.length > 0);
     setDeviceSecretInput('');
+    setOverrideSlotId('');
+    // The terminal's identity just changed, so what it is pointing at has to be
+    // resolved again from scratch rather than kept.
+    hasTargetRef.current = false;
+    setRetryTick(n => n + 1);
   }
 
-  // FIXED KIOSK MODE. A paired terminal asks the server what it should be
-  // scanning, derived from its own campus and room against the timetable. The
-  // operator does not pick a class — the device already knows where it is.
-  const [kioskSession, setKioskSession] = useState<{
-    classSectionId: string;
-    subjectName: string | null;
-    className: string | null;
-    sectionName: string | null;
-    startTime: string;
-    endTime: string;
-    room: string | null;
-  } | null>(null);
+  /* ------------------------------------------------------------------ *
+   * BOOTSTRAP. Open (or reuse) the right session without asking the
+   * operator anything. Reused for the whole day, so a reload cannot split
+   * one terminal's counters in two.
+   * ------------------------------------------------------------------ */
 
-  useEffect(() => {
-    const secret = deviceSecretRef.current;
-    if (!secret) {
-      setKioskSession(null);
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      try {
-        const res = await fetch(`/api/attendance/kiosk/current-session?deviceSecret=${encodeURIComponent(secret)}`);
-        const json = await res.json();
-        // null is a normal answer: no lesson here right now.
-        if (!cancelled) {
-          setKioskSession(json?.data?.session ?? null);
-        }
-      } catch {
-        // A kiosk that cannot reach the timetable shows "no lesson", not an error.
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [devicePaired]);
-
-  // Fetch Class Sections on load
-  const [sectionsError, setSectionsError] = useState<string | null>(null);
-  const loadSections = useCallback(() => {
-    setSectionsError(null);
-    fetch('/api/academics/class-sections')
-      .then(res => res.json())
-      .then(json => {
-        if (json.success && Array.isArray(json.data)) {
-          setSections(json.data);
-          setSelectedSectionId(prev => prev || json.data[0]?.id || '');
-        } else {
-          setSectionsError(json?.error?.message || 'Impossible de charger les classes.');
-        }
-      })
-      .catch(() => setSectionsError('Erreur réseau : impossible de charger les classes.'));
-  }, []);
-
-  useEffect(() => {
-    loadSections();
-  }, [loadSections]);
-
-  // Fetch student roster size for selected class
-  const [rosterError, setRosterError] = useState<string | null>(null);
-  const [rosterRetry, setRosterRetry] = useState(0);
-  useEffect(() => {
-    if (!selectedSectionId) {
-      setClassRosterCount(null);
-      return;
-    }
-    setRosterError(null);
-    fetch(`/api/students?classSectionId=${selectedSectionId}`)
-      .then(res => res.json())
-      .then(json => {
-        if (json.success && Array.isArray(json.data)) {
-          // The authoritative roster size is the API's `total` (all students in
-          // the section), NOT the fetched page length — the call is paginated
-          // and data.length would cap the meter at one page
-          // (audit 2026-09-22, P1-4).
-          setClassRosterCount(typeof json.total === 'number' ? json.total : json.data.length);
-        } else {
-          setRosterError(json?.error?.message || 'Impossible de charger l\'effectif de la classe.');
-        }
-      })
-      .catch(() => setRosterError('Erreur réseau : impossible de charger l\'effectif.'));
-  }, [selectedSectionId, rosterRetry]);
-
-  // Fetch Initial Event History
-  const fetchRecentEvents = useCallback(async () => {
+  /** Opens or reuses a session. Returns null and records the failure otherwise. */
+  const openSession = useCallback(async (body: { slotId?: string }) => {
     try {
-      const endpoint = sessionIdRef.current
-        ? `/api/attendance/qr/scanner-sessions/${sessionIdRef.current}/events`
-        : `/api/attendance/qr/events?from=${new Date().toISOString().slice(0, 10)}`;
-      const res = await fetch(endpoint);
-      const json = await res.json();
-      if (json.success && Array.isArray(json.data)) {
-        const mapped: UnifiedScanEvent[] = json.data.slice(0, 30).map((item: any) => ({
-          id: item.id || `ev-${Math.random()}`,
-          scannedAt: item.scannedAt
-            ? new Date(item.scannedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-            : new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-          resultStatus: item.resultStatus || 'accepted',
-          rejectionReason: item.rejectionReason,
-          stagedStatus: item.stagedStatus || (item.resultStatus === 'accepted' ? 'present' : null),
-          studentName: item.studentName || item.student?.name || 'Élève',
-          matricule: item.matricule || item.student?.matricule || '—',
-          className: item.className || '—',
-          guardianName: item.guardianName ?? null,
-          guardianCin: item.guardianCin ?? null,
-          smsDispatched: Boolean(item.smsDispatched),
-        }));
-        setEvents(mapped);
-      }
-    } catch {
-      // best-effort polling
-    }
-  }, []);
-
-  const fetchOnsiteHeadcount = useCallback(async () => {
-    try {
-      const response = await fetch('/api/attendance/onsite', { cache: 'no-store' });
-      const body = await response.json();
-      if (!response.ok || !body.success) throw new Error('Headcount unavailable');
-      setOnsiteHeadcount(body.data);
-      setHeadcountError(false);
-    } catch {
-      setHeadcountError(true);
-      setOnsiteHeadcount(null);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchRecentEvents();
-    const interval = setInterval(fetchRecentEvents, 4000);
-    return () => clearInterval(interval);
-  }, [fetchRecentEvents]);
-
-  useEffect(() => {
-    fetchOnsiteHeadcount();
-    const interval = setInterval(fetchOnsiteHeadcount, 30000);
-    return () => clearInterval(interval);
-  }, [fetchOnsiteHeadcount]);
-
-  // Keep USB scanner input focused in USB mode
-  useEffect(() => {
-    if (scanMode !== 'usb') return;
-    const focusTimer = setInterval(() => {
-      if (document.activeElement !== usbInputRef.current) {
-        usbInputRef.current?.focus();
-      }
-    }, 1000);
-    usbInputRef.current?.focus();
-    return () => clearInterval(focusTimer);
-  }, [scanMode]);
-
-  // Close Session helper
-  const closeCurrentSession = useCallback(async (id: string | null) => {
-    if (!id) return;
-    try {
-      await fetch(`/api/attendance/qr/scanner-sessions/${id}/close`, { method: 'POST' });
-    } catch {
-      // best effort
-    }
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      closeCurrentSession(sessionIdRef.current);
-    };
-  }, [closeCurrentSession]);
-
-  // Start Scanner Session
-  const handleStartSession = async () => {
-    if (!selectedSectionId) return;
-    try {
-      setSessionStarting(true);
-      setSessionError(null);
       const res = await fetch('/api/attendance/qr/scanner-sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ classSectionId: selectedSectionId }),
+        body: JSON.stringify(body),
       });
       const json = await res.json();
-      if (!res.ok || !json.success) {
-        setSessionError(json.error?.message || t('sessionStartError'));
+      if (!res.ok || !json?.success) {
+        setBootError(json?.error?.message || tRef.current('scanSessionFailed'));
+        setBootState('failed');
+        return null;
+      }
+      return { sessionId: json.data?.id as string, mode: json.mode as ScannerMode };
+    } catch {
+      setBootError(tRef.current('sessionNetworkError'));
+      setBootState('failed');
+      return null;
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    // Only blank the screen when there is nothing to show yet, and never while
+    // a failure is on display: a terminal that cannot reach the server should
+    // keep saying so, not blink between "loading" and "failed" every retry.
+    if (!hasTargetRef.current && bootStateRef.current !== 'failed') {
+      setBootState('loading');
+      setBootError(null);
+    }
+
+    void (async () => {
+      const secret = deviceSecretRef.current;
+      let kiosk: { bound: boolean; device?: { roomLabel: string | null }; session: KioskLesson | null } | null = null;
+
+      if (secret) {
+        try {
+          const res = await fetch(`/api/attendance/kiosk/current-session?deviceSecret=${encodeURIComponent(secret)}`);
+          const json = await res.json();
+          if (json?.success) {
+            kiosk = json.data;
+          }
+        } catch {
+          // A kiosk that cannot reach the timetable falls back to the gate below
+          // rather than blocking. Entrance scanning records arrivals and writes
+          // no lesson mark at all, so this degradation cannot corrupt a register;
+          // refusing to scan until the timetable answers would take the door
+          // offline over a read that will succeed on the next check.
+        }
+      }
+      if (cancelled) {
         return;
       }
-      setSessionId(json.data.id);
-      sessionIdRef.current = json.data.id;
-      fetchRecentEvents();
-    } catch {
-      setSessionError(t('sessionNetworkError'));
-    } finally {
-      setSessionStarting(false);
-    }
-  };
 
-  const handleEndSession = async () => {
-    const id = sessionIdRef.current;
-    await closeCurrentSession(id);
-    setSessionId(null);
-    sessionIdRef.current = null;
-    fetchRecentEvents();
-  };
+      const roomLabel = kiosk?.device?.roomLabel ?? null;
+      setDeviceRoom(roomLabel);
 
-  // Main Token Processor
-  const processToken = useCallback(async (token: string) => {
-    const trimmed = token.trim();
-    if (!trimmed || isProcessing) return;
+      // A terminal paired WITH a room is a classroom station. No lesson there
+      // right now is a normal state, not a failure: say so and wait.
+      if (secret && kiosk?.bound && roomLabel) {
+        const lesson = kiosk.session;
+        if (!lesson?.slotId) {
+          hasTargetRef.current = false;
+          setTarget(null);
+          setBootState('no-lesson');
+          return;
+        }
+        const opened = await openSession({ slotId: lesson.slotId });
+        if (cancelled) {
+          return;
+        }
+        if (!opened) {
+          return;
+        }
+        hasTargetRef.current = true;
+        setTarget({
+          mode: 'classroom',
+          sessionId: opened.sessionId,
+          slotId: lesson.slotId,
+          classSectionId: lesson.classSectionId ?? null,
+          subjectName: lesson.subjectName ?? null,
+          className: lesson.className ?? null,
+          sectionName: lesson.sectionName ?? null,
+          room: lesson.room ?? roomLabel,
+          startTime: lesson.startTime ?? null,
+          endTime: lesson.endTime ?? null,
+          source: 'kiosk',
+        });
+        setBootState('ready');
+        return;
+      }
 
-    // Debounce rapid duplicate scans (within 2.5 seconds)
-    const now = Date.now();
-    if (lastScannedTokenRef.current && lastScannedTokenRef.current.token === trimmed && now - lastScannedTokenRef.current.time < 2500) {
+      // Unpaired, or paired without a room: the gate. Any student of the school.
+      const opened = await openSession({});
+      if (cancelled) {
+        return;
+      }
+      if (!opened) {
+        return;
+      }
+      hasTargetRef.current = true;
+      setTarget({
+        mode: 'entrance',
+        sessionId: opened.sessionId,
+        slotId: null,
+        classSectionId: null,
+        subjectName: null,
+        className: null,
+        sectionName: null,
+        room: null,
+        startTime: null,
+        endTime: null,
+        source: 'entrance',
+      });
+      setBootState('ready');
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [retryTick, openSession]);
+
+  /**
+   * The screen PROMISES that a room-bound terminal resumes on its own at the
+   * next lesson ("le pointage reprendra automatiquement"). That claim has to be
+   * true, so the bootstrap re-runs on a timer: every 30 seconds while waiting
+   * for a lesson, every 5 minutes otherwise so a terminal paired mid-morning
+   * picks up the new lesson without a reload.
+   *
+   * Re-running is safe: opening a session is an upsert that reuses the day's
+   * already-open one, so this cannot split a terminal's counters or open a
+   * second session.
+   */
+  useEffect(() => {
+    if (bootState === 'loading') {
       return;
     }
-    lastScannedTokenRef.current = { token: trimmed, time: now };
+    // A gate that failed retries on its own; so does a room waiting for its
+    // next lesson. A working terminal re-resolves less often, so a queued scan
+    // is never interrupted for a check that changes nothing.
+    const delay = bootState === 'ready' ? 300000 : 30000;
+    const id = setInterval(() => setRetryTick(n => n + 1), delay);
+    return () => clearInterval(id);
+  }, [bootState]);
+
+  /* ------------------------------------------------------------------ *
+   * The terminal's own journal. Server-owned: this list IS the counter
+   * source for "Ce terminal", so a reload, a second tab or a colleague at
+   * the same desk cannot make it disagree with the database.
+   * ------------------------------------------------------------------ */
+  const sessionId = target?.sessionId ?? null;
+
+  useEffect(() => {
+    if (!sessionId) {
+      setJournal([]);
+      return;
+    }
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/attendance/qr/scanner-sessions/${sessionId}/events`);
+        const json = await res.json();
+        if (cancelled || !json?.success || !Array.isArray(json.data)) {
+          return;
+        }
+        setJournal(json.data.map((item: {
+          id: string;
+          scannedAt: string;
+          resultStatus: string;
+          rejectionReason: string | null;
+          stagedStatus: string | null;
+          studentName: string | null;
+        }) => ({
+          id: item.id,
+          at: item.scannedAt,
+          outcome: toOutcome(item.resultStatus, item.stagedStatus),
+          studentName: item.studentName ?? tRef.current('unknownStudent'),
+          className: null,
+          reason: item.rejectionReason ?? null,
+        })));
+      } catch {
+        // Best effort. The next tick tries again.
+      }
+    };
+
+    void load();
+    const interval = setInterval(() => {
+      void load();
+    }, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [sessionId]);
+
+  /* ------------------------------------------------------------------ *
+   * Campus-wide numbers. These come from SERVER aggregate counts, not from
+   * a client array, so "Tous les terminaux" cannot silently cap out. Kept
+   * in a separate scope from the terminal's own numbers and labelled as
+   * such, because two different questions read as a contradiction when
+   * their scopes are not named.
+   * ------------------------------------------------------------------ */
+  useEffect(() => {
+    let cancelled = false;
+    const today = casablancaTodayIso();
+
+    const load = async () => {
+      try {
+        const [eventsRes, onsiteRes] = await Promise.all([
+          fetch(`/api/attendance/qr/events?from=${today}&to=${today}`),
+          fetch('/api/attendance/onsite', { cache: 'no-store' }),
+        ]);
+        const eventsJson = await eventsRes.json();
+        const onsiteJson = await onsiteRes.json();
+        if (cancelled) {
+          return;
+        }
+        if (eventsJson?.success && eventsJson.aggregates) {
+          setCampusCounters({
+            accepted: eventsJson.aggregates.accepted ?? 0,
+            rejected: eventsJson.aggregates.rejected ?? 0,
+            alreadyScanned: eventsJson.aggregates.alreadyScanned ?? 0,
+          });
+        } else {
+          setCampusCounters(null);
+        }
+        setHeadcount(onsiteJson?.success ? onsiteJson.data : null);
+      } catch {
+        if (!cancelled) {
+          setCampusCounters(null);
+          setHeadcount(null);
+        }
+      }
+    };
+
+    void load();
+    const interval = setInterval(() => {
+      void load();
+    }, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [sessionId]);
+
+  /* ------------------------------------------------------------------ *
+   * Roll-call meter. Classroom only, and both numbers come from the SAME
+   * scope: the scans this lesson's terminal recorded, over that lesson's
+   * own roster. An entrance terminal has no roster to divide by, so it
+   * shows none rather than dividing a session count by a campus count.
+   * ------------------------------------------------------------------ */
+  useEffect(() => {
+    const sectionId = target?.classSectionId;
+    if (target?.mode !== 'classroom' || !sectionId) {
+      setRosterCount(null);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/students?classSectionId=${sectionId}`)
+      .then(res => res.json())
+      .then((json) => {
+        if (cancelled) {
+          return;
+        }
+        // `total` is the whole section; `data.length` is one page.
+        setRosterCount(json?.success ? (typeof json.total === 'number' ? json.total : json.data?.length ?? null) : null);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRosterCount(null);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [target?.mode, target?.classSectionId]);
+
+  /** Today's lessons, for the admin override. Loaded on demand. */
+  const loadOccurrences = useCallback(async () => {
+    setOccurrencesState('loading');
+    try {
+      const res = await fetch('/api/attendance/day');
+      const json = await res.json();
+      if (!json?.success) {
+        setOccurrencesState('error');
+        return;
+      }
+      const sessions: Occurrence[] = (json.data?.sessions ?? [])
+        .filter((s: Occurrence & { state?: string }) => s.slotId && s.state !== 'ANNULE')
+        .map((s: Occurrence) => ({
+          slotId: s.slotId,
+          period: s.period ?? null,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          subjectName: s.subjectName ?? null,
+          className: s.className ?? null,
+          sectionName: s.sectionName ?? null,
+          room: s.room ?? null,
+          classSectionId: s.classSectionId ?? null,
+        }));
+      setOccurrences(sessions);
+      setOccurrencesState('ready');
+    } catch {
+      setOccurrencesState('error');
+    }
+  }, []);
+
+  /**
+   * An admin picks a lesson, not a class: a section alone cannot tell a 14:00
+   *  badge from an 08:00 one. The session is bound to the chosen occurrence, so
+   *  every scan under the override is recorded against that lesson and appears
+   *  in the audit trail with its slot.
+   */
+  const applyOverride = useCallback(async (slotId: string) => {
+    setOverrideError(null);
+    if (!slotId) {
+      setOverrideSlotId('');
+      setRetryTick(n => n + 1);
+      return;
+    }
+    const occurrence = occurrences.find(o => o.slotId === slotId);
+    if (!occurrence) {
+      return;
+    }
+
+    const opened = await openSession({ slotId });
+    if (!opened) {
+      // openSession already parked the failure in the header, which is where
+      // the operator is looking; this line names the override specifically.
+      setOverrideError(tRef.current('scanSessionFailed'));
+      return;
+    }
+
+    setOverrideSlotId(slotId);
+    hasTargetRef.current = true;
+    setTarget({
+      mode: 'classroom',
+      sessionId: opened.sessionId,
+      slotId,
+      classSectionId: occurrence.classSectionId,
+      subjectName: occurrence.subjectName,
+      className: occurrence.className,
+      sectionName: occurrence.sectionName,
+      room: occurrence.room,
+      startTime: occurrence.startTime,
+      endTime: occurrence.endTime,
+      source: 'override',
+    });
+    setBootState('ready');
+  }, [occurrences, openSession]);
+
+  /* ------------------------------------------------------------------ *
+   * A badge read. The server resolves the lesson and decides the mode; this
+   * component only reports what came back.
+   * ------------------------------------------------------------------ */
+  const processToken = useCallback(async (rawToken: string) => {
+    if (processingRef.current) {
+      return;
+    }
+    const trimmed = rawToken.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    // A wedge can deliver the same code twice in one burst.
+    const now = Date.now();
+    if (lastTokenRef.current && lastTokenRef.current.token === trimmed && now - lastTokenRef.current.at < 2500) {
+      return;
+    }
+    lastTokenRef.current = { token: trimmed, at: now };
 
     setIsProcessing(true);
-    const timeStr = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
     try {
-      const activeSession = sessionIdRef.current;
+      const active = targetRef.current;
       const res = await fetch('/api/attendance/qr/verify-and-stage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           rawToken: trimmed,
-          sessionId: activeSession || undefined,
-          // The derived session wins over a hand-picked class: a paired kiosk
-          // scans for the lesson actually happening where it is.
-          classSectionId: kioskSession?.classSectionId ?? (selectedSectionId || undefined),
-          // Sent by a PAIRED terminal so the server can verify this device and
-          // use ITS branch. A browser operator without one still scans exactly
-          // as before — the secret is an identity, not a new requirement.
+          sessionId: active?.sessionId ?? undefined,
+          // The device's own identity, so the server can use ITS branch. A
+          // browser operator without one still scans exactly as before.
           deviceSecret: deviceSecretRef.current || undefined,
         }),
       });
-
       const json = await res.json();
+      const at = new Date().toISOString();
 
-      if (json.success) {
-        const stagedStatus = json.data?.stagedStatus || 'present';
-        const scanEv: UnifiedScanEvent = {
-          id: json.data?.scanEvent?.id || `scan-${Date.now()}`,
-          scannedAt: timeStr,
-          resultStatus: json.data?.resultStatus || 'accepted',
-          stagedStatus,
-          studentName: json.data?.student?.name || 'Élève reconnu',
-          matricule: json.data?.student?.matricule || '—',
-          className: sections.find(s => s.id === selectedSectionId)?.className || '—',
-          guardianName: json.data?.guardian?.name ?? null,
-          guardianCin: json.data?.guardian?.cin ?? null,
-          smsDispatched: Boolean(json.data?.smsDispatched),
-        };
+      if (json?.success) {
+        const data = json.data ?? {};
+        const lesson: ServerLesson | null = data.lesson ?? null;
+        const mode: ScannerMode = data.mode ?? active?.mode ?? 'entrance';
+        const late = data.stagedStatus === 'late';
+        // `arrivalOnly` is the server saying "no lesson was in window, this is
+        // an arrival and nothing else". Fall back to "no lesson returned" for
+        // an older server, which means the same thing.
+        const arrivalOnly = data.arrivalOnly ?? !lesson;
 
-        setLastScan(scanEv);
-        setEvents(prev => [scanEv, ...prev]);
-        fetchOnsiteHeadcount();
-        if (soundEnabled) playBeep(stagedStatus === 'late' ? 'late' : 'accepted');
+        setLastScan({
+          id: data.scanEvent?.id ?? `scan-${now}`,
+          at,
+          outcome: data.resultStatus === 'already_scanned' ? 'already' : late ? 'late' : arrivalOnly ? 'arrival-only' : 'arrived',
+          studentName: data.student?.name ?? tRef.current('studentRecognized'),
+          studentImage: data.student?.image ?? null,
+          className: mode === 'classroom' ? active?.className ?? null : null,
+          lesson,
+          reason: null,
+        });
+        if (soundRef.current) {
+          playBeep(late ? 'late' : 'accepted');
+        }
       } else {
-        const errorMsg = json.error?.message || json.message || t('badgeNotRecognizedClass');
-        const rejectedEv: UnifiedScanEvent = {
-          id: `rej-${Date.now()}`,
-          scannedAt: timeStr,
-          resultStatus: 'rejected',
-          rejectionReason: errorMsg,
-          studentName: 'Badge Invalide / Inconnu',
-          matricule: 'NON-RECONNU',
-          className: 'Accès restreint',
-          smsDispatched: false,
-        };
-        setLastScan(rejectedEv);
-        setEvents(prev => [rejectedEv, ...prev]);
-        if (soundEnabled) playBeep('rejected');
+        const code = json?.error?.code ?? '';
+        const label = rejectionLabels(t)[code];
+        setLastScan({
+          id: `rej-${now}`,
+          at,
+          outcome: 'rejected',
+          studentName: code === 'BADGE_INVALID' || code === 'INVALID_CREDENTIAL'
+            ? tRef.current('scanReasonUnknownBadge')
+            : tRef.current('scanEventRejected'),
+          studentImage: null,
+          className: null,
+          lesson: null,
+          reason: label ?? json?.error?.message ?? tRef.current('badgeNotRecognizedClass'),
+        });
+        if (soundRef.current) {
+          playBeep('rejected');
+        }
       }
     } catch {
-      const netErrorEv: UnifiedScanEvent = {
-        id: `err-${Date.now()}`,
-        scannedAt: timeStr,
-        resultStatus: 'rejected',
-        rejectionReason: t('serverUnreachable'),
-        studentName: 'Erreur Réseau',
-        matricule: 'NET-ERR',
-        className: 'Déconnecté',
-      };
-      setLastScan(netErrorEv);
-      if (soundEnabled) playBeep('rejected');
+      setLastScan({
+        id: `err-${now}`,
+        at: new Date().toISOString(),
+        outcome: 'rejected',
+        studentName: tRef.current('scanEventRejected'),
+        studentImage: null,
+        className: null,
+        lesson: null,
+        reason: tRef.current('serverUnreachable'),
+      });
+      if (soundRef.current) {
+        playBeep('rejected');
+      }
     } finally {
       setIsProcessing(false);
     }
-  }, [isProcessing, sections, selectedSectionId, soundEnabled, t, fetchOnsiteHeadcount]);
+  }, []);
 
-  // Camera Management
+  /* ------------------------------------------------------------------ *
+   * The emergency path: a student with no badge. This is a MANUAL mark by a
+   * named human, not a badge read, and it is recorded as one (no scan event,
+   * the operator's id on the row). It needs the student's own class and the
+   * period of the lesson actually running, and it refuses rather than writing
+   * a presence into an arbitrary period when no lesson is on.
+   * ------------------------------------------------------------------ */
+  const submitManualMatricule = useCallback(async (raw: string) => {
+    const term = raw.trim();
+    if (!term || processingRef.current) {
+      return;
+    }
+    setIsProcessing(true);
+    setManualState('searching');
+    setManualMessage(null);
+
+    try {
+      const studentRes = await fetch(`/api/students?search=${encodeURIComponent(term)}`);
+      const studentJson = await studentRes.json();
+      const student = Array.isArray(studentJson?.data) ? studentJson.data[0] : null;
+      if (!student) {
+        setManualMessage({ tone: 'error', text: tRef.current('scanManualNotFound') });
+        return;
+      }
+      if (!student.classSectionId) {
+        setManualMessage({ tone: 'error', text: tRef.current('scanManualNoClass') });
+        return;
+      }
+
+      // The period this student's class is actually in right now, or the lesson
+      // an admin has explicitly chosen for this terminal.
+      const override = targetRef.current?.source === 'override' ? targetRef.current : null;
+      let period = override && override.classSectionId === student.classSectionId
+        ? occurrences.find(o => o.slotId === override.slotId)?.period ?? null
+        : null;
+
+      if (!period) {
+        const dayRes = await fetch('/api/attendance/day');
+        const dayJson = await dayRes.json();
+        const nowMinutes = schoolMinutesNow();
+        const running = (dayJson?.data?.sessions ?? []).find((s: Occurrence) => {
+          if (s.classSectionId !== student.classSectionId) {
+            return false;
+          }
+          const start = minutesOf(s.startTime);
+          const end = minutesOf(s.endTime);
+          if (start === null || end === null) {
+            return false;
+          }
+          return nowMinutes >= start - 5 && nowMinutes <= end + 15;
+        });
+        period = running?.period ?? null;
+      }
+
+      if (!period) {
+        setManualMessage({ tone: 'error', text: tRef.current('scanManualNoLesson') });
+        return;
+      }
+
+      const sectionsRes = await fetch('/api/academics/class-sections');
+      const sectionsJson = await sectionsRes.json();
+      const row = (sectionsJson?.data ?? []).find((s: { id: string; classId?: string }) => s.id === student.classSectionId);
+      if (!row?.classId) {
+        setManualMessage({ tone: 'error', text: tRef.current('scanManualNoClass') });
+        return;
+      }
+
+      const writeRes = await fetch('/api/attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: casablancaTodayIso(),
+          studentGroupId: row.classId,
+          period,
+          records: [{ studentId: student.id, status: 'present' }],
+          // Deliberately NOT a translation. This note is written into the
+          // attendance row and read back by the register and the audit trail,
+          // possibly by an administrator using another locale. An audit entry
+          // that changes wording with the reader's UI language is a worse record
+          // than one that stays in the school's operational language.
+          correctionNote: MANUAL_BYPASS_NOTE,
+        }),
+      });
+      const writeJson = await writeRes.json();
+      if (!writeRes.ok || !writeJson?.success) {
+        setManualMessage({ tone: 'error', text: writeJson?.error?.message ?? tRef.current('scanManualFailed') });
+        if (soundRef.current) {
+          playBeep('rejected');
+        }
+        return;
+      }
+
+      setLastScan({
+        id: `manual-${Date.now()}`,
+        at: new Date().toISOString(),
+        outcome: 'manual',
+        studentName: student.fullName ?? student.name ?? term,
+        studentImage: null,
+        className: student.className ?? null,
+        lesson: null,
+        reason: null,
+      });
+      setManualMessage({ tone: 'ok', text: tRef.current('scanManualDone', { name: student.fullName ?? student.name ?? term }) });
+      setKeypadInput('');
+      if (soundRef.current) {
+        playBeep('accepted');
+      }
+    } catch {
+      setManualMessage({ tone: 'error', text: tRef.current('scanManualFailed') });
+      if (soundRef.current) {
+        playBeep('rejected');
+      }
+    } finally {
+      setManualState('idle');
+      setIsProcessing(false);
+    }
+  }, [occurrences]);
+
+  /* ------------------------------------------------------------------ *
+   * THE WEDGE IS ALWAYS LISTENING. A USB scanner types into whatever has
+   * focus, so a document-level buffer catches the burst whenever the focus
+   * is NOT in a form control. That is what lets the keypad, the override
+   * select and the settings drawer stay usable: nothing steals focus on a
+   * timer, and a badge still lands while a button has focus.
+   * ------------------------------------------------------------------ */
+  useEffect(() => {
+    if (bootState !== 'ready') {
+      return;
+    }
+    let buffer = '';
+    let lastKeyAt = 0;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      const el = document.activeElement as HTMLElement | null;
+      const tag = el?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el?.isContentEditable) {
+        return;
+      }
+
+      const current = Date.now();
+      // A gap longer than a wedge burst starts a new code.
+      if (current - lastKeyAt > 300) {
+        buffer = '';
+      }
+      lastKeyAt = current;
+
+      if (event.key === 'Enter') {
+        if (buffer.length >= 3) {
+          event.preventDefault();
+          const token = buffer;
+          buffer = '';
+          void processToken(token);
+        }
+        return;
+      }
+      if (event.key.length === 1) {
+        buffer += event.key;
+      }
+      if (buffer.length > 512) {
+        buffer = '';
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [bootState, processToken]);
+
+  /* ------------------------------------------------------------------ *
+   * Camera. Off by default: a fixed terminal with a USB reader does not
+   * need a permission prompt on every load, and the camera is the optional
+   * second input, not the primary one.
+   * ------------------------------------------------------------------ */
   const stopCamera = useCallback(() => {
-    scanningLoopRef.current = false;
+    scanningRef.current = false;
     setCameraReady(false);
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
@@ -467,41 +1069,32 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
     setCameraError(null);
 
     if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-      setCameraError(t('cameraUnsupported'));
+      setCameraError(tRef.current('cameraUnsupported'));
       return;
     }
 
     try {
-      const constraints: MediaStreamConstraints = {
-        video: {
-          facingMode: cameraFacing,
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: cameraFacing, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
-      };
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      });
       streamRef.current = stream;
-
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
 
-      scanningLoopRef.current = true;
+      scanningRef.current = true;
       setCameraReady(true);
 
-      // DECODING (phase 7). BarcodeDetector is a fast native path but exists
-      // only on Chromium/Android/iOS 17+. On Windows Chrome, Firefox and desktop
-      // Safari the camera opened, the video played, and NO QR was ever read —
-      // the failure was silent because the old fallback branch was empty.
-      // jsQR decodes from a canvas and works everywhere, so it backs the native
-      // path and also covers a BarcodeDetector that throws on construction.
+      // BarcodeDetector is the fast native path but exists only on Chromium and
+      // Android; jsQR backs it and covers the browsers where the camera opened
+      // and nothing was ever decoded.
       let nativeDetector: { detect: (source: HTMLVideoElement) => Promise<{ rawValue?: string }[]> } | null = null;
-      if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
+      if ('BarcodeDetector' in window) {
         try {
-          nativeDetector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
+          const Ctor = (window as unknown as { BarcodeDetector: new (opts: { formats: string[] }) => { detect: (s: HTMLVideoElement) => Promise<{ rawValue?: string }[]> } }).BarcodeDetector;
+          nativeDetector = new Ctor({ formats: ['qr_code'] });
         } catch {
           nativeDetector = null;
         }
@@ -511,17 +1104,16 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
       const scanFrame = async () => {
-        if (!scanningLoopRef.current || !videoRef.current) {
+        if (!scanningRef.current || !videoRef.current) {
           return;
         }
         const video = videoRef.current;
-
         try {
           if (video.readyState === video.HAVE_ENOUGH_DATA) {
             if (nativeDetector) {
-              const barcodes = await nativeDetector.detect(video);
-              if (barcodes.length > 0 && barcodes[0]?.rawValue) {
-                processToken(barcodes[0].rawValue);
+              const codes = await nativeDetector.detect(video);
+              if (codes.length > 0 && codes[0]?.rawValue) {
+                void processToken(codes[0].rawValue);
               }
             } else if (ctx) {
               canvas.width = video.videoWidth;
@@ -530,688 +1122,1029 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
               const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
               const code = jsQR(frame.data, frame.width, frame.height);
               if (code?.data) {
-                processToken(code.data);
+                void processToken(code.data);
               }
             }
           }
         } catch {
-          // A dropped frame is not a failed scan; keep going.
+          // A dropped frame is not a failed scan.
         }
-
-        if (scanningLoopRef.current) {
-          requestAnimationFrame(() => { void scanFrame(); });
+        if (scanningRef.current) {
+          requestAnimationFrame(() => {
+            void scanFrame();
+          });
         }
       };
 
-      requestAnimationFrame(() => { void scanFrame(); });
+      requestAnimationFrame(() => {
+        void scanFrame();
+      });
     } catch {
       stopCamera();
-      setCameraError(t('cameraPermissionError'));
+      setCameraError(tRef.current('cameraPermissionError'));
     }
-  }, [cameraFacing, processToken, stopCamera, t]);
+  }, [cameraFacing, processToken, stopCamera]);
 
   useEffect(() => {
-    if (scanMode === 'camera' && cameraActive) {
-      startCamera();
+    if (cameraEnabled && bootState === 'ready') {
+      void startCamera();
     } else {
       stopCamera();
     }
     return () => {
       stopCamera();
     };
-  }, [scanMode, cameraActive, startCamera, stopCamera]);
+  }, [cameraEnabled, bootState, startCamera, stopCamera]);
 
-  // Handle Manual Matricule / Keypad Submission (Fallback when student forgot badge)
-  const handleManualMatriculeSubmit = async (codeToSearch?: string) => {
-    const term = (codeToSearch || keypadInput || rawTokenInput).trim();
-    if (!term || isProcessing) return;
+  /* ------------------------------------------------------------------ *
+   * Counters. "Ce terminal" is the session's own journal; "Tous les
+   * terminaux" is the school's aggregate. Each is labelled with its scope
+   * so the two can never be read as disagreeing.
+   * ------------------------------------------------------------------ */
+  const terminalCounts = useMemo(() => {
+    const accepted = journal.filter(e => e.outcome === 'arrived' || e.outcome === 'late' || e.outcome === 'arrival-only').length;
+    const late = journal.filter(e => e.outcome === 'late').length;
+    const rejected = journal.filter(e => e.outcome === 'rejected').length;
+    return { accepted, late, rejected, total: journal.length };
+  }, [journal]);
 
-    setIsProcessing(true);
-    const timeStr = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const JOURNAL_CAP = 200;
+  const journalCapped = journal.length >= JOURNAL_CAP;
 
-    try {
-      // 1. Search student in database
-      const res = await fetch(`/api/students?search=${encodeURIComponent(term)}`);
-      const json = await res.json();
+  const campusTotal = campusCounters
+    ? campusCounters.accepted + campusCounters.rejected + campusCounters.alreadyScanned
+    : null;
 
-      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-        const student = json.data[0];
+  function timeOf(iso: string): string {
+    return new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+  }
 
-        // 2. Register direct attendance in database
-        const todayStr = casablancaTodayIso();
-        const attendanceResponse = await fetch('/api/attendance', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            date: todayStr,
-            records: [{ studentId: student.id, status: 'present' }],
-          }),
-        });
-        if (!attendanceResponse.ok || !(await attendanceResponse.json()).success) {
-          throw new Error('Attendance registration failed');
-        }
+  function classLabel(className: string | null, sectionName: string | null): string | null {
+    const joined = [className, sectionName].filter(Boolean).join(' ').trim();
+    return joined.length > 0 ? joined : null;
+  }
 
-        const registeredEv: UnifiedScanEvent = {
-          id: `man-${Date.now()}`,
-          scannedAt: timeStr,
-          resultStatus: 'accepted',
-          stagedStatus: 'present',
-          studentName: student.fullName || student.name,
-          matricule: student.matricule || term,
-          className: student.className || '—',
-          guardianName: student.guardianName ?? null,
-          guardianCin: null,
-          smsDispatched: false,
-        };
-
-        setLastScan(registeredEv);
-        setEvents(prev => [registeredEv, ...prev]);
-        fetchOnsiteHeadcount();
-        setKeypadInput('');
-        setRawTokenInput('');
-        if (soundEnabled) playBeep('accepted');
-      } else {
-        // Try fallback directly as QR token
-        await processToken(term);
-        setKeypadInput('');
-        setRawTokenInput('');
-      }
-    } catch {
-      if (soundEnabled) playBeep('rejected');
-    } finally {
-      setIsProcessing(false);
+  const modeLine = (() => {
+    if (bootState === 'loading') {
+      return t('scanPreparing');
     }
-  };
+    if (bootState === 'no-lesson') {
+      return t('scanNoLessonInRoom');
+    }
+    if (bootState === 'failed') {
+      return t('scanSessionFailed');
+    }
+    if (!target || target.mode === 'entrance') {
+      return t('scanModeEntrance');
+    }
+    const klass = classLabel(target.className, target.sectionName) ?? t('scanUnknownClass');
+    const head = {
+      subject: target.subjectName ?? t('scanUnknownSubject'),
+      class: klass,
+      start: target.startTime ?? '--:--',
+      end: target.endTime ?? '--:--',
+    };
+    return target.room
+      ? t('scanModeClassroom', { room: target.room, ...head })
+      : t('scanModeClassroomNoRoom', head);
+  })();
 
-  // Metrics computation from real events
-  const acceptedCount = events.filter(e => e.resultStatus === 'accepted' && e.stagedStatus !== 'late').length;
-  const lateCount = events.filter(e => e.stagedStatus === 'late').length;
-  const rejectedCount = events.filter(e => e.resultStatus === 'rejected').length;
-  const totalScans = events.length;
+  const scanningEnabled = bootState === 'ready' && Boolean(target);
+
+  /** The one line the operator reads. Server-resolved lesson, never a guess. */
+  function arrivalLine(scan: LastScan): string {
+    if (scan.outcome === 'rejected') {
+      return scan.reason ?? t('scanReasonGeneric');
+    }
+    if (scan.outcome === 'manual') {
+      return t('scanManualTitle');
+    }
+    if (scan.outcome === 'already') {
+      return t('alreadyScannedMessage');
+    }
+    const time = timeOf(scan.at);
+    if (scan.outcome === 'late' && scan.lesson?.subject && scan.lesson.startTime) {
+      return t('scanArrivedLate', { time, subject: scan.lesson.subject, start: scan.lesson.startTime });
+    }
+    if (scan.outcome === 'arrival-only') {
+      return t('scanArrivalNoLesson');
+    }
+    return t('scanArrivedAt', { time });
+  }
+
+  const rollCallPercent = rosterCount && rosterCount > 0
+    ? Math.min(100, Math.round((terminalCounts.accepted / rosterCount) * 100))
+    : 0;
 
   return (
-    <div className="space-y-6 max-w-[1400px] mx-auto pb-16">
-      {/* Terminal identity. A paired kiosk proves which terminal it is, and the
-          server then uses ITS campus rather than anything the page claims. */}
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-xs">
-        <span className={`rounded-full px-2 py-0.5 font-bold ${devicePaired ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-          {devicePaired ? t('devicePairedLabel') : t('deviceUnpairedLabel')}
-        </span>
-        <input
-          type="password"
-          value={deviceSecretInput}
-          onChange={e => setDeviceSecretInput(e.target.value)}
-          placeholder={t('deviceSecretPlaceholder')}
-          aria-label={t('deviceSecretPlaceholder')}
-          className="h-8 min-w-[14rem] flex-1 rounded-lg border border-slate-200 px-2 text-xs text-slate-700"
-        />
-        <Button type="button" variant="outline" size="sm" className="h-8 rounded-lg" onClick={pairThisTerminal}>
-          {devicePaired ? t('deviceUnpairBtn') : t('devicePairBtn')}
-        </Button>
-      </div>
+    <div className="mx-auto max-w-[1400px] space-y-4 pb-16">
 
-      {/* Quick Ecosystem Switcher */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+      {/* WHAT THIS TERMINAL IS POINTING AT, in plain words. It is the first
+          thing on the page because it is the only thing that can be wrong in a
+          way the operator cannot see. */}
+      <header className="
+        rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-2xs
+      "
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className={`
+              flex size-11 shrink-0 items-center justify-center rounded-xl
+              ${
+    target?.mode === 'classroom'
+      ? 'bg-sos-info-soft text-[#2487B8]'
+      : `bg-sos-canvas text-[#16212B]`
+    }
+            `}
+            >
+              {target?.mode === 'classroom'
+                ? <MapPin className="size-5" />
+                : (
+                    <ScanLine className="size-5" />
+                  )}
+            </span>
+            <div className="min-w-0">
+              <p className="
+                text-[11px] font-bold tracking-wider text-slate-400 uppercase
+              "
+              >
+                {t('scanTitle')}
+              </p>
+              <h1 className="
+                truncate text-lg font-black tracking-tight text-[#16212B]
+              "
+              >
+                {modeLine}
+              </h1>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {target?.source === 'override' && (
+              <Badge variant="warning" className="gap-1">
+                <SlidersHorizontal className="size-3" />
+                {t('scanOverrideActive', { lesson: target.subjectName ?? classLabel(target.className, target.sectionName) ?? '' })}
+              </Badge>
+            )}
+            <Badge variant={devicePaired ? 'success' : 'neutral'}>
+              {devicePaired ? t('devicePairedLabel') : t('deviceUnpairedLabel')}
+            </Badge>
+            <button
+              type="button"
+              onClick={() => setSoundEnabled(v => !v)}
+              aria-pressed={soundEnabled}
+              title={soundEnabled ? t('scanSoundOn') : t('scanSoundOff')}
+              className={`
+                rounded-lg border p-2 transition-colors
+                ${
+    soundEnabled
+      ? `
+        border-emerald-200 bg-emerald-50 text-emerald-700
+        hover:bg-emerald-100
+      `
+      : `
+        border-slate-200 bg-slate-100 text-slate-400
+        hover:bg-slate-200
+      `
+    }
+              `}
+            >
+              {soundEnabled
+                ? <Volume2 className="size-4" />
+                : (
+                    <VolumeX className="size-4" />
+                  )}
+              <span className="sr-only">{soundEnabled ? t('scanSoundOn') : t('scanSoundOff')}</span>
+            </button>
+          </div>
+        </div>
+
+        {bootState === 'no-lesson' && (
+          <div className="
+            mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg
+            border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold
+            text-amber-900
+          "
+          >
+            <span className="flex items-center gap-1.5">
+              <AlertTriangle className="size-3.5 shrink-0" />
+              {t('scanNoLessonInRoomHint')}
+            </span>
+            <Button type="button" size="sm" variant="outline" className="h-7" onClick={() => setRetryTick(n => n + 1)}>
+              <RefreshCw className="size-3" />
+              {' '}
+              {t('scanRecheck')}
+            </Button>
+          </div>
+        )}
+
+        {bootState === 'failed' && (
+          <div className="
+            mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg
+            border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold
+            text-rose-900
+          "
+          >
+            <span className="flex items-center gap-1.5">
+              <AlertTriangle className="size-3.5 shrink-0" />
+              {bootError ?? t('scanSessionFailed')}
+            </span>
+            <Button type="button" size="sm" variant="outline" className="h-7" onClick={() => setRetryTick(n => n + 1)}>
+              <RefreshCw className="size-3" />
+              {' '}
+              {t('retryBtn')}
+            </Button>
+          </div>
+        )}
+      </header>
+
+      {/* The rest of the attendance workspace, and the two admin-only surfaces.
+          Both are native disclosures: no modal, no focus trap, nothing to
+          dismiss before the next scan. */}
+      <div className="flex flex-wrap items-center gap-2 text-xs">
         <Link
           href={`/${locale}/dashboard/attendance`}
-          className="px-3.5 py-1.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition-colors shrink-0 flex items-center gap-1.5 shadow-2xs"
+          className="
+            flex items-center gap-1.5 rounded-lg border border-slate-200
+            bg-white px-3 py-1.5 font-semibold text-slate-700 transition-colors
+            hover:bg-slate-50
+          "
         >
-          <Activity className="w-3.5 h-3.5 text-[#2487B8]" />
-          Feuille d'Appel
-        </Link>
-        <Link
-          href={`/${locale}/dashboard/attendance/badges`}
-          className="px-3.5 py-1.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition-colors shrink-0 flex items-center gap-1.5 shadow-2xs"
-        >
-          <QrCode className="w-3.5 h-3.5 text-[#0EA5C4]" />
-          Badges QR
+          <Activity className="size-3.5 text-[#2487B8]" />
+          {' '}
+          {t('scanLinkRollCall')}
         </Link>
         <Link
           href={`/${locale}/dashboard/attendance/qr-reports`}
-          className="px-3.5 py-1.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition-colors shrink-0 flex items-center gap-1.5 shadow-2xs"
+          className="
+            flex items-center gap-1.5 rounded-lg border border-slate-200
+            bg-white px-3 py-1.5 font-semibold text-slate-700 transition-colors
+            hover:bg-slate-50
+          "
         >
-          <History className="w-3.5 h-3.5 text-slate-500" />
-          Audit & Rapports
+          <History className="size-3.5 text-slate-500" />
+          {' '}
+          {t('scanLinkReports')}
         </Link>
         <Link
-          href={`/${locale}/dashboard/workforce/timeclock`}
-          className="px-3.5 py-1.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition-colors shrink-0 flex items-center gap-1.5 shadow-2xs"
+          href={`/${locale}/dashboard/cards/badges`}
+          className="
+            flex items-center gap-1.5 rounded-lg border border-slate-200
+            bg-white px-3 py-1.5 font-semibold text-slate-700 transition-colors
+            hover:bg-slate-50
+          "
         >
-          <Clock className="w-3.5 h-3.5 text-amber-500" />
-          Pointeuse Staff
+          <QrCode className="size-3.5 text-sos-signal" />
+          {' '}
+          {t('scanLinkBadges')}
         </Link>
-      </div>
 
-      {/* Top Station Header & Hardware Control Strip */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-sm">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0EA5C4] to-[#2487B8] flex items-center justify-center text-white shadow-md shrink-0">
-              <ScanLine className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#0EA5C4]/15 text-[#0EA5C4] border border-[#0EA5C4]/30">
-                  <ShieldCheck className="w-3.5 h-3.5" /> Station de Scan Unifiée
-                </span>
-                <span className="text-xs font-semibold text-slate-400">Caméra WebRTC + Douchette USB + Saisie Tactile</span>
-              </div>
-              <h1 className="text-xl sm:text-2xl font-black text-[#16212B] tracking-tight mt-1">
-                {t('scannerKioskTitle')}
-              </h1>
-              <p className="text-xs text-slate-500 font-medium">
-                Borne unique de pointage des badges QR, vérification d'identité et appel en temps réel.
-              </p>
-            </div>
-          </div>
-
-          {/* Quick Hardware Controls & Audio Toggle */}
-          <div className="flex items-center gap-2.5 flex-wrap">
-            {/* Capture Mode Pill */}
-            <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200/80 text-xs font-bold">
-              <button
-                type="button"
-                onClick={() => setScanMode('camera')}
-                className={`px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
-                  scanMode === 'camera' ? 'bg-white text-[#2487B8] shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Camera className="w-3.5 h-3.5" />
-                <span>Caméra Vidéo</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setScanMode('usb')}
-                className={`px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
-                  scanMode === 'usb' ? 'bg-white text-[#2487B8] shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Keyboard className="w-3.5 h-3.5" />
-                <span>Douchette USB</span>
-              </button>
-            </div>
-
-            {/* Sound Toggle */}
-            <button
-              type="button"
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              className={`p-2.5 rounded-2xl border transition-all cursor-pointer ${
-                soundEnabled
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                  : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
-              }`}
-              title={soundEnabled ? 'Bip sonore actif' : 'Bip sonore en sourdine'}
+        {isAdmin && (
+          <details
+            className="group relative"
+            onToggle={(e) => {
+              if ((e.currentTarget as HTMLDetailsElement).open && occurrencesState === 'idle') {
+                void loadOccurrences();
+              }
+            }}
+          >
+            <summary className="
+              flex cursor-pointer list-none items-center gap-1.5 rounded-lg
+              border border-slate-200 bg-white px-3 py-1.5 font-semibold
+              text-slate-700 transition-colors
+              hover:bg-slate-50
+            "
             >
-              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Academic Session Bar */}
-        <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="sm:w-72">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
-                Classe / Portique actif
+              <SlidersHorizontal className="size-3.5 text-amber-500" />
+              {t('scanOverrideSummary')}
+              <ChevronDown className="
+                size-3 transition-transform
+                group-open:rotate-180
+              "
+              />
+            </summary>
+            <div className="
+              absolute left-0 z-20 mt-2 w-80 space-y-2 rounded-xl border
+              border-slate-200 bg-white p-3 shadow-lg
+            "
+            >
+              <p className="text-[11px] font-medium text-slate-500">{t('scanOverrideHint')}</p>
+              <label
+                className="
+                  block text-[11px] font-bold tracking-wider text-slate-500
+                  uppercase
+                "
+                htmlFor="scan-override"
+              >
+                {t('scanOverrideLabel')}
               </label>
               <select
-                value={selectedSectionId}
-                disabled={!!sessionId}
-                onChange={e => setSelectedSectionId(e.target.value)}
-                className="w-full h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-[#2487B8]"
+                id="scan-override"
+                value={overrideSlotId}
+                onChange={(e) => {
+                  void applyOverride(e.target.value);
+                }}
+                disabled={occurrencesState === 'loading'}
+                className="
+                  h-9 w-full rounded-lg border border-slate-200 bg-sos-canvas/40
+                  px-2 text-xs font-semibold text-slate-800 outline-none
+                  focus:border-[#2487B8] focus:ring-2 focus:ring-[#2487B8]/20
+                "
               >
-                <option value="">Sélectionnez une classe...</option>
-                {sections.map(sec => (
-                  <option key={sec.id} value={sec.id}>
-                    {sec.className} — {sec.sectionName}
+                <option value="">{t('scanOverrideDefault')}</option>
+                {occurrences.map(o => (
+                  <option key={o.slotId} value={o.slotId}>
+                    {t('scanOverrideOption', {
+                      start: o.startTime,
+                      subject: o.subjectName ?? t('scanUnknownSubject'),
+                      class: classLabel(o.className, o.sectionName) ?? t('scanUnknownClass'),
+                    })}
                   </option>
                 ))}
               </select>
-            </div>
-
-            <div className="pt-2 sm:pt-4">
-              {sessionId ? (
-                <Button
-                  size="sm"
-                  onClick={handleEndSession}
-                  className="h-9 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs gap-1.5 shadow-xs"
-                >
-                  <Square className="w-3.5 h-3.5" /> Clôturer la Session
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  onClick={handleStartSession}
-                  disabled={!selectedSectionId || sessionStarting}
-                  className="h-9 px-4 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs gap-1.5 shadow-xs"
-                >
-                  <Play className="w-3.5 h-3.5" /> {sessionStarting ? 'Ouverture...' : 'Ouvrir la Session'}
-                </Button>
+              {occurrencesState === 'loading' && (
+                <p className="text-[11px] text-slate-500">
+                  {t('scanOverrideLoading')}
+                </p>
+              )}
+              {occurrencesState === 'error' && (
+                <p className="text-[11px] font-semibold text-rose-600">
+                  {t('scanOverrideError')}
+                </p>
+              )}
+              {occurrencesState === 'ready' && occurrences.length === 0 && (
+                <p className="text-[11px] text-slate-500">
+                  {t('scanOverrideEmpty')}
+                </p>
+              )}
+              {overrideError && (
+                <p className="text-[11px] font-semibold text-rose-600">
+                  {overrideError}
+                </p>
               )}
             </div>
-          </div>
+          </details>
+        )}
 
-          <div className="flex items-center gap-3">
-            <Badge className={`text-xs px-3 py-1 font-bold border-none ${
-              sessionId ? 'bg-emerald-500/15 text-emerald-700' : 'bg-slate-100 text-slate-600'
-            }`}>
-              {sessionId ? '● Session Enregistrée en Base' : '○ Mode Libre / Portique'}
-            </Badge>
-          </div>
-        </div>
-
-        {(sectionsError || rosterError) && (
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold">
-            <span className="flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-              {sectionsError ?? rosterError}
-            </span>
-            <button
-              type="button"
-              onClick={() => (sectionsError ? loadSections() : setRosterRetry(n => n + 1))}
-              className="px-2.5 py-1 rounded-lg bg-white border border-amber-300 font-bold text-amber-900 hover:bg-amber-50 transition-colors cursor-pointer"
+        {isAdmin && (
+          <details className="group relative">
+            <summary className="
+              flex cursor-pointer list-none items-center gap-1.5 rounded-lg
+              border border-slate-200 bg-white px-3 py-1.5 font-semibold
+              text-slate-700 transition-colors
+              hover:bg-slate-50
+            "
             >
-              Réessayer
-            </button>
-          </div>
-        )}
-
-        {/* Dynamic Class Roll-Call Meter (When a class is selected) */}
-        {classRosterCount !== null && classRosterCount > 0 && (
-          <div className="mt-4 pt-3 border-t border-slate-100 space-y-1.5">
-            <div className="flex justify-between text-xs font-bold">
-              <span className="text-slate-600">Avancement de l'appel pour cette classe</span>
-              <span className="text-[#2487B8]">
-                {acceptedCount} / {classRosterCount} élèves scannés ({Math.min(100, Math.round((acceptedCount / classRosterCount) * 100))}%)
-              </span>
-            </div>
-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
-              <div
-                className="h-full bg-gradient-to-r from-[#2487B8] to-[#0EA5C4] rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(100, Math.round((acceptedCount / classRosterCount) * 100))}%` }}
+              <KeyRound className="size-3.5 text-slate-500" />
+              {t('scanSettingsTitle')}
+              <ChevronDown className="
+                size-3 transition-transform
+                group-open:rotate-180
+              "
               />
-            </div>
-          </div>
-        )}
+            </summary>
+            <div className="
+              absolute left-0 z-20 mt-2 w-80 space-y-3 rounded-xl border
+              border-slate-200 bg-white p-3 shadow-lg
+            "
+            >
+              <p className="text-[11px] font-medium text-slate-500">{t('scanSettingsHint')}</p>
 
-        {sessionError && (
-          <p className="text-xs font-bold text-rose-600 mt-3 flex items-center gap-1.5">
-            <AlertCircle className="w-4 h-4" /> {sessionError}
-          </p>
+              <div className="space-y-2">
+                <p className="
+                  text-[11px] font-bold tracking-wider text-slate-500 uppercase
+                "
+                >
+                  {t('scanPairingTitle')}
+                </p>
+                <p className="text-[11px] text-slate-500">{t('scanPairingHint')}</p>
+                {deviceRoom && (
+                  <p className="text-[11px] font-semibold text-[#2487B8]">
+                    {t('roomLabel')}
+                    {' '}
+                    :
+                    {' '}
+                    {deviceRoom}
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <input
+                    type="password"
+                    value={deviceSecretInput}
+                    onChange={e => setDeviceSecretInput(e.target.value)}
+                    placeholder={t('deviceSecretPlaceholder')}
+                    aria-label={t('deviceSecretPlaceholder')}
+                    className="
+                      h-9 min-w-0 flex-1 rounded-lg border border-slate-200 px-2
+                      text-xs text-slate-700 outline-none
+                      focus:border-[#2487B8] focus:ring-2
+                      focus:ring-[#2487B8]/20
+                    "
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 shrink-0"
+                    onClick={pairThisTerminal}
+                  >
+                    {devicePaired ? t('deviceUnpairBtn') : t('devicePairBtn')}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2 border-t border-slate-100 pt-3">
+                <p className="
+                  text-[11px] font-bold tracking-wider text-slate-500 uppercase
+                "
+                >
+                  {t('scanManualTitle')}
+                </p>
+                <p className="text-[11px] text-slate-500">{t('scanManualHint')}</p>
+                <div className="flex gap-2">
+                  <Input
+                    value={keypadInput}
+                    onChange={e => setKeypadInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        void submitManualMatricule(keypadInput);
+                      }
+                    }}
+                    placeholder={t('scanManualPlaceholder')}
+                    aria-label={t('scanManualPlaceholder')}
+                    className="
+                      h-9 text-center font-mono font-bold tracking-wider
+                    "
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-9 shrink-0"
+                    disabled={!keypadInput.trim() || manualState === 'searching'}
+                    onClick={() => {
+                      void submitManualMatricule(keypadInput);
+                    }}
+                  >
+                    {manualState === 'searching' ? t('scanManualSearching') : t('manualValidateBtn')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 shrink-0"
+                    disabled={!keypadInput}
+                    onClick={() => {
+                      setKeypadInput('');
+                      setManualMessage(null);
+                    }}
+                  >
+                    {t('scanManualClear')}
+                  </Button>
+                </div>
+                {/* The same keypad the counter staff already know, for a tablet
+                    with no keyboard attached. */}
+                <div className="grid grid-cols-3 gap-1.5">
+                  {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', 'OK'].map(key => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => {
+                        if (key === 'C') {
+                          setKeypadInput('');
+                          setManualMessage(null);
+                        } else if (key === 'OK') {
+                          void submitManualMatricule(keypadInput);
+                        } else {
+                          setKeypadInput(prev => prev + key);
+                        }
+                      }}
+                      className={`
+                        h-9 rounded-lg text-xs font-black transition-colors
+                        ${
+                    key === 'OK'
+                      ? `
+                        bg-[#2487B8] text-white
+                        hover:bg-sos-primary-active
+                      `
+                      : key === 'C'
+                        ? `
+                          border border-rose-200 bg-rose-50 text-rose-700
+                          hover:bg-rose-100
+                        `
+                        : `
+                          border border-slate-200 bg-slate-50 text-slate-800
+                          hover:bg-slate-100
+                        `
+                    }
+                      `}
+                    >
+                      {key === 'C' ? t('scanManualClear') : key}
+                    </button>
+                  ))}
+                </div>
+                {manualMessage && (
+                  <p className={`
+                    text-[11px] font-semibold
+                    ${manualMessage.tone === 'ok'
+                    ? `text-emerald-700`
+                    : `text-rose-600`}
+                  `}
+                  >
+                    {manualMessage.text}
+                  </p>
+                )}
+              </div>
+            </div>
+          </details>
         )}
       </div>
 
-      {/* Main Unified Split Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* LEFT COLUMN: LIVE SCANNER VIEWPORT & INSTANT RESULT CARD */}
-        <div className="lg:col-span-7 space-y-6">
-          {/* Active Scanner Viewport Card */}
-          <Card className="p-6 bg-slate-950 text-white rounded-3xl border border-slate-800 shadow-2xl relative overflow-hidden flex flex-col justify-between min-h-[460px]">
-            {/* Viewport Header */}
-            <div className="flex items-center justify-between z-10 mb-4">
+      <div className="
+        grid grid-cols-1 gap-4
+        lg:grid-cols-12 lg:items-start
+      "
+      >
+
+        {/* ------------------------------------------------ LEFT: the scan */}
+        <div className="
+          space-y-4
+          lg:col-span-7
+        "
+        >
+
+          <Card className="space-y-4 p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className={`w-2.5 h-2.5 rounded-full ${scanMode === 'camera' && !cameraReady ? 'bg-rose-500' : 'bg-emerald-500 animate-pulse'}`} />
-                <span className={`font-mono text-xs font-bold uppercase tracking-wider ${scanMode === 'camera' && !cameraReady ? 'text-rose-300' : 'text-emerald-400'}`}>
-                  {scanMode === 'camera' ? (cameraReady ? 'Viseur WebRTC actif' : 'Caméra indisponible') : 'Récepteur Douchette USB Prêt'}
+                <span className={`
+                  size-2.5 rounded-full
+                  ${scanningEnabled
+      ? `bg-emerald-500`
+      : `bg-amber-500`}
+                  motion-safe:animate-pulse
+                `}
+                />
+                <span className="
+                  font-mono text-[11px] font-bold tracking-wider text-slate-500
+                  uppercase
+                "
+                >
+                  {scanningEnabled ? t('scanListenerTitle') : t('scanPreparing')}
                 </span>
               </div>
-
-              {scanMode === 'camera' && (
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCameraFacing(prev => (prev === 'environment' ? 'user' : 'environment'))}
-                    className="h-8 text-xs rounded-xl bg-white/10 hover:bg-white/20 border-white/20 text-white gap-1.5 font-bold"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    {cameraFacing === 'environment' ? 'Caméra Arrière' : 'Caméra Avant'}
-                  </Button>
-                </div>
-              )}
+              <Button
+                type="button"
+                variant={cameraEnabled ? 'outline' : 'secondary'}
+                size="sm"
+                className="h-8"
+                onClick={() => setCameraEnabled(v => !v)}
+              >
+                {cameraEnabled
+                  ? <CameraOff className="size-3.5" />
+                  : (
+                      <Camera className="size-3.5" />
+                    )}
+                {cameraEnabled ? t('scanCameraHide') : t('scanCameraShow')}
+              </Button>
             </div>
 
-            {/* Viewport Center Surface */}
-            {scanMode === 'camera' ? (
-              <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-black/80 flex items-center justify-center border border-white/10">
+            {/* The wedge field. Present, quiet, and never focused on a timer, so
+                it cannot fight the keypad or the settings drawer for input. */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (wedgeInput.trim() && scanningEnabled) {
+                  void processToken(wedgeInput.trim());
+                }
+                setWedgeInput('');
+              }}
+              className="space-y-2"
+            >
+              <label
+                htmlFor="scan-wedge"
+                className="text-[11px] font-medium text-slate-500"
+              >
+                {t('scanListenerHint')}
+              </label>
+              <Input
+                id="scan-wedge"
+                ref={wedgeRef}
+                value={wedgeInput}
+                onChange={e => setWedgeInput(e.target.value)}
+                placeholder={t('scanListenerInputPlaceholder')}
+                aria-label={t('scanListenerInputLabel')}
+                autoComplete="off"
+                disabled={!scanningEnabled}
+                className="h-10 font-mono text-xs"
+              />
+            </form>
+
+            {cameraEnabled && (
+              <div className="
+                relative aspect-video overflow-hidden rounded-xl border
+                border-slate-800 bg-slate-950
+              "
+              >
                 <video
                   ref={videoRef}
                   playsInline
                   muted
-                  className="w-full h-full object-cover"
+                  className="size-full object-cover"
                 />
-
-                {/* Animated Targeting Overlay */}
-                <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-6">
-                  <div className="relative w-64 h-64 border-2 border-[#0EA5C4]/60 rounded-3xl shadow-[0_0_0_9999px_rgba(0,0,0,0.55)] flex items-center justify-center">
-                    {/* Corners */}
-                    <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-[#0EA5C4] rounded-tl-xl" />
-                    <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-[#0EA5C4] rounded-tr-xl" />
-                    <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-[#0EA5C4] rounded-bl-xl" />
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-[#0EA5C4] rounded-br-xl" />
-
-                    {/* Animated Scanning Line */}
-                    <div className="absolute inset-x-2 h-0.5 bg-gradient-to-r from-transparent via-[#0EA5C4] to-transparent shadow-[0_0_14px_#0EA5C4] animate-bounce" />
-                    <QrCode className="w-20 h-20 text-white/15" />
+                <div className="
+                  pointer-events-none absolute inset-0 flex items-center
+                  justify-center
+                "
+                >
+                  <div className="
+                    relative flex size-52 items-center justify-center rounded-xl
+                    border-2 border-sos-signal/60
+                  "
+                  >
+                    <div className="
+                      absolute -top-0.5 -left-0.5 size-5 rounded-tl-lg
+                      border-t-4 border-l-4 border-sos-signal
+                    "
+                    />
+                    <div className="
+                      absolute -top-0.5 -right-0.5 size-5 rounded-tr-lg
+                      border-t-4 border-r-4 border-sos-signal
+                    "
+                    />
+                    <div className="
+                      absolute -bottom-0.5 -left-0.5 size-5 rounded-bl-lg
+                      border-b-4 border-l-4 border-sos-signal
+                    "
+                    />
+                    <div className="
+                      absolute -right-0.5 -bottom-0.5 size-5 rounded-br-lg
+                      border-r-4 border-b-4 border-sos-signal
+                    "
+                    />
+                    <QrCode className="size-16 text-white/20" />
+                    {!cameraReady && !cameraError && (
+                      <span className="
+                        absolute bottom-2 font-mono text-[11px] text-white/80
+                      "
+                      >
+                        {t('scanProcessing')}
+                      </span>
+                    )}
                   </div>
-                  <p className="mt-4 text-xs font-bold text-white/90 bg-black/70 px-3.5 py-1 rounded-full backdrop-blur-md border border-white/10">
-                    Présentez le badge QR devant l'objectif
-                  </p>
                 </div>
-
+                <p className="
+                  absolute inset-x-0 bottom-0 bg-slate-950/70 py-1.5 text-center
+                  text-[11px] font-semibold text-white
+                "
+                >
+                  {t('scanCameraAim')}
+                </p>
                 {cameraError && (
-                  <div className="absolute inset-0 bg-slate-900/95 flex flex-col items-center justify-center p-6 text-center text-white">
-                    <CameraOff className="w-10 h-10 text-rose-500 mb-2" />
-                    <p className="text-xs font-bold text-rose-300 max-w-sm">{cameraError}</p>
-                    <Button
-                      size="sm"
-                      onClick={startCamera}
-                      className="mt-3 text-xs rounded-xl bg-white text-slate-900 font-bold hover:bg-slate-100"
+                  <div className="
+                    absolute inset-0 flex flex-col items-center justify-center
+                    gap-2 bg-slate-950/95 p-4 text-center
+                  "
+                  >
+                    <CameraOff className="size-8 text-rose-500" />
+                    <p className="
+                      max-w-sm text-[11px] font-semibold text-rose-300
+                    "
                     >
-                      Réessayer la caméra
+                      {cameraError}
+                    </p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-8"
+                      onClick={() => {
+                        void startCamera();
+                      }}
+                    >
+                      {t('retryBtn')}
                     </Button>
                   </div>
                 )}
-              </div>
-            ) : (
-              /* USB / Hardware Scanner Wedge Interface */
-              <div className="py-14 text-center space-y-4">
-                <div className="w-24 h-24 bg-gradient-to-br from-[#2487B8]/20 to-[#0EA5C4]/20 border-2 border-dashed border-[#0EA5C4]/40 rounded-3xl mx-auto flex items-center justify-center animate-pulse text-[#0EA5C4]">
-                  <ScanLine className="w-10 h-10" />
+                <div className="absolute top-2 right-2 flex gap-1.5">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="
+                      h-7 border-white/20 bg-white/10 text-white
+                      hover:bg-white/20
+                    "
+                    onClick={() => setCameraFacing(prev => (prev === 'environment' ? 'user' : 'environment'))}
+                  >
+                    <RefreshCw className="size-3" />
+                    {cameraFacing === 'environment' ? t('rearCamera') : t('frontCamera')}
+                  </Button>
                 </div>
-                <div>
-                  <h3 className="text-lg font-black text-white">Prêt pour Douchette USB</h3>
-                  <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1">
-                    Scannez le badge directement avec votre lecteur optique ou terminal USB. La capture est automatique.
-                  </p>
-                </div>
-
-                <form
-                  onSubmit={e => {
-                    e.preventDefault();
-                    if (rawTokenInput.trim()) {
-                      processToken(rawTokenInput.trim());
-                      setRawTokenInput('');
-                    }
-                  }}
-                  className="max-w-md mx-auto pt-2"
-                >
-                  <Input
-                    ref={usbInputRef}
-                    type="password"
-                    value={rawTokenInput}
-                    onChange={e => setRawTokenInput(e.target.value)}
-                    placeholder="En attente du signal code-barres USB..."
-                    className="h-11 text-center font-mono text-xs rounded-xl border-white/20 bg-white/10 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-[#0EA5C4]"
-                  />
-                </form>
               </div>
             )}
-
-            {/* Viewport Live Ticker Footer */}
-            <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400 font-mono">
-              <span>Scans Aujourd'hui : <strong className="text-white">{totalScans}</strong></span>
-              <span>À l'heure : <strong className="text-emerald-400">{acceptedCount}</strong></span>
-              <span>Retards : <strong className="text-amber-400">{lateCount}</strong></span>
-            </div>
           </Card>
 
-          {/* Instant Student Feedback Splash Card */}
-          <Card className="p-6 bg-white rounded-3xl border border-slate-200/90 shadow-md space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
-                Dernier Scan Validé en Temps Réel
-              </h3>
+          {/* THE RESULT. Photo, name, class where the server gave us one, and the
+              single line that says what happened. */}
+          <Card className="space-y-4 p-5">
+            <div className="
+              flex items-center justify-between border-b border-slate-100 pb-2
+            "
+            >
+              <h2 className="
+                text-[11px] font-bold tracking-wider text-slate-500 uppercase
+              "
+              >
+                {t('scanLastArrival')}
+              </h2>
               {lastScan && (
-                <span className="text-[11px] font-mono text-slate-400">
-                  Horodatage : {lastScan.scannedAt}
+                <span className="font-mono text-[11px] text-slate-400">
+                  {timeOf(lastScan.at)}
                 </span>
               )}
             </div>
 
-            {lastScan ? (
-              <div className="space-y-4 animate-in fade-in-50 duration-200">
+            {!lastScan && (
+              <p className="py-10 text-center text-xs font-medium text-slate-400">
+                {t('waitingForFirstScans')}
+              </p>
+            )}
+
+            {lastScan && (
+              <div className="space-y-3">
                 <div className="flex items-center gap-4">
-                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center font-black text-xl shadow-sm ${
-                    lastScan.resultStatus === 'accepted'
-                      ? lastScan.stagedStatus === 'late'
-                        ? 'bg-amber-500 text-white'
-                        : 'bg-[#2487B8] text-white'
-                      : 'bg-rose-500 text-white'
-                  }`}>
-                    {lastScan.studentName.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-black text-[#16212B]">{lastScan.studentName}</h4>
-                    <p className="text-xs font-mono text-slate-500">{lastScan.matricule}</p>
-                    <p className="text-xs font-bold text-[#2487B8] mt-0.5">{lastScan.className}</p>
-                  </div>
-                </div>
-
-                {/* Status Indicator Banner */}
-                <div className={`p-4 rounded-2xl flex items-center gap-3.5 ${
-                  lastScan.resultStatus === 'accepted'
-                    ? lastScan.stagedStatus === 'late'
-                      ? 'bg-amber-50 border border-amber-200 text-amber-900'
-                      : 'bg-emerald-50 border border-emerald-200 text-emerald-900'
-                    : 'bg-rose-50 border border-rose-200 text-rose-900'
-                }`}>
-                  {lastScan.resultStatus === 'accepted' ? (
-                    lastScan.stagedStatus === 'late' ? (
-                      <Clock className="w-7 h-7 text-amber-600 shrink-0" />
-                    ) : (
-                      <CheckCircle2 className="w-7 h-7 text-emerald-600 shrink-0" />
-                    )
-                  ) : (
-                    <XCircle className="w-7 h-7 text-rose-600 shrink-0" />
+                  {lastScan.studentImage && (
+                    <img
+                      src={lastScan.studentImage}
+                      alt={t('scanPhotoAlt', { name: lastScan.studentName })}
+                      className="size-16 shrink-0 rounded-xl object-cover"
+                    />
                   )}
-
-                  <div>
-                    <p className="font-extrabold text-sm">
-                      {lastScan.resultStatus === 'accepted'
-                        ? lastScan.stagedStatus === 'late'
-                          ? 'Arrivée Tardive Enregistrée'
-                          : 'Présence Validée avec Succès'
-                        : (lastScan.rejectionReason || 'Badge Refusé ou Non Enregistré')}
+                  {!lastScan.studentImage && (
+                    <span className="
+                      flex size-16 shrink-0 items-center justify-center
+                      rounded-xl bg-sos-canvas text-sos-muted
+                    "
+                    >
+                      <UserRound className="size-7" />
+                    </span>
+                  )}
+                  <div className="min-w-0">
+                    <p className="
+                      truncate text-lg font-black tracking-tight text-[#16212B]
+                    "
+                    >
+                      {lastScan.studentName}
                     </p>
-                    <p className="text-xs opacity-80 mt-0.5 font-medium">
-                      Enregistré à {lastScan.scannedAt} · Base de données synchronisée
-                    </p>
-                  </div>
-                </div>
-
-                {/* Guardian / Security Confirmation Info — only what the API confirmed */}
-                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/70 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-slate-700">
-                  <div>
-                    <span className="text-slate-400 font-medium">Tuteur légal : </span>
-                    <strong className="text-slate-800 font-bold">{lastScan.guardianName || '—'}</strong>
-                    {lastScan.guardianCin && (
-                      <span className="text-slate-500 font-mono text-[11px] ml-1.5">({lastScan.guardianCin})</span>
+                    {lastScan.className && (
+                      <p className="text-xs font-bold text-[#2487B8]">
+                        {lastScan.className}
+                      </p>
                     )}
                   </div>
-
-                  {lastScan.smsDispatched ? (
-                    <span className="inline-flex items-center gap-1.5 text-emerald-700 font-bold text-[11px] bg-emerald-100/70 px-2.5 py-1 rounded-lg">
-                      <Send className="w-3 h-3 text-emerald-600" /> SMS d'alerte délivré au parent
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 text-slate-500 font-semibold text-[11px] bg-slate-100 px-2.5 py-1 rounded-lg">
-                      <Send className="w-3 h-3 text-slate-400" /> Notification non envoyée
-                    </span>
-                  )}
                 </div>
-              </div>
-            ) : (
-              <div className="py-12 text-center text-slate-400 text-xs font-medium">
-                En attente du premier passage de badge...
+
+                <div className={`
+                  flex items-center gap-3 rounded-xl border px-4 py-3
+                  ${OUTCOME_BOX[outcomeTone(lastScan.outcome)]}
+                `}
+                >
+                  <OutcomeIcon outcome={lastScan.outcome} />
+                  <p className="text-sm font-extrabold">{arrivalLine(lastScan)}</p>
+                </div>
+
+                {/* The lesson is shown because the SERVER resolved it, and it is
+                    labelled as informational: the badge did not mark anyone present. */}
+                {lastScan.lesson?.subject && (
+                  <div className="
+                    space-y-1 rounded-xl border border-slate-200
+                    bg-sos-surface-sunken px-3 py-2
+                  "
+                  >
+                    <p className="text-xs font-semibold text-slate-700">
+                      {t('scanLessonNow', {
+                        subject: lastScan.lesson.subject,
+                        start: lastScan.lesson.startTime ?? '--:--',
+                        end: lastScan.lesson.endTime ?? '--:--',
+                      })}
+                    </p>
+                    <p className="text-[11px] text-slate-500">{t('scanLessonTeacherOwns')}</p>
+                  </div>
+                )}
               </div>
             )}
           </Card>
         </div>
 
-        {/* RIGHT COLUMN: WORKSTATION COMPANION (KEYPAD, METRICS, REAL-TIME AUDIT) */}
-        <div className="lg:col-span-5 space-y-6">
-          {/* Live Metrics Counters */}
-          <div className="grid grid-cols-3 gap-3">
-            <Card className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-xs text-center">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Présents</p>
-              <p className="text-2xl font-black text-emerald-600 mt-1">{acceptedCount}</p>
-            </Card>
-            <Card className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-xs text-center">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Retards</p>
-              <p className="text-2xl font-black text-amber-500 mt-1">{lateCount}</p>
-            </Card>
-            <Card className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-xs text-center">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rejetés</p>
-              <p className="text-2xl font-black text-rose-600 mt-1">{rejectedCount}</p>
-            </Card>
-          </div>
+        {/* ------------------------------------- RIGHT: counters and journal */}
+        <div className="
+          space-y-4
+          lg:col-span-5
+        "
+        >
 
-          {/* Quick Manual Entry & Numeric Keypad (When student forgot badge) */}
-          <Card className="p-5 bg-white rounded-3xl border border-slate-200/90 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <Keyboard className="w-4 h-4 text-[#2487B8]" />
-                <h3 className="font-extrabold text-xs text-[#16212B] uppercase tracking-wider">
-                  Saisie Rapide Matricule (Sans Badge)
-                </h3>
-              </div>
-              <Badge variant="neutral" className="text-[10px]">Secours Immédiat</Badge>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                <Input
-                  value={keypadInput}
-                  onChange={e => setKeypadInput(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') handleManualMatriculeSubmit();
-                  }}
-                  placeholder="Tapez le matricule de l'élève..."
-                  className="h-10 text-center font-mono font-bold text-sm tracking-wider rounded-xl border-slate-200 focus:ring-2 focus:ring-[#2487B8]"
-                />
-                <Button
-                  onClick={() => handleManualMatriculeSubmit()}
-                  disabled={!keypadInput.trim() || isProcessing}
-                  className="h-10 px-4 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs shrink-0"
+          <section className="
+            rounded-xl border border-slate-200 bg-white p-4 shadow-2xs
+          "
+          >
+            <h2 className="
+              mb-3 flex items-center gap-1.5 text-[11px] font-bold
+              tracking-wider text-slate-500 uppercase
+            "
+            >
+              <ScanLine className="size-3.5 text-[#2487B8]" />
+              {' '}
+              {t('scanScopeTerminal')}
+            </h2>
+            <div className="
+              grid grid-cols-2 gap-3
+              sm:grid-cols-4
+            "
+            >
+              <div>
+                <p className="
+                  text-[10px] font-bold tracking-wider text-slate-400 uppercase
+                "
                 >
-                  Valider
-                </Button>
+                  {t('scanCountArrivals')}
+                </p>
+                <p className="font-mono text-2xl font-black text-emerald-600">{terminalCounts.accepted}</p>
               </div>
-
-              {/* Tactical Numeric Touch Keypad for Tablets & Screens */}
-              <div className="grid grid-cols-3 gap-2 pt-1">
-                {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', 'OK'].map(key => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => {
-                      if (key === 'C') setKeypadInput('');
-                      else if (key === 'OK') handleManualMatriculeSubmit();
-                      else setKeypadInput(prev => prev + key);
-                    }}
-                    className={`h-10 rounded-xl font-black text-xs transition-all cursor-pointer ${
-                      key === 'OK'
-                        ? 'bg-[#2487B8] hover:bg-[#1B6C93] text-white shadow-xs'
-                        : key === 'C'
-                        ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/50'
-                        : 'bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-200/60'
-                    }`}
-                  >
-                    {key}
-                  </button>
-                ))}
+              <div>
+                <p className="
+                  text-[10px] font-bold tracking-wider text-slate-400 uppercase
+                "
+                >
+                  {t('scanCountLate')}
+                </p>
+                <p className="font-mono text-2xl font-black text-amber-500">{terminalCounts.late}</p>
+              </div>
+              <div>
+                <p className="
+                  text-[10px] font-bold tracking-wider text-slate-400 uppercase
+                "
+                >
+                  {t('scanCountRejected')}
+                </p>
+                <p className="font-mono text-2xl font-black text-rose-600">{terminalCounts.rejected}</p>
+              </div>
+              <div>
+                <p className="
+                  text-[10px] font-bold tracking-wider text-slate-400 uppercase
+                "
+                >
+                  {t('scanCountScans')}
+                </p>
+                <p className="font-mono text-2xl font-black text-[#16212B]">{terminalCounts.total}</p>
               </div>
             </div>
-          </Card>
+            {journalCapped && <p className="mt-2 text-[11px] text-slate-500">{t('scanJournalCapNotice')}</p>}
 
-          {/* Real-time Session Scans Stream */}
-          <Card className="p-5 bg-white rounded-3xl border border-slate-200/90 shadow-xs space-y-3.5">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <History className="w-4 h-4 text-[#2487B8]" />
-                <h3 className="font-extrabold text-xs text-[#16212B] uppercase tracking-wider">
-                  Journal des Scans en Direct
-                </h3>
-              </div>
-              <span className="text-[10px] font-mono text-slate-400">
-                {events.length} enregistrements
-              </span>
-            </div>
-
-            <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1">
-              {events.map(item => (
+            {/* Classroom only, and both numbers share one scope: this lesson's
+                scans over this lesson's roster. */}
+            {target?.mode === 'classroom' && rosterCount !== null && rosterCount > 0 && (
+              <div className="mt-4 space-y-1.5 border-t border-slate-100 pt-3">
+                <div className="flex justify-between text-[11px] font-bold">
+                  <span className="text-slate-600">{t('scanRollCallTitle')}</span>
+                  <span className="font-mono text-[#2487B8]">
+                    {terminalCounts.accepted}
+                    {' '}
+                    /
+                    {' '}
+                    {rosterCount}
+                  </span>
+                </div>
                 <div
-                  key={item.id}
-                  className="p-3 rounded-2xl border border-slate-100 bg-slate-50/80 hover:bg-slate-100/80 transition-colors flex items-center justify-between text-xs"
+                  role="progressbar"
+                  aria-valuenow={rollCallPercent}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={t('scanRollCallTitle')}
+                  className="
+                    h-1.5 w-full overflow-hidden rounded-full bg-slate-100
+                  "
                 >
-                  <div className="space-y-0.5">
-                    <p className="font-bold text-[#16212B]">{item.studentName}</p>
-                    <p className="text-[10px] text-slate-500 font-mono">
-                      {item.className} · {item.scannedAt}
-                    </p>
-                  </div>
+                  <div
+                    className="
+                      h-full rounded-full bg-[#2487B8] transition-[width]
+                      duration-500 ease-out
+                    "
+                    style={{ width: `${rollCallPercent}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </section>
 
-                  <Badge className={`text-[10px] font-bold border-none ${
-                    item.resultStatus === 'accepted'
-                      ? item.stagedStatus === 'late'
-                        ? 'bg-amber-500/15 text-amber-700'
-                        : 'bg-emerald-500/15 text-emerald-700'
-                      : 'bg-rose-500/15 text-rose-700'
-                  }`}>
-                    {item.resultStatus === 'accepted'
-                      ? item.stagedStatus === 'late'
-                        ? 'Retard'
-                        : 'Présent'
-                      : 'Rejeté'}
+          <section className="
+            rounded-xl border border-slate-200 bg-white p-4 shadow-2xs
+          "
+          >
+            <h2 className="
+              mb-3 flex items-center gap-1.5 text-[11px] font-bold
+              tracking-wider text-slate-500 uppercase
+            "
+            >
+              <ShieldCheck className="size-3.5 text-slate-400" />
+              {' '}
+              {t('scanScopeAll')}
+            </h2>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <p className="
+                  text-[10px] font-bold tracking-wider text-slate-400 uppercase
+                "
+                >
+                  {t('scanCountArrivals')}
+                </p>
+                <p className="font-mono text-xl font-black text-[#16212B]">{campusCounters?.accepted ?? '—'}</p>
+              </div>
+              <div>
+                <p className="
+                  text-[10px] font-bold tracking-wider text-slate-400 uppercase
+                "
+                >
+                  {t('scanCountRejected')}
+                </p>
+                <p className="font-mono text-xl font-black text-[#16212B]">{campusCounters?.rejected ?? '—'}</p>
+              </div>
+              <div>
+                <p className="
+                  text-[10px] font-bold tracking-wider text-slate-400 uppercase
+                "
+                >
+                  {t('scanCountScans')}
+                </p>
+                <p className="font-mono text-xl font-black text-[#16212B]">{campusTotal ?? '—'}</p>
+              </div>
+            </div>
+            <div className="mt-3 border-t border-slate-100 pt-3">
+              <p className="
+                text-[10px] font-bold tracking-wider text-slate-400 uppercase
+              "
+              >
+                {t('headcountOnSite')}
+              </p>
+              {headcount
+                ? (
+                    <>
+                      <p className="font-mono text-xl font-black text-[#16212B]">{headcount.headcount}</p>
+                      <p className="text-[11px] text-slate-500">
+                        {t('scanCampusDetail', { confirmed: headcount.confirmedArrivals, manual: headcount.manualUnverified })}
+                      </p>
+                    </>
+                  )
+                : (
+                    <p className="text-[11px] text-slate-500">{t('scanCampusUnavailable')}</p>
+                  )}
+            </div>
+          </section>
+
+          <Card className="space-y-3 p-4">
+            <div className="
+              flex items-center justify-between border-b border-slate-100 pb-2
+            "
+            >
+              <h2 className="
+                flex items-center gap-1.5 text-[11px] font-bold tracking-wider
+                text-slate-500 uppercase
+              "
+              >
+                <History className="size-3.5 text-[#2487B8]" />
+                {' '}
+                {t('scanJournalTitle')}
+              </h2>
+              <span className="font-mono text-[10px] text-slate-400">{journal.length}</span>
+            </div>
+
+            <div className="max-h-[320px] space-y-1.5 overflow-y-auto pr-1">
+              {journal.map(entry => (
+                <div
+                  key={entry.id}
+                  className="
+                    flex items-center justify-between gap-2 rounded-lg border
+                    border-slate-100 bg-sos-surface-sunken px-3 py-2 text-xs
+                  "
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-bold text-[#16212B]">{entry.studentName}</p>
+                    <p className="font-mono text-[10px] text-slate-500">{timeOf(entry.at)}</p>
+                  </div>
+                  <Badge
+                    variant={entry.outcome === 'rejected' ? 'danger' : entry.outcome === 'late' ? 'warning' : 'success'}
+                    className="shrink-0"
+                  >
+                    {entry.outcome === 'rejected'
+                      ? t('scanEventRejected')
+                      : entry.outcome === 'late'
+                        ? t('scanEventLate')
+                        : t('scanEventArrived')}
                   </Badge>
                 </div>
               ))}
-
-              {events.length === 0 && (
-                <p className="text-center text-slate-400 text-xs py-8">
-                  Aucun scan enregistré pour cette session.
-                </p>
+              {journal.length === 0 && (
+                <p className="py-8 text-center text-xs text-slate-400">{t('scanJournalEmpty')}</p>
               )}
             </div>
           </Card>
-
-          {/* Emergency Muster & Security Quick Action */}
-          <div className={`p-4 rounded-2xl flex items-center justify-between gap-3 transition-all ${
-            emergencyLockdown ? 'bg-rose-600 text-white shadow-lg' : 'bg-slate-900 text-white'
-          }`}>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center font-bold shrink-0">
-                {emergencyLockdown ? <Flame className="w-5 h-5 text-amber-300 animate-bounce" /> : <ShieldCheck className="w-5 h-5 text-emerald-400" />}
-              </div>
-              <div>
-                <h4 className="font-black text-xs uppercase tracking-wider text-white">
-                  {emergencyLockdown ? 'Protocole Alerte Actif' : 'Effectif & Sécurité'}
-                </h4>
-                <p className="text-[11px] text-white/80">
-                  Présence signalée : <strong className="text-white font-bold">{headcountError || !onsiteHeadcount ? 'Indisponible' : onsiteHeadcount.headcount}</strong>
-                </p>
-                {onsiteHeadcount && !headcountError && (
-                  <p className="text-[10px] text-white/70">
-                    {onsiteHeadcount.manualUnverified} présence(s) manuelle(s) à vérifier · Actualisé à {new Date(onsiteHeadcount.asOf).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <Button
-              size="sm"
-              onClick={() => setEmergencyLockdown(!emergencyLockdown)}
-              className={`h-8 text-xs font-bold rounded-xl gap-1.5 shrink-0 ${
-                emergencyLockdown
-                  ? 'bg-white text-rose-700 hover:bg-slate-100'
-                  : 'bg-rose-600 hover:bg-rose-700 text-white'
-              }`}
-            >
-              <AlertTriangle className="w-3.5 h-3.5" />
-              {emergencyLockdown ? 'Lever l\'alerte' : 'Alerte Urgence'}
-            </Button>
-          </div>
         </div>
       </div>
     </div>

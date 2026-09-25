@@ -1167,8 +1167,15 @@
     {
       "idx": 166,
       "version": "7",
-      "when": 1790365355000,
-      "tag": "0166_scanner_device_identity",
+      "when": 1790392000000,
+      "tag": "0169_scanner_device_identity",
+      "breakpoints": true
+    },
+    {
+      "idx": 167,
+      "version": "7",
+      "when": 1790393000000,
+      "tag": "0170_scanner_session_lesson_identity",
       "breakpoints": true
     }
   ]

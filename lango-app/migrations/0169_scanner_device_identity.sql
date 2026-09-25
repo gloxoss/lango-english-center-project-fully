@@ -1,4 +1,4 @@
--- 0166_scanner_device_identity.sql — A PAIRED DEVICE IS AN IDENTITY, NOT A ROW.
+-- 0169_scanner_device_identity.sql — A PAIRED DEVICE IS AN IDENTITY, NOT A ROW.
 --
 -- scanner_devices held a `secret_key` that was generated at pairing, stored in
 -- PLAIN TEXT, returned once, and then never used: no scan route authenticated a

@@ -25,8 +25,10 @@ import {
 // Phase 7: lateness is relative to the ACTUAL lesson, not one school-wide start
 // time. The clock is identical in both cases below — only the timetable differs,
 // which is the whole point. Before this, both scans were judged against 08:00.
+//
+// The status is staged on the scan event (fix-plan-02): a scan writes no mark,
+// so there is no attendance row to read it from.
 const FROZEN_NOW = new Date('2026-10-06T06:30:00.000Z'); // 07:30 Casablanca, Tuesday
-const TODAY = '2026-10-06';
 
 vi.mock('@/libs/env/server', () => ({
   serverEnv: {
@@ -151,10 +153,19 @@ describe.skipIf(!dbReachable)('QR lateness relative to the session — DB-backed
 
   async function stagedStatusFor(studentId: string) {
     const [row] = await db
-      .select({ status: attendance.status })
-      .from(attendance)
-      .where(and(eq(attendance.tenantId, tenantId), eq(attendance.studentId, studentId), eq(attendance.date, TODAY)));
-    return row?.status;
+      .select({ stagedStatus: attendanceScanEvents.stagedStatus })
+      .from(attendanceScanEvents)
+      .where(and(
+        eq(attendanceScanEvents.tenantId, tenantId),
+        eq(attendanceScanEvents.studentId, studentId),
+        eq(attendanceScanEvents.resultStatus, 'accepted'),
+      ));
+    return row?.stagedStatus;
+  }
+
+  async function attendanceRowCount() {
+    const rows = await db.select({ id: attendance.id }).from(attendance).where(eq(attendance.tenantId, tenantId));
+    return rows.length;
   }
 
   it('L7.1: the same clock is LATE for a lesson that started at 07:00', async () => {
@@ -163,6 +174,7 @@ describe.skipIf(!dbReachable)('QR lateness relative to the session — DB-backed
 
     expect(res.status).toBe(200);
     expect(await stagedStatusFor(EARLY_STUDENT)).toBe('late');
+    expect(await attendanceRowCount()).toBe(0);
   });
 
   it('L7.2: and ON TIME for a lesson that starts at 08:00 — the timetable decides, not a global 08:00', async () => {
@@ -175,5 +187,6 @@ describe.skipIf(!dbReachable)('QR lateness relative to the session — DB-backed
     // (default 08:00 + grace), so this one would also have been "present" only
     // by coincidence — and an afternoon lesson could never be on time.
     expect(await stagedStatusFor(LATE_STUDENT)).toBe('present');
+    expect(await attendanceRowCount()).toBe(0);
   });
 });

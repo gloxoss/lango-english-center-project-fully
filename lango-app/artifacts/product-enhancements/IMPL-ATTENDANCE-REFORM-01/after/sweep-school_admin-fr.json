@@ -1,0 +1,15 @@
+[
+  {
+    "route": "/dashboard/attendance/scanner",
+    "finalPath": "/fr/dashboard/attendance/scanner",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 615,
+    "failures": [
+      "console: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-uniqu",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-attendance__scanner.png"
+  }
+]

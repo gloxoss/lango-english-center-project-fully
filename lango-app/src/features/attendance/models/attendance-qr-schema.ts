@@ -1,5 +1,7 @@
+import { sql } from 'drizzle-orm';
 import {
   boolean,
+  date,
   foreignKey,
   index,
   integer,
@@ -9,6 +11,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
@@ -87,10 +90,26 @@ export const scannerSessions = pgTable('scanner_sessions', {
   deviceId: uuid('device_id'),
   operatorId: text('operator_id').notNull(),
   classSectionId: uuid('class_section_id'),
+  // LESSON IDENTITY (migration 0168). Set on a CLASSROOM session, which is bound
+  // to one occurrence (slot x date) and only accepts that lesson's section. Null
+  // on an ENTRANCE (portique) session, which accepts any student of the tenant
+  // and records a campus arrival only. This column is what tells the two apart.
+  //
+  // No Drizzle foreignKey() here on purpose: `classScheduleSlots` is declared in
+  // models/Schema.ts, which re-exports this file, so referencing it would close
+  // an import cycle. The constraint exists in the migration and in the database.
+  classScheduleSlotId: uuid('class_schedule_slot_id'),
+  date: date('date'),
   startedAt: timestamp('started_at', { mode: 'string' }).defaultNow().notNull(),
   endedAt: timestamp('ended_at', { mode: 'string' }),
   status: varchar({ length: 50 }).default('active').notNull(),
 }, table => [
+  index('scanner_sessions_slot_date_idx').on(table.tenantId, table.classScheduleSlotId, table.date),
+  // One OPEN classroom session per occurrence. Partial, so entrance sessions
+  // (null slot) and closed sessions stay unconstrained.
+  uniqueIndex('scanner_sessions_occurrence_open_unique')
+    .on(table.tenantId, table.classScheduleSlotId, table.date)
+    .where(sql`${table.classScheduleSlotId} IS NOT NULL AND ${table.status} = 'active'`),
   foreignKey({
     columns: [table.tenantId],
     foreignColumns: [tenants.id],

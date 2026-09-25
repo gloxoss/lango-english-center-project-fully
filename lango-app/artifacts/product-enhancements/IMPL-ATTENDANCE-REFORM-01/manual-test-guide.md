@@ -204,36 +204,76 @@ Expected: status becomes revoked. A revoked badge is refused by the scanner with
 Expected: the scanner refuses it with **BADGE_EXPIRED**. Before this reform an
 expired badge still wrote attendance.
 
-## 19–21 — Scanner: camera, USB and manual fallback
+## E1–E4 — Entrance (portique): badge in, and nothing else
 
 **URL:** http://localhost:3470/fr/dashboard/attendance/scanner
-**Role:** school_admin
+**Role:** school_admin, or whoever runs the gate terminal
 
-At the top there is a terminal identity strip reading **Terminal non appairé**
-with a secret field and an **Appairer** button.
+There is no class to pick and no **Ouvrir la Session** button. The page resolves
+its own mode on load and says so in the header: **Mode portique — tous les
+élèves** on an unpaired terminal, or **Salle 4 — Français · 3ème A · 11:00–11:55**
+when the terminal is paired with a room.
 
-- **19 Camera:** with a camera attached, the video should start. Decoding a real
-  QR is **NOT VERIFIED** — no camera was available during this work.
-- **20 USB:** a keyboard-wedge scanner types into the USB field and presses
-  Enter. This path is unchanged and works with any HID scanner.
-- **21 Manual matricule fallback:** if you use it, record that it bypasses the
-  credential by design and should be treated as an emergency path.
+- **E1 Arrival only, whatever the hour.** Scan one student at 07:50, the same
+  student at 10:30 (mid-lesson), and again at 12:15 (lunch). Each scan records
+  one campus arrival and **zero lesson marks** — the mid-lesson one included.
+  Check with `select count(*) from attendance where student_id='<id>'`; it must
+  not move. This is the product owner's rule: "present" means the teacher saw the
+  student in the lesson, and only the teacher can say that.
+- **E2 Second scan of the same day.** Scan a student who already arrived. The
+  card reads **déjà arrivé à 07:50**, and no second arrival is recorded.
+- **E3 Refusals.** A revoked badge, an expired badge, and a badge belonging to
+  another school are each refused with a plain French reason, and none of them
+  writes anything.
+- **E4 Counters.** *Arrivés aujourd'hui*, *Dont en retard* and *Encore attendus*
+  must agree with the arrival records, and each must show its scope so a
+  per-terminal number is never read against a campus-wide one. Scan more than 30
+  students and the day's count must still be correct — it used to be capped at 30.
 
-## 22 — Scanner: a paired terminal resolves its own lesson
+## C1–C6 — Classroom: the teacher scans, then validates
 
-**Action:** pair a terminal (see the pairing strip). Then, as school_admin, open
-http://localhost:3470/fr/dashboard/attendance/scanner
-Expected: the strip reads **Terminal appairé**. The scanner sends its secret with
-every scan, and the server uses that device's campus rather than anything the
-page claims.
-API check: `GET /api/attendance/kiosk/current-session?deviceSecret=<secret>`
-returns `bound: true` with the device's label and room, and `session: null` when
-nothing is scheduled there right now. A bogus secret returns **401**.
+**URL:** http://localhost:3470/fr/dashboard/attendance?slot=&lt;slotId&gt;&date=&lt;date&gt;
+**Role:** the lesson's own teacher, or school_admin
 
-## 23 — Scanner: wrong-class and duplicate behaviour
+Reach it from **Ma prochaine séance** on the teacher portal. The register header
+carries **Activer le scan**, offered only while the lesson is inside its window
+(opens 5 minutes before the start, closes 15 minutes after the end).
 
-- A badge for a student in another section is refused `WRONG_CLASS` (422).
-- The same badge scanned twice in one session does not create a second mark.
+- **C1 Activating binds the session to this lesson.** Activate at 14:02 for a
+  14:00 lesson. The panel shows the arrival count, and the session is bound to
+  that lesson occurrence rather than to the class. Reload the page: it must
+  reattach to the same session, not open a second one.
+- **C2 Staged, not written.** Scan a student at 14:03 → **à l'heure**. Scan
+  another at 14:12 with a 10-minute grace configured → **retard 2 min**. Then
+  look at the day: **nothing is in `attendance` yet.** This is the whole reform,
+  so verify it explicitly rather than assuming it.
+- **C3 Validating writes the marks.** **Valider l'appel** sends the reviewed list
+  through the ordinary roll-call submission. Only now do the marks exist, and
+  they must equal what was on screen, including any row the teacher changed by
+  hand and any **badge oublié** row.
+- **C4 Who may activate.** Another teacher is refused **403**. A student is
+  refused **403**. An admin may. When a session exception has replaced the
+  teacher for that lesson, the replacement **is** allowed: the occurrence
+  decides, not the timetable slot.
+- **C5 Wrong section, and repeats.** A badge from another section is refused
+  `WRONG_CLASS` **with the student's name shown to the teacher**, and is recorded
+  as a rejected scan — never silently ignored. The same badge scanned twice adds
+  no second row; the existing row flashes instead.
+- **C6 Nothing is auto-submitted.** Leave a session unvalidated past the end of
+  its window. The session closes, no marks are written, and the lesson reads
+  **À compléter** in Appel du jour. Open that lesson again later and the arrivals
+  are still there to validate — that is how a forgotten register gets completed
+  late. A cancelled lesson cannot activate scanning at all: it is not happening,
+  so there is nothing to scan into.
+
+**Run every one of E1–E4 and C1–C6 in three ways:** French desktop, phone width
+390, and Arabic RTL. A test passed in one language and one layout is not a test
+passed in the others.
+
+**Hardware, still NOT VERIFIED.** Camera decoding on a real Android and iPhone,
+and a USB keyboard-wedge scanner, remain unverified because neither was
+physically tried. Phone scanning is now on the teacher's critical path, so this
+must be done on a device before release rather than treated as optional.
 
 ## 24 — Registers & historique
 
