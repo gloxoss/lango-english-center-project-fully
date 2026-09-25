@@ -97,8 +97,23 @@ Three of the five required conditions are now met, two are not.
   qualify) and restricts slots to it; with no published version there are no
   expectations.
 - **Session has ended.** Was: no end-time check at all, so future and ongoing
-  lessons were reported as overdue. Now only slots whose `endTime` has already
-  passed in Casablanca (`casablancaTimeHm`).
+  lessons were reported as overdue.
+
+**Corrected after Agent A review — the date is classified BEFORE the clock.**
+
+The first revision compared a slot's end time against the current wall clock for
+*every* selected date, which is wrong for any date that is not today. The rule is
+now:
+
+| Selected date | Rule |
+|---|---|
+| `selectedDate < today` (Casablanca) | **every** applicable lesson has ended, whatever the clock says now |
+| `selectedDate == today` | only lessons whose `endTime <=` current Casablanca wall time may be missing |
+| `selectedDate > today` | nothing is missing — schedule preview only |
+
+Without this, a historical date would report the whole past day as "not yet
+ended", and the reminder button would offer to chase teachers about lessons from
+last week.
 
 **Not met, and not derivable from today's data:**
 
@@ -123,26 +138,81 @@ one, flagging the entire school as missing registers.
 
 This closes in phase 1 when registers carry a session reference.
 
+## 0.6 Repairing databases seeded before the fix — DONE
+
+Fixing the seed stopped *new* fabrications but left every already-seeded database
+wrong: the cache row is only rewritten when that student next gets a mark, so a
+demo database keeps its invented numbers indefinitely.
+
+`scripts/rebuild-attendance-summaries.ts` recomputes the cache from the real marks
+through the canonical helper. Audit is the default; writing requires `--apply`, and
+a production `NODE_ENV` additionally requires `--force`. It reports the target
+database, so an operator can see what they are about to rewrite.
+
+Measured against the app's real dev database (`schoolos` on 5433):
+
+```
+Groupe Scolaire Atlas — 200 students with marks
+  before: 200 rows | >100%: 32 | negative: 51 | disagreeing with marks: 200
+```
+
+Those are exactly the discovery's figures. Repair proven on a controlled fixture
+in `schoolos_audit` (9 marks including one voided; a fabricated summary with rate
+150 and `total_absent` −50):
+
+| | rows | >100% | negative | disagreeing |
+|---|---|---|---|---|
+| before | 1 | 1 | 1 | 1 |
+| after `--apply` | 1 | **0** | **0** | **0** |
+| after a second `--apply` | 1 | **0** | **0** | **0** |
+
+Rebuilt values match the canonical expectation exactly (`present 4, absent 2,
+late 1, excused 1, sessions 8, rate 75.00`), the voided mark is excluded, all 9
+attendance rows survive, and the second run is a no-op — idempotent.
+
+**The command to repair a dev/demo database:**
+
+```
+npx tsx scripts/rebuild-attendance-summaries.ts            # audit only
+npx tsx scripts/rebuild-attendance-summaries.ts --apply    # rewrite the caches
+```
+
+`schoolos` was deliberately left **unmodified** — audit only.
+
 ---
 
-## Tests added this phase (27, all passing)
+## Tests added this phase
 
 | File | Covers |
 |---|---|
 | `attendance-qr-parity-g15.test.ts` (+4) | expired badge refused and no mark written; refusal recorded as a scan event; future expiry accepted; no-expiry accepted |
-| `workforce-punches-p0.test.ts` (new, 5) | valid punch; expired refused; revoked refused; `workforce.punch` demanded; denied capability writes nothing |
-| `attendance-qr-report-scope.test.ts` (new, 5) | tenant-wide sees all; campus-limited sees own campus; teacher sees own sections; unassigned teacher sees nothing; CSV narrows identically to the list |
-| `attendance-missing-register-truth.test.ts` (new, 3) | unended lesson excluded; ended lesson reported; draft-version slots excluded |
+| `workforce-punches-p0.test.ts` (5) | valid punch; expired refused; revoked refused; `workforce.punch` demanded; denied capability writes nothing |
+| `attendance-qr-report-scope.test.ts` (5) | tenant-wide sees all; campus-limited sees own campus; teacher sees own sections; unassigned teacher sees nothing; CSV narrows identically to the list |
+| `attendance-missing-register-truth.test.ts` (10) | past date = whole day ended; today ongoing not missing; today future not missing; today ended missing; future date preview only; draft version ignored; non-effective published version ignored; effective version considered; business date is Casablanca not UTC |
+| `attendance-calendar-p0.test.ts` (fixture fix) | G12.5 restored by giving the fixture a published, effective version — not by weakening the rule |
 
 ## Suite result
 
-`attendance*`, `*qr*`, `*workforce*`, `*punch*`, `*badge*`:
-**161 passed, 1 failed.**
+24 files, **188 passed / 188**, including `attendance-calendar-p0`, which the
+earlier 161/1 run had omitted.
 
-The failure is `attendance-teacher-scope.test.ts` → "refuses the whole batch when
-any record is out of scope", in `POST /api/attendance` — a route this phase never
-touched. It **passes 3/3 in isolation** and is the same intermittent failure the
-discovery documented ("the one intermittent failure is a test flaw"). Not a
-regression from this work.
+Static gates: `npm run check:types` exit 0; `npm run check:isolation` exit 0.
 
-Static gates: `npm run check:types` exits 0 (run after each commit).
+### The teacher-scope failure, root-caused
+
+Agent A saw a 161/1 run with `attendance-teacher-scope` failing. It was **not**
+a flake, and it was **not** a production regression. The cause was in the test:
+
+```ts
+// attendance-teacher-scope.test.ts:173
+const rows = await db.select().from(attendance).where(eq(attendance.period, 3));
+```
+
+**The query has no tenant filter.** It counts period-3 attendance rows across the
+*entire database*, so it fails whenever any other tenant has one. The "flakiness"
+was data-dependent, not random: it failed 5/5 while a fixture of mine held a
+period-3 row, and passed 5/5 once that row was removed.
+
+Correction: my fixture was removed. The test's own missing tenant scope is left
+as-is (not this campaign's file) and is reported for its owner. Minimum fix if it
+recurs: add `eq(attendance.tenantId, tenantId)` to that `where`.
