@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { createEvent, listVisibleEvents } from '@/features/events/services/events-service';
+import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { requireAddon } from '@/libs/api/entitlements';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
-import { requireAddon } from '@/libs/api/entitlements';
-import { recordAudit } from '@/libs/api/audit';
 import { parseJson } from '@/libs/api/validation';
-import { createEvent, listVisibleEvents } from '@/features/events/services/events-service';
 
 const createEventSchema = z.object({
   title: z.string().trim().min(1).max(255),
@@ -22,6 +22,9 @@ const createEventSchema = z.object({
     timezone: z.string().max(64).optional(),
     recurrenceRule: z.enum(['none', 'daily', 'weekly', 'monthly']).optional(),
     recurrenceEndDate: z.string().max(40).nullable().optional(),
+  }).refine(s => s.startTime < s.endTime, {
+    message: 'La fin doit être postérieure au début.',
+    path: ['endTime'],
   })).min(1),
   venues: z.array(z.object({
     venueType: z.enum(['physical', 'online', 'hybrid']).optional(),
