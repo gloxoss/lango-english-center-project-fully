@@ -6,6 +6,7 @@ import { recalculateStudentAttendanceSummary } from '@/libs/api/attendance-summa
 import { recordAudit } from '@/libs/api/audit';
 import { computeHmacHash } from '@/libs/api/badge-crypto';
 import { isCredentialExpired } from '@/libs/api/badge-service';
+import { authenticateDevice } from '@/libs/attendance/device-auth';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
@@ -59,6 +60,10 @@ const verifyQrSchema = z.object({
   sessionId: z.string().uuid().optional(),
   period: z.number().int().min(1).max(12).optional().default(1),
   idempotencyKey: z.string().max(255).optional(),
+  // Presented by a PAIRED terminal (phase 7). Optional so a logged-in operator
+  // scanning in the browser still works, but when present the device must prove
+  // itself and its branch becomes authoritative.
+  deviceSecret: z.string().trim().min(1).optional(),
 }).strict();
 
 /**
@@ -78,6 +83,15 @@ export async function POST(request: Request) {
     const tenantId = requireTenant(context);
     await requireCapability(context, 'attendance.manage');
     const body = await parseJson(request, verifyQrSchema);
+
+    // DEVICE IDENTITY (phase 7). FIRST, before the credential is even read: a
+    // terminal that cannot prove itself has no business being told whether a
+    // badge exists. Its own branch is authoritative — a kiosk cannot widen its
+    // scope by claiming a different campus.
+    const device = body.deviceSecret
+      ? await authenticateDevice(tenantId, body.deviceSecret)
+      : null;
+    const effectiveBranchId = device?.branchId ?? context.branchId;
 
     // Compute HMAC hash of incoming raw token
     const tokenHash = computeHmacHash(body.rawToken);
@@ -193,7 +207,7 @@ export async function POST(request: Request) {
     }
 
     // BRANCH SCOPE: a branch-limited caller cannot stage marks for another campus.
-    if (context.branchId && section.branchId !== context.branchId) {
+    if (effectiveBranchId && section.branchId !== effectiveBranchId) {
       await recordRejected('WRONG_BRANCH', {
         credentialId: badge.id,
         studentId: scannedUser.id,
