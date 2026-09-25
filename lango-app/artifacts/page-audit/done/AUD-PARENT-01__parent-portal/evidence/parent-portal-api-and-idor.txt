@@ -1,0 +1,56 @@
+Guardian identity resolved: {
+  id: '299bbbe0-f75e-4c82-b117-3e9e89c56e9f',
+  tenant_id: '06ab27c5-7862-4e07-93af-49ef1935bfe6',
+  user_id: 'PARENT-001',
+  first_name: 'Tariq',
+  last_name: 'Benjelloun',
+  email: 'parent.001@atlas.ma',
+  phone: '0661998877',
+  occupation: null,
+  address: null,
+  created_at: 2026-09-22T20:49:09.338Z,
+  updated_at: 2026-09-22T20:49:09.338Z,
+  default_relation: 'Parent',
+  email_opt_in: true,
+  sms_opt_in: true,
+  preferred_language: null
+}
+Effective children count: 4
+Children: [
+  {
+    relationship_id: '10500dd0-430a-4585-a5c0-f1ea9481ca58',
+    student_id: 'STU-003',
+    name: 'Omar Tazi',
+    matricule: 'AAM-2425-0003',
+    class_name: null,
+    level: null,
+    is_primary_contact: true
+  },
+  {
+    relationship_id: '37f3e0b7-8593-4c44-ae44-f64021e4b045',
+    student_id: 'STD-13749349',
+    name: 'Salma Benjelloun',
+    matricule: 'STD-2026-0001',
+    class_name: null,
+    level: null,
+    is_primary_contact: true
+  },
+  {
+    relationship_id: 'd4e561cc-89b5-4fb7-8d0a-2108713699c4',
+    student_id: 'STD-14745779',
+    name: 'Salma Benjelloun-5728',
+    matricule: 'STD-2026-0002',
+    class_name: null,
+    level: null,
+    is_primary_contact: true
+  },
+  {
+    relationship_id: 'e58cee94-d70b-4f3f-85f6-33b05735d567',
+    student_id: 'STU-002',
+    name: 'Salma Bennani',
+    matricule: 'AAM-2425-0002',
+    class_name: null,
+    level: null,
+    is_primary_contact: false
+  }
+]

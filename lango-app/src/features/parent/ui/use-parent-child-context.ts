@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
 import type { LinkedChildOption } from '@/components/parent/ChildContextSwitcher';
+import { useTranslations } from 'next-intl';
+import { useCallback, useEffect, useState } from 'react';
 
 export type ActiveChild = {
   relationshipId: string;
@@ -27,6 +28,7 @@ type HomeData = {
 // server-side (a non-owned relationship is a uniform 404), so the client id is
 // never trusted as authorization.
 export function useParentChildContext() {
+  const tParent = useTranslations('Parent');
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,14 +43,14 @@ export function useParentChildContext() {
       if (json.success) {
         setData(json.data as HomeData);
       } else {
-        setError(json.error?.message ?? 'Erreur lors du chargement.');
+        setError(json.error?.message ?? tParent('errorLoad'));
       }
     } catch {
-      setError('Impossible de se connecter au serveur.');
+      setError(tParent('errorConnect'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tParent]);
 
   useEffect(() => {
     load();
@@ -56,7 +58,9 @@ export function useParentChildContext() {
 
   const switchTo = useCallback(
     (relationshipId: string) => {
-      if (relationshipId === data?.activeChild?.relationshipId) return;
+      if (relationshipId === data?.activeChild?.relationshipId) {
+        return;
+      }
       load(relationshipId);
     },
     [data?.activeChild?.relationshipId, load],
