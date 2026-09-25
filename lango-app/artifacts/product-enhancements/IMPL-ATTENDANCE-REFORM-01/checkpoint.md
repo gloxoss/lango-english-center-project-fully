@@ -1,59 +1,83 @@
 # Checkpoint — IMPL-ATTENDANCE-REFORM-01
 
 Agent: claude-agentb (Agent B, implementation owner)
-Started: 2026-09-25
+Updated: 2026-09-25
 
-## Branch identity
+## Where the work lives
 
 | | |
 |---|---|
-| Source branch | `student-directory-hardening` (local) |
-| Source SHA | `17945212` — "wip: checkpoint of audit fixes in progress (all agents' tracked changes)" |
-| Implementation branch | `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01` |
-| Worktree | `.worktrees/IMPL-ATTENDANCE-REFORM-01` |
-| HEAD | `4653cd31` |
-| Dev port claimed | `3470` (hub item `task:port-3470`) |
-| Test database | `schoolos_audit` (never `schoolos`) |
+| **Active branch** | `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01-integrated` |
+| **HEAD** | `690ab331` |
+| **Worktree** | `.worktrees/IMPL-ATT-INTEGRATED` |
+| **Base (release)** | `origin/release/REL-INTEGRATE-01` = `8215bb6e` |
+| Original pre-integration branch | `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01` @ `383dc542` (Agent A reviewed `7ef7355e`) |
+| Dev port claimed | `3470` |
+| Test database | `schoolos_audit` |
 
-## Why this source SHA
+Continue on the **integrated** branch. Do not return to the pre-integration branch.
 
-Chosen by the human owner from three candidates. `17945212` is the branch the
-discovery actually traced ("Traced from code on 2026-09-25 (branch
-student-directory-hardening, working tree)"), and it is the only committed,
-reproducible snapshot.
-
-Two things about this base are worth knowing, because they affect any reviewer:
-
-- **The main working tree is dirty with other agents' work.** 232 uncommitted
-  source files (640 including docs) sit in it, from three agents the hub still
-  lists as active: `claude-finance`, `opencode-2`, `gemini-audit`. A worktree can
-  only materialise committed state, which is one reason this branch does not
-  carry them.
-- **Local `student-directory-hardening` has diverged from its own origin.**
-  Local `17945212` vs `origin/student-directory-hardening` `f42c2bc4`. It is also
-  **52 commits ahead of `origin/main`**.
-- **`release/REL-INTEGRATE-01` (`8215bb6e`) is NOT in this base.** It carries 10+
-  integration merges this branch does not have, including `AUD-SAFETY-01`,
-  `AUD-TEACHER-01` and `AUD-HR-01` — all three land in this reform's blast radius.
-  That was a deliberate choice (the brief says not to merge unrelated unverified
-  branches), but it means **Agent A should confirm the base is still the intended
-  one before final review.**
-
-## Environment notes
-
-- `lango_postgres` was **exited** when this campaign started; it was started.
-  Both `schoolos` and `schoolos_audit` are present.
-- The worktree's `node_modules` is a **junction** to the main checkout (symlinks
-  need elevation on this machine).
-- `.env` was copied verbatim from the main checkout. Its `DATABASE_URL` points at
-  `schoolos`, so every test run in this campaign **overrode** `DATABASE_URL` to
-  `schoolos_audit`, per the hub rule that test data goes there only.
-
-## Commits
+## Commit history on the integrated branch
 
 | SHA | Phase | Summary |
 |---|---|---|
-| `cd894414` | 0 (1/2) | Expired credentials, QR report scope, workforce punch capability, fabricated summaries |
-| `4653cd31` | 0 (2/2) | Missing-register truth: Casablanca date, published version, ended-only |
+| `0ded9df3` | 0.1–0.4 | Expired credentials, QR report scope, `workforce.punch`, seed summaries recomputed |
+| (cherry-pick) | 0.5 | Missing-register: Casablanca date, published version, ended-only |
+| (cherry-pick) | docs | Phase 0 artifact package |
+| `de63af39` | 0.5 corr. | Date classified before the clock; calendar fixture fixed; rebuild tool |
+| `15edc4fd` | **1 (backend)** | Session-occurrence identity; migration 0158; phase 0.5 limitation closed |
+| `690ab331` | docs | Phase 1 artifact |
 
-Both pushed to `origin/enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01`.
+## Phase status
+
+| Phase | Status |
+|---|---|
+| 0 — Safety + data truth | **COMPLETE** (see `phase-0-safety.md`) |
+| 1 — Appel du jour | **BACKEND DONE, UI NOT BUILT** (see `phase-1-admin-attendance.md`) |
+| 2 — Teacher current lesson | NOT STARTED |
+| 3 — Business truth / metrics | NOT STARTED |
+| 4 — Justifications + Suivi & alertes | NOT STARTED |
+| 5 — Cards + credentials | NOT STARTED |
+| 6 — Session exceptions | NOT STARTED |
+| 7 — Kiosk + devices | NOT STARTED |
+| 8 — Registers, history & QR reporting | NOT STARTED |
+| 9 — HR Temps & Pointeuse + navigation | NOT STARTED |
+
+## Next concrete step
+
+Finish phase 1's UI, which is the only thing standing between the landed backend
+and a working Appel du jour:
+
+1. `GET /api/attendance/day?date=` returning `listSessionOccurrences` results with
+   `occurrenceState` per lesson.
+2. The screen at `/dashboard/attendance`: chronological session cards
+   (`08:00–08:55 · Mathématiques · 1ère A · Mme X · Salle B12`), status chips,
+   past = view-only, today = operational, future = preview.
+3. `Corriger le registre` reusing the existing REOPENED / reason / before-after
+   audit path with a mandatory reason.
+
+Then phase 2, which shares the same resolver and should be mostly UI.
+
+## Environment facts worth carrying forward
+
+- **The app's dev database is `schoolos` on `localhost:5433`** — a native
+  Postgres, *not* the `lango_postgres` container (which publishes no host port).
+  Tests must target `schoolos_audit`; override `DATABASE_URL` explicitly.
+- `lango_postgres` was **exited** at campaign start and was started by hand.
+- `.env` in each worktree is copied from the main checkout and points at
+  `schoolos`, so every test run must override `DATABASE_URL` to `schoolos_audit`.
+- Worktree `node_modules` are **junctions** to the main checkout (symlinks need
+  elevation on this machine).
+- `npx drizzle-kit migrate` exits 1 against `schoolos_audit` without an error
+  message: that DB has **163** applied migrations against a **160**-entry journal.
+  Pre-existing, unrelated to 0158.
+
+## Test baseline at this checkpoint
+
+- Attendance/QR/teacher/workforce/audit-summary suites: **265 passed / 28 files**
+- Integrated regression (teacher + safety + HR included): **375 passed / 52 files**
+- `npm run check:types` exit 0
+- `npm run check:isolation` PASS
+
+No screenshots captured yet — phase 1's UI does not exist, and the screenshot set
+in the brief is a closeout deliverable.
