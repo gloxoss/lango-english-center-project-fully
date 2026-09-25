@@ -14,7 +14,7 @@ export const promotionDecisionType = pgEnum('promotion_decision_type', ['promote
 export const attendanceStatus = pgEnum('attendance_status', ['present', 'absent', 'late', 'excused']);
 export const attendanceExcuseStatus = pgEnum('attendance_excuse_status', ['pending', 'approved', 'rejected']);
 export const attendanceFlagType = pgEnum('attendance_flag_type', ['UNJUSTIFIED_ABSENCE', 'REPEATED_LATE', 'CONSECUTIVE_ABSENCE']);
-export const attendanceFlagStatus = pgEnum('attendance_flag_status', ['OPEN', 'RESOLVED']);
+export const attendanceFlagStatus = pgEnum('attendance_flag_status', ['OPEN', 'ACKNOWLEDGED', 'CONTACTED', 'RESOLVED', 'DISMISSED']);
 export const attendanceFlagSeverity = pgEnum('attendance_flag_severity', ['CRITIQUE', 'ELEVE', 'MOYEN']);
 export const attendanceRegisterStatus = pgEnum('attendance_register_status', ['LOCKED', 'REOPENED']);
 export const dayOfWeek = pgEnum('day_of_week', ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']);
@@ -1605,6 +1605,10 @@ export const attendanceFlags = pgTable('attendance_flags', {
   assignedToId: text('assigned_to_id'),
   detectedAt: timestamp('detected_at', { mode: 'string' }).defaultNow().notNull(),
   resolvedAt: timestamp('resolved_at', { mode: 'string' }),
+  // LIFECYCLE (migration 0159): when the family was actually reached, and why a
+  // flag was dismissed without being resolved.
+  contactedAt: timestamp('contacted_at', { mode: 'string' }),
+  dismissReason: text('dismiss_reason'),
 }, table => [
   index('attendance_flags_student_tenant_idx').on(table.tenantId, table.studentId),
   foreignKey({

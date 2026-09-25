@@ -1121,6 +1121,13 @@
       "when": 1790342802428,
       "tag": "0158_attendance_session_occurrence",
       "breakpoints": true
+    },
+    {
+      "idx": 160,
+      "version": "7",
+      "when": 1790348746461,
+      "tag": "0159_attendance_flag_lifecycle",
+      "breakpoints": true
     }
   ]
 }
