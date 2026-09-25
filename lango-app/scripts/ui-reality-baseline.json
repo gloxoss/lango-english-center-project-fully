@@ -5,8 +5,8 @@
   "_deadControls": "A <Button>/<button> with no onClick, submit, link or trigger parent. Lowered to 47 after entitlements module ticket modal and license certificate actions wired.",
   "mockScreens": 0,
   "_mockScreens": "0 current findings, including the imported data fixture state pattern. The heuristic does not prove that every fetch returns real records.",
-  "unlinkedPages": 30,
-  "_unlinkedPages": "Static dashboard pages with no sidebar or portal-manifest entry points. Five direct-URL mock Communication routes were archived. Some remaining pages are reached from a parent screen by design. RAISED 28 -> 30 deliberately (IMPL-ATTENDANCE-REFORM-01): /dashboard/attendance/suivi and /dashboard/cards/badges are built and working, but their sidebar entries land in the campaign's single navigation-consolidation pass, which is deferred so that four separate features do not each rewrite the same shared sidebar.tsx block. Both pages were browser-verified before this raise; the entries are owed, not forgotten. Lower back to 28 in the navigation pass.",
+  "unlinkedPages": 31,
+  "_unlinkedPages": "Static dashboard pages with no sidebar or portal-manifest entry points. Five direct-URL mock Communication routes were archived. Some remaining pages are reached from a parent screen by design. RAISED 28 -> 31 deliberately (IMPL-ATTENDANCE-REFORM-01): /dashboard/attendance/suivi, /dashboard/cards/badges and /dashboard/attendance/registres are built and browser-verified, but their sidebar entries land in the campaign's single navigation-consolidation pass, which is deferred so that several features do not each rewrite the same shared sidebar.tsx block. The entries are owed, not forgotten. Lower back to 28 in the navigation pass - if it does not come back down, a page really is unreachable.",
   "orphanedComponents": 7,
   "_orphanedComponents": "Exported components nothing in src imports. Was 14; seven mock/duplicate screens were moved to future-implementation/_archived-ui. The remaining seven are small prop-driven building blocks, not fake screens."
 }
