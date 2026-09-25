@@ -1,5 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/libs/DB';
+import { casablancaTodayIso } from '@/libs/finance/today';
 import { addonEntitlements } from '@/models/Schema';
 import { getAddonDefinition, listAddonDefinitions } from './addon-catalog';
 import { ApiError } from './errors';
@@ -17,12 +18,43 @@ export async function assertKnownAddon(addonId: string): Promise<void> {
   }
 }
 
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * True once the paid period has actually ended.
+ *
+ * expiresAt comes in two shapes and they mean different things:
+ *   - a date-only string ('2026-12-31', what the entitlement and licence
+ *     screens submit via z.iso.date()) names a DAY the customer paid through,
+ *     so it only expires at the end of that Casablanca business day. Reading
+ *     it as an instant put the cut-off at 00:00 and pulled the module ~23h
+ *     early on the last paid day.
+ *   - a value carrying a time is an exact instant and is honoured to the second.
+ *
+ * Exported so the licence suspension worker uses the identical rule; if the two
+ * ever drift, a tenant can be suspended while the gate still lets it in.
+ */
+export function isExpiredAt(expiresAt: string | null, now: Date = new Date()): boolean {
+  if (!expiresAt) {
+    return false;
+  }
+  if (DATE_ONLY.test(expiresAt)) {
+    return casablancaTodayIso(now) > expiresAt;
+  }
+  // A naive time-bearing value carries no offset, and `new Date(naive)` reads it
+  // as SERVER-LOCAL, moving the cut-off by the host offset. Normalise to UTC the
+  // way AUD-OPS-01 treats stored naive timestamps. Writers today send either a
+  // date-only string or a Z-suffixed instant, so this is defensive.
+  const isoish = expiresAt.trim().replace(' ', 'T');
+  const hasOffset = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(isoish);
+  return new Date(hasOffset ? isoish : `${isoish}Z`).getTime() < now.getTime();
+}
+
 export function isActive(row: { isEnabled: boolean; expiresAt: string | null }): boolean {
   if (!row.isEnabled) {
     return false;
   }
-  // expiresAt is a date-only-ish timestamp string; compare as instants.
-  return !row.expiresAt || new Date(row.expiresAt).getTime() > Date.now();
+  return !isExpiredAt(row.expiresAt);
 }
 
 export async function listEntitlements(tenantId: string): Promise<Entitlement[]> {

@@ -1,0 +1,12 @@
+/dashboard/super-admin
+/dashboard/super-admin/schools
+/dashboard/super-admin/schools/create
+/dashboard/super-admin/domains
+/dashboard/super-admin/subscriptions
+/dashboard/super-admin/subscriptions/list
+/dashboard/super-admin/settings
+/dashboard/super-admin/waitlist
+/dashboard/super-admin/reports
+/dashboard/super-admin/support
+/dashboard/super-admin/sms
+/dashboard/super-admin/schools/bf635991-1c38-41d7-9999-41f5a04262f9

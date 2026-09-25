@@ -1,0 +1,122 @@
+[
+  {
+    "route": "/dashboard/super-admin",
+    "finalPath": "/fr/dashboard",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 981,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-super-admin.png"
+  },
+  {
+    "route": "/dashboard/super-admin/schools",
+    "finalPath": "/fr/dashboard",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 981,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-super-admin__schools.png"
+  },
+  {
+    "route": "/dashboard/super-admin/schools/create",
+    "finalPath": "/fr/dashboard",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 981,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-super-admin__schools__create.png"
+  },
+  {
+    "route": "/dashboard/super-admin/domains",
+    "finalPath": "/fr/dashboard",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 981,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-super-admin__domains.png"
+  },
+  {
+    "route": "/dashboard/super-admin/subscriptions",
+    "finalPath": "/fr/dashboard",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 981,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-super-admin__subscriptions.png"
+  },
+  {
+    "route": "/dashboard/super-admin/subscriptions/list",
+    "finalPath": "/fr/dashboard",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 981,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-super-admin__subscriptions__list.png"
+  },
+  {
+    "route": "/dashboard/super-admin/settings",
+    "finalPath": "/fr/dashboard",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 981,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-super-admin__settings.png"
+  },
+  {
+    "route": "/dashboard/super-admin/waitlist",
+    "finalPath": "/fr/dashboard",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 981,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-super-admin__waitlist.png"
+  },
+  {
+    "route": "/dashboard/super-admin/reports",
+    "finalPath": "/fr/dashboard",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 981,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-super-admin__reports.png"
+  },
+  {
+    "route": "/dashboard/super-admin/support",
+    "finalPath": "/fr/dashboard",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 981,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-super-admin__support.png"
+  },
+  {
+    "route": "/dashboard/super-admin/sms",
+    "finalPath": "/fr/dashboard",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 981,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-super-admin__sms.png"
+  },
+  {
+    "route": "/dashboard/super-admin/schools/bf635991-1c38-41d7-9999-41f5a04262f9",
+    "finalPath": "/fr/dashboard",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 981,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-super-admin__schools__bf635991-1c38-41d7-9999-41f5a04262f9.png"
+  }
+]
