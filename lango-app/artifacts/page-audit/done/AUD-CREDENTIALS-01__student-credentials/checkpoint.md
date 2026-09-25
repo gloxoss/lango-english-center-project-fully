@@ -1,22 +1,29 @@
-# AUD-CREDENTIALS-01 Checkpoint — Remediation Complete
+# AUD-CREDENTIALS-01 Checkpoint — Final Visual Cleanup Complete
 
-**Timestamp:** 2026-09-24T23:50:00Z  
+**Timestamp:** 2026-09-25T00:20:00Z  
 **Campaign:** AUD-CREDENTIALS-01 (Student Cards, Certificates, Convocations & Official School Documents)  
 **Agent:** antigravity-1 (Agent A)  
 **Branch:** `audit/agent-a/AUD-CREDENTIALS-01-cards-certificates`  
-**Status:** REMEDIATION COMPLETE (Ready for second-agent verification)
+**Status:** FINAL VISUAL CLEANUP COMPLETE (Ready for Agent 5 targeted re-verify)
 
-### Verification Summary
-- `npm run check:types`: 0 errors
+### Final Audit Status & Quality Gates
+- **previous rejected screenshots**: 9/9 stable
+- **additional loading screenshots corrected**: 9/9
+- **total final screenshots stable**: 31/31
+- **loading placeholders remaining**: 0
+- **Next.js error badges**: 0
+- **unhydrated shells**: 0
+- **Template Designer cards**: PASS
+- **Template Designer certificates**: PASS
+- **public certificate verification final state**: PASS
+- **check:types**: PASS (0 errors)
+- **check:ui**: PASS (Dead controls 38/39, mock screens 0/0, unlinked pages 28/28)
 - `npm run check:isolation`: 0 errors (69 warnings, holding steady)
 - `npm run check:i18n`: 0 missing keys, 0 invalid translations
 - `npm run check:i18n:keys`: 0 missing keys
-- `npm run check:ui`: Ratchet holds (dead controls 38/39, mock screens 0/0, unlinked pages 28/28)
 - `npx vitest run src/features/certificates/__tests__/credentials-domain-e2e.test.ts`: 8/8 tests passed (100%)
 - `npm run build:next`: Production build clean
-- Visual Evidence: 31 screenshots verified clean in `screenshots/` (all 9 rejected screenshots recaptured with 0 error badges, settled hydration, and mounted designers)
-- Cryptographic Verification Evidence: `token-verification-proof.json` generated and verified (SHA-256 hash lookup, zero plaintext tokens, anti-enumeration, CNDP compliant)
-- Remediation Note: `evidence/runtime-browser-remediation.md` documenting root causes, code fixes, probe proofs, and visual audit evidence
+- Package Validation Sweep: `scripts/verify-all-31-package.mjs` executed (31/31 PASS)
 
 ### Artifacts Delivered
 - Report: `artifacts/page-audit/done/AUD-CREDENTIALS-01__student-credentials/report.md`
@@ -29,4 +36,4 @@
   - `evidence/isolation-report.txt`
 - Screenshots: 31 files in `screenshots/` (Cards, Certificates, Convocations, Templates, Jobs, Public Verification)
 
-**READY FOR AGENT 5 RE-VERIFY: YES**
+**READY FOR AGENT 5 TARGETED RE-VERIFY: YES**

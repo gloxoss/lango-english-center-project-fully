@@ -144,13 +144,64 @@ All 9 screenshots were recaptured at 1440x900 desktop resolution using Playwrigh
 
 ---
 
-## 6. Ready for Agent 5 Verification
+## 6. Final Visual Cleanup — Recapture of 9 Loading-State Screenshots
 
-All items in Agent 5's rejection notice have been systematically resolved:
-- Template Designer mounts client-side and saves template versions cleanly.
-- Definition detail page mounts with full designer controls without runtime crashes.
-- All 9 visual evidence artifacts have been recaptured with zero error badges or unhydrated skeletons.
-- Public certificate verifier displays authentic validation for `atlas-cert-token-valid-2026`.
-- Invariant logic (hash-at-rest, tenant isolation, serial counters) preserved unmodified.
+In the final visual cleanup round, 9 screenshots that previously exhibited intermediate loading states or placeholder indicators were recaptured in their settled, fully hydrated route state:
 
-**READY FOR AGENT 5 RE-VERIFY: YES**
+| Screenshot File | Route | Settled Visual State Verified | Loading Text / Spinners | Error Badge |
+|---|---|---|---|---|
+| `01-cards-dashboard-desktop-fr.png` | `/fr/dashboard/cards` | KPIs resolved (3, 9, 1, 1; zero `—`), recent issuances listed | **NONE** | **FALSE** |
+| `02-cards-students-desktop-fr.png` | `/fr/dashboard/cards/students` | Students table populated with 5 active students, filters settled | **NONE** | **FALSE** |
+| `04-cards-students-arabic-rtl.png` | `/ar/dashboard/cards/students` | Arabic RTL layout populated with student records, zero "جاري التحميل" | **NONE** | **FALSE** |
+| `05-cards-employees-desktop-fr.png` | `/fr/dashboard/cards/employees` | Employees table populated with 5 staff members, role badges | **NONE** | **FALSE** |
+| `06-cards-admit-cards-desktop-fr.png` | `/fr/dashboard/cards/admit-cards` | Admit cards table populated with candidate desk & exam room assignments | **NONE** | **FALSE** |
+| `08-cards-admit-cards-arabic-rtl.png` | `/ar/dashboard/cards/admit-cards` | Arabic RTL convocations table populated, zero "جاري التحميل" | **NONE** | **FALSE** |
+| `12-cards-jobs-desktop-fr.png` | `/fr/dashboard/cards/jobs` | Batch jobs monitor populated with completed batch job (5 cards) | **NONE** | **FALSE** |
+| `13-certificates-dashboard-desktop-fr.png` | `/fr/dashboard/certificates` | KPIs resolved (3, 1, 4, 2; zero `—`), recent certificates list populated | **NONE** | **FALSE** |
+| `15-certificates-issue-employees-desktop-fr.png` | `/fr/dashboard/certificates/issue/employees` | Staff recipients table populated with 5 employees, issue actions | **NONE** | **FALSE** |
+
+### Settlement Verification Guarantees
+Each capture verified the following strict invariants:
+1. **Initial API Requests Settled**: Table rows (`tbody tr`) and dashboard metric values rendered without fallback dashes (`—`).
+2. **Loading Placeholders Absent**: Zero instances of `Chargement...`, `Chargement des élèves...`, `Chargement des places d'examen...`, `Chargement des employés...`, `جاري التحميل`, or `Rendering...`.
+3. **Authenticated User Shell Hydrated**: User avatar/initials (`YE`) rendered cleanly.
+4. **Zero Active Spinners**: No `.animate-spin` or CSS loading indicators.
+5. **Zero Error Badges**: `nextjs-portal` Error overlay evaluated to `false`.
+
+### Preservation of Previously Accepted Recaptures
+The 9 accepted recaptures from the prior remediation (`10`, `11`, `14`, `16`, `17`, `18`, `21`, `23`, `31`) were left stable and undisturbed:
+- Template Designer cards (`11`): PASS
+- Template Designer certificates (`23`): PASS
+- Certificate definition detail (`17`): PASS
+- Public verification settled state (`31`): PASS
+
+---
+
+## 7. Full 31-Screen Automated Package Validation Sweep
+
+The automated assertion runner (`scripts/verify-all-31-package.mjs`) executed across all 31 routes in the audit manifest, applying strict assertions:
+```
+PACKAGE VALIDATION SUMMARY:
+Total screens evaluated: 31
+Passed: 31
+Failed: 0
+🎉 ALL 31 SCREENS IN THE PACKAGE ARE 100% SETTLED, HYDRATED, AND STABLE!
+```
+
+---
+
+## 8. Final Status Summary
+
+- **Previous rejected screenshots**: 9/9 stable
+- **Additional loading screenshots corrected**: 9/9
+- **Total final screenshots stable**: 31/31
+- **Loading placeholders remaining**: 0
+- **Next.js error badges**: 0
+- **Unhydrated shells**: 0
+- **Template Designer cards**: PASS
+- **Template Designer certificates**: PASS
+- **Public certificate verification final state**: PASS
+- **check:types**: PASS (0 errors)
+- **check:ui**: PASS (Dead controls 38/39, mock screens 0/0, unlinked pages 28/28)
+
+**READY FOR AGENT 5 TARGETED RE-VERIFY: YES**

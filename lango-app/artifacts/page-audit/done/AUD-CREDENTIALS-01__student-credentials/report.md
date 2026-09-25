@@ -224,17 +224,56 @@ All captures are saved in `artifacts/page-audit/done/AUD-CREDENTIALS-01__student
 
 ---
 
-### 6. Remediation & Verification Status
+### 6. Remediation & Final Visual Cleanup Status
 
-Following the initial audit review, all 9 rejected visual evidence routes were systematically remediated:
-1. Client-side hydration mismatches in global shell components (`sidebar.tsx`, `header.tsx`, `impersonation-banner.tsx`) eliminated with `isMounted` guards and `suppressHydrationWarning`.
-2. Template designer runtime dynamic importing stabilized for `@pdfme/ui`, enabling canvas rendering and version saving (`POST /api/cards/templates/[id]/versions` and `POST /api/certificates/templates/[id]/versions` return 200 OK).
-3. All 9 rejected screenshots (`10`, `11`, `14`, `16`, `17`, `18`, `21`, `23`, `31`) were recaptured cleanly with 0 Next.js error badges (`nextjs-portal Error Badge: false`), fully hydrated states, and active visual content.
-4. Certificate verification route renders authentic verification card for `atlas-cert-token-valid-2026` with Moroccan serial `CERT-2026-000001`.
-5. Canonical production build (`npm run build:next`) verified clean.
-6. All quality gates pass: `vitest` (8/8), `check:types` (0 errors), `check:isolation` (828 files), `check:i18n`, `check:i18n:keys` (0 missing), `check:ui` (38/39 dead controls).
+#### 6.1 Phase 1: Core Defect Remediation (Accepted)
+1. **Global Shell Hydration**: Resolved client-side hydration mismatches in global shell components (`sidebar.tsx`, `header.tsx`, `impersonation-banner.tsx`) using `isMounted` guards and `suppressHydrationWarning`.
+2. **Template Designer Studio**: Dynamic import and canvas bounding container stabilized for `@pdfme/ui`. Functional save probes (`POST /api/cards/templates/[id]/versions` and `POST /api/certificates/templates/[id]/versions`) return 200 OK.
+3. **Detail Route & Verifier Settlement**: Definition detail route mounted cleanly with designer controls; public verification portal resolves authentic state for `atlas-cert-token-valid-2026`.
+4. **Initial 9 Re-captures**: Screenshots `10`, `11`, `14`, `16`, `17`, `18`, `21`, `23`, `31` recaptured with 0 error badges.
 
-Detailed remediation evidence is archived in [`evidence/runtime-browser-remediation.md`](file:///c:/Users/OMEN/OneDrive/Documents/projects/lango-english-center-project-fully/.worktrees/AUD-CREDENTIALS-01/lango-app/artifacts/page-audit/done/AUD-CREDENTIALS-01__student-credentials/evidence/runtime-browser-remediation.md).
+#### 6.2 Phase 2: Final Full-Package Visual Cleanup (Settled States)
+1. **Elimination of All Loading States**: Recaptured 9 remaining routes that previously exhibited intermediate loading states (`01`, `02`, `04`, `05`, `06`, `08`, `12`, `13`, `15`) after guaranteeing complete API response settlement:
+   - `01-cards-dashboard-desktop-fr.png`: KPIs resolved (3, 9, 1, 1; zero `—`), recent issuances listed.
+   - `02-cards-students-desktop-fr.png`: Students table populated with 5 active students, zero loading text.
+   - `04-cards-students-arabic-rtl.png`: Arabic RTL layout populated with student records, zero "جاري التحميل".
+   - `05-cards-employees-desktop-fr.png`: Employees table populated with 5 staff members and role badges.
+   - `06-cards-admit-cards-desktop-fr.png`: Admit cards table populated with candidate desk & exam room assignments.
+   - `08-cards-admit-cards-arabic-rtl.png`: Arabic RTL convocations table populated, zero "جاري التحميل".
+   - `12-cards-jobs-desktop-fr.png`: Batch jobs monitor populated with completed batch job (5 cards).
+   - `13-certificates-dashboard-desktop-fr.png`: KPIs resolved (3, 1, 4, 2; zero `—`), recent certificates list populated.
+   - `15-certificates-issue-employees-desktop-fr.png`: Staff recipients table populated with 5 employees.
+2. **Automated Package Assertion Sweep**: Executed `scripts/verify-all-31-package.mjs` verifying:
+   - 0 "Chargement"
+   - 0 "جاري التحميل"
+   - 0 "Rendering..."
+   - 0 unresolved spinners
+   - 0 nextjs-portal error badges
+   - 0 unhydrated user shells
+   - Result: **31/31 PASS**
+3. **Quality Gates Status**:
+   - `npm run check:types`: **0 errors (PASS)**
+   - `npm run check:ui`: **Ratchet holding (Dead controls 38/39, mock screens 0/0, unlinked pages 28/28) (PASS)**
+   - `vitest` domain suite: **8/8 PASS**
+   - Canonical production build: **PASS**
 
-**READY FOR AGENT 5 RE-VERIFY: YES**
+Detailed evidence is archived in [`evidence/runtime-browser-remediation.md`](file:///c:/Users/OMEN/OneDrive/Documents/projects/lango-english-center-project-fully/.worktrees/AUD-CREDENTIALS-01/lango-app/artifacts/page-audit/done/AUD-CREDENTIALS-01__student-credentials/evidence/runtime-browser-remediation.md).
+
+---
+
+### 7. Sign-off Summary
+
+- previous rejected screenshots: 9/9 stable
+- additional loading screenshots corrected: 9/9
+- total final screenshots stable: 31/31
+- loading placeholders remaining: 0
+- Next.js error badges: 0
+- unhydrated shells: 0
+- Template Designer cards: PASS
+- Template Designer certificates: PASS
+- public certificate verification final state: PASS
+- check:types: PASS
+- check:ui: PASS
+
+**READY FOR AGENT 5 TARGETED RE-VERIFY: YES**
 
