@@ -7073,6 +7073,8 @@
     "rejectionReason": "Rejection: {reason}"
   },
   "Workforce": {
+    "punchAutoHint": "The system determines whether this is an arrival or a departure.",
+    "punchSubmitAuto": "Clock",
     "hubTitle": "Payroll & HR Operations",
     "hubSubtitle": "Monthly MAD payroll. Configured rules remain administrative drafts and not legally certified.",
     "categoryTag": "Workforce Operations",

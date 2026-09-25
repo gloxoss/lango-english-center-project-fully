@@ -165,4 +165,77 @@ describe.skipIf(!dbReachable)('workforce punches P0 — DB-backed', () => {
       permissionState.allowed = true;
     }
   });
+
+  // ---- the state machine (phase 9) ----------------------------------------
+
+  it('P9.1: the server decides the action, and reports it', async () => {
+    await asOperator();
+
+    // Establish a known state: one arrival, open shift.
+    await db.insert(workforcePunchEvents).values({
+      tenantId, employeeId: EMP_VALID, punchType: 'in',
+      scannedAt: new Date().toISOString(), notes: 'state setup',
+    });
+
+    // The caller states nothing and the server answers "out".
+    const res = await post({ rawToken: TOKEN_VALID });
+
+    expect(res.status).toBe(200);
+
+    const json = await res.json() as any;
+
+    expect(json.data.action).toBe('out');
+    expect(json.data.punch.punchType).toBe('out');
+  });
+
+  it('P9.2: a duplicate arrival is refused, and the refusal names the legal action', async () => {
+    await asOperator();
+    // Last punch is now "out" from P9.1, so another departure is the illegal one.
+    const res = await post({ rawToken: TOKEN_VALID, punchType: 'out' });
+
+    expect(res.status).toBe(409);
+
+    const json = await res.json() as any;
+
+    expect(json.error.code).toBe('INVALID_PUNCH_SEQUENCE');
+    expect(json.error.message).toMatch(/arrivée/i);
+  });
+
+  it('P9.3: a departure without an arrival is refused', async () => {
+    await asOperator();
+
+    // A fresh employee with no punch history at all.
+    const employeeId = crypto.randomUUID();
+    const token = `tok-fresh-${crypto.randomUUID()}`;
+    await db.insert(user).values({ id: employeeId, tenantId, name: 'Fresh', email: `fresh-${employeeId}@t.local`, role: 'teacher' });
+    await db.insert(identityBadgeCredentials).values({
+      tenantId, userId: employeeId, tokenHash: computeHmacHash(token), status: 'active',
+    });
+
+    const res = await post({ rawToken: token, punchType: 'out' });
+
+    expect(res.status).toBe(409);
+    expect((await punchesFor(employeeId))).toHaveLength(0);
+  });
+
+  it('P9.4: an overnight shift is not an error — arrival yesterday, departure today', async () => {
+    await asOperator();
+
+    const employeeId = crypto.randomUUID();
+    const token = `tok-night-${crypto.randomUUID()}`;
+    await db.insert(user).values({ id: employeeId, tenantId, name: 'Night', email: `night-${employeeId}@t.local`, role: 'teacher' });
+    await db.insert(identityBadgeCredentials).values({
+      tenantId, userId: employeeId, tokenHash: computeHmacHash(token), status: 'active',
+    });
+
+    const yesterday = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+    await db.insert(workforcePunchEvents).values({
+      tenantId, employeeId, punchType: 'in', scannedAt: yesterday, notes: 'night shift',
+    });
+
+    const res = await post({ rawToken: token });
+
+    expect(res.status).toBe(200);
+    expect((await res.json() as any).data.action).toBe('out');
+  });
 });
