@@ -19,14 +19,18 @@ export async function GET(request: Request) {
     const tenantId = requireTenant(context);
     const { searchParams } = new URL(request.url);
     const pagination = parsePagination(searchParams);
-    const statusParam = searchParams.get('status');
+    // Repeated params, so a caller can ask for "everything still open" in one
+    // request. `get` would have silently honoured only the first value, quietly
+    // hiding the other two states.
+    const ALLOWED = ['OPEN', 'ACKNOWLEDGED', 'CONTACTED', 'RESOLVED', 'DISMISSED'] as const;
+    const statusParams = searchParams.getAll('status').filter(s => (ALLOWED as readonly string[]).includes(s));
     const typeParam = searchParams.get('type');
     const severityParam = searchParams.get('severity');
     const assignedToParam = searchParams.get('assignedToId');
 
     const conditions = [eq(attendanceFlags.tenantId, tenantId)];
-    if (statusParam && ['OPEN', 'RESOLVED'].includes(statusParam)) {
-      conditions.push(eq(attendanceFlags.status, statusParam as 'OPEN' | 'RESOLVED'));
+    if (statusParams.length > 0) {
+      conditions.push(inArray(attendanceFlags.status, statusParams as ('OPEN' | 'ACKNOWLEDGED' | 'CONTACTED' | 'RESOLVED' | 'DISMISSED')[]));
     }
     if (typeParam && (FLAG_TYPES as readonly string[]).includes(typeParam)) {
       conditions.push(eq(attendanceFlags.type, typeParam as typeof FLAG_TYPES[number]));
@@ -109,7 +113,8 @@ export async function GET(request: Request) {
 const updateFlagSchema = z.object({
   flagId: z.string().uuid(),
   assignedToId: z.string().min(1).nullable().optional(),
-  status: z.enum(['OPEN', 'RESOLVED']).optional(),
+  status: z.enum(['OPEN', 'ACKNOWLEDGED', 'CONTACTED', 'RESOLVED', 'DISMISSED']).optional(),
+  dismissReason: z.string().trim().min(3).max(500).optional(),
 }).strict();
 
 export async function PATCH(request: Request) {
@@ -146,7 +151,24 @@ export async function PATCH(request: Request) {
     }
     if (body.status) {
       updates.status = body.status;
-      updates.resolvedAt = body.status === 'RESOLVED' ? new Date().toISOString() : null;
+
+      // A closing state carries a timestamp; moving back to an open state clears
+      // it, so "when was this closed" can never describe a flag that is open.
+      const closed = body.status === 'RESOLVED' || body.status === 'DISMISSED';
+      updates.resolvedAt = closed ? new Date().toISOString() : null;
+
+      if (body.status === 'CONTACTED') {
+        updates.contactedAt = new Date().toISOString();
+      }
+
+      if (body.status === 'DISMISSED') {
+        // A dismissal with no reason is indistinguishable from neglect, and it
+        // is the only way to clear a flag nobody intends to act on.
+        if (!body.dismissReason) {
+          throw new ApiError(422, 'REASON_REQUIRED', 'Un motif est requis pour écarter un signalement.');
+        }
+        updates.dismissReason = body.dismissReason;
+      }
     }
 
     const [updated] = await db

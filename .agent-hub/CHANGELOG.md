@@ -1490,6 +1490,8 @@ AUD-SETTINGS-01 complete: users/roles salary leak and mass-assignment fixed, cro
 
 - Files: `lango-app/locales`, `lango-app/src/app/[locale]/(dashboard)/dashboard/settings`, `lango-app/src/app/api/settings`, `lango-app/src/app/api/users`, `lango-app/src/features/settings`, `lango-app/src/libs/api/validation.ts`, `lango-app/package.json`, `lango-app/tsconfig.json`, `lango-app/artifacts/page-audit`, `lango-app/scripts/check-hardcoded-french.mjs`, `lango-app/scripts/i18n-hardcoded-baseline.json`
 - Verified with: `npm run check:types (PASS) ; npm run check:isolation (PASS) ; npm run check:i18n (PASS) ; npm run check:i18n:keys (PASS) ; npm run check:ui (PASS) ; npx eslint touched (PASS) ; vitest 10 tests (PASS)`
+- Status: done, waiting for a second agent to verify
+
 ## 2026-09-24 20:05 · antigravity-1 · task:AUD-FINANCE-01
 
 AUD-FINANCE-01 complete: student billing, family accounts, payments & cashier audited; S-7 Moroccan currency formatted; S-36 mobile responsive cards; S-19 unique fine assessment index; S-27 neutral cashier empty state; S-35 accountant class-sections lookups; 12 screenshots + evidence log generated; 102 vitest tests pass

@@ -1,5 +1,5 @@
 import type { RequestContext } from '@/libs/api/context';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { GET, POST } from '@/app/api/attendance/route';
 import { db } from '@/libs/DB';
@@ -170,7 +170,9 @@ describe.skipIf(!dbReachable)('POST /api/attendance — teacher section scope', 
 
     expect(res.status).toBe(403);
 
-    const rows = await db.select().from(attendance).where(eq(attendance.period, 3));
+    // Tenant-scoped: without it this counted period-3 marks belonging to OTHER
+    // tenants, so a parallel test writing one made this fail intermittently.
+    const rows = await db.select().from(attendance).where(and(eq(attendance.tenantId, tenantId), eq(attendance.period, 3)));
 
     expect(rows).toHaveLength(0);
   });

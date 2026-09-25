@@ -124,12 +124,12 @@ describe.skipIf(!dbReachable)('attendance canonical aggregate P0 — DB-backed',
     expect(scoped.excusedCount).toBe(1);
     expect(scoped.recordedTotal).toBe(6); // voided p6 + foreign p8 + prior session excluded
     expect(scoped.unjustifiedAbsentCount).toBe(1); // p7 justified by approved excuse
-    expect(scoped.presenceRate).toBe(66.67); // (2+1+1)/6
+    expect(scoped.presenceRate).toBe(50); // (2+1)/6 — physical presence only, excused excluded
 
     const unscoped = await getAttendanceAggregate({ tenantId, sessionYearId: sessionB, studentId: STUDENT_A });
 
     expect(unscoped.recordedTotal).toBe(7); // foreign-section row included here
-    expect(unscoped.presenceRate).toBe(71.43); // (3+1+1)/7
+    expect(unscoped.presenceRate).toBe(57.14); // (3+1)/7
   });
 
   it('G14.8: zero denominator yields a NULL rate, never 100', async () => {
@@ -137,6 +137,22 @@ describe.skipIf(!dbReachable)('attendance canonical aggregate P0 — DB-backed',
 
     expect(zero.recordedTotal).toBe(0);
     expect(zero.presenceRate).toBeNull();
+  });
+
+  it('G14.8b: presence rate counts PHYSICAL presence — an excused absence is not attendance', async () => {
+    // The product rule, stated once: Present = in the room. Late = in the room.
+    // Excused = absent but justified, which is still absent in the room.
+    // Counting excused as present inflates the one number a director reads.
+    const scoped = await getAttendanceAggregate({ tenantId, sessionYearId: sessionB, studentId: STUDENT_A, classSectionId: sectionA });
+
+    expect(scoped.presentCount + scoped.lateCount).toBe(3);
+    expect(scoped.excusedCount).toBe(1);
+    expect(scoped.recordedTotal).toBe(6);
+
+    expect(scoped.presenceRate).toBe(50); // 3/6, excused NOT in the numerator
+    expect(scoped.presenceRate).not.toBe(
+      Number((((scoped.presentCount + scoped.lateCount + scoped.excusedCount) / scoped.recordedTotal) * 100).toFixed(2)),
+    );
   });
 
   it('cache (guardian/student source) reconciles with the canonical aggregate and stores NULL for zero data', async () => {

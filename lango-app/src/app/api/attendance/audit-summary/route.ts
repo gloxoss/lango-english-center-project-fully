@@ -5,11 +5,12 @@ import { sendSmsMessage } from '@/features/broadcast/services/sms-delivery';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { weekdayNameFor } from '@/libs/api/school-day';
 import { parseJson } from '@/libs/api/validation';
+import { listSessionOccurrences, loadRegisterIndex, missingOccurrences } from '@/libs/attendance/session-occurrence';
 import { db } from '@/libs/DB';
-import { attendance, attendanceFlags, attendanceSummary, classes, classScheduleSlots, classSections, classSubjects, sections, sessionYears, subjects, user } from '@/models/Schema';
-
-const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+import { casablancaTodayIso } from '@/libs/finance/today';
+import { attendance, attendanceFlags, attendanceSummary, classScheduleSlots, sessionYears, user } from '@/models/Schema';
 
 const reminderSchema = z.object({
   classScheduleSlotId: z.string().uuid(),
@@ -21,8 +22,10 @@ export async function GET(request: Request) {
     const tenantId = requireTenant(context);
 
     const { searchParams } = new URL(request.url);
-    const today = searchParams.get('date') || new Date().toISOString().slice(0, 10);
-    const todayDayOfWeek = DAY_NAMES[new Date(`${today}T00:00:00Z`).getUTCDay()]!;
+    // The business day is the school's, not the server's: a UTC date reports
+    // yesterday during Moroccan mornings.
+    const today = searchParams.get('date') || casablancaTodayIso();
+    const todayDayOfWeek = weekdayNameFor(today);
 
     // BRANCH SCOPE (P0): every aggregate is scoped through the student row so
     // a branch-limited principal only audits their own campus.
@@ -50,41 +53,16 @@ export async function GET(request: Request) {
       .where(and(...flagConditions))
       .groupBy(attendanceFlags.type);
 
-    const todaySlots = await db
-      .select({
-        id: classScheduleSlots.id,
-        classSectionId: classScheduleSlots.classSectionId,
-        teacherId: classScheduleSlots.teacherId,
-        startTime: classScheduleSlots.startTime,
-        endTime: classScheduleSlots.endTime,
-        className: classes.name,
-        sectionName: sections.name,
-        subjectName: subjects.name,
-        teacherName: user.name,
-      })
-      .from(classScheduleSlots)
-      .innerJoin(classSections, eq(classScheduleSlots.classSectionId, classSections.id))
-      .innerJoin(classes, eq(classSections.classId, classes.id))
-      .innerJoin(sections, eq(classSections.sectionId, sections.id))
-      .innerJoin(classSubjects, eq(classScheduleSlots.classSubjectId, classSubjects.id))
-      .innerJoin(subjects, eq(classSubjects.subjectId, subjects.id))
-      .innerJoin(user, eq(classScheduleSlots.teacherId, user.id))
-      .where(and(
-        eq(classScheduleSlots.tenantId, tenantId),
-        eq(classScheduleSlots.dayOfWeek, todayDayOfWeek),
-        ...(context.branchId ? [eq(classes.branchId, context.branchId)] : []),
-      ));
-
-    const submittedRows = await db
-      .selectDistinct({ classSectionId: user.classSectionId })
-      .from(attendance)
-      .innerJoin(user, eq(attendance.studentId, user.id))
-      .where(and(
-        eq(attendance.tenantId, tenantId),
-        eq(attendance.date, today),
-        ...(context.branchId ? [eq(user.branchId, context.branchId)] : []),
-      ));
-    const submittedSectionIds = new Set(submittedRows.map(r => r.classSectionId).filter(Boolean));
+    // EXACT SESSION IDENTITY (phase 1). Expectations are scheduled session
+    // occurrences — a timetable slot on this date under the published effective
+    // version — and a lesson is answered by the register for THAT occurrence.
+    // One completed lesson can no longer hide a different missing one.
+    const occurrences = await listSessionOccurrences({
+      tenantId,
+      date: today,
+      branchId: context.branchId,
+    });
+    const registerIndex = await loadRegisterIndex(tenantId, today);
 
     // CALENDAR GUARD (Phase 5): a date outside every academic session can
     // never produce a "missing register" expectation.
@@ -98,8 +76,23 @@ export async function GET(request: Request) {
       ))
       .limit(1);
 
+    // Exact-occurrence answer: a lesson counts as missing only when its own
+    // occurrence has ended and no register answers for it.
     const missingRegistersToday = sessionForToday
-      ? todaySlots.filter(slot => !submittedSectionIds.has(slot.classSectionId))
+      ? missingOccurrences(occurrences, registerIndex, today).map(occurrence => ({
+          id: occurrence.slotId,
+          classSectionId: occurrence.classSectionId,
+          classScheduleSlotId: occurrence.slotId,
+          teacherId: occurrence.teacherId,
+          startTime: occurrence.startTime,
+          endTime: occurrence.endTime,
+          period: occurrence.period,
+          room: occurrence.room,
+          className: occurrence.className,
+          sectionName: occurrence.sectionName,
+          subjectName: occurrence.subjectName,
+          teacherName: occurrence.teacherName,
+        }))
       : [];
 
     return NextResponse.json({

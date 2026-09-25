@@ -1,5 +1,6 @@
-import { and, count, desc, eq, gte, ilike, lte } from 'drizzle-orm';
+import { and, count, desc, eq, gte, ilike, inArray, lte, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
+import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { db } from '@/libs/DB';
 import {
   attendanceScanEvents,
@@ -58,7 +59,25 @@ export type QrEventsResult = {
   };
 };
 
-function buildConditions(tenantId: string, filters: QrEventsFilters) {
+/**
+ * Server-side authorization scope for the scan feed. Both fields are optional
+ * and independent: a branch-limited admin and a teacher are narrowed on
+ * different axes, and a caller may be neither.
+ */
+export type QrEventScope = {
+  /** Set for a campus-limited caller. Null/undefined means the whole tenant. */
+  branchId?: string | null;
+  /** Set when the caller is a teacher, to narrow to their own sections. */
+  teacherUserId?: string | null;
+};
+
+type ResolvedScope = {
+  branchId: string | null;
+  /** null = not a teacher; [] = a teacher with no current assignment. */
+  teacherSectionIds: string[] | null;
+};
+
+function buildConditions(tenantId: string, filters: QrEventsFilters, scope: ResolvedScope) {
   const conditions = [eq(attendanceScanEvents.tenantId, tenantId)];
   if (filters.from) {
     conditions.push(gte(attendanceScanEvents.scannedAt, `${filters.from}T00:00:00.000Z`));
@@ -84,6 +103,21 @@ function buildConditions(tenantId: string, filters: QrEventsFilters) {
   if (filters.studentName) {
     conditions.push(ilike(user.name, `%${filters.studentName}%`));
   }
+  // Authorization, not filtering: a campus-limited caller must not be able to
+  // widen these by editing the query string, and a teacher must not read
+  // another teacher's scans. Both live in the shared where-clause so the list,
+  // the CSV and the PDF can never disagree about what the caller may see.
+  if (scope.branchId) {
+    conditions.push(eq(classes.branchId, scope.branchId));
+  }
+  if (scope.teacherSectionIds) {
+    conditions.push(
+      // A teacher with no current assignment sees nothing, never everything.
+      scope.teacherSectionIds.length > 0
+        ? inArray(attendanceScanEvents.classSectionId, scope.teacherSectionIds)
+        : sql`false`,
+    );
+  }
   return and(...conditions);
 }
 
@@ -94,8 +128,16 @@ function buildConditions(tenantId: string, filters: QrEventsFilters) {
 export async function queryScanEvents(
   tenantId: string,
   filters: QrEventsFilters,
+  scope: QrEventScope = {},
 ): Promise<QrEventsResult> {
-  const where = buildConditions(tenantId, filters);
+  const teacherSectionIds = scope.teacherUserId
+    ? await getTeacherClassSectionIds(tenantId, scope.teacherUserId)
+    : null;
+
+  const where = buildConditions(tenantId, filters, {
+    branchId: scope.branchId ?? null,
+    teacherSectionIds,
+  });
   const limit = filters.limit ?? 500;
 
   const [events, aggRows, pairedDevices, operatorRows, deviceRows] = await Promise.all([
@@ -133,6 +175,10 @@ export async function queryScanEvents(
       .from(attendanceScanEvents)
       .leftJoin(user, eq(attendanceScanEvents.studentId, user.id))
       .leftJoin(scannerSessions, eq(attendanceScanEvents.sessionId, scannerSessions.id))
+      // Joined for the same reason as the event query: the shared where-clause
+      // can carry a branch condition, which needs the section's class.
+      .leftJoin(classSections, eq(attendanceScanEvents.classSectionId, classSections.id))
+      .leftJoin(classes, eq(classSections.classId, classes.id))
       .where(where)
       .groupBy(attendanceScanEvents.resultStatus),
     db

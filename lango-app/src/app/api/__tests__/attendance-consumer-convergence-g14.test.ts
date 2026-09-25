@@ -190,7 +190,7 @@ describe.skipIf(!dbReachable)('G14 consumer convergence — DB-backed', () => {
     const json = await res.json() as any;
     const s1 = json.data.students.find((s: any) => s.id === S1);
 
-    expect(s1.attendanceRate).toBe(75); // (present + late + excused) / 4
+    expect(s1.attendanceRate).toBe(50); // (present + late) / 4 — physical presence only
   });
 
   it('G14.14: roster zero-data is NULL, not 100', async () => {
@@ -234,7 +234,7 @@ describe.skipIf(!dbReachable)('G14 consumer convergence — DB-backed', () => {
     const s1 = json.data.find((r: any) => r.studentId === S1);
     const s2 = json.data.find((r: any) => r.studentId === S2);
 
-    expect(Number(s1.attendanceRate)).toBe(75);
+    expect(Number(s1.attendanceRate)).toBe(50);
     expect(s1.totalSessions).toBe(4);
     expect(s2.attendanceRate).toBeNull();
     expect(s2.totalSessions).toBe(0);
@@ -259,7 +259,7 @@ describe.skipIf(!dbReachable)('G14 consumer convergence — DB-backed', () => {
     const overview = await AttendanceAdapter.getAttendanceOverviewReport(tenantId);
     const s1 = overview.find(o => o.studentName === 'Conv S1');
 
-    expect(s1?.attendanceRate).toBe(75);
+    expect(s1?.attendanceRate).toBe(50);
     expect(s1?.totalSessions).toBe(4);
     expect(s1?.unexcusedAbsences).toBe(1);
 

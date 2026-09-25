@@ -74,8 +74,11 @@ export async function GET(request: Request) {
     for (const row of attendanceRows) {
       const entry = attendanceByStudent.get(row.studentId) ?? { attended: 0, total: 0 };
       entry.total += 1;
-      // CANONICAL PRESENCE (Phase 7B): present + late + excused are attended.
-      if (row.status === 'present' || row.status === 'late' || row.status === 'excused') {
+      // PHYSICAL PRESENCE: present + late are in the room. An excused absence is
+      // still an absence — it is justified, not attended, and counting it here
+      // reported a different rate than the canonical aggregate for the same
+      // student.
+      if (row.status === 'present' || row.status === 'late') {
         entry.attended += 1;
       }
       attendanceByStudent.set(row.studentId, entry);

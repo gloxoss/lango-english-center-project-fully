@@ -56,28 +56,36 @@ export async function POST(
     const rawToken = `LANGQR-${oldBadge.subjectType.toUpperCase().slice(0, 3)}-${rawTokenBytes}`;
     const tokenHash = computeHmacHash(rawToken);
 
-    const [newBadge] = await db
-      .insert(identityBadgeCredentials)
-      .values({
-        tenantId,
-        userId: oldBadge.userId,
-        subjectType: oldBadge.subjectType,
-        tokenHash,
-        displayPrefix: rawToken.slice(0, 12),
-        status: 'active',
-        expiresAt: body.expiresAt || null,
-        issuerId: context.userId,
-      })
-      .returning();
+    // Insert the new credential and retire the old one in ONE transaction. As
+    // two statements, a failure between them leaves TWO active badges for the
+    // same student, and the scanner honours whichever it finds first — so the
+    // credential the school just replaced keeps working.
+    const newBadge = await db.transaction(async (tx) => {
+      const [inserted] = await tx
+        .insert(identityBadgeCredentials)
+        .values({
+          tenantId,
+          userId: oldBadge.userId,
+          subjectType: oldBadge.subjectType,
+          tokenHash,
+          displayPrefix: rawToken.slice(0, 12),
+          status: 'active',
+          expiresAt: body.expiresAt || null,
+          issuerId: context.userId,
+        })
+        .returning();
 
-    await db
-      .update(identityBadgeCredentials)
-      .set({
-        status: 'replaced',
-        replacementId: newBadge!.id,
-        revokedAt: new Date().toISOString(),
-      })
-      .where(and(eq(identityBadgeCredentials.id, oldBadge.id), eq(identityBadgeCredentials.tenantId, tenantId)));
+      await tx
+        .update(identityBadgeCredentials)
+        .set({
+          status: 'replaced',
+          replacementId: inserted!.id,
+          revokedAt: new Date().toISOString(),
+        })
+        .where(and(eq(identityBadgeCredentials.id, oldBadge.id), eq(identityBadgeCredentials.tenantId, tenantId)));
+
+      return inserted!;
+    });
 
     recordAudit(context, 'create', 'identity_badge', newBadge!.id, {
       replacedBadgeId: oldBadge.id,

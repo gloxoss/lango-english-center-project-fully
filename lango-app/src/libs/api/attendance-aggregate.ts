@@ -11,7 +11,9 @@ import { attendance, attendanceExcuses } from '@/models/Schema';
  *   LATE               status = 'late'      — attended, late
  *   EXCUSED            status = 'excused'   — justified absence (Phase 3 rewrite)
  *   RECORDED TOTAL     all eligible marks (the four statuses)
- *   PRESENCE RATE      (present + late + excused) / recordedTotal, NULL when 0
+ *   PRESENCE RATE      (present + late) / recordedTotal, NULL when 0.
+ *                      Physical presence only — an excused absence is reported
+ *                      as a justified absence, never as attendance.
  *   UNJUSTIFIED ABSENT absent marks WITHOUT an approved excuse matching their
  *                      exact scope (period/section when the excuse carries one)
  *
@@ -99,8 +101,12 @@ export async function getAttendanceAggregate(scope: AttendanceAggregateScope): P
     unjustifiedAbsentCount = absentCount - Number(justified[0]?.n ?? 0);
   }
 
+  // Physical presence only. An excused absence is still an absence: the student
+  // was not in the room. Counting it as present inflated every rate a justified
+  // absence touched, and made "present" and "justified" impossible to tell apart
+  // in the one number a director reads.
   const presenceRate = recordedTotal > 0
-    ? Number((((presentCount + lateCount + excusedCount) / recordedTotal) * 100).toFixed(2))
+    ? Number((((presentCount + lateCount) / recordedTotal) * 100).toFixed(2))
     : null;
 
   return {

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { TeacherCurrentLesson } from './TeacherCurrentLesson';
 import {
   Calendar,
   CalendarClock,
@@ -173,6 +174,11 @@ export function TeacherPortalView() {
       </div>
 
       {tab === 'today' && (
+        <div className="space-y-6">
+          {/* The teacher's first question is "what am I teaching now?", so the
+              current lesson leads — resolved from the timetable, no pickers. */}
+          <TeacherCurrentLesson />
+
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div className="xl:col-span-2 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
@@ -219,6 +225,7 @@ export function TeacherPortalView() {
               </div>
             )}
           </div>
+        </div>
         </div>
       )}
 

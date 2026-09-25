@@ -96,7 +96,6 @@ export async function getTonight(tenantId: string, opts: { hostelId: string; cal
           eq(hostelLeavePasses.status, 'approved'),
           inArray(hostelLeavePasses.allocationId, allocationIds),
           sql`${hostelLeavePasses.startDateTime} <= ${dayEnd}`,
-          sql`${hostelLeavePasses.expectedReturnAt} >= ${dayStart}`,
         ))
     : [];
   const leaveByAllocation = new Map<string, typeof leaveRows[number]>();

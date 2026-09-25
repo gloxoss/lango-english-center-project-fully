@@ -14,7 +14,7 @@ export const promotionDecisionType = pgEnum('promotion_decision_type', ['promote
 export const attendanceStatus = pgEnum('attendance_status', ['present', 'absent', 'late', 'excused']);
 export const attendanceExcuseStatus = pgEnum('attendance_excuse_status', ['pending', 'approved', 'rejected']);
 export const attendanceFlagType = pgEnum('attendance_flag_type', ['UNJUSTIFIED_ABSENCE', 'REPEATED_LATE', 'CONSECUTIVE_ABSENCE']);
-export const attendanceFlagStatus = pgEnum('attendance_flag_status', ['OPEN', 'RESOLVED']);
+export const attendanceFlagStatus = pgEnum('attendance_flag_status', ['OPEN', 'ACKNOWLEDGED', 'CONTACTED', 'RESOLVED', 'DISMISSED']);
 export const attendanceFlagSeverity = pgEnum('attendance_flag_severity', ['CRITIQUE', 'ELEVE', 'MOYEN']);
 export const attendanceRegisterStatus = pgEnum('attendance_register_status', ['LOCKED', 'REOPENED']);
 export const dayOfWeek = pgEnum('day_of_week', ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']);
@@ -1402,6 +1402,11 @@ export const attendanceRegisters = pgTable('attendance_registers', {
   // Nullable only for legacy rows whose date no session covers (reported).
   sessionYearId: uuid('session_year_id'),
   subjectId: uuid('subject_id'),
+  // EXACT SESSION IDENTITY (migration 0157): the scheduled occurrence this
+  // register answers for — a timetable slot on a concrete date. Nullable so
+  // every legacy (section, date, period) register stays valid and readable.
+  classScheduleSlotId: uuid('class_schedule_slot_id'),
+  timetableVersionId: uuid('timetable_version_id'),
   date: date().notNull(),
   period: integer('period').notNull().default(1),
   reference: varchar('reference', { length: 50 }).notNull(),
@@ -1590,6 +1595,44 @@ export const attendanceExcuses = pgTable('attendance_excuses', {
   }),
 ]);
 
+/**
+ * A dated deviation from the weekly timetable (migration 0161).
+ *
+ * class_schedule_slots is a recurrence with no date, so it cannot say "this
+ * Tuesday is cancelled" or "Mme X is replaced today". An exception is keyed on
+ * the same occurrence identity attendance uses — (slot, date) — so every
+ * consumer sees the effective session without knowing exceptions exist. The base
+ * timetable is never mutated.
+ */
+export const classSessionExceptions = pgTable('class_session_exceptions', {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  classScheduleSlotId: uuid('class_schedule_slot_id').notNull(),
+  date: date().notNull(),
+  type: varchar('type', { length: 20 }).notNull(),
+  substituteTeacherId: text('substitute_teacher_id'),
+  roomLabel: varchar('room_label', { length: 100 }),
+  startTime: varchar('start_time', { length: 5 }),
+  endTime: varchar('end_time', { length: 5 }),
+  reason: text().notNull(),
+  createdById: text('created_by_id'),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+}, table => [
+  foreignKey({
+    columns: [table.tenantId],
+    foreignColumns: [tenants.id],
+    name: 'class_session_exceptions_tenant_id_fk',
+  }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.classScheduleSlotId],
+    foreignColumns: [classScheduleSlots.id],
+    name: 'class_session_exceptions_slot_id_fk',
+  }).onDelete('cascade'),
+  uniqueIndex('class_session_exceptions_occurrence_unique').on(table.tenantId, table.classScheduleSlotId, table.date),
+  index('class_session_exceptions_tenant_date_idx').on(table.tenantId, table.date),
+]);
+
 export const attendanceFlags = pgTable('attendance_flags', {
   id: uuid().defaultRandom().primaryKey().notNull(),
   tenantId: uuid('tenant_id').notNull(),
@@ -1600,6 +1643,10 @@ export const attendanceFlags = pgTable('attendance_flags', {
   assignedToId: text('assigned_to_id'),
   detectedAt: timestamp('detected_at', { mode: 'string' }).defaultNow().notNull(),
   resolvedAt: timestamp('resolved_at', { mode: 'string' }),
+  // LIFECYCLE (migration 0159): when the family was actually reached, and why a
+  // flag was dismissed without being resolved.
+  contactedAt: timestamp('contacted_at', { mode: 'string' }),
+  dismissReason: text('dismiss_reason'),
 }, table => [
   index('attendance_flags_student_tenant_idx').on(table.tenantId, table.studentId),
   foreignKey({

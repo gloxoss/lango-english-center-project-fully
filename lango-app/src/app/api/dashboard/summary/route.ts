@@ -510,11 +510,12 @@ export async function GET(request: Request) {
         ))
         .groupBy(attendance.date, attendance.status),
 
-      // 3.20 Classes with low attendance (< 85%) past 7 days (canonical
-      // presence: present + late + excused; voided excluded)
+      // 3.20 Classes with low attendance (< 85%) past 7 days (PHYSICAL
+      // presence: present + late; an excused absence is justified, not attended;
+      // voided excluded)
       db.select({
         classSectionId: user.classSectionId,
-        attended: sql<number>`sum(case when ${attendance.status} in ('present', 'late', 'excused') then 1 else 0 end)::int`,
+        attended: sql<number>`sum(case when ${attendance.status} in ('present', 'late') then 1 else 0 end)::int`,
         total: sql<number>`count(*)::int`,
       })
         .from(attendance)
@@ -526,7 +527,7 @@ export async function GET(request: Request) {
           userBranchFilter,
         ))
         .groupBy(user.classSectionId)
-        .having(sql`count(*) >= 1 and (sum(case when ${attendance.status} in ('present', 'late', 'excused') then 1 else 0 end)::float / count(*)::float) < 0.85`),
+        .having(sql`count(*) >= 1 and (sum(case when ${attendance.status} in ('present', 'late') then 1 else 0 end)::float / count(*)::float) < 0.85`),
 
       // 3.21 Active schedule days (to know which weekdays have scheduled classes according to the timetable)
       db.selectDistinct({ dayOfWeek: classScheduleSlots.dayOfWeek })
@@ -788,10 +789,10 @@ export async function GET(request: Request) {
 
     const presentMarks = todayAttendanceStatusRows.find(r => r.status === 'present')?.count ?? 0;
     const totalMarks = todayAttendanceStatusRows.reduce((sum, r) => sum + r.count, 0);
-    // CANONICAL PRESENCE (Phase 7B): present + late + excused count as attended;
-    // NULL (never 100) when no marks exist for today.
+    // PHYSICAL PRESENCE: present + late are in the room. An excused absence is
+    // justified, not attended; NULL (never 100) when no marks exist for today.
     const attendedMarks = todayAttendanceStatusRows
-      .filter(r => r.status === 'present' || r.status === 'late' || r.status === 'excused')
+      .filter(r => r.status === 'present' || r.status === 'late')
       .reduce((sum, r) => sum + r.count, 0);
     const todayAttendanceRate = totalMarks > 0 ? Math.round((attendedMarks / totalMarks) * 1000) / 10 : null;
 
@@ -901,8 +902,8 @@ export async function GET(request: Request) {
     for (const row of weeklyAttendanceRows) {
       const entry = attendanceByDate.get(row.date) ?? { attended: 0, total: 0 };
       entry.total += row.count;
-      // CANONICAL PRESENCE: present + late + excused are attended.
-      if (row.status === 'present' || row.status === 'late' || row.status === 'excused') {
+      // PHYSICAL PRESENCE: present + late are in the room.
+      if (row.status === 'present' || row.status === 'late') {
         entry.attended += row.count;
       }
       attendanceByDate.set(row.date, entry);

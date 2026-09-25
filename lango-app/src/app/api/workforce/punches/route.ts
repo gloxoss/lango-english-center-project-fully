@@ -2,6 +2,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { computeHmacHash } from '@/libs/api/badge-crypto';
+import { isCredentialExpired } from '@/libs/api/badge-service';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
@@ -49,6 +50,9 @@ export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'teacher', 'receptionist']);
     const tenantId = requireTenant(context);
+    // Recording staff time is not implied by being able to open the page: a
+    // teacher session must not be able to clock any employee in or out.
+    await requireCapability(context, 'workforce.punch');
     const body = await parseJson(request, punchSchema);
 
     // Compute HMAC hash of raw badge token
@@ -69,6 +73,11 @@ export async function POST(request: Request) {
 
     if (!badge) {
       throw new ApiError(404, 'STAFF_BADGE_INVALID', 'Badge employé non reconnu ou inactif.');
+    }
+
+    // The lookup above filters on status='active', which cannot express expiry.
+    if (isCredentialExpired(badge)) {
+      throw new ApiError(422, 'BADGE_EXPIRED', 'Ce badge employé a expiré.');
     }
 
     const [staffUser] = await db

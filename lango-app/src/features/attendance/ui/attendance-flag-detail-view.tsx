@@ -17,7 +17,7 @@ type ApiFlagDetail = {
   studentId: string;
   studentName: string;
   type: FlagType;
-  status: 'OPEN' | 'RESOLVED';
+  status: 'OPEN' | 'ACKNOWLEDGED' | 'CONTACTED' | 'RESOLVED' | 'DISMISSED';
   severity: FlagSeverity;
   assignedToId: string | null;
   assignedToName: string | null;
@@ -54,6 +54,24 @@ export function AttendanceFlagDetailView({ id, locale }: { id: string; locale: s
   const [newNote, setNewNote] = useState('');
   const [savingNote, setSavingNote] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [dismissOpen, setDismissOpen] = useState(false);
+  const [dismissReason, setDismissReason] = useState('');
+
+  // Five states now, so the badge can no longer be a ternary.
+  const STATUS_STYLE: Record<string, string> = {
+    OPEN: 'bg-[#FCF0DC] text-[#E8A33D]',
+    ACKNOWLEDGED: 'bg-sky-50 text-sky-700',
+    CONTACTED: 'bg-violet-50 text-violet-700',
+    RESOLVED: 'bg-[#D1F5E8] text-[#17A673]',
+    DISMISSED: 'bg-rose-50 text-rose-700',
+  };
+  const STATUS_LABEL: Record<string, string> = {
+    OPEN: t('statusOpen'),
+    ACKNOWLEDGED: t('statusAcknowledged'),
+    CONTACTED: t('statusContacted'),
+    RESOLVED: t('statusResolved'),
+    DISMISSED: t('statusDismissed'),
+  };
   const [smsBody, setSmsBody] = useState('');
   const [sendingSms, setSendingSms] = useState(false);
   const [smsStatus, setSmsStatus] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
@@ -109,7 +127,11 @@ export function AttendanceFlagDetailView({ id, locale }: { id: string; locale: s
       .catch(err => console.error('Failed loading staff', err));
   }, [id]);
 
-  async function updateFlag(patch: { assignedToId?: string | null; status?: 'OPEN' | 'RESOLVED' }) {
+  async function updateFlag(patch: {
+    assignedToId?: string | null;
+    status?: 'OPEN' | 'ACKNOWLEDGED' | 'CONTACTED' | 'RESOLVED' | 'DISMISSED';
+    dismissReason?: string;
+  }) {
     setUpdating(true);
     try {
       const res = await fetch('/api/attendance/flags', {
@@ -119,6 +141,8 @@ export function AttendanceFlagDetailView({ id, locale }: { id: string; locale: s
       });
       const json = await res.json();
       if (json.success) {
+        setDismissOpen(false);
+        setDismissReason('');
         await loadFlag();
       }
     } catch (err) {
@@ -225,8 +249,8 @@ export function AttendanceFlagDetailView({ id, locale }: { id: string; locale: s
             <p className="text-[10px] font-bold text-slate-400">{t('attendanceRate')}</p>
             <p className="text-lg font-extrabold text-[#16212B]">{flag.attendanceRate !== null ? `${flag.attendanceRate}%` : '—'}</p>
           </div>
-          <Badge className={flag.status === 'OPEN' ? 'bg-[#FCF0DC] text-[#E8A33D]' : 'bg-[#D1F5E8] text-[#17A673]'}>
-            {flag.status === 'OPEN' ? t('statusOpen') : t('statusResolved')}
+          <Badge className={STATUS_STYLE[flag.status] ?? STATUS_STYLE.OPEN}>
+            {STATUS_LABEL[flag.status] ?? flag.status}
           </Badge>
         </div>
       </div>
@@ -364,16 +388,72 @@ export function AttendanceFlagDetailView({ id, locale }: { id: string; locale: s
                 ))}
               </SelectContent>
             </Select>
-            {flag.status === 'OPEN'
+            {flag.status === 'RESOLVED' || flag.status === 'DISMISSED'
               ? (
-                  <Button size="sm" disabled={updating} onClick={() => updateFlag({ status: 'RESOLVED' })} className="w-full h-9 rounded-lg text-xs bg-emerald-600 hover:bg-emerald-700 text-white">
-                    {t('markResolvedBtn')}
+                  <Button size="sm" variant="outline" disabled={updating} onClick={() => updateFlag({ status: 'OPEN' })} className="w-full h-9 rounded-lg text-xs">
+                    {t('flagActionReopen')}
                   </Button>
                 )
               : (
-                  <Button size="sm" variant="outline" disabled={updating} onClick={() => updateFlag({ status: 'OPEN' })} className="w-full h-9 rounded-lg text-xs">
-                    {t('reopenFlagBtn')}
-                  </Button>
+                  <div className="space-y-2">
+                    {/* The lifecycle, in the order it actually happens. A flag
+                        someone has seen, or already called the family about, is
+                        no longer indistinguishable from one nobody has touched. */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={updating || flag.status === 'ACKNOWLEDGED' || flag.status === 'CONTACTED'}
+                      onClick={() => updateFlag({ status: 'ACKNOWLEDGED' })}
+                      className="w-full h-9 rounded-lg text-xs"
+                    >
+                      {t('flagActionAcknowledge')}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={updating || flag.status === 'CONTACTED'}
+                      onClick={() => updateFlag({ status: 'CONTACTED' })}
+                      className="w-full h-9 rounded-lg text-xs"
+                    >
+                      {t('flagActionContact')}
+                    </Button>
+                    <Button size="sm" disabled={updating} onClick={() => updateFlag({ status: 'RESOLVED' })} className="w-full h-9 rounded-lg text-xs bg-emerald-600 hover:bg-emerald-700 text-white">
+                      {t('flagActionResolve')}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={updating}
+                      onClick={() => { setDismissOpen(true); setDismissReason(''); }}
+                      className="w-full h-9 rounded-lg text-xs text-rose-700"
+                    >
+                      {t('flagActionDismiss')}
+                    </Button>
+
+                    {dismissOpen && (
+                      <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-start">
+                        <label className="block text-xs font-bold text-slate-700" htmlFor="dismiss-reason">
+                          {t('dismissReasonLabel')}
+                        </label>
+                        <textarea
+                          id="dismiss-reason"
+                          value={dismissReason}
+                          onChange={e => setDismissReason(e.target.value)}
+                          placeholder={t('dismissReasonPlaceholder')}
+                          rows={2}
+                          className="mt-1 w-full rounded-lg border border-slate-200 p-2 text-xs text-slate-700"
+                        />
+                        <Button
+                          size="sm"
+                          disabled={updating || dismissReason.trim().length < 3}
+                          onClick={() => updateFlag({ status: 'DISMISSED', dismissReason: dismissReason.trim() })}
+                          className="mt-2 h-8 w-full rounded-lg text-xs bg-rose-600 hover:bg-rose-700 text-white"
+                        >
+                          {t('dismissConfirm')}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 )}
           </Card>
 

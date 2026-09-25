@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { resolveUnjustifiedAbsenceFlagsForDate } from '@/libs/api/attendance-flags';
 import { recalculateStudentAttendanceSummary } from '@/libs/api/attendance-summary';
 import { recordAudit } from '@/libs/api/audit';
+import { sendSmsMessage } from '@/features/broadcast/services/sms-delivery';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { getGuardianChildIds } from '@/libs/api/guardian-scope';
@@ -402,9 +403,42 @@ export async function PATCH(request: Request) {
       period: existingExcuse.period,
     });
 
+    // The decision is what the family is waiting on, and until now nothing told
+    // them. Sent AFTER the transaction — an SMS is not transactional, and a
+    // failed send must not roll back a decision already made.
+    //
+    // The delivery state is reported exactly as the provider gave it. A
+    // simulated or failed send is never presented as delivered.
+    let notification: { delivery: string; simulated: boolean } | null = null;
+
+    const [guardian] = await db
+      .select({ phone: guardians.phone })
+      .from(guardianStudents)
+      .innerJoin(guardians, eq(guardianStudents.guardianId, guardians.id))
+      .where(and(
+        eq(guardianStudents.tenantId, tenantId),
+        eq(guardianStudents.studentId, existingExcuse.studentId),
+      ))
+      .limit(1);
+
+    if (guardian?.phone) {
+      const sent = await sendSmsMessage(tenantId, {
+        to: guardian.phone,
+        // Tied to the student so the message log answers "what was the family
+        // told about THIS child", not just "an SMS went out".
+        studentId: existingExcuse.studentId,
+        body: body.status === 'approved'
+          ? `Justification acceptée pour l'absence du ${existingExcuse.date}.`
+          : `Justification refusée pour l'absence du ${existingExcuse.date}.`,
+        createdById: context.userId,
+      });
+      notification = { delivery: sent.delivery, simulated: sent.delivery === 'simulated' };
+    }
+
     return NextResponse.json({
       success: true,
       data: updatedExcuse,
+      notification,
       message: `Justification ${body.status === 'approved' ? 'approuvée' : 'refusée'}.`,
     });
   } catch (error) {

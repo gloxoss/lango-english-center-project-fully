@@ -5,7 +5,7 @@ import { GET as getAuditSummary } from '@/app/api/attendance/audit-summary/route
 import { GET as getExcuseDocument } from '@/app/api/attendance/excuses/document/route';
 import { GET as getExcuses } from '@/app/api/attendance/excuses/route';
 import { POST as postFlagNote } from '@/app/api/attendance/flags/notes/route';
-import { GET as getFlags } from '@/app/api/attendance/flags/route';
+import { GET as getFlags, PATCH as patchFlag } from '@/app/api/attendance/flags/route';
 import { GET as getHeatmap } from '@/app/api/attendance/heatmap/route';
 import { POST as reopenRegister } from '@/app/api/attendance/registers/reopen/route';
 import { GET as getRegister } from '@/app/api/attendance/registers/route';
@@ -421,5 +421,43 @@ describe.skipIf(!dbReachable)('attendance security P0 — DB-backed', () => {
 
       expect(res.status).toBe(422);
     });
+  });
+
+  it('G4b: an alert follows a real lifecycle, and dismissal demands a reason', async () => {
+    await asRole(ADMIN_ALL, 'school_admin');
+
+    // Seen by someone.
+    const ack = await patchFlag(jsonRequest('http://x/api/attendance/flags', 'PATCH', { flagId: flagA, status: 'ACKNOWLEDGED' }));
+
+    expect(ack.status).toBe(200);
+    expect((await bodyOf(ack)).data.status).toBe('ACKNOWLEDGED');
+
+    // The family was actually reached — recorded, because a contacted-but-
+    // unresolved flag going stale is the whole point of tracking it.
+    const contacted = await patchFlag(jsonRequest('http://x/api/attendance/flags', 'PATCH', { flagId: flagA, status: 'CONTACTED' }));
+
+    expect(contacted.status).toBe(200);
+    expect((await bodyOf(contacted)).data.contactedAt).not.toBeNull();
+
+    // Dismissal without a reason is refused: it is the only way to clear a flag
+    // nobody intends to act on, so an unexplained one is indistinguishable
+    // from neglect.
+    const noReason = await patchFlag(jsonRequest('http://x/api/attendance/flags', 'PATCH', { flagId: flagA, status: 'DISMISSED' }));
+
+    expect(noReason.status).toBe(422);
+
+    const dismissed = await patchFlag(jsonRequest('http://x/api/attendance/flags', 'PATCH', {
+      flagId: flagA,
+      status: 'DISMISSED',
+      dismissReason: 'Erreur de saisie du professeur',
+    }));
+
+    expect(dismissed.status).toBe(200);
+
+    const dismissedBody = await bodyOf(dismissed);
+
+    expect(dismissedBody.data.status).toBe('DISMISSED');
+    expect(dismissedBody.data.dismissReason).toBe('Erreur de saisie du professeur');
+    expect(dismissedBody.data.resolvedAt).not.toBeNull();
   });
 });

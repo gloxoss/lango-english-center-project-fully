@@ -151,6 +151,12 @@ export const PERMISSIONS = {
   'payroll.awards.manage': 'Gérer les récompenses et primes',
   'payroll.self.read': 'Consulter ses propres bulletins et données de paie (self-service)',
 
+  // Staff time clock. Separate from the payroll keys on purpose: recording that
+  // someone arrived is a front-desk act, not a payroll act, and it must not be
+  // reachable by every role that can reach the staff badge reader. Held by
+  // school_admin by default; grant explicitly to a kiosk operator.
+  'workforce.punch': 'Pointer l\'arrivée et le départ du personnel (pointeuse)',
+
   // CRM (Phase 7)
   'crm.manage': 'Gérer le pipeline CRM et les prospects',
 

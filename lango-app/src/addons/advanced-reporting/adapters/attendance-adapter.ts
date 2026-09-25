@@ -135,7 +135,7 @@ export class AttendanceAdapter {
       .select({
         studentName: user.name,
         totalSessions: sql<number>`count(${attendance.id})::int`,
-        attendedSessions: sql<number>`coalesce(sum(case when ${attendance.status} in ('present', 'late', 'excused') then 1 else 0 end), 0)::int`,
+        attendedSessions: sql<number>`coalesce(sum(case when ${attendance.status} in ('present', 'late') then 1 else 0 end), 0)::int`,
         unexcusedAbsences: sql<number>`coalesce(sum(case when ${attendance.status} = 'absent' and not exists (
           SELECT 1 FROM attendance_excuses ex
           WHERE ex.tenant_id = ${tenantId}::uuid
@@ -161,8 +161,8 @@ export class AttendanceAdapter {
       const total = Number(o.totalSessions || 0);
       const attended = Number(o.attendedSessions || 0);
       const unexcused = Number(o.unexcusedAbsences || 0);
-      // CANONICAL PRESENCE: attended = present + late + excused; a zero
-      // denominator is "not calculated" (null), never a fabricated 100.
+      // PHYSICAL PRESENCE: attended = present + late (see attendedSessions). A
+      // zero denominator is "not calculated" (null), never a fabricated 100.
       const rate = total > 0 ? Math.round((attended / total) * 100) : null;
       let alert = total > 0 ? 'Normal' : 'À configurer';
       if (unexcused >= 5) {
