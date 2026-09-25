@@ -1,0 +1,67 @@
+{
+  "timestamp": "2026-09-24T22:14:23.695Z",
+  "environment": {
+    "tenant": "Groupe Scolaire Atlas (c47ac10b-58cc-4372-a567-0e02b2c3d479)",
+    "architecture": "SchoolOS Moroccan Multi-Tenant Platform"
+  },
+  "cardVerification": {
+    "validToken": {
+      "rawToken": "atlas-card-token-valid-2026",
+      "sha256Hash": "305c3e4367dd3b0680c75418af9493a7b197ad1672b8b270b5071a56a4a30f2e",
+      "result": {
+        "valid": true,
+        "subjectName": "Salma Bennani",
+        "subjectType": "student",
+        "documentType": "student_id",
+        "issuedAt": "2026-09-24 21:34:24.728964",
+        "validUntil": "2027-06-30 00:00:00",
+        "schoolName": "Groupe Scolaire Atlas"
+      }
+    },
+    "tamperedToken": {
+      "rawToken": "tampered_fake_card_token_00000000000000000000000000000000",
+      "result": {
+        "valid": false
+      }
+    },
+    "honeypotCheck": {
+      "result": {
+        "valid": false,
+        "reason": "bot_honeypot_triggered"
+      }
+    }
+  },
+  "certificateVerification": {
+    "validToken": {
+      "rawToken": "atlas-cert-token-valid-2026",
+      "sha256Hash": "f91fe1ee72261642bf9649505a199f55ba65240acc4bf3e7ed471bc9f4de622b",
+      "result": {
+        "valid": true,
+        "recipientName": "Salma Bennani",
+        "certificateTitle": "Attestation de Scolarité Officielle (Loi 06-00)",
+        "serialNumber": "CERT-2026-000001",
+        "issuedAt": "2026-09-24 21:34:24.857767",
+        "schoolName": "Groupe Scolaire Atlas"
+      }
+    },
+    "tamperedToken": {
+      "rawToken": "tampered_fake_cert_token_00000000000000000000000000000000",
+      "result": {
+        "valid": false
+      }
+    },
+    "honeypotCheck": {
+      "result": {
+        "valid": false,
+        "reason": "bot_honeypot_triggered"
+      }
+    }
+  },
+  "securityInvariants": {
+    "zeroTokenPlaintextInDb": "Only sha256 hashes are persisted in public_token_hash / verification_token_hash",
+    "tenantIsolationEnforced": "Every credential mutation and lookup enforces tenantId partitioning",
+    "antiEnumerationGuaranteed": "Identical {valid:false} response shape for non-existent, tampered, expired, and revoked credentials",
+    "privacyComplianceCNDP": "Public verification never exposes sensitive PII (DOB, NID, salary, guardian contacts, internal notes)",
+    "botProtection": "Honeypot field (website_hp) and IP sliding window rate-limiter enforced"
+  }
+}

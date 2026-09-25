@@ -1,21 +1,21 @@
-import { and, desc, eq, isNotNull } from 'drizzle-orm';
+import type { DocumentTemplateSchema } from '@/libs/document-studio/types';
 import { createHash, randomBytes } from 'node:crypto';
-import { ApiError } from '@/libs/api/errors';
-import { contentTypeFor, readUploadedFile } from '@/libs/api/uploads';
-import { hasAddon } from '@/libs/api/entitlements';
-import { getEffectiveValue } from '@/libs/settings/registry';
-import { db } from '@/libs/DB';
-import { classes, classSections, sections, user } from '@/models/Schema';
+import { and, desc, eq, isNotNull } from 'drizzle-orm';
 import { examHalls, examSeats, examTerms } from '@/features/assessment/models/assessment-schema';
 import {
+  documentEvents,
   documentTemplates,
   documentTemplateVersions,
-  documentEvents,
   issuedDocuments,
 } from '@/features/cards/models/cards-schema';
-import { renderPdf } from '@/libs/document-studio/render';
-import type { DocumentTemplateSchema } from '@/libs/document-studio/types';
 import { mayUseStudentPhoto } from '@/features/students/services/media-consent';
+import { hasAddon } from '@/libs/api/entitlements';
+import { ApiError } from '@/libs/api/errors';
+import { contentTypeFor, readUploadedFile } from '@/libs/api/uploads';
+import { db } from '@/libs/DB';
+import { renderPdf } from '@/libs/document-studio/render';
+import { getEffectiveValue } from '@/libs/settings/registry';
+import { classes, classSections, sections, user } from '@/models/Schema';
 
 export type CardSubjectType = 'student' | 'employee' | 'exam_candidate';
 
@@ -29,14 +29,20 @@ const VERIFY_BASE_URL = process.env.BETTER_AUTH_URL || 'http://localhost:3000';
 
 function splitName(fullName: string | null): [string, string] {
   const parts = (fullName ?? '').trim().split(/\s+/);
-  if (parts.length === 0 || parts[0] === '') return ['', ''];
+  if (parts.length === 0 || parts[0] === '') {
+    return ['', ''];
+  }
   return [parts[0] ?? '', parts.slice(1).join(' ')];
 }
 
 export function templateRequiresPhoto(schemaJson: unknown): boolean {
-  if (!schemaJson || typeof schemaJson !== 'object') return false;
+  if (!schemaJson || typeof schemaJson !== 'object') {
+    return false;
+  }
   const s = schemaJson as { schemas?: unknown[] };
-  if (!Array.isArray(s.schemas)) return false;
+  if (!Array.isArray(s.schemas)) {
+    return false;
+  }
   for (const page of s.schemas) {
     if (Array.isArray(page)) {
       for (const element of page) {
@@ -47,7 +53,9 @@ export function templateRequiresPhoto(schemaJson: unknown): boolean {
     } else if (page && typeof page === 'object') {
       for (const [key, value] of Object.entries(page)) {
         const fieldName = (value && typeof value === 'object' && (value as any).name) ? (value as any).name : key;
-        if (fieldName === 'photo') return true;
+        if (fieldName === 'photo') {
+          return true;
+        }
       }
     }
   }
@@ -55,11 +63,13 @@ export function templateRequiresPhoto(schemaJson: unknown): boolean {
 }
 
 async function loadPhotoDataUri(tenantId: string, userId: string): Promise<string> {
-  const [row] = await db.select({ photoUrl: user.photoUrl, image: user.image }).from(user)
-    .where(and(eq(user.id, userId), eq(user.tenantId, tenantId)))
-    .limit(1);
-  if (row?.image?.startsWith('data:image/')) return row.image;
-  if (!row?.photoUrl) return '';
+  const [row] = await db.select({ photoUrl: user.photoUrl, image: user.image }).from(user).where(and(eq(user.id, userId), eq(user.tenantId, tenantId))).limit(1);
+  if (row?.image?.startsWith('data:image/')) {
+    return row.image;
+  }
+  if (!row?.photoUrl) {
+    return '';
+  }
   try {
     const bytes = await readUploadedFile(tenantId, row.photoUrl);
     const ext = row.photoUrl.split('.').pop() ?? 'jpg';
@@ -75,10 +85,10 @@ export async function resolveSubjectData(
   subjectId: string,
 ): Promise<{ subjectId: string; data: Record<string, string> }> {
   if (subjectType === 'student') {
-    const [u] = await db.select().from(user)
-      .where(and(eq(user.id, subjectId), eq(user.tenantId, tenantId)))
-      .limit(1);
-    if (!u) throw new ApiError(404, 'NOT_FOUND', 'Élève introuvable pour cet établissement.');
+    const [u] = await db.select().from(user).where(and(eq(user.id, subjectId), eq(user.tenantId, tenantId))).limit(1);
+    if (!u) {
+      throw new ApiError(404, 'NOT_FOUND', 'Élève introuvable pour cet établissement.');
+    }
     const [firstName, lastName] = splitName(u.name);
     let program = u.className ?? u.level ?? '';
     if (u.classSectionId) {
@@ -87,7 +97,7 @@ export async function resolveSubjectData(
         .from(classSections)
         .innerJoin(classes, eq(classSections.classId, classes.id))
         .innerJoin(sections, eq(classSections.sectionId, sections.id))
-        .where(eq(classSections.id, u.classSectionId))
+        .where(and(eq(classSections.tenantId, tenantId), eq(classSections.id, u.classSectionId)))
         .limit(1);
       if (sec) {
         program = [u.className ?? u.level, sec.label].filter(Boolean).join(' ');
@@ -119,10 +129,10 @@ export async function resolveSubjectData(
   }
 
   if (subjectType === 'employee') {
-    const [u] = await db.select().from(user)
-      .where(and(eq(user.id, subjectId), eq(user.tenantId, tenantId)))
-      .limit(1);
-    if (!u) throw new ApiError(404, 'NOT_FOUND', 'Employé introuvable pour cet établissement.');
+    const [u] = await db.select().from(user).where(and(eq(user.id, subjectId), eq(user.tenantId, tenantId))).limit(1);
+    if (!u) {
+      throw new ApiError(404, 'NOT_FOUND', 'Employé introuvable pour cet établissement.');
+    }
     const [firstName, lastName] = splitName(u.name);
     const resolvedPhoto = u.photoUrl ? `/api/students/photos?id=${u.id}` : (u.image ?? '');
     return {
@@ -145,14 +155,14 @@ export async function resolveSubjectData(
   }
 
   // exam_candidate: subjectId is the examSeats row id.
-  const [seat] = await db.select().from(examSeats)
-    .where(and(eq(examSeats.id, subjectId), eq(examSeats.tenantId, tenantId)))
-    .limit(1);
-  if (!seat) throw new ApiError(404, 'NOT_FOUND', 'Place d\'examen introuvable pour cet établissement.');
+  const [seat] = await db.select().from(examSeats).where(and(eq(examSeats.id, subjectId), eq(examSeats.tenantId, tenantId))).limit(1);
+  if (!seat) {
+    throw new ApiError(404, 'NOT_FOUND', 'Place d\'examen introuvable pour cet établissement.');
+  }
 
-  const [u] = await db.select().from(user).where(eq(user.id, seat.studentId)).limit(1);
-  const [term] = await db.select().from(examTerms).where(eq(examTerms.id, seat.examTermId)).limit(1);
-  const [hall] = await db.select().from(examHalls).where(eq(examHalls.id, seat.examHallId)).limit(1);
+  const [u] = await db.select().from(user).where(and(eq(user.id, seat.studentId), eq(user.tenantId, tenantId))).limit(1);
+  const [term] = await db.select().from(examTerms).where(and(eq(examTerms.id, seat.examTermId), eq(examTerms.tenantId, tenantId))).limit(1);
+  const [hall] = await db.select().from(examHalls).where(and(eq(examHalls.id, seat.examHallId), eq(examHalls.tenantId, tenantId))).limit(1);
   const [firstName, lastName] = splitName(u?.name ?? '');
   const examPhotoAllowed = await mayUseStudentPhoto(tenantId, seat.studentId);
   const resolvedPhoto = !examPhotoAllowed ? '' : u?.photoUrl ? `/api/students/photos?id=${seat.studentId}` : (u?.image ?? '');
@@ -197,22 +207,24 @@ export type IssuedResult = {
 export async function issueDocument(params: IssueDocumentParams): Promise<IssuedResult> {
   const { tenantId, templateVersionId, subjectType, subjectId, issuedBy } = params;
 
-  const [version] = await db.select().from(documentTemplateVersions)
-    .where(and(
-      eq(documentTemplateVersions.tenantId, tenantId),
-      eq(documentTemplateVersions.id, templateVersionId),
-    ))
-    .limit(1);
-  if (!version) throw new ApiError(404, 'NOT_FOUND', 'Version de modèle introuvable pour cet établissement.');
-  if (!version.publishedById) throw new ApiError(400, 'NOT_PUBLISHED', 'Seules les versions publiées peuvent être émises.');
+  const [version] = await db.select().from(documentTemplateVersions).where(and(
+    eq(documentTemplateVersions.tenantId, tenantId),
+    eq(documentTemplateVersions.id, templateVersionId),
+  )).limit(1);
+  if (!version) {
+    throw new ApiError(404, 'NOT_FOUND', 'Version de modèle introuvable pour cet établissement.');
+  }
+  if (!version.publishedById) {
+    throw new ApiError(400, 'NOT_PUBLISHED', 'Seules les versions publiées peuvent être émises.');
+  }
 
-  const [template] = await db.select().from(documentTemplates)
-    .where(and(
-      eq(documentTemplates.tenantId, tenantId),
-      eq(documentTemplates.id, version.templateId),
-    ))
-    .limit(1);
-  if (!template) throw new ApiError(404, 'NOT_FOUND', 'Modèle introuvable pour cet établissement.');
+  const [template] = await db.select().from(documentTemplates).where(and(
+    eq(documentTemplates.tenantId, tenantId),
+    eq(documentTemplates.id, version.templateId),
+  )).limit(1);
+  if (!template) {
+    throw new ApiError(404, 'NOT_FOUND', 'Modèle introuvable pour cet établissement.');
+  }
 
   const expectedType = TEMPLATE_TYPE_BY_SUBJECT[subjectType];
   if (template.type !== expectedType) {
@@ -331,9 +343,13 @@ export async function resolveDefaultPublishedTemplateVersion(
       eq(documentTemplates.status, 'published'),
     ));
 
-  if (templates.length === 0) return null;
+  if (templates.length === 0) {
+    return null;
+  }
   const first = templates[0];
-  if (!first) return null;
+  if (!first) {
+    return null;
+  }
   const preferredId = (templates.find(t => t.isDefault) ?? first).id;
 
   const [version] = await db
@@ -362,11 +378,17 @@ export async function autoIssueStudentCardOnAdmission(
   issuedBy: string,
 ): Promise<IssuedResult | null> {
   const setting = await getEffectiveValue(tenantId, null, 'cards.autoIssueStudentCardOnApproval');
-  if (setting.value !== true) return null;
-  if (!(await hasAddon(tenantId, 'card-management'))) return null;
+  if (setting.value !== true) {
+    return null;
+  }
+  if (!(await hasAddon(tenantId, 'card-management'))) {
+    return null;
+  }
 
   const templateVersionId = await resolveDefaultPublishedTemplateVersion(tenantId, 'student_id');
-  if (!templateVersionId) return null;
+  if (!templateVersionId) {
+    return null;
+  }
 
   const result = await issueDocument({
     tenantId,

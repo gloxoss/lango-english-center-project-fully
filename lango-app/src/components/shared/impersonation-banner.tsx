@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Eye, X } from 'lucide-react';
+import { authClient } from '@/libs/auth-client';
 
 // Persistent impersonation banner (audit 2026-09-22, P1-2): while a super
 // admin is acting inside a school, every dashboard page says so and offers a
@@ -9,9 +10,14 @@ import { Eye, X } from 'lucide-react';
 // cookie is httpOnly.
 
 export function ImpersonationBanner({ locale }: { locale: string }) {
+  const { data: session } = authClient.useSession();
   const [tenantName, setTenantName] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
+    if ((session?.user as any)?.role !== 'super_admin') {
+      setTenantName(null);
+      return;
+    }
     fetch('/api/super-admin/tenant-context')
       .then((res) => (res.ok ? res.json() : null))
       .then((json) => {
@@ -22,7 +28,7 @@ export function ImpersonationBanner({ locale }: { locale: string }) {
         }
       })
       .catch(() => setTenantName(null));
-  }, []);
+  }, [session?.user]);
 
   useEffect(() => {
     refresh();

@@ -284,12 +284,21 @@ export function Sidebar({ locale }: { locale: string }) {
   }, [locale]);
   const canSee = (permission?: string) => !permission || (myPermissions !== null && myPermissions.has(permission));
 
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   // Effective role comes from the server-owned active context; falls back to
   // the session base role until /api/portal/me resolves.
-  const effectiveRole = portalMe?.role ?? userRole;
-  const isSuperAdmin = effectiveRole === 'super_admin';
+  const effectiveRole = isMounted ? (portalMe?.role ?? userRole) : '';
+  const isSuperAdmin = isMounted && effectiveRole === 'super_admin';
   const hasSelectedTenant = Boolean(portalMe?.tenantId);
-  const roleLabel = (tRoles as any).has(effectiveRole) ? tRoles(effectiveRole) : (ROLE_LABELS[effectiveRole] ?? effectiveRole);
+  const roleLabel = !isMounted
+    ? ''
+    : (tRoles as any).has(effectiveRole)
+      ? tRoles(effectiveRole)
+      : (ROLE_LABELS[effectiveRole] ?? effectiveRole);
 
   const canSeeAddon = (addon?: string) => {
     if (!addon) {
@@ -1356,7 +1365,7 @@ export function Sidebar({ locale }: { locale: string }) {
             text-[11px] font-bold text-[#2487B8]
           "
           >
-            {roleLabel}
+            {roleLabel || '\u00A0'}
           </span>
         </div>
         <PortalRoleSwitcher
