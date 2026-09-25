@@ -1,26 +1,26 @@
 import { and, asc, desc, eq, ilike, or, sql } from 'drizzle-orm';
-import { db } from '@/libs/DB';
-import { ApiError } from '@/libs/api/errors';
-import { branches, employeeProfiles, user } from '@/models/Schema';
 import { departments, designations, employeeEmploymentEvents } from '@/features/hr/models/hr-schema';
+import { ApiError } from '@/libs/api/errors';
+import { db } from '@/libs/DB';
+import { branches, employeeProfiles, user } from '@/models/Schema';
 import { reserveEmployeeId } from './employee-id';
 
 // ---------------------------------------------------------------------------
 // Employment events (append-only timeline)
 // ---------------------------------------------------------------------------
 
-export type EmploymentEventType =
-  | 'hired'
-  | 'changed_department'
-  | 'changed_designation'
-  | 'changed_manager'
-  | 'employment_status_change'
-  | 'access_granted'
-  | 'access_revoked'
-  | 'offboarded'
-  | 'reactivated'
-  | 'archived'
-  | 'linked_account';
+export type EmploymentEventType
+  = | 'hired'
+    | 'changed_department'
+    | 'changed_designation'
+    | 'changed_manager'
+    | 'employment_status_change'
+    | 'access_granted'
+    | 'access_revoked'
+    | 'offboarded'
+    | 'reactivated'
+    | 'archived'
+    | 'linked_account';
 
 export async function recordEmploymentEvent(
   tenantId: string,
@@ -40,7 +40,25 @@ export async function recordEmploymentEvent(
   });
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function listEmploymentEvents(tenantId: string, employeeId: string) {
+  let resolvedId = employeeId;
+  if (!UUID_REGEX.test(employeeId)) {
+    const [found] = await db
+      .select({ id: employeeProfiles.id })
+      .from(employeeProfiles)
+      .where(and(
+        or(eq(employeeProfiles.employeeId, employeeId), eq(employeeProfiles.userId, employeeId)),
+        eq(employeeProfiles.tenantId, tenantId),
+      ))
+      .limit(1);
+    if (!found) {
+      return [];
+    }
+    resolvedId = found.id;
+  }
+
   return db
     .select({
       id: employeeEmploymentEvents.id,
@@ -56,7 +74,7 @@ export async function listEmploymentEvents(tenantId: string, employeeId: string)
     .leftJoin(user, eq(employeeEmploymentEvents.actorId, user.id))
     .where(and(
       eq(employeeEmploymentEvents.tenantId, tenantId),
-      eq(employeeEmploymentEvents.employeeId, employeeId),
+      eq(employeeEmploymentEvents.employeeId, resolvedId),
     ))
     .orderBy(desc(employeeEmploymentEvents.effectiveAt));
 }
@@ -126,31 +144,43 @@ function directoryProjection(sensitive: boolean) {
 // ---------------------------------------------------------------------------
 
 async function verifyBranch(tenantId: string, branchId?: string | null) {
-  if (!branchId) return;
-  const [row] = await db.select({ id: branches.id }).from(branches)
-    .where(and(eq(branches.id, branchId), eq(branches.tenantId, tenantId))).limit(1);
-  if (!row) throw new ApiError(422, 'INVALID_BRANCH', 'La succursale choisie n\'existe pas dans cet établissement.');
+  if (!branchId) {
+    return;
+  }
+  const [row] = await db.select({ id: branches.id }).from(branches).where(and(eq(branches.id, branchId), eq(branches.tenantId, tenantId))).limit(1);
+  if (!row) {
+    throw new ApiError(422, 'INVALID_BRANCH', 'La succursale choisie n\'existe pas dans cet établissement.');
+  }
 }
 
 async function verifyDepartment(tenantId: string, departmentId?: string | null) {
-  if (!departmentId) return;
-  const [row] = await db.select({ id: departments.id }).from(departments)
-    .where(and(eq(departments.id, departmentId), eq(departments.tenantId, tenantId))).limit(1);
-  if (!row) throw new ApiError(422, 'INVALID_DEPARTMENT', 'Le département choisi n\'existe pas dans cet établissement.');
+  if (!departmentId) {
+    return;
+  }
+  const [row] = await db.select({ id: departments.id }).from(departments).where(and(eq(departments.id, departmentId), eq(departments.tenantId, tenantId))).limit(1);
+  if (!row) {
+    throw new ApiError(422, 'INVALID_DEPARTMENT', 'Le département choisi n\'existe pas dans cet établissement.');
+  }
 }
 
 async function verifyDesignation(tenantId: string, designationId?: string | null) {
-  if (!designationId) return;
-  const [row] = await db.select({ id: designations.id }).from(designations)
-    .where(and(eq(designations.id, designationId), eq(designations.tenantId, tenantId))).limit(1);
-  if (!row) throw new ApiError(422, 'INVALID_DESIGNATION', 'Le poste choisi n\'existe pas dans cet établissement.');
+  if (!designationId) {
+    return;
+  }
+  const [row] = await db.select({ id: designations.id }).from(designations).where(and(eq(designations.id, designationId), eq(designations.tenantId, tenantId))).limit(1);
+  if (!row) {
+    throw new ApiError(422, 'INVALID_DESIGNATION', 'Le poste choisi n\'existe pas dans cet établissement.');
+  }
 }
 
 async function verifyManager(tenantId: string, managerEmployeeId?: string | null) {
-  if (!managerEmployeeId) return;
-  const [row] = await db.select({ id: employeeProfiles.id }).from(employeeProfiles)
-    .where(and(eq(employeeProfiles.id, managerEmployeeId), eq(employeeProfiles.tenantId, tenantId))).limit(1);
-  if (!row) throw new ApiError(422, 'INVALID_MANAGER', 'Le responsable désigné n\'est pas un employé de cet établissement.');
+  if (!managerEmployeeId) {
+    return;
+  }
+  const [row] = await db.select({ id: employeeProfiles.id }).from(employeeProfiles).where(and(eq(employeeProfiles.id, managerEmployeeId), eq(employeeProfiles.tenantId, tenantId))).limit(1);
+  if (!row) {
+    throw new ApiError(422, 'INVALID_MANAGER', 'Le responsable désigné n\'est pas un employé de cet établissement.');
+  }
 }
 
 /**
@@ -158,17 +188,24 @@ async function verifyManager(tenantId: string, managerEmployeeId?: string | null
  * reachable, assigning candidateId as targetId's manager would create a cycle.
  */
 async function wouldCreateManagerCycle(tenantId: string, candidateId: string, targetId: string): Promise<boolean> {
-  if (candidateId === targetId) return true;
+  if (candidateId === targetId) {
+    return true;
+  }
   const frontier = [candidateId];
   const visited = new Set<string>();
   while (frontier.length > 0) {
     const current = frontier.shift()!;
-    if (visited.has(current)) continue;
+    if (visited.has(current)) {
+      continue;
+    }
     visited.add(current);
-    if (current === targetId) return true;
-    const [mgr] = await db.select({ managerEmployeeId: employeeProfiles.managerEmployeeId }).from(employeeProfiles)
-      .where(and(eq(employeeProfiles.id, current), eq(employeeProfiles.tenantId, tenantId))).limit(1);
-    if (mgr?.managerEmployeeId) frontier.push(mgr.managerEmployeeId);
+    if (current === targetId) {
+      return true;
+    }
+    const [mgr] = await db.select({ managerEmployeeId: employeeProfiles.managerEmployeeId }).from(employeeProfiles).where(and(eq(employeeProfiles.id, current), eq(employeeProfiles.tenantId, tenantId))).limit(1);
+    if (mgr?.managerEmployeeId) {
+      frontier.push(mgr.managerEmployeeId);
+    }
   }
   return false;
 }
@@ -196,14 +233,30 @@ export async function listEmployees(tenantId: string, filters: EmployeeFilters, 
         ilike(user.email, `%${filters.search}%`),
       )
     : undefined;
-  if (searchCond) conditions.push(searchCond);
-  if (filters.departmentId) conditions.push(eq(employeeProfiles.departmentId, filters.departmentId));
-  if (filters.designationId) conditions.push(eq(employeeProfiles.designationId, filters.designationId));
-  if (filters.branchId) conditions.push(eq(employeeProfiles.branchId, filters.branchId));
-  if (filters.employmentStatus) conditions.push(eq(employeeProfiles.employmentStatus, filters.employmentStatus));
-  if (filters.loginStatus === 'linked') conditions.push(sql`${employeeProfiles.userId} IS NOT NULL`);
-  if (filters.loginStatus === 'unlinked') conditions.push(sql`${employeeProfiles.userId} IS NULL`);
-  if (filters.role) conditions.push(eq(user.role, filters.role as 'super_admin' | 'school_admin' | 'teacher' | 'accountant' | 'student' | 'alumni' | 'parent' | 'receptionist' | 'guard'));
+  if (searchCond) {
+    conditions.push(searchCond);
+  }
+  if (filters.departmentId) {
+    conditions.push(eq(employeeProfiles.departmentId, filters.departmentId));
+  }
+  if (filters.designationId) {
+    conditions.push(eq(employeeProfiles.designationId, filters.designationId));
+  }
+  if (filters.branchId) {
+    conditions.push(eq(employeeProfiles.branchId, filters.branchId));
+  }
+  if (filters.employmentStatus) {
+    conditions.push(eq(employeeProfiles.employmentStatus, filters.employmentStatus));
+  }
+  if (filters.loginStatus === 'linked') {
+    conditions.push(sql`${employeeProfiles.userId} IS NOT NULL`);
+  }
+  if (filters.loginStatus === 'unlinked') {
+    conditions.push(sql`${employeeProfiles.userId} IS NULL`);
+  }
+  if (filters.role) {
+    conditions.push(eq(user.role, filters.role as 'super_admin' | 'school_admin' | 'teacher' | 'accountant' | 'student' | 'alumni' | 'parent' | 'receptionist' | 'guard'));
+  }
 
   return db
     .select(directoryProjection(sensitive))
@@ -214,11 +267,15 @@ export async function listEmployees(tenantId: string, filters: EmployeeFilters, 
 }
 
 export async function getEmployee(tenantId: string, id: string, sensitive: boolean) {
+  const identifierCondition = UUID_REGEX.test(id)
+    ? eq(employeeProfiles.id, id)
+    : or(eq(employeeProfiles.employeeId, id), eq(employeeProfiles.userId, id));
+
   const [row] = await db
     .select(directoryProjection(sensitive))
     .from(employeeProfiles)
     .leftJoin(user, eq(employeeProfiles.userId, user.id))
-    .where(and(eq(employeeProfiles.id, id), eq(employeeProfiles.tenantId, tenantId)))
+    .where(and(identifierCondition, eq(employeeProfiles.tenantId, tenantId)))
     .limit(1);
   return row ?? null;
 }
@@ -270,7 +327,9 @@ export async function createEmployee(tenantId: string, actorId: string, input: C
   let linkedUser: typeof user.$inferSelect | undefined;
   if (input.userId) {
     const [row] = await db.select().from(user).where(and(eq(user.id, input.userId), eq(user.tenantId, tenantId))).limit(1);
-    if (!row) throw new ApiError(422, 'INVALID_USER', 'Le compte lié n\'existe pas dans cet établissement.');
+    if (!row) {
+      throw new ApiError(422, 'INVALID_USER', 'Le compte lié n\'existe pas dans cet établissement.');
+    }
     linkedUser = row;
   }
 
@@ -324,14 +383,25 @@ export async function createEmployee(tenantId: string, actorId: string, input: C
       if (input.firstName || input.lastName) {
         userUpdates.name = `${input.firstName ?? ''} ${input.lastName ?? ''}`.trim();
       }
-      if (input.firstName) userUpdates.firstName = input.firstName;
-      if (input.lastName) userUpdates.lastName = input.lastName;
-      if (input.phone) userUpdates.phone = input.phone;
-      if (input.photoUrl) userUpdates.photoUrl = input.photoUrl;
-      if (input.nationalId) userUpdates.nationalId = input.nationalId;
-      if (input.salary) userUpdates.salary = input.salary;
-      await tx.update(user).set({ ...userUpdates, updatedAt: new Date().toISOString() })
-        .where(and(eq(user.id, input.userId!), eq(user.tenantId, tenantId)));
+      if (input.firstName) {
+        userUpdates.firstName = input.firstName;
+      }
+      if (input.lastName) {
+        userUpdates.lastName = input.lastName;
+      }
+      if (input.phone) {
+        userUpdates.phone = input.phone;
+      }
+      if (input.photoUrl) {
+        userUpdates.photoUrl = input.photoUrl;
+      }
+      if (input.nationalId) {
+        userUpdates.nationalId = input.nationalId;
+      }
+      if (input.salary) {
+        userUpdates.salary = input.salary;
+      }
+      await tx.update(user).set({ ...userUpdates, updatedAt: new Date().toISOString() }).where(and(eq(user.id, input.userId!), eq(user.tenantId, tenantId)));
     }
 
     return profile;
@@ -346,7 +416,9 @@ export type UpdateEmployeeInput = Partial<Omit<CreateEmployeeInput, 'userId' | '
 
 export async function updateEmployee(tenantId: string, actorId: string, id: string, input: UpdateEmployeeInput) {
   const existing = await getEmployee(tenantId, id, true);
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Employé introuvable dans cet établissement.');
+  if (!existing) {
+    throw new ApiError(404, 'NOT_FOUND', 'Employé introuvable dans cet établissement.');
+  }
 
   await verifyBranch(tenantId, input.branchId ?? existing.branchId);
   await verifyDepartment(tenantId, input.departmentId ?? existing.departmentId);
@@ -380,17 +452,37 @@ export async function updateEmployee(tenantId: string, actorId: string, id: stri
   const profileUpdates: Record<string, unknown> = { updatedAt: new Date().toISOString() };
   const userUpdates: Record<string, unknown> = {};
   for (const field of [
-    'branchId', 'departmentId', 'designationId', 'managerEmployeeId',
-    'employmentType', 'employmentStatus', 'hireDate', 'contractStartDate',
-    'contractEndDate', 'workloadHours', 'dependantsCount',
-    'cnssNumber', 'amoNumber', 'bankRib', 'contractType',
-    'nationalId', 'salary',
-    'firstName', 'lastName', 'email', 'phone', 'photoUrl',
+    'branchId',
+    'departmentId',
+    'designationId',
+    'managerEmployeeId',
+    'employmentType',
+    'employmentStatus',
+    'hireDate',
+    'contractStartDate',
+    'contractEndDate',
+    'workloadHours',
+    'dependantsCount',
+    'cnssNumber',
+    'amoNumber',
+    'bankRib',
+    'contractType',
+    'nationalId',
+    'salary',
+    'firstName',
+    'lastName',
+    'email',
+    'phone',
+    'photoUrl',
   ] as const) {
-    if (input[field] !== undefined) profileUpdates[field] = input[field];
+    if (input[field] !== undefined) {
+      profileUpdates[field] = input[field];
+    }
   }
   for (const field of ['firstName', 'lastName', 'email', 'phone', 'photoUrl', 'nationalId', 'salary'] as const) {
-    if (input[field] !== undefined) userUpdates[field] = input[field];
+    if (input[field] !== undefined) {
+      userUpdates[field] = input[field];
+    }
   }
 
   return await db.transaction(async (tx) => {
@@ -416,8 +508,7 @@ export async function updateEmployee(tenantId: string, actorId: string, id: stri
       if (userUpdates.firstName !== undefined || userUpdates.lastName !== undefined) {
         userUpdates.name = `${userUpdates.firstName ?? existing.firstName ?? ''} ${userUpdates.lastName ?? existing.lastName ?? ''}`.trim();
       }
-      await tx.update(user).set({ ...userUpdates, updatedAt: new Date().toISOString() })
-        .where(and(eq(user.id, existing.userId), eq(user.tenantId, tenantId)));
+      await tx.update(user).set({ ...userUpdates, updatedAt: new Date().toISOString() }).where(and(eq(user.id, existing.userId), eq(user.tenantId, tenantId)));
     }
 
     return row;
