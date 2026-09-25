@@ -1,0 +1,26 @@
+[
+  {
+    "route": "/dashboard/parent/communication",
+    "finalPath": "/fr/dashboard/parent/communication",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 314,
+    "failures": [
+      "403 /api/settings/branches"
+    ],
+    "textDefects": [],
+    "file": "parent-fr-parent__communication.png"
+  },
+  {
+    "route": "/dashboard/parent/requests",
+    "finalPath": "/fr/dashboard/parent/requests",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 216,
+    "failures": [
+      "403 /api/settings/branches"
+    ],
+    "textDefects": [],
+    "file": "parent-fr-parent__requests.png"
+  }
+]

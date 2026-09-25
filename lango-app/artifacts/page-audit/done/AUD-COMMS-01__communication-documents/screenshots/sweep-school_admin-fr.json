@@ -1,0 +1,174 @@
+[
+  {
+    "route": "/dashboard/certificates/jobs",
+    "finalPath": "/fr/dashboard/certificates/jobs",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 569,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-certificates__jobs.png"
+  },
+  {
+    "route": "/dashboard/certificates/requests",
+    "finalPath": "/fr/dashboard/certificates/requests",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 756,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-certificates__requests.png"
+  },
+  {
+    "route": "/dashboard/certificates/settings",
+    "finalPath": "/fr/dashboard/certificates/settings",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 571,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-certificates__settings.png"
+  },
+  {
+    "route": "/dashboard/certificates/templates",
+    "finalPath": "/fr/dashboard/certificates/templates",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 555,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-certificates__templates.png"
+  },
+  {
+    "route": "/dashboard/certificates/templates/1493028f-0190-448e-bba5-77c8cc51469a/edit",
+    "finalPath": "/fr/dashboard/certificates/templates/1493028f-0190-448e-bba5-77c8cc51469a/edit",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 698,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-certificates__templates__1493028f-0190-448e-bba5-77c8cc51469a__edit.png"
+  },
+  {
+    "route": "/dashboard/cards",
+    "finalPath": "/fr/dashboard/cards",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 612,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-cards.png"
+  },
+  {
+    "route": "/dashboard/cards/admit-cards",
+    "finalPath": "/fr/dashboard/cards/admit-cards",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 2433,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-cards__admit-cards.png"
+  },
+  {
+    "route": "/dashboard/cards/employees",
+    "finalPath": "/fr/dashboard/cards/employees",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 886,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-cards__employees.png"
+  },
+  {
+    "route": "/dashboard/cards/issued",
+    "finalPath": "/fr/dashboard/cards/issued",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 720,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-cards__issued.png"
+  },
+  {
+    "route": "/dashboard/cards/jobs",
+    "finalPath": "/fr/dashboard/cards/jobs",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 554,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-cards__jobs.png"
+  },
+  {
+    "route": "/dashboard/cards/students",
+    "finalPath": "/fr/dashboard/cards/students",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 2145,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-cards__students.png"
+  },
+  {
+    "route": "/dashboard/cards/templates",
+    "finalPath": "/fr/dashboard/cards/templates",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 567,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-cards__templates.png"
+  },
+  {
+    "route": "/dashboard/cards/templates/1c1ce805-8966-4736-84f4-29656a6fa6c2/edit",
+    "finalPath": "/fr/dashboard/cards/templates/1c1ce805-8966-4736-84f4-29656a6fa6c2/edit",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 696,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-cards__templates__1c1ce805-8966-4736-84f4-29656a6fa6c2__edit.png"
+  },
+  {
+    "route": "/dashboard/documents/generator",
+    "finalPath": "/fr/dashboard/documents/generator",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 533,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-documents__generator.png"
+  },
+  {
+    "route": "/dashboard/settings/notifications",
+    "finalPath": "/fr/dashboard/settings/notifications",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 508,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-settings__notifications.png"
+  },
+  {
+    "route": "/dashboard/students/alumni/requests",
+    "finalPath": "/fr/dashboard/students/alumni/requests",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 632,
+    "failures": [
+      "console: IntlError: FORMATTING_ERROR: The intl string context variable \"count\" was not provided to the string \"{count} demandes\"\n    at getFallbackFr"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-students__alumni__requests.png"
+  },
+  {
+    "route": "/dashboard/super-admin/sms",
+    "finalPath": "/fr/dashboard",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 981,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-super-admin__sms.png"
+  }
+]

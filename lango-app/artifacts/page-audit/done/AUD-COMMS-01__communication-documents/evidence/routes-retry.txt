@@ -1,0 +1,17 @@
+/dashboard/certificates/jobs
+/dashboard/certificates/requests
+/dashboard/certificates/settings
+/dashboard/certificates/templates
+/dashboard/certificates/templates/1493028f-0190-448e-bba5-77c8cc51469a/edit
+/dashboard/cards
+/dashboard/cards/admit-cards
+/dashboard/cards/employees
+/dashboard/cards/issued
+/dashboard/cards/jobs
+/dashboard/cards/students
+/dashboard/cards/templates
+/dashboard/cards/templates/1c1ce805-8966-4736-84f4-29656a6fa6c2/edit
+/dashboard/documents/generator
+/dashboard/settings/notifications
+/dashboard/students/alumni/requests
+/dashboard/super-admin/sms

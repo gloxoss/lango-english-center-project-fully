@@ -1,0 +1,2 @@
+/dashboard/parent/communication
+/dashboard/parent/requests
