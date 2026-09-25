@@ -1,0 +1,6 @@
+/dashboard/receptionist
+/dashboard/receptionist/inquiries
+/dashboard/receptionist/handoffs
+/dashboard/receptionist/appointments
+/dashboard/receptionist/visitors
+/dashboard/receptionist/pickups
