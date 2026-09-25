@@ -1,0 +1,165 @@
+[
+  {
+    "route": "/dashboard/teacher",
+    "finalPath": "/ar/dashboard/teacher",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 298,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-ar-teacher.png"
+  },
+  {
+    "route": "/dashboard/academics/teacher-schedule",
+    "finalPath": "/ar/dashboard/academics/teacher-schedule",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 372,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-ar-academics__teacher-schedule.png"
+  },
+  {
+    "route": "/dashboard/attendance",
+    "finalPath": "/ar/dashboard/attendance",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 1116,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3447/_next/static/webpack/webpack.fe2dd7528beb3b48.hot-update.js' because its MIME type ('t",
+      "console: Refused to execute script from 'http://localhost:3447/_next/static/webpack/app/[locale]/layout.fe2dd7528beb3b48.hot-update.js' because its M"
+    ],
+    "textDefects": [],
+    "file": "teacher-ar-attendance.png"
+  },
+  {
+    "route": "/dashboard/academics/results",
+    "finalPath": "/ar/dashboard/academics/results",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 217,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-ar-academics__results.png"
+  },
+  {
+    "route": "/dashboard/students",
+    "finalPath": "/ar/dashboard/students",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 865,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-ar-students.png"
+  },
+  {
+    "route": "/dashboard/students/parents",
+    "finalPath": "/ar/dashboard/students/parents",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 890,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-ar-students__parents.png"
+  },
+  {
+    "route": "/dashboard/reports",
+    "finalPath": "/ar/dashboard/reports",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 506,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-ar-reports.png"
+  },
+  {
+    "route": "/dashboard/transport",
+    "finalPath": "/ar/dashboard/transport",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 320,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-ar-transport.png"
+  },
+  {
+    "route": "/dashboard/transport/trips",
+    "finalPath": "/ar/dashboard/transport/trips",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 229,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-ar-transport__trips.png"
+  },
+  {
+    "route": "/dashboard/transport/boarding",
+    "finalPath": "/ar/dashboard/transport/boarding",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 274,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-ar-transport__boarding.png"
+  },
+  {
+    "route": "/dashboard/academics/grades/entry",
+    "finalPath": "/ar/dashboard/academics/grades/entry",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 280,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-ar-academics__grades__entry.png"
+  },
+  {
+    "route": "/dashboard/academics/assessment/marksheet",
+    "finalPath": "/ar/dashboard/academics/assessment/marksheet",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 201,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-ar-academics__assessment__marksheet.png"
+  },
+  {
+    "route": "/dashboard/academics/assessment/homework",
+    "finalPath": "/ar/dashboard/academics/assessment/homework",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 273,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-ar-academics__assessment__homework.png"
+  },
+  {
+    "route": "/dashboard/academics/teacher-availability",
+    "finalPath": "/ar/dashboard/academics/teacher-availability",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 95,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-ar-academics__teacher-availability.png"
+  },
+  {
+    "route": "/dashboard/academics/live-class",
+    "finalPath": "/ar/dashboard/academics/live-class",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 297,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-ar-academics__live-class.png"
+  },
+  {
+    "route": "/dashboard/academics/live-class-reports",
+    "finalPath": "/ar/dashboard/academics/live-class-reports",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 284,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-ar-academics__live-class-reports.png"
+  }
+]

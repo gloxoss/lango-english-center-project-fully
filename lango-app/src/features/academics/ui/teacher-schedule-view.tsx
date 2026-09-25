@@ -24,6 +24,12 @@ type Slot = {
 
 const DAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
 
+/** "H:MM" and "HH:MM" both occur; lexicographic order puts "10:00" before "8:00". */
+function minutesOf(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return (hours ?? 0) * 60 + (minutes ?? 0);
+}
+
 export function TeacherScheduleView({ locale: _locale, isTeacher }: { locale: string; isTeacher: boolean }) {
   const t = useTranslations('Teachers');
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -72,17 +78,19 @@ export function TeacherScheduleView({ locale: _locale, isTeacher }: { locale: st
       map.get(slot.dayOfWeek)?.push(slot);
     }
     for (const day of DAY_ORDER) {
-      map.get(day)?.sort((a, b) => a.startTime.localeCompare(b.startTime));
+      map.get(day)?.sort((a, b) => minutesOf(a.startTime) - minutesOf(b.startTime) || minutesOf(a.endTime) - minutesOf(b.endTime));
     }
     return map;
   }, [slots]);
 
   const totalHours = useMemo(() => {
-    return slots.reduce((sum, s) => {
+    const hours = slots.reduce((sum, s) => {
       const [sh, sm] = s.startTime.split(':').map(Number);
       const [eh, em] = s.endTime.split(':').map(Number);
       return sum + ((eh! * 60 + em!) - (sh! * 60 + sm!)) / 60;
     }, 0);
+    // Float accumulation renders "10.999999999999998h" otherwise.
+    return Math.round(hours * 10) / 10;
   }, [slots]);
 
   return (

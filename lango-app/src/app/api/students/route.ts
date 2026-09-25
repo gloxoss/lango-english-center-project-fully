@@ -5,7 +5,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
-import { requireCapability } from '@/libs/api/permissions';
+import { hasCapability, requireCapability } from '@/libs/api/permissions';
 import { parseJson, studentCreateSchema, studentUpdateSchema } from '@/libs/api/validation';
 import { csvSafeCell } from '@/libs/csv-safe';
 import { db } from '@/libs/DB';
@@ -681,9 +681,17 @@ export async function GET(request: Request) {
     ]);
 
     const total = totalRows[0]?.total ?? 0;
-    const totalOverdueMAD = overdueFinance.reduce((sum, r) => sum + Math.max(0, r.remainingAmount), 0);
-    const overdueStudentsCount = new Set(overdueFinance.map(r => r.studentId)).size;
-    const overdueFamiliesCount = new Set(overdueFinance.map(r => r.guardianPhone || r.studentId)).size;
+    // Fee data is finance data: a caller without finance.read (teacher) must
+    // not receive the school-wide overdue aggregate, even though the per-row
+    // amounts are already zeroed for them below.
+    const canSeeFinance = await hasCapability(context.userId, tenantId, context.role, 'finance.read');
+    const totalOverdueMAD = canSeeFinance
+      ? overdueFinance.reduce((sum, r) => sum + Math.max(0, r.remainingAmount), 0)
+      : 0;
+    const overdueStudentsCount = canSeeFinance ? new Set(overdueFinance.map(r => r.studentId)).size : 0;
+    const overdueFamiliesCount = canSeeFinance
+      ? new Set(overdueFinance.map(r => r.guardianPhone || r.studentId)).size
+      : 0;
     const newEnrollmentsCount = Number(enrollmentStats[0]?.newEnrollments ?? 0);
     const newProfilesCount = Number(kpiStats[0]?.newProfilesThisYear ?? 0);
 
@@ -801,7 +809,20 @@ export async function GET(request: Request) {
 
     // 8. Server-Side CSV Export if Requested
     if (isExport) {
-      const csvHeaders = ['Matricule', 'Nom Complet', 'Classe', 'Tuteur Legal', 'Telephone Tuteur', 'Statut', 'Situation Financiere', 'Montant Restant (MAD)', 'Montant Echu (MAD)'];
+      const financeHeaders = [
+        'Situation Financiere',
+        'Montant Restant (MAD)',
+        'Montant Echu (MAD)',
+      ];
+      const csvHeaders = [
+        'Matricule',
+        'Nom Complet',
+        'Classe',
+        'Tuteur Legal',
+        'Telephone Tuteur',
+        'Statut',
+        ...(canSeeFinance ? financeHeaders : []),
+      ];
       const csvLines = [
         csvHeaders.join(';'),
         ...roleFilteredData.map(st => [
@@ -811,9 +832,7 @@ export async function GET(request: Request) {
           st.guardianName || '',
           st.guardianPhone || '',
           st.status,
-          st.paymentStatus,
-          st.outstandingAmount || 0,
-          st.overdueAmount || 0,
+          ...(canSeeFinance ? [st.paymentStatus, st.outstandingAmount || 0, st.overdueAmount || 0] : []),
         ].map(csvSafeCell).join(';')),
       ];
 

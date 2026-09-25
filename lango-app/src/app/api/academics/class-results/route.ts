@@ -2,6 +2,7 @@ import { and, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { getTeacherClassSubjectPairs } from '@/libs/api/teacher-scope';
 import { db } from '@/libs/DB';
 import { calculateClassRanks, calculateMoroccanAverage, getMoroccanMention, percentageToTwenty } from '@/libs/grading/moroccan-grade-engine';
 import { assessmentPlans, assessmentResults, assessments, classes, classSections, classSubjects, subjects, user } from '@/models/Schema';
@@ -31,6 +32,21 @@ export async function GET(request: Request) {
 
     if (!classSubject) {
       return NextResponse.json({ success: false, message: 'Matière de classe introuvable.' }, { status: 404 });
+    }
+
+    // A teacher may only read the results of a subject they currently teach:
+    // the class-subject id is client-supplied, so without this check any
+    // teacher could read every class's ranked roster (names + averages) by
+    // iterating the picker. school_admin keeps the whole-school view.
+    if (context.role === 'teacher') {
+      const pairs = await getTeacherClassSubjectPairs(tenantId, context.userId);
+      const assigned = [...pairs].some(pair => pair.endsWith(`|${classSubjectId}`));
+      if (!assigned) {
+        return NextResponse.json(
+          { success: false, message: 'Vous ne pouvez consulter que les résultats de vos propres matières.' },
+          { status: 403 },
+        );
+      }
     }
 
     const roster = await db
