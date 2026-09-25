@@ -2178,6 +2178,14 @@
     "room": "Salle"
   },
   "Attendance": {
+    "teacherCurrentLesson": "Votre cours actuel",
+    "teacherNoLesson": "Vous n’avez aucun cours en ce moment.",
+    "teacherNextLesson": "Prochain cours",
+    "teacherTodaySchedule": "Votre journée",
+    "teacherWindowOpen": "Le pointage est ouvert.",
+    "teacherWindowBefore": "Le pointage ouvrira 5 minutes avant le début du cours.",
+    "teacherWindowClosed": "Le pointage est fermé. Une correction par l’administration est requise.",
+    "studentsCount": "élèves",
     "takeRegister": "Faire l’appel",
     "appelTitle": "Appel du jour",
     "appelSubtitle": "Les cours programmés et leur état de pointage",

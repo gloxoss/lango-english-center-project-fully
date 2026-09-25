@@ -133,7 +133,13 @@ export function AttendanceClient({
         }
         setSelectedDate(session.date);
         setSelectedClass(match.classSectionId);
-        setSelectedSubject(match.subjectId ?? 'all');
+        // Deliberately NOT the session's subject id. `attendance.subject_id`
+        // still carries a foreign key to the legacy `courses` table, while the
+        // timetable gives a modern `subjects.id`; sending the latter fails the
+        // insert outright (attendance_subject_id_courses_id_fk). The lesson's
+        // identity for the register is section + date + period, and the subject
+        // is already shown on the card, so the filter stays open.
+        setSelectedSubject('all');
         setSelectedPeriod(String(match.period));
         setSessionLabel([match.subjectName, match.className, match.sectionName].filter(Boolean).join(' · '));
       } catch {
@@ -202,7 +208,12 @@ export function AttendanceClient({
         if (isMounted) {
           setClassesList(classOpts);
           setSubjectsList(subjOpts);
-          if (classOpts.length > 0 && !selectedClass) {
+          // Never default the section when the lesson is already known. This
+          // effect has [] deps, so it closes over the initial empty
+          // `selectedClass` and would otherwise overwrite the section the
+          // session resolved — posting one section's id with another section's
+          // students, which the API refuses as WRONG_CLASS.
+          if (classOpts.length > 0 && !selectedClass && !session) {
             setSelectedClass(classOpts[0]!.id);
           }
         }

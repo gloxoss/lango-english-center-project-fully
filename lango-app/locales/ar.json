@@ -2178,6 +2178,14 @@
     "mobileStudentTargetSectionLabel": "القسم المستهدف"
   },
   "Attendance": {
+    "teacherCurrentLesson": "درسك الحالي",
+    "teacherNoLesson": "ليس لديك أي درس في هذه اللحظة.",
+    "teacherNextLesson": "الدرس التالي",
+    "teacherTodaySchedule": "يومك",
+    "teacherWindowOpen": "التسجيل مفتوح.",
+    "teacherWindowBefore": "سيفتح التسجيل قبل 5 دقائق من بداية الدرس.",
+    "teacherWindowClosed": "التسجيل مغلق. يلزم تصحيح من الإدارة.",
+    "studentsCount": "تلميذ",
     "takeRegister": "إجراء النداء",
     "appelTitle": "النداء اليومي",
     "appelSubtitle": "الحصص المبرمجة وحالة تسجيل الحضور",

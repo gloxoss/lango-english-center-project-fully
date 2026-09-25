@@ -2178,6 +2178,14 @@
     "mobileStudentTargetSectionLabel": "Target Section"
   },
   "Attendance": {
+    "teacherCurrentLesson": "Your current lesson",
+    "teacherNoLesson": "You have no lesson right now.",
+    "teacherNextLesson": "Next lesson",
+    "teacherTodaySchedule": "Your day",
+    "teacherWindowOpen": "Attendance is open.",
+    "teacherWindowBefore": "Attendance opens 5 minutes before the lesson starts.",
+    "teacherWindowClosed": "Attendance is closed. An administrator correction is required.",
+    "studentsCount": "students",
     "takeRegister": "Take the register",
     "appelTitle": "Daily roll call",
     "appelSubtitle": "Scheduled lessons and their attendance state",

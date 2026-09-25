@@ -3,11 +3,14 @@ import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { GET as auditSummary } from '@/app/api/attendance/audit-summary/route';
 import {
+  currentOccurrence,
   listSessionOccurrences,
   loadRegisterIndex,
   missingOccurrences,
+  nextOccurrence,
   occurrenceState,
   registerForOccurrence,
+  registerWindow,
 } from '@/libs/attendance/session-occurrence';
 import { db } from '@/libs/DB';
 import {
@@ -227,5 +230,64 @@ describe('session occurrence state', () => {
       empty,
       future,
     )).toEqual([]);
+  });
+});
+
+// The approved attendance window: opens 5 minutes before the start, stays open
+// through the lesson, closes 15 minutes after the end.
+describe('attendance window', () => {
+  const lesson = { startTime: '14:00', endTime: '14:55' };
+
+  function at(date: string, hhmm: string) {
+    // Build a Casablanca wall-clock moment by pinning UTC + 1h.
+    const [h, m] = hhmm.split(':').map(Number);
+    return new Date(Date.UTC(
+      Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, Number(date.slice(8, 10)),
+      h! - 1, m!, 0, 0,
+    ));
+  }
+
+  it('SC.13: opens 5 minutes before the lesson, not earlier', () => {
+    expect(registerWindow(lesson, '2026-10-06', at('2026-10-06', '13:54'))).toBe('BEFORE');
+    expect(registerWindow(lesson, '2026-10-06', at('2026-10-06', '13:55'))).toBe('OPEN');
+  });
+
+  it('SC.14: stays open through the lesson', () => {
+    expect(registerWindow(lesson, '2026-10-06', at('2026-10-06', '14:00'))).toBe('OPEN');
+    expect(registerWindow(lesson, '2026-10-06', at('2026-10-06', '14:55'))).toBe('OPEN');
+  });
+
+  it('SC.15: closes 15 minutes after the end, not before', () => {
+    expect(registerWindow(lesson, '2026-10-06', at('2026-10-06', '15:10'))).toBe('OPEN');
+    expect(registerWindow(lesson, '2026-10-06', at('2026-10-06', '15:11'))).toBe('CLOSED');
+  });
+
+  it('SC.16: a past date is always closed and a future date always unopened', () => {
+    expect(registerWindow(lesson, '2026-10-05', at('2026-10-06', '14:00'))).toBe('CLOSED');
+    expect(registerWindow(lesson, '2026-10-07', at('2026-10-06', '14:00'))).toBe('BEFORE');
+  });
+
+  it('SC.17: currentOccurrence picks the lesson inside the window', () => {
+    const morning = { ...lesson, slotId: 'am', startTime: '08:00', endTime: '09:00' };
+    const afternoon = { ...lesson, slotId: 'pm', startTime: '14:00', endTime: '14:55' };
+
+    const found = currentOccurrence([morning, afternoon], '2026-10-06', at('2026-10-06', '14:10'));
+
+    expect(found?.slotId).toBe('pm');
+  });
+
+  it('SC.18: no lesson inside the window yields null, never a guess', () => {
+    const morning = { ...lesson, slotId: 'am', startTime: '08:00', endTime: '09:00' };
+
+    expect(currentOccurrence([morning], '2026-10-06', at('2026-10-06', '12:00'))).toBeNull();
+  });
+
+  it('SC.19: nextOccurrence returns the first lesson still to start', () => {
+    const morning = { ...lesson, slotId: 'am', startTime: '08:00', endTime: '09:00' };
+    const afternoon = { ...lesson, slotId: 'pm', startTime: '14:00', endTime: '14:55' };
+
+    expect(nextOccurrence([morning, afternoon], '2026-10-06', at('2026-10-06', '10:00'))?.slotId).toBe('pm');
+    // After the last lesson there is nothing left to announce.
+    expect(nextOccurrence([morning, afternoon], '2026-10-06', at('2026-10-06', '16:00'))).toBeNull();
   });
 });

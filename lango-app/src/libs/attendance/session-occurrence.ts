@@ -293,3 +293,80 @@ export function missingOccurrences(
     return occurrence.endTime <= hm;
   });
 }
+
+/**
+ * THE APPROVED ATTENDANCE WINDOW.
+ *
+ * A register opens 5 minutes before the lesson starts, stays open through it,
+ * and closes 15 minutes after it ends. Outside that the teacher is read-only and
+ * a change has to go through an admin correction — so a register cannot be
+ * quietly written hours later, and a teacher is not blocked for arriving early.
+ */
+export const REGISTER_OPENS_BEFORE_MINUTES = 5;
+export const REGISTER_CLOSES_AFTER_MINUTES = 15;
+
+export type RegisterWindow = 'BEFORE' | 'OPEN' | 'CLOSED';
+
+function minutesOf(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return (hours ?? 0) * 60 + (minutes ?? 0);
+}
+
+export function registerWindow(
+  occurrence: Pick<SessionOccurrence, 'startTime' | 'endTime'>,
+  selectedDate: string,
+  now: Date = new Date(),
+): RegisterWindow {
+  const businessDate = casablancaTodayIso(now);
+
+  // Only today is ever operable; a past lesson is closed, a future one unopened.
+  if (selectedDate < businessDate) {
+    return 'CLOSED';
+  }
+  if (selectedDate > businessDate) {
+    return 'BEFORE';
+  }
+
+  const hm = minutesOf(casablancaTimeHm(now));
+  const opens = minutesOf(occurrence.startTime) - REGISTER_OPENS_BEFORE_MINUTES;
+  const closes = minutesOf(occurrence.endTime) + REGISTER_CLOSES_AFTER_MINUTES;
+
+  if (hm < opens) {
+    return 'BEFORE';
+  }
+  return hm > closes ? 'CLOSED' : 'OPEN';
+}
+
+/**
+ * The lesson the teacher is teaching right now, i.e. the one whose window is
+ * open. When two overlap (a data error) the later start wins: that is the one
+ * actually being taught.
+ *
+ * Generic over the row shape: callers may hold the full occurrence or a lighter
+ * projection, and only the times are needed to decide.
+ */
+export function currentOccurrence<T extends Pick<SessionOccurrence, 'startTime' | 'endTime'>>(
+  occurrences: T[],
+  selectedDate: string,
+  now: Date = new Date(),
+): T | null {
+  const open = occurrences.filter(o => registerWindow(o, selectedDate, now) === 'OPEN');
+  return open.length > 0 ? open[open.length - 1]! : null;
+}
+
+/** The next lesson that has not started yet, for the "no lesson now" state. */
+export function nextOccurrence<T extends Pick<SessionOccurrence, 'startTime' | 'endTime'>>(
+  occurrences: T[],
+  selectedDate: string,
+  now: Date = new Date(),
+): T | null {
+  const businessDate = casablancaTodayIso(now);
+  if (selectedDate < businessDate) {
+    return null;
+  }
+  if (selectedDate > businessDate) {
+    return occurrences[0] ?? null;
+  }
+  const hm = minutesOf(casablancaTimeHm(now));
+  return occurrences.find(o => minutesOf(o.startTime) > hm) ?? null;
+}
