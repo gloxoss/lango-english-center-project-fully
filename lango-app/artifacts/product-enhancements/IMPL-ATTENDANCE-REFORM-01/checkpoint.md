@@ -8,7 +8,7 @@ Updated: 2026-09-25
 | | |
 |---|---|
 | **Active branch** | `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01-integrated` |
-| **HEAD** | `2dd9c750` |
+| **HEAD** | `570fd0a9` |
 | **Worktree** | `.worktrees/IMPL-ATT-INTEGRATED` |
 | **Base (release)** | `origin/release/REL-INTEGRATE-01` = `8215bb6e` |
 | Original pre-integration branch | `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01` @ `383dc542` (Agent A reviewed `7ef7355e`) |
@@ -30,6 +30,8 @@ Updated: 2026-09-25
 | `60f0b0c8` | docs | Checkpoint after phase 2 |
 | `93ed0da4` | **3** | Presence rate counts physical presence only (6 sites) |
 | `2dd9c750` | **4a** | Guardian notified when a justification is decided |
+| `e215af89` | **4c** | Alert lifecycle: ACKNOWLEDGED / CONTACTED / DISMISSED + reason |
+| `570fd0a9` | **4d** | Alert thresholds read from Attendance settings |
 
 ## Phase status
 
@@ -40,7 +42,7 @@ Updated: 2026-09-25
 | 1 — Admin Appel du jour | **COMPLETE** (RTL time-range cosmetic open) |
 | 2 — Teacher current lesson | **COMPLETE** |
 | 3 — Business truth / metrics | **COMPLETE** |
-| 4 — Justifications + Suivi & alertes | **PARTIAL — 4a done** (parent notification). 4b admin "enregistrer une justification reçue", 4c alert lifecycle (ACKNOWLEDGED/CONTACTED/DISMISSED+reason), 4d thresholds into settings, 4e merge Signalements + Audit & Alertes — NOT STARTED |
+| 4 — Justifications + Suivi & alertes | **PARTIAL — 4a, 4c, 4d done.** Remaining: 4b admin "enregistrer une justification reçue" (UI only — the backend already accepts admin submissions), 4e merge Signalements + Audit & Alertes into one "Suivi & alertes" page |
 | 5 — Cards + credentials | NOT STARTED |
 | 6 — Session exceptions | NOT STARTED |
 | 7 — Kiosk + device security | NOT STARTED |
