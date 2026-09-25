@@ -13,7 +13,10 @@ import { identityBadgeCredentials, user, workforcePunchEvents } from '@/models/S
 
 const punchSchema = z.object({
   rawToken: z.string().trim().min(1),
-  punchType: z.enum(['in', 'out']),
+  // Optional on purpose. The server derives the legal next action from the
+  // employee's own last punch; a caller may state what it believes the action is,
+  // and will be refused if it contradicts. It may not decide.
+  punchType: z.enum(['in', 'out']).optional(),
   notes: z.string().optional(),
 }).strict();
 
@@ -90,24 +93,60 @@ export async function POST(request: Request) {
       throw new ApiError(404, 'EMPLOYEE_NOT_FOUND', 'Employé introuvable.');
     }
 
+    // THE STATE MACHINE. The employee's own last punch decides what may happen
+    // next: an open shift can only be closed, and a closed one only opened. The
+    // client cannot choose, so two arrivals in a row or a departure without an
+    // arrival are not merely rejected — they are unrepresentable.
+    //
+    // Not restricted to today: someone who arrived at 22:00 and leaves at 06:00
+    // is a normal night shift, not an error.
+    const [lastPunch] = await db
+      .select({ punchType: workforcePunchEvents.punchType })
+      .from(workforcePunchEvents)
+      .where(and(
+        eq(workforcePunchEvents.tenantId, tenantId),
+        eq(workforcePunchEvents.employeeId, staffUser.id),
+      ))
+      .orderBy(desc(workforcePunchEvents.scannedAt))
+      .limit(1);
+
+    const hasOpenShift = lastPunch?.punchType === 'in';
+    const nextAction = hasOpenShift ? 'out' : 'in';
+
+    if (body.punchType && body.punchType !== nextAction) {
+      throw new ApiError(
+        409,
+        'INVALID_PUNCH_SEQUENCE',
+        hasOpenShift
+          ? 'Une arrivée est déjà enregistrée. Le prochain pointage doit être un départ.'
+          : 'Aucune arrivée enregistrée. Le prochain pointage doit être une arrivée.',
+      );
+    }
+
     const [punch] = await db
       .insert(workforcePunchEvents)
       .values({
         tenantId,
         employeeId: staffUser.id,
         credentialId: badge.id,
-        punchType: body.punchType,
+        punchType: nextAction,
         notes: body.notes || null,
       })
       .returning();
 
-    await recordAudit(context, 'create', 'workforce_punch', punch!.id);
+    await recordAudit(context, 'create', 'workforce_punch', punch!.id, {
+      punchType: nextAction,
+      derived: body.punchType === undefined,
+    });
 
     return NextResponse.json({
       success: true,
       data: {
         punch,
         employeeName: staffUser.name,
+        // Told plainly so a kiosk can render "Arrivée" or "Départ" without
+        // guessing, and can show the refusal reason before it happens.
+        action: nextAction,
       },
     });
   } catch (error) {

@@ -9453,6 +9453,8 @@
       "prepared": "Préparée",
       "active": "Active"
     },
+    "punchAutoHint": "Le système détermine automatiquement s'il s'agit d'une arrivée ou d'un départ.",
+    "punchSubmitAuto": "Pointer",
     "hubTitle": "Paie et opérations RH",
     "hubSubtitle": "Paie mensuelle MAD. Les règles livrées restent configurées et non juridiquement certifiées.",
     "categoryTag": "Workforce Operations",

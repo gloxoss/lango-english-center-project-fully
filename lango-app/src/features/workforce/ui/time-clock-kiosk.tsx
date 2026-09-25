@@ -8,8 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
   Clock,
-  LogIn,
-  LogOut,
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
@@ -27,7 +25,6 @@ interface PunchItem {
 export function TimeClockKiosk() {
   const t = useTranslations('Workforce');
   const tCommon = useTranslations('Common');
-  const [punchMode, setPunchMode] = useState<'in' | 'out'>('in');
   const [rawTokenInput, setRawTokenInput] = useState('');
   const [punches, setPunches] = useState<PunchItem[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -62,13 +59,13 @@ export function TimeClockKiosk() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           rawToken: rawTokenInput.trim(),
-          punchType: punchMode,
+          // punchType deliberately omitted: the server decides.
         }),
       });
 
       const json = await res.json();
       if (json.success && json.data) {
-        setLastPunch({ name: json.data.employeeName || 'Employé', type: punchMode });
+        setLastPunch({ name: json.data.employeeName || 'Employé', type: json.data.action });
         setRawTokenInput('');
         fetchPunches();
       } else {
@@ -105,35 +102,11 @@ export function TimeClockKiosk() {
         </Badge>
       </div>
 
-      {/* Mode Selector & Punch Form */}
+      {/* No mode selector: the server derives arrival or departure from the
+          employee's own last punch, so the kiosk cannot offer a contradictory
+          action in the first place. A person does not "choose" to clock out. */}
       <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-6">
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => setPunchMode('in')}
-            className={`p-4 rounded-2xl border text-center transition-all cursor-pointer ${
-              punchMode === 'in'
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-800 shadow-2xs font-extrabold'
-                : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            <LogIn className="w-6 h-6 mx-auto mb-1.5 text-emerald-600 rtl:rotate-180" />
-            <span className="text-xs font-extrabold uppercase tracking-wider block">{t('btnPunchIn')}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setPunchMode('out')}
-            className={`p-4 rounded-2xl border text-center transition-all cursor-pointer ${
-              punchMode === 'out'
-                ? 'bg-amber-50 border-amber-300 text-amber-800 shadow-2xs font-extrabold'
-                : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            <LogOut className="w-6 h-6 mx-auto mb-1.5 text-amber-600 rtl:rotate-180" />
-            <span className="text-xs font-extrabold uppercase tracking-wider block">{t('btnPunchOut')}</span>
-          </button>
-        </div>
+        <p className="text-xs text-slate-500">{t('punchAutoHint')}</p>
 
         <form onSubmit={handlePunch} className="space-y-4">
           <div>
@@ -169,11 +142,11 @@ export function TimeClockKiosk() {
             type="submit"
             disabled={submitting}
             className={`w-full h-11 font-bold text-xs rounded-xl shadow-2xs gap-2 ${
-              punchMode === 'in' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-amber-600 hover:bg-amber-700 text-white'
+              'bg-[#2487B8] hover:bg-[#1B6C93] text-white'
             }`}
           >
             <QrCode className="w-4 h-4" />
-            <span>{submitting ? tCommon('loading') : (punchMode === 'in' ? t('punchSubmitIn') : t('punchSubmitOut'))}</span>
+            <span>{submitting ? tCommon('loading') : t('punchSubmitAuto')}</span>
           </Button>
         </form>
       </Card>
