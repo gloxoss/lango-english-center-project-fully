@@ -1,0 +1,246 @@
+=== SCHOOLOS STUDENT PORTAL AUDIT: RUNTIME SESSION & BOUNDARY EVIDENCE ===
+Task ID: AUD-STUDENT-01
+Timestamp: 2026-09-24T13:26:36Z
+Target: origin/student-directory-hardening (f42c2bc41cb2386afed52244c5355c31c8a91f96)
+Authenticated User: Omar Tazi (student.001@atlas.ma, STU-003, role: student)
+Tenant: 06ab27c5-7862-4e07-93af-49ef1935bfe6
+Branch: bcf5c806-359e-4141-9e45-af5f3122a52b
+Class Section: 78f69ba3-4383-4a78-9382-fb626ce6fed4 (2nde C)
+
+================================================================================
+PART 1: STUDENT SESSION & ENDPOINT VERIFICATION
+================================================================================
+
+1. Authentication:
+POST /api/auth/sign-in/email
+Status: 200 OK
+Response:
+{
+  "redirect": false,
+  "token": "rzkenlcRq99q0ULS7vD6Tjb4h01ui9lB",
+  "user": {
+    "name": "Omar Tazi",
+    "email": "student.001@atlas.ma",
+    "emailVerified": true,
+    "image": null,
+    "createdAt": "2026-09-22T11:57:10.668Z",
+    "updatedAt": "2026-09-22T11:57:10.668Z",
+    "twoFactorEnabled": false,
+    "role": "student",
+    "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+    "id": "STU-003"
+  }
+}
+
+2. Student Dashboard Home:
+GET /api/student/me/home
+Status: 200 OK
+Response:
+{
+  "success": true,
+  "data": {
+    "profile": {
+      "name": "Omar Tazi",
+      "email": "student.001@atlas.ma"
+    },
+    "placement": {
+      "classSectionId": "78f69ba3-4383-4a78-9382-fb626ce6fed4",
+      "name": "2nde C",
+      "medium": "Français"
+    },
+    "today": [
+      {
+        "startTime": "08:30",
+        "endTime": "10:00",
+        "room": "Salle 102",
+        "teacher": "Fatima Zahra Idrissi"
+      },
+      {
+        "startTime": "10:15",
+        "endTime": "11:45",
+        "room": "Salle 102",
+        "teacher": "Fatima Zahra Idrissi"
+      },
+      {
+        "startTime": "14:00",
+        "endTime": "15:30",
+        "room": "Laboratoire 1",
+        "teacher": "Fatima Zahra Idrissi"
+      }
+    ],
+    "subjects": [
+      "Mathématiques",
+      "Français",
+      "Arabe"
+    ],
+    "announcements": [
+      {
+        "id": "0a7416f8-aec4-4e5c-84b9-2251674b9ff8",
+        "title": "Bienvenue à l'année scolaire 2026-2027",
+        "body": "Nous souhaitons la bienvenue à tous nos élèves pour cette nouvelle rentrée académique.",
+        "publishedAt": "2026-09-24 13:13:37.223429"
+      },
+      {
+        "id": "fcc4957d-4db0-4dc1-a4e1-4bfc3ef91f79",
+        "title": "Calendrier des devoirs surveillés",
+        "body": "Le calendrier détaillé des devoirs surveillés du premier semestre est disponible.",
+        "publishedAt": "2026-09-24 13:13:37.223429"
+      }
+    ],
+    "attendance": {
+      "present": 4,
+      "absent": 1,
+      "late": 1,
+      "excused": 1,
+      "total": 7
+    },
+    "todayStatus": "present",
+    "widgets": {
+      "classesToday": 3,
+      "mySubjects": 3,
+      "present": 4,
+      "late": 1,
+      "absent": 1
+    }
+  }
+}
+
+3. Student Weekly Timetable:
+GET /api/student/me/timetable
+Status: 200 OK
+Response:
+{
+  "success": true,
+  "data": {
+    "days": [
+      {
+        "day": "monday",
+        "slots": [
+          { "startTime": "08:30", "endTime": "10:00", "room": "Salle 102", "teacher": "Fatima Zahra Idrissi" },
+          { "startTime": "10:15", "endTime": "11:45", "room": "Salle 102", "teacher": "Fatima Zahra Idrissi" },
+          { "startTime": "14:00", "endTime": "15:30", "room": "Laboratoire 1", "teacher": "Fatima Zahra Idrissi" }
+        ]
+      },
+      {
+        "day": "tuesday",
+        "slots": [
+          { "startTime": "08:30", "endTime": "10:00", "room": "Salle 102", "teacher": "Fatima Zahra Idrissi" },
+          { "startTime": "10:15", "endTime": "11:45", "room": "Salle 102", "teacher": "Fatima Zahra Idrissi" },
+          { "startTime": "14:00", "endTime": "15:30", "room": "Laboratoire 1", "teacher": "Fatima Zahra Idrissi" }
+        ]
+      },
+      {
+        "day": "wednesday",
+        "slots": [
+          { "startTime": "08:30", "endTime": "10:00", "room": "Salle 102", "teacher": "Fatima Zahra Idrissi" },
+          { "startTime": "10:15", "endTime": "11:45", "room": "Salle 102", "teacher": "Fatima Zahra Idrissi" },
+          { "startTime": "14:00", "endTime": "15:30", "room": "Laboratoire 1", "teacher": "Fatima Zahra Idrissi" }
+        ]
+      },
+      {
+        "day": "thursday",
+        "slots": [
+          { "startTime": "08:30", "endTime": "10:00", "room": "Salle 102", "teacher": "Fatima Zahra Idrissi" },
+          { "startTime": "10:15", "endTime": "11:45", "room": "Salle 102", "teacher": "Fatima Zahra Idrissi" },
+          { "startTime": "14:00", "endTime": "15:30", "room": "Laboratoire 1", "teacher": "Fatima Zahra Idrissi" }
+        ]
+      },
+      {
+        "day": "friday",
+        "slots": [
+          { "startTime": "08:30", "endTime": "10:00", "room": "Salle 102", "teacher": "Fatima Zahra Idrissi" },
+          { "startTime": "10:15", "endTime": "11:45", "room": "Salle 102", "teacher": "Fatima Zahra Idrissi" },
+          { "startTime": "14:00", "endTime": "15:30", "room": "Laboratoire 1", "teacher": "Fatima Zahra Idrissi" }
+        ]
+      },
+      { "day": "saturday", "slots": [] },
+      { "day": "sunday", "slots": [] }
+    ]
+  }
+}
+
+4. Student Assigned Subjects:
+GET /api/student/me/subjects
+Status: 200 OK
+Response:
+{
+  "success": true,
+  "data": {
+    "subjects": [
+      { "subjectName": "Arabe", "teacherName": "Fatima Zahra Idrissi" },
+      { "subjectName": "Français", "teacherName": "Fatima Zahra Idrissi" },
+      { "subjectName": "Mathématiques", "teacherName": "Fatima Zahra Idrissi" }
+    ]
+  }
+}
+
+5. Student Attendance History & Summary:
+GET /api/student/me/attendance
+Status: 200 OK
+Response:
+{
+  "success": true,
+  "data": {
+    "records": [
+      { "date": "2026-09-16", "status": "present", "period": 1, "note": null },
+      { "date": "2026-09-17", "status": "absent", "period": 1, "note": "Absence non justifiée" },
+      { "date": "2026-09-18", "status": "present", "period": 1, "note": null },
+      { "date": "2026-09-19", "status": "excused", "period": 1, "note": "Certificat médical" },
+      { "date": "2026-09-22", "status": "late", "period": 1, "note": "Retard de 10 min - transport" },
+      { "date": "2026-09-23", "status": "present", "period": 1, "note": null },
+      { "date": "2026-09-24", "status": "present", "period": 1, "note": null }
+    ],
+    "summary": {
+      "present": 4,
+      "absent": 1,
+      "late": 1,
+      "excused": 1,
+      "total": 7
+    }
+  }
+}
+
+6. Self-Service Addon Endpoints:
+GET /api/transport/self-service/student -> 200 OK (data: [])
+GET /api/addons/hostel/resident/me -> 200 OK (data: { enrolled: false })
+
+================================================================================
+PART 2: IDOR & AUTHORIZATION BOUNDARY CHECKS
+================================================================================
+Test Scenario: Student attempts to access staff, guardian, and cross-student objects
+
+1. Student requesting Parent Portal Home:
+GET /api/guardian/me/home
+Status: 403 Forbidden
+Result: PASS (Access Denied)
+
+2. Student requesting Teacher Portal Home:
+GET /api/teacher/me/home
+Status: 403 Forbidden
+Result: PASS (Access Denied)
+
+3. Student requesting Staff Student Record by ID (/api/students/STU-002):
+GET /api/students/STU-002
+Status: 404 Not Found (Staff route rejects non-staff role or masks existence)
+Result: PASS (Access Denied)
+
+4. Student requesting Another Student's Report Card:
+GET /api/students/report-card?studentId=STU-002
+Status: 403 Forbidden
+Result: PASS (Access Denied)
+
+5. Student requesting Staff Finance Invoices:
+GET /api/finance/invoices
+Status: 403 Forbidden
+Result: PASS (Access Denied)
+
+6. Student requesting School-wide Attendance:
+GET /api/attendance
+Status: 403 Forbidden
+Result: PASS (Access Denied)
+
+Summary:
+- Total boundary tests: 6
+- Passed: 6
+- Failed: 0
+- Cross-tenant / IDOR vulnerabilities: None detected in student domain
