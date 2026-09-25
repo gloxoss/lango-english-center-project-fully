@@ -40,14 +40,17 @@ function monthRate(invoiced: number, outstanding: number): number | null {
 describe('Dashboard finance KPI truth', () => {
   it('no longer divides cash collected by invoices raised', () => {
     // The bug: `monthCollected / monthInvoiced` mixed two populations.
+    // ENH-ADMIN-DASH-01 removed the rate from the daily pulse card (it now shows
+    // cash collected vs the previous month); the only rate left is the period
+    // recovery rate, which must stay invoice-based.
     expect(src()).not.toContain('monthCollected / monthInvoiced');
-    expect(src()).toContain('monthPaidOnInvoices / monthInvoiced');
+    expect(src()).toContain('periodPaidOnInvoices / periodInvoicedTotal');
   });
 
   it('derives the rate from invoiced minus outstanding', () => {
     const s = src();
 
-    expect(s).toContain('const monthPaidOnInvoices = Math.max(0, monthInvoiced - monthOpen);');
+    expect(s).toContain('const periodPaidOnInvoices = Math.max(0, periodInvoicedTotal - periodOutstandingTotal);');
     // Outstanding on this month's invoices must come from net - paid, the
     // canonical balance, not from cash movements.
     expect(s).toContain('greatest(');
@@ -98,9 +101,11 @@ describe('Dashboard finance KPI truth', () => {
   it('scopes every finance aggregate to the tenant and the branch context', () => {
     const s = src();
 
-    // Tenant on each finance query.
-    expect((s.match(/eq\(invoices\.tenantId, tenantId\)/g) ?? []).length).toBeGreaterThan(3);
-    expect((s.match(/eq\(payments\.tenantId, tenantId\)/g) ?? []).length).toBeGreaterThan(1);
+    // Tenant on each finance query: at least one tenant filter per FROM.
+    const count = (re: RegExp) => (s.match(re) ?? []).length;
+
+    expect(count(/eq\(invoices\.tenantId, tenantId\)/g)).toBeGreaterThanOrEqual(count(/\.from\(invoices\)/g));
+    expect(count(/eq\(payments\.tenantId, tenantId\)/g)).toBeGreaterThanOrEqual(count(/\.from\(payments\)/g));
     // Branch context is honoured (all-branches or a specific branch).
     expect(s).toContain('userBranchFilter');
     expect(s).toContain('classBranchFilter');

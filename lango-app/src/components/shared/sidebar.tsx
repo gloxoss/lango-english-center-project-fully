@@ -484,6 +484,7 @@ export function Sidebar({ locale }: { locale: string }) {
         { label: tAttendance('qrKiosk'), href: `/${locale}/dashboard/attendance/scanner`, permission: 'attendance.manage' },
         { label: tNav('attendance-timeclock'), href: `/${locale}/dashboard/workforce/timeclock`, permission: 'attendance.read', addon: 'payroll-workforce' },
         { label: tAttendance('excuseDocument'), href: `/${locale}/dashboard/attendance/excuses`, permission: 'attendance.read' },
+        { label: tAttendance('suiviTitle'), href: `/${locale}/dashboard/attendance/suivi`, permission: 'attendance.read' },
         { label: tNav('attendance-flags'), href: `/${locale}/dashboard/attendance/flags`, permission: 'attendance.read' },
         { label: tNav('attendance-audit'), href: `/${locale}/dashboard/attendance/audit`, permission: 'attendance.read' },
       ],

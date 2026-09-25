@@ -196,7 +196,8 @@ describe.skipIf(!hasDb)('API security regression suite', () => {
     currentSessionUserId = adminAId;
     const res = await usersRoute.DELETE(new Request(`http://x/api/users?id=${adminBId}`, { method: 'DELETE' }));
 
-    expect(res.status).toBe(200);
+    // AUD-SETTINGS-01: a user outside the caller's tenant is reported as not found.
+    expect(res.status).toBe(404);
 
     // The cross-tenant WHERE clause matched nothing, so the row must still exist.
     currentSessionUserId = adminBId;

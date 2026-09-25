@@ -1,7 +1,8 @@
 {
   "_README": "Ratchet baselines for scripts/check-ui-reality.ts. Each count may only go DOWN. Lower a number when you fix something, so the gain is locked in. Raising one is allowed but must be deliberate and explained in the PR - it means shipping a control that does nothing, a screen with invented data, a page nobody can reach, or dead code.",
   "_measured": "2026-09-23, five imported-fixture Communication routes archived after the deep visual sweep.",
-  "deadControls": 0,
+  "deadControls": 1,
+  "_deadControls_2026-09-25-integration": "Raised to 1 deliberately: TeacherCurrentLesson.tsx 'take register' button is disabled on purpose outside the lesson window (a false positive of the no-handler heuristic).",
   "_deadControls": "A <Button>/<button> with no onClick, submit, link or trigger parent. Lowered to 0 on 2026-09-25 (S11 UX cleanup): Button asChild wrapped around Links in finance views, onClick added to unavailable catalog card and HTML certificate print button.",
   "mockScreens": 0,
   "_mockScreens": "0 current findings, including the imported data fixture state pattern. The heuristic does not prove that every fetch returns real records.",
