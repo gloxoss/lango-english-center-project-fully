@@ -21,6 +21,11 @@ export async function GET(request: Request) {
       operatorId: searchParams.get('operatorId') || undefined,
       resultStatus: searchParams.get('resultStatus') || undefined,
       rejectionReason: searchParams.get('rejectionReason') || undefined,
+    }, {
+      // A campus-limited admin reads only their campus; a teacher only their
+      // own sections. Never taken from the query string.
+      branchId: context.branchId,
+      teacherUserId: context.role === 'teacher' ? context.userId : null,
     });
 
     return NextResponse.json({

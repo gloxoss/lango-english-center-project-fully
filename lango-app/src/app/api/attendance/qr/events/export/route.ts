@@ -35,6 +35,11 @@ export async function GET(request: Request) {
     const { events } = await queryScanEvents(tenantId, {
       ...parseFilters(searchParams),
       limit: 5000,
+    }, {
+      // Same scope as the list route, so an export can never widen what the
+      // caller was allowed to read on screen.
+      branchId: context.branchId,
+      teacherUserId: context.role === 'teacher' ? context.userId : null,
     });
 
     const rows = events.map(e => ({

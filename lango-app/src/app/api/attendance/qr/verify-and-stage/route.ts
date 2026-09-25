@@ -5,6 +5,7 @@ import { detectAndRecordFlags } from '@/libs/api/attendance-flags';
 import { recalculateStudentAttendanceSummary } from '@/libs/api/attendance-summary';
 import { recordAudit } from '@/libs/api/audit';
 import { computeHmacHash } from '@/libs/api/badge-crypto';
+import { isCredentialExpired } from '@/libs/api/badge-service';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
@@ -118,6 +119,18 @@ export async function POST(request: Request) {
       });
 
       throw new ApiError(422, `BADGE_${badge.status.toUpperCase()}`, `Ce badge est ${badge.status}.`);
+    }
+
+    // An active credential can still be past its expiry date. The status column
+    // alone cannot express that, so it is checked here before the badge is
+    // allowed to write attendance.
+    if (isCredentialExpired(badge)) {
+      await recordRejected('BADGE_EXPIRED', {
+        credentialId: badge.id,
+        studentId: badge.userId,
+      });
+
+      throw new ApiError(422, 'BADGE_EXPIRED', 'Ce badge a expiré.');
     }
 
     // Resolve user details (tenant-scoped)
