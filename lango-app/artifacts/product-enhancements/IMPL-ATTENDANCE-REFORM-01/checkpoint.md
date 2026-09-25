@@ -8,7 +8,7 @@ Updated: 2026-09-25
 | | |
 |---|---|
 | **Active branch** | `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01-integrated` |
-| **HEAD** | `1fa2280a` |
+| **HEAD** | `2dd9c750` |
 | **Worktree** | `.worktrees/IMPL-ATT-INTEGRATED` |
 | **Base (release)** | `origin/release/REL-INTEGRATE-01` = `8215bb6e` |
 | Original pre-integration branch | `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01` @ `383dc542` (Agent A reviewed `7ef7355e`) |
@@ -27,6 +27,9 @@ Updated: 2026-09-25
 | `1be00e73` | 1 UI | Appel du jour screen + `GET /api/attendance/day` |
 | `fd02baae` | 1 fix | Lesson action button wired; room label fix |
 | `1fa2280a` | **2** | Teacher current lesson + 2 roll-call bugs |
+| `60f0b0c8` | docs | Checkpoint after phase 2 |
+| `93ed0da4` | **3** | Presence rate counts physical presence only (6 sites) |
+| `2dd9c750` | **4a** | Guardian notified when a justification is decided |
 
 ## Phase status
 
@@ -36,8 +39,8 @@ Updated: 2026-09-25
 | 0.5 — Exact-session identity | **COMPLETE** |
 | 1 — Admin Appel du jour | **COMPLETE** (RTL time-range cosmetic open) |
 | 2 — Teacher current lesson | **COMPLETE** |
-| 3 — Business truth / metrics | NOT STARTED |
-| 4 — Justifications + Suivi & alertes | NOT STARTED |
+| 3 — Business truth / metrics | **COMPLETE** |
+| 4 — Justifications + Suivi & alertes | **PARTIAL — 4a done** (parent notification). 4b admin "enregistrer une justification reçue", 4c alert lifecycle (ACKNOWLEDGED/CONTACTED/DISMISSED+reason), 4d thresholds into settings, 4e merge Signalements + Audit & Alertes — NOT STARTED |
 | 5 — Cards + credentials | NOT STARTED |
 | 6 — Session exceptions | NOT STARTED |
 | 7 — Kiosk + device security | NOT STARTED |
@@ -106,8 +109,27 @@ committing; `.next-agentb/` is now in `.gitignore`.
 
 ## Next concrete step
 
-**Phase 3 — attendance business truth.** Physical-presence rate becomes
-`(present + late) / recorded`; excused stops counting as physically present and
-is reported separately. Touches the canonical aggregate, student summaries, the
-audit view and dashboards. Do it before Phase 4, because the alert rules read the
-same totals.
+**Finish phase 4**, in this order — each is self-contained and independently
+verifiable:
+
+1. **4c alert lifecycle** — add ACKNOWLEDGED / CONTACTED / DISMISSED-with-reason
+   alongside OPEN / RESOLVED. Needs a status enum change (migration `0159`, check
+   the journal first — `codex-4` holds a claim on `0160`). The detector already
+   prevents duplicate open flags per student+type, so the transitions can hang
+   off that.
+2. **4d thresholds into settings** — `attendance.consecutiveAbsenceThreshold`
+   (default 3) and `attendance.repeatedLateThreshold` (default 5), read via
+   `getEffectiveValueWithLegacyFallback`, the same helper `lateGraceMinutes`
+   already uses. Note the consecutive rule currently derives `lastThreeDays`, so
+   the window has to become dynamic with the threshold.
+3. **4b admin "enregistrer une justification reçue"** — record a paper/phone
+   justification. The backend (POST /api/attendance/excuses) already accepts
+   admin submissions; this is UI.
+4. **4e merge Signalements + Audit & Alertes** into one "Suivi & alertes" page,
+   with a sidebar entry. `sidebar.tsx` is shared with other agents and the
+   nav/page-guard parity test enforces exactness.
+
+**Known trap for phase 7:** no QR *decoder* is installed — `qrcode.react` only
+generates. The cross-browser fallback needs a real decoder (`jsqr` or
+`@zxing/browser`). `npm install` in this worktree already failed once on a native
+build, so budget for that.
