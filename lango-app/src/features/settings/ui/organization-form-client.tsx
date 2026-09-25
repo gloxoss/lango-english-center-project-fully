@@ -3,15 +3,25 @@
 // Server Component (organization-page.tsx) fetches initial data and passes it as props.
 'use client';
 
-import React, { useRef, useState, useTransition } from 'react';
+import {
+  AlertCircle,
+  Building2,
+  CheckCircle,
+  ChevronRight,
+  FileText,
+  GraduationCap,
+  Image as ImageIcon,
+  Languages,
+  Palette,
+  Save,
+  Shield,
+  Upload,
+  User,
+} from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useLocale, useTranslations } from 'next-intl';
-import {
-  Building2, Globe, Phone, Mail, MapPin, FileText, Shield, Upload,
-  Save, CheckCircle, AlertCircle, Languages, Palette, Image as ImageIcon,
-  User, Briefcase, GraduationCap, ChevronRight,
-} from 'lucide-react';
+import React, { useRef, useState, useTransition } from 'react';
 import { INSTITUTIONAL_CONTACT_ROLES } from '@/features/settings/data/institutional-contacts-config';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -69,10 +79,19 @@ function SectionCard({ icon: Icon, title, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white border border-[#E5E7EB] rounded-2xl overflow-hidden">
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-[#F3F4F6]">
-        <div className="w-8 h-8 rounded-lg bg-[#F0F4FF] flex items-center justify-center">
-          <Icon className="w-4 h-4 text-[#4B6BFB]" />
+    <div className="
+      overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white
+    "
+    >
+      <div className="
+        flex items-center gap-3 border-b border-[#F3F4F6] px-6 py-4
+      "
+      >
+        <div className="
+          flex size-8 items-center justify-center rounded-lg bg-[#F0F4FF]
+        "
+        >
+          <Icon className="size-4 text-[#4B6BFB]" />
         </div>
         <h2 className="text-sm font-semibold text-[#111827]">{title}</h2>
       </div>
@@ -90,21 +109,34 @@ function Field({ label, children, hint, error, required }: {
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium text-[#374151] flex items-center justify-between">
+      <label className="
+        flex items-center justify-between text-xs font-medium text-[#374151]
+      "
+      >
         <span>
           {label}
-          {required && <span className="text-red-500 ml-1 font-bold">*</span>}
+          {required && <span className="ml-1 font-bold text-red-500">*</span>}
         </span>
       </label>
       {children}
-      {error ? (
-        <p role="alert" className="text-xs text-red-600 font-medium flex items-center gap-1.5 mt-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
-          <AlertCircle className="w-3.5 h-3.5 shrink-0 text-red-500" />
-          <span>{error}</span>
-        </p>
-      ) : hint ? (
-        <p className="text-xs text-[#9CA3AF]">{hint}</p>
-      ) : null}
+      {error
+        ? (
+            <p
+              role="alert"
+              className="
+                mt-0.5 flex items-center gap-1.5 text-xs font-medium
+                text-red-600 duration-150
+              "
+            >
+              <AlertCircle className="size-3.5 shrink-0 text-red-500" />
+              <span>{error}</span>
+            </p>
+          )
+        : hint
+          ? (
+              <p className="text-xs text-[#9CA3AF]">{hint}</p>
+            )
+          : null}
     </div>
   );
 }
@@ -127,11 +159,24 @@ function Input({ value, onChange, placeholder, type = 'text', disabled, error, i
       placeholder={placeholder}
       disabled={disabled}
       aria-invalid={Boolean(error)}
-      className={`w-full px-3 py-2 text-sm rounded-lg transition-all focus:outline-none disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF] ${
-        error
-          ? 'bg-red-50/40 border border-red-400 text-red-900 placeholder:text-red-300 focus:ring-2 focus:ring-red-400/20 focus:border-red-500'
-          : 'bg-white border border-[#E5E7EB] text-[#111827] placeholder:text-[#9CA3AF] focus:ring-2 focus:ring-[#4B6BFB]/20 focus:border-[#4B6BFB]'
-      }`}
+      className={`
+        w-full rounded-lg px-3 py-2 text-sm transition-all
+        focus:outline-none
+        disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF]
+        ${
+    error
+      ? `
+        border border-red-400 bg-red-50/40 text-red-900
+        placeholder:text-red-300
+        focus:border-red-500 focus:ring-2 focus:ring-red-400/20
+      `
+      : `
+        border border-[#E5E7EB] bg-white text-[#111827]
+        placeholder:text-[#9CA3AF]
+        focus:border-[#4B6BFB] focus:ring-2 focus:ring-[#4B6BFB]/20
+      `
+    }
+      `}
     />
   );
 }
@@ -147,13 +192,21 @@ function Toggle({ checked, onChange, label }: {
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent
-        transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#4B6BFB]/30
-        ${checked ? 'bg-[#4B6BFB]' : 'bg-[#D1D5DB]'}`}
+      className={`
+        relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full
+        border-2 border-transparent transition-colors
+        focus:ring-2 focus:ring-[#4B6BFB]/30 focus:outline-none
+        ${checked ? 'bg-[#4B6BFB]' : 'bg-[#D1D5DB]'}
+      `}
     >
       <span
-        className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm
-          transform transition-transform ${checked ? 'translate-x-4' : 'translate-x-0'}`}
+        className={`
+          pointer-events-none inline-block size-4 transform rounded-full
+          bg-white shadow-sm transition-transform
+          ${checked
+      ? 'translate-x-4'
+      : `translate-x-0`}
+        `}
       />
       <span className="sr-only">{label}</span>
     </button>
@@ -194,7 +247,9 @@ function LogoUploadZone({
         ? '/api/settings/logo?type=favicon'
         : '/api/settings/logo';
       const res = await fetch(url, { method: 'POST', body: fd });
-      if (!res.ok) throw new Error('Upload failed');
+      if (!res.ok) {
+        throw new Error('Upload failed');
+      }
       onUploaded();
     } catch {
       setError(t('uploadError'));
@@ -206,31 +261,50 @@ function LogoUploadZone({
   return (
     <div className="flex flex-col gap-3">
       <div
-        className="w-20 h-20 rounded-xl border-2 border-dashed border-[#E5E7EB] bg-[#F9FAFB]
-          flex items-center justify-center overflow-hidden cursor-pointer hover:border-[#4B6BFB]/50 transition-colors"
+        className="
+          flex size-20 cursor-pointer items-center justify-center
+          overflow-hidden rounded-xl border-2 border-dashed border-[#E5E7EB]
+          bg-[#F9FAFB] transition-colors
+          hover:border-[#4B6BFB]/50
+        "
         onClick={() => inputRef.current?.click()}
         onDragOver={e => e.preventDefault()}
-        onDrop={e => {
+        onDrop={(e) => {
           e.preventDefault();
           const file = e.dataTransfer.files[0];
-          if (file) handleFile(file);
+          if (file) {
+            handleFile(file);
+          }
         }}
       >
-        {src ? (
-          <Image src={src} alt={label} width={80} height={80} className="object-cover w-full h-full" unoptimized />
-        ) : (
-          <ImageIcon className="w-6 h-6 text-[#D1D5DB]" />
-        )}
+        {src
+          ? (
+              <Image
+                src={src}
+                alt={label}
+                width={80}
+                height={80}
+                className="size-full object-cover"
+                unoptimized
+              />
+            )
+          : (
+              <ImageIcon className="size-6 text-[#D1D5DB]" />
+            )}
       </div>
       <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#4B6BFB]
-            bg-[#F0F4FF] rounded-lg hover:bg-[#E0E8FF] disabled:opacity-50 transition-colors"
+          className="
+            flex items-center gap-1.5 rounded-lg bg-[#F0F4FF] px-3 py-1.5
+            text-xs font-medium text-[#4B6BFB] transition-colors
+            hover:bg-[#E0E8FF]
+            disabled:opacity-50
+          "
         >
-          <Upload className="w-3 h-3" />
+          <Upload className="size-3" />
           {uploading ? t('uploading') : t('change', { item: label })}
         </button>
         <span className="text-xs text-[#9CA3AF]">{t('uploadHint')}</span>
@@ -241,9 +315,11 @@ function LogoUploadZone({
         type="file"
         accept="image/jpeg,image/png"
         className="hidden"
-        onChange={e => {
+        onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) handleFile(file);
+          if (file) {
+            handleFile(file);
+          }
           e.target.value = '';
         }}
       />
@@ -275,7 +351,7 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
     return (value: string) => {
       setForm(prev => ({ ...prev, [key]: value }));
       if (fieldErrors[key as string]) {
-        setFieldErrors(prev => {
+        setFieldErrors((prev) => {
           const next = { ...prev };
           delete next[key as string];
           return next;
@@ -296,7 +372,7 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
     if (!form.establishmentName.trim()) {
       errs.establishmentName = t('nameRequired');
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/;
     if (form.email.trim() && !emailRegex.test(form.email.trim())) {
       errs.email = t('invalidEmail', { example: 'contact@ecole.ma' });
     }
@@ -365,7 +441,7 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
           throw new Error(data.error?.message ?? t('saveError'));
         }
         setSaveStatus('success');
-        setTimeout(() => setSaveStatus('idle'), 3000);
+        setTimeout(setSaveStatus, 3000, 'idle');
       } catch (err) {
         setSaveStatus('error');
         setErrorMsg(err instanceof Error ? err.message : t('unknownError'));
@@ -377,13 +453,13 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
   const faviconSrc = hasFavicon ? `/api/settings/logo?type=favicon&t=${faviconTs}` : null;
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6 pb-20">
+    <div className="mx-auto flex max-w-4xl flex-col gap-6 pb-20">
 
       {/* ── Header ── */}
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-xl font-bold text-[#111827]">{t('title')}</h1>
-          <p className="text-sm text-[#6B7280] mt-0.5">
+          <p className="mt-0.5 text-sm text-[#6B7280]">
             {t('subtitle')}
           </p>
         </div>
@@ -391,34 +467,49 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
           id="save-settings-btn"
           onClick={handleSave}
           disabled={isPending}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white
-            bg-[#4B6BFB] rounded-xl hover:bg-[#3B5BDB] disabled:opacity-60
-            transition-all shadow-sm shadow-[#4B6BFB]/20"
+          className="
+            flex items-center gap-2 rounded-xl bg-[#4B6BFB] px-4 py-2 text-sm
+            font-medium text-white shadow-sm shadow-[#4B6BFB]/20 transition-all
+            hover:bg-[#3B5BDB]
+            disabled:opacity-60
+          "
         >
-          <Save className="w-4 h-4" />
+          <Save className="size-4" />
           {isPending ? t('saving') : t('save')}
         </button>
       </div>
 
       {/* ── Save feedback ── */}
       {saveStatus === 'success' && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700">
-          <CheckCircle className="w-4 h-4 shrink-0" />
+        <div className="
+          flex items-center gap-2 rounded-xl border border-emerald-200
+          bg-emerald-50 px-4 py-3 text-sm text-emerald-700
+        "
+        >
+          <CheckCircle className="size-4 shrink-0" />
           {t('saved')}
         </div>
       )}
       {saveStatus === 'error' && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-          <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+        <div className="
+          flex items-center gap-2 rounded-xl border border-red-200 bg-red-50
+          px-4 py-3 text-sm text-red-700
+        "
+        >
+          <AlertCircle className="size-4 shrink-0 text-red-600" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {/* ── Section 1: Identité Visuelle ── */}
       <SectionCard icon={ImageIcon} title={t('sectionVisual')}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+        <div className="
+          grid grid-cols-1 gap-8
+          sm:grid-cols-2
+        "
+        >
           <div>
-            <p className="text-xs font-medium text-[#374151] mb-3">{t('schoolLogo')}</p>
+            <p className="mb-3 text-xs font-medium text-[#374151]">{t('schoolLogo')}</p>
             <LogoUploadZone
               src={logoSrc}
               label={t('theLogo')}
@@ -427,7 +518,7 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
             />
           </div>
           <div>
-            <p className="text-xs font-medium text-[#374151] mb-3">{t('favicon')}</p>
+            <p className="mb-3 text-xs font-medium text-[#374151]">{t('favicon')}</p>
             <LogoUploadZone
               src={faviconSrc}
               label={t('theFavicon')}
@@ -440,7 +531,11 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
 
       {/* ── Section 2: Informations Générales ── */}
       <SectionCard icon={Building2} title={t('sectionGeneral')}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="
+          grid grid-cols-1 gap-4
+          sm:grid-cols-2
+        "
+        >
           <Field label={t('fullName')} required error={fieldErrors.establishmentName}>
             <Input value={form.establishmentName} onChange={field('establishmentName')} placeholder="ex: SchoolOS English Center" error={!!fieldErrors.establishmentName} />
           </Field>
@@ -470,7 +565,11 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
 
       {/* ── Section 3: Année scolaire ── */}
       <SectionCard icon={GraduationCap} title={t('sectionYear')}>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="
+          grid grid-cols-1 gap-4
+          sm:grid-cols-3
+        "
+        >
           <Field label={t('schoolYear')} required hint={t('schoolYearHint')} error={fieldErrors.academicYear}>
             <Input value={form.academicYear} onChange={field('academicYear')} placeholder="2026-2027" error={!!fieldErrors.academicYear} />
           </Field>
@@ -485,7 +584,11 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
 
       {/* ── Section 4: Informations Légales ── */}
       <SectionCard icon={FileText} title={t('sectionLegal')}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="
+          grid grid-cols-1 gap-4
+          sm:grid-cols-2
+        "
+        >
           <Field label={t('legalStatus')} error={fieldErrors.legalStatus}>
             <Input value={form.legalStatus} onChange={field('legalStatus')} placeholder={t('legalStatusPlaceholder')} error={!!fieldErrors.legalStatus} />
           </Field>
@@ -504,14 +607,22 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
       {/* ── Section 4b: Agrément MEN, Cachet & Signature (Maroc) ── */}
       <SectionCard icon={FileText} title={t('sectionMen')}>
         <div className="space-y-4">
-          <div className="p-3 bg-blue-50/60 rounded-xl border border-blue-100 text-xs text-blue-900 leading-relaxed">
+          <div className="
+            rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-xs/relaxed
+            text-blue-900
+          "
+          >
             <p className="font-bold">{t('law0600Title')}</p>
-            <p className="text-[11px] text-blue-800/80 mt-0.5">
+            <p className="mt-0.5 text-[11px] text-blue-800/80">
               {t('law0600Body')}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="
+            grid grid-cols-1 gap-4
+            sm:grid-cols-3
+          "
+          >
             <Field label={t('menNumber')} hint={t('menNumberHint')} error={fieldErrors.menAuthorizationNumber}>
               <Input
                 value={form.menAuthorizationNumber}
@@ -538,7 +649,11 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
             </Field>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+          <div className="
+            grid grid-cols-1 gap-4 border-t border-slate-100 pt-2
+            sm:grid-cols-2
+          "
+          >
             <Field
               label={t('stampUrl')}
               hint={t('stampUrlHint')}
@@ -551,10 +666,22 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
                 error={!!fieldErrors.officialStampUrl}
               />
               {form.officialStampUrl && (
-                <div className="mt-2 p-2 bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-3">
-                  <div className="w-12 h-12 bg-white border border-slate-200 rounded flex items-center justify-center overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={form.officialStampUrl} alt={t('stampAlt')} className="max-w-full max-h-full object-contain" />
+                <div className="
+                  mt-2 flex items-center gap-3 rounded-lg border
+                  border-slate-200 bg-slate-50 p-2
+                "
+                >
+                  <div className="
+                    flex size-12 items-center justify-center overflow-hidden
+                    rounded-sm border border-slate-200 bg-white
+                  "
+                  >
+                    {/* eslint-disable-next-line next/no-img-element */}
+                    <img
+                      src={form.officialStampUrl}
+                      alt={t('stampAlt')}
+                      className="max-h-full max-w-full object-contain"
+                    />
                   </div>
                   <div className="text-[11px] text-slate-500">
                     <p className="font-bold text-[#16212B]">{t('stampPreview')}</p>
@@ -576,10 +703,22 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
                 error={!!fieldErrors.directorSignatureUrl}
               />
               {form.directorSignatureUrl && (
-                <div className="mt-2 p-2 bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-3">
-                  <div className="w-12 h-12 bg-white border border-slate-200 rounded flex items-center justify-center overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={form.directorSignatureUrl} alt={t('signatureAlt')} className="max-w-full max-h-full object-contain" />
+                <div className="
+                  mt-2 flex items-center gap-3 rounded-lg border
+                  border-slate-200 bg-slate-50 p-2
+                "
+                >
+                  <div className="
+                    flex size-12 items-center justify-center overflow-hidden
+                    rounded-sm border border-slate-200 bg-white
+                  "
+                  >
+                    {/* eslint-disable-next-line next/no-img-element */}
+                    <img
+                      src={form.directorSignatureUrl}
+                      alt={t('signatureAlt')}
+                      className="max-h-full max-w-full object-contain"
+                    />
                   </div>
                   <div className="text-[11px] text-slate-500">
                     <p className="font-bold text-[#16212B]">{t('signaturePreview')}</p>
@@ -597,14 +736,21 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
         <div className="flex flex-col gap-6">
           {INSTITUTIONAL_CONTACT_ROLES.map(role => (
             <div key={role.key}>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-                  bg-[#F0F4FF] text-[#4B6BFB]">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="
+                  inline-flex items-center rounded-full bg-[#F0F4FF] px-2 py-0.5
+                  text-xs font-medium text-[#4B6BFB]
+                "
+                >
                   {t(`contacts.${role.key}.badge`)}
                 </span>
                 <span className="text-sm font-medium text-[#374151]">{t(`contacts.${role.key}.label`)}</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="
+                grid grid-cols-1 gap-3
+                sm:grid-cols-3
+              "
+              >
                 <Field label={t('contactName')} error={fieldErrors[role.nameField]}>
                   <Input
                     value={form[role.nameField] as string}
@@ -639,14 +785,25 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
 
       {/* ── Section 5: Langues & Localisation ── */}
       <SectionCard icon={Languages} title={t('sectionLanguages')}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="
+          grid grid-cols-1 gap-6
+          sm:grid-cols-2
+        "
+        >
           <div>
-            <p className="text-xs font-medium text-[#374151] mb-3">{t('interfaceLanguages')}</p>
+            <p className="mb-3 text-xs font-medium text-[#374151]">{t('interfaceLanguages')}</p>
             <div className="flex flex-col gap-2">
               {Object.entries(form.languages).map(([key, enabled]) => (
-                <label key={key} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-[#F9FAFB] cursor-pointer">
+                <label
+                  key={key}
+                  className="
+                    flex cursor-pointer items-center justify-between rounded-lg
+                    px-3 py-2
+                    hover:bg-[#F9FAFB]
+                  "
+                >
                   <span className="text-sm text-[#374151] capitalize">{toggleLabel('languages', key)}</span>
-                  <Toggle checked={enabled} onChange={v => toggleJsonb('languages', key)} label={toggleLabel('languages', key)} />
+                  <Toggle checked={enabled} onChange={_v => toggleJsonb('languages', key)} label={toggleLabel('languages', key)} />
                 </label>
               ))}
             </div>
@@ -656,8 +813,12 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
               <select
                 value={form.localeTimezone}
                 onChange={e => setForm(prev => ({ ...prev, localeTimezone: e.target.value }))}
-                className="w-full px-3 py-2 text-sm bg-white border border-[#E5E7EB] rounded-lg
-                  text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#4B6BFB]/20 focus:border-[#4B6BFB]"
+                className="
+                  w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2
+                  text-sm text-[#111827]
+                  focus:border-[#4B6BFB] focus:ring-2 focus:ring-[#4B6BFB]/20
+                  focus:outline-none
+                "
               >
                 <option value="Africa/Casablanca">Africa/Casablanca (GMT+1)</option>
                 <option value="Europe/Paris">Europe/Paris (GMT+2)</option>
@@ -668,8 +829,12 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
               <select
                 value={form.dateFormat}
                 onChange={e => setForm(prev => ({ ...prev, dateFormat: e.target.value }))}
-                className="w-full px-3 py-2 text-sm bg-white border border-[#E5E7EB] rounded-lg
-                  text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#4B6BFB]/20 focus:border-[#4B6BFB]"
+                className="
+                  w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2
+                  text-sm text-[#111827]
+                  focus:border-[#4B6BFB] focus:ring-2 focus:ring-[#4B6BFB]/20
+                  focus:outline-none
+                "
               >
                 <option value="dd/mm/yyyy">dd/mm/yyyy</option>
                 <option value="mm/dd/yyyy">mm/dd/yyyy</option>
@@ -682,20 +847,30 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
 
       {/* ── Section 6: Style de Documents ── */}
       <SectionCard icon={Palette} title={t('sectionDocStyle')}>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="
+          grid grid-cols-1 gap-3
+          sm:grid-cols-3
+        "
+        >
           {DOC_STYLES.map(style => (
             <button
               key={style}
               type="button"
               onClick={() => setForm(prev => ({ ...prev, documentHeaderStyle: style }))}
-              className={`p-4 rounded-xl border-2 text-left transition-all ${
-                form.documentHeaderStyle === style
-                  ? 'border-[#4B6BFB] bg-[#F0F4FF]'
-                  : 'border-[#E5E7EB] hover:border-[#C7D2FE]'
-              }`}
+              className={`
+                rounded-xl border-2 p-4 text-left transition-all
+                ${
+            form.documentHeaderStyle === style
+              ? 'border-[#4B6BFB] bg-[#F0F4FF]'
+              : `
+                border-[#E5E7EB]
+                hover:border-[#C7D2FE]
+              `
+            }
+              `}
             >
               <p className="text-sm font-semibold text-[#111827]">{t(`docStyles.${style}.label`)}</p>
-              <p className="text-xs text-[#6B7280] mt-1">{t(`docStyles.${style}.desc`)}</p>
+              <p className="mt-1 text-xs text-[#6B7280]">{t(`docStyles.${style}.desc`)}</p>
             </button>
           ))}
         </div>
@@ -703,12 +878,20 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
 
       {/* ── Section 7: Opérations & Présences ── */}
       <SectionCard icon={Shield} title={t('sectionOperations')}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="
+          grid grid-cols-1 gap-6
+          sm:grid-cols-2
+        "
+        >
           <div>
-            <div className="flex items-center justify-between py-3 px-4 bg-[#F9FAFB] rounded-xl">
+            <div className="
+              flex items-center justify-between rounded-xl bg-[#F9FAFB] px-4
+              py-3
+            "
+            >
               <div>
                 <p className="text-sm font-medium text-[#111827]">{t('operationsActive')}</p>
-                <p className="text-xs text-[#6B7280] mt-0.5">{t('operationsActiveHint')}</p>
+                <p className="mt-0.5 text-xs text-[#6B7280]">{t('operationsActiveHint')}</p>
               </div>
               <Toggle
                 checked={form.allowOperations}
@@ -718,12 +901,19 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
             </div>
           </div>
           <div>
-            <p className="text-xs font-medium text-[#374151] mb-3">{t('presenceModesTitle')}</p>
+            <p className="mb-3 text-xs font-medium text-[#374151]">{t('presenceModesTitle')}</p>
             <div className="flex flex-col gap-2">
               {Object.entries(form.presenceModes).map(([key, enabled]) => (
-                <label key={key} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-[#F9FAFB] cursor-pointer">
+                <label
+                  key={key}
+                  className="
+                    flex cursor-pointer items-center justify-between rounded-lg
+                    px-3 py-2
+                    hover:bg-[#F9FAFB]
+                  "
+                >
                   <span className="text-sm text-[#374151]">{toggleLabel('presenceModes', key)}</span>
-                  <Toggle checked={enabled} onChange={v => toggleJsonb('presenceModes', key)} label={toggleLabel('presenceModes', key)} />
+                  <Toggle checked={enabled} onChange={_v => toggleJsonb('presenceModes', key)} label={toggleLabel('presenceModes', key)} />
                 </label>
               ))}
             </div>
@@ -732,17 +922,25 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
       </SectionCard>
 
       {/* ── Footer shortcut ── */}
-      <div className="flex items-center justify-between px-4 py-3 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl">
+      <div className="
+        flex items-center justify-between rounded-xl border border-[#E5E7EB]
+        bg-[#F9FAFB] px-4 py-3
+      "
+      >
         <div className="flex items-center gap-2 text-sm text-[#6B7280]">
-          <GraduationCap className="w-4 h-4" />
+          <GraduationCap className="size-4" />
           {t('academicStructure')}
         </div>
         <Link
           href={`/${locale}/dashboard/academics/classes`}
-          className="flex items-center gap-1 text-sm font-medium text-[#4B6BFB] hover:text-[#3B5BDB] transition-colors"
+          className="
+            flex items-center gap-1 text-sm font-medium text-[#4B6BFB]
+            transition-colors
+            hover:text-[#3B5BDB]
+          "
         >
           {t('goToClasses')}
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="size-4" />
         </Link>
       </div>
 

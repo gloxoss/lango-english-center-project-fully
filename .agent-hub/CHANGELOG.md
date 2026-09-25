@@ -1484,4 +1484,10 @@ StudentPortalView updated with 8 tabs, 3 compact summary cards, empty/error/load
 
 - Files: `lango-app/src/features/student/ui/StudentPortalView.tsx`, `lango-app/locales/fr.json`, `lango-app/locales/en.json`, `lango-app/locales/ar.json`
 - Verified with: `npm run check:types (0 errors), node scripts/check-missing-i18n-keys.mjs (0 missing), npm run check:ui (ratchet holds), npm run check:isolation (0 violations)`
+## 2026-09-24 19:15 · antigravity-1 · task:AUD-SETTINGS-01
+
+AUD-SETTINGS-01 complete: users/roles salary leak and mass-assignment fixed, cross-tenant/branch boundaries enforced, admin self-protection added, permissions matrix sync fixed, organization save/reload verified, S-7 full FR/EN/AR localization, all static gates and tests PASS
+
+- Files: `lango-app/locales`, `lango-app/src/app/[locale]/(dashboard)/dashboard/settings`, `lango-app/src/app/api/settings`, `lango-app/src/app/api/users`, `lango-app/src/features/settings`, `lango-app/src/libs/api/validation.ts`, `lango-app/package.json`, `lango-app/tsconfig.json`, `lango-app/artifacts/page-audit`, `lango-app/scripts/check-hardcoded-french.mjs`, `lango-app/scripts/i18n-hardcoded-baseline.json`
+- Verified with: `npm run check:types (PASS) ; npm run check:isolation (PASS) ; npm run check:i18n (PASS) ; npm run check:i18n:keys (PASS) ; npm run check:ui (PASS) ; npx eslint touched (PASS) ; vitest 10 tests (PASS)`
 - Status: done, waiting for a second agent to verify

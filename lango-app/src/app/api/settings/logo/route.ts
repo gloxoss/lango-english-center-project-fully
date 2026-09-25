@@ -1,8 +1,9 @@
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
-import { recordAudit } from '@/libs/api/audit';
+import { requireCapability } from '@/libs/api/permissions';
 import { brandingFileKey, contentTypeFor, readUploadedFile, saveUploadedFile } from '@/libs/api/uploads';
 import { db } from '@/libs/DB';
 import { tenants } from '@/models/Schema';
@@ -52,6 +53,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
+    await requireCapability(context, 'settings.organization.manage');
     const tenantId = requireTenant(context);
     const { searchParams } = new URL(request.url);
     const isFavicon = searchParams.get('type') === 'favicon';

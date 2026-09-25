@@ -29,6 +29,9 @@ export async function GET(request: Request) {
     const context = await requireRequestContext(request, ['school_admin', 'super_admin']);
     const tenantId = requireTenant(context);
     await requireCapability(context, 'users.manage');
+    if (context.branchId) {
+      throw new ApiError(403, 'BRANCH_INVITATION_UNSUPPORTED', 'Les invitations de campus nécessitent une affectation de branche.');
+    }
 
     const invitations = await db
       .select({
@@ -60,6 +63,9 @@ export async function POST(request: Request) {
     const context = await requireRequestContext(request, ['school_admin', 'super_admin']);
     const tenantId = requireTenant(context);
     await requireCapability(context, 'users.manage');
+    if (context.branchId) {
+      throw new ApiError(403, 'BRANCH_INVITATION_UNSUPPORTED', 'Les invitations de campus nécessitent une affectation de branche.');
+    }
 
     const body = await parseJson(request, createInvitationSchema);
     const email = body.email.toLowerCase().trim();
@@ -93,7 +99,7 @@ export async function POST(request: Request) {
       .returning();
 
     if (!invitation) {
-      throw new ApiError(500, 'INVITE_FAILED', "Échec de l'envoi de l'invitation.");
+      throw new ApiError(500, 'INVITE_FAILED', 'Échec de l\'envoi de l\'invitation.');
     }
 
     recordAudit(context, 'create', 'invitation', invitation.id, {

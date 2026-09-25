@@ -128,7 +128,7 @@ function getSubjectStyle(name?: string) {
   return { card: 'border-slate-200 bg-slate-50 text-slate-800', badge: 'bg-slate-100 text-slate-700 border-slate-200' };
 }
 
-export function ScheduleClient({ locale: _locale = 'fr' }: { locale?: string } = {}) {
+export function ScheduleClient({ locale = 'fr' }: { locale?: string } = {}) {
   const t = useTranslations('Academics');
   const tCommon = useTranslations('Common');
   const { can } = usePermissions();
