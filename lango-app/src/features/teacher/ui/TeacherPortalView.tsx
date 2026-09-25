@@ -189,7 +189,7 @@ export function TeacherPortalView() {
                       <span className="font-mono text-xs font-bold text-[#0066FF]">{s.startTime}–{s.endTime}</span>
                       <div>
                         <p className="text-sm font-semibold text-slate-800">{s.group}</p>
-                        <p className="text-xs text-slate-500">{s.room}</p>
+                        {s.room && <p className="text-xs text-slate-500">{s.room}</p>}
                       </div>
                     </div>
                     <CheckCircle2 className="w-4 h-4 text-slate-300" />
@@ -237,7 +237,7 @@ export function TeacherPortalView() {
                     <div key={i} className="px-5 py-3 flex items-center justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-slate-800">{s.group}</p>
-                        <p className="text-xs text-slate-500">{s.room}</p>
+                        {s.room && <p className="text-xs text-slate-500">{s.room}</p>}
                       </div>
                       <span className="font-mono text-xs font-bold text-slate-600">{s.startTime}</span>
                     </div>
@@ -259,7 +259,7 @@ export function TeacherPortalView() {
                 <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                   <div>
                     <h2 className="font-semibold text-slate-900">{c.name}</h2>
-                    <p className="text-xs text-slate-500">{c.subjects.join(' · ') || '—'}</p>
+                    {c.subjects.length > 0 && <p className="text-xs text-slate-500">{c.subjects.join(' · ')}</p>}
                   </div>
                   <span className="text-xs font-bold text-slate-500 flex items-center gap-1">
                     <Users className="w-3.5 h-3.5 text-slate-400" /> {tTeacher('studentsCount', { count: c.students.length })}

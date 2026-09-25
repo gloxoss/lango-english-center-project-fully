@@ -1,10 +1,11 @@
-import { and, asc, count, eq, ilike, isNull } from 'drizzle-orm';
+import { and, asc, count, eq, ilike, inArray, isNull } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
+import { getTeacherClassSubjectPairs } from '@/libs/api/teacher-scope';
 import { classSubjectCreateSchema, classSubjectUpdateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { academicClassOfferings, assessmentPlans, classes, classScheduleSlots, classSubjects, semesters, subjects, subjectTeachers } from '@/models/Schema';
@@ -128,6 +129,24 @@ export async function GET(request: Request) {
     if (classId) {
       conditions.push(eq(classSubjects.classId, classId));
       await resolveClassBranch(context, tenantId, classId, 'read');
+    }
+    // A teacher only ever sees the class-subjects they currently teach. The
+    // unfiltered list fed the results picker (and every other picker built on
+    // this endpoint) with the whole school, so a teacher could select - and
+    // then read the ranked results of - a class they do not teach.
+    if (context.role === 'teacher') {
+      const pairs = await getTeacherClassSubjectPairs(tenantId, context.userId);
+      const allowedIds = [...new Set([...pairs].map(pair => pair.split('|')[1]).filter((id): id is string => Boolean(id)))];
+      if (allowedIds.length === 0) {
+        return NextResponse.json({
+          success: true,
+          data: [],
+          total: 0,
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+        });
+      }
+      conditions.push(inArray(classSubjects.id, allowedIds));
     }
     if (offeringId) {
       conditions.push(eq(classSubjects.offeringId, offeringId));

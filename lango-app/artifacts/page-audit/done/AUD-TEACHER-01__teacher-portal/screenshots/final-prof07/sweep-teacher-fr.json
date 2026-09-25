@@ -1,0 +1,164 @@
+[
+  {
+    "route": "/dashboard/teacher",
+    "finalPath": "/fr/dashboard/teacher",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 299,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-teacher.png"
+  },
+  {
+    "route": "/dashboard/academics/teacher-schedule",
+    "finalPath": "/fr/dashboard/academics/teacher-schedule",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 372,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-academics__teacher-schedule.png"
+  },
+  {
+    "route": "/dashboard/attendance",
+    "finalPath": "/fr/dashboard/attendance",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 1114,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-attendance.png"
+  },
+  {
+    "route": "/dashboard/academics/results",
+    "finalPath": "/fr/dashboard/academics/results",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 216,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-academics__results.png"
+  },
+  {
+    "route": "/dashboard/students",
+    "finalPath": "/fr/dashboard/students",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 868,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-students.png"
+  },
+  {
+    "route": "/dashboard/students/parents",
+    "finalPath": "/fr/dashboard/students/parents",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 891,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-students__parents.png"
+  },
+  {
+    "route": "/dashboard/reports",
+    "finalPath": "/fr/dashboard/reports",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 630,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-reports.png"
+  },
+  {
+    "route": "/dashboard/transport",
+    "finalPath": "/fr/dashboard/transport",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 319,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-transport.png"
+  },
+  {
+    "route": "/dashboard/transport/trips",
+    "finalPath": "/fr/dashboard/transport/trips",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 229,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-transport__trips.png"
+  },
+  {
+    "route": "/dashboard/transport/boarding",
+    "finalPath": "/fr/dashboard/transport/boarding",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 274,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-transport__boarding.png"
+  },
+  {
+    "route": "/dashboard/academics/grades/entry",
+    "finalPath": "/fr/dashboard/academics/grades/entry",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 280,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-academics__grades__entry.png"
+  },
+  {
+    "route": "/dashboard/academics/assessment/marksheet",
+    "finalPath": "/fr/dashboard/academics/assessment/marksheet",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 201,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-academics__assessment__marksheet.png"
+  },
+  {
+    "route": "/dashboard/academics/assessment/homework",
+    "finalPath": "/fr/dashboard/academics/assessment/homework",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 273,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-academics__assessment__homework.png"
+  },
+  {
+    "route": "/dashboard/academics/teacher-availability",
+    "finalPath": "/fr/dashboard/academics/teacher-availability",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 218,
+    "failures": [
+      "403 /api/teachers"
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-academics__teacher-availability.png"
+  },
+  {
+    "route": "/dashboard/academics/live-class",
+    "finalPath": "/fr/dashboard/academics/live-class",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 297,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-academics__live-class.png"
+  },
+  {
+    "route": "/dashboard/academics/live-class-reports",
+    "finalPath": "/fr/dashboard/academics/live-class-reports",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 284,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-academics__live-class-reports.png"
+  }
+]
