@@ -16,7 +16,7 @@ import {
 import { CalendarPlus, Loader2, History, Pencil, CheckCircle2, XCircle, UserX, LogIn } from 'lucide-react';
 import { PortalStateView } from '@/components/shared/portal-state';
 import {
-  api, fmtDateTime, APPOINTMENT_STATUS_KEYS, APPOINTMENT_STATUS_LABELS, type Appointment,
+  api, casablancaToday, fmtDateTime, APPOINTMENT_STATUS_KEYS, APPOINTMENT_STATUS_LABELS, type Appointment,
 } from './reception-api';
 
 type Staff = { id: string; name: string; role: string };
@@ -28,7 +28,7 @@ export function ReceptionAppointmentsView({ locale = 'fr' }: { locale?: string }
 
   const [data, setData] = useState<Appointment[]>([]);
   const [total, setTotal] = useState(0);
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0] ?? '');
+  const [date, setDate] = useState(casablancaToday());
   const [status, setStatus] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

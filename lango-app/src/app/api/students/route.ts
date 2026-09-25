@@ -469,7 +469,9 @@ async function getStudentDetail(tenantId: string, id: string, branchId?: string 
 
 export async function GET(request: Request) {
   try {
-    const context = await requireRequestContext(request, ['school_admin', 'teacher', 'accountant']);
+    // Receptionist holds students.read (front-desk directory + enrollment); the
+    // narrower roles below each get a least-privilege projection.
+    const context = await requireRequestContext(request, ['school_admin', 'teacher', 'accountant', 'receptionist']);
     const tenantId = requireTenant(context);
     const { searchParams } = new URL(request.url);
 
@@ -517,6 +519,13 @@ export async function GET(request: Request) {
       if (context.role === 'teacher') {
         const { payments: _pay, balanceDue: _bal, totalInvoiced: _ti, totalPaid: _tp, overdueAmount: _oa, nationalId: _nid, bloodGroup: _bg, address: _addr, ...academicSafeDetail } = detail;
         return NextResponse.json({ success: true, data: academicSafeDetail });
+      }
+      if (context.role === 'receptionist') {
+        // Front desk needs identity, class and guardian contact to greet and
+        // enroll; it has no finance.read and no academic mandate, so billing,
+        // medical/identity papers and academic history are stripped.
+        const { payments: _pay, balanceDue: _bal, totalInvoiced: _ti, totalPaid: _tp, overdueAmount: _oa, nationalId: _nid, bloodGroup: _bg, address: _addr, placementsHistory: _ph, recentAssessments: _ra, ...frontDeskSafeDetail } = detail;
+        return NextResponse.json({ success: true, data: frontDeskSafeDetail });
       }
       return NextResponse.json({ success: true, data: detail });
     }
@@ -780,6 +789,17 @@ export async function GET(request: Request) {
       roleFilteredData = mappedStudents.map(({ nationalId: _nid, ...rest }) => ({
         ...rest,
         nationalId: null,
+      }));
+    } else if (context.role === 'receptionist') {
+      // Same finance zeroing as teacher (receptionist has no finance.read) plus
+      // the identity-number strip the accountant projection applies. The
+      // Massar code (codeMassar) stays: it is the front desk's search key.
+      roleFilteredData = mappedStudents.map(({ outstandingAmount: _oa, overdueAmount: _ova, overdueCount: _ovc, ...rest }) => ({
+        ...rest,
+        nationalId: null,
+        outstandingAmount: 0,
+        overdueAmount: 0,
+        overdueCount: 0,
       }));
     }
 
