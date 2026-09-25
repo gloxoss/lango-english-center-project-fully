@@ -69,6 +69,12 @@
     "colAction": "Action"
   },
   "Navigation": {
+    "attendance-appel": "Daily roll call",
+    "settings-kiosks": "Kiosks & terminals",
+    "workforce-timeclock": "Time & clock",
+    "cards-badges": "Cards & badges",
+    "attendance-suivi": "Follow-up & alerts",
+    "attendance-registres": "Registers & history",
     "dashboard": "Command Center",
     "analytics": "Analytics & Leadership",
     "students": "Students & Profiles",

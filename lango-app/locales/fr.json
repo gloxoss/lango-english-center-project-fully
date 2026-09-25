@@ -69,6 +69,12 @@
     "colAction": "Action"
   },
   "Navigation": {
+    "attendance-appel": "Appel du jour",
+    "settings-kiosks": "Kiosques & terminaux",
+    "workforce-timeclock": "Temps & Pointeuse",
+    "cards-badges": "Cartes & badges",
+    "attendance-suivi": "Suivi & alertes",
+    "attendance-registres": "Registres & historique",
     "dashboard": "Tableau de Bord",
     "analytics": "Analytiques & Direction",
     "students": "Élèves & Profils",
