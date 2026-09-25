@@ -382,7 +382,9 @@ export function BadgeManagementView({ locale: _locale }: { locale?: string } = {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Wraps: two labelled buttons do not fit 390px side by side, and the
+            second one was clipped off the edge of the screen. */}
+        <div className="flex flex-wrap items-center gap-3">
           <Button
             variant="outline"
             onClick={() => {

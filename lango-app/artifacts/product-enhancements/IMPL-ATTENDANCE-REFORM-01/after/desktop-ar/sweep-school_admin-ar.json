@@ -1,0 +1,62 @@
+[
+  {
+    "route": "/dashboard/attendance",
+    "finalPath": "/ar/dashboard/attendance",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 859,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-ar-attendance.png"
+  },
+  {
+    "route": "/dashboard/attendance/registres",
+    "finalPath": "/ar/dashboard/attendance/registres",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 658,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-ar-attendance__registres.png"
+  },
+  {
+    "route": "/dashboard/attendance/suivi",
+    "finalPath": "/ar/dashboard/attendance/suivi",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 760,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-ar-attendance__suivi.png"
+  },
+  {
+    "route": "/dashboard/attendance/excuses",
+    "finalPath": "/ar/dashboard/attendance/excuses",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 548,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-ar-attendance__excuses.png"
+  },
+  {
+    "route": "/dashboard/cards/badges",
+    "finalPath": "/ar/dashboard/cards/badges",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 3527,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-ar-cards__badges.png"
+  },
+  {
+    "route": "/dashboard/workforce/timeclock",
+    "finalPath": "/ar/dashboard/workforce/timeclock",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 612,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-ar-workforce__timeclock.png"
+  }
+]
