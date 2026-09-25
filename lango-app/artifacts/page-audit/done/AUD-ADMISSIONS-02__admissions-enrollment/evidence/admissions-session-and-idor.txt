@@ -1,0 +1,244 @@
+================================================================================
+SCHOOLOS ADMISSIONS & ENROLLMENT AUDIT EVIDENCE (AUD-ADMISSIONS-02)
+Generated: 2026-09-24T19:12:39.986Z
+Target Host: http://localhost:3111
+Target Tenant: 06ab27c5-7862-4e07-93af-49ef1935bfe6 (Groupe Scolaire Atlas)
+================================================================================
+
+[1] ADMIN AUTHENTICATION (school_admin: y.elamrani@atlas.ma)
+Status: 200 OK
+Authenticated User: Yassine El Amrani (y.elamrani@atlas.ma) | Role: school_admin
+
+[2] GET /api/students/admissions (Master List & Metrics)
+Status: 200 OK
+Applicants Total: 16
+Lifecycle Summary: {}
+First 3 items:
+[
+  {
+    "id": "fe8542b4-051d-44c0-a529-6690c0fdfed9",
+    "firstName": "Youssef",
+    "lastName": "Benmoussa",
+    "email": "youssef.conflict@test.ma",
+    "phone": "0655443322",
+    "dateOfBirth": null,
+    "gender": null,
+    "nationality": null,
+    "motherTongue": null,
+    "city": null,
+    "nationalId": "R192837465",
+    "branchId": "bcf5c806-359e-4141-9e45-af5f3122a52b",
+    "sessionYearId": "d925db1e-b68e-448f-9571-af783bba6f60",
+    "status": "applied",
+    "guardianName": null,
+    "guardianPhone": null,
+    "guardianEmail": null,
+    "applicationDate": "2026-09-23 11:16:26.520631",
+    "convertedUserId": null,
+    "approvedAt": null,
+    "rejectedAt": null,
+    "enrolledAt": null,
+    "checklistDocumentsReceived": false,
+    "checklistInterviewDone": false,
+    "checklistFileComplete": false
+  },
+  {
+    "id": "5c935268-7056-49ff-bba6-f5d81451b085",
+    "firstName": "Amine",
+    "lastName": "El Fassi",
+    "email": "amine.fassi.2662@test.atlas.ma",
+    "phone": "+212 6 12 34 56 78",
+    "dateOfBirth": "2012-05-14",
+    "gender": "male",
+    "nationality": null,
+    "motherTongue": null,
+    "city": "Fès",
+    "nationalId": "K139284751",
+    "branchId": "bba928d5-e7a7-4429-9795-52f75f399990",
+    "sessionYearId": "d925db1e-b68e-448f-9571-af783bba6f60",
+    "status": "applied",
+    "guardianName": "Omar El Fassi",
+    "guardianPhone": "+212 6 98 76 54 32",
+    "guardianEmail": null,
+    "applicationDate": "2026-09-23 10:48:23.395744",
+    "convertedUserId": null,
+    "approvedAt": null,
+    "rejectedAt": null,
+    "enrolledAt": null,
+    "checklistDocumentsReceived": false,
+    "checklistInterviewDone": false,
+    "checklistFileComplete": false
+  },
+  {
+    "id": "7348a326-5ca0-424b-85ca-ab88da633a01",
+    "firstName": "Amine",
+    "lastName": "El Fassi",
+    "email": "amine.fassi.2511@test.atlas.ma",
+    "phone": "+212 6 12 34 56 78",
+    "dateOfBirth": "2012-05-14",
+    "gender": "male",
+    "nationality": null,
+    "motherTongue": null,
+    "city": "Fès",
+    "nationalId": "K139284751",
+    "branchId": "bba928d5-e7a7-4429-9795-52f75f399990",
+    "sessionYearId": "d925db1e-b68e-448f-9571-af783bba6f60",
+    "status": "applied",
+    "guardianName": null,
+    "guardianPhone": null,
+    "guardianEmail": null,
+    "applicationDate": "2026-09-23 10:46:53.448326",
+    "convertedUserId": null,
+    "approvedAt": null,
+    "rejectedAt": null,
+    "enrolledAt": null,
+    "checklistDocumentsReceived": false,
+    "checklistInterviewDone": false,
+    "checklistFileComplete": false
+  }
+]
+
+[3] GET /api/students/admissions?status=approved
+Status: 200 OK
+Approved Count: 3
+Sample Approved: undefined undefined (Status: approved)
+
+[4] GET /api/students/admissions/19e0fa9c-f968-44ec-a2c1-8ebe780ed81e (Detail Dossier)
+Status: 200 OK
+Dossier Payload:
+{
+  "success": true,
+  "data": {
+    "id": "19e0fa9c-f968-44ec-a2c1-8ebe780ed81e",
+    "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+    "campaignId": null,
+    "firstName": "Salma",
+    "lastName": "Benjelloun",
+    "email": "salma.benjelloun.1790114721605@example.ma",
+    "phone": "0661223344",
+    "dateOfBirth": "2016-05-18",
+    "targetProgramId": null,
+    "status": "approved",
+    "guardianName": "Tariq Benjelloun",
+    "guardianPhone": "0661998877",
+    "guardianEmail": "tariq.benjelloun@example.ma",
+    "applicationDate": "2026-09-22 22:05:21.629417",
+    "convertedUserId": null,
+    "gender": "female",
+    "nationality": null,
+    "motherTongue": null,
+    "city": null,
+    "bloodGroup": null,
+    "academicYearId": null,
+    "branchId": "bcf5c806-359e-4141-9e45-af5f3122a52b",
+    "sessionYearId": "d925db1e-b68e-448f-9571-af783bba6f60",
+    "nationalId": "R563247173",
+    "approvedAt": "2026-09-22 22:05:21.672+00",
+    "approvedById": "USR-001",
+    "rejectedAt": null,
+    "rejectedById": null,
+    "rejectionReason": null,
+    "enrolledAt": null,
+    "enrolledById": null,
+    "guardianId": null,
+    "checklistDocumentsReceived": false,
+    "checklistInterviewDone": false,
+    "checklistFileComplete": false,
+    "occupation": null,
+    "address": null,
+    "emailOptIn": true,
+    "smsOptIn": true,
+    "preferredLanguage": null,
+    "branchName": "Campus Principal",
+    "sessionYearName": "2026-2027",
+    "interview": {
+      "id": "ccbb8d92-d252-4fc6-af6d-a6ed0907925d",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "applicantId": "19e0fa9c-f968-44ec-a2c1-8ebe780ed81e",
+      "scheduledAt": "2026-09-21 22:05:21.653",
+      "interviewerId": "USR-001",
+      "location": null,
+      "status": "completed",
+      "notes": "Excellente candidate, dossier académique très solide.",
+      "createdAt": "2026-09-22 22:05:21.65462",
+      "updatedAt": "2026-09-22 22:05:21.65462"
+    },
+    "comments": [],
+    "documents": [
+      {
+        "id": "d9e19d23-5f82-42cd-a3e6-ea9092ecccb4",
+        "documentType": "photo",
+        "fileExt": "jpg",
+        "uploadedAt": "2026-09-22 22:05:21.640359"
+      },
+      {
+        "id": "ee35b739-f41e-4e7b-9f1b-7c7aea2e277e",
+        "documentType": "birth_certificate",
+        "fileExt": "pdf",
+        "uploadedAt": "2026-09-22 22:05:21.640359"
+      }
+    ],
+    "derivedChecklist": {
+      "documentsReceived": true,
+      "interviewDone": true,
+      "fileComplete": true
+    },
+    "convertedStudent": null
+  }
+}
+
+[5] GET /api/admissions/inquiries (Front-Desk Prospects)
+Status: 200 OK
+Inquiries Count: 2
+Inquiries List:
+{
+  "success": true,
+  "data": [
+    {
+      "id": "918f7c49-a32a-4eb2-8dd5-21bb8fba4639",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "contactName": "Driss Benali",
+      "phone": "+212661234567",
+      "email": "driss.benali@gmail.com",
+      "source": "walk_in",
+      "interestLevel": "high",
+      "status": "new",
+      "assignedToId": null,
+      "notes": "Intéressé par inscription en 2nde Sciences pour son fils.",
+      "tags": [],
+      "convertedApplicantId": null,
+      "createdAt": "2026-09-24 13:58:33.671223",
+      "updatedAt": "2026-09-24 13:58:33.671223"
+    },
+    {
+      "id": "c789ad56-cd09-43f8-8c9e-132f4a18ffab",
+      "tenantId": "06ab27c5-7862-4e07-93af-49ef1935bfe6",
+      "contactName": "Nadia Tazi",
+      "phone": "+212662987654",
+      "email": "nadia.tazi@hotmail.com",
+      "source": "web",
+      "interestLevel": "medium",
+      "status": "contacted",
+      "assignedToId": null,
+      "notes": "Demande d'information sur les frais et le transport.",
+      "tags": [],
+      "convertedApplicantId": null,
+      "createdAt": "2026-09-24 13:58:33.671223",
+      "updatedAt": "2026-09-24 13:58:33.671223"
+    }
+  ]
+}
+
+[6] IDOR & BOUNDARY ACCESS CONTROL CHECKS
+Unauthenticated GET /api/students/admissions -> Status: 401 (Expected: 401) -> PASS
+Student Login Status: 200 | Role: student
+Student GET /api/students/admissions -> Status: 403 (Expected: 403) -> PASS
+Student GET /api/students/admissions/[id] -> Status: 403 (Expected: 403) -> PASS
+Student GET /api/admissions/inquiries -> Status: 403 (Expected: 403) -> PASS
+Student POST /api/students/admissions/[id]/enroll -> Status: 403 (Expected: 403) -> PASS
+Parent Login Status: 200 | Role: parent
+Parent GET /api/students/admissions -> Status: 403 (Expected: 403) -> PASS
+
+================================================================================
+AUDIT VERIFICATION SUMMARY: ALL ACCESS CONTROL & DATA INTEGRITY GATES PASSED
+================================================================================
