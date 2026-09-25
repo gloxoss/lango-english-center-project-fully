@@ -1,0 +1,3 @@
+/dashboard/communication/crm
+/dashboard/communication/campaign-composer
+/dashboard/communication/delivery-reports
