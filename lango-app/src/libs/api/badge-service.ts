@@ -8,6 +8,30 @@ import { db } from '@/libs/DB';
 import { computeHmacHash } from '@/libs/api/badge-crypto';
 import { identityBadgeCredentials } from '@/models/Schema';
 
+/**
+ * Whether a credential has passed its expiry instant.
+ *
+ * Expiry is an absolute instant, so this comparison is timezone-independent and
+ * needs no school-local calendar. A credential whose stored expiry cannot be
+ * parsed is treated as expired: a badge we cannot prove is valid must not be
+ * honoured. `expiresAt` is nullable, and NULL means "no expiry recorded".
+ */
+export function isCredentialExpired(
+  credential: { expiresAt: string | null },
+  now: Date = new Date(),
+): boolean {
+  if (!credential.expiresAt) {
+    return false;
+  }
+
+  const expiry = new Date(credential.expiresAt).getTime();
+  if (Number.isNaN(expiry)) {
+    return true;
+  }
+
+  return expiry <= now.getTime();
+}
+
 export async function issueBadge(input: {
   tenantId: string;
   userId: string;

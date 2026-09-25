@@ -405,3 +405,98 @@ describe.skipIf(!dbReachable)('G15 QR attendance parity — DB-backed', () => {
     expect(Number(cache!.attendanceRate)).toBe(aggregate.presenceRate);
   });
 });
+
+// A credential's status column cannot express expiry, so an "active" badge whose
+// expiry date has passed must still be refused by the scanner. These fixtures
+// live in their own tenant so they cannot disturb the parity cases above.
+describe.skipIf(!dbReachable)('G15 badge expiry — DB-backed', () => {
+  let p: Provisioned;
+
+  beforeAll(async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(FROZEN_NOW);
+    p = await provision('qr-expiry', { session: 'current' });
+  });
+
+  afterAll(async () => {
+    vi.useRealTimers();
+    await db.delete(attendanceScanEvents).where(eq(attendanceScanEvents.tenantId, p.tenantId));
+    await db.delete(attendanceSummary).where(eq(attendanceSummary.tenantId, p.tenantId));
+    await db.delete(attendance).where(eq(attendance.tenantId, p.tenantId));
+    await db.delete(attendanceRegisters).where(eq(attendanceRegisters.tenantId, p.tenantId));
+    await db.delete(identityBadgeCredentials).where(eq(identityBadgeCredentials.tenantId, p.tenantId));
+    await db.delete(sessionYears).where(eq(sessionYears.tenantId, p.tenantId));
+    await db.delete(user).where(eq(user.tenantId, p.tenantId));
+    await db.delete(classSections).where(eq(classSections.tenantId, p.tenantId));
+    await db.delete(classes).where(eq(classes.tenantId, p.tenantId));
+    await db.delete(sections).where(eq(sections.tenantId, p.tenantId));
+    await db.delete(mediums).where(eq(mediums.tenantId, p.tenantId));
+    await db.delete(branches).where(eq(branches.tenantId, p.tenantId));
+    await db.delete(tenants).where(eq(tenants.id, p.tenantId));
+  });
+
+  async function setExpiry(studentId: string, expiresAt: string | null) {
+    await db
+      .update(identityBadgeCredentials)
+      .set({ expiresAt })
+      .where(and(
+        eq(identityBadgeCredentials.tenantId, p.tenantId),
+        eq(identityBadgeCredentials.userId, studentId),
+      ));
+  }
+
+  it('G15.11: an active badge past its expiry is refused and writes no mark', async () => {
+    await asTenant(p);
+    await setExpiry(p.studentA, '2026-10-05T00:00:00.000Z'); // one day before FROZEN_NOW
+
+    const res = await scan({ rawToken: p.tokenA, classSectionId: p.sectionId, period: 1 });
+
+    expect(res.status).toBe(422);
+
+    const json = await res.json() as any;
+
+    expect(json.error.code).toBe('BADGE_EXPIRED');
+    expect(await activeMarksFor(p, p.studentA)).toHaveLength(0);
+  });
+
+  it('G15.12: the expiry refusal is recorded as a rejected scan event', async () => {
+    const events = await db
+      .select()
+      .from(attendanceScanEvents)
+      .where(and(
+        eq(attendanceScanEvents.tenantId, p.tenantId),
+        eq(attendanceScanEvents.rejectionReason, 'BADGE_EXPIRED'),
+      ));
+
+    expect(events).toHaveLength(1);
+    expect(events[0]!.resultStatus).toBe('rejected');
+    expect(events[0]!.studentId).toBe(p.studentA);
+  });
+
+  it('G15.13: an active badge whose expiry is still in the future is accepted', async () => {
+    await asTenant(p);
+    await setExpiry(p.studentA, '2026-11-01T00:00:00.000Z');
+
+    const res = await scan({ rawToken: p.tokenA, classSectionId: p.sectionId, period: 1 });
+
+    expect(res.status).toBe(200);
+
+    const json = await res.json() as any;
+
+    expect(json.data.resultStatus).toBe('accepted');
+    expect(await activeMarksFor(p, p.studentA)).toHaveLength(1);
+  });
+
+  it('G15.14: a badge with no expiry recorded is accepted', async () => {
+    await asTenant(p);
+    await setExpiry(p.studentB, null);
+
+    const res = await scan({ rawToken: p.tokenB, classSectionId: p.otherSectionId, period: 1 });
+
+    expect(res.status).toBe(200);
+
+    const json = await res.json() as any;
+
+    expect(json.data.resultStatus).toBe('accepted');
+  });
+});

@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { hashPassword } from 'better-auth/crypto';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/libs/DB';
+import { recalculateStudentAttendanceSummary } from '@/libs/api/attendance-summary';
 import {
   academicClassOfferings,
   account,
@@ -89,7 +90,6 @@ import {
   attendanceExcuses,
   attendanceFlagNotes,
   attendanceFlags,
-  attendanceSummary,
   bankAccounts,
   buildings,
   chapters,
@@ -1723,11 +1723,13 @@ async function run() {
     for (const f of flagRows) { const [r] = await tx.insert(attendanceFlags).values(f).returning(); flagIds.push(r!.id); }
     const flagNoteRows = flagIds.slice(0, 6).map((fid, i) => ({ tenantId, flagId: fid, authorId: teacherIds[i % 20], body: `Relance ${i + 1} auprès de la famille`, createdAt: isoTs(-9) }));
     await tx.insert(attendanceFlagNotes).values(flagNoteRows);
-    const summaryRows = studentIds.map((sid, i) => {
-      const total = 80; const present = int(70, 78); const late = int(0, 5); const excused = int(0, 3);
-      return { tenantId, studentId: sid, academicYearId: ay25!.id, totalPresent: present, totalAbsent: total - present - late - excused, totalLate: late, totalExcused: excused, totalSessions: total, attendanceRate: ((present + late * 0.5 + excused) / total * 100).toFixed(2), lastUpdated: isoTs(0) };
-    });
-    for (let i = 0; i < summaryRows.length; i += 100) await tx.insert(attendanceSummary).values(summaryRows.slice(i, i + 100));
+    // Summaries are derived, never invented. Each student's cache is recomputed
+    // from the marks seeded above through the canonical helper, so the demo
+    // figures reconcile with real attendance instead of being independent
+    // random numbers (which could exceed 100% or show negative absences).
+    for (const sid of studentIds) {
+      await recalculateStudentAttendanceSummary(tenantId, sid, tx);
+    }
     const devRows = ['Portique A', 'Portique B', 'Scanner entrée', 'Badgeuse salle profs'].map((label, i) => ({ tenantId, deviceLabel: label, branchId, pairedAt: isoTs(-90), lastSeenAt: isoTs(-1), isDisabled: false, secretKey: `sec-${i + 1}` }));
     const devIds: string[] = [];
     for (const d of devRows) { const [r] = await tx.insert(scannerDevices).values(d).returning(); devIds.push(r!.id); }
@@ -1738,7 +1740,7 @@ async function run() {
     for (let i = 0; i < scanRows.length; i += 50) await tx.insert(attendanceScanEvents).values(scanRows.slice(i, i + 50));
     const punchRows = teacherIds.slice(0, 10).flatMap((tid, i) => [{ tenantId, employeeId: tid, credentialId: null, punchType: 'in', scannedAt: isoTs(-1), deviceId: devIds[3], notes: null }, { tenantId, employeeId: tid, credentialId: null, punchType: 'out', scannedAt: isoTs(-1), deviceId: devIds[3], notes: null }]);
     await tx.insert(workforcePunchEvents).values(punchRows);
-    console.log(`  · seeded attendance extras (${excuseRows.length} excuses, ${flagRows.length} flags, ${summaryRows.length} summaries, ${scanRows.length} scans, ${punchRows.length} punches)`);
+    console.log(`  · seeded attendance extras (${excuseRows.length} excuses, ${flagRows.length} flags, ${studentIds.length} summaries recomputed from marks, ${scanRows.length} scans, ${punchRows.length} punches)`);
 
     // -----------------------------------------------------------------------
     // Communication / CRM: connections, segments, templates, campaigns,
