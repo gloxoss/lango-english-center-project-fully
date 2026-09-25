@@ -1,0 +1,12 @@
+[
+  {
+    "route": "/dashboard/analytics",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 222,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-analytics.png"
+  }
+]

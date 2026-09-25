@@ -1,0 +1,22 @@
+[
+  {
+    "route": "/dashboard/analytics",
+    "finalPath": "/fr/dashboard/analytics",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 726,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-analytics.png"
+  },
+  {
+    "route": "/dashboard/portals/leadership",
+    "finalPath": "/fr/dashboard/portals/leadership",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 726,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-portals__leadership.png"
+  }
+]
