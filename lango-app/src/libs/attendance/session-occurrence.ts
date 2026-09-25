@@ -64,6 +64,13 @@ export type SessionOccurrence = {
   startTime: string;
   endTime: string;
   /**
+   * The timetable's own times, before any exception. Kept so a screen can show
+   * what the lesson WAS alongside what it is now — "moved to 10:00" is only
+   * meaningful next to "usually 08:00".
+   */
+  baseStartTime: string;
+  baseEndTime: string;
+  /**
    * Ordinal of this lesson within its section's day, 1-based and ordered by
    * start time. Legacy rows still carry a hand-picked `period`, so a
    * session-keyed register keeps a meaningful value in that column rather than
@@ -233,6 +240,8 @@ export async function listSessionOccurrences(opts: {
       room: exception?.roomLabel ?? row.room,
       startTime: exception?.startTime ?? row.startTime,
       endTime: exception?.endTime ?? row.endTime,
+      baseStartTime: row.startTime,
+      baseEndTime: row.endTime,
       exception,
     };
   });

@@ -49,6 +49,8 @@ export async function GET(request: Request) {
         slotId: occurrence.slotId,
         startTime: occurrence.startTime,
         endTime: occurrence.endTime,
+        baseStartTime: occurrence.baseStartTime,
+        baseEndTime: occurrence.baseEndTime,
         subjectName: occurrence.subjectName,
         // Ids, not just labels: the roll-call grid keys its subject filter on the
         // subject id, so a session-scoped open can select it without a picker.
@@ -64,6 +66,10 @@ export async function GET(request: Request) {
         period: occurrence.period,
         state: occurrenceState(occurrence, register, now),
         register,
+        // The dated deviation, if this lesson has one. The timing, room and
+        // teacher above are already the EFFECTIVE values; this is what changed
+        // and why, so the screen can show original vs effective.
+        exception: occurrence.exception,
       };
     });
 

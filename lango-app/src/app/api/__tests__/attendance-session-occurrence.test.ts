@@ -351,7 +351,7 @@ describe('session occurrence state', () => {
     const future = '2027-01-05';
 
     expect(missingOccurrences(
-      [{ slotId: 'x', date: future, classSectionId: 's', classSubjectId: 'cs', subjectId: null, subjectName: null, teacherId: 't', teacherName: null, branchId: null, className: null, sectionName: null, room: null, startTime: '08:00', endTime: '09:00', versionId: null, period: 1, exception: null }],
+      [{ slotId: 'x', date: future, classSectionId: 's', classSubjectId: 'cs', subjectId: null, subjectName: null, teacherId: 't', teacherName: null, branchId: null, className: null, sectionName: null, room: null, startTime: '08:00', endTime: '09:00', baseStartTime: '08:00', baseEndTime: '09:00', versionId: null, period: 1, exception: null }],
       empty,
       future,
     )).toEqual([]);
