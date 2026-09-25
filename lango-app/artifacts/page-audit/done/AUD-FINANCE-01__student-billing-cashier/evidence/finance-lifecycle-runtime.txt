@@ -1,0 +1,92 @@
+[2026-09-24T21:04:09.905Z] ======================================================================
+[2026-09-24T21:04:09.906Z] AUD-FINANCE-01 REAL END-TO-END FINANCE RUNTIME VERIFICATION
+[2026-09-24T21:04:09.906Z] Comprehensive Student Billing, Cashier, Payments, Refunds & Security
+[2026-09-24T21:04:09.906Z] ======================================================================
+[2026-09-24T21:04:09.906Z] 
+--- Step 1: Initializing Isolated Audit Tenant & Principals ---
+[2026-09-24T21:04:10.052Z] Audit tenant and principals created successfully.
+[2026-09-24T21:04:10.052Z] 
+--- Step 2: Open Cashier Session ---
+[2026-09-24T21:04:10.076Z] ✅ PASS: Session status is "open"
+[2026-09-24T21:04:10.076Z] ✅ PASS: Starting float is 500.00 MAD
+[2026-09-24T21:04:10.076Z] Cashier session ff302f41-fc22-4092-b201-3d414ec4ecf9 opened for cashier f3759bc9-3e37-4800-8cbf-e3642ddbdaa7
+[2026-09-24T21:04:10.076Z] 
+--- Step 3: Create Student Invoice ---
+[2026-09-24T21:04:10.123Z] ✅ PASS: Initial invoice status is "pending"
+[2026-09-24T21:04:10.123Z] ✅ PASS: Invoice netAmount is 3 000.00 MAD
+[2026-09-24T21:04:10.123Z] ✅ PASS: Invoice paidAmount is 0.00 MAD
+[2026-09-24T21:04:10.123Z] 
+--- Step 4: Collect Partial Payment & Verify Balance/Receipt ---
+[2026-09-24T21:04:10.303Z] ✅ PASS: Payment 1 status is posted
+[2026-09-24T21:04:10.303Z] ✅ PASS: Payment 1 amount is 1 000.00 MAD
+[2026-09-24T21:04:10.303Z] ✅ PASS: Exactly one invoice updated
+[2026-09-24T21:04:10.303Z] ✅ PASS: Invoice status transitioned pending -> partial
+[2026-09-24T21:04:10.303Z] ✅ PASS: Invoice paidAmount updated to 1 000.00 MAD exactly once
+[2026-09-24T21:04:10.303Z] ✅ PASS: Receipt successfully generated
+[2026-09-24T21:04:10.309Z] ✅ PASS: Receipt amount is 1 000.00 MAD (got 1000)
+[2026-09-24T21:04:10.309Z] ✅ PASS: Receipt student matches student 1
+[2026-09-24T21:04:10.309Z] Generated receipt: RC-2026-0001
+[2026-09-24T21:04:10.327Z] ✅ PASS: Invoice payment_recorded event recorded
+[2026-09-24T21:04:10.327Z] 
+--- Step 5: Duplicate Payment Submission Idempotency Check ---
+[2026-09-24T21:04:10.357Z] ✅ PASS: Duplicate submission flagged as idempotent
+[2026-09-24T21:04:10.358Z] ✅ PASS: Returned existing payment record, did not create duplicate
+[2026-09-24T21:04:10.362Z] ✅ PASS: Database has exactly 1 payment allocation row
+[2026-09-24T21:04:10.364Z] ✅ PASS: Invoice paidAmount did not double-post (remains 1 000.00 MAD)
+[2026-09-24T21:04:10.364Z] 
+--- Step 6: Collect Full Settlement (2 000.00 MAD) ---
+[2026-09-24T21:04:10.398Z] ✅ PASS: Payment 2 posted successfully
+[2026-09-24T21:04:10.398Z] ✅ PASS: Invoice status transitioned partial -> paid
+[2026-09-24T21:04:10.398Z] ✅ PASS: Invoice paidAmount is 3 000.00 MAD (settled)
+[2026-09-24T21:04:10.398Z] 
+--- Step 7: Close & Reconcile Cashier Session ---
+[2026-09-24T21:04:10.425Z] ✅ PASS: Closing expected cash is exactly 3 500.00 MAD (500 float + 3000 cash)
+[2026-09-24T21:04:10.425Z] ✅ PASS: Closing actual cash declared is 3 500.00 MAD
+[2026-09-24T21:04:10.425Z] ✅ PASS: Variance is exactly 0.00 MAD (balanced drawer)
+[2026-09-24T21:04:10.427Z] ✅ PASS: Cashier session status updated to "closed"
+[2026-09-24T21:04:10.465Z] ✅ PASS: Cashier session status successfully reconciled
+[2026-09-24T21:04:10.465Z] ✅ PASS: Reconciliation timestamp set
+[2026-09-24T21:04:10.465Z] 
+--- Step 8: Correction Path (Refund) & Statement Update ---
+[2026-09-24T21:04:10.502Z] ✅ PASS: Original payment linkage strictly preserved
+[2026-09-24T21:04:10.576Z] GL auto-post result: skipped (fail-open S-3 GL without chart of accounts)
+[2026-09-24T21:04:10.576Z] ✅ PASS: Refund applied successfully with fail-open S-3 GL integration
+[2026-09-24T21:04:10.580Z] ✅ PASS: Invoice paidAmount decreased from 3000 to 2500 MAD
+[2026-09-24T21:04:10.580Z] ✅ PASS: Invoice status reverted paid -> partial
+[2026-09-24T21:04:10.580Z] Verifying student account statement...
+[2026-09-24T21:04:10.588Z] ✅ PASS: Statement Total Charges: 3 000.00 MAD
+[2026-09-24T21:04:10.588Z] ✅ PASS: Statement Net Credits: 2 500.00 MAD
+[2026-09-24T21:04:10.588Z] ✅ PASS: Statement Outstanding Balance Due: 500.00 MAD
+[2026-09-24T21:04:10.588Z] 
+--- Step 9: Tenant Isolation Enforcement ---
+[2026-09-24T21:04:10.604Z] ✅ PASS: Cross-tenant payment rejected: Une ou plusieurs factures indiquées n'existent pas.
+[2026-09-24T21:04:10.604Z] ✅ PASS: Cross-tenant invoice payment attempt blocked completely
+[2026-09-24T21:04:10.605Z] ✅ PASS: Tenant A cannot query Tenant B student payments
+[2026-09-24T21:04:10.605Z] 
+--- Step 10: Branch Isolation Enforcement ---
+[2026-09-24T21:04:10.607Z] ✅ PASS: Casablanca staff can see Student 1
+[2026-09-24T21:04:10.607Z] ✅ PASS: Casablanca staff CANNOT see Rabat Student 2 (strict campus isolation)
+[2026-09-24T21:04:10.607Z] 
+--- Step 11: IDOR & Cross-Student Tamper Resistance ---
+[2026-09-24T21:04:10.616Z] ✅ PASS: Payment IDOR check: payment does not match illegitimate student ID
+[2026-09-24T21:04:10.616Z] 
+--- Step 12: Role & Capability Matrix Verification ---
+[2026-09-24T21:04:10.634Z] ✅ PASS: Teacher is strictly denied "finance.manage" capability
+[2026-09-24T21:04:10.634Z] ✅ PASS: Student is strictly denied "finance.manage" capability
+[2026-09-24T21:04:10.635Z] ✅ PASS: Accountant holds "finance.manage" capability
+[2026-09-24T21:04:10.635Z] ✅ PASS: School Admin holds "finance.approve" capability
+[2026-09-24T21:04:10.635Z] 
+--- Step 13: Historical Ledger Integrity (Zero Record Deletions) ---
+[2026-09-24T21:04:10.649Z] ✅ PASS: All invoice historical records preserved
+[2026-09-24T21:04:10.649Z] ✅ PASS: All payment records preserved (never hard-deleted)
+[2026-09-24T21:04:10.649Z] ✅ PASS: All allocation traces preserved
+[2026-09-24T21:04:10.649Z] ✅ PASS: All issued receipts immutably recorded
+[2026-09-24T21:04:10.649Z] ✅ PASS: All refund audit records preserved
+[2026-09-24T21:04:10.649Z] ✅ PASS: Cashier drawer closing audit trail intact
+[2026-09-24T21:04:10.649Z] VERIFIED: Ledger immutability 100% compliant with Law 09-08 & Moroccan accounting standards.
+[2026-09-24T21:04:10.649Z] ======================================================================
+[2026-09-24T21:04:10.649Z] ALL 13 RUNTIME AUDIT SCENARIOS PASSED: FULL FINANCE LIFECYCLE VERIFIED
+[2026-09-24T21:04:10.649Z] ======================================================================
+[2026-09-24T21:04:10.649Z] 
+Cleaning up isolated test tenants and audit fixtures...
+[2026-09-24T21:04:12.544Z] Isolated test tenant data successfully cleaned up.

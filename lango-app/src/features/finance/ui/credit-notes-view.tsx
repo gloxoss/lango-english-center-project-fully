@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, CheckCircle2, XCircle } from 'lucide-react';
 import { usePermissions } from '@/hooks/use-permissions';
+import { formatMoney } from '@/libs/finance/format-money';
 
 type CreditNote = {
   id: string;
@@ -147,7 +148,7 @@ export function CreditNotesView() {
           </div>
           <div className="flex items-center gap-2">
             <Button size="sm" disabled={saving} onClick={handleCreate} className="h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold">
-              {saving ? '...' : t('createCreditNoteBtn')}
+              {saving ? tCommon('loading') : t('createCreditNoteBtn')}
             </Button>
             <Button size="sm" variant="outline" onClick={() => setShowForm(false)} className="h-9 rounded-xl text-xs font-bold">
               {tCommon('cancel')}
@@ -177,7 +178,7 @@ export function CreditNotesView() {
                 <td className="py-3.5 px-4 font-mono text-[#2487B8] font-bold">{n.creditNoteNumber}</td>
                 <td className="py-3.5 px-4 font-bold text-[#16212B]">{n.studentName}</td>
                 <td className="py-3.5 px-4 text-slate-500">{n.reason}</td>
-                <td className="py-3.5 px-4 text-end font-extrabold text-[#16212B]">{Number(n.amount).toLocaleString('fr-FR')} MAD</td>
+                <td className="py-3.5 px-4 text-end font-extrabold text-[#16212B]">{formatMoney(n.amount)}</td>
                 <td className="py-3.5 px-4 text-center">{statusBadge(n.status)}</td>
                 <td className="py-3.5 px-4">
                   {n.status === 'pending' && can('finance.approve') && (

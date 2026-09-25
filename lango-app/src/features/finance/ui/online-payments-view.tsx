@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Search, CreditCard } from 'lucide-react';
+import { formatMoney } from '@/libs/finance/format-money';
 
 type Payment = {
   id: string;
@@ -65,7 +66,7 @@ export function OnlinePaymentsView() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-1">
           <p className="text-xs font-bold text-slate-400">{t('totalAmountCard')}</p>
-          <p className="text-2xl font-extrabold text-[#16212B]">{total.toLocaleString('fr-FR')} MAD</p>
+          <p className="text-2xl font-extrabold text-[#16212B]">{formatMoney(total)}</p>
         </Card>
         <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-1">
           <p className="text-xs font-bold text-slate-400">{t('transactionsCount')}</p>
@@ -109,7 +110,7 @@ export function OnlinePaymentsView() {
                     </Badge>
                   </td>
                   <td className="py-3.5 px-4 font-mono text-[10px] text-slate-500">{p.referenceId ?? '—'}</td>
-                  <td className="py-3.5 px-4 text-end font-extrabold text-[#16212B]">{Number(p.amount).toLocaleString('fr-FR')} MAD</td>
+                  <td className="py-3.5 px-4 text-end font-extrabold text-[#16212B]">{formatMoney(p.amount)}</td>
                 </tr>
               ))}
             </tbody>

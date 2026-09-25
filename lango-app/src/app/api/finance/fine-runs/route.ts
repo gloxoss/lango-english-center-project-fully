@@ -7,7 +7,7 @@ import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { classSections, fineAssessments, finePolicies, invoiceEvents, invoices, user } from '@/models/Schema';
+import { classSections, fineAssessments, finePolicies, invoiceEvents, invoiceItems, invoices, user } from '@/models/Schema';
 import { casablancaTodayIso } from '@/libs/finance/today';
 
 const runSchema = z.object({
@@ -138,7 +138,9 @@ export async function POST(request: Request) {
       const toInsert = created.filter((candidate) => currentIds.has(candidate.invoiceId)
         && !existingKeys.has(`${candidate.invoiceId}:${candidate.finePolicyId}`));
       if (toInsert.length === 0) return [];
-      await tx.insert(fineAssessments).values(toInsert.map((candidate) => ({
+      // The unique index is the real guard. A row another run slipped in since
+      // the recheck is dropped here, and only rows actually inserted are billed.
+      const insertedRows = await tx.insert(fineAssessments).values(toInsert.map((candidate) => ({
         tenantId,
         studentId: candidate.studentId,
         finePolicyId: candidate.finePolicyId,
@@ -146,15 +148,45 @@ export async function POST(request: Request) {
         amount: candidate.amount,
         reason: 'Pénalité de retard automatique',
         status: 'assessed',
-      })));
-      await tx.insert(invoiceEvents).values(toInsert.map((candidate) => ({
+      }))).onConflictDoNothing().returning();
+      if (insertedRows.length === 0) return [];
+
+      // Bill the fine where the family can see it. An assessment that never
+      // becomes an invoice line is invisible to the balance, which is how these
+      // ran for months without ever being owed. Line and total move together so
+      // the balance can never show the same fine twice.
+      const policyNames = new Map(active.map((p) => [p.id, p.name]));
+      await tx.insert(invoiceItems).values(insertedRows.map((row) => ({
         tenantId,
-        invoiceId: candidate.invoiceId,
+        invoiceId: row.invoiceId!,
+        fineAssessmentId: row.id,
+        feeCategoryId: null,
+        description: `Pénalité de retard — ${policyNames.get(row.finePolicyId) ?? 'amende'}`,
+        amount: row.amount,
+      })));
+
+      const addedByInvoice = new Map<string, number>();
+      for (const row of insertedRows) {
+        if (!row.invoiceId) continue;
+        addedByInvoice.set(row.invoiceId, (addedByInvoice.get(row.invoiceId) ?? 0) + row.amount);
+      }
+      for (const [id, added] of addedByInvoice) {
+        await tx.update(invoices).set({
+          amount: sql`${invoices.amount} + ${added}`,
+          netAmount: sql`${invoices.netAmount} + ${added}`,
+          updatedAt: new Date().toISOString(),
+        }).where(and(eq(invoices.id, id), eq(invoices.tenantId, tenantId)));
+      }
+
+      await tx.insert(invoiceEvents).values(insertedRows.map((row) => ({
+        tenantId,
+        // Every assessment here comes from an overdue invoice selected above.
+        invoiceId: (row.invoiceId ?? '') as string,
         eventType: 'fine_assessed',
-        payload: { finePolicyId: candidate.finePolicyId, amount: candidate.amount },
+        payload: { fineAssessmentId: row.id, finePolicyId: row.finePolicyId, amount: row.amount },
         actorUserId: context.userId,
       })));
-      return toInsert;
+      return insertedRows;
     }) : [];
 
     const total = inserted.reduce((sum, c) => sum + c.amount, 0);

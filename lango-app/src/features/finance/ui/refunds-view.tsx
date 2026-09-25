@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, CheckCircle2, XCircle } from 'lucide-react';
 import { usePermissions } from '@/hooks/use-permissions';
+import { formatMoney } from '@/libs/finance/format-money';
 
 type Refund = {
   id: string;
@@ -187,7 +188,7 @@ export function RefundsView() {
                 <td className="py-3.5 px-4 font-bold text-[#16212B]">{r.studentName}</td>
                 <td className="py-3.5 px-4 text-slate-500">{methodLabel[r.refundMethod] ?? r.refundMethod}</td>
                 <td className="py-3.5 px-4 text-slate-500">{r.reason}</td>
-                <td className="py-3.5 px-4 text-end font-extrabold text-[#16212B]">{Number(r.amount).toLocaleString('fr-FR')} MAD</td>
+                <td className="py-3.5 px-4 text-end font-extrabold text-[#16212B]">{formatMoney(r.amount)}</td>
                 <td className="py-3.5 px-4 text-center">{statusBadge(r.status)}</td>
                 <td className="py-3.5 px-4">
                   {r.status === 'pending' && can('finance.approve') && (

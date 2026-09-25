@@ -19,7 +19,7 @@ import { tenants } from '@/models/Schema';
 //   - every start/exit is recorded in audit_logs with the stated reason,
 //   - audit rows written while impersonating are marked (see recordAudit).
 
-export const TENANT_COOKIE = 'schoolos_active_tenant_id';
+const TENANT_COOKIE = 'schoolos_active_tenant_id';
 const TENANT_COOKIE_MAX_AGE = 8 * 60 * 60; // 8 hours
 
 const switchTenantSchema = z.object({
@@ -39,7 +39,9 @@ function tenantCookieOptions() {
 }
 
 async function resolveTenantName(tenantId: string | null): Promise<string | null> {
-  if (!tenantId) return null;
+  if (!tenantId) {
+    return null;
+  }
   const [row] = await db
     .select({ name: tenants.name })
     .from(tenants)

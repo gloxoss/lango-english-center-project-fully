@@ -808,6 +808,13 @@ export const alumniEvents = pgTable('alumni_events', {
   startsAt: timestamp('starts_at', { mode: 'string' }).notNull(),
   endsAt: timestamp('ends_at', { mode: 'string' }),
   createdBy: text('created_by'),
+  isPublished: boolean('is_published').default(true).notNull(),
+  capacity: integer('capacity'),
+  targetCohortSessionYearId: uuid('target_cohort_session_year_id'),
+  targetBranchId: uuid('target_branch_id'),
+  attachmentUrl: varchar('attachment_url', { length: 500 }),
+  isCancelled: boolean('is_cancelled').default(false).notNull(),
+  cancellationReason: text('cancellation_reason'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
   foreignKey({
@@ -820,6 +827,16 @@ export const alumniEvents = pgTable('alumni_events', {
     foreignColumns: [user.id],
     name: 'alumni_events_created_by_user_id_fk',
   }).onDelete('set null'),
+  foreignKey({
+    columns: [table.targetCohortSessionYearId],
+    foreignColumns: [sessionYears.id],
+    name: 'alumni_events_target_cohort_fk',
+  }).onDelete('set null'),
+  foreignKey({
+    columns: [table.targetBranchId],
+    foreignColumns: [branches.id],
+    name: 'alumni_events_target_branch_fk',
+  }).onDelete('set null'),
 ]);
 
 export const alumniEventRsvps = pgTable('alumni_event_rsvps', {
@@ -828,6 +845,11 @@ export const alumniEventRsvps = pgTable('alumni_event_rsvps', {
   eventId: uuid('event_id').notNull(),
   alumnusId: text('alumnus_id').notNull(),
   status: alumniEventRsvpStatus().notNull(),
+  isWaitlisted: boolean('is_waitlisted').default(false).notNull(),
+  waitlistPosition: integer('waitlist_position'),
+  checkedIn: boolean('checked_in').default(false).notNull(),
+  checkedInAt: timestamp('checked_in_at', { mode: 'string' }),
+  createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
   foreignKey({
@@ -2132,9 +2154,12 @@ export const invoiceItems = pgTable('invoice_items', {
   tenantId: uuid('tenant_id').notNull(),
   invoiceId: uuid('invoice_id').notNull(),
   feeCategoryId: uuid('fee_category_id'),
+  fineAssessmentId: uuid('fine_assessment_id'),
   description: varchar({ length: 255 }).notNull(),
   amount: numeric({ precision: 14, scale: 2, mode: 'number' }).notNull(),
 }, table => [
+  uniqueIndex('invoice_items_fine_assessment_unique').on(table.tenantId, table.fineAssessmentId)
+    .where(sql`${table.fineAssessmentId} IS NOT NULL`),
   foreignKey({
     columns: [table.tenantId],
     foreignColumns: [tenants.id],

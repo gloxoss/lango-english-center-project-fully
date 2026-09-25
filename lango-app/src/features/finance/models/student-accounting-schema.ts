@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import {
   boolean,
   date,
@@ -11,6 +12,7 @@ import {
   uuid,
   varchar,
   foreignKey,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import {
   branches,
@@ -77,6 +79,8 @@ export const fineAssessments = pgTable('fine_assessments', {
   waivedAmount: numeric('waived_amount', { precision: 14, scale: 2, mode: 'number' }).default(0).notNull(),
   waiveReason: text('waive_reason'),
   waiveById: text('waive_by_id'),
+  supersededById: uuid('superseded_by_id'),
+  supersededAt: timestamp('superseded_at', { mode: 'string' }),
   assessedAt: timestamp('assessed_at', { mode: 'string' }).defaultNow().notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
 }, table => [
@@ -101,6 +105,11 @@ export const fineAssessments = pgTable('fine_assessments', {
     name: 'fine_assessments_invoice_id_invoices_id_fk',
   }),
   index('fine_assessments_tenant_student_idx').on(table.tenantId, table.studentId),
+  // One fine per invoice and policy, enforced by the database. The guard used to
+  // be a read-then-insert in application code, so two racing runs could assess
+  // the same late fee twice and bill a family twice.
+  uniqueIndex('fine_assessments_invoice_policy_unique').on(table.tenantId, table.invoiceId, table.finePolicyId)
+    .where(sql`${table.invoiceId} IS NOT NULL AND ${table.supersededById} IS NULL`),
 ]);
 
 export const invoiceEvents = pgTable('invoice_events', {

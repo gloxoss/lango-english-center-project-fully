@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
+import { formatMoney } from '@/libs/finance/format-money';
 
 type ClassOption = { id: string; name: string };
 type AllocationStudent = {
@@ -85,11 +86,11 @@ export function FeeAllocationView({ locale: _locale }: { locale?: string } = {})
         </Card>
         <Card className="p-4 bg-white rounded-2xl border border-blue-200/60 bg-blue-50/20 shadow-2xs space-y-1">
           <p className="text-xs font-bold text-[#1B6C93]">{t('totalNetReal')}</p>
-          <p className="text-2xl font-extrabold text-[#16212B]">{totalNet.toLocaleString('fr-FR')} MAD</p>
+          <p className="text-2xl font-extrabold text-[#16212B]">{formatMoney(totalNet)}</p>
         </Card>
         <Card className="p-4 bg-white rounded-2xl border border-emerald-200/60 bg-emerald-50/20 shadow-2xs space-y-1">
           <p className="text-xs font-bold text-[#17A673]">{t('appliedDiscountsReal')}</p>
-          <p className="text-2xl font-extrabold text-[#17A673]">{totalDiscount.toLocaleString('fr-FR')} MAD</p>
+          <p className="text-2xl font-extrabold text-[#17A673]">{formatMoney(totalDiscount)}</p>
         </Card>
       </div>
 
@@ -138,9 +139,9 @@ export function FeeAllocationView({ locale: _locale }: { locale?: string } = {})
               {filtered.map(item => (
                 <tr key={item.studentId} className="hover:bg-slate-50/80 transition">
                   <td className="py-3.5 px-4 font-bold text-[#16212B]">{item.studentName}</td>
-                  <td className="py-3.5 px-4 text-slate-500">{item.baseAmount.toLocaleString('fr-FR')} MAD</td>
-                  <td className="py-3.5 px-4 font-bold text-[#17A673]">{item.discountAmount > 0 ? `-${item.discountAmount.toLocaleString('fr-FR')} MAD` : '—'}</td>
-                  <td className="py-3.5 px-4 font-extrabold text-[#16212B]">{item.netAmount.toLocaleString('fr-FR')} MAD</td>
+                  <td className="py-3.5 px-4 text-slate-500">{formatMoney(item.baseAmount)}</td>
+                  <td className="py-3.5 px-4 font-bold text-[#17A673]">{item.discountAmount > 0 ? `-${formatMoney(item.discountAmount)}` : '—'}</td>
+                  <td className="py-3.5 px-4 font-extrabold text-[#16212B]">{formatMoney(item.netAmount)}</td>
                   <td className="py-3.5 px-4 text-end">
                     <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${item.status === 'not_invoiced' ? 'bg-slate-100 text-slate-600' : 'bg-[#DDF5EC] text-[#17A673]'}`}>
                       {statusLabel[item.status] ?? item.status}
