@@ -1,6 +1,13 @@
 node_modules
 .next
 .next-audit
+# Tests never ship, and some import scripts/ (ignored above), which would
+# fail the type check inside `next build`.
+**/__tests__
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
 # Per-agent dev build folders (NEXT_DIST_DIR); several GB each.
 .next-*
 .capture-*
