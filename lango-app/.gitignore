@@ -17,6 +17,7 @@
 # next.js
 /.next/
 /.next-audit*/
+/.next-agentb/
 /.next-build-failed-*/
 /out/
 

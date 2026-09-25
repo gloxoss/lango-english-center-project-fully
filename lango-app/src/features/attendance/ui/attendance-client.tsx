@@ -61,7 +61,23 @@ type RegisterInfo = {
   correctionNote: string | null;
 };
 
-export function AttendanceClient({ locale = 'fr' }: { locale?: string } = {}) {
+/**
+ * Roll call for ONE lesson.
+ *
+ * `session` names the exact scheduled occurrence the caller opened from Appel du
+ * jour. When present the class/subject/period fields are hidden and the context
+ * is resolved from the timetable, so the admin cannot mark a different lesson
+ * than the one they clicked — and never re-picks a "Période 1–8" by hand.
+ */
+export type AttendanceSessionContext = {
+  slotId: string;
+  date: string;
+};
+
+export function AttendanceClient({
+  locale = 'fr',
+  session,
+}: { locale?: string; session?: AttendanceSessionContext } = {}) {
   const t = useTranslations('Attendance');
   const tCommon = useTranslations('Common');
   const tStatus = useTranslations('Status');
@@ -97,6 +113,35 @@ export function AttendanceClient({ locale = 'fr' }: { locale?: string } = {}) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [sessionLabel, setSessionLabel] = useState<string | null>(null);
+
+  // A session-scoped open resolves its own context from the timetable, so the
+  // class/subject/period fields stay hidden and cannot be re-picked. Marking the
+  // wrong lesson is therefore not reachable by mis-selecting a dropdown.
+  useEffect(() => {
+    if (!session) {
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/attendance/day?date=${encodeURIComponent(session.date)}`);
+        const json = await res.json();
+        const match = (json?.data?.sessions ?? []).find((s: { slotId: string }) => s.slotId === session.slotId);
+        if (cancelled || !match) {
+          return;
+        }
+        setSelectedDate(session.date);
+        setSelectedClass(match.classSectionId);
+        setSelectedSubject(match.subjectId ?? 'all');
+        setSelectedPeriod(String(match.period));
+        setSessionLabel([match.subjectName, match.className, match.sectionName].filter(Boolean).join(' · '));
+      } catch {
+        // Fall through: the grid keeps its defaults and the admin can still pick.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [session]);
 
   // Fetch logged in user role
   useEffect(() => {
@@ -630,6 +675,7 @@ export function AttendanceClient({ locale = 'fr' }: { locale?: string } = {}) {
         border-slate-200/80 bg-white p-4 shadow-2xs
       "
       >
+        {!session && (
         <div className="flex flex-1 flex-wrap items-end gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-[10px] font-bold text-slate-400">{t('selectDate')}</label>
@@ -709,6 +755,11 @@ export function AttendanceClient({ locale = 'fr' }: { locale?: string } = {}) {
             </Select>
           </div>
         </div>
+        )}
+
+        {session && sessionLabel && (
+          <p className="text-xs font-medium text-slate-500">{sessionLabel}</p>
+        )}
 
         <Button
           size="sm"
