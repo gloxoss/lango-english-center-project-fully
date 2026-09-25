@@ -1,15 +1,15 @@
-import { and, avg, count, eq, sql } from 'drizzle-orm';
+import { and, avg, count, desc, eq, gte, isNull, lte, or, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { sendSmsMessage } from '@/features/broadcast/services/sms-delivery';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { weekdayNameFor } from '@/libs/api/school-day';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { attendance, attendanceFlags, attendanceSummary, classes, classScheduleSlots, classSections, classSubjects, sections, sessionYears, subjects, user } from '@/models/Schema';
-
-const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+import { casablancaTimeHm, casablancaTodayIso } from '@/libs/finance/today';
+import { attendance, attendanceFlags, attendanceSummary, classes, classScheduleSlots, classSections, classSubjects, sections, sessionYears, subjects, timetableVersions, user } from '@/models/Schema';
 
 const reminderSchema = z.object({
   classScheduleSlotId: z.string().uuid(),
@@ -21,8 +21,10 @@ export async function GET(request: Request) {
     const tenantId = requireTenant(context);
 
     const { searchParams } = new URL(request.url);
-    const today = searchParams.get('date') || new Date().toISOString().slice(0, 10);
-    const todayDayOfWeek = DAY_NAMES[new Date(`${today}T00:00:00Z`).getUTCDay()]!;
+    // The business day is the school's, not the server's: a UTC date reports
+    // yesterday during Moroccan mornings.
+    const today = searchParams.get('date') || casablancaTodayIso();
+    const todayDayOfWeek = weekdayNameFor(today);
 
     // BRANCH SCOPE (P0): every aggregate is scoped through the student row so
     // a branch-limited principal only audits their own campus.
@@ -50,6 +52,21 @@ export async function GET(request: Request) {
       .where(and(...flagConditions))
       .groupBy(attendanceFlags.type);
 
+    // The timetable version that governs `today`: published, and effective on the
+    // date. Slots belonging to a draft or superseded version must never create an
+    // expectation of a register, so without a published version there are none.
+    const [effectiveVersion] = await db
+      .select({ id: timetableVersions.id })
+      .from(timetableVersions)
+      .where(and(
+        eq(timetableVersions.tenantId, tenantId),
+        eq(timetableVersions.status, 'published'),
+        or(isNull(timetableVersions.effectiveFrom), lte(timetableVersions.effectiveFrom, today))!,
+        or(isNull(timetableVersions.effectiveTo), gte(timetableVersions.effectiveTo, today))!,
+      ))
+      .orderBy(desc(timetableVersions.versionNumber))
+      .limit(1);
+
     const todaySlots = await db
       .select({
         id: classScheduleSlots.id,
@@ -72,6 +89,7 @@ export async function GET(request: Request) {
       .where(and(
         eq(classScheduleSlots.tenantId, tenantId),
         eq(classScheduleSlots.dayOfWeek, todayDayOfWeek),
+        effectiveVersion ? eq(classScheduleSlots.versionId, effectiveVersion.id) : sql`false`,
         ...(context.branchId ? [eq(classes.branchId, context.branchId)] : []),
       ));
 
@@ -98,8 +116,13 @@ export async function GET(request: Request) {
       ))
       .limit(1);
 
+    // Only lessons that have already ENDED can be missing a register. A lesson
+    // still in progress, or one that has not started, cannot be overdue.
+    const nowHm = casablancaTimeHm();
+    const endedSlots = todaySlots.filter(slot => slot.endTime <= nowHm);
+
     const missingRegistersToday = sessionForToday
-      ? todaySlots.filter(slot => !submittedSectionIds.has(slot.classSectionId))
+      ? endedSlots.filter(slot => !submittedSectionIds.has(slot.classSectionId))
       : [];
 
     return NextResponse.json({
