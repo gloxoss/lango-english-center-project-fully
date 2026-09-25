@@ -55,7 +55,7 @@ Terminale A · ATL-2526-0058
 Voir tous les résultats
 CNDP : Récépissé déclaré
 Toutes les succursales
-6
+5
 FR
 العربية
 EN
@@ -108,7 +108,7 @@ Encaissements reçus ce mois
 Journal des encaissements
 Impayés échus
 767 500 MAD
-40 40 factures · 40 40 familles
+40 factures · 40 familles
 Relancer les impayés
 Recouvrement des factures - 2026-2027
 
@@ -323,4 +323,4 @@ Omar Rahmani
 27 août
 
 Contacté
-Voir les admis
+Voir les admissions 
