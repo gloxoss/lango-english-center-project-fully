@@ -1899,7 +1899,9 @@ async function run() {
     // Guard / reception portals + platform: gates, shifts, visits, incidents,
     // reception appointments, custom fields, role permissions, domains, settings.
     // -----------------------------------------------------------------------
-    const gateRows = [['PORT-A', 'Portail principal', 'in'], ['PORT-B', 'Portail secondaire', 'out']].map((g, i) => ({ tenantId, branchId, gateCode: g[0], gateName: g[1], direction: g[2], isActive: true, createdAt: isoTs(-90), updatedAt: isoTs(-90) }));
+    // Canonical direction vocabulary (guardGateCreateSchema: entry|exit|both);
+    // legacy 'in'/'out' rows made the scanner reject every scan.
+    const gateRows = [['PORT-A', 'Portail principal', 'entry'], ['PORT-B', 'Portail secondaire', 'exit']].map((g, i) => ({ tenantId, branchId, gateCode: g[0], gateName: g[1], direction: g[2], isActive: true, createdAt: isoTs(-90), updatedAt: isoTs(-90) }));
     const gateIds: string[] = [];
     for (const g of gateRows) { const [r] = await tx.insert(guardGates).values(g).returning(); gateIds.push(r!.id); }
     const gShiftRows = [['Matin', '06:00', '14:00'], ['Après-midi', '14:00', '22:00'], ['Nuit', '22:00', '06:00']].map((s) => ({ tenantId, branchId, name: s[0], startTime: s[1], endTime: s[2], isActive: true, createdAt: isoTs(-90), updatedAt: isoTs(-90) }));
@@ -1914,11 +1916,30 @@ async function run() {
     const gAuthRows = studentIds.slice(0, 8).map((sid, i) => ({ tenantId, studentId: sid, pickupPersonId: guardianIds[i % 130], relationshipType: 'parent', authorizedFrom: '2025-09-01T00:00:00.000Z', authorizedUntil: '2026-08-31T00:00:00.000Z', reason: null, status: i % 3 === 0 ? 'cancelled' : 'active', consumedAt: null, createdById: 'USR-001', createdAt: isoTs(-80), updatedAt: isoTs(-80) }));
     const gAuthIds: string[] = [];
     for (const a of gAuthRows) { const [r] = await tx.insert(guardPickupAuthorizations).values(a).returning(); gAuthIds.push(r!.id); }
+    // The service requires a live (canPickup + hasPickupAuthority) guardian link
+    // to authorize AND to release; seed the link for each authorization so the
+    // fixture can actually run the pickup workflow instead of failing every
+    // release with PICKUP_RIGHT_REVOKED.
+    for (const a of gAuthRows) {
+      await tx.update(guardianStudents)
+        .set({ canPickup: true, hasPickupAuthority: true })
+        .where(and(
+          eq(guardianStudents.tenantId, tenantId),
+          eq(guardianStudents.studentId, a.studentId),
+          eq(guardianStudents.guardianId, a.pickupPersonId),
+        ));
+    }
+    // Authorizations that carry release evidence must read as consumed.
+    for (const aid of gAuthIds.slice(0, 4)) {
+      await tx.update(guardPickupAuthorizations)
+        .set({ status: 'consumed', consumedAt: isoTs(-1), updatedAt: isoTs(-1) })
+        .where(and(eq(guardPickupAuthorizations.tenantId, tenantId), eq(guardPickupAuthorizations.id, aid)));
+    }
     const gRelRows = gAuthIds.slice(0, 4).map((aid, i) => ({ tenantId, studentId: studentIds[i], authorizationId: aid, releaseMethod: 'manual', operatorId: 'USR-GUARD-001', gateId: gateIds[i % 2], deviceId: null, kioskSessionId: null, idempotencyKey: `rel-${aid.slice(0, 8)}`, releasedAt: isoTs(-1), evidence: { gate: 'PORT-A' } }));
     await tx.insert(guardReleaseEvents).values(gRelRows);
-    const gScanRows = studentIds.slice(0, 15).map((sid, i) => ({ tenantId, kioskSessionId: null, gateId: gateIds[i % 2], deviceId: null, direction: i % 2 === 0 ? 'in' : 'out', credentialId: null, subjectType: 'student', studentId: sid, visitId: null, resultStatus: i % 7 === 0 ? 'rejected' : 'accepted', rejectionReason: i % 7 === 0 ? 'NO_AUTH' : null, idempotencyKey: `gscan-${sid}-${i}`, scannedAt: isoTs(0), actorId: 'USR-GUARD-001' }));
+    const gScanRows = studentIds.slice(0, 15).map((sid, i) => ({ tenantId, kioskSessionId: null, gateId: gateIds[i % 2], deviceId: null, direction: i % 2 === 0 ? 'entry' : 'exit', credentialId: null, subjectType: 'student', studentId: sid, visitId: null, resultStatus: i % 7 === 0 ? 'rejected' : 'accepted', rejectionReason: i % 7 === 0 ? 'NO_AUTH' : null, idempotencyKey: `gscan-${sid}-${i}`, scannedAt: isoTs(0), actorId: 'USR-GUARD-001' }));
     await tx.insert(guardGateScanEvents).values(gScanRows);
-    const gIncRows = [0, 1, 2].map((i) => ({ tenantId, branchId, gateId: gateIds[i % 2], category: pick(['acces_non_autorise', 'materiel_endommage', 'intrusion']), severity: pick(['low', 'medium', 'high']), location: 'Portail principal', description: 'Incident de sécurité signalé', reportedById: 'USR-GUARD-001', occurredAt: isoTs(-3), status: i === 0 ? 'open' : 'resolved', escalatedToId: null, escalatedAt: null, resolvedById: i === 0 ? null : 'USR-GUARD-001', resolvedAt: i === 0 ? null : isoTs(-1), resolutionNotes: i === 0 ? null : 'Traité', createdAt: isoTs(-3), updatedAt: isoTs(-1) }));
+    const gIncRows = [0, 1, 2].map((i) => ({ tenantId, branchId, gateId: gateIds[i % 2], category: pick(['acces', 'autre', 'securite']), severity: pick(['low', 'medium', 'high']), location: 'Portail principal', description: 'Incident de sécurité signalé', reportedById: 'USR-GUARD-001', occurredAt: isoTs(-3), status: i === 0 ? 'open' : 'resolved', escalatedToId: null, escalatedAt: null, resolvedById: i === 0 ? null : 'USR-GUARD-001', resolvedAt: i === 0 ? null : isoTs(-1), resolutionNotes: i === 0 ? null : 'Traité', createdAt: isoTs(-3), updatedAt: isoTs(-1) }));
     const gIncIds: string[] = [];
     for (const inc of gIncRows) { const [r] = await tx.insert(guardIncidents).values(inc).returning(); gIncIds.push(r!.id); }
     const gIncActRows = gIncIds.map((iid, i) => ({ tenantId, incidentId: iid, actionType: 'notification', notes: 'Avis transmis à la direction', actorId: 'USR-GUARD-001', createdAt: isoTs(-2) }));
