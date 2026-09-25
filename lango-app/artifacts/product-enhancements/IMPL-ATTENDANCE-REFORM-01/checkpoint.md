@@ -7,10 +7,10 @@ Updated: 2026-09-25
 
 | | |
 |---|---|
-| **Active branch** | `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01-integrated` |
-| **HEAD** | `462dec56` |
+| **Active branch** | `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01-mainline` (deploy line) |
+| **HEAD** | `bd30cf4d` |
 | **Worktree** | `.worktrees/IMPL-ATT-INTEGRATED` |
-| **Base (release)** | `origin/release/REL-INTEGRATE-01` = `8215bb6e` |
+| **Base (deploy line)** | `student-directory-hardening` @ `54d386a4` |
 | Original pre-integration branch | `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01` @ `383dc542` (Agent A reviewed `7ef7355e`) |
 | Dev port | `3470` |
 | Test database | `schoolos_audit` (mutations) |
