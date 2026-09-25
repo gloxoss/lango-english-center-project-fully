@@ -1,6 +1,7 @@
+import { getTranslations } from 'next-intl/server';
+import Link from 'next/link';
 import { MarksheetGridView } from '@/features/assessment/ui/marksheet-grid-view';
 import { requireServerPage } from '@/libs/api/page-guard';
-import { getTranslations } from 'next-intl/server';
 
 /**
  * Keyboard-driven mark entry for one assessment.
@@ -23,11 +24,24 @@ export default async function MarksheetPage({
   if (!examTermId || !assessmentDefinitionId) {
     const t = await getTranslations({ locale, namespace: 'Grading' });
     return (
-      <div className="mx-auto max-w-[700px] rounded-2xl border border-dashed border-slate-300 p-10 text-center">
+      <div className="
+        mx-auto max-w-[700px] rounded-2xl border border-dashed border-slate-300
+        p-10 text-center
+      "
+      >
         <p className="text-sm font-extrabold text-[#16212B]">{t('noAssessmentSelected')}</p>
         <p className="mt-1 text-xs text-slate-500">
           {t('noAssessmentSelectedDesc')}
         </p>
+        <Link
+          href={`/${locale}/dashboard/academics/evaluations`}
+          className="
+            mt-3 inline-block text-xs font-bold text-[#2487B8]
+            hover:underline
+          "
+        >
+          {t('backToExamList')}
+        </Link>
       </div>
     );
   }

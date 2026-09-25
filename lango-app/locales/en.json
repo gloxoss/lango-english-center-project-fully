@@ -4921,6 +4921,7 @@
     "passRateTile": "Pass rate",
     "excludingAbsents": "excluding absents",
     "noAssessmentSelected": "No assessment selected",
+    "backToExamList": "Back to the exam list",
     "noAssessmentSelectedDesc": "Open a marksheet from the assessment list to enter grades.",
     "homeworkTitle": "Homework & Assignments",
     "homeworkSubtitle": "Manage, assign, and review digitized student homework submissions.",
