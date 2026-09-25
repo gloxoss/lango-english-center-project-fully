@@ -2178,6 +2178,7 @@
     "mobileStudentTargetSectionLabel": "القسم المستهدف"
   },
   "Attendance": {
+    "recordExcuseHint": "لمبرر مُسلَّم ورقياً أو عبر الهاتف.",
     "exceptionAction": "استثناء اليوم",
     "exceptionTitle": "استثناء على هذه الحصة",
     "exceptionHint": "يعدّل هذه الحصة فقط. يبقى الجدول الأسبوعي دون تغيير.",
@@ -2282,8 +2283,8 @@
     "btnPrevious": "السابق",
     "btnNext": "التالي",
     "excusesTitle": "المبررات وتذاكر الغياب",
-    "excusesSubtitle": "مراجعة وتأكيد مبررات الغياب والتأخر المقدمة من طرف أولياء الأمور.",
-    "submitExcuseBtn": "تقديم مبرر غياب",
+    "excusesSubtitle": "سجّل المبرر المُستلَم في الاستقبال أو هاتفياً، ثم ادرس الطلبات.",
+    "submitExcuseBtn": "تسجيل مبرر مُستلَم",
     "kpiPendingValidation": "قيد التحقق",
     "kpiApprovedExcuses": "مبررات مقبولة",
     "kpiRejectedExcuses": "مبررات مرفوضة",
@@ -2304,7 +2305,7 @@
     "approveBtn": "قبول",
     "rejectBtn": "رفض",
     "selectExcusePrompt": "اختر طلب تبرير من القائمة على اليمين.",
-    "submitModalTitle": "تقديم مبرر غياب",
+    "submitModalTitle": "تسجيل مبرر مُستلَم",
     "studentLabel": "التلميذ *",
     "selectStudentPlaceholder": "اختر تلميذاً",
     "absenceDateLabel": "تاريخ الغياب *",

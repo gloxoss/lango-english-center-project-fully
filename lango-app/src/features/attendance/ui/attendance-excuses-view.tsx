@@ -386,6 +386,10 @@ export function AttendanceExcusesView({ locale: _locale }: { locale?: string } =
             </DialogTitle>
           </DialogHeader>
 
+          {/* The admin is recording something a family handed in, not filing
+              their own excuse — the hint says so where the form starts. */}
+          <p className="mt-1 text-xs text-slate-500 text-start">{t('recordExcuseHint')}</p>
+
           <div className="space-y-3 my-3 text-xs text-start">
             <div>
               <label className="font-bold text-slate-700 block mb-1">{t('studentLabel')}</label>

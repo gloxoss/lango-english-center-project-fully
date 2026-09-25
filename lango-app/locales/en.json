@@ -2178,6 +2178,7 @@
     "mobileStudentTargetSectionLabel": "Target Section"
   },
   "Attendance": {
+    "recordExcuseHint": "For a justification handed in on paper or given by phone.",
     "exceptionAction": "One-day exception",
     "exceptionTitle": "Exception for this lesson",
     "exceptionHint": "Changes this lesson only. The weekly timetable stays unchanged.",
@@ -2282,8 +2283,8 @@
     "btnPrevious": "Previous",
     "btnNext": "Next",
     "excusesTitle": "Absence Excuses & Notes",
-    "excusesSubtitle": "Review and validation of absence and tardiness excuses submitted by guardians.",
-    "submitExcuseBtn": "Submit an excuse",
+    "excusesSubtitle": "Record a justification handed in at the desk or given by phone, then review the requests.",
+    "submitExcuseBtn": "Record a received justification",
     "kpiPendingValidation": "Pending Validation",
     "kpiApprovedExcuses": "Approved Excuses",
     "kpiRejectedExcuses": "Rejected Excuses",
@@ -2304,7 +2305,7 @@
     "approveBtn": "Approve",
     "rejectBtn": "Reject",
     "selectExcusePrompt": "Select an excuse request on the left.",
-    "submitModalTitle": "Submit Absence Excuse",
+    "submitModalTitle": "Record a received justification",
     "studentLabel": "Student *",
     "selectStudentPlaceholder": "Select a student",
     "absenceDateLabel": "Absence date *",

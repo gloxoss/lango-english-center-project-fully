@@ -2178,6 +2178,7 @@
     "room": "Salle"
   },
   "Attendance": {
+    "recordExcuseHint": "Pour un justificatif remis sur papier ou communiqué par téléphone.",
     "exceptionAction": "Exception du jour",
     "exceptionTitle": "Exception sur cette séance",
     "exceptionHint": "Modifie cette séance uniquement. L’emploi du temps hebdomadaire reste inchangé.",
@@ -2282,8 +2283,8 @@
     "btnPrevious": "Précédent",
     "btnNext": "Suivant",
     "excusesTitle": "Justificatifs & Billet d'Absence",
-    "excusesSubtitle": "Examen et validation des motifs de retards et d'absences déposés par les tuteurs.",
-    "submitExcuseBtn": "Soumettre une justification",
+    "excusesSubtitle": "Enregistrez un justificatif reçu au guichet ou par téléphone, puis examinez les demandes.",
+    "submitExcuseBtn": "Enregistrer une justification reçue",
     "kpiPendingValidation": "En attente de validation",
     "kpiApprovedExcuses": "Justificatifs approuvés",
     "kpiRejectedExcuses": "Motifs refusés",
@@ -2304,7 +2305,7 @@
     "approveBtn": "Approuver",
     "rejectBtn": "Refuser",
     "selectExcusePrompt": "Sélectionnez une demande de justification à gauche.",
-    "submitModalTitle": "Soumettre une Justification d'Absence",
+    "submitModalTitle": "Enregistrer une justification reçue",
     "studentLabel": "Élève *",
     "selectStudentPlaceholder": "Sélectionner un élève",
     "absenceDateLabel": "Date d'absence *",
