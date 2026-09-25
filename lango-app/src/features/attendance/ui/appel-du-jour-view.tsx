@@ -1,7 +1,8 @@
 'use client';
 
 import { CalendarDays, CheckCircle2, Clock, DoorOpen, Loader2, RotateCcw, User } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import Link from 'next/link';
+import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -62,6 +63,7 @@ const STATE_KEYS: Record<SessionState, string> = {
 
 export function AppelDuJourView() {
   const t = useTranslations('Attendance');
+  const locale = useLocale();
   const [date, setDate] = useState(casablancaTodayIso());
   const [data, setData] = useState<DayData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -116,6 +118,11 @@ export function AppelDuJourView() {
       setSaving(false);
     }
   }
+
+  // Session-scoped link: the roll call reads ?slot=…&date=… and resolves the
+  // lesson from the timetable, so its context cannot be mis-picked.
+  const rollCallHref = (slotId: string) =>
+    `/${locale}/dashboard/attendance?slot=${encodeURIComponent(slotId)}&date=${encodeURIComponent(date)}`;
 
   const sessions = data?.sessions ?? [];
   const mode = data?.mode ?? 'today';
@@ -211,13 +218,28 @@ export function AppelDuJourView() {
                     {session.room && (
                       <span className="inline-flex items-center gap-1">
                         <DoorOpen className="h-3.5 w-3.5 text-slate-400" aria-hidden />
-                        {t('roomLabel')} {session.room}
+                        {/* roomLabel is already human text ("Salle 5"), so it is
+                            shown as-is rather than prefixed with a label. */}
+                        {session.room}
                       </span>
                     )}
                   </div>
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">
+                  {/* Today's lessons are the operational ones. Opening one goes to
+                      its roll call with the lesson already resolved, so the admin
+                      never re-picks class/subject/period. */}
+                  {mode === 'today' && (session.state === 'EN_COURS' || session.state === 'A_COMPLETER') && (
+                    <Button asChild size="sm" className="h-8 rounded-lg">
+                      <Link href={rollCallHref(session.slotId)}>{t('takeRegister')}</Link>
+                    </Button>
+                  )}
+                  {mode === 'today' && session.state === 'POINTAGE_TERMINE' && (
+                    <Button asChild variant="outline" size="sm" className="h-8 rounded-lg">
+                      <Link href={rollCallHref(session.slotId)}>{t('markAttendance')}</Link>
+                    </Button>
+                  )}
                   {session.state === 'POINTAGE_TERMINE' && session.register && mode === 'past' && (
                     <Button
                       variant="outline"
