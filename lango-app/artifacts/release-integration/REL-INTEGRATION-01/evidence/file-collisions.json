@@ -1,0 +1,123 @@
+{
+  "totalOverlappingFiles": 7,
+  "overlappingFiles": {
+    ".agent-hub/CHANGELOG.md": [
+      "AUD-FINANCE-01",
+      "AUD-SETTINGS-01"
+    ],
+    "lango-app/locales/ar.json": [
+      "AUD-FINANCE-01",
+      "AUD-SETTINGS-01"
+    ],
+    "lango-app/locales/en.json": [
+      "AUD-FINANCE-01",
+      "AUD-SETTINGS-01"
+    ],
+    "lango-app/locales/fr.json": [
+      "AUD-FINANCE-01",
+      "AUD-SETTINGS-01"
+    ],
+    "lango-app/src/app/api/students/route.ts": [
+      "AUD-FINANCE-01",
+      "AUD-RECEPTION-01",
+      "AUD-TEACHER-01"
+    ],
+    "lango-app/src/features/students/ui/students-list-client.tsx": [
+      "AUD-RECEPTION-01",
+      "AUD-TEACHER-01"
+    ],
+    "lango-app/tsconfig.json": [
+      "AUD-LIVE-01",
+      "AUD-SETTINGS-01",
+      "AUD-CREDENTIALS-01"
+    ]
+  },
+  "pairwiseCollisions": [
+    {
+      "pair": "AUD-FINANCE-01 <-> AUD-RECEPTION-01",
+      "a": "AUD-FINANCE-01",
+      "b": "AUD-RECEPTION-01",
+      "trustedPair": true,
+      "commonFilesCount": 1,
+      "commonFiles": [
+        "lango-app/src/app/api/students/route.ts"
+      ]
+    },
+    {
+      "pair": "AUD-FINANCE-01 <-> AUD-TEACHER-01",
+      "a": "AUD-FINANCE-01",
+      "b": "AUD-TEACHER-01",
+      "trustedPair": true,
+      "commonFilesCount": 1,
+      "commonFiles": [
+        "lango-app/src/app/api/students/route.ts"
+      ]
+    },
+    {
+      "pair": "AUD-FINANCE-01 <-> AUD-SETTINGS-01",
+      "a": "AUD-FINANCE-01",
+      "b": "AUD-SETTINGS-01",
+      "trustedPair": true,
+      "commonFilesCount": 4,
+      "commonFiles": [
+        ".agent-hub/CHANGELOG.md",
+        "lango-app/locales/ar.json",
+        "lango-app/locales/en.json",
+        "lango-app/locales/fr.json"
+      ]
+    },
+    {
+      "pair": "AUD-RECEPTION-01 <-> AUD-TEACHER-01",
+      "a": "AUD-RECEPTION-01",
+      "b": "AUD-TEACHER-01",
+      "trustedPair": true,
+      "commonFilesCount": 2,
+      "commonFiles": [
+        "lango-app/src/app/api/students/route.ts",
+        "lango-app/src/features/students/ui/students-list-client.tsx"
+      ]
+    },
+    {
+      "pair": "AUD-LIVE-01 <-> AUD-SETTINGS-01",
+      "a": "AUD-LIVE-01",
+      "b": "AUD-SETTINGS-01",
+      "trustedPair": true,
+      "commonFilesCount": 1,
+      "commonFiles": [
+        "lango-app/tsconfig.json"
+      ]
+    },
+    {
+      "pair": "AUD-LIVE-01 <-> AUD-CREDENTIALS-01",
+      "a": "AUD-LIVE-01",
+      "b": "AUD-CREDENTIALS-01",
+      "trustedPair": false,
+      "commonFilesCount": 1,
+      "commonFiles": [
+        "lango-app/tsconfig.json"
+      ]
+    },
+    {
+      "pair": "AUD-SETTINGS-01 <-> AUD-CREDENTIALS-01",
+      "a": "AUD-SETTINGS-01",
+      "b": "AUD-CREDENTIALS-01",
+      "trustedPair": false,
+      "commonFilesCount": 1,
+      "commonFiles": [
+        "lango-app/tsconfig.json"
+      ]
+    }
+  ],
+  "migrations": [
+    {
+      "campaign": "AUD-FINANCE-01",
+      "file": "lango-app/migrations/0156_fine_assessment_unique.sql",
+      "trusted": true
+    },
+    {
+      "campaign": "AUD-FINANCE-01",
+      "file": "lango-app/migrations/meta/_journal.json",
+      "trusted": true
+    }
+  ]
+}

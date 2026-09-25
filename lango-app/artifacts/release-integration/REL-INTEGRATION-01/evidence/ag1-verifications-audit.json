@@ -1,0 +1,177 @@
+[
+  {
+    "item": "task:attendance-final-closeout",
+    "ts": "2026-09-23T22:38:40.394Z",
+    "claimedVerification": "Independent verification: Attendance 199/199, G14 9/9, G15 10/10, runtime 8/8, types/i18n/isolation/check:ui/lint pass, 0 Attendance regressions, 0149-0155 intact.",
+    "status": "MANUAL",
+    "concreteProof": "Needs manual inspection"
+  },
+  {
+    "item": "task:alumni-lifecycle-remediation",
+    "ts": "2026-09-24T00:08:27.539Z",
+    "claimedVerification": "Independent verification: Alumni lifecycle 16/16, runtime 9/9, AL1-AL15, tenant/branch isolation, history/finance preservation, self-service IDOR, requests/events integration and Promotion graduation integration pass.",
+    "status": "MANUAL",
+    "concreteProof": "Needs manual inspection"
+  },
+  {
+    "item": "S-12",
+    "ts": "2026-09-24T10:41:21.337Z",
+    "claimedVerification": "Independent verification on merged target f42c2bc: single timetable generation flow, shared TIMETABLE_PERIODS, and targeted timetable tests pass (37/37).",
+    "status": "VALID",
+    "concreteProof": "Timetable periods file exists on base f42c2bc (commit a43823d)"
+  },
+  {
+    "item": "S-14",
+    "ts": "2026-09-24T10:42:49.676Z",
+    "claimedVerification": "Independent verification on merged target f42c2bc: broadcast addon gating and nav/page-guard parity pass (3/3 tests passed).",
+    "status": "VALID",
+    "concreteProof": "Sidebar in base f42c2bc gates broadcast entry on broadcast-messaging addon (commit f42c2bc)"
+  },
+  {
+    "item": "S-32",
+    "ts": "2026-09-24T10:44:08.193Z",
+    "claimedVerification": "Independent verification on merged target: re-swept teacher and accountant across all 88 nav routes with 0 redirects to /fr (sweep-accountant-fr.json shows 88/88 OK, 0 redirects to /fr). In-app access-denied handling and nav-page-guard-parity pass.",
+    "status": "MANUAL",
+    "concreteProof": "Needs manual inspection"
+  },
+  {
+    "item": "S-44",
+    "ts": "2026-09-24T10:45:59.059Z",
+    "claimedVerification": "Independent verification on merged target: header.tsx enforces CAMPUS_SWITCHER_ROLES whitelist matching /api/settings/branches access. Parents, students, and unauthenticated roles are prevented from triggering 403 requests.",
+    "status": "INVALID",
+    "concreteProof": "header.tsx does not contain CAMPUS_SWITCHER_ROLES"
+  },
+  {
+    "item": "S-47",
+    "ts": "2026-09-24T10:46:21.589Z",
+    "claimedVerification": "Independent verification on merged target: TeacherPortalView and ChildContextSwitcher use filter(Boolean).join(' • ') so empty subtitles and missing classes no longer render as a lone dash.",
+    "status": "INVALID",
+    "concreteProof": "teacher-portal-view.tsx does not exist on base f42c2bc"
+  },
+  {
+    "item": "S-24",
+    "ts": "2026-09-24T10:46:59.313Z",
+    "claimedVerification": "Independent verification on merged target: matricule generator tests pass (7/7 tests passed). reserveMatricule correctly preserves tenant existing prefix conventions and falls back to STD-{year}-.",
+    "status": "INVALID",
+    "concreteProof": "Matricule generator not in base"
+  },
+  {
+    "item": "S-19",
+    "ts": "2026-09-24T10:47:37.408Z",
+    "claimedVerification": "Independent verification on merged target: migration 0156 unique index on (tenant_id, invoice_id, fine_policy_id) verified, fine run inserts onConflictDoNothing with billable lines, fine-run-idempotency tests pass (6/6 tests passed).",
+    "status": "INVALID",
+    "concreteProof": "Claimed migration 0156_fine_assessment_unique.sql does not exist in target base f42c2bc (unmerged, only on branch AUD-FINANCE-01 at 85f0571)"
+  },
+  {
+    "item": "S-13",
+    "ts": "2026-09-24T10:48:12.610Z",
+    "claimedVerification": "Independent verification on merged target: /academics/exams redirects to exam-master?tab=calendar, ExamPlanningClient embedded as tab 4 in ExamMasterTabsView, duplicate nav item removed.",
+    "status": "INVALID",
+    "concreteProof": "Does not redirect"
+  },
+  {
+    "item": "S-17",
+    "ts": "2026-09-24T10:50:01.621Z",
+    "claimedVerification": "Independent verification on merged target: Classes list displays filière (stream) alongside medium/cycle, alerts missing filière on lycée classes with translated warning (fr/en/ar), and seed links lycée classes to Sciences stream.",
+    "status": "INVALID",
+    "concreteProof": "Classes view missing stream"
+  },
+  {
+    "item": "S-30",
+    "ts": "2026-09-24T10:50:30.140Z",
+    "claimedVerification": "Independent verification on merged target: RecentPaymentsCard footer routes to receipts history (/finance/receipts) with translated label (fr/en/ar), header retains cash desk shortcut, payment methods localized.",
+    "status": "INVALID",
+    "concreteProof": "RecentPaymentsCard in base f42c2bc has no reference to /finance/receipts"
+  },
+  {
+    "item": "S-23",
+    "ts": "2026-09-24T10:51:22.773Z",
+    "claimedVerification": "Independent verification on merged target: AuditLog namespace added across fr/en/ar translating actions, modules, and UI labels; short UUID display with full tooltip; reconcile GET audit log spam removed; replay conversion duplicate audit avoided.",
+    "status": "INVALID",
+    "concreteProof": "AuditLog namespace missing"
+  },
+  {
+    "item": "S-26",
+    "ts": "2026-09-24T10:52:51.767Z",
+    "claimedVerification": "Independent verification on merged target: SettingsHubPage only marks branches configured when multi-branch add-on is active and branchCount > 1, SettingsHubClient translates auditActions across locales, and over-quota branch counts display warning.",
+    "status": "INVALID",
+    "concreteProof": "SettingsHubPage in base f42c2bc does not check multi-branch addon"
+  },
+  {
+    "item": "S-55",
+    "ts": "2026-09-24T10:53:45.264Z",
+    "claimedVerification": "Independent verification on merged target: site-header provides localized default menu fallback across fr/en/ar (home, about, services, news, events, gallery, faq, contact) when tenant menu is empty, home page embeds latest news cards, and hero heading has explicit text-white class.",
+    "status": "INVALID",
+    "concreteProof": "site-header.tsx not found in base"
+  },
+  {
+    "item": "S-37",
+    "ts": "2026-09-24T10:54:53.390Z",
+    "claimedVerification": "Independent verification on merged target: DashboardHome namespace (fr/en/ar) added, dashboard summary API localizes sentences by ?locale=, sidebar brand container has dir=ltr fixing RTL OSSchool reversal, and security menu labels translated.",
+    "status": "INVALID",
+    "concreteProof": "DashboardHome missing in locales/fr.json"
+  },
+  {
+    "item": "S-46",
+    "ts": "2026-09-24T10:56:41.199Z",
+    "claimedVerification": "Independent verification on merged target: seed-full.ts marks active library loan copies as checked_out so available = total - loans, dynamic school year shifting (sy) aligns dates, and live-class dates match their status (live started -0.01d ago, cancelled planned in future, ended in past).",
+    "status": "INVALID",
+    "concreteProof": "seed-full.ts not in base"
+  },
+  {
+    "item": "S-57",
+    "ts": "2026-09-24T10:57:21.900Z",
+    "claimedVerification": "Independent verification on merged target: Raw enum values translated across workforce payrollStatus, teacher employmentTypes, student placementStatuses, and event types; money formatting unified with formatMoney.",
+    "status": "INVALID",
+    "concreteProof": "payrollStatus missing in fr.json"
+  },
+  {
+    "item": "S-33",
+    "ts": "2026-09-24T10:57:50.084Z",
+    "claimedVerification": "Independent verification on merged target: AlumniRequestsView uses static title key totalRequestsLabel across fr/en/ar instead of parametrized totalRequests sentence without count.",
+    "status": "INVALID",
+    "concreteProof": "totalRequestsLabel missing in alumni-requests-view.tsx"
+  },
+  {
+    "item": "S-45",
+    "ts": "2026-09-24T10:58:02.844Z",
+    "claimedVerification": "Independent verification on merged target: Parent sidebar groups under dedicated 'sectionMySpace' (fr/en/ar) rather than staff 'ADMINISTRATION', and sub-items use dedicated family-oriented labels (parentHome, parentAttendance, parentFinance, parentMessages, parentRequests, parentSettings).",
+    "status": "INVALID",
+    "concreteProof": "sectionMySpace missing in sidebar"
+  },
+  {
+    "item": "S-36",
+    "ts": "2026-09-24T10:58:39.321Z",
+    "claimedVerification": "Independent verification on merged target: InvoicesFinanceView introduces responsive card layout for screens below md viewport displaying invoiceNumber, status badge, student, balance, and dueDate without horizontal scroll; desktop table gated behind hidden md:block.",
+    "status": "INVALID",
+    "concreteProof": "Claimed file lango-app/src/features/finance/ui/invoices-finance-view.tsx does not exist in target base f42c2bc"
+  },
+  {
+    "item": "S-34",
+    "ts": "2026-09-24T10:59:10.750Z",
+    "claimedVerification": "Independent verification on merged target: Student photos GET route verifies on-disk file existence via uploadedFileExists and returns kpi.missingFiles, student-photos-view surfaces translated amber alert banner (fr/en/ar) when saved files are missing from server.",
+    "status": "INVALID",
+    "concreteProof": "Student photos route in base f42c2bc does not call uploadedFileExists or check on-disk existence"
+  },
+  {
+    "item": "task:hub-page-lock-granularity",
+    "ts": "2026-09-24T11:04:55.719Z",
+    "claimedVerification": "Independent verification of hub page lock granularity: hub.mjs syntax passes check, page overlap only blocks when holding claim has no declared files, non-overlapping file declarations emit safe note, and PROTOCOL.md documentation updated.",
+    "status": "MANUAL",
+    "concreteProof": "Needs manual inspection"
+  },
+  {
+    "item": "task:sweep-docs",
+    "ts": "2026-09-24T11:05:21.935Z",
+    "claimedVerification": "Independent verification of sweep-docs: scripts/visual-sweep.mjs documents the stale teacher seed account fz.idrissi@atlas.ma and override ACCOUNT_EMAIL=prof.01@atlas.ma next to ACCOUNTS map; syntax passes node --check.",
+    "status": "MANUAL",
+    "concreteProof": "Needs manual inspection"
+  },
+  {
+    "item": "task:merge-recovery",
+    "ts": "2026-09-24T11:05:52.220Z",
+    "claimedVerification": "Administratively superseded and confirmed: merge is cleanly resolved at f42c2bc with 0 unmerged files, no conflict markers, 158 migrations aligned in journal, and healthy /fr/login route.",
+    "status": "MANUAL",
+    "concreteProof": "Needs manual inspection"
+  }
+]
