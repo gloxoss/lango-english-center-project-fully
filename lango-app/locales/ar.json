@@ -7079,6 +7079,15 @@
     "rejectionReason": "سبب الرفض: {reason}"
   },
   "Workforce": {
+    "punchTypeLabel": "نوع التسجيل",
+    "punchCorrectTime": "الساعة",
+    "punchCorrectFailed": "فشل التصحيح.",
+    "punchCorrected": "تم تصحيح التسجيل.",
+    "punchCorrectSave": "حفظ التصحيح",
+    "punchCorrectReasonPlaceholder": "اشرح سبب تصحيح هذا التسجيل",
+    "punchCorrectReason": "سبب التصحيح",
+    "punchCorrectTitle": "تصحيح التسجيل",
+    "punchCorrect": "تصحيح",
     "punchAutoHint": "يحدد النظام تلقائياً ما إذا كان التسجيل حضوراً أم انصرافاً.",
     "punchSubmitAuto": "تسجيل",
     "hubTitle": "الرواتب والعمليات الإدارية",
