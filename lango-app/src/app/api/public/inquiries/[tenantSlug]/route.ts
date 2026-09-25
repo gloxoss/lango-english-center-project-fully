@@ -9,11 +9,13 @@ import { inquiries, tenants } from '@/models/Schema';
 
 const publicInquirySchema = z.object({
   contactName: z.string().trim().min(1, 'Le nom est requis').max(255),
-  phone: z.string().trim().optional(),
+  // Unauthenticated endpoint: every free-text field is bounded so one request
+  // cannot park megabytes of text in the inquiries table.
+  phone: z.string().trim().max(32).optional(),
   email: z.string().email('Email non valide').optional().or(z.literal('')),
-  notes: z.string().trim().optional(),
+  notes: z.string().trim().max(2000).optional(),
   // Basic bot honeypot field - must be empty
-  website_hp: z.string().optional(),
+  website_hp: z.string().max(64).optional(),
 }).strict();
 
 export async function POST(
@@ -22,7 +24,10 @@ export async function POST(
 ) {
   try {
     const resolvedParams = await params;
-    const clientIp = request.headers.get('x-forwarded-for') || '127.0.0.1';
+    // Take one IP entry, not the raw header: keying the limiter on the whole
+    // X-Forwarded-For value gave every request with a fresh header its own
+    // bucket, so the limit never tripped. Same normalization as public/signup.
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
 
     // Strict public rate limit: max 5 submissions per hour per IP
     checkRateLimit(`public-inquiry:${clientIp}:${resolvedParams.tenantSlug}`, 5, 60 * 60 * 1000);

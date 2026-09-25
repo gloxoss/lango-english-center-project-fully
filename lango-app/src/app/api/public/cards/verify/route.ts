@@ -22,7 +22,7 @@ const verifySchema = z.object({
 // renderDataSnapshot (which can contain DOB/NID/guardian data).
 export async function POST(request: Request) {
   try {
-    const clientIp = request.headers.get('x-forwarded-for') || '127.0.0.1';
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
     checkRateLimit(`public-card-verify:${clientIp}`, 10, 60 * 60 * 1000);
 
     const body = await parseJson(request, verifySchema);
