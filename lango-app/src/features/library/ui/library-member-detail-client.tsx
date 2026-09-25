@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { casablancaTodayIso } from '@/libs/finance/today';
 
 type ActiveLoan = { loanId: string; dueDate: string; issuedAt: string; renewedCount: number; accessionNumber: string; title: string };
 type OpenCharge = { id: string; amount: string; reason: string; state: string; createdAt: string };
@@ -51,7 +52,7 @@ export function LibraryMemberDetailClient({ memberId }: { memberId: string }) {
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString(locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR');
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = casablancaTodayIso();
   const s = member ? (stateLabels[member.state] ?? { label: member.state, cls: 'bg-slate-100 text-slate-500' }) : null;
   const overdueCount = member?.activeLoans.filter(l => l.dueDate < today).length ?? 0;
 

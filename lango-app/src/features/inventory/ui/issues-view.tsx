@@ -16,6 +16,7 @@ import {
 import {
   AlertCircle, AlertTriangle, CalendarDays, HandHelping, Loader2, Package, Plus, Search, Undo2,
 } from 'lucide-react';
+import { casablancaTodayIso } from '@/libs/finance/today';
 
 type Row = {
   id: string; issueNumber: string; storeId: string; storeName: string;
@@ -42,7 +43,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<{ ok: boolean; s
   }
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => casablancaTodayIso();
 
 const STATUS_VARIANT: Record<Row['status'], 'warning' | 'success' | 'danger' | 'neutral'> = {
   issued: 'warning', returned: 'success', overdue: 'danger', lost: 'neutral', damaged: 'neutral',

@@ -21,6 +21,7 @@ import { qtyToMilli } from './inventory-math';
 import { reserveInventoryNumber } from './inventory-sequence';
 import { isIdempotencyViolation, postStockMovements } from './inventory-transactions';
 import { decideReorder, DEFAULT_REORDER_THRESHOLD } from './reorder-policy';
+import { casablancaTodayIso } from '@/libs/finance/today';
 
 export type PurchaseLineInput = { productId: string; qtyInPurchaseUnit: string; unitCost: number };
 export type PurchaseInput = {
@@ -280,7 +281,7 @@ export async function receivePurchase(context: RequestContext, tenantId: string,
         tenantId,
         category: 'supplies',
         amount: existing.netAmount,
-        expenseDate: new Date().toISOString().slice(0, 10),
+        expenseDate: casablancaTodayIso(),
         description: `Achat N° ${existing.purchaseNumber} — ${existing.supplierName}`,
         recordedById: context.userId,
       }).returning();
@@ -315,7 +316,7 @@ export async function receivePurchase(context: RequestContext, tenantId: string,
     expenseId: fresh.expenseId!,
     description: `Achat N° ${fresh.purchaseNumber} — ${fresh.supplierName}`,
     amount: String(fresh.netAmount),
-    expenseDate: fresh.receivedAt ?? new Date().toISOString().slice(0, 10),
+    expenseDate: fresh.receivedAt ?? casablancaTodayIso(),
   });
   return fresh;
 }
@@ -487,7 +488,7 @@ export async function generateDraftPurchaseOrders(
   orders: AutoGeneratePoGroup[],
 ) {
   const createdPurchases = [];
-  const today = new Date().toISOString().slice(0, 10);
+  const today = casablancaTodayIso();
 
   for (const order of orders) {
     if (!order.supplierId || !order.storeId || order.lines.length === 0) {

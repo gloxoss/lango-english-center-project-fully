@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { casablancaTodayIso } from '@/libs/finance/today';
 
 type Overview = { totalCopies: number; availableCopies: number; activeLoans: number; overdueLoans: number; waitingHolds: number; activeMembers: number };
 type Overdue = { loanId: string; dueDate: string; memberNumber: string; memberName: string; accessionNumber: string; title: string };
@@ -52,7 +53,7 @@ export function LibraryReportsClient() {
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString(locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR');
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = casablancaTodayIso();
   const kpis = overview ? [
     [t('kpiTotalCopies'), overview.totalCopies, Library],
     [t('kpiAvailableCopies'), overview.availableCopies, BookOpen],

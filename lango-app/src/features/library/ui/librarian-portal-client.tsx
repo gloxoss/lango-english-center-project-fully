@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { casablancaTodayIso } from '@/libs/finance/today';
 
 type Overview = { totalCopies: number; availableCopies: number; activeLoans: number; overdueLoans: number; waitingHolds: number; activeMembers: number };
 type Member = { id: string; memberNumber: string; name: string; role: string; state: string };
@@ -218,7 +219,7 @@ export function LibrarianPortalClient({ desk = false, viewingRole }: { desk?: bo
                           <div className="text-xs text-slate-500">{loan.memberNumber}</div>
                         </td>
                         <td className="p-3">
-                          <span className={loan.dueDate < new Date().toISOString().slice(0, 10) ? 'font-semibold text-red-600' : ''}>
+                          <span className={loan.dueDate < casablancaTodayIso() ? 'font-semibold text-red-600' : ''}>
                             {loan.dueDate}
                           </span>
                         </td>

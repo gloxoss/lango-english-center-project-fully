@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { casablancaTodayIso } from '@/libs/finance/today';
 
 type Home = { memberNumber: string; activeLoans: number; overdueLoans: number; waitingHolds: number; openCharges: number };
 type Loan = { id: string; dueDate: string; returnedAt: string | null; renewedCount: number; accessionNumber: string; title: string; returnState?: string | null };
@@ -137,7 +138,7 @@ export function LibrarySelfServiceClient() {
     );
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = casablancaTodayIso();
   const homeKpis = home ? [
     [t('kpiActiveLoans'), home.activeLoans, BookOpen],
     [t('kpiOverdueLoans'), home.overdueLoans, Clock3],
