@@ -1,0 +1,12 @@
+[
+  {
+    "route": "/dashboard/events",
+    "finalPath": "/ar/dashboard/events",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 743,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-ar-events.png"
+  }
+]
