@@ -8,7 +8,7 @@ Updated: 2026-09-25
 | | |
 |---|---|
 | **Active branch** | `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01-integrated` |
-| **HEAD** | `3e8c4ae7` |
+| **HEAD** | `32c1992f` |
 | **Worktree** | `.worktrees/IMPL-ATT-INTEGRATED` |
 | **Base (release)** | `origin/release/REL-INTEGRATE-01` = `8215bb6e` |
 | Original pre-integration branch | `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01` @ `383dc542` (Agent A reviewed `7ef7355e`) |
@@ -45,7 +45,7 @@ Updated: 2026-09-25
 | 4 — Justifications + Suivi & alertes | **COMPLETE.** 4a guardian notification, 4b admin recording, 4c lifecycle, 4d thresholds, 4e merged Suivi & alertes page. Sidebar wired in the navigation pass |
 | 5 — Cards + credentials | **COMPLETE.** Atomic replacement, wording, and the consolidated Cartes & badges destination under Cartes & Convocations |
 | 6 — Session exceptions | **COMPLETE.** Table (0161), resolver, upsert API, and the admin editor reached from the lesson itself |
-| 7 — Kiosk + device security | **NOT STARTED — the only phase left.** Needs a QR decoder dependency |
+| 7 — Kiosk + device security | **PARTIAL.** Device identity (0162, hashed secret, auth, branch binding, heartbeat), jsQR fallback, session-relative lateness, and terminal pairing in the scanner. Remaining: the fixed kiosk deriving its own session from room+device with no manual class picker |
 | 8 — Registers / historique | **COMPLETE.** Scoped marks history at /dashboard/attendance/registres with manual-vs-QR origin, filters, and technical ids behind Journal technique |
 | 9 — HR time clock | **COMPLETE.** Server-side punch state machine + HR correction with reason and before/after audit |
 
