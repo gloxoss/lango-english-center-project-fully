@@ -1,0 +1,82 @@
+[
+  {
+    "route": "/dashboard/portals/guard",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 435,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-portals__guard.png"
+  },
+  {
+    "route": "/dashboard/portals/guard/scanner",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 435,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-portals__guard__scanner.png"
+  },
+  {
+    "route": "/dashboard/portals/guard/visitors",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 435,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-portals__guard__visitors.png"
+  },
+  {
+    "route": "/dashboard/portals/guard/pickups",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 435,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-portals__guard__pickups.png"
+  },
+  {
+    "route": "/dashboard/portals/guard/incidents",
+    "finalPath": "/fr/dashboard/portals/guard/incidents",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 487,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-portals__guard__incidents.png"
+  },
+  {
+    "route": "/dashboard/portals/guard/emergency",
+    "finalPath": "/fr/dashboard/portals/guard/emergency",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 482,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-portals__guard__emergency.png"
+  },
+  {
+    "route": "/dashboard/portals/guard/config",
+    "finalPath": "/fr/dashboard/portals/guard/config",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 504,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-portals__guard__config.png"
+  },
+  {
+    "route": "/dashboard",
+    "finalPath": "/fr/dashboard",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 968,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-home.png"
+  }
+]

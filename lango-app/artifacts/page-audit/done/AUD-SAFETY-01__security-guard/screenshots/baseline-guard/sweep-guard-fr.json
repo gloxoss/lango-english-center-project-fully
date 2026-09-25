@@ -1,0 +1,82 @@
+[
+  {
+    "route": "/dashboard/portals/guard",
+    "finalPath": "/fr/dashboard/portals/guard",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 246,
+    "failures": [],
+    "textDefects": [],
+    "file": "guard-fr-portals__guard.png"
+  },
+  {
+    "route": "/dashboard/portals/guard/scanner",
+    "finalPath": "/fr/dashboard/portals/guard/scanner",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 227,
+    "failures": [],
+    "textDefects": [],
+    "file": "guard-fr-portals__guard__scanner.png"
+  },
+  {
+    "route": "/dashboard/portals/guard/visitors",
+    "finalPath": "/fr/dashboard/portals/guard/visitors",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 207,
+    "failures": [],
+    "textDefects": [],
+    "file": "guard-fr-portals__guard__visitors.png"
+  },
+  {
+    "route": "/dashboard/portals/guard/pickups",
+    "finalPath": "/fr/dashboard/portals/guard/pickups",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 165,
+    "failures": [],
+    "textDefects": [],
+    "file": "guard-fr-portals__guard__pickups.png"
+  },
+  {
+    "route": "/dashboard/portals/guard/incidents",
+    "finalPath": "/fr/dashboard/portals/guard/incidents",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 189,
+    "failures": [],
+    "textDefects": [],
+    "file": "guard-fr-portals__guard__incidents.png"
+  },
+  {
+    "route": "/dashboard/portals/guard/emergency",
+    "finalPath": "/fr/dashboard/portals/guard/emergency",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 184,
+    "failures": [],
+    "textDefects": [],
+    "file": "guard-fr-portals__guard__emergency.png"
+  },
+  {
+    "route": "/dashboard/portals/guard/config",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 143,
+    "failures": [],
+    "textDefects": [],
+    "file": "guard-fr-portals__guard__config.png"
+  },
+  {
+    "route": "/dashboard",
+    "finalPath": "/fr/dashboard/portals/guard",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 246,
+    "failures": [],
+    "textDefects": [],
+    "file": "guard-fr-home.png"
+  }
+]
