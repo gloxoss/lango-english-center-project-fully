@@ -19,6 +19,7 @@ import {
   smsMessages,
   subjects,
   tenants,
+  timetableVersions,
   user,
 } from '@/models/Schema';
 
@@ -109,6 +110,19 @@ describe.skipIf(!dbReachable)('attendance calendar P0 — DB-backed', () => {
     // One Monday timetable slot — the missing-register detector's authority.
     const [subject] = await db.insert(subjects).values({ tenantId, name: `Maths-${suffix}`, mediumId: medium!.id, type: 'theory' }).returning();
     const [classSubject] = await db.insert(classSubjects).values({ tenantId, classId: cls!.id, subjectId: subject!.id, type: 'compulsory' }).returning();
+    // The missing-register detector only honours slots belonging to a PUBLISHED
+    // timetable version effective on the audited date. An unversioned slot is
+    // correctly not an expectation, so the fixture must supply a real version.
+    const [timetableVersion] = await db.insert(timetableVersions).values({
+      tenantId,
+      sessionYearId,
+      status: 'published',
+      versionNumber: 1,
+      effectiveFrom: '2026-09-01',
+      effectiveTo: '2027-06-30',
+      createdBy: ADMIN,
+    }).returning();
+
     await db.insert(classScheduleSlots).values([
       {
         tenantId,
@@ -118,6 +132,7 @@ describe.skipIf(!dbReachable)('attendance calendar P0 — DB-backed', () => {
         dayOfWeek: 'monday',
         startTime: '08:00',
         endTime: '10:00',
+        versionId: timetableVersion!.id,
       },
       {
         tenantId,
@@ -127,6 +142,7 @@ describe.skipIf(!dbReachable)('attendance calendar P0 — DB-backed', () => {
         dayOfWeek: 'friday',
         startTime: '08:00',
         endTime: '10:00',
+        versionId: timetableVersion!.id,
       },
     ]);
   });
@@ -140,6 +156,7 @@ describe.skipIf(!dbReachable)('attendance calendar P0 — DB-backed', () => {
     await db.delete(attendanceFlags).where(eq(attendanceFlags.tenantId, tenantId));
     await db.delete(attendance).where(eq(attendance.tenantId, tenantId));
     await db.delete(classScheduleSlots).where(eq(classScheduleSlots.tenantId, tenantId));
+    await db.delete(timetableVersions).where(eq(timetableVersions.tenantId, tenantId));
     await db.delete(classSubjects).where(eq(classSubjects.tenantId, tenantId));
     await db.delete(subjects).where(eq(subjects.tenantId, tenantId));
     await db.delete(classSections).where(eq(classSections.tenantId, tenantId));
@@ -204,15 +221,24 @@ describe.skipIf(!dbReachable)('attendance calendar P0 — DB-backed', () => {
   });
 
   it('G12.5: missing-register detection only applies inside the session and on timetable days', async () => {
-    // 2026-10-12 is a mark-free Monday inside the session.
-    const inSessionMonday = await bodyOf(await getAuditSummary(new Request('http://x/api/attendance/audit-summary?date=2026-10-12')));
+    // The business day is pinned AFTER both audited dates, so this exercises the
+    // historical-date rule instead of depending on when the suite happens to run.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-20T12:00:00.000Z'));
+    try {
+      // 2026-10-12 is a mark-free Monday inside the session, now in the past.
+      const inSessionMonday = await bodyOf(await getAuditSummary(new Request('http://x/api/attendance/audit-summary?date=2026-10-12')));
 
-    expect(inSessionMonday.data.missingRegistersToday.some((slot: { classSectionId: string }) => slot.classSectionId === sectionId)).toBe(true);
+      expect(inSessionMonday.data.missingRegistersToday.some((slot: { classSectionId: string }) => slot.classSectionId === sectionId)).toBe(true);
 
-    // 2027-07-05 is a Monday but outside the session → never "missing".
-    const outsideSession = await bodyOf(await getAuditSummary(new Request('http://x/api/attendance/audit-summary?date=2027-07-05')));
+      // 2026-07-06 is a Monday but BEFORE the session, and also in the past, so
+      // the session-range guard is what excludes it (not the future-date rule).
+      const outsideSession = await bodyOf(await getAuditSummary(new Request('http://x/api/attendance/audit-summary?date=2026-07-06')));
 
-    expect(outsideSession.data.missingRegistersToday).toHaveLength(0);
+      expect(outsideSession.data.missingRegistersToday).toHaveLength(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('G12.10: historical attendance on a now-classified non-instructional day stays untouched', async () => {

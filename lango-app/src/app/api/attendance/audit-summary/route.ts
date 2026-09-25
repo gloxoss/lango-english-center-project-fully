@@ -93,6 +93,20 @@ export async function GET(request: Request) {
         ...(context.branchId ? [eq(classes.branchId, context.branchId)] : []),
       ));
 
+    // DEFERRED TO PHASE 1 — exact session identity.
+    //
+    // The rule below answers "does this SECTION have any mark today?", not "does
+    // this SESSION have a register?". So one marked period still hides a
+    // different unmarked lesson in the same section. That is a known, accepted
+    // limitation of this phase, not an oversight:
+    //
+    //   attendance_registers.subject_id   populated on 0 of 32 rows
+    //   attendance.class_section_id       populated on 0 of 1600 rows
+    //   attendance.subject_id             populated on 0 of 1600 rows
+    //
+    // Keying on those columns would flag every slot in the school as missing.
+    // The exact per-session key arrives with the phase 1 session-occurrence
+    // model, which is an explicit phase 1 acceptance criterion.
     const submittedRows = await db
       .selectDistinct({ classSectionId: user.classSectionId })
       .from(attendance)
@@ -116,10 +130,24 @@ export async function GET(request: Request) {
       ))
       .limit(1);
 
-    // Only lessons that have already ENDED can be missing a register. A lesson
-    // still in progress, or one that has not started, cannot be overdue.
-    const nowHm = casablancaTimeHm();
-    const endedSlots = todaySlots.filter(slot => slot.endTime <= nowHm);
+    // The selected date is classified against the school's business day BEFORE
+    // any clock comparison. A lesson's "has it ended?" question only has an
+    // answer relative to the day it falls on:
+    //   past date    -> every lesson of that day has ended, whatever the clock
+    //                   says now. Comparing its end time against today's clock
+    //                   would wrongly report a whole historical day as unended.
+    //   today        -> a lesson is ended once the Casablanca wall clock passes
+    //                   its end time; ongoing and future lessons are not overdue.
+    //   future date  -> nothing is missing; this is a schedule preview only.
+    const businessToday = casablancaTodayIso();
+    const isPastDate = today < businessToday;
+    const isFutureDate = today > businessToday;
+
+    const endedSlots = isPastDate
+      ? todaySlots
+      : isFutureDate
+        ? []
+        : todaySlots.filter(slot => slot.endTime <= casablancaTimeHm());
 
     const missingRegistersToday = sessionForToday
       ? endedSlots.filter(slot => !submittedSectionIds.has(slot.classSectionId))
