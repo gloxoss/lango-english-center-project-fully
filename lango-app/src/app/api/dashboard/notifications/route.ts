@@ -1,4 +1,4 @@
-import { and, count, eq, gte, inArray, lte, sql } from 'drizzle-orm';
+import { and, count, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
@@ -56,6 +56,23 @@ export async function GET(request: Request) {
     const system: NotificationItem[] = [];
 
     // --- Announcements (existing persistence, all roles) ---------------------
+    // Audience filter mirrors the announcements surfaces exactly: a viewer
+    // only sees announcements addressed to their role (or unaddressed) AND
+    // addressed to their class (or school-wide). Without this, a parent would
+    // read a teachers-only note (privacy leak, claude-finance review).
+    const [viewer] = await db
+      .select({ classSectionId: user.classSectionId })
+      .from(user)
+      .where(and(eq(user.id, context.userId), eq(user.tenantId, tenantId)))
+      .limit(1);
+    const mySectionId = viewer?.classSectionId ?? null;
+    const announcementRoleScope = or(
+      isNull(announcements.targetRole),
+      eq(announcements.targetRole, context.role as any),
+    )!;
+    const announcementSectionScope = mySectionId
+      ? or(isNull(announcements.targetClassSectionId), eq(announcements.targetClassSectionId, mySectionId))!
+      : isNull(announcements.targetClassSectionId)!;
     // announcement_reads has no tenant column; tenant scoping flows through
     // the join to announcements (which is tenant-scoped).
     const readRows = await db
@@ -70,7 +87,11 @@ export async function GET(request: Request) {
     const announcementRows = await db
       .select()
       .from(announcements)
-      .where(eq(announcements.tenantId, tenantId))
+      .where(and(
+        eq(announcements.tenantId, tenantId),
+        announcementRoleScope,
+        announcementSectionScope,
+      ))
       .limit(20);
     const unreadAnnouncements = announcementRows.filter(a => !readIds.has(a.id));
     for (const a of unreadAnnouncements.slice(0, 3)) {

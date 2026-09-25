@@ -106,8 +106,6 @@
     ".next-codex-2d/types/**/*.ts",
     ".next-codex-2d/dev/types/**/*.ts",
     ".next-claude-finance/types/**/*.ts",
-    ".next-claude-finance/dev/types/**/*.ts",
-    ".next-enh-dash/types/**/*.ts",
-    ".next-enh-dash/dev/types/**/*.ts"
+    ".next-claude-finance/dev/types/**/*.ts"
   ]
 }

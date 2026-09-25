@@ -1,4 +1,8 @@
+import type { Mock } from 'vitest';
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { GET } from '@/app/api/dashboard/notifications/route';
+import { db } from '@/libs/DB';
 
 // ENH-ADMIN-DASH-01: the bell must be a general notification surface
 // aggregating REAL sources, grouped into À traiter / Mises à jour / Système,
@@ -41,10 +45,6 @@ vi.mock('@/libs/DB', () => {
   return { db: { select: vi.fn(() => makeChain([])), __makeChain: makeChain } };
 });
 
-import { GET } from '@/app/api/dashboard/notifications/route';
-import { db } from '@/libs/DB';
-import type { Mock } from 'vitest';
-
 const dbAny = db as any;
 
 function chainLeaf(leaf: unknown) {
@@ -79,12 +79,14 @@ describe('dashboard notifications aggregation', () => {
     const { db } = await import('@/libs/DB');
     const select = db.select as unknown as Mock;
     // Query order in the route:
-    // 1 announcementReads join -> rows   2 announcements -> rows
-    // 3 overdue count -> [{c: 40}]       4 refunds -> [{c: 2}]
-    // 5 expected classes -> [{c: 12}]    6 marked sections -> [{c: 0}]
-    // 7 applicants -> [{c: 13}]          8 interviews -> [{c: 1}]
-    // 9 failed sms -> [{c: 3}]
+    // 1 viewer section -> [{ classSectionId: null }] (school admin, no section)
+    // 2 announcementReads join -> rows   3 announcements -> rows
+    // 4 overdue count -> [{c: 40}]       5 refunds -> [{c: 2}]
+    // 6 expected classes -> [{c: 12}]    7 marked sections -> [{c: 0}]
+    // 8 applicants -> [{c: 13}]          9 interviews -> [{c: 1}]
+    // 10 failed sms -> [{c: 3}]
     select
+      .mockReturnValueOnce(chainLeaf([{ classSectionId: null }]))
       .mockReturnValueOnce(chainLeaf([{ announcementId: 'a2' }]))
       .mockReturnValueOnce(chainLeaf([
         { id: 'a1', title: 'Annonce 1', body: 'b1', createdAt: '2026-09-20T10:00:00' },
@@ -99,7 +101,9 @@ describe('dashboard notifications aggregation', () => {
       .mockReturnValueOnce(chainLeaf([{ c: 3 }]));
 
     const response = await callRoute();
+
     expect(response.status).toBe(200);
+
     const json = await response.json();
     const { groups, unreadCount } = json.data;
 
@@ -122,17 +126,19 @@ describe('dashboard notifications aggregation', () => {
     (hasCapability as unknown as Mock).mockImplementation(async (_u, _t, _r, cap: string) => cap !== 'finance.read');
     const select = db.select as unknown as Mock;
     select
-      .mockReturnValueOnce(chainLeaf([]))                       // reads
-      .mockReturnValueOnce(chainLeaf([]))                       // announcements
-      .mockReturnValueOnce(chainLeaf([{ c: 12 }]))              // expected classes
-      .mockReturnValueOnce(chainLeaf([{ c: 0 }]))               // marked sections
-      .mockReturnValueOnce(chainLeaf([{ c: 4 }]))               // applicants
-      .mockReturnValueOnce(chainLeaf([{ c: 0 }]))               // interviews
-      .mockReturnValueOnce(chainLeaf([{ c: 1 }]));              // sms
+      .mockReturnValueOnce(chainLeaf([{ classSectionId: null }])) // viewer section
+      .mockReturnValueOnce(chainLeaf([])) // reads
+      .mockReturnValueOnce(chainLeaf([])) // announcements
+      .mockReturnValueOnce(chainLeaf([{ c: 12 }])) // expected classes
+      .mockReturnValueOnce(chainLeaf([{ c: 0 }])) // marked sections
+      .mockReturnValueOnce(chainLeaf([{ c: 4 }])) // applicants
+      .mockReturnValueOnce(chainLeaf([{ c: 0 }])) // interviews
+      .mockReturnValueOnce(chainLeaf([{ c: 1 }])); // sms
 
     const response = await callRoute();
     const json = await response.json();
     const titles = json.data.groups.action.map((a: any) => a.title);
+
     expect(titles.some((t: string) => t.includes('facture'))).toBe(false);
     expect(titles.some((t: string) => t.includes('remboursement'))).toBe(false);
     expect(titles.some((t: string) => t.includes('admission'))).toBe(true);
@@ -142,6 +148,7 @@ describe('dashboard notifications aggregation', () => {
     const { db } = await import('@/libs/DB');
     const select = db.select as unknown as Mock;
     select
+      .mockReturnValueOnce(chainLeaf([{ classSectionId: null }]))
       .mockReturnValueOnce(chainLeaf([]))
       .mockReturnValueOnce(chainLeaf([]))
       .mockReturnValueOnce(chainLeaf([{ c: 0 }]))
@@ -154,9 +161,88 @@ describe('dashboard notifications aggregation', () => {
 
     const response = await callRoute();
     const json = await response.json();
+
     expect(json.data.unreadCount).toBe(0);
     expect(json.data.groups.action).toEqual([]);
     expect(json.data.groups.updates).toEqual([]);
     expect(json.data.groups.system).toEqual([]);
+  });
+
+  // PRIVACY (claude-finance review): the bell must apply the same audience
+  // rule as the announcements surfaces — role targeting AND class targeting.
+  it('filters announcements by viewer role and class (no cross-audience leak)', async () => {
+    const { db } = await import('@/libs/DB');
+    const capturedConditions: any[] = [];
+    const recordingChain = (leaf: unknown) => {
+      const p = () => Promise.resolve(leaf);
+      const chain: any = {
+        from: vi.fn(() => chain),
+        innerJoin: vi.fn(() => chain),
+        where: vi.fn((cond: any) => {
+          capturedConditions.push(cond);
+          return chain;
+        }),
+        limit: vi.fn(() => p()),
+        groupBy: vi.fn(() => chain),
+        then: (onF: any, onR: any) => p().then(onF, onR),
+        catch: (onR: any) => p().catch(onR),
+        finally: (f: any) => p().finally(f),
+      };
+      return chain;
+    };
+    (db.select as unknown as Mock).mockImplementation(() => recordingChain([
+      { id: 'a-leak', title: 'Réunion disciplinaire élève X', body: 'secret', createdAt: '2026-09-20T10:00:00' },
+    ]));
+
+    // A sectionless staff viewer (e.g. accountant): role scope present, class
+    // scope must be "school-wide only".
+    const response = await callRoute('accountant');
+
+    expect(response.status).toBe(200);
+
+    const { PgDialect } = await import('drizzle-orm/pg-core');
+    const dialect = new PgDialect();
+    const compiled = capturedConditions.map(c => dialect.sqlToQuery(c));
+    const roleScoped = compiled.find(q => q.sql.includes('target_role'));
+
+    expect(roleScoped).toBeTruthy();
+    expect(roleScoped!.sql).toMatch(/is null/i);
+    expect(roleScoped!.sql).toMatch(/=/);
+    expect(roleScoped!.params).toContain('accountant');
+
+    const sectionScoped = compiled.find(q => q.sql.includes('target_class_section_id'));
+
+    expect(sectionScoped).toBeTruthy();
+    // Sectionless viewer: only school-wide announcements — no equality clause.
+    expect(sectionScoped!.sql).toMatch(/is null/i);
+    expect(sectionScoped!.sql).not.toMatch(/target_class_section_id"?\s*=/i);
+
+    // A class-linked viewer (parent of a 3ème A student) must ALSO get their
+    // section id in the class scope.
+    capturedConditions.length = 0;
+    const leaves: unknown[] = [[{ classSectionId: 'sec-3eme-a' }], [], []];
+    (db.select as unknown as Mock).mockImplementation(() => recordingChain(leaves.shift()));
+    const { requireRequestContext } = await import('@/libs/api/context');
+    vi.mocked(requireRequestContext).mockResolvedValueOnce({
+      userId: 'usr-parent-1',
+      tenantId: '00000000-0000-0000-0000-000000000001',
+      branchId: null,
+      role: 'parent',
+      baseRole: 'parent',
+      name: 'Parent Test',
+      email: 'parent@atlas.ma',
+    } as any);
+    const request = new Request('http://localhost:3000/api/dashboard/notifications');
+    await GET(request);
+    const parentCompiled = capturedConditions.map(c => dialect.sqlToQuery(c));
+    const parentSection = parentCompiled.find(q => q.sql.includes('target_class_section_id'));
+
+    expect(parentSection).toBeTruthy();
+    expect(parentSection!.sql).toMatch(/target_class_section_id"?\s*=/i);
+    expect(parentSection!.params).toContain('sec-3eme-a');
+
+    const parentRole = parentCompiled.find(q => q.sql.includes('target_role'));
+
+    expect(parentRole!.params).toContain('parent');
   });
 });
