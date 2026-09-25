@@ -8,7 +8,7 @@ Updated: 2026-09-25
 | | |
 |---|---|
 | **Active branch** | `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01-integrated` |
-| **HEAD** | `f2267603` |
+| **HEAD** | `8174f290` |
 | **Worktree** | `.worktrees/IMPL-ATT-INTEGRATED` |
 | **Base (release)** | `origin/release/REL-INTEGRATE-01` = `8215bb6e` |
 | Original pre-integration branch | `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01` @ `383dc542` (Agent A reviewed `7ef7355e`) |
@@ -42,9 +42,9 @@ Updated: 2026-09-25
 | 1 — Admin Appel du jour | **COMPLETE** (RTL time-range cosmetic open) |
 | 2 — Teacher current lesson | **COMPLETE** |
 | 3 — Business truth / metrics | **COMPLETE** |
-| 4 — Justifications + Suivi & alertes | **PARTIAL — 4a, 4c, 4d done.** Remaining: 4b admin "enregistrer une justification reçue" (UI only — the backend already accepts admin submissions), 4e merge Signalements + Audit & Alertes into one "Suivi & alertes" page |
+| 4 — Justifications + Suivi & alertes | **COMPLETE** 4a 4b 4c 4d 4e. Sidebar wiring for the new suivi page deferred to the final navigation pass (task G) |
 | 5 — Cards + credentials | **PARTIAL.** Atomic replacement on both reissue paths, and the badge wording. Card/QR page consolidation NOT STARTED |
-| 6 — Session exceptions | **CORE + API DONE.** Table (0161), resolver merge, upsert API, tests. UI to set one NOT STARTED |
+| 6 — Session exceptions | **COMPLETE.** Table (0161), resolver, upsert API, and the admin editor reached from the lesson itself |
 | 7 — Kiosk + device security | NOT STARTED |
 | 8 — Registers / history / QR reporting | NOT STARTED |
 | 9 — HR time clock + navigation | NOT STARTED |
@@ -111,27 +111,32 @@ committing; `.next-agentb/` is now in `.gitignore`.
 
 ## Next concrete step
 
-**Finish phase 4**, in this order — each is self-contained and independently
-verifiable:
+Remaining work, in the order the campaign brief sets. Each is self-contained.
 
-1. **4c alert lifecycle** — add ACKNOWLEDGED / CONTACTED / DISMISSED-with-reason
-   alongside OPEN / RESOLVED. Needs a status enum change (migration `0159`, check
-   the journal first — `codex-4` holds a claim on `0160`). The detector already
-   prevents duplicate open flags per student+type, so the transitions can hang
-   off that.
-2. **4d thresholds into settings** — `attendance.consecutiveAbsenceThreshold`
-   (default 3) and `attendance.repeatedLateThreshold` (default 5), read via
-   `getEffectiveValueWithLegacyFallback`, the same helper `lateGraceMinutes`
-   already uses. Note the consecutive rule currently derives `lastThreeDays`, so
-   the window has to become dynamic with the threshold.
-3. **4b admin "enregistrer une justification reçue"** — record a paper/phone
-   justification. The backend (POST /api/attendance/excuses) already accepts
-   admin submissions; this is UI.
-4. **4e merge Signalements + Audit & Alertes** into one "Suivi & alertes" page,
-   with a sidebar entry. `sidebar.tsx` is shared with other agents and the
-   nav/page-guard parity test enforces exactness.
+1. **Phase 5 consolidation** — merge the standalone Attendance badge page into
+   Cartes & Convocations → Cartes & badges. Inspect the existing Cards UI first;
+   confirm the printable card actually carries the credential the scanner
+   verifies, then remove the duplicate route and its nav entry.
+2. **Phase 8 — Registres & historique** — one administrative history surface over
+   registers, marks, session occurrence, manual-vs-QR origin and corrections,
+   with server-side tenant/branch/teacher scope and CSV/PDF parity against the
+   same filtered query.
+3. **Phase 9 — Temps & Pointeuse** — server-authoritative punch state machine in
+   RH/Workforce, with HR correction. Do NOT let payroll consume it.
+4. **Phase 7 — kiosk + devices** — device authentication (hashed secret, branch
+   binding, heartbeat) and the classroom kiosk reading the effective session.
+   Needs a QR **decoder**; none is installed ( only generates) and
+   Unknown command: "install"
 
-**Known trap for phase 7:** no QR *decoder* is installed — `qrcode.react` only
-generates. The cross-browser fallback needs a real decoder (`jsqr` or
-`@zxing/browser`). `npm install` in this worktree already failed once on a native
-build, so budget for that.
+
+Did you mean one of these?
+  npm install # Install a package
+  npm uninstall # Remove a package
+To see a list of supported npm commands, run:
+  npm help failed here once on a native build. Inspect before adding.
+5. **Navigation consolidation (task G)** — one sidebar edit once every route is
+   real.  is shared; re-read it rather than overwriting from a copy.
+6. **Acceptance pass (task H)** — screenshots in desktop FR, mobile 390 and
+   Arabic RTL, plus the manual test guide.
+
+Foundation, correct today: phases 0, 0.5, 1, 2, 3, 4 and 6 are complete.
