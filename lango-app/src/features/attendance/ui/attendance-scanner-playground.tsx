@@ -97,6 +97,9 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
   const [selectedSectionId, setSelectedSectionId] = useState('');
   const [sessionId, setSessionId] = useState<string | null>(null);
   const sessionIdRef = useRef<string | null>(null);
+  // The pairing secret of THIS terminal, if it is a paired kiosk. Kept in a ref
+  // rather than state so it never lands in a render tree or a log.
+  const deviceSecretRef = useRef<string>('');
   const [sessionStarting, setSessionStarting] = useState(false);
   const [sessionError, setSessionError] = useState<string | null>(null);
 
@@ -128,6 +131,37 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
   const scanningLoopRef = useRef<boolean>(false);
 
   const [classRosterCount, setClassRosterCount] = useState<number | null>(null);
+  const [deviceSecretInput, setDeviceSecretInput] = useState('');
+  const [devicePaired, setDevicePaired] = useState(false);
+
+  // A paired terminal remembers its secret between reloads. Reading is guarded:
+  // a private window or blocked site data throws, and a scanner that will not
+  // start because localStorage is unavailable would be a worse failure.
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem('schoolos.deviceSecret') ?? '';
+      deviceSecretRef.current = stored;
+      setDevicePaired(stored.length > 0);
+    } catch {
+      deviceSecretRef.current = '';
+    }
+  }, []);
+
+  function pairThisTerminal() {
+    const secret = deviceSecretInput.trim();
+    try {
+      if (secret) {
+        window.localStorage.setItem('schoolos.deviceSecret', secret);
+      } else {
+        window.localStorage.removeItem('schoolos.deviceSecret');
+      }
+    } catch {
+      // Not persisted, but it still works for this session.
+    }
+    deviceSecretRef.current = secret;
+    setDevicePaired(secret.length > 0);
+    setDeviceSecretInput('');
+  }
 
   // Fetch Class Sections on load
   const [sectionsError, setSectionsError] = useState<string | null>(null);
@@ -317,6 +351,10 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
           rawToken: trimmed,
           sessionId: activeSession || undefined,
           classSectionId: selectedSectionId || undefined,
+          // Sent by a PAIRED terminal so the server can verify this device and
+          // use ITS branch. A browser operator without one still scans exactly
+          // as before — the secret is an identity, not a new requirement.
+          deviceSecret: deviceSecretRef.current || undefined,
         }),
       });
 
@@ -556,6 +594,25 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto pb-16">
+      {/* Terminal identity. A paired kiosk proves which terminal it is, and the
+          server then uses ITS campus rather than anything the page claims. */}
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-xs">
+        <span className={`rounded-full px-2 py-0.5 font-bold ${devicePaired ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+          {devicePaired ? t('devicePairedLabel') : t('deviceUnpairedLabel')}
+        </span>
+        <input
+          type="password"
+          value={deviceSecretInput}
+          onChange={e => setDeviceSecretInput(e.target.value)}
+          placeholder={t('deviceSecretPlaceholder')}
+          aria-label={t('deviceSecretPlaceholder')}
+          className="h-8 min-w-[14rem] flex-1 rounded-lg border border-slate-200 px-2 text-xs text-slate-700"
+        />
+        <Button type="button" variant="outline" size="sm" className="h-8 rounded-lg" onClick={pairThisTerminal}>
+          {devicePaired ? t('deviceUnpairBtn') : t('devicePairBtn')}
+        </Button>
+      </div>
+
       {/* Quick Ecosystem Switcher */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
         <Link

@@ -2184,6 +2184,11 @@
     "room": "Salle"
   },
   "Attendance": {
+    "deviceUnpairBtn": "Dissocier",
+    "devicePairBtn": "Appairer",
+    "deviceSecretPlaceholder": "Secret d'appairage du terminal",
+    "deviceUnpairedLabel": "Terminal non appairé",
+    "devicePairedLabel": "Terminal appairé",
     "historyTitle": "Registres & historique",
     "historySubtitle": "Les présences enregistrées, manuelles ou par badge, sur une période.",
     "historyFrom": "Du",

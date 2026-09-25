@@ -2184,6 +2184,11 @@
     "mobileStudentTargetSectionLabel": "القسم المستهدف"
   },
   "Attendance": {
+    "deviceUnpairBtn": "فصل",
+    "devicePairBtn": "اقتران",
+    "deviceSecretPlaceholder": "سر اقتران الطرفية",
+    "deviceUnpairedLabel": "طرفي غير مقترن",
+    "devicePairedLabel": "طرفي مقترن",
     "historyTitle": "السجلات والأرشيف",
     "historySubtitle": "عمليات تسجيل الحضور، يدوياً أو بالبطاقة، خلال فترة.",
     "historyFrom": "من",
