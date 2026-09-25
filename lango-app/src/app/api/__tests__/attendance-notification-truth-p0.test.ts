@@ -2,11 +2,13 @@ import type { RequestContext } from '@/libs/api/context';
 import { and, eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST as reopenRegister } from '@/app/api/attendance/registers/reopen/route';
+import { PATCH as patchExcuseRoute } from '@/app/api/attendance/excuses/route';
 import { POST as postAttendance } from '@/app/api/attendance/route';
 import { db } from '@/libs/DB';
 import { setSettingValue } from '@/libs/settings/registry';
 import {
   attendance,
+  attendanceExcuses,
   attendanceRegisters,
   branches,
   classes,
@@ -70,6 +72,14 @@ async function asAdmin() {
 function post(body: unknown): Promise<Response> {
   return postAttendance(new Request('http://x/api/attendance', {
     method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  }));
+}
+
+function patchExcuse(body: unknown): Promise<Response> {
+  return patchExcuseRoute(new Request('http://x/api/attendance/excuses', {
+    method: 'PATCH',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   }));
@@ -143,6 +153,7 @@ describe.skipIf(!dbReachable)('attendance notification truth P0 — DB-backed', 
 
   afterAll(async () => {
     await db.delete(smsMessages).where(eq(smsMessages.tenantId, tenantId));
+    await db.delete(attendanceExcuses).where(eq(attendanceExcuses.tenantId, tenantId));
     await db.delete(attendance).where(eq(attendance.tenantId, tenantId));
     await db.delete(attendanceRegisters).where(eq(attendanceRegisters.tenantId, tenantId));
     await db.delete(guardianStudents).where(eq(guardianStudents.tenantId, tenantId));
@@ -303,5 +314,39 @@ describe.skipIf(!dbReachable)('attendance notification truth P0 — DB-backed', 
 
     expect(forThisDate).toHaveLength(1);
     expect(after.length).toBeGreaterThanOrEqual(before.length);
+  });
+
+  it('G13.13: deciding a justification notifies the guardian, and never claims "sent"', async () => {
+    // The family is waiting on this decision and nothing told them before, so
+    // the notification is part of the decision, not a side effect.
+    const [excuse] = await db.insert(attendanceExcuses).values({
+      tenantId,
+      studentId: STUDENT,
+      classSectionId: sectionId,
+      sessionYearId,
+      date,
+      period: 2,
+      reason: 'Rendez-vous médical',
+      status: 'pending',
+    }).returning();
+
+    const before = await intents();
+
+    const res = await patchExcuse({ excuseId: excuse!.id, status: 'approved' });
+
+    expect(res.status).toBe(200);
+
+    const json = await res.json() as any;
+
+    expect(json.notification).not.toBeNull();
+    // No provider is configured here, so the honest answer is "simulated" —
+    // never a fabricated "sent".
+    expect(json.notification.delivery).not.toBe('sent');
+    expect(json.notification.simulated).toBe(true);
+
+    const after = await intents();
+
+    expect(after.length).toBe(before.length + 1);
+    expect(after.some(r => r.status === 'sent')).toBe(false);
   });
 });
