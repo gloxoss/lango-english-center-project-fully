@@ -1,0 +1,34 @@
+=== AUD-LIVE-01: Runtime E2E Session Lifecycle & Security Audit ===
+Executed on: 2026-09-24T21:57:03Z
+Target Tenant: Lango Center (5be685d1-27ef-4234-ad57-1e3f5826a540)
+Environment: Local Audit Worktree (Branch: audit/agent-d/AUD-LIVE-01-live-classrooms)
+
+[PASS] 1. Resolve Active Tenant: Tenant Lango Center (5be685d1-27ef-4234-ad57-1e3f5826a540)
+[PASS] 2. Addon Entitlement: live-classrooms addon already active
+[PASS] 3. Provider Profile: Found active provider profile (Deterministic Dev Classroom, type=dev)
+[PASS] 4. Academic Roster Resolution: Teacher=Sara Bennis, Section=6ed4fce1-eb6c-442c-b112-cebe30ee15ae, Subject=45b745bd-9c17-47d0-aa03-dbf85eeb5bfa, Student=Adam Chraibi
+[PASS] 5. Session Scheduling: Session created: id=c024f544-c922-425d-bdb2-cf13fdb1b5bd, status=scheduled
+[PASS] 6. Audience Invitations: Generated 1 invitations; student LANGO-STU-001 invited=true
+[PASS] 7. Start Session: Session transitioned to status=live
+[PASS] 7b. State Machine (Double Start): Idempotent start accepted
+[PASS] 8. Join Token Issuance: Token issued for student: role=viewer, expiresAt=2026-09-24T21:59:01.000Z
+[PASS] 9. Single-Use Token Redemption: Redeemed successfully: url=/dashboard/academics/live-class/c024f544-c922-425d-bdb2-cf13fdb1b5bd, role=viewer
+[PASS] 10. Security: Anti-Replay Defense: Replay attempt rejected: Ce jeton de connexion a déjà été utilisé ou a expiré. (status=401, code=JOIN_GRANT_REPLAYED)
+[PASS] 11. Security: Forged Token Defense: Forged token rejected: Jeton de connexion invalide: INVALID_SIGNATURE
+[PASS] 12. Security: Cross-Tenant Isolation: Cross-tenant access prevented: Session introuvable. (status=404)
+[PASS] 13. Telemetry Events Recorded: Inserted joined, reconnect, left events into immutable participant events
+[PASS] 14. End Session: Session ended: status=ended
+[PASS] 15. State Machine: Join Ended Session: Join ended session rejected: Cette classe virtuelle est terminée. (status=409, code=SESSION_ENDED)
+[PASS] 16. Attendance Reconciliation: Reconciled 1 attendees. Student status=present
+[PASS] 17. Post Attendance to Register: Posted 1 attendance records to core attendance register (skipped=0)
+[PASS] 18. Idempotency: Double Post Defense: Double post rejected: Aucune présence réconciliée à reporter. Lancez d'abord une réconciliation. (status=409, code=NOTHING_TO_POST)
+[PASS] 19. Core Attendance Persistence: Found core attendance row: status=present, period=0
+[PASS] 20. Materials Attachment: Attached material: title=Support Cours Virtuel PDF
+[PASS] 20b. Materials Detachment: Detached material cleanly
+[PASS] 21. Recording Linkage: Recording created: state=ready, duration=1800s
+[PASS] 22. Reports Engine (Overview): Overview: totalSessions=1, totalHours=1.0h, averagePresence=100%
+[PASS] 23. Reports Engine (Session Reports): Session reports returned 1 sessions (first title=Séance Audit Live Classrooms E2E)
+[PASS] 24. Reports Engine (CSV Export): CSV export generated successfully (518 bytes)
+[PASS] 25. Timezone Verification: Session timezone stored as Africa/Casablanca; start=2026-09-24 21:42:00.849, end=2026-09-24 22:42:00.849
+
+=== ALL 25 RUNTIME E2E AUDIT STEPS PASSED SUCCESSFULLY ===
