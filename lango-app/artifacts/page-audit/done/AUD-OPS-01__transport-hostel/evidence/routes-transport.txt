@@ -1,0 +1,13 @@
+/dashboard/transport
+/dashboard/transport/vehicles
+/dashboard/transport/drivers
+/dashboard/transport/routes
+/dashboard/transport/stops
+/dashboard/transport/allocations
+/dashboard/transport/boarding
+/dashboard/transport/trips
+/dashboard/transport/incidents
+/dashboard/transport/reports
+/dashboard/transport/policies
+/dashboard/transport/guardian
+/dashboard/transport/student

@@ -15,7 +15,7 @@ import {
   hostelRooms,
   hostels,
 } from '@/features/hostel/models/hostel-schema';
-import { dateString, requireHostel } from '@/features/hostel/services/inventory-service';
+import { dateString, requireHostel, storedInstant } from '@/features/hostel/services/inventory-service';
 
 export async function getTonight(tenantId: string, opts: { hostelId: string; callDate?: string | null }) {
   await requireHostel(tenantId, opts.hostelId);
@@ -108,7 +108,11 @@ export async function getTonight(tenantId: string, opts: { hostelId: string; cal
     const entry = entriesByAllocation.get(r.allocationId);
     const pass = leaveByAllocation.get(r.allocationId);
     const onLeaveTonight = Boolean(pass);
-    const overdueReturn = Boolean(pass && pass.expectedReturnAt < new Date().toISOString());
+    // Overdue means the expected return instant has passed. Comparing the
+    // stored naive text to an ISO string was always true for a same-day return
+    // (' ' sorts before 'T'), so everyone out on leave was flagged late hours
+    // before they were due back.
+    const overdueReturn = Boolean(pass && storedInstant(pass.expectedReturnAt).getTime() < Date.now());
     const rollCallStatus = entry?.status ?? null;
     // Accounted: has a non-missing roll-call entry, or is out on approved leave.
     const accounted = onLeaveTonight || (rollCallStatus !== null && rollCallStatus !== 'missing');

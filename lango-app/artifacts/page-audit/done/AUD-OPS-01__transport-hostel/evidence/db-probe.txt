@@ -1,0 +1,53 @@
+AUD-OPS-01 — live evidence for F-01 and F-08
+Database: schoolos_audit (Postgres, container lango_postgres)
+Probed: 2026-09-24
+
+--- 1. Column type and driver shape (F-08) ---
+SELECT pg_typeof(expected_return_at) FROM hostel_leave_passes;
+  -> timestamp without time zone
+
+SELECT expected_return_at FROM hostel_leave_passes LIMIT 3;   -- drizzle-equivalent
+  RAW TEXT: "2026-09-21 00:00:00" typeof string
+
+Drizzle's node-postgres session installs an identity type parser for TIMESTAMP
+(node_modules/drizzle-orm/node-postgres/session.js: `getTypeParser` -> `(val) => val`),
+and PgTimestampString.mapFromDriverValue returns strings unchanged. So in the app
+`pass.expectedReturnAt` is Postgres TEXT: 'YYYY-MM-DD HH:MM:SS.mmm' — a SPACE
+separator, no offset.
+
+Confirmed by the UI round trip: the seeded pass was posted as
+  startDateTime     2026-09-24T10:20:29.491Z
+  expectedReturnAt  2026-09-24T16:20:29.491Z
+and the resident screen renders 11:20:29 -> 17:20:29 (Casablanca, UTC+1), i.e. the
+stored naive values are the UTC wall clock.
+
+--- 2. The two comparisons disagree on the same instant (F-01) ---
+A leave pass due LATER THE SAME DAY (stored '2026-09-24 23:00:00', now 12:07 UTC):
+
+  SQL form (escalations-service.ts, correct):
+    SELECT '2026-09-24 23:00:00'::timestamp < '2026-09-24T12:07:30.211Z'::timestamp;
+    -> f          ("not overdue" — correct)
+
+  JS form (tonight-service.ts, the bug):
+    '2026-09-24 23:00:00' < '2026-09-24T12:07:30.211Z'
+    -> true       ("overdue" — WRONG)
+
+Same data, same instant, opposite answers. Root cause: Postgres text uses a space
+where ISO uses 'T', and ' ' (0x20) < 'T' (0x54), so any same-day timestamp sorts
+before every ISO "now" string.
+
+--- 3. On-screen reproduction ---
+screenshots/before-after/student-fr-hostel__me-before.png
+  "Retour prevu  24/09/2026 17:20:29 (en retard)"   <- captured at ~14:20 local
+screenshots/before-after/student-fr-hostel__me-after.png
+  "Retour prevu  24/09/2026 17:20:29"               <- false marker gone
+
+--- 4. Regression proof ---
+Reverting tonight-service.ts to `pass.expectedReturnAt < new Date().toISOString()`:
+  FAIL src/features/hostel/__tests__/hostel-audit.test.ts
+       > Hostel audit fixes > 11. Overdue return boundary
+       > is not overdue while the expected return is still ahead
+       AssertionError: expected true to be false
+       at src/features/hostel/__tests__/hostel-audit.test.ts:503:49
+  1 failed | 1 passed | 16 skipped
+Fix restored: 18/18 pass, and 29/29 across src/features/hostel/__tests__/.

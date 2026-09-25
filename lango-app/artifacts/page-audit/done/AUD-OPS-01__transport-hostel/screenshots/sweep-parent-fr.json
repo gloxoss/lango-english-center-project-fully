@@ -1,0 +1,26 @@
+[
+  {
+    "route": "/dashboard/transport/guardian",
+    "finalPath": "/fr/dashboard/transport/guardian",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 43,
+    "failures": [
+      "403 /api/settings/branches"
+    ],
+    "textDefects": [],
+    "file": "parent-fr-transport__guardian.png"
+  },
+  {
+    "route": "/dashboard/hostel/guardian",
+    "finalPath": "/fr/dashboard/hostel/guardian",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 239,
+    "failures": [
+      "403 /api/settings/branches"
+    ],
+    "textDefects": [],
+    "file": "parent-fr-hostel__guardian.png"
+  }
+]
