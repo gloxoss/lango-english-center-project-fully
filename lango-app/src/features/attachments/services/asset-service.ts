@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import path from 'node:path';
 import { and, eq } from 'drizzle-orm';
 import { attachmentTypes, digitalAssetTagLinks, digitalAssetTags, digitalAssets, digitalAssetTargets, digitalAssetVersions } from '@/features/attachments/models/attachments-schema';
 import { blobKeyFor, blobStore, quarantineKeyFor } from '@/libs/api/blob-store';
@@ -86,7 +87,8 @@ export class AssetService {
 
     const existing = await db.select({ versionNumber: digitalAssetVersions.versionNumber }).from(digitalAssetVersions).where(eq(digitalAssetVersions.assetId, assetId));
     const versionNumber = AssetService.nextVersionNumberFromExisting(existing.map(e => e.versionNumber));
-    const safeFilename = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const rawBasename = path.basename(file.name).replace(/\.\./g, '_');
+    const safeFilename = rawBasename.replace(/[^a-zA-Z0-9._-]/g, '_');
 
     const [version] = await db.transaction(async (tx) => {
       const reCheck = await tx.select({ versionNumber: digitalAssetVersions.versionNumber }).from(digitalAssetVersions).where(eq(digitalAssetVersions.assetId, assetId));

@@ -57,7 +57,7 @@ export async function GET(
     const bytes = await blobStore.get(version.storageKey);
 
     recordAudit(context, 'update', 'digital_asset', id, { downloaded: true });
-    db.insert(digitalAssetAccessEvents).values({ assetId: id, actorId: context.userId, eventType: 'download' }).catch(() => {});
+    await db.insert(digitalAssetAccessEvents).values({ assetId: id, actorId: context.userId, eventType: 'download' }).catch(() => {});
 
     return new NextResponse(new Uint8Array(bytes), {
       status: 200,
