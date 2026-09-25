@@ -153,7 +153,7 @@ Expected:
 
 ## MANUAL TEST 14 — BRANCH-PINNED USER (permission)
 
-Optional (needs a branch-pinned account): a pinned principal sees a **static branch pill with a lock icon** in the header — no menu, no "Toutes les succursales". Manually requesting another branch ID via API returns **403**.
+Optional (needs a branch-pinned account): a pinned principal sees a **static branch pill with a lock icon** in the header — no menu, no "Toutes les succursales". Behaviour is safe but NOT uniform: the dashboard summary **rejects with 403** a pinned admin's request for another branch, while global search **silently returns only their own branch's results** (the requested branch is ignored). Both leak nothing.
 
 ---
 
