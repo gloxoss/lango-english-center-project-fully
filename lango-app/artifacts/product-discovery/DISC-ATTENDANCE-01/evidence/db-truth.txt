@@ -1,0 +1,19 @@
+# DB truth, db=schoolos (dev), read-only, 2026-09-25T12:17:11Z
+attendance rows / students / voided | 1602 | 202 | 0
+attendance statuses | excused:51, late:50, absent:64, present:1437
+attendance date range | 2026-09-01 | 2026-09-12 | 9
+attendance rows with timetable link | no column exists
+summary rows >100% / negative absent / total | 32 | 51 | 200 | 104.38
+summary total_sessions != real rows | 200
+registers | 32 | LOCKED
+excuses | 14 | approved,pending,rejected
+flags | 12 | CONSECUTIVE_ABSENCE,REPEATED_LATE,UNJUSTIFIED_ABSENCE
+scan events | 40 | accepted,rejected
+badges (sample prefixes) | 221 | active,replaced,revoked | ATL-STAFF-01 | LANGQR-STU-5
+badges with expires_at | 220
+scanner devices / disabled / max last_seen | 4 | 0 | 2026-09-11 22:51:31.808
+scanner sessions | 3
+punches / distinct timestamps / min / max | 20 | 1 | 2026-09-11 22:51:31.826 | 2026-09-11 22:51:31.826
+class_schedule_slots / versions / null version | 60 | 1 | 0
+legacy timetable_slots | 40
+active but expired badges|0

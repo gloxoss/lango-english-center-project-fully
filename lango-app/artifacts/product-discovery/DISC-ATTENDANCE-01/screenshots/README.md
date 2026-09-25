@@ -1,0 +1,1 @@
+No screenshots: this campaign ran without a browser or camera. Findings are from code tracing, read-only DB queries (evidence/db-truth.txt) and automated tests (evidence/tests.txt). Use manual-review-links.md to capture screens.

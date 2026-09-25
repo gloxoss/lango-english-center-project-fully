@@ -8,10 +8,8 @@ import { assessmentCreateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { assessmentPlans, assessmentResults, assessments, classes, classSubjects, subjects } from '@/models/Schema';
 
-// ponytail: named "assessment-sessions" (not "assessments", already taken by
-// src/app/api/academics/assessments/route.ts which manages assessmentResults
-// / grade entry) - this route creates/lists rows in the `assessments` table
-// itself, i.e. "define a test/exam instance under a plan".
+// ponytail: named "assessment-sessions" - this route creates/lists rows in the
+// `assessments` table itself, i.e. "define a test/exam instance under a plan".
 
 export async function GET(request: Request) {
   try {

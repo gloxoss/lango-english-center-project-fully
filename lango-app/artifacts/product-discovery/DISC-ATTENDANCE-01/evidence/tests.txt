@@ -1,0 +1,20 @@
+# npx vitest run --project unit attendance qr badge scanner punch excuse flag  (DATABASE_URL=.../schoolos_audit), 2026-09-25T12:20:27Z
+ ✓ |unit| src/app/api/__tests__/waha-qr-guard.test.ts (6 tests)
+ ✓ |unit| src/app/api/__tests__/attendance-aggregate-p0.test.ts (3 tests)
+ ✓ |unit| src/app/api/__tests__/attendance-excuses-idor.test.ts (4 tests)
+ ✓ |unit| src/app/api/__tests__/attendance-calendar-p0.test.ts (6 tests)
+ ✓ |unit| src/app/api/__tests__/attendance-excuses-scope-p0.test.ts (7 tests)
+ ✓ |unit| src/app/api/__tests__/attendance-runtime-reconciliation.test.ts (8 tests)
+     × refuses the whole batch when any record is out of scope
+ ✓ |unit| src/app/api/__tests__/attendance-session-year-p0.test.ts (8 tests)
+ ✓ |unit| src/app/api/__tests__/attendance-lifecycle-p0.test.ts (8 tests)
+ ✓ |unit| src/app/api/__tests__/attendance-notification-truth-p0.test.ts (7 tests)
+ ✓ |unit| src/app/api/__tests__/attendance-security-p0.test.ts (13 tests)
+ ✓ |unit| src/app/api/__tests__/attendance-consumer-convergence-g14.test.ts (6 tests)
+ ✓ |unit| src/app/api/__tests__/academic-attendance-placement-p0.test.ts (10 tests)
+ ✓ |unit| src/app/api/__tests__/attendance-qr-parity-g15.test.ts (10 tests)
+ ✓ |unit| src/features/live-classrooms/services/attendance-service.test.ts (13 tests)
+ Test Files  1 failed | 14 passed (15)
+      Tests  1 failed | 113 passed (114)
+
+# Note: the one failure is intermittent (passed on the 11:5x run, failed on the 12:2x run). attendance-teacher-scope.test.ts:173 counts rows where period=3 across the whole DB without a tenant filter, so parallel test files writing period-3 rows make it fail. Test flaw, not an app defect: the route validates scope before its transaction.

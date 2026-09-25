@@ -368,12 +368,12 @@ export function HomeworkClient({ locale }: { locale?: string } = {}) {
 
                 <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                   <span className="text-[10px] text-slate-400 font-bold">{hw.coefficient ? `Coefficient ${hw.coefficient}` : t('typeHomework')}</span>
-                  <Link href={`/${locale || 'fr'}/dashboard/homework/submissions`}>
-                    <Button variant="ghost" size="sm" className="h-8 text-xs font-bold text-[#2487B8] hover:bg-[#DCEBF4]/40 gap-1">
+                  <Button asChild variant="ghost" size="sm" className="h-8 text-xs font-bold text-[#2487B8] hover:bg-[#DCEBF4]/40 gap-1">
+                    <Link href={`/${locale || 'fr'}/dashboard/homework/submissions`}>
                       <span>{t('consultSubmissions')}</span>
                       <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </div>
               </Card>
             );

@@ -45,8 +45,12 @@ function principal(userId: string, role = roleOf(userId)) {
 }
 
 function roleOf(userId: string): string {
-  if (userId === STUDENT) return 'student';
-  if (userId === 'staff-1') return 'teacher';
+  if (userId === STUDENT) {
+    return 'student';
+  }
+  if (userId === 'staff-1') {
+    return 'teacher';
+  }
   return 'parent';
 }
 
@@ -88,13 +92,6 @@ const QUESTION = {
   cycle: null,
 };
 
-const OPTION = {
-  id: 'opt-1',
-  questionId: 'q-1',
-  optionText: 'Rabat',
-  isCorrect: true,
-};
-
 /** Queue of async result resolvers consumed in call order; every chain method is universal. */
 function queuedSelect() {
   const steps: Array<() => Promise<unknown[]>> = [];
@@ -102,7 +99,9 @@ function queuedSelect() {
     const next = steps.shift() ?? (async () => []);
     let resolved: Promise<unknown[]> | null = null;
     const consume = () => {
-      if (!resolved) resolved = next();
+      if (!resolved) {
+        resolved = next();
+      }
       return resolved;
     };
     const builder: Record<string, unknown> = {
@@ -155,6 +154,7 @@ describe('online exam answer-key access (P0-B) + submission integrity (P1-D)', (
     mockPrincipalRow(STUDENT);
     const { GET } = await import('@/app/api/academics/online-exams/[examId]/questions/route');
     const res = await GET(new Request('http://localhost/api/academics/online-exams/exam-1/questions') as any, { params: Promise.resolve({ examId: 'exam-1' }) } as never);
+
     expect(res.status).toBe(403);
   });
 
@@ -164,10 +164,15 @@ describe('online exam answer-key access (P0-B) + submission integrity (P1-D)', (
     queueTakeRoute();
     const { GET } = await import('@/app/api/academics/online-exams/[examId]/take/route');
     const res = await GET(new Request('http://localhost/api/academics/online-exams/exam-1/take') as any, { params: Promise.resolve({ examId: 'exam-1' }) } as never);
+
     expect(res.status).toBe(200);
+
     const text = await res.text();
+
     expect(text).not.toContain('isCorrect');
+
     const json = JSON.parse(text);
+
     expect(json.data.questions[0].options[0]).toEqual({ id: 'opt-1', questionId: 'q-1', optionText: 'Rabat' });
   });
 
@@ -179,6 +184,7 @@ describe('online exam answer-key access (P0-B) + submission integrity (P1-D)', (
     vi.mocked(mockedDB.db.select).mockImplementation(q.impl());
     const { GET } = await import('@/app/api/academics/online-exams/[examId]/take/route');
     const res = await GET(new Request('http://localhost/api/academics/online-exams/exam-1/take') as any, { params: Promise.resolve({ examId: 'exam-1' }) } as never);
+
     expect(res.status).toBe(422);
     expect((await res.json()).error.code).toBe('EXAM_NOT_OPEN');
   });
@@ -193,6 +199,7 @@ describe('online exam answer-key access (P0-B) + submission integrity (P1-D)', (
     vi.mocked(mockedDB.db.select).mockImplementation(q.impl());
     const { GET } = await import('@/app/api/academics/online-exams/[examId]/take/route');
     const res = await GET(new Request('http://localhost/api/academics/online-exams/exam-1/take') as any, { params: Promise.resolve({ examId: 'exam-1' }) } as never);
+
     expect(res.status).toBe(403);
     expect((await res.json()).error.code).toBe('EXAM_NOT_ASSIGNED');
   });
@@ -206,6 +213,72 @@ describe('online exam answer-key access (P0-B) + submission integrity (P1-D)', (
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ examId: 'exam-1', answers: [] }),
     }) as any);
+
     expect(res.status).toBe(403);
+  });
+
+  // A resubmission used to overwrite the score until the deadline, and each
+  // response carried the new score, so a student could probe the answer key.
+  const EXAM_ID = '00000000-0000-4000-8000-000000000001';
+  const Q1 = '00000000-0000-4000-8000-000000000011';
+  const Q2 = '00000000-0000-4000-8000-000000000012';
+  const OPT = '00000000-0000-4000-8000-000000000021';
+
+  function queueSubmitChecks(attempt: Record<string, unknown> | null) {
+    const q = queuedSelect();
+    q.push(async () => [EXAM]);
+    q.push(async () => [{ classSectionId: 'sec-1' }]);
+    q.push(async () => [{ id: 'sec-1' }]);
+    q.push(async () => (attempt ? [attempt] : []));
+    q.push(async () => [{ ...QUESTION, id: Q1 }]);
+    vi.mocked(mockedDB.db.select).mockImplementation(q.impl());
+  }
+
+  async function submit(answers: Array<{ questionId: string; selectedOptionId: string }>) {
+    const { POST } = await import('@/app/api/academics/online-exams/submit/route');
+    return POST(new Request('http://localhost/api/academics/online-exams/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ examId: EXAM_ID, answers }),
+    }) as any);
+  }
+
+  it('submit refuses a second submission with 422 ATTEMPT_ALREADY_SUBMITTED', async () => {
+    mockPrincipalRow(STUDENT);
+    queueSubmitChecks({ startedAt: new Date().toISOString(), submittedAt: new Date().toISOString(), status: 'graded' });
+    const res = await submit([{ questionId: Q1, selectedOptionId: OPT }]);
+
+    expect(res.status).toBe(422);
+    expect((await res.json()).error.code).toBe('ATTEMPT_ALREADY_SUBMITTED');
+    expect(mockedDB.db.insert).not.toHaveBeenCalled();
+  });
+
+  it('submit rejects the same question answered twice (marks were counted twice)', async () => {
+    mockPrincipalRow(STUDENT);
+    const res = await submit([
+      { questionId: Q1, selectedOptionId: OPT },
+      { questionId: Q1, selectedOptionId: OPT },
+      { questionId: Q2, selectedOptionId: OPT },
+    ]);
+
+    expect(res.status).toBe(422);
+    expect((await res.json()).error.code).toBe('VALIDATION_ERROR');
+    expect(mockedDB.db.insert).not.toHaveBeenCalled();
+  });
+
+  it('submit loses a race cleanly: a conflicting graded attempt is not re-graded', async () => {
+    mockPrincipalRow(STUDENT);
+    queueSubmitChecks({ startedAt: new Date().toISOString(), submittedAt: null, status: 'in_progress' });
+    const insertOnTx = vi.fn(() => ({
+      values: () => ({ onConflictDoUpdate: () => ({ returning: async () => [] }) }),
+    }));
+    const update = vi.fn();
+    (mockedDB.db as unknown as { transaction: unknown }).transaction = vi.fn(async (cb: (tx: unknown) => unknown) =>
+      cb({ select: mockedDB.db.select, insert: insertOnTx, update }));
+    const res = await submit([{ questionId: Q1, selectedOptionId: OPT }]);
+
+    expect(res.status).toBe(422);
+    expect((await res.json()).error.code).toBe('ATTEMPT_ALREADY_SUBMITTED');
+    expect(update).not.toHaveBeenCalled();
   });
 });

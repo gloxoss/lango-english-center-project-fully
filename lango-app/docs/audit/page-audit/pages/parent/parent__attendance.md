@@ -2,7 +2,144 @@
 
 **Status: NEEDS FIX (P2)** · Module: `parent` · Source: [`src/app/[locale]/(dashboard)/dashboard/parent/attendance/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/parent/attendance/page.tsx>)
 
-**Progress (2026-09-24):** S-45 REVIEW · S-47 REVIEW
+**Progress (2026-09-25):** S-45 PARTIAL · S-47 PARTIAL
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -70,7 +207,7 @@ Guard: `requireServerPage` · roles `parent`
 
 ## Cross-cutting findings that also show here
 
-- [S-44](../../findings/S-44.md) (P2) Staff campus switcher renders for parents, students and super admin (403 on every page)
+- [S-44](../../findings/done/S-44.md) (P2) Staff campus switcher renders for parents, students and super admin (403 on every page)
 - [S-7](../../findings/S-7.md) (P1) ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French)
 - [S-18](../../findings/done/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
 - [S-25](../../findings/done/S-25.md) (P2) Header shows a fake identity when the session call is slow

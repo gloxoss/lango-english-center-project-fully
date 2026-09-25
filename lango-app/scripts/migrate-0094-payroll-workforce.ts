@@ -35,8 +35,9 @@ async function main() {
       ['salary_advance_policies', `select (to_regclass('public.salary_advance_policies') is not null) as ok`],
       ['salary_advance_repayment_schedules', `select (to_regclass('public.salary_advance_repayment_schedules') is not null) as ok`],
       ['award_definitions', `select (to_regclass('public.award_definitions') is not null) as ok`],
-      // Double-payment prevention: one payment per payroll run line per tenant.
-      ['salary_payments_tenant_run_line_unique', `select exists(select 1 from pg_constraint where conname='salary_payments_tenant_run_line_unique') as ok`],
+      // Double-payment prevention: one live payment per payroll run line per tenant
+      // (0159 turned the constraint into a partial unique index; either satisfies it).
+      ['salary_payments_tenant_run_line_unique', `select (exists(select 1 from pg_constraint where conname='salary_payments_tenant_run_line_unique') or to_regclass('public.salary_payments_tenant_run_line_active_unique') is not null) as ok`],
       // Double-recovery prevention: one advance repayment per payroll run line.
       ['salary_advance_repay_run_line_unique', `select exists(select 1 from pg_constraint where conname='salary_advance_repay_run_line_unique') as ok`],
       // Extended lifecycle columns on the pre-existing tables.

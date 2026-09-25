@@ -14,6 +14,7 @@ interface AttendanceTrendCardProps {
 
 export function AttendanceTrendCard({ data, locale }: AttendanceTrendCardProps) {
   const t = useTranslations('Dashboard');
+  const th = useTranslations('DashboardHome');
   const { weeklyAverageRate, days, classesBelowThresholdCount, daysBelowThresholdCount, thresholdPercent } = data;
 
   return (
@@ -24,7 +25,7 @@ export function AttendanceTrendCard({ data, locale }: AttendanceTrendCardProps) 
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-extrabold text-slate-900">
-                Présence cette semaine
+                {th('attendanceTitle')}
               </h3>
               {weeklyAverageRate !== null && (
                 <span className={`rounded-full px-2 py-0.5 text-[11px] font-extrabold ${
@@ -32,19 +33,19 @@ export function AttendanceTrendCard({ data, locale }: AttendanceTrendCardProps) 
                     ? 'bg-emerald-50 text-emerald-700'
                     : 'bg-amber-50 text-amber-700'
                 }`}>
-                  Moyenne : {formatPercentage(weeklyAverageRate)}
+                  {th('attendanceAverage', { rate: formatPercentage(weeklyAverageRate) })}
                 </span>
               )}
             </div>
             <p className="mt-0.5 text-xs text-slate-500 font-medium">
-              Taux de présence des élèves sur les journées d'enseignement
+              {th('attendanceSubtitle')}
             </p>
           </div>
           <Link
             href={`/${locale}/dashboard/attendance`}
             className="flex items-center gap-1 text-xs font-bold text-blue-600 transition hover:text-blue-800 hover:underline"
           >
-            <span>Voir présences</span>
+            <span>{th('seeAttendance')}</span>
             <ArrowUpRight className="size-3.5" />
           </Link>
         </div>
@@ -115,14 +116,14 @@ export function AttendanceTrendCard({ data, locale }: AttendanceTrendCardProps) 
             <div className="flex items-center gap-2">
               <AlertTriangle className="size-4 shrink-0 text-amber-600" />
               <span>
-                <strong className="font-bold">{classesBelowThresholdCount} classe{classesBelowThresholdCount > 1 ? 's sont' : ' est'}</strong> sous le seuil d'assiduité de {thresholdPercent}% cette semaine.
+                <strong className="font-bold">{th('classesCount', { count: classesBelowThresholdCount })}</strong> {th('classesBelowThreshold', { count: classesBelowThresholdCount, threshold: thresholdPercent })}
               </span>
             </div>
             <Link
               href={`/${locale}/dashboard/academics/classes`}
               className="shrink-0 font-extrabold text-amber-900 underline hover:text-amber-950"
             >
-              Voir les classes
+              {th('seeClasses')}
             </Link>
           </div>
         ) : weeklyAverageRate !== null && weeklyAverageRate < thresholdPercent ? (
@@ -130,14 +131,14 @@ export function AttendanceTrendCard({ data, locale }: AttendanceTrendCardProps) 
             <div className="flex items-center gap-2">
               <AlertTriangle className="size-4 shrink-0 text-amber-600" />
               <span>
-                <strong className="font-bold">Moyenne hebdomadaire ({formatPercentage(weeklyAverageRate)})</strong> sous le seuil d'alerte ({thresholdPercent}%).
+                <strong className="font-bold">{th('weeklyAverage', { rate: formatPercentage(weeklyAverageRate) })}</strong> {th('belowAlertThreshold', { threshold: thresholdPercent })}
               </span>
             </div>
             <Link
               href={`/${locale}/dashboard/attendance`}
               className="shrink-0 font-extrabold text-amber-900 underline hover:text-amber-950"
             >
-              Voir présences
+              {th('seeAttendance')}
             </Link>
           </div>
         ) : daysBelowThresholdCount > 0 ? (
@@ -145,24 +146,24 @@ export function AttendanceTrendCard({ data, locale }: AttendanceTrendCardProps) 
             <div className="flex items-center gap-2">
               <AlertTriangle className="size-4 shrink-0 text-amber-600" />
               <span>
-                <strong className="font-bold">{daysBelowThresholdCount} journée{daysBelowThresholdCount > 1 ? 's' : ''}</strong> sous le seuil de {thresholdPercent}% cette semaine.
+                <strong className="font-bold">{th('daysCount', { count: daysBelowThresholdCount })}</strong> {th('daysBelowThreshold', { threshold: thresholdPercent })}
               </span>
             </div>
             <Link
               href={`/${locale}/dashboard/attendance`}
               className="shrink-0 font-extrabold text-amber-900 underline hover:text-amber-950"
             >
-              Voir présences
+              {th('seeAttendance')}
             </Link>
           </div>
         ) : weeklyAverageRate !== null ? (
           <div className="flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/50 p-3 text-xs text-emerald-800">
             <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
-            <span>Toutes les classes maintiennent une assiduité supérieure au seuil d'alerte ({thresholdPercent}%).</span>
+            <span>{th('allClassesAboveThreshold', { threshold: thresholdPercent })}</span>
           </div>
         ) : (
           <div className="flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50/50 p-3 text-xs text-slate-500">
-            <span>Aucune séance d'enseignement enregistrée cette semaine.</span>
+            <span>{th('noSessionsThisWeek')}</span>
           </div>
         )}
       </div>

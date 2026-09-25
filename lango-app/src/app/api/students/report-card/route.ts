@@ -1,10 +1,11 @@
 import { and, eq, or } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
-import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse } from '@/libs/api/errors';
-import { requireAnyCapability } from '@/libs/api/permissions';
-import { db } from '@/libs/DB';
 import { getClassReportCards } from '@/features/academics/services/report-card-service';
+import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { requireAnyCapability } from '@/libs/api/permissions';
+import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
+import { db } from '@/libs/DB';
 import { examTerms, sessionYears, user } from '@/models/Schema';
 
 // GET /api/students/report-card?studentId= — one student's real report card.
@@ -46,6 +47,15 @@ export async function GET(request: Request) {
       targetClassSectionId = classSectionId!;
     }
 
+    // Any teacher could pull any student's or any class's bulletins; a teacher
+    // now only reaches the sections they teach.
+    if (context.role === 'teacher') {
+      const assigned = await getTeacherClassSectionIds(tenantId, context.userId);
+      if (!assigned.includes(targetClassSectionId)) {
+        throw new ApiError(403, 'FORBIDDEN', 'Cette classe ne fait pas partie de vos classes.');
+      }
+    }
+
     // Resolve the bulletin window: explicit exam term, else the active session year.
     let termWindow: { termStart?: string; termEnd?: string } = {};
     if (examTermId) {
@@ -67,7 +77,9 @@ export async function GET(request: Request) {
           or(eq(sessionYears.isDefault, true)),
         ))
         .limit(1);
-      if (year) termWindow = { termStart: year.startDate, termEnd: year.endDate };
+      if (year) {
+        termWindow = { termStart: year.startDate, termEnd: year.endDate };
+      }
     }
 
     const { cards } = await getClassReportCards(tenantId, targetClassSectionId, termWindow);

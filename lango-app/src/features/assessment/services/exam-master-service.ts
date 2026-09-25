@@ -1,17 +1,14 @@
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import {
-  examTerms,
-  examHalls,
-  examSeats,
-  examSchedules,
-  examSupervisors,
-  marksheetTemplates,
-  resultPublications,
-  assessmentDefinitions,
   assessmentOutcomes,
+  examHalls,
+  examSchedules,
+  examSeats,
+  examSupervisors,
+  examTerms,
 } from '../models/assessment-schema';
 import { OutcomeService } from './outcome-service';
-import { eq, and, inArray, desc, sql } from 'drizzle-orm';
 
 // Real, independently-testable time-overlap rule (future-implementation/
 // assessment-and-examination remediation, section-05) - extracted so the
@@ -211,7 +208,7 @@ export class ExamMasterService {
           staffId,
           role: idx === 0 ? 'chief_invigilator' : 'invigilator',
           attendanceStatus: 'assigned',
-        }))
+        })),
       );
     }
 
@@ -232,6 +229,8 @@ export class ExamMasterService {
     }>;
   }) {
     const { tenantId, assessmentDefinitionId, markerId, marks } = params;
+
+    await OutcomeService.assertScoresInRange(tenantId, assessmentDefinitionId, marks.map(m => m.rawScore));
 
     const recordedOutcomes = [];
     for (const item of marks) {
@@ -266,8 +265,8 @@ export class ExamMasterService {
       .where(
         and(
           eq(assessmentOutcomes.tenantId, tenantId),
-          eq(assessmentOutcomes.assessmentDefinitionId, assessmentDefinitionId)
-        )
+          eq(assessmentOutcomes.assessmentDefinitionId, assessmentDefinitionId),
+        ),
       )
       .orderBy(desc(sql`CAST(${assessmentOutcomes.normalizedScore} AS NUMERIC)`));
 

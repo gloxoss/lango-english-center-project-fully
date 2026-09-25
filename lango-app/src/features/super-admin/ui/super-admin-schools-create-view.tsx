@@ -89,9 +89,9 @@ export function SuperAdminSchoolsCreateView({ locale }: { locale: string }) {
               </span>
             </div>
           </div>
-          <Link href={`/${locale}/dashboard/super-admin/schools`}>
-            <Button variant="primary" className="w-full">{t('backToSchools')}</Button>
-          </Link>
+          <Button asChild variant="primary" className="w-full">
+            <Link href={`/${locale}/dashboard/super-admin/schools`}>{t('backToSchools')}</Link>
+          </Button>
         </div>
       </div>
     );

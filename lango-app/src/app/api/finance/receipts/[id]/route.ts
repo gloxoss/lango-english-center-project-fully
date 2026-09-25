@@ -20,6 +20,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         id: receipts.id,
         receiptNumber: receipts.receiptNumber,
         studentId: receipts.studentId,
+        paymentId: receipts.paymentId,
         studentName: user.name,
         studentEmail: user.email,
         amount: receipts.amount,

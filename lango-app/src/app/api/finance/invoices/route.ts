@@ -6,6 +6,8 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
+import { ensureFinanceArtifact } from '@/features/documents/services/issue-finance';
+import { logger } from '@/libs/logger';
 import { db } from '@/libs/DB';
 import { consumeDocumentNumber } from '@/libs/finance/document-number';
 import { centsToMoney, moneyToCents } from '@/libs/finance/money';
@@ -268,6 +270,13 @@ export async function POST(request: Request) {
     });
 
     recordAudit(context, 'create', 'invoice', invoice.id);
+    if (status !== 'draft') {
+      try {
+        await ensureFinanceArtifact(request, context, 'invoice', invoice.id);
+      } catch (error) {
+        logger.error({ err: error, invoiceId: invoice.id, tenantId }, 'Invoice created but PDF archive failed');
+      }
+    }
 
     return NextResponse.json({
       success: true,

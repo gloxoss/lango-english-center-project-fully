@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Card } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Trash2, Plus } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 import { usePermissions } from '@/hooks/use-permissions';
 
 type ClassOption = { id: string; name: string };
@@ -83,85 +84,187 @@ export function FeeAssignmentsView() {
     }
   };
 
+  // Was one click with no confirmation, and a refused delete (fee already
+  // billed) looked like a success.
   const handleDelete = async (id: string) => {
-    await fetch(`/api/finance/fee-assignments?id=${id}`, { method: 'DELETE' });
+    // eslint-disable-next-line no-alert
+    if (!window.confirm(tCommon('confirmDeleteGeneric'))) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/finance/fee-assignments?id=${id}`, { method: 'DELETE' });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || json?.success === false) {
+        toast.error(json?.error?.message || json?.message || tCommon('error'));
+      }
+    } catch {
+      toast.error(tCommon('networkError'));
+    }
     load();
   };
 
   return (
-    <div className="space-y-6 max-w-[1200px] mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="mx-auto max-w-[1200px] space-y-6">
+      <div className="
+        flex flex-col justify-between gap-4
+        sm:flex-row sm:items-center
+      "
+      >
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('feeAssignmentsTitle')}</h1>
-          <p className="text-xs text-slate-500 mt-1">{t('feeAssignmentsSubtitle')}</p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('feeAssignmentsTitle')}</h1>
+          <p className="mt-1 text-xs text-slate-500">{t('feeAssignmentsSubtitle')}</p>
         </div>
         {canManage && (
-          <Button size="sm" onClick={() => setShowForm(v => !v)} className="h-9 text-xs rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5">
-            <Plus className="w-3.5 h-3.5" />
+          <Button
+            size="sm"
+            onClick={() => setShowForm(v => !v)}
+            className="
+              h-9 gap-1.5 rounded-xl bg-[#2487B8] text-xs text-white
+              hover:bg-[#1B6C93]
+            "
+          >
+            <Plus className="size-3.5" />
             {t('assignStructureBtn')}
           </Button>
         )}
       </div>
 
       {canManage && showForm && (
-        <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
+        <Card className="
+          space-y-3 rounded-2xl border border-slate-200/80 bg-white p-5
+          shadow-2xs
+        "
+        >
           {error && <p className="text-xs font-semibold text-rose-600">{error}</p>}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div className="
+            grid grid-cols-1 gap-3 text-xs
+            sm:grid-cols-3
+          "
+          >
             <div className="space-y-1">
               <label className="font-bold text-slate-600">{t('classLabel')}</label>
-              <select value={form.classId} onChange={e => setForm({ ...form, classId: e.target.value })} className="h-9 w-full rounded-xl border border-slate-200 px-3">
+              <select
+                value={form.classId}
+                onChange={e => setForm({ ...form, classId: e.target.value })}
+                className="h-9 w-full rounded-xl border border-slate-200 px-3"
+              >
                 <option value="">{t('selectPlaceholder')}</option>
                 {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
             <div className="space-y-1">
               <label className="font-bold text-slate-600">{t('feeStructureLabel')}</label>
-              <select value={form.feeStructureId} onChange={e => setForm({ ...form, feeStructureId: e.target.value })} className="h-9 w-full rounded-xl border border-slate-200 px-3">
+              <select
+                value={form.feeStructureId}
+                onChange={e => setForm({ ...form, feeStructureId: e.target.value })}
+                className="h-9 w-full rounded-xl border border-slate-200 px-3"
+              >
                 <option value="">{t('selectPlaceholder')}</option>
-                {feeStructures.map(fs => <option key={fs.id} value={fs.id}>{fs.name} ({Number(fs.amount).toLocaleString('fr-FR')} MAD)</option>)}
+                {feeStructures.map(fs => (
+                  <option key={fs.id} value={fs.id}>
+                    {fs.name}
+                    {' '}
+                    (
+                    {Number(fs.amount).toLocaleString('fr-FR')}
+                    {' '}
+                    MAD)
+                  </option>
+                ))}
               </select>
             </div>
             <div className="space-y-1">
               <label className="font-bold text-slate-600">{t('effectiveDateLabel')}</label>
-              <input type="date" value={form.effectiveDate} onChange={e => setForm({ ...form, effectiveDate: e.target.value })} className="h-9 w-full rounded-xl border border-slate-200 px-3" />
+              <input
+                type="date"
+                value={form.effectiveDate}
+                onChange={e => setForm({ ...form, effectiveDate: e.target.value })}
+                className="h-9 w-full rounded-xl border border-slate-200 px-3"
+              />
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button size="sm" disabled={saving} onClick={handleCreate} className="h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold">
+            <Button
+              size="sm"
+              disabled={saving}
+              onClick={handleCreate}
+              className="
+                h-9 rounded-xl bg-[#2487B8] text-xs font-bold text-white
+                hover:bg-[#1B6C93]
+              "
+            >
               {saving ? '...' : t('assignBtn')}
             </Button>
-            <Button size="sm" variant="outline" onClick={() => setShowForm(false)} className="h-9 rounded-xl text-xs font-bold">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowForm(false)}
+              className="h-9 rounded-xl text-xs font-bold"
+            >
               {tCommon('cancel')}
             </Button>
           </div>
         </Card>
       )}
 
-      <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+      <Card className="
+        overflow-hidden rounded-2xl border border-slate-200/80 bg-white
+        shadow-2xs
+      "
+      >
         <table className="w-full text-start text-xs">
-          <thead className="bg-[#F6F9FC] text-[#16212B] font-extrabold border-b border-slate-200/80">
+          <thead className="
+            border-b border-slate-200/80 bg-[#F6F9FC] font-extrabold
+            text-[#16212B]
+          "
+          >
             <tr>
-              <th className="py-3.5 px-4">{t('classLabel')}</th>
-              <th className="py-3.5 px-4">{t('feeStructureLabel')}</th>
-              <th className="py-3.5 px-4 text-end">{t('amount')}</th>
-              <th className="py-3.5 px-4">{t('effectiveDateLabel')}</th>
-              {canManage && <th className="py-3.5 px-4" />}
+              <th className="px-4 py-3.5">{t('classLabel')}</th>
+              <th className="px-4 py-3.5">{t('feeStructureLabel')}</th>
+              <th className="px-4 py-3.5 text-end">{t('amount')}</th>
+              <th className="px-4 py-3.5">{t('effectiveDateLabel')}</th>
+              {canManage && <th className="px-4 py-3.5" />}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {!loading && assignments.length === 0 && (
-              <tr><td colSpan={canManage ? 5 : 4} className="py-8 text-center text-slate-400">{t('noAssignmentsFound')}</td></tr>
+              <tr>
+                <td
+                  colSpan={canManage ? 5 : 4}
+                  className="py-8 text-center text-slate-400"
+                >
+                  {t('noAssignmentsFound')}
+                </td>
+              </tr>
             )}
             {assignments.map(a => (
-              <tr key={a.id} className="hover:bg-slate-50/80 transition font-medium">
-                <td className="py-3.5 px-4 font-bold text-[#16212B]">{a.className}</td>
-                <td className="py-3.5 px-4 text-slate-600">{a.feeStructureName}</td>
-                <td className="py-3.5 px-4 text-end font-extrabold text-[#16212B]">{Number(a.feeAmount).toLocaleString('fr-FR')} MAD</td>
-                <td className="py-3.5 px-4 text-slate-500">{a.effectiveDate}</td>
+              <tr
+                key={a.id}
+                className="
+                  font-medium transition
+                  hover:bg-slate-50/80
+                "
+              >
+                <td className="px-4 py-3.5 font-bold text-[#16212B]">{a.className}</td>
+                <td className="px-4 py-3.5 text-slate-600">{a.feeStructureName}</td>
+                <td className="
+                  px-4 py-3.5 text-end font-extrabold text-[#16212B]
+                "
+                >
+                  {Number(a.feeAmount).toLocaleString('fr-FR')}
+                  {' '}
+                  MAD
+                </td>
+                <td className="px-4 py-3.5 text-slate-500">{a.effectiveDate}</td>
                 {canManage && (
-                  <td className="py-3.5 px-4 text-end">
-                    <button onClick={() => handleDelete(a.id)} className="p-1.5 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600">
-                      <Trash2 className="w-3.5 h-3.5" />
+                  <td className="px-4 py-3.5 text-end">
+                    <button
+                      onClick={() => handleDelete(a.id)}
+                      className="
+                        rounded-lg p-1.5 text-slate-400
+                        hover:bg-rose-50 hover:text-rose-600
+                      "
+                    >
+                      <Trash2 className="size-3.5" />
                     </button>
                   </td>
                 )}

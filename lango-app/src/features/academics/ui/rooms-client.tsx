@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { exportToCsv } from '@/libs/csv-export';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -185,6 +186,8 @@ export function RoomsClient({ locale: _locale }: { locale?: string } = {}) {
           <Button
             variant="outline"
             size="sm"
+            disabled={filteredRooms.length === 0}
+            onClick={() => exportToCsv(filteredRooms.map(r => ({ code: r.code ?? '', name: r.name, building: r.building ?? '', floor: r.floor ?? '', capacity: r.capacity ?? '', type: r.roomType ?? '', equipment: r.equipment.join(' | '), status: r.status, occupancy: r.occupancyStatus })), 'rooms-plan')}
             className="h-10 gap-2 rounded-xl border-slate-200 px-4 text-xs font-bold"
           >
             <Download className="size-4 text-slate-600" />

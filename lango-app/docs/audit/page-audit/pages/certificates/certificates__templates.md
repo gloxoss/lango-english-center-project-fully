@@ -2,7 +2,144 @@
 
 **Status: FIXED, pending re-sweep** · Module: `certificates` · Source: [`src/app/[locale]/(dashboard)/dashboard/certificates/templates/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/certificates/templates/page.tsx>)
 
-**Progress (2026-09-24):** S-6 DONE · S-42 DONE
+**Progress (2026-09-25):** S-6 DONE · S-42 DONE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -79,7 +216,7 @@ Guard: `requireServerPage` · capability `certificates.templates.manage`
 ## Cross-cutting findings that also show here
 
 - [S-7](../../findings/S-7.md) (P1) ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French)
-- [S-14](../../findings/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
+- [S-14](../../findings/done/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
 - [S-18](../../findings/done/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
 - [S-25](../../findings/done/S-25.md) (P2) Header shows a fake identity when the session call is slow
 - [S-37](../../findings/S-37.md) (P2) Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL

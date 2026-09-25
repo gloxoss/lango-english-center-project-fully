@@ -1,21 +1,25 @@
-import ExcelJS from 'exceljs';
+import { Buffer } from 'node:buffer';
 import { and, eq, inArray } from 'drizzle-orm';
-import { db } from '@/libs/DB';
-import { user, classSections, classes, sections, tenants } from '@/models/Schema';
+import ExcelJS from 'exceljs';
 import { assessmentDefinitions, assessmentOutcomes } from '@/features/assessment/models/assessment-schema';
+import { ExamMasterService } from '@/features/assessment/services/exam-master-service';
+import { requireExamTermStage } from '@/features/assessment/services/exam-term-guard';
+import { ApiError } from '@/libs/api/errors';
+import { db } from '@/libs/DB';
+import { classes, classSections, sections, tenants, user } from '@/models/Schema';
 
-export interface MassarImportResult {
+export type MassarImportResult = {
   totalProcessed: number;
   importedCount: number;
   errorCount: number;
   errors: string[];
-}
+};
 
 /**
  * Generates an official Moroccan Ministry of National Education (MEN)
  * Massar-compatible Excel student roster.
  */
-export interface MassarValidationStudent {
+export type MassarValidationStudent = {
   id: string;
   name: string;
   codeMassar: string | null;
@@ -24,14 +28,14 @@ export interface MassarValidationStudent {
   className: string | null;
   status: 'valid' | 'blocked';
   blockingReasons: string[];
-}
+};
 
-export interface MassarValidationReport {
+export type MassarValidationReport = {
   total: number;
   validCount: number;
   blockedCount: number;
   students: MassarValidationStudent[];
-}
+};
 
 /**
  * Validates students prior to official MEN Massar export.
@@ -43,7 +47,7 @@ export async function validateMassarStudentRoster(
     classSectionId?: string;
     branchId?: string;
     studentIds?: string[];
-  }
+  },
 ): Promise<MassarValidationReport> {
   const conditions = [
     eq(user.tenantId, tenantId),
@@ -107,8 +111,8 @@ export async function validateMassarStudentRoster(
     };
   });
 
-  const validCount = validationResults.filter((s) => s.status === 'valid').length;
-  const blockedCount = validationResults.filter((s) => s.status === 'blocked').length;
+  const validCount = validationResults.filter(s => s.status === 'valid').length;
+  const blockedCount = validationResults.filter(s => s.status === 'blocked').length;
 
   return {
     total: validationResults.length,
@@ -130,7 +134,7 @@ export async function generateMassarStudentRoster(
     branchId?: string;
     studentIds?: string[];
     onlyValid?: boolean;
-  }
+  },
 ): Promise<{ buffer: Buffer; filename: string }> {
   const [tenant] = await db
     .select({ name: tenants.name })
@@ -246,7 +250,7 @@ export async function generateMassarStudentRoster(
   ];
 
   const arrayBuffer = await workbook.xlsx.writeBuffer();
-  const filename = `Massar_Eleves_${sectionName.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.xlsx`;
+  const filename = `Massar_Eleves_${sectionName.replace(/[^a-z0-9]/gi, '_')}_${Date.now()}.xlsx`;
   return { buffer: Buffer.from(arrayBuffer), filename };
 }
 
@@ -255,7 +259,7 @@ export async function generateMassarStudentRoster(
  */
 export async function generateMassarMarksheet(
   tenantId: string,
-  assessmentDefId: string
+  assessmentDefId: string,
 ): Promise<{ buffer: Buffer; filename: string }> {
   const [assessment] = await db
     .select()
@@ -346,7 +350,7 @@ export async function generateMassarMarksheet(
   ];
 
   const arrayBuffer = await workbook.xlsx.writeBuffer();
-  const filename = `Massar_Notes_${assessment.title.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.xlsx`;
+  const filename = `Massar_Notes_${assessment.title.replace(/[^a-z0-9]/gi, '_')}_${Date.now()}.xlsx`;
   return { buffer: Buffer.from(arrayBuffer), filename };
 }
 
@@ -354,10 +358,18 @@ export async function generateMassarMarksheet(
  * Parses an uploaded Massar Excel notes file and persists scores to assessmentOutcomes.
  * Validates Moroccan /20 grade range (0.00 to 20.00).
  */
+/**
+ * The import used to write assessment_outcomes directly: no term-stage lock
+ * (published marks could be overwritten), no teacher class scoping, no
+ * moderation lock, no revision trail, and every paper assumed /20. It now
+ * parses the sheet, applies the same guards as grade entry, and saves through
+ * ExamMasterService.saveMarksheetGrid (bounds, locks, revisions).
+ */
 export async function parseAndImportMassarMarks(
   tenantId: string,
   assessmentDefId: string,
-  fileBuffer: Buffer
+  fileBuffer: Buffer,
+  options: { markerId: string; writableStudentIds: Set<string> | null },
 ): Promise<MassarImportResult> {
   const [assessment] = await db
     .select()
@@ -366,8 +378,12 @@ export async function parseAndImportMassarMarks(
     .limit(1);
 
   if (!assessment) {
-    throw new Error('Évaluation introuvable.');
+    throw new ApiError(404, 'NOT_FOUND', 'Évaluation introuvable.');
   }
+  if (assessment.termId) {
+    await requireExamTermStage(tenantId, assessment.termId, 'enter_marks');
+  }
+  const maximumScore = Number(assessment.maximumScore) || 20;
 
   // Pre-fetch all students in tenant for fast in-memory matching
   const students = await db
@@ -382,21 +398,35 @@ export async function parseAndImportMassarMarks(
   const studentsByCode = new Map<string, typeof students[0]>();
   const studentsByName = new Map<string, typeof students[0]>();
 
+  // Two students with the same name must not be matched by name: the mark
+  // would land on whichever came last.
+  const ambiguousNames = new Set<string>();
   for (const s of students) {
     if (s.codeMassar) {
       studentsByCode.set(s.codeMassar.trim().toUpperCase(), s);
     }
     if (s.name) {
-      studentsByName.set(s.name.trim().toLowerCase(), s);
+      const key = s.name.trim().toLowerCase();
+      if (studentsByName.has(key)) {
+        ambiguousNames.add(key);
+      }
+      studentsByName.set(key, s);
     }
+  }
+  for (const key of ambiguousNames) {
+    studentsByName.delete(key);
   }
 
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(fileBuffer as any);
+  try {
+    await workbook.xlsx.load(fileBuffer as any);
+  } catch {
+    throw new ApiError(422, 'INVALID_FILE', 'Fichier Excel illisible (.xlsx attendu).');
+  }
   const sheet = workbook.worksheets[0];
 
   if (!sheet) {
-    throw new Error('Le classeur Excel ne contient aucune feuille.');
+    throw new ApiError(422, 'INVALID_FILE', 'Le classeur Excel ne contient aucune feuille.');
   }
 
   const result: MassarImportResult = {
@@ -415,14 +445,26 @@ export async function parseAndImportMassarMarks(
   let feedbackColIdx = -1;
 
   sheet.eachRow((row, rowNumber) => {
-    if (headerRowIndex !== -1) return;
+    if (headerRowIndex !== -1) {
+      return;
+    }
     row.eachCell((cell, colNumber) => {
       const val = String(cell.value || '').toLowerCase();
-      if (val.includes('massar') || val.includes('code')) codeColIdx = colNumber;
-      if (val.includes('nom') || val.includes('prénom')) nameColIdx = colNumber;
-      if (val.includes('note') || val.includes('/20') || val.includes('score')) scoreColIdx = colNumber;
-      if (val.includes('absent') || val.includes('absence')) absentColIdx = colNumber;
-      if (val.includes('observ') || val.includes('appréc') || val.includes('remarque')) feedbackColIdx = colNumber;
+      if (val.includes('massar') || val.includes('code')) {
+        codeColIdx = colNumber;
+      }
+      if (val.includes('nom') || val.includes('prénom')) {
+        nameColIdx = colNumber;
+      }
+      if (val.includes('note') || val.includes('/20') || val.includes('score')) {
+        scoreColIdx = colNumber;
+      }
+      if (val.includes('absent') || val.includes('absence')) {
+        absentColIdx = colNumber;
+      }
+      if (val.includes('observ') || val.includes('appréc') || val.includes('remarque')) {
+        feedbackColIdx = colNumber;
+      }
     });
 
     if (codeColIdx !== -1 || scoreColIdx !== -1) {
@@ -431,7 +473,7 @@ export async function parseAndImportMassarMarks(
   });
 
   if (headerRowIndex === -1 || scoreColIdx === -1) {
-    throw new Error('En-têtes Massar non reconnus. Veuillez utiliser le modèle de notes officiel généré par SchoolOS.');
+    throw new ApiError(422, 'INVALID_FILE', 'En-têtes Massar non reconnus. Veuillez utiliser le modèle de notes officiel généré par SchoolOS.');
   }
 
   // Iterate over data rows
@@ -443,7 +485,9 @@ export async function parseAndImportMassarMarks(
   }> = [];
 
   sheet.eachRow((row, rowNumber) => {
-    if (rowNumber <= headerRowIndex) return;
+    if (rowNumber <= headerRowIndex) {
+      return;
+    }
 
     const rawCode = codeColIdx !== -1 ? String(row.getCell(codeColIdx).value || '').trim().toUpperCase() : '';
     const rawName = nameColIdx !== -1 ? String(row.getCell(nameColIdx).value || '').trim().toLowerCase() : '';
@@ -451,7 +495,9 @@ export async function parseAndImportMassarMarks(
     const rawAbsent = absentColIdx !== -1 ? String(row.getCell(absentColIdx).value || '').trim().toUpperCase() : 'N';
     const rawFeedback = feedbackColIdx !== -1 ? String(row.getCell(feedbackColIdx).value || '').trim() : '';
 
-    if (!rawCode && !rawName) return; // Skip empty rows
+    if (!rawCode && !rawName) {
+      return;
+    } // Skip empty rows
 
     result.totalProcessed++;
 
@@ -469,9 +515,9 @@ export async function parseAndImportMassarMarks(
     let scoreStr: string | null = null;
     if (!isAbsent && rawScore !== null && rawScore !== undefined && rawScore !== '') {
       const numScore = Number(rawScore);
-      if (Number.isNaN(numScore) || numScore < 0 || numScore > 20) {
+      if (Number.isNaN(numScore) || numScore < 0 || numScore > maximumScore) {
         result.errorCount++;
-        result.errors.push(`Ligne ${rowNumber}: Note invalide (${rawScore}) pour ${matchedStudent.name}. La note doit être comprise entre 0 et 20.`);
+        result.errors.push(`Ligne ${rowNumber}: Note invalide (${rawScore}) pour ${matchedStudent.name}. La note doit être comprise entre 0 et ${maximumScore}.`);
         return;
       }
       scoreStr = numScore.toFixed(2);
@@ -485,48 +531,41 @@ export async function parseAndImportMassarMarks(
     });
   });
 
-  // Batch commit to assessmentOutcomes
-  for (const item of outcomesToCommit) {
-    const [existing] = await db
-      .select({ id: assessmentOutcomes.id })
-      .from(assessmentOutcomes)
-      .where(
-        and(
-          eq(assessmentOutcomes.tenantId, tenantId),
-          eq(assessmentOutcomes.assessmentDefinitionId, assessmentDefId),
-          eq(assessmentOutcomes.studentId, item.studentId)
-        )
-      )
-      .limit(1);
+  // Rows with neither a mark nor an absence carry nothing to record.
+  const marks = outcomesToCommit
+    .filter(item => item.isExcused || item.score !== null)
+    .map(item => ({
+      studentId: item.studentId,
+      rawScore: item.isExcused || item.score === null ? undefined : Number(item.score),
+      status: (item.isExcused ? 'absent' : 'graded') as 'absent' | 'graded',
+    }));
 
-    const statusVal = item.isExcused ? 'absent' : (item.score !== null ? 'graded' : 'pending');
-    if (existing) {
-      await db
-        .update(assessmentOutcomes)
-        .set({
-          rawScore: item.score !== null ? String(item.score) : null,
-          normalizedScore: item.score !== null ? String(item.score) : null,
-          status: statusVal,
-          grade: item.feedback || null,
-          updatedAt: new Date().toISOString(),
-        })
-        .where(eq(assessmentOutcomes.id, existing.id));
-    } else {
-      await db.insert(assessmentOutcomes).values({
-        tenantId,
-        assessmentDefinitionId: assessmentDefId,
-        studentId: item.studentId,
-        rawScore: item.score !== null ? String(item.score) : null,
-        normalizedScore: item.score !== null ? String(item.score) : null,
-        maximumScoreSnapshot: '20.00',
-        status: statusVal,
-        grade: item.feedback || null,
-        sourceType: 'paper_exam',
-        moderationState: 'draft',
-      });
+  const seen = new Set<string>();
+  for (const m of marks) {
+    if (seen.has(m.studentId)) {
+      throw new ApiError(422, 'DUPLICATE_STUDENT', 'Le fichier contient plusieurs lignes pour le même élève.');
     }
-    result.importedCount++;
+    seen.add(m.studentId);
   }
+
+  // Same rule as grade entry: refused whole, since a partial import would leave
+  // a teacher believing marks were saved that were not.
+  if (options.writableStudentIds) {
+    const outside = marks.filter(m => !options.writableStudentIds!.has(m.studentId));
+    if (outside.length > 0) {
+      throw new ApiError(403, 'FORBIDDEN', `Le fichier contient ${outside.length} élève(s) hors de vos classes. Import refusé.`);
+    }
+  }
+
+  if (marks.length > 0) {
+    await ExamMasterService.saveMarksheetGrid({
+      tenantId,
+      assessmentDefinitionId: assessmentDefId,
+      markerId: options.markerId,
+      marks,
+    });
+  }
+  result.importedCount = marks.length;
 
   return result;
 }

@@ -16,6 +16,7 @@ import { ApiError } from '@/libs/api/errors';
 import { recordAudit } from '@/libs/api/audit';
 import type { RequestContext } from '@/libs/api/context';
 import { tryPostPaymentGLEntry } from '@/libs/finance/gl-auto-post';
+import { consumeDocumentNumber } from '@/libs/finance/document-number';
 import { centsToMoney, moneyToCents } from '@/libs/finance/money';
 import {
   invoiceItems, invoices, inventoryProducts, inventorySaleLines, inventorySales, inventoryStores,
@@ -262,7 +263,10 @@ export async function createSale(context: RequestContext, tenantId: string, inpu
 
       if (input.saleToRole === 'student') {
         const year = new Date(input.saleDate).getFullYear() || new Date().getFullYear();
-        const invNumber = `INV-${year}-${String(Math.floor(1000 + Math.random() * 9000))}`;
+        // Same sequential INV-<year>- series as every other invoice: a random
+        // 4-digit suffix could collide (unique per tenant) and broke the continuous
+        // numbering invoices must keep.
+        const invNumber = await consumeDocumentNumber(tx, { tenantId, prefix: `INV-${year}-` });
         const [invoice] = await tx.insert(invoices).values({
           tenantId,
           studentId: input.studentId!,

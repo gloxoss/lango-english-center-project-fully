@@ -434,6 +434,7 @@ export const receipts = pgTable('receipts', {
   tenantId: uuid('tenant_id').notNull(),
   receiptNumber: varchar('receipt_number', { length: 50 }).notNull(),
   studentId: text('student_id').notNull(),
+  paymentId: uuid('payment_id'),
   amount: numeric({ precision: 14, scale: 2, mode: 'number' }).notNull(),
   paymentDate: date('payment_date').notNull(),
   allocations: jsonb().notNull().default([]),
@@ -450,5 +451,11 @@ export const receipts = pgTable('receipts', {
     foreignColumns: [user.id],
     name: 'receipts_student_id_user_id_fk',
   }).onDelete('cascade'),
+  foreignKey({
+    columns: [table.paymentId],
+    foreignColumns: [payments.id],
+    name: 'receipts_payment_id_payments_id_fk',
+  }).onDelete('set null'),
   index('receipts_tenant_student_idx').on(table.tenantId, table.studentId),
+  uniqueIndex('receipts_tenant_payment_unique').on(table.tenantId, table.paymentId).where(sql`${table.paymentId} IS NOT NULL`),
 ]);

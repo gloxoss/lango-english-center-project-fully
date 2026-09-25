@@ -1,0 +1,7526 @@
+[
+ {
+  "route": "/api/academics/academic-years",
+  "mod": "academics",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/academics/assessment-definitions",
+  "mod": "academics",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/assessment-plans",
+  "mod": "academics",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/assessment-sessions",
+  "mod": "academics",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/assignments/grade",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/assignments",
+  "mod": "academics",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/assignments/submit",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/class-offerings/copy",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/class-offerings",
+  "mod": "academics",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/class-results",
+  "mod": "academics",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/academics/class-sections",
+  "mod": "academics",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": true,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/class-sections/[id]/homeroom-teacher",
+  "mod": "academics",
+  "methods": "PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/class-subjects",
+  "mod": "academics",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/class-teachers",
+  "mod": "academics",
+  "methods": "GET|POST|DELETE",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/classes/roster",
+  "mod": "academics",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/academics/classes",
+  "mod": "academics",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/coverage",
+  "mod": "academics",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/academics/elective-choices",
+  "mod": "academics",
+  "methods": "GET|POST|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/elective-groups",
+  "mod": "academics",
+  "methods": "GET|POST|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/exam-halls",
+  "mod": "academics",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/exam-schedules",
+  "mod": "academics",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/exam-schedules/staff",
+  "mod": "academics",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/academics/exam-terms",
+  "mod": "academics",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/exam-terms/[id]/marksheet",
+  "mod": "academics",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/exam-terms/[id]/rankings",
+  "mod": "academics",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/academics/exam-terms/[id]/seat-allocation",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/exam-terms/[id]/stage",
+  "mod": "academics",
+  "methods": "GET|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/grade-entry",
+  "mod": "academics",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/grading-policies",
+  "mod": "academics",
+  "methods": "GET|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/homework",
+  "mod": "academics",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/homework/upload",
+  "mod": "academics",
+  "methods": "POST|GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/homework/[id]/attempts",
+  "mod": "academics",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/academics/homework/[id]/grade",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/homework/[id]",
+  "mod": "academics",
+  "methods": "GET|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/homework/[id]/submit",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/massar/export/marksheet",
+  "mod": "academics",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/academics/massar/export/preview",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/massar/export/roster",
+  "mod": "academics",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/academics/massar/import/marks",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/mediums",
+  "mod": "academics",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/meeting-slots/book",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/meeting-slots",
+  "mod": "academics",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/online-exams",
+  "mod": "academics",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/online-exams/submit",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/online-exams/[examId]/questions",
+  "mod": "academics",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/online-exams/[examId]/questions/[questionId]",
+  "mod": "academics",
+  "methods": "PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/online-exams/[examId]/take",
+  "mod": "academics",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/academics/online-exams/[examId]/variants",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/promotions/capacity-check",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/promotions/revert",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/question-bank",
+  "mod": "academics",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/question-bank/[id]/copy-into-exam",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/readiness/export",
+  "mod": "academics",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/academics/readiness",
+  "mod": "academics",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/academics/readiness/snapshots",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/room-utilization",
+  "mod": "academics",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/academics/rooms",
+  "mod": "academics",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/sections",
+  "mod": "academics",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/semesters",
+  "mod": "academics",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/session-years",
+  "mod": "academics",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/shifts",
+  "mod": "academics",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/streams/coefficients",
+  "mod": "academics",
+  "methods": "GET|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/streams",
+  "mod": "academics",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/subject-teachers",
+  "mod": "academics",
+  "methods": "GET|POST|DELETE",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/subjects",
+  "mod": "academics",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/syllabus",
+  "mod": "academics",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/teacher-availability",
+  "mod": "academics",
+  "methods": "GET|POST|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/teacher-question-bank",
+  "mod": "academics",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/teacher-question-bank/seed",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/teacher-question-bank/[id]",
+  "mod": "academics",
+  "methods": "PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/timetable-conflicts/resolve",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/timetable-conflicts",
+  "mod": "academics",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/academics/timetable-slots/copy",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/timetable-slots",
+  "mod": "academics",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/timetable-versions/generate",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/timetable-versions/publish",
+  "mod": "academics",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/academics/timetable-versions",
+  "mod": "academics",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/accountant/me/approvals",
+  "mod": "accountant",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/accountant/me/cashier",
+  "mod": "accountant",
+  "methods": "GET|POST|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/accountant/me/home",
+  "mod": "accountant",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/accountant/me/office-accounting",
+  "mod": "accountant",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/accountant/me/receivables",
+  "mod": "accountant",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/broadcast/automations",
+  "mod": "broadcast",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/automations/runs/[runId]/recipients",
+  "mod": "broadcast",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/broadcast/automations/[id]",
+  "mod": "broadcast",
+  "methods": "GET|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/automations/[id]/runs",
+  "mod": "broadcast",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/broadcast/automations/[id]/test",
+  "mod": "broadcast",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/automations/[id]/toggle",
+  "mod": "broadcast",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/campaigns",
+  "mod": "broadcast",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/campaigns/[id]/approve",
+  "mod": "broadcast",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/campaigns/[id]/cancel",
+  "mod": "broadcast",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/campaigns/[id]/export",
+  "mod": "broadcast",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/broadcast/campaigns/[id]/preview",
+  "mod": "broadcast",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/campaigns/[id]/recipients",
+  "mod": "broadcast",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/broadcast/campaigns/[id]/report",
+  "mod": "broadcast",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/broadcast/campaigns/[id]",
+  "mod": "broadcast",
+  "methods": "GET|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/campaigns/[id]/schedule",
+  "mod": "broadcast",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/connections",
+  "mod": "broadcast",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/connections/[id]",
+  "mod": "broadcast",
+  "methods": "GET|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/connections/[id]/send-test",
+  "mod": "broadcast",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/connections/[id]/test",
+  "mod": "broadcast",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/consents",
+  "mod": "broadcast",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/deliveries/[id]/events",
+  "mod": "broadcast",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/broadcast/deliveries/[id]/retry",
+  "mod": "broadcast",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/segments",
+  "mod": "broadcast",
+  "methods": "GET|POST|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/segments/[id]/preview",
+  "mod": "broadcast",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/segments/[id]",
+  "mod": "broadcast",
+  "methods": "GET|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/suppressions",
+  "mod": "broadcast",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/suppressions/[id]",
+  "mod": "broadcast",
+  "methods": "DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/templates",
+  "mod": "broadcast",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/templates/[id]",
+  "mod": "broadcast",
+  "methods": "GET|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/templates/[id]/versions",
+  "mod": "broadcast",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/templates/[id]/versions/[versionId]/publish",
+  "mod": "broadcast",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/broadcast/waha/qr",
+  "mod": "broadcast",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/broadcast/worker/process",
+  "mod": "broadcast",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/calendar",
+  "mod": "events",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/events/occurrences/[id]/checkins",
+  "mod": "events",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/occurrences/[id]/waitlist",
+  "mod": "events",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/events/occurrences/[id]/waitlist/[waitlistId]/respond",
+  "mod": "events",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/registrations/[id]/cancel",
+  "mod": "events",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/reports",
+  "mod": "events",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/events",
+  "mod": "events",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/types",
+  "mod": "events",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/[id]/attachments",
+  "mod": "events",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/[id]/attachments/[attachmentId]",
+  "mod": "events",
+  "methods": "DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/[id]/audiences",
+  "mod": "events",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/[id]/audiences/[ruleId]",
+  "mod": "events",
+  "methods": "DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/[id]/cancel",
+  "mod": "events",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/[id]/communications",
+  "mod": "events",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/[id]/feed.ics",
+  "mod": "events",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/events/[id]/feedback",
+  "mod": "events",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/[id]/feedback/[feedbackId]",
+  "mod": "events",
+  "methods": "PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/[id]/incidents",
+  "mod": "events",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/[id]/incidents/[incidentId]",
+  "mod": "events",
+  "methods": "PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/[id]/occurrences",
+  "mod": "events",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/events/[id]/publish",
+  "mod": "events",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/[id]/registrations",
+  "mod": "events",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/[id]",
+  "mod": "events",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/[id]/tasks",
+  "mod": "events",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/[id]/tasks/[taskId]",
+  "mod": "events",
+  "methods": "PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/[id]/venues",
+  "mod": "events",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/events/[id]/venues/[venueId]",
+  "mod": "events",
+  "methods": "PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/allocations/bulk/commit",
+  "mod": "hostel",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/allocations/bulk/preview",
+  "mod": "hostel",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/allocations/commit",
+  "mod": "hostel",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/allocations/preview",
+  "mod": "hostel",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/allocations",
+  "mod": "hostel",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/hostel/allocations/[id]/check-in",
+  "mod": "hostel",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/allocations/[id]/check-out",
+  "mod": "hostel",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/allocations/[id]/events",
+  "mod": "hostel",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/hostel/allocations/[id]",
+  "mod": "hostel",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/hostel/allocations/[id]/transfer",
+  "mod": "hostel",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/applications",
+  "mod": "hostel",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/applications/[id]/decision",
+  "mod": "hostel",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/applications/[id]",
+  "mod": "hostel",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/beds",
+  "mod": "hostel",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/beds/[id]",
+  "mod": "hostel",
+  "methods": "PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/beds/[id]/status",
+  "mod": "hostel",
+  "methods": "PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/board",
+  "mod": "hostel",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/hostel/categories",
+  "mod": "hostel",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/categories/[id]",
+  "mod": "hostel",
+  "methods": "PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/escalations",
+  "mod": "hostel",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/hostel/escalations/run",
+  "mod": "hostel",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/escalations/[id]/acknowledge",
+  "mod": "hostel",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/guardian/me",
+  "mod": "hostel",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/hostel/hostels",
+  "mod": "hostel",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/hostels/[id]",
+  "mod": "hostel",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/leave-passes",
+  "mod": "hostel",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/leave-passes/[id]/return",
+  "mod": "hostel",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/leave-passes/[id]",
+  "mod": "hostel",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/policies",
+  "mod": "hostel",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/reports/allocations",
+  "mod": "hostel",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/hostel/reports/occupancy",
+  "mod": "hostel",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/hostel/resident/me/leave-requests",
+  "mod": "hostel",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/resident/me",
+  "mod": "hostel",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/hostel/roll-calls",
+  "mod": "hostel",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/roll-calls/[id]/close",
+  "mod": "hostel",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/roll-calls/[id]/entries",
+  "mod": "hostel",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/roll-calls/[id]",
+  "mod": "hostel",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/hostel/rooms",
+  "mod": "hostel",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/rooms/[id]",
+  "mod": "hostel",
+  "methods": "PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/tonight",
+  "mod": "hostel",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/hostel/zones",
+  "mod": "hostel",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/hostel/zones/[id]",
+  "mod": "hostel",
+  "methods": "PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/adjustments",
+  "mod": "inventory",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/adjustments/[id]",
+  "mod": "inventory",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/inventory/categories",
+  "mod": "inventory",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/categories/[id]",
+  "mod": "inventory",
+  "methods": "PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/export",
+  "mod": "inventory",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/inventory/issues",
+  "mod": "inventory",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/issues/[id]/return",
+  "mod": "inventory",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/issues/[id]",
+  "mod": "inventory",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/inventory/movements",
+  "mod": "inventory",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/inventory/overview",
+  "mod": "inventory",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/inventory/products",
+  "mod": "inventory",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/products/[id]",
+  "mod": "inventory",
+  "methods": "GET|PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/purchases",
+  "mod": "inventory",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/purchases/suggestions",
+  "mod": "inventory",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/purchases/[id]/receive",
+  "mod": "inventory",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/purchases/[id]/reverse",
+  "mod": "inventory",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/purchases/[id]",
+  "mod": "inventory",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/inventory/sales",
+  "mod": "inventory",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/sales/[id]/reverse",
+  "mod": "inventory",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/sales/[id]",
+  "mod": "inventory",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/inventory/stock/reconcile",
+  "mod": "inventory",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/stock",
+  "mod": "inventory",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/inventory/stores",
+  "mod": "inventory",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/stores/[id]",
+  "mod": "inventory",
+  "methods": "PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/suppliers",
+  "mod": "inventory",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/suppliers/[id]",
+  "mod": "inventory",
+  "methods": "PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/transfers",
+  "mod": "inventory",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/transfers/[id]/cancel",
+  "mod": "inventory",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/transfers/[id]/complete",
+  "mod": "inventory",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/transfers/[id]",
+  "mod": "inventory",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/inventory/units",
+  "mod": "inventory",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/inventory/units/[id]",
+  "mod": "inventory",
+  "methods": "PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/catalog/categories",
+  "mod": "library",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/catalog/categories/[id]",
+  "mod": "library",
+  "methods": "PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/catalog/contributors",
+  "mod": "library",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/catalog/contributors/[id]",
+  "mod": "library",
+  "methods": "PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/catalog/publishers",
+  "mod": "library",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/catalog/publishers/[id]",
+  "mod": "library",
+  "methods": "PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/catalog",
+  "mod": "library",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/catalog/subjects",
+  "mod": "library",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/catalog/subjects/[id]",
+  "mod": "library",
+  "methods": "PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/catalog/[id]/contributors",
+  "mod": "library",
+  "methods": "PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/catalog/[id]",
+  "mod": "library",
+  "methods": "GET|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/catalog/[id]/subjects",
+  "mod": "library",
+  "methods": "PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/charges",
+  "mod": "library",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/library/charges/[id]/post",
+  "mod": "library",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/charges/[id]/waive",
+  "mod": "library",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/circulation/issue",
+  "mod": "library",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/circulation/loans",
+  "mod": "library",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/library/circulation/renew",
+  "mod": "library",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/circulation/return",
+  "mod": "library",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/closures",
+  "mod": "library",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/closures/[id]",
+  "mod": "library",
+  "methods": "DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/copies/export",
+  "mod": "library",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/library/copies/import",
+  "mod": "library",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/copies",
+  "mod": "library",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/copies/[id]",
+  "mod": "library",
+  "methods": "GET|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/editions",
+  "mod": "library",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/editions/[id]",
+  "mod": "library",
+  "methods": "GET|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/holds",
+  "mod": "library",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/holds/[id]/cancel",
+  "mod": "library",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/me/charges",
+  "mod": "library",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/library/me/children",
+  "mod": "library",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/library/me/children/[studentId]/loans",
+  "mod": "library",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/library/me/history",
+  "mod": "library",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/library/me/holds",
+  "mod": "library",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/me/home",
+  "mod": "library",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/library/me/loans",
+  "mod": "library",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/library/me/renew",
+  "mod": "library",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/members",
+  "mod": "library",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/members/[id]",
+  "mod": "library",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/library/policies",
+  "mod": "library",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/policies/[id]",
+  "mod": "library",
+  "methods": "PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/reports/circulation",
+  "mod": "library",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/library/reports/inventory",
+  "mod": "library",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/library/reports/overdue",
+  "mod": "library",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/library/reports/overview",
+  "mod": "library",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/library/stocktakes",
+  "mod": "library",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/stocktakes/[id]/adjustments/apply",
+  "mod": "library",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/stocktakes/[id]/adjustments",
+  "mod": "library",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/library/stocktakes/[id]/close",
+  "mod": "library",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/stocktakes/[id]/observations",
+  "mod": "library",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/transfers",
+  "mod": "library",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/library/transfers/[id]/transition",
+  "mod": "library",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/live-classrooms/health",
+  "mod": "live-classrooms",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/live-classrooms/my-sessions",
+  "mod": "live-classrooms",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/live-classrooms/my-sessions/[id]/join",
+  "mod": "live-classrooms",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/live-classrooms/provider-profiles",
+  "mod": "live-classrooms",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/live-classrooms/provider-profiles/[id]",
+  "mod": "live-classrooms",
+  "methods": "PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/live-classrooms/provider-profiles/[id]/test",
+  "mod": "live-classrooms",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/live-classrooms/reports/export",
+  "mod": "live-classrooms",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/live-classrooms/reports/overview",
+  "mod": "live-classrooms",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/live-classrooms/reports/sessions",
+  "mod": "live-classrooms",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/live-classrooms/sessions",
+  "mod": "live-classrooms",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/live-classrooms/sessions/[id]/attendance",
+  "mod": "live-classrooms",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/live-classrooms/sessions/[id]/end",
+  "mod": "live-classrooms",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/live-classrooms/sessions/[id]/join",
+  "mod": "live-classrooms",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/live-classrooms/sessions/[id]/materials",
+  "mod": "live-classrooms",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/live-classrooms/sessions/[id]/materials/[assetId]",
+  "mod": "live-classrooms",
+  "methods": "DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/live-classrooms/sessions/[id]/post-attendance",
+  "mod": "live-classrooms",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/live-classrooms/sessions/[id]/reconcile",
+  "mod": "live-classrooms",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/live-classrooms/sessions/[id]/recordings",
+  "mod": "live-classrooms",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/live-classrooms/sessions/[id]/recordings/[recordingId]",
+  "mod": "live-classrooms",
+  "methods": "PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/live-classrooms/sessions/[id]/redeem-join",
+  "mod": "live-classrooms",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/live-classrooms/sessions/[id]",
+  "mod": "live-classrooms",
+  "methods": "GET|PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/live-classrooms/sessions/[id]/start",
+  "mod": "live-classrooms",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/live-classrooms/sessions/[id]/sync",
+  "mod": "live-classrooms",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/live-classrooms/webhooks/[providerType]",
+  "mod": "live-classrooms",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/reporting/admin/console",
+  "mod": "reporting",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/reporting/catalog",
+  "mod": "reporting",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/reporting/favorites",
+  "mod": "reporting",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/reporting/reports/[key]/preview",
+  "mod": "reporting",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/reporting/reports/[key]/run",
+  "mod": "reporting",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/reporting/runs/recover",
+  "mod": "reporting",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/reporting/runs",
+  "mod": "reporting",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/reporting/runs/[id]/download",
+  "mod": "reporting",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/reporting/runs/[id]",
+  "mod": "reporting",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/addons/reporting/saved-views",
+  "mod": "reporting",
+  "methods": "GET|POST|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/reporting/schedules",
+  "mod": "reporting",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/addons/reporting/schedules/[id]",
+  "mod": "reporting",
+  "methods": "GET|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/admissions/inquiries/convert",
+  "mod": "admissions",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/admissions/inquiries",
+  "mod": "admissions",
+  "methods": "GET|POST|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/alumni/directory",
+  "mod": "alumni",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/alumni/me/events",
+  "mod": "alumni",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/alumni/me/events/[id]/rsvp",
+  "mod": "alumni",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/alumni/me/mentoring",
+  "mod": "alumni",
+  "methods": "GET|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/alumni/me/preferences",
+  "mod": "alumni",
+  "methods": "GET|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/alumni/me/profile",
+  "mod": "alumni",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/alumni/me/records",
+  "mod": "alumni",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/alumni/me/records/[id]/download",
+  "mod": "alumni",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/alumni/me/requests",
+  "mod": "alumni",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/alumni/mentoring",
+  "mod": "alumni",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/analytics",
+  "mod": "analytics",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/attendance/audit-summary",
+  "mod": "attendance",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/attendance/excuses/document",
+  "mod": "attendance",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/attendance/excuses",
+  "mod": "attendance",
+  "methods": "GET|POST|PATCH",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/attendance/flags/detail",
+  "mod": "attendance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/attendance/flags/notes",
+  "mod": "attendance",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/attendance/flags",
+  "mod": "attendance",
+  "methods": "GET|PATCH",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/attendance/heatmap",
+  "mod": "attendance",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/attendance/onsite",
+  "mod": "attendance",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/attendance/qr/events/export",
+  "mod": "attendance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/attendance/qr/events",
+  "mod": "attendance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/attendance/qr/scanner-sessions",
+  "mod": "attendance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/attendance/qr/scanner-sessions/[id]/close",
+  "mod": "attendance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/attendance/qr/scanner-sessions/[id]/events",
+  "mod": "attendance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/attendance/qr/verify-and-stage",
+  "mod": "attendance",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/attendance/registers/reopen",
+  "mod": "attendance",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/attendance/registers",
+  "mod": "attendance",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/attendance",
+  "mod": "attendance",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/attendance/summary",
+  "mod": "attendance",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/audit-logs/export",
+  "mod": "audit-logs",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/audit-logs",
+  "mod": "audit-logs",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/auth/me",
+  "mod": "auth",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/auth/setup-account",
+  "mod": "auth",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/auth/[...all]",
+  "mod": "auth",
+  "methods": "",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/cards/admit-seats",
+  "mod": "cards",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/cards/employees",
+  "mod": "cards",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/cards/issue",
+  "mod": "cards",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/cards/issued",
+  "mod": "cards",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/cards/issued/[id]/pdf",
+  "mod": "cards",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/cards/issued/[id]/revoke",
+  "mod": "cards",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/cards/jobs",
+  "mod": "cards",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/cards/jobs/[id]/process",
+  "mod": "cards",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/cards/jobs/[id]",
+  "mod": "cards",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/cards/overview",
+  "mod": "cards",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/cards/templates",
+  "mod": "cards",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/cards/templates/[id]",
+  "mod": "cards",
+  "methods": "GET|PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/cards/templates/[id]/versions",
+  "mod": "cards",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/certificates/definitions",
+  "mod": "certificates",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/certificates/definitions/[id]",
+  "mod": "certificates",
+  "methods": "GET|PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/certificates/definitions/[id]/versions",
+  "mod": "certificates",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/certificates/issue",
+  "mod": "certificates",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/certificates/issued",
+  "mod": "certificates",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/certificates/issued/[id]/pdf",
+  "mod": "certificates",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/certificates/issued/[id]/replace",
+  "mod": "certificates",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/certificates/issued/[id]/revoke",
+  "mod": "certificates",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/certificates/issued/[id]",
+  "mod": "certificates",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/certificates/jobs",
+  "mod": "certificates",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/certificates/jobs/[id]/process",
+  "mod": "certificates",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/certificates/jobs/[id]",
+  "mod": "certificates",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/certificates/overview",
+  "mod": "certificates",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/certificates/recipients",
+  "mod": "certificates",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/certificates/requests",
+  "mod": "certificates",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/certificates/requests/[id]",
+  "mod": "certificates",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/certificates/settings",
+  "mod": "certificates",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/certificates/signatories",
+  "mod": "certificates",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/certificates/signatories/[id]",
+  "mod": "certificates",
+  "methods": "PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/certificates/templates",
+  "mod": "certificates",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/certificates/templates/[id]",
+  "mod": "certificates",
+  "methods": "GET|PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/certificates/templates/[id]/versions",
+  "mod": "certificates",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/communication/announcements/mark-read",
+  "mod": "communication",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/communication/announcements",
+  "mod": "communication",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/communication/announcements/unread-count",
+  "mod": "communication",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/communication/balance",
+  "mod": "communication",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/communication/messages",
+  "mod": "communication",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/communication/reminder-audience",
+  "mod": "communication",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/communication/send",
+  "mod": "communication",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/communication/templates",
+  "mod": "communication",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/content/assets",
+  "mod": "content",
+  "methods": "POST|GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/content/assets/[id]/archive",
+  "mod": "content",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/content/assets/[id]/download",
+  "mod": "content",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/content/assets/[id]/publish",
+  "mod": "content",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/content/assets/[id]",
+  "mod": "content",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/content/assets/[id]/targets",
+  "mod": "content",
+  "methods": "PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/content/assets/[id]/usage-links",
+  "mod": "content",
+  "methods": "GET|POST|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/content/assets/[id]/versions",
+  "mod": "content",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/content/attachment-types",
+  "mod": "content",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/content/attachment-types/[id]",
+  "mod": "content",
+  "methods": "PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/crm/inquiries/merge",
+  "mod": "crm",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/crm/inquiries",
+  "mod": "crm",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/crm/inquiries/[id]/duplicates",
+  "mod": "crm",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/crm/inquiries/[id]/follow-ups",
+  "mod": "crm",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/crm/inquiries/[id]",
+  "mod": "crm",
+  "methods": "GET|PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/dashboard/summary",
+  "mod": "dashboard",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/documents/artifacts/[id]",
+  "mod": "documents",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/documents/designs/[kind]/publish",
+  "mod": "documents",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/documents/designs/[kind]",
+  "mod": "documents",
+  "methods": "GET|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/documents/previews",
+  "mod": "documents",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/employee/me/advances",
+  "mod": "employee",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/employee/me/awards",
+  "mod": "employee",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/employee/me/documents",
+  "mod": "employee",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/employee/me/documents/[documentId]/download",
+  "mod": "employee",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/employee/me/home",
+  "mod": "employee",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/employee/me/leave",
+  "mod": "employee",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/employee/me/leave/[id]/cancel",
+  "mod": "employee",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/employee/me/payroll",
+  "mod": "employee",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/employee/me/payroll/[payslipId]/download",
+  "mod": "employee",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/employee/me/preferences",
+  "mod": "employee",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/employee/me/profile",
+  "mod": "employee",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/employee/me/requests",
+  "mod": "employee",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/employee/me/time",
+  "mod": "employee",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/exports",
+  "mod": "exports",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/exports/[id]/download",
+  "mod": "exports",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/exports/[id]",
+  "mod": "exports",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/accounting/accounts",
+  "mod": "finance",
+  "methods": "GET|POST|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/accounting/deposits",
+  "mod": "finance",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/accounting/expenses",
+  "mod": "finance",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/accounting/expenses/[id]/approve",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/accounting/expenses/[id]/post",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/accounting/expenses/[id]/reject",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/accounting/expenses/[id]/submit",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/accounting/journal-entries",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/accounting/journals",
+  "mod": "finance",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/accounting/periods",
+  "mod": "finance",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/accounting/periods/[id]/close",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/accounting/periods/[id]/reopen",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/accounting/periods/[id]/reopen-requests",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/accounting/periods/[id]/reopen-requests/[requestId]/decide",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/accounting/posting-status",
+  "mod": "finance",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/accounting/statements/drill-down",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/accounting/statements/[type]",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/accounting/student-accounting/exceptions",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/accounting/student-accounting/exceptions/[id]",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/accounting/student-accounting/mappings",
+  "mod": "finance",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/accounting/student-accounting/mappings/[id]",
+  "mod": "finance",
+  "methods": "DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/accounting/student-accounting/post",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/accounting/student-accounting/reconcile",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/accounting/transactions",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/accounting/transactions/[id]/reverse",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/accounting/transactions/[id]",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/accounting/trial-balance",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/accounting/voucher-types",
+  "mod": "finance",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/allocations",
+  "mod": "finance",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/bank-reconciliation",
+  "mod": "finance",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/bank-reconciliation/[id]/close",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/bank-reconciliation/[id]/fee-interest",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/bank-reconciliation/[id]/import",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/bank-reconciliation/[id]/match",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/bank-reconciliation/[id]/matches",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/bank-reconciliation/[id]/matches/unmatch",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/bank-reconciliation/[id]/merge",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/bank-reconciliation/[id]",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/bank-reconciliation/[id]/split",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/cashier-sessions",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/cashier-sessions/[id]/close",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/cashier-sessions/[id]/reconcile",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/chart-of-accounts",
+  "mod": "finance",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/credit-notes",
+  "mod": "finance",
+  "methods": "GET|POST|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/credits",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/expenses/receipt",
+  "mod": "finance",
+  "methods": "POST|GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/expenses",
+  "mod": "finance",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/exports/journal/push",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/exports/journal",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/fee-allocation",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/fee-allocations/preview",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/fee-allocations",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/fee-allocations/[id]/approve",
+  "mod": "finance",
+  "methods": "PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/fee-allocations/[id]/cancel",
+  "mod": "finance",
+  "methods": "PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/fee-allocations/[id]",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/fee-allocations/[id]/run",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/fee-assignments",
+  "mod": "finance",
+  "methods": "GET|POST|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/fee-structure-versions",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/fee-structures",
+  "mod": "finance",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/fee-structures/[id]/versions",
+  "mod": "finance",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/fee-types",
+  "mod": "finance",
+  "methods": "GET|POST|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/fine-assessments",
+  "mod": "finance",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/fine-policies",
+  "mod": "finance",
+  "methods": "GET|POST|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/fine-runs",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/fiscal-periods/close",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/invoice-events",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/invoices",
+  "mod": "finance",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/invoices/[id]/cancel",
+  "mod": "finance",
+  "methods": "PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/invoices/[id]/credit",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/invoices/[id]/issue",
+  "mod": "finance",
+  "methods": "PUT",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/journals",
+  "mod": "finance",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/lookups",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/payment-methods",
+  "mod": "finance",
+  "methods": "GET|POST|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/payment-reversals",
+  "mod": "finance",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/payments/online/callback",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/payments/online",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/payments",
+  "mod": "finance",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/payments/sandbox",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/payments/[id]/reverse",
+  "mod": "finance",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/receipts",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/receipts/[id]",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/refunds",
+  "mod": "finance",
+  "methods": "GET|POST|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/reminder-rules",
+  "mod": "finance",
+  "methods": "GET|POST|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/reminder-runs",
+  "mod": "finance",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/reminders",
+  "mod": "finance",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/finance/reports",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/finance/statements",
+  "mod": "finance",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/gate/credentials/verify",
+  "mod": "gate",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/assignments",
+  "mod": "guard",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/assignments/[id]",
+  "mod": "guard",
+  "methods": "PATCH|DELETE",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/emergency/activate",
+  "mod": "guard",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/emergency/procedures",
+  "mod": "guard",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/guard/emergency/[activationId]/acknowledge",
+  "mod": "guard",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/emergency/[activationId]/end",
+  "mod": "guard",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/gates",
+  "mod": "guard",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/gates/[id]",
+  "mod": "guard",
+  "methods": "PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/incidents",
+  "mod": "guard",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/incidents/[id]/actions",
+  "mod": "guard",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/incidents/[id]/attachments",
+  "mod": "guard",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/incidents/[id]/attachments/[attachmentId]",
+  "mod": "guard",
+  "methods": "DELETE",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/incidents/[id]",
+  "mod": "guard",
+  "methods": "PATCH",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/kiosk-sessions",
+  "mod": "guard",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/kiosk-sessions/[id]/close",
+  "mod": "guard",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/kiosk-sessions/[id]/lock",
+  "mod": "guard",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/me/expected",
+  "mod": "guard",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/guard/me/gate",
+  "mod": "guard",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/guard/me/incidents",
+  "mod": "guard",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/guard/me/shift",
+  "mod": "guard",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/guard/pickup-authorizations",
+  "mod": "guard",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/pickup-authorizations/[id]/cancel",
+  "mod": "guard",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/pickups/release",
+  "mod": "guard",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/scans",
+  "mod": "guard",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/guard/shifts",
+  "mod": "guard",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/shifts/[id]",
+  "mod": "guard",
+  "methods": "PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/students/search",
+  "mod": "guard",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/guard/students/[id]/pickups",
+  "mod": "guard",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/guard/visitor-invitations",
+  "mod": "guard",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/visitor-invitations/[id]/approve",
+  "mod": "guard",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/visitor-invitations/[id]/reject",
+  "mod": "guard",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/visits",
+  "mod": "guard",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/visits/[id]/check-in",
+  "mod": "guard",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/visits/[id]/check-out",
+  "mod": "guard",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guard/visits/[id]/pass",
+  "mod": "guard",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/guardian/link/accept",
+  "mod": "guardian",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/guardian/link/start",
+  "mod": "guardian",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/guardian/me/children",
+  "mod": "guardian",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/guardian/me/children/[relationshipId]/announcements",
+  "mod": "guardian",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/guardian/me/children/[relationshipId]/attendance",
+  "mod": "guardian",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/guardian/me/children/[relationshipId]/documents",
+  "mod": "guardian",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/guardian/me/children/[relationshipId]/excuses",
+  "mod": "guardian",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/guardian/me/children/[relationshipId]/excuses/[excuseId]/document",
+  "mod": "guardian",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/guardian/me/children/[relationshipId]/finance",
+  "mod": "guardian",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/guardian/me/children/[relationshipId]/homework",
+  "mod": "guardian",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/guardian/me/children/[relationshipId]/meetings",
+  "mod": "guardian",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/guardian/me/children/[relationshipId]/overview",
+  "mod": "guardian",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/guardian/me/children/[relationshipId]/requests",
+  "mod": "guardian",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/guardian/me/children/[relationshipId]/results",
+  "mod": "guardian",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/guardian/me/children/[relationshipId]",
+  "mod": "guardian",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/guardian/me/finance",
+  "mod": "guardian",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/guardian/me/home",
+  "mod": "guardian",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/guardian/me/messages",
+  "mod": "guardian",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/guardian/me/preferences",
+  "mod": "guardian",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/guardian/me",
+  "mod": "guardian",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/health",
+  "mod": "health",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/hr/access",
+  "mod": "hr",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/hr/departments",
+  "mod": "hr",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/departments/[id]",
+  "mod": "hr",
+  "methods": "PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/designations",
+  "mod": "hr",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/designations/[id]",
+  "mod": "hr",
+  "methods": "PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/employee-profiles",
+  "mod": "hr",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/employees",
+  "mod": "hr",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/employees/[id]/documents",
+  "mod": "hr",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/employees/[id]/documents/[documentId]",
+  "mod": "hr",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/employees/[id]/history",
+  "mod": "hr",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/hr/employees/[id]/link-account",
+  "mod": "hr",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/employees/[id]/offboard",
+  "mod": "hr",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/employees/[id]/payroll-attendance",
+  "mod": "hr",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/hr/employees/[id]/reactivate",
+  "mod": "hr",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/employees/[id]",
+  "mod": "hr",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/export",
+  "mod": "hr",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/hr/leave/balances",
+  "mod": "hr",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/hr/leave/categories",
+  "mod": "hr",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/leave/requests",
+  "mod": "hr",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/leave/requests/[id]",
+  "mod": "hr",
+  "methods": "PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/me/self-service-eligibility",
+  "mod": "hr",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/hr/overview",
+  "mod": "hr",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/hr/payroll/periods",
+  "mod": "hr",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/payroll/periods/[id]/calculate",
+  "mod": "hr",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/payroll/periods/[id]/lines",
+  "mod": "hr",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/hr/payroll/periods/[id]/lock",
+  "mod": "hr",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/payslips",
+  "mod": "hr",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/hr/payslips/[id]",
+  "mod": "hr",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/hr/profile-edit-requests",
+  "mod": "hr",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/salary-assignments",
+  "mod": "hr",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/hr/salary-templates",
+  "mod": "hr",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/identity-badges/bulk-issue",
+  "mod": "identity-badges",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/identity-badges",
+  "mod": "identity-badges",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/identity-badges/[id]/replace",
+  "mod": "identity-badges",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/identity-badges/[id]",
+  "mod": "identity-badges",
+  "methods": "DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/leadership/admin/authorities",
+  "mod": "leadership",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/leadership/admin/scopes",
+  "mod": "leadership",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/leadership/me/approvals",
+  "mod": "leadership",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/leadership/me/exceptions",
+  "mod": "leadership",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/leadership/me/home",
+  "mod": "leadership",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/me/permissions",
+  "mod": "me",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/notifications",
+  "mod": "notifications",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/platform/caddy-ask",
+  "mod": "platform",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/platform/edge-tenant-resolve",
+  "mod": "platform",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/portal/activity",
+  "mod": "portal",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/portal/home",
+  "mod": "portal",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/portal/manifest",
+  "mod": "portal",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/portal/me",
+  "mod": "portal",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/portal/preferences",
+  "mod": "portal",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/portal/role",
+  "mod": "portal",
+  "methods": "POST|DELETE",
+  "ctxBranch": true,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/portal/search",
+  "mod": "portal",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/public/alumni-documents/verify",
+  "mod": "public",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/public/cards/verify",
+  "mod": "public",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/public/certificates/verify",
+  "mod": "public",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/public/events/[tenantSlug]",
+  "mod": "public",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/public/inquiries/[tenantSlug]",
+  "mod": "public",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/public/invitations/[token]/accept",
+  "mod": "public",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/public/invitations/[token]",
+  "mod": "public",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/public/signup",
+  "mod": "public",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/public/website/[tenantSlug]/images/[filename]",
+  "mod": "public",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/public/website/[tenantSlug]/logo",
+  "mod": "public",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/reception/appointments",
+  "mod": "reception",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/reception/appointments/[id]/cancel",
+  "mod": "reception",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/reception/appointments/[id]/check-in",
+  "mod": "reception",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/reception/appointments/[id]/complete",
+  "mod": "reception",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/reception/appointments/[id]/no-show",
+  "mod": "reception",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/reception/appointments/[id]/reschedule",
+  "mod": "reception",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/reception/appointments/[id]",
+  "mod": "reception",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/reception/gates",
+  "mod": "reception",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/reception/handoffs",
+  "mod": "reception",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/reception/handoffs/[id]/acknowledge",
+  "mod": "reception",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/reception/handoffs/[id]/cancel",
+  "mod": "reception",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/reception/handoffs/[id]/resolve",
+  "mod": "reception",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/reception/inquiries",
+  "mod": "reception",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/reception/inquiries/[id]/follow-ups",
+  "mod": "reception",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/reception/lookup",
+  "mod": "reception",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/reception/me/home",
+  "mod": "reception",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/reception/pickups/authorizations",
+  "mod": "reception",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/reception/pickups/authorizations/[id]/cancel",
+  "mod": "reception",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/reception/pickups/release",
+  "mod": "reception",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/reception/pickups/students",
+  "mod": "reception",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/reception/pickups/students/[id]/pickups",
+  "mod": "reception",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/reception/staff",
+  "mod": "reception",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/reception/verifications",
+  "mod": "reception",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/reception/visitors",
+  "mod": "reception",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/reception/visitors/[id]/check-in",
+  "mod": "reception",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/reception/visitors/[id]/check-out",
+  "mod": "reception",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/reception/visitors/[id]/pass",
+  "mod": "reception",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/scanner-devices/pair",
+  "mod": "scanner-devices",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/scanner-devices",
+  "mod": "scanner-devices",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/scanner-devices/[id]",
+  "mod": "scanner-devices",
+  "methods": "PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/search",
+  "mod": "search",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/security/dashboard",
+  "mod": "security",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/security/sessions/[id]",
+  "mod": "security",
+  "methods": "DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/access-reset",
+  "mod": "settings",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/addons",
+  "mod": "settings",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/settings/addons/[id]",
+  "mod": "settings",
+  "methods": "PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/branches",
+  "mod": "settings",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/branches/[id]",
+  "mod": "settings",
+  "methods": "PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/catalog",
+  "mod": "settings",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/settings/cndp-filing",
+  "mod": "settings",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/custom-fields",
+  "mod": "settings",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/custom-fields/[id]",
+  "mod": "settings",
+  "methods": "GET|PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/custom-fields/[id]/values",
+  "mod": "settings",
+  "methods": "GET|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/data-export",
+  "mod": "settings",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/settings/domains",
+  "mod": "settings",
+  "methods": "GET|POST|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/domains/[id]/verify",
+  "mod": "settings",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/drafts",
+  "mod": "settings",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/drafts/[id]/approve",
+  "mod": "settings",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/drafts/[id]/reject",
+  "mod": "settings",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/drafts/[id]",
+  "mod": "settings",
+  "methods": "PATCH",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/invitations",
+  "mod": "settings",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/invitations/[id]",
+  "mod": "settings",
+  "methods": "DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/jobs/[id]/trigger",
+  "mod": "settings",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/logo",
+  "mod": "settings",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/migration",
+  "mod": "settings",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/migration/tasks/[id]",
+  "mod": "settings",
+  "methods": "PATCH",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/migration/template",
+  "mod": "settings",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/settings/numbering",
+  "mod": "settings",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/numbering/[id]/next",
+  "mod": "settings",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/numbering/[id]/preview",
+  "mod": "settings",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/numbering/[id]",
+  "mod": "settings",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/permissions",
+  "mod": "settings",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/providers",
+  "mod": "settings",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/providers/[id]",
+  "mod": "settings",
+  "methods": "PATCH",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/providers/[id]/test",
+  "mod": "settings",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/readiness",
+  "mod": "settings",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/settings",
+  "mod": "settings",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/scheduled-jobs",
+  "mod": "settings",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/scheduled-jobs/[id]",
+  "mod": "settings",
+  "methods": "GET|PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/scheduled-jobs/[id]/runs",
+  "mod": "settings",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/settings/scheduled-jobs/[id]/toggle",
+  "mod": "settings",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/scheduled-jobs/[id]/trigger",
+  "mod": "settings",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/search",
+  "mod": "settings",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/settings/security/login-events",
+  "mod": "settings",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/settings/subscription/renewal-request",
+  "mod": "settings",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/subscription",
+  "mod": "settings",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/settings/values",
+  "mod": "settings",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/values/[key]/peek",
+  "mod": "settings",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/values/[key]/rotate",
+  "mod": "settings",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/values/[key]",
+  "mod": "settings",
+  "methods": "GET|PATCH|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/website/images",
+  "mod": "settings",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/website/menu-items",
+  "mod": "settings",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/website/menu-items/[id]",
+  "mod": "settings",
+  "methods": "PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/website/news",
+  "mod": "settings",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/website/news/[id]",
+  "mod": "settings",
+  "methods": "GET|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/website/pages",
+  "mod": "settings",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/settings/website/pages/[pageType]",
+  "mod": "settings",
+  "methods": "GET|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/settings/website/theme",
+  "mod": "settings",
+  "methods": "GET|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/student/me/attendance",
+  "mod": "student",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/student/me/exams",
+  "mod": "student",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/student/me/home",
+  "mod": "student",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/student/me/homework",
+  "mod": "student",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/student/me/report-cards",
+  "mod": "student",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/student/me/report-cards/[id]/pdf",
+  "mod": "student",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/student/me/results",
+  "mod": "student",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/student/me/subjects",
+  "mod": "student",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/student/me/timetable",
+  "mod": "student",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/students/admissions/documents",
+  "mod": "students",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/students/admissions",
+  "mod": "students",
+  "methods": "GET|POST|PATCH|PUT",
+  "ctxBranch": true,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/students/admissions/[id]/approve",
+  "mod": "students",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/students/admissions/[id]/checklist",
+  "mod": "students",
+  "methods": "PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/students/admissions/[id]/comments",
+  "mod": "students",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/students/admissions/[id]/documents/[docType]",
+  "mod": "students",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/students/admissions/[id]/enroll",
+  "mod": "students",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/students/admissions/[id]/interview",
+  "mod": "students",
+  "methods": "GET|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/students/admissions/[id]/reject",
+  "mod": "students",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/students/admissions/[id]",
+  "mod": "students",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/students/alumni/events",
+  "mod": "students",
+  "methods": "GET|POST|PUT|PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/students/alumni/requests",
+  "mod": "students",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/students/alumni/requests/[id]/status",
+  "mod": "students",
+  "methods": "PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/students/alumni",
+  "mod": "students",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/students/alumni/[id]/documents",
+  "mod": "students",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/students/bulk-transition-to-alumni",
+  "mod": "students",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/students/documents",
+  "mod": "students",
+  "methods": "GET|POST|DELETE",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/students/import",
+  "mod": "students",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/students/matricules",
+  "mod": "students",
+  "methods": "GET|POST|PATCH",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/students/parents/link",
+  "mod": "students",
+  "methods": "POST|PATCH|DELETE",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/students/parents",
+  "mod": "students",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/students/parents/[id]/activity",
+  "mod": "students",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/students/parents/[id]/payments",
+  "mod": "students",
+  "methods": "GET",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/students/parents/[id]",
+  "mod": "students",
+  "methods": "GET|PATCH",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/students/photos",
+  "mod": "students",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": true,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/students/placements/auto",
+  "mod": "students",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/students/placements",
+  "mod": "students",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/students/promotions/preview",
+  "mod": "students",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/students/promotions",
+  "mod": "students",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/students/report-card/issue",
+  "mod": "students",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/students/report-card",
+  "mod": "students",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/students/report-card/templates",
+  "mod": "students",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/students",
+  "mod": "students",
+  "methods": "GET|POST|PUT|PATCH|DELETE",
+  "ctxBranch": true,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/students/transfer-stats",
+  "mod": "students",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/students/transfers",
+  "mod": "students",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/students/[id]/regenerate-access",
+  "mod": "students",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/students/[id]/reinstate-from-alumni",
+  "mod": "students",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/students/[id]/transfer",
+  "mod": "students",
+  "methods": "POST",
+  "ctxBranch": true,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/students/[id]/transition-to-alumni",
+  "mod": "students",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/super-admin/addon-definitions",
+  "mod": "super-admin",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/super-admin/alerts",
+  "mod": "super-admin",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/super-admin/domains",
+  "mod": "super-admin",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/super-admin/domains/[id]",
+  "mod": "super-admin",
+  "methods": "PATCH|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/super-admin/domains/[id]/verify",
+  "mod": "super-admin",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/super-admin/entitlements",
+  "mod": "super-admin",
+  "methods": "GET|POST|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/super-admin/health",
+  "mod": "super-admin",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/super-admin/plan-limits",
+  "mod": "super-admin",
+  "methods": "GET|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/super-admin/plans",
+  "mod": "super-admin",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/super-admin/plans/[planTier]",
+  "mod": "super-admin",
+  "methods": "GET|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/super-admin/plans/[planTier]/sync",
+  "mod": "super-admin",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/super-admin/reports",
+  "mod": "super-admin",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/super-admin/schools/anonymize",
+  "mod": "super-admin",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/super-admin/schools/backup",
+  "mod": "super-admin",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/super-admin/schools",
+  "mod": "super-admin",
+  "methods": "GET|POST|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/super-admin/schools/[id]/branches",
+  "mod": "super-admin",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/super-admin/sms",
+  "mod": "super-admin",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/super-admin/subscriptions",
+  "mod": "super-admin",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/super-admin/subscriptions/[schoolId]/license",
+  "mod": "super-admin",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/super-admin/subscriptions/[schoolId]/payments/[paymentId]/decision",
+  "mod": "super-admin",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/super-admin/subscriptions/[schoolId]",
+  "mod": "super-admin",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/super-admin/summary",
+  "mod": "super-admin",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/super-admin/support",
+  "mod": "super-admin",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/super-admin/tenant-context",
+  "mod": "super-admin",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/super-admin/waitlist/convert",
+  "mod": "super-admin",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/super-admin/waitlist",
+  "mod": "super-admin",
+  "methods": "GET|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/support/upload",
+  "mod": "support",
+  "methods": "POST|GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/teacher/me/classes",
+  "mod": "teacher",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/teacher/me/home",
+  "mod": "teacher",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/teacher/me/timetable",
+  "mod": "teacher",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/teachers/documents",
+  "mod": "teachers",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/teachers/export",
+  "mod": "teachers",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/teachers/import",
+  "mod": "teachers",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/teachers/options",
+  "mod": "teachers",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/teachers/photo",
+  "mod": "teachers",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/teachers",
+  "mod": "teachers",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/tenant/billing/checkout-session",
+  "mod": "tenant",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/tenant/billing/portal-session",
+  "mod": "tenant",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/tenant/support",
+  "mod": "tenant",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/transport/allocations",
+  "mod": "transport",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/transport/allocations/[id]",
+  "mod": "transport",
+  "methods": "GET|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/transport/drivers",
+  "mod": "transport",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/transport/incidents",
+  "mod": "transport",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/transport/policies",
+  "mod": "transport",
+  "methods": "GET|PUT",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/transport/reports/export",
+  "mod": "transport",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/transport/reports/overview",
+  "mod": "transport",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/transport/rider-events",
+  "mod": "transport",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/transport/routes",
+  "mod": "transport",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/transport/routes/[id]",
+  "mod": "transport",
+  "methods": "GET|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/transport/self-service/guardian",
+  "mod": "transport",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/transport/self-service/student",
+  "mod": "transport",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/transport/stops",
+  "mod": "transport",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/transport/stops/[id]",
+  "mod": "transport",
+  "methods": "GET|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/transport/trips",
+  "mod": "transport",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/transport/trips/[id]/complete",
+  "mod": "transport",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/transport/trips/[id]/roster",
+  "mod": "transport",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": false
+ },
+ {
+  "route": "/api/transport/trips/[id]/start",
+  "mod": "transport",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/transport/vehicles",
+  "mod": "transport",
+  "methods": "GET|POST",
+  "ctxBranch": true,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/transport/vehicles/[id]",
+  "mod": "transport",
+  "methods": "GET|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": true,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/users",
+  "mod": "users",
+  "methods": "GET|POST|PUT|DELETE",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/users/unlock",
+  "mod": "users",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/waitlist",
+  "mod": "waitlist",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/webhooks/communication/[provider]",
+  "mod": "webhooks",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/webhooks/stripe-platform",
+  "mod": "webhooks",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": true,
+  "writes": true
+ },
+ {
+  "route": "/api/workforce/advances",
+  "mod": "workforce",
+  "methods": "GET|PATCH",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/workforce/awards",
+  "mod": "workforce",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/workforce/payroll/config",
+  "mod": "workforce",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/workforce/payroll/config/[resource]/[id]/action",
+  "mod": "workforce",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/workforce/payroll/payments",
+  "mod": "workforce",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/workforce/payroll/payments/[id]/action",
+  "mod": "workforce",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/workforce/payroll/payments/[id]/export",
+  "mod": "workforce",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/workforce/payroll/payslips",
+  "mod": "workforce",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/workforce/payroll/runs",
+  "mod": "workforce",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/workforce/payroll/runs/[id]/action",
+  "mod": "workforce",
+  "methods": "POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ },
+ {
+  "route": "/api/workforce/payroll/runs/[id]",
+  "mod": "workforce",
+  "methods": "GET",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": false
+ },
+ {
+  "route": "/api/workforce/punches",
+  "mod": "workforce",
+  "methods": "GET|POST",
+  "ctxBranch": false,
+  "qBranch": false,
+  "anyBranch": false,
+  "writes": true
+ }
+]

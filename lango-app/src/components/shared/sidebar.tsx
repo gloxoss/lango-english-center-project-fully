@@ -208,6 +208,7 @@ function manifestToNav(item: ManifestItem, locale: string, tNav?: any): NavItem 
 export function Sidebar({ locale }: { locale: string }) {
   const pathname = usePathname();
   const tNav = useTranslations('Navigation');
+  const th = useTranslations('DashboardHome');
   const tAuth = useTranslations('Auth');
   const tRoles = useTranslations('Roles');
   const tStudents = useTranslations('Students');
@@ -516,7 +517,6 @@ export function Sidebar({ locale }: { locale: string }) {
         { label: 'Résultats par Classe', href: `/${locale}/dashboard/academics/results`, permission: 'grading.read' },
         { label: 'Barèmes & Mentions', href: `/${locale}/dashboard/academics/grading/policies`, permission: 'grading.manage' },
         { label: 'Planification des Épreuves', href: `/${locale}/dashboard/academics/evaluations`, permission: 'academics.manage' },
-        { label: 'Épreuves & Calendrier', href: `/${locale}/dashboard/academics/exams`, permission: 'academics.manage' },
       ],
     },
 
@@ -568,6 +568,7 @@ export function Sidebar({ locale }: { locale: string }) {
       subItems: [
         { label: tNav('finance'), href: `/${locale}/dashboard/finance`, permission: 'finance.read' },
         { label: tFinance('cashierDesk'), href: `/${locale}/dashboard/finance/collection-desk`, permission: 'finance.read' },
+        { label: tNav('online-payments'), href: `/${locale}/dashboard/finance/online-payments`, permission: 'finance.read' },
         { label: tNav('receivables'), href: `/${locale}/dashboard/finance/receivables`, permission: 'finance.read' },
         { label: tNav('reminders'), href: `/${locale}/dashboard/finance/reminders`, permission: 'finance.manage' },
         { label: tNav('invoices'), href: `/${locale}/dashboard/finance/invoices`, permission: 'finance.read' },
@@ -577,7 +578,11 @@ export function Sidebar({ locale }: { locale: string }) {
         { label: tFinance('recordPayment'), href: `/${locale}/dashboard/finance/payments/new`, permission: 'finance.read' },
         { label: tNav('office-accounting'), href: `/${locale}/dashboard/finance/office-accounting`, permission: 'accounting.account.read' },
         { label: tNav('accounting-accounts'), href: `/${locale}/dashboard/finance/accounting/accounts`, permission: 'accounting.account.read' },
+        { label: tNav('chart-of-accounts'), href: `/${locale}/dashboard/finance/chart-of-accounts`, permission: 'accounting.account.read' },
         { label: tNav('accounting-transactions'), href: `/${locale}/dashboard/finance/accounting/transactions`, permission: 'accounting.account.read' },
+        { label: tNav('journal'), href: `/${locale}/dashboard/finance/journal`, permission: 'accounting.journal.create' },
+        { label: tNav('bank-reconciliation'), href: `/${locale}/dashboard/finance/bank-reconciliation`, permission: 'accounting.reconcile' },
+        { label: tNav('reconciliation'), href: `/${locale}/dashboard/finance/reconciliation`, permission: 'accounting.reconcile' },
         { label: tNav('accounting-voucher-types'), href: `/${locale}/dashboard/finance/accounting/voucher-types`, permission: 'accounting.account.manage' },
         { label: tNav('accounting-deposit'), href: `/${locale}/dashboard/finance/accounting/deposits/new`, permission: 'accounting.deposit.create' },
         { label: tNav('accounting-expense'), href: `/${locale}/dashboard/finance/expenses/new`, permission: 'accounting.expense.prepare' },
@@ -654,6 +659,8 @@ export function Sidebar({ locale }: { locale: string }) {
       subItems: [
         { label: tNav('hr-dashboard'), href: `/${locale}/dashboard/hr/overview`, permission: 'hr.employee.read', addon: 'human-resources' },
         { label: tNav('hr-employees'), href: `/${locale}/dashboard/hr/employees`, permission: 'hr.employee.read', addon: 'human-resources' },
+        { label: tNav('leave-management'), href: `/${locale}/dashboard/hr/leave-management`, permission: 'hr.manage', addon: 'human-resources' },
+        { label: tNav('salary-advances'), href: `/${locale}/dashboard/hr/salary-advances`, permission: 'hr.manage', addon: 'human-resources' },
         { label: tNav('hr-new-employee'), href: `/${locale}/dashboard/hr/employees/new`, permission: 'hr.employee.manage', addon: 'human-resources' },
         { label: tNav('hr-departments'), href: `/${locale}/dashboard/hr/departments`, permission: 'hr.organization.manage', addon: 'human-resources' },
         { label: tNav('hr-designations'), href: `/${locale}/dashboard/hr/designations`, permission: 'hr.organization.manage', addon: 'human-resources' },
@@ -669,6 +676,7 @@ export function Sidebar({ locale }: { locale: string }) {
       subItems: [
         { label: tNav('workforce-overview'), href: `/${locale}/dashboard/workforce`, permission: 'payroll.review', addon: 'payroll-workforce' },
         { label: tNav('hr-payroll'), href: `/${locale}/dashboard/workforce/payroll/runs`, permission: 'payroll.review', addon: 'payroll-workforce' },
+        { label: tNav('workforce-payslips'), href: `/${locale}/dashboard/workforce/payroll/payslips`, permission: 'payroll.review', addon: 'payroll-workforce' },
         { label: tNav('workforce-components'), href: `/${locale}/dashboard/workforce/payroll/components`, permission: 'payroll.configure', addon: 'payroll-workforce' },
         { label: tNav('workforce-structures'), href: `/${locale}/dashboard/workforce/payroll/structures`, permission: 'payroll.configure', addon: 'payroll-workforce' },
         { label: tNav('workforce-assignments'), href: `/${locale}/dashboard/workforce/payroll/assignments`, permission: 'payroll.configure', addon: 'payroll-workforce' },
@@ -781,6 +789,7 @@ export function Sidebar({ locale }: { locale: string }) {
         { label: 'Registre des paramètres', href: `/${locale}/dashboard/settings/values`, permission: 'settings.read' },
         { label: 'Approbation des paramètres', href: `/${locale}/dashboard/settings/drafts`, permission: 'settings.read' },
         { label: 'Séries de numérotation', href: `/${locale}/dashboard/settings/numbering`, permission: 'settings.read' },
+        { label: 'Modeles PDF', href: `/${locale}/dashboard/settings/documents`, permission: 'settings.organization.manage' },
         { label: 'Champs personnalisés', href: `/${locale}/dashboard/settings/custom-fields`, permission: 'settings.read' },
         { label: 'Tâches automatisées', href: `/${locale}/dashboard/settings/scheduled-jobs`, permission: 'settings.read' },
         { label: tNav('settings-permissions'), href: `/${locale}/dashboard/settings/permissions`, permission: 'users.permissions.manage' },
@@ -1015,7 +1024,10 @@ export function Sidebar({ locale }: { locale: string }) {
             S
           </div>
           <div>
-            <h1 className="
+            {/* dir=ltr: the Latin brand is a flex row, which RTL would flip to "OSSchool" (audit S-37). */}
+            <h1
+              dir="ltr"
+              className="
               flex items-center text-base font-extrabold tracking-tight
               text-white
             "
@@ -1051,7 +1063,7 @@ export function Sidebar({ locale }: { locale: string }) {
               >
                 <Siren className="size-4" />
               </span>
-              <span>{hasActiveEmergency ? 'Urgence active' : 'Sécurité & urgence'}</span>
+              <span>{hasActiveEmergency ? th('emergencyActive') : th('securityEmergency')}</span>
               {hasActiveEmergency && (
                 <span className="ml-auto size-2 animate-pulse rounded-full bg-[#E5544B]" />
               )}

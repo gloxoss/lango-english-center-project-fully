@@ -126,7 +126,7 @@ export function ReportsView() {
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => exportCsv(c.id, c.name)} className="cursor-pointer"><Download className="me-1 h-3.5 w-3.5" /> {t('exportCsv')}</Button>
-                  <Link href={`/${locale}/dashboard/broadcast/campaigns/${c.id}`}><Button size="sm" className="cursor-pointer">{t('details')}</Button></Link>
+                  <Button asChild size="sm" className="cursor-pointer"><Link href={`/${locale}/dashboard/broadcast/campaigns/${c.id}`}>{t('details')}</Link></Button>
                 </div>
               </div>
               <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">

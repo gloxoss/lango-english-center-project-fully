@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { CheckCircle2, FileText, Printer, Search, TrendingUp } from 'lucide-react';
+import { printReceiptDocument } from './finance-document-print';
 
 type ReceiptAllocation = { invoiceId: string; invoiceNumber: string; amount: string };
 
@@ -22,7 +23,7 @@ type ReceiptRow = {
   createdAt: string;
 };
 
-export function ReceiptsFinanceView({ locale: _locale }: { locale?: string }) {
+export function ReceiptsFinanceView({ locale = 'fr' }: { locale?: string }) {
   const t = useTranslations('Finance');
   const tCommon = useTranslations('Common');
 
@@ -164,7 +165,11 @@ export function ReceiptsFinanceView({ locale: _locale }: { locale?: string }) {
               <span>{t('totalLabel')}</span><span>{Number(selected.amount).toLocaleString('fr-FR')} MAD</span>
             </div>
 
-            <Button variant="outline" size="sm" onClick={() => window.print()} className="w-full h-9 text-[11px] rounded-xl border-slate-200 gap-1.5">
+            <Button variant="outline" size="sm" onClick={() => printReceiptDocument(selected, {
+              title: t('receipt'), student: t('student'), date: tCommon('date'),
+              description: t('invoiceBreakdown'), amount: t('amount'), total: t('totalLabel'),
+              reference: t('receiptNumberCol'), receivedBy: t('receivedByCol'),
+            }, locale)} className="w-full h-9 text-[11px] rounded-xl border-slate-200 gap-1.5">
               <Printer className="w-3.5 h-3.5" />
               {t('printReceiptBtn')}
             </Button>

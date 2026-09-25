@@ -24,11 +24,11 @@ function SubscriptionSuspended({ locale }: { locale: string }) {
             l&apos;accès, demandez le renouvellement de votre licence.
           </p>
         </div>
-        <Link href={`/${locale}/dashboard/settings/subscription`}>
-          <Button className="bg-[#0066FF] hover:bg-[#0052CC] text-white gap-2 text-xs font-bold h-10 rounded-xl">
+        <Button asChild className="bg-[#0066FF] hover:bg-[#0052CC] text-white gap-2 text-xs font-bold h-10 rounded-xl">
+          <Link href={`/${locale}/dashboard/settings/subscription`}>
             Gérer mon abonnement
-          </Button>
-        </Link>
+          </Link>
+        </Button>
         <p className="text-xs text-slate-400">
           Une question ? Contactez votre administrateur de plateforme.
         </p>

@@ -9,6 +9,7 @@ import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
+import { sendSmsMessage } from '@/features/broadcast/services/sms-delivery';
 import { accessResetRequests, account, guardians, guardianStudents, smsMessages, user } from '@/models/Schema';
 
 // ponytail: "code" here is a real temporary password for the guardian's
@@ -80,20 +81,41 @@ export async function POST(request: Request) {
       if (!reqRow) {
         throw new ApiError(404, 'NOT_FOUND', 'Demande introuvable.');
       }
-      const [guardian] = await db.select({ phone: guardians.phone }).from(guardians).where(eq(guardians.id, reqRow.guardianId)).limit(1);
+      const [guardian] = await db
+        .select({ phone: guardians.phone })
+        .from(guardians)
+        .where(and(eq(guardians.id, reqRow.guardianId), eq(guardians.tenantId, tenantId)))
+        .limit(1);
+      if (!guardian?.phone) {
+        throw new ApiError(400, 'NO_PHONE', 'Ce tuteur n’a pas de numéro de téléphone.');
+      }
 
-      await db.insert(smsMessages).values({
-        tenantId,
-        recipientPhone: guardian?.phone ?? '—',
+      // Real delivery through the school's SMS provider. This used to write an
+      // SMS row marked "sent" without sending anything, and it kept the
+      // temporary password in plain text in the SMS log.
+      const result = await sendSmsMessage(tenantId, {
+        to: guardian.phone,
         body: `Votre code d'accès temporaire SchoolOS : ${body.code}`,
-        status: 'sent',
-        sentAt: new Date().toISOString(),
         createdById: context.userId,
       });
-      await db.update(accessResetRequests).set({ status: 'sms_sent' }).where(eq(accessResetRequests.id, body.requestId));
+      // The log keeps a masked copy: the password must not be readable later.
+      await db
+        .update(smsMessages)
+        .set({ body: 'Votre code d’accès temporaire SchoolOS : ••••••' })
+        .where(and(eq(smsMessages.id, result.id), eq(smsMessages.tenantId, tenantId)));
 
-      recordAudit(context, 'update', 'access_reset_request', body.requestId, { action: 'send_sms' });
-      return NextResponse.json({ success: true, code: body.code, message: 'SMS (simulé) envoyé.' });
+      if (result.delivery === 'failed') {
+        throw new ApiError(502, 'SMS_FAILED', result.failureReason ?? 'Échec de l’envoi du SMS.');
+      }
+      if (result.delivery === 'simulated') {
+        // No SMS provider configured: nothing left the platform, so say so.
+        recordAudit(context, 'update', 'access_reset_request', body.requestId, { action: 'send_sms', delivery: 'simulated' });
+        throw new ApiError(409, 'NO_SMS_PROVIDER', 'Aucun fournisseur SMS n’est configuré : le code n’a pas été envoyé. Communiquez-le directement au parent.');
+      }
+      await db.update(accessResetRequests).set({ status: 'sms_sent' }).where(and(eq(accessResetRequests.id, body.requestId), eq(accessResetRequests.tenantId, tenantId)));
+
+      recordAudit(context, 'update', 'access_reset_request', body.requestId, { action: 'send_sms', delivery: result.delivery, provider: result.provider });
+      return NextResponse.json({ success: true, delivery: result.delivery });
     }
 
     const body = await parseJson(request, generateSchema);

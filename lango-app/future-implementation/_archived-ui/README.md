@@ -22,6 +22,8 @@ Keep the original filenames so `git log --follow` can find their history after c
 | `components/teacher/GradeEntryGrid.tsx` | A second grade-entry grid | 4 students inline in `useState`; `handleSave` sets a flag for 3s and calls no API |
 | `components/teacher/TeacherTodaySchedule.tsx` | Teacher's day view | class list inline in `useState` |
 | `features/crm/{ui,data}/{lead-pipeline,audience-segments,form-intake,milestone-triggers,templates-automation}*` | Five direct-URL Communication pages | Imported fixture records used as live client state |
+| `components/parent/ParentInvoiceBreakdown.tsx` | Parent fee summary card (archived 2026-09-24) | hardcoded 4 500,00 DH invoiced/paid, "Compte à jour", a fixed 2025/2026 term |
+| `components/accountant/CashierPaymentModal.tsx` | Cashier payment modal (archived 2026-09-24) | `setTimeout` fake payment, invented receipt REC-2026-0892; the real flow is /finance/collection-desk |
 
 Between them they hold ~44 controls with no handler at all — pagination bars that
 paginate nothing, row `⋮` menus, and "see all" links that go nowhere. Treat every

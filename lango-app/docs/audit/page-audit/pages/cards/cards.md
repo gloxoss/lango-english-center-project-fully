@@ -1,8 +1,146 @@
 # `/dashboard/cards`
+<!-- swept: 2026-09-24 claude-finance | school_admin sweep :3466 schoolos_audit 2026-09-24: loads, no failed API, no h-scroll, no text defects -->
 
-**Status: NEEDS FIX (P3)** · Module: `cards` · Source: [`src/app/[locale]/(dashboard)/dashboard/cards/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/cards/page.tsx>)
+**Status: CONFIRMED ON SCREEN (2026-09-24 claude-finance)** · Module: `cards` · Source: [`src/app/[locale]/(dashboard)/dashboard/cards/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/cards/page.tsx>)
 
-**Progress (2026-09-24):** S-51 REVIEW
+**Progress (2026-09-25):** S-51 DONE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -43,7 +181,7 @@ Guard: `requireServerPage` · capability `cards.issue`
 
 | ID | Sev | Problem | Fix | Code now |
 |---|---|---|---|---|
-| [S-51](../../findings/S-51.md) | P3 | Cards "Émissions récentes" never shows the recipient | Show the student/employee name. | Not re-checked since the sweep. |
+| [S-51](../../findings/done/S-51.md) | P3 | Cards "Émissions récentes" never shows the recipient | Show the student/employee name. | Not re-checked since the sweep. |
 
 ## Sweep results
 
@@ -72,7 +210,7 @@ Guard: `requireServerPage` · capability `cards.issue`
 ## Cross-cutting findings that also show here
 
 - [S-7](../../findings/S-7.md) (P1) ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French)
-- [S-14](../../findings/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
+- [S-14](../../findings/done/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
 - [S-18](../../findings/done/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
 - [S-25](../../findings/done/S-25.md) (P2) Header shows a fake identity when the session call is slow
 - [S-37](../../findings/S-37.md) (P2) Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,7 +32,6 @@ import {
 } from 'lucide-react';
 import { IncomeExpenseDonut } from '@/features/dashboard/ui/income-expense-donut';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 type SchoolReport = {
   id: string;
@@ -99,13 +98,12 @@ type ReportsData = {
   schools: SchoolReport[];
 };
 
-function fmtMad(n: number): string {
-  return n.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' MAD';
-}
-
 export function SuperAdminReportsView({ locale: propLocale }: { locale?: string } = {}) {
   const currentLocale = useLocale();
   const locale = propLocale || currentLocale;
+  const t = useTranslations('PlatformReports');
+  const intlLocale = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-GB' : 'fr-FR';
+  const fmtMad = (n: number) => `${n.toLocaleString(intlLocale, { maximumFractionDigits: 0 })} MAD`;
 
   const [data, setData] = useState<ReportsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -121,10 +119,10 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
   const [activeSchool, setActiveSchool] = useState<SchoolReport | null>(null);
 
   const planLabels: Record<string, string> = {
-    trial: locale === 'ar' ? 'تجريبي' : locale === 'en' ? 'Trial' : 'Essai',
-    basic: locale === 'ar' ? 'أساسي' : locale === 'en' ? 'Basic' : 'Basique',
-    standard: locale === 'ar' ? 'قياسي' : 'Standard',
-    premium: locale === 'ar' ? 'مميز' : 'Premium',
+    trial: t('plans.trial'),
+    basic: t('plans.basic'),
+    standard: t('plans.standard'),
+    premium: t('plans.premium'),
   };
 
   const loadReports = () => {
@@ -136,10 +134,10 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
         if (json.success && json.data) {
           setData(json.data);
         } else {
-          setError(json.message || 'Erreur lors du chargement des rapports.');
+          setError(json.message || t('loadError'));
         }
       })
-      .catch(() => setError('Connexion impossible avec le serveur.'))
+      .catch(() => setError(t('connectError')))
       .finally(() => setLoading(false));
   };
 
@@ -182,27 +180,14 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
   const handleExportCsv = () => {
     if (!data?.schools || data.schools.length === 0) return;
 
-    const headers = [
-      'Établissement',
-      'Identifiant (Slug)',
-      'Formule',
-      'Statut',
-      'Élèves',
-      'Enseignants',
-      'Parents',
-      'Ratio Élève/Prof',
-      'Factures Émises',
-      'Total Facturé (MAD)',
-      'Total Encaissé (MAD)',
-      'Reste à Recouvrer (MAD)',
-      'Taux de Recouvrement (%)',
-    ];
+    const headers = (['school', 'slug', 'plan', 'status', 'students', 'teachers', 'parents', 'ratio', 'invoices', 'invoiced', 'collected', 'outstanding', 'rate'] as const)
+      .map(key => t(`csv.${key}`));
 
     const rows = data.schools.map((s) => [
       `"${s.name.replace(/"/g, '""')}"`,
       `"${s.slug}"`,
       `"${planLabels[s.planTier] || s.planTier}"`,
-      `"${s.isActive ? 'Actif' : 'Inactif'}"`,
+      `"${s.isActive ? t('active') : t('inactive')}"`,
       s.students,
       s.teachers,
       s.parents,
@@ -238,10 +223,10 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
           </div>
           <div>
             <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight">
-              Rapports Plateforme & Performances Globales
+              {t('title')}
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Statistiques consolidées en temps réel sur l'ensemble des établissements partenaires, effectifs et finances.
+              {t('subtitle')}
             </p>
           </div>
         </div>
@@ -254,7 +239,7 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
             className="h-9 text-xs rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-1.5 shadow-xs px-3.5"
           >
             <Download className="w-3.5 h-3.5" />
-            Exporter CSV
+            {t('exportCsv')}
           </Button>
 
           <Button
@@ -265,7 +250,7 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
             className="h-9 text-xs rounded-xl border-slate-200 bg-white text-slate-700 hover:bg-slate-50 gap-1.5 px-3 font-bold"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#0066FF]' : 'text-slate-600'}`} />
-            Rafraîchir
+            {t('refresh')}
           </Button>
         </div>
       </div>
@@ -281,68 +266,68 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
         <Card className="p-3.5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs space-y-2 hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Écoles Partenaires</span>
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{t('kpiSchools')}</span>
             <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center text-[#0066FF]">
               <School className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-extrabold text-[#0F172A]">{totals?.schools ?? 0}</div>
-          <p className="text-[11px] text-emerald-600 font-semibold">{totals?.activeSchools ?? 0} actives en production</p>
+          <p className="text-[11px] text-emerald-600 font-semibold">{t('kpiSchoolsActive', { count: totals?.activeSchools ?? 0 })}</p>
         </Card>
 
         <Card className="p-3.5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs space-y-2 hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Effectif Élèves</span>
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{t('kpiStudents')}</span>
             <div className="w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
               <GraduationCap className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-extrabold text-[#0F172A]">{totals?.students ?? 0}</div>
-          <p className="text-[11px] text-slate-400 font-medium">Ratio: {totals?.globalRatio ?? 0} él./prof</p>
+          <p className="text-[11px] text-slate-400 font-medium">{t('kpiRatio', { ratio: totals?.globalRatio ?? 0 })}</p>
         </Card>
 
         <Card className="p-3.5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs space-y-2 hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Corps Enseignant</span>
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{t('kpiTeachers')}</span>
             <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
               <Users className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-extrabold text-[#0F172A]">{totals?.teachers ?? 0}</div>
-          <p className="text-[11px] text-slate-400 font-medium">Professeurs déclarés</p>
+          <p className="text-[11px] text-slate-400 font-medium">{t('kpiTeachersHint')}</p>
         </Card>
 
         <Card className="p-3.5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs space-y-2 hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Facturation Émise</span>
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{t('kpiInvoiced')}</span>
             <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700">
               <Receipt className="w-4 h-4" />
             </div>
           </div>
           <div className="text-xl font-extrabold text-[#0F172A]">{fmtMad(totals?.invoiced ?? 0)}</div>
-          <p className="text-[11px] text-slate-400 font-medium">{totals?.invoices ?? 0} factures scolarité</p>
+          <p className="text-[11px] text-slate-400 font-medium">{t('kpiInvoicesCount', { count: totals?.invoices ?? 0 })}</p>
         </Card>
 
         <Card className="p-3.5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs space-y-2 hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Recouvrement Encaissé</span>
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{t('kpiCollected')}</span>
             <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
               <Banknote className="w-4 h-4" />
             </div>
           </div>
           <div className="text-xl font-extrabold text-emerald-700">{fmtMad(totals?.collected ?? 0)}</div>
-          <p className="text-[11px] text-emerald-600 font-bold">{totals?.collectionRate ?? 0}% de recouvrement</p>
+          <p className="text-[11px] text-emerald-600 font-bold">{t('kpiRate', { rate: totals?.collectionRate ?? 0 })}</p>
         </Card>
 
         <Card className="p-3.5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs space-y-2 hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Reste à Recouvrer</span>
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{t('kpiOutstanding')}</span>
             <div className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600">
               <AlertCircle className="w-4 h-4" />
             </div>
           </div>
           <div className="text-xl font-extrabold text-rose-600">{fmtMad(totals?.outstanding ?? 0)}</div>
-          <p className="text-[11px] text-slate-400 font-medium">Solde en attente</p>
+          <p className="text-[11px] text-slate-400 font-medium">{t('kpiOutstandingHint')}</p>
         </Card>
       </div>
 
@@ -356,7 +341,7 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
               remaining: totals?.outstanding ?? 0,
               invoiced: totals?.invoiced ?? 0,
             }}
-            monthName="Toutes Écoles — Exercice en cours"
+            monthName={t('donutLabel')}
           />
         </div>
 
@@ -366,9 +351,9 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-[#0066FF]" />
-                <h3 className="text-sm font-extrabold text-[#0F172A]">Évolution Mensuelle des Encaissements</h3>
+                <h3 className="text-sm font-extrabold text-[#0F172A]">{t('trendTitle')}</h3>
               </div>
-              <span className="text-[10px] text-slate-400 font-medium">Paiements validés</span>
+              <span className="text-[10px] text-slate-400 font-medium">{t('trendHint')}</span>
             </div>
 
             <div className="py-4 space-y-3">
@@ -382,7 +367,7 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-bold text-slate-700 font-mono">{trend.month}</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-slate-400 font-medium">{trend.count} paiements</span>
+                          <span className="text-[10px] text-slate-400 font-medium">{t('paymentsCount', { count: trend.count })}</span>
                           <span className="font-extrabold text-emerald-700">{fmtMad(trend.collected)}</span>
                         </div>
                       </div>
@@ -396,14 +381,14 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
                   );
                 })
               ) : (
-                <div className="py-8 text-center text-xs text-slate-400">Aucun historique mensuel disponible.</div>
+                <div className="py-8 text-center text-xs text-slate-400">{t('trendEmpty')}</div>
               )}
             </div>
           </div>
 
           <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
-            <span>Moyenne facturée par élève</span>
-            <span className="font-extrabold text-[#0F172A]">{fmtMad(totals?.averageFeePerStudent ?? 0)} / an</span>
+            <span>{t('avgPerStudent')}</span>
+            <span className="font-extrabold text-[#0F172A]">{t('perYear', { amount: fmtMad(totals?.averageFeePerStudent ?? 0) })}</span>
           </div>
         </div>
 
@@ -412,7 +397,7 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
           <div>
             <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
               <CreditCard className="w-4 h-4 text-[#0066FF]" />
-              <h3 className="text-sm font-extrabold text-[#0F172A]">Modes de Règlement</h3>
+              <h3 className="text-sm font-extrabold text-[#0F172A]">{t('methodsTitle')}</h3>
             </div>
 
             <div className="py-4 space-y-3.5">
@@ -430,19 +415,19 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
                       />
                     </div>
                     <div className="flex items-center justify-between text-[10px] text-slate-400">
-                      <span>{pm.count} opérations</span>
+                      <span>{t('operationsCount', { count: pm.count })}</span>
                       <span>{fmtMad(pm.amount)}</span>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="py-8 text-center text-xs text-slate-400">Aucune donnée disponible.</div>
+                <div className="py-8 text-center text-xs text-slate-400">{t('noData')}</div>
               )}
             </div>
           </div>
 
           <div className="pt-3 border-t border-slate-100 text-[11px] text-slate-400 text-center">
-            Paiements enregistrés et rapprochés
+            {t('methodsHint')}
           </div>
         </div>
       </div>
@@ -453,7 +438,7 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
           <div className="relative flex-1 w-full">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input
-              placeholder="Rechercher une école par nom ou slug..."
+              placeholder={t('searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 h-9 text-xs rounded-xl bg-slate-50/70 border-slate-200 focus:bg-white"
@@ -466,11 +451,8 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
               onChange={(e) => setPlanFilter(e.target.value)}
               className="h-9 px-3 text-xs border border-slate-200 rounded-xl bg-white text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-[#0066FF]/20 focus:border-[#0066FF]"
             >
-              <option value="all">Toutes les formules</option>
-              <option value="trial">Essai</option>
-              <option value="basic">Basique</option>
-              <option value="standard">Standard</option>
-              <option value="premium">Premium</option>
+              <option value="all">{t('allPlans')}</option>
+              {(['trial', 'basic', 'standard', 'premium'] as const).map(p => <option key={p} value={p}>{planLabels[p]}</option>)}
             </select>
 
             <select
@@ -478,10 +460,10 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
               onChange={(e) => setStatusFilter(e.target.value)}
               className="h-9 px-3 text-xs border border-slate-200 rounded-xl bg-white text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-[#0066FF]/20 focus:border-[#0066FF]"
             >
-              <option value="all">Tous les statuts</option>
-              <option value="active">Actives</option>
-              <option value="trial">Période d'essai</option>
-              <option value="suspended">Suspendues</option>
+              <option value="all">{t('allStatuses')}</option>
+              <option value="active">{t('statusActive')}</option>
+              <option value="trial">{t('statusTrial')}</option>
+              <option value="suspended">{t('statusSuspended')}</option>
             </select>
 
             <select
@@ -489,10 +471,10 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
               onChange={(e) => setSortBy(e.target.value as any)}
               className="h-9 px-3 text-xs border border-slate-200 rounded-xl bg-white text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-[#0066FF]/20 focus:border-[#0066FF]"
             >
-              <option value="default">Tri par défaut</option>
-              <option value="revenue">Revenus décroissants</option>
-              <option value="students">Effectifs décroissants</option>
-              <option value="rate">Taux de recouvrement</option>
+              <option value="default">{t('sortDefault')}</option>
+              <option value="revenue">{t('sortRevenue')}</option>
+              <option value="students">{t('sortStudents')}</option>
+              <option value="rate">{t('sortRate')}</option>
             </select>
           </div>
         </div>
@@ -504,16 +486,16 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                <th className="py-3 px-4 min-w-[240px]">Établissement</th>
-                <th className="py-3 px-4 min-w-[110px]">Formule</th>
-                <th className="py-3 px-4 min-w-[110px]">Statut</th>
-                <th className="py-3 px-4 min-w-[80px]">Élèves</th>
-                <th className="py-3 px-4 min-w-[80px]">Profs</th>
-                <th className="py-3 px-4 min-w-[120px]">Facturé</th>
-                <th className="py-3 px-4 min-w-[120px]">Encaissé</th>
-                <th className="py-3 px-4 min-w-[120px]">Reste dû</th>
-                <th className="py-3 px-4 min-w-[110px]">Recouvrement</th>
-                <th className="py-3 px-4 w-[110px] text-right">Détails</th>
+                <th className="py-3 px-4 min-w-[240px]">{t('colSchool')}</th>
+                <th className="py-3 px-4 min-w-[110px]">{t('colPlan')}</th>
+                <th className="py-3 px-4 min-w-[110px]">{t('colStatus')}</th>
+                <th className="py-3 px-4 min-w-[80px]">{t('colStudents')}</th>
+                <th className="py-3 px-4 min-w-[80px]">{t('colTeachers')}</th>
+                <th className="py-3 px-4 min-w-[120px]">{t('colInvoiced')}</th>
+                <th className="py-3 px-4 min-w-[120px]">{t('colCollected')}</th>
+                <th className="py-3 px-4 min-w-[120px]">{t('colOutstanding')}</th>
+                <th className="py-3 px-4 min-w-[110px]">{t('colRate')}</th>
+                <th className="py-3 px-4 w-[110px] text-right">{t('colDetails')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
@@ -547,7 +529,7 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
                             : 'bg-amber-50 text-amber-800 border border-amber-200'
                         }`}
                       >
-                        {school.isActive ? 'Active' : 'Inactive'}
+                        {school.isActive ? t('active') : t('inactive')}
                       </span>
                     </td>
 
@@ -583,7 +565,7 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
                         }}
                         className="h-7 text-xs font-bold text-[#0066FF] hover:bg-blue-50 rounded-lg gap-1 px-2.5"
                       >
-                        Consulter
+                        {t('open')}
                         <ChevronRight className="w-3.5 h-3.5" />
                       </Button>
                     </td>
@@ -601,7 +583,7 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#0F172A] flex items-center gap-2">
               <Building className="w-5 h-5 text-[#0066FF]" />
-              Fiche Établissement : {activeSchool?.name}
+              {t('detailTitle', { name: activeSchool?.name ?? '' })}
             </DialogTitle>
           </DialogHeader>
 
@@ -609,39 +591,39 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
             <div className="space-y-4 py-2 text-xs">
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-700">Identifiant technique</span>
+                  <span className="font-bold text-slate-700">{t('technicalId')}</span>
                   <span className="font-mono text-slate-900 font-semibold">{activeSchool.slug}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-700">Formule souscrite</span>
+                  <span className="font-bold text-slate-700">{t('subscribedPlan')}</span>
                   <span className="font-bold text-[#0066FF]">{planLabels[activeSchool.planTier] || activeSchool.planTier}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-700">Date d'inscription</span>
+                  <span className="font-bold text-slate-700">{t('signupDate')}</span>
                   <span className="text-slate-600">
-                    {format(new Date(activeSchool.createdAt), 'dd MMMM yyyy', { locale: fr })}
+                    {new Date(activeSchool.createdAt).toLocaleDateString(intlLocale, { day: '2-digit', month: 'long', year: 'numeric' })}
                   </span>
                 </div>
               </div>
 
               {/* Financial Box */}
               <div className="p-3.5 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-2">
-                <p className="font-extrabold text-emerald-900">Bilan Financier & Recouvrement</p>
+                <p className="font-extrabold text-emerald-900">{t('financeBox')}</p>
                 <div className="grid grid-cols-2 gap-2 text-[11px]">
                   <div>
-                    <span className="text-slate-500">Total facturé :</span>
+                    <span className="text-slate-500">{t('totalInvoiced')}</span>
                     <p className="font-bold text-[#0F172A]">{fmtMad(activeSchool.invoiced)}</p>
                   </div>
                   <div>
-                    <span className="text-slate-500">Total encaissé :</span>
+                    <span className="text-slate-500">{t('totalCollected')}</span>
                     <p className="font-bold text-emerald-700">{fmtMad(activeSchool.collected)}</p>
                   </div>
                   <div>
-                    <span className="text-slate-500">Reste à recouvrer :</span>
+                    <span className="text-slate-500">{t('totalOutstanding')}</span>
                     <p className="font-bold text-rose-600">{fmtMad(activeSchool.outstanding)}</p>
                   </div>
                   <div>
-                    <span className="text-slate-500">Taux de recouvrement :</span>
+                    <span className="text-slate-500">{t('totalRate')}</span>
                     <p className="font-extrabold text-emerald-800">
                       {activeSchool.collectionRate != null ? `${activeSchool.collectionRate}%` : 'N/A'}
                     </p>
@@ -651,18 +633,18 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
 
               {/* Demographics Box */}
               <div className="p-3.5 bg-blue-50/60 border border-blue-200 rounded-xl space-y-2">
-                <p className="font-extrabold text-blue-900">Effectifs & Communauté Scolaire</p>
+                <p className="font-extrabold text-blue-900">{t('peopleBox')}</p>
                 <div className="grid grid-cols-3 gap-2 text-[11px]">
                   <div>
-                    <span className="text-slate-500">Élèves :</span>
+                    <span className="text-slate-500">{t('studentsLabel')}</span>
                     <p className="font-bold text-[#0F172A]">{activeSchool.students}</p>
                   </div>
                   <div>
-                    <span className="text-slate-500">Professeurs :</span>
+                    <span className="text-slate-500">{t('teachersLabel')}</span>
                     <p className="font-bold text-[#0F172A]">{activeSchool.teachers}</p>
                   </div>
                   <div>
-                    <span className="text-slate-500">Parents :</span>
+                    <span className="text-slate-500">{t('parentsLabel')}</span>
                     <p className="font-bold text-[#0F172A]">{activeSchool.parents}</p>
                   </div>
                 </div>
@@ -677,7 +659,7 @@ export function SuperAdminReportsView({ locale: propLocale }: { locale?: string 
               onClick={() => setActiveSchool(null)}
               className="rounded-xl border-slate-200 text-slate-700 text-xs font-bold"
             >
-              Fermer
+              {t('close')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -147,6 +147,17 @@ export const SETTINGS_MODULES = [
     badgeColor: "emerald",
   },
   {
+    id: "documents",
+    title: "Modèles PDF",
+    desc: "Style, format, champs et libellés des documents générés par l'établissement.",
+    status: "configured" as const,
+    statusLabel: "Configuré",
+    iconName: "FileText",
+    href: "/dashboard/settings/documents",
+    category: "General",
+    badgeColor: "emerald",
+  },
+  {
     id: "custom-fields",
     title: "Champs personnalisés",
     desc: "Attributs sur mesure pour élèves, tuteurs et employés : texte, nombre, date, liste et booléen.",

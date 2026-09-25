@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckCircle2, AlertCircle, Plus, Pencil, Play, Power, History, Loader2, Save, X, Trash2 } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -29,19 +30,17 @@ type Run = {
   metadata: { purgedSessions?: number } | null;
 };
 
-const HANDLERS: { value: string; label: string }[] = [
-  { value: 'purge_sessions', label: 'Purge des sessions expirées' },
-  { value: 'noop', label: 'Test (aucun effet)' },
-];
+// Labels live in ScheduledJobs.handlers.<value>.
+const HANDLERS = ['purge_sessions', 'noop'] as const;
 
 const EMPTY_FORM = { key: '', name: '', handler: 'purge_sessions', intervalMinutes: '1440' };
 
-function fmtDate(iso: string | null): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
-}
-
 export default function ScheduledJobsPage() {
+  const t = useTranslations('ScheduledJobs');
+  const locale = useLocale();
+  const intlLocale = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-GB' : 'fr-FR';
+  const fmtDate = (iso: string | null): string => (iso ? new Date(iso).toLocaleString(intlLocale, { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—');
+  const handlerLabel = (h: string) => (t.has(`handlers.${h}`) ? t(`handlers.${h}` as 'handlers.noop') : h);
   const [rows, setRows] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Job | null>(null);
@@ -66,8 +65,9 @@ export default function ScheduledJobsPage() {
       const res = await fetch('/api/settings/scheduled-jobs');
       const json = await res.json();
       if (json.success) setRows(json.data);
+      else showToast('err', json.error?.message ?? t('loadError'));
     } catch {
-      showToast('err', 'Erreur chargement des tâches.');
+      showToast('err', t('loadError'));
     } finally {
       setLoading(false);
     }
@@ -93,13 +93,13 @@ export default function ScheduledJobsPage() {
       if (json.success) {
         setForm(EMPTY_FORM);
         setEditing(null);
-        showToast('ok', editing ? 'Tâche mise à jour.' : 'Tâche planifiée créée.');
+        showToast('ok', editing ? t('updated') : t('created'));
         load();
       } else {
-        showToast('err', json.error?.message ?? 'Enregistrement impossible.');
+        showToast('err', json.error?.message ?? t('saveError'));
       }
     } catch {
-      showToast('err', 'Erreur réseau.');
+      showToast('err', t('networkError'));
     } finally {
       setBusy(false);
     }
@@ -116,10 +116,10 @@ export default function ScheduledJobsPage() {
       const res = await fetch(`/api/settings/scheduled-jobs/${j.id}/toggle`, { method: 'POST' });
       const json = await res.json();
       if (json.success) showToast('ok', json.message);
-      else showToast('err', json.error?.message ?? 'Activation impossible.');
+      else showToast('err', json.error?.message ?? t('toggleError'));
       load();
     } catch {
-      showToast('err', 'Erreur réseau.');
+      showToast('err', t('networkError'));
     } finally {
       setBusyId(null);
     }
@@ -131,29 +131,29 @@ export default function ScheduledJobsPage() {
       const res = await fetch(`/api/settings/scheduled-jobs/${j.id}/trigger`, { method: 'POST' });
       const json = await res.json();
       if (json.success) showToast('ok', json.message);
-      else showToast('err', json.error?.message ?? 'Exécution impossible.');
+      else showToast('err', json.error?.message ?? t('runError'));
       load();
     } catch {
-      showToast('err', 'Erreur réseau.');
+      showToast('err', t('networkError'));
     } finally {
       setBusyId(null);
     }
   };
 
   const handleDelete = async (j: Job) => {
-    if (!window.confirm(`Supprimer la tâche « ${j.name} » ?`)) return;
+    if (!window.confirm(t('confirmDelete', { name: j.name }))) return;
     setBusyId(j.id);
     try {
       const res = await fetch(`/api/settings/scheduled-jobs/${j.id}`, { method: 'DELETE' });
       const json = await res.json();
       if (json.success) {
-        showToast('ok', 'Tâche supprimée.');
+        showToast('ok', t('deleted'));
         load();
       } else {
-        showToast('err', json.error?.message ?? 'Suppression impossible.');
+        showToast('err', json.error?.message ?? t('deleteError'));
       }
     } catch {
-      showToast('err', 'Erreur réseau.');
+      showToast('err', t('networkError'));
     } finally {
       setBusyId(null);
     }
@@ -172,7 +172,7 @@ export default function ScheduledJobsPage() {
         if (json.success) setHistory(h => ({ ...h, [j.id]: json.data }));
       }
     } catch {
-      showToast('err', 'Erreur chargement de l\'historique.');
+      showToast('err', t('historyError'));
     }
   };
 
@@ -182,8 +182,8 @@ export default function ScheduledJobsPage() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Tâches planifiées</h1>
-        <p className="text-xs text-slate-500 mt-1">Exécutions automatiques périodiques (purge des sessions expirées). Chaque tâche utilise un gestionnaire prédéfini et sécurisé — aucun code arbitraire n&apos;est accepté.</p>
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">{t('title')}</h1>
+        <p className="text-xs text-slate-500 mt-1">{t('subtitle')}</p>
       </div>
 
       {toast && (
@@ -196,18 +196,18 @@ export default function ScheduledJobsPage() {
       )}
 
       <Card className="border border-slate-200 rounded-2xl shadow-xs p-5">
-        <div className="text-sm font-bold text-slate-800 mb-3">{editing ? `Modifier « ${editing.name} »` : 'Nouvelle tâche'}</div>
+        <div className="text-sm font-bold text-slate-800 mb-3">{editing ? t('editTitle', { name: editing.name }) : t('newJob')}</div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Input className="h-9 text-xs rounded-xl" placeholder="Clé (ex: purge_sessions)" value={form.key} onChange={set('key')} disabled={!!editing} />
-          <Input className="h-9 text-xs rounded-xl" placeholder="Nom (ex: Purge des sessions)" value={form.name} onChange={set('name')} />
+          <Input className="h-9 text-xs rounded-xl" placeholder={t('keyPlaceholder')} aria-label={t('keyPlaceholder')} value={form.key} onChange={set('key')} disabled={!!editing} />
+          <Input className="h-9 text-xs rounded-xl" placeholder={t('namePlaceholder')} aria-label={t('namePlaceholder')} value={form.name} onChange={set('name')} />
           <select
             className="h-9 text-xs rounded-xl border border-slate-200 bg-white px-3 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={form.handler}
             onChange={set('handler')}
           >
-            {HANDLERS.map(h => <option key={h.value} value={h.value}>{h.label}</option>)}
+            {HANDLERS.map(h => <option key={h} value={h}>{handlerLabel(h)}</option>)}
           </select>
-          <Input className="h-9 text-xs rounded-xl" type="number" min={1} placeholder="Intervalle (minutes)" value={form.intervalMinutes} onChange={set('intervalMinutes')} />
+          <Input className="h-9 text-xs rounded-xl" type="number" min={1} placeholder={t('intervalPlaceholder')} aria-label={t('intervalPlaceholder')} value={form.intervalMinutes} onChange={set('intervalMinutes')} />
         </div>
         <div className="flex gap-2 mt-4">
           <Button
@@ -216,11 +216,11 @@ export default function ScheduledJobsPage() {
             className="gap-2 h-9 rounded-full px-5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
           >
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {editing ? 'Enregistrer' : 'Créer la tâche'}
+            {editing ? t('save') : t('create')}
           </Button>
           {editing && (
             <Button onClick={() => { setEditing(null); setForm(EMPTY_FORM); }} className="h-9 rounded-full px-4 text-xs" variant="outline">
-              <X className="w-3.5 h-3.5" /> Annuler
+              <X className="w-3.5 h-3.5" /> {t('cancel')}
             </Button>
           )}
         </div>
@@ -232,7 +232,7 @@ export default function ScheduledJobsPage() {
         </div>
       ) : rows.length === 0 ? (
         <Card className="border border-dashed border-slate-300 rounded-2xl p-10 text-center">
-          <p className="text-sm text-slate-500">Aucune tâche planifiée. Créez la première pour commencer.</p>
+          <p className="text-sm text-slate-500">{t('empty')}</p>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -242,24 +242,24 @@ export default function ScheduledJobsPage() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-slate-800 truncate">{j.name}</span>
-                    <Badge variant={j.isActive ? 'success' : 'neutral'} className="text-[10px] px-2">{j.isActive ? 'Actif' : 'Inactif'}</Badge>
+                    <Badge variant={j.isActive ? 'success' : 'neutral'} className="text-[10px] px-2">{j.isActive ? t('active') : t('inactive')}</Badge>
                   </div>
                   <div className="text-[11px] text-slate-500 font-mono mt-0.5 truncate">
                     {j.key}
-                    <span className="text-slate-400"> · {HANDLERS.find(h => h.value === j.handler)?.label ?? j.handler} · toutes les {j.intervalMinutes ?? '—'} min · dernière exécution {fmtDate(j.lastRunAt)} · prochaine {fmtDate(j.nextRunAt)}</span>
+                    <span className="text-slate-400"> · {handlerLabel(j.handler)} · {t('meta', { interval: j.intervalMinutes ?? '—', last: fmtDate(j.lastRunAt), next: fmtDate(j.nextRunAt) })}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <Button size="sm" variant="ghost" onClick={() => toggleHistory(j)} title="Historique des exécutions" className="h-8 w-8 p-0 text-slate-500">
+                  <Button size="sm" variant="ghost" onClick={() => toggleHistory(j)} title={t('history')} aria-label={t('history')} className="h-8 w-8 p-0 text-slate-500">
                     <History className="w-4 h-4" />
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => startEdit(j)} title="Modifier" className="h-8 w-8 p-0 text-slate-500">
+                  <Button size="sm" variant="ghost" onClick={() => startEdit(j)} title={t('edit')} aria-label={t('edit')} className="h-8 w-8 p-0 text-slate-500">
                     <Pencil className="w-4 h-4" />
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => handleToggle(j)} disabled={busyId === j.id} title={j.isActive ? 'Désactiver' : 'Activer'} className="h-8 w-8 p-0 text-slate-500">
+                  <Button size="sm" variant="ghost" onClick={() => handleToggle(j)} disabled={busyId === j.id} title={j.isActive ? t('disable') : t('enable')} aria-label={j.isActive ? t('disable') : t('enable')} className="h-8 w-8 p-0 text-slate-500">
                     <Power className="w-4 h-4" />
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => handleDelete(j)} disabled={busyId === j.id} title="Supprimer" className="h-8 w-8 p-0 text-red-500">
+                  <Button size="sm" variant="ghost" onClick={() => handleDelete(j)} disabled={busyId === j.id} title={t('delete')} aria-label={t('delete')} className="h-8 w-8 p-0 text-red-500">
                     <Trash2 className="w-4 h-4" />
                   </Button>
                   <Button
@@ -269,7 +269,7 @@ export default function ScheduledJobsPage() {
                     className="gap-1.5 h-8 rounded-full px-3 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     {busyId === j.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
-                    Exécuter
+                    {t('run')}
                   </Button>
                 </div>
               </div>
@@ -279,16 +279,16 @@ export default function ScheduledJobsPage() {
                   {(() => {
                     const runs = history[j.id];
                     if (!runs?.length) {
-                      return <p className="text-[11px] text-slate-400">Aucune exécution enregistrée pour cette tâche.</p>;
+                      return <p className="text-[11px] text-slate-400">{t('noRuns')}</p>;
                     }
                     return (
                       <ul className="space-y-1.5">
                         {runs.map(r => (
                           <li key={r.id} className="flex items-center gap-2 text-[11px] text-slate-600">
-                            <Badge variant={r.status === 'success' ? 'success' : 'danger'} className="text-[9px] px-1.5">{r.status === 'success' ? 'OK' : 'Erreur'}</Badge>
+                            <Badge variant={r.status === 'success' ? 'success' : 'danger'} className="text-[9px] px-1.5">{r.status === 'success' ? t('ok') : t('error')}</Badge>
                             <span>{fmtDate(r.startedAt)}</span>
-                            <span className="text-slate-400">· {r.triggeredBy === 'worker' ? 'automatique' : 'manuelle'}</span>
-                            {r.metadata && typeof r.metadata.purgedSessions === 'number' && <span className="text-slate-400">· {r.metadata.purgedSessions} session(s) purgée(s)</span>}
+                            <span className="text-slate-400">· {r.triggeredBy === 'worker' ? t('automatic') : t('manual')}</span>
+                            {r.metadata && typeof r.metadata.purgedSessions === 'number' && <span className="text-slate-400">· {t('purged', { count: r.metadata.purgedSessions })}</span>}
                             {r.error && <span className="text-red-600 truncate">{r.error}</span>}
                             {r.durationMs != null && <span className="text-slate-400">· {r.durationMs} ms</span>}
                           </li>
@@ -303,7 +303,7 @@ export default function ScheduledJobsPage() {
         </div>
       )}
 
-      <div className="flex items-center gap-1.5 text-[10px] text-slate-500"><Plus className="w-3 h-3" /> Le worker interne vérifie les tâches actives chaque minute.</div>
+      <div className="flex items-center gap-1.5 text-[10px] text-slate-500"><Plus className="w-3 h-3" /> {t('workerNote')}</div>
     </div>
   );
 }

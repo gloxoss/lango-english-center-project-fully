@@ -1,12 +1,12 @@
 {
   "_README": "Ratchet baselines for scripts/check-ui-reality.ts. Each count may only go DOWN. Lower a number when you fix something, so the gain is locked in. Raising one is allowed but must be deliberate and explained in the PR - it means shipping a control that does nothing, a screen with invented data, a page nobody can reach, or dead code.",
   "_measured": "2026-09-23, five imported-fixture Communication routes archived after the deep visual sweep.",
-  "deadControls": 39,
-  "_deadControls": "A <Button>/<button> with no onClick, submit, link or trigger parent. Lowered to 47 after entitlements module ticket modal and license certificate actions wired.",
+  "deadControls": 0,
+  "_deadControls": "A <Button>/<button> with no onClick, submit, link or trigger parent. Lowered to 0 on 2026-09-25 (S11 UX cleanup): Button asChild wrapped around Links in finance views, onClick added to unavailable catalog card and HTML certificate print button.",
   "mockScreens": 0,
   "_mockScreens": "0 current findings, including the imported data fixture state pattern. The heuristic does not prove that every fetch returns real records.",
-  "unlinkedPages": 28,
-  "_unlinkedPages": "Static dashboard pages with no sidebar or portal-manifest entry points. Five direct-URL mock Communication routes were archived. Some remaining pages are reached from a parent screen by design.",
-  "orphanedComponents": 7,
-  "_orphanedComponents": "Exported components nothing in src imports. Was 14; seven mock/duplicate screens were moved to future-implementation/_archived-ui. The remaining seven are small prop-driven building blocks, not fake screens."
+  "unlinkedPages": 21,
+  "_unlinkedPages": "Static dashboard pages with no sidebar or portal-manifest entry points. Lowered from 29 to 21 on 2026-09-25 (S08 navigation): 8 real workspaces added to menus (finance/online-payments, finance/chart-of-accounts, finance/journal, finance/bank-reconciliation, finance/reconciliation, hr/leave-management, hr/salary-advances, workforce/payroll/payslips).",
+  "orphanedComponents": 2,
+  "_orphanedComponents": "Exported components nothing in src imports. Lowered from 5 to 2 on 2026-09-25 (S11 UX cleanup): deleted attendance-scanner-kiosk, parents-guardians-page, and student-attendance-heatmap. The remaining 2 (analytics-view, attendance-chart) are under features/dashboard/ locked by task:ENH-ADMIN-DASH-01."
 }

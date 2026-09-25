@@ -8,13 +8,37 @@ import { namingSeries, user } from '@/models/Schema';
  * so concurrent callers can never receive the same number (no MAX()+1 race).
  * Automatically reconciles upwards if pre-existing or imported records exist in the database.
  */
+/**
+ * Prefix a new matricule should use when the caller does not force one: the
+ * format of the school's most recent matricule (e.g. 'ATL-2526-'), so new
+ * students continue the existing series instead of starting a second format
+ * (audit S-24). Schools with no matricule yet get STD-{year}-.
+ */
+export async function currentTenantPrefix(
+  db: Pick<typeof dbClient, 'select'> | any,
+  tenantId: string,
+): Promise<string> {
+  const fallback = `STD-${new Date().getFullYear()}-`;
+  try {
+    const [latest] = await db
+      .select({ matricule: user.matricule })
+      .from(user)
+      .where(and(eq(user.tenantId, tenantId), sql`${user.matricule} is not null and ${user.matricule} <> ''`))
+      .orderBy(sql`${user.createdAt} desc`)
+      .limit(1);
+    const match = typeof latest?.matricule === 'string' ? /^(.*D)(d{3,})$/.exec(latest.matricule) : null;
+    return match ? match[1]! : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export async function reserveMatricule(
   db: Pick<typeof dbClient, 'select' | 'update' | 'insert'> | any,
   tenantId: string,
   customPrefix?: string,
 ): Promise<string> {
-  const year = new Date().getFullYear();
-  const prefix = customPrefix ?? `STD-${year}-`;
+  const prefix = customPrefix ?? await currentTenantPrefix(db, tenantId);
 
   // 1. Transaction-level advisory lock when supported (e.g. Postgres)
   if (typeof db.execute === 'function') {

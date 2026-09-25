@@ -48,10 +48,8 @@ export function ClassDetail360View({ id, locale }: { id: string; locale: string 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
       <div className="flex items-center gap-3">
-        <Link href={`/${locale}/dashboard/academics/classes`}>
-          <button className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#2487B8]" title={tCommon('back')}>
-            <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
-          </button>
+        <Link href={`/${locale}/dashboard/academics/classes`} className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#2487B8]" title={tCommon('back')} aria-label={tCommon('back')}>
+          <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
         </Link>
         <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">
           {className || t('classDefault')}

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import {
   AlertTriangle,
@@ -19,6 +20,7 @@ interface ActionCenterProps {
 }
 
 export function ActionCenter({ data, locale }: ActionCenterProps) {
+  const th = useTranslations('DashboardHome');
   const { attendance, overdueInvoices, unjustifiedAbsences } = data;
 
   return (
@@ -32,7 +34,7 @@ export function ActionCenter({ data, locale }: ActionCenterProps) {
             id="action-center-heading"
             className="text-xs font-bold uppercase tracking-wider text-slate-500"
           >
-            Centre d’actions prioritaires
+            {th('acHeading')}
           </h2>
         </div>
       </div>
@@ -69,11 +71,11 @@ export function ActionCenter({ data, locale }: ActionCenterProps) {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Présences
+                  {th('acAttendanceLabel')}
                 </span>
                 {attendance.status === 'warning' && (
                   <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-800">
-                    Action requise
+                    {th('acActionRequired')}
                   </span>
                 )}
               </div>
@@ -92,7 +94,7 @@ export function ActionCenter({ data, locale }: ActionCenterProps) {
                 href={`/${locale}/dashboard/attendance`}
                 className="inline-flex min-h-[44px] w-full items-center justify-between rounded-xl bg-amber-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-amber-700 active:scale-[0.99]"
               >
-                <span>Voir les classes</span>
+                <span>{th('seeClasses')}</span>
                 <ArrowRight className="size-3.5" />
               </Link>
             </div>
@@ -124,11 +126,11 @@ export function ActionCenter({ data, locale }: ActionCenterProps) {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Recouvrement
+                  {th('acCollectionLabel')}
                 </span>
                 {overdueInvoices.status === 'warning' && (
                   <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-extrabold text-rose-800">
-                    {overdueInvoices.overdueCount} retards
+                    {th('acLateCount', { count: overdueInvoices.overdueCount })}
                   </span>
                 )}
               </div>
@@ -147,7 +149,7 @@ export function ActionCenter({ data, locale }: ActionCenterProps) {
                 href={`/${locale}/dashboard/finance/invoices`}
                 className="inline-flex min-h-[44px] w-full items-center justify-between rounded-xl bg-rose-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-rose-700 active:scale-[0.99]"
               >
-                <span>Voir les factures</span>
+                <span>{th('seeInvoices')}</span>
                 <ArrowRight className="size-3.5" />
               </Link>
             </div>
@@ -179,11 +181,11 @@ export function ActionCenter({ data, locale }: ActionCenterProps) {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Assiduité
+                  {th('acAssiduityLabel')}
                 </span>
                 {unjustifiedAbsences.status === 'warning' && (
                   <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-800">
-                    Non justifiées
+                    {th('acUnexcusedBadge')}
                   </span>
                 )}
               </div>
@@ -202,7 +204,7 @@ export function ActionCenter({ data, locale }: ActionCenterProps) {
                 href={`/${locale}/dashboard/attendance`}
                 className="inline-flex min-h-[44px] w-full items-center justify-between rounded-xl bg-amber-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-amber-700 active:scale-[0.99]"
               >
-                <span>Voir les présences</span>
+                <span>{th('seeAttendance')}</span>
                 <ArrowRight className="size-3.5" />
               </Link>
             </div>

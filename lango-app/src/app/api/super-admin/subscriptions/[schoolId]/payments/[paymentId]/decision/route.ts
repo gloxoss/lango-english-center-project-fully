@@ -10,7 +10,12 @@ type Params = { params: Promise<{ schoolId: string; paymentId: string }> };
 const schema = z.object({
   approved: z.boolean(),
   amount: z.coerce.number().min(0).max(1_000_000_000).optional(),
-}).strict();
+}).strict().refine(
+  // Approving records a paid renewal: an empty amount used to be stored as 0 MAD.
+  // A free extension has its own license action (extend), not this endpoint.
+  body => !body.approved || (body.amount !== undefined && body.amount > 0),
+  { message: 'Approving a renewal needs the amount received (greater than 0).', path: ['amount'] },
+);
 
 // POST /api/super-admin/subscriptions/:schoolId/payments/:paymentId/decision
 // Approves or rejects a pending renewal request. Approving records the payment

@@ -15,6 +15,7 @@ export interface ReceiptAllocation {
 export interface CreateReceiptOptions {
   tenantId: string;
   studentId: string;
+  paymentId: string;
   amountCents: bigint;
   paymentDate: string; // YYYY-MM-DD
   allocations: ReceiptAllocation[];
@@ -32,6 +33,7 @@ export async function createReceipt(client: ReceiptClient, opts: CreateReceiptOp
       tenantId: opts.tenantId,
       receiptNumber,
       studentId: opts.studentId,
+      paymentId: opts.paymentId,
       amount: Number(centsToMoney(opts.amountCents)),
       paymentDate: opts.paymentDate,
       allocations: opts.allocations,

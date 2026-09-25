@@ -21,17 +21,18 @@ interface DailyPulseKpiProps {
 
 export function DailyPulseKpi({ data, locale }: DailyPulseKpiProps) {
   const t = useTranslations('Dashboard');
+  const th = useTranslations('DashboardHome');
   const { activeStudents, attendanceToday, periodCollected, periodOverdue } = data;
 
   return (
-    <section aria-label="Indicateurs clés d’activité" className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <section aria-label={th('kpiAria')} className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {/* 1. ÉLÈVES ACTIFS */}
       <Link
         href={`/${locale}/dashboard/students`}
         className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-xs"
       >
         <div className="flex items-start justify-between">
-          <span className="text-xs font-bold text-slate-500">Élèves actifs</span>
+          <span className="text-xs font-bold text-slate-500">{th('kpiActiveStudents')}</span>
           <div className="flex size-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition group-hover:bg-blue-600 group-hover:text-white">
             <GraduationCap className="size-4.5" />
           </div>
@@ -42,11 +43,11 @@ export function DailyPulseKpi({ data, locale }: DailyPulseKpiProps) {
           </div>
           <div className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
             <TrendingUp className="size-3.5" />
-            <span>+{activeStudents.newRegistrationsThisMonth} inscriptions ce mois</span>
+            <span>{th('kpiNewThisMonth', { count: activeStudents.newRegistrationsThisMonth })}</span>
           </div>
         </div>
         <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 text-[11px] font-bold text-slate-400 group-hover:text-blue-600">
-          <span>Consulter l'effectif</span>
+          <span>{th('kpiViewRoster')}</span>
           <ArrowUpRight className="size-3 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </div>
       </Link>
@@ -57,7 +58,7 @@ export function DailyPulseKpi({ data, locale }: DailyPulseKpiProps) {
         className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-xs"
       >
         <div className="flex items-start justify-between">
-          <span className="text-xs font-bold text-slate-500">Présence aujourd’hui</span>
+          <span className="text-xs font-bold text-slate-500">{th('kpiAttendanceToday')}</span>
           <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition group-hover:bg-emerald-600 group-hover:text-white">
             <CalendarCheck className="size-4.5" />
           </div>
@@ -69,28 +70,28 @@ export function DailyPulseKpi({ data, locale }: DailyPulseKpiProps) {
           <div className="mt-1 text-xs font-medium text-slate-500">
             {attendanceToday.markedCount > 0 ? (
               <span>
-                <strong className="font-bold text-slate-700">{attendanceToday.presentCount}</strong> présents · {attendanceToday.markedCount} pointés
+                <strong className="font-bold text-slate-700">{attendanceToday.presentCount}</strong> {th('kpiPresentOfMarked', { marked: attendanceToday.markedCount })}
               </span>
             ) : attendanceToday.status === 'no_school' ? (
-              <span className="text-slate-400">Aucun cours aujourd'hui</span>
+              <span className="text-slate-400">{th('kpiNoSchool')}</span>
             ) : (
-              <span className="text-amber-600 font-semibold">Pointage en attente</span>
+              <span className="text-amber-600 font-semibold">{th('kpiMarkingPending')}</span>
             )}
           </div>
         </div>
         <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 text-[11px] font-bold text-slate-400 group-hover:text-emerald-600">
-          <span>Suivre les présences</span>
+          <span>{th('kpiFollowAttendance')}</span>
           <ArrowUpRight className="size-3 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </div>
       </Link>
 
       {/* 3. ENCAISSÉ CE MOIS */}
       <Link
-        href={`/${locale}/dashboard/finance/payments`}
+        href={`/${locale}/dashboard/finance/receipts`}
         className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-xs"
       >
         <div className="flex items-start justify-between">
-          <span className="text-xs font-bold text-slate-500">Encaissé ce mois</span>
+          <span className="text-xs font-bold text-slate-500">{th('kpiCollectedMonth')}</span>
           <div className="flex size-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition group-hover:bg-blue-600 group-hover:text-white">
             <Wallet className="size-4.5" />
           </div>
@@ -103,11 +104,11 @@ export function DailyPulseKpi({ data, locale }: DailyPulseKpiProps) {
             <span className="rounded bg-blue-50 px-1.5 py-0.5 font-bold text-blue-700">
               {periodCollected.rate === null ? '—' : `${periodCollected.rate}%`}
             </span>
-            <span>du montant attendu</span>
+            <span>{th('kpiOfExpected')}</span>
           </div>
         </div>
         <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 text-[11px] font-bold text-slate-400 group-hover:text-blue-600">
-          <span>Journal des encaissements</span>
+          <span>{th('kpiCollectionsJournal')}</span>
           <ArrowUpRight className="size-3 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </div>
       </Link>

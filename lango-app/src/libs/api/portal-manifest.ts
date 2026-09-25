@@ -122,13 +122,18 @@ export const FULL_NAVIGATION: NavItem[] = [
     children: [
       { id: 'invoices', label: 'Factures', icon: 'Receipt', href: '/dashboard/finance/invoices', permission: 'finance.read' },
       { id: 'payments', label: 'Paiements', icon: 'CreditCard', href: '/dashboard/finance/payments', permission: 'finance.read' },
+      { id: 'online-payments', label: 'Paiements en ligne', icon: 'CreditCard', href: '/dashboard/finance/online-payments', permission: 'finance.read' },
       // `finance.manage`, matching both the page guard and what
       // /api/finance/expenses requires — with `finance.read` the page opened and
       // every fetch on it 403'd.
       { id: 'expenses', label: 'Dépenses', icon: 'TrendingDown', href: '/dashboard/finance/expenses', permission: 'finance.manage' },
       { id: 'office-accounting', label: 'Comptabilité générale & caisse', icon: 'Calculator', href: '/dashboard/finance/office-accounting', permission: 'accounting.account.read' },
       { id: 'accounting-accounts', label: 'Plan comptable', icon: 'BookOpen', href: '/dashboard/finance/accounting/accounts', permission: 'accounting.account.read' },
+      { id: 'chart-of-accounts', label: 'Plan comptable général', icon: 'BookOpen', href: '/dashboard/finance/chart-of-accounts', permission: 'accounting.account.read' },
       { id: 'accounting-transactions', label: 'Grand livre', icon: 'FileText', href: '/dashboard/finance/accounting/transactions', permission: 'accounting.account.read' },
+      { id: 'journal', label: 'Journal des écritures', icon: 'FileText', href: '/dashboard/finance/journal', permission: 'accounting.journal.create' },
+      { id: 'bank-reconciliation', label: 'Rapprochement bancaire', icon: 'Receipt', href: '/dashboard/finance/bank-reconciliation', permission: 'accounting.reconcile' },
+      { id: 'reconciliation', label: 'Rapprochements', icon: 'Receipt', href: '/dashboard/finance/reconciliation', permission: 'accounting.reconcile' },
       { id: 'accounting-voucher-types', label: 'Journaux & pièces', icon: 'Settings2', href: '/dashboard/finance/accounting/voucher-types', permission: 'accounting.account.manage' },
       { id: 'accounting-deposit', label: 'Nouvel encaissement', icon: 'Receipt', href: '/dashboard/finance/accounting/deposits/new', permission: 'accounting.deposit.create' },
       { id: 'accounting-expense', label: 'Nouvelle dépense', icon: 'TrendingDown', href: '/dashboard/finance/expenses/new', permission: 'accounting.expense.prepare' },
@@ -179,8 +184,11 @@ export const FULL_NAVIGATION: NavItem[] = [
       { id: 'hr-dashboard', label: 'Tableau de bord RH', icon: 'LayoutDashboard', href: '/dashboard/hr', permission: 'hr.read' },
       { id: 'hr-self-service', label: 'Mon espace RH', icon: 'User', href: '/dashboard/hr/self-service' },
       { id: 'hr-employees', label: 'Profils employés', icon: 'Users', href: '/dashboard/hr/employees', permission: 'hr.manage' },
+      { id: 'leave-management', label: 'Gestion des congés', icon: 'Calendar', href: '/dashboard/hr/leave-management', permission: 'hr.manage' },
+      { id: 'salary-advances', label: 'Avances sur salaire', icon: 'DollarSign', href: '/dashboard/hr/salary-advances', permission: 'hr.manage' },
       { id: 'hr-salary-templates', label: 'Gabarits salariaux', icon: 'DollarSign', href: '/dashboard/workforce/payroll/structures', permission: 'payroll.configure', addonId: 'payroll-workforce' },
       { id: 'hr-payroll', label: 'Paie mensuelle', icon: 'CreditCard', href: '/dashboard/workforce/payroll/runs', permission: 'payroll.review', addonId: 'payroll-workforce' },
+      { id: 'workforce-payslips', label: 'Bulletins de paie', icon: 'FileText', href: '/dashboard/workforce/payroll/payslips', permission: 'payroll.review', addonId: 'payroll-workforce' },
       { id: 'hr-leave', label: 'Congés', icon: 'CalendarOff', href: '/dashboard/hr/leave', permission: 'hr.read' },
     ],
   },

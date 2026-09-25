@@ -1,8 +1,146 @@
 # `/dashboard/settings`
+<!-- swept: 2026-09-24 claude-finance | school_admin sweep :3466: loads, no failed API; only flag 'SMS.ma' is the SMS provider's domain name, a false positive of the raw-key detector -->
 
 **Status: NEEDS FIX (P1)** · Module: `settings` · Source: [`src/app/[locale]/(dashboard)/dashboard/settings/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/settings/page.tsx>)
 
-**Progress (2026-09-24):** S-32 PARTIAL · S-26 REVIEW
+**Progress (2026-09-25):** S-32 PARTIAL · S-26 PARTIAL
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -83,7 +221,7 @@ Guard: `requireServerPage` · capability `settings.organization.manage`
 ## Cross-cutting findings that also show here
 
 - [S-7](../../findings/S-7.md) (P1) ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French)
-- [S-14](../../findings/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
+- [S-14](../../findings/done/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
 - [S-18](../../findings/done/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
 - [S-25](../../findings/done/S-25.md) (P2) Header shows a fake identity when the session call is slow
 - [S-37](../../findings/S-37.md) (P2) Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL

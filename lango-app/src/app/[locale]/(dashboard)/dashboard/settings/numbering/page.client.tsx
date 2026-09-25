@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckCircle2, AlertCircle, Plus, Pencil, Eye, Zap, Loader2, Save, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +35,7 @@ type SeriesForm = {
 const EMPTY_FORM: SeriesForm = { key: '', name: '', prefix: '', suffix: '', padding: '0', start: '1', step: '1' };
 
 export default function NumberingPage() {
+  const t = useTranslations('NumberingSettings');
   const [rows, setRows] = useState<Series[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Series | null>(null);
@@ -56,8 +58,9 @@ export default function NumberingPage() {
       const res = await fetch('/api/settings/numbering');
       const json = await res.json();
       if (json.success) setRows(json.data);
+      else showToast('err', json.error?.message ?? t('loadError'));
     } catch {
-      showToast('err', 'Erreur chargement des séries.');
+      showToast('err', t('loadError'));
     } finally {
       setLoading(false);
     }
@@ -84,13 +87,13 @@ export default function NumberingPage() {
       const json = await res.json();
       if (json.success) {
         setForm(EMPTY_FORM);
-        showToast('ok', 'Série créée.');
+        showToast('ok', t('created'));
         load();
       } else {
-        showToast('err', json.error?.message ?? 'Création impossible.');
+        showToast('err', json.error?.message ?? t('createError'));
       }
     } catch {
-      showToast('err', 'Erreur réseau.');
+      showToast('err', t('networkError'));
     } finally {
       setBusy(false);
     }
@@ -115,13 +118,13 @@ export default function NumberingPage() {
       if (json.success) {
         setEditing(null);
         setForm(EMPTY_FORM);
-        showToast('ok', 'Série mise à jour.');
+        showToast('ok', t('updated'));
         load();
       } else {
-        showToast('err', json.error?.message ?? 'Mise à jour impossible.');
+        showToast('err', json.error?.message ?? t('updateError'));
       }
     } catch {
-      showToast('err', 'Erreur réseau.');
+      showToast('err', t('networkError'));
     } finally {
       setBusy(false);
     }
@@ -145,28 +148,30 @@ export default function NumberingPage() {
       const res = await fetch(`/api/settings/numbering/${s.id}/preview`, { method: 'POST' });
       const json = await res.json();
       if (json.success) {
-        showToast('ok', `Prochain numéro : ${json.data.nextValue}`);
+        showToast('ok', t('nextNumber', { value: json.data.nextValue }));
       } else {
-        showToast('err', json.error?.message ?? 'Aperçu impossible.');
+        showToast('err', json.error?.message ?? t('previewError'));
       }
     } catch {
-      showToast('err', 'Erreur réseau.');
+      showToast('err', t('networkError'));
     }
   };
 
   const handleNext = async (s: Series) => {
+    // Handing out a number is irreversible: it leaves a gap in the series.
+    if (!window.confirm(t('confirmAssign', { name: s.name }))) return;
     setBusyNextId(s.id);
     try {
       const res = await fetch(`/api/settings/numbering/${s.id}/next`, { method: 'POST' });
       const json = await res.json();
       if (json.success) {
-        showToast('ok', `Numéro attribué : ${json.data.nextValue}`);
+        showToast('ok', t('assigned', { value: json.data.nextValue }));
         load();
       } else {
-        showToast('err', json.error?.message ?? 'Attribution impossible.');
+        showToast('err', json.error?.message ?? t('assignError'));
       }
     } catch {
-      showToast('err', 'Erreur réseau.');
+      showToast('err', t('networkError'));
     } finally {
       setBusyNextId(null);
     }
@@ -177,8 +182,9 @@ export default function NumberingPage() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Séries de numérotation</h1>
-        <p className="text-xs text-slate-500 mt-1">Séquences de numérotation pour documents (factures, matricules) : préfixe, suffixe, remplissage et pas. La consommation est sérialisée pour ne jamais attribuer deux fois le même numéro.</p>
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">{t('title')}</h1>
+        <p className="text-xs text-slate-500 mt-1">{t('subtitle')}</p>
+        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mt-2">{t('notWiredNote')}</p>
       </div>
 
       {toast && (
@@ -191,15 +197,15 @@ export default function NumberingPage() {
       )}
 
       <Card className="border border-slate-200 rounded-2xl shadow-xs p-5">
-        <div className="text-sm font-bold text-slate-800 mb-3">{editing ? `Modifier « ${editing.name} »` : 'Nouvelle série'}</div>
+        <div className="text-sm font-bold text-slate-800 mb-3">{editing ? t('editTitle', { name: editing.name }) : t('newSeries')}</div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Input className="h-9 text-xs rounded-xl" placeholder="Clé (ex: invoice)" value={form.key} onChange={set('key')} disabled={!!editing} />
-          <Input className="h-9 text-xs rounded-xl" placeholder="Nom (ex: Factures 2026)" value={form.name} onChange={set('name')} />
-          <Input className="h-9 text-xs rounded-xl" placeholder="Préfixe (ex: FAC-2026-)" value={form.prefix} onChange={set('prefix')} />
-          <Input className="h-9 text-xs rounded-xl" placeholder="Suffixe (ex: /A)" value={form.suffix} onChange={set('suffix')} />
-          <Input className="h-9 text-xs rounded-xl" placeholder="Remplissage (ex: 6)" value={form.padding} onChange={set('padding')} />
-          <Input className="h-9 text-xs rounded-xl" placeholder="Départ (ex: 1)" value={form.start} onChange={set('start')} disabled={!!editing} />
-          <Input className="h-9 text-xs rounded-xl" placeholder="Pas (ex: 1)" value={form.step} onChange={set('step')} />
+          <Input className="h-9 text-xs rounded-xl" placeholder={t('keyPlaceholder')} aria-label={t('keyPlaceholder')} value={form.key} onChange={set('key')} disabled={!!editing} />
+          <Input className="h-9 text-xs rounded-xl" placeholder={t('namePlaceholder')} aria-label={t('namePlaceholder')} value={form.name} onChange={set('name')} />
+          <Input className="h-9 text-xs rounded-xl" placeholder={t('prefixPlaceholder')} aria-label={t('prefixPlaceholder')} value={form.prefix} onChange={set('prefix')} />
+          <Input className="h-9 text-xs rounded-xl" placeholder={t('suffixPlaceholder')} aria-label={t('suffixPlaceholder')} value={form.suffix} onChange={set('suffix')} />
+          <Input className="h-9 text-xs rounded-xl" placeholder={t('paddingPlaceholder')} aria-label={t('paddingPlaceholder')} value={form.padding} onChange={set('padding')} />
+          <Input className="h-9 text-xs rounded-xl" placeholder={t('startPlaceholder')} aria-label={t('startPlaceholder')} value={form.start} onChange={set('start')} disabled={!!editing} />
+          <Input className="h-9 text-xs rounded-xl" placeholder={t('stepPlaceholder')} aria-label={t('stepPlaceholder')} value={form.step} onChange={set('step')} />
         </div>
         <div className="flex gap-2 mt-4">
           <Button
@@ -208,11 +214,11 @@ export default function NumberingPage() {
             className="gap-2 h-9 rounded-full px-5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
           >
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {editing ? 'Enregistrer' : 'Créer la série'}
+            {editing ? t('save') : t('create')}
           </Button>
           {editing && (
             <Button onClick={() => { setEditing(null); setForm(EMPTY_FORM); }} className="h-9 rounded-full px-4 text-xs" variant="outline">
-              <X className="w-3.5 h-3.5" /> Annuler
+              <X className="w-3.5 h-3.5" /> {t('cancel')}
             </Button>
           )}
         </div>
@@ -224,7 +230,7 @@ export default function NumberingPage() {
         </div>
       ) : rows.length === 0 ? (
         <Card className="border border-dashed border-slate-300 rounded-2xl p-10 text-center">
-          <p className="text-sm text-slate-500">Aucune série de numérotation. Créez la première pour commencer.</p>
+          <p className="text-sm text-slate-500">{t('empty')}</p>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -233,18 +239,18 @@ export default function NumberingPage() {
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-slate-800 truncate">{s.name}</span>
-                  <Badge variant={s.isActive ? 'success' : 'neutral'} className="text-[10px] px-2">{s.isActive ? 'Actif' : 'Inactif'}</Badge>
+                  <Badge variant={s.isActive ? 'success' : 'neutral'} className="text-[10px] px-2">{s.isActive ? t('active') : t('inactive')}</Badge>
                 </div>
                 <div className="text-[11px] text-slate-500 font-mono mt-0.5 truncate">
                   {s.prefix ?? ''}{String(s.current + s.step).padStart(s.padding, '0')}{s.suffix ?? ''}
-                  <span className="text-slate-400"> · {s.key} · départ {s.start} · pas {s.step} · pad {s.padding}</span>
+                  <span className="text-slate-400"> · {s.key} · {t('meta', { start: s.start, step: s.step, padding: s.padding })}</span>
                 </div>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                <Button size="sm" variant="ghost" onClick={() => handlePreview(s)} title="Aperçu sans consommer" className="h-8 w-8 p-0 text-slate-500">
+                <Button size="sm" variant="ghost" onClick={() => handlePreview(s)} title={t('previewTitle')} aria-label={t('previewTitle')} className="h-8 w-8 p-0 text-slate-500">
                   <Eye className="w-4 h-4" />
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => startEdit(s)} title="Modifier" className="h-8 w-8 p-0 text-slate-500">
+                <Button size="sm" variant="ghost" onClick={() => startEdit(s)} title={t('edit')} aria-label={t('edit')} className="h-8 w-8 p-0 text-slate-500">
                   <Pencil className="w-4 h-4" />
                 </Button>
                 <Button
@@ -254,7 +260,7 @@ export default function NumberingPage() {
                   className="gap-1.5 h-8 rounded-full px-3 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   {busyNextId === s.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
-                  Attribuer
+                  {t('assign')}
                 </Button>
               </div>
             </Card>
@@ -262,7 +268,7 @@ export default function NumberingPage() {
         </div>
       )}
 
-      <div className="flex items-center gap-1.5 text-[10px] text-slate-500"><Plus className="w-3 h-3" /> Les champs Clé/Départ sont verrouillés après création.</div>
+      <div className="flex items-center gap-1.5 text-[10px] text-slate-500"><Plus className="w-3 h-3" /> {t('lockedNote')}</div>
     </div>
   );
 }

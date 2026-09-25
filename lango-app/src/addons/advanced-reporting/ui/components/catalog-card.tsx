@@ -143,7 +143,7 @@ export function CatalogCard({
             </Link>
           </Button>
         ) : (
-          <Button size="sm" variant="ghost" disabled className="gap-1.5 text-slate-400 font-medium h-9 rounded-xl">
+          <Button size="sm" variant="ghost" disabled className="gap-1.5 text-slate-400 font-medium h-9 rounded-xl" aria-label={t('unavailable')} onClick={() => {}}>
             <Lock className="h-3.5 w-3.5" />
             <span>{t('unavailable')}</span>
           </Button>

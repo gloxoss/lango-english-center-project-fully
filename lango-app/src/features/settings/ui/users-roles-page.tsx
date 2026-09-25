@@ -5,7 +5,6 @@ import { db } from '@/libs/DB';
 import { getServerUserContext } from '@/libs/auth/server-context';
 import { auditLogs, branches, rolePermissions, tenants, twoFactor, user } from '@/models/Schema';
 import { DEFAULT_ROLE_PERMISSIONS, PERMISSIONS, type PermissionKey } from '@/libs/api/permissions';
-import { toUiStatus } from '@/models/userMapping';
 import { UsersRolesClient, UserItem, AuditEvent } from './users-roles-client';
 
 export async function UsersRolesPage({ locale }: { locale?: string } = {}) {
@@ -50,26 +49,29 @@ export async function UsersRolesPage({ locale }: { locale?: string } = {}) {
       .from(tenants)
       .where(tenantId ? eq(tenants.id, tenantId) : undefined)
       .limit(1);
-    const schoolName = tenant?.name || 'Établissement';
+    const schoolName = tenant?.name ?? '';
+    const dateLocale = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-GB' : 'fr-FR';
 
     initialUsers = userRows.map(u => {
       const uiRole = u.role;
       const branchName = u.branchId ? branchMap.get(u.branchId) ?? null : null;
 
-      let scope = branchName ?? 'Établissement';
+      // Scope ids are translated by the client (UsersRoles.scopes.*); a campus
+      // name is shown as is.
+      let scope = branchName ?? 'school';
       if (uiRole === 'super_admin' || uiRole === 'school_admin' || uiRole === 'accountant') {
-        scope = 'Toutes les classes';
+        scope = 'all_classes';
       } else if (uiRole === 'teacher') {
-        scope = 'Classes assignées';
+        scope = 'assigned_classes';
       }
 
       return {
         id: u.id,
-        name: u.name || 'Utilisateur',
+        name: u.name || u.email,
         email: u.email,
         role: u.role,
-        status: toUiStatus(u.status),
-        lastLogin: u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('fr-FR') : null,
+        status: u.status,
+        lastLogin: u.lastLogin ? new Date(u.lastLogin).toLocaleDateString(dateLocale) : null,
         tfa: Boolean(u.tfaVerified),
         schoolName: branchName ?? schoolName,
         accessScope: scope,
@@ -109,10 +111,10 @@ export async function UsersRolesPage({ locale }: { locale?: string } = {}) {
 
     initialAuditEvents = auditRows.map(a => ({
       id: a.id,
-      actorName: a.actorName ?? 'Système',
+      actorName: a.actorName ?? '',
       action: a.action,
       entityType: a.entityType,
-      timestamp: a.createdAt ? new Date(a.createdAt).toLocaleDateString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : 'Récemment',
+      timestamp: a.createdAt ? new Date(a.createdAt).toLocaleDateString(dateLocale, { hour: '2-digit', minute: '2-digit' }) : '',
     }));
 
   } catch (err) {

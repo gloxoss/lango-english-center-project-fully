@@ -1,10 +1,43 @@
+import type { OutcomeStatus } from '../types/assessment-types';
+import { and, eq } from 'drizzle-orm';
 import { ApiError } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
-import { assessmentOutcomes, assessmentOutcomeRevisions, assessmentDefinitions } from '../models/assessment-schema';
-import { eq, and } from 'drizzle-orm';
-import type { OutcomeStatus, ModerationState } from '../types/assessment-types';
+import { assessmentDefinitions, assessmentOutcomeRevisions, assessmentOutcomes } from '../models/assessment-schema';
+
+/**
+ * The "no mark above the maximum" rule used to live only in the marksheet UI
+ * (marksheet-grid.ts), so any other caller could store 155/20 or -3 and skew
+ * averages, rankings and report cards. Every write path checks it here.
+ */
+export function assertScoreInRange(rawScore: number | null | undefined, maxScore: number): void {
+  if (rawScore === undefined || rawScore === null) {
+    return;
+  }
+  if (!Number.isFinite(rawScore) || rawScore < 0 || rawScore > maxScore) {
+    throw new ApiError(422, 'SCORE_OUT_OF_RANGE', `La note doit être comprise entre 0 et ${maxScore}.`);
+  }
+}
 
 export class OutcomeService {
+  /**
+   * Checks a whole batch before anything is written, so one bad mark cannot
+   * leave the rows before it saved and the rest not.
+   */
+  static async assertScoresInRange(tenantId: string, assessmentDefinitionId: string, scores: Array<number | null | undefined>) {
+    const [def] = await db
+      .select({ maximumScore: assessmentDefinitions.maximumScore })
+      .from(assessmentDefinitions)
+      .where(and(eq(assessmentDefinitions.id, assessmentDefinitionId), eq(assessmentDefinitions.tenantId, tenantId)))
+      .limit(1);
+    if (!def) {
+      throw new ApiError(404, 'ASSESSMENT_NOT_FOUND', 'Évaluation introuvable.');
+    }
+    const maxScore = Number(def.maximumScore) || 20;
+    for (const score of scores) {
+      assertScoreInRange(score, maxScore);
+    }
+  }
+
   /**
    * Post or update a student's assessment outcome in the shared core ledger.
    */
@@ -38,8 +71,8 @@ export class OutcomeService {
       .where(
         and(
           eq(assessmentDefinitions.id, assessmentDefinitionId),
-          eq(assessmentDefinitions.tenantId, tenantId)
-        )
+          eq(assessmentDefinitions.tenantId, tenantId),
+        ),
       )
       .limit(1);
 
@@ -48,18 +81,25 @@ export class OutcomeService {
     }
 
     const maxScore = Number(def.maximumScore) || 20;
-    const normalizedScore =
-      rawScore !== undefined && rawScore !== null
+    assertScoreInRange(rawScore, maxScore);
+    const normalizedScore
+      = rawScore !== undefined && rawScore !== null
         ? Number(((rawScore / maxScore) * 20).toFixed(2))
         : undefined;
 
-    let grade: string | undefined = undefined;
+    let grade: string | undefined;
     if (normalizedScore !== undefined) {
-      if (normalizedScore >= 16) grade = 'Très Bien';
-      else if (normalizedScore >= 14) grade = 'Bien';
-      else if (normalizedScore >= 12) grade = 'Assez Bien';
-      else if (normalizedScore >= 10) grade = 'Passable';
-      else grade = 'Insuffisant';
+      if (normalizedScore >= 16) {
+        grade = 'Très Bien';
+      } else if (normalizedScore >= 14) {
+        grade = 'Bien';
+      } else if (normalizedScore >= 12) {
+        grade = 'Assez Bien';
+      } else if (normalizedScore >= 10) {
+        grade = 'Passable';
+      } else {
+        grade = 'Insuffisant';
+      }
     }
 
     // Check existing outcome
@@ -69,8 +109,8 @@ export class OutcomeService {
       .where(
         and(
           eq(assessmentOutcomes.assessmentDefinitionId, assessmentDefinitionId),
-          eq(assessmentOutcomes.studentId, studentId)
-        )
+          eq(assessmentOutcomes.studentId, studentId),
+        ),
       )
       .limit(1);
 
@@ -89,8 +129,8 @@ export class OutcomeService {
 
       // Record revision audit log if score or status changed
       if (
-        Number(existing.rawScore) !== rawScore ||
-        existing.status !== status
+        Number(existing.rawScore) !== rawScore
+        || existing.status !== status
       ) {
         await db.insert(assessmentOutcomeRevisions).values({
           assessmentOutcomeId: existing.id,
@@ -146,7 +186,7 @@ export class OutcomeService {
   /**
    * Bulk lock outcomes for a given assessment definition upon moderation completion.
    */
-  static async lockOutcomes(tenantId: string, assessmentDefinitionId: string, markerId: string) {
+  static async lockOutcomes(tenantId: string, assessmentDefinitionId: string, _markerId: string) {
     return db
       .update(assessmentOutcomes)
       .set({
@@ -156,8 +196,8 @@ export class OutcomeService {
       .where(
         and(
           eq(assessmentOutcomes.tenantId, tenantId),
-          eq(assessmentOutcomes.assessmentDefinitionId, assessmentDefinitionId)
-        )
+          eq(assessmentOutcomes.assessmentDefinitionId, assessmentDefinitionId),
+        ),
       )
       .returning();
   }

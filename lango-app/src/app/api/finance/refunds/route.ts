@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, ne, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext } from '@/libs/api/context';
@@ -8,7 +8,7 @@ import { hasCapability, requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { consumeDocumentNumber } from '@/libs/finance/document-number';
-import { normalizeMoney } from '@/libs/finance/money';
+import { centsToMoney, moneyToCents, normalizeMoney } from '@/libs/finance/money';
 import { moneyInput } from '@/libs/finance/validation';
 import { applyApprovedRefund, decideRefund } from '@/libs/services/refund-approval';
 import { payments, refunds, user } from '@/models/Schema';
@@ -64,7 +64,8 @@ export async function GET(req: NextRequest) {
       .from(refunds)
       .innerJoin(user, eq(refunds.studentId, user.id))
       .where(and(...conditions))
-      .orderBy(desc(refunds.createdAt)).limit(200);
+      .orderBy(desc(refunds.createdAt))
+      .limit(200);
 
     return NextResponse.json({ success: true, data: records });
   } catch (error) {
@@ -82,13 +83,28 @@ export async function POST(req: NextRequest) {
 
     const body = await parseJson(req, createRefundSchema);
     const tenantId = ctx.tenantId!;
-    const [payment] = await db.select({ id: payments.id }).from(payments).where(and(
+    const [payment] = await db.select({ id: payments.id, amount: payments.amount, status: payments.status }).from(payments).where(and(
       eq(payments.id, body.paymentId),
       eq(payments.tenantId, tenantId),
       eq(payments.studentId, body.studentId),
     )).limit(1);
     if (!payment) {
       throw new ApiError(422, 'INVALID_PAYMENT', 'Le paiement original est incompatible avec cet élève.');
+    }
+    if (payment.status !== 'posted') {
+      throw new ApiError(409, 'PAYMENT_NOT_REFUNDABLE', 'Ce paiement a déjà été annulé ou remboursé.');
+    }
+
+    // The DB trigger (0042/0158) is the real cap; checking here first turns its
+    // bare 500 into a message the cashier can act on.
+    const [refundedRow] = await db
+      .select({ refundedCents: sql<string>`coalesce(sum(round(${refunds.amount} * 100)), 0)::text` })
+      .from(refunds)
+      .where(and(eq(refunds.tenantId, tenantId), eq(refunds.paymentId, payment.id), ne(refunds.status, 'rejected')));
+    const remainingCents = moneyToCents(String(payment.amount)) - BigInt(refundedRow?.refundedCents ?? '0');
+    if (moneyToCents(normalizeMoney(body.amount)) > remainingCents) {
+      const remaining = remainingCents > BigInt(0) ? centsToMoney(remainingCents) : '0.00';
+      throw new ApiError(422, 'REFUND_EXCEEDS_PAYMENT', `Le remboursement dépasse le montant restant remboursable sur ce paiement (${remaining} MAD).`);
     }
 
     const canSelfApprove = await hasCapability(ctx.userId, tenantId, ctx.role, 'finance.approve');

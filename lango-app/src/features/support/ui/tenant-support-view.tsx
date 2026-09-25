@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -181,9 +182,12 @@ export function TenantSupportView() {
         setTimeout(() => setSuccessNotice(null), 4000);
         openTicketDetail(activeTicket);
         fetchTickets();
+      } else {
+        toast.error(json?.error?.message || json?.message || 'Erreur lors de l\'envoi de la reponse.');
       }
     } catch (err) {
       console.error('Failed to reply to ticket', err);
+      toast.error('Erreur reseau lors de l\'envoi de la reponse.');
     } finally {
       setSubmittingReply(false);
     }
@@ -200,15 +204,18 @@ export function TenantSupportView() {
           ticketId: activeTicket.id,
         }),
       });
-      const json = await res.json();
-      if (json.success) {
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
         setSuccessNotice('Demande marquée comme résolue.');
         setTimeout(() => setSuccessNotice(null), 4000);
         openTicketDetail({ ...activeTicket, status: 'resolved' });
         fetchTickets();
+      } else {
+        toast.error(json?.error?.message || json?.message || 'Erreur lors de la resolution de la demande.');
       }
     } catch (err) {
       console.error('Failed to resolve ticket', err);
+      toast.error('Erreur reseau lors de la resolution de la demande.');
     }
   };
 
@@ -229,8 +236,8 @@ export function TenantSupportView() {
           attachments: newTicketAttachments.length > 0 ? newTicketAttachments : undefined,
         }),
       });
-      const json = await res.json();
-      if (json.success) {
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
         setIsCreateOpen(false);
         setNewTicketAttachments([]);
         setNewTicketForm({
@@ -242,9 +249,12 @@ export function TenantSupportView() {
         setSuccessNotice('Votre demande d’assistance et vos pièces jointes ont été transmises à l’équipe SchoolOS.');
         setTimeout(() => setSuccessNotice(null), 5000);
         fetchTickets();
+      } else {
+        toast.error(json?.error?.message || json?.message || 'Erreur lors de la creation de la demande.');
       }
     } catch (err) {
       console.error('Failed to create ticket', err);
+      toast.error('Erreur reseau lors de la creation de la demande.');
     } finally {
       setCreatingTicket(false);
     }

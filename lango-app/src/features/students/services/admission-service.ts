@@ -1384,13 +1384,17 @@ export class AdmissionService {
       }
     }
 
-    recordAudit(context, 'create', 'student_from_admission', conversionResult.student!.id, {
-      applicantId,
-      matricule: conversionResult.matricule,
-      placementId: conversionResult.placementId,
-      branchId: input.branchId,
-      classSectionId: input.classSectionId,
-    });
+    // A replayed conversion returns the existing student: nothing was created,
+    // so it must not log a second 'create' (audit S-23).
+    if (!conversionResult.alreadyEnrolled) {
+      recordAudit(context, 'create', 'student_from_admission', conversionResult.student!.id, {
+        applicantId,
+        matricule: conversionResult.matricule,
+        placementId: conversionResult.placementId,
+        branchId: input.branchId,
+        classSectionId: input.classSectionId,
+      });
+    }
 
     return conversionResult;
   }

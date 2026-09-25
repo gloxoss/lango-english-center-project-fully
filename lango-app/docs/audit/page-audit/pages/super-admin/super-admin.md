@@ -1,8 +1,145 @@
 # `/dashboard/super-admin`
 
-**Status: NEEDS FIX (P3)** · Module: `super-admin` · Source: [`src/app/[locale]/(dashboard)/dashboard/super-admin/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/super-admin/page.tsx>)
+**Status: FIXED, pending re-sweep** · Module: `super-admin` · Source: [`src/app/[locale]/(dashboard)/dashboard/super-admin/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/super-admin/page.tsx>)
 
-**Progress (2026-09-24):** S-39 DONE · S-40 DONE · S-49 REVIEW
+**Progress (2026-09-25):** S-39 DONE · S-40 DONE · S-49 DONE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -45,7 +182,7 @@ Guard: `requireServerPage` · roles `super_admin`
 |---|---|---|---|---|
 | [S-39](../../findings/done/S-39.md) | P1 | Super-admin dashboard shows invented numbers | Compute from real tables or remove the field (UI shows "—"). | STILL OPEN |
 | [S-40](../../findings/done/S-40.md) | P1 | Super-admin revenue: collected > billed, "Reste dû 0" | Outstanding = open invoice balances (exclude cancelled/draft); collected = `netCollectedSumSql` for the month; separate figures. | STILL OPEN |
-| [S-49](../../findings/S-49.md) | P3 | Super-admin dashboard text glitches | Fix apostrophe, add the count, translate titles. | Not re-checked since the sweep. |
+| [S-49](../../findings/done/S-49.md) | P3 | Super-admin dashboard text glitches | Fix apostrophe, add the count, translate titles. | Not re-checked since the sweep. |
 
 ## Sweep results
 
@@ -83,7 +220,7 @@ Guard: `requireServerPage` · roles `super_admin`
 
 ## Cross-cutting findings that also show here
 
-- [S-44](../../findings/S-44.md) (P2) Staff campus switcher renders for parents, students and super admin (403 on every page)
+- [S-44](../../findings/done/S-44.md) (P2) Staff campus switcher renders for parents, students and super admin (403 on every page)
 - [S-7](../../findings/S-7.md) (P1) ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French)
 - [S-18](../../findings/done/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
 - [S-25](../../findings/done/S-25.md) (P2) Header shows a fake identity when the session call is slow

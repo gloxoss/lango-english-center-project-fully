@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Phone, Mail, AlertCircle, Printer } from 'lucide-react';
+import { printInvoiceDocument } from './finance-document-print';
 
 type ApiInvoiceDetail = {
   id: string;
@@ -100,7 +101,12 @@ export function InvoiceDetailView({ locale, invoiceId }: { locale: string; invoi
           <span>/</span>
           <span className="font-bold text-[#16212B]">{invoice.invoiceNumber}</span>
         </div>
-        <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2 h-9 rounded-full px-4 text-xs">
+        <Button variant="outline" size="sm" onClick={() => printInvoiceDocument(invoice, {
+          title: t('invoiceDetailTitle'), student: t('student'), date: tCommon('date'),
+          description: t('descriptionCol'), amount: t('amount'), total: t('totalLabel'),
+          paid: t('paidAmountLabel'), balance: t('remainingBalanceLabel'),
+          discount: t('discountLabel'), invoiceDate: t('issueDateLabel'), dueDate: t('dueDateLabel'),
+        }, locale)} className="gap-2 h-9 rounded-full px-4 text-xs">
           <Printer className="w-3.5 h-3.5" />
           <span>{t('printPdfBtn')}</span>
         </Button>
@@ -250,12 +256,12 @@ export function InvoiceDetailView({ locale, invoiceId }: { locale: string; invoi
             </div>
 
             {balance > 0 && (
-              <Link href={`/${locale}/dashboard/finance/payments/new?studentId=${invoice.studentId}`}>
-                <Button variant="primary" size="md" className="w-full gap-2 rounded-xl">
+              <Button asChild variant="primary" size="md" className="w-full gap-2 rounded-xl">
+                <Link href={`/${locale}/dashboard/finance/payments/new?studentId=${invoice.studentId}`}>
                   <CreditCard className="w-4 h-4" />
                   <span>{t('recordPaymentBtn')}</span>
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             )}
           </Card>
 

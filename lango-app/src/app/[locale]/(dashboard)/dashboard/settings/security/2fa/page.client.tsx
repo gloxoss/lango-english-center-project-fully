@@ -6,6 +6,7 @@ import {
   CheckCircle2, AlertCircle, AlertTriangle, Lock,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -19,6 +20,7 @@ type TwoFaStatus = {
 type Step = 'idle' | 'qr' | 'codes' | 'disabling';
 
 function BackupCodes({ codes }: { codes: string[] }) {
+  const t = useTranslations('TwoFactor');
   const [copied, setCopied] = useState(false);
   const copy = () => {
     navigator.clipboard.writeText(codes.join('\n'));
@@ -30,7 +32,7 @@ function BackupCodes({ codes }: { codes: string[] }) {
     <div className="space-y-3">
       <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700 flex items-start gap-2">
         <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-        <span><strong>Affichez une seule fois.</strong> Copiez et conservez ces codes en lieu sûr. Chaque code ne peut être utilisé qu&apos;une seule fois.</span>
+        <span><strong>{t('codesOnce')}</strong> {t('codesHint')}</span>
       </div>
       <div className="grid grid-cols-2 gap-2">
         {codes.map(code => (
@@ -41,13 +43,16 @@ function BackupCodes({ codes }: { codes: string[] }) {
       </div>
       <Button variant="outline" size="sm" onClick={copy} className="gap-2 text-xs rounded-xl w-full">
         <Copy className="w-3.5 h-3.5" />
-        {copied ? 'Copié !' : 'Copier tous les codes'}
+        {copied ? t('copied') : t('copyAll')}
       </Button>
     </div>
   );
 }
 
 export default function TwoFactorPage() {
+  const t = useTranslations('TwoFactor');
+  const locale = useLocale();
+  const intlLocale = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-GB' : 'fr-FR';
   const [status, setStatus] = useState<TwoFaStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState<Step>('idle');
@@ -82,7 +87,7 @@ export default function TwoFactorPage() {
         enrolledAt: user?.twoFactorEnrolledAt ?? null,
       });
     } catch {
-      showToast('err', 'Erreur chargement du statut 2FA.');
+      showToast('err', t('statusError'));
     } finally {
       setLoading(false);
     }
@@ -107,10 +112,10 @@ export default function TwoFactorPage() {
         setStep('qr');
         setPassword('');
       } else {
-        showToast('err', json.message ?? 'Impossible d\'initier la 2FA. Vérifiez votre mot de passe.');
+        showToast('err', json.message ?? t('enableError'));
       }
     } catch {
-      showToast('err', 'Erreur réseau.');
+      showToast('err', t('networkError'));
     } finally {
       setWorking(false);
     }
@@ -121,7 +126,7 @@ export default function TwoFactorPage() {
   // at the enable step.
   const verifyOtp = async () => {
     if (otp.length !== 6) {
-      showToast('err', 'Entrez un code à 6 chiffres.');
+      showToast('err', t('enterSixDigits'));
       return;
     }
     setWorking(true);
@@ -136,10 +141,10 @@ export default function TwoFactorPage() {
         setStep('codes');
         setOtp('');
       } else {
-        showToast('err', json.message ?? 'Code invalide. Réessayez.');
+        showToast('err', json.message ?? t('invalidCode'));
       }
     } catch {
-      showToast('err', 'Erreur réseau.');
+      showToast('err', t('networkError'));
     } finally {
       setWorking(false);
     }
@@ -151,7 +156,7 @@ export default function TwoFactorPage() {
     setStep('idle');
     setBackupCodes([]);
     setSavedConfirmed(false);
-    showToast('ok', 'Authentification à deux facteurs activée.');
+    showToast('ok', t('enabled'));
   };
 
   // Disable 2FA
@@ -168,12 +173,12 @@ export default function TwoFactorPage() {
         await loadStatus();
         setStep('idle');
         setPassword('');
-        showToast('ok', '2FA désactivée.');
+        showToast('ok', t('disabled'));
       } else {
-        showToast('err', json.message ?? 'Mot de passe incorrect.');
+        showToast('err', json.message ?? t('wrongPassword'));
       }
     } catch {
-      showToast('err', 'Erreur réseau.');
+      showToast('err', t('networkError'));
     } finally {
       setWorking(false);
     }
@@ -191,9 +196,9 @@ export default function TwoFactorPage() {
     <div className="space-y-6 max-w-2xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Authentification à deux facteurs</h1>
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">{t('title')}</h1>
         <p className="text-xs text-slate-500 mt-1">
-          Renforcez la sécurité de votre compte avec une deuxième couche de vérification.
+          {t('subtitle')}
         </p>
       </div>
 
@@ -218,11 +223,11 @@ export default function TwoFactorPage() {
             </div>
             <div>
               <p className="font-bold text-slate-900 text-sm">
-                {status?.enabled ? 'Activée' : 'Désactivée'}
+                {status?.enabled ? t('statusOn') : t('statusOff')}
               </p>
               {status?.enrolledAt && (
                 <p className="text-[10px] text-slate-500">
-                  Depuis le {new Date(status.enrolledAt).toLocaleDateString('fr-FR')}
+                  {t('since', { date: new Date(status.enrolledAt).toLocaleDateString(intlLocale) })}
                 </p>
               )}
             </div>
@@ -238,12 +243,13 @@ export default function TwoFactorPage() {
             {!status?.enabled ? (
               <div className="space-y-3">
                 <p className="text-xs text-slate-600">
-                  Entrez votre mot de passe pour commencer la configuration de la 2FA.
+                  {t('enterPassword')}
                 </p>
                 <div className="relative">
                   <Input
                     type={showPw ? 'text' : 'password'}
-                    placeholder="Votre mot de passe"
+                    placeholder={t('passwordPlaceholder')}
+                    aria-label={t('passwordPlaceholder')}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && startEnable()}
@@ -252,6 +258,7 @@ export default function TwoFactorPage() {
                   <button
                     type="button"
                     onClick={() => setShowPw(s => !s)}
+                    aria-label={showPw ? t('hidePassword') : t('showPassword')}
                     className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600"
                   >
                     {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -263,7 +270,7 @@ export default function TwoFactorPage() {
                   className="w-full gap-2 h-9 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   <Key className="w-4 h-4" />
-                  {working ? 'Chargement...' : 'Configurer la 2FA'}
+                  {working ? t('loading') : t('setUp')}
                 </Button>
               </div>
             ) : (
@@ -273,7 +280,7 @@ export default function TwoFactorPage() {
                 className="gap-2 text-xs rounded-xl w-full h-9 text-red-600 border-red-200 hover:bg-red-50"
               >
                 <Lock className="w-3.5 h-3.5" />
-                Désactiver la 2FA
+                {t('turnOff')}
               </Button>
             )}
           </>
@@ -284,33 +291,36 @@ export default function TwoFactorPage() {
             <div className="p-4 bg-slate-100 rounded-xl flex flex-col items-center gap-2">
               <QRCodeSVG value={otpauthUri} size={180} marginSize={2} />
               <p className="text-xs text-slate-500 text-center">
-                Scannez ce code avec votre application d&apos;authentification (Google Authenticator, Authy, etc.)
+                {t('scanHint')}
               </p>
             </div>
             <div className="space-y-2">
               <label className="text-xs font-semibold text-slate-700">
-                Code de vérification (6 chiffres)
+                {t('codeLabel')}
               </label>
               <Input
                 type="text"
                 maxLength={6}
                 placeholder="123456"
                 value={otp}
-                onChange={e => setOtp(e.target.value.replace(/\D/, ''))}
+                onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                aria-label={t('codeLabel')}
                 className="h-9 text-sm font-mono text-center rounded-xl tracking-widest"
                 autoFocus
               />
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStep('idle')} className="flex-1 text-xs rounded-xl h-9">
-                Annuler
+                {t('cancel')}
               </Button>
               <Button
                 onClick={verifyOtp}
                 disabled={working || otp.length !== 6}
                 className="flex-1 text-xs rounded-xl h-9 bg-blue-600 hover:bg-blue-700 text-white"
               >
-                {working ? 'Vérification...' : 'Vérifier le code'}
+                {working ? t('verifying') : t('verify')}
               </Button>
             </div>
           </div>
@@ -318,7 +328,9 @@ export default function TwoFactorPage() {
 
         {step === 'codes' && (
           <div className="space-y-4">
-            <BackupCodes codes={backupCodes.length > 0 ? backupCodes : ['(Non disponible — conservez votre appli d\'auth comme seul moyen de récupération)']} />
+            {backupCodes.length > 0
+              ? <BackupCodes codes={backupCodes} />
+              : <p className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700">{t('noBackupCodes')}</p>}
             <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
               <input
                 type="checkbox"
@@ -326,14 +338,14 @@ export default function TwoFactorPage() {
                 onChange={e => setSavedConfirmed(e.target.checked)}
                 className="w-4 h-4 accent-blue-500 rounded"
               />
-              J&apos;ai copié et conservé mes codes de secours en lieu sûr.
+              {t('savedConfirm')}
             </label>
             <Button
               onClick={finishEnable}
               disabled={!savedConfirmed}
               className="w-full text-xs rounded-xl h-9 bg-emerald-600 hover:bg-emerald-700 text-white"
             >
-              Terminer la configuration
+              {t('finish')}
             </Button>
           </div>
         )}
@@ -342,25 +354,26 @@ export default function TwoFactorPage() {
           <div className="space-y-3">
             <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>La désactivation réduit la sécurité de votre compte. Confirmez avec votre mot de passe.</span>
+              <span>{t('disableWarning')}</span>
             </div>
             <Input
               type="password"
-              placeholder="Votre mot de passe"
+              placeholder={t('passwordPlaceholder')}
+              aria-label={t('passwordPlaceholder')}
               value={password}
               onChange={e => setPassword(e.target.value)}
               className="h-9 text-xs rounded-xl"
             />
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStep('idle')} className="flex-1 text-xs rounded-xl h-9">
-                Annuler
+                {t('cancel')}
               </Button>
               <Button
                 onClick={disable2fa}
                 disabled={working || !password}
                 className="flex-1 text-xs rounded-xl h-9 bg-red-500 hover:bg-red-600 text-white"
               >
-                {working ? 'Désactivation...' : 'Confirmer la désactivation'}
+                {working ? t('disabling') : t('confirmDisable')}
               </Button>
             </div>
           </div>
@@ -369,7 +382,7 @@ export default function TwoFactorPage() {
 
       {/* Info */}
       <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 space-y-1">
-        <p className="font-semibold text-slate-700">Applications recommandées</p>
+        <p className="font-semibold text-slate-700">{t('recommendedApps')}</p>
         <p>Google Authenticator · Authy · Microsoft Authenticator · 1Password</p>
       </div>
     </div>

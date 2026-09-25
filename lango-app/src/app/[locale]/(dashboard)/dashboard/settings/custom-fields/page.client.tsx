@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckCircle2, AlertCircle, Plus, Pencil, Trash2, Save, X, Loader2, Database } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -35,10 +36,11 @@ const FIELD_TYPES = ['text', 'number', 'date', 'select', 'boolean'] as const;
 
 const EMPTY_FORM: FieldForm = { key: '', label: '', entityType: 'student', fieldType: 'text', options: '', required: 'false', sortOrder: '0' };
 
-const ENTITY_LABEL: Record<string, string> = { student: 'Élève', guardian: 'Tuteur', employee: 'Employé' };
-const FIELD_LABEL: Record<string, string> = { text: 'Texte', number: 'Nombre', date: 'Date', select: 'Liste', boolean: 'Booléen' };
 
 export default function CustomFieldsPage() {
+  const cf = useTranslations('CustomFieldsPage');
+  const ENTITY_LABEL = (key: string) => (cf.has(`entities.${key}`) ? cf(`entities.${key}` as 'entities.student') : key);
+  const FIELD_LABEL = (key: string) => (cf.has(`types.${key}`) ? cf(`types.${key}` as 'types.text') : key);
   const [rows, setRows] = useState<Field[]>([]);
   const [entityFilter, setEntityFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
@@ -69,9 +71,9 @@ export default function CustomFieldsPage() {
       const res = await fetch(`/api/settings/custom-fields${qs}`);
       const json = await res.json();
       if (json.success) setRows(json.data);
-      else showToast('err', json.error?.message ?? 'Erreur chargement des champs.');
+      else showToast('err', json.error?.message ?? cf('loadError'));
     } catch {
-      showToast('err', 'Erreur réseau.');
+      showToast('err', cf('networkError'));
     } finally {
       setLoading(false);
     }
@@ -103,13 +105,13 @@ export default function CustomFieldsPage() {
       const json = await res.json();
       if (json.success) {
         setForm(EMPTY_FORM);
-        showToast('ok', 'Champ créé.');
+        showToast('ok', cf('created'));
         load();
       } else {
-        showToast('err', json.error?.message ?? 'Création impossible.');
+        showToast('err', json.error?.message ?? cf('createError'));
       }
     } catch {
-      showToast('err', 'Erreur réseau.');
+      showToast('err', cf('networkError'));
     } finally {
       setBusy(false);
     }
@@ -137,13 +139,13 @@ export default function CustomFieldsPage() {
       if (json.success) {
         setEditing(null);
         setForm(EMPTY_FORM);
-        showToast('ok', 'Champ mis à jour.');
+        showToast('ok', cf('updated'));
         load();
       } else {
-        showToast('err', json.error?.message ?? 'Mise à jour impossible.');
+        showToast('err', json.error?.message ?? cf('updateError'));
       }
     } catch {
-      showToast('err', 'Erreur réseau.');
+      showToast('err', cf('networkError'));
     } finally {
       setBusy(false);
     }
@@ -163,19 +165,19 @@ export default function CustomFieldsPage() {
   };
 
   const handleDeactivate = async (f: Field) => {
-    if (!window.confirm(`Désactiver le champ « ${f.label} » ?`)) return;
+    if (!window.confirm(cf('confirmDeactivate', { label: f.label }))) return;
     try {
       const res = await fetch(`/api/settings/custom-fields/${f.id}`, { method: 'DELETE' });
       const json = await res.json();
       if (json.success) {
-        showToast('ok', 'Champ désactivé.');
+        showToast('ok', cf('deactivated'));
         if (valueFieldId === f.id) { setValueFieldId(null); setEntityId(''); }
         load();
       } else {
-        showToast('err', json.error?.message ?? 'Désactivation impossible.');
+        showToast('err', json.error?.message ?? cf('deactivateError'));
       }
     } catch {
-      showToast('err', 'Erreur réseau.');
+      showToast('err', cf('networkError'));
     }
   };
 
@@ -195,21 +197,21 @@ export default function CustomFieldsPage() {
         setExistingValue(json.data?.value ?? null);
         setRawValue(json.data ? String(json.data.value) : '');
       } else {
-        showToast('err', json.error?.message ?? 'Lecture impossible.');
+        showToast('err', json.error?.message ?? cf('readError'));
       }
     } catch {
-      showToast('err', 'Erreur réseau.');
+      showToast('err', cf('networkError'));
     }
   };
 
   const handleSaveValue = async () => {
-    if (!valueFieldId || !entityId.trim()) { showToast('err', 'Saisissez un identifiant d’entité.'); return; }
+    if (!valueFieldId || !entityId.trim()) { showToast('err', cf('entityIdRequired')); return; }
     setBusyValue(true);
     try {
       let value: unknown = rawValue;
       if (fieldDef?.fieldType === 'number') value = rawValue === '' ? '' : Number(rawValue);
       if (fieldDef?.fieldType === 'boolean') value = rawValue === 'true';
-      if (fieldDef?.fieldType === 'select' && rawValue === '') { showToast('err', 'Sélectionnez une option.'); setBusyValue(false); return; }
+      if (fieldDef?.fieldType === 'select' && rawValue === '') { showToast('err', cf('selectOption')); setBusyValue(false); return; }
       const res = await fetch(`/api/settings/custom-fields/${valueFieldId}/values`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -217,13 +219,13 @@ export default function CustomFieldsPage() {
       });
       const json = await res.json();
       if (json.success) {
-        showToast('ok', 'Valeur enregistrée.');
+        showToast('ok', cf('valueSaved'));
         loadValue();
       } else {
-        showToast('err', json.error?.message ?? 'Enregistrement impossible.');
+        showToast('err', json.error?.message ?? cf('saveError'));
       }
     } catch {
-      showToast('err', 'Erreur réseau.');
+      showToast('err', cf('networkError'));
     } finally {
       setBusyValue(false);
     }
@@ -231,7 +233,7 @@ export default function CustomFieldsPage() {
 
   const handleClearValue = async () => {
     if (!valueFieldId || !entityId.trim()) return;
-    if (!window.confirm('Effacer la valeur pour cette entité ?')) return;
+    if (!window.confirm(cf('confirmClear'))) return;
     setBusyValue(true);
     try {
       const res = await fetch(`/api/settings/custom-fields/${valueFieldId}/values`, {
@@ -241,14 +243,14 @@ export default function CustomFieldsPage() {
       });
       const json = await res.json();
       if (json.success) {
-        showToast('ok', 'Valeur supprimée.');
+        showToast('ok', cf('valueCleared'));
         setExistingValue(null);
         setRawValue('');
       } else {
-        showToast('err', json.error?.message ?? 'Suppression impossible.');
+        showToast('err', json.error?.message ?? cf('clearError'));
       }
     } catch {
-      showToast('err', 'Erreur réseau.');
+      showToast('err', cf('networkError'));
     } finally {
       setBusyValue(false);
     }
@@ -260,8 +262,8 @@ export default function CustomFieldsPage() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Champs personnalisés</h1>
-        <p className="text-xs text-slate-500 mt-1">Attributs sur mesure pour élèves, tuteurs et employés. Le registre définit les champs ; leur raccordement aux formulaires élèves/tuteurs/factures sera réalisé dans une étape ultérieure.</p>
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">{cf('title')}</h1>
+        <p className="text-xs text-slate-500 mt-1">{cf('subtitle')}</p>
       </div>
 
       {toast && (
@@ -274,24 +276,24 @@ export default function CustomFieldsPage() {
       )}
 
       <Card className="border border-slate-200 rounded-2xl shadow-xs p-5">
-        <div className="text-sm font-bold text-slate-800 mb-3">{editing ? `Modifier « ${editing.label} »` : 'Nouveau champ'}</div>
+        <div className="text-sm font-bold text-slate-800 mb-3">{editing ? cf('editTitle', { label: editing.label }) : cf('newField')}</div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Input className="h-9 text-xs rounded-xl" placeholder="Clé (ex: cndp_number)" value={form.key} onChange={set('key')} disabled={!!editing} />
-          <Input className="h-9 text-xs rounded-xl" placeholder="Libellé (ex: Numéro CNDP)" value={form.label} onChange={set('label')} />
+          <Input className="h-9 text-xs rounded-xl" placeholder={cf('keyPlaceholder')} value={form.key} onChange={set('key')} disabled={!!editing} />
+          <Input className="h-9 text-xs rounded-xl" placeholder={cf('labelPlaceholder')} value={form.label} onChange={set('label')} />
           <select className="h-9 text-xs rounded-xl border border-slate-200 bg-white px-3 text-slate-700" value={form.entityType} onChange={set('entityType')} disabled={!!editing}>
-            {ENTITY_TYPES.map(t => <option key={t} value={t}>{ENTITY_LABEL[t]}</option>)}
+            {ENTITY_TYPES.map(t => <option key={t} value={t}>{ENTITY_LABEL(t)}</option>)}
           </select>
           <select className="h-9 text-xs rounded-xl border border-slate-200 bg-white px-3 text-slate-700" value={form.fieldType} onChange={set('fieldType')}>
-            {FIELD_TYPES.map(t => <option key={t} value={t}>{FIELD_LABEL[t]}</option>)}
+            {FIELD_TYPES.map(t => <option key={t} value={t}>{FIELD_LABEL(t)}</option>)}
           </select>
           {form.fieldType === 'select' && (
-            <Input className="h-9 text-xs rounded-xl md:col-span-2" placeholder="Options séparées par des virgules (ex: A, B, C)" value={form.options} onChange={set('options')} />
+            <Input className="h-9 text-xs rounded-xl md:col-span-2" placeholder={cf('optionsPlaceholder')} value={form.options} onChange={set('options')} />
           )}
           <select className="h-9 text-xs rounded-xl border border-slate-200 bg-white px-3 text-slate-700" value={form.required} onChange={set('required')}>
-            <option value="false">Facultatif</option>
-            <option value="true">Obligatoire</option>
+            <option value="false">{cf('optional')}</option>
+            <option value="true">{cf('required')}</option>
           </select>
-          <Input className="h-9 text-xs rounded-xl" placeholder="Ordre (ex: 10)" value={form.sortOrder} onChange={set('sortOrder')} />
+          <Input className="h-9 text-xs rounded-xl" placeholder={cf('orderPlaceholder')} value={form.sortOrder} onChange={set('sortOrder')} />
         </div>
         <div className="flex gap-2 mt-4">
           <Button
@@ -300,11 +302,11 @@ export default function CustomFieldsPage() {
             className="gap-2 h-9 rounded-full px-5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
           >
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {editing ? 'Enregistrer' : 'Créer le champ'}
+            {editing ? cf('save') : cf('create')}
           </Button>
           {editing && (
             <Button onClick={() => { setEditing(null); setForm(EMPTY_FORM); }} className="h-9 rounded-full px-4 text-xs" variant="outline">
-              <X className="w-3.5 h-3.5" /> Annuler
+              <X className="w-3.5 h-3.5" /> {cf('cancel')}
             </Button>
           )}
         </div>
@@ -319,7 +321,7 @@ export default function CustomFieldsPage() {
               entityFilter === t ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
             }`}
           >
-            {t === 'all' ? 'Tous' : ENTITY_LABEL[t]}
+            {t === 'all' ? cf('all') : ENTITY_LABEL(t)}
           </button>
         ))}
       </div>
@@ -330,7 +332,7 @@ export default function CustomFieldsPage() {
         </div>
       ) : rows.length === 0 ? (
         <Card className="border border-dashed border-slate-300 rounded-2xl p-10 text-center">
-          <p className="text-sm text-slate-500">Aucun champ personnalisé. Créez le premier pour commencer.</p>
+          <p className="text-sm text-slate-500">{cf('empty')}</p>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -340,24 +342,24 @@ export default function CustomFieldsPage() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-slate-800 truncate">{f.label}</span>
-                    <Badge variant={f.isActive ? 'success' : 'neutral'} className="text-[10px] px-2">{f.isActive ? 'Actif' : 'Inactif'}</Badge>
-                    <Badge variant="neutral" className="text-[10px] px-2">{FIELD_LABEL[f.fieldType]}</Badge>
-                    {f.required && <Badge variant="warning" className="text-[10px] px-2">Obligatoire</Badge>}
+                    <Badge variant={f.isActive ? 'success' : 'neutral'} className="text-[10px] px-2">{f.isActive ? cf('active') : cf('inactive')}</Badge>
+                    <Badge variant="neutral" className="text-[10px] px-2">{FIELD_LABEL(f.fieldType)}</Badge>
+                    {f.required && <Badge variant="warning" className="text-[10px] px-2">{cf('required')}</Badge>}
                   </div>
                   <div className="text-[11px] text-slate-500 font-mono mt-0.5 truncate">
-                    {f.key} · {ENTITY_LABEL[f.entityType]}{f.options?.length ? ` · options : ${f.options.join(', ')}` : ''}
-                    <span className="text-slate-400"> · ordre {f.sortOrder}</span>
+                    {f.key} · {ENTITY_LABEL(f.entityType)}{f.options?.length ? ` · ${cf('optionsList', { list: f.options.join(', ') })}` : ''}
+                    <span className="text-slate-400"> · {cf('order', { n: f.sortOrder })}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <Button size="sm" variant="ghost" onClick={() => openValueManager(f)} title="Gérer les valeurs" className="h-8 w-8 p-0 text-slate-500">
+                  <Button size="sm" variant="ghost" onClick={() => openValueManager(f)} title={cf('manageValues')} aria-label={cf('manageValues')} className="h-8 w-8 p-0 text-slate-500">
                     <Database className="w-4 h-4" />
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => startEdit(f)} title="Modifier" className="h-8 w-8 p-0 text-slate-500">
+                  <Button size="sm" variant="ghost" onClick={() => startEdit(f)} title={cf('edit')} aria-label={cf('edit')} className="h-8 w-8 p-0 text-slate-500">
                     <Pencil className="w-4 h-4" />
                   </Button>
                   {f.isActive && (
-                    <Button size="sm" variant="ghost" onClick={() => handleDeactivate(f)} title="Désactiver" className="h-8 w-8 p-0 text-red-500">
+                    <Button size="sm" variant="ghost" onClick={() => handleDeactivate(f)} title={cf('deactivate')} aria-label={cf('deactivate')} className="h-8 w-8 p-0 text-red-500">
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   )}
@@ -366,12 +368,12 @@ export default function CustomFieldsPage() {
 
               {valueFieldId === f.id && (
                 <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <Input className="h-9 text-xs rounded-xl" placeholder="ID de l’entité (ex: STU-2026-001)" value={entityId} onChange={e => setEntityId(e.target.value)} onBlur={loadValue} />
+                  <Input className="h-9 text-xs rounded-xl" placeholder={cf('entityIdPlaceholder')} value={entityId} onChange={e => setEntityId(e.target.value)} onBlur={loadValue} />
                   {f.fieldType === 'boolean' ? (
                     <select className="h-9 text-xs rounded-xl border border-slate-200 bg-white px-3 text-slate-700" value={rawValue} onChange={e => setRawValue(e.target.value)}>
                       <option value="">—</option>
-                      <option value="true">Vrai</option>
-                      <option value="false">Faux</option>
+                      <option value="true">{cf('yes')}</option>
+                      <option value="false">{cf('no')}</option>
                     </select>
                   ) : f.fieldType === 'select' ? (
                     <select className="h-9 text-xs rounded-xl border border-slate-200 bg-white px-3 text-slate-700" value={rawValue} onChange={e => setRawValue(e.target.value)}>
@@ -382,7 +384,7 @@ export default function CustomFieldsPage() {
                     <Input
                       className="h-9 text-xs rounded-xl"
                       type={f.fieldType === 'number' ? 'number' : f.fieldType === 'date' ? 'date' : 'text'}
-                      placeholder={f.fieldType === 'number' ? 'Valeur numérique' : 'Valeur'}
+                      placeholder={f.fieldType === 'number' ? cf('numberValue') : cf('value')}
                       value={rawValue}
                       onChange={e => setRawValue(e.target.value)}
                     />
@@ -390,11 +392,11 @@ export default function CustomFieldsPage() {
                   <div className="flex items-center gap-1.5">
                     <Button onClick={handleSaveValue} disabled={busyValue || !entityId.trim()} className="gap-1.5 h-9 rounded-full px-3 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white">
                       {busyValue ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                      Enregistrer
+                      {cf('save')}
                     </Button>
                     {existingValue !== null && (
                       <Button onClick={handleClearValue} disabled={busyValue} variant="outline" className="h-9 rounded-full px-3 text-xs">
-                        Effacer
+                        {cf('clear')}
                       </Button>
                     )}
                   </div>
@@ -405,7 +407,7 @@ export default function CustomFieldsPage() {
         </div>
       )}
 
-      <div className="flex items-center gap-1.5 text-[10px] text-slate-500"><Plus className="w-3 h-3" /> Les champs Clé/Type d’entité sont verrouillés après création.</div>
+      <div className="flex items-center gap-1.5 text-[10px] text-slate-500"><Plus className="w-3 h-3" /> {cf('lockedNote')}</div>
     </div>
   );
 }

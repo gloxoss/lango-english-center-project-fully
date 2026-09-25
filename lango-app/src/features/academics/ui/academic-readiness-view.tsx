@@ -286,16 +286,16 @@ export function AcademicReadinessView({ locale = 'fr' }: { locale?: string } = {
             {/* Drill-down action link (§6.16) */}
             {check.deepLink && (
               <div className="p-4 pt-0">
-                <Link href={check.deepLink} className="w-full">
-                  <Button
+                <Button asChild
                     variant="outline"
                     size="sm"
                     className="w-full h-8 text-xs rounded-xl border-slate-200 text-[#0066FF] hover:bg-blue-50 font-bold justify-between group"
                   >
+                  <Link href={check.deepLink} className="w-full">
                     <span>{check.deepLinkLabel || t('btnResolve')}</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 rtl:rotate-180 transition-transform" />
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             )}
           </Card>

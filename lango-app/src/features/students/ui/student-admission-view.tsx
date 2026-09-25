@@ -12,9 +12,9 @@ import {
   Upload,
   X,
 } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useCallback, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -71,8 +71,8 @@ const EMPTY_FORM: FormState = {
   guardianRelation: 'Parent',
   guardianOccupation: '',
   guardianAddress: '',
-  guardianEmailOptIn: true,
-  guardianSmsOptIn: true,
+  guardianEmailOptIn: false,
+  guardianSmsOptIn: false,
   guardianPreferredLanguage: '',
 };
 
@@ -90,7 +90,7 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
   const currentLocale = useLocale();
   const locale = propLocale || currentLocale;
   const t = useTranslations('Students');
-  const tCommon = useTranslations('Common');
+  const tScreen = useTranslations('StudentAdmission');
 
   const router = useRouter();
   const { role, loaded } = usePermissions();
@@ -108,6 +108,7 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
 
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [branchesList, setBranchesList] = useState<Branch[]>([]);
+  const [optionsError, setOptionsError] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState<{
     id: string;
     name: string;
@@ -131,11 +132,11 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
   const [showCreateGuardianForm, setShowCreateGuardianForm] = useState(false);
 
   // Step 3: real document uploads & consents.
-  const [uploadedDocTypes, setUploadedDocTypes] = useState<Set<string>>(new Set());
+  const [uploadedDocTypes, setUploadedDocTypes] = useState<Set<string>>(() => new Set());
   const [uploadingDocType, setUploadingDocType] = useState<string | null>(null);
   const [docUploadErrors, setDocUploadErrors] = useState<Record<string, string>>({});
-  const [consentAccuracy, setConsentAccuracy] = useState(true);
-  const [consentCndp, setConsentCndp] = useState(true);
+  const [consentAccuracy, setConsentAccuracy] = useState(false);
+  const [consentCndp, setConsentCndp] = useState(false);
 
   const set = (field: StringField) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm(prev => ({ ...prev, [field]: e.target.value }));
@@ -150,11 +151,11 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
   ];
 
   const documents = [
-    { type: 'photo', name: t('docPhoto'), format: 'JPG/PNG • max 5 Mo', required: true },
-    { type: 'birth_certificate', name: t('docBirthCert'), format: 'PDF • max 5 Mo', required: true },
-    { type: 'school_certificate', name: t('docSchoolCert'), format: 'PDF • max 5 Mo', required: true },
-    { type: 'guardian_cni', name: t('docGuardianCni'), format: 'PDF • max 5 Mo', required: true },
-    { type: 'bulletin', name: t('docReportCards'), format: 'PDF • max 5 Mo', required: false },
+    { type: 'photo', name: t('docPhoto'), format: tScreen('imageFormat'), required: true },
+    { type: 'birth_certificate', name: t('docBirthCert'), format: tScreen('pdfFormat'), required: true },
+    { type: 'school_certificate', name: t('docSchoolCert'), format: tScreen('pdfFormat'), required: true },
+    { type: 'guardian_cni', name: t('docGuardianCni'), format: tScreen('pdfFormat'), required: true },
+    { type: 'bulletin', name: t('docReportCards'), format: tScreen('pdfFormat'), required: false },
   ];
 
   const motherTongueOptions = [
@@ -165,43 +166,65 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
     { value: 'other', label: t('langOther') },
   ];
 
-  useEffect(() => {
-    fetch('/api/academics/academic-years')
-      .then(res => (res.ok ? res.json() : null))
-      .then(json => json?.success && setAcademicYears(json.data))
-      .catch(() => {});
-
-    fetch('/api/settings/branches')
-      .then(res => (res.ok ? res.json() : null))
-      .then(json => {
-        if (json?.success && Array.isArray(json.data)) {
-          setBranchesList(json.data);
-        }
-      })
-      .catch(() => {});
+  const loadOptions = useCallback(async () => {
+    try {
+      const [yearsResponse, branchesResponse] = await Promise.all([
+        fetch('/api/academics/academic-years'),
+        fetch('/api/settings/branches'),
+      ]);
+      const [years, branches] = await Promise.all([yearsResponse.json(), branchesResponse.json()]);
+      if (!yearsResponse.ok || !years.success || !Array.isArray(years.data)
+        || !branchesResponse.ok || !branches.success || !Array.isArray(branches.data)) {
+        throw new Error('Failed loading admission options');
+      }
+      setAcademicYears(years.data);
+      setBranchesList(branches.data);
+      setOptionsError(false);
+    } catch {
+      setOptionsError(true);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadOptions();
+  }, [loadOptions]);
 
   useEffect(() => {
     const query = guardianSearch.trim();
     if (query.length < 2) {
-      setGuardianResults([]);
       return;
     }
+    let cancelled = false;
     const handle = setTimeout(() => {
       setGuardianSearching(true);
       setGuardianSearchError(null);
       fetch(`/api/students/parents?search=${encodeURIComponent(query)}`)
         .then(res => (res.ok ? res.json() : Promise.reject(new Error('search failed'))))
         .then((json) => {
-          if (json?.success) {
-            setGuardianResults(json.data.map((g: any) => ({ id: g.id, name: g.name, phone: g.phone, email: g.email, relation: g.relation })));
+          if (cancelled) {
+            return;
           }
+          if (!json?.success || !Array.isArray(json.data)) {
+            throw new Error('Guardian search failed');
+          }
+          setGuardianResults(json.data.map((g: GuardianResult) => ({ id: g.id, name: g.name, phone: g.phone, email: g.email, relation: g.relation })));
           setGuardianSearchAttempted(true);
         })
-        .catch(() => setGuardianSearchError(t('guardianSearchError')))
-        .finally(() => setGuardianSearching(false));
+        .catch(() => {
+          if (!cancelled) {
+            setGuardianSearchError(t('guardianSearchError'));
+          }
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setGuardianSearching(false);
+          }
+        });
     }, 300);
-    return () => clearTimeout(handle);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
   }, [guardianSearch, t]);
 
   async function handleGoToStep2(override: boolean = false) {
@@ -230,8 +253,12 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
           academicYearId: form.academicYearId || undefined,
           branchId: form.branchId || undefined,
           nationalId: form.nationalId ? form.nationalId.trim().toUpperCase() : undefined,
+          emailOptIn: false,
+          smsOptIn: false,
+          consentAccuracy: false,
+          consentCndp: false,
           overrideDuplicate: override || undefined,
-          overrideReason: override ? 'Autorisation administrative explicite (dérogation doublon Massar)' : undefined,
+          overrideReason: override ? tScreen('overrideReason') : undefined,
         }),
       });
       const json = await res.json();
@@ -243,7 +270,7 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
           });
           return;
         }
-        throw new Error(json.error?.message || json.message || (locale === 'ar' ? 'فشل إنشاء طلب القبول.' : 'Échec de la création de la demande.'));
+        throw new Error(tScreen('createError'));
       }
       setApplicantId(json.data.id);
       if (json.duplicateWarning) {
@@ -251,7 +278,7 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
       }
       setStep(2);
     } catch (err) {
-      setStep1Error(err instanceof Error ? err.message : (locale === 'ar' ? 'حدث خطأ غير متوقع.' : 'Erreur inconnue.'));
+      setStep1Error(err instanceof Error ? err.message : tScreen('createError'));
     } finally {
       setCreatingApplicant(false);
     }
@@ -271,11 +298,11 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
       const res = await fetch('/api/students/admissions/documents', { method: 'POST', body: formData });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        throw new Error(json.error?.message || json.message || t('uploadFailed'));
+        throw new Error(tScreen('uploadError'));
       }
       setUploadedDocTypes(prev => new Set(prev).add(docType));
     } catch (err) {
-      setDocUploadErrors(prev => ({ ...prev, [docType]: err instanceof Error ? err.message : t('uploadFailed') }));
+      setDocUploadErrors(prev => ({ ...prev, [docType]: err instanceof Error ? err.message : tScreen('uploadError') }));
     } finally {
       setUploadingDocType(null);
     }
@@ -317,11 +344,11 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        throw new Error(json.error?.message || json.message || (locale === 'ar' ? 'فشل إتمام طلب القبول.' : 'Échec de la mise à jour de la demande.'));
+        throw new Error(tScreen('submitError'));
       }
       setSubmitted(true);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : (locale === 'ar' ? 'حدث خطأ غير متوقع.' : 'Erreur inconnue.'));
+      setSubmitError(err instanceof Error ? err.message : tScreen('submitError'));
     } finally {
       setSubmitting(false);
     }
@@ -339,8 +366,8 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
     setGuardianSearchAttempted(false);
     setUploadedDocTypes(new Set());
     setDuplicateWarning(null);
-    setConsentAccuracy(true);
-    setConsentCndp(true);
+    setConsentAccuracy(false);
+    setConsentCndp(false);
   }
 
   // POST /api/students/admissions is school_admin-only server-side - show
@@ -348,14 +375,22 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
   if (loaded && role !== 'school_admin') {
     return (
       <div className="mx-auto max-w-lg space-y-3 py-16 text-center">
-        <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+        <div className="
+          mx-auto flex size-16 items-center justify-center rounded-full
+          bg-rose-100 text-rose-600
+        "
+        >
           <AlertTriangle className="size-8" />
         </div>
         <h1 className="text-xl font-extrabold text-[#16212B]">{t('unauthorizedTitle')}</h1>
         <p className="text-sm text-slate-500">
           {t('unauthorizedDesc')}
         </p>
-        <Button variant="outline" onClick={() => router.push(`/${locale}/dashboard/students`)} className="rounded-full">
+        <Button
+          variant="outline"
+          onClick={() => router.push(`/${locale}/dashboard/students`)}
+          className="rounded-full"
+        >
           {t('backToDirectoryFull')}
         </Button>
       </div>
@@ -377,7 +412,11 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
           {t('admissionSuccessDesc', { name: `${form.firstName} ${form.lastName}`.trim() || t('summaryStudent') })}
         </p>
         <div className="flex items-center justify-center gap-3 pt-2">
-          <Button variant="outline" onClick={resetWizard} className="rounded-full">
+          <Button
+            variant="outline"
+            onClick={resetWizard}
+            className="rounded-full"
+          >
             {t('btnNewRequest')}
           </Button>
           <Button
@@ -400,10 +439,31 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
           <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('admissionTitle')}</h1>
           <p className="mt-1 text-xs text-slate-500">{t('admissionSubtitle')}</p>
         </div>
+        {optionsError && (
+          <div
+            role="alert"
+            className="
+              rounded-xl border border-red-200 bg-red-50 p-3 text-xs
+              text-red-700
+            "
+          >
+            {tScreen('optionsLoadError')}
+            {' '}
+            <button type="button" className="underline" onClick={() => void loadOptions()}>{tScreen('retry')}</button>
+          </div>
+        )}
 
         {/* Intake Semantics Disclaimer Banner */}
-        <div className="flex items-start gap-3 rounded-2xl border border-sky-200 bg-sky-50/70 p-4 text-xs text-sky-900 shadow-2xs">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
+        <div className="
+          flex items-start gap-3 rounded-2xl border border-sky-200 bg-sky-50/70
+          p-4 text-xs text-sky-900 shadow-2xs
+        "
+        >
+          <div className="
+            flex size-8 shrink-0 items-center justify-center rounded-xl
+            bg-sky-100 text-sky-700
+          "
+          >
             <FileText className="size-4" />
           </div>
           <div className="min-w-0 flex-1">
@@ -416,8 +476,16 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
 
         {/* Massar Duplicate Conflict Alert (Blocking with Administrative Override) */}
         {massarConflict && (
-          <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50/90 p-4 text-xs text-rose-900 shadow-2xs">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-700">
+          <div className="
+            flex items-start gap-3 rounded-2xl border border-rose-200
+            bg-rose-50/90 p-4 text-xs text-rose-900 shadow-2xs
+          "
+          >
+            <div className="
+              flex size-8 shrink-0 items-center justify-center rounded-xl
+              bg-rose-100 text-rose-700
+            "
+            >
               <AlertTriangle className="size-4" />
             </div>
             <div className="min-w-0 flex-1">
@@ -435,9 +503,16 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
                   size="sm"
                   disabled={creatingApplicant}
                   onClick={() => handleGoToStep2(true)}
-                  className="h-8 rounded-full bg-rose-600 px-4 text-[11px] text-white hover:bg-rose-700"
+                  className="
+                    h-8 rounded-full bg-rose-600 px-4 text-[11px] text-white
+                    hover:bg-rose-700
+                  "
                 >
-                  {creatingApplicant ? <Loader2 className="size-3 animate-spin me-1.5" /> : null}
+                  {creatingApplicant
+                    ? (
+                        <Loader2 className="me-1.5 size-3 animate-spin" />
+                      )
+                    : null}
                   {t('btnConfirmOverride')}
                 </Button>
                 <Button
@@ -457,38 +532,50 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
 
         {/* Duplicate Candidate / Student Warning Alert */}
         {duplicateWarning && (
-          <div className={`flex items-start gap-3 rounded-2xl border p-4 text-xs shadow-2xs ${
-            duplicateWarning.severity === 'strong'
-              ? 'border-rose-200 bg-rose-50/80 text-rose-900'
-              : duplicateWarning.severity === 'medium'
-                ? 'border-amber-200 bg-amber-50/80 text-amber-900'
-                : 'border-sky-200 bg-sky-50/80 text-sky-900'
-          }`}>
-            <div className={`flex size-8 shrink-0 items-center justify-center rounded-xl ${
-              duplicateWarning.severity === 'strong'
-                ? 'bg-rose-100 text-rose-700'
-                : duplicateWarning.severity === 'medium'
-                  ? 'bg-amber-100 text-amber-700'
-                  : 'bg-sky-100 text-sky-700'
-            }`}>
+          <div className={`
+            flex items-start gap-3 rounded-2xl border p-4 text-xs shadow-2xs
+            ${
+          duplicateWarning.severity === 'strong'
+            ? 'border-rose-200 bg-rose-50/80 text-rose-900'
+            : duplicateWarning.severity === 'medium'
+              ? 'border-amber-200 bg-amber-50/80 text-amber-900'
+              : 'border-sky-200 bg-sky-50/80 text-sky-900'
+          }
+          `}
+          >
+            <div className={`
+              flex size-8 shrink-0 items-center justify-center rounded-xl
+              ${
+          duplicateWarning.severity === 'strong'
+            ? 'bg-rose-100 text-rose-700'
+            : duplicateWarning.severity === 'medium'
+              ? 'bg-amber-100 text-amber-700'
+              : 'bg-sky-100 text-sky-700'
+          }
+            `}
+            >
               <AlertTriangle className="size-4" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <p className="font-extrabold text-[#16212B]">{t('duplicateWarningTitle')}</p>
                 {duplicateWarning.severity === 'strong' && (
-                  <Badge variant="danger" className="text-[9px] py-0 px-2">
-                    {locale === 'ar' ? 'ترخيص إداري' : 'Dérogation administrative'}
+                  <Badge variant="danger" className="px-2 py-0 text-[9px]">
+                    {tScreen('administrativeException')}
                   </Badge>
                 )}
               </div>
-              <p className={`mt-0.5 text-[11px] leading-relaxed ${
-                duplicateWarning.severity === 'strong'
-                  ? 'text-rose-800'
-                  : duplicateWarning.severity === 'medium'
-                    ? 'text-amber-800'
-                    : 'text-sky-800'
-              }`}>
+              <p className={`
+                mt-0.5 text-[11px] leading-relaxed
+                ${
+          duplicateWarning.severity === 'strong'
+            ? 'text-rose-800'
+            : duplicateWarning.severity === 'medium'
+              ? 'text-amber-800'
+              : 'text-sky-800'
+          }
+              `}
+              >
                 {t('duplicateWarningDesc', { name: duplicateWarning.name, status: duplicateWarning.status })}
               </p>
             </div>
@@ -497,16 +584,16 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
 
         {/* Steps */}
         <div className="
-          flex items-center gap-0 rounded-2xl border border-slate-200/80
-          bg-white p-4 shadow-2xs overflow-x-auto
+          flex items-center gap-0 overflow-x-auto rounded-2xl border
+          border-slate-200/80 bg-white p-4 shadow-2xs
         "
         >
           {steps.map((s, i) => (
-            <div key={s.num} className="flex flex-1 items-center min-w-[140px]">
+            <div key={s.num} className="flex min-w-[140px] flex-1 items-center">
               <div className="flex items-center gap-3">
                 <div className={`
-                  flex size-8 items-center justify-center rounded-full text-xs
-                  font-bold shrink-0
+                  flex size-8 shrink-0 items-center justify-center rounded-full
+                  text-xs font-bold
                   ${s.num < step
               ? `bg-[#17A673] text-white`
               : s.num === step
@@ -542,8 +629,6 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
           ))}
         </div>
 
-
-
         <Card className="
           rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs
         "
@@ -552,34 +637,112 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
             <div>
               <h2 className="mb-1 text-sm font-extrabold text-[#16212B]">{t('studentInfoSectionTitle')}</h2>
               <p className="mb-4 text-[10px] text-slate-500">{t('requiredFieldsNote')}</p>
-              <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="
+                mb-3 grid grid-cols-1 gap-4
+                sm:grid-cols-2
+              "
+              >
                 <div>
-                  <label htmlFor="admission-first-name" className="text-[10px] font-bold text-slate-500">{t('firstName')}</label>
-                  <Input id="admission-first-name" value={form.firstName} onChange={set('firstName')} className="mt-1 h-10 rounded-xl text-xs" />
+                  <label
+                    htmlFor="admission-first-name"
+                    className="text-[10px] font-bold text-slate-500"
+                  >
+                    {t('firstName')}
+                  </label>
+                  <Input
+                    id="admission-first-name"
+                    value={form.firstName}
+                    onChange={set('firstName')}
+                    className="mt-1 h-10 rounded-xl text-xs"
+                  />
                 </div>
                 <div>
-                  <label htmlFor="admission-last-name" className="text-[10px] font-bold text-slate-500">{t('lastName')}</label>
-                  <Input id="admission-last-name" value={form.lastName} onChange={set('lastName')} className="mt-1 h-10 rounded-xl text-xs" />
+                  <label
+                    htmlFor="admission-last-name"
+                    className="text-[10px] font-bold text-slate-500"
+                  >
+                    {t('lastName')}
+                  </label>
+                  <Input
+                    id="admission-last-name"
+                    value={form.lastName}
+                    onChange={set('lastName')}
+                    className="mt-1 h-10 rounded-xl text-xs"
+                  />
                 </div>
               </div>
-              <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="
+                mb-3 grid grid-cols-1 gap-4
+                sm:grid-cols-2
+              "
+              >
                 <div>
-                  <label htmlFor="admission-email" className="text-[10px] font-bold text-slate-500">{t('email')}</label>
-                  <Input id="admission-email" type="email" value={form.email} onChange={set('email')} className="mt-1 h-10 rounded-xl text-xs" />
+                  <label
+                    htmlFor="admission-email"
+                    className="text-[10px] font-bold text-slate-500"
+                  >
+                    {t('email')}
+                  </label>
+                  <Input
+                    id="admission-email"
+                    type="email"
+                    value={form.email}
+                    onChange={set('email')}
+                    className="mt-1 h-10 rounded-xl text-xs"
+                  />
                 </div>
                 <div>
-                  <label htmlFor="admission-phone" className="text-[10px] font-bold text-slate-500">{t('phone')}</label>
-                  <Input id="admission-phone" value={form.phone} onChange={set('phone')} placeholder="+212 6 00 00 00 00" className="mt-1 h-10 rounded-xl text-xs" />
+                  <label
+                    htmlFor="admission-phone"
+                    className="text-[10px] font-bold text-slate-500"
+                  >
+                    {t('phone')}
+                  </label>
+                  <Input
+                    id="admission-phone"
+                    value={form.phone}
+                    onChange={set('phone')}
+                    placeholder="+212 6 00 00 00 00"
+                    className="mt-1 h-10 rounded-xl text-xs"
+                  />
                 </div>
               </div>
-              <div className="mb-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="
+                mb-3 grid grid-cols-1 gap-4
+                sm:grid-cols-3
+              "
+              >
                 <div>
-                  <label htmlFor="admission-dob" className="text-[10px] font-bold text-slate-500">{t('dateOfBirth')}</label>
-                  <Input id="admission-dob" type="date" value={form.dateOfBirth} onChange={set('dateOfBirth')} className="mt-1 h-10 rounded-xl text-xs" />
+                  <label
+                    htmlFor="admission-dob"
+                    className="text-[10px] font-bold text-slate-500"
+                  >
+                    {t('dateOfBirth')}
+                  </label>
+                  <Input
+                    id="admission-dob"
+                    type="date"
+                    value={form.dateOfBirth}
+                    onChange={set('dateOfBirth')}
+                    className="mt-1 h-10 rounded-xl text-xs"
+                  />
                 </div>
                 <div>
-                  <label htmlFor="admission-gender" className="text-[10px] font-bold text-slate-500">{t('gender')}</label>
-                  <select id="admission-gender" value={form.gender} onChange={set('gender')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs bg-white">
+                  <label
+                    htmlFor="admission-gender"
+                    className="text-[10px] font-bold text-slate-500"
+                  >
+                    {t('gender')}
+                  </label>
+                  <select
+                    id="admission-gender"
+                    value={form.gender}
+                    onChange={set('gender')}
+                    className="
+                      mt-1 h-10 w-full rounded-xl border border-slate-200
+                      bg-white px-3 text-xs
+                    "
+                  >
                     <option value="">{t('selectPlaceholder')}</option>
                     <option value="female">{t('genderFemale')}</option>
                     <option value="male">{t('genderMale')}</option>
@@ -587,58 +750,158 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="admission-year" className="text-[10px] font-bold text-slate-500">{t('academicYear')}</label>
-                  <select id="admission-year" value={form.academicYearId} onChange={set('academicYearId')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs bg-white">
+                  <label
+                    htmlFor="admission-year"
+                    className="text-[10px] font-bold text-slate-500"
+                  >
+                    {t('academicYear')}
+                  </label>
+                  <select
+                    id="admission-year"
+                    value={form.academicYearId}
+                    onChange={set('academicYearId')}
+                    className="
+                      mt-1 h-10 w-full rounded-xl border border-slate-200
+                      bg-white px-3 text-xs
+                    "
+                  >
                     <option value="">{t('selectPlaceholder')}</option>
                     {academicYears.map(y => <option key={y.id} value={y.id}>{y.name}</option>)}
                   </select>
                 </div>
               </div>
-              <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="
+                mb-3 grid grid-cols-1 gap-4
+                sm:grid-cols-2
+              "
+              >
                 <div>
-                  <label htmlFor="admission-branch" className="text-[10px] font-bold text-slate-500">{t('branch')}</label>
-                  <select id="admission-branch" value={form.branchId} onChange={set('branchId')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs bg-white">
+                  <label
+                    htmlFor="admission-branch"
+                    className="text-[10px] font-bold text-slate-500"
+                  >
+                    {t('branch')}
+                  </label>
+                  <select
+                    id="admission-branch"
+                    value={form.branchId}
+                    onChange={set('branchId')}
+                    className="
+                      mt-1 h-10 w-full rounded-xl border border-slate-200
+                      bg-white px-3 text-xs
+                    "
+                  >
                     <option value="">{t('branchPlaceholder')}</option>
                     {branchesList.map(b => (
                       <option key={b.id} value={b.id}>
-                        {b.name}{b.isDefault ? ` (${locale === 'ar' ? 'افتراضي' : 'Par défaut'})` : ''}
+                        {b.name}
+                        {b.isDefault ? ` (${tScreen('defaultBranch')})` : ''}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="admission-massar" className="text-[10px] font-bold text-slate-500">{t('massarCode')}</label>
-                  <Input id="admission-massar" value={form.nationalId} onChange={set('nationalId')} placeholder="Ex. G134567890" className="mt-1 h-10 rounded-xl text-xs uppercase" />
+                  <label
+                    htmlFor="admission-massar"
+                    className="text-[10px] font-bold text-slate-500"
+                  >
+                    {t('massarCode')}
+                  </label>
+                  <Input
+                    id="admission-massar"
+                    value={form.nationalId}
+                    onChange={set('nationalId')}
+                    placeholder="Ex. G134567890"
+                    className="mt-1 h-10 rounded-xl text-xs uppercase"
+                  />
                 </div>
               </div>
-              <div className="mb-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="
+                mb-3 grid grid-cols-1 gap-4
+                sm:grid-cols-3
+              "
+              >
                 <div>
-                  <label htmlFor="admission-nationality" className="text-[10px] font-bold text-slate-500">{t('nationality')}</label>
-                  <Input id="admission-nationality" value={form.nationality} onChange={set('nationality')} className="mt-1 h-10 rounded-xl text-xs" />
+                  <label
+                    htmlFor="admission-nationality"
+                    className="text-[10px] font-bold text-slate-500"
+                  >
+                    {t('nationality')}
+                  </label>
+                  <Input
+                    id="admission-nationality"
+                    value={form.nationality}
+                    onChange={set('nationality')}
+                    className="mt-1 h-10 rounded-xl text-xs"
+                  />
                 </div>
                 <div>
-                  <label htmlFor="admission-mother-tongue" className="text-[10px] font-bold text-slate-500">{t('motherTongue')}</label>
-                  <select id="admission-mother-tongue" value={form.motherTongue} onChange={set('motherTongue')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs bg-white">
+                  <label
+                    htmlFor="admission-mother-tongue"
+                    className="text-[10px] font-bold text-slate-500"
+                  >
+                    {t('motherTongue')}
+                  </label>
+                  <select
+                    id="admission-mother-tongue"
+                    value={form.motherTongue}
+                    onChange={set('motherTongue')}
+                    className="
+                      mt-1 h-10 w-full rounded-xl border border-slate-200
+                      bg-white px-3 text-xs
+                    "
+                  >
                     <option value="">{t('selectPlaceholder')}</option>
                     {motherTongueOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="admission-city" className="text-[10px] font-bold text-slate-500">{t('city')}</label>
-                  <Input id="admission-city" value={form.city} onChange={set('city')} className="mt-1 h-10 rounded-xl text-xs" />
+                  <label
+                    htmlFor="admission-city"
+                    className="text-[10px] font-bold text-slate-500"
+                  >
+                    {t('city')}
+                  </label>
+                  <Input
+                    id="admission-city"
+                    value={form.city}
+                    onChange={set('city')}
+                    className="mt-1 h-10 rounded-xl text-xs"
+                  />
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="
+                grid grid-cols-1 gap-4
+                sm:grid-cols-3
+              "
+              >
                 <div>
-                  <label htmlFor="admission-blood-group" className="text-[10px] font-bold text-slate-500">{t('bloodGroupOptional')}</label>
-                  <select id="admission-blood-group" value={form.bloodGroup} onChange={set('bloodGroup')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs bg-white">
+                  <label
+                    htmlFor="admission-blood-group"
+                    className="text-[10px] font-bold text-slate-500"
+                  >
+                    {t('bloodGroupOptional')}
+                  </label>
+                  <select
+                    id="admission-blood-group"
+                    value={form.bloodGroup}
+                    onChange={set('bloodGroup')}
+                    className="
+                      mt-1 h-10 w-full rounded-xl border border-slate-200
+                      bg-white px-3 text-xs
+                    "
+                  >
                     <option value="">{t('notSpecified')}</option>
                     {BLOOD_GROUP_OPTIONS.map(bg => <option key={bg} value={bg}>{bg}</option>)}
                   </select>
                 </div>
               </div>
               {step1Error && (
-                <div className="mt-4 rounded-xl bg-[#FCE4E2] p-3 text-xs font-semibold text-[#E5544B]">
+                <div className="
+                  mt-4 rounded-xl bg-[#FCE4E2] p-3 text-xs font-semibold
+                  text-[#E5544B]
+                "
+                >
                   {step1Error}
                 </div>
               )}
@@ -652,27 +915,57 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
 
               {!selectedGuardian && (
                 <div className="mb-4">
-                  <label htmlFor="admission-guardian-search" className="text-[10px] font-bold text-slate-500">{t('searchGuardianLabel')}</label>
+                  <label
+                    htmlFor="admission-guardian-search"
+                    className="text-[10px] font-bold text-slate-500"
+                  >
+                    {t('searchGuardianLabel')}
+                  </label>
                   <div className="relative mt-1">
-                    <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                    <Search className="
+                      absolute inset-s-3 top-1/2 size-4 -translate-y-1/2
+                      text-slate-400
+                    "
+                    />
                     <Input
                       id="admission-guardian-search"
                       value={guardianSearch}
-                      onChange={e => setGuardianSearch(e.target.value)}
+                      onChange={(e) => {
+                        setGuardianSearch(e.target.value);
+                        setGuardianResults([]);
+                        setGuardianSearchAttempted(false);
+                        setGuardianSearchError(null);
+                      }}
                       placeholder={t('searchGuardianPlaceholder')}
                       className="h-10 rounded-xl ps-9 text-xs"
                     />
                   </div>
-                  {guardianSearching && <p className="mt-2 text-[10px] text-slate-400">{t('searching')}</p>}
-                  {guardianSearchError && <p className="mt-2 text-[10px] font-semibold text-rose-600">{guardianSearchError}</p>}
+                  {guardianSearching && (
+                    <p className="mt-2 text-[10px] text-slate-400">
+                      {t('searching')}
+                    </p>
+                  )}
+                  {guardianSearchError && (
+                    <p className="mt-2 text-[10px] font-semibold text-rose-600">
+                      {guardianSearchError}
+                    </p>
+                  )}
                   {!guardianSearching && !guardianSearchError && guardianResults.length > 0 && (
                     <div className="mt-2 space-y-1.5">
                       {guardianResults.map(g => (
                         <button
                           type="button"
                           key={g.id}
-                          onClick={() => { setSelectedGuardian(g); setShowCreateGuardianForm(false); }}
-                          className="flex w-full items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-3 text-start hover:bg-[#DCEBF4]/40 transition-colors"
+                          onClick={() => {
+                            setSelectedGuardian(g);
+                            setShowCreateGuardianForm(false);
+                          }}
+                          className="
+                            flex w-full items-center justify-between rounded-xl
+                            border border-slate-100 bg-slate-50 p-3 text-start
+                            transition-colors
+                            hover:bg-[#DCEBF4]/40
+                          "
                         >
                           <div>
                             <p className="text-xs font-bold text-[#16212B]">{g.name}</p>
@@ -696,7 +989,10 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
                     <button
                       type="button"
                       onClick={() => setShowCreateGuardianForm(true)}
-                      className="mt-3 text-[11px] font-bold text-[#2487B8] hover:underline block"
+                      className="
+                        mt-3 block text-[11px] font-bold text-[#2487B8]
+                        hover:underline
+                      "
                     >
                       {t('createNewGuardianPrompt')}
                     </button>
@@ -705,7 +1001,11 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
               )}
 
               {selectedGuardian && (
-                <div className="mb-4 flex items-center justify-between rounded-xl border border-[#DCEBF4] bg-[#DCEBF4]/30 p-3">
+                <div className="
+                  mb-4 flex items-center justify-between rounded-xl border
+                  border-[#DCEBF4] bg-[#DCEBF4]/30 p-3
+                "
+                >
                   <div>
                     <p className="text-xs font-bold text-[#16212B]">{selectedGuardian.name}</p>
                     <p className="text-[10px] text-slate-500">{selectedGuardian.phone || '—'}</p>
@@ -713,7 +1013,11 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
                   <button
                     type="button"
                     onClick={() => setSelectedGuardian(null)}
-                    className="flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-rose-600 transition-colors"
+                    className="
+                      flex items-center gap-1 text-[10px] font-bold
+                      text-slate-500 transition-colors
+                      hover:text-rose-600
+                    "
                   >
                     <X className="size-3" />
                     {t('changeGuardian')}
@@ -722,26 +1026,81 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
               )}
 
               {!selectedGuardian && showCreateGuardianForm && (
-                <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                <div className="
+                  rounded-xl border border-slate-100 bg-slate-50 p-4
+                "
+                >
                   <p className="mb-3 text-xs font-bold text-[#16212B]">{t('newGuardianTitle')}</p>
-                  <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="
+                    mb-3 grid grid-cols-1 gap-4
+                    sm:grid-cols-2
+                  "
+                  >
                     <div>
-                      <label htmlFor="admission-guardian-name" className="text-[10px] font-bold text-slate-500">{t('guardianNameField')}</label>
-                      <Input id="admission-guardian-name" value={form.guardianName} onChange={set('guardianName')} className="mt-1 h-10 rounded-xl text-xs" />
+                      <label
+                        htmlFor="admission-guardian-name"
+                        className="text-[10px] font-bold text-slate-500"
+                      >
+                        {t('guardianNameField')}
+                      </label>
+                      <Input
+                        id="admission-guardian-name"
+                        value={form.guardianName}
+                        onChange={set('guardianName')}
+                        className="mt-1 h-10 rounded-xl text-xs"
+                      />
                     </div>
                     <div>
-                      <label htmlFor="admission-guardian-phone" className="text-[10px] font-bold text-slate-500">{t('guardianPhoneField')}</label>
-                      <Input id="admission-guardian-phone" value={form.guardianPhone} onChange={set('guardianPhone')} className="mt-1 h-10 rounded-xl text-xs" />
+                      <label
+                        htmlFor="admission-guardian-phone"
+                        className="text-[10px] font-bold text-slate-500"
+                      >
+                        {t('guardianPhoneField')}
+                      </label>
+                      <Input
+                        id="admission-guardian-phone"
+                        value={form.guardianPhone}
+                        onChange={set('guardianPhone')}
+                        className="mt-1 h-10 rounded-xl text-xs"
+                      />
                     </div>
                   </div>
-                  <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="
+                    mb-3 grid grid-cols-1 gap-4
+                    sm:grid-cols-2
+                  "
+                  >
                     <div>
-                      <label htmlFor="admission-guardian-email" className="text-[10px] font-bold text-slate-500">{t('guardianEmailField')}</label>
-                      <Input id="admission-guardian-email" type="email" value={form.guardianEmail} onChange={set('guardianEmail')} className="mt-1 h-10 rounded-xl text-xs" />
+                      <label
+                        htmlFor="admission-guardian-email"
+                        className="text-[10px] font-bold text-slate-500"
+                      >
+                        {t('guardianEmailField')}
+                      </label>
+                      <Input
+                        id="admission-guardian-email"
+                        type="email"
+                        value={form.guardianEmail}
+                        onChange={set('guardianEmail')}
+                        className="mt-1 h-10 rounded-xl text-xs"
+                      />
                     </div>
                     <div>
-                      <label htmlFor="admission-guardian-relation" className="text-[10px] font-bold text-slate-500">{t('guardianRelationField')}</label>
-                      <select id="admission-guardian-relation" value={form.guardianRelation} onChange={set('guardianRelation')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs bg-white">
+                      <label
+                        htmlFor="admission-guardian-relation"
+                        className="text-[10px] font-bold text-slate-500"
+                      >
+                        {t('guardianRelationField')}
+                      </label>
+                      <select
+                        id="admission-guardian-relation"
+                        value={form.guardianRelation}
+                        onChange={set('guardianRelation')}
+                        className="
+                          mt-1 h-10 w-full rounded-xl border border-slate-200
+                          bg-white px-3 text-xs
+                        "
+                      >
                         <option value="Parent">{t('summaryGuardian')}</option>
                         <option value="Père">{t('relationFather')}</option>
                         <option value="Mère">{t('relationMother')}</option>
@@ -750,14 +1109,41 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
                       </select>
                     </div>
                   </div>
-                  <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="
+                    mb-3 grid grid-cols-1 gap-4
+                    sm:grid-cols-2
+                  "
+                  >
                     <div>
-                      <label htmlFor="admission-guardian-occupation" className="text-[10px] font-bold text-slate-500">{t('guardianOccupation')}</label>
-                      <Input id="admission-guardian-occupation" value={form.guardianOccupation} onChange={set('guardianOccupation')} className="mt-1 h-10 rounded-xl text-xs" />
+                      <label
+                        htmlFor="admission-guardian-occupation"
+                        className="text-[10px] font-bold text-slate-500"
+                      >
+                        {t('guardianOccupation')}
+                      </label>
+                      <Input
+                        id="admission-guardian-occupation"
+                        value={form.guardianOccupation}
+                        onChange={set('guardianOccupation')}
+                        className="mt-1 h-10 rounded-xl text-xs"
+                      />
                     </div>
                     <div>
-                      <label htmlFor="admission-guardian-pref-lang" className="text-[10px] font-bold text-slate-500">{t('preferredLanguage')}</label>
-                      <select id="admission-guardian-pref-lang" value={form.guardianPreferredLanguage} onChange={set('guardianPreferredLanguage')} className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-xs bg-white">
+                      <label
+                        htmlFor="admission-guardian-pref-lang"
+                        className="text-[10px] font-bold text-slate-500"
+                      >
+                        {t('preferredLanguage')}
+                      </label>
+                      <select
+                        id="admission-guardian-pref-lang"
+                        value={form.guardianPreferredLanguage}
+                        onChange={set('guardianPreferredLanguage')}
+                        className="
+                          mt-1 h-10 w-full rounded-xl border border-slate-200
+                          bg-white px-3 text-xs
+                        "
+                      >
                         <option value="">{t('defaultLang')}</option>
                         <option value="fr">{t('langFrench')}</option>
                         <option value="ar">{t('langArabic')}</option>
@@ -766,16 +1152,44 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
                     </div>
                   </div>
                   <div className="mb-3">
-                    <label htmlFor="admission-guardian-address" className="text-[10px] font-bold text-slate-500">{t('guardianAddress')}</label>
-                    <Input id="admission-guardian-address" value={form.guardianAddress} onChange={set('guardianAddress')} className="mt-1 h-10 rounded-xl text-xs" />
+                    <label
+                      htmlFor="admission-guardian-address"
+                      className="text-[10px] font-bold text-slate-500"
+                    >
+                      {t('guardianAddress')}
+                    </label>
+                    <Input
+                      id="admission-guardian-address"
+                      value={form.guardianAddress}
+                      onChange={set('guardianAddress')}
+                      className="mt-1 h-10 rounded-xl text-xs"
+                    />
                   </div>
                   <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 cursor-pointer">
-                      <input type="checkbox" checked={form.guardianEmailOptIn} onChange={e => setForm(prev => ({ ...prev, guardianEmailOptIn: e.target.checked }))} className="rounded border-slate-300" />
+                    <label className="
+                      flex cursor-pointer items-center gap-1.5 text-[11px]
+                      font-semibold text-slate-600
+                    "
+                    >
+                      <input
+                        type="checkbox"
+                        checked={form.guardianEmailOptIn}
+                        onChange={e => setForm(prev => ({ ...prev, guardianEmailOptIn: e.target.checked }))}
+                        className="rounded-sm border-slate-300"
+                      />
                       Email
                     </label>
-                    <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 cursor-pointer">
-                      <input type="checkbox" checked={form.guardianSmsOptIn} onChange={e => setForm(prev => ({ ...prev, guardianSmsOptIn: e.target.checked }))} className="rounded border-slate-300" />
+                    <label className="
+                      flex cursor-pointer items-center gap-1.5 text-[11px]
+                      font-semibold text-slate-600
+                    "
+                    >
+                      <input
+                        type="checkbox"
+                        checked={form.guardianSmsOptIn}
+                        onChange={e => setForm(prev => ({ ...prev, guardianSmsOptIn: e.target.checked }))}
+                        className="rounded-sm border-slate-300"
+                      />
                       SMS
                     </label>
                   </div>
@@ -788,29 +1202,78 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
             <div>
               <h2 className="mb-1 text-sm font-extrabold text-[#16212B]">{t('documentsSectionTitle')}</h2>
               <p className="mb-2 text-[10px] text-slate-500">{t('documentsSectionSubtitle')}</p>
-              <div className="mb-4 rounded-xl border border-slate-200/60 bg-slate-50/80 p-3 text-[11px] leading-relaxed text-slate-600">
+              <div className="
+                mb-4 rounded-xl border border-slate-200/60 bg-slate-50/80 p-3
+                text-[11px] leading-relaxed text-slate-600
+              "
+              >
                 {t('docIntakeNotice')}
               </div>
-              <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="
+                mb-6 grid grid-cols-1 gap-3
+                sm:grid-cols-2
+              "
+              >
                 {documents.map((doc) => {
                   const uploaded = uploadedDocTypes.has(doc.type);
                   const uploading = uploadingDocType === doc.type;
                   const error = docUploadErrors[doc.type];
                   return (
-                    <div key={doc.type} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
-                      <div className={`flex size-9 items-center justify-center rounded-lg shrink-0 ${uploaded ? 'bg-[#D1F5E8]' : 'bg-slate-100'}`}>
-                        {uploaded ? <CheckCircle2 className="size-4 text-[#17A673]" /> : <FileText className="size-4 text-slate-400" />}
+                    <div
+                      key={doc.type}
+                      className="
+                        flex items-center gap-3 rounded-xl border
+                        border-slate-100 bg-slate-50 p-3
+                      "
+                    >
+                      <div className={`
+                        flex size-9 shrink-0 items-center justify-center
+                        rounded-lg
+                        ${uploaded
+                      ? `bg-[#D1F5E8]`
+                      : `bg-slate-100`}
+                      `}
+                      >
+                        {uploaded
+                          ? (
+                              <CheckCircle2 className="size-4 text-[#17A673]" />
+                            )
+                          : (
+                              <FileText className="size-4 text-slate-400" />
+                            )}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <label htmlFor={`admission-doc-${doc.type}`} className="block truncate text-[11px] font-bold text-[#16212B]">
+                          <label
+                            htmlFor={`admission-doc-${doc.type}`}
+                            className="
+                              block truncate text-[11px] font-bold
+                              text-[#16212B]
+                            "
+                          >
                             {doc.name}
                           </label>
-                          <Badge variant={doc.required ? 'warning' : 'neutral'} className={`text-[8px] font-bold px-1.5 py-0 border-0 ${doc.required ? 'bg-amber-100/70 text-amber-800' : 'bg-slate-200/60 text-slate-600'}`}>
+                          <Badge
+                            variant={doc.required ? 'warning' : 'neutral'}
+                            className={`
+                              border-0 px-1.5 py-0 text-[8px] font-bold
+                              ${doc.required
+                      ? `bg-amber-100/70 text-amber-800`
+                      : `bg-slate-200/60 text-slate-600`}
+                            `}
+                          >
                             {doc.required ? t('docRequiredBeforeApproval') : t('docOptional')}
                           </Badge>
                         </div>
-                        <p className="text-[9px] text-slate-400">{error ? <span className="text-rose-600">{error}</span> : doc.format}</p>
+                        <p className="text-[9px] text-slate-400">
+                          {error
+                            ? (
+                                <span className="text-rose-600">
+                                  {error}
+                                </span>
+                              )
+                            : doc.format}
+                        </p>
                       </div>
                       <input
                         id={`admission-doc-${doc.type}`}
@@ -831,9 +1294,15 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
                         size="sm"
                         disabled={!applicantId || uploading}
                         onClick={() => document.getElementById(`admission-doc-${doc.type}`)?.click()}
-                        className="h-7 gap-1 rounded-lg px-2.5 text-[10px] shrink-0"
+                        className="
+                          h-7 shrink-0 gap-1 rounded-lg px-2.5 text-[10px]
+                        "
                       >
-                        {uploading ? <Loader2 className="size-3 animate-spin" /> : <Upload className="size-3" />}
+                        {uploading
+                          ? <Loader2 className="size-3 animate-spin" />
+                          : (
+                              <Upload className="size-3" />
+                            )}
                         {' '}
                         {uploaded ? t('btnReplace') : t('btnUpload')}
                       </Button>
@@ -851,7 +1320,10 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
                     onChange={e => setConsentAccuracy(e.target.checked)}
                     className="mt-0.5 rounded-sm text-[#2487B8]"
                   />
-                  <label htmlFor="admission-consent-accuracy" className="text-[11px] text-slate-600 cursor-pointer">
+                  <label
+                    htmlFor="admission-consent-accuracy"
+                    className="cursor-pointer text-[11px] text-slate-600"
+                  >
                     {t('consentAccuracy')}
                   </label>
                 </div>
@@ -863,8 +1335,11 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
                     onChange={e => setConsentCndp(e.target.checked)}
                     className="mt-0.5 rounded-sm text-[#2487B8]"
                   />
-                  <label htmlFor="admission-consent-cndp" className="text-[11px] text-slate-600 cursor-pointer">
-                    {t('consentCndp')}
+                  <label
+                    htmlFor="admission-consent-cndp"
+                    className="cursor-pointer text-[11px] text-slate-600"
+                  >
+                    {tScreen('guardianConsentAttestation')}
                   </label>
                 </div>
               </div>
@@ -928,13 +1403,19 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
                     {documents.length}
                     {' '}
                     <span className="text-[10px] font-normal text-slate-400">
-                      ({t('summaryDocsNotice')})
+                      (
+                      {t('summaryDocsNotice')}
+                      )
                     </span>
                   </span>
                 </div>
               </div>
               {submitError && (
-                <div className="mt-4 rounded-xl bg-[#FCE4E2] p-3 text-xs font-semibold text-[#E5544B]">
+                <div className="
+                  mt-4 rounded-xl bg-[#FCE4E2] p-3 text-xs font-semibold
+                  text-[#E5544B]
+                "
+                >
                   {submitError}
                 </div>
               )}
@@ -950,7 +1431,11 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
               onClick={() => setStep(s => Math.max(1, s - 1))}
               className="h-10 gap-2 rounded-full px-5 text-xs"
             >
-              <ChevronLeft className="size-4 rtl:rotate-180" />
+              <ChevronLeft className="
+                size-4
+                rtl:rotate-180
+              "
+              />
               {' '}
               {t('btnPrevious')}
             </Button>
@@ -965,7 +1450,13 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
                 >
                   {creatingApplicant ? <Loader2 className="size-4 animate-spin" /> : null}
                   {creatingApplicant ? t('creating') : t('btnNext')}
-                  {!creatingApplicant && <ChevronRight className="size-4 rtl:rotate-180" />}
+                  {!creatingApplicant && (
+                    <ChevronRight className="
+                      size-4
+                      rtl:rotate-180
+                    "
+                    />
+                  )}
                 </Button>
               )}
               {step > 1 && step < 4 && (
@@ -977,7 +1468,11 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
                 >
                   {t('btnNext')}
                   {' '}
-                  <ChevronRight className="size-4 rtl:rotate-180" />
+                  <ChevronRight className="
+                    size-4
+                    rtl:rotate-180
+                  "
+                  />
                 </Button>
               )}
               {step === 4 && (
@@ -1014,8 +1509,8 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
           <h4 className="mb-2 text-xs font-bold text-[#16212B]">{t('summaryStudent')}</h4>
           <div className="mb-4 flex items-center gap-3">
             <div className="
-              flex size-12 items-center justify-center rounded-full bg-slate-200
-              text-sm font-bold text-slate-600 shrink-0
+              flex size-12 shrink-0 items-center justify-center rounded-full
+              bg-slate-200 text-sm font-bold text-slate-600
             "
             >
               {(form.firstName[0] || '') + (form.lastName[0] || '') || '—'}
@@ -1027,7 +1522,11 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
           </div>
 
           {(form.branchId || form.academicYearId) && (
-            <div className="mb-4 rounded-xl border border-slate-100 bg-slate-50 p-2.5 text-[10px] space-y-1">
+            <div className="
+              mb-4 space-y-1 rounded-xl border border-slate-100 bg-slate-50
+              p-2.5 text-[10px]
+            "
+            >
               {form.branchId && (
                 <div className="flex justify-between">
                   <span className="text-slate-400">{t('branch')}</span>
@@ -1048,8 +1547,9 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
             ? (
                 <div className="flex items-center gap-2 py-1.5">
                   <div className="
-                    flex size-8 items-center justify-center rounded-full
-                    bg-slate-200 text-[10px] font-bold text-slate-600 shrink-0
+                    flex size-8 shrink-0 items-center justify-center
+                    rounded-full bg-slate-200 text-[10px] font-bold
+                    text-slate-600
                   "
                   >
                     {(selectedGuardian?.name || form.guardianName).split(' ').map(n => n[0]).join('').slice(0, 2)}
@@ -1068,4 +1568,3 @@ export function StudentAdmissionView({ locale: propLocale }: { locale?: string }
     </div>
   );
 }
-

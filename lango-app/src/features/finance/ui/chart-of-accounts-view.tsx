@@ -153,13 +153,15 @@ export function ChartOfAccountsView({ locale: _locale }: { locale?: string } = {
       return;
     }
     setIsSaving(true);
+    setErrorMsg(null);
     try {
       const response = await fetch('/api/finance/accounting/accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, parentAccountId: form.parentAccountId || null }),
       });
-      if (!response.ok) throw new Error('ACCOUNT_CREATE_FAILED');
+      const json = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(json?.error?.message ?? 'Echec de la creation du compte');
       setIsAddModalOpen(false);
       setForm({ code: '', name: '', accountType: 'asset', parentAccountId: '' });
       setFeedbackMsg(t('accountCreatedFeedback', { code: form.code, name: form.name }));
@@ -167,6 +169,7 @@ export function ChartOfAccountsView({ locale: _locale }: { locale?: string } = {
       load();
     } catch (err) {
       console.error('Failed to create account', err);
+      setErrorMsg(err instanceof Error ? err.message : 'Impossible de creer le compte.');
     } finally {
       setIsSaving(false);
     }

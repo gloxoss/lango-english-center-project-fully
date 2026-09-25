@@ -4,9 +4,9 @@ import { z } from 'zod';
 import { attachmentTypes } from '@/features/attachments/models/attachments-schema';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { requireAddon } from '@/libs/api/entitlements';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
-import { requireAddon } from '@/libs/api/entitlements';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 
@@ -70,6 +70,9 @@ export async function DELETE(
     const [existing] = await db.select().from(attachmentTypes).where(and(eq(attachmentTypes.id, id), eq(attachmentTypes.tenantId, tenantId))).limit(1);
     if (!existing) {
       throw new ApiError(404, 'NOT_FOUND', 'Type de pièce jointe introuvable.');
+    }
+    if (existing.isSystem) {
+      throw new ApiError(403, 'SYSTEM_TYPE_LOCKED', 'Ce type est un type système et ne peut pas être archivé.');
     }
 
     // Archive, never a hard delete - referenced types stay referenced by

@@ -17,6 +17,7 @@ import {
 import { toast } from 'sonner';
 import { usePermissions } from '@/hooks/use-permissions';
 import { SchedulePublishBar } from './schedule-publish-bar';
+import { openDocumentPreview } from '@/features/documents/ui/pdf-preview';
 
 type ClassSectionOption = {
   id: string;
@@ -546,6 +547,12 @@ export function ScheduleClient({ locale = 'fr' }: { locale?: string } = {}) {
   // Helper: Find active section object
   const activeSection = classSections.find(cs => cs.id === selectedSectionId);
 
+  const printTimetable = () => {
+    const sourceId = viewMode === 'class' ? selectedSectionId : viewMode === 'teacher' ? selectedTeacherId : selectedRoomLabel;
+    if (!sourceId) return;
+    openDocumentPreview({ kind: 'timetable', sourceId, viewMode }, locale);
+  };
+
   // Helper: Calculate weekly taught hours for each teacher
   const teacherWorkloads = useMemo(() => {
     const map = new Map<string, number>();
@@ -650,7 +657,8 @@ export function ScheduleClient({ locale = 'fr' }: { locale?: string } = {}) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.print()}
+            onClick={printTimetable}
+            disabled={loading || slots.length === 0}
             className="h-9 px-3 rounded-xl text-xs font-semibold border-slate-200 text-slate-700 gap-1.5 hover:bg-slate-50"
           >
             <Printer className="w-3.5 h-3.5 text-slate-500" />

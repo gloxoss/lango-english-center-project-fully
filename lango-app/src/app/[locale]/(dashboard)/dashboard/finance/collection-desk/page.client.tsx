@@ -15,7 +15,8 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { printReceiptDocument } from '@/features/finance/ui/finance-document-print';
 
 interface CashierSession {
   id: string;
@@ -68,6 +69,7 @@ type AgingRow = { studentId: string; studentName: string | null; studentEmail: s
 export default function CollectionDeskPage() {
   const t = useTranslations('Finance');
   const tCommon = useTranslations('Common');
+  const locale = useLocale();
 
   const legacyMethods: MethodOption[] = [
     { methodCode: 'cash', labelFr: t('methodCash') },
@@ -841,7 +843,11 @@ export default function CollectionDeskPage() {
               <div className="flex justify-between"><span className="text-slate-500">{t('paymentMethodLabel')}</span><span className="font-bold text-slate-900">{paymentMethods.find(m => m.methodCode === receipt.method)?.labelFr ?? receipt.method}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">{tCommon('date')}</span><span className="font-bold text-slate-900">{receipt.paymentDate}</span></div>
             </div>
-            <button onClick={() => window.print()} className="mt-4 w-full rounded-lg border border-slate-200 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">
+            <button onClick={() => printReceiptDocument(receipt, {
+              title: t('receipt'), student: t('student'), date: tCommon('date'),
+              description: t('invoiceBreakdown'), amount: t('amount'), total: t('totalLabel'),
+              reference: t('receiptNumberCol'), method: t('paymentMethodLabel'),
+            }, locale)} className="mt-4 w-full rounded-lg border border-slate-200 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">
               {t('printReceiptBtn')}
             </button>
             <button onClick={() => setReceipt(null)} className="mt-2 w-full rounded-lg bg-[#0066FF] py-2 text-xs font-bold text-white hover:bg-[#0052CC]">

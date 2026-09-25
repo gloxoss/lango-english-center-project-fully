@@ -1,21 +1,23 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { CheckCircle2, AlertCircle, ShieldCheck, ShieldX, RefreshCw } from 'lucide-react';
+import { AlertCircle, CheckCircle2, RefreshCw, ShieldCheck, ShieldX } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 
 // These match DEFAULT_ROLE_PERMISSIONS keys (excluding super_admin)
 const ROLES = [
-  { id: 'school_admin', label: 'Administrateur' },
-  { id: 'teacher', label: 'Enseignant' },
-  { id: 'accountant', label: 'Comptable' },
-  { id: 'receptionist', label: 'Réceptionniste' },
-  { id: 'guard', label: 'Gardien' },
-  { id: 'librarian', label: 'Bibliothécaire' },
-  { id: 'student', label: 'Élève' },
-  { id: 'parent', label: 'Parent' },
+  { id: 'school_admin' },
+  { id: 'teacher' },
+  { id: 'accountant' },
+  { id: 'receptionist' },
+  { id: 'guard' },
+  { id: 'librarian' },
+  { id: 'student' },
+  { id: 'parent' },
+  { id: 'alumni' },
 ] as const;
 
 type RoleId = typeof ROLES[number]['id'];
@@ -34,67 +36,78 @@ function groupPermissions(perms: Permissions): Record<string, string[]> {
   const groups: Record<string, string[]> = {};
   for (const key of Object.keys(perms)) {
     const ns = key.split('.')[0] ?? 'other';
-    if (!groups[ns]) groups[ns] = [];
+    if (!groups[ns]) {
+      groups[ns] = [];
+    }
     groups[ns].push(key);
   }
   return groups;
 }
 
-const MODULE_LABELS: Record<string, string> = {
-  settings: 'Paramètres',
-  students: 'Élèves',
-  teachers: 'Enseignants',
-  academics: 'Académique',
-  attendance: 'Présence',
-  finance: 'Finance',
-  users: 'Utilisateurs',
-  audit: 'Audit',
-  guardians: 'Parents/Tuteurs',
-  communication: 'Communication',
-  grading: 'Notes',
-  reports: 'Rapports',
-  hr: 'RH & Paie',
-};
-
 export default function PermissionsPage() {
+  const locale = useLocale();
+  const t = useTranslations('SettingsPermissions');
+  const tRoles = useTranslations('Roles');
   const [data, setData] = useState<ApiData | null>(null);
   const [matrix, setMatrix] = useState<Matrix>({} as Matrix);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState<string | null>(null); // 'roleId.permKey'
   const [toast, setToast] = useState<{ type: 'ok' | 'err'; msg: string } | null>(null);
 
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showToast = useCallback((type: 'ok' | 'err', msg: string) => {
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
     setToast({ type, msg });
-    toastTimerRef.current = setTimeout(() => setToast(null), 3500);
+    toastTimerRef.current = setTimeout(setToast, 3500, null);
   }, []);
 
-  useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); }, []);
+  useEffect(() => () => {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+  }, []);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (showLoading = true) => {
+    if (showLoading) {
+      setLoading(true);
+    }
     try {
       const res = await fetch('/api/settings/permissions');
       const json = await res.json();
-      if (json.success) {
-        setData(json.data);
-        setMatrix(json.data.matrix);
+      if (!res.ok || !json.success) {
+        throw new Error('Failed to load permissions');
       }
+      setData(json.data);
+      setMatrix(json.data.matrix);
+      setLoadError(false);
     } catch {
-      showToast('err', 'Erreur chargement des permissions.');
+      setLoadError(true);
+      showToast('err', t('loadError'));
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
-  }, [showToast]);
+  }, [showToast, t]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const toggle = async (roleId: RoleId, permKey: string) => {
     const current = matrix[roleId]?.[permKey] ?? false;
     const newVal = !current;
     const cellKey = `${roleId}.${permKey}`;
+    if (roleId === 'school_admin' && permKey === 'users.permissions.manage' && current) {
+      // eslint-disable-next-line no-alert
+      if (!window.confirm(t('confirmLockout'))) {
+        return;
+      }
+    }
 
     // Optimistic update
     setMatrix(m => ({
@@ -110,107 +123,158 @@ export default function PermissionsPage() {
         body: JSON.stringify({ roleId, permissionId: permKey, granted: newVal }),
       });
       const json = await res.json();
-      if (!json.success) {
-        // Revert
+      if (!res.ok || !json.success) {
         setMatrix(m => ({
           ...m,
           [roleId]: { ...(m[roleId] ?? {}), [permKey]: current },
         }));
-        showToast('err', json.error?.message ?? 'Erreur mise à jour permission.');
+        showToast('err', t('updateError'));
       } else {
-        showToast('ok', json.message ?? 'Permission mise à jour.');
+        showToast('ok', t('updated'));
+        await load(false);
       }
     } catch {
       setMatrix(m => ({
         ...m,
         [roleId]: { ...(m[roleId] ?? {}), [permKey]: current },
       }));
-      showToast('err', 'Erreur réseau.');
+      showToast('err', t('networkError'));
     } finally {
       setSaving(null);
     }
   };
 
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent" />
+      <div className="flex h-64 items-center justify-center">
+        <div className="
+          size-8 animate-spin rounded-full border-2 border-blue-500
+          border-t-transparent
+        "
+        />
       </div>
     );
   }
 
-  if (!data) return null;
+  if (!data) {
+    return (
+      <div
+        role="alert"
+        className="flex flex-col items-center gap-4 py-16 text-sm text-red-700"
+      >
+        <p>{t('loadError')}</p>
+        <Button onClick={() => void load()}>{t('retry')}</Button>
+      </div>
+    );
+  }
 
   const groups = groupPermissions(data.permissions);
 
   return (
-    <div className="space-y-6 max-w-[1400px] mx-auto">
+    <div className="mx-auto max-w-[1400px] space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Matrice des permissions</h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Configurez les capacités de chaque rôle.
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">{t('title')}</h1>
+          <p className="mt-1 text-xs text-slate-500">
+            {t('subtitle')}
             {data.overrideCount > 0 && (
-              <span className="ml-2 text-blue-600 font-semibold">{data.overrideCount} dérogation(s) active(s)</span>
+              <span className="ml-2 font-semibold text-blue-600">{t('overridesCount', { count: data.overrideCount })}</span>
             )}
           </p>
+          {locale !== 'fr' && <p className="mt-1 text-xs text-slate-500">{t('technicalKeyNote')}</p>}
         </div>
         <Button
           variant="outline"
           size="sm"
-          onClick={load}
-          className="gap-2 text-xs rounded-full"
+          onClick={() => void load()}
+          disabled={loading || saving !== null}
+          className="gap-2 rounded-full text-xs"
         >
-          <RefreshCw className="w-3.5 h-3.5" />
-          Actualiser
+          <RefreshCw className="size-3.5" />
+          {t('refresh')}
         </Button>
       </div>
 
+      {loadError && <div role="alert" className="text-sm text-red-700">{t('loadError')}</div>}
+
       {/* Toast */}
       {toast && (
-        <div className={`flex items-center gap-2 p-3 rounded-xl text-xs font-semibold ${
-          toast.type === 'ok' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'
-        }`}>
-          {toast.type === 'ok' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+        <div
+          role="status"
+          className={`
+            flex items-center gap-2 rounded-xl p-3 text-xs font-semibold
+            ${
+        toast.type === 'ok'
+          ? `border border-emerald-200 bg-emerald-50 text-emerald-700`
+          : `border border-red-200 bg-red-50 text-red-700`
+        }
+          `}
+        >
+          {toast.type === 'ok'
+            ? <CheckCircle2 className="size-4 shrink-0" />
+            : (
+                <AlertCircle className="size-4 shrink-0" />
+              )}
           {toast.msg}
         </div>
       )}
 
       {/* Matrix Table */}
-      <Card className="overflow-x-auto rounded-2xl border border-slate-200 shadow-xs">
-        <table className="w-full text-xs border-collapse">
+      <Card className="
+        overflow-x-auto rounded-2xl border border-slate-200 shadow-xs
+      "
+      >
+        <table className="w-full border-collapse text-xs">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
-              <th className="text-left px-4 py-3 font-bold text-slate-700 min-w-[220px]">Permission</th>
+            <tr className="border-b border-slate-200 bg-slate-50">
+              <th className="
+                min-w-[220px] px-4 py-3 text-left font-bold text-slate-700
+              "
+              >
+                {t('permission')}
+              </th>
               {ROLES.map(role => (
-                <th key={role.id} className="px-3 py-3 font-bold text-slate-700 min-w-[100px] text-center">
-                  {role.label}
+                <th
+                  key={role.id}
+                  className="
+                    min-w-[100px] p-3 text-center font-bold text-slate-700
+                  "
+                >
+                  {tRoles(role.id)}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
             {Object.entries(groups).map(([module, keys]) => (
-              <>
+              <Fragment key={module}>
                 {/* Module separator row */}
-                <tr key={`${module}-header`} className="bg-slate-50/70">
+                <tr className="bg-slate-50/70">
                   <td
                     colSpan={ROLES.length + 1}
-                    className="px-4 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-t border-slate-100"
+                    className="
+                      border-t border-slate-100 px-4 py-1.5 text-[10px]
+                      font-bold tracking-widest text-slate-500 uppercase
+                    "
                   >
-                    {MODULE_LABELS[module] ?? module}
+                    {t.has(`modules.${module}`) ? t(`modules.${module}`) : module}
                   </td>
                 </tr>
 
                 {keys.map(permKey => (
-                  <tr key={permKey} className="border-t border-slate-100 hover:bg-slate-50/50 transition-colors">
+                  <tr
+                    key={permKey}
+                    className="
+                      border-t border-slate-100 transition-colors
+                      hover:bg-slate-50/50
+                    "
+                  >
                     <td className="px-4 py-2.5">
-                      <div className="font-medium text-slate-800">{data.permissions[permKey]}</div>
+                      <div className="font-medium text-slate-800">{locale === 'fr' ? data.permissions[permKey] : permKey}</div>
                       <div className="font-mono text-[10px] text-slate-400">{permKey}</div>
                     </td>
-                    {ROLES.map(role => {
+                    {ROLES.map((role) => {
                       const granted = matrix[role.id]?.[permKey] ?? false;
                       const isSaving = saving === `${role.id}.${permKey}`;
 
@@ -218,27 +282,38 @@ export default function PermissionsPage() {
                         <td key={role.id} className="px-3 py-2.5 text-center">
                           <button
                             type="button"
-                            onClick={() => toggle(role.id, permKey)}
-                            disabled={isSaving}
-                            title={granted ? 'Cliquer pour révoquer' : 'Cliquer pour accorder'}
-                            className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-all ${
-                              isSaving
-                                ? 'opacity-50 cursor-wait'
-                                : granted
-                                  ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'
-                                  : 'bg-slate-100 text-slate-300 hover:bg-red-50 hover:text-red-400'
-                            }`}
+                            onClick={() => void toggle(role.id, permKey)}
+                            disabled={saving !== null}
+                            title={t(granted ? 'revoke' : 'grant')}
+                            aria-label={t(granted ? 'revokeLabel' : 'grantLabel', { role: tRoles(role.id), permission: permKey })}
+                            className={`
+                              inline-flex size-7 items-center justify-center
+                              rounded-lg transition-all
+                              ${
+                        isSaving
+                          ? 'cursor-wait opacity-50'
+                          : granted
+                            ? `
+                              bg-emerald-100 text-emerald-600
+                              hover:bg-emerald-200
+                            `
+                            : `
+                              bg-slate-100 text-slate-300
+                              hover:bg-red-50 hover:text-red-400
+                            `
+                        }
+                            `}
                           >
                             {granted
-                              ? <ShieldCheck className="w-4 h-4" />
-                              : <ShieldX className="w-4 h-4" />}
+                              ? <ShieldCheck className="size-4" />
+                              : <ShieldX className="size-4" />}
                           </button>
                         </td>
                       );
                     })}
                   </tr>
                 ))}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>
@@ -247,13 +322,17 @@ export default function PermissionsPage() {
       {/* Legend */}
       <div className="flex items-center gap-5 text-[10px] text-slate-500">
         <span className="flex items-center gap-1.5">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> Accordée
+          <ShieldCheck className="size-3.5 text-emerald-500" />
+          {' '}
+          {t('granted')}
         </span>
         <span className="flex items-center gap-1.5">
-          <ShieldX className="w-3.5 h-3.5 text-slate-300" /> Refusée
+          <ShieldX className="size-3.5 text-slate-300" />
+          {' '}
+          {t('denied')}
         </span>
         <Badge variant="neutral" className="text-[10px]">
-          Les modifications sont appliquées immédiatement et auditées.
+          {t('auditNote')}
         </Badge>
       </div>
     </div>

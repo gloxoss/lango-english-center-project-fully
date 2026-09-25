@@ -6,6 +6,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   AlertTriangle, ArrowRight, ArrowRightLeft, Check, CheckCircle2, ChevronRight,
   Download, FileSpreadsheet, Info, Plus, RefreshCw, Sparkles, User, X,
@@ -27,6 +28,8 @@ function problemHref(locale: string | undefined, url: string): string {
 }
 
 export function MigrationReadinessClient({ initialData, locale }: Props) {
+  const t = useTranslations('MigrationReadiness');
+  const columnLabel = (key: string, fallback: string) => (t.has(`columns.${key}`) ? t(`columns.${key}` as 'columns.student_full_name') : fallback);
   const [data, setData] = useState<MigrationReadinessData | null>(initialData);
   const [mappingModalOpen, setMappingModalOpen] = useState(false);
   const [draftMappings, setDraftMappings] = useState<ColumnMapping[]>([]);
@@ -46,9 +49,9 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
       const res = await fetch('/api/settings/migration', { cache: 'no-store' });
       const json = await res.json();
       if (res.ok && json.data) setData(json.data);
-      else triggerToast(json?.error?.message ?? 'Impossible de recharger les données.');
+      else triggerToast(json?.error?.message ?? t('reloadError'));
     } catch {
-      triggerToast('Erreur réseau lors du rechargement.');
+      triggerToast(t('reloadNetworkError'));
     } finally {
       setLoading(false);
     }
@@ -65,12 +68,12 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
       const json = await res.json();
       if (res.ok && json.data) {
         setData(json.data);
-        triggerToast('Validation globale des données de migration terminée.');
+        triggerToast(t('validationDone'));
       } else {
-        triggerToast(json?.error?.message ?? 'Échec de la validation.');
+        triggerToast(json?.error?.message ?? t('validationError'));
       }
     } catch {
-      triggerToast('Erreur réseau lors de la validation.');
+      triggerToast(t('validationNetworkError'));
     } finally {
       setValidating(false);
     }
@@ -94,14 +97,14 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
           ...prev,
           tasks: prev.tasks.map(t => (t.id === task.id ? { ...t, status: task.status } : t)),
         } : prev);
-        triggerToast(json?.error?.message ?? 'Échec de la mise à jour de la tâche.');
+        triggerToast(json?.error?.message ?? t('taskError'));
       }
     } catch {
       setData(prev => prev ? {
         ...prev,
         tasks: prev.tasks.map(t => (t.id === task.id ? { ...t, status: task.status } : t)),
       } : prev);
-      triggerToast('Erreur réseau lors de la mise à jour de la tâche.');
+      triggerToast(t('taskNetworkError'));
     }
   }
 
@@ -115,7 +118,7 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
       .filter(m => m.sourceCol.trim().length > 0)
       .map(m => ({ sourceCol: m.sourceCol.trim(), targetField: m.targetField }));
     if (cleaned.length === 0) {
-      triggerToast('Ajoutez au moins une colonne cartographiée.');
+      triggerToast(t('mappingEmpty'));
       return;
     }
     setSavingMappings(true);
@@ -129,12 +132,12 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
       if (res.ok && json.data) {
         setData(json.data);
         setMappingModalOpen(false);
-        triggerToast(`Cartographie des champs enregistrée (${cleaned.length} colonnes).`);
+        triggerToast(t('mappingSaved', { count: cleaned.length }));
       } else {
-        triggerToast(json?.error?.message ?? "Échec de l'enregistrement du mapping.");
+        triggerToast(json?.error?.message ?? t('mappingError'));
       }
     } catch {
-      triggerToast("Erreur réseau lors de l'enregistrement du mapping.");
+      triggerToast(t('mappingNetworkError'));
     } finally {
       setSavingMappings(false);
     }
@@ -146,10 +149,10 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
         <div className="bg-white border border-[#E5E7EB] rounded-2xl p-10 text-center shadow-2xs">
           <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-3" />
           <h2 className="text-base font-bold text-[#111827]">
-            Impossible de charger l'état de migration
+            {t('loadErrorTitle')}
           </h2>
           <p className="text-xs text-[#6B7280] mt-1 max-w-md mx-auto">
-            Connectez-vous à un compte administrateur d'établissement, puis réessayez.
+            {t('loadErrorBody')}
           </p>
           <button
             onClick={refresh}
@@ -157,7 +160,7 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
             className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-[#4B6BFB] hover:bg-[#3B5BDB] rounded-xl transition-colors"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            {loading ? 'Rechargement...' : 'Réessayer'}
+            {loading ? t('reloading') : t('retry')}
           </button>
         </div>
       </div>
@@ -166,8 +169,8 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
 
   const stepsDone = data.steps.filter(s => s.status === 'done').length;
   const stepsLabel = stepsDone === data.steps.length
-    ? 'Toutes les étapes terminées'
-    : `Étape ${Math.min(stepsDone + 1, data.steps.length)} sur ${data.steps.length} en cours`;
+    ? t('allStepsDone')
+    : t('stepProgress', { current: Math.min(stepsDone + 1, data.steps.length), total: data.steps.length });
   const mappedPct = data.totalColumnsCount > 0
     ? Math.round((data.mappedColumnsCount / data.totalColumnsCount) * 100)
     : 0;
@@ -186,9 +189,9 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
       {/* ── Top Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-[#111827]">Centre de Préparation à la Migration (PF-01)</h1>
+          <h1 className="text-xl font-bold text-[#111827]">{t('title')}</h1>
           <p className="text-sm text-[#6B7280] mt-0.5">
-            Audit de conformité, cartographie des champs Excel/MASSAR et validation avant injection PostgreSQL.
+            {t('subtitle')}
           </p>
         </div>
 
@@ -199,7 +202,7 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
               bg-white border border-[#E5E7EB] rounded-xl hover:bg-[#F9FAFB] transition-colors"
           >
             <Download className="w-4 h-4 text-[#4B6BFB]" />
-            Télécharger le modèle Excel
+            {t('downloadTemplate')}
           </a>
           <button
             onClick={handleTriggerValidation}
@@ -208,7 +211,7 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
               bg-[#4B6BFB] rounded-xl hover:bg-[#3B5BDB] transition-all shadow-sm shadow-[#4B6BFB]/20"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${validating ? 'animate-spin' : ''}`} />
-            {validating ? 'Validation en cours...' : 'Lancer la validation globale'}
+            {validating ? t('validating') : t('runValidation')}
           </button>
         </div>
       </div>
@@ -217,7 +220,7 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] flex items-center justify-between shadow-2xs">
           <div className="space-y-1">
-            <p className="text-xs font-medium text-[#6B7280]">Score de préparation globale</p>
+            <p className="text-xs font-medium text-[#6B7280]">{t('statScore')}</p>
             <p className="text-2xl font-bold text-[#111827]">{data.readinessScore}%</p>
             <div className="w-32 bg-slate-100 h-2 rounded-full overflow-hidden mt-1">
               <div className="bg-[#4B6BFB] h-full transition-all" style={{ width: `${data.readinessScore}%` }} />
@@ -230,9 +233,9 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
 
         <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] flex items-center justify-between shadow-2xs">
           <div className="space-y-1">
-            <p className="text-xs font-medium text-[#6B7280]">Fichiers source importés</p>
-            <p className="text-2xl font-bold text-[#111827]">{data.fileCount} fichiers</p>
-            <p className="text-[11px] font-semibold text-emerald-600">Excel / CSV MASSAR</p>
+            <p className="text-xs font-medium text-[#6B7280]">{t('statFiles')}</p>
+            <p className="text-2xl font-bold text-[#111827]">{t('filesCount', { count: data.fileCount })}</p>
+            <p className="text-[11px] font-semibold text-emerald-600">{t('statFilesHint')}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
             <FileSpreadsheet className="w-5 h-5" />
@@ -241,10 +244,10 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
 
         <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] flex items-center justify-between shadow-2xs">
           <div className="space-y-1">
-            <p className="text-xs font-medium text-[#6B7280]">Enregistrements à migrer</p>
+            <p className="text-xs font-medium text-[#6B7280]">{t('statRecords')}</p>
             <p className="text-2xl font-bold text-[#111827]">{data.entityCounts.students + data.entityCounts.guardians}</p>
             <p className="text-[11px] font-semibold text-[#4B6BFB]">
-              {data.entityCounts.students} Élèves · {data.entityCounts.guardians} Tuteurs
+              {t('recordsSplit', { students: data.entityCounts.students, guardians: data.entityCounts.guardians })}
             </p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
@@ -254,9 +257,9 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
 
         <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] flex items-center justify-between shadow-2xs">
           <div className="space-y-1">
-            <p className="text-xs font-medium text-[#6B7280]">Colonnes cartographiées</p>
+            <p className="text-xs font-medium text-[#6B7280]">{t('statMapped')}</p>
             <p className="text-2xl font-bold text-[#111827]">{data.mappedColumnsCount} / {data.totalColumnsCount}</p>
-            <p className="text-[11px] font-semibold text-emerald-600">{mappedPct}% des attributs cartographiés</p>
+            <p className="text-[11px] font-semibold text-emerald-600">{t('mappedPct', { percent: mappedPct })}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
             <ArrowRightLeft className="w-5 h-5" />
@@ -284,7 +287,7 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
             onClick={openMappingModal}
             className="px-3.5 py-1.5 text-xs font-semibold bg-white border border-current rounded-lg hover:opacity-80 shrink-0 transition-colors"
           >
-            Cartographier les champs
+            {t('mapFields')}
           </button>
         </div>
       )}
@@ -298,7 +301,7 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
           {/* Étapes de Préparation à la Migration */}
           <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 space-y-4 shadow-2xs">
             <div className="flex items-center justify-between border-b border-[#F3F4F6] pb-3">
-              <h2 className="text-sm font-semibold text-[#111827]">Étapes de Préparation à la Migration</h2>
+              <h2 className="text-sm font-semibold text-[#111827]">{t('stepsTitle')}</h2>
               <span className="text-xs text-[#6B7280]">{stepsLabel}</span>
             </div>
 
@@ -307,7 +310,7 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
                 <div key={s.id} className="p-4 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] space-y-2 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold text-[#4B6BFB]">Étape {s.stepNumber}</span>
+                      <span className="text-xs font-bold text-[#4B6BFB]">{t('step', { n: s.stepNumber })}</span>
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                         s.status === 'done'
                           ? 'bg-emerald-50 text-emerald-700'
@@ -315,7 +318,7 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
                           ? 'bg-blue-50 text-blue-700'
                           : 'bg-slate-100 text-slate-500'
                       }`}>
-                        {s.status === 'done' ? 'Terminé' : s.status === 'in_progress' ? 'En cours' : 'En attente'}
+                        {s.status === 'done' ? t('statusDone') : s.status === 'in_progress' ? t('statusInProgress') : t('statusPending')}
                       </span>
                     </div>
                     <p className="text-xs font-bold text-[#111827]">{s.label}</p>
@@ -327,7 +330,7 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
                       onClick={openMappingModal}
                       className="mt-2 w-full py-1.5 text-xs font-semibold text-white bg-[#4B6BFB] hover:bg-[#3B5BDB] rounded-lg transition-colors flex items-center justify-center gap-1"
                     >
-                      <span>Configurer le mapping</span>
+                      <span>{t('configureMapping')}</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   )}
@@ -339,18 +342,18 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
           {/* Alertes de Qualité des Données Table */}
           <div className="bg-white border border-[#E5E7EB] rounded-2xl overflow-hidden shadow-2xs">
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#F3F4F6]">
-              <h3 className="text-sm font-semibold text-[#111827]">Anomalies &amp; Problèmes de Qualité</h3>
-              <span className="text-xs text-[#6B7280]">{data.qualityProblems.length} anomalies détectées</span>
+              <h3 className="text-sm font-semibold text-[#111827]">{t('qualityTitle')}</h3>
+              <span className="text-xs text-[#6B7280]">{t('anomaliesCount', { count: data.qualityProblems.length })}</span>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-[#F9FAFB] text-[#6B7280] font-semibold border-b border-[#E5E7EB]">
                   <tr>
-                    <th className="py-3 px-4">Problème Détecté</th>
-                    <th className="py-3 px-4 text-center">Fiches Affectées</th>
-                    <th className="py-3 px-4">Sévérité</th>
-                    <th className="py-3 px-4 text-right">Action Recommandée</th>
+                    <th className="py-3 px-4">{t('colProblem')}</th>
+                    <th className="py-3 px-4 text-center">{t('colAffected')}</th>
+                    <th className="py-3 px-4">{t('colSeverity')}</th>
+                    <th className="py-3 px-4 text-right">{t('colAction')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#F3F4F6] font-medium text-[#374151]">
@@ -366,7 +369,7 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
                             ? 'bg-amber-50 text-amber-700'
                             : 'bg-yellow-50 text-yellow-700'
                         }`}>
-                          {prob.severity === 'danger' ? 'Critique' : 'Avertissement'}
+                          {prob.severity === 'danger' ? t('critical') : t('warning')}
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-right">
@@ -383,7 +386,7 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
                     <tr>
                       <td colSpan={4} className="py-8 text-center text-[#6B7280]">
                         <CheckCircle2 className="w-6 h-6 text-emerald-500 mx-auto mb-1" />
-                        Toutes les anomalies ont été résolues avec succès !
+                        {t('noAnomalies')}
                       </td>
                     </tr>
                   )}
@@ -395,8 +398,8 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
           {/* Fichiers Récents d'Importation */}
           <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 space-y-4 shadow-2xs">
             <div className="flex items-center justify-between border-b border-[#F3F4F6] pb-3">
-              <h3 className="text-sm font-semibold text-[#111827]">Fichiers Source Téléchargés</h3>
-              <span className="text-xs text-[#6B7280]">{data.recentFiles.length} fichiers récents</span>
+              <h3 className="text-sm font-semibold text-[#111827]">{t('filesTitle')}</h3>
+              <span className="text-xs text-[#6B7280]">{t('recentFilesCount', { count: data.recentFiles.length })}</span>
             </div>
 
             {data.recentFiles.length > 0 ? (
@@ -410,7 +413,7 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
                       <div>
                         <p className="font-bold text-[#111827]">{file.name}</p>
                         <p className="text-[11px] text-[#6B7280]">
-                          {file.size} · Importé par <span className="font-semibold">{file.author}</span> · {file.time}
+                          {file.size} · {t('importedBy')} <span className="font-semibold">{file.author}</span> · {file.time}
                         </p>
                       </div>
                     </div>
@@ -425,10 +428,10 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
               <div className="py-8 text-center text-[#6B7280]">
                 <FileSpreadsheet className="w-6 h-6 text-slate-300 mx-auto mb-1" />
                 <p className="text-xs">
-                  Aucun fichier source importé pour le moment.
+                  {t('noFiles')}
                 </p>
                 <p className="text-[11px] mt-0.5">
-                  Téléchargez le modèle Excel ci-dessus pour commencer.
+                  {t('noFilesHint')}
                 </p>
               </div>
             )}
@@ -442,32 +445,33 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
           {/* Suivi des Tâches d'Équipe */}
           <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 space-y-4 shadow-2xs">
             <div className="flex items-center justify-between border-b border-[#F3F4F6] pb-3">
-              <h3 className="text-sm font-semibold text-[#111827]">Suivi des Tâches d'Équipe</h3>
-              <span className="text-xs text-[#6B7280]">{data.tasks.filter(t => t.status === 'done').length}/{data.tasks.length} complétées</span>
+              <h3 className="text-sm font-semibold text-[#111827]">{t('tasksTitle')}</h3>
+              <span className="text-xs text-[#6B7280]">{t('tasksDone', { done: data.tasks.filter(task => task.status === 'done').length, total: data.tasks.length })}</span>
             </div>
 
             {data.tasks.length > 0 ? (
               <div className="space-y-3 text-xs">
-                {data.tasks.map(t => (
-                  <div key={t.id} className="p-3 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl flex items-start gap-3">
+                {data.tasks.map(task => (
+                  <div key={task.id} className="p-3 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl flex items-start gap-3">
                     <button
-                      onClick={() => handleToggleTask(t)}
+                      onClick={() => handleToggleTask(task)}
+                      aria-label={task.status === 'done' ? t('markPending') : t('markDone')}
                       className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-                        t.status === 'done'
+                        task.status === 'done'
                           ? 'bg-emerald-500 border-emerald-500 text-white'
                           : 'border-[#D1D5DB] bg-white hover:border-[#4B6BFB]'
                       }`}
                     >
-                      {t.status === 'done' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                      {task.status === 'done' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                     </button>
 
                     <div className="space-y-1 flex-1">
-                      <p className={`font-semibold ${t.status === 'done' ? 'line-through text-[#9CA3AF]' : 'text-[#111827]'}`}>
-                        {t.task}
+                      <p className={`font-semibold ${task.status === 'done' ? 'line-through text-[#9CA3AF]' : 'text-[#111827]'}`}>
+                        {task.task}
                       </p>
                       <div className="flex items-center justify-between text-[11px] text-[#6B7280]">
-                        <span>{t.assignee || 'Non assigné'}</span>
-                        <span>{t.date || '—'}</span>
+                        <span>{task.assignee || t('unassigned')}</span>
+                        <span>{task.date || '—'}</span>
                       </div>
                     </div>
                   </div>
@@ -475,7 +479,7 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
               </div>
             ) : (
               <div className="py-8 text-center text-[#6B7280]">
-                <p className="text-xs">Aucune tâche d'équipe définie.</p>
+                <p className="text-xs">{t('noTasks')}</p>
               </div>
             )}
           </div>
@@ -483,8 +487,8 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
           {/* Distribution des Erreurs */}
           <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 space-y-4 shadow-2xs">
             <div className="flex items-center justify-between border-b border-[#F3F4F6] pb-3">
-              <h3 className="text-sm font-semibold text-[#111827]">Distribution des Erreurs</h3>
-              <span className="text-xs text-[#6B7280]">{data.totalErrors} anomalies totales</span>
+              <h3 className="text-sm font-semibold text-[#111827]">{t('errorsTitle')}</h3>
+              <span className="text-xs text-[#6B7280]">{t('totalAnomalies', { count: data.totalErrors })}</span>
             </div>
 
             {data.errorDistribution.length > 0 ? (
@@ -504,7 +508,7 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
             ) : (
               <div className="py-8 text-center text-[#6B7280]">
                 <CheckCircle2 className="w-6 h-6 text-emerald-500 mx-auto mb-1" />
-                <p className="text-xs">Aucune anomalie détectée — les données sont propres.</p>
+                <p className="text-xs">{t('noErrors')}</p>
               </div>
             )}
           </div>
@@ -519,10 +523,10 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl border border-[#E5E7EB]">
             <div className="flex items-center justify-between border-b border-[#F3F4F6] pb-3">
               <div>
-                <h3 className="text-base font-bold text-[#111827]">Cartographie des Champs Excel -&gt; SchoolOS</h3>
-                <p className="text-xs text-[#6B7280] mt-0.5">Associez chaque colonne de votre fichier Excel aux champs de la DB.</p>
+                <h3 className="text-base font-bold text-[#111827]">{t('mappingTitle')}</h3>
+                <p className="text-xs text-[#6B7280] mt-0.5">{t('mappingSubtitle')}</p>
               </div>
-              <button onClick={() => setMappingModalOpen(false)} className="text-[#9CA3AF] hover:text-[#111827]">
+              <button onClick={() => setMappingModalOpen(false)} aria-label={t('close')} className="text-[#9CA3AF] hover:text-[#111827]">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -536,7 +540,7 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
                       const v = e.target.value;
                       setDraftMappings(prev => prev.map((item, i) => i === idx ? { ...item, sourceCol: v } : item));
                     }}
-                    placeholder="Nom de la colonne source"
+                    placeholder={t('sourceColumn')}
                     className="flex-1 px-2.5 py-1.5 bg-white border border-[#E5E7EB] rounded-lg text-[#111827] font-mono font-bold outline-none"
                   />
                   <ArrowRight className="w-4 h-4 text-[#9CA3AF] shrink-0" />
@@ -549,13 +553,13 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
                     className="flex-1 px-2.5 py-1.5 bg-white border border-[#E5E7EB] rounded-lg text-[#111827] outline-none"
                   >
                     {TARGET_COLUMNS.map(col => (
-                      <option key={col.key} value={col.key}>{col.label}</option>
+                      <option key={col.key} value={col.key}>{columnLabel(col.key, col.label)}</option>
                     ))}
                   </select>
                   <button
                     onClick={() => setDraftMappings(prev => prev.filter((_, i) => i !== idx))}
                     className="text-[#9CA3AF] hover:text-red-500 shrink-0"
-                    aria-label="Supprimer la colonne"
+                    aria-label={t('removeColumn')}
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -570,7 +574,7 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
                 className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold text-[#4B6BFB] bg-[#F0F4FF] hover:bg-[#E0E9FF] rounded-xl transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
-                Ajouter une colonne
+                {t('addColumn')}
               </button>
             </div>
 
@@ -579,14 +583,14 @@ export function MigrationReadinessClient({ initialData, locale }: Props) {
                 onClick={() => setMappingModalOpen(false)}
                 className="px-4 py-2 font-semibold text-[#6B7280] hover:bg-[#F9FAFB] rounded-xl text-xs"
               >
-                Fermer
+                {t('close')}
               </button>
               <button
                 onClick={handleSaveMapping}
                 disabled={savingMappings}
                 className="px-4 py-2 font-semibold text-white bg-[#4B6BFB] hover:bg-[#3B5BDB] rounded-xl text-xs shadow-xs disabled:opacity-60"
               >
-                {savingMappings ? 'Enregistrement...' : 'Enregistrer le Mapping'}
+                {savingMappings ? t('saving') : t('saveMapping')}
               </button>
             </div>
           </div>

@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -221,14 +222,19 @@ export function AlumniEventsView() {
 
   const handleTogglePublish = async (ev: EventRow) => {
     try {
-      await fetch('/api/students/alumni/events', {
+      const res = await fetch('/api/students/alumni/events', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: ev.id, isPublished: !ev.isPublished }),
       });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || json?.success === false) {
+        toast.error(json?.error?.message || json?.message || tCommon('error'));
+      }
       load();
     } catch (e) {
       console.error('Failed to toggle publish status:', e);
+      toast.error(tCommon('networkError'));
     }
   };
 
@@ -237,7 +243,8 @@ export function AlumniEventsView() {
       return;
     }
     try {
-      await fetch('/api/students/alumni/events', {
+      // A refused cancel used to close the dialog as if it had worked.
+      const res = await fetch('/api/students/alumni/events', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -246,11 +253,17 @@ export function AlumniEventsView() {
           cancellationReason: cancellationReasonInput.trim() || 'Annulé par l\'administration',
         }),
       });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || json?.success === false) {
+        toast.error(json?.error?.message || json?.message || tCommon('error'));
+        return;
+      }
       setCancellingEvent(null);
       setCancellationReasonInput('');
       load();
     } catch (e) {
       console.error('Failed to cancel event:', e);
+      toast.error(tCommon('networkError'));
     }
   };
 

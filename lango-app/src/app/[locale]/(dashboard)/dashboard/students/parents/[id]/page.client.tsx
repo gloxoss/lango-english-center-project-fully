@@ -137,6 +137,14 @@ export default function GuardianDetailPage() {
   const locale = typeof params.locale === 'string' ? params.locale : currentLocale;
   const t = useTranslations('Guardians');
   const tCommon = useTranslations('Common');
+  const g = useTranslations('GuardianProfile');
+  // Number/date formats follow the UI language (English used to get French formats).
+  const intlLocale = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-GB' : 'fr-FR';
+  // Relationship values are stored in French; only the labels are translated.
+  const relationLabel = (value: string) => {
+    const key = ({ Parent: 'parent', 'Père': 'father', 'Mère': 'mother', Tuteur: 'legalGuardian', 'Grand-parent': 'grandparent', Autre: 'other' } as Record<string, string>)[value];
+    return key ? g(`relations.${key}` as 'relations.parent') : value;
+  };
   const { can, role } = usePermissions();
 
   const [guardian, setGuardian] = useState<GuardianDetail | null>(null);
@@ -275,7 +283,7 @@ export default function GuardianDetailPage() {
   async function handleSave(e?: React.FormEvent) {
     if (e) e.preventDefault();
     if (!editFields.firstName?.trim() || !editFields.lastName?.trim()) {
-      setSaveError('Le prénom et le nom sont requis');
+      setSaveError(g('namesRequired'));
       return;
     }
     setSaving(true);
@@ -301,7 +309,7 @@ export default function GuardianDetailPage() {
         setSaveError(json.message ?? t('saveError'));
         return;
       }
-      toast.success('Profil du tuteur mis à jour avec succès');
+      toast.success(g('profileSaved'));
       setGuardian(prev => prev ? { ...prev, ...json.data } : null);
       setShowEditDialog(false);
     } catch (err) {
@@ -334,7 +342,7 @@ export default function GuardianDetailPage() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setLinkChildError(json.message || 'Impossible de lier cet élève.');
+        setLinkChildError(json.message || g('linkError'));
         return;
       }
       toast.success('Élève rattaché avec succès');
@@ -345,7 +353,7 @@ export default function GuardianDetailPage() {
       // refresh activity
       fetch(`/api/students/parents/${guardianId}/activity`).then(r => r.json()).then(j => j?.success && setActivity(j.data));
     } catch {
-      setLinkChildError('Erreur réseau');
+      setLinkChildError(g('networkError'));
     } finally {
       setLinkingChild(false);
     }
@@ -363,7 +371,7 @@ export default function GuardianDetailPage() {
         toast.error(json.message ?? t('unlinkError'));
         return;
       }
-      toast.success('Lien clos avec succès (conservé dans l\'historique d\'audit)');
+      toast.success(g('unlinked'));
       setGuardian(prev => prev
         ? { ...prev, linkedStudents: prev.linkedStudents.filter(s => s.linkId !== unlinkTarget.linkId) }
         : null,
@@ -420,17 +428,17 @@ export default function GuardianDetailPage() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        toast.error(json.message || 'Erreur lors de la mise à jour');
+        toast.error(json.message || g('updateError'));
         return;
       }
-      toast.success('Préférences mises à jour');
+      toast.success(g('prefsSaved'));
       if (patch.isPrimaryContact !== undefined || patch.isFinanciallyResponsible !== undefined) {
         await fetchGuardian();
         await fetchPaymentsData();
       }
       fetch(`/api/students/parents/${guardianId}/activity`).then(r => r.json()).then(j => j?.success && setActivity(j.data));
     } catch {
-      toast.error('Erreur lors de la mise à jour');
+      toast.error(g('updateError'));
     }
   }
 
@@ -598,7 +606,7 @@ export default function GuardianDetailPage() {
                       <span className={`text-2xl font-black font-mono tracking-tight ${
                         (paymentSummary?.outstandingBalance ?? 0) > 0 ? 'text-amber-900' : 'text-emerald-900'
                       }`}>
-                        {(paymentSummary?.outstandingBalance ?? 0).toLocaleString(locale === 'ar' ? 'ar-MA' : 'fr-MA')} MAD
+                        {(paymentSummary?.outstandingBalance ?? 0).toLocaleString(intlLocale)} MAD
                       </span>
                       <span className="text-xs text-slate-400">
                         {(paymentSummary?.outstandingBalance ?? 0) > 0 ? t('remainingDue') : t('noArrears')}
@@ -619,9 +627,7 @@ export default function GuardianDetailPage() {
                       {t('noFinancialResponsibility')}
                     </p>
                     <p className="text-[11px] text-slate-400">
-                      {locale === 'ar'
-                        ? 'هذا الولي غير مسجل كمسؤول مالي عن أي تلميذ نشط حالياً.'
-                        : 'Ce tuteur n\'est pas désigné comme responsable financier pour les élèves rattachés.'}
+                      {g('notFinanciallyResponsible')}
                     </p>
                   </>
                 )}
@@ -742,7 +748,7 @@ export default function GuardianDetailPage() {
                               ? 'text-amber-800 bg-amber-100 hover:bg-amber-200 ring-1 ring-amber-300'
                               : 'text-slate-400 bg-slate-100 hover:bg-amber-50 hover:text-amber-700 hover:ring-1 hover:ring-amber-300'
                           }`}
-                          title={student.isPrimaryContact ? 'Contact principal' : '+ Principal'}
+                          title={student.isPrimaryContact ? g('primaryContact') : g('makePrimary')}
                         >
                           <Star className={`w-3 h-3 ${student.isPrimaryContact ? 'fill-amber-500 text-amber-500' : 'text-slate-400'}`} />
                           {student.isPrimaryContact ? t('badgePrimary') : `+ ${t('badgePrimary')}`}
@@ -758,7 +764,7 @@ export default function GuardianDetailPage() {
                               ? 'text-rose-800 bg-rose-100 hover:bg-rose-200 ring-1 ring-rose-300'
                               : 'text-slate-400 bg-slate-100 hover:bg-rose-50 hover:text-rose-700 hover:ring-1 hover:ring-rose-300'
                           }`}
-                          title={student.isEmergencyContact ? 'Contact d\'urgence' : '+ Urgence'}
+                          title={student.isEmergencyContact ? g('emergencyContact') : g('makeEmergency')}
                         >
                           <ShieldCheck className={`w-3 h-3 ${student.isEmergencyContact ? 'text-rose-600' : 'text-slate-400'}`} />
                           {student.isEmergencyContact ? t('badgeEmergency') : `+ ${t('badgeEmergency')}`}
@@ -849,10 +855,10 @@ export default function GuardianDetailPage() {
                         }}
                         className="h-7 rounded-lg border border-slate-200 bg-white px-2 text-xs font-bold text-[#16212B]"
                       >
-                        <option value="">— Non défini —</option>
-                        <option value="1">1ère priorité (Urgence #1)</option>
-                        <option value="2">2ème priorité</option>
-                        <option value="3">3ème priorité</option>
+                        <option value="">{`— ${g('notSet')} —`}</option>
+                        <option value="1">{g('priority1')}</option>
+                        <option value="2">{g('priorityN', { n: 2 })}</option>
+                        <option value="3">{g('priorityN', { n: 3 })}</option>
                       </select>
                     </div>
                   </div>
@@ -924,7 +930,7 @@ export default function GuardianDetailPage() {
             <div className="sm:col-span-2 pt-2 border-t border-slate-100">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{t('communicationPreferences')}</label>
               <p className="text-sm font-semibold text-[#16212B] mt-0.5">
-                {[guardian.emailOptIn && (locale === 'ar' ? 'البريد الإلكتروني' : 'Email'), guardian.smsOptIn && 'SMS'].filter(Boolean).join(' · ') || t('langNone')}
+                {[guardian.emailOptIn && g('channelEmail'), guardian.smsOptIn && 'SMS'].filter(Boolean).join(' · ') || t('langNone')}
                 {guardian.preferredLanguage && ` · ${t('langPrefix')} ${guardian.preferredLanguage === 'fr' ? t('frenchLang') : guardian.preferredLanguage === 'ar' ? t('arabicLang') : guardian.preferredLanguage === 'en' ? t('englishLang') : guardian.preferredLanguage.toUpperCase()}`}
               </p>
             </div>
@@ -982,9 +988,9 @@ export default function GuardianDetailPage() {
                     <tr key={`${p.type}-${p.id}`}>
                       <td className="py-2.5 px-4 font-bold text-[#16212B]">{p.type === 'invoice' ? t('invoiceType') : t('paymentType')}</td>
                       <td className="py-2.5 px-4 text-slate-600">{p.studentName}</td>
-                      <td className="py-2.5 px-4 font-mono">{p.amount.toLocaleString(locale === 'ar' ? 'ar-MA' : 'fr-MA')} MAD</td>
+                      <td className="py-2.5 px-4 font-mono">{p.amount.toLocaleString(intlLocale)} MAD</td>
                       <td className="py-2.5 px-4 text-slate-500">{p.status}</td>
-                      <td className="py-2.5 px-4 text-slate-400">{new Date(p.date).toLocaleDateString(locale === 'ar' ? 'ar-MA' : 'fr-FR')}</td>
+                      <td className="py-2.5 px-4 text-slate-400">{new Date(p.date).toLocaleDateString(intlLocale)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1035,7 +1041,7 @@ export default function GuardianDetailPage() {
                       )}
                     </div>
                   </div>
-                  <span className="text-slate-400 text-[11px] shrink-0 font-medium">{new Date(a.createdAt).toLocaleString(locale === 'ar' ? 'ar-MA' : 'fr-FR')}</span>
+                  <span className="text-slate-400 text-[11px] shrink-0 font-medium">{new Date(a.createdAt).toLocaleString(intlLocale)}</span>
                 </div>
               ))}
             </div>
@@ -1049,7 +1055,7 @@ export default function GuardianDetailPage() {
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
               <Pencil className="w-4 h-4 text-[#2487B8]" />
-              Modifier les Informations du Tuteur
+              {g('editTitle')}
             </DialogTitle>
           </DialogHeader>
 
@@ -1063,71 +1069,71 @@ export default function GuardianDetailPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Prénom *</label>
+                <label className="font-bold text-slate-700 block">{g('firstName')}</label>
                 <Input
                   required
                   value={editFields.firstName ?? ''}
                   onChange={e => setEditFields(prev => ({ ...prev, firstName: e.target.value }))}
                   className="h-9 text-xs rounded-xl"
-                  placeholder="Ex: Soufiane"
+                  placeholder={g('firstNamePlaceholder')}
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Nom de famille *</label>
+                <label className="font-bold text-slate-700 block">{g('lastName')}</label>
                 <Input
                   required
                   value={editFields.lastName ?? ''}
                   onChange={e => setEditFields(prev => ({ ...prev, lastName: e.target.value }))}
                   className="h-9 text-xs rounded-xl"
-                  placeholder="Ex: Ziani"
+                  placeholder={g('lastNamePlaceholder')}
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Numéro de téléphone</label>
+                <label className="font-bold text-slate-700 block">{g('phone')}</label>
                 <Input
                   value={editFields.phone ?? ''}
                   onChange={e => setEditFields(prev => ({ ...prev, phone: e.target.value }))}
                   className="h-9 text-xs rounded-xl"
-                  placeholder="Ex: +212 6 58 55 43 26"
+                  placeholder={g('phonePlaceholder')}
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Adresse email</label>
+                <label className="font-bold text-slate-700 block">{g('email')}</label>
                 <Input
                   type="email"
                   value={editFields.email ?? ''}
                   onChange={e => setEditFields(prev => ({ ...prev, email: e.target.value }))}
                   className="h-9 text-xs rounded-xl"
-                  placeholder="Ex: parent@domaine.ma"
+                  placeholder={g('emailPlaceholder')}
                 />
               </div>
 
               <div className="space-y-1 sm:col-span-2">
-                <label className="font-bold text-slate-700 block">Profession / Activité</label>
+                <label className="font-bold text-slate-700 block">{g('profession')}</label>
                 <Input
                   value={editFields.occupation ?? ''}
                   onChange={e => setEditFields(prev => ({ ...prev, occupation: e.target.value }))}
                   className="h-9 text-xs rounded-xl"
-                  placeholder="Ex: Cadre commercial, Entrepreneur, Ingénieur..."
+                  placeholder={g('professionPlaceholder')}
                 />
               </div>
 
               <div className="space-y-1 sm:col-span-2">
-                <label className="font-bold text-slate-700 block">Adresse de résidence</label>
+                <label className="font-bold text-slate-700 block">{g('address')}</label>
                 <textarea
                   rows={2}
                   value={editFields.address ?? ''}
                   onChange={e => setEditFields(prev => ({ ...prev, address: e.target.value }))}
                   className="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 bg-white resize-none focus:outline-none focus:border-[#2487B8]"
-                  placeholder="Ex: Résidence Al Andalous, Bd Anfa, Casablanca"
+                  placeholder={g('addressPlaceholder')}
                 />
               </div>
 
               <div className="space-y-2 sm:col-span-2 pt-2 border-t border-slate-100">
-                <label className="font-bold text-slate-700 block">Préférences de communication</label>
+                <label className="font-bold text-slate-700 block">{g('commPrefs')}</label>
                 <div className="flex flex-wrap items-center gap-4 text-xs">
                   <label className="flex items-center gap-2 font-semibold text-slate-600 cursor-pointer">
                     <input
@@ -1136,7 +1142,7 @@ export default function GuardianDetailPage() {
                       onChange={e => setEditFields(prev => ({ ...prev, emailOptIn: e.target.checked }))}
                       className="rounded border-slate-300"
                     />
-                    Autoriser les emails d&apos;information
+                    {g('allowEmails')}
                   </label>
                   <label className="flex items-center gap-2 font-semibold text-slate-600 cursor-pointer">
                     <input
@@ -1145,17 +1151,17 @@ export default function GuardianDetailPage() {
                       onChange={e => setEditFields(prev => ({ ...prev, smsOptIn: e.target.checked }))}
                       className="rounded border-slate-300"
                     />
-                    Autoriser les alertes SMS
+                    {g('allowSms')}
                   </label>
                   <select
                     value={editFields.preferredLanguage ?? ''}
                     onChange={e => setEditFields(prev => ({ ...prev, preferredLanguage: e.target.value }))}
                     className="h-8 px-2.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700"
                   >
-                    <option value="">Langue par défaut</option>
+                    <option value="">{g('defaultLanguage')}</option>
                     <option value="fr">Français</option>
-                    <option value="ar">العربية (Arabe)</option>
-                    <option value="en">English (Anglais)</option>
+                    <option value="ar">العربية</option>
+                    <option value="en">English</option>
                   </select>
                 </div>
               </div>
@@ -1175,7 +1181,7 @@ export default function GuardianDetailPage() {
                 disabled={saving || !editFields.firstName?.trim() || !editFields.lastName?.trim()}
                 className="rounded-full text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold"
               >
-                {saving ? 'Enregistrement...' : 'Enregistrer'}
+                {saving ? g('saving') : g('save')}
               </Button>
             </DialogFooter>
           </form>
@@ -1188,7 +1194,7 @@ export default function GuardianDetailPage() {
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
               <UserPlus className="w-4 h-4 text-[#2487B8]" />
-              Rattacher un élève à ce tuteur
+              {g('linkTitle')}
             </DialogTitle>
           </DialogHeader>
 
@@ -1201,14 +1207,14 @@ export default function GuardianDetailPage() {
             )}
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Sélectionner un Élève *</label>
+              <label className="font-bold text-slate-700 block mb-1">{g('selectStudent')}</label>
               <select
                 required
                 value={selectedStudentId}
                 onChange={e => setSelectedStudentId(e.target.value)}
                 className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-[#16212B]"
               >
-                <option value="">-- Choisir parmi les élèves de l&apos;école --</option>
+                <option value="">{`-- ${g('chooseStudent')} --`}</option>
                 {availableStudents.map(s => (
                   <option key={s.id} value={s.id}>
                     {s.fullName} {s.matricule ? `(${s.matricule})` : ''} {s.className ? `· ${s.className}` : ''}
@@ -1217,24 +1223,21 @@ export default function GuardianDetailPage() {
               </select>
               {availableStudents.length === 0 && (
                 <p className="text-[10px] text-slate-400 mt-1">
-                  Chargement des élèves disponibles...
+                  {g('loadingStudents')}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Lien de parenté / Relation</label>
+              <label className="font-bold text-slate-700 block mb-1">{g('relationship')}</label>
               <select
                 value={selectedRelationship}
                 onChange={e => setSelectedRelationship(e.target.value)}
                 className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-[#16212B]"
               >
-                <option value="Parent">Parent</option>
-                <option value="Père">Père</option>
-                <option value="Mère">Mère</option>
-                <option value="Tuteur">Tuteur légal</option>
-                <option value="Grand-parent">Grand-parent</option>
-                <option value="Autre">Autre responsable</option>
+                {(['Parent', 'Père', 'Mère', 'Tuteur', 'Grand-parent', 'Autre'] as const).map(value => (
+                  <option key={value} value={value}>{relationLabel(value)}</option>
+                ))}
               </select>
             </div>
 
@@ -1288,15 +1291,15 @@ export default function GuardianDetailPage() {
 
               {linkIsEmergency && (
                 <div className="flex items-center gap-2 pt-1">
-                  <span className="text-slate-600 font-medium">Priorité d&apos;urgence :</span>
+                  <span className="text-slate-600 font-medium">{g('emergencyPriority')}</span>
                   <select
                     value={linkEmergencyPriority}
                     onChange={e => setLinkEmergencyPriority(Number(e.target.value))}
                     className="h-8 px-2.5 rounded-lg border border-slate-200 bg-white text-xs font-bold text-slate-800"
                   >
-                    <option value={1}>1ère priorité (Urgence #1)</option>
-                    <option value={2}>2ème priorité</option>
-                    <option value={3}>3ème priorité</option>
+                    <option value={1}>{g('priority1')}</option>
+                    <option value={2}>{g('priorityN', { n: 2 })}</option>
+                    <option value={3}>{g('priorityN', { n: 3 })}</option>
                   </select>
                 </div>
               )}
@@ -1316,7 +1319,7 @@ export default function GuardianDetailPage() {
                 disabled={linkingChild || !selectedStudentId}
                 className="rounded-full text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold"
               >
-                {linkingChild ? 'Liaison en cours...' : 'Confirmer la liaison'}
+                {linkingChild ? g('linking') : g('confirmLink')}
               </Button>
             </DialogFooter>
           </form>
@@ -1328,17 +1331,17 @@ export default function GuardianDetailPage() {
         <DialogContent className="max-w-md bg-white rounded-2xl p-6">
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B]">
-              Retirer le lien de responsabilité
+              {g('unlinkTitle')}
             </DialogTitle>
           </DialogHeader>
           <div className="text-xs text-slate-600 mt-2 space-y-2.5">
             <p>
-              Êtes-vous sûr de vouloir clore le lien avec l&apos;élève <strong>{unlinkTarget?.studentName ?? ''}</strong> ?
+              {g('unlinkQuestion')} <strong>{unlinkTarget?.studentName ?? ''}</strong>
             </p>
             <ul className="list-disc pl-4 space-y-1 text-slate-500 text-[11px]">
-              <li>Le tuteur et l&apos;élève restent conservés dans le système.</li>
-              <li>L&apos;historique de la relation reste archivé pour l&apos;audit légal et la traçabilité.</li>
-              <li>Les autorisations de récupération, d&apos;urgence et de contact sont immédiatement révoquées.</li>
+              <li>{g('unlinkNote1')}</li>
+              <li>{g('unlinkNote2')}</li>
+              <li>{g('unlinkNote3')}</li>
             </ul>
           </div>
           <DialogFooter className="gap-2 mt-4 pt-3 border-t border-slate-100">
@@ -1350,7 +1353,7 @@ export default function GuardianDetailPage() {
               onClick={handleUnlink}
               className="rounded-full text-xs h-9 bg-rose-600 hover:bg-rose-700 text-white border-0 font-bold"
             >
-              {unlinking ? 'Clôture du lien...' : 'Confirmer le retrait'}
+              {unlinking ? g('unlinking') : g('confirmUnlink')}
             </Button>
           </DialogFooter>
         </DialogContent>

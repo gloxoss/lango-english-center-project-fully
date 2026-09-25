@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { hashPassword } from 'better-auth/crypto';
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
@@ -16,7 +17,7 @@ const acceptInvitationSchema = z
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ token: string }> }
+  { params }: { params: Promise<{ token: string }> },
 ) {
   try {
     const { token } = await params;
@@ -40,7 +41,7 @@ export async function POST(
         'INVITATION_NOT_PENDING',
         invitation.status === 'accepted'
           ? 'Cette invitation a déjà été acceptée.'
-          : 'Cette invitation a été révoquée.'
+          : 'Cette invitation a été révoquée.',
       );
     }
 
@@ -54,7 +55,7 @@ export async function POST(
 
     const hashedPassword = await hashPassword(body.password);
     const now = new Date();
-    const userId = `USR-INV-${Date.now()}`;
+    const userId = `USR-INV-${randomUUID()}`;
 
     const result = await db.transaction(async (tx) => {
       const email = invitation.email.toLowerCase().trim();

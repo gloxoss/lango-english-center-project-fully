@@ -3,8 +3,9 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { POST as postPayment } from '@/app/api/finance/payments/route';
 import { POST as reversePayment } from '@/app/api/finance/payments/[id]/reverse/route';
 import { decidePaymentReversal } from '@/libs/services/payment-reversal';
+import { decideRefund } from '@/libs/services/refund-approval';
 import { db } from '@/libs/DB';
-import { accountingAdapterExceptions, invoiceEvents, invoices, payments, tenants, user } from '@/models/Schema';
+import { accountingAdapterExceptions, invoiceEvents, invoices, payments, refunds, tenants, user } from '@/models/Schema';
 import { paymentReversals } from '@/features/finance/models/student-accounting-schema';
 import type { RequestContext } from '@/libs/api/context';
 
@@ -148,5 +149,45 @@ describe.skipIf(!hasDb)('payment reversal (Phase E)', () => {
     await expect(
       decidePaymentReversal({ tenantId, id: draft!.id, decision: 'rejected', decidedById: ADMIN_ID }),
     ).rejects.toMatchObject({ status: 422, code: 'REASON_REQUIRED' });
+  });
+
+  it('row lock prevents race between concurrent refund approval and reversal approval on same payment', async () => {
+    const [inv] = await db.insert(invoices).values(createInvoiceRow(tenantId, studentId, 100)).returning();
+    const payRes = await pay({ allocations: [{ invoiceId: inv!.id, amount: '100.00' }], paymentMethod: 'card' });
+    const paymentId = (await payRes.json()).data.payment.id;
+
+    const [draftRev] = await db.insert(paymentReversals).values({
+      tenantId,
+      paymentId,
+      reason: 'Race test reversal',
+      status: 'draft',
+      reversedById: ADMIN_ID,
+    }).returning();
+
+    const [pendingRef] = await db.insert(refunds).values({
+      tenantId,
+      studentId,
+      paymentId,
+      refundNumber: `REF-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      amount: '100.00',
+      reason: 'Race test refund',
+      status: 'pending',
+      approvedById: ADMIN_ID,
+    }).returning();
+
+    const [revResult, refResult] = await Promise.allSettled([
+      decidePaymentReversal({ tenantId, id: draftRev!.id, decision: 'approved', decidedById: ADMIN_ID }),
+      decideRefund({ tenantId, id: pendingRef!.id, decision: 'approved', decidedById: ADMIN_ID }),
+    ]);
+
+    const successes = [revResult, refResult].filter(r => r.status === 'fulfilled');
+    const failures = [revResult, refResult].filter(r => r.status === 'rejected');
+
+    expect(successes).toHaveLength(1);
+    expect(failures).toHaveLength(1);
+
+    const [finalInv] = await db.select().from(invoices).where(eq(invoices.id, inv!.id));
+    expect(Number(finalInv!.paidAmount)).toBe(0);
+    expect(finalInv!.status).toBe('pending');
   });
 });

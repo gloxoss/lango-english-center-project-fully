@@ -196,7 +196,7 @@ export function CampaignDetailView({ campaignId: propId }: { campaignId?: string
     return (
       <div className="flex items-center gap-2 py-20 text-rose-600">
         <AlertCircle className="h-5 w-5" /> {error ?? t('noCampaigns')}
-        <Link href={`/${locale}/dashboard/broadcast/campaigns`}><Button variant="outline" size="sm">{t('backToCampaigns')}</Button></Link>
+        <Button asChild variant="outline" size="sm"><Link href={`/${locale}/dashboard/broadcast/campaigns`}>{t('backToCampaigns')}</Link></Button>
       </div>
     );
   }
@@ -209,9 +209,9 @@ export function CampaignDetailView({ campaignId: propId }: { campaignId?: string
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Link href={`/${locale}/dashboard/broadcast/campaigns`}>
-            <Button variant="ghost" size="icon" className="cursor-pointer"><ArrowLeft className="h-4 w-4" /></Button>
-          </Link>
+          <Button asChild variant="ghost" size="icon" className="cursor-pointer">
+            <Link href={`/${locale}/dashboard/broadcast/campaigns`}><ArrowLeft className="h-4 w-4" /></Link>
+          </Button>
           <div>
             <h1 className="text-2xl font-bold text-[#16212B]">{campaign.name}</h1>
             <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">

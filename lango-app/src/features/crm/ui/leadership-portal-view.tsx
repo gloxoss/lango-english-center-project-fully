@@ -4,6 +4,7 @@
 // render an explicit "données insuffisantes" empty state, never invented numbers.
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { usePathname } from 'next/navigation';
@@ -14,6 +15,7 @@ import {
   AlertTriangle, BookOpen, Calendar, CheckCircle2, DollarSign, Download, Info,
   Plus, RefreshCw, ShieldCheck, Users,
 } from 'lucide-react';
+import { openDocumentPreview } from '@/features/documents/ui/pdf-preview';
 
 type RiskItem = { level: 'Critique' | 'Importante' | 'Modérée'; count: number; label: string };
 type PriorityAction = { task: string; priority: 'Critique' | 'Haute' | 'Moyenne' };
@@ -165,6 +167,10 @@ export function LeadershipPortalView() {
 
   const hasIgp = data.igpLatest != null && data.igpTrend.some(t => t.igp > 0);
 
+  const printLeadershipReport = () => {
+    openDocumentPreview({ kind: 'leadership_report', sourceId: 'current', range: range === '30d' ? '30d' : '6mo' }, locale);
+  };
+
   return (
     <div className="space-y-6 max-w-[1800px] mx-auto">
       {/* Header */}
@@ -186,7 +192,7 @@ export function LeadershipPortalView() {
             <Calendar className="w-3.5 h-3.5" />
             {data.period.from} — {data.period.to}
           </span>
-          <Button variant="outline" size="sm" className="h-9 text-xs rounded-xl border-slate-200 bg-white gap-1.5 font-bold text-[#16212B]">
+          <Button variant="outline" size="sm" onClick={printLeadershipReport} className="h-9 text-xs rounded-xl border-slate-200 bg-white gap-1.5 font-bold text-[#16212B]">
             <Download className="w-3.5 h-3.5" /> {t('export')}
           </Button>
         </div>
@@ -289,6 +295,8 @@ export function LeadershipPortalView() {
               <span className="text-3xl font-extrabold text-[#16212B]">{hasIgp ? data.igpLatest : '—'}</span>
               <span className="text-xs font-bold text-slate-400">{t('igpScale')}</span>
             </div>
+            {/* The score is a composite; say how it is built (audit S-15). */}
+            <p className="text-[11px] text-slate-500 leading-snug">{t('igpSub')}</p>
 
             {hasIgp ? (
               <div className="flex items-end gap-3 h-32 pt-4 border-b border-slate-100">
@@ -340,9 +348,9 @@ export function LeadershipPortalView() {
               </div>
             )}
 
-            <button className="text-xs font-extrabold text-[#2487B8] hover:underline w-full text-center pt-1">
+            <Link href={`/${locale}/dashboard/academics/results`} className="block text-xs font-extrabold text-[#2487B8] hover:underline w-full text-center pt-1">
               {t('viewFullAcademicReport')}
-            </button>
+            </Link>
           </Card>
         </div>
 
@@ -370,9 +378,9 @@ export function LeadershipPortalView() {
               </div>
             )}
 
-            <button className="text-xs font-extrabold text-[#2487B8] hover:underline w-full text-center pt-1">
+            <Link href={`/${locale}/dashboard/portals/leadership/exceptions`} className="block text-xs font-extrabold text-[#2487B8] hover:underline w-full text-center pt-1">
               {t('viewAllInsights')}
-            </button>
+            </Link>
           </Card>
         </div>
       </div>
@@ -384,7 +392,7 @@ export function LeadershipPortalView() {
           <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-extrabold text-[#16212B]">{t('financialOverview')}</h2>
-              <button className="text-[11px] font-bold text-[#2487B8] hover:underline">{t('viewFinancialDashboard')}</button>
+              <Link href={`/${locale}/dashboard/finance`} className="text-[11px] font-bold text-[#2487B8] hover:underline">{t('viewFinancialDashboard')}</Link>
             </div>
 
             <div className="flex items-center gap-4 py-2">
@@ -433,9 +441,9 @@ export function LeadershipPortalView() {
               ))}
             </div>
 
-            <button className="text-xs font-extrabold text-[#2487B8] hover:underline w-full text-center pt-1">
+            <Link href={`/${locale}/dashboard/portals/leadership/exceptions`} className="block text-xs font-extrabold text-[#2487B8] hover:underline w-full text-center pt-1">
               {t('viewRiskRegistry')}
-            </button>
+            </Link>
           </Card>
         </div>
 
@@ -464,9 +472,9 @@ export function LeadershipPortalView() {
               </div>
             </div>
 
-            <button className="text-xs font-extrabold text-[#2487B8] hover:underline w-full text-center pt-1">
+            <Link href={`/${locale}/dashboard/hr`} className="block text-xs font-extrabold text-[#2487B8] hover:underline w-full text-center pt-1">
               {t('viewHrDashboard')}
-            </button>
+            </Link>
           </Card>
         </div>
       </div>
@@ -478,7 +486,7 @@ export function LeadershipPortalView() {
           <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-extrabold text-[#16212B]">{t('upcomingMeetings')}</h2>
-              <button className="text-[11px] font-bold text-[#2487B8] hover:underline">{t('viewCalendar')}</button>
+              <Link href={`/${locale}/dashboard/academics/calendar`} className="text-[11px] font-bold text-[#2487B8] hover:underline">{t('viewCalendar')}</Link>
             </div>
 
             {data.meetings.length > 0 ? (
@@ -508,8 +516,10 @@ export function LeadershipPortalView() {
           <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-extrabold text-[#16212B]">{t('institutionalAnnouncements')}</h2>
-              <Button size="sm" className="h-7 text-[10px] bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold rounded-lg gap-1">
-                <Plus className="w-3 h-3" /> {t('newAnnouncement')}
+              <Button asChild size="sm" className="h-7 text-[10px] bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold rounded-lg gap-1">
+                <Link href={`/${locale}/dashboard/communication`}>
+                  <Plus className="w-3 h-3" /> {t('newAnnouncement')}
+                </Link>
               </Button>
             </div>
 
@@ -540,7 +550,7 @@ export function LeadershipPortalView() {
           <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-extrabold text-[#16212B]">{t('priorityActionsTitle')}</h2>
-              <button className="text-[11px] font-bold text-[#2487B8] hover:underline">{t('viewAllActions')}</button>
+              <Link href={`/${locale}/dashboard/portals/leadership/approvals`} className="text-[11px] font-bold text-[#2487B8] hover:underline">{t('viewAllActions')}</Link>
             </div>
 
             <div className="space-y-2 text-xs">

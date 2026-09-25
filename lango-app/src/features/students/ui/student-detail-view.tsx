@@ -23,6 +23,7 @@ import {
 import { toast } from 'sonner';
 import { usePermissions } from '@/hooks/use-permissions';
 import { IssueCardDialog } from '@/features/cards/ui/issue-card-dialog';
+import { openDocumentPreview } from '@/features/documents/ui/pdf-preview';
 
 type GuardianLink = {
   id: string;
@@ -151,13 +152,11 @@ const DOC_KEY_MAP: Record<string, string> = {
   bulletin: 'docReportCards',
 };
 
-const DOC_META: Record<string, { label: string; desc: string }> = {
-  photo: { label: "Photo d'identité", desc: 'Format photo d\'identité officiel (JPG, PNG)' },
-  birth_certificate: { label: 'Extrait d\'acte de naissance', desc: 'Document officiel d\'état civil marocain (PDF, Image)' },
-  school_certificate: { label: 'Certificat de scolarité', desc: 'Certificat de radiation ou scolarité précédente' },
-  guardian_cni: { label: 'CNI du tuteur légal', desc: 'Carte Nationale d\'Identité (Recto/Verso)' },
-  bulletin: { label: 'Dernier bulletin scolaire', desc: 'Relevé de notes officiel de l\'année écoulée' },
-};
+// Document labels live in StudentDetail.docs.<type>.{label,desc}.
+const DOC_TYPES = new Set(['photo', 'birth_certificate', 'school_certificate', 'guardian_cni', 'bulletin']);
+
+// Relationship values are stored as these French words; labels follow the UI language.
+const RELATION_KEYS: Record<string, string> = { 'Père': 'father', 'Mère': 'mother', 'Tuteur légal': 'legalGuardian', 'Grand-parent': 'grandparent', 'Oncle / Tante': 'uncleAunt', Autre: 'other', Tuteur: 'guardian' };
 
 const MOTHER_TONGUE_KEY_MAP: Record<string, string> = {
   arabic: 'langArabic',
@@ -174,6 +173,11 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
   const t = useTranslations('Students');
   const tCommon = useTranslations('Common');
   const tGuardians = useTranslations('Guardians');
+  const sd = useTranslations('StudentDetail');
+  const tHome = useTranslations('DashboardHome');
+  const relationLabel = (value: string) => (RELATION_KEYS[value] ? sd(`relations.${RELATION_KEYS[value]}` as 'relations.father') : value);
+  const methodLabel = (value: string) => (tHome.has(`method_${value}`) ? tHome(`method_${value}` as 'method_cash') : value);
+  const lifecycleLabel = (value: string) => (sd.has(`lifecycle.${value}`) ? sd(`lifecycle.${value}` as 'lifecycle.active') : value);
   const { can } = usePermissions();
 
   const tabs: { id: TabId; label: string }[] = [
@@ -225,9 +229,9 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
     email: '',
     dateOfBirth: '',
     gender: 'male',
-    nationality: 'Marocaine',
+    nationality: '',
     motherTongue: 'arabic',
-    city: 'Casablanca',
+    city: '',
     bloodGroup: '',
     nationalId: '',
     address: '',
@@ -260,7 +264,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
 
   const handleDocumentUpload = async (docType: string, file: File) => {
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Le fichier ne doit pas dépasser 5 Mo');
+      toast.error(sd('fileTooLarge'));
       return;
     }
     setUploadingDocType(docType);
@@ -275,20 +279,20 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
       });
       const json = await res.json();
       if (json.success) {
-        toast.success('Document téléversé avec succès');
+        toast.success(sd('docUploaded'));
         await reloadDocuments();
       } else {
-        toast.error(json.message || 'Erreur lors du téléversement');
+        toast.error(json.message || sd('uploadError'));
       }
     } catch {
-      toast.error('Erreur réseau');
+      toast.error(sd('networkError'));
     } finally {
       setUploadingDocType(null);
     }
   };
 
   const handleDocumentDelete = async (docType: string) => {
-    if (!confirm('Supprimer définitivement ce document ?')) return;
+    if (!confirm(sd('confirmDeleteDoc'))) return;
     setDeletingDocType(docType);
     try {
       const res = await fetch(`/api/students/documents?studentId=${id}&documentType=${docType}`, {
@@ -296,13 +300,13 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
       });
       const json = await res.json();
       if (json.success) {
-        toast.success('Document supprimé avec succès');
+        toast.success(sd('docDeleted'));
         await reloadDocuments();
       } else {
-        toast.error(json.message || 'Erreur lors de la suppression');
+        toast.error(json.message || sd('deleteError'));
       }
     } catch {
-      toast.error('Erreur réseau');
+      toast.error(sd('networkError'));
     } finally {
       setDeletingDocType(null);
     }
@@ -316,9 +320,11 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
       email: student.email || '',
       dateOfBirth: student.dateOfBirth ? student.dateOfBirth.slice(0, 10) : '',
       gender: student.gender || 'male',
-      nationality: student.nationality || 'Marocaine',
+      // Empty stays empty: pre-filling 'Marocaine' / 'Casablanca' wrote invented
+      // values into the record the moment the form was saved.
+      nationality: student.nationality || '',
       motherTongue: student.motherTongue || 'arabic',
-      city: student.city || 'Casablanca',
+      city: student.city || '',
       bloodGroup: student.bloodGroup || '',
       nationalId: student.nationalId || '',
       address: student.address || '',
@@ -330,7 +336,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editForm.fullName.trim()) {
-      toast.error('Le nom complet est obligatoire');
+      toast.error(sd('fullNameRequired'));
       return;
     }
     setSavingProfile(true);
@@ -356,14 +362,14 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
       });
       const json = await res.json();
       if (json.success) {
-        toast.success('Informations personnelles mises à jour avec succès');
+        toast.success(sd('profileSaved'));
         setShowEditProfileDialog(false);
         await reloadStudentData();
       } else {
-        toast.error(json.message || 'Erreur lors de la mise à jour');
+        toast.error(json.message || sd('updateError'));
       }
     } catch {
-      toast.error('Erreur réseau');
+      toast.error(sd('networkError'));
     } finally {
       setSavingProfile(false);
     }
@@ -406,15 +412,15 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
       });
       const json = await res.json();
       if (json.success) {
-        toast.success('Tuteur associé avec succès');
+        toast.success(sd('guardianLinked'));
         setShowLinkGuardianDialog(false);
         setSelectedGuardianId('');
         await reloadStudentData();
       } else {
-        toast.error(json.message || 'Erreur lors de la liaison');
+        toast.error(json.message || sd('linkError'));
       }
     } catch {
-      toast.error('Erreur réseau');
+      toast.error(sd('networkError'));
     } finally {
       setLinkingGuardian(false);
     }
@@ -428,13 +434,13 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
       });
       const json = await res.json();
       if (json.success) {
-        toast.success('Liaison supprimée avec succès');
+        toast.success(sd('guardianUnlinked'));
         await reloadStudentData();
       } else {
-        toast.error(json.message || 'Erreur lors de la suppression de la liaison');
+        toast.error(json.message || sd('unlinkError'));
       }
     } catch {
-      toast.error('Erreur réseau');
+      toast.error(sd('networkError'));
     } finally {
       setUnlinkingGuardianId(null);
     }
@@ -451,21 +457,21 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
         body: JSON.stringify({
           id,
           targetStatus,
-          reason: statusReason.trim() || 'Transition de statut depuis le profil élève 360',
+          reason: statusReason.trim() || sd('defaultStatusReason'),
           effectiveDate: new Date().toISOString().slice(0, 10),
         }),
       });
       const json = await res.json();
       if (json.success) {
-        toast.success(`Statut mis à jour : ${targetStatus}`);
+        toast.success(sd('statusUpdated', { status: lifecycleLabel(targetStatus) }));
         setShowStatusDialog(false);
         setStatusReason('');
         await reloadStudentData();
       } else {
-        toast.error(json.message || 'Erreur lors du changement de statut');
+        toast.error(json.message || sd('statusError'));
       }
     } catch {
-      toast.error('Erreur réseau');
+      toast.error(sd('networkError'));
     } finally {
       setUpdatingStatus(false);
     }
@@ -480,10 +486,10 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
           setAcademicYearsList(j.data);
           setAcademicYearsError(null);
         } else {
-          setAcademicYearsError('Impossible de charger les années scolaires.');
+          setAcademicYearsError(sd('yearsLoadError'));
         }
       })
-      .catch(() => setAcademicYearsError('Erreur réseau : impossible de charger les années scolaires.'));
+      .catch(() => setAcademicYearsError(sd('yearsNetworkError')));
     Promise.all([
       fetch(`/api/students?id=${id}`).then(r => r.json()),
       fetch(`/api/students/documents?studentId=${id}`).then(r => (r.ok ? r.json() : { success: false })),
@@ -523,8 +529,8 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
   const overdueAmount = student.overdueAmount ?? 0;
 
   const displayClassLabel = student.className
-    ? (student.role === 'alumni' && student.cohortName ? `${student.className} (Promo ${student.cohortName})` : student.className)
-    : (student.role === 'alumni' ? (student.cohortName ? `Promo ${student.cohortName}` : 'Ancien(ne) élève') : t('unassigned'));
+    ? (student.role === 'alumni' && student.cohortName ? `${student.className} (${sd('cohort', { name: student.cohortName })})` : student.className)
+    : (student.role === 'alumni' ? (student.cohortName ? sd('cohort', { name: student.cohortName }) : sd('alumniFallback')) : t('unassigned'));
 
   // Localized attendance status helper
   const renderAttendanceStatus = (statusStr: string) => {
@@ -547,7 +553,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
             onClick={() => setAcademicYearsRetry(n => n + 1)}
             className="px-2.5 py-1 rounded-lg bg-white border border-amber-300 font-bold text-amber-900 hover:bg-amber-50 transition-colors cursor-pointer"
           >
-            Réessayer
+            {sd('retry')}
           </button>
         </div>
       )}
@@ -589,7 +595,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
               <span className="font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-700 font-semibold">{student.matricule ?? '—'}</span>
               <span className="font-medium text-slate-700">{displayClassLabel}</span>
               {student.academicYearName && (
-                <span className="text-slate-500 font-medium">Session {student.academicYearName}</span>
+                <span className="text-slate-500 font-medium">{sd('session', { name: student.academicYearName })}</span>
               )}
               {student.phone && (
                 <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-[#2487B8]" />{student.phone}</span>
@@ -611,7 +617,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                 className="h-8 rounded-full text-xs gap-1.5 bg-[#17A673] hover:bg-[#13885E] text-white font-bold shadow-xs flex-1 sm:flex-initial"
               >
                 <Wallet className="w-3.5 h-3.5" />
-                Encaisser
+                {sd('collect')}
               </Button>
             )}
 
@@ -632,7 +638,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="sm" variant="outline" className="h-8 rounded-full text-xs gap-1.5 border-slate-200 font-semibold">
-                  Actions
+                  {sd('actions')}
                   <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
                 </Button>
               </DropdownMenuTrigger>
@@ -649,7 +655,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                     {t('changeStatus')}
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onClick={() => window.print()} className="gap-2 cursor-pointer">
+                <DropdownMenuItem onClick={() => openDocumentPreview({ kind: 'student_profile', sourceId: student.id }, locale)} className="gap-2 cursor-pointer">
                   <Printer className="w-3.5 h-3.5 text-slate-600" />
                   {t('printProfile')}
                 </DropdownMenuItem>
@@ -689,24 +695,24 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                 </h2>
               </div>
               <Badge className="bg-[#DCEBF4] text-[#1B6C93] border-none text-[10px] font-bold">
-                Affectation Active
+                {sd('activePlacement')}
               </Badge>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Année Scolaire en Cours
+                  {sd('currentYear')}
                 </span>
                 <p className="font-extrabold text-[#16212B] mt-0.5">
-                  {student.academicYearName || 'Non assignée'}
+                  {student.academicYearName || sd('notAssignedF')}
                 </p>
               </div>
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Classe & Section
+                  {sd('classSection')}
                 </span>
                 <p className="font-extrabold text-[#16212B] mt-0.5">
-                  {student.className || 'Non assigné'}
+                  {student.className || sd('notAssignedM')}
                 </p>
               </div>
               <div>
@@ -731,35 +737,35 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                     <GraduationCap className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-extrabold text-[#16212B]">Parcours & Statut Ancien Élève</h2>
-                    <p className="text-[11px] text-slate-500">Dossier archivé et suivi post-scolaire</p>
+                    <h2 className="text-sm font-extrabold text-[#16212B]">{sd('alumniTitle')}</h2>
+                    <p className="text-[11px] text-slate-500">{sd('alumniSubtitle')}</p>
                   </div>
                 </div>
                 <Badge className="bg-[#DCEBF4] text-[#1B6C93] border-none text-[11px] font-bold px-3 py-1">
-                  {student.cohortName ? `Promotion ${student.cohortName}` : 'Ancien Élève'}
+                  {student.cohortName ? sd('promotion', { name: student.cohortName }) : sd('alumniFallback')}
                 </Badge>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
                 <div className="p-3.5 rounded-xl bg-white border border-slate-200/70 shadow-2xs">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                    Promotion / Cohorte
+                    {sd('cohortLabel')}
                   </span>
                   <p className="text-xs font-bold text-[#16212B]">
-                    {student.cohortName ?? student.academicYearName ?? 'Session 2025-2026'}
+                    {student.cohortName ?? student.academicYearName ?? '—'}
                   </p>
                 </div>
                 <div className="p-3.5 rounded-xl bg-white border border-slate-200/70 shadow-2xs">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                    Dernière classe
+                    {sd('lastClass')}
                   </span>
                   <p className="text-xs font-bold text-[#16212B]">
-                    {student.className ?? 'Terminale (Diplômé)'}
+                    {student.className ?? '—'}
                   </p>
                 </div>
                 <div className="p-3.5 rounded-xl bg-white border border-slate-200/70 shadow-2xs">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                    Date de sortie
+                    {sd('exitDate')}
                   </span>
                   <p className="text-xs font-bold text-[#16212B]">
                     {student.alumniTransitionedAt ? student.alumniTransitionedAt.slice(0, 10) : '—'}
@@ -774,7 +780,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h2 className="text-sm font-extrabold text-[#16212B] flex items-center gap-2">
                 <User className="w-4 h-4 text-[#2487B8]" />
-                Informations Personnelles
+                {sd('personalInfo')}
               </h2>
             </div>
 
@@ -802,7 +808,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                     {f.label}
                   </label>
                   <p className={`text-sm font-semibold mt-0.5 ${f.value ? 'text-[#16212B]' : 'text-slate-400 font-normal italic'}`}>
-                    {f.value || '— Non renseigné'}
+                    {f.value || `— ${sd('notProvided')}`}
                   </p>
                 </div>
               ))}
@@ -838,7 +844,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
               </div>
             </div>
             <Badge className="bg-slate-200/70 text-slate-700 border border-slate-300 text-[10px] font-bold px-2.5 py-1 shrink-0">
-              Cadre CNDP
+              {sd('cndpBadge')}
             </Badge>
           </Card>
         </div>
@@ -849,9 +855,9 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
         <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
             <div>
-              <h2 className="text-sm font-extrabold text-[#16212B]">Pièces Justificatives &amp; Dossier Scolaire</h2>
+              <h2 className="text-sm font-extrabold text-[#16212B]">{sd('docsTitle')}</h2>
               <p className="text-[11px] text-slate-500">
-                Documents officiels exigés par le Ministère de l&apos;Éducation Nationale et le règlement intérieur.
+                {sd('docsSubtitle')}
               </p>
             </div>
             <Button
@@ -861,16 +867,18 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
               className="h-8 rounded-full text-xs font-semibold border-slate-200 hover:bg-slate-50 self-start sm:self-auto gap-1.5"
             >
               <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
-              Actualiser
+              {sd('refresh')}
             </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {documents.map(doc => {
-              const meta = DOC_META[doc.documentType] || {
-                label: DOC_KEY_MAP[doc.documentType] ? t(DOC_KEY_MAP[doc.documentType] as any) : doc.documentType,
-                desc: 'Document du dossier élève',
-              };
+              const meta = DOC_TYPES.has(doc.documentType)
+                ? { label: sd(`docs.${doc.documentType}.label` as 'docs.photo.label'), desc: sd(`docs.${doc.documentType}.desc` as 'docs.photo.desc') }
+                : {
+                    label: DOC_KEY_MAP[doc.documentType] ? t(DOC_KEY_MAP[doc.documentType] as any) : doc.documentType,
+                    desc: sd('docGenericDesc'),
+                  };
               const isUploading = uploadingDocType === doc.documentType;
               const isDeleting = deletingDocType === doc.documentType;
               const isGuardianCniWithoutGuardian = doc.documentType === 'guardian_cni' && student.guardians.length === 0;
@@ -911,7 +919,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                           </span>
                           {doc.uploaded && doc.uploadedAt && (
                             <span className="text-[10px] text-slate-400">
-                              Déposé le {doc.uploadedAt.slice(0, 10)}
+                              {sd('uploadedOn', { date: doc.uploadedAt.slice(0, 10) })}
                             </span>
                           )}
                         </div>
@@ -923,7 +931,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                   {isGuardianCniWithoutGuardian && (
                     <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-800 flex items-center gap-2">
                       <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                      <span>Aucun tuteur officiel n&apos;est lié. Associez d&apos;abord un tuteur pour certifier cette pièce.</span>
+                      <span>{sd('cniNoGuardian')}</span>
                     </div>
                   )}
 
@@ -939,14 +947,14 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-[#1B6C93] hover:bg-[#DCEBF4]/50 transition-colors"
                           >
                             <Eye className="w-3.5 h-3.5" />
-                            Visualiser
+                            {sd('view')}
                           </a>
                           <a
                             href={`/api/students/documents?studentId=${id}&documentType=${doc.documentType}&download=1`}
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
                           >
                             <Download className="w-3.5 h-3.5" />
-                            Télécharger
+                            {sd('download')}
                           </a>
                         </>
                       )}
@@ -955,7 +963,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                     <div className="flex items-center gap-1.5 ml-auto">
                       <label className="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-white bg-[#2487B8] hover:bg-[#1B6C93] transition-colors">
                         <Upload className="w-3.5 h-3.5" />
-                        <span>{isUploading ? 'Téléversement...' : doc.uploaded ? 'Remplacer' : 'Ajouter'}</span>
+                        <span>{isUploading ? sd('uploading') : doc.uploaded ? sd('replace') : sd('add')}</span>
                         <input
                           type="file"
                           accept=".pdf,.png,.jpg,.jpeg,.webp"
@@ -975,7 +983,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                           disabled={isDeleting}
                           onClick={() => handleDocumentDelete(doc.documentType)}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                          title="Supprimer ce document"
+                          title={sd('deleteDoc')}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -997,8 +1005,8 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-extrabold text-[#16212B]">Tuteurs &amp; Responsables Légaux</h2>
-              <p className="text-[11px] text-slate-500">Personnes autorisées pour les communications scolaires, les absences et les sorties.</p>
+              <h2 className="text-sm font-extrabold text-[#16212B]">{sd('guardiansTitle')}</h2>
+              <p className="text-[11px] text-slate-500">{sd('guardiansSubtitle')}</p>
             </div>
             {can('students.guardians.manage') && (
               <Button
@@ -1010,7 +1018,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                 className="h-9 rounded-full text-xs font-bold bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5 shadow-2xs"
               >
                 <UserPlus className="w-3.5 h-3.5" />
-                + Lier un tuteur
+                {sd('linkGuardianButton')}
               </Button>
             )}
           </div>
@@ -1072,7 +1080,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                   className="rounded-full text-xs font-bold border-slate-200 mt-2"
                 >
                   <Plus className="w-3.5 h-3.5 mr-1" />
-                  Associer un premier tuteur
+                  {sd('linkFirstGuardian')}
                 </Button>
               )}
             </Card>
@@ -1090,11 +1098,11 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-extrabold text-[#16212B] truncate">{g.firstName} {g.lastName}</p>
                       <Badge className="bg-slate-100 text-slate-700 text-[10px] font-bold border-none px-2 py-0.5">
-                        {g.relationshipType}
+                        {relationLabel(g.relationshipType)}
                       </Badge>
                     </div>
                     <p className="text-[11px] text-slate-500 mt-0.5 truncate">
-                      {g.phone || g.email || 'Aucun contact enregistré'}
+                      {g.phone || g.email || sd('noContact')}
                     </p>
                   </div>
                 </div>
@@ -1114,7 +1122,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                       disabled={unlinkingGuardianId === g.id}
                       onClick={() => handleUnlinkGuardian(g.id)}
                       className="p-2 h-8 w-8 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                      title="Dissocier ce tuteur"
+                      title={sd('unlinkGuardian')}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -1136,11 +1144,11 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-extrabold text-[#16212B]">{t('attendanceLast30Days')}</h3>
                   <Badge variant="neutral" className="text-[10px] font-semibold text-slate-500 bg-slate-50 border-slate-200">
-                    Taux sur pointages enregistrés
+                    {sd('rateOnRecorded')}
                   </Badge>
                 </div>
                 <p className="text-[11px] text-slate-500">
-                  {student.attendance?.presentCount === 1 ? '1 présent' : `${student.attendance?.presentCount ?? 0} présents`} / {student.attendance?.totalRecorded === 1 ? '1 pointage enregistré' : `${student.attendance?.totalRecorded ?? 0} pointages enregistrés`}
+                  {sd('presentCount', { count: student.attendance?.presentCount ?? 0 })} / {sd('recordedCount', { count: student.attendance?.totalRecorded ?? 0 })}
                 </p>
               </div>
               <Badge className="bg-[#DCEBF4] text-[#1B6C93] border-none text-sm font-extrabold px-3 py-1">
@@ -1182,7 +1190,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-slate-400 text-center py-4">Aucun pointage disponible pour cette période</p>
+              <p className="text-xs text-slate-400 text-center py-4">{sd('noAttendance')}</p>
             )}
           </Card>
 
@@ -1202,15 +1210,15 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                 >
                   <div className="flex items-center gap-3">
                     <span className="font-extrabold text-[#16212B]">
-                      {p.sessionYearName || '2026-2027'}
+                      {p.sessionYearName || '—'}
                     </span>
                     <span>·</span>
-                    <span>{p.className || 'Classe'} {p.sectionName ? `(${p.sectionName})` : ''}</span>
+                    <span>{p.className || sd('classFallback')} {p.sectionName ? `(${p.sectionName})` : ''}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     {p.isCurrent ? (
                       <Badge className="bg-[#17A673] text-white border-none text-[10px] font-bold">
-                        En cours
+                        {sd('current')}
                       </Badge>
                     ) : (
                       <Badge className="bg-slate-200 text-slate-700 border-none text-[10px]">
@@ -1221,7 +1229,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                 </div>
               ))}
               {(!student.placementsHistory || student.placementsHistory.length === 0) && (
-                <p className="text-xs text-slate-400 text-center py-4">Aucun historique de placement antérieur</p>
+                <p className="text-xs text-slate-400 text-center py-4">{sd('noPlacementHistory')}</p>
               )}
             </div>
           </Card>
@@ -1237,7 +1245,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                 href={`/${locale}/dashboard/academics/assessment/marksheet`}
                 className="text-xs font-bold text-[#2487B8] hover:underline flex items-center gap-1"
               >
-                Voir le dossier académique
+                {sd('viewAcademicRecord')}
                 <ExternalLink className="w-3 h-3" />
               </Link>
             </div>
@@ -1247,7 +1255,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                   <div>
                     <p className="font-extrabold text-[#16212B]">{a.title}</p>
                     <p className="text-[10px] text-slate-500 mt-0.5">
-                      {[a.subject, a.termName || (a.gradeCode ? `Mention ${a.gradeCode}` : 'Évaluation')].filter(Boolean).join(' · ')}
+                      {[a.subject, a.termName || (a.gradeCode ? sd('mention', { code: a.gradeCode }) : sd('assessment'))].filter(Boolean).join(' · ')}
                     </p>
                   </div>
                   <div className="text-end">
@@ -1263,7 +1271,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                 </div>
               ))}
               {(!student.recentAssessments || student.recentAssessments.length === 0) && (
-                <p className="text-xs text-slate-400 text-center py-4">Aucune évaluation enregistrée récemment</p>
+                <p className="text-xs text-slate-400 text-center py-4">{sd('noAssessments')}</p>
               )}
             </div>
           </Card>
@@ -1277,10 +1285,10 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-sm font-extrabold text-[#16212B]">
-                Comptabilité &amp; Frais de Scolarité
+                {sd('financeTitle')}
               </h2>
               <p className="text-[11px] text-slate-500">
-                Année scolaire {student.academicYearName || 'Non assignée'} · Relevé consolidé
+                {sd('financeSubtitle', { year: student.academicYearName || sd('notAssignedF') })}
               </p>
             </div>
             <Link
@@ -1327,10 +1335,10 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
           <Card className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-xs font-extrabold text-[#16212B] uppercase tracking-wide">
-                Paiements Récents
+                {sd('recentPayments')}
               </h3>
               <Badge className="bg-slate-100 text-slate-600 border-none text-[10px]">
-                {(student.payments ?? []).length} transaction(s)
+                {sd('transactions', { count: (student.payments ?? []).length })}
               </Badge>
             </div>
 
@@ -1348,7 +1356,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                   {(student.payments ?? []).map(p => (
                     <tr key={p.id}>
                       <td className="py-2.5 px-4 text-slate-500">{p.paymentDate.slice(0, 10)}</td>
-                      <td className="py-2.5 px-4 text-slate-700 font-medium">{p.paymentMethod}</td>
+                      <td className="py-2.5 px-4 text-slate-700 font-medium">{methodLabel(p.paymentMethod)}</td>
                       <td className="py-2.5 px-4 text-end font-bold text-[#16212B]">
                         {Number(p.amount).toLocaleString(locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR')} {tCommon('currency')}
                       </td>
@@ -1357,7 +1365,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                   {(!student.payments || student.payments.length === 0) && (
                     <tr>
                       <td colSpan={3} className="py-8 text-center text-slate-400">
-                        Aucun paiement enregistré pour cette période
+                        {sd('noPaymentsPeriod')}
                       </td>
                     </tr>
                   )}
@@ -1370,7 +1378,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
               {(student.payments ?? []).map(p => (
                 <div key={p.id} className="p-3.5 flex items-center justify-between text-xs">
                   <div>
-                    <p className="font-extrabold text-[#16212B]">{p.paymentMethod}</p>
+                    <p className="font-extrabold text-[#16212B]">{methodLabel(p.paymentMethod)}</p>
                     <p className="text-[10px] text-slate-400 mt-0.5">{p.paymentDate.slice(0, 10)}</p>
                   </div>
                   <span className="font-extrabold text-[#17A673]">
@@ -1380,7 +1388,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
               ))}
               {(!student.payments || student.payments.length === 0) && (
                 <div className="py-8 text-center text-slate-400 text-xs">
-                  Aucun paiement enregistré
+                  {sd('noPayments')}
                 </div>
               )}
             </div>
@@ -1394,7 +1402,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#17A673] hover:bg-[#13885E] text-white rounded-xl text-xs font-bold shadow-xs transition-colors"
               >
                 <Wallet className="w-4 h-4" />
-                Encaisser à la caisse
+                {sd('collectAtDesk')}
               </Link>
             </div>
           )}
@@ -1412,31 +1420,29 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
           </DialogHeader>
           <div className="space-y-4 my-2 text-xs">
             <p className="text-slate-600">
-              Modifier le statut de l&apos;élève <strong>{student.fullName}</strong> via le moteur de cycle de vie SchoolOS.
+              {sd('statusIntro')} <strong>{student.fullName}</strong>
             </p>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Nouveau statut</label>
+              <label className="font-bold text-slate-700 block mb-1">{sd('newStatus')}</label>
               <select
                 value={targetStatus}
                 onChange={e => setTargetStatus(e.target.value)}
                 className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-[#16212B]"
               >
-                <option value="active">Actif (Inscrit)</option>
-                <option value="withdrawn">Retiré / Désinscrit</option>
-                <option value="transferred">Transféré vers un autre établissement</option>
-                <option value="graduated">Diplômé / Ancien élève</option>
-                <option value="archived">Archivé</option>
+                {(['active', 'withdrawn', 'transferred', 'graduated', 'archived'] as const).map(s => (
+                  <option key={s} value={s}>{lifecycleLabel(s)}</option>
+                ))}
               </select>
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Motif du changement (audit)</label>
+              <label className="font-bold text-slate-700 block mb-1">{sd('reasonLabel')}</label>
               <textarea
                 rows={2}
                 value={statusReason}
                 onChange={e => setStatusReason(e.target.value)}
-                placeholder="Ex: Demande parentale, déménagement, fin de cycle..."
+                placeholder={sd('reasonPlaceholder')}
                 className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-xs text-[#16212B] resize-none"
               />
             </div>
@@ -1450,7 +1456,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
               onClick={handleLifecycleTransition}
               className="rounded-full text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white border-0 font-bold"
             >
-              {updatingStatus ? 'Mise à jour...' : 'Confirmer la transition'}
+              {updatingStatus ? sd('updating') : sd('confirmTransition')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1462,21 +1468,21 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
               <UserPlus className="w-4 h-4 text-[#2487B8]" />
-              Lier un tuteur légal à l&apos;élève
+              {sd('linkDialogTitle')}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 my-2 text-xs">
             {/* Search Input for scalability */}
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Rechercher parmi les tuteurs</label>
+              <label className="font-bold text-slate-700 block mb-1">{sd('searchGuardians')}</label>
               <div className="relative">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
                 <input
                   type="text"
                   value={guardianSearchQuery}
                   onChange={e => setGuardianSearchQuery(e.target.value)}
-                  placeholder="Nom, téléphone ou email..."
+                  placeholder={sd('searchGuardiansPlaceholder')}
                   className="w-full h-9 pl-9 pr-3 rounded-xl border border-slate-200 bg-white text-xs text-[#16212B]"
                 />
               </div>
@@ -1485,10 +1491,10 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
             {/* Results List */}
             <div className="space-y-1.5 max-h-48 overflow-y-auto border border-slate-100 rounded-xl p-1 bg-slate-50/50">
               {searchingGuardians && (
-                <p className="text-[11px] text-slate-400 text-center py-3">Recherche en cours...</p>
+                <p className="text-[11px] text-slate-400 text-center py-3">{sd('searching')}</p>
               )}
               {!searchingGuardians && searchedGuardians.length === 0 && (
-                <p className="text-[11px] text-slate-400 text-center py-3">Aucun tuteur trouvé</p>
+                <p className="text-[11px] text-slate-400 text-center py-3">{sd('noGuardianFound')}</p>
               )}
               {!searchingGuardians && searchedGuardians.map(g => (
                 <label
@@ -1509,28 +1515,25 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                     />
                     <div>
                       <p className="font-extrabold text-[#16212B] leading-tight">{g.name}</p>
-                      <p className="text-[10px] text-slate-500">{g.phone || g.email || 'Sans contact'}</p>
+                      <p className="text-[10px] text-slate-500">{g.phone || g.email || sd('noContact')}</p>
                     </div>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-medium">{g.relation || 'Tuteur'}</span>
+                  <span className="text-[10px] text-slate-400 font-medium">{relationLabel(g.relation || 'Tuteur')}</span>
                 </label>
               ))}
             </div>
 
             {/* Relationship Type */}
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Lien de parenté / Rôle</label>
+              <label className="font-bold text-slate-700 block mb-1">{sd('relationLabel')}</label>
               <select
                 value={selectedRelation}
                 onChange={e => setSelectedRelation(e.target.value)}
                 className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-[#16212B]"
               >
-                <option value="Père">Père</option>
-                <option value="Mère">Mère</option>
-                <option value="Tuteur légal">Tuteur légal</option>
-                <option value="Grand-parent">Grand-parent</option>
-                <option value="Oncle / Tante">Oncle / Tante</option>
-                <option value="Autre">Autre</option>
+                {(['Père', 'Mère', 'Tuteur légal', 'Grand-parent', 'Oncle / Tante', 'Autre'] as const).map(value => (
+                  <option key={value} value={value}>{relationLabel(value)}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -1548,7 +1551,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
               disabled={linkingGuardian || !selectedGuardianId}
               className="rounded-full text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold"
             >
-              {linkingGuardian ? 'Liaison en cours...' : 'Confirmer la liaison'}
+              {linkingGuardian ? sd('linking') : sd('confirmLink')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1560,26 +1563,26 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
           <DialogHeader>
             <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
               <Pencil className="w-4 h-4 text-[#2487B8]" />
-              Modifier les Informations Personnelles
+              {sd('editTitle')}
             </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleSaveProfile} className="space-y-4 my-2 text-xs">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Nom complet *</label>
+                <label className="font-bold text-slate-700 block">{sd('fullNameRequiredLabel')}</label>
                 <input
                   type="text"
                   required
                   value={editForm.fullName}
                   onChange={e => setEditForm(prev => ({ ...prev, fullName: e.target.value }))}
                   className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-[#16212B]"
-                  placeholder="Ex: Sami Mansouri"
+                  placeholder={sd('fullNamePlaceholder')}
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Date de naissance</label>
+                <label className="font-bold text-slate-700 block">{t('fieldBirthDate')}</label>
                 <input
                   type="date"
                   value={editForm.dateOfBirth}
@@ -1589,63 +1592,61 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Genre</label>
+                <label className="font-bold text-slate-700 block">{t('fieldGender')}</label>
                 <select
                   value={editForm.gender}
                   onChange={e => setEditForm(prev => ({ ...prev, gender: e.target.value }))}
                   className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-[#16212B]"
                 >
-                  <option value="male">Homme (Garçon)</option>
-                  <option value="female">Femme (Fille)</option>
-                  <option value="other">Autre</option>
+                  <option value="male">{t('genderMale')}</option>
+                  <option value="female">{t('genderFemale')}</option>
+                  <option value="other">{t('genderOther')}</option>
                 </select>
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Nationalité</label>
+                <label className="font-bold text-slate-700 block">{t('fieldNationality')}</label>
                 <input
                   type="text"
                   value={editForm.nationality}
                   onChange={e => setEditForm(prev => ({ ...prev, nationality: e.target.value }))}
                   className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-[#16212B]"
-                  placeholder="Ex: Marocaine"
+                  placeholder={sd('nationalityPlaceholder')}
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Langue maternelle</label>
+                <label className="font-bold text-slate-700 block">{t('fieldMotherTongue')}</label>
                 <select
                   value={editForm.motherTongue}
                   onChange={e => setEditForm(prev => ({ ...prev, motherTongue: e.target.value }))}
                   className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-[#16212B]"
                 >
-                  <option value="arabic">Arabe</option>
-                  <option value="french">Français</option>
-                  <option value="english">Anglais</option>
-                  <option value="tamazight">Tamazight</option>
-                  <option value="other">Autre</option>
+                  {Object.entries(MOTHER_TONGUE_KEY_MAP).map(([value, key]) => (
+                    <option key={value} value={value}>{t(key as any)}</option>
+                  ))}
                 </select>
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Ville</label>
+                <label className="font-bold text-slate-700 block">{t('fieldCity')}</label>
                 <input
                   type="text"
                   value={editForm.city}
                   onChange={e => setEditForm(prev => ({ ...prev, city: e.target.value }))}
                   className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-[#16212B]"
-                  placeholder="Ex: Casablanca, Rabat..."
+                  placeholder={sd('cityPlaceholder')}
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Groupe sanguin</label>
+                <label className="font-bold text-slate-700 block">{t('fieldBloodGroup')}</label>
                 <select
                   value={editForm.bloodGroup}
                   onChange={e => setEditForm(prev => ({ ...prev, bloodGroup: e.target.value }))}
                   className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-[#16212B]"
                 >
-                  <option value="">-- Non renseigné --</option>
+                  <option value="">{`-- ${sd('notProvided')} --`}</option>
                   <option value="A+">A+</option>
                   <option value="A-">A-</option>
                   <option value="B+">B+</option>
@@ -1658,46 +1659,46 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Numéro de téléphone</label>
+                <label className="font-bold text-slate-700 block">{sd('phoneLabel')}</label>
                 <input
                   type="text"
                   value={editForm.phone}
                   onChange={e => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
                   className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-[#16212B]"
-                  placeholder="Ex: +212 6 00 00 00 00"
+                  placeholder={sd('phonePlaceholder')}
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Adresse email</label>
+                <label className="font-bold text-slate-700 block">{sd('emailLabel')}</label>
                 <input
                   type="email"
                   value={editForm.email}
                   onChange={e => setEditForm(prev => ({ ...prev, email: e.target.value }))}
                   className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-[#16212B]"
-                  placeholder="Ex: etudiant@atlas.ma"
+                  placeholder={sd('emailPlaceholder')}
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Code National / Massar</label>
+                <label className="font-bold text-slate-700 block">{sd('massarLabel')}</label>
                 <input
                   type="text"
                   value={editForm.nationalId}
                   onChange={e => setEditForm(prev => ({ ...prev, nationalId: e.target.value }))}
                   className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-[#16212B]"
-                  placeholder="Ex: R130000000"
+                  placeholder={sd('massarPlaceholder')}
                 />
               </div>
 
               <div className="space-y-1 sm:col-span-2">
-                <label className="font-bold text-slate-700 block">Adresse de résidence</label>
+                <label className="font-bold text-slate-700 block">{t('fieldAddress')}</label>
                 <textarea
                   rows={2}
                   value={editForm.address}
                   onChange={e => setEditForm(prev => ({ ...prev, address: e.target.value }))}
                   className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-[#16212B] resize-none"
-                  placeholder="Ex: 276, Avenue Hassan II, Casablanca"
+                  placeholder={sd('addressPlaceholder')}
                 />
               </div>
             </div>
@@ -1716,7 +1717,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
                 disabled={savingProfile || !editForm.fullName.trim()}
                 className="rounded-full text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold"
               >
-                {savingProfile ? 'Enregistrement...' : 'Enregistrer les modifications'}
+                {savingProfile ? sd('saving') : sd('saveChanges')}
               </Button>
             </DialogFooter>
           </form>

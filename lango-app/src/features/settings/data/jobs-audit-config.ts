@@ -1,5 +1,5 @@
 // jobs-audit-config.ts
-// Seed definitions for scheduled jobs and maintenance windows. These populate
+// Seed definitions for scheduled jobs. These populate
 // the `jobs.definitions` setting on first load; run history is recorded by the
 // trigger API, never fabricated here.
 // Decoupled from JSX per Next.js App Router Rule 3 (Content Separation).
@@ -79,7 +79,3 @@ export const SCHEDULED_JOBS = [
   },
 ] as const;
 
-export const MAINTENANCE_WINDOWS = [
-  { title: 'Mise à jour mensuelle de sécurité système', schedule: 'Dimanche 15 août 2026, 02:00 - 04:00', impact: 'Coupure brève de 10 min' },
-  { title: 'Sauvegarde froide intégrale infrastructure', schedule: '1er septembre 2026, 01:00 - 03:00', impact: 'Accès lecture seule' },
-] as const;

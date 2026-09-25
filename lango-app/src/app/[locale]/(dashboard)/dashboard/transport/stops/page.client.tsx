@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { MapPin, Plus, Search, Filter, Edit2, Trash2, Globe, Navigation, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { nextCode } from '@/libs/next-code';
 
 interface Stop {
   id: string;
@@ -57,7 +58,7 @@ export default function StopsPage() {
   const openCreateModal = () => {
     setEditingStop(null);
     setFormData({
-      stopCode: `STP-${Math.floor(100 + Math.random() * 900)}`,
+      stopCode: nextCode('STP', stops.map(s => s.stopCode)),
       stopName: '',
       address: '',
       latitude: '',

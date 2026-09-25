@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CheckCircle2, AlertCircle, ChevronDown, ChevronRight, Eye, EyeOff, Save, RotateCcw, RefreshCw, Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -37,19 +38,11 @@ type ApiResponse = {
   };
 };
 
-const NS_LABELS: Record<string, string> = {
-  organization: 'Organisation',
-  academic: 'Année scolaire',
-  attendance: 'Présence',
-  localization: 'Localisation',
-  security: 'Sécurité',
-  finance: 'Finance',
-};
-
-const SOURCE_BADGES: Record<string, { label: string; cls: string }> = {
-  default: { label: 'Par défaut', cls: 'bg-slate-100 text-slate-500' },
-  tenant: { label: 'Établissement', cls: 'bg-blue-50 text-blue-600' },
-  branch: { label: 'Filiale', cls: 'bg-emerald-50 text-emerald-600' },
+// Labels live in SettingsRegistry.namespaces.* and SettingsRegistry.sources.*.
+const SOURCE_CLS: Record<string, string> = {
+  default: 'bg-slate-100 text-slate-500',
+  tenant: 'bg-blue-50 text-blue-600',
+  branch: 'bg-emerald-50 text-emerald-600',
 };
 
 function valueToString(v: unknown): string {
@@ -73,6 +66,7 @@ function ValueEditor({
   onPeek?: (key: string) => Promise<string | null>;
   onRotate?: (key: string) => void;
 }) {
+  const t = useTranslations('SettingsRegistry');
   const [show, setShow] = useState(false);
   const [revealed, setRevealed] = useState<string | null>(null);
   const [peeking, setPeeking] = useState(false);
@@ -105,8 +99,8 @@ function ValueEditor({
       <div className="flex items-center justify-between gap-2">
         <label className="text-xs font-semibold text-slate-700 truncate">{defLabel}</label>
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${SOURCE_BADGES[item.source]?.cls ?? ''}`}>
-            {SOURCE_BADGES[item.source]?.label}
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${SOURCE_CLS[item.source] ?? ''}`}>
+            {t(`sources.${item.source}`)}
           </span>
           {item.version > 0 && (
             <span className="text-[10px] text-slate-400 font-mono">v{item.version}</span>
@@ -117,7 +111,8 @@ function ValueEditor({
                 <button
                   type="button"
                   onClick={() => onRotate(item.key)}
-                  title="Rotation du secret (ré-encryptage)"
+                  title={t('rotate')}
+                  aria-label={t('rotate')}
                   className="text-slate-400 hover:text-slate-600"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
@@ -126,7 +121,8 @@ function ValueEditor({
               <button
                 type="button"
                 onClick={handleReveal}
-                title="Afficher le secret (action journalisée)"
+                title={t('reveal')}
+                aria-label={t('reveal')}
                 disabled={peeking}
                 className="text-slate-400 hover:text-slate-600 disabled:opacity-40"
               >
@@ -155,7 +151,8 @@ function ValueEditor({
             onChange(item.key, e.target.value);
           }}
           className="h-9 text-xs bg-slate-50 border-slate-200 rounded-xl"
-          placeholder={item.inherited ? '(valeur héritée)' : ''}
+          placeholder={item.inherited ? t('inheritedValue') : ''}
+          aria-label={defLabel}
         />
       )}
 
@@ -166,6 +163,7 @@ function ValueEditor({
 }
 
 export default function SettingsValuesPage() {
+  const t = useTranslations('SettingsRegistry');
   const [data, setData] = useState<ApiResponse['data'] | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [snapshot, setSnapshot] = useState<Record<string, string>>({}); // F03: baseline for dirty check
@@ -199,9 +197,11 @@ export default function SettingsValuesPage() {
           for (const v of json.data.values) init[v.key] = valueToString(v.value);
           setDrafts(init);
           setSnapshot(init);
+        } else {
+          showToast('err', t('loadError'));
         }
       })
-      .catch(() => showToast('err', 'Erreur chargement des paramètres.'))
+      .catch(() => showToast('err', t('loadError')))
       .finally(() => setLoading(false));
   }, [showToast]);
 
@@ -223,10 +223,10 @@ export default function SettingsValuesPage() {
         setSnapshot(s => ({ ...s, [key]: json.data.value }));
         return json.data.value as string;
       }
-      showToast('err', json.error?.message ?? 'Impossible d\'afficher le secret.');
+      showToast('err', json.error?.message ?? t('revealError'));
       return null;
     } catch {
-      showToast('err', 'Erreur réseau lors de l\'affichage du secret.');
+      showToast('err', t('revealNetworkError'));
       return null;
     }
   };
@@ -236,12 +236,12 @@ export default function SettingsValuesPage() {
       const res = await fetch(`/api/settings/values/${encodeURIComponent(key)}/rotate`, { method: 'POST' });
       const json = await res.json();
       if (json.success) {
-        showToast('ok', json.message ?? 'Secret ré-encrypté.');
+        showToast('ok', json.message ?? t('rotated'));
       } else {
-        showToast('err', json.error?.message ?? 'Rotation impossible.');
+        showToast('err', json.error?.message ?? t('rotateError'));
       }
     } catch {
-      showToast('err', 'Erreur réseau lors de la rotation.');
+      showToast('err', t('rotateNetworkError'));
     }
   };
 
@@ -249,9 +249,11 @@ export default function SettingsValuesPage() {
     if (!data) return;
     setSaving(true);
     try {
-      // Only send keys that changed vs loaded value
+      // Only send keys that changed vs the snapshot (same baseline as the dirty
+      // counter): comparing with the loaded value re-saved every secret that had
+      // merely been revealed.
       const changed = data.values
-        .filter(v => drafts[v.key] !== valueToString(v.value))
+        .filter(v => drafts[v.key] !== snapshot[v.key])
         .map(v => {
           let value: unknown = drafts[v.key];
           // Try to parse complex JSON back
@@ -264,7 +266,7 @@ export default function SettingsValuesPage() {
         });
 
       if (changed.length === 0) {
-        showToast('ok', 'Aucune modification à enregistrer.');
+        showToast('ok', t('nothingToSave'));
         return;
       }
 
@@ -275,7 +277,7 @@ export default function SettingsValuesPage() {
       });
       const json = await res.json();
       if (json.success) {
-        showToast('ok', `${changed.length} paramètre(s) mis à jour.`);
+        showToast('ok', t('saved', { count: changed.length }));
         // Refetch
         const fresh = await fetch('/api/settings/values').then(r => r.json()) as ApiResponse;
         if (fresh.success) {
@@ -286,10 +288,10 @@ export default function SettingsValuesPage() {
           setSnapshot(newDrafts); // reset baseline after successful save
         }
       } else {
-        showToast('err', json.error?.message ?? 'Erreur lors de la sauvegarde.');
+        showToast('err', json.error?.message ?? t('saveError'));
       }
     } catch {
-      showToast('err', 'Erreur réseau.');
+      showToast('err', t('networkError'));
     } finally {
       setSaving(false);
     }
@@ -311,8 +313,8 @@ export default function SettingsValuesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Registre des paramètres</h1>
-          <p className="text-xs text-slate-500 mt-1">Tous les paramètres de configuration de l&apos;établissement avec historique complet.</p>
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">{t('title')}</h1>
+          <p className="text-xs text-slate-500 mt-1">{t('subtitle')}</p>
         </div>
         <Button
           onClick={handleSave}
@@ -320,7 +322,7 @@ export default function SettingsValuesPage() {
           className="gap-2 h-9 rounded-full px-5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-40"
         >
           <Save className="w-4 h-4" />
-          {saving ? 'Enregistrement...' : dirtyCount > 0 ? `Sauvegarder (${dirtyCount})` : 'Aucune modification'}
+          {saving ? t('saving') : dirtyCount > 0 ? t('saveCount', { count: dirtyCount }) : t('noChanges')}
         </Button>
       </div>
 
@@ -355,8 +357,8 @@ export default function SettingsValuesPage() {
               className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-slate-50 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <span className="text-sm font-bold text-slate-800">{NS_LABELS[ns] ?? ns}</span>
-                <Badge variant="neutral" className="text-[10px] px-2">{items.length} clés</Badge>
+                <span className="text-sm font-bold text-slate-800">{t.has(`namespaces.${ns}`) ? t(`namespaces.${ns}` as 'namespaces.finance') : ns}</span>
+                <Badge variant="neutral" className="text-[10px] px-2">{t('keysCount', { count: items.length })}</Badge>
               </div>
               {nsExpanded
                 ? <ChevronDown className="w-4 h-4 text-slate-400" />
@@ -384,10 +386,10 @@ export default function SettingsValuesPage() {
 
       {/* Legend */}
       <div className="flex flex-wrap gap-3 text-[10px] text-slate-500">
-        {Object.entries(SOURCE_BADGES).map(([k, v]) => (
-          <span key={k} className={`px-2 py-0.5 rounded-full font-medium ${v.cls}`}>{v.label}</span>
+        {Object.entries(SOURCE_CLS).map(([k, cls]) => (
+          <span key={k} className={`px-2 py-0.5 rounded-full font-medium ${cls}`}>{t(`sources.${k}`)}</span>
         ))}
-        <span className="flex items-center gap-1"><RotateCcw className="w-3 h-3" /> Héritée = valeur de niveau supérieur, modifiable</span>
+        <span className="flex items-center gap-1"><RotateCcw className="w-3 h-3" /> {t('inheritedLegend')}</span>
       </div>
     </div>
   );

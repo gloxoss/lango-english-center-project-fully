@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight, DollarSign } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { FinanceOverviewData } from '../model/types';
 import { formatMad } from '../model/formatters';
 
@@ -11,9 +12,18 @@ interface FinanceOverviewCardProps {
   locale: string;
 }
 
+const MONTH_KEYS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
 export function FinanceOverviewCard({ data, locale }: FinanceOverviewCardProps) {
   const { periodLabel, invoiced, collected, outstanding, collectionRate, monthlyBreakdown } = data;
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const th = useTranslations('DashboardHome');
+  const tDash = useTranslations('Dashboard');
+  // The API labels months in French; translate from the month number instead.
+  const monthName = (m: { monthNum: number; month: string }) => {
+    const key = `month_${MONTH_KEYS[m.monthNum - 1]}`;
+    return MONTH_KEYS[m.monthNum - 1] && tDash.has(key) ? tDash(key as 'month_Jan') : m.month;
+  };
 
   const maxMonthValue = Math.max(
     ...monthlyBreakdown.map(m => Math.max(m.invoiced, m.collected)),
@@ -29,17 +39,17 @@ export function FinanceOverviewCard({ data, locale }: FinanceOverviewCardProps) 
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
             <h3 className="text-sm font-extrabold text-slate-900">
-              Facturé vs encaissé — {periodLabel}
+              {th('financeTitle', { period: periodLabel })}
             </h3>
             <p className="mt-0.5 text-xs text-slate-500 font-medium">
-              Synthèse financière de l'exercice académique actif
+              {th('financeSubtitle')}
             </p>
           </div>
           <Link
             href={`/${locale}/dashboard/finance`}
             className="flex items-center gap-1 text-xs font-bold text-blue-600 transition hover:text-blue-800 hover:underline"
           >
-            <span>Voir Finance</span>
+            <span>{th('seeFinance')}</span>
             <ArrowUpRight className="size-3.5" />
           </Link>
         </div>
@@ -48,7 +58,7 @@ export function FinanceOverviewCard({ data, locale }: FinanceOverviewCardProps) 
         <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
           <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Facturé
+              {th('invoiced')}
             </span>
             <p className="mt-1 text-base font-extrabold text-slate-900">
               {formatMad(invoiced)}
@@ -56,7 +66,7 @@ export function FinanceOverviewCard({ data, locale }: FinanceOverviewCardProps) 
           </div>
           <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3">
             <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">
-              Encaissé
+              {th('collected')}
             </span>
             <p className="mt-1 text-base font-extrabold text-emerald-700">
               {formatMad(collected)}
@@ -64,7 +74,7 @@ export function FinanceOverviewCard({ data, locale }: FinanceOverviewCardProps) 
           </div>
           <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-3">
             <span className="text-[11px] font-bold uppercase tracking-wider text-rose-600">
-              Restant dû
+              {th('outstanding')}
             </span>
             <p className="mt-1 text-base font-extrabold text-rose-700">
               {formatMad(outstanding)}
@@ -72,7 +82,7 @@ export function FinanceOverviewCard({ data, locale }: FinanceOverviewCardProps) 
           </div>
           <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-3">
             <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
-              Taux recouvrement
+              {th('collectionRate')}
             </span>
             <p className="mt-1 text-base font-extrabold text-blue-700">
               {collectionRate}%
@@ -87,16 +97,16 @@ export function FinanceOverviewCard({ data, locale }: FinanceOverviewCardProps) 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-xs bg-slate-300" />
-              <span>Facturé</span>
+              <span>{th('invoiced')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-xs bg-emerald-500" />
-              <span>Encaissé</span>
+              <span>{th('collected')}</span>
             </div>
           </div>
           {hoveredIndex !== null && monthlyBreakdown[hoveredIndex] && (
             <div className="text-xs font-bold text-slate-700">
-              {monthlyBreakdown[hoveredIndex]!.month} :{' '}
+              {monthName(monthlyBreakdown[hoveredIndex]!)} :{' '}
               <span className="text-emerald-600">
                 {formatMad(monthlyBreakdown[hoveredIndex]!.collected)}
               </span>{' '}
@@ -107,7 +117,7 @@ export function FinanceOverviewCard({ data, locale }: FinanceOverviewCardProps) 
 
         {!hasChartData ? (
           <div className="flex h-20 items-center justify-center rounded-xl bg-slate-50 text-xs text-slate-400">
-            Aucune opération comptable enregistrée sur cette période
+            {th('financeEmpty')}
           </div>
         ) : (
           <div className="flex h-44 items-end gap-2 pt-4">
@@ -135,7 +145,7 @@ export function FinanceOverviewCard({ data, locale }: FinanceOverviewCardProps) 
                     />
                   </div>
                   <span className="mt-1 text-[11px] font-bold text-slate-500 group-hover:text-slate-900">
-                    {m.month}
+                    {monthName(m)}
                   </span>
                 </div>
               );
@@ -146,8 +156,8 @@ export function FinanceOverviewCard({ data, locale }: FinanceOverviewCardProps) 
 
       {/* Footer Info */}
       <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-400 font-medium">
-        <span>Facturation et encaissements en dirham marocain</span>
-        <span className="font-bold text-slate-600">Devise : MAD (Dirham marocain)</span>
+        <span>{th('financeFooter')}</span>
+        <span className="font-bold text-slate-600">{th('currencyNote')}</span>
       </div>
     </div>
   );

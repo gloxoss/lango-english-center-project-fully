@@ -2,7 +2,144 @@
 
 **Status: NEEDS FIX (P1)** · Module: `broadcast` · Source: [`src/app/[locale]/(dashboard)/dashboard/broadcast/connections/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/broadcast/connections/page.tsx>)
 
-**Progress (2026-09-24):** S-32 PARTIAL
+**Progress (2026-09-25):** S-32 PARTIAL
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -74,7 +211,7 @@ Guard: `requireServerPage` · capability `broadcast.connections.manage`
 ## Cross-cutting findings that also show here
 
 - [S-7](../../findings/S-7.md) (P1) ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French)
-- [S-14](../../findings/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
+- [S-14](../../findings/done/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
 - [S-18](../../findings/done/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
 - [S-25](../../findings/done/S-25.md) (P2) Header shows a fake identity when the session call is slow
 - [S-37](../../findings/S-37.md) (P2) Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL

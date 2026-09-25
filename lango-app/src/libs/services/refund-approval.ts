@@ -26,8 +26,7 @@ export type ApprovedRefund = {
 
 /** Same shape as decideCreditNote - one state transition, shared by the Refunds page and the accountant approvals queue. */
 export async function decideRefund(input: DecideRefundInput) {
-  const [existing] = await db.select().from(refunds)
-    .where(and(eq(refunds.id, input.id), eq(refunds.tenantId, input.tenantId))).limit(1);
+  const [existing] = await db.select().from(refunds).where(and(eq(refunds.id, input.id), eq(refunds.tenantId, input.tenantId))).limit(1);
   if (!existing) {
     throw new ApiError(404, 'REFUND_NOT_FOUND', 'Remboursement introuvable.');
   }
@@ -78,7 +77,10 @@ export async function applyApprovedRefund(input: {
       .select()
       .from(payments)
       .where(and(eq(payments.id, refund.paymentId!), eq(payments.tenantId, tenantId)))
-      .limit(1);
+      .limit(1)
+      // Row lock: a refund and a reversal of the same payment used to both see
+      // 'posted' and both take the money off the invoice.
+      .for('update');
     if (!payment) {
       throw new ApiError(404, 'PAYMENT_NOT_FOUND', 'Paiement introuvable.');
     }
@@ -93,13 +95,17 @@ export async function applyApprovedRefund(input: {
 
     let remaining = refundCents;
     for (const alloc of allocs) {
-      if (remaining <= BigInt(0)) break;
+      if (remaining <= BigInt(0)) {
+        break;
+      }
       const [inv] = await tx
         .select()
         .from(invoices)
         .where(and(eq(invoices.id, alloc.invoiceId), eq(invoices.tenantId, tenantId)))
         .limit(1);
-      if (!inv) continue;
+      if (!inv) {
+        continue;
+      }
 
       const allocCents = moneyToCents(String(alloc.allocatedAmount));
       const reduceCents = remaining < allocCents ? remaining : allocCents;
@@ -164,9 +170,7 @@ export async function applyApprovedRefund(input: {
   // account), raise a visible reconciliation exception instead of drifting
   // silently. Schools with no chart of accounts at all are unaffected.
   if (!posted) {
-    const [hasLedger] = await db.select({ id: chartOfAccounts.id }).from(chartOfAccounts)
-      .where(and(eq(chartOfAccounts.tenantId, tenantId), eq(chartOfAccounts.isActive, true)))
-      .limit(1);
+    const [hasLedger] = await db.select({ id: chartOfAccounts.id }).from(chartOfAccounts).where(and(eq(chartOfAccounts.tenantId, tenantId), eq(chartOfAccounts.isActive, true))).limit(1);
     if (hasLedger) {
       await db.insert(accountingAdapterExceptions).values({
         tenantId,

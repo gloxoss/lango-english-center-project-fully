@@ -240,11 +240,11 @@ export function SubscriptionOverviewView({ locale }: { locale: string }) {
                 <h3 className="text-sm font-extrabold text-[#0F172A]">Modules & Extensions</h3>
                 <p className="text-xs text-slate-400 mt-0.5">Vos modules actifs. L&apos;activation d&apos;un module relève de l&apos;administrateur de la plateforme.</p>
               </div>
-              <Link href={`/${locale}/dashboard/settings/entitlements`}>
-                <Button variant="outline" size="sm" className="h-8 text-xs font-bold rounded-xl border-slate-200">
+              <Button asChild variant="outline" size="sm" className="h-8 text-xs font-bold rounded-xl border-slate-200">
+                <Link href={`/${locale}/dashboard/settings/entitlements`}>
                   Gérer les modules
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
             {activeAddons.length > 0 ? (
               <div className="flex flex-wrap gap-2">

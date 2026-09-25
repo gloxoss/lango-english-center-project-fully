@@ -1,19 +1,18 @@
-import { db } from '@/libs/DB';
-import { resolveStudentAudienceContext } from '@/libs/academics/audience-context';
+import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import { attachmentTypes, digitalAssets, digitalAssetTargets, digitalAssetUsageLinks } from '@/features/attachments/models/attachments-schema';
 import { isAssetVisibleToUser } from '@/features/attachments/services/targeting-service';
-import {
-  assessmentDefinitions,
-  assessmentAudiences,
-  homeworkDetails,
-  homeworkAttempts,
-  homeworkAttemptFiles,
-  homeworkRubrics,
-  homeworkRubricCriteria,
-} from '../models/assessment-schema';
+import { resolveStudentAudienceContext } from '@/libs/academics/audience-context';
+import { ApiError } from '@/libs/api/errors';
+import { db } from '@/libs/DB';
 import { classes, classSubjects, subjects, user } from '@/models/Schema';
-import { OutcomeService } from './outcome-service';
-import { eq, and, inArray, desc, asc } from 'drizzle-orm';
+import {
+  assessmentAudiences,
+  assessmentDefinitions,
+  homeworkAttemptFiles,
+  homeworkAttempts,
+  homeworkDetails,
+} from '../models/assessment-schema';
+import { assertScoreInRange, OutcomeService } from './outcome-service';
 
 type AudienceRow = { studentId: string | null; sectionId: string | null; classOfferingId: string | null };
 
@@ -124,9 +123,9 @@ export class HomeworkService {
     }> = [];
 
     const defId = def.id;
-    classOfferingIds.forEach((co) => audienceRows.push({ assessmentDefinitionId: defId, classOfferingId: co }));
-    sectionIds.forEach((sec) => audienceRows.push({ assessmentDefinitionId: defId, sectionId: sec }));
-    studentIds.forEach((st) => audienceRows.push({ assessmentDefinitionId: defId, studentId: st }));
+    classOfferingIds.forEach(co => audienceRows.push({ assessmentDefinitionId: defId, classOfferingId: co }));
+    sectionIds.forEach(sec => audienceRows.push({ assessmentDefinitionId: defId, sectionId: sec }));
+    studentIds.forEach(st => audienceRows.push({ assessmentDefinitionId: defId, studentId: st }));
 
     if (audienceRows.length > 0) {
       await db.insert(assessmentAudiences).values(audienceRows);
@@ -168,8 +167,8 @@ export class HomeworkService {
         and(
           eq(assessmentDefinitions.tenantId, tenantId),
           eq(assessmentDefinitions.type, 'homework'),
-          eq(assessmentDefinitions.status, 'published')
-        )
+          eq(assessmentDefinitions.status, 'published'),
+        ),
       )
       .orderBy(desc(assessmentDefinitions.createdAt));
 
@@ -192,7 +191,7 @@ export class HomeworkService {
       .from(homeworkAttempts)
       .where(eq(homeworkAttempts.studentId, studentId));
 
-    const attemptsMap = new Map(attempts.map((a) => [a.assessmentDefinitionId, a]));
+    const attemptsMap = new Map(attempts.map(a => [a.assessmentDefinitionId, a]));
 
     const usageLinks = visibleHomeworks.length > 0
       ? await db.select().from(digitalAssetUsageLinks).where(and(eq(digitalAssetUsageLinks.usageType, 'homework'), inArray(digitalAssetUsageLinks.usageRefId, visibleHomeworks.map(hw => hw.id))))
@@ -221,15 +220,19 @@ export class HomeworkService {
     const linksByHomework = new Map<string, typeof linkedAssets>();
     for (const link of usageLinks) {
       const asset = assetById.get(link.assetId);
-      if (!asset) continue;
+      if (!asset) {
+        continue;
+      }
       const type = typeById.get(asset.attachmentTypeId);
-      if (!isAssetVisibleToUser(targetsByAsset.get(asset.id) ?? [], type?.studentVisible ?? true, viewer)) continue;
+      if (!isAssetVisibleToUser(targetsByAsset.get(asset.id) ?? [], type?.studentVisible ?? true, viewer)) {
+        continue;
+      }
       const list = linksByHomework.get(link.usageRefId) ?? [];
       list.push(asset);
       linksByHomework.set(link.usageRefId, list);
     }
 
-    return visibleHomeworks.map((hw) => ({
+    return visibleHomeworks.map(hw => ({
       ...hw,
       submission: attemptsMap.get(hw.id) || null,
       attachments: (hw.attachments as Array<{ name: string; url: string; size?: number; type?: string }>) || [],
@@ -272,7 +275,7 @@ export class HomeworkService {
         and(
           eq(assessmentDefinitions.tenantId, tenantId),
           eq(assessmentDefinitions.type, 'homework'),
-        )
+        ),
       )
       .orderBy(desc(assessmentDefinitions.createdAt));
 
@@ -384,8 +387,8 @@ export class HomeworkService {
       .where(
         and(
           eq(homeworkAttempts.assessmentDefinitionId, assessmentDefinitionId),
-          eq(homeworkAttempts.studentId, studentId)
-        )
+          eq(homeworkAttempts.studentId, studentId),
+        ),
       );
 
     const nextAttemptNumber = existingAttempts.length + 1;
@@ -408,13 +411,13 @@ export class HomeworkService {
 
     if (files.length > 0) {
       await db.insert(homeworkAttemptFiles).values(
-        files.map((f) => ({
+        files.map(f => ({
           attemptId: attempt.id,
           fileName: f.fileName,
           fileUrl: f.fileUrl,
           fileSize: f.fileSize,
           mimeType: f.mimeType,
-        }))
+        })),
       );
     }
 
@@ -434,15 +437,23 @@ export class HomeworkService {
     const { tenantId, attemptId, score, feedbackText, gradedBy } = params;
 
     const [attempt] = await db
-      .select({ id: homeworkAttempts.id, assessmentDefinitionId: homeworkAttempts.assessmentDefinitionId, studentId: homeworkAttempts.studentId })
+      .select({
+        id: homeworkAttempts.id,
+        assessmentDefinitionId: homeworkAttempts.assessmentDefinitionId,
+        studentId: homeworkAttempts.studentId,
+        maximumScore: assessmentDefinitions.maximumScore,
+      })
       .from(homeworkAttempts)
       .innerJoin(assessmentDefinitions, eq(homeworkAttempts.assessmentDefinitionId, assessmentDefinitions.id))
       .where(and(eq(homeworkAttempts.id, attemptId), eq(assessmentDefinitions.tenantId, tenantId)))
       .limit(1);
 
     if (!attempt) {
-      throw new Error('Homework attempt not found.');
+      throw new ApiError(404, 'ATTEMPT_NOT_FOUND', 'Copie introuvable.');
     }
+
+    // Checked before the attempt row is updated; the outcome ledger checks again.
+    assertScoreInRange(score, Number(attempt.maximumScore) || 20);
 
     const [updatedAttempt] = await db
       .update(homeworkAttempts)
@@ -507,7 +518,9 @@ export class HomeworkService {
       )
       .limit(1);
 
-    if (!row) return null;
+    if (!row) {
+      return null;
+    }
     return {
       ...row,
       attachments: (row.attachments as Array<{ name: string; url: string; size?: number; type?: string }>) || [],

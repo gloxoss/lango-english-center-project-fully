@@ -1,22 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
-  MessageSquare,
-  Plus,
-  Trash2,
-  Save,
-  Smartphone,
   AlertCircle,
   CheckCircle2,
   FileCode,
+  MessageSquare,
+  Plus,
+  Save,
   ShieldCheck,
+  Smartphone,
+  Trash2,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 type ApiTemplate = { id: string; name: string; body: string };
 
@@ -62,7 +63,7 @@ export function SmsTemplatesView({ locale }: { locale?: string } = {}) {
   }
 
   function insertVariable(v: string) {
-    setBody((prev) => `${prev} ${v}`);
+    setBody(prev => `${prev} ${v}`);
   }
 
   async function handleSave() {
@@ -98,7 +99,21 @@ export function SmsTemplatesView({ locale }: { locale?: string } = {}) {
   }
 
   async function handleDelete(id: string) {
-    await fetch(`/api/communication/templates?id=${id}`, { method: 'DELETE' });
+    // eslint-disable-next-line no-alert
+    if (!window.confirm(tCommon('confirmDeleteGeneric'))) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/communication/templates?id=${id}`, { method: 'DELETE' });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || json?.success === false) {
+        toast.error(json?.error?.message || json?.message || tCommon('error'));
+        return;
+      }
+    } catch {
+      toast.error(tCommon('networkError'));
+      return;
+    }
     if (selectedId === id) {
       newTemplate();
     }
@@ -113,127 +128,221 @@ export function SmsTemplatesView({ locale }: { locale?: string } = {}) {
     .replace(/\{ecole\}/g, 'SchoolOS English Center');
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
+    <div className="mx-auto max-w-[1600px] space-y-6 pb-12">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
+      <div className="
+        flex flex-col justify-between gap-4 rounded-2xl border
+        border-slate-200/80 bg-white p-6 shadow-2xs
+        sm:flex-row sm:items-center
+      "
+      >
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0066FF] to-[#0052CC] flex items-center justify-center text-white shadow-2xs shrink-0">
-            <FileCode className="w-6 h-6" />
+          <div className="
+            flex size-12 shrink-0 items-center justify-center rounded-2xl
+            bg-linear-to-br from-[#0066FF] to-[#0052CC] text-white shadow-2xs
+          "
+          >
+            <FileCode className="size-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">
+            <h1 className="
+              text-2xl font-extrabold tracking-tight text-[#16212B]
+            "
+            >
               {t('templatesStudioTitle')}
             </h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
+            <p className="mt-0.5 text-xs font-medium text-slate-500">
               {t('templatesStudioSubtitle')}
             </p>
           </div>
         </div>
 
-        <Badge variant="success" className="font-bold gap-1 px-3 py-1.5 text-xs">
-          <ShieldCheck className="w-3.5 h-3.5" />
+        <Badge variant="success" className="gap-1 px-3 py-1.5 text-xs font-bold">
+          <ShieldCheck className="size-3.5" />
           <span>{t('metaApproved')}</span>
         </Badge>
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-2.5 text-rose-800 text-xs font-bold">
-          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+        <div className="
+          flex items-center gap-2.5 rounded-2xl border border-rose-200
+          bg-rose-50 p-4 text-xs font-bold text-rose-800
+        "
+        >
+          <AlertCircle className="size-4 shrink-0 text-rose-600" />
           <span>{error}</span>
         </div>
       )}
       {success && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-2.5 text-emerald-800 text-xs font-bold">
-          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+        <div className="
+          flex items-center gap-2.5 rounded-2xl border border-emerald-200
+          bg-emerald-50 p-4 text-xs font-bold text-emerald-800
+        "
+        >
+          <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
           <span>{success}</span>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="
+        grid grid-cols-1 gap-6
+        lg:grid-cols-4
+      "
+      >
         {/* Templates List Column */}
-        <Card className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
+        <Card className="
+          space-y-4 rounded-2xl border border-slate-200/80 bg-white p-4
+          shadow-2xs
+        "
+        >
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('savedTemplates')}</h3>
+            <h3 className="
+              text-xs font-bold tracking-wider text-slate-500 uppercase
+            "
+            >
+              {t('savedTemplates')}
+            </h3>
             <button
               onClick={newTemplate}
-              className="text-xs font-bold text-[#0066FF] hover:underline flex items-center gap-1 cursor-pointer"
+              className="
+                flex cursor-pointer items-center gap-1 text-xs font-bold
+                text-[#0066FF]
+                hover:underline
+              "
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="size-3.5" />
               <span>{t('newTemplate')}</span>
             </button>
           </div>
           <div className="space-y-2">
-            {templates.map((tItem) => (
+            {templates.map(tItem => (
               <div
                 key={tItem.id}
-                className={`w-full p-3 rounded-xl border flex items-start gap-2 transition-all ${
-                  selectedId === tItem.id ? 'bg-blue-50/70 border-[#0066FF]' : 'bg-white border-slate-200/80 hover:bg-slate-50'
-                }`}
+                className={`
+                  flex w-full items-start gap-2 rounded-xl border p-3
+                  transition-all
+                  ${
+              selectedId === tItem.id
+                ? 'border-[#0066FF] bg-blue-50/70'
+                : `
+                  border-slate-200/80 bg-white
+                  hover:bg-slate-50
+                `
+              }
+                `}
               >
-                <button onClick={() => selectTemplate(tItem)} className="flex-1 min-w-0 text-start flex items-start gap-2 cursor-pointer">
+                <button
+                  onClick={() => selectTemplate(tItem)}
+                  className="
+                    flex min-w-0 flex-1 cursor-pointer items-start gap-2
+                    text-start
+                  "
+                >
                   <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                      selectedId === tItem.id ? 'bg-[#0066FF] text-white' : 'bg-slate-100 text-slate-500'
-                    }`}
+                    className={`
+                      flex size-8 shrink-0 items-center justify-center
+                      rounded-lg
+                      ${
+              selectedId === tItem.id
+                ? 'bg-[#0066FF] text-white'
+                : `bg-slate-100 text-slate-500`
+              }
+                    `}
                   >
-                    <MessageSquare className="w-4 h-4" />
+                    <MessageSquare className="size-4" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-extrabold text-[#16212B] truncate">{tItem.name}</p>
-                    <p className="text-[10px] text-slate-400 font-medium truncate mt-0.5">{tItem.body}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="
+                      truncate text-xs font-extrabold text-[#16212B]
+                    "
+                    >
+                      {tItem.name}
+                    </p>
+                    <p className="
+                      mt-0.5 truncate text-[10px] font-medium text-slate-400
+                    "
+                    >
+                      {tItem.body}
+                    </p>
                   </div>
                 </button>
                 <button
                   onClick={() => handleDelete(tItem.id)}
                   title={t('deleteTemplate')}
-                  className="p-1 rounded-lg hover:bg-rose-50 text-rose-500 shrink-0 cursor-pointer"
+                  className="
+                    shrink-0 cursor-pointer rounded-lg p-1 text-rose-500
+                    hover:bg-rose-50
+                  "
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="size-3.5" />
                 </button>
               </div>
             ))}
-            {templates.length === 0 && <p className="text-xs text-slate-400 font-medium">{t('noTemplatesCreated')}</p>}
+            {templates.length === 0 && (
+              <p className="text-xs font-medium text-slate-400">
+                {t('noTemplatesCreated')}
+              </p>
+            )}
           </div>
         </Card>
 
         {/* Editor Form Column */}
-        <Card className="lg:col-span-2 p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-6">
+        <Card className="
+          space-y-6 rounded-2xl border border-slate-200/80 bg-white p-6
+          shadow-2xs
+          lg:col-span-2
+        "
+        >
           <div className="space-y-1">
             <label className="text-xs font-bold text-slate-700">{t('templateNameLabel')}</label>
             <Input
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={e => setName(e.target.value)}
               placeholder={t('templateNamePlaceholder')}
-              className="h-10 text-xs bg-slate-50 border border-slate-200 rounded-xl"
+              className="
+                h-10 rounded-xl border border-slate-200 bg-slate-50 text-xs
+              "
             />
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
               <label className="font-bold text-slate-700">{t('messageBodyLabel')}</label>
-              <span className="text-[11px] text-slate-400 font-mono font-bold">
+              <span className="font-mono text-[11px] font-bold text-slate-400">
                 {t('charCount', { current: body.length, max: 160 })}
               </span>
             </div>
             <textarea
               rows={5}
               value={body}
-              onChange={(e) => setBody(e.target.value)}
+              onChange={e => setBody(e.target.value)}
               placeholder={t('messageBodyPlaceholder')}
-              className="w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0066FF] text-slate-800 leading-relaxed font-mono"
+              className="
+                w-full rounded-xl border border-slate-200 bg-slate-50 p-3
+                font-mono text-xs/relaxed text-slate-800
+                focus:ring-2 focus:ring-[#0066FF] focus:outline-none
+              "
             />
 
             <div className="space-y-2 pt-2">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              <label className="
+                text-[11px] font-bold tracking-wider text-slate-500 uppercase
+              "
+              >
                 {t('dynamicVariablesAvailable')}
               </label>
               <div className="flex flex-wrap gap-2">
-                {VARIABLES.map((v) => (
+                {VARIABLES.map(v => (
                   <button
                     key={v}
                     type="button"
                     onClick={() => insertVariable(v)}
-                    className="px-3 py-1 bg-blue-50 text-[#0052CC] hover:bg-blue-100 rounded-xl text-xs font-mono font-bold border border-blue-100 transition-colors cursor-pointer"
+                    className="
+                      cursor-pointer rounded-xl border border-blue-100
+                      bg-blue-50 px-3 py-1 font-mono text-xs font-bold
+                      text-[#0052CC] transition-colors
+                      hover:bg-blue-100
+                    "
                   >
                     {v}
                   </button>
@@ -242,33 +351,52 @@ export function SmsTemplatesView({ locale }: { locale?: string } = {}) {
             </div>
           </div>
 
-          <div className="flex justify-end pt-2 border-t border-slate-100">
+          <div className="flex justify-end border-t border-slate-100 pt-2">
             <Button
               disabled={saving}
               onClick={handleSave}
-              className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold gap-2 text-xs rounded-xl h-10 px-6 cursor-pointer"
+              className="
+                h-10 cursor-pointer gap-2 rounded-xl bg-[#0066FF] px-6 text-xs
+                font-bold text-white
+                hover:bg-[#0052CC]
+              "
             >
-              <Save className="w-4 h-4" />
+              <Save className="size-4" />
               <span>{saving ? t('saving') : t('saveTemplate')}</span>
             </Button>
           </div>
         </Card>
 
         {/* Mobile Live Simulator Column */}
-        <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
+        <Card className="
+          space-y-4 rounded-2xl border border-slate-200/80 bg-white p-6
+          shadow-2xs
+        "
+        >
           <div className="flex items-center gap-2">
-            <Smartphone className="w-4 h-4 text-[#0066FF]" />
+            <Smartphone className="size-4 text-[#0066FF]" />
             <h3 className="text-sm font-bold text-[#16212B]">{t('mobileSimulatorTitle')}</h3>
           </div>
 
-          <div className="bg-slate-900 p-4 rounded-3xl border-4 border-slate-800 shadow-xl space-y-3 max-w-[280px] mx-auto">
-            <div className="w-16 h-1.5 bg-slate-700 rounded-full mx-auto" />
-            <div className="bg-slate-100 p-3 rounded-2xl space-y-2 text-xs">
-              <div className="bg-white p-3 rounded-xl shadow-xs border border-slate-200 text-slate-800 space-y-1">
-                <p className="text-[11px] leading-relaxed whitespace-pre-wrap font-sans">
+          <div className="
+            mx-auto max-w-[280px] space-y-3 rounded-3xl border-4
+            border-slate-800 bg-slate-900 p-4 shadow-xl
+          "
+          >
+            <div className="mx-auto h-1.5 w-16 rounded-full bg-slate-700" />
+            <div className="space-y-2 rounded-2xl bg-slate-100 p-3 text-xs">
+              <div className="
+                space-y-1 rounded-xl border border-slate-200 bg-white p-3
+                text-slate-800 shadow-xs
+              "
+              >
+                <p className="
+                  font-sans text-[11px] leading-relaxed whitespace-pre-wrap
+                "
+                >
                   {previewBody || t('mobileSimulatorPlaceholder')}
                 </p>
-                <span className="text-[9px] text-slate-400 block text-right">{t('todayTime', { time: '14:32' })}</span>
+                <span className="block text-right text-[9px] text-slate-400">{t('todayTime', { time: '14:32' })}</span>
               </div>
             </div>
           </div>

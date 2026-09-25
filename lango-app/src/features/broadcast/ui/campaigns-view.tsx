@@ -300,9 +300,9 @@ export function CampaignsView() {
                     <td className="px-4 py-3 text-emerald-700 text-start">{fmtCount(c.deliveredCount, locale)}</td>
                     <td className="px-4 py-3 text-rose-600 text-start">{fmtCount(c.failedCount, locale)}</td>
                     <td className="px-4 py-3 text-end">
-                      <Link href={`/${locale}/dashboard/broadcast/campaigns/${c.id}`}>
-                        <Button variant="outline" size="sm" className="cursor-pointer">{t('details')}</Button>
-                      </Link>
+                      <Button asChild variant="outline" size="sm" className="cursor-pointer">
+                        <Link href={`/${locale}/dashboard/broadcast/campaigns/${c.id}`}>{t('details')}</Link>
+                      </Button>
                     </td>
                   </tr>
                 ))}

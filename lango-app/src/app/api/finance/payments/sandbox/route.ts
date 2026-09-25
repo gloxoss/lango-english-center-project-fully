@@ -19,6 +19,12 @@ const sandboxPaymentSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    // Test-gateway endpoint: it records a payment and marks the invoice paid
+    // with no money received, outside the real flow (no receipt, no cashier
+    // session, paid_amount untouched). Never available in production.
+    if (process.env.NODE_ENV === 'production' && process.env.ALLOW_TEST_HOOKS !== 'true') {
+      throw new ApiError(404, 'NOT_FOUND', 'Not found.');
+    }
     const context = await requireRequestContext(request, ['school_admin', 'accountant']);
     const tenantId = requireTenant(context);
     await requireCapability(context, 'finance.manage');

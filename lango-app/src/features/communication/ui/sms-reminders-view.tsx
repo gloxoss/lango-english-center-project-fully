@@ -551,17 +551,17 @@ export function SmsRemindersView({ locale }: { locale?: string } = {}) {
           )}
 
           {/* Manage Connectors Link */}
-          <Link href="/dashboard/broadcast/connections">
-            <Button
+          <Button asChild
               variant="outline"
               size="sm"
               className="h-8 text-xs font-bold border-slate-200 hover:bg-slate-50 rounded-xl flex items-center gap-1.5 text-slate-700 shadow-2xs cursor-pointer"
             >
+            <Link href="/dashboard/broadcast/connections">
               <Smartphone className="w-3.5 h-3.5 text-[#2487B8]" />
               <span>Gérer les Passerelles</span>
               <ExternalLink className="w-3 h-3 text-slate-400 ml-0.5" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </div>
 

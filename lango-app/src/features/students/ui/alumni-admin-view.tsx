@@ -43,18 +43,18 @@ export function AlumniAdminView({ locale }: { locale?: string } = {}) {
             {t('alumniSubtitle')}
           </p>
         </div>
-        <Link href={`/${locale || 'fr'}/dashboard/students/alumni-transition`}>
-          <Button
+        <Button asChild
             size="sm"
             className="
               h-9 gap-1.5 rounded-xl bg-[#2487B8] text-xs text-white
               hover:bg-[#1B6C93]
             "
           >
+          <Link href={`/${locale || 'fr'}/dashboard/students/alumni-transition`}>
             <GraduationCap className="size-3.5" />
             {t('massTransition')}
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
 
       <Card className="

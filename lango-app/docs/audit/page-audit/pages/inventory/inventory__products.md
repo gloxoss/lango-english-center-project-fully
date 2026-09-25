@@ -1,8 +1,146 @@
 # `/dashboard/inventory/products`
+<!-- swept: 2026-09-24 claude-finance | school_admin sweep :3466 schoolos_audit 2026-09-24: loads, no failed API, no h-scroll, no text defects -->
 
 **Status: NEEDS FIX (P1)** · Module: `inventory` · Source: [`src/app/[locale]/(dashboard)/dashboard/inventory/products/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/inventory/products/page.tsx>)
 
-**Progress (2026-09-24):** S-32 PARTIAL · S-56 REVIEW
+**Progress (2026-09-25):** S-32 PARTIAL · S-56 DONE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -44,7 +182,7 @@ Guard: `requireServerPage` · capability `inventory.catalog.manage`
 | ID | Sev | Problem | Fix | Code now |
 |---|---|---|---|---|
 | [S-32](../../findings/S-32.md) | P1 | Sidebar links looser than their page; denied users land on the public homepage | Derive the sidebar permission from the page guard; denial renders in-app "Accès refusé"; remove dead links; test that walks sidebar vs guards. | Not re-checked since the sweep. |
-| [S-56](../../findings/S-56.md) | P2 | Inventory quantities read as thousands ("+12.000" for 12) | Locale-aware quantity formatting without trailing zeros; plural fix. | Not re-checked since the sweep. |
+| [S-56](../../findings/done/S-56.md) | P2 | Inventory quantities read as thousands ("+12.000" for 12) | Locale-aware quantity formatting without trailing zeros; plural fix. | Not re-checked since the sweep. |
 
 ## Sweep results
 
@@ -79,7 +217,7 @@ Guard: `requireServerPage` · capability `inventory.catalog.manage`
 ## Cross-cutting findings that also show here
 
 - [S-7](../../findings/S-7.md) (P1) ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French)
-- [S-14](../../findings/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
+- [S-14](../../findings/done/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
 - [S-18](../../findings/done/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
 - [S-25](../../findings/done/S-25.md) (P2) Header shows a fake identity when the session call is slow
 - [S-37](../../findings/S-37.md) (P2) Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL

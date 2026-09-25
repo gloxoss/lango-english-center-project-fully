@@ -1,12 +1,22 @@
-﻿// translations-custom-fields-client.tsx
+// translations-custom-fields-client.tsx
 // CLIENT ISLAND — owns i18n search/filtering, custom fields table, inline dictionary editing, and creation modal.
 'use client';
 
-import React, { useState, useTransition } from 'react';
 import {
-  Languages, Plus, Trash2, Edit, Save, Search, RefreshCw, CheckCircle2,
-  AlertTriangle, Filter, Globe, Sliders, Layers, Eye, FileText, X, ChevronRight
+  AlertTriangle,
+  CheckCircle2,
+  Globe,
+  Languages,
+  Plus,
+  Save,
+  Search,
+  Sliders,
+  Trash2,
+  X,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import React, { useState, useTransition } from 'react';
+import { toast } from 'sonner';
 
 export type LanguageCoverageItem = {
   code: string;
@@ -39,6 +49,12 @@ export type CustomFieldItem = {
   status: 'active' | 'hidden';
 };
 
+// Custom-field attributes are stored as these values (kept for existing data);
+// the labels come from TranslationsSettings.* so they follow the UI language.
+const MODULE_KEYS: Record<string, string> = { Élève: 'student', Parent: 'parent', Employé: 'staff', Inscription: 'admission' };
+const TYPE_KEYS: Record<string, string> = { Texte: 'text', Sélecteur: 'select', Nombre: 'number', Date: 'date', Fichier: 'file' };
+const VISIBILITY_KEYS: Record<string, string> = { 'Formulaire public': 'publicForm', 'Profil public': 'publicForm', 'Profil médical': 'medical', 'Interne admin': 'internal', 'Dossier académique': 'academic' };
+
 type Props = {
   initialKeys: I1nKeyItem[];
   initialFields: CustomFieldItem[];
@@ -58,6 +74,12 @@ export function TranslationsCustomFieldsClient({
   enabledLanguageCount,
   enabledLanguageLabel,
 }: Props) {
+  const t = useTranslations('TranslationsSettings');
+  const tCommon = useTranslations('Common');
+  const labelOf = (group: 'modules' | 'types' | 'visibility', map: Record<string, string>, value: string) => {
+    const key = map[value];
+    return key ? t(`${group}.${key}` as 'modules.student') : value;
+  };
   const [keys, setKeys] = useState<I1nKeyItem[]>(initialKeys);
   const [fields, setFields] = useState<CustomFieldItem[]>(initialFields);
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,33 +89,40 @@ export function TranslationsCustomFieldsClient({
   const [isPending, startTransition] = useTransition();
 
   // Filter i18n keys
-  const filteredKeys = keys.filter(k => {
-    const matchesSearch =
-      k.key.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      k.fr.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      k.ar.includes(searchQuery) ||
-      k.en.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredKeys = keys.filter((k) => {
+    const matchesSearch
+      = k.key.toLowerCase().includes(searchQuery.toLowerCase())
+        || k.fr.toLowerCase().includes(searchQuery.toLowerCase())
+        || k.ar.includes(searchQuery)
+        || k.en.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
 
   function handlePublish() {
     startTransition(async () => {
       try {
-        await fetch('/api/settings/values/i18n.translations', {
+        // The response used to be ignored, so a rejected publish still showed success.
+        const res = await fetch('/api/settings/values/i18n.translations', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ value: { keys, fields } }),
         });
+        const json = await res.json().catch(() => null);
+        if (!res.ok || json?.success === false) {
+          toast.error(json?.error?.message || json?.message || tCommon('error'));
+          return;
+        }
         setPublishedSuccess(true);
-        setTimeout(() => setPublishedSuccess(false), 3000);
+        setTimeout(setPublishedSuccess, 3000, false);
       } catch (err) {
         console.error('Failed to publish translations:', err);
+        toast.error(tCommon('networkError'));
       }
     });
   }
 
   function handleKeyChange(id: string, lang: 'fr' | 'ar' | 'en', val: string) {
-    setKeys(prev => prev.map(k => {
+    setKeys(prev => prev.map((k) => {
       if (k.id === id) {
         return { ...k, [lang]: val, status: 'overridden' };
       }
@@ -106,157 +135,259 @@ export function TranslationsCustomFieldsClient({
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto flex flex-col gap-6 pb-20">
+    <div className="mx-auto flex max-w-[1600px] flex-col gap-6 pb-20">
 
       {/* ── Top Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="
+        flex flex-col justify-between gap-4
+        sm:flex-row sm:items-center
+      "
+      >
         <div>
-          <h1 className="text-xl font-bold text-[#111827]">Traductions &amp; Champs Personnalisés</h1>
-          <p className="text-sm text-[#6B7280] mt-0.5">
-            Localisation i18n multilingue (FR, AR, EN) et gestion des attributs dynamiques d'établissement.
+          <h1 className="text-xl font-bold text-[#111827]">{t('title')}</h1>
+          <p className="mt-0.5 text-sm text-[#6B7280]">
+            {t('subtitle')}
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => setAddFieldModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-[#374151]
-              bg-white border border-[#E5E7EB] rounded-xl hover:bg-[#F9FAFB] transition-colors"
+            className="
+              flex items-center gap-2 rounded-xl border border-[#E5E7EB]
+              bg-white px-3.5 py-2 text-xs font-semibold text-[#374151]
+              transition-colors
+              hover:bg-[#F9FAFB]
+            "
           >
-            <Plus className="w-4 h-4 text-[#4B6BFB]" />
-            Ajouter un champ
+            <Plus className="size-4 text-[#4B6BFB]" />
+            {t('addField')}
           </button>
           <button
             onClick={handlePublish}
             disabled={isPending}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white
-              bg-[#4B6BFB] rounded-xl hover:bg-[#3B5BDB] disabled:opacity-60 transition-all shadow-sm shadow-[#4B6BFB]/20"
+            className="
+              flex items-center gap-2 rounded-xl bg-[#4B6BFB] px-4 py-2 text-xs
+              font-semibold text-white shadow-sm shadow-[#4B6BFB]/20
+              transition-all
+              hover:bg-[#3B5BDB]
+              disabled:opacity-60
+            "
           >
-            <Save className="w-4 h-4" />
-            {isPending ? 'Publication...' : 'Publier les changements'}
+            <Save className="size-4" />
+            {isPending ? t('publishing') : t('publish')}
           </button>
         </div>
       </div>
 
       {publishedSuccess && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          Les surcharges de traduction et champs personnalisés ont été publiés et sont actifs dans l'application.
+        <div className="
+          flex items-center gap-2 rounded-xl border border-emerald-200
+          bg-emerald-50 p-4 text-xs font-semibold text-emerald-900
+        "
+        >
+          <CheckCircle2 className="size-4 text-emerald-600" />
+          {t('published')}
         </div>
       )}
 
       {/* ── 4 Stat Cards Band ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] flex items-center justify-between shadow-2xs">
+      <div className="
+        grid grid-cols-1 gap-4
+        sm:grid-cols-2
+        lg:grid-cols-4
+      "
+      >
+        <div className="
+          flex items-center justify-between rounded-2xl border border-[#E5E7EB]
+          bg-white p-5 shadow-2xs
+        "
+        >
           <div className="space-y-1">
-            <p className="text-xs font-medium text-[#6B7280]">Langues activées</p>
+            <p className="text-xs font-medium text-[#6B7280]">{t('statLanguages')}</p>
             <p className="text-2xl font-bold text-[#111827]">{enabledLanguageCount}</p>
-            <p className="text-[11px] font-semibold text-[#4B6BFB]">{enabledLanguageLabel || 'Aucune langue activée'}</p>
+            <p className="text-[11px] font-semibold text-[#4B6BFB]">{enabledLanguageLabel || t('noLanguage')}</p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-[#F0F4FF] text-[#4B6BFB] flex items-center justify-center">
-            <Globe className="w-5 h-5" />
+          <div className="
+            flex size-10 items-center justify-center rounded-xl bg-[#F0F4FF]
+            text-[#4B6BFB]
+          "
+          >
+            <Globe className="size-5" />
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] flex items-center justify-between shadow-2xs">
+        <div className="
+          flex items-center justify-between rounded-2xl border border-[#E5E7EB]
+          bg-white p-5 shadow-2xs
+        "
+        >
           <div className="space-y-1">
-            <p className="text-xs font-medium text-[#6B7280]">Clés traduites (i18n)</p>
+            <p className="text-xs font-medium text-[#6B7280]">{t('statKeys')}</p>
             <p className="text-2xl font-bold text-[#111827]">{totalKeysCount}</p>
-            <p className="text-[11px] font-semibold text-emerald-600">Dictionnaire système à jour</p>
+            <p className="text-[11px] font-semibold text-emerald-600">{t('statKeysHint')}</p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <Languages className="w-5 h-5" />
+          <div className="
+            flex size-10 items-center justify-center rounded-xl bg-emerald-50
+            text-emerald-600
+          "
+          >
+            <Languages className="size-5" />
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] flex items-center justify-between shadow-2xs">
+        <div className="
+          flex items-center justify-between rounded-2xl border border-[#E5E7EB]
+          bg-white p-5 shadow-2xs
+        "
+        >
           <div className="space-y-1">
-            <p className="text-xs font-medium text-[#6B7280]">Champs personnalisés</p>
+            <p className="text-xs font-medium text-[#6B7280]">{t('statFields')}</p>
             <p className="text-2xl font-bold text-[#111827]">{fields.length}</p>
-            <p className="text-[11px] font-semibold text-purple-600">Attributs Élève/Parent/Staff</p>
+            <p className="text-[11px] font-semibold text-purple-600">{t('statFieldsHint')}</p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-            <Sliders className="w-5 h-5" />
+          <div className="
+            flex size-10 items-center justify-center rounded-xl bg-purple-50
+            text-purple-600
+          "
+          >
+            <Sliders className="size-5" />
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] flex items-center justify-between shadow-2xs">
+        <div className="
+          flex items-center justify-between rounded-2xl border border-[#E5E7EB]
+          bg-white p-5 shadow-2xs
+        "
+        >
           <div className="space-y-1">
-            <p className="text-xs font-medium text-[#6B7280]">À revoir / À valider</p>
+            <p className="text-xs font-medium text-[#6B7280]">{t('statReview')}</p>
             <p className="text-2xl font-bold text-[#111827]">{reviewPendingCount}</p>
             <p className="text-[11px] font-semibold text-amber-600">
-              {reviewPendingCount > 0 ? 'Clés en attente de relecture' : 'Toutes les clés sont à jour'}
+              {reviewPendingCount > 0 ? t('reviewPending') : t('reviewNone')}
             </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-            <AlertTriangle className="w-5 h-5" />
+          <div className="
+            flex size-10 items-center justify-center rounded-xl bg-amber-50
+            text-amber-600
+          "
+          >
+            <AlertTriangle className="size-5" />
           </div>
         </div>
       </div>
 
       {/* ── Language Coverage Progress Card ── */}
-      <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 space-y-4 shadow-2xs">
-        <div className="flex items-center justify-between border-b border-[#F3F4F6] pb-3">
+      <div className="
+        space-y-4 rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-2xs
+      "
+      >
+        <div className="
+          flex items-center justify-between border-b border-[#F3F4F6] pb-3
+        "
+        >
           <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4 text-[#4B6BFB]" />
-            <h3 className="text-sm font-semibold text-[#111827]">Couverture Linguistique des Libellés</h3>
+            <Globe className="size-4 text-[#4B6BFB]" />
+            <h3 className="text-sm font-semibold text-[#111827]">{t('coverageTitle')}</h3>
           </div>
-          <span className="text-xs text-[#6B7280]">Dictionnaire multilingue complet</span>
+          <span className="text-xs text-[#6B7280]">{t('coverageHint')}</span>
         </div>
 
-        {initialCoverage.length === 0 ? (
-          <div className="p-8 text-center">
-            <p className="text-sm font-semibold text-[#111827]">Aucune clé de traduction enregistrée</p>
-            <p className="text-xs text-[#6B7280] mt-1">
-              La couverture linguistique apparaîtra dès que le dictionnaire contient des clés.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {initialCoverage.map(lang => (
-              <div key={lang.code} className="p-4 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold">
-                  <span className="flex items-center gap-2 text-[#111827]">
-                    <span className="text-base">{lang.flag}</span>
-                    {lang.name}
-                  </span>
-                  <span className="text-[#4B6BFB]">{lang.coverage}%</span>
-                </div>
-                <div className="w-full bg-[#E5E7EB] rounded-full h-2 overflow-hidden">
-                  <div
-                    className="bg-[#4B6BFB] h-full rounded-full transition-all duration-500"
-                    style={{ width: `${lang.coverage}%` }}
-                  />
-                </div>
-                <p className="text-[11px] text-[#6B7280] font-medium text-right">
-                  {lang.count} / {lang.total} clés traduites
+        {initialCoverage.length === 0
+          ? (
+              <div className="p-8 text-center">
+                <p className="text-sm font-semibold text-[#111827]">{t('coverageEmpty')}</p>
+                <p className="mt-1 text-xs text-[#6B7280]">
+                  {t('coverageEmptyHint')}
                 </p>
               </div>
-            ))}
-          </div>
-        )}
+            )
+          : (
+              <div className="
+                grid grid-cols-1 gap-6
+                sm:grid-cols-3
+              "
+              >
+                {initialCoverage.map(lang => (
+                  <div
+                    key={lang.code}
+                    className="
+                      space-y-2 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB]
+                      p-4
+                    "
+                  >
+                    <div className="
+                      flex items-center justify-between text-xs font-bold
+                    "
+                    >
+                      <span className="flex items-center gap-2 text-[#111827]">
+                        <span className="text-base">{lang.flag}</span>
+                        {lang.name}
+                      </span>
+                      <span className="text-[#4B6BFB]">
+                        {lang.coverage}
+                        %
+                      </span>
+                    </div>
+                    <div className="
+                      h-2 w-full overflow-hidden rounded-full bg-[#E5E7EB]
+                    "
+                    >
+                      <div
+                        className="
+                          h-full rounded-full bg-[#4B6BFB] transition-all
+                          duration-500
+                        "
+                        style={{ width: `${lang.coverage}%` }}
+                      />
+                    </div>
+                    <p className="
+                      text-right text-[11px] font-medium text-[#6B7280]
+                    "
+                    >
+                      {t('keysTranslated', { count: lang.count, total: lang.total })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
       </div>
 
       {/* ── Main Two-Section Layout ── */}
       <div className="flex flex-col gap-6">
 
         {/* ── Section 1: i18n Key Dictionary & Inline Editor ── */}
-        <div className="bg-white border border-[#E5E7EB] rounded-2xl overflow-hidden shadow-2xs space-y-4 p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F3F4F6] pb-4">
+        <div className="
+          space-y-4 overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white
+          p-6 shadow-2xs
+        "
+        >
+          <div className="
+            flex flex-col justify-between gap-4 border-b border-[#F3F4F6] pb-4
+            sm:flex-row sm:items-center
+          "
+          >
             <div className="flex items-center gap-2">
-              <Languages className="w-4 h-4 text-[#4B6BFB]" />
-              <h2 className="text-sm font-semibold text-[#111827]">Dictionnaire des Libellés Système (Surcharges i18n)</h2>
+              <Languages className="size-4 text-[#4B6BFB]" />
+              <h2 className="text-sm font-semibold text-[#111827]">{t('dictionaryTitle')}</h2>
             </div>
 
             {/* Search Input */}
-            <div className="relative w-full sm:w-72">
-              <Search className="w-4 h-4 text-[#9CA3AF] absolute left-3 top-2.5" />
+            <div className="
+              relative w-full
+              sm:w-72
+            "
+            >
+              <Search className="absolute top-2.5 left-3 size-4 text-[#9CA3AF]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Rechercher une clé ou un libellé..."
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl text-[#111827] outline-none"
+                placeholder={t('searchKey')}
+                className="
+                  w-full rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] py-1.5
+                  pr-3 pl-9 text-xs text-[#111827] outline-none
+                "
               />
             </div>
           </div>
@@ -264,58 +395,88 @@ export function TranslationsCustomFieldsClient({
           {/* i18n Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#F9FAFB] text-[#6B7280] font-semibold border-b border-[#E5E7EB]">
+              <thead className="
+                border-b border-[#E5E7EB] bg-[#F9FAFB] font-semibold
+                text-[#6B7280]
+              "
+              >
                 <tr>
-                  <th className="py-3 px-4">Clé i18n / Module</th>
-                  <th className="py-3 px-4">Français 🇫🇷</th>
-                  <th className="py-3 px-4">Arabe 🇲🇦 (RTL)</th>
-                  <th className="py-3 px-4">Anglais 🇬🇧</th>
-                  <th className="py-3 px-4 text-center">Statut</th>
+                  <th className="px-4 py-3">{t('colKey')}</th>
+                  <th className="px-4 py-3">{t('colFr')}</th>
+                  <th className="px-4 py-3">{t('colAr')}</th>
+                  <th className="px-4 py-3">{t('colEn')}</th>
+                  <th className="px-4 py-3 text-center">{t('colStatus')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#F3F4F6] font-medium text-[#374151]">
+              <tbody className="
+                divide-y divide-[#F3F4F6] font-medium text-[#374151]
+              "
+              >
                 {filteredKeys.map(k => (
                   <tr key={k.id} className="hover:bg-[#F9FAFB]">
-                    <td className="py-3.5 px-4">
-                      <p className="font-mono text-[11px] font-bold text-[#4B6BFB]">{k.key}</p>
-                      <span className="text-[10px] text-[#6B7280] bg-[#F3F4F6] px-1.5 py-0.5 rounded font-semibold">
+                    <td className="px-4 py-3.5">
+                      <p className="
+                        font-mono text-[11px] font-bold text-[#4B6BFB]
+                      "
+                      >
+                        {k.key}
+                      </p>
+                      <span className="
+                        rounded-sm bg-[#F3F4F6] px-1.5 py-0.5 text-[10px]
+                        font-semibold text-[#6B7280]
+                      "
+                      >
                         {k.module}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="px-4 py-3.5">
                       <input
                         type="text"
                         value={k.fr}
                         onChange={e => handleKeyChange(k.id, 'fr', e.target.value)}
-                        className="w-full px-2 py-1 bg-white border border-[#E5E7EB] rounded-lg text-xs font-semibold text-[#111827]"
+                        className="
+                          w-full rounded-lg border border-[#E5E7EB] bg-white
+                          px-2 py-1 text-xs font-semibold text-[#111827]
+                        "
                       />
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="px-4 py-3.5">
                       <input
                         type="text"
                         dir="rtl"
                         value={k.ar}
                         onChange={e => handleKeyChange(k.id, 'ar', e.target.value)}
-                        className="w-full px-2 py-1 bg-white border border-[#E5E7EB] rounded-lg text-xs font-semibold text-[#111827] text-right font-serif"
+                        className="
+                          w-full rounded-lg border border-[#E5E7EB] bg-white
+                          px-2 py-1 text-right font-serif text-xs font-semibold
+                          text-[#111827]
+                        "
                       />
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="px-4 py-3.5">
                       <input
                         type="text"
                         value={k.en}
                         onChange={e => handleKeyChange(k.id, 'en', e.target.value)}
-                        className="w-full px-2 py-1 bg-white border border-[#E5E7EB] rounded-lg text-xs text-[#374151]"
+                        className="
+                          w-full rounded-lg border border-[#E5E7EB] bg-white
+                          px-2 py-1 text-xs text-[#374151]
+                        "
                       />
                     </td>
-                    <td className="py-3.5 px-4 text-center">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        k.status === 'translated'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : k.status === 'overridden'
-                          ? 'bg-blue-50 text-blue-700'
-                          : 'bg-amber-50 text-amber-700'
-                      }`}>
-                        {k.status === 'translated' ? 'Traduit' : k.status === 'overridden' ? 'Surchargé' : 'À revoir'}
+                    <td className="px-4 py-3.5 text-center">
+                      <span className={`
+                        rounded-full px-2 py-0.5 text-[10px] font-bold
+                        ${
+                  k.status === 'translated'
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : k.status === 'overridden'
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'bg-amber-50 text-amber-700'
+                  }
+                      `}
+                      >
+                        {k.status === 'translated' ? t('statusTranslated') : k.status === 'overridden' ? t('statusOverridden') : t('statusReview')}
                       </span>
                     </td>
                   </tr>
@@ -326,67 +487,113 @@ export function TranslationsCustomFieldsClient({
         </div>
 
         {/* ── Section 2: 8-Column Dynamic Custom Fields Table ── */}
-        <div className="bg-white border border-[#E5E7EB] rounded-2xl overflow-hidden shadow-2xs space-y-4 p-6">
-          <div className="flex items-center justify-between border-b border-[#F3F4F6] pb-4">
+        <div className="
+          space-y-4 overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white
+          p-6 shadow-2xs
+        "
+        >
+          <div className="
+            flex items-center justify-between border-b border-[#F3F4F6] pb-4
+          "
+          >
             <div className="flex items-center gap-2">
-              <Sliders className="w-4 h-4 text-[#4B6BFB]" />
-              <h2 className="text-sm font-semibold text-[#111827]">Attributs &amp; Champs Personnalisés (Custom Fields)</h2>
+              <Sliders className="size-4 text-[#4B6BFB]" />
+              <h2 className="text-sm font-semibold text-[#111827]">{t('fieldsTitle')}</h2>
             </div>
-            <span className="text-xs text-[#6B7280]">{fields.length} champs définis</span>
+            <span className="text-xs text-[#6B7280]">{t('fieldsCount', { count: fields.length })}</span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#F9FAFB] text-[#6B7280] font-semibold border-b border-[#E5E7EB]">
+              <thead className="
+                border-b border-[#E5E7EB] bg-[#F9FAFB] font-semibold
+                text-[#6B7280]
+              "
+              >
                 <tr>
-                  <th className="py-3 px-4">Nom du champ</th>
-                  <th className="py-3 px-4">Module / Entité</th>
-                  <th className="py-3 px-4">Type de donnée</th>
-                  <th className="py-3 px-4">Visibilité</th>
-                  <th className="py-3 px-4 text-center">Requis</th>
-                  <th className="py-3 px-4">Valeur par défaut</th>
-                  <th className="py-3 px-4">Statut</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="px-4 py-3">{t('colFieldName')}</th>
+                  <th className="px-4 py-3">{t('colModule')}</th>
+                  <th className="px-4 py-3">{t('colType')}</th>
+                  <th className="px-4 py-3">{t('colVisibility')}</th>
+                  <th className="px-4 py-3 text-center">{t('colRequired')}</th>
+                  <th className="px-4 py-3">{t('colDefault')}</th>
+                  <th className="px-4 py-3">{t('colStatus')}</th>
+                  <th className="px-4 py-3 text-right">{t('colActions')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#F3F4F6] font-medium text-[#374151]">
+              <tbody className="
+                divide-y divide-[#F3F4F6] font-medium text-[#374151]
+              "
+              >
                 {fields.map(f => (
                   <tr key={f.id} className="hover:bg-[#F9FAFB]">
-                    <td className="py-3.5 px-4 font-bold text-[#111827]">{f.name}</td>
-                    <td className="py-3.5 px-4">
-                      <span className="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-[#F3F4F6] text-[#374151]">
-                        {f.module}
+                    <td className="px-4 py-3.5 font-bold text-[#111827]">{f.name}</td>
+                    <td className="px-4 py-3.5">
+                      <span className="
+                        rounded-md bg-[#F3F4F6] px-2 py-0.5 text-[10px]
+                        font-semibold text-[#374151]
+                      "
+                      >
+                        {labelOf('modules', MODULE_KEYS, f.module)}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-[#6B7280] font-mono text-[11px]">{f.type}</td>
-                    <td className="py-3.5 px-4 text-[#374151]">{f.visibility}</td>
-                    <td className="py-3.5 px-4 text-center">
-                      {f.required ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700">
-                          Requis
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-500">
-                          Optionnel
-                        </span>
-                      )}
+                    <td className="
+                      px-4 py-3.5 font-mono text-[11px] text-[#6B7280]
+                    "
+                    >
+                      {labelOf('types', TYPE_KEYS, f.type)}
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-[11px] text-[#6B7280]">{f.defaultValue}</td>
-                    <td className="py-3.5 px-4">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        Actif
+                    <td className="px-4 py-3.5 text-[#374151]">{labelOf('visibility', VISIBILITY_KEYS, f.visibility)}</td>
+                    <td className="px-4 py-3.5 text-center">
+                      {f.required
+                        ? (
+                            <span className="
+                              rounded-sm bg-amber-50 px-2 py-0.5 text-[10px]
+                              font-bold text-amber-700
+                            "
+                            >
+                              {t('required')}
+                            </span>
+                          )
+                        : (
+                            <span className="
+                              rounded-sm bg-slate-100 px-2 py-0.5 text-[10px]
+                              font-medium text-slate-500
+                            "
+                            >
+                              {t('optional')}
+                            </span>
+                          )}
+                    </td>
+                    <td className="
+                      px-4 py-3.5 font-mono text-[11px] text-[#6B7280]
+                    "
+                    >
+                      {f.defaultValue}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span className="
+                        inline-flex items-center gap-1 rounded-full
+                        bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold
+                        text-emerald-700
+                      "
+                      >
+                        <span className="size-1.5 rounded-full bg-emerald-500" />
+                        {t('active')}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-right">
+                    <td className="px-4 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button
                           type="button"
                           onClick={() => handleDeleteField(f.id)}
-                          className="p-1 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
-                          title="Supprimer le champ"
+                          className="
+                            rounded-lg p-1 text-red-600 transition-colors
+                            hover:bg-red-50
+                          "
+                          title={t('deleteField')}
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="size-3.5" />
                         </button>
                       </div>
                     </td>
@@ -401,12 +608,26 @@ export function TranslationsCustomFieldsClient({
 
       {/* ── Modal: Ajouter un Champ Personnalisé ── */}
       {addFieldModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl border border-[#E5E7EB]">
+        <div className="
+          fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4
+          backdrop-blur-xs
+        "
+        >
+          <div className="
+            w-full max-w-md space-y-4 rounded-2xl border border-[#E5E7EB]
+            bg-white p-6 shadow-xl
+          "
+          >
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-[#111827]">Créer un nouveau champ personnalisé</h3>
-              <button onClick={() => setAddFieldModalOpen(false)} className="text-[#9CA3AF] hover:text-[#111827]">
-                <X className="w-5 h-5" />
+              <h3 className="text-base font-bold text-[#111827]">{t('createFieldTitle')}</h3>
+              <button
+                onClick={() => setAddFieldModalOpen(false)}
+                className="
+                  text-[#9CA3AF]
+                  hover:text-[#111827]
+                "
+              >
+                <X className="size-5" />
               </button>
             </div>
 
@@ -416,7 +637,7 @@ export function TranslationsCustomFieldsClient({
                 const fd = new FormData(e.currentTarget);
                 const newF: CustomFieldItem = {
                   id: `cf-${Date.now()}`,
-                  name: String(fd.get('name') || 'Nouveau Champ'),
+                  name: String(fd.get('name') || t('newField')),
                   module: String(fd.get('module') || 'Élève'),
                   type: String(fd.get('type') || 'Texte'),
                   visibility: String(fd.get('visibility') || 'Profil public'),
@@ -430,67 +651,101 @@ export function TranslationsCustomFieldsClient({
               className="space-y-4 text-xs"
             >
               <div className="flex flex-col gap-1.5">
-                <label className="font-semibold text-[#374151]">Nom du champ *</label>
+                <label className="font-semibold text-[#374151]">{t('fieldNameRequired')}</label>
                 <input
                   type="text"
                   name="name"
                   required
-                  placeholder="ex: Identifiant CIIE"
-                  className="px-3 py-2 bg-white border border-[#E5E7EB] rounded-xl text-[#111827] outline-none"
+                  placeholder={t('fieldNamePlaceholder')}
+                  className="
+                    rounded-xl border border-[#E5E7EB] bg-white px-3 py-2
+                    text-[#111827] outline-none
+                  "
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
-                  <label className="font-semibold text-[#374151]">Module / Entité *</label>
-                  <select name="module" className="px-3 py-2 bg-white border border-[#E5E7EB] rounded-xl text-[#111827] outline-none">
-                    <option value="Élève">Élève</option>
-                    <option value="Parent">Parent / Responsable</option>
-                    <option value="Employé">Employé / Staff</option>
-                    <option value="Inscription">Inscription</option>
+                  <label className="font-semibold text-[#374151]">{t('moduleRequired')}</label>
+                  <select
+                    name="module"
+                    className="
+                      rounded-xl border border-[#E5E7EB] bg-white px-3 py-2
+                      text-[#111827] outline-none
+                    "
+                  >
+                    {Object.entries(MODULE_KEYS).map(([value, key]) => (
+                      <option key={value} value={value}>{t(`modules.${key}` as 'modules.student')}</option>
+                    ))}
                   </select>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="font-semibold text-[#374151]">Type de donnée *</label>
-                  <select name="type" className="px-3 py-2 bg-white border border-[#E5E7EB] rounded-xl text-[#111827] outline-none">
-                    <option value="Texte">Texte court</option>
-                    <option value="Sélecteur">Sélecteur (Liste)</option>
-                    <option value="Nombre">Nombre</option>
-                    <option value="Date">Date</option>
-                    <option value="Fichier">Fichier PDF / Img</option>
+                  <label className="font-semibold text-[#374151]">{t('typeRequired')}</label>
+                  <select
+                    name="type"
+                    className="
+                      rounded-xl border border-[#E5E7EB] bg-white px-3 py-2
+                      text-[#111827] outline-none
+                    "
+                  >
+                    {Object.entries(TYPE_KEYS).map(([value, key]) => (
+                      <option key={value} value={value}>{t(`types.${key}` as 'types.text')}</option>
+                    ))}
                   </select>
                 </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="font-semibold text-[#374151]">Visibilité *</label>
-                <select name="visibility" className="px-3 py-2 bg-white border border-[#E5E7EB] rounded-xl text-[#111827] outline-none">
-                  <option value="Formulaire public">Formulaire public d'inscription</option>
-                  <option value="Profil médical">Profil médical (Confidentiel)</option>
-                  <option value="Interne admin">Interne administration uniquement</option>
-                  <option value="Dossier académique">Dossier académique</option>
+                <label className="font-semibold text-[#374151]">{t('visibilityRequired')}</label>
+                <select
+                  name="visibility"
+                  className="
+                    rounded-xl border border-[#E5E7EB] bg-white px-3 py-2
+                    text-[#111827] outline-none
+                  "
+                >
+                  {(['Formulaire public', 'Profil médical', 'Interne admin', 'Dossier académique'] as const).map(value => (
+                    <option key={value} value={value}>{t(`visibility.${VISIBILITY_KEYS[value]}` as 'visibility.internal')}</option>
+                  ))}
                 </select>
               </div>
 
               <div className="flex items-center gap-2 pt-1">
-                <input type="checkbox" name="required" id="req-cb" className="w-4 h-4 text-[#4B6BFB] rounded border-[#E5E7EB]" />
-                <label htmlFor="req-cb" className="font-semibold text-[#374151] cursor-pointer">Champ obligatoire</label>
+                <input
+                  type="checkbox"
+                  name="required"
+                  id="req-cb"
+                  className="size-4 rounded-sm border-[#E5E7EB] text-[#4B6BFB]"
+                />
+                <label
+                  htmlFor="req-cb"
+                  className="cursor-pointer font-semibold text-[#374151]"
+                >
+                  {t('requiredField')}
+                </label>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setAddFieldModalOpen(false)}
-                  className="px-4 py-2 font-semibold text-[#6B7280] hover:bg-[#F9FAFB] rounded-xl"
+                  className="
+                    rounded-xl px-4 py-2 font-semibold text-[#6B7280]
+                    hover:bg-[#F9FAFB]
+                  "
                 >
-                  Annuler
+                  {t('cancel')}
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 font-semibold text-white bg-[#4B6BFB] hover:bg-[#3B5BDB] rounded-xl shadow-xs"
+                  className="
+                    rounded-xl bg-[#4B6BFB] px-4 py-2 font-semibold text-white
+                    shadow-xs
+                    hover:bg-[#3B5BDB]
+                  "
                 >
-                  Enregistrer le champ
+                  {t('saveField')}
                 </button>
               </div>
             </form>

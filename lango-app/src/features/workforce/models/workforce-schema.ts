@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 // Payroll & Workforce Operations add-on schema.
 //
 // Follows the feature-schema pattern used by hr-schema: shared types (tenants,
@@ -22,6 +23,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
@@ -61,7 +63,7 @@ export const payrollRegulationPacks = pgTable('payroll_regulation_packs', {
   createdById: text('created_by_id'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'payroll_regulation_packs_tenant_id_tenants_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.validatedById], foreignColumns: [user.id], name: 'payroll_regulation_packs_validated_by_id_user_id_fk' }).onDelete('set null'),
   foreignKey({ columns: [table.createdById], foreignColumns: [user.id], name: 'payroll_regulation_packs_created_by_id_user_id_fk' }).onDelete('set null'),
@@ -86,7 +88,7 @@ export const payrollRegulationVersions = pgTable('payroll_regulation_versions', 
   publishedAt: timestamp('published_at', { mode: 'string' }),
   publishedById: text('published_by_id'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'payroll_regulation_versions_tenant_id_tenants_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.packId], foreignColumns: [payrollRegulationPacks.id], name: 'payroll_regulation_versions_pack_id_pack_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.publishedById], foreignColumns: [user.id], name: 'payroll_regulation_versions_published_by_id_user_id_fk' }).onDelete('set null'),
@@ -106,7 +108,7 @@ export const payrollSettingsVersions = pgTable('payroll_settings_versions', {
   publishedAt: timestamp('published_at', { mode: 'string' }),
   publishedById: text('published_by_id'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'payroll_settings_versions_tenant_id_tenants_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.publishedById], foreignColumns: [user.id], name: 'payroll_settings_versions_published_by_id_user_id_fk' }).onDelete('set null'),
   unique('payroll_settings_versions_tenant_version_unique').on(table.tenantId, table.versionNo),
@@ -142,7 +144,7 @@ export const salaryComponentVersions = pgTable('salary_component_versions', {
   publishedAt: timestamp('published_at', { mode: 'string' }),
   publishedById: text('published_by_id'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'salary_component_versions_tenant_id_tenants_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.componentId], foreignColumns: [salaryComponents.id], name: 'salary_component_versions_component_id_components_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.publishedById], foreignColumns: [user.id], name: 'salary_component_versions_published_by_id_user_id_fk' }).onDelete('set null'),
@@ -161,7 +163,7 @@ export const salaryStructureVersions = pgTable('salary_structure_versions', {
   publishedAt: timestamp('published_at', { mode: 'string' }),
   publishedById: text('published_by_id'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'salary_structure_versions_tenant_id_tenants_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.templateId], foreignColumns: [salaryTemplates.id], name: 'salary_structure_versions_template_id_templates_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.publishedById], foreignColumns: [user.id], name: 'salary_structure_versions_published_by_id_user_id_fk' }).onDelete('set null'),
@@ -176,7 +178,7 @@ export const salaryStructureComponents = pgTable('salary_structure_components', 
   componentVersionId: uuid('component_version_id').notNull(),
   sortOrder: integer('sort_order').default(0).notNull(),
   baseValue: money('base_value'), // optional override of the component's fixed value for this structure
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'salary_structure_components_tenant_id_tenants_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.structureVersionId], foreignColumns: [salaryStructureVersions.id], name: 'salary_structure_components_structure_version_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.componentId], foreignColumns: [salaryComponents.id], name: 'salary_structure_components_component_id_fk' }).onDelete('cascade'),
@@ -206,7 +208,7 @@ export const employeePayrollProfiles = pgTable('employee_payroll_profiles', {
   status: varchar('status', { length: 20 }).default('active').notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'employee_payroll_profiles_tenant_id_tenants_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.employeeId], foreignColumns: [employeeProfiles.id], name: 'employee_payroll_profiles_employee_id_profiles_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.userId], foreignColumns: [user.id], name: 'employee_payroll_profiles_user_id_user_id_fk' }).onDelete('set null'),
@@ -243,7 +245,7 @@ export const payrollAdjustments = pgTable('payroll_adjustments', {
   approvedAt: timestamp('approved_at', { mode: 'string' }),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'payroll_adjustments_tenant_id_tenants_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.employeeId], foreignColumns: [employeeProfiles.id], name: 'payroll_adjustments_employee_id_profiles_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.userId], foreignColumns: [user.id], name: 'payroll_adjustments_user_id_user_id_fk' }).onDelete('cascade'),
@@ -274,7 +276,7 @@ export const payrollResultLines = pgTable('payroll_result_lines', {
   formulaVersion: varchar('formula_version', { length: 40 }),
   sortOrder: integer('sort_order').default(0).notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'payroll_result_lines_tenant_id_tenants_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.runId], foreignColumns: [payrollPeriods.id], name: 'payroll_result_lines_run_id_periods_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.userId], foreignColumns: [user.id], name: 'payroll_result_lines_user_id_user_id_fk' }).onDelete('cascade'),
@@ -295,7 +297,7 @@ export const payrollCalculationTraces = pgTable('payroll_calculation_traces', {
   trace: jsonb('trace').notNull(),
   inputSnapshot: jsonb('input_snapshot').notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'payroll_calculation_traces_tenant_id_tenants_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.runId], foreignColumns: [payrollPeriods.id], name: 'payroll_calculation_traces_run_id_periods_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.userId], foreignColumns: [user.id], name: 'payroll_calculation_traces_user_id_user_id_fk' }).onDelete('cascade'),
@@ -323,7 +325,7 @@ export const payrollPostings = pgTable('payroll_postings', {
   postedAt: timestamp('posted_at', { mode: 'string' }),
   failureReason: text('failure_reason'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'payroll_postings_tenant_id_tenants_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.runId], foreignColumns: [payrollPeriods.id], name: 'payroll_postings_run_id_periods_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.postedById], foreignColumns: [user.id], name: 'payroll_postings_posted_by_id_user_id_fk' }).onDelete('set null'),
@@ -339,7 +341,7 @@ export const payrollPostingLines = pgTable('payroll_posting_lines', {
   creditAmount: money('credit_amount').notNull(),
   memo: text('memo'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'payroll_posting_lines_tenant_id_tenants_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.postingId], foreignColumns: [payrollPostings.id], name: 'payroll_posting_lines_posting_id_postings_id_fk' }).onDelete('cascade'),
 ]);
@@ -368,7 +370,7 @@ export const salaryPaymentBatches = pgTable('salary_payment_batches', {
   reversedAt: timestamp('reversed_at', { mode: 'string' }),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'salary_payment_batches_tenant_id_tenants_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.runId], foreignColumns: [payrollPeriods.id], name: 'salary_payment_batches_run_id_periods_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.preparedById], foreignColumns: [user.id], name: 'salary_payment_batches_prepared_by_id_user_id_fk' }).onDelete('restrict'),
@@ -391,13 +393,15 @@ export const salaryPayments = pgTable('salary_payments', {
   paidById: text('paid_by_id'),
   paidAt: timestamp('paid_at', { mode: 'string' }),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'salary_payments_tenant_id_tenants_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.batchId], foreignColumns: [salaryPaymentBatches.id], name: 'salary_payments_batch_id_batches_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.runLineId], foreignColumns: [payrollRunLines.id], name: 'salary_payments_run_line_id_run_lines_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.userId], foreignColumns: [user.id], name: 'salary_payments_user_id_user_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.paidById], foreignColumns: [user.id], name: 'salary_payments_paid_by_id_user_id_fk' }).onDelete('set null'),
-  unique('salary_payments_tenant_run_line_unique').on(table.tenantId, table.runLineId),
+  // One live payment per payslip line. Failed and reversed payments stay as
+  // history and must not block a retry (migration 0159).
+  uniqueIndex('salary_payments_tenant_run_line_active_unique').on(table.tenantId, table.runLineId).where(sql`${table.status} in ('pending', 'paid')`),
 ]);
 
 // ---------------------------------------------------------------------------
@@ -421,7 +425,7 @@ export const employeeLeavePolicies = pgTable('employee_leave_policies', {
   status: varchar('status', { length: 20 }).default('active').notNull(), // active | archived
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'employee_leave_policies_tenant_id_tenants_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.categoryId], foreignColumns: [leaveCategories.id], name: 'employee_leave_policies_category_id_categories_id_fk' }).onDelete('restrict'),
 ]);
@@ -435,7 +439,7 @@ export const employeeLeavePolicyAssignments = pgTable('employee_leave_policy_ass
   effectiveTo: date('effective_to'),
   status: varchar('status', { length: 20 }).default('active').notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'employee_leave_policy_assignments_tenant_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.employeeId], foreignColumns: [employeeProfiles.id], name: 'employee_leave_policy_assignments_employee_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.policyId], foreignColumns: [employeeLeavePolicies.id], name: 'employee_leave_policy_assignments_policy_fk' }).onDelete('cascade'),
@@ -458,7 +462,7 @@ export const employeeLeaveBalanceTransactions = pgTable('employee_leave_balance_
   createdById: text('created_by_id'),
   notes: text('notes'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'employee_leave_balance_tx_tenant_id_tenants_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.employeeId], foreignColumns: [employeeProfiles.id], name: 'employee_leave_balance_tx_employee_id_profiles_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.userId], foreignColumns: [user.id], name: 'employee_leave_balance_tx_user_id_user_id_fk' }).onDelete('set null'),
@@ -484,7 +488,7 @@ export const salaryAdvancePolicies = pgTable('salary_advance_policies', {
   status: varchar('status', { length: 20 }).default('active').notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'salary_advance_policies_tenant_id_tenants_id_fk' }).onDelete('cascade'),
 ]);
 
@@ -501,7 +505,7 @@ export const salaryAdvanceRepaymentSchedules = pgTable('salary_advance_repayment
   allocatedAt: timestamp('allocated_at', { mode: 'string' }),
   notes: text('notes'),
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'salary_advance_repay_tenant_id_tenants_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.advanceId], foreignColumns: [salaryAdvances.id], name: 'salary_advance_repay_advance_id_advances_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.payrollRunLineId], foreignColumns: [payrollRunLines.id], name: 'salary_advance_repay_run_line_id_run_lines_id_fk' }).onDelete('set null'),
@@ -527,7 +531,7 @@ export const awardDefinitions = pgTable('award_definitions', {
   status: varchar('status', { length: 20 }).default('active').notNull(), // active | archived
   createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, table => [
   foreignKey({ columns: [table.tenantId], foreignColumns: [tenants.id], name: 'award_definitions_tenant_id_tenants_id_fk' }).onDelete('cascade'),
   foreignKey({ columns: [table.monetaryComponentId], foreignColumns: [salaryComponents.id], name: 'award_definitions_monetary_component_id_components_fk' }).onDelete('set null'),
 ]);

@@ -17,6 +17,7 @@ import {
   Send, Ban, RotateCcw, Layers,
 } from 'lucide-react';
 import { exportToCsv } from '@/libs/csv-export';
+import { printInvoiceDocument } from './finance-document-print';
 
 type InvoiceRow = {
   id: string;
@@ -239,12 +240,12 @@ export function InvoicesFinanceView({ locale = 'fr' }: { locale?: string }) {
           <p className="text-xs text-slate-500 mt-1">{tFinance('invoicesSubtitle', { count: invoices.length })}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
-          <Link href={`/${locale}/dashboard/finance/allocations`}>
-            <Button variant="outline" size="sm" className="h-9 text-xs rounded-xl border-slate-200 bg-white gap-1.5 hover:border-[#0066FF] hover:text-[#0066FF]">
+          <Button asChild variant="outline" size="sm" className="h-9 text-xs rounded-xl border-slate-200 bg-white gap-1.5 hover:border-[#0066FF] hover:text-[#0066FF]">
+            <Link href={`/${locale}/dashboard/finance/allocations`}>
               <Layers className="w-3.5 h-3.5" />
               {tFinance('batchBilling')}
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setCreateOpen(true)} className="h-9 text-xs rounded-xl border-slate-200 bg-white gap-1.5">
             <Plus className="w-3.5 h-3.5" />
             {tFinance('createInvoice')}
@@ -464,7 +465,14 @@ export function InvoicesFinanceView({ locale = 'fr' }: { locale?: string }) {
                   <RotateCcw className="w-3 h-3" />{tFinance('credit')}
                 </Button>
               )}
-              <Button variant="outline" size="sm" onClick={() => window.print()} className="h-8 text-[11px] rounded-xl border-slate-200 gap-1 ml-auto">
+              <Button variant="outline" size="sm" onClick={() => printInvoiceDocument(detail, {
+                title: tFinance('invoiceDetailTitle'), student: tFinance('student'),
+                date: tCommon('date'), description: tFinance('descriptionCol'),
+                amount: tFinance('amount'), total: tFinance('netTotal'),
+                paid: tFinance('paidAmountLabel'), balance: tFinance('remainingBalanceLabel'),
+                discount: tFinance('discountLabel'), invoiceDate: tFinance('issueDateLabel'),
+                dueDate: tFinance('dueDateLabel'),
+              }, locale)} className="h-8 text-[11px] rounded-xl border-slate-200 gap-1 ml-auto">
                 <Printer className="w-3 h-3" />{tFinance('print')}
               </Button>
             </div>

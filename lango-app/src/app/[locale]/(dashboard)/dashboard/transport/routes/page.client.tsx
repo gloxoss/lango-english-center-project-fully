@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigation, Plus, Search, Filter, Edit2, Trash2, Sun, Moon, Clock, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { nextCode } from '@/libs/next-code';
 
 interface TransportRoute {
   id: string;
@@ -53,7 +54,7 @@ export default function RoutesPage() {
   const openCreateModal = () => {
     setEditingRoute(null);
     setFormData({
-      routeCode: `RT-${Math.floor(100 + Math.random() * 900)}`,
+      routeCode: nextCode('RT', routes.map(r => r.routeCode)),
       routeName: '',
       serviceDirection: 'morning_pickup',
       status: 'active',

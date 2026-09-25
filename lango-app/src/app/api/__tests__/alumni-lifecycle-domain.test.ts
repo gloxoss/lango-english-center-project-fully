@@ -1,7 +1,19 @@
 import { randomUUID } from 'node:crypto';
-import { and, count, eq } from 'drizzle-orm';
+import { and, count, eq, inArray } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import {
+  hostelAllocationEvents,
+  hostelAllocations,
+  hostelBeds,
+  hostelRooms,
+  hostels,
+} from '@/features/hostel/models/hostel-schema';
 import { resolveEffectiveChildren } from '@/features/parent/services/relationship-resolver';
+import {
+  transportRoutes,
+  transportStops,
+  transportStudentAllocations,
+} from '@/features/transport/models/transport-schema';
 import { db } from '@/libs/DB';
 import { transitionStudentToAlumni } from '@/libs/services/alumni-transition';
 import {
@@ -46,6 +58,28 @@ describe('Alumni Lifecycle & Domain Hardening (AL1 - AL15)', () => {
   const relationshipId = randomUUID();
   const invoice1Id = randomUUID();
   const attendance1Id = randomUUID();
+
+  // Entities for hostel & transport allocation lifecycle testing
+  const studentAllocId = randomUUID();
+  const studentTenantBId = randomUUID();
+  const hostelAId = randomUUID();
+  const hostelBId = randomUUID();
+  const roomAId = randomUUID();
+  const roomBId = randomUUID();
+  const bed1Id = randomUUID();
+  const bed2Id = randomUUID();
+  const bedBId = randomUUID();
+  const bedAllocCheckedInId = randomUUID();
+  const bedAllocReservedId = randomUUID();
+  const bedAllocTenantBId = randomUUID();
+  const stop1Id = randomUUID();
+  const stop2Id = randomUUID();
+  const stopB1Id = randomUUID();
+  const stopB2Id = randomUUID();
+  const routeAId = randomUUID();
+  const routeBId = randomUUID();
+  const transportAllocAId = randomUUID();
+  const transportAllocBId = randomUUID();
 
   beforeAll(async () => {
     // 1. Setup tenants & branches
@@ -244,10 +278,139 @@ describe('Alumni Lifecycle & Domain Hardening (AL1 - AL15)', () => {
       canAccessAttendance: true,
       canAccessFinance: true,
     });
+
+    // 9. Setup students with hostel & transport allocations (Tenant A and Tenant B)
+    await db.insert(user).values([
+      {
+        id: studentAllocId,
+        tenantId: tenantA,
+        branchId: branchA,
+        name: 'Allocations Candidate',
+        email: `alloc-${studentAllocId.slice(0, 6)}@test.local`,
+        role: 'student',
+        userStatus: 'active',
+        dateOfBirth: '2006-02-14',
+        matricule: 'MAT-2026-004',
+      },
+      {
+        id: studentTenantBId,
+        tenantId: tenantB,
+        branchId: branchB,
+        name: 'Tenant B Student',
+        email: `tb-${studentTenantBId.slice(0, 6)}@test.local`,
+        role: 'student',
+        userStatus: 'active',
+        dateOfBirth: '2006-03-20',
+        matricule: 'MAT-TB-001',
+      },
+    ]);
+
+    await db.insert(studentPlacements).values({
+      id: randomUUID(),
+      tenantId: tenantA,
+      studentId: studentAllocId,
+      sessionYearId: sessionYearA,
+      classSectionId: classSectionA,
+      isCurrent: true,
+      status: 'enrolled',
+      startDate: '2025-09-01',
+    });
+
+    // Hostels, rooms, beds
+    await db.insert(hostels).values([
+      { id: hostelAId, tenantId: tenantA, code: 'H-A', name: 'Hostel A', genderPolicy: 'mixed' },
+      { id: hostelBId, tenantId: tenantB, code: 'H-B', name: 'Hostel B', genderPolicy: 'mixed' },
+    ]);
+    await db.insert(hostelRooms).values([
+      { id: roomAId, tenantId: tenantA, hostelId: hostelAId, code: 'R-A1' },
+      { id: roomBId, tenantId: tenantB, hostelId: hostelBId, code: 'R-B1' },
+    ]);
+    await db.insert(hostelBeds).values([
+      { id: bed1Id, tenantId: tenantA, roomId: roomAId, code: 'B-1' },
+      { id: bed2Id, tenantId: tenantA, roomId: roomAId, code: 'B-2' },
+      { id: bedBId, tenantId: tenantB, roomId: roomBId, code: 'B-TB' },
+    ]);
+
+    // Hostel allocations (checked_in and reserved for studentAlloc, checked_in for tenantB student)
+    await db.insert(hostelAllocations).values([
+      {
+        id: bedAllocCheckedInId,
+        tenantId: tenantA,
+        studentId: studentAllocId,
+        bedId: bed1Id,
+        state: 'checked_in',
+        effectiveStartDate: '2025-09-01',
+        effectiveEndDate: '2026-01-01',
+        checkedInAt: '2025-09-01T08:00:00Z',
+      },
+      {
+        id: bedAllocReservedId,
+        tenantId: tenantA,
+        studentId: studentAllocId,
+        bedId: bed2Id,
+        state: 'reserved',
+        effectiveStartDate: '2026-01-01',
+        effectiveEndDate: '2026-06-30',
+      },
+      {
+        id: bedAllocTenantBId,
+        tenantId: tenantB,
+        studentId: studentTenantBId,
+        bedId: bedBId,
+        state: 'checked_in',
+        effectiveStartDate: '2025-09-01',
+        effectiveEndDate: '2026-06-30',
+        checkedInAt: '2025-09-01T08:00:00Z',
+      },
+    ]);
+
+    // Transport routes and stops
+    await db.insert(transportStops).values([
+      { id: stop1Id, tenantId: tenantA, stopCode: 'ST-1', stopName: 'Stop 1' },
+      { id: stop2Id, tenantId: tenantA, stopCode: 'ST-2', stopName: 'Stop 2' },
+      { id: stopB1Id, tenantId: tenantB, stopCode: 'ST-B1', stopName: 'Stop B1' },
+      { id: stopB2Id, tenantId: tenantB, stopCode: 'ST-B2', stopName: 'Stop B2' },
+    ]);
+    await db.insert(transportRoutes).values([
+      { id: routeAId, tenantId: tenantA, routeCode: 'RT-A', routeName: 'Route A' },
+      { id: routeBId, tenantId: tenantB, routeCode: 'RT-B', routeName: 'Route B' },
+    ]);
+
+    // Transport student allocations
+    await db.insert(transportStudentAllocations).values([
+      {
+        id: transportAllocAId,
+        tenantId: tenantA,
+        studentId: studentAllocId,
+        routeId: routeAId,
+        pickupStopId: stop1Id,
+        dropoffStopId: stop2Id,
+        effectiveStartDate: '2025-09-01',
+        status: 'active',
+      },
+      {
+        id: transportAllocBId,
+        tenantId: tenantB,
+        studentId: studentTenantBId,
+        routeId: routeBId,
+        pickupStopId: stopB1Id,
+        dropoffStopId: stopB2Id,
+        effectiveStartDate: '2025-09-01',
+        status: 'active',
+      },
+    ]);
   });
 
   afterAll(async () => {
     // Cleanup in reverse dependency order
+    await db.delete(hostelAllocationEvents).where(inArray(hostelAllocationEvents.tenantId, [tenantA, tenantB]));
+    await db.delete(hostelAllocations).where(inArray(hostelAllocations.tenantId, [tenantA, tenantB]));
+    await db.delete(hostelBeds).where(inArray(hostelBeds.tenantId, [tenantA, tenantB]));
+    await db.delete(hostelRooms).where(inArray(hostelRooms.tenantId, [tenantA, tenantB]));
+    await db.delete(hostels).where(inArray(hostels.tenantId, [tenantA, tenantB]));
+    await db.delete(transportStudentAllocations).where(inArray(transportStudentAllocations.tenantId, [tenantA, tenantB]));
+    await db.delete(transportRoutes).where(inArray(transportRoutes.tenantId, [tenantA, tenantB]));
+    await db.delete(transportStops).where(inArray(transportStops.tenantId, [tenantA, tenantB]));
     await db.delete(accountSetupTokens).where(eq(accountSetupTokens.tenantId, tenantA));
     await db.delete(alumniDocuments).where(eq(alumniDocuments.tenantId, tenantA));
     await db.delete(alumniDirectoryConsent).where(eq(alumniDirectoryConsent.tenantId, tenantA));
@@ -258,6 +421,7 @@ describe('Alumni Lifecycle & Domain Hardening (AL1 - AL15)', () => {
     await db.delete(studentPlacements).where(eq(studentPlacements.tenantId, tenantA));
     await db.delete(account).where(and(eq(account.userId, student1Id)));
     await db.delete(user).where(eq(user.tenantId, tenantA));
+    await db.delete(user).where(eq(user.tenantId, tenantB));
     await db.delete(classSections).where(eq(classSections.tenantId, tenantA));
     await db.delete(sections).where(eq(sections.tenantId, tenantA));
     await db.delete(classes).where(eq(classes.tenantId, tenantA));
@@ -516,5 +680,101 @@ describe('Alumni Lifecycle & Domain Hardening (AL1 - AL15)', () => {
       .limit(1);
 
     expect(docTenantB).toBeUndefined();
+  });
+
+  it('AL16: graduation closes active hostel and transport allocations, leaves other tenants untouched, and is idempotent', async () => {
+    // 1. Verify pre-transition state
+    const hostelAllocsBefore = await db
+      .select()
+      .from(hostelAllocations)
+      .where(and(eq(hostelAllocations.tenantId, tenantA), eq(hostelAllocations.studentId, studentAllocId)));
+    expect(hostelAllocsBefore).toHaveLength(2);
+    expect(hostelAllocsBefore.map(a => a.state).sort()).toEqual(['checked_in', 'reserved']);
+
+    const transportAllocsBefore = await db
+      .select()
+      .from(transportStudentAllocations)
+      .where(and(eq(transportStudentAllocations.tenantId, tenantA), eq(transportStudentAllocations.studentId, studentAllocId)));
+    expect(transportAllocsBefore).toHaveLength(1);
+    expect(transportAllocsBefore[0]!.status).toBe('active');
+
+    // 2. Perform transition
+    const res = await transitionStudentToAlumni(
+      db,
+      tenantA,
+      studentAllocId,
+      adminUserId,
+      sessionYearA,
+      { effectiveDate: '2026-06-30' },
+    );
+    expect(res.studentId).toBe(studentAllocId);
+    expect(res.idempotent).toBe(false);
+
+    // 3. Verify hostel allocations transitioned
+    const hostelAllocsAfter = await db
+      .select()
+      .from(hostelAllocations)
+      .where(and(eq(hostelAllocations.tenantId, tenantA), eq(hostelAllocations.studentId, studentAllocId)));
+
+    const checkedInAlloc = hostelAllocsAfter.find(a => a.id === bedAllocCheckedInId);
+    expect(checkedInAlloc).toBeDefined();
+    expect(checkedInAlloc!.state).toBe('checked_out');
+    expect(checkedInAlloc!.checkedOutAt).not.toBeNull();
+
+    const reservedAlloc = hostelAllocsAfter.find(a => a.id === bedAllocReservedId);
+    expect(reservedAlloc).toBeDefined();
+    expect(reservedAlloc!.state).toBe('cancelled');
+
+    // 4. Verify hostel events logged
+    const events = await db
+      .select()
+      .from(hostelAllocationEvents)
+      .where(eq(hostelAllocationEvents.tenantId, tenantA));
+    const studentEventTypes = events
+      .filter(e => e.allocationId === bedAllocCheckedInId || e.allocationId === bedAllocReservedId)
+      .map(e => e.eventType)
+      .sort();
+    expect(studentEventTypes).toEqual(['cancelled', 'checked_out']);
+
+    // 5. Verify transport allocations closed
+    const transportAllocsAfter = await db
+      .select()
+      .from(transportStudentAllocations)
+      .where(and(eq(transportStudentAllocations.tenantId, tenantA), eq(transportStudentAllocations.studentId, studentAllocId)));
+    expect(transportAllocsAfter[0]!.status).toBe('cancelled');
+    expect(transportAllocsAfter[0]!.effectiveEndDate).toBe('2026-06-30');
+
+    // 6. Verify Tenant B allocations remain completely untouched
+    const tenantBHostel = await db
+      .select()
+      .from(hostelAllocations)
+      .where(and(eq(hostelAllocations.tenantId, tenantB), eq(hostelAllocations.studentId, studentTenantBId)));
+    expect(tenantBHostel[0]!.state).toBe('checked_in');
+    expect(tenantBHostel[0]!.checkedOutAt).toBeNull();
+
+    const tenantBTransport = await db
+      .select()
+      .from(transportStudentAllocations)
+      .where(and(eq(transportStudentAllocations.tenantId, tenantB), eq(transportStudentAllocations.studentId, studentTenantBId)));
+    expect(tenantBTransport[0]!.status).toBe('active');
+
+    // 7. Test idempotency (re-run on already graduated student)
+    const resIdempotent = await transitionStudentToAlumni(
+      db,
+      tenantA,
+      studentAllocId,
+      adminUserId,
+      sessionYearA,
+    );
+    expect(resIdempotent.idempotent).toBe(true);
+
+    // Event count didn't increase on idempotent re-run
+    const eventsAfterSecondRun = await db
+      .select()
+      .from(hostelAllocationEvents)
+      .where(eq(hostelAllocationEvents.tenantId, tenantA));
+    const studentEventsAfter = eventsAfterSecondRun
+      .filter(e => e.allocationId === bedAllocCheckedInId || e.allocationId === bedAllocReservedId);
+    expect(studentEventsAfter).toHaveLength(2);
   });
 });

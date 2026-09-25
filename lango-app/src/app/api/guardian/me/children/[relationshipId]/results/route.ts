@@ -1,14 +1,8 @@
-import { and, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { apiErrorResponse } from '@/libs/api/errors';
-import { db } from '@/libs/DB';
-import { classSubjects, subjects } from '@/models/Schema';
 import { requireParentContext } from '@/features/parent/api/guard';
 import { requireRelationship } from '@/features/parent/services/relationship-resolver';
-import {
-  assessmentDefinitions,
-  assessmentOutcomes,
-} from '@/features/assessment/models/assessment-schema';
+import { getPublishedResultsForStudent } from '@/features/assessment/services/published-results';
 
 // GET /api/guardian/me/children/[relationshipId]/results — the child's results,
 // published only. Gate: the relationship must be effective for this guardian
@@ -25,35 +19,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     const { relationshipId } = await params;
     const auth = await requireRelationship(ctx, relationshipId, { academic: true });
 
-    const rows = await db
-      .select({
-        assessmentId: assessmentDefinitions.id,
-        title: assessmentDefinitions.title,
-        type: assessmentDefinitions.type,
-        subjectId: classSubjects.subjectId,
-        subjectName: subjects.name,
-        maximumScore: assessmentDefinitions.maximumScore,
-        rawScore: assessmentOutcomes.rawScore,
-        normalizedScore: assessmentOutcomes.normalizedScore,
-        maximumScoreSnapshot: assessmentOutcomes.maximumScoreSnapshot,
-        grade: assessmentOutcomes.grade,
-        status: assessmentOutcomes.status,
-        gradedAt: assessmentOutcomes.updatedAt,
-      })
-      .from(assessmentOutcomes)
-      .innerJoin(
-        assessmentDefinitions,
-        eq(assessmentOutcomes.assessmentDefinitionId, assessmentDefinitions.id),
-      )
-      .leftJoin(classSubjects, eq(assessmentDefinitions.classSubjectId, classSubjects.id))
-      .leftJoin(subjects, eq(classSubjects.subjectId, subjects.id))
-      .where(and(
-        eq(assessmentOutcomes.tenantId, ctx.tenantId as string),
-        eq(assessmentOutcomes.studentId, auth.studentId),
-        eq(assessmentOutcomes.moderationState, 'published'),
-        inArray(assessmentOutcomes.status, ['graded', 'exempted', 'absent']),
-      ))
-      .orderBy(assessmentOutcomes.updatedAt);
+    const rows = await getPublishedResultsForStudent(ctx.tenantId as string, auth.studentId);
 
     return NextResponse.json({
       success: true,

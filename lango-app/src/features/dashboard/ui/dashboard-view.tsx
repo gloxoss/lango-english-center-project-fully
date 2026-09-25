@@ -23,6 +23,7 @@ interface DashboardViewProps {
 export function DashboardView({ locale, notice }: DashboardViewProps) {
   const t = useTranslations('Dashboard');
   const tCommon = useTranslations('Common');
+  const th = useTranslations('DashboardHome');
 
   const [summary, setSummary] = useState<FullDashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,20 +36,28 @@ export function DashboardView({ locale, notice }: DashboardViewProps) {
     setError(null);
     try {
       const targetBranch = branchIdToFetch ?? selectedBranchId;
-      const url = targetBranch && targetBranch !== 'all'
-        ? `/api/dashboard/summary?branchId=${encodeURIComponent(targetBranch)}`
-        : '/api/dashboard/summary';
+      const params = new URLSearchParams({ locale });
+      if (targetBranch && targetBranch !== 'all') params.set('branchId', targetBranch);
+      const url = `/api/dashboard/summary?${params}`;
 
       const res = await fetch(url);
       if (!res.ok) {
         const errorJson = await res.json().catch(() => ({}));
-        throw new Error(errorJson.error?.message || 'Erreur lors du chargement du tableau de bord.');
+        if (targetBranch && targetBranch !== 'all' && (res.status === 403 || res.status === 404)) {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('schoolos_active_branch_id');
+            window.dispatchEvent(new CustomEvent('schoolos:branch-changed', { detail: { branchId: null } }));
+          }
+          setSelectedBranchId('all');
+          return await loadSummary('all');
+        }
+        throw new Error(errorJson.error?.message || th('loadError'));
       }
       const json = await res.json();
       setSummary(json.data);
     } catch (err: any) {
       console.error('Failed to load dashboard summary', err);
-      setError(err.message || 'Impossible de charger le tableau de bord.');
+      setError(err.message || th('loadFailedTitle'));
     } finally {
       setLoading(false);
     }
@@ -92,7 +101,7 @@ export function DashboardView({ locale, notice }: DashboardViewProps) {
           <AlertCircle className="size-6" />
         </div>
         <h2 className="mt-4 text-base font-extrabold text-slate-900">
-          Impossible de charger le tableau de bord
+          {th('loadFailedTitle')}
         </h2>
         <p className="mt-1 max-w-md text-xs text-slate-600 font-medium">
           {error}
@@ -102,7 +111,7 @@ export function DashboardView({ locale, notice }: DashboardViewProps) {
           className="mt-5 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 active:scale-[0.99]"
         >
           <RefreshCw className="mr-1.5 size-3.5" />
-          Réessayer
+          {th('retry')}
         </Button>
       </div>
     );
@@ -135,7 +144,7 @@ export function DashboardView({ locale, notice }: DashboardViewProps) {
       <header className="flex flex-col gap-3 border-b border-slate-200/80 pb-3.5 sm:pb-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">
-            Tableau de bord
+            {th('title')}
           </h1>
           <p className="mt-1 text-xs font-semibold text-slate-500">
             <span>{institution.name}</span>
@@ -152,12 +161,12 @@ export function DashboardView({ locale, notice }: DashboardViewProps) {
             <div className="flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-3 py-1.5 shadow-2xs">
               <Building2 className="size-3.5 text-slate-400" />
               <select
-                aria-label="Sélectionner une succursale"
+                aria-label={th('selectBranch')}
                 value={selectedBranchId}
                 onChange={e => handleBranchChange(e.target.value)}
                 className="bg-transparent text-xs font-bold text-slate-700 outline-hidden cursor-pointer"
               >
-                <option value="all">Toutes les succursales</option>
+                <option value="all">{th('allBranches')}</option>
                 {institution.availableBranches.map(b => (
                   <option key={b.id} value={b.id}>
                     {b.name}
@@ -174,7 +183,7 @@ export function DashboardView({ locale, notice }: DashboardViewProps) {
             className="rounded-xl border-slate-200/80 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50"
           >
             <RefreshCw className="mr-1.5 size-3 text-slate-400" />
-            Actualiser
+            {th('refresh')}
           </Button>
         </div>
       </header>

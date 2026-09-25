@@ -160,6 +160,7 @@ export async function createPayment(input: CreatePaymentInput): Promise<CreatePa
     const receipt = await createReceipt(tx, {
       tenantId,
       studentId,
+      paymentId: newPayment.id,
       amountCents: totalPaymentCents,
       paymentDate,
       allocations: allocations.map((a) => {

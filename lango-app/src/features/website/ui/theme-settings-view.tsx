@@ -235,15 +235,16 @@ export function ThemeSettingsView() {
                 <div className="p-5 bg-white space-y-3">
                   <h3 style={{ color: theme.colorText }} className="text-base font-extrabold">Bienvenue</h3>
                   <p style={{ color: theme.colorTextSecondary }} className="text-xs">Texte secondaire d&apos;exemple pour visualiser le contraste.</p>
-                  <button
-                    type="button"
+                  {/* Preview only: shows the button colours, so it is not a real, focusable control. */}
+                  <span
+                    aria-hidden="true"
                     style={{ backgroundColor: theme.colorPrimary, borderRadius: `${theme.borderRadius}px` }}
-                    className="text-white text-xs font-bold px-4 py-2 cursor-default"
+                    className="inline-block text-white text-xs font-bold px-4 py-2 cursor-default"
                     onMouseEnter={e => { e.currentTarget.style.backgroundColor = theme.colorButtonHover; }}
                     onMouseLeave={e => { e.currentTarget.style.backgroundColor = theme.colorPrimary; }}
                   >
                     Bouton d&apos;action
-                  </button>
+                  </span>
                 </div>
                 <div style={{ backgroundColor: theme.colorFooterBackground, color: theme.colorFooterText }} className="px-4 py-3 text-xs">
                   {theme.footerAboutText || 'Texte du pied de page...'}

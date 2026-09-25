@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Download, Printer, RefreshCw, Search, User } from 'lucide-react';
 import { exportToCsv } from '@/libs/csv-export';
+import { printStatementDocument } from './finance-document-print';
 
 type StudentResult = { id: string; name: string; email: string | null; matricule: string | null };
 
@@ -32,7 +33,7 @@ type StatementData = {
   transactions: StatementRow[];
 };
 
-export function StatementsFinanceView({ locale: _locale }: { locale?: string }) {
+export function StatementsFinanceView({ locale = 'fr' }: { locale?: string }) {
   const t = useTranslations('Finance');
   const tCommon = useTranslations('Common');
 
@@ -176,7 +177,13 @@ export function StatementsFinanceView({ locale: _locale }: { locale?: string }) 
                 <Button variant="outline" size="sm" onClick={() => exportToCsv(statement.transactions, `releve-${statement.studentName}`)} className="h-8 text-[11px] rounded-xl border-slate-200 gap-1.5">
                   <Download className="w-3.5 h-3.5" />{t('exportCsvBtn')}
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => window.print()} className="h-8 text-[11px] rounded-xl border-slate-200 gap-1.5">
+                <Button variant="outline" size="sm" onClick={() => printStatementDocument(statement, {
+                  title: t('studentStatementsTitle'), student: t('student'), date: tCommon('date'),
+                  description: t('descriptionCol'), amount: t('amount'), total: t('closingBalance'),
+                  reference: t('referenceCol'), debit: t('debitCol'), credit: t('creditCol'),
+                  balance: t('balanceCol'), period: t('periodCol'),
+                  opening: t('openingBalance'), closing: t('closingBalance'),
+                }, locale)} className="h-8 text-[11px] rounded-xl border-slate-200 gap-1.5">
                   <Printer className="w-3.5 h-3.5" />{t('printBtn')}
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => handleSelect(selected)} className="h-8 text-[11px] rounded-xl border-slate-200 gap-1.5">

@@ -14,7 +14,8 @@ describe('cndpStatusOf', () => {
 
   it('reflects a real filed or approved declaration', () => {
     expect(cndpStatusOf('submitted')).toMatchObject({ key: 'submitted', label: 'En cours' });
-    expect(cndpStatusOf('approved')).toMatchObject({ key: 'approved', label: 'Conforme / Récépissé' });
+    expect(cndpStatusOf('approved')).toMatchObject({ key: 'approved', label: 'Récépissé déclaré' });
+    expect(cndpStatusOf('approved').label).not.toMatch(/Conforme/);
   });
 
   it('reports an unreadable registry as unavailable, never as compliant', () => {

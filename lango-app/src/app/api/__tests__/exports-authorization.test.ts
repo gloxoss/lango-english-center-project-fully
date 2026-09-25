@@ -1,4 +1,6 @@
+import { Buffer } from 'node:buffer';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ApiError } from '@/libs/api/errors';
 
 // D-12-class defect found in the 165-route capability sweep (2026-08-27).
 //
@@ -15,8 +17,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // These assertions fail if either guard is removed.
 
 const requireCapabilityMock = vi.fn();
-const createExportJobMock = vi.fn(async (_input: unknown) => "job-1");
+const createExportJobMock = vi.fn(async (_input: unknown) => 'job-1');
 const getExportJobMock = vi.fn();
+const dbSelectMock = vi.fn();
+const getFileMock = vi.fn();
 
 vi.mock('@/libs/api/context', () => ({
   requireRequestContext: vi.fn(async () => ({
@@ -37,6 +41,14 @@ vi.mock('@/libs/services/export-service', () => ({
   getExportJob: (id: string, tenantId: string) => getExportJobMock(id, tenantId),
 }));
 
+vi.mock('@/libs/DB', () => ({
+  db: { select: (...args: unknown[]) => dbSelectMock(...args) },
+}));
+
+vi.mock('@/libs/services/file-service', () => ({
+  getFile: (...args: unknown[]) => getFileMock(...args),
+}));
+
 function postRequest(body: unknown): Request {
   return new Request('http://localhost/api/exports', {
     method: 'POST',
@@ -49,6 +61,60 @@ beforeEach(() => {
   requireCapabilityMock.mockReset();
   createExportJobMock.mockClear();
   getExportJobMock.mockReset();
+  dbSelectMock.mockReset();
+  getFileMock.mockReset();
+});
+
+describe('GET /api/exports/[id]/download', () => {
+  const routeContext = { params: Promise.resolve({ id: 'job-1' }) };
+  const ownJob = {
+    id: 'job-1',
+    tenantId: 'tenant-a',
+    requestedBy: 'user-student',
+    reportType: 'audit-logs',
+    resultPath: '/uploads/tenant-a/exports/audit.csv',
+    status: 'complete',
+  };
+
+  it('does not read another user’s file', async () => {
+    getExportJobMock.mockResolvedValueOnce({ ...ownJob, requestedBy: 'another-user' });
+    const { GET } = await import('@/app/api/exports/[id]/download/route');
+    const res = await GET(new Request('http://localhost/api/exports/job-1/download'), routeContext);
+
+    expect(res.status).toBe(404);
+    expect(dbSelectMock).not.toHaveBeenCalled();
+    expect(getFileMock).not.toHaveBeenCalled();
+  });
+
+  it('rechecks the report capability before reading the file', async () => {
+    getExportJobMock.mockResolvedValueOnce(ownJob);
+    requireCapabilityMock.mockRejectedValueOnce(new ApiError(403, 'FORBIDDEN', 'forbidden'));
+    const { GET } = await import('@/app/api/exports/[id]/download/route');
+    const res = await GET(new Request('http://localhost/api/exports/job-1/download'), routeContext);
+
+    expect(res.status).toBe(403);
+    expect(requireCapabilityMock).toHaveBeenCalledWith(expect.anything(), 'audit.read');
+    expect(dbSelectMock).not.toHaveBeenCalled();
+  });
+
+  it('downloads only a matching owned export file', async () => {
+    getExportJobMock.mockResolvedValueOnce(ownJob);
+    dbSelectMock.mockReturnValueOnce({
+      from: () => ({ where: () => ({ limit: async () => [{ id: 'file-1' }] }) }),
+    });
+    getFileMock.mockResolvedValueOnce({
+      buffer: Buffer.from('Date,Action\n2026-09-24,login'),
+      fileName: 'audit.csv',
+      mimeType: 'text/csv',
+    });
+    const { GET } = await import('@/app/api/exports/[id]/download/route');
+    const res = await GET(new Request('http://localhost/api/exports/job-1/download'), routeContext);
+
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain('2026-09-24,login');
+    expect(res.headers.get('cache-control')).toBe('private, no-store');
+    expect(getFileMock).toHaveBeenCalledWith('file-1', 'tenant-a');
+  });
 });
 
 describe('POST /api/exports authorization', () => {
@@ -86,7 +152,7 @@ describe('POST /api/exports authorization', () => {
 });
 
 describe('GET /api/exports/[id] ownership', () => {
-  it("hides another user's export job", async () => {
+  it('hides another user\'s export job', async () => {
     getExportJobMock.mockResolvedValueOnce({
       id: 'job-1',
       tenantId: 'tenant-a',
@@ -101,7 +167,9 @@ describe('GET /api/exports/[id] ownership', () => {
     });
 
     expect(res.status).toBe(404);
+
     const body = await res.text();
+
     expect(body).not.toContain('secret.csv');
   });
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ArrowUpRight, Calendar, Cake, Clock } from 'lucide-react';
 import type { UpcomingEventItem } from '../model/types';
@@ -18,10 +19,11 @@ export function UpcomingEventsCard({
   birthdaysPreview,
   locale,
 }: UpcomingEventsCardProps) {
+  const th = useTranslations('DashboardHome');
   const timingGroupLabels: Record<UpcomingEventItem['timingGroup'], string> = {
-    today: "Aujourd'hui",
-    tomorrow: 'Demain',
-    this_week: 'Cette semaine',
+    today: th('today'),
+    tomorrow: th('tomorrow'),
+    this_week: th('thisWeek'),
   };
 
   return (
@@ -33,13 +35,13 @@ export function UpcomingEventsCard({
             <div className="flex size-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
               <Calendar className="size-4" />
             </div>
-            <h3 className="text-sm font-extrabold text-slate-900">À venir</h3>
+            <h3 className="text-sm font-extrabold text-slate-900">{th('upcomingTitle')}</h3>
           </div>
           <Link
             href={`/${locale}/dashboard/events`}
             className="flex items-center gap-1 text-xs font-bold text-blue-600 transition hover:text-blue-800 hover:underline"
           >
-            <span>Voir calendrier</span>
+            <span>{th('seeCalendar')}</span>
             <ArrowUpRight className="size-3.5" />
           </Link>
         </div>
@@ -52,7 +54,7 @@ export function UpcomingEventsCard({
                 <Cake className="size-3.5" />
               </span>
               <span>
-                <strong className="font-bold">{todayBirthdaysCount} anniversaire{todayBirthdaysCount > 1 ? 's' : ''}</strong> aujourd’hui
+                <strong className="font-bold">{th('birthdaysCount', { count: todayBirthdaysCount })}</strong> {th('todayLower')}
                 {birthdaysPreview.length > 0 && (
                   <span className="text-purple-700 font-medium"> ({birthdaysPreview.join(', ')})</span>
                 )}
@@ -68,7 +70,7 @@ export function UpcomingEventsCard({
         <div className="mt-3.5 space-y-2">
           {events.length === 0 ? (
             <div className="py-4 text-center text-xs text-slate-400">
-              Aucun événement planifié pour les prochains jours
+              {th('noUpcomingEvents')}
             </div>
           ) : (
             events.slice(0, 5).map(event => (
@@ -112,7 +114,7 @@ export function UpcomingEventsCard({
           href={`/${locale}/dashboard/events`}
           className="block text-center text-xs font-bold text-blue-600 hover:underline"
         >
-          Voir le calendrier complet →
+          {th('seeFullCalendar')} →
         </Link>
       </div>
     </div>

@@ -4649,6 +4649,7 @@ export * from '@/features/cards/models/cards-schema';
 
 // Attendance QR Enhancement exports
 export * from '@/features/certificates/models/certificates-schema';
+export * from '@/features/documents/models/document-schema';
 
 // Event Management exports
 export * from '@/features/events/models/events-schema';

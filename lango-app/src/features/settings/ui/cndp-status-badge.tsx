@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import type { CndpStatusView } from '@/features/settings/cndp-status';
 import { ShieldCheck } from 'lucide-react';
-import { cndpStatusOf, type CndpStatusView } from '@/features/settings/cndp-status';
+import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import { cndpStatusOf } from '@/features/settings/cndp-status';
 
 const TONE: Record<CndpStatusView['tone'], string> = {
   good: 'bg-emerald-100 text-emerald-800 border-emerald-200',
@@ -22,6 +24,8 @@ const TONE: Record<CndpStatusView['tone'], string> = {
  * rather than falling back to a compliance claim.
  */
 export function CndpStatusBadge({ enabled = false }: { enabled?: boolean } = {}) {
+  const t = useTranslations('CndpBadge');
+  const tStatus = useTranslations('CndpCompliance.status');
   const [status, setStatus] = useState<CndpStatusView | null>(null);
 
   useEffect(() => {
@@ -33,7 +37,9 @@ export function CndpStatusBadge({ enabled = false }: { enabled?: boolean } = {})
 
     fetch('/api/settings/cndp-filing', { cache: 'no-store' })
       .then(async (res) => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         if (res.status === 401 || res.status === 403) {
           // Not for this viewer: family accounts have no business reading the
           // school's filing, so no badge at all.
@@ -48,21 +54,32 @@ export function CndpStatusBadge({ enabled = false }: { enabled?: boolean } = {})
         setStatus(cndpStatusOf(json?.data?.status ?? null));
       })
       .catch(() => {
-        if (!cancelled) setStatus(cndpStatusOf(null, true));
+        if (!cancelled) {
+          setStatus(cndpStatusOf(null, true));
+        }
       });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [enabled]);
 
-  if (!status) return null;
+  if (!status) {
+    return null;
+  }
 
   return (
     <span
-      className={`hidden lg:inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${TONE[status.tone]}`}
-      title="Statut de la déclaration CNDP (loi 09-08) de l'établissement"
+      className={`
+        hidden items-center gap-1 rounded-full border px-2 py-0.5 text-[10px]
+        font-bold
+        lg:inline-flex
+        ${TONE[status.tone]}
+      `}
+      title={t('title')}
     >
-      <ShieldCheck className="w-3 h-3" />
-      CNDP : {status.label}
+      <ShieldCheck className="size-3" />
+      {t('label', { status: tStatus(status.key) })}
     </span>
   );
 }

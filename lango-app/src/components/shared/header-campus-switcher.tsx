@@ -30,8 +30,12 @@ export function HeaderCampusSwitcher() {
         if (json?.success && Array.isArray(json.data)) {
           setBranches(json.data);
           const saved = localStorage.getItem('schoolos_active_branch_id');
-          if (saved && json.data.some((b: BranchItem) => b.id === saved)) {
-            setSelectedBranchId(saved);
+          if (saved) {
+            if (json.data.some((b: BranchItem) => b.id === saved)) {
+              setSelectedBranchId(saved);
+            } else {
+              localStorage.removeItem('schoolos_active_branch_id');
+            }
           }
         }
       })

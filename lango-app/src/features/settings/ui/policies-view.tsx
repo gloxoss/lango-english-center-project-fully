@@ -1,183 +1,289 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card } from '@/components/ui/card';
+import { AlertTriangle, Bell, CheckCircle2, GraduationCap, Info, RefreshCw, Save } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { GraduationCap, Users, Save, CheckCircle2 } from 'lucide-react';
 
+// Only keys something in the app actually reads. academic.autoPromotion,
+// portal.guardianEnabled and portal.studentEnabled used to be switches here too,
+// but no code consumes them, so flipping them changed nothing.
 const KEYS = [
-  'academic.autoPromotion',
   'academic.passThreshold',
   'academic.gradingScale',
-  'portal.guardianEnabled',
-  'portal.studentEnabled',
   'attendance.smsAlerts',
 ] as const;
 
-type Values = Record<(typeof KEYS)[number], unknown>;
+type Key = (typeof KEYS)[number];
+type Values = Record<Key, unknown>;
 
 export function PoliciesView({ locale: _locale }: { locale: string }) {
+  const t = useTranslations('PoliciesSettings');
   const [values, setValues] = useState<Values | null>(null);
+  const [snapshot, setSnapshot] = useState<Values | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [savedSuccess, setSavedSuccess] = useState(false);
+  const [status, setStatus] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoadError(false);
     fetch('/api/settings/values')
       .then(res => (res.ok ? res.json() : null))
       .then((json) => {
-        if (json?.success) {
-          const map = Object.fromEntries(
-            KEYS.map(k => [k, json.data.values.find((v: { key: string }) => v.key === k)?.value]),
-          ) as Values;
-          setValues(map);
+        if (!json?.success) {
+          setLoadError(true);
+          return;
         }
+        const map = Object.fromEntries(
+          KEYS.map(k => [k, json.data.values.find((v: { key: string }) => v.key === k)?.value]),
+        ) as Values;
+        setValues(map);
+        setSnapshot(map);
       })
-      .catch(() => {});
+      .catch(() => setLoadError(true));
   }, []);
 
-  const setField = (key: (typeof KEYS)[number], value: unknown) => {
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const setField = (key: Key, value: unknown) => {
     setValues(prev => (prev ? { ...prev, [key]: value } : prev));
   };
 
+  const scale = Number(values?.['academic.gradingScale'] ?? 20);
+  const threshold = Number(values?.['academic.passThreshold']);
+  const thresholdInvalid = !Number.isFinite(threshold) || threshold < 0 || threshold > scale;
+
   const handleSave = async () => {
-    if (!values) {
+    if (!values || !snapshot || thresholdInvalid) {
+      return;
+    }
+    const changed = KEYS.filter(k => values[k] !== snapshot[k]);
+    if (changed.length === 0) {
+      setStatus({ kind: 'success', text: t('nothingToSave') });
       return;
     }
     setIsSaving(true);
-    try {
-      await Promise.all(
-        KEYS.map(key =>
-          fetch(`/api/settings/values/${key}`, {
+    setStatus(null);
+    // Used to ignore every response and always show "saved".
+    const results = await Promise.all(
+      changed.map(async (key) => {
+        try {
+          const res = await fetch(`/api/settings/values/${key}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ value: values[key] }),
-          }),
-        ),
-      );
-      setSavedSuccess(true);
-      setTimeout(() => setSavedSuccess(false), 3000);
-    } catch (err) {
-      console.error('Failed to save policies', err);
-    } finally {
-      setIsSaving(false);
+          });
+          return { key, ok: res.ok };
+        } catch {
+          return { key, ok: false };
+        }
+      }),
+    );
+    const saved = results.filter(r => r.ok).map(r => r.key);
+    setSnapshot(prev => (prev ? { ...prev, ...Object.fromEntries(saved.map(k => [k, values[k]])) } : prev));
+    const failed = results.length - saved.length;
+    if (failed > 0) {
+      setStatus({ kind: 'error', text: t('saveFailed', { count: failed }) });
+    } else {
+      setStatus({ kind: 'success', text: t('saved') });
+      setTimeout(setStatus, 3000, null);
     }
+    setIsSaving(false);
   };
 
+  if (loadError) {
+    return (
+      <Card className="
+        space-y-3 rounded-2xl border border-slate-200/80 bg-white p-8
+        text-center
+      "
+      >
+        <AlertTriangle className="mx-auto size-8 text-rose-400" />
+        <p className="text-sm font-bold text-[#16212B]">{t('loadError')}</p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={load}
+          className="h-8 rounded-xl text-xs"
+        >
+          <RefreshCw className="me-1.5 size-3.5" />
+          {t('retry')}
+        </Button>
+      </Card>
+    );
+  }
+
   if (!values) {
-    return <div className="text-xs text-slate-500">Chargement...</div>;
+    return <div className="text-xs text-slate-500">{t('loading')}</div>;
   }
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
-      {/* Title */}
-      <div className="flex items-center justify-between">
+    <div className="mx-auto max-w-[1600px] space-y-6">
+      <div className="
+        flex flex-col justify-between gap-4
+        sm:flex-row sm:items-center
+      "
+      >
         <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Politiques académiques & portails</h1>
-          <p className="text-xs text-slate-500 mt-1">Définissez les règles de passage, barèmes et accès aux portails tuteurs et élèves.</p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('title')}</h1>
+          <p className="mt-1 text-xs text-slate-500">{t('subtitle')}</p>
         </div>
         <Button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="gap-2 h-10 rounded-full px-5 text-xs font-bold bg-[#0066FF] hover:bg-[#0052CC] text-white"
+          onClick={() => void handleSave()}
+          disabled={isSaving || thresholdInvalid}
+          className="
+            h-10 gap-2 self-start rounded-full bg-[#0066FF] px-5 text-xs
+            font-bold text-white
+            hover:bg-[#0052CC]
+            sm:self-auto
+          "
         >
-          <Save className="w-4 h-4" />
-          {isSaving ? 'Enregistrement...' : 'Enregistrer les règles'}
+          <Save className="size-4" />
+          {isSaving ? t('saving') : t('save')}
         </Button>
       </div>
 
-      {savedSuccess && (
-        <div className="p-4 bg-[#D1F5E8] border border-[#17A673]/30 rounded-2xl flex items-center gap-3 text-xs font-bold text-[#17A673]">
-          <CheckCircle2 className="w-5 h-5 shrink-0" />
-          <span>Politiques académiques sauvegardées avec succès.</span>
+      {status && (
+        <div
+          role={status.kind === 'error' ? 'alert' : 'status'}
+          className={`
+            flex items-center gap-3 rounded-2xl border p-4 text-xs font-bold
+            ${status.kind === 'success'
+          ? `border-[#17A673]/30 bg-[#D1F5E8] text-[#17A673]`
+          : `border-rose-200 bg-rose-50 text-rose-700`}
+          `}
+        >
+          {status.kind === 'success'
+            ? (
+                <CheckCircle2 className="size-5 shrink-0" />
+              )
+            : (
+                <AlertTriangle className="size-5 shrink-0" />
+              )}
+          <span>{status.text}</span>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Section 1: Academic Rules */}
-        <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-5">
+      <div className="
+        grid grid-cols-1 gap-6
+        md:grid-cols-2
+      "
+      >
+        <Card className="
+          space-y-5 rounded-2xl border border-slate-200/80 bg-white p-6
+          shadow-2xs
+        "
+        >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center">
-              <GraduationCap className="w-5 h-5" />
+            <div className="
+              flex size-10 items-center justify-center rounded-xl bg-[#DCEBF4]
+              text-[#1B6C93]
+            "
+            >
+              <GraduationCap className="size-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#16212B]">Règles de passage & notation</h3>
-              <p className="text-[11px] text-slate-500">Seuils et promotion automatique des élèves</p>
+              <h3 className="text-sm font-bold text-[#16212B]">{t('gradingTitle')}</h3>
+              <p className="text-[11px] text-slate-500">{t('gradingHint')}</p>
             </div>
           </div>
 
           <div className="space-y-4 text-xs">
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-              <div className="space-y-0.5">
-                <label className="font-bold text-slate-700">Promotion automatique</label>
-                <p className="text-[10px] text-slate-500">Promouvoir automatiquement les élèves ayant une moyenne ≥ au seuil</p>
-              </div>
-              <Switch checked={Boolean(values['academic.autoPromotion'])} onCheckedChange={v => setField('academic.autoPromotion', v)} />
-            </div>
-
             <div className="space-y-1">
-              <label className="font-bold text-slate-700">Seuil de réussite (Moyenne minimale)</label>
-              <Input
-                type="number"
-                value={String(values['academic.passThreshold'] ?? '')}
-                onChange={e => setField('academic.passThreshold', Number(e.target.value))}
-                className="h-10 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="font-bold text-slate-700">Barème de notation officiel</label>
+              <label htmlFor="pol-scale" className="font-bold text-slate-700">{t('scaleLabel')}</label>
               <Select value={String(values['academic.gradingScale'] ?? '20')} onValueChange={v => setField('academic.gradingScale', v)}>
-                <SelectTrigger className="h-10 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                <SelectTrigger
+                  id="pol-scale"
+                  className="
+                    h-10 rounded-xl border border-slate-200 bg-slate-50 text-xs
+                  "
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="20">Note sur 20 (Système Marocain standard)</SelectItem>
-                  <SelectItem value="100">Pourcentage / Note sur 100</SelectItem>
+                  <SelectItem value="20">{t('scale20')}</SelectItem>
+                  <SelectItem value="100">{t('scale100')}</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-1">
+              <label
+                htmlFor="pol-threshold"
+                className="font-bold text-slate-700"
+              >
+                {t('thresholdLabel', { scale })}
+              </label>
+              <Input
+                id="pol-threshold"
+                type="number"
+                min={0}
+                max={scale}
+                step={0.25}
+                value={String(values['academic.passThreshold'] ?? '')}
+                onChange={e => setField('academic.passThreshold', e.target.value === '' ? Number.NaN : Number(e.target.value))}
+                aria-invalid={thresholdInvalid}
+                className="
+                  h-10 rounded-xl border border-slate-200 bg-slate-50 text-xs
+                  font-bold
+                "
+              />
+              {thresholdInvalid && <p className="text-[11px] text-rose-600">{t('thresholdInvalid', { scale })}</p>}
+              <p className="text-[10px] text-slate-500">{t('thresholdHint')}</p>
             </div>
           </div>
         </Card>
 
-        {/* Section 2: Portals & Alerts */}
-        <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-5">
+        <Card className="
+          space-y-5 rounded-2xl border border-slate-200/80 bg-white p-6
+          shadow-2xs
+        "
+        >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center">
-              <Users className="w-5 h-5" />
+            <div className="
+              flex size-10 items-center justify-center rounded-xl bg-[#DCEBF4]
+              text-[#1B6C93]
+            "
+            >
+              <Bell className="size-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#16212B]">Accès portails & notifications</h3>
-              <p className="text-[11px] text-slate-500">Contrôlez les fonctionnalités visibles aux parents et élèves</p>
+              <h3 className="text-sm font-bold text-[#16212B]">{t('alertsTitle')}</h3>
+              <p className="text-[11px] text-slate-500">{t('alertsHint')}</p>
             </div>
           </div>
 
           <div className="space-y-4 text-xs">
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <div className="
+              flex items-center justify-between gap-4 rounded-xl border
+              border-slate-100 bg-slate-50 p-3
+            "
+            >
               <div className="space-y-0.5">
-                <label className="font-bold text-slate-700">Portail tuteurs/parents</label>
-                <p className="text-[10px] text-slate-500">Permet d&apos;accéder aux bulletins, absences et solde des frais</p>
+                <p className="font-bold text-slate-700">{t('smsLabel')}</p>
+                <p className="text-[10px] text-slate-500">{t('smsHint')}</p>
               </div>
-              <Switch checked={Boolean(values['portal.guardianEnabled'])} onCheckedChange={v => setField('portal.guardianEnabled', v)} />
+              <Switch
+                aria-label={t('smsLabel')}
+                checked={Boolean(values['attendance.smsAlerts'])}
+                onCheckedChange={v => setField('attendance.smsAlerts', v)}
+              />
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-              <div className="space-y-0.5">
-                <label className="font-bold text-slate-700">Portail élèves</label>
-                <p className="text-[10px] text-slate-500">Accès à l&apos;emploi du temps, devoirs et cahier de texte</p>
-              </div>
-              <Switch checked={Boolean(values['portal.studentEnabled'])} onCheckedChange={v => setField('portal.studentEnabled', v)} />
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-              <div className="space-y-0.5">
-                <label className="font-bold text-slate-700">Alertes absences SMS automatiques</label>
-                <p className="text-[10px] text-slate-500">Notification immédiate au tuteur en cas d&apos;absence non justifiée</p>
-              </div>
-              <Switch checked={Boolean(values['attendance.smsAlerts'])} onCheckedChange={v => setField('attendance.smsAlerts', v)} />
-            </div>
+            <p className="
+              flex items-start gap-2 rounded-xl border border-slate-100
+              bg-slate-50 p-3 text-[11px] text-slate-500
+            "
+            >
+              <Info className="mt-0.5 size-3.5 shrink-0" />
+              {t('notEnforcedNote')}
+            </p>
           </div>
         </Card>
       </div>

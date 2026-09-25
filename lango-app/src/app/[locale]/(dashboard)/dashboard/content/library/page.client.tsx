@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -41,29 +42,31 @@ type Asset = {
   tags?: string[];
   usageLinks?: { id: string; usageType: string; usageRefId: string }[];
 };
-type ClassSection = { id: string; sectionId: string; classId: string };
-type ClassSubject = { id: string; classId: string; subjectId: string };
+type ClassSection = { id: string; sectionId: string; classId: string; className?: string | null; sectionName?: string | null };
+type ClassSubject = { id: string; classId: string; subjectId: string; className?: string | null; subjectName?: string | null };
+
+// Pickers showed raw UUIDs; the APIs already join the names in.
+const sectionLabel = (s: ClassSection) => [s.className, s.sectionName].filter(Boolean).join(' ') || s.id;
+const subjectLabel = (s: ClassSubject) => [s.subjectName, s.className].filter(Boolean).join(' · ') || s.id;
 type StudentRow = { id: string; fullName: string; matricule: string };
 
-const TARGET_KIND_LABEL: Record<string, string> = {
-  school: 'Toute l\'école',
-  role: 'Un rôle',
-  class_section: 'Une classe/section',
-  class_subject: 'Une matière',
-  class_offering: 'Une offre de cours',
-  user: 'Un élève spécifique',
-};
+// Labels live in ContentLibrary.targets.* and ContentLibrary.statuses.*.
+const TARGET_KINDS = ['school', 'role', 'class_section', 'class_subject', 'user'] as const;
 
-const STATUS_BADGE: Record<string, { label: string; variant: 'info' | 'success' | 'signal' | 'warning' | 'danger' | 'neutral' }> = {
-  draft: { label: 'Brouillon', variant: 'neutral' },
-  ready: { label: 'Prêt', variant: 'info' },
-  published: { label: 'Publié', variant: 'success' },
-  archived: { label: 'Archivé', variant: 'neutral' },
-  infected: { label: 'Infecté', variant: 'danger' },
-  scan_failed: { label: 'Échec analyse', variant: 'danger' },
+const STATUS_VARIANT: Record<string, 'info' | 'success' | 'signal' | 'warning' | 'danger' | 'neutral'> = {
+  draft: 'neutral',
+  ready: 'info',
+  published: 'success',
+  archived: 'neutral',
+  infected: 'danger',
+  scan_failed: 'danger',
 };
 
 export default function ContentLibraryPage() {
+  const c = useTranslations('ContentLibrary');
+  const locale = useLocale();
+  const intlLocale = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-GB' : 'fr-FR';
+  const statusLabel = (s: string) => (c.has(`statuses.${s}`) ? c(`statuses.${s}` as 'statuses.draft') : s);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [types, setTypes] = useState<AttachmentType[]>([]);
   const [sections, setSections] = useState<ClassSection[]>([]);
@@ -120,7 +123,7 @@ export default function ContentLibraryPage() {
       await loadAssets();
       if (inspecting?.id === id) openInspector({ id } as Asset);
     } else {
-      alert(json.error?.message || 'Échec de la publication.');
+      alert(json.error?.message || c('publishError'));
     }
   };
 
@@ -140,7 +143,7 @@ export default function ContentLibraryPage() {
 
   const handleCreate = () => {
     if (!title.trim() || !attachmentTypeId || !file) {
-      setUploadError('Titre, type et fichier sont requis.');
+      setUploadError(c('requiredFields'));
       return;
     }
     setUploading(true);
@@ -178,13 +181,13 @@ export default function ContentLibraryPage() {
           loadAssets();
           setTimeout(() => { setCreateOpen(false); resetCreateForm(); }, 1200);
         } else {
-          setUploadError(json.error?.message || 'Échec du téléversement.');
+          setUploadError(json.error?.message || c('uploadError'));
         }
       } catch {
-        setUploadError('Erreur inattendue du serveur.');
+        setUploadError(c('serverError'));
       }
     };
-    xhr.onerror = () => { setUploading(false); setUploadError('Erreur réseau lors du téléversement.'); };
+    xhr.onerror = () => { setUploading(false); setUploadError(c('uploadNetworkError')); };
     xhr.send(formData);
   };
 
@@ -193,7 +196,7 @@ export default function ContentLibraryPage() {
     const targets = editForm.targetKind === 'school' ? [{ targetKind: 'school' }] : editForm.targetKind === 'role' ? [{ targetKind: 'role', targetRoleValue: editForm.targetRoleValue }] : editForm.targetRefId ? [{ targetKind: editForm.targetKind, targetRefId: editForm.targetRefId }] : [];
     const res = await fetch(`/api/content/assets/${inspecting.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: editForm.title.trim(), description: editForm.description.trim() || null, tags: editForm.tags.split(',').map(t => t.trim()).filter(Boolean), targets, expiresAt: editForm.expiresAt ? new Date(editForm.expiresAt).toISOString() : null }) });
     const json = await res.json();
-    if (json.success) { await loadAssets(); await openInspector(inspecting); } else alert(json.error?.message || 'Échec de la modification.');
+    if (json.success) { await loadAssets(); await openInspector(inspecting); } else alert(json.error?.message || c('editError'));
   };
 
   const filtered = assets.filter(a => a.title.toLowerCase().includes(search.toLowerCase()));
@@ -208,22 +211,22 @@ export default function ContentLibraryPage() {
             <FolderOpen className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Bibliothèque de Ressources Pédagogiques</h1>
+            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{c('title')}</h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Téléversement sécurisé, ciblage précis, versions, réutilisation et analyse antivirus obligatoire.
+              {c('subtitle')}
             </p>
           </div>
         </div>
         <Button onClick={() => setCreateOpen(true)} className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs rounded-xl shadow-2xs gap-1.5 px-4 cursor-pointer">
           <Plus className="w-4 h-4" />
-          <span>Nouvelle Ressource</span>
+          <span>{c('newResource')}</span>
         </Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Publiées</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{c('statPublished')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{publishedCount}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
@@ -232,7 +235,7 @@ export default function ContentLibraryPage() {
         </Card>
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Brouillons / Prêtes</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{c('statDrafts')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{draftCount}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
@@ -241,7 +244,7 @@ export default function ContentLibraryPage() {
         </Card>
         <Card className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Types Disponibles</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{c('statTypes')}</span>
             <h3 className="text-2xl font-extrabold text-[#16212B] mt-1">{types.length}</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0066FF] flex items-center justify-center shrink-0">
@@ -255,36 +258,36 @@ export default function ContentLibraryPage() {
           <div className="relative max-w-md w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input
-              placeholder="Rechercher une ressource..."
+              placeholder={c('searchPlaceholder')}
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="pl-9 text-xs rounded-xl h-9 border-slate-200"
             />
           </div>
           <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
-            <button onClick={() => setViewMode('table')} className={`p-2 rounded-lg cursor-pointer ${viewMode === 'table' ? 'bg-white shadow-2xs text-[#0066FF]' : 'text-slate-500'}`}>
+            <button onClick={() => setViewMode('table')} aria-label={c('tableView')} title={c('tableView')} className={`p-2 rounded-lg cursor-pointer ${viewMode === 'table' ? 'bg-white shadow-2xs text-[#0066FF]' : 'text-slate-500'}`}>
               <ListIcon className="w-4 h-4" />
             </button>
-            <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg cursor-pointer ${viewMode === 'grid' ? 'bg-white shadow-2xs text-[#0066FF]' : 'text-slate-500'}`}>
+            <button onClick={() => setViewMode('grid')} aria-label={c('gridView')} title={c('gridView')} className={`p-2 rounded-lg cursor-pointer ${viewMode === 'grid' ? 'bg-white shadow-2xs text-[#0066FF]' : 'text-slate-500'}`}>
               <GridIcon className="w-4 h-4" />
             </button>
           </div>
         </div>
 
         {loading ? (
-          <p className="text-xs text-slate-400 text-center py-8">Chargement...</p>
+          <p className="text-xs text-slate-400 text-center py-8">{c('loading')}</p>
         ) : filtered.length === 0 ? (
-          <p className="text-xs text-slate-400 text-center py-8">Aucune ressource pour le moment. Créez-en une avec « Nouvelle Ressource ».</p>
+          <p className="text-xs text-slate-400 text-center py-8">{c('empty')}</p>
         ) : viewMode === 'table' ? (
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                  <th className="py-2 pr-4">Titre</th>
-                  <th className="py-2 pr-4">Statut</th>
-                  <th className="py-2 pr-4">Versions</th>
-                  <th className="py-2 pr-4">Créé le</th>
-                  <th className="py-2 pr-4">Actions</th>
+                  <th className="py-2 pr-4">{c('colTitle')}</th>
+                  <th className="py-2 pr-4">{c('colStatus')}</th>
+                  <th className="py-2 pr-4">{c('colVersions')}</th>
+                  <th className="py-2 pr-4">{c('colCreated')}</th>
+                  <th className="py-2 pr-4">{c('colActions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -292,19 +295,19 @@ export default function ContentLibraryPage() {
                   <tr key={a.id} className="border-b border-slate-50 hover:bg-slate-50/50">
                     <td className="py-3 pr-4 font-semibold text-[#16212B]">{a.title}</td>
                     <td className="py-3 pr-4">
-                      <Badge variant={STATUS_BADGE[a.status]?.variant || 'neutral'} className="text-[10px] font-bold">
-                        {STATUS_BADGE[a.status]?.label || a.status}
+                      <Badge variant={STATUS_VARIANT[a.status] || 'neutral'} className="text-[10px] font-bold">
+                        {statusLabel(a.status)}
                       </Badge>
                     </td>
                     <td className="py-3 pr-4 text-slate-500">{a.currentVersionId ? 'v' + (a.versions?.length || 1) : '—'}</td>
-                    <td className="py-3 pr-4 text-slate-500">{new Date(a.createdAt).toLocaleDateString('fr-FR')}</td>
+                    <td className="py-3 pr-4 text-slate-500">{new Date(a.createdAt).toLocaleDateString(intlLocale)}</td>
                     <td className="py-3 pr-4">
                       <div className="flex items-center gap-2">
-                        <button onClick={() => openInspector(a)} className="text-slate-500 hover:text-[#0066FF] cursor-pointer" title="Détails">
+                        <button onClick={() => openInspector(a)} className="text-slate-500 hover:text-[#0066FF] cursor-pointer" title={c('details')} aria-label={c('details')}>
                           <Eye className="w-4 h-4" />
                         </button>
                         {a.status === 'published' && (
-                          <a href={`/api/content/assets/${a.id}/download`} className="text-slate-500 hover:text-emerald-600 cursor-pointer" title="Télécharger">
+                          <a href={`/api/content/assets/${a.id}/download`} className="text-slate-500 hover:text-emerald-600 cursor-pointer" title={c('download')} aria-label={c('download')}>
                             <Download className="w-4 h-4" />
                           </a>
                         )}
@@ -321,8 +324,8 @@ export default function ContentLibraryPage() {
               <Card key={a.id} onClick={() => openInspector(a)} className="p-4 rounded-xl border border-slate-200 hover:border-[#0066FF]/40 cursor-pointer space-y-2">
                 <FileText className="w-6 h-6 text-[#0066FF]" />
                 <p className="text-xs font-bold text-[#16212B] truncate">{a.title}</p>
-                <Badge variant={STATUS_BADGE[a.status]?.variant || 'neutral'} className="text-[10px] font-bold">
-                  {STATUS_BADGE[a.status]?.label || a.status}
+                <Badge variant={STATUS_VARIANT[a.status] || 'neutral'} className="text-[10px] font-bold">
+                  {statusLabel(a.status)}
                 </Badge>
               </Card>
             ))}
@@ -334,33 +337,33 @@ export default function ContentLibraryPage() {
       <Dialog open={createOpen} onOpenChange={(open) => { setCreateOpen(open); if (!open) resetCreateForm(); }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Nouvelle Ressource Pédagogique</DialogTitle>
+            <DialogTitle>{c('createTitle')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <label className="text-xs font-bold text-slate-700">Titre</label>
+              <label className="text-xs font-bold text-slate-700">{c('fieldTitle')}</label>
               <Input value={title} onChange={e => setTitle(e.target.value)} className="mt-1 text-xs rounded-xl h-9" />
             </div>
             <div>
-              <label className="text-xs font-bold text-slate-700">Description</label>
+              <label className="text-xs font-bold text-slate-700">{c('fieldDescription')}</label>
               <Textarea value={description} onChange={e => setDescription(e.target.value)} className="mt-1 text-xs rounded-xl" rows={2} />
             </div>
-            <div className="grid grid-cols-2 gap-3"><div><label className="text-xs font-bold text-slate-700">Tags</label><Input value={tags} onChange={e => setTags(e.target.value)} placeholder="cours, révision, bac" className="mt-1 h-9 rounded-xl text-xs" /></div><div><label className="text-xs font-bold text-slate-700">Visible jusqu’au</label><Input type="datetime-local" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} className="mt-1 h-9 rounded-xl text-xs" /></div></div>
+            <div className="grid grid-cols-2 gap-3"><div><label className="text-xs font-bold text-slate-700">{c('fieldTags')}</label><Input value={tags} onChange={e => setTags(e.target.value)} placeholder={c('tagsPlaceholder')} className="mt-1 h-9 rounded-xl text-xs" /></div><div><label className="text-xs font-bold text-slate-700">{c('visibleUntil')}</label><Input type="datetime-local" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} className="mt-1 h-9 rounded-xl text-xs" /></div></div>
             <div>
-              <label className="text-xs font-bold text-slate-700">Type de pièce jointe</label>
+              <label className="text-xs font-bold text-slate-700">{c('attachmentType')}</label>
               <Select value={attachmentTypeId} onValueChange={setAttachmentTypeId}>
-                <SelectTrigger className="mt-1 text-xs rounded-xl h-9"><SelectValue placeholder="Choisir un type" /></SelectTrigger>
+                <SelectTrigger className="mt-1 text-xs rounded-xl h-9"><SelectValue placeholder={c('chooseType')} /></SelectTrigger>
                 <SelectContent>
                   {types.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="text-xs font-bold text-slate-700">Public cible</label>
+              <label className="text-xs font-bold text-slate-700">{c('audience')}</label>
               <Select value={targetKind} onValueChange={setTargetKind}>
                 <SelectTrigger className="mt-1 text-xs rounded-xl h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {Object.entries(TARGET_KIND_LABEL).filter(([k]) => k !== 'class_offering').map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}
+                  {TARGET_KINDS.map(k => <SelectItem key={k} value={k}>{c(`targets.${k}`)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -368,38 +371,38 @@ export default function ContentLibraryPage() {
               <Select value={targetRoleValue} onValueChange={setTargetRoleValue}>
                 <SelectTrigger className="text-xs rounded-xl h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="teacher">Enseignants</SelectItem>
-                  <SelectItem value="student">Élèves</SelectItem>
-                  <SelectItem value="parent">Parents</SelectItem>
+                  <SelectItem value="teacher">{c('roleTeachers')}</SelectItem>
+                  <SelectItem value="student">{c('roleStudents')}</SelectItem>
+                  <SelectItem value="parent">{c('roleParents')}</SelectItem>
                 </SelectContent>
               </Select>
             )}
             {targetKind === 'class_section' && (
               <Select value={targetRefId} onValueChange={setTargetRefId}>
-                <SelectTrigger className="text-xs rounded-xl h-9"><SelectValue placeholder="Choisir une section" /></SelectTrigger>
+                <SelectTrigger className="text-xs rounded-xl h-9"><SelectValue placeholder={c('chooseSection')} /></SelectTrigger>
                 <SelectContent>
-                  {sections.map(s => <SelectItem key={s.id} value={s.id}>{s.id}</SelectItem>)}
+                  {sections.map(s => <SelectItem key={s.id} value={s.id}>{sectionLabel(s)}</SelectItem>)}
                 </SelectContent>
               </Select>
             )}
             {targetKind === 'class_subject' && (
               <Select value={targetRefId} onValueChange={setTargetRefId}>
-                <SelectTrigger className="text-xs rounded-xl h-9"><SelectValue placeholder="Choisir une matière" /></SelectTrigger>
+                <SelectTrigger className="text-xs rounded-xl h-9"><SelectValue placeholder={c('chooseSubject')} /></SelectTrigger>
                 <SelectContent>
-                  {subjects.map(s => <SelectItem key={s.id} value={s.id}>{s.id}</SelectItem>)}
+                  {subjects.map(s => <SelectItem key={s.id} value={s.id}>{subjectLabel(s)}</SelectItem>)}
                 </SelectContent>
               </Select>
             )}
             {targetKind === 'user' && (
               <Select value={targetRefId} onValueChange={setTargetRefId}>
-                <SelectTrigger className="text-xs rounded-xl h-9"><SelectValue placeholder="Choisir un élève" /></SelectTrigger>
+                <SelectTrigger className="text-xs rounded-xl h-9"><SelectValue placeholder={c('chooseStudent')} /></SelectTrigger>
                 <SelectContent>
                   {students.map(s => <SelectItem key={s.id} value={s.id}>{s.fullName} ({s.matricule})</SelectItem>)}
                 </SelectContent>
               </Select>
             )}
             <div>
-              <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5"><UploadCloud className="w-3.5 h-3.5" /> Fichier</label>
+              <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5"><UploadCloud className="w-3.5 h-3.5" /> {c('file')}</label>
               <input type="file" onChange={e => setFile(e.target.files?.[0] || null)} className="mt-1 text-xs w-full" />
             </div>
             {uploading && (
@@ -407,12 +410,12 @@ export default function ContentLibraryPage() {
                 <div className="bg-[#0066FF] h-2 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
               </div>
             )}
-            {uploadResultStatus && <p className="text-xs font-bold text-emerald-600">Statut: {STATUS_BADGE[uploadResultStatus]?.label || uploadResultStatus}</p>}
+            {uploadResultStatus && <p className="text-xs font-bold text-emerald-600">{c('statusLine', { status: statusLabel(uploadResultStatus) })}</p>}
             {uploadError && <p className="text-xs font-bold text-red-600">{uploadError}</p>}
           </div>
           <DialogFooter>
             <Button onClick={handleCreate} disabled={uploading} className="bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs rounded-xl cursor-pointer">
-              {uploading ? `Téléversement... ${uploadProgress}%` : 'Créer et Téléverser'}
+              {uploading ? c('uploading', { percent: uploadProgress }) : c('createAndUpload')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -427,37 +430,37 @@ export default function ContentLibraryPage() {
                 <DialogTitle>{inspecting.title}</DialogTitle>
               </DialogHeader>
               <div className="space-y-3 text-xs">
-                {editingInspector ? <div className="space-y-3"><Input value={editForm.title} onChange={e => setEditForm({...editForm,title:e.target.value})} /><Textarea value={editForm.description} onChange={e => setEditForm({...editForm,description:e.target.value})} rows={3} /><div className="grid grid-cols-2 gap-3"><Input value={editForm.tags} onChange={e => setEditForm({...editForm,tags:e.target.value})} placeholder="Tags séparés par des virgules" /><Input type="datetime-local" value={editForm.expiresAt} onChange={e => setEditForm({...editForm,expiresAt:e.target.value})} /></div><Select value={editForm.targetKind} onValueChange={v=>setEditForm({...editForm,targetKind:v,targetRefId:''})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{Object.entries(TARGET_KIND_LABEL).filter(([k])=>k!=='class_offering').map(([k,v])=><SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select>{editForm.targetKind==='role'&&<Select value={editForm.targetRoleValue} onValueChange={v=>setEditForm({...editForm,targetRoleValue:v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="teacher">Enseignants</SelectItem><SelectItem value="student">Élèves</SelectItem><SelectItem value="parent">Parents</SelectItem></SelectContent></Select>}{editForm.targetKind==='class_section'&&<Select value={editForm.targetRefId} onValueChange={v=>setEditForm({...editForm,targetRefId:v})}><SelectTrigger><SelectValue placeholder="Section" /></SelectTrigger><SelectContent>{sections.map(s=><SelectItem key={s.id} value={s.id}>{s.id}</SelectItem>)}</SelectContent></Select>}{editForm.targetKind==='class_subject'&&<Select value={editForm.targetRefId} onValueChange={v=>setEditForm({...editForm,targetRefId:v})}><SelectTrigger><SelectValue placeholder="Matière" /></SelectTrigger><SelectContent>{subjects.map(s=><SelectItem key={s.id} value={s.id}>{s.id}</SelectItem>)}</SelectContent></Select>}{editForm.targetKind==='user'&&<Select value={editForm.targetRefId} onValueChange={v=>setEditForm({...editForm,targetRefId:v})}><SelectTrigger><SelectValue placeholder="Élève" /></SelectTrigger><SelectContent>{students.map(s=><SelectItem key={s.id} value={s.id}>{s.fullName}</SelectItem>)}</SelectContent></Select>}</div> : <p className="text-slate-500">{inspecting.description || 'Aucune description.'}</p>}
+                {editingInspector ? <div className="space-y-3"><Input value={editForm.title} onChange={e => setEditForm({...editForm,title:e.target.value})} /><Textarea value={editForm.description} onChange={e => setEditForm({...editForm,description:e.target.value})} rows={3} /><div className="grid grid-cols-2 gap-3"><Input value={editForm.tags} onChange={e => setEditForm({...editForm,tags:e.target.value})} placeholder={c('tagsCommaPlaceholder')} /><Input type="datetime-local" value={editForm.expiresAt} onChange={e => setEditForm({...editForm,expiresAt:e.target.value})} /></div><Select value={editForm.targetKind} onValueChange={v=>setEditForm({...editForm,targetKind:v,targetRefId:''})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{TARGET_KINDS.map(k=><SelectItem key={k} value={k}>{c(`targets.${k}`)}</SelectItem>)}</SelectContent></Select>{editForm.targetKind==='role'&&<Select value={editForm.targetRoleValue} onValueChange={v=>setEditForm({...editForm,targetRoleValue:v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="teacher">{c('roleTeachers')}</SelectItem><SelectItem value="student">{c('roleStudents')}</SelectItem><SelectItem value="parent">{c('roleParents')}</SelectItem></SelectContent></Select>}{editForm.targetKind==='class_section'&&<Select value={editForm.targetRefId} onValueChange={v=>setEditForm({...editForm,targetRefId:v})}><SelectTrigger><SelectValue placeholder={c('chooseSection')} /></SelectTrigger><SelectContent>{sections.map(s=><SelectItem key={s.id} value={s.id}>{sectionLabel(s)}</SelectItem>)}</SelectContent></Select>}{editForm.targetKind==='class_subject'&&<Select value={editForm.targetRefId} onValueChange={v=>setEditForm({...editForm,targetRefId:v})}><SelectTrigger><SelectValue placeholder={c('chooseSubject')} /></SelectTrigger><SelectContent>{subjects.map(s=><SelectItem key={s.id} value={s.id}>{subjectLabel(s)}</SelectItem>)}</SelectContent></Select>}{editForm.targetKind==='user'&&<Select value={editForm.targetRefId} onValueChange={v=>setEditForm({...editForm,targetRefId:v})}><SelectTrigger><SelectValue placeholder={c('chooseStudent')} /></SelectTrigger><SelectContent>{students.map(s=><SelectItem key={s.id} value={s.id}>{s.fullName}</SelectItem>)}</SelectContent></Select>}</div> : <p className="text-slate-500">{inspecting.description || c('noDescription')}</p>}
                 <div className="flex items-center gap-2">
-                  <Badge variant={STATUS_BADGE[inspecting.status]?.variant || 'neutral'}>{STATUS_BADGE[inspecting.status]?.label || inspecting.status}</Badge>
+                  <Badge variant={STATUS_VARIANT[inspecting.status] || 'neutral'}>{statusLabel(inspecting.status)}</Badge>
                   {(inspecting.tags || []).map(t => <Badge key={t} variant="neutral">{t}</Badge>)}
                 </div>
                 <div>
-                  <p className="font-bold text-slate-700 mb-1">Versions</p>
+                  <p className="font-bold text-slate-700 mb-1">{c('colVersions')}</p>
                   {(inspecting.versions || []).map(v => (
                     <div key={v.id} className="flex items-center justify-between border-b border-slate-50 py-1.5">
                       <span>v{v.versionNumber} — {v.originalFilename}</span>
-                      <Badge variant={v.scanStatus === 'clean' ? 'success' : 'danger'} className="text-[10px]">{v.scanStatus}</Badge>
+                      <Badge variant={v.scanStatus === 'clean' ? 'success' : 'danger'} className="text-[10px]">{c.has(`scan.${v.scanStatus}`) ? c(`scan.${v.scanStatus}` as 'scan.clean') : v.scanStatus}</Badge>
                     </div>
                   ))}
                 </div>
                 {(inspecting.usageLinks || []).length > 0 && (
                   <div>
-                    <p className="font-bold text-slate-700 mb-1">Réutilisée dans</p>
-                    <p className="text-slate-500">{inspecting.usageLinks!.length} devoir(s)</p>
+                    <p className="font-bold text-slate-700 mb-1">{c('reusedIn')}</p>
+                    <p className="text-slate-500">{c('homeworkCount', { count: inspecting.usageLinks!.length })}</p>
                   </div>
                 )}
               </div>
               <DialogFooter className="gap-2">
-                {editingInspector ? <><Button variant="outline" onClick={()=>setEditingInspector(false)}>Annuler</Button><Button onClick={handleInspectorSave} className="bg-[#0066FF] text-white">Enregistrer</Button></> : <Button variant="outline" onClick={()=>setEditingInspector(true)}>Modifier</Button>}
+                {editingInspector ? <><Button variant="outline" onClick={()=>setEditingInspector(false)}>{c('cancel')}</Button><Button onClick={handleInspectorSave} className="bg-[#0066FF] text-white">{c('save')}</Button></> : <Button variant="outline" onClick={()=>setEditingInspector(true)}>{c('edit')}</Button>}
                 {inspecting.status === 'ready' && (
                   <Button onClick={() => handlePublish(inspecting.id)} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl cursor-pointer">
-                    Publier
+                    {c('publish')}
                   </Button>
                 )}
                 {inspecting.status === 'published' && (
                   <Button onClick={() => handleArchive(inspecting.id)} variant="secondary" className="text-xs font-bold rounded-xl gap-1.5 cursor-pointer">
-                    <Archive className="w-3.5 h-3.5" /> Archiver
+                    <Archive className="w-3.5 h-3.5" /> {c('archive')}
                   </Button>
                 )}
               </DialogFooter>

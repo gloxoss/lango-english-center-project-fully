@@ -12,6 +12,10 @@ import type {
 } from '@/features/dashboard/model/types';
 import { and, desc, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { createTranslator } from 'next-intl';
+import messagesAr from '../../../../../locales/ar.json';
+import messagesEn from '../../../../../locales/en.json';
+import messagesFr from '../../../../../locales/fr.json';
 import { eventOccurrences, events, eventSchedules } from '@/features/events/models/events-schema';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
@@ -50,12 +54,20 @@ function formatMad(amount: number): string {
   return `${Math.round(amount).toLocaleString('fr-FR')} MAD`;
 }
 
+// The dashboard asks for its UI locale (?locale=), so the sentences this route
+// builds (action center, watchlist reasons, day labels) match the page language
+// instead of always being French (audit S-37).
+const SUMMARY_MESSAGES = { fr: messagesFr, en: messagesEn, ar: messagesAr } as const;
+
 export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
     const { searchParams } = new URL(request.url);
     const requestedBranchId = searchParams.get('branchId');
+    const requestedLocale = searchParams.get('locale');
+    const locale: keyof typeof SUMMARY_MESSAGES = requestedLocale === 'ar' || requestedLocale === 'en' ? requestedLocale : 'fr';
+    const tr = createTranslator({ locale, messages: SUMMARY_MESSAGES[locale], namespace: 'DashboardHome' });
     const classSectionId = searchParams.get('classSectionId');
 
     const today = todayIso();
@@ -140,10 +152,10 @@ export async function GET(request: Request) {
 
     const schoolName = tenantRows[0]?.name ?? 'SchoolOS';
     const activeBranchName = effectiveBranchId
-      ? availableBranches.find(b => b.id === effectiveBranchId)?.name ?? 'Succursale'
+      ? availableBranches.find(b => b.id === effectiveBranchId)?.name ?? tr('branchFallback')
       : availableBranches.length > 1
-        ? 'Toutes les succursales'
-        : availableBranches[0]?.name ?? 'Campus Principal';
+        ? tr('allBranches')
+        : availableBranches[0]?.name ?? tr('mainCampus');
 
     const activeAcademicYear = activeSessionYearRows[0];
     const periodStart = activeAcademicYear?.startDate ?? `${currentYear}-01-01`;
@@ -316,6 +328,7 @@ export async function GET(request: Request) {
         yearNum: sql<number>`extract(year from date(${invoices.issueDate}))::int`,
         monthLabel: sql<string>`to_char(date(${invoices.issueDate}), 'Mon')`,
         invoiced: sql<string>`coalesce(sum(${invoices.netAmount}), 0)::numeric::text`,
+        open: sql<string>`coalesce(sum(greatest(${invoices.netAmount} - ${invoices.paidAmount}, 0)), 0)::numeric::text`,
       })
         .from(invoices)
         .innerJoin(user, and(eq(invoices.studentId, user.id), eq(user.tenantId, tenantId)))
@@ -569,20 +582,20 @@ export async function GET(request: Request) {
 
     if (!isSchoolDay) {
       actionCenterAttendanceStatus = 'no_school';
-      actionCenterAttendanceTitle = 'Aucun cours prévu aujourd\'hui';
-      actionCenterAttendanceSub = isSunday ? 'Dimanche — Journée de repos' : 'Vacances scolaires / Jour férié';
+      actionCenterAttendanceTitle = tr('acNoSchoolTitle');
+      actionCenterAttendanceSub = isSunday ? tr('acSundaySub') : tr('acHolidaySub');
     } else if (missingAttendanceClasses === 0 && expectedClasses > 0) {
       actionCenterAttendanceStatus = 'all_clear';
-      actionCenterAttendanceTitle = 'Présences à jour';
-      actionCenterAttendanceSub = `${completedAttendanceClasses} classes pointées sur ${expectedClasses}`;
+      actionCenterAttendanceTitle = tr('acAttendanceDoneTitle');
+      actionCenterAttendanceSub = tr('acAttendanceDoneSub', { done: completedAttendanceClasses, expected: expectedClasses });
     } else if (expectedClasses === 0) {
       actionCenterAttendanceStatus = 'all_clear';
-      actionCenterAttendanceTitle = 'Aucune classe configurée';
-      actionCenterAttendanceSub = 'Configurez les classes dans le module Académique';
+      actionCenterAttendanceTitle = tr('acNoClassesTitle');
+      actionCenterAttendanceSub = tr('acNoClassesSub');
     } else {
       actionCenterAttendanceStatus = 'warning';
-      actionCenterAttendanceTitle = `${missingAttendanceClasses} présence${missingAttendanceClasses > 1 ? 's' : ''} non saisie${missingAttendanceClasses > 1 ? 's' : ''}`;
-      actionCenterAttendanceSub = `${missingAttendanceClasses} classe${missingAttendanceClasses > 1 ? 's' : ''} terminée${missingAttendanceClasses > 1 ? 's' : ''} sans pointage`;
+      actionCenterAttendanceTitle = tr('acAttendanceMissingTitle', { count: missingAttendanceClasses });
+      actionCenterAttendanceSub = tr('acAttendanceMissingSub', { count: missingAttendanceClasses });
     }
 
     // Overdue Invoices
@@ -595,10 +608,10 @@ export async function GET(request: Request) {
 
     const actionCenterOverdue = {
       status: overdueCount > 0 ? ('warning' as const) : ('all_clear' as const),
-      title: overdueCount > 0 ? `${overdueCount} factures en retard` : 'Paiements à jour',
+      title: overdueCount > 0 ? tr('acOverdueTitle', { count: overdueCount }) : tr('acPaymentsClearTitle'),
       sub: overdueCount > 0
-        ? `${formatMad(overdueAmount)} à recouvrer · ${affectedFamilies} famille${affectedFamilies > 1 ? 's' : ''}`
-        : 'Aucun retard de paiement constaté',
+        ? tr('acOverdueSub', { amount: formatMad(overdueAmount), families: affectedFamilies })
+        : tr('acPaymentsClearSub'),
       overdueCount,
       overdueAmount,
       affectedFamilies,
@@ -611,8 +624,8 @@ export async function GET(request: Request) {
     const unjustifiedStudentsCount = new Set(unjustifiedAbsencesTodayRows.map(r => r.studentId)).size;
     const actionCenterAbsences = {
       status: unjustifiedCount > 0 ? ('warning' as const) : ('all_clear' as const),
-      title: unjustifiedCount > 0 ? `${unjustifiedCount} absence${unjustifiedCount > 1 ? 's' : ''} non justifiée${unjustifiedCount > 1 ? 's' : ''}` : 'Aucune absence injustifiée',
-      sub: unjustifiedCount > 0 ? `${unjustifiedStudentsCount} élève${unjustifiedStudentsCount > 1 ? 's' : ''} concerné${unjustifiedStudentsCount > 1 ? 's' : ''}` : 'Toutes les absences du jour sont justifiées',
+      title: unjustifiedCount > 0 ? tr('acUnjustifiedTitle', { count: unjustifiedCount }) : tr('acNoUnjustifiedTitle'),
+      sub: unjustifiedCount > 0 ? tr('acUnjustifiedSub', { count: unjustifiedStudentsCount }) : tr('acNoUnjustifiedSub'),
       unjustifiedCount,
       affectedStudentCount: unjustifiedStudentsCount,
       route: '/dashboard/attendance',
@@ -679,8 +692,10 @@ export async function GET(request: Request) {
     // =========================================================================
     const MONTH_NAMES = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
     const invoicedByMonthMap = new Map<string, number>();
+    let periodOpenTotal = 0;
     for (const row of periodInvoicesByMonth) {
       invoicedByMonthMap.set(`${row.yearNum}-${row.monthNum}`, Number(row.invoiced));
+      periodOpenTotal += Number(row.open ?? 0);
     }
     const collectedByMonthMap = new Map<string, number>();
     for (const row of periodPaymentsByMonth) {
@@ -713,9 +728,14 @@ export async function GET(request: Request) {
     // Mathematical reconciliation: sum of breakdown exactly equals period totals
     const periodInvoicedTotal = monthlyBreakdown.reduce((sum, m) => sum + m.invoiced, 0);
     const periodCollectedTotal = monthlyBreakdown.reduce((sum, m) => sum + m.collected, 0);
-    const periodOutstandingTotal = Math.max(0, periodInvoicedTotal - periodCollectedTotal);
+    // Balances come from the period's invoices themselves (net - paid). Cash
+    // received in the period also settles older invoices, so "invoiced minus
+    // cash" read 0 due and a collection rate above 100% while families still
+    // owed money on this year's invoices.
+    const periodOutstandingTotal = periodOpenTotal;
+    const periodPaidOnInvoices = Math.max(0, periodInvoicedTotal - periodOutstandingTotal);
     const collectionRate = periodInvoicedTotal > 0
-      ? Math.round((periodCollectedTotal / periodInvoicedTotal) * 1000) / 10
+      ? Math.round((periodPaidOnInvoices / periodInvoicedTotal) * 1000) / 10
       : 0;
 
     // Runtime reconciliation assertion:
@@ -730,7 +750,7 @@ export async function GET(request: Request) {
     const financeOverview: FinanceOverviewData = {
       periodLabel,
       invoiced: periodInvoicedTotal,
-      collected: periodCollectedTotal,
+      collected: periodPaidOnInvoices,
       outstanding: periodOutstandingTotal,
       collectionRate,
       monthlyBreakdown,
@@ -781,7 +801,7 @@ export async function GET(request: Request) {
       const entry = attendanceByDate.get(iso);
       const sRate = entry && entry.total > 0 ? Math.round((entry.attended / entry.total) * 1000) / 10 : null;
       return {
-        dayLabel: DAY_LABELS[dayIndex] ?? '',
+        dayLabel: DAY_LABELS[dayIndex] ? tr(`day_${dayIndex}` as 'day_0') : '',
         date: `${iso.slice(8, 10)}/${iso.slice(5, 7)}`,
         studentRate: sRate,
         isToday: iso === today,
@@ -835,8 +855,8 @@ export async function GET(request: Request) {
       className: formatClassName(p.classSectionId),
       amount: p.amount,
       paymentDate: p.paymentDate,
-      paymentMethod: p.paymentMethod ?? 'Espèces',
-      reason: 'Frais de scolarité',
+      paymentMethod: p.paymentMethod ?? 'cash',
+      reason: tr('tuitionFees'),
       invoiceId: p.invoiceId,
     }));
 
@@ -851,10 +871,10 @@ export async function GET(request: Request) {
         studentId: r.studentId,
         name: r.studentName,
         className: formatClassName(r.classSectionId),
-        reason: `${r.absentCount} absences non justifiées`,
+        reason: tr('wlAbsences', { count: r.absentCount }),
         category: 'attendance',
         severity: r.absentCount >= 4 ? 'critical' : 'warning',
-        relevantMetric: `${r.absentCount} abs.`,
+        relevantMetric: tr('wlAbsShort', { count: r.absentCount }),
         destinationRoute: `/dashboard/attendance?studentId=${r.studentId}`,
       });
     }
@@ -862,7 +882,7 @@ export async function GET(request: Request) {
     for (const r of overdueRiskRows) {
       const existing = watchlistMap.get(r.studentId);
       if (existing) {
-        existing.reason = `${existing.reason} · Retard paiement (${r.oldestDays ?? 0}j)`;
+        existing.reason = `${existing.reason} · ${tr('wlLatePaymentShort', { days: r.oldestDays ?? 0 })}`;
         existing.severity = 'critical';
       } else {
         watchlistMap.set(r.studentId, {
@@ -870,7 +890,7 @@ export async function GET(request: Request) {
           studentId: r.studentId,
           name: r.studentName,
           className: formatClassName(r.classSectionId),
-          reason: `Paiement en retard · ${r.oldestDays ?? 0} jours`,
+          reason: tr('wlLatePayment', { days: r.oldestDays ?? 0 }),
           category: 'finance',
           severity: (r.oldestDays ?? 0) > 30 ? 'critical' : 'warning',
           relevantMetric: formatMad(Number(r.overdueTotal ?? 0)),
@@ -921,7 +941,7 @@ export async function GET(request: Request) {
         activeBranchName,
         activeBranchId: effectiveBranchId,
         availableBranches,
-        currentDateFormatted: new Date().toLocaleDateString('fr-FR', {
+        currentDateFormatted: new Date().toLocaleDateString(locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-GB' : 'fr-FR', {
           weekday: 'long',
           year: 'numeric',
           month: 'long',

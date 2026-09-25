@@ -5,7 +5,9 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
-import { invoiceEvents, invoices } from '@/models/Schema';
+import { invoiceEvents, invoices, user } from '@/models/Schema';
+import { logger } from '@/libs/logger';
+import { ensureFinanceArtifact } from '@/features/documents/services/issue-finance';
 
 // PUT /api/finance/invoices/:id/issue — promote a draft to an issued (pending)
 // invoice. Drafts are invisible to the collection desk; issue is the act that
@@ -24,6 +26,11 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       .limit(1);
     if (!invoice) {
       throw new ApiError(404, 'INVOICE_NOT_FOUND', 'Facture introuvable.');
+    }
+    if (context.branchId) {
+      const [student] = await db.select({ id: user.id }).from(user)
+        .where(and(eq(user.id, invoice.studentId), eq(user.tenantId, tenantId), eq(user.branchId, context.branchId))).limit(1);
+      if (!student) throw new ApiError(404, 'INVOICE_NOT_FOUND', 'Facture introuvable.');
     }
     if (invoice.status !== 'draft') {
       throw new ApiError(409, 'INVOICE_NOT_DRAFT', 'Seule une facture en brouillon peut être émise.');
@@ -44,7 +51,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     });
     recordAudit(context, 'update', 'invoice', id, { action: 'issue' });
 
-    return NextResponse.json({ success: true, data: updated, message: `Facture ${invoice.invoiceNumber} émise.` });
+    let pdfArtifactId: string | null = null;
+    try {
+      pdfArtifactId = (await ensureFinanceArtifact(request, context, 'invoice', id))?.id ?? null;
+    } catch (error) {
+      logger.error({ err: error, invoiceId: id, tenantId }, 'Invoice issued but PDF archive failed');
+    }
+
+    return NextResponse.json({ success: true, data: updated, pdfArtifactId, message: `Facture ${invoice.invoiceNumber} émise.` });
   } catch (error) {
     return apiErrorResponse(error);
   }

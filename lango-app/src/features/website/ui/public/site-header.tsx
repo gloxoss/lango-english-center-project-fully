@@ -1,7 +1,21 @@
 import Link from 'next/link';
 import type { ResolvedSite } from './site-resolver';
 
-function menuItemHref(item: ResolvedSite['menu'][number], locale: string, tenantSlug: string) {
+type HeaderMenuItem = Pick<ResolvedSite['menu'][number], 'id' | 'label' | 'linkType' | 'linkValue'>;
+
+// A school that has not built a menu yet still needs a way around its own
+// site: fall back to the standard pages in the visitor's language (audit S-55).
+const DEFAULT_MENU: Record<string, [string, string][]> = {
+  fr: [['home', 'Accueil'], ['about', 'À propos'], ['services', 'Services'], ['news', 'Actualités'], ['events', 'Événements'], ['gallery', 'Galerie'], ['faq', 'FAQ'], ['contact', 'Contact']],
+  en: [['home', 'Home'], ['about', 'About'], ['services', 'Services'], ['news', 'News'], ['events', 'Events'], ['gallery', 'Gallery'], ['faq', 'FAQ'], ['contact', 'Contact']],
+  ar: [['home', 'الرئيسية'], ['about', 'من نحن'], ['services', 'الخدمات'], ['news', 'الأخبار'], ['events', 'الفعاليات'], ['gallery', 'المعرض'], ['faq', 'الأسئلة الشائعة'], ['contact', 'اتصل بنا']],
+};
+
+function defaultMenu(locale: string): HeaderMenuItem[] {
+  return (DEFAULT_MENU[locale] ?? DEFAULT_MENU.fr!).map(([page, label]) => ({ id: `default-${page}`, label, linkType: 'page', linkValue: page } as HeaderMenuItem));
+}
+
+function menuItemHref(item: HeaderMenuItem, locale: string, tenantSlug: string) {
   if (item.linkType === 'external') {
     return item.linkValue;
   }
@@ -17,7 +31,8 @@ function menuItemHref(item: ResolvedSite['menu'][number], locale: string, tenant
 }
 
 export function SiteHeader({ site, locale }: { site: ResolvedSite; locale: string }) {
-  const { tenant, logoUrl, theme, menu } = site;
+  const { tenant, logoUrl, theme } = site;
+  const menu: HeaderMenuItem[] = site.menu.length > 0 ? site.menu : defaultMenu(locale);
   if (!theme) {
     return null;
   }

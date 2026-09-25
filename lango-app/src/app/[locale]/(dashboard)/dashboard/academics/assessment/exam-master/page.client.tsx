@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { ExamPlanningClient } from '@/features/academics/ui/exam-planning-client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -107,8 +108,15 @@ export default function ExamMasterPage() {
   const tCommon = useTranslations('Common');
   const tStatus = useTranslations('Status');
 
-  // Sequential 3-step flow (§10.1): 1. seats -> 2. schedules -> 3. marksheet
-  const [activeTab, setActiveTab] = useState<'seats' | 'schedules' | 'marksheet'>('seats');
+  const locale = useLocale();
+
+  // Sequential 3-step flow (§10.1): 1. seats -> 2. schedules -> 3. marksheet.
+  // 'calendar' is the former /academics/exams screen (calendar + supervisors),
+  // folded in here so exam planning lives on one page (audit S-13).
+  const [activeTab, setActiveTab] = useState<'seats' | 'schedules' | 'marksheet' | 'calendar'>('seats');
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('tab') === 'calendar') setActiveTab('calendar');
+  }, []);
 
   const [terms, setTerms] = useState<ExamTerm[]>([]);
   const [halls, setHalls] = useState<ExamHall[]>([]);
@@ -774,7 +782,7 @@ export default function ExamMasterPage() {
       )}
 
       {/* Sequential Step Indicator Bar (§10.1) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         <button
           type="button"
           onClick={() => setActiveTab('seats')}
@@ -843,7 +851,29 @@ export default function ExamMasterPage() {
             <p className="text-[11px] text-slate-400">{t('step3Desc')}</p>
           </div>
         </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('calendar')}
+          className={`p-4 rounded-2xl border text-start transition-all cursor-pointer flex items-center gap-3.5 ${
+            activeTab === 'calendar'
+              ? 'bg-white border-[#0066FF] shadow-xs ring-2 ring-[#0066FF]/20'
+              : 'bg-slate-50/70 border-slate-200 hover:bg-white text-slate-600'
+          }`}
+        >
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+            activeTab === 'calendar' ? 'bg-[#0066FF] text-white shadow-2xs' : 'bg-slate-200 text-slate-600'
+          }`}>
+            <Calendar className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-[#16212B]">{t('calendarTabTitle')}</div>
+            <p className="text-[11px] text-slate-400">{t('calendarTabDesc')}</p>
+          </div>
+        </button>
       </div>
+
+      {activeTab === 'calendar' && <ExamPlanningClient locale={locale} embedded />}
 
       {/* STEP 1: Salles & Sessions */}
       {activeTab === 'seats' && (

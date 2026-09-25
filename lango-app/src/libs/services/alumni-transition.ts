@@ -1,7 +1,9 @@
 import type { db as dbClient } from '@/libs/DB';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { hashPassword } from 'better-auth/crypto';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
+import { hostelAllocationEvents, hostelAllocations } from '@/features/hostel/models/hostel-schema';
+import { transportStudentAllocations } from '@/features/transport/models/transport-schema';
 import { ApiError } from '@/libs/api/errors';
 import { getEffectiveValueWithLegacyFallback } from '@/libs/settings/registry';
 import { hashSetupToken } from '@/libs/setup-token';
@@ -28,6 +30,88 @@ export type TransitionResult = {
   idempotent?: boolean;
 };
 
+function addOneDayString(isoDate: string): string {
+  const [y, m, d] = isoDate.split('-').map(Number);
+  const dt = new Date(Date.UTC(y!, m! - 1, d! + 1));
+  return dt.toISOString().slice(0, 10);
+}
+
+async function closeHostelAndTransportAllocations(
+  tx: Tx,
+  tenantId: string,
+  studentId: string,
+  actorUserId: string,
+  effectiveDate: string,
+  nowIso: string,
+  notes?: string,
+): Promise<void> {
+  // 1. Hostel: find active or reserved allocations for this student in this tenant
+  const activeHostelAllocations = await tx
+    .select({
+      id: hostelAllocations.id,
+      state: hostelAllocations.state,
+      effectiveStartDate: hostelAllocations.effectiveStartDate,
+    })
+    .from(hostelAllocations)
+    .where(
+      and(
+        eq(hostelAllocations.tenantId, tenantId),
+        eq(hostelAllocations.studentId, studentId),
+        inArray(hostelAllocations.state, ['reserved', 'checked_in']),
+      ),
+    );
+
+  for (const alloc of activeHostelAllocations) {
+    const isCheckedIn = alloc.state === 'checked_in';
+    const closedState = isCheckedIn ? 'checked_out' : 'cancelled';
+    const closedEnd = alloc.effectiveStartDate < effectiveDate
+      ? effectiveDate
+      : addOneDayString(alloc.effectiveStartDate);
+
+    await tx
+      .update(hostelAllocations)
+      .set({
+        state: closedState,
+        ...(isCheckedIn ? { checkedOutAt: nowIso } : {}),
+        effectiveEndDate: closedEnd,
+        updatedAt: nowIso,
+        notes: notes || 'Fin de scolarité / Diplômé (Transition vers Ancien élève)',
+      })
+      .where(
+        and(
+          eq(hostelAllocations.id, alloc.id),
+          eq(hostelAllocations.tenantId, tenantId),
+        ),
+      );
+
+    await tx.insert(hostelAllocationEvents).values({
+      tenantId,
+      allocationId: alloc.id,
+      eventType: closedState,
+      actorId: actorUserId,
+      reason: notes || 'Fin de scolarité / Diplômé (Transition vers Ancien élève)',
+      metadata: { closedState, effectiveEndDate: closedEnd },
+    });
+  }
+
+  // 2. Transport: cancel active or waitlisted bus allocations for this student in this tenant
+  await tx
+    .update(transportStudentAllocations)
+    .set({
+      status: 'cancelled',
+      effectiveEndDate: effectiveDate,
+      assistanceNotes: notes || 'Fin de scolarité / Diplômé (Transition vers Ancien élève)',
+      updatedAt: nowIso,
+    })
+    .where(
+      and(
+        eq(transportStudentAllocations.tenantId, tenantId),
+        eq(transportStudentAllocations.studentId, studentId),
+        inArray(transportStudentAllocations.status, ['active', 'waitlisted']),
+      ),
+    );
+}
+
 // Canonical graduation transition (future-implementation/alumni-portal) -
 // Authoritative lifecycle transition from active student to alumnus.
 // Implements rules AL1 to AL15:
@@ -38,6 +122,7 @@ export type TransitionResult = {
 // - Idempotent re-transition (AL2)
 // - Preserves matricule/Massar (AL9)
 // - Secure credential and access transition (AL13)
+// - Closes active hostel bed allocations and transport routes
 export async function transitionStudentToAlumni(
   tx: Tx,
   tenantId: string,
@@ -116,6 +201,16 @@ async function executeTransition(
         ),
       );
 
+    await closeHostelAndTransportAllocations(
+      tx,
+      tenantId,
+      studentId,
+      actorUserId,
+      effectiveDate,
+      nowIso,
+      options?.notes,
+    );
+
     return {
       studentId,
       tempPassword: null,
@@ -168,6 +263,17 @@ async function executeTransition(
         ),
       );
   }
+
+  // Close active hostel allocations and transport bus allocations
+  await closeHostelAndTransportAllocations(
+    tx,
+    tenantId,
+    studentId,
+    actorUserId,
+    effectiveDate,
+    nowIso,
+    options?.notes,
+  );
 
   const cohortSessionYearId = graduationCohortSessionYearId ?? currentPlacement?.sessionYearId ?? null;
 

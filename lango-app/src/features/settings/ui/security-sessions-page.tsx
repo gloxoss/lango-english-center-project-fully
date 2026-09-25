@@ -1,87 +1,65 @@
+import type { AuditItem, Role2faItem, SecurityAlertItem, SessionItem, TrustedDeviceItem } from './security-sessions-client';
 // security-sessions-page.tsx
-// SERVER COMPONENT — pre-fetches real tenant-scoped sessions, 2FA adoption by role,
-// trusted devices, derived security alerts, audit log, and security policy settings.
+// SERVER COMPONENT: pre-fetches real tenant-scoped sessions, 2FA adoption by role,
+// active devices, derived security alerts and the audit log. It passes raw data
+// only; every label is translated in the client (SecuritySessions namespace).
 import { and, desc, eq, gt, inArray, sql } from 'drizzle-orm';
-import { db } from '@/libs/DB';
 import { getServerUserContext } from '@/libs/auth/server-context';
+import { db } from '@/libs/DB';
 import { getEffectiveValue } from '@/libs/settings/registry';
 import {
-  accessResetRequests, auditLogs, session, twoFactor, user,
+  accessResetRequests,
+  auditLogs,
+  session,
+  twoFactor,
+  user,
 } from '@/models/Schema';
 import {
-  SecuritySessionsClient, SessionItem, AuditItem, TrustedDeviceItem,
-  SecurityAlertItem, Role2faItem,
+  SecuritySessionsClient,
 } from './security-sessions-client';
 
 const STAFF_ROLES = ['school_admin', 'accountant', 'teacher', 'receptionist'] as const;
 
-const ROLE_META: Record<string, { label: string; badge: string }> = {
-  school_admin: { label: 'Directeur & Administration', badge: 'bg-[#F0F4FF] text-[#4B6BFB]' },
-  accountant: { label: 'Comptabilité & Finance', badge: 'bg-amber-50 text-amber-700' },
-  teacher: { label: 'Corps Enseignant', badge: 'bg-blue-50 text-blue-700' },
-  receptionist: { label: 'Réception & Accueil', badge: 'bg-emerald-50 text-emerald-700' },
+const ROLE_BADGE: Record<string, string> = {
+  school_admin: 'bg-[#F0F4FF] text-[#4B6BFB]',
+  accountant: 'bg-amber-50 text-amber-700',
+  teacher: 'bg-blue-50 text-blue-700',
+  receptionist: 'bg-emerald-50 text-emerald-700',
 };
 
-function describeDevice(userAgent: string | null): { device: string; os: string; type: 'desktop' | 'mobile' } {
-  if (!userAgent) return { device: 'Appareil inconnu', os: '—', type: 'desktop' };
+// Browser and OS names are product names, so they stay untranslated; null means unknown.
+function describeDevice(userAgent: string | null): { browser: string | null; os: string | null; type: 'desktop' | 'mobile' } {
+  if (!userAgent) {
+    return { browser: null, os: null, type: 'desktop' };
+  }
   const ua = userAgent.toLowerCase();
   const type: 'desktop' | 'mobile' = /mobile|android|iphone|ipad/i.test(ua) ? 'mobile' : 'desktop';
-  const browser = /edg\//.test(ua) ? 'Edge' : /opr\//.test(ua) ? 'Opera' : /firefox/.test(ua) ? 'Firefox' : /safari/.test(ua) ? 'Safari' : /chrome/.test(ua) ? 'Chrome' : 'Navigateur';
-  const os = /windows/.test(ua) ? 'Windows' : /mac os|macintosh/.test(ua) ? 'macOS' : /android/.test(ua) ? 'Android' : /iphone|ipad/.test(ua) ? 'iOS' : /linux/.test(ua) ? 'Linux' : '—';
-  return { device: `${browser} sur ${os}`, os, type };
+  const browser = /edg\//.test(ua) ? 'Edge' : /opr\//.test(ua) ? 'Opera' : /firefox/.test(ua) ? 'Firefox' : /safari/.test(ua) && !/chrome/.test(ua) ? 'Safari' : /chrome/.test(ua) ? 'Chrome' : null;
+  const os = /windows/.test(ua) ? 'Windows' : /mac os|macintosh/.test(ua) ? 'macOS' : /android/.test(ua) ? 'Android' : /iphone|ipad/.test(ua) ? 'iOS' : /linux/.test(ua) ? 'Linux' : null;
+  return { browser, os, type };
 }
 
-function relativeTime(iso: string | null): string {
-  if (!iso) return '';
-  const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return '';
-  const minutes = Math.floor((Date.now() - then) / 60000);
-  if (minutes < 1) return 'En ce moment';
-  if (minutes < 60) return `Il y a ${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `Il y a ${hours} h`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return 'Hier';
-  return `Il y a ${days} jours`;
-}
-
-export async function SecuritySessionsPage({ locale }: { locale?: string } = {}) {
+export async function SecuritySessionsPage(_props: { locale?: string } = {}) {
   const ctx = await getServerUserContext();
   const tenantId = ctx?.tenantId ?? null;
 
   let initialSessions: SessionItem[] = [];
   let initialAudits: AuditItem[] = [];
   let initialTrustedDevices: TrustedDeviceItem[] = [];
-  let initialAlerts: SecurityAlertItem[] = [];
+  const initialAlerts: SecurityAlertItem[] = [];
   let initial2faAdoption: Role2faItem[] = [];
   let initialDismissedAlertIds: string[] = [];
   let globalTfaPercentage = 0;
-
-  const initialSettings = {
-    twoFaRequired: false,
-    requireAdmin2fa: false,
-    passwordPolicy: 'strict' as string,
-    sessionTimeout: '60',
-    ipRestriction: false,
-    allowedIps: '196.202.12.0/24',
-    loginAlerts: true,
-  };
+  let requireAdmin2fa = false;
+  let loadFailed = false;
 
   try {
     if (tenantId && ctx) {
-      // Policy settings from the registry.
-      const [polEff, timeoutEff, dismissedEff, admin2faEff] = await Promise.all([
-        getEffectiveValue(tenantId, ctx.branchId, 'security.policies'),
-        getEffectiveValue(tenantId, ctx.branchId, 'security.sessionTimeoutMinutes'),
+      const [dismissedEff, admin2faEff] = await Promise.all([
         getEffectiveValue(tenantId, ctx.branchId, 'security.dismissedAlerts'),
         getEffectiveValue(tenantId, ctx.branchId, 'security.requireTwoFactorForAdmins'),
       ]);
-      const policies = (polEff.value ?? {}) as Record<string, boolean>;
-      initialSettings.twoFaRequired = Boolean(policies.twoFa ?? false);
-      initialSettings.requireAdmin2fa = Boolean(admin2faEff.value ?? false);
-      initialSettings.passwordPolicy = policies.strongPassword ? 'strict' : 'standard';
-      initialSettings.sessionTimeout = String(timeoutEff.value ?? 60);
-      initialSettings.loginAlerts = Boolean(policies.auditLog ?? true);
+      requireAdmin2fa = Boolean(admin2faEff.value ?? false);
       initialDismissedAlertIds = Array.isArray(dismissedEff.value)
         ? (dismissedEff.value as string[])
         : [];
@@ -104,36 +82,37 @@ export async function SecuritySessionsPage({ locale }: { locale?: string } = {})
         .orderBy(desc(session.updatedAt))
         .limit(20);
 
-      initialSessions = sessionRows.map(r => {
-        const { device, type } = describeDevice(r.userAgent);
+      initialSessions = sessionRows.map((r) => {
+        const { browser, os, type } = describeDevice(r.userAgent);
         return {
           id: r.id,
           userName: r.userName ?? r.userId,
           userRole: r.userRole,
-          device,
+          browser,
+          os,
           type,
           ip: r.ipAddress ?? '—',
-          location: '—',
-          lastActive: relativeTime(r.updatedAt ? r.updatedAt.toISOString() : null),
+          lastActiveAt: r.updatedAt ? r.updatedAt.toISOString() : null,
           isCurrent: r.id === ctx.sessionId,
         };
       });
 
-      // Trusted devices = distinct devices with an active session.
+      // Active devices = distinct user+device pairs with an active session.
       const latestByDevice = new Map<string, (typeof sessionRows)[number]>();
       for (const r of sessionRows) {
         const key = `${r.userId}|${r.userAgent ?? 'unknown'}`;
-        if (!latestByDevice.has(key)) latestByDevice.set(key, r);
+        if (!latestByDevice.has(key)) {
+          latestByDevice.set(key, r);
+        }
       }
-      initialTrustedDevices = [...latestByDevice.values()].slice(0, 6).map(r => {
-        const { device, os } = describeDevice(r.userAgent);
+      initialTrustedDevices = [...latestByDevice.values()].slice(0, 6).map((r) => {
+        const { browser, os } = describeDevice(r.userAgent);
         return {
           id: `dev-${r.id}`,
-          name: device,
-          owner: r.userName ?? r.userId,
+          browser,
           os,
-          location: '—',
-          verifiedAt: r.createdAt ? new Date(r.createdAt).toLocaleDateString('fr-FR') : '—',
+          owner: r.userName ?? r.userId,
+          firstSeenAt: r.createdAt ? new Date(r.createdAt).toISOString() : null,
           isCurrent: r.id === ctx.sessionId,
         };
       });
@@ -152,85 +131,64 @@ export async function SecuritySessionsPage({ locale }: { locale?: string } = {})
       const seen = new Set<string>();
       const byRole = new Map<string, { total: number; tfa: number }>();
       for (const u of staffUsers) {
-        if (seen.has(u.id)) continue;
+        if (seen.has(u.id)) {
+          continue;
+        }
         seen.add(u.id);
         const entry = byRole.get(u.role) ?? { total: 0, tfa: 0 };
         entry.total += 1;
-        if (u.tfaVerified) entry.tfa += 1;
+        if (u.tfaVerified) {
+          entry.tfa += 1;
+        }
         byRole.set(u.role, entry);
       }
       let totalTfa = 0;
       let totalStaff = 0;
-      initial2faAdoption = STAFF_ROLES.map(roleKey => {
+      initial2faAdoption = STAFF_ROLES.map((roleKey) => {
         const stats = byRole.get(roleKey) ?? { total: 0, tfa: 0 };
         totalTfa += stats.tfa;
         totalStaff += stats.total;
         return {
           roleKey,
-          roleLabel: ROLE_META[roleKey]?.label ?? roleKey,
           totalCount: stats.total,
           tfaCount: stats.tfa,
           percentage: stats.total > 0 ? Math.round((stats.tfa / stats.total) * 100) : 0,
-          badgeColor: ROLE_META[roleKey]?.badge ?? 'bg-[#F3F4F6] text-[#374151]',
+          badgeColor: ROLE_BADGE[roleKey] ?? 'bg-[#F3F4F6] text-[#374151]',
         };
       });
       globalTfaPercentage = totalStaff > 0 ? Math.round((totalTfa / totalStaff) * 100) : 0;
 
       // Security alerts derived from real signals (dismissed ones are filtered out).
-      const [aggRows, resetRows] = await Promise.all([
+      const [aggRows, [resetAgg]] = await Promise.all([
         db
           .select({
             failedTotal: sql<number>`coalesce(sum(${user.failedLoginCount}), 0)::int`,
-            lockedCount: sql<number>`count(*) filter (where ${user.lockedUntil} is not null)::int`,
+            lockedCount: sql<number>`count(*) filter (where ${user.lockedUntil} > now())::int`,
           })
           .from(user)
           .where(eq(user.tenantId, tenantId)),
+        // Was `.limit(1)` + rows.length, so the alert always said "1 request".
         db
-          .select({ id: accessResetRequests.id })
+          .select({ value: sql<number>`count(*)::int` })
           .from(accessResetRequests)
-          .where(eq(accessResetRequests.tenantId, tenantId))
-          .limit(1),
+          .where(eq(accessResetRequests.tenantId, tenantId)),
       ]);
       const failedTotal = aggRows[0]?.failedTotal ?? 0;
       const lockedCount = aggRows[0]?.lockedCount ?? 0;
-      const resetCount = resetRows.length;
+      const resetCount = resetAgg?.value ?? 0;
 
       const dismissed = new Set(initialDismissedAlertIds);
       if (!dismissed.has('alert-locked') && lockedCount > 0) {
-        initialAlerts.push({
-          id: 'alert-locked',
-          severity: 'critical',
-          title: 'Comptes temporairement verrouillés',
-          description: `${lockedCount} compte(s) verrouillé(s) après des tentatives de connexion échouées.`,
-          timestamp: 'Actif',
-          actionLabel: 'Réinitialiser les accès',
-          actionHref: '/dashboard/settings/access-reset',
-        });
+        initialAlerts.push({ id: 'alert-locked', kind: 'locked', severity: 'critical', count: lockedCount, actionHref: '/dashboard/settings/access-reset' });
       }
       if (!dismissed.has('alert-failed-logins') && failedTotal > 0) {
-        initialAlerts.push({
-          id: 'alert-failed-logins',
-          severity: 'warning',
-          title: 'Connexions échouées enregistrées',
-          description: `${failedTotal} tentative(s) de connexion échouée(s) sur les comptes de l'établissement.`,
-          timestamp: 'Actif',
-          actionLabel: 'Voir les utilisateurs',
-          actionHref: '/dashboard/settings/users',
-        });
+        initialAlerts.push({ id: 'alert-failed-logins', kind: 'failedLogins', severity: 'warning', count: failedTotal, actionHref: '/dashboard/settings/users' });
       }
       if (!dismissed.has('alert-resets') && resetCount > 0) {
-        initialAlerts.push({
-          id: 'alert-resets',
-          severity: 'warning',
-          title: "Réinitialisations d'accès récentes",
-          description: `${resetCount} demande(s) de réinitialisation d'accès enregistrée(s).`,
-          timestamp: 'Actif',
-          actionLabel: 'Voir les réinitialisations',
-          actionHref: '/dashboard/settings/access-reset',
-        });
+        initialAlerts.push({ id: 'alert-resets', kind: 'resets', severity: 'warning', count: resetCount, actionHref: '/dashboard/settings/access-reset' });
       }
 
-      // Recent security audit trail (tenant-scoped).
+      // Recent audit trail (tenant-scoped).
       const auditRows = await db
         .select({
           id: auditLogs.id,
@@ -253,6 +211,8 @@ export async function SecuritySessionsPage({ locale }: { locale?: string } = {})
       }));
     }
   } catch (err) {
+    // Used to be swallowed, so a DB failure looked like "0 sessions, 0 alerts".
+    loadFailed = true;
     console.error('Failed to pre-fetch security page data server-side:', err);
   }
 
@@ -260,12 +220,13 @@ export async function SecuritySessionsPage({ locale }: { locale?: string } = {})
     <SecuritySessionsClient
       initialSessions={initialSessions}
       initialAudits={initialAudits}
-      initialSettings={initialSettings}
+      initialRequireAdmin2fa={requireAdmin2fa}
       initialTrustedDevices={initialTrustedDevices}
       initialAlerts={initialAlerts}
       initial2faAdoption={initial2faAdoption}
       initialDismissedAlertIds={initialDismissedAlertIds}
       globalTfaPercentage={globalTfaPercentage}
+      loadFailed={loadFailed}
     />
   );
 }

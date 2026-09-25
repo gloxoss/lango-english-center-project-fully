@@ -1,8 +1,8 @@
 'use client';
 
 import { AlertCircle, CheckCircle2, RefreshCw, Trash2, XCircle } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -118,9 +118,15 @@ export function StudentAccountingView({ locale: _locale }: { locale?: string } =
         fetch('/api/finance/accounting/student-accounting/reconcile').then(r2 => r2.json()),
         fetch('/api/finance/accounting/accounts?pageSize=100').then(r2 => r2.json()),
       ]);
-      if (!m.success) throw new Error(m.error?.message ?? t('loadingFailed'));
-      if (!e.success) throw new Error(e.error?.message ?? t('loadingFailed'));
-      if (!r.success) throw new Error(r.error?.message ?? t('loadingFailed'));
+      if (!m.success) {
+        throw new Error(m.error?.message ?? t('loadingFailed'));
+      }
+      if (!e.success) {
+        throw new Error(e.error?.message ?? t('loadingFailed'));
+      }
+      if (!r.success) {
+        throw new Error(r.error?.message ?? t('loadingFailed'));
+      }
       setMappings(m.data);
       setExceptions(e.data);
       setRecon(r.data);
@@ -140,7 +146,9 @@ export function StudentAccountingView({ locale: _locale }: { locale?: string } =
     try {
       const res = await fetch(url, init);
       const json = await res.json();
-      if (!res.ok) return { ok: false, message: json.error?.message ?? t('actionFailed') };
+      if (!res.ok) {
+        return { ok: false, message: json.error?.message ?? t('actionFailed') };
+      }
       return { ok: true };
     } catch (cause) {
       return { ok: false, message: cause instanceof Error ? cause.message : t('actionFailed') };
@@ -170,6 +178,10 @@ export function StudentAccountingView({ locale: _locale }: { locale?: string } =
   };
 
   const deleteMapping = async (id: string) => {
+    // eslint-disable-next-line no-alert
+    if (!window.confirm(tCommon('confirmDeleteGeneric'))) {
+      return;
+    }
     const outcome = await api(`/api/finance/accounting/student-accounting/mappings/${id}`, { method: 'DELETE' });
     if (outcome.ok) {
       setNotice(tCommon('success'));
@@ -206,38 +218,71 @@ export function StudentAccountingView({ locale: _locale }: { locale?: string } =
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between text-start">
+      <div className="
+        flex flex-col gap-4 text-start
+        sm:flex-row sm:items-center sm:justify-between
+      "
+      >
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t('studentAccountingTitle')}</h1>
           <p className="text-sm text-slate-500">{t('studentAccountingSubtitle')}</p>
         </div>
-        <Button variant="outline" onClick={load} disabled={loading} className="gap-2">
-          <RefreshCw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} />
+        <Button
+          variant="outline"
+          onClick={load}
+          disabled={loading}
+          className="gap-2"
+        >
+          <RefreshCw className={`
+            size-3.5
+            ${loading ? 'animate-spin' : ''}
+          `}
+          />
           {tCommon('refresh')}
         </Button>
       </div>
 
       {error && (
-        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="
+          flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4
+          text-sm text-red-700
+        "
+        >
           <AlertCircle className="size-5 shrink-0" />
           <span>{error}</span>
         </div>
       )}
       {notice && (
-        <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+        <div className="
+          flex items-center gap-3 rounded-lg border border-emerald-200
+          bg-emerald-50 p-4 text-sm text-emerald-700
+        "
+        >
           <CheckCircle2 className="size-5 shrink-0" />
           <span>{notice}</span>
         </div>
       )}
 
-      <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 text-xs font-semibold">
+      <div className="
+        flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1
+        text-xs font-semibold
+      "
+      >
         {(['mappings', 'exceptions', 'reconciliation'] as const).map(key => (
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`rounded-lg px-4 py-2 transition-colors ${
-              tab === key ? 'bg-[#2487B8] text-white' : 'text-slate-600 hover:bg-slate-50'
-            }`}
+            className={`
+              rounded-lg px-4 py-2 transition-colors
+              ${
+          tab === key
+            ? 'bg-[#2487B8] text-white'
+            : `
+              text-slate-600
+              hover:bg-slate-50
+            `
+          }
+            `}
           >
             {key === 'mappings'
               ? t('tabAccountMappings')
@@ -249,22 +294,37 @@ export function StudentAccountingView({ locale: _locale }: { locale?: string } =
       </div>
 
       {tab === 'mappings' && (
-        <Card className="p-0 overflow-hidden rounded-2xl border-slate-200/80">
-          <div className="flex items-center justify-between border-b border-slate-200 p-4 text-start">
+        <Card className="overflow-hidden rounded-2xl border-slate-200/80 p-0">
+          <div className="
+            flex items-center justify-between border-b border-slate-200 p-4
+            text-start
+          "
+          >
             <h3 className="font-bold text-slate-900">{t('tabAccountMappings')}</h3>
             <Button
               onClick={() => setShowCreate(v => !v)}
-              className="bg-[#2487B8] text-white hover:bg-[#1B6C93] text-xs h-8"
+              className="
+                h-8 bg-[#2487B8] text-xs text-white
+                hover:bg-[#1B6C93]
+              "
             >
               {showCreate ? tCommon('close') : tCommon('add')}
             </Button>
           </div>
           {showCreate && (
-            <form onSubmit={createMapping} className="grid gap-3 border-b border-slate-200 p-4 sm:grid-cols-5 text-start">
+            <form
+              onSubmit={createMapping}
+              className="
+                grid gap-3 border-b border-slate-200 p-4 text-start
+                sm:grid-cols-5
+              "
+            >
               <select
                 value={form.sourceModule}
                 onChange={e => setForm(f => ({ ...f, sourceModule: e.target.value }))}
-                className="rounded-lg border border-slate-200 p-2 text-xs bg-white"
+                className="
+                  rounded-lg border border-slate-200 bg-white p-2 text-xs
+                "
               >
                 <option value="student_invoice">{t('moduleStudentInvoice')}</option>
                 <option value="student_payment">{t('moduleStudentPayment')}</option>
@@ -272,7 +332,9 @@ export function StudentAccountingView({ locale: _locale }: { locale?: string } =
               <select
                 value={form.sourceKeyType}
                 onChange={e => setForm(f => ({ ...f, sourceKeyType: e.target.value }))}
-                className="rounded-lg border border-slate-200 p-2 text-xs bg-white"
+                className="
+                  rounded-lg border border-slate-200 bg-white p-2 text-xs
+                "
               >
                 <option value="fee_category">{t('keyTypeFeeCategory')}</option>
                 <option value="payment_method">{t('keyTypePaymentMethod')}</option>
@@ -282,30 +344,48 @@ export function StudentAccountingView({ locale: _locale }: { locale?: string } =
                 placeholder={t('searchPlaceholder')}
                 value={form.sourceKey}
                 onChange={e => setForm(f => ({ ...f, sourceKey: e.target.value }))}
-                className="text-xs h-9"
+                className="h-9 text-xs"
               />
               <select
                 value={form.accountId}
                 onChange={e => setForm(f => ({ ...f, accountId: e.target.value }))}
-                className="rounded-lg border border-slate-200 p-2 text-xs bg-white"
+                className="
+                  rounded-lg border border-slate-200 bg-white p-2 text-xs
+                "
               >
-                <option value="">— {t('accountCol')} —</option>
+                <option value="">
+                  —
+                  {t('accountCol')}
+                  {' '}
+                  —
+                </option>
                 {accounts
                   .filter(a => a.isActive)
                   .map(a => (
                     <option key={a.id} value={a.id}>
-                      {a.code} · {a.name}
+                      {a.code}
+                      {' '}
+                      ·
+                      {a.name}
                     </option>
                   ))}
               </select>
-              <Button type="submit" disabled={!form.accountId || loading} className="bg-[#2487B8] text-white h-9 text-xs">
+              <Button
+                type="submit"
+                disabled={!form.accountId || loading}
+                className="h-9 bg-[#2487B8] text-xs text-white"
+              >
                 {tCommon('save')}
               </Button>
             </form>
           )}
           <div className="overflow-x-auto">
             <table className="w-full text-start text-xs">
-              <thead className="border-b border-slate-200 bg-slate-50 font-bold uppercase text-slate-500">
+              <thead className="
+                border-b border-slate-200 bg-slate-50 font-bold text-slate-500
+                uppercase
+              "
+              >
                 <tr>
                   <th className="px-4 py-3 text-start">{t('colSourceModule')}</th>
                   <th className="px-4 py-3 text-start">{t('keyTypeFeeCategory')}</th>
@@ -314,25 +394,38 @@ export function StudentAccountingView({ locale: _locale }: { locale?: string } =
                   <th className="px-4 py-3 text-end" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+              <tbody className="
+                divide-y divide-slate-100 font-medium text-slate-700
+              "
+              >
                 {mappings.map(m => (
                   <tr key={m.id} className="hover:bg-slate-50/80">
                     <td className="px-4 py-3">{getModuleLabel(m.sourceModule)}</td>
                     <td className="px-4 py-3">{getKeyTypeLabel(m.sourceKeyType)}</td>
                     <td className="px-4 py-3">
                       {m.sourceKey ?? (
-                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">
+                        <span className="
+                          rounded-full bg-amber-100 px-2 py-0.5 text-[11px]
+                          font-bold text-amber-700
+                        "
+                        >
                           {tCommon('default') || 'Default'}
                         </span>
                       )}
                     </td>
                     <td className="px-4 py-3 font-bold text-slate-900">
-                      {accountFor(m)?.code} · {accountFor(m)?.name}
+                      {accountFor(m)?.code}
+                      {' '}
+                      ·
+                      {accountFor(m)?.name}
                     </td>
                     <td className="px-4 py-3 text-end">
                       <button
                         onClick={() => deleteMapping(m.id)}
-                        className="text-red-500 hover:text-red-700 p-1"
+                        className="
+                          p-1 text-red-500
+                          hover:text-red-700
+                        "
                         title={tCommon('delete')}
                       >
                         <Trash2 className="size-4" />
@@ -354,14 +447,18 @@ export function StudentAccountingView({ locale: _locale }: { locale?: string } =
       )}
 
       {tab === 'exceptions' && (
-        <Card className="p-0 overflow-hidden rounded-2xl border-slate-200/80">
+        <Card className="overflow-hidden rounded-2xl border-slate-200/80 p-0">
           <div className="border-b border-slate-200 p-4 text-start">
             <h3 className="font-bold text-slate-900">{t('tabAdapterExceptions')}</h3>
             <p className="text-xs text-slate-500">{t('studentAccountingSubtitle')}</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-start text-xs">
-              <thead className="border-b border-slate-200 bg-slate-50 font-bold uppercase text-slate-500">
+              <thead className="
+                border-b border-slate-200 bg-slate-50 font-bold text-slate-500
+                uppercase
+              "
+              >
                 <tr>
                   <th className="px-4 py-3 text-start">{tCommon('status')}</th>
                   <th className="px-4 py-3 text-start">{t('colSourceModule')}</th>
@@ -371,14 +468,23 @@ export function StudentAccountingView({ locale: _locale }: { locale?: string } =
                   <th className="px-4 py-3 text-end" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+              <tbody className="
+                divide-y divide-slate-100 font-medium text-slate-700
+              "
+              >
                 {exceptions.map(x => (
                   <tr key={x.id} className="hover:bg-slate-50/80">
                     <td className="px-4 py-3">
                       <span
-                        className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase ${
-                          x.status === 'open' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'
-                        }`}
+                        className={`
+                          rounded-full px-2.5 py-0.5 text-[11px] font-bold
+                          uppercase
+                          ${
+                  x.status === 'open'
+                    ? 'bg-red-100 text-red-700'
+                    : `bg-slate-100 text-slate-600`
+                  }
+                        `}
                       >
                         {x.status}
                       </span>
@@ -393,7 +499,10 @@ export function StudentAccountingView({ locale: _locale }: { locale?: string } =
                           <Button
                             size="sm"
                             onClick={() => setExceptionStatus(x.id, 'resolve')}
-                            className="bg-emerald-600 text-white hover:bg-emerald-700 text-xs h-7"
+                            className="
+                              h-7 bg-emerald-600 text-xs text-white
+                              hover:bg-emerald-700
+                            "
                           >
                             {tCommon('resolve') || 'Resolve'}
                           </Button>
@@ -401,7 +510,7 @@ export function StudentAccountingView({ locale: _locale }: { locale?: string } =
                             size="sm"
                             variant="outline"
                             onClick={() => setExceptionStatus(x.id, 'dismiss')}
-                            className="text-slate-600 text-xs h-7"
+                            className="h-7 text-xs text-slate-600"
                           >
                             {tCommon('dismiss') || 'Dismiss'}
                           </Button>
@@ -425,7 +534,11 @@ export function StudentAccountingView({ locale: _locale }: { locale?: string } =
 
       {tab === 'reconciliation' && (
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-5 text-start">
+          <div className="
+            grid gap-4 text-start
+            sm:grid-cols-5
+          "
+          >
             {[
               ['Source', recon?.summary.sourceTotal, 'text-slate-900'],
               [t('statePosted'), recon?.summary.postedTotal, 'text-emerald-600'],
@@ -433,16 +546,36 @@ export function StudentAccountingView({ locale: _locale }: { locale?: string } =
               [t('statePending'), recon?.summary.pendingTotal, 'text-amber-600'],
               [t('driftAmountLabel'), recon?.summary.drift, 'text-slate-500'],
             ].map(([label, value, color]) => (
-              <div key={String(label)} className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{label}</span>
-                <div className={`mt-1 text-lg font-extrabold ${color}`}>{loading ? '...' : value}</div>
+              <div
+                key={String(label)}
+                className="
+                  rounded-xl border border-slate-200 bg-white p-4 shadow-xs
+                "
+              >
+                <span className="
+                  text-[11px] font-bold tracking-wider text-slate-500 uppercase
+                "
+                >
+                  {label}
+                </span>
+                <div className={`
+                  mt-1 text-lg font-extrabold
+                  ${color}
+                `}
+                >
+                  {loading ? '...' : value}
+                </div>
               </div>
             ))}
           </div>
-          <Card className="p-0 overflow-hidden rounded-2xl border-slate-200/80">
+          <Card className="overflow-hidden rounded-2xl border-slate-200/80 p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-start text-xs">
-                <thead className="border-b border-slate-200 bg-slate-50 font-bold uppercase text-slate-500">
+                <thead className="
+                  border-b border-slate-200 bg-slate-50 font-bold text-slate-500
+                  uppercase
+                "
+                >
                   <tr>
                     <th className="px-4 py-3 text-start">{tCommon('status')}</th>
                     <th className="px-4 py-3 text-start">{t('referenceLabel')}</th>
@@ -452,18 +585,28 @@ export function StudentAccountingView({ locale: _locale }: { locale?: string } =
                     <th className="px-4 py-3 text-start">{tCommon('reason')}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                <tbody className="
+                  divide-y divide-slate-100 font-medium text-slate-700
+                "
+                >
                   {recon?.rows.map(r => (
-                    <tr key={`${r.sourceModule}:${r.documentId}`} className="hover:bg-slate-50/80">
+                    <tr
+                      key={`${r.sourceModule}:${r.documentId}`}
+                      className="hover:bg-slate-50/80"
+                    >
                       <td className="px-4 py-3">
                         <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase ${
-                            r.state === 'posted'
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : r.state === 'blocked'
-                                ? 'bg-red-100 text-red-700'
-                                : 'bg-amber-100 text-amber-700'
-                          }`}
+                          className={`
+                            inline-flex items-center gap-1 rounded-full px-2.5
+                            py-0.5 text-[11px] font-bold uppercase
+                            ${
+                    r.state === 'posted'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : r.state === 'blocked'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-amber-100 text-amber-700'
+                    }
+                          `}
                         >
                           {r.state === 'blocked' && <XCircle className="size-3" />}
                           {getStateLabel(r.state)}
@@ -473,7 +616,11 @@ export function StudentAccountingView({ locale: _locale }: { locale?: string } =
                       <td className="px-4 py-3">
                         {r.documentType === 'invoice' ? t('moduleStudentInvoice') : t('moduleStudentPayment')}
                       </td>
-                      <td className="px-4 py-3 font-bold">{r.amount} MAD</td>
+                      <td className="px-4 py-3 font-bold">
+                        {r.amount}
+                        {' '}
+                        MAD
+                      </td>
                       <td className="px-4 py-3 text-slate-500">{r.entryNumber ?? '—'}</td>
                       <td className="px-4 py-3 text-red-600">{r.reason ?? '—'}</td>
                     </tr>

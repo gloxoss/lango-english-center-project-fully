@@ -99,11 +99,11 @@ export function SuperAdminSchoolsView({ locale, initialStatus }: { locale: strin
       key: 'actions',
       header: t('actionsCol'),
       cell: (school) => (
-        <Link href={`/${locale}/dashboard/super-admin/schools/${school.id}`}>
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+        <Button asChild variant="ghost" size="sm" className="h-7 w-7 p-0">
+          <Link href={`/${locale}/dashboard/super-admin/schools/${school.id}`}>
             <ArrowUpRight className="w-3.5 h-3.5 text-[#0066FF]" />
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       ),
     },
   ];
@@ -119,12 +119,12 @@ export function SuperAdminSchoolsView({ locale, initialStatus }: { locale: strin
           <Button variant="outline" size="sm" onClick={() => exportToCsv(filtered, 'ecoles-clientes')} className="gap-2 text-xs font-bold h-9 rounded-xl border-slate-200">
             {t('exportCsv')}
           </Button>
-          <Link href={`/${locale}/dashboard/super-admin/schools/create`}>
-            <Button className="bg-[#0066FF] hover:bg-[#0052CC] text-white gap-2 text-xs font-bold h-9 rounded-xl">
+          <Button asChild className="bg-[#0066FF] hover:bg-[#0052CC] text-white gap-2 text-xs font-bold h-9 rounded-xl">
+            <Link href={`/${locale}/dashboard/super-admin/schools/create`}>
               <Plus className="w-3.5 h-3.5" />
               <span>{t('newSchool')}</span>
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </div>
 

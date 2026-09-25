@@ -3,37 +3,17 @@
 // jobs config on first load), real system health metrics, maintenance windows
 // and the tenant's operational audit trail.
 import { and, desc, eq, gt, sql } from 'drizzle-orm';
+import { getTranslations } from 'next-intl/server';
 import { db } from '@/libs/DB';
 import { getServerUserContext } from '@/libs/auth/server-context';
 import { getEffectiveValue } from '@/libs/settings/registry';
 import { auditLogs, files, session, smsMessages, user } from '@/models/Schema';
-import {
-  SCHEDULED_JOBS, MAINTENANCE_WINDOWS,
-} from '@/features/settings/data/jobs-audit-config';
+import { SCHEDULED_JOBS } from '@/features/settings/data/jobs-audit-config';
 import {
   JobsAuditClient, JobItem, AuditLogItem, HealthMetricItem,
 } from './jobs-audit-client';
 
-const ACTION_LABELS: Record<string, string> = {
-  create: 'Création',
-  update: 'Modification',
-  delete: 'Suppression',
-  import: 'Import de données',
-  export: 'Export de données',
-  settings_change: 'Modification de paramètre',
-  permission_change: 'Modification de permissions',
-};
-
-const MODULE_LABELS: Record<string, string> = {
-  job_run: 'Tâches planifiées',
-  setting: 'Paramètres',
-  settings: 'Paramètres',
-  session: 'Sessions',
-  school_settings: 'Paramètres école',
-  payment: 'Paiements',
-  invoice: 'Factures',
-};
-
+// Action / module labels live in JobsAudit.audit.{actions,modules}.*.
 function auditSeverity(action: string): AuditLogItem['severity'] {
   if (action === 'delete') return 'error';
   if (action === 'create' || action === 'import') return 'success';
@@ -43,12 +23,14 @@ function auditSeverity(action: string): AuditLogItem['severity'] {
 export async function JobsAuditPage({ locale }: { locale?: string } = {}) {
   const ctx = await getServerUserContext();
   const tenantId = ctx?.tenantId ?? null;
+  const uiLocale = locale === 'ar' || locale === 'en' ? locale : 'fr';
+  const t = await getTranslations({ locale: uiLocale, namespace: 'JobsAudit' });
+  const dateLocale = uiLocale === 'ar' ? 'ar-MA' : uiLocale === 'en' ? 'en-GB' : 'fr-FR';
 
   let initialJobs: JobItem[] = Array.from(SCHEDULED_JOBS) as JobItem[];
   let initialAudits: AuditLogItem[] = [];
   let initialHealthMetrics: HealthMetricItem[] = [];
   let initialQueuedSms = 0;
-  const initialMaintenanceWindows = Array.from(MAINTENANCE_WINDOWS);
 
   try {
     if (tenantId && ctx) {
@@ -93,30 +75,30 @@ export async function JobsAuditPage({ locale }: { locale?: string } = {}) {
       initialHealthMetrics = [
         {
           id: 'db-latency',
-          name: 'Latence base de données',
+          name: t('metricDbLatency'),
           value: `${latencyMs} ms`,
-          note: 'Temps de réponse PostgreSQL (SELECT 1)',
+          note: t('metricDbLatencyNote'),
           status: latencyMs < 500 ? 'healthy' : 'warning',
         },
         {
           id: 'active-sessions',
-          name: 'Sessions actives',
+          name: t('metricSessions'),
           value: String(activeSessions),
-          note: "Connexions en cours de l'établissement",
+          note: t('metricSessionsNote'),
           status: 'healthy',
         },
         {
           id: 'files',
-          name: 'Fichiers importés',
+          name: t('metricFiles'),
           value: String(fileCount),
-          note: 'Fichiers (imports, pièces jointes)',
+          note: t('metricFilesNote'),
           status: 'healthy',
         },
         {
           id: 'sms-sent',
-          name: 'SMS envoyés',
+          name: t('metricSms'),
           value: String(smsSentCount),
-          note: 'Messages WhatsApp/SMS envoyés',
+          note: t('metricSmsNote'),
           status: 'healthy',
         },
       ];
@@ -139,11 +121,11 @@ export async function JobsAuditPage({ locale }: { locale?: string } = {}) {
 
       initialAudits = auditRows.map(a => ({
         id: a.id,
-        user: a.actorName ?? (a.actorId ? `Utilisateur (${a.actorId.slice(0, 8)})` : 'Système automatique'),
-        action: ACTION_LABELS[a.action] ?? `Opération ${a.action}`,
-        module: MODULE_LABELS[a.entityType] ?? (a.entityType || 'Système'),
+        user: a.actorName ?? (a.actorId ? t('userShort', { id: a.actorId.slice(0, 8) }) : t('system')),
+        action: t.has(`audit.actions.${a.action}`) ? t(`audit.actions.${a.action}` as 'audit.actions.create') : a.action,
+        module: t.has(`audit.modules.${a.entityType}`) ? t(`audit.modules.${a.entityType}` as 'audit.modules.job_run') : (a.entityType || t('system')),
         severity: auditSeverity(a.action),
-        timestamp: a.createdAt ? new Date(a.createdAt).toLocaleString('fr-FR') : 'Récemment',
+        timestamp: a.createdAt ? new Date(a.createdAt).toLocaleString(dateLocale) : t('recently'),
       }));
     }
   } catch (err) {
@@ -155,7 +137,6 @@ export async function JobsAuditPage({ locale }: { locale?: string } = {}) {
       initialJobs={initialJobs}
       initialAudits={initialAudits}
       initialHealthMetrics={initialHealthMetrics}
-      initialMaintenanceWindows={initialMaintenanceWindows}
       initialQueuedSms={initialQueuedSms}
     />
   );

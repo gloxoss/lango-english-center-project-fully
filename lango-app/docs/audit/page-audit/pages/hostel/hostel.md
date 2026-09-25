@@ -1,8 +1,146 @@
 # `/dashboard/hostel`
+<!-- swept: 2026-09-24 claude-finance | school_admin sweep :3466 schoolos_audit 2026-09-24: loads, no failed API, no h-scroll, no text defects -->
 
-**Status: NEEDS FIX (P2)** · Module: `hostel` · Source: [`src/app/[locale]/(dashboard)/dashboard/hostel/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/hostel/page.tsx>)
+**Status: CONFIRMED ON SCREEN (2026-09-24 claude-finance)** · Module: `hostel` · Source: [`src/app/[locale]/(dashboard)/dashboard/hostel/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/hostel/page.tsx>)
 
-**Progress (2026-09-24):** S-54 REVIEW
+**Progress (2026-09-25):** S-54 DONE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -43,7 +181,7 @@ Guard: `requireServerPage` · capability `hostel.read`
 
 | ID | Sev | Problem | Fix | Code now |
 |---|---|---|---|---|
-| [S-54](../../findings/S-54.md) | P2 | Expired hostel stays stay "checked_in" forever | Overdue-checkout list and alert; seed dates relative to `now()`. | Not re-checked since the sweep. |
+| [S-54](../../findings/done/S-54.md) | P2 | Expired hostel stays stay "checked_in" forever | Overdue-checkout list and alert; seed dates relative to `now()`. | Not re-checked since the sweep. |
 
 ## Sweep results
 
@@ -74,7 +212,7 @@ Guard: `requireServerPage` · capability `hostel.read`
 ## Cross-cutting findings that also show here
 
 - [S-7](../../findings/S-7.md) (P1) ~1 375 hardcoded French UI strings bypass translation (Arabic UI stays French)
-- [S-14](../../findings/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
+- [S-14](../../findings/done/S-14.md) (P2) Sidebar lists add-on modules the tenant has not enabled
 - [S-18](../../findings/done/S-18.md) (P1) Header claims CNDP compliance on every page; the school has not filed
 - [S-25](../../findings/done/S-25.md) (P2) Header shows a fake identity when the session call is slow
 - [S-37](../../findings/S-37.md) (P2) Arabic: dashboard widgets stay French; brand renders "OSSchool" in RTL

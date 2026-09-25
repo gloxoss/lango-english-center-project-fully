@@ -3,6 +3,7 @@
 // status against the real chart of accounts, the real journal trial balance, and
 // the finance/settings audit feed server-side.
 import { and, desc, eq, inArray } from 'drizzle-orm';
+import { getTranslations } from 'next-intl/server';
 import { db } from '@/libs/DB';
 import { getServerUserContext } from '@/libs/auth/server-context';
 import { auditLogs, chartOfAccounts, journalEntries, journalEntryLines, user } from '@/models/Schema';
@@ -17,49 +18,36 @@ const FINANCE_ENTITY_TYPES = [
   'setting', 'settings', 'setting_rollback', 'expense', 'invoice', 'payment', 'payment_reminder',
 ] as const;
 
-function relativeTime(iso: string | null): string {
+type Translate = Awaited<ReturnType<typeof getTranslations<'AccountingSettings'>>>;
+
+function relativeTime(t: Translate, iso: string | null, dateLocale: string): string {
   if (!iso) return '';
   const then = new Date(iso).getTime();
   if (Number.isNaN(then)) return '';
   const minutes = Math.floor((Date.now() - then) / 60000);
-  if (minutes < 1) return "À l'instant";
-  if (minutes < 60) return `Il y a ${minutes} min`;
+  if (minutes < 1) return t('justNow');
+  if (minutes < 60) return t('minutesAgo', { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `Il y a ${hours} h`;
+  if (hours < 24) return t('hoursAgo', { count: hours });
   const days = Math.floor(hours / 24);
-  if (days === 1) return 'Hier';
-  if (days < 30) return `Il y a ${days} jours`;
-  return new Date(iso).toLocaleDateString('fr-FR');
+  if (days === 1) return t('yesterday');
+  if (days < 30) return t('daysAgo', { count: days });
+  return new Date(iso).toLocaleDateString(dateLocale);
 }
 
-const ACTION_VERBS: Record<string, string> = {
-  create: 'Création',
-  update: 'Modification',
-  delete: 'Suppression',
-  settings_change: 'Modification de paramètre',
-  export: 'Export',
-  import: 'Import',
-};
-
-const ENTITY_NOUNS: Record<string, string> = {
-  setting: 'des paramètres comptables',
-  settings: 'des paramètres comptables',
-  setting_rollback: 'de rollback des paramètres comptables',
-  expense: "d'une dépense",
-  invoice: "d'une facture",
-  payment: "d'un paiement",
-  payment_reminder: "d'un rappel de paiement",
-};
-
-function auditLabel(action: string, entityType: string): string {
-  const verb = ACTION_VERBS[action] ?? `Opération ${action}`;
-  const noun = ENTITY_NOUNS[entityType] ?? entityType;
-  return `${verb} ${noun}`;
+// "<action> <entity>" from AccountingSettings.audit.*; unknown pairs stay readable.
+function auditLabel(t: Translate, action: string, entityType: string): string {
+  const verb = t.has(`audit.actions.${action}`) ? t(`audit.actions.${action}` as 'audit.actions.create') : action;
+  const noun = t.has(`audit.entities.${entityType}`) ? t(`audit.entities.${entityType}` as 'audit.entities.invoice') : entityType;
+  return `${verb} · ${noun}`;
 }
 
 export async function AccountingDefaultsPage({ locale }: { locale?: string } = {}) {
   const ctx = await getServerUserContext();
   const tenantId = ctx?.tenantId ?? null;
+  const uiLocale = locale === 'ar' || locale === 'en' ? locale : 'fr';
+  const t = await getTranslations({ locale: uiLocale, namespace: 'AccountingSettings' });
+  const dateLocale = uiLocale === 'ar' ? 'ar-MA' : uiLocale === 'en' ? 'en-GB' : 'fr-FR';
 
   let initialSettings: AccountingSettingsState = { ...DEFAULT_ACCOUNTING_SETTINGS };
   let initialMappings: PcgMapping[] = Array.from(PCG_MAPPINGS) as PcgMapping[];
@@ -133,9 +121,9 @@ export async function AccountingDefaultsPage({ locale }: { locale?: string } = {
 
       initialAuditFeed = auditRows.map(r => ({
         id: r.id,
-        action: auditLabel(r.action, r.entityType),
-        user: r.actorName ?? 'Système',
-        timestamp: relativeTime(r.createdAt),
+        action: auditLabel(t, r.action, r.entityType),
+        user: r.actorName ?? t('system'),
+        timestamp: relativeTime(t, r.createdAt, dateLocale),
       }));
     }
   } catch (err) {

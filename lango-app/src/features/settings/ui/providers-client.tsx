@@ -4,6 +4,7 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   RefreshCw, Plus, Server, Activity, AlertTriangle,
   FileText, ExternalLink, Layers, Play, X, Key,
@@ -52,14 +53,15 @@ const EMPTY_FORM: ProviderForm = {
   senderId: '',
 };
 
-const CATEGORY_OPTIONS = [
-  { value: 'Communication', label: 'Communication (SMS/WhatsApp)' },
-  { value: 'Messaging', label: 'Messagerie (SMTP/Email)' },
-  { value: 'Finance', label: 'Finance & Paiement (CMI)' },
-  { value: 'Infrastructures', label: 'Infrastructures & Stockage' },
-  { value: 'Conformité', label: 'Conformité (CNDP)' },
-  { value: 'Académique', label: 'Académique (Massar)' },
-];
+// Stored category values (kept for existing rows) -> ProvidersSettings.categories.<key>.
+const CATEGORY_KEYS: Record<string, string> = {
+  Communication: 'communication',
+  Messaging: 'messaging',
+  Finance: 'finance',
+  Infrastructures: 'infrastructure',
+  'Conformité': 'compliance',
+  'Académique': 'academic',
+};
 
 type Props = {
   initialProviders: ProviderItem[];
@@ -76,14 +78,21 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
   const [addForm, setAddForm] = useState<ProviderForm>(EMPTY_FORM);
   const [editForm, setEditForm] = useState<ProviderForm>(EMPTY_FORM);
   const [isPending, startTransition] = useTransition();
+  // Failures used to be swallowed: a failed save or test simply did nothing.
+  const [actionError, setActionError] = useState<string | null>(null);
+  const t = useTranslations('ProvidersSettings');
+  const categoryLabel = (value: string) => (CATEGORY_KEYS[value] ? t(`categories.${CATEGORY_KEYS[value]}` as 'categories.finance') : value);
+  const statusLabel = (s: ProviderItem['status']) => (s === 'operational' ? t('statusOperational') : s === 'degraded' ? t('statusDegraded') : t('statusNotConfigured'));
 
   const selectedProvider = providers.find(p => p.id === selectedProviderId) ?? providers[0] ?? null;
 
   function handleTestSingleProvider(id: string) {
     startTransition(async () => {
       try {
+        setActionError(null);
         const res = await fetch(`/api/settings/providers/${id}/test`, { method: 'POST' });
         const payload = await res.json();
+        if (!res.ok && !payload.provider) setActionError(payload.error?.message ?? t('testError'));
         if (payload.provider) {
           setProviders(prev => prev.map(p => (p.id === id ? payload.provider : p)));
         }
@@ -91,7 +100,7 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
           setLogs(prev => [payload.logItem, ...prev].slice(0, 50));
         }
       } catch {
-        // Network failure on the request itself — state is left unchanged.
+        setActionError(t('networkError'));
       }
     });
   }
@@ -125,12 +134,14 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
     e.preventDefault();
     startTransition(async () => {
       try {
+        setActionError(null);
         const res = await fetch('/api/settings/providers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(addForm),
         });
         const payload = await res.json();
+        if (!payload.provider) setActionError(payload.error?.message ?? t('saveError'));
         if (payload.provider) {
           setProviders(prev => [...prev, payload.provider]);
           setSelectedProviderId(payload.provider.id);
@@ -138,7 +149,7 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
           setAddForm(EMPTY_FORM);
         }
       } catch {
-        // Network failure — keep the modal open for retry.
+        setActionError(t('networkError'));
       }
     });
   }
@@ -149,18 +160,20 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
     const id = selectedProvider.id;
     startTransition(async () => {
       try {
+        setActionError(null);
         const res = await fetch(`/api/settings/providers/${id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(editForm),
         });
         const payload = await res.json();
+        if (!payload.provider) setActionError(payload.error?.message ?? t('saveError'));
         if (payload.provider) {
           setProviders(prev => prev.map(p => (p.id === id ? payload.provider : p)));
           setEditModalOpen(false);
         }
       } catch {
-        // Network failure — keep the modal open for retry.
+        setActionError(t('networkError'));
       }
     });
   }
@@ -183,24 +196,24 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
   const warningCount = providers.filter(p =>
     p.status === 'degraded' || (p.quotaTotal > 0 && p.quotaUsed / p.quotaTotal >= 0.75),
   ).length;
-  const lastSync = logs[0]?.timestamp ?? 'Jamais';
+  const lastSync = logs[0]?.timestamp ?? t('never');
 
   // Recommendations derived from real provider states.
   const recommendations = [
     ...providers.filter(p => p.status === 'disconnected').map(p => ({
       id: `disc-${p.id}`,
       type: 'warning' as const,
-      title: `Connexion non configurée : ${p.name}`,
-      description: "Aucun health check réussi. Testez la connexion pour vérifier la disponibilité.",
-      actionLabel: 'Tester la connexion',
+      title: t('recNotConfigured', { name: p.name }),
+      description: t('recNotConfiguredBody'),
+      actionLabel: t('testConnection'),
       targetId: p.id,
     })),
     ...providers.filter(p => p.status === 'degraded').map(p => ({
       id: `deg-${p.id}`,
       type: 'warning' as const,
-      title: `Service dégradé : ${p.name}`,
-      description: p.lastPing !== 'Jamais' ? `Dernier test : ${p.lastPing}.` : 'Dernier test en échec.',
-      actionLabel: 'Relancer un test',
+      title: t('recDegraded', { name: p.name }),
+      description: p.lastPing !== 'Jamais' ? t('lastTest', { when: p.lastPing }) : t('lastTestFailed'),
+      actionLabel: t('retest'),
       targetId: p.id,
     })),
   ];
@@ -213,10 +226,11 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
       {/* ── Top Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-[#111827]">Fournisseurs &amp; Connexions Externes</h1>
+          <h1 className="text-xl font-bold text-[#111827]">{t('title')}</h1>
           <p className="text-sm text-[#6B7280] mt-0.5">
-            Surveillance des API tierces, passerelle SMS, SMTP Email, stockage cloud et paiement CMI.
+            {t('subtitle')}
           </p>
+          {actionError && <p role="alert" className="mt-2 text-xs font-semibold text-rose-600">{actionError}</p>}
         </div>
 
         <div className="flex items-center gap-3">
@@ -227,7 +241,7 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
               bg-[#F0F4FF] border border-[#C7D2FE] rounded-xl hover:bg-[#E0E8FF] disabled:opacity-60 transition-colors"
           >
             <RefreshCw className={`w-4 h-4 ${testingAll ? 'animate-spin' : ''}`} />
-            {testingAll ? 'Test en cours...' : 'Tester les connexions'}
+            {testingAll ? t('testing') : t('testAll')}
           </button>
           <button
             id="add-connection-btn"
@@ -236,7 +250,7 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
               bg-[#4B6BFB] rounded-xl hover:bg-[#3B5BDB] transition-all shadow-sm shadow-[#4B6BFB]/20"
           >
             <Plus className="w-4 h-4" />
-            Ajouter une connexion
+            {t('addConnection')}
           </button>
         </div>
       </div>
@@ -245,9 +259,9 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] flex items-center justify-between shadow-2xs">
           <div className="space-y-1">
-            <p className="text-xs font-medium text-[#6B7280]">Connexions testées</p>
+            <p className="text-xs font-medium text-[#6B7280]">{t('statTested')}</p>
             <p className="text-2xl font-bold text-[#111827]">{connectedCount} / {providers.length}</p>
-            <p className="text-[11px] font-semibold text-emerald-600">Réponse au dernier test de santé</p>
+            <p className="text-[11px] font-semibold text-emerald-600">{t('statTestedHint')}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-[#F0F4FF] text-[#4B6BFB] flex items-center justify-center">
             <Server className="w-5 h-5" />
@@ -256,9 +270,9 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
 
         <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] flex items-center justify-between shadow-2xs">
           <div className="space-y-1">
-            <p className="text-xs font-medium text-[#6B7280]">Fournisseurs en santé</p>
+            <p className="text-xs font-medium text-[#6B7280]">{t('statHealthy')}</p>
             <p className="text-2xl font-bold text-[#111827]">{healthyCount}</p>
-            <p className="text-[11px] font-semibold text-emerald-600">Services opérationnels</p>
+            <p className="text-[11px] font-semibold text-emerald-600">{t('statHealthyHint')}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
             <Activity className="w-5 h-5" />
@@ -267,9 +281,9 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
 
         <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] flex items-center justify-between shadow-2xs">
           <div className="space-y-1">
-            <p className="text-xs font-medium text-[#6B7280]">Avertissements / Quotas</p>
+            <p className="text-xs font-medium text-[#6B7280]">{t('statWarnings')}</p>
             <p className="text-2xl font-bold text-[#111827]">{warningCount}</p>
-            <p className="text-[11px] font-semibold text-amber-600">Seuil de quota proche</p>
+            <p className="text-[11px] font-semibold text-amber-600">{t('statWarningsHint')}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
             <AlertTriangle className="w-5 h-5" />
@@ -278,9 +292,9 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
 
         <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] flex items-center justify-between shadow-2xs">
           <div className="space-y-1">
-            <p className="text-xs font-medium text-[#6B7280]">Dernier health check</p>
+            <p className="text-xs font-medium text-[#6B7280]">{t('statLastCheck')}</p>
             <p className="text-sm font-bold text-[#111827]">{lastSync}</p>
-            <p className="text-[11px] font-semibold text-[#4B6BFB]">Tests manuels &amp; health checks</p>
+            <p className="text-[11px] font-semibold text-[#4B6BFB]">{t('statLastCheckHint')}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-[#F0F4FF] text-[#4B6BFB] flex items-center justify-center">
             <RefreshCw className="w-5 h-5" />
@@ -326,21 +340,21 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#F3F4F6]">
               <div className="flex items-center gap-2">
                 <Layers className="w-4 h-4 text-[#4B6BFB]" />
-                <h2 className="text-sm font-semibold text-[#111827]">Liste des Intégrations API &amp; Services</h2>
+                <h2 className="text-sm font-semibold text-[#111827]">{t('listTitle')}</h2>
               </div>
-              <span className="text-xs text-[#6B7280]">{providers.length} services</span>
+              <span className="text-xs text-[#6B7280]">{t('servicesCount', { count: providers.length })}</span>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-[#F9FAFB] text-[#6B7280] font-semibold border-b border-[#E5E7EB]">
                   <tr>
-                    <th className="py-3 px-4">Service / Intégration</th>
-                    <th className="py-3 px-4">Catégorie</th>
-                    <th className="py-3 px-4">Endpoint API</th>
-                    <th className="py-3 px-4 text-center">Latence</th>
-                    <th className="py-3 px-4">Statut</th>
-                    <th className="py-3 px-4 text-center">Action</th>
+                    <th className="py-3 px-4">{t('colService')}</th>
+                    <th className="py-3 px-4">{t('colCategory')}</th>
+                    <th className="py-3 px-4">{t('colEndpoint')}</th>
+                    <th className="py-3 px-4 text-center">{t('colLatency')}</th>
+                    <th className="py-3 px-4">{t('colStatus')}</th>
+                    <th className="py-3 px-4 text-center">{t('colAction')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#F3F4F6] font-medium text-[#374151]">
@@ -360,7 +374,7 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
                         </td>
                         <td className="py-3.5 px-4">
                           <span className="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-[#F3F4F6] text-[#374151]">
-                            {p.category}
+                            {categoryLabel(p.category)}
                           </span>
                         </td>
                         <td className="py-3.5 px-4 font-mono text-[11px] text-[#6B7280] max-w-[200px] truncate">
@@ -380,7 +394,7 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
                             <span className={`w-1.5 h-1.5 rounded-full ${
                               p.status === 'operational' ? 'bg-emerald-500' : p.status === 'degraded' ? 'bg-amber-500' : 'bg-slate-400'
                             }`} />
-                            {p.status === 'operational' ? 'Opérationnel' : p.status === 'degraded' ? 'Dégradé' : 'Non configuré'}
+                            {statusLabel(p.status)}
                           </span>
                         </td>
                         <td className="py-3.5 px-4 text-center">
@@ -392,7 +406,8 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
                             }}
                             disabled={isPending}
                             className="p-1.5 rounded-lg hover:bg-white text-[#4B6BFB] font-medium disabled:opacity-50"
-                            title="Tester la connexion"
+                            title={t('testConnection')}
+                            aria-label={t('testConnection')}
                           >
                             <Play className="w-3.5 h-3.5" />
                           </button>
@@ -410,27 +425,27 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
             <div className="flex items-center justify-between border-b border-[#F3F4F6] pb-3">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-[#4B6BFB]" />
-                <h3 className="text-sm font-semibold text-[#111827]">Journal des Événements &amp; Pings Health Check</h3>
+                <h3 className="text-sm font-semibold text-[#111827]">{t('logTitle')}</h3>
               </div>
-              <span className="text-xs text-[#9CA3AF]">Historique récent</span>
+              <span className="text-xs text-[#9CA3AF]">{t('logHint')}</span>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-mono">
                 <thead className="bg-[#F9FAFB] text-[#6B7280] font-sans font-semibold border-b border-[#E5E7EB]">
                   <tr>
-                    <th className="py-2.5 px-3">Heure</th>
-                    <th className="py-2.5 px-3">Service</th>
-                    <th className="py-2.5 px-3">Événement</th>
-                    <th className="py-2.5 px-3 text-center">Code HTTP</th>
-                    <th className="py-2.5 px-3 text-center">Latence</th>
+                    <th className="py-2.5 px-3">{t('colTime')}</th>
+                    <th className="py-2.5 px-3">{t('colServiceShort')}</th>
+                    <th className="py-2.5 px-3">{t('colEvent')}</th>
+                    <th className="py-2.5 px-3 text-center">{t('colHttp')}</th>
+                    <th className="py-2.5 px-3 text-center">{t('colLatency')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#F3F4F6] text-[#374151]">
                   {logs.length === 0 && (
                     <tr>
                       <td colSpan={5} className="py-4 px-3 text-center text-[#6B7280] font-sans">
-                        Aucun health check enregistré pour le moment. Lancez un test de connexion.
+                        {t('logEmpty')}
                       </td>
                     </tr>
                   )}
@@ -466,20 +481,20 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
           <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 space-y-5 shadow-2xs">
             {!selectedProvider ? (
               <p className="text-xs text-[#6B7280] text-center py-6">
-                Aucune connexion configurée. Ajoutez-en une pour afficher ses détails.
+                {t('noProvider')}
               </p>
             ) : (
               <>
                 <div className="flex items-start justify-between border-b border-[#F3F4F6] pb-4">
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#4B6BFB]">Détails du Service</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#4B6BFB]">{t('detailTitle')}</span>
                     <h3 className="text-base font-bold text-[#111827] mt-0.5">{selectedProvider.name}</h3>
                     <p className="text-xs text-[#6B7280]">{selectedProvider.providerName || '—'}</p>
                   </div>
                   <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                     selectedProvider.status === 'operational' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
                   }`}>
-                    {selectedProvider.status === 'operational' ? 'Opérationnel' : selectedProvider.status === 'degraded' ? 'Dégradé' : 'Non configuré'}
+                    {statusLabel(selectedProvider.status)}
                   </span>
                 </div>
 
@@ -487,7 +502,7 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
                 {selectedProvider.quotaTotal > 0 && (
                   <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] space-y-2">
                     <div className="flex items-center justify-between text-xs font-semibold">
-                      <span className="text-[#374151]">Utilisation des Quotas</span>
+                      <span className="text-[#374151]">{t('quotaUsage')}</span>
                       <span className="text-[#111827]">
                         {selectedProvider.quotaUsed} / {selectedProvider.quotaTotal} {selectedProvider.quotaUnit}
                       </span>
@@ -508,19 +523,19 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
                 {/* Metadata Fields */}
                 <div className="space-y-3 text-xs">
                   <div className="flex justify-between py-1.5 border-b border-[#F3F4F6]">
-                    <span className="text-[#6B7280]">Identifiant / Sender ID :</span>
+                    <span className="text-[#6B7280]">{t('senderId')}</span>
                     <span className="font-semibold text-[#111827]">{selectedProvider.senderId || '—'}</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-[#F3F4F6]">
-                    <span className="text-[#6B7280]">Endpoint API :</span>
+                    <span className="text-[#6B7280]">{t('endpointLabel')}</span>
                     <span className="font-mono text-[11px] text-[#374151] truncate max-w-[180px]">{selectedProvider.endpointUrl}</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-[#F3F4F6]">
-                    <span className="text-[#6B7280]">Responsable :</span>
+                    <span className="text-[#6B7280]">{t('owner')}</span>
                     <span className="font-semibold text-[#111827]">{selectedProvider.ownerName || '—'}</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-[#F3F4F6]">
-                    <span className="text-[#6B7280]">Dernier Health Check :</span>
+                    <span className="text-[#6B7280]">{t('lastCheck')}</span>
                     <span className="text-[#374151]">{selectedProvider.lastPing}</span>
                   </div>
                 </div>
@@ -533,14 +548,14 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
                     disabled={isPending}
                     className="w-full py-2 text-xs font-semibold text-white bg-[#4B6BFB] hover:bg-[#3B5BDB] rounded-xl transition-all shadow-xs disabled:opacity-60"
                   >
-                    Tester la connexion maintenant
+                    {t('testNow')}
                   </button>
                   <button
                     type="button"
                     onClick={openEditModal}
                     className="w-full py-2 text-xs font-semibold text-[#374151] bg-white border border-[#E5E7EB] hover:bg-[#F9FAFB] rounded-xl transition-colors"
                   >
-                    Modifier la connexion
+                    {t('editConnection')}
                   </button>
                 </div>
               </>
@@ -551,7 +566,7 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
           <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 space-y-4 shadow-2xs">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-[#4B6BFB]" />
-              <h3 className="text-sm font-semibold text-[#111827]">Documentation &amp; Guides</h3>
+              <h3 className="text-sm font-semibold text-[#111827]">{t('docsTitle')}</h3>
             </div>
             <div className="space-y-2">
               {INTEGRATION_RESOURCE_LINKS.map((link, idx) => (
@@ -578,51 +593,51 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl border border-[#E5E7EB]">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-[#111827]">Ajouter une nouvelle intégration</h3>
-              <button onClick={() => setAddModalOpen(false)} className="text-[#9CA3AF] hover:text-[#111827]">
+              <h3 className="text-base font-bold text-[#111827]">{t('addTitle')}</h3>
+              <button onClick={() => setAddModalOpen(false)} aria-label={t('close')} className="text-[#9CA3AF] hover:text-[#111827]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleSubmitAdd} className="space-y-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#374151]">Nom du service *</label>
+                <label className="text-xs font-semibold text-[#374151]">{t('fieldName')}</label>
                 <input
                   type="text"
                   required
                   value={addForm.name}
                   onChange={e => setAddForm({ ...addForm, name: e.target.value })}
-                  placeholder="ex: Passerelle SMS Maroc Telecom"
+                  placeholder={t('namePlaceholder')}
                   className={formInputClass}
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#374151]">Catégorie *</label>
+                <label className="text-xs font-semibold text-[#374151]">{t('fieldCategory')}</label>
                 <select
                   value={addForm.category}
                   onChange={e => setAddForm({ ...addForm, category: e.target.value })}
                   className={formInputClass}
                 >
-                  {CATEGORY_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  {Object.keys(CATEGORY_KEYS).map(value => (
+                    <option key={value} value={value}>{categoryLabel(value)}</option>
                   ))}
                 </select>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#374151]">Nom du fournisseur</label>
+                <label className="text-xs font-semibold text-[#374151]">{t('fieldProvider')}</label>
                 <input
                   type="text"
                   value={addForm.providerName}
                   onChange={e => setAddForm({ ...addForm, providerName: e.target.value })}
-                  placeholder="ex: OrangeAPI Morocco"
+                  placeholder={t('providerPlaceholder')}
                   className={formInputClass}
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#374151]">URL du serveur / Endpoint API *</label>
+                <label className="text-xs font-semibold text-[#374151]">{t('fieldEndpoint')}</label>
                 <input
                   type="text"
                   required
@@ -634,12 +649,12 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#374151]">Identifiant / Sender ID</label>
+                <label className="text-xs font-semibold text-[#374151]">{t('fieldSender')}</label>
                 <input
                   type="text"
                   value={addForm.senderId}
                   onChange={e => setAddForm({ ...addForm, senderId: e.target.value })}
-                  placeholder="ex: LEC-SMS"
+                  placeholder={t('senderPlaceholder')}
                   className={formInputClass}
                 />
               </div>
@@ -650,14 +665,14 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
                   onClick={() => setAddModalOpen(false)}
                   className="px-4 py-2 text-xs font-semibold text-[#6B7280] hover:bg-[#F9FAFB] rounded-xl"
                 >
-                  Annuler
+                  {t('cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
                   className="px-4 py-2 text-xs font-semibold text-white bg-[#4B6BFB] hover:bg-[#3B5BDB] rounded-xl shadow-xs disabled:opacity-60"
                 >
-                  Enregistrer l'intégration
+                  {t('saveIntegration')}
                 </button>
               </div>
             </form>
@@ -672,16 +687,16 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Key className="w-4 h-4 text-[#4B6BFB]" />
-                <h3 className="text-base font-bold text-[#111827]">Modifier la connexion</h3>
+                <h3 className="text-base font-bold text-[#111827]">{t('editConnection')}</h3>
               </div>
-              <button onClick={() => setEditModalOpen(false)} className="text-[#9CA3AF] hover:text-[#111827]">
+              <button onClick={() => setEditModalOpen(false)} aria-label={t('close')} className="text-[#9CA3AF] hover:text-[#111827]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleSubmitEdit} className="space-y-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#374151]">Nom du service *</label>
+                <label className="text-xs font-semibold text-[#374151]">{t('fieldName')}</label>
                 <input
                   type="text"
                   required
@@ -692,20 +707,20 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#374151]">Catégorie *</label>
+                <label className="text-xs font-semibold text-[#374151]">{t('fieldCategory')}</label>
                 <select
                   value={editForm.category}
                   onChange={e => setEditForm({ ...editForm, category: e.target.value })}
                   className={formInputClass}
                 >
-                  {CATEGORY_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  {Object.keys(CATEGORY_KEYS).map(value => (
+                    <option key={value} value={value}>{categoryLabel(value)}</option>
                   ))}
                 </select>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#374151]">Nom du fournisseur</label>
+                <label className="text-xs font-semibold text-[#374151]">{t('fieldProvider')}</label>
                 <input
                   type="text"
                   value={editForm.providerName}
@@ -715,7 +730,7 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#374151]">URL du serveur / Endpoint API *</label>
+                <label className="text-xs font-semibold text-[#374151]">{t('fieldEndpoint')}</label>
                 <input
                   type="text"
                   required
@@ -726,7 +741,7 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#374151]">Identifiant / Sender ID</label>
+                <label className="text-xs font-semibold text-[#374151]">{t('fieldSender')}</label>
                 <input
                   type="text"
                   value={editForm.senderId}
@@ -741,14 +756,14 @@ export function ProvidersClient({ initialProviders, initialLogs }: Props) {
                   onClick={() => setEditModalOpen(false)}
                   className="px-4 py-2 text-xs font-semibold text-[#6B7280] hover:bg-[#F9FAFB] rounded-xl"
                 >
-                  Annuler
+                  {t('cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
                   className="px-4 py-2 text-xs font-semibold text-white bg-[#4B6BFB] hover:bg-[#3B5BDB] rounded-xl shadow-xs disabled:opacity-60"
                 >
-                  Enregistrer les modifications
+                  {t('saveChanges')}
                 </button>
               </div>
             </form>

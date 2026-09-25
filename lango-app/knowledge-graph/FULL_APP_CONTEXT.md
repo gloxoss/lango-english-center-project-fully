@@ -88,12 +88,11 @@
   - `/dashboard/academics/syllabus`
   - `/dashboard/academics/teacher-availability`
   - `/dashboard/academics/teacher-schedule`
-- **API Routes (71):**  
+- **API Routes (70):**  
   - `GET /api/academics/academic-years`
   - `GET|POST /api/academics/assessment-definitions`
   - `GET|POST /api/academics/assessment-plans`
   - `GET|POST /api/academics/assessment-sessions`
-  - `GET|POST /api/academics/assessments`
   - `POST /api/academics/assignments/grade`
   - `GET|POST /api/academics/assignments`
   - `POST /api/academics/assignments/submit`

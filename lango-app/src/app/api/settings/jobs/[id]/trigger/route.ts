@@ -39,6 +39,12 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
 
     const job = jobs[index]!;
+    // Only jobs with a real side-effect can run. The others (backup, reminders,
+    // MASSAR sync...) have no processing behind them: running one used to mark
+    // it "success", so an admin could believe a backup had been made.
+    if (job.action !== 'purge_sessions') {
+      throw new ApiError(409, 'JOB_NOT_AUTOMATED', 'Cette tâche n’est pas automatisée : aucun traitement n’est exécuté.');
+    }
     const startedAt = new Date();
     let resultMessage: string;
     let purgeCount = 0;

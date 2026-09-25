@@ -654,12 +654,12 @@ export function EventsCalendarClient({ locale: _locale }: { locale?: string }) {
                   </div>
                 </div>
 
-                <Link href={`/${_locale || 'fr'}/dashboard/events/${activeEvent.id}`} className="block w-full">
-                  <Button className="w-full h-9 text-xs font-bold rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white gap-2 cursor-pointer transition-all active:scale-[0.98]">
+                <Button asChild className="w-full h-9 text-xs font-bold rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white gap-2 cursor-pointer transition-all active:scale-[0.98]">
+                  <Link href={`/${_locale || 'fr'}/dashboard/events/${activeEvent.id}`} className="block w-full">
                     <span>Gérer l&apos;événement &amp; les billets</span>
                     <ExternalLink className="w-3.5 h-3.5" />
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </>
             ) : (
               <div className="p-8 text-center text-slate-400 space-y-2">

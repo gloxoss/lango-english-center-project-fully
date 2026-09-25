@@ -106,7 +106,10 @@ async function applyReversal(input: {
       .select()
       .from(payments)
       .where(and(eq(payments.id, reversal.paymentId), eq(payments.tenantId, tenantId)))
-      .limit(1);
+      .limit(1)
+      // Row lock: a refund and a reversal of the same payment used to both see
+      // 'posted' and both take the money off the invoice.
+      .for('update');
     if (!payment) {
       throw new ApiError(404, 'PAYMENT_NOT_FOUND', 'Paiement introuvable.');
     }
@@ -126,8 +129,12 @@ async function applyReversal(input: {
         .from(invoices)
         .where(and(eq(invoices.id, alloc.invoiceId), eq(invoices.tenantId, tenantId)))
         .limit(1);
-      if (!inv) continue;
-      if (!touchedInvoiceNumber) touchedInvoiceNumber = inv.invoiceNumber;
+      if (!inv) {
+        continue;
+      }
+      if (!touchedInvoiceNumber) {
+        touchedInvoiceNumber = inv.invoiceNumber;
+      }
 
       const allocCents = moneyToCents(String(alloc.allocatedAmount));
       const reducedCents = moneyToCents(String(inv.paidAmount)) - allocCents;

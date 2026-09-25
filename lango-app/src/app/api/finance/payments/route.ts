@@ -13,6 +13,8 @@ import { centsToMoney } from '@/libs/finance/money';
 import { validatePaymentMethod } from '@/libs/finance/payment-methods';
 import { moneyInput } from '@/libs/finance/validation';
 import { createPayment } from '@/libs/services/payment-create';
+import { ensureFinanceArtifact } from '@/features/documents/services/issue-finance';
+import { logger } from '@/libs/logger';
 import { accountingAdapterExceptions, cashierSessions, chartOfAccounts, invoices, payments, user } from '@/models/Schema';
 
 const allocationItemSchema = z.object({
@@ -119,6 +121,14 @@ export async function POST(request: Request) {
       note: body.note,
       receivedById: context.userId,
     });
+
+    if (receipt) {
+      try {
+        await ensureFinanceArtifact(request, context, 'receipt', receipt.id);
+      } catch (error) {
+        logger.error({ err: error, receiptId: receipt.id, tenantId }, 'Receipt committed but PDF archive failed');
+      }
+    }
 
     if (idempotent) {
       return NextResponse.json({

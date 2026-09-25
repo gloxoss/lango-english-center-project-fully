@@ -54,18 +54,9 @@ type ClassRow = {
 const CLASS_PAGE_SIZE = 20;
 type RefOption = { id: string; name: string; startTime?: string; endTime?: string };
 
-const CYCLE_OPTIONS = [
-  { value: 'maternelle', label: 'Maternelle' },
-  { value: 'primaire', label: 'Primaire' },
-  { value: 'college', label: 'Collège' },
-  { value: 'lycee', label: 'Lycée' },
-];
-
-const PERIOD_MODE_OPTIONS = [
-  { value: 'semester', label: 'Semestriel (2 semestres)' },
-  { value: 'trimester', label: 'Trimestriel (3 trimestres)' },
-  { value: 'month', label: 'Mensuel' },
-];
+// Labels come from Academics.cycle* and ClassesPage.periodModes.*.
+const CYCLE_OPTIONS = ['maternelle', 'primaire', 'college', 'lycee'] as const;
+const PERIOD_MODE_OPTIONS = ['semester', 'trimester', 'month'] as const;
 type Availability = { teacherId: string; dayOfWeek: string; startTime: string; endTime: string };
 type PreviewSlot = { id: string; dayOfWeek: string; startTime: string; endTime: string; subjectName?: string; roomLabel?: string | null };
 
@@ -83,6 +74,7 @@ type SectionRow = {
 export function ClassesClient({ locale }: { locale?: string } = {}) {
   const t = useTranslations('Academics');
   const tCommon = useTranslations('Common');
+  const cp = useTranslations('ClassesPage');
   const { can } = usePermissions();
   const [classes, setClasses] = useState<ClassRow[]>([]);
   const [mediums, setMediums] = useState<RefOption[]>([]);
@@ -158,17 +150,17 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
       const res = await fetch('/api/academics/class-teachers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ classSectionId: sectionId, teacherId, role: 'substitute', notes: 'Remplaçant' }),
+        body: JSON.stringify({ classSectionId: sectionId, teacherId, role: 'substitute', notes: cp('substituteNote') }),
       });
       const json = await res.json();
       if (json.success) {
-        toast.success('Professeur remplaçant assigné');
+        toast.success(cp('substituteAssigned'));
         loadSubstitutes(sectionId);
       } else {
         toast.error(json.error?.message || 'Échec de l\'affectation du remplaçant');
       }
     } catch {
-      toast.error('Erreur réseau');
+      toast.error(cp('networkError'));
     }
   };
 
@@ -185,7 +177,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
         toast.error('Échec du retrait du remplaçant');
       }
     } catch {
-      toast.error('Erreur réseau');
+      toast.error(cp('networkError'));
     }
   };
 
@@ -230,7 +222,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
 
   const handleAttachSection = async (classId: string) => {
     if (!newSectionId) {
-      toast.error('Veuillez sélectionner ou créer une section.');
+      toast.error(cp('selectSection'));
       return;
     }
     setLinkingSection(true);
@@ -247,24 +239,24 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
       });
       const json = await res.json();
       if (!json.success) {
-        toast.error(json.error?.message || json.message || 'Impossible de lier cette section');
+        toast.error(json.error?.message || json.message || cp('linkSectionError'));
         return;
       }
-      toast.success('Section liée avec succès');
+      toast.success(cp('sectionLinked'));
       setNewSectionId('');
       setNewSectionMaxStudents('');
       setNewSectionHomeRoomId('');
       loadSections(classId);
       load();
     } catch {
-      toast.error('Erreur réseau lors de la liaison de la section');
+      toast.error(cp('linkSectionNetworkError'));
     } finally {
       setLinkingSection(false);
     }
   };
 
   const handleUnlinkSection = (classId: string, sectionRowId: string, sectionName: string) => {
-    toast(`Détacher la section « ${sectionName} » de cette classe ?`, {
+    toast(cp('confirmUnlinkSection', { name: sectionName }), {
       action: {
         label: tCommon('confirm'),
         onClick: () => {
@@ -288,7 +280,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
       loadSections(classId);
       load();
     } catch {
-      toast.error('Erreur réseau');
+      toast.error(cp('networkError'));
     }
   };
 
@@ -305,13 +297,13 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
       });
       const json = await res.json();
       if (json.success) {
-        toast.success('Modifications enregistrées');
+        toast.success(cp('changesSaved'));
         load();
       } else {
         toast.error(json.error?.message || 'Échec de la mise à jour');
       }
     } catch {
-      toast.error('Erreur réseau');
+      toast.error(cp('networkError'));
     }
   };
 
@@ -329,16 +321,22 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
         });
         const json = await res.json();
         if (json.success) {
-          toast.success('Professeur principal assigné');
+          toast.success(cp('homeroomAssigned'));
         } else {
           toast.error(json.error?.message || 'Échec de l\'attribution');
         }
       } else {
-        await fetch(`/api/academics/class-sections/${sectionRowId}/homeroom-teacher`, { method: 'DELETE' });
-        toast.success('Professeur principal retiré');
+        // Said "removed" whatever the server answered.
+        const res = await fetch(`/api/academics/class-sections/${sectionRowId}/homeroom-teacher`, { method: 'DELETE' });
+        const json = await res.json().catch(() => null);
+        if (res.ok && json?.success !== false) {
+          toast.success(cp('homeroomRemoved'));
+        } else {
+          toast.error(json?.error?.message || json?.message || cp('updateError'));
+        }
       }
     } catch {
-      toast.error('Erreur lors de la mise à jour');
+      toast.error(cp('updateError'));
     }
   };
 
@@ -413,18 +411,18 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
         setError(json.error?.message || json.message || 'Échec de l\'enregistrement.');
         return;
       }
-      toast.success(editing ? 'Classe modifiée avec succès' : 'Classe créée avec succès');
+      toast.success(editing ? cp('classUpdated') : cp('classCreated'));
       setShowForm(false);
       load({ page: 1 });
     } catch {
-      setError('Connexion impossible.');
+      setError(cp('connectError'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = (id: string) => {
-    toast('Supprimer cette classe ?', {
+    toast(cp('confirmDeleteClass'), {
       action: {
         label: tCommon('confirm'),
         onClick: () => {
@@ -439,13 +437,13 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
       const res = await fetch(`/api/academics/classes?id=${id}`, { method: 'DELETE' });
       const json = await res.json();
       if (json.success) {
-        toast.success('Classe supprimée');
+        toast.success(cp('classDeleted'));
         load();
       } else {
         toast.error(json.error?.message || 'Échec de la suppression');
       }
     } catch {
-      toast.error('Erreur réseau');
+      toast.error(cp('networkError'));
     }
   };
 
@@ -546,12 +544,12 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
           "
           >
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Nom de la classe</label>
+              <label className="font-bold text-slate-600">{cp('className')}</label>
               <Input
                 value={form.name}
                 onChange={e => setForm({ ...form, name: e.target.value })}
                 className="h-9 rounded-xl"
-                placeholder="Ex. 2nde"
+                placeholder={cp('classNamePlaceholder')}
               />
               {nameHasSectionSuffix && (
                 <p className="
@@ -565,51 +563,51 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
               )}
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Médium</label>
+              <label className="font-bold text-slate-600">{cp('medium')}</label>
               <select
                 value={form.mediumId}
                 onChange={e => setForm({ ...form, mediumId: e.target.value })}
                 className="h-9 w-full rounded-xl border border-slate-200 px-3"
               >
-                <option value="">Sélectionner...</option>
+                <option value="">{cp('select')}</option>
                 {mediums.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
               </select>
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Vacation (matin / après-midi, optionnel)</label>
+              <label className="font-bold text-slate-600">{cp('shiftOptional')}</label>
               <select
                 value={form.shiftId}
                 onChange={e => setForm({ ...form, shiftId: e.target.value })}
                 className="h-9 w-full rounded-xl border border-slate-200 px-3"
               >
-                <option value="">Aucun</option>
+                <option value="">{cp('noneM')}</option>
                 {shifts.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Filière (optionnel)</label>
+              <label className="font-bold text-slate-600">{cp('streamOptional')}</label>
               <select
                 value={form.streamId}
                 onChange={e => setForm({ ...form, streamId: e.target.value })}
                 className="h-9 w-full rounded-xl border border-slate-200 px-3"
               >
-                <option value="">Aucune</option>
+                <option value="">{cp('noneF')}</option>
                 {streams.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Cycle (optionnel)</label>
+              <label className="font-bold text-slate-600">{cp('cycleOptional')}</label>
               <select
                 value={form.cycle}
                 onChange={e => setForm({ ...form, cycle: e.target.value })}
                 className="h-9 w-full rounded-xl border border-slate-200 px-3"
               >
-                <option value="">Aucun</option>
-                {CYCLE_OPTIONS.map(c => <option key={c.value} value={c.value}>{cycleLabels[c.value] || c.label}</option>)}
+                <option value="">{cp('noneM')}</option>
+                {CYCLE_OPTIONS.map(c => <option key={c} value={c}>{cycleLabels[c] || c}</option>)}
               </select>
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-slate-600">Mode de période</label>
+              <label className="font-bold text-slate-600">{cp('periodMode')}</label>
               <select
                 value={form.periodType}
                 onChange={e => setForm({ ...form, periodType: e.target.value as any })}
@@ -617,13 +615,13 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                   h-9 w-full rounded-xl border border-slate-200 px-3 font-medium
                 "
               >
-                {PERIOD_MODE_OPTIONS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                {PERIOD_MODE_OPTIONS.map(p => <option key={p} value={p}>{cp(`periodModes.${p}`)}</option>)}
               </select>
             </div>
             {!editing && (
               <>
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-600">Nombre de sections</label>
+                  <label className="font-bold text-slate-600">{cp('sectionCount')}</label>
                   <Input
                     type="number"
                     min={0}
@@ -634,7 +632,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-600">Professeur principal</label>
+                  <label className="font-bold text-slate-600">{cp('homeroomTeacher')}</label>
                   <select
                     value={form.teacherId}
                     onChange={e => setForm({ ...form, teacherId: e.target.value })}
@@ -642,10 +640,10 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                       h-9 w-full rounded-xl border border-slate-200 px-3
                     "
                   >
-                    <option value="">À affecter plus tard</option>
+                    <option value="">{cp('assignLater')}</option>
                     {rankedTeachers.map(t => (
                       <option key={t.id} value={t.id}>
-                        {isTeacherAvailable(t.id) ? 'Disponible · ' : ''}
+                        {isTeacherAvailable(t.id) ? `${cp('available')} · ` : ''}
                         {t.name}
                       </option>
                     ))}
@@ -727,7 +725,14 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                       mt-0.5 text-[10px] font-medium text-slate-500
                     "
                     >
-                      {[nameOf(mediums, cls.mediumId), cls.cycle ? cycleLabels[cls.cycle] : null, cls.shiftId ? nameOf(shifts, cls.shiftId) : null].filter(Boolean).join(' · ') || '—'}
+                      {[nameOf(mediums, cls.mediumId), cls.cycle ? cycleLabels[cls.cycle] : null, nameOf(streams, cls.streamId), cls.shiftId ? nameOf(shifts, cls.shiftId) : null].filter(Boolean).join(' · ') || '—'}
+                      {/* Lycée classes are graded by filière coefficients: say when none is set (audit S-17). */}
+                      {cls.cycle === 'lycee' && !cls.streamId && (
+                        <span className="ms-1 font-bold text-amber-700">
+                          ·
+                          {t('filiereMissing')}
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-4 py-3.5 text-start text-slate-600">{cls.branchName ?? '—'}</td>
@@ -884,7 +889,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                       truncate text-[10px] font-medium text-slate-500
                     "
                     >
-                      {[nameOf(mediums, cls.mediumId), cls.cycle ? cycleLabels[cls.cycle] : null, cls.branchName].filter(Boolean).join(' · ') || '—'}
+                      {[nameOf(mediums, cls.mediumId), cls.cycle ? cycleLabels[cls.cycle] : null, nameOf(streams, cls.streamId), cls.branchName].filter(Boolean).join(' · ') || '—'}
                     </p>
                   </div>
                   {gaps.length === 0
@@ -1042,7 +1047,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                         text-base font-extrabold text-[#16212B]
                       "
                       >
-                        Sections ·
+                        {cp('sectionsOf')}
                         {' '}
                         {selectedClassForSections.name}
                       </DialogTitle>
@@ -1073,7 +1078,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                       mt-0.5 text-[11px] text-slate-500
                     "
                     >
-                      {nameOf(mediums, selectedClassForSections.mediumId) ?? 'Médium non défini'}
+                      {nameOf(mediums, selectedClassForSections.mediumId) ?? cp('noMedium')}
                       {selectedClassForSections.cycle ? ` · ${cycleLabels[selectedClassForSections.cycle] || selectedClassForSections.cycle}` : ''}
                       {selectedClassForSections.shiftId ? ` · Shift: ${nameOf(shifts, selectedClassForSections.shiftId)}` : ''}
                     </DialogDescription>
@@ -1095,7 +1100,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                   <span className="text-slate-500">
                     {(sectionsByClass[selectedClassForSections.id] ?? []).reduce((acc, s) => acc + s.enrolledCount, 0)}
                     {' '}
-                    élèves
+                    {cp('studentsWord')}
                   </span>
                   {(sectionsByClass[selectedClassForSections.id] ?? []).some(s => s.maxStudents === null) && (
                     <>
@@ -1123,7 +1128,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                       setAllSections(p => [...p, s]);
                       setNewSectionId(s.id);
                     }}
-                    placeholder="Lier une section (ex: A, B, C...)"
+                    placeholder={cp('linkSectionPlaceholder')}
                   />
                 </div>
                 <Input
@@ -1132,7 +1137,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                   max={100}
                   value={newSectionMaxStudents}
                   onChange={e => setNewSectionMaxStudents(e.target.value)}
-                  placeholder="Cap. (30)"
+                  placeholder={cp('capacityPlaceholder')}
                   className="h-9 w-24 rounded-xl bg-white text-xs"
                 />
                 <Button
@@ -1145,7 +1150,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                   "
                 >
                   <Plus className="size-3.5" />
-                  <span>{linkingSection ? '...' : 'Lier'}</span>
+                  <span>{linkingSection ? '…' : cp('link')}</span>
                 </Button>
               </div>
             )}
@@ -1159,9 +1164,9 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                 "
                 >
                   <Layers className="mx-auto size-6 text-slate-300" />
-                  <p className="text-xs font-bold text-slate-600">Aucune section liée à cette classe</p>
+                  <p className="text-xs font-bold text-slate-600">{cp('noSections')}</p>
                   <p className="mx-auto max-w-sm text-[11px] text-slate-400">
-                    Utilisez le sélecteur ci-dessus pour associer des sections à cette classe.
+                    {cp('noSectionsHint')}
                   </p>
                 </div>
               )}
@@ -1204,7 +1209,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                             text-xs/tight font-extrabold text-[#16212B]
                           "
                           >
-                            Section
+                            {cp('section')}
                             {' '}
                             {sec.sectionName}
                           </p>
@@ -1215,7 +1220,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                             {sec.enrolledCount}
                             {sec.maxStudents ? ` / ${sec.maxStudents}` : ''}
                             {' '}
-                            élèves
+                            {cp('studentsWord')}
                           </span>
                         </div>
                       </div>
@@ -1230,9 +1235,9 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                             border-slate-200 bg-slate-50 px-2 text-xs
                             font-medium text-[#16212B]
                           "
-                          title="Professeur principal"
+                          title={cp('homeroomTeacher')}
                         >
-                          <option value="">Prof. principal...</option>
+                          <option value="">{cp('homeroomShort')}</option>
                           {teachers.map(t => (
                             <option key={t.id} value={t.id}>
                               {isTeacherAvailable(t.id) ? '✓ ' : ''}
@@ -1252,9 +1257,9 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                             border-slate-200 bg-slate-50 px-2 text-xs
                             font-medium text-[#16212B]
                           "
-                          title="Salle de base"
+                          title={cp('homeRoom')}
                         >
-                          <option value="">Salle...</option>
+                          <option value="">{cp('roomShort')}</option>
                           {rooms.map(r => (
                             <option key={r.id} value={r.id}>{r.name}</option>
                           ))}
@@ -1286,10 +1291,10 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                       `
                   }
                           `}
-                          title="Afficher les détails et le planning"
+                          title={cp('showDetails')}
                         >
                           <Clock className="size-3" />
-                          <span>{slotsCount > 0 ? `${slotsCount} créneaux` : 'Détails'}</span>
+                          <span>{slotsCount > 0 ? cp('slots', { count: slotsCount }) : cp('details')}</span>
                           {isExpanded
                             ? <ChevronUp className="size-3" />
                             : (
@@ -1304,7 +1309,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                               rounded-lg p-1.5 text-slate-400 transition
                               hover:bg-rose-50 hover:text-rose-600
                             "
-                            title="Détacher cette section"
+                            title={cp('unlinkSection')}
                           >
                             <Trash2 className="size-3.5" />
                           </button>
@@ -1331,7 +1336,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                               text-slate-500
                             "
                             >
-                              Capacité max :
+                              {cp('maxCapacity')}
                             </span>
                             <input
                               type="number"
@@ -1362,7 +1367,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                               text-slate-500
                             "
                             >
-                              Remplaçant :
+                              {cp('substitute')}
                             </span>
                             <select
                               value=""
@@ -1372,7 +1377,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                                 bg-white px-2 text-[11px] font-medium
                               "
                             >
-                              <option value="">Affecter...</option>
+                              <option value="">{cp('assign')}</option>
                               {teachers.map(t => (
                                 <option key={t.id} value={t.id}>{t.name}</option>
                               ))}
@@ -1390,7 +1395,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                               text-[10px] font-bold text-slate-400
                             "
                             >
-                              Remplaçants :
+                              {cp('substitutes')}
                             </span>
                             {(substitutesBySection[sec.id] ?? []).map((sb) => {
                               const teacher = teachers.find(x => x.id === sb.teacherId);
@@ -1412,7 +1417,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                                         ml-1 rounded-sm p-0.5
                                         hover:text-amber-900
                                       "
-                                      title="Retirer"
+                                      title={cp('remove')}
                                     >
                                       <X className="size-2.5" />
                                     </button>
@@ -1436,10 +1441,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                                 "
                                 >
                                   <Clock className="size-3 text-[#2487B8]" />
-                                  Aperçu hebdomadaire (
-                                  {slotsBySection[sec.id]!.length}
-                                  {' '}
-                                  cours)
+                                  {cp('weeklyPreview', { count: slotsBySection[sec.id]!.length })}
                                 </p>
                                 <div className="flex flex-wrap gap-1.5">
                                   {slotsBySection[sec.id]!.map(slot => (
@@ -1493,7 +1495,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                                 pt-1 text-[10px] text-slate-400 italic
                               "
                               >
-                                Aucun cours programmé dans l&apos;emploi du temps pour cette section.
+                                {cp('noLessons')}
                               </p>
                             )}
                       </div>
@@ -1510,7 +1512,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                 onClick={() => setSelectedClassForSections(null)}
                 className="h-8 rounded-xl px-4 text-xs font-bold"
               >
-                Fermer
+                {cp('close')}
               </Button>
             </div>
           </DialogContent>

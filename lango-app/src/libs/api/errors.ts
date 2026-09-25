@@ -60,6 +60,23 @@ export function apiErrorResponse(error: unknown): NextResponse {
         { status: 409 },
       );
     }
+    if (code === '23514') {
+      // Check constraints and finance integrity triggers (refund/credit-note caps,
+      // cross-tenant links) raise 23514. It is a refused operation, not a crash,
+      // so it must not surface as "internal error".
+      logger.warn({ err: error }, 'PostgreSQL 23514 check violation');
+      return NextResponse.json(
+        { success: false, error: { code: 'INTEGRITY_RULE', message: 'Opération refusée : elle enfreint une règle d’intégrité (montant ou lien incohérent).' } },
+        { status: 422 },
+      );
+    }
+    if (code === '23P01') {
+      logger.warn({ err: error }, 'PostgreSQL 23P01 exclusion violation');
+      return NextResponse.json(
+        { success: false, error: { code: 'SCHEDULE_CONFLICT', message: 'Créneau déjà occupé : ce professeur ou cette classe a déjà un cours à cette heure.' } },
+        { status: 409 },
+      );
+    }
   }
 
   logger.error({ err: error }, 'Unhandled API error');

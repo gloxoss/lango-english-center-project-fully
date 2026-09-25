@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse } from '@/libs/api/errors';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { requireAddon } from '@/libs/api/entitlements';
 import { parseJson } from '@/libs/api/validation';
@@ -25,6 +25,11 @@ export async function POST(request: Request, { params }: RouteContext) {
 
     const { id } = await params;
     const body = await parseJson(request, checkOutSchema);
+    // The hook skips the residence-fee charge, so in production it would let a
+    // check-out bypass billing. Only test/dev environments may use it.
+    if (body.simulateFinanceFailure && process.env.NODE_ENV === 'production' && process.env.ALLOW_TEST_HOOKS !== 'true') {
+      throw new ApiError(400, 'TEST_HOOK_DISABLED', 'simulateFinanceFailure is a test hook and is disabled in production.');
+    }
     const allocation = await checkOutAllocation(tenantId, context.userId, id, {
       simulateFinanceFailure: body.simulateFinanceFailure,
     });

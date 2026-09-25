@@ -24,13 +24,15 @@ type ClassSubjectOption = {
   curriculumLabel?: string | null;
 };
 
-// ponytail: Moroccan default curriculum seeds for 1-click syllabus initialization
+// Default Moroccan curriculum outline for 1-click syllabus initialization. A new
+// syllabus starts with every chapter Upcoming and no files: the template used to
+// mark chapters Completed/In Progress and attach PDFs that did not exist.
 function getDefaultCurriculumForSubject(subjectName: string): Chapter[] {
   const norm = subjectName.toLowerCase();
   if (norm.includes('math')) {
     return [
-      { id: `c-${Date.now()}-1`, number: 1, title: 'Limites et Continuité des Fonctions Numériques', status: 'Completed', hoursAllocated: 12, resources: [{ id: 'r-1', name: 'Cours_Limites_Continuite.pdf', type: 'pdf', size: '2.1 MB' }] },
-      { id: `c-${Date.now()}-2`, number: 2, title: 'Dérivabilité et Étude des Fonctions Logarithmes', status: 'In Progress', hoursAllocated: 16, resources: [{ id: 'r-2', name: 'Exercices_Fonctions_Ln.pdf', type: 'pdf', size: '1.4 MB' }] },
+      { id: `c-${Date.now()}-1`, number: 1, title: 'Limites et Continuité des Fonctions Numériques', status: 'Upcoming', hoursAllocated: 12, resources: [] },
+      { id: `c-${Date.now()}-2`, number: 2, title: 'Dérivabilité et Étude des Fonctions Logarithmes', status: 'Upcoming', hoursAllocated: 16, resources: [] },
       { id: `c-${Date.now()}-3`, number: 3, title: 'Suites Numériques & Raisonnement par Récurrence', status: 'Upcoming', hoursAllocated: 14, resources: [] },
       { id: `c-${Date.now()}-4`, number: 4, title: 'Fonctions Exponentielles et Primitives', status: 'Upcoming', hoursAllocated: 16, resources: [] },
       { id: `c-${Date.now()}-5`, number: 5, title: 'Calcul Intégral et Équations Différentielles', status: 'Upcoming', hoursAllocated: 18, resources: [] },
@@ -38,29 +40,29 @@ function getDefaultCurriculumForSubject(subjectName: string): Chapter[] {
   }
   if (norm.includes('phys') || norm.includes('chim')) {
     return [
-      { id: `c-${Date.now()}-1`, number: 1, title: 'Ondes Mécaniques Progressives et Périodiques', status: 'Completed', hoursAllocated: 10, resources: [{ id: 'r-1', name: 'Ondes_Mecaniques_TP.pdf', type: 'pdf', size: '3.2 MB' }] },
-      { id: `c-${Date.now()}-2`, number: 2, title: 'Décroissance Radioactive et Réactions Nucléaires', status: 'In Progress', hoursAllocated: 12, resources: [] },
+      { id: `c-${Date.now()}-1`, number: 1, title: 'Ondes Mécaniques Progressives et Périodiques', status: 'Upcoming', hoursAllocated: 10, resources: [] },
+      { id: `c-${Date.now()}-2`, number: 2, title: 'Décroissance Radioactive et Réactions Nucléaires', status: 'Upcoming', hoursAllocated: 12, resources: [] },
       { id: `c-${Date.now()}-3`, number: 3, title: 'Circuits Électriques : Dipôles RC, RL et RLC', status: 'Upcoming', hoursAllocated: 16, resources: [] },
       { id: `c-${Date.now()}-4`, number: 4, title: 'Transformations Chimiques Rapides et Lentes', status: 'Upcoming', hoursAllocated: 14, resources: [] },
     ];
   }
   if (norm.includes('anglais') || norm.includes('english')) {
     return [
-      { id: `c-${Date.now()}-1`, number: 1, title: 'Unit 1: Cultural Heritage & Globalization', status: 'Completed', hoursAllocated: 10, resources: [{ id: 'r-1', name: 'Vocabulary_Unit1.pdf', type: 'pdf', size: '1.2 MB' }] },
-      { id: `c-${Date.now()}-2`, number: 2, title: 'Unit 2: Education & Future Careers', status: 'In Progress', hoursAllocated: 12, resources: [] },
+      { id: `c-${Date.now()}-1`, number: 1, title: 'Unit 1: Cultural Heritage & Globalization', status: 'Upcoming', hoursAllocated: 10, resources: [] },
+      { id: `c-${Date.now()}-2`, number: 2, title: 'Unit 2: Education & Future Careers', status: 'Upcoming', hoursAllocated: 12, resources: [] },
       { id: `c-${Date.now()}-3`, number: 3, title: 'Unit 3: Science, Technology and Society', status: 'Upcoming', hoursAllocated: 14, resources: [] },
     ];
   }
   if (norm.includes('franç') || norm.includes('litt')) {
     return [
-      { id: `c-${Date.now()}-1`, number: 1, title: 'Le Réalisme et le Naturalisme au XIXe Siècle', status: 'Completed', hoursAllocated: 12, resources: [{ id: 'r-1', name: 'Fiche_Lecture_Zola.pdf', type: 'pdf', size: '1.8 MB' }] },
-      { id: `c-${Date.now()}-2`, number: 2, title: 'La Poésie Moderne et Symboliste', status: 'In Progress', hoursAllocated: 10, resources: [] },
+      { id: `c-${Date.now()}-1`, number: 1, title: 'Le Réalisme et le Naturalisme au XIXe Siècle', status: 'Upcoming', hoursAllocated: 12, resources: [] },
+      { id: `c-${Date.now()}-2`, number: 2, title: 'La Poésie Moderne et Symboliste', status: 'Upcoming', hoursAllocated: 10, resources: [] },
       { id: `c-${Date.now()}-3`, number: 3, title: 'Le Théâtre Classique et la Tragédie', status: 'Upcoming', hoursAllocated: 14, resources: [] },
     ];
   }
   return [
-    { id: `c-${Date.now()}-1`, number: 1, title: 'Module 1 : Notions Fondamentales et Diagnostic', status: 'Completed', hoursAllocated: 10, resources: [] },
-    { id: `c-${Date.now()}-2`, number: 2, title: 'Module 2 : Approfondissement et Travaux Dirigés', status: 'In Progress', hoursAllocated: 14, resources: [] },
+    { id: `c-${Date.now()}-1`, number: 1, title: 'Module 1 : Notions Fondamentales et Diagnostic', status: 'Upcoming', hoursAllocated: 10, resources: [] },
+    { id: `c-${Date.now()}-2`, number: 2, title: 'Module 2 : Approfondissement et Travaux Dirigés', status: 'Upcoming', hoursAllocated: 14, resources: [] },
     { id: `c-${Date.now()}-3`, number: 3, title: 'Module 3 : Synthèse, Projets et Préparation aux Évaluations', status: 'Upcoming', hoursAllocated: 12, resources: [] },
   ];
 }
@@ -94,7 +96,7 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
     chapterId: '',
     name: '',
     type: 'pdf' as Resource['type'],
-    size: '1.5 MB',
+    url: '',
   });
 
   // Load real subjects from API
@@ -222,17 +224,20 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
   };
 
   const handleAddResource = () => {
-    if (!newResource.name.trim() || !newResource.chapterId) return;
+    // No file storage behind this dialog: a resource is a link to where the file
+    // lives (drive, video, website), so it always opens something real.
+    const url = newResource.url.trim();
+    if (!newResource.name.trim() || !newResource.chapterId || !/^https?:\/\/\S+$/i.test(url)) return;
     const res: Resource = {
       id: `r-${Date.now()}`,
       name: newResource.name.trim(),
       type: newResource.type,
-      size: newResource.size,
+      url,
     };
     const updated = chapters.map(c => c.id === newResource.chapterId ? { ...c, resources: [...(c.resources || []), res] } : c);
     setChapters(updated);
     setIsUploadResourceOpen(false);
-    setNewResource({ chapterId: '', name: '', type: 'pdf', size: '1.5 MB' });
+    setNewResource({ chapterId: '', name: '', type: 'pdf', url: '' });
     handleSaveSyllabus(updated);
   };
 
@@ -476,9 +481,13 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
                         <span className="truncate font-semibold text-[#16212B]">{res.name}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Button size="sm" variant="ghost" className="h-7 text-xs text-slate-500 hover:text-[#2487B8]">
-                          <Download className="w-3.5 h-3.5" />
-                        </Button>
+                        {res.url && (
+                          <Button asChild size="sm" variant="ghost" className="h-7 text-xs text-slate-500 hover:text-[#2487B8]">
+                            <a href={res.url} target="_blank" rel="noopener noreferrer" download aria-label={res.name}>
+                              <Download className="w-3.5 h-3.5" />
+                            </a>
+                          </Button>
+                        )}
                         <Button
                           size="sm"
                           variant="ghost"
@@ -571,7 +580,7 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
               <label className="font-bold text-slate-700 block mb-1">{t('targetChapterLabel')}</label>
               <Select value={newResource.chapterId} onValueChange={val => setNewResource({ ...newResource, chapterId: val })}>
                 <SelectTrigger className="h-9 text-xs rounded-xl">
-                  <SelectValue placeholder="Sélectionner un chapitre" />
+                  <SelectValue placeholder={t('selectChapterPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {chapters.map(c => (
@@ -609,10 +618,13 @@ export function SyllabusClient({ locale: _locale }: { locale?: string } = {}) {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">{t('estimatedSizeLabel')}</label>
+                <label className="font-bold text-slate-700 block mb-1">{t('resourceUrlLabel')}</label>
                 <Input
-                  value={newResource.size}
-                  onChange={e => setNewResource({ ...newResource, size: e.target.value })}
+                  type="url"
+                  required
+                  placeholder="https://"
+                  value={newResource.url}
+                  onChange={e => setNewResource({ ...newResource, url: e.target.value })}
                   className="h-9 text-xs rounded-xl"
                 />
               </div>

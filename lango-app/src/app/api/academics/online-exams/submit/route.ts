@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, ne } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
@@ -10,10 +10,15 @@ import { classSections, classSubjects, onlineExamAnswers, onlineExamAttempts, on
 
 const submitExamSchema = z.object({
   examId: z.string().uuid(),
+  // One answer per question: repeating a correct answer used to add its marks
+  // again, so a score could exceed the exam total.
   answers: z.array(z.object({
     questionId: z.string().uuid(),
     selectedOptionId: z.string().uuid(),
-  })),
+  })).max(500).refine(
+    answers => new Set(answers.map(a => a.questionId)).size === answers.length,
+    'Une seule réponse par question.',
+  ),
 }).strict();
 
 export async function POST(request: Request) {
@@ -76,10 +81,16 @@ export async function POST(request: Request) {
     // ever checked, so elapsed time per student was never actually
     // measured. future-implementation/assessment-and-examination remediation, section-01.
     const [existingAttempt] = await db
-      .select({ startedAt: onlineExamAttempts.startedAt })
+      .select({ startedAt: onlineExamAttempts.startedAt, submittedAt: onlineExamAttempts.submittedAt, status: onlineExamAttempts.status })
       .from(onlineExamAttempts)
       .where(and(eq(onlineExamAttempts.onlineExamId, body.examId), eq(onlineExamAttempts.studentId, context.userId)))
       .limit(1);
+
+    // Submit used to be repeatable until the deadline, and each response showed
+    // the new score: a student could probe answers one by one and keep the best.
+    if (existingAttempt && (existingAttempt.status === 'graded' || existingAttempt.submittedAt)) {
+      throw new ApiError(422, 'ATTEMPT_ALREADY_SUBMITTED', 'Vous avez déjà soumis cet examen.');
+    }
 
     if (existingAttempt) {
       const deadline = new Date(new Date(existingAttempt.startedAt).getTime() + exam.durationMinutes * 60 * 1000);
@@ -112,14 +123,22 @@ export async function POST(request: Request) {
             submittedAt: nowIso,
             status: 'graded',
           },
+          // Two submits racing past the check above: only the first one grades.
+          setWhere: ne(onlineExamAttempts.status, 'graded'),
         })
         .returning();
+
+      if (!attempt) {
+        throw new ApiError(422, 'ATTEMPT_ALREADY_SUBMITTED', 'Vous avez déjà soumis cet examen.');
+      }
 
       let totalScore = 0;
 
       for (const ans of body.answers) {
         const q = questions.find(item => item.id === ans.questionId);
-        if (!q) continue;
+        if (!q) {
+          continue;
+        }
 
         // Real ownership check - the option must actually belong to the
         // submitted question, not just exist somewhere in the exam.

@@ -184,12 +184,12 @@ export function HostelDetailView({ hostelId }: { hostelId: string }) {
           </Card>
 
           <div className="flex gap-3">
-            <Link href={`/dashboard/hostel?hostelId=${hostelId}`}>
-              <Button variant="outline">{t('tonightTitle')}</Button>
-            </Link>
-            <Link href={`/dashboard/hostel/roll-call?hostelId=${hostelId}`}>
-              <Button variant="outline">{t('eveningRollCall')}</Button>
-            </Link>
+            <Button asChild variant="outline">
+              <Link href={`/dashboard/hostel?hostelId=${hostelId}`}>{t('tonightTitle')}</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href={`/dashboard/hostel/roll-call?hostelId=${hostelId}`}>{t('eveningRollCall')}</Link>
+            </Button>
           </div>
         </>
       ) : (

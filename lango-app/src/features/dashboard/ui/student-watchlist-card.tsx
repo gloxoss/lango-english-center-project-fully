@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { AlertTriangle, ArrowUpRight, ShieldAlert } from 'lucide-react';
 import type { WatchlistStudent } from '../model/types';
@@ -16,6 +17,7 @@ export function StudentWatchlistCard({
   totalWatchlistCount,
   locale,
 }: StudentWatchlistCardProps) {
+  const th = useTranslations('DashboardHome');
   return (
     <div className="flex flex-col rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-2xs">
       <div>
@@ -25,13 +27,13 @@ export function StudentWatchlistCard({
             <div className="flex size-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
               <ShieldAlert className="size-4" />
             </div>
-            <h3 className="text-sm font-extrabold text-slate-900">Élèves à surveiller</h3>
+            <h3 className="text-sm font-extrabold text-slate-900">{th('watchlistTitle')}</h3>
           </div>
           <Link
             href={`/${locale}/dashboard/students`}
             className="flex items-center gap-1 text-xs font-bold text-blue-600 transition hover:text-blue-800 hover:underline"
           >
-            <span>Voir annuaire</span>
+            <span>{th('seeDirectory')}</span>
             <ArrowUpRight className="size-3.5" />
           </Link>
         </div>
@@ -40,7 +42,7 @@ export function StudentWatchlistCard({
         <div className="mt-3.5 space-y-2">
           {students.length === 0 ? (
             <div className="py-4 text-center text-xs text-slate-400">
-              Aucun élève en situation critique actuellement
+              {th('watchlistEmpty')}
             </div>
           ) : (
             students.map(s => (
@@ -65,7 +67,7 @@ export function StudentWatchlistCard({
                       : 'border border-amber-200 bg-amber-100 text-amber-800'
                   }`}
                 >
-                  {s.severity === 'critical' ? 'Risque élevé' : 'À surveiller'}
+                  {s.severity === 'critical' ? th('highRisk') : th('toWatch')}
                 </span>
               </Link>
             ))
@@ -80,8 +82,8 @@ export function StudentWatchlistCard({
           className="text-xs font-bold text-blue-600 hover:underline"
         >
           {totalWatchlistCount > 5
-            ? `Voir les ${totalWatchlistCount} cas à surveiller →`
-            : "Accéder à l'annuaire complet des élèves →"}
+            ? `${th('seeAllCases', { count: totalWatchlistCount })} →`
+            : `${th('openDirectory')} →`}
         </Link>
       </div>
     </div>

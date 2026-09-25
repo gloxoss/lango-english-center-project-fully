@@ -15,6 +15,7 @@ import {
   Calendar, Building2, Plus, Download, Search, Grid, Loader2, AlertCircle, CheckCircle2, Users, UserX,
 } from 'lucide-react';
 import type { ExamScheduleStatus, ExamSession } from '../data/exam-planning-config';
+import { openDocumentPreview } from '@/features/documents/ui/pdf-preview';
 
 type ExamTerm = { id: string; name: string; code: string; startDate: string; endDate: string };
 type ExamHall = { id: string; name: string; code: string; capacity: number };
@@ -49,7 +50,9 @@ const STATUS_FILTERS = [
   { id: 'cancelled', statusKey: 'filterCancelled' },
 ] as const;
 
-export function ExamPlanningClient({ locale = 'fr' }: { locale?: string } = {}) {
+// embedded: rendered as the calendar tab of Exam Master (audit S-13), which
+// already carries the page title.
+export function ExamPlanningClient({ locale = 'fr', embedded = false }: { locale?: string; embedded?: boolean } = {}) {
   const t = useTranslations('Grading');
   const tCommon = useTranslations('Common');
 
@@ -182,6 +185,11 @@ export function ExamPlanningClient({ locale = 'fr' }: { locale?: string } = {}) 
   });
 
   const selectedExam = exams.find(e => e.id === selectedExamId) ?? filteredExams[0] ?? null;
+
+  const printExamDocument = (sessions: ExamSession[], attendance: boolean) => {
+    if (sessions.length === 0) return;
+    openDocumentPreview({ kind: attendance ? 'exam_attendance' : 'exam_seating', sourceId: 'selected', scheduleIds: sessions.map(exam => exam.id) }, locale);
+  };
 
   const mobilizedInvigilatorCount = useMemo(
     () => new Set(exams.flatMap(e => e.invigilators.map(i => i.staffKey))).size,
@@ -327,15 +335,18 @@ export function ExamPlanningClient({ locale = 'fr' }: { locale?: string } = {}) 
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('examPlanningTitle')}</h1>
-          <p className="text-xs text-slate-500 mt-1">{t('examPlanningSubtitle')}</p>
-        </div>
+        {embedded ? <div /> : (
+          <div>
+            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('examPlanningTitle')}</h1>
+            <p className="text-xs text-slate-500 mt-1">{t('examPlanningSubtitle')}</p>
+          </div>
+        )}
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.print()}
+            onClick={() => printExamDocument(filteredExams.filter(exam => exam.seatingGrid.some(seat => seat.isOccupied)), false)}
+            disabled={!filteredExams.some(exam => exam.seatingGrid.some(seat => seat.isOccupied))}
             className="h-10 rounded-xl px-4 gap-2 border-slate-200 text-xs font-bold"
           >
             <Download className="w-4 h-4 text-slate-600" />
@@ -581,7 +592,8 @@ export function ExamPlanningClient({ locale = 'fr' }: { locale?: string } = {}) 
               <div className="pt-2">
                 <Button
                   size="sm"
-                  onClick={() => window.print()}
+                  onClick={() => printExamDocument([selectedExam], true)}
+                  disabled={!selectedExam.seatingGrid.some(seat => seat.isOccupied)}
                   className="w-full h-9 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs font-bold gap-1.5"
                 >
                   <Download className="w-4 h-4" />

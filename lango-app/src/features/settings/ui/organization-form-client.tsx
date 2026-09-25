@@ -6,6 +6,7 @@
 import React, { useRef, useState, useTransition } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   Building2, Globe, Phone, Mail, MapPin, FileText, Shield, Upload,
   Save, CheckCircle, AlertCircle, Languages, Palette, Image as ImageIcon,
@@ -170,17 +171,18 @@ function LogoUploadZone({
   uploadKey: 'logo' | 'favicon';
   onUploaded: () => void;
 }) {
+  const t = useTranslations('OrganizationSettings');
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleFile(file: File) {
     if (!['image/jpeg', 'image/png'].includes(file.type)) {
-      setError('PNG ou JPG uniquement');
+      setError(t('uploadTypeError'));
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      setError('Max 2 Mo');
+      setError(t('uploadSizeError'));
       return;
     }
     setError(null);
@@ -195,7 +197,7 @@ function LogoUploadZone({
       if (!res.ok) throw new Error('Upload failed');
       onUploaded();
     } catch {
-      setError('Erreur lors du téléchargement');
+      setError(t('uploadError'));
     } finally {
       setUploading(false);
     }
@@ -229,9 +231,9 @@ function LogoUploadZone({
             bg-[#F0F4FF] rounded-lg hover:bg-[#E0E8FF] disabled:opacity-50 transition-colors"
         >
           <Upload className="w-3 h-3" />
-          {uploading ? 'Envoi...' : `Changer ${label}`}
+          {uploading ? t('uploading') : t('change', { item: label })}
         </button>
-        <span className="text-xs text-[#9CA3AF]">PNG / JPG · 2 Mo max</span>
+        <span className="text-xs text-[#9CA3AF]">{t('uploadHint')}</span>
       </div>
       {error && <p className="text-xs text-red-500">{error}</p>}
       <input
@@ -251,15 +253,16 @@ function LogoUploadZone({
 
 // ─── DOCUMENT STYLE PICKER ────────────────────────────────────────────────────
 
-const DOC_STYLES: Array<{ key: 'classique' | 'minimal' | 'moderne'; label: string; desc: string }> = [
-  { key: 'classique', label: 'Classique', desc: 'En-tête complet avec logo et coordonnées' },
-  { key: 'minimal', label: 'Minimal', desc: 'En-tête épuré, nom de l\'établissement uniquement' },
-  { key: 'moderne', label: 'Moderne', desc: 'Bandeau coloré avec logo en relief' },
-];
+// Labels live in OrganizationSettings.docStyles.<key>.
+const DOC_STYLES: Array<'classique' | 'minimal' | 'moderne'> = ['classique', 'minimal', 'moderne'];
 
 // ─── MAIN CLIENT FORM ─────────────────────────────────────────────────────────
 
 export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Props) {
+  const t = useTranslations('OrganizationSettings');
+  const locale = useLocale();
+  // Stored toggle keys (presence, francais, ...) have labels when known.
+  const toggleLabel = (group: 'presenceModes' | 'languages', key: string) => (t.has(`${group}.${key}`) ? t(`${group}.${key}` as 'languages.fr') : key);
   const [form, setForm] = useState<OrganisationFormData>(initialData);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [logoTs, setLogoTs] = useState(Date.now());
@@ -291,20 +294,20 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
   function validateClient(): Record<string, string> {
     const errs: Record<string, string> = {};
     if (!form.establishmentName.trim()) {
-      errs.establishmentName = "Le nom de l'établissement est obligatoire.";
+      errs.establishmentName = t('nameRequired');
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (form.email.trim() && !emailRegex.test(form.email.trim())) {
-      errs.email = "Adresse email invalide (ex: contact@ecole.ma).";
+      errs.email = t('invalidEmail', { example: 'contact@ecole.ma' });
     }
     if (form.directorEmail.trim() && !emailRegex.test(form.directorEmail.trim())) {
-      errs.directorEmail = "Adresse email invalide (ex: direction@ecole.ma).";
+      errs.directorEmail = t('invalidEmail', { example: 'direction@ecole.ma' });
     }
     if (form.financialContactEmail.trim() && !emailRegex.test(form.financialContactEmail.trim())) {
-      errs.financialContactEmail = "Adresse email invalide (ex: finance@ecole.ma).";
+      errs.financialContactEmail = t('invalidEmail', { example: 'finance@ecole.ma' });
     }
     if (form.admissionsContactEmail.trim() && !emailRegex.test(form.admissionsContactEmail.trim())) {
-      errs.admissionsContactEmail = "Adresse email invalide (ex: admissions@ecole.ma).";
+      errs.admissionsContactEmail = t('invalidEmail', { example: 'admissions@ecole.ma' });
     }
     return errs;
   }
@@ -317,7 +320,7 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
         setFieldErrors(clientErrors);
         setSaveStatus('error');
         const count = Object.keys(clientErrors).length;
-        setErrorMsg(`${count} champ${count > 1 ? 's contiennent des erreurs' : ' contient une erreur'}. Veuillez corriger les informations surlignées en rouge ci-dessous.`);
+        setErrorMsg(t('fieldErrors', { count }));
         return;
       }
 
@@ -357,15 +360,15 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
           if (Object.keys(extracted).length > 0) {
             setFieldErrors(extracted);
             const count = Object.keys(extracted).length;
-            throw new Error(`${count} champ${count > 1 ? 's contiennent des erreurs' : ' contient une erreur'}. Veuillez corriger les informations surlignées en rouge ci-dessous.`);
+            throw new Error(t('fieldErrors', { count }));
           }
-          throw new Error(data.error?.message ?? 'Erreur lors de l\'enregistrement des paramètres.');
+          throw new Error(data.error?.message ?? t('saveError'));
         }
         setSaveStatus('success');
         setTimeout(() => setSaveStatus('idle'), 3000);
       } catch (err) {
         setSaveStatus('error');
-        setErrorMsg(err instanceof Error ? err.message : 'Erreur inconnue');
+        setErrorMsg(err instanceof Error ? err.message : t('unknownError'));
       }
     });
   }
@@ -379,9 +382,9 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
       {/* ── Header ── */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-bold text-[#111827]">Organisation &amp; Identité</h1>
+          <h1 className="text-xl font-bold text-[#111827]">{t('title')}</h1>
           <p className="text-sm text-[#6B7280] mt-0.5">
-            Paramètres de l'établissement, contacts institutionnels et préférences de localisation.
+            {t('subtitle')}
           </p>
         </div>
         <button
@@ -393,7 +396,7 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
             transition-all shadow-sm shadow-[#4B6BFB]/20"
         >
           <Save className="w-4 h-4" />
-          {isPending ? 'Enregistrement...' : 'Enregistrer'}
+          {isPending ? t('saving') : t('save')}
         </button>
       </div>
 
@@ -401,7 +404,7 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
       {saveStatus === 'success' && (
         <div className="flex items-center gap-2 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700">
           <CheckCircle className="w-4 h-4 shrink-0" />
-          Paramètres enregistrés avec succès.
+          {t('saved')}
         </div>
       )}
       {saveStatus === 'error' && (
@@ -412,22 +415,22 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
       )}
 
       {/* ── Section 1: Identité Visuelle ── */}
-      <SectionCard icon={ImageIcon} title="Identité Visuelle">
+      <SectionCard icon={ImageIcon} title={t('sectionVisual')}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
           <div>
-            <p className="text-xs font-medium text-[#374151] mb-3">Logo de l'établissement</p>
+            <p className="text-xs font-medium text-[#374151] mb-3">{t('schoolLogo')}</p>
             <LogoUploadZone
               src={logoSrc}
-              label="le logo"
+              label={t('theLogo')}
               uploadKey="logo"
               onUploaded={() => setLogoTs(Date.now())}
             />
           </div>
           <div>
-            <p className="text-xs font-medium text-[#374151] mb-3">Favicon</p>
+            <p className="text-xs font-medium text-[#374151] mb-3">{t('favicon')}</p>
             <LogoUploadZone
               src={faviconSrc}
-              label="le favicon"
+              label={t('theFavicon')}
               uploadKey="favicon"
               onUploaded={() => setFaviconTs(Date.now())}
             />
@@ -436,81 +439,80 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
       </SectionCard>
 
       {/* ── Section 2: Informations Générales ── */}
-      <SectionCard icon={Building2} title="Informations Générales">
+      <SectionCard icon={Building2} title={t('sectionGeneral')}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Nom complet de l'établissement" required error={fieldErrors.establishmentName}>
+          <Field label={t('fullName')} required error={fieldErrors.establishmentName}>
             <Input value={form.establishmentName} onChange={field('establishmentName')} placeholder="ex: SchoolOS English Center" error={!!fieldErrors.establishmentName} />
           </Field>
-          <Field label="Nom abrégé" hint="Utilisé dans les documents compacts" error={fieldErrors.shortName}>
+          <Field label={t('shortName')} hint={t('shortNameHint')} error={fieldErrors.shortName}>
             <Input value={form.shortName} onChange={field('shortName')} placeholder="ex: LEC" error={!!fieldErrors.shortName} />
           </Field>
-          <Field label="Ville" error={fieldErrors.city}>
-            <Input value={form.city} onChange={field('city')} placeholder="ex: Casablanca" error={!!fieldErrors.city} />
+          <Field label={t('city')} error={fieldErrors.city}>
+            <Input value={form.city} onChange={field('city')} placeholder={t('cityPlaceholder')} error={!!fieldErrors.city} />
           </Field>
-          <Field label="Pays" error={fieldErrors.country}>
-            <Input value={form.country} onChange={field('country')} placeholder="ex: Maroc" error={!!fieldErrors.country} />
+          <Field label={t('country')} error={fieldErrors.country}>
+            <Input value={form.country} onChange={field('country')} placeholder={t('countryPlaceholder')} error={!!fieldErrors.country} />
           </Field>
-          <Field label="Adresse complète" error={fieldErrors.address}>
-            <Input value={form.address} onChange={field('address')} placeholder="ex: 12, rue Allal Ben Abdellah" error={!!fieldErrors.address} />
+          <Field label={t('address')} error={fieldErrors.address}>
+            <Input value={form.address} onChange={field('address')} placeholder={t('addressPlaceholder')} error={!!fieldErrors.address} />
           </Field>
-          <Field label="Site web" error={fieldErrors.website}>
+          <Field label={t('website')} error={fieldErrors.website}>
             <Input value={form.website} onChange={field('website')} type="url" placeholder="https://" error={!!fieldErrors.website} />
           </Field>
-          <Field label="Téléphone" error={fieldErrors.phone}>
+          <Field label={t('phone')} error={fieldErrors.phone}>
             <Input value={form.phone} onChange={field('phone')} type="tel" placeholder="+212 5 22 00 00 00" error={!!fieldErrors.phone} />
           </Field>
-          <Field label="Email" error={fieldErrors.email}>
+          <Field label={t('email')} error={fieldErrors.email}>
             <Input value={form.email} onChange={field('email')} type="email" placeholder="contact@schoolos.ma" error={!!fieldErrors.email} />
           </Field>
         </div>
       </SectionCard>
 
       {/* ── Section 3: Année scolaire ── */}
-      <SectionCard icon={GraduationCap} title="Année scolaire">
+      <SectionCard icon={GraduationCap} title={t('sectionYear')}>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Field label="Année scolaire" required hint="Exemple : 2026-2027" error={fieldErrors.academicYear}>
+          <Field label={t('schoolYear')} required hint={t('schoolYearHint')} error={fieldErrors.academicYear}>
             <Input value={form.academicYear} onChange={field('academicYear')} placeholder="2026-2027" error={!!fieldErrors.academicYear} />
           </Field>
-          <Field label="Date de début" error={fieldErrors.startDate}>
+          <Field label={t('startDate')} error={fieldErrors.startDate}>
             <Input value={form.startDate} onChange={field('startDate')} type="date" error={!!fieldErrors.startDate} />
           </Field>
-          <Field label="Date de fin" error={fieldErrors.endDate}>
+          <Field label={t('endDate')} error={fieldErrors.endDate}>
             <Input value={form.endDate} onChange={field('endDate')} type="date" error={!!fieldErrors.endDate} />
           </Field>
         </div>
       </SectionCard>
 
       {/* ── Section 4: Informations Légales ── */}
-      <SectionCard icon={FileText} title="Informations Légales">
+      <SectionCard icon={FileText} title={t('sectionLegal')}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Forme juridique" error={fieldErrors.legalStatus}>
-            <Input value={form.legalStatus} onChange={field('legalStatus')} placeholder="ex: SARL, SA, Association" error={!!fieldErrors.legalStatus} />
+          <Field label={t('legalStatus')} error={fieldErrors.legalStatus}>
+            <Input value={form.legalStatus} onChange={field('legalStatus')} placeholder={t('legalStatusPlaceholder')} error={!!fieldErrors.legalStatus} />
           </Field>
-          <Field label="Registre de Commerce (RC)" error={fieldErrors.rc}>
+          <Field label={t('rc')} error={fieldErrors.rc}>
             <Input value={form.rc} onChange={field('rc')} placeholder="ex: RC 123456" error={!!fieldErrors.rc} />
           </Field>
-          <Field label="ICE" hint="Identifiant Commun de l'Entreprise" error={fieldErrors.ice}>
+          <Field label="ICE" hint={t('iceHint')} error={fieldErrors.ice}>
             <Input value={form.ice} onChange={field('ice')} placeholder="ex: 001234567000012" error={!!fieldErrors.ice} />
           </Field>
-          <Field label="Identifiant Fiscal (IF)" error={fieldErrors.taxId}>
+          <Field label={t('taxId')} error={fieldErrors.taxId}>
             <Input value={form.taxId} onChange={field('taxId')} placeholder="ex: 12345678" error={!!fieldErrors.taxId} />
           </Field>
         </div>
       </SectionCard>
 
       {/* ── Section 4b: Agrément MEN, Cachet & Signature (Maroc) ── */}
-      <SectionCard icon={FileText} title="Agrément MEN, Cachet Officiel & Signature (Maroc)">
+      <SectionCard icon={FileText} title={t('sectionMen')}>
         <div className="space-y-4">
           <div className="p-3 bg-blue-50/60 rounded-xl border border-blue-100 text-xs text-blue-900 leading-relaxed">
-            <p className="font-bold">Conformité Loi 06-00 (Enseignement Privé au Maroc)</p>
+            <p className="font-bold">{t('law0600Title')}</p>
             <p className="text-[11px] text-blue-800/80 mt-0.5">
-              Ces informations et visuels officiels sont automatiquement incrustés sur les attestations de scolarité,
-              relevés de notes, diplômes et certificats d'inscription générés par la plateforme.
+              {t('law0600Body')}
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Field label="N° d'Autorisation MEN" hint="Ex: 06/2018/EP ou réf. ministérielle" error={fieldErrors.menAuthorizationNumber}>
+            <Field label={t('menNumber')} hint={t('menNumberHint')} error={fieldErrors.menAuthorizationNumber}>
               <Input
                 value={form.menAuthorizationNumber}
                 onChange={field('menAuthorizationNumber')}
@@ -518,7 +520,7 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
                 error={!!fieldErrors.menAuthorizationNumber}
               />
             </Field>
-            <Field label="Académie Régionale (AREF)" hint="Ex: Casablanca-Settat" error={fieldErrors.regionalAcademy}>
+            <Field label={t('aref')} hint={t('arefHint')} error={fieldErrors.regionalAcademy}>
               <Input
                 value={form.regionalAcademy}
                 onChange={field('regionalAcademy')}
@@ -526,11 +528,11 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
                 error={!!fieldErrors.regionalAcademy}
               />
             </Field>
-            <Field label="Direction Provinciale" hint="Ex: DP Anfa, DP Fès" error={fieldErrors.provincialDirection}>
+            <Field label={t('provincial')} hint={t('provincialHint')} error={fieldErrors.provincialDirection}>
               <Input
                 value={form.provincialDirection}
                 onChange={field('provincialDirection')}
-                placeholder="ex: Direction Provinciale Anfa"
+                placeholder={t('provincialPlaceholder')}
                 error={!!fieldErrors.provincialDirection}
               />
             </Field>
@@ -538,50 +540,50 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
             <Field
-              label="URL du Cachet officiel (PNG transparent)"
-              hint="Tampon officiel de l'école (fond transparent recommandé)"
+              label={t('stampUrl')}
+              hint={t('stampUrlHint')}
               error={fieldErrors.officialStampUrl}
             >
               <Input
                 value={form.officialStampUrl}
                 onChange={field('officialStampUrl')}
-                placeholder="https://... ou /uploads/stamp.png"
+                placeholder={t('stampPlaceholder')}
                 error={!!fieldErrors.officialStampUrl}
               />
               {form.officialStampUrl && (
                 <div className="mt-2 p-2 bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-3">
                   <div className="w-12 h-12 bg-white border border-slate-200 rounded flex items-center justify-center overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={form.officialStampUrl} alt="Cachet école" className="max-w-full max-h-full object-contain" />
+                    <img src={form.officialStampUrl} alt={t('stampAlt')} className="max-w-full max-h-full object-contain" />
                   </div>
                   <div className="text-[11px] text-slate-500">
-                    <p className="font-bold text-[#16212B]">Aperçu du cachet</p>
-                    <p className="text-[10px]">Ce cachet sera apposé au bas des attestations.</p>
+                    <p className="font-bold text-[#16212B]">{t('stampPreview')}</p>
+                    <p className="text-[10px]">{t('stampPreviewHint')}</p>
                   </div>
                 </div>
               )}
             </Field>
 
             <Field
-              label="URL de la Signature du Directeur (PNG transparent)"
-              hint="Signature numérisée du chef d'établissement"
+              label={t('signatureUrl')}
+              hint={t('signatureUrlHint')}
               error={fieldErrors.directorSignatureUrl}
             >
               <Input
                 value={form.directorSignatureUrl}
                 onChange={field('directorSignatureUrl')}
-                placeholder="https://... ou /uploads/signature.png"
+                placeholder={t('signaturePlaceholder')}
                 error={!!fieldErrors.directorSignatureUrl}
               />
               {form.directorSignatureUrl && (
                 <div className="mt-2 p-2 bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-3">
                   <div className="w-12 h-12 bg-white border border-slate-200 rounded flex items-center justify-center overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={form.directorSignatureUrl} alt="Signature directeur" className="max-w-full max-h-full object-contain" />
+                    <img src={form.directorSignatureUrl} alt={t('signatureAlt')} className="max-w-full max-h-full object-contain" />
                   </div>
                   <div className="text-[11px] text-slate-500">
-                    <p className="font-bold text-[#16212B]">Aperçu de la signature</p>
-                    <p className="text-[10px]">Apposée aux côtés du cachet officiel.</p>
+                    <p className="font-bold text-[#16212B]">{t('signaturePreview')}</p>
+                    <p className="text-[10px]">{t('signaturePreviewHint')}</p>
                   </div>
                 </div>
               )}
@@ -591,27 +593,27 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
       </SectionCard>
 
       {/* ── Section 4: Contacts Institutionnels ── */}
-      <SectionCard icon={User} title="Contacts Institutionnels">
+      <SectionCard icon={User} title={t('sectionContacts')}>
         <div className="flex flex-col gap-6">
           {INSTITUTIONAL_CONTACT_ROLES.map(role => (
             <div key={role.key}>
               <div className="flex items-center gap-2 mb-3">
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
                   bg-[#F0F4FF] text-[#4B6BFB]">
-                  {role.badge}
+                  {t(`contacts.${role.key}.badge`)}
                 </span>
-                <span className="text-sm font-medium text-[#374151]">{role.label}</span>
+                <span className="text-sm font-medium text-[#374151]">{t(`contacts.${role.key}.label`)}</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Field label="Nom complet" error={fieldErrors[role.nameField]}>
+                <Field label={t('contactName')} error={fieldErrors[role.nameField]}>
                   <Input
                     value={form[role.nameField] as string}
                     onChange={field(role.nameField)}
-                    placeholder="Nom Prénom"
+                    placeholder={t('contactNamePlaceholder')}
                     error={!!fieldErrors[role.nameField]}
                   />
                 </Field>
-                <Field label="Email" error={fieldErrors[role.emailField]}>
+                <Field label={t('email')} error={fieldErrors[role.emailField]}>
                   <Input
                     value={form[role.emailField] as string}
                     onChange={field(role.emailField)}
@@ -620,7 +622,7 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
                     error={!!fieldErrors[role.emailField]}
                   />
                 </Field>
-                <Field label="Téléphone" error={fieldErrors[role.phoneField]}>
+                <Field label={t('phone')} error={fieldErrors[role.phoneField]}>
                   <Input
                     value={form[role.phoneField] as string}
                     onChange={field(role.phoneField)}
@@ -636,21 +638,21 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
       </SectionCard>
 
       {/* ── Section 5: Langues & Localisation ── */}
-      <SectionCard icon={Languages} title="Langues &amp; Localisation">
+      <SectionCard icon={Languages} title={t('sectionLanguages')}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
-            <p className="text-xs font-medium text-[#374151] mb-3">Langues de l'interface</p>
+            <p className="text-xs font-medium text-[#374151] mb-3">{t('interfaceLanguages')}</p>
             <div className="flex flex-col gap-2">
               {Object.entries(form.languages).map(([key, enabled]) => (
                 <label key={key} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-[#F9FAFB] cursor-pointer">
-                  <span className="text-sm text-[#374151] capitalize">{key}</span>
-                  <Toggle checked={enabled} onChange={v => toggleJsonb('languages', key)} label={key} />
+                  <span className="text-sm text-[#374151] capitalize">{toggleLabel('languages', key)}</span>
+                  <Toggle checked={enabled} onChange={v => toggleJsonb('languages', key)} label={toggleLabel('languages', key)} />
                 </label>
               ))}
             </div>
           </div>
           <div className="flex flex-col gap-4">
-            <Field label="Fuseau horaire">
+            <Field label={t('timezone')}>
               <select
                 value={form.localeTimezone}
                 onChange={e => setForm(prev => ({ ...prev, localeTimezone: e.target.value }))}
@@ -662,7 +664,7 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
                 <option value="UTC">UTC</option>
               </select>
             </Field>
-            <Field label="Format de date">
+            <Field label={t('dateFormat')}>
               <select
                 value={form.dateFormat}
                 onChange={e => setForm(prev => ({ ...prev, dateFormat: e.target.value }))}
@@ -679,49 +681,49 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
       </SectionCard>
 
       {/* ── Section 6: Style de Documents ── */}
-      <SectionCard icon={Palette} title="Style de Documents">
+      <SectionCard icon={Palette} title={t('sectionDocStyle')}>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {DOC_STYLES.map(style => (
             <button
-              key={style.key}
+              key={style}
               type="button"
-              onClick={() => setForm(prev => ({ ...prev, documentHeaderStyle: style.key }))}
+              onClick={() => setForm(prev => ({ ...prev, documentHeaderStyle: style }))}
               className={`p-4 rounded-xl border-2 text-left transition-all ${
-                form.documentHeaderStyle === style.key
+                form.documentHeaderStyle === style
                   ? 'border-[#4B6BFB] bg-[#F0F4FF]'
                   : 'border-[#E5E7EB] hover:border-[#C7D2FE]'
               }`}
             >
-              <p className="text-sm font-semibold text-[#111827]">{style.label}</p>
-              <p className="text-xs text-[#6B7280] mt-1">{style.desc}</p>
+              <p className="text-sm font-semibold text-[#111827]">{t(`docStyles.${style}.label`)}</p>
+              <p className="text-xs text-[#6B7280] mt-1">{t(`docStyles.${style}.desc`)}</p>
             </button>
           ))}
         </div>
       </SectionCard>
 
       {/* ── Section 7: Opérations & Présences ── */}
-      <SectionCard icon={Shield} title="Opérations &amp; Modes de Présence">
+      <SectionCard icon={Shield} title={t('sectionOperations')}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
             <div className="flex items-center justify-between py-3 px-4 bg-[#F9FAFB] rounded-xl">
               <div>
-                <p className="text-sm font-medium text-[#111827]">Opérations actives</p>
-                <p className="text-xs text-[#6B7280] mt-0.5">Autorise les opérations académiques et financières</p>
+                <p className="text-sm font-medium text-[#111827]">{t('operationsActive')}</p>
+                <p className="text-xs text-[#6B7280] mt-0.5">{t('operationsActiveHint')}</p>
               </div>
               <Toggle
                 checked={form.allowOperations}
                 onChange={v => setForm(prev => ({ ...prev, allowOperations: v }))}
-                label="Opérations actives"
+                label={t('operationsActive')}
               />
             </div>
           </div>
           <div>
-            <p className="text-xs font-medium text-[#374151] mb-3">Modes de présence</p>
+            <p className="text-xs font-medium text-[#374151] mb-3">{t('presenceModesTitle')}</p>
             <div className="flex flex-col gap-2">
               {Object.entries(form.presenceModes).map(([key, enabled]) => (
                 <label key={key} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-[#F9FAFB] cursor-pointer">
-                  <span className="text-sm text-[#374151]">{key}</span>
-                  <Toggle checked={enabled} onChange={v => toggleJsonb('presenceModes', key)} label={key} />
+                  <span className="text-sm text-[#374151]">{toggleLabel('presenceModes', key)}</span>
+                  <Toggle checked={enabled} onChange={v => toggleJsonb('presenceModes', key)} label={toggleLabel('presenceModes', key)} />
                 </label>
               ))}
             </div>
@@ -733,13 +735,13 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
       <div className="flex items-center justify-between px-4 py-3 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl">
         <div className="flex items-center gap-2 text-sm text-[#6B7280]">
           <GraduationCap className="w-4 h-4" />
-          Structure académique (cycles, classes)
+          {t('academicStructure')}
         </div>
         <Link
-          href="/fr/dashboard/academics/classes"
+          href={`/${locale}/dashboard/academics/classes`}
           className="flex items-center gap-1 text-sm font-medium text-[#4B6BFB] hover:text-[#3B5BDB] transition-colors"
         >
-          Aller à la gestion des classes
+          {t('goToClasses')}
           <ChevronRight className="w-4 h-4" />
         </Link>
       </div>

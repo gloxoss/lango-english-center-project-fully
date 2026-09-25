@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Bus, Plus, Search, Filter, Edit2, Trash2, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { nextCode } from '@/libs/next-code';
 
 interface Vehicle {
   id: string;
@@ -59,7 +60,7 @@ export default function VehiclesPage() {
   const openCreateModal = () => {
     setEditingVehicle(null);
     setFormData({
-      vehicleCode: `BUS-${Math.floor(100 + Math.random() * 900)}`,
+      vehicleCode: nextCode('BUS', vehicles.map(v => v.vehicleCode)),
       registrationNumber: '',
       capacity: 30,
       vehicleType: 'bus',

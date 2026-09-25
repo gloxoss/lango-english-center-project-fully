@@ -1093,12 +1093,18 @@ async function run() {
       { tenantId, name: 'Semestre 1', startMonth: 9, endMonth: 1 },
       { tenantId, name: 'Semestre 2', startMonth: 2, endMonth: 6 },
     ]);
-    await tx.insert(streams).values([
+    const streamRows = await tx.insert(streams).values([
       { tenantId, name: 'Sciences' },
       { tenantId, name: 'Lettres' },
       { tenantId, name: 'Économie' },
       { tenantId, name: 'Technologie' },
-    ]);
+    ]).returning({ id: streams.id, name: streams.name });
+    // Lycée classes are graded with filière coefficients, so give them one;
+    // the classes were created before the filières existed (audit S-17).
+    const sciencesStreamId = streamRows.find(s => s.name === 'Sciences')!.id;
+    for (const className of ['2nde', '1ère', 'Terminale']) {
+      await tx.update(classes).set({ streamId: sciencesStreamId }).where(eq(classes.id, classInfo[className]!.id));
+    }
     const shiftIds: string[] = [];
     for (const [name, st, en] of [['Matin', '08:00', '13:00'], ['Après-midi', '14:00', '18:30']] as const) {
       const [sh] = await tx.insert(shifts).values({ tenantId, name, startTime: st, endTime: en, isActive: true }).returning();

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -34,10 +35,15 @@ type StudentOption = { id: string; fullName: string; matricule: string };
 // never persisted in plaintext server-side, so it can't be re-displayed
 // after a page refresh (matches how the super-admin school-creation temp
 // password already behaves).
+// The API reports status as these French labels; they are only used as keys here.
+const STATUS_CODE_GENERATED = 'Code généré';
+const STATUS_SMS_SENT = 'SMS envoyé';
+
 export function AccessResetView() {
+  const t = useTranslations('AccessReset');
   const [requests, setRequests] = useState<ApiResetRequest[]>([]);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
-  const [filterStatus, setFilterStatus] = useState<string>('Tous');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [displayedCodes, setDisplayedCodes] = useState<Record<string, string>>({});
@@ -85,7 +91,7 @@ export function AccessResetView() {
 
   const filteredRequests = requests.filter((r) => {
     const matchesSearch = r.studentName.toLowerCase().includes(searchTerm.toLowerCase()) || r.guardianName.toLowerCase().includes(searchTerm.toLowerCase()) || r.phone.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'Tous' || r.status === filterStatus;
+    const matchesStatus = filterStatus === 'all' || r.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
@@ -101,7 +107,7 @@ export function AccessResetView() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.message || 'Échec de la génération du code.');
+        setError(json.error?.message || json.message || t('generateError'));
         return;
       }
       setDisplayedCodes(prev => ({ ...prev, [json.data.id]: json.code }));
@@ -111,14 +117,14 @@ export function AccessResetView() {
       setStudentQuery('');
     } catch (err) {
       console.error('Access-reset generation failed', err);
-      setError('Connexion impossible. Vérifiez votre réseau.');
+      setError(t('networkError'));
     }
   }
 
   async function handleSendSms(requestId: string) {
     const code = displayedCodes[requestId];
     if (!code) {
-      setError('Le code n\'est visible que juste après sa génération.');
+      setError(t('codeOnlyOnce'));
       return;
     }
     setError(null);
@@ -130,22 +136,22 @@ export function AccessResetView() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.message || 'Échec de l\'envoi.');
+        setError(json.error?.message || json.message || t('sendError'));
         return;
       }
       await loadRequests();
     } catch (err) {
       console.error('Send SMS failed', err);
-      setError('Connexion impossible.');
+      setError(t('networkError'));
     }
   }
 
   const getStatusBadge = (status: ApiResetRequest['status']) => {
     switch (status) {
-      case 'Code généré':
-        return <Badge className="bg-[#DCEBF4] text-[#1B6C93] text-[10px] px-2 py-0.5 border-none">🔑 Code généré</Badge>;
-      case 'SMS envoyé':
-        return <Badge className="bg-[#D1F5E8] text-[#17A673] text-[10px] px-2 py-0.5 border-none">✈️ SMS envoyé</Badge>;
+      case STATUS_CODE_GENERATED:
+        return <Badge className="bg-[#DCEBF4] text-[#1B6C93] text-[10px] px-2 py-0.5 border-none">🔑 {t('statusGenerated')}</Badge>;
+      case STATUS_SMS_SENT:
+        return <Badge className="bg-[#D1F5E8] text-[#17A673] text-[10px] px-2 py-0.5 border-none">✈️ {t('statusSent')}</Badge>;
     }
   };
 
@@ -154,14 +160,14 @@ export function AccessResetView() {
       <div className="flex-1 space-y-6 min-w-0">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">Réinitialisation des accès</h1>
-            <p className="text-xs text-slate-500 mt-1">Générez un mot de passe temporaire pour le portail parent d&apos;un élève.</p>
+            <h1 className="text-2xl font-extrabold text-[#16212B] tracking-tight">{t('title')}</h1>
+            <p className="text-xs text-slate-500 mt-1">{t('subtitle')}</p>
           </div>
           <Button
             onClick={() => setIsNewResetOpen(true)}
             className="gap-2 h-10 rounded-full px-4 text-xs font-bold bg-[#0066FF] text-white hover:bg-[#0052CC]"
           >
-            <Plus className="w-4 h-4" /> Nouveau reset
+            <Plus className="w-4 h-4" /> {t('newReset')}
           </Button>
         </div>
 
@@ -175,7 +181,7 @@ export function AccessResetView() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-bold text-slate-500">Demandes totales</p>
+              <p className="text-xs font-bold text-slate-500">{t('statTotal')}</p>
               <p className="text-2xl font-extrabold text-[#16212B]">{requests.length}</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center">
@@ -184,8 +190,8 @@ export function AccessResetView() {
           </Card>
           <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-bold text-slate-500">Codes générés</p>
-              <p className="text-2xl font-extrabold text-[#16212B]">{requests.length}</p>
+              <p className="text-xs font-bold text-slate-500">{t('statPending')}</p>
+              <p className="text-2xl font-extrabold text-[#16212B]">{requests.filter(r => r.status === STATUS_CODE_GENERATED).length}</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-[#DCEBF4] text-[#1B6C93] flex items-center justify-center">
               <Key className="w-5 h-5" />
@@ -193,8 +199,8 @@ export function AccessResetView() {
           </Card>
           <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-bold text-slate-500">SMS envoyés (simulé)</p>
-              <p className="text-2xl font-extrabold text-[#16212B]">{requests.filter(r => r.status === 'SMS envoyé').length}</p>
+              <p className="text-xs font-bold text-slate-500">{t('statSent')}</p>
+              <p className="text-2xl font-extrabold text-[#16212B]">{requests.filter(r => r.status === STATUS_SMS_SENT).length}</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-[#D1F5E8] text-[#17A673] flex items-center justify-center">
               <Send className="w-5 h-5" />
@@ -203,7 +209,7 @@ export function AccessResetView() {
         </div>
 
         <Card className="bg-white rounded-2xl shadow-2xs border border-slate-200/80 p-5 space-y-4">
-          <h2 className="text-sm font-extrabold text-[#16212B]">Demandes de réinitialisation</h2>
+          <h2 className="text-sm font-extrabold text-[#16212B]">{t('listTitle')}</h2>
 
           <div className="flex items-center gap-3 flex-wrap">
             <div className="relative min-w-[240px] flex-1">
@@ -211,18 +217,18 @@ export function AccessResetView() {
               <Input
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                placeholder="Rechercher un élève, parent ou téléphone..."
+                placeholder={t('searchPlaceholder')}
                 className="pl-10 h-9 text-xs bg-slate-50 border-slate-200 rounded-full"
               />
             </div>
             <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-full text-xs">
-              {['Tous', 'Code généré', 'SMS envoyé'].map(status => (
+              {([['all', t('filterAll')], [STATUS_CODE_GENERATED, t('statusGenerated')], [STATUS_SMS_SENT, t('statusSent')]] as const).map(([status, text]) => (
                 <button
                   key={status}
                   onClick={() => setFilterStatus(status)}
                   className={`px-3 py-1.5 rounded-full font-bold text-[11px] transition-colors ${filterStatus === status ? 'bg-white text-[#16212B] shadow-2xs' : 'text-slate-500 hover:text-slate-800'}`}
                 >
-                  {status}
+                  {text}
                 </button>
               ))}
             </div>
@@ -232,12 +238,12 @@ export function AccessResetView() {
             <Table>
               <TableHeader className="bg-[#F6F9FC] text-slate-500 font-semibold text-xs">
                 <TableRow>
-                  <TableHead>Élève</TableHead>
-                  <TableHead>Parent / Tuteur</TableHead>
-                  <TableHead>Téléphone</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Demandé le</TableHead>
-                  <TableHead className="text-center">Actions</TableHead>
+                  <TableHead>{t('colStudent')}</TableHead>
+                  <TableHead>{t('colGuardian')}</TableHead>
+                  <TableHead>{t('colPhone')}</TableHead>
+                  <TableHead>{t('colStatus')}</TableHead>
+                  <TableHead>{t('colRequested')}</TableHead>
+                  <TableHead className="text-center">{t('colActions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="text-xs font-medium divide-y divide-slate-100">
@@ -263,12 +269,12 @@ export function AccessResetView() {
                     <TableCell className="text-slate-500">{r.requestedAt}</TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1.5" onClick={e => e.stopPropagation()}>
-                        {r.status === 'Code généré' && displayedCodes[r.id] && (
+                        {r.status === STATUS_CODE_GENERATED && displayedCodes[r.id] && (
                           <button
                             onClick={() => handleSendSms(r.id)}
                             className="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-[10px] font-bold hover:bg-emerald-100"
                           >
-                            Envoyer SMS
+                            {t('sendSms')}
                           </button>
                         )}
                       </div>
@@ -276,7 +282,7 @@ export function AccessResetView() {
                   </TableRow>
                 ))}
                 {filteredRequests.length === 0 && (
-                  <TableRow><TableCell colSpan={6} className="py-8 text-center text-slate-400">Aucune demande.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="py-8 text-center text-slate-400">{t('empty')}</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -288,40 +294,40 @@ export function AccessResetView() {
         <div className="w-[320px] shrink-0 space-y-4 hidden xl:block sticky top-6 self-start max-h-[calc(100vh-3rem)] overflow-y-auto">
           <Card className="p-5 bg-white rounded-2xl shadow-2xs border border-slate-200/80 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-extrabold text-[#16212B]">Détail de la demande</h3>
+              <h3 className="text-sm font-extrabold text-[#16212B]">{t('detailTitle')}</h3>
               {getStatusBadge(sel.status)}
             </div>
 
             <div>
               <p className="font-extrabold text-[#16212B] text-base">{sel.studentName}</p>
-              <p className="text-xs text-slate-500">Parent: {sel.guardianName}</p>
+              <p className="text-xs text-slate-500">{t('parentLine', { name: sel.guardianName })}</p>
             </div>
 
             {displayedCodes[sel.id] && (
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
-                <p className="text-[10px] text-slate-400 font-bold uppercase">Mot de passe temporaire</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase">{t('tempPassword')}</p>
                 <p className="text-xl font-extrabold font-mono text-[#0066FF] tracking-widest my-1 break-all">{displayedCodes[sel.id]}</p>
-                <p className="text-[10px] text-slate-400">Communiquez-le une seule fois - il ne sera plus affiché après.</p>
+                <p className="text-[10px] text-slate-400">{t('tempPasswordHint')}</p>
               </div>
             )}
 
             <div className="space-y-2 text-xs border-t pt-3">
               <div className="flex justify-between">
-                <span className="text-slate-500">Téléphone Tuteur</span>
+                <span className="text-slate-500">{t('guardianPhone')}</span>
                 <span className="font-mono font-bold text-[#16212B]">{sel.phone || '—'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Demandé le</span>
+                <span className="text-slate-500">{t('colRequested')}</span>
                 <span className="text-slate-700">{sel.requestedAt}</span>
               </div>
             </div>
 
-            {sel.status === 'Code généré' && displayedCodes[sel.id] && (
+            {sel.status === STATUS_CODE_GENERATED && displayedCodes[sel.id] && (
               <Button
                 onClick={() => handleSendSms(sel.id)}
                 className="w-full text-xs font-bold h-9 rounded-xl bg-[#0066FF] text-white hover:bg-[#0052CC]"
               >
-                Envoyer par SMS
+                {t('sendBySms')}
               </Button>
             )}
           </Card>
@@ -331,22 +337,22 @@ export function AccessResetView() {
       <Dialog open={isNewResetOpen} onOpenChange={(open) => { setIsNewResetOpen(open); if (!open) { setSelectedStudent(null); setStudentQuery(''); } }}>
         <DialogContent className="max-w-md bg-white rounded-2xl p-6">
           <DialogHeader>
-            <DialogTitle className="text-lg font-extrabold text-[#16212B]">Nouveau reset d&apos;accès</DialogTitle>
+            <DialogTitle className="text-lg font-extrabold text-[#16212B]">{t('dialogTitle')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 my-2 text-xs">
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Élève *</label>
+              <label className="font-bold text-slate-700 block mb-1">{t('studentRequired')}</label>
               {selectedStudent ? (
                 <div className="flex items-center justify-between h-9 px-3 rounded-xl border border-slate-200 bg-slate-50">
                   <span className="font-bold text-[#16212B]">{selectedStudent.fullName}</span>
-                  <button type="button" onClick={() => setSelectedStudent(null)} className="text-slate-400 hover:text-rose-600 text-[10px] font-bold">Changer</button>
+                  <button type="button" onClick={() => setSelectedStudent(null)} className="text-slate-400 hover:text-rose-600 text-[10px] font-bold">{t('change')}</button>
                 </div>
               ) : (
                 <div className="relative">
                   <Input
                     value={studentQuery}
                     onChange={e => setStudentQuery(e.target.value)}
-                    placeholder="Rechercher un élève par nom ou matricule..."
+                    placeholder={t('studentSearchPlaceholder')}
                     className="h-9 text-xs rounded-xl"
                   />
                   {studentResults.length > 0 && (
@@ -367,17 +373,17 @@ export function AccessResetView() {
                 </div>
               )}
             </div>
-            <p className="text-[10px] text-slate-400">Le mot de passe temporaire du portail parent de cet élève sera régénéré (ou son compte créé s&apos;il n&apos;en a pas encore).</p>
+            <p className="text-[10px] text-slate-400">{t('dialogHint')}</p>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIsNewResetOpen(false)} className="rounded-full text-xs h-9">Annuler</Button>
+            <Button variant="outline" onClick={() => setIsNewResetOpen(false)} className="rounded-full text-xs h-9">{t('cancel')}</Button>
             <Button
               variant="primary"
               disabled={!selectedStudent}
               onClick={() => selectedStudent && handleGenerateForStudent(selectedStudent.id)}
               className="rounded-full text-xs h-9 bg-[#0066FF] text-white"
             >
-              Générer le code
+              {t('generate')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { contentTypeFor, resolveTenantPath, saveUploadedFile } from '@/libs/api/uploads';
 import { db } from '@/libs/DB';
 import { studentDocuments, user } from '@/models/Schema';
@@ -11,6 +12,19 @@ import { studentDocuments, user } from '@/models/Schema';
 const ALLOWED_TYPES: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'application/pdf': 'pdf' };
 const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 const DOCUMENT_TYPES = ['photo', 'birth_certificate', 'school_certificate', 'guardian_cni', 'bulletin'] as const;
+
+// These files include the guardian's CNI and the birth certificate (Law 09-08).
+// Any teacher of the school could read, replace and delete them; a teacher now
+// only reaches students of the sections they teach.
+async function assertTeacherTeachesStudent(context: { role: string; userId: string }, tenantId: string, classSectionId: string | null) {
+  if (context.role !== 'teacher') {
+    return;
+  }
+  const assigned = await getTeacherClassSectionIds(tenantId, context.userId);
+  if (!classSectionId || !assigned.includes(classSectionId)) {
+    throw new ApiError(403, 'FORBIDDEN', 'Cet élève ne fait pas partie de vos classes.');
+  }
+}
 
 export async function GET(request: Request) {
   try {
@@ -27,7 +41,7 @@ export async function GET(request: Request) {
 
     // Branch authorization check
     const [student] = await db
-      .select({ id: user.id, branchId: user.branchId })
+      .select({ id: user.id, branchId: user.branchId, classSectionId: user.classSectionId })
       .from(user)
       .where(and(eq(user.id, studentId), eq(user.tenantId, tenantId), inArray(user.role, ['student', 'alumni'])))
       .limit(1);
@@ -39,6 +53,7 @@ export async function GET(request: Request) {
     if (context.branchId && student.branchId && student.branchId !== context.branchId) {
       return NextResponse.json({ success: false, message: 'Accès interdit à cette succursale.' }, { status: 403 });
     }
+    await assertTeacherTeachesStudent(context, tenantId, student.classSectionId);
 
     // Serve file content if requested
     if (isView && documentType) {
@@ -114,7 +129,7 @@ export async function POST(request: Request) {
     }
 
     const [student] = await db
-      .select({ id: user.id, branchId: user.branchId })
+      .select({ id: user.id, branchId: user.branchId, classSectionId: user.classSectionId })
       .from(user)
       .where(and(eq(user.id, studentId), eq(user.tenantId, tenantId), inArray(user.role, ['student', 'alumni'])))
       .limit(1);
@@ -124,6 +139,7 @@ export async function POST(request: Request) {
     if (context.branchId && student.branchId && student.branchId !== context.branchId) {
       throw new ApiError(403, 'FORBIDDEN', 'Accès non autorisé pour cette succursale.');
     }
+    await assertTeacherTeachesStudent(context, tenantId, student.classSectionId);
 
     const ext = await saveUploadedFile(tenantId, `documents/${studentId}/${documentType}.{ext}`, file, ALLOWED_TYPES, MAX_SIZE_BYTES);
 
@@ -163,7 +179,7 @@ export async function DELETE(request: Request) {
 
     // Branch authorization check
     const [student] = await db
-      .select({ id: user.id, branchId: user.branchId })
+      .select({ id: user.id, branchId: user.branchId, classSectionId: user.classSectionId })
       .from(user)
       .where(and(eq(user.id, studentId), eq(user.tenantId, tenantId), inArray(user.role, ['student', 'alumni'])))
       .limit(1);
@@ -173,6 +189,7 @@ export async function DELETE(request: Request) {
     if (context.branchId && student.branchId && student.branchId !== context.branchId) {
       return NextResponse.json({ success: false, message: 'Accès non autorisé pour cette succursale.' }, { status: 403 });
     }
+    await assertTeacherTeachesStudent(context, tenantId, student.classSectionId);
 
     const [existing] = await db
       .select({ fileExt: studentDocuments.fileExt })

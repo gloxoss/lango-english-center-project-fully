@@ -15,7 +15,9 @@ export type CndpStatusView = {
 };
 
 const VIEWS: Record<CndpStatusKey, CndpStatusView> = {
-  approved: { key: 'approved', label: 'Conforme / Récépissé', tone: 'good' },
+  // Self-declared by the school (reference + date required by the API); SchoolOS
+  // cannot check it with the CNDP, so it never says "conforme".
+  approved: { key: 'approved', label: 'Récépissé déclaré', tone: 'good' },
   submitted: { key: 'submitted', label: 'En cours', tone: 'progress' },
   draft: { key: 'draft', label: 'Non déposé', tone: 'none' },
   unavailable: { key: 'unavailable', label: 'Information non disponible', tone: 'unknown' },

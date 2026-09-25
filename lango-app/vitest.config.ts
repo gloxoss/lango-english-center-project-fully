@@ -39,7 +39,15 @@ export default defineConfig({
           // explicitly. Fails the run immediately (before any suite skips)
           // when the DB is down. Scoped to the unit project — browser (ui)
           // tests are pure component tests and do not need a database.
-          globalSetup: ['vitest.global-setup.ts'],
+          // ponytail: name check only; a dedicated TEST_DATABASE_URL var if more test DBs appear.
+          ...((): { globalSetup?: string[] } => {
+            const resolvedDb = process.env.DATABASE_URL ?? loadEnv('', process.cwd(), '').DATABASE_URL;
+            const dbName = resolvedDb ? resolvedDb.split('/').pop()?.split('?')[0] : '';
+            if (dbName && dbName !== 'schoolos_audit') {
+              throw new Error('DB tests must use schoolos_audit: set DATABASE_URL=.../schoolos_audit');
+            }
+            return { globalSetup: ['vitest.global-setup.ts'] };
+          })(),
         },
       },
       {

@@ -1114,6 +1114,34 @@
       "when": 1790120000000,
       "tag": "0157_alumni_events_lifecycle_and_waitlist",
       "breakpoints": true
+    },
+    {
+      "idx": 159,
+      "version": "7",
+      "when": 1790120001000,
+      "tag": "0158_refund_cap_ignores_rejected",
+      "breakpoints": true
+    },
+    {
+      "idx": 160,
+      "version": "7",
+      "when": 1790120002000,
+      "tag": "0159_salary_payment_retry",
+      "breakpoints": true
+    },
+    {
+      "idx": 161,
+      "version": "7",
+      "when": 1790120003000,
+      "tag": "0160_document_system",
+      "breakpoints": true
+    },
+    {
+      "idx": 162,
+      "version": "7",
+      "when": 1790120004000,
+      "tag": "0161_timetable_no_overlap",
+      "breakpoints": true
     }
   ]
 }

@@ -721,9 +721,11 @@ export function StudentTransfersClient({ locale = 'fr' }: { locale?: string } = 
                               </div>
                             </div>
 
+                            {/* The row selects on mouse click; this button is the keyboard path. */}
                             <Button
                               size="sm"
                               variant="ghost"
+                              onClick={(e) => { e.stopPropagation(); handleSelectStudent(r); }}
                               className="
                                 h-8 gap-1 text-xs font-bold text-[#2487B8]
                                 group-hover:bg-[#2487B8] group-hover:text-white

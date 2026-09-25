@@ -14,6 +14,7 @@ interface RecentPaymentsCardProps {
 
 export function RecentPaymentsCard({ payments, locale }: RecentPaymentsCardProps) {
   const t = useTranslations('Dashboard');
+  const th = useTranslations('DashboardHome');
   return (
     <div className="flex flex-col rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-2xs">
       <div>
@@ -56,7 +57,7 @@ export function RecentPaymentsCard({ payments, locale }: RecentPaymentsCardProps
                       {p.studentName}
                     </p>
                     <p className="text-[11px] text-slate-400 font-medium truncate">
-                      {p.className} · {p.paymentMethod}
+                      {p.className} · {th.has(`method_${p.paymentMethod}`) ? th(`method_${p.paymentMethod}` as 'method_cash') : p.paymentMethod}
                     </p>
                   </div>
                 </div>
@@ -75,13 +76,13 @@ export function RecentPaymentsCard({ payments, locale }: RecentPaymentsCardProps
         </div>
       </div>
 
-      {/* Footer CTA */}
+      {/* Footer CTA: each cash-desk collection issues one receipt (payment-create.ts), so the receipts list is the payment history (audit S-30). */}
       <div className="mt-4 border-t border-slate-100 pt-3 text-center">
         <Link
-          href={`/${locale}/dashboard/finance/collection-desk`}
+          href={`/${locale}/dashboard/finance/receipts`}
           className="text-xs font-bold text-blue-600 hover:underline"
         >
-          {t('openCashDesk')} →
+          {t('viewPaymentHistory')} →
         </Link>
       </div>
     </div>

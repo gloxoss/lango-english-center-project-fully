@@ -2,8 +2,8 @@
 
 import type { MarkRow, MarkStatus, NavigationKey } from '../services/marksheet-grid';
 import { AlertCircle, CheckCircle2, Download, Keyboard, Loader2, Save, Upload } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -83,7 +83,9 @@ export function MarksheetGridView({
 
   const handleImportMassar = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
     setImportingMassar(true);
     try {
       const fd = new FormData();
@@ -98,13 +100,15 @@ export function MarksheetGridView({
         alert(json.message);
         void load();
       } else {
-        alert(json.message || 'Erreur lors de l’import Massar');
+        alert(json.error?.message || json.message || 'Erreur lors de l’import Massar');
       }
     } catch {
       alert('Erreur réseau lors de l’import Massar');
     } finally {
       setImportingMassar(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -244,7 +248,11 @@ export function MarksheetGridView({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center gap-2 py-16 text-xs font-bold text-slate-400">
+      <div className="
+        flex items-center justify-center gap-2 py-16 text-xs font-bold
+        text-slate-400
+      "
+      >
         <Loader2 className="size-4 animate-spin" />
         <span>{t('loadingMarksheet')}</span>
       </div>
@@ -253,7 +261,11 @@ export function MarksheetGridView({
 
   if (!payload) {
     return (
-      <div className="flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-bold text-red-700">
+      <div className="
+        flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4
+        py-3 text-xs font-bold text-red-700
+      "
+      >
         <AlertCircle className="size-4 shrink-0" />
         <span>{error ?? t('marksheetUnavailable')}</span>
         <Button
@@ -270,7 +282,11 @@ export function MarksheetGridView({
 
   return (
     <div className="mx-auto max-w-[1200px] space-y-4">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+      <div className="
+        flex flex-col justify-between gap-3
+        sm:flex-row sm:items-center
+      "
+      >
         <div>
           <h1 className="text-xl font-extrabold tracking-tight text-[#16212B]">{payload.definition.title}</h1>
           <p className="mt-0.5 text-xs text-slate-500">
@@ -283,7 +299,10 @@ export function MarksheetGridView({
         </div>
         <div className="flex items-center gap-2">
           {savedAt && (
-            <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-600">
+            <span className="
+              flex items-center gap-1 text-[11px] font-bold text-emerald-600
+            "
+            >
               <CheckCircle2 className="size-3.5" />
               {t('savedAtTime', { time: savedAt })}
             </span>
@@ -303,7 +322,11 @@ export function MarksheetGridView({
             variant="outline"
             size="sm"
             onClick={handleExportMassar}
-            className="h-9 gap-1.5 rounded-xl border-emerald-300 bg-emerald-50 text-emerald-800 text-xs font-bold hover:bg-emerald-100"
+            className="
+              h-9 gap-1.5 rounded-xl border-emerald-300 bg-emerald-50 text-xs
+              font-bold text-emerald-800
+              hover:bg-emerald-100
+            "
             title="Exporter la feuille de notes au format officiel Massar (.xlsx)"
           >
             <Download className="size-3.5 text-emerald-600" />
@@ -316,21 +339,31 @@ export function MarksheetGridView({
             size="sm"
             disabled={importingMassar}
             onClick={() => fileInputRef.current?.click()}
-            className="h-9 gap-1.5 rounded-xl border-blue-200 bg-white text-slate-700 text-xs font-bold hover:bg-blue-50"
+            className="
+              h-9 gap-1.5 rounded-xl border-blue-200 bg-white text-xs font-bold
+              text-slate-700
+              hover:bg-blue-50
+            "
             title="Importer les notes depuis un fichier Excel Massar"
           >
-            {importingMassar ? (
-              <Loader2 className="size-3.5 animate-spin text-[#0066FF]" />
-            ) : (
-              <Upload className="size-3.5 text-[#0066FF]" />
-            )}
+            {importingMassar
+              ? (
+                  <Loader2 className="size-3.5 animate-spin text-[#0066FF]" />
+                )
+              : (
+                  <Upload className="size-3.5 text-[#0066FF]" />
+                )}
             <span>Import Massar</span>
           </Button>
 
           <Button
             onClick={() => void save()}
             disabled={saving || summary.invalidCount > 0 || buildSavePayload(rows, maximumScore).length === 0}
-            className="h-9 gap-2 rounded-xl bg-[#2487B8] px-4 text-xs font-bold text-white hover:bg-[#1B6C93]"
+            className="
+              h-9 gap-2 rounded-xl bg-[#2487B8] px-4 text-xs font-bold
+              text-white
+              hover:bg-sos-primary-active
+            "
           >
             {saving
               ? <Loader2 className="size-3.5 animate-spin" />
@@ -341,28 +374,47 @@ export function MarksheetGridView({
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-bold text-red-700">
+        <div className="
+          flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50
+          px-4 py-3 text-xs font-bold text-red-700
+        "
+        >
           <AlertCircle className="size-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {summary.invalidCount > 0 && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold text-amber-800">
+        <div className="
+          rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs
+          font-bold text-amber-800
+        "
+        >
           {t('invalidEntriesWarning', { count: summary.invalidCount })}
         </div>
       )}
 
-      <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-[11px] text-slate-500">
+      <div className="
+        flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-[11px]
+        text-slate-500
+      "
+      >
         <Keyboard className="size-3.5 shrink-0" />
         <span>{t('keyboardShortcutsGuide')}</span>
       </div>
 
-      <Card className="overflow-hidden rounded-2xl border border-slate-200/80 p-0">
+      <Card className="
+        overflow-hidden rounded-2xl border border-slate-200/80 p-0
+      "
+      >
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-start text-xs">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase">
+              <tr className="
+                border-b border-slate-200 bg-slate-50 text-[10px] font-bold
+                text-slate-500 uppercase
+              "
+              >
                 <th className="w-10 px-3 py-2.5 text-start">#</th>
                 <th className="px-3 py-2.5 text-start">{t('studentHeader')}</th>
                 <th className="w-32 px-3 py-2.5 text-start">
@@ -386,7 +438,10 @@ export function MarksheetGridView({
 
                 return (
                   <tr key={student.studentId} className="hover:bg-slate-50/50">
-                    <td className="px-3 py-2 text-[10px] font-bold text-slate-400">
+                    <td className="
+                      px-3 py-2 text-[10px] font-bold text-slate-400
+                    "
+                    >
                       {index + 1}
                     </td>
                     <td className="px-3 py-2">
@@ -407,14 +462,25 @@ export function MarksheetGridView({
                         inputMode="decimal"
                         aria-label={`Note de ${student.name}`}
                         aria-invalid={invalid}
-                        className={`h-8 w-24 rounded-lg border px-2 text-xs font-bold tabular-nums outline-none ${
-                          invalid
-                            ? 'border-rose-400 bg-rose-50 text-rose-700'
-                            : 'border-slate-200 focus:border-[#2487B8]'
-                        } disabled:bg-slate-100 disabled:text-slate-400`}
+                        className={`
+                          h-8 w-24 rounded-lg border px-2 text-xs font-bold
+                          tabular-nums outline-none
+                          ${
+                  invalid
+                    ? 'border-rose-400 bg-rose-50 text-rose-700'
+                    : `
+                      border-slate-200
+                      focus:border-[#2487B8]
+                    `
+                  }
+                          disabled:bg-slate-100 disabled:text-slate-400
+                        `}
                       />
                       {invalid && (
-                        <p className="mt-0.5 text-[10px] font-bold text-rose-600">
+                        <p className="
+                          mt-0.5 text-[10px] font-bold text-rose-600
+                        "
+                        >
                           {parsed.error}
                         </p>
                       )}
@@ -422,7 +488,11 @@ export function MarksheetGridView({
                     <td className="px-3 py-2">
                       {mention
                         ? (
-                            <Badge className={`border-none text-[10px] font-bold ${MENTION_STYLES[mention] ?? ''}`}>
+                            <Badge className={`
+                              border-none text-[10px] font-bold
+                              ${MENTION_STYLES[mention] ?? ''}
+                            `}
+                            >
                               {mention}
                             </Badge>
                           )
@@ -436,9 +506,15 @@ export function MarksheetGridView({
                               type="button"
                               onClick={() => clearStatus(index)}
                               title={t('revertToNumeric')}
-                              className="rounded-full bg-slate-200 px-2.5 py-0.5 text-[10px] font-bold text-slate-700 hover:bg-slate-300 cursor-pointer"
+                              className="
+                                cursor-pointer rounded-full bg-slate-200 px-2.5
+                                py-0.5 text-[10px] font-bold text-slate-700
+                                hover:bg-slate-300
+                              "
                             >
-                              {statusLabels[row.status]} ✕
+                              {statusLabels[row.status]}
+                              {' '}
+                              ✕
                             </button>
                           )}
                     </td>
@@ -456,7 +532,11 @@ export function MarksheetGridView({
         )}
       </Card>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="
+        grid grid-cols-2 gap-3
+        sm:grid-cols-5
+      "
+      >
         <SummaryTile label={t('gradedCountTile')} value={String(summary.gradedCount)} />
         <SummaryTile label={t('pendingCountTile')} value={String(summary.pendingCount)} />
         <SummaryTile label={t('absentsCountTile')} value={String(summary.absentCount + summary.exemptedCount + summary.withheldCount)} />

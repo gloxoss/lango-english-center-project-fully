@@ -135,6 +135,8 @@ describe('SchoolOS Matricule & Student Identifier Authoritative Domain', () => {
 
     it('2. reserveMatricule auto-reconciles upwards above existing user matricules', async () => {
       // Naming series counter is currently only at 2
+      // No earlier matricule in the tenant: the generator falls back to STD-{year}-.
+      mockDbSelect.mockReturnValueOnce(createChainableQuery(() => []));
       mockDbSelect.mockReturnValueOnce(createChainableQuery(() => [{ currentVal: 2 }]));
       // But an imported or pre-existing student exists with STD-2026-0045!
       const year = new Date().getFullYear();
@@ -225,6 +227,8 @@ describe('SchoolOS Matricule & Student Identifier Authoritative Domain', () => {
         { id: 'stu-unassigned-1', name: 'Karim Bennani' },
       ]));
       // Inside reserveMatricule: series lookup + user lookup
+      // No earlier matricule in the tenant: the generator falls back to STD-{year}-.
+      mockDbSelect.mockReturnValueOnce(createChainableQuery(() => []));
       mockDbSelect.mockReturnValueOnce(createChainableQuery(() => [{ currentVal: 3 }]));
       mockDbSelect.mockReturnValueOnce(createChainableQuery(() => []));
       mockDbUpdate.mockReturnValue(createChainableQuery(() => [{}]));
@@ -438,6 +442,8 @@ describe('SchoolOS Matricule & Student Identifier Authoritative Domain', () => {
     it('12. Direct student creation generates sequential matricule via reserveMatricule when omitted', async () => {
       const year = new Date().getFullYear();
       // 1. Inside reserveMatricule: namingSeries query
+      // No earlier matricule in the tenant: the generator falls back to STD-{year}-.
+      mockDbSelect.mockReturnValueOnce(createChainableQuery(() => []));
       mockDbSelect.mockReturnValueOnce(createChainableQuery(() => [{ currentVal: 12 }]));
       // 2. Inside reserveMatricule: existing user matricules query
       mockDbSelect.mockReturnValueOnce(createChainableQuery(() => []));

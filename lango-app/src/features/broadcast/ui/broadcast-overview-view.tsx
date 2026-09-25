@@ -179,7 +179,7 @@ export function BroadcastOverviewView({ locale: initialLocale }: { locale?: stri
                   <td className="px-4 py-3 text-start">{fmtCount(c.sentCount, locale)}</td>
                   <td className="px-4 py-3 text-start text-emerald-700">{fmtCount(c.deliveredCount, locale)}</td>
                   <td className="px-4 py-3 text-end">
-                    <Link href={`/${locale}/dashboard/broadcast/campaigns/${c.id}`}><Button variant="outline" size="sm">{t('details')}</Button></Link>
+                    <Button asChild variant="outline" size="sm"><Link href={`/${locale}/dashboard/broadcast/campaigns/${c.id}`}>{t('details')}</Link></Button>
                   </td>
                 </tr>
               ))}

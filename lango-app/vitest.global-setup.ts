@@ -13,15 +13,20 @@ import { loadEnv } from 'vite';
 // for local convenience. CI must NOT set it — a green run with the DB down is
 // the failure mode this precondition exists to prevent.
 export default async function globalSetup(): Promise<void> {
+  const fromEnvFile = loadEnv('', process.cwd(), '');
+  const databaseUrl = process.env.DATABASE_URL ?? fromEnvFile.DATABASE_URL;
+  const dbName = databaseUrl ? databaseUrl.split('/').pop()?.split('?')[0] : '';
+
+  if (dbName && dbName !== 'schoolos_audit') {
+    throw new Error('DB tests must use schoolos_audit: set DATABASE_URL=.../schoolos_audit');
+  }
+
   if (process.env.ALLOW_DB_SKIP === '1') {
     console.warn(
       '⚠️  ALLOW_DB_SKIP=1 — skipping the DB availability precondition. DB-backed suites will skip. Do not set this in CI.',
     );
     return;
   }
-
-  const fromEnvFile = loadEnv('', process.cwd(), '');
-  const databaseUrl = process.env.DATABASE_URL ?? fromEnvFile.DATABASE_URL;
 
   if (!databaseUrl) {
     throw new Error(

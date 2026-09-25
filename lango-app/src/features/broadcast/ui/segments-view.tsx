@@ -1,17 +1,25 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import type { ApiErrorShape } from './broadcast-ui';
+import {
+  AlertCircle,
+  Loader2,
+  Plus,
+  RefreshCw,
+  Trash2,
+  Users,
+  X,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useParams } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Loader2, Plus, RefreshCw, Users, AlertCircle, X, Trash2,
-} from 'lucide-react';
-import { api, fmtDate, fmtCount, isAddonNotActivated, type ApiErrorShape } from './broadcast-ui';
+import { api, fmtCount, fmtDate, isAddonNotActivated } from './broadcast-ui';
 
 type SegmentDefinition = {
   kind: string;
@@ -139,22 +147,35 @@ export function SegmentsView() {
     setLoading(true);
     setError(null);
     const res = await api<Segment[]>('/api/addons/broadcast/segments');
-    if (res.ok && res.data) setRows(res.data);
-    else setError(res.error ?? { message: t('addonNotActivated') });
+    if (res.ok && res.data) {
+      setRows(res.data);
+    } else {
+      setError(res.error ?? { message: t('addonNotActivated') });
+    }
     setLoading(false);
   }, [t]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const refresh = async (s: Segment) => {
     await api(`/api/addons/broadcast/segments/${s.id}`, {
-      method: 'PUT', body: JSON.stringify({ name: s.name, description: s.description, definition: s.definition }),
+      method: 'PUT',
+      body: JSON.stringify({ name: s.name, description: s.description, definition: s.definition }),
     });
     load();
   };
 
   const del = async (id: string) => {
-    await api(`/api/addons/broadcast/segments/${id}`, { method: 'DELETE' });
+    // eslint-disable-next-line no-alert
+    if (!window.confirm(tCommon('confirmDeleteGeneric'))) {
+      return;
+    }
+    const res = await api(`/api/addons/broadcast/segments/${id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      toast.error(res.error?.message ?? tCommon('error'));
+    }
     load();
   };
 
@@ -162,8 +183,12 @@ export function SegmentsView() {
     setSaving(true);
     setFormError(null);
     const definition: SegmentDefinition = { kind, filters: { ...filters } };
-    if (tag.trim()) definition.filters = { ...definition.filters, tag: tag.trim() };
-    if (kind === 'student') definition.filters = { ...definition.filters, role: 'student', contactByGuardian: filters.contactByGuardian === 'guardian' };
+    if (tag.trim()) {
+      definition.filters = { ...definition.filters, tag: tag.trim() };
+    }
+    if (kind === 'student') {
+      definition.filters = { ...definition.filters, role: 'student', contactByGuardian: filters.contactByGuardian === 'guardian' };
+    }
     const res = await api<Segment>('/api/addons/broadcast/segments', {
       method: 'POST',
       body: JSON.stringify({ name, description, definition }),
@@ -179,21 +204,43 @@ export function SegmentsView() {
   };
 
   if (loading) {
-    return <div className="flex items-center gap-2 py-20 text-slate-500"><Loader2 className="h-5 w-5 animate-spin" /> {tCommon('loading')}</div>;
+    return (
+      <div className="flex items-center gap-2 py-20 text-slate-500">
+        <Loader2 className="size-5 animate-spin" />
+        {' '}
+        {tCommon('loading')}
+      </div>
+    );
   }
 
   if (error && !rows) {
     if (isAddonNotActivated(error)) {
       return (
-        <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-700">
-          <AlertCircle className="h-5 w-5 shrink-0" /> {error.message ?? t('addonNotActivated')}
+        <div className="
+          flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50
+          px-4 py-3 text-amber-700
+        "
+        >
+          <AlertCircle className="size-5 shrink-0" />
+          {' '}
+          {error.message ?? t('addonNotActivated')}
         </div>
       );
     }
     return (
       <div className="flex items-center gap-2 py-20 text-rose-600">
-        <AlertCircle className="h-5 w-5" /> {error.message ?? tCommon('error')}
-        <Button variant="outline" size="sm" onClick={load} className="cursor-pointer"><RefreshCw className="mr-1 h-4 w-4" />{tCommon('retry')}</Button>
+        <AlertCircle className="size-5" />
+        {' '}
+        {error.message ?? tCommon('error')}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={load}
+          className="cursor-pointer"
+        >
+          <RefreshCw className="mr-1 size-4" />
+          {tCommon('retry')}
+        </Button>
       </div>
     );
   }
@@ -202,45 +249,80 @@ export function SegmentsView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="
+        flex flex-col justify-between gap-4
+        sm:flex-row sm:items-center
+      "
+      >
         <div>
           <h1 className="text-2xl font-bold text-[#16212B]">{t('segmentsTitle')}</h1>
           <p className="text-sm text-slate-500">{t('segmentsSubtitle')}</p>
         </div>
-        <Button onClick={() => setShowForm((v) => !v)} className="cursor-pointer"><Plus className="me-2 h-4 w-4" /> {t('btnNewSegment')}</Button>
+        <Button
+          onClick={() => setShowForm(v => !v)}
+          className="cursor-pointer"
+        >
+          <Plus className="me-2 size-4" />
+          {' '}
+          {t('btnNewSegment')}
+        </Button>
       </div>
 
       {showForm && (
-        <Card className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
+        <Card className="
+          rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs
+        "
+        >
           <div className="mb-4 flex items-center justify-between">
             <h2 className="font-semibold text-[#16212B]">{t('btnNewSegment')}</h2>
-            <Button variant="ghost" size="sm" onClick={() => setShowForm(false)} className="cursor-pointer"><X className="h-4 w-4" /></Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowForm(false)}
+              className="cursor-pointer"
+            >
+              <X className="size-4" />
+            </Button>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="
+            grid gap-4
+            sm:grid-cols-2
+          "
+          >
             <div>
               <Label>{t('colName')}</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('segmentName')} />
+              <Input value={name} onChange={e => setName(e.target.value)} placeholder={t('segmentName')} />
             </div>
             <div>
               <Label>{t('audienceType')}</Label>
-              <select value={kind} onChange={(e) => setKind(e.target.value)} className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm cursor-pointer">
-                {KINDS.map((k) => <option key={k} value={k}>{getRecipientKindLabel(k)}</option>)}
+              <select
+                value={kind}
+                onChange={e => setKind(e.target.value)}
+                className="
+                  h-9 w-full cursor-pointer rounded-md border border-slate-200
+                  bg-white px-3 text-sm
+                "
+              >
+                {KINDS.map(k => <option key={k} value={k}>{getRecipientKindLabel(k)}</option>)}
               </select>
             </div>
             <div className="sm:col-span-2">
               <Label>{t('tagOptional')}</Label>
-              <Input value={tag} onChange={(e) => setTag(e.target.value)} placeholder={tCRM('tagsPlaceholder')} />
+              <Input value={tag} onChange={e => setTag(e.target.value)} placeholder={tCRM('tagsPlaceholder')} />
             </div>
-            {activeFilters.map((f) => (
+            {activeFilters.map(f => (
               <div key={f.key}>
                 <Label>{f.label}</Label>
                 <select
                   value={filters[f.key] ?? ''}
-                  onChange={(e) => setFilters({ ...filters, [f.key]: e.target.value })}
-                  className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm cursor-pointer"
+                  onChange={e => setFilters({ ...filters, [f.key]: e.target.value })}
+                  className="
+                    h-9 w-full cursor-pointer rounded-md border border-slate-200
+                    bg-white px-3 text-sm
+                  "
                 >
                   <option value="">{t('filterAll')}</option>
-                  {f.values.map((v) => (
+                  {f.values.map(v => (
                     <option key={v} value={v}>
                       {getFilterValueLabel(f.key, v)}
                     </option>
@@ -251,55 +333,124 @@ export function SegmentsView() {
           </div>
           {formError && <p className="mt-3 text-sm text-rose-600">{formError}</p>}
           <div className="mt-4 flex gap-2">
-            <Button onClick={submit} disabled={saving || !name.trim()} className="cursor-pointer">
-              {saving ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : <Users className="me-2 h-4 w-4" />} {t('btnCreate')}
+            <Button
+              onClick={submit}
+              disabled={saving || !name.trim()}
+              className="cursor-pointer"
+            >
+              {saving
+                ? <Loader2 className="me-2 size-4 animate-spin" />
+                : (
+                    <Users className="me-2 size-4" />
+                  )}
+              {' '}
+              {t('btnCreate')}
             </Button>
-            <Button variant="outline" onClick={() => setShowForm(false)} className="cursor-pointer">{t('btnCancel')}</Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowForm(false)}
+              className="cursor-pointer"
+            >
+              {t('btnCancel')}
+            </Button>
           </div>
         </Card>
       )}
 
-      {(!rows || rows.length === 0) ? (
-        <Card className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">
-          {t('noSegments')}
-        </Card>
-      ) : (
-        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-start text-xs uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-4 py-3 text-start">{t('colName')}</th>
-                  <th className="px-4 py-3 text-start">{t('audienceType')}</th>
-                  <th className="px-4 py-3 text-start">{t('filters')}</th>
-                  <th className="px-4 py-3 text-start">{t('members')}</th>
-                  <th className="px-4 py-3 text-start">{t('computed')}</th>
-                  <th className="px-4 py-3 text-end" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {rows.map((s) => (
-                  <tr key={s.id} className="hover:bg-slate-50/60">
-                    <td className="px-4 py-3 font-medium text-[#16212B] text-start">{s.name}</td>
-                    <td className="px-4 py-3 text-start"><Badge className="border border-slate-200 bg-slate-50 text-slate-700">{getRecipientKindLabel(s.definition?.kind ?? '')}</Badge></td>
-                    <td className="px-4 py-3 text-xs text-slate-500 text-start">
-                      {Object.entries(s.definition?.filters ?? {}).filter(([, v]) => v !== undefined && v !== null && v !== '').map(([k, v]) => `${getFilterLabel(k)}: ${getFilterValueLabel(k, String(v))}`).join(' · ') || '—'}
-                    </td>
-                    <td className="px-4 py-3 font-semibold text-[#16212B] text-start">{fmtCount(s.memberCount, locale)}</td>
-                    <td className="px-4 py-3 text-slate-500 text-start">{fmtDate(s.lastComputedAt, locale)}</td>
-                    <td className="px-4 py-3 text-end">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="outline" size="sm" onClick={() => refresh(s)} className="cursor-pointer"><RefreshCw className="me-1 h-3.5 w-3.5" /> {t('btnRecalculate')}</Button>
-                        <Button variant="ghost" size="sm" className="text-slate-400 hover:text-rose-600 cursor-pointer" onClick={() => del(s.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      {(!rows || rows.length === 0)
+        ? (
+            <Card className="
+              rounded-2xl border border-dashed border-slate-300 bg-white p-10
+              text-center text-slate-500
+            "
+            >
+              {t('noSegments')}
+            </Card>
+          )
+        : (
+            <div className="
+              overflow-hidden rounded-2xl border border-slate-200/80 bg-white
+              shadow-2xs
+            "
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="
+                    bg-slate-50 text-start text-xs tracking-wide text-slate-500
+                    uppercase
+                  "
+                  >
+                    <tr>
+                      <th className="px-4 py-3 text-start">{t('colName')}</th>
+                      <th className="px-4 py-3 text-start">{t('audienceType')}</th>
+                      <th className="px-4 py-3 text-start">{t('filters')}</th>
+                      <th className="px-4 py-3 text-start">{t('members')}</th>
+                      <th className="px-4 py-3 text-start">{t('computed')}</th>
+                      <th className="px-4 py-3 text-end" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {rows.map(s => (
+                      <tr key={s.id} className="hover:bg-slate-50/60">
+                        <td className="
+                          px-4 py-3 text-start font-medium text-[#16212B]
+                        "
+                        >
+                          {s.name}
+                        </td>
+                        <td className="px-4 py-3 text-start">
+                          <Badge className="
+                            border border-slate-200 bg-slate-50 text-slate-700
+                          "
+                          >
+                            {getRecipientKindLabel(s.definition?.kind ?? '')}
+                          </Badge>
+                        </td>
+                        <td className="
+                          px-4 py-3 text-start text-xs text-slate-500
+                        "
+                        >
+                          {Object.entries(s.definition?.filters ?? {}).filter(([, v]) => v !== undefined && v !== null && v !== '').map(([k, v]) => `${getFilterLabel(k)}: ${getFilterValueLabel(k, String(v))}`).join(' · ') || '—'}
+                        </td>
+                        <td className="
+                          px-4 py-3 text-start font-semibold text-[#16212B]
+                        "
+                        >
+                          {fmtCount(s.memberCount, locale)}
+                        </td>
+                        <td className="px-4 py-3 text-start text-slate-500">{fmtDate(s.lastComputedAt, locale)}</td>
+                        <td className="px-4 py-3 text-end">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => refresh(s)}
+                              className="cursor-pointer"
+                            >
+                              <RefreshCw className="me-1 size-3.5" />
+                              {' '}
+                              {t('btnRecalculate')}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="
+                                cursor-pointer text-slate-400
+                                hover:text-rose-600
+                              "
+                              onClick={() => del(s.id)}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
     </div>
   );
 }
