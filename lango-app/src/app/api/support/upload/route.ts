@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { Readable } from 'node:stream';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { requireRequestContext } from '@/libs/api/context';
+import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { UPLOADS_ROOT } from '@/libs/api/uploads';
 
@@ -31,7 +31,10 @@ const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
 
 export async function POST(req: NextRequest) {
   try {
-    await requireRequestContext(req, ['super_admin', 'school_admin', 'teacher', 'accountant']);
+    const context = await requireRequestContext(req, ['super_admin', 'school_admin', 'teacher', 'accountant']);
+    // Attachments live under the tenant's own folder so a fileKey cannot be
+    // handed to another school.
+    const tenantId = requireTenant(context);
 
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
@@ -69,7 +72,7 @@ export async function POST(req: NextRequest) {
     // Organize by year-month directory
     const now = new Date();
     const subfolder = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const targetDir = path.resolve(SUPPORT_UPLOADS_ROOT, subfolder);
+    const targetDir = path.resolve(SUPPORT_UPLOADS_ROOT, tenantId, subfolder);
 
     await mkdir(targetDir, { recursive: true });
 
@@ -88,7 +91,7 @@ export async function POST(req: NextRequest) {
 
     await writeFile(fullPath, buffer);
 
-    const relativeKey = `${subfolder}/${fileName}`;
+    const relativeKey = `${tenantId}/${subfolder}/${fileName}`;
     const publicUrl = `/api/support/upload?fileKey=${encodeURIComponent(relativeKey)}`;
 
     return NextResponse.json({
@@ -109,6 +112,12 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    // Unauthenticated GET meant any anonymous visitor who knew a fileKey could
+    // download another school's support attachments. The global middleware
+    // matcher excludes /api, so this route must authenticate itself.
+    const context = await requireRequestContext(req, ['super_admin', 'school_admin', 'teacher', 'accountant']);
+    const callerTenantId = requireTenant(context);
+
     const { searchParams } = new URL(req.url);
     const fileKey = searchParams.get('fileKey');
 
@@ -119,7 +128,18 @@ export async function GET(req: NextRequest) {
     const safeKey = path.normalize(fileKey).replace(/^(\.\.(\/|\\|$))+/, '');
     const fullPath = path.resolve(SUPPORT_UPLOADS_ROOT, safeKey);
 
-    if (!fullPath.startsWith(SUPPORT_UPLOADS_ROOT)) {
+    if (!fullPath.startsWith(SUPPORT_UPLOADS_ROOT + path.sep)) {
+      throw new ApiError(403, 'FORBIDDEN', 'Accès interdit.');
+    }
+
+    // New uploads live under <tenantId>/... so a tenant-scoped key must belong to
+    // the caller. super_admin is the platform support desk and may read any.
+    // Keys with no tenant segment are pre-existing uploads: kept authenticated-
+    // only rather than orphaned.
+    const relKey = path.relative(SUPPORT_UPLOADS_ROOT, fullPath);
+    const firstSegment = relKey.split(path.sep)[0] ?? '';
+    const tenantScoped = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(firstSegment);
+    if (tenantScoped && context.role !== 'super_admin' && firstSegment !== callerTenantId) {
       throw new ApiError(403, 'FORBIDDEN', 'Accès interdit.');
     }
 
@@ -181,7 +201,8 @@ export async function GET(req: NextRequest) {
           'Accept-Ranges': 'bytes',
           'Content-Length': chunksize.toString(),
           'Content-Type': contentType,
-          'Cache-Control': 'public, max-age=31536000, immutable',
+          // Confidential support evidence must not sit in shared caches for a year.
+        'Cache-Control': 'private, max-age=300, must-revalidate',
         },
       });
     }
@@ -195,7 +216,8 @@ export async function GET(req: NextRequest) {
         'Content-Type': contentType,
         'Content-Length': fileSize.toString(),
         'Accept-Ranges': 'bytes',
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        // Confidential support evidence must not sit in shared caches for a year.
+        'Cache-Control': 'private, max-age=300, must-revalidate',
       },
     });
   } catch (error) {

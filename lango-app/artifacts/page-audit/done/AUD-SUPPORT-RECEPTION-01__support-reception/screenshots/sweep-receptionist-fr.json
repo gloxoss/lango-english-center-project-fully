@@ -1,0 +1,64 @@
+[
+  {
+    "route": "/dashboard/receptionist",
+    "finalPath": "/fr/dashboard/receptionist",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 321,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-fr-receptionist.png"
+  },
+  {
+    "route": "/dashboard/receptionist/inquiries",
+    "finalPath": "/fr/dashboard/receptionist/inquiries",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 294,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-fr-receptionist__inquiries.png"
+  },
+  {
+    "route": "/dashboard/receptionist/handoffs",
+    "finalPath": "/fr/dashboard/receptionist/handoffs",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 252,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-fr-receptionist__handoffs.png"
+  },
+  {
+    "route": "/dashboard/receptionist/appointments",
+    "finalPath": "/fr/dashboard/receptionist/appointments",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 239,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-fr-receptionist__appointments.png"
+  },
+  {
+    "route": "/dashboard/receptionist/visitors",
+    "finalPath": "/fr/dashboard/receptionist/visitors",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 250,
+    "failures": [],
+    "textDefects": [],
+    "file": "receptionist-fr-receptionist__visitors.png"
+  },
+  {
+    "route": "/dashboard/receptionist/pickups",
+    "finalPath": "/fr/dashboard/receptionist/pickups",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 178,
+    "failures": [
+      "403 /api/reception/pickups/authorizations"
+    ],
+    "textDefects": [],
+    "file": "receptionist-fr-receptionist__pickups.png"
+  }
+]
