@@ -9,13 +9,16 @@ import { tenantInvitations } from '@/models/Schema';
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
     const context = await requireRequestContext(request, ['school_admin', 'super_admin']);
     const tenantId = requireTenant(context);
     await requireCapability(context, 'users.manage');
+    if (context.branchId) {
+      throw new ApiError(403, 'BRANCH_INVITATION_UNSUPPORTED', 'Les invitations de campus nécessitent une affectation de branche.');
+    }
 
     const [existing] = await db
       .select()

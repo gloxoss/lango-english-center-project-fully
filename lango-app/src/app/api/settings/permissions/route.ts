@@ -1,19 +1,19 @@
-import { and, eq } from 'drizzle-orm';
+import type { PermissionKey } from '@/libs/api/permissions';
+import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse, ApiError } from '@/libs/api/errors';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import {
   DEFAULT_ROLE_PERMISSIONS,
-  getEffectivePermissions,
+
   PERMISSIONS,
   requireCapability,
-  type PermissionKey,
 } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { rolePermissions, userPermissionOverrides } from '@/models/Schema';
+import { rolePermissions } from '@/models/Schema';
 
 // GET /api/settings/permissions — list all permissions and the role matrix.
 export async function GET(request: Request) {
@@ -21,6 +21,9 @@ export async function GET(request: Request) {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
     await requireCapability(context, 'users.permissions.manage');
+    if (context.branchId) {
+      throw new ApiError(403, 'TENANT_WIDE_ADMIN_REQUIRED', 'La matrice des rôles est gérée au niveau de l’établissement.');
+    }
 
     // Get tenant-level role overrides.
     const overrides = await db
@@ -33,7 +36,9 @@ export async function GET(request: Request) {
     const matrix: Record<string, Record<string, boolean>> = {};
 
     for (const [role, defaults] of Object.entries(DEFAULT_ROLE_PERMISSIONS)) {
-      if (role === 'super_admin') continue; // Never configurable.
+      if (role === 'super_admin') {
+        continue;
+      } // Never configurable.
       matrix[role] = {};
       for (const perm of allPerms) {
         // An override row decides in either direction; only fall back to the
@@ -69,6 +74,9 @@ export async function POST(request: Request) {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
     await requireCapability(context, 'users.permissions.manage');
+    if (context.branchId) {
+      throw new ApiError(403, 'TENANT_WIDE_ADMIN_REQUIRED', 'La matrice des rôles est gérée au niveau de l’établissement.');
+    }
     const body = await parseJson(request, grantSchema);
 
     // Validate the permission exists.

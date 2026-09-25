@@ -96,6 +96,8 @@
     ".next-audit3333/types/**/*.ts",
     ".next-audit3333/dev/types/**/*.ts",
     ".next-aud-live/types/**/*.ts",
-    ".next-aud-live/dev/types/**/*.ts"
+    ".next-aud-live/dev/types/**/*.ts",
+    ".next-aud-settings/types/**/*.ts",
+    ".next-aud-settings/dev/types/**/*.ts"
   ]
 }

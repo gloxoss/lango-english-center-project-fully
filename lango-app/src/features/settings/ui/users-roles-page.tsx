@@ -1,24 +1,37 @@
+import type { AuditEvent, UserItem } from './users-roles-client';
+import type { PermissionKey } from '@/libs/api/permissions';
 // users-roles-page.tsx
 // SERVER COMPONENT — pre-fetches users, permissions matrix, and audit logs server-side.
-import { and, desc, eq, ne } from 'drizzle-orm';
-import { db } from '@/libs/DB';
+import { and, count, desc, eq, ne } from 'drizzle-orm';
+import { DEFAULT_ROLE_PERMISSIONS, PERMISSIONS } from '@/libs/api/permissions';
 import { getServerUserContext } from '@/libs/auth/server-context';
+import { db } from '@/libs/DB';
 import { auditLogs, branches, rolePermissions, tenants, twoFactor, user } from '@/models/Schema';
-import { DEFAULT_ROLE_PERMISSIONS, PERMISSIONS, type PermissionKey } from '@/libs/api/permissions';
-import { toUiStatus } from '@/models/userMapping';
-import { UsersRolesClient, UserItem, AuditEvent } from './users-roles-client';
+import { UsersRolesClient } from './users-roles-client';
 
 export async function UsersRolesPage({ locale }: { locale?: string } = {}) {
   const ctx = await getServerUserContext();
   const tenantId = ctx?.tenantId ?? null;
+  if (!tenantId) {
+    throw new Error('Tenant context required for users and roles');
+  }
 
   let initialUsers: UserItem[] = [];
-  let initialMatrix: Record<string, Record<string, boolean>> = {};
+  let initialTotal = 0;
+  let tenantName = '';
+  let branchOptions: { id: string; name: string }[] = [];
+  const initialMatrix: Record<string, Record<string, boolean>> = {};
   let initialAuditEvents: AuditEvent[] = [];
 
   try {
     // 1. Fetch Users (staff & admins, excluding student accounts) — tenant-scoped,
     //    with real 2FA enrollment from the better-auth two_factor table.
+    const userWhere = and(
+      eq(user.tenantId, tenantId),
+      ctx?.branchId ? eq(user.branchId, ctx.branchId) : undefined,
+      ne(user.role, 'student'),
+      ne(user.role, 'super_admin'),
+    );
     const userRows = await db
       .select({
         id: user.id,
@@ -32,44 +45,50 @@ export async function UsersRolesPage({ locale }: { locale?: string } = {}) {
       })
       .from(user)
       .leftJoin(twoFactor, eq(user.id, twoFactor.userId))
-      .where(and(
-        tenantId ? eq(user.tenantId, tenantId) : undefined,
-        ne(user.role, 'student'),
-      ))
+      .where(userWhere)
+      .orderBy(desc(user.createdAt), user.id)
       .limit(50);
+    const [totalRow] = await db.select({ total: count() }).from(user).where(userWhere);
+    initialTotal = totalRow?.total ?? 0;
 
     // Branch / campus names for the access-scope column.
     const branchRows = await db
       .select({ id: branches.id, name: branches.name })
       .from(branches)
-      .where(tenantId ? eq(branches.tenantId, tenantId) : undefined);
+      .where(and(eq(branches.tenantId, tenantId), ctx?.branchId ? eq(branches.id, ctx.branchId) : undefined));
     const branchMap = new Map(branchRows.map(b => [b.id, b.name]));
+    branchOptions = branchRows;
 
     const [tenant] = await db
       .select({ name: tenants.name })
       .from(tenants)
-      .where(tenantId ? eq(tenants.id, tenantId) : undefined)
+      .where(eq(tenants.id, tenantId))
       .limit(1);
-    const schoolName = tenant?.name || 'Établissement';
+    const schoolName = tenant?.name ?? '';
+    tenantName = schoolName;
+    const dateLocale = locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-GB' : 'fr-FR';
 
-    initialUsers = userRows.map(u => {
+    initialUsers = userRows.map((u) => {
       const uiRole = u.role;
       const branchName = u.branchId ? branchMap.get(u.branchId) ?? null : null;
 
-      let scope = branchName ?? 'Établissement';
+      // Scope ids are translated by the client (UsersRoles.scopes.*); a campus
+      // name is shown as is.
+      let scope = branchName ?? 'school';
       if (uiRole === 'super_admin' || uiRole === 'school_admin' || uiRole === 'accountant') {
-        scope = 'Toutes les classes';
+        scope = 'all_classes';
       } else if (uiRole === 'teacher') {
-        scope = 'Classes assignées';
+        scope = 'assigned_classes';
       }
 
       return {
         id: u.id,
-        name: u.name || 'Utilisateur',
+        name: u.name || u.email,
         email: u.email,
         role: u.role,
-        status: toUiStatus(u.status),
-        lastLogin: u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('fr-FR') : null,
+        branchId: u.branchId,
+        status: u.status,
+        lastLogin: u.lastLogin ? new Date(u.lastLogin).toLocaleDateString(dateLocale) : null,
         tfa: Boolean(u.tfaVerified),
         schoolName: branchName ?? schoolName,
         accessScope: scope,
@@ -80,11 +99,13 @@ export async function UsersRolesPage({ locale }: { locale?: string } = {}) {
     const overrides = await db
       .select()
       .from(rolePermissions)
-      .where(tenantId ? eq(rolePermissions.tenantId, tenantId) : undefined);
+      .where(eq(rolePermissions.tenantId, tenantId));
     const allPerms = Object.keys(PERMISSIONS) as PermissionKey[];
 
     for (const [roleKey, defaults] of Object.entries(DEFAULT_ROLE_PERMISSIONS)) {
-      if (roleKey === 'super_admin') continue;
+      if (roleKey === 'super_admin') {
+        continue;
+      }
       initialMatrix[roleKey] = {};
       for (const perm of allPerms) {
         const override = overrides.find(o => o.roleId === roleKey && o.permissionId === perm);
@@ -103,25 +124,30 @@ export async function UsersRolesPage({ locale }: { locale?: string } = {}) {
       })
       .from(auditLogs)
       .leftJoin(user, eq(auditLogs.actorId, user.id))
-      .where(tenantId ? eq(auditLogs.tenantId, tenantId) : undefined)
+      .where(eq(auditLogs.tenantId, tenantId))
       .orderBy(desc(auditLogs.createdAt))
       .limit(10);
 
     initialAuditEvents = auditRows.map(a => ({
       id: a.id,
-      actorName: a.actorName ?? 'Système',
+      actorName: a.actorName ?? '',
       action: a.action,
       entityType: a.entityType,
-      timestamp: a.createdAt ? new Date(a.createdAt).toLocaleDateString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : 'Récemment',
+      timestamp: a.createdAt ? new Date(a.createdAt).toLocaleDateString(dateLocale, { hour: '2-digit', minute: '2-digit' }) : '',
     }));
-
   } catch (err) {
     console.error('Failed to pre-fetch users-roles page data server-side:', err);
+    throw err;
   }
 
   return (
     <UsersRolesClient
       initialUsers={initialUsers}
+      initialTotal={initialTotal}
+      tenantName={tenantName}
+      branches={branchOptions}
+      currentUserId={ctx?.userId ?? ''}
+      branchRestricted={Boolean(ctx?.branchId)}
       initialMatrix={initialMatrix}
       initialAuditEvents={initialAuditEvents}
     />

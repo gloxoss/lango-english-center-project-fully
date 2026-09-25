@@ -1,13 +1,14 @@
+import type { OrganisationFormData } from './organization-form-client';
 // organization-page.tsx
 // SERVER COMPONENT — fetches initial settings + tenant logo status server-side,
 // and passes them to the OrganizationFormClient island.
 import { eq } from 'drizzle-orm';
+import { brandingFileKey, uploadedFileExists } from '@/libs/api/uploads';
 import { getServerUserContext } from '@/libs/auth/server-context';
 import { db } from '@/libs/DB';
-import { brandingFileKey, uploadedFileExists } from '@/libs/api/uploads';
 import { getEffectiveValueWithLegacyFallback } from '@/libs/settings/registry';
 import { schoolSettings, tenants } from '@/models/Schema';
-import { OrganisationFormClient, OrganisationFormData } from './organization-form-client';
+import { OrganisationFormClient } from './organization-form-client';
 
 const DEFAULT_FORM_DATA: OrganisationFormData = {
   establishmentName: '',
@@ -54,6 +55,28 @@ const DEFAULT_FORM_DATA: OrganisationFormData = {
   documentHeaderStyle: 'classique',
 };
 
+function normalizePresenceModes(value: unknown): Record<string, boolean> {
+  if (Array.isArray(value)) {
+    const enabled = Object.fromEntries(value.filter((key): key is string => typeof key === 'string' && key.length <= 50).map(key => [key, true]));
+    return { ...DEFAULT_FORM_DATA.presenceModes, ...enabled };
+  }
+  if (value && typeof value === 'object') {
+    const flags = Object.fromEntries(Object.entries(value).filter(([key, enabled]) => key.length <= 50 && typeof enabled === 'boolean'));
+    return { ...DEFAULT_FORM_DATA.presenceModes, ...flags };
+  }
+  return { ...DEFAULT_FORM_DATA.presenceModes };
+}
+
+function normalizeDocumentStyle(value: unknown): OrganisationFormData['documentHeaderStyle'] {
+  if (value === 'modern' || value === 'moderne') {
+    return 'moderne';
+  }
+  if (value === 'minimal') {
+    return 'minimal';
+  }
+  return 'classique';
+}
+
 export async function OrganizationPage() {
   let initialData = { ...DEFAULT_FORM_DATA };
   let hasLogo = false;
@@ -61,6 +84,9 @@ export async function OrganizationPage() {
 
   const ctx = await getServerUserContext();
   const tenantId = ctx?.tenantId ?? null;
+  if (!tenantId) {
+    throw new Error('Tenant context required for organization settings');
+  }
 
   try {
     // Scoped to the caller's tenant. Both reads below used a bare LIMIT 1 with
@@ -102,12 +128,14 @@ export async function OrganizationPage() {
         admissionsContactEmail: settingRow.admissionsContactEmail ?? '',
         admissionsContactPhone: settingRow.admissionsContactPhone ?? '',
         allowOperations: settingRow.allowOperations ?? true,
-        presenceModes: (settingRow.presenceModes as Record<string, boolean>) ?? DEFAULT_FORM_DATA.presenceModes,
+        presenceModes: normalizePresenceModes(settingRow.presenceModes),
         languages: (settingRow.languages as Record<string, boolean>) ?? DEFAULT_FORM_DATA.languages,
         security: (settingRow.security as Record<string, boolean>) ?? DEFAULT_FORM_DATA.security,
         localeTimezone: settingRow.localeTimezone ?? 'Africa/Casablanca',
-        dateFormat: settingRow.dateFormat ?? 'dd/mm/yyyy',
-        documentHeaderStyle: (settingRow.documentHeaderStyle as 'classique' | 'minimal' | 'moderne') ?? 'classique',
+        dateFormat: ['dd/mm/yyyy', 'mm/dd/yyyy', 'yyyy-mm-dd'].includes(settingRow.dateFormat?.toLowerCase() ?? '')
+          ? settingRow.dateFormat!.toLowerCase()
+          : 'dd/mm/yyyy',
+        documentHeaderStyle: normalizeDocumentStyle(settingRow.documentHeaderStyle),
       };
     }
 
@@ -121,7 +149,7 @@ export async function OrganizationPage() {
         getEffectiveValueWithLegacyFallback(tenantId, ctx?.branchId ?? null, 'security.policies'),
         getEffectiveValueWithLegacyFallback(tenantId, ctx?.branchId ?? null, 'localization.timezone'),
       ]);
-      initialData.presenceModes = (presEff.value as Record<string, boolean>) ?? initialData.presenceModes;
+      initialData.presenceModes = normalizePresenceModes(presEff.value ?? initialData.presenceModes);
       initialData.languages = (langEff.value as Record<string, boolean>) ?? initialData.languages;
       initialData.security = (secEff.value as Record<string, boolean>) ?? initialData.security;
       initialData.localeTimezone = (tzEff.value as string) ?? initialData.localeTimezone;
@@ -144,6 +172,7 @@ export async function OrganizationPage() {
     }
   } catch (err) {
     console.error('Failed to pre-fetch organization settings server-side:', err);
+    throw err;
   }
 
   return (

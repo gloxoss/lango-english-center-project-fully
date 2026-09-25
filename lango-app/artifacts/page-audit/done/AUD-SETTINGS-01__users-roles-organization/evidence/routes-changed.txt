@@ -1,0 +1,2 @@
+/dashboard/settings/users
+/dashboard/settings/onboarding

@@ -1,23 +1,36 @@
+import type { AuditItem } from './settings-hub-client';
 // settings-hub-page.tsx
 // SERVER COMPONENT — pre-fetches settings hub data (tenant-scoped), per-module
 // configuration status, and the recent audit feed server-side.
 import { and, count, desc, eq, inArray } from 'drizzle-orm';
-import { db } from '@/libs/DB';
-import { getServerUserContext } from '@/libs/auth/server-context';
-import {
-  addonEntitlements, auditLogs, branches, cndpFilings, chartOfAccounts,
-  files, schoolSettings, settingValues, tenants, user,
-} from '@/models/Schema';
 import { SETTINGS_MODULES } from '@/features/settings/data/settings-hub-config';
-import { SettingsHubClient, type AuditItem } from './settings-hub-client';
+import { getServerUserContext } from '@/libs/auth/server-context';
+import { db } from '@/libs/DB';
+import {
+  addonEntitlements,
+  auditLogs,
+  branches,
+  chartOfAccounts,
+  cndpFilings,
+  files,
+  schoolSettings,
+  settingValues,
+  tenants,
+  user,
+} from '@/models/Schema';
+import { SettingsHubClient } from './settings-hub-client';
 
 const STAFF_ROLES = ['school_admin', 'teacher', 'accountant', 'receptionist', 'guard'] as const;
 const CNDP_DONE_STATUSES = ['submitted', 'approved'] as const;
 
 function relativeTime(iso: string | null, locale = 'fr'): string {
-  if (!iso) return '';
+  if (!iso) {
+    return '';
+  }
   const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return '';
+  if (Number.isNaN(then)) {
+    return '';
+  }
   const diffSec = Math.floor((Date.now() - then) / 1000);
   const diffMin = Math.floor(diffSec / 60);
   const diffHours = Math.floor(diffMin / 60);
@@ -25,10 +38,18 @@ function relativeTime(iso: string | null, locale = 'fr'): string {
 
   try {
     const rtf = new Intl.RelativeTimeFormat(locale === 'ar' ? 'ar-MA' : locale === 'en' ? 'en-US' : 'fr-FR', { numeric: 'auto' });
-    if (diffMin < 1) return rtf.format(0, 'second');
-    if (diffHours < 1) return rtf.format(-diffMin, 'minute');
-    if (diffDays < 1) return rtf.format(-diffHours, 'hour');
-    if (diffDays < 30) return rtf.format(-diffDays, 'day');
+    if (diffMin < 1) {
+      return rtf.format(0, 'second');
+    }
+    if (diffHours < 1) {
+      return rtf.format(-diffMin, 'minute');
+    }
+    if (diffDays < 1) {
+      return rtf.format(-diffHours, 'hour');
+    }
+    if (diffDays < 30) {
+      return rtf.format(-diffDays, 'day');
+    }
   } catch {
     // fallback
   }
@@ -37,7 +58,9 @@ function relativeTime(iso: string | null, locale = 'fr'): string {
 
 function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '?';
+  if (parts.length === 0) {
+    return '?';
+  }
   const first = parts[0]?.[0] ?? '?';
   const second = parts.length > 1 ? parts[1]?.[0] ?? '' : '';
   return (first + second).toUpperCase() || '?';
@@ -46,6 +69,9 @@ function initialsOf(name: string): string {
 export async function SettingsHubPage({ locale }: { locale?: string } = {}) {
   const ctx = await getServerUserContext();
   const tenantId = ctx?.tenantId ?? null;
+  if (!tenantId) {
+    throw new Error('Tenant context required for settings hub');
+  }
 
   // Real data. Empty DB / no data renders an empty state — never fabricated values.
   let initialAudits: AuditItem[] = [];
@@ -72,7 +98,7 @@ export async function SettingsHubPage({ locale }: { locale?: string } = {}) {
       .orderBy(desc(auditLogs.createdAt))
       .limit(5);
 
-    initialAudits = auditRows.map(r => {
+    initialAudits = auditRows.map((r) => {
       const actorName = r.actorName ?? (r.actorId ? `User (${r.actorId.slice(0, 6)})` : 'System');
       return {
         id: r.id,
@@ -145,22 +171,28 @@ export async function SettingsHubPage({ locale }: { locale?: string } = {}) {
     cndpDone = cndpRow.length > 0;
 
     modulesStatus = {
-      onboarding: Boolean(schoolRow[0]?.establishmentName),
-      users: staffRow.length > 0,
-      security: hasAnyKey('security.policies', 'security.sessionTimeoutMinutes', 'security.dismissedAlerts'),
-      providers: hasKey('integrations.providers'),
+      'onboarding': Boolean(schoolRow[0]?.establishmentName),
+      'users': staffRow.length > 0,
+      'security': hasAnyKey('security.policies', 'security.sessionTimeoutMinutes', 'security.dismissedAlerts'),
+      'providers': hasKey('integrations.providers'),
       'accounting-defaults': pcgDone,
-      translations: hasKey('i18n.translations'),
-      jobs: hasKey('jobs.definitions'),
-      migration: fileRow.length > 0 || hasKey('migration.state'),
-      policies: hasAnyKey(
-        'academic.autoPromotion', 'academic.passThreshold', 'academic.gradingScale',
-        'portal.guardianEnabled', 'portal.studentEnabled',
-        'attendance.presenceModes', 'attendance.smsAlerts', 'attendance.lateGraceMinutes', 'attendance.periodStartTime',
+      'translations': hasKey('i18n.translations'),
+      'jobs': hasKey('jobs.definitions'),
+      'migration': fileRow.length > 0 || hasKey('migration.state'),
+      'policies': hasAnyKey(
+        'academic.autoPromotion',
+        'academic.passThreshold',
+        'academic.gradingScale',
+        'portal.guardianEnabled',
+        'portal.studentEnabled',
+        'attendance.presenceModes',
+        'attendance.smsAlerts',
+        'attendance.lateGraceMinutes',
+        'attendance.periodStartTime',
       ),
-      entitlements: addonRow.length > 0,
-      branches: (branchCount[0]?.value ?? 0) > 1,
-      cndp: cndpDone,
+      'entitlements': addonRow.length > 0,
+      'branches': (branchCount[0]?.value ?? 0) > 1,
+      'cndp': cndpDone,
     };
 
     tenantName = tenantRow[0]?.name ?? '';
@@ -168,6 +200,7 @@ export async function SettingsHubPage({ locale }: { locale?: string } = {}) {
     ice = schoolRow[0]?.ice ?? '';
   } catch (err) {
     console.error('Failed to pre-fetch settings hub data:', err);
+    throw err;
   }
 
   const totalModules = SETTINGS_MODULES.length;

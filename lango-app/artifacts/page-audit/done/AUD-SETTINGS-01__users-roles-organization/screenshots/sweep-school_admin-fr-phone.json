@@ -1,0 +1,22 @@
+[
+  {
+    "route": "/dashboard/settings/users",
+    "finalPath": "/fr/dashboard/settings/users",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 1290,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-phone-settings__users.png"
+  },
+  {
+    "route": "/dashboard/settings/onboarding",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 840,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-phone-settings__onboarding.png"
+  }
+]
