@@ -125,17 +125,10 @@ Remaining work, in the order the campaign brief sets. Each is self-contained.
    RH/Workforce, with HR correction. Do NOT let payroll consume it.
 4. **Phase 7 — kiosk + devices** — device authentication (hashed secret, branch
    binding, heartbeat) and the classroom kiosk reading the effective session.
-   Needs a QR **decoder**; none is installed ( only generates) and
-   Unknown command: "install"
-
-
-Did you mean one of these?
-  npm install # Install a package
-  npm uninstall # Remove a package
-To see a list of supported npm commands, run:
-  npm help failed here once on a native build. Inspect before adding.
+   Needs a QR **decoder**; none is installed (qrcode.react only generates) and
+   the package install failed here once on a native build. Inspect before adding.
 5. **Navigation consolidation (task G)** — one sidebar edit once every route is
-   real.  is shared; re-read it rather than overwriting from a copy.
+   real. sidebar.tsx is shared; re-read it rather than overwriting from a copy.
 6. **Acceptance pass (task H)** — screenshots in desktop FR, mobile 390 and
    Arabic RTL, plus the manual test guide.
 
