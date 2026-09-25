@@ -1,0 +1,12 @@
+[
+  {
+    "route": "/dashboard/analytics",
+    "finalPath": "/ar/dashboard/analytics",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 726,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-ar-analytics.png"
+  }
+]

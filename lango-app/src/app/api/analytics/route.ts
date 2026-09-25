@@ -6,15 +6,22 @@
 // academics and finance (see computeIgp) that only renders an empty state when
 // none of its pillars has data for the period.
 
-import { and, desc, eq, gte, gt, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, gte, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
 import {
+  collectedPaymentCondition,
+  invoicedInvoiceCondition,
+  netCollectedSumSql,
+  overdueInvoiceCondition,
+} from '@/libs/finance/definitions';
+import { casablancaTodayIso } from '@/libs/finance/today';
+import {
   announcements,
-  assessments,
   assessmentResults,
+  assessments,
   attendance,
   attendanceFlags,
   classes,
@@ -29,10 +36,11 @@ type RiskItem = { level: 'Critique' | 'Importante' | 'Modérée'; count: number;
 type PriorityAction = { task: string; priority: 'Critique' | 'Haute' | 'Moyenne' };
 type Insight = { icon: 'green' | 'blue' | 'orange'; title: string; desc: string };
 
-const STAFF_ROLES = ['teacher', 'school_admin', 'accountant', 'receptionist', 'guard'] as const;
-
 function isoDate(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  // The school day is the Casablanca one (libs/finance/today.ts), not the UTC
+  // day: a UTC slice reports yesterday during Moroccan mornings and shifts every
+  // month/30-day window on the executive dashboard.
+  return casablancaTodayIso(d);
 }
 
 function lastMonths(count: number): string[] {
@@ -67,10 +75,18 @@ function computeIgp(
 ): number | null {
   const clamp = (v: number) => Math.min(100, Math.max(0, v));
   const pillars: { value: number; weight: number }[] = [];
-  if (attendanceRate != null) pillars.push({ value: clamp(attendanceRate), weight: IGP_PILLAR_WEIGHTS.attendance });
-  if (academicScore != null) pillars.push({ value: clamp(academicScore), weight: IGP_PILLAR_WEIGHTS.academics });
-  if (collectionRate != null) pillars.push({ value: clamp(collectionRate), weight: IGP_PILLAR_WEIGHTS.finance });
-  if (pillars.length === 0) return null;
+  if (attendanceRate != null) {
+    pillars.push({ value: clamp(attendanceRate), weight: IGP_PILLAR_WEIGHTS.attendance });
+  }
+  if (academicScore != null) {
+    pillars.push({ value: clamp(academicScore), weight: IGP_PILLAR_WEIGHTS.academics });
+  }
+  if (collectionRate != null) {
+    pillars.push({ value: clamp(collectionRate), weight: IGP_PILLAR_WEIGHTS.finance });
+  }
+  if (pillars.length === 0) {
+    return null;
+  }
   const totalWeight = pillars.reduce((sum, p) => sum + p.weight, 0);
   return Math.round((pillars.reduce((sum, p) => sum + p.value * p.weight, 0) / totalWeight) * 10) / 10;
 }
@@ -125,16 +141,16 @@ export async function GET(request: Request) {
         .groupBy(attendance.status),
       db.select({ total: sql<number>`coalesce(sum(${invoices.netAmount}), 0)::float` })
         .from(invoices)
-        .where(and(eq(invoices.tenantId, tenantId), sql`${invoices.status} not in ('draft', 'cancelled', 'credited')`)),
-      db.select({ total: sql<number>`coalesce(sum(${payments.amount}), 0)::float` })
+        .where(and(eq(invoices.tenantId, tenantId), invoicedInvoiceCondition(invoices.status))),
+      db.select({ total: netCollectedSumSql(payments) })
         .from(payments)
-        .where(and(eq(payments.tenantId, tenantId), eq(payments.status, 'posted'))),
+        .where(and(eq(payments.tenantId, tenantId), collectedPaymentCondition(payments.status))),
       db.select({ total: sql<number>`coalesce(sum(${invoices.netAmount} - ${invoices.paidAmount}), 0)::float` })
         .from(invoices)
-        .where(and(eq(invoices.tenantId, tenantId), sql`${invoices.status} not in ('draft', 'cancelled', 'credited')`)),
+        .where(and(eq(invoices.tenantId, tenantId), invoicedInvoiceCondition(invoices.status))),
       db.select({ total: sql<number>`coalesce(sum(${invoices.discountAmount}), 0)::float` })
         .from(invoices)
-        .where(and(eq(invoices.tenantId, tenantId), sql`${invoices.status} not in ('draft', 'cancelled', 'credited')`)),
+        .where(and(eq(invoices.tenantId, tenantId), invoicedInvoiceCondition(invoices.status))),
       db.select({
         avg: sql<number>`coalesce(avg(${assessmentResults.finalPercentage}), 0)::float`,
         count: sql<number>`count(*)::int`,
@@ -149,7 +165,7 @@ export async function GET(request: Request) {
         .from(attendanceFlags)
         .where(and(eq(attendanceFlags.tenantId, tenantId), eq(attendanceFlags.status, 'OPEN')))
         .groupBy(attendanceFlags.severity, attendanceFlags.type),
-      db.select({ count: sql<number>`count(*)::int` }).from(invoices).where(and(eq(invoices.tenantId, tenantId), eq(invoices.status, 'overdue'))),
+      db.select({ count: sql<number>`count(*)::int` }).from(invoices).where(and(eq(invoices.tenantId, tenantId), overdueInvoiceCondition(invoices.status, invoices.dueDate, today))),
       db.select({ count: sql<number>`count(*)::int` }).from(user).where(and(eq(user.tenantId, tenantId), gt(user.lockedUntil, nowIso))),
       db.select({
         month: sql<string>`to_char(${user.createdAt}, 'YYYY-MM')`,
@@ -163,14 +179,14 @@ export async function GET(request: Request) {
         total: sql<number>`coalesce(sum(${invoices.netAmount}), 0)::float`,
       })
         .from(invoices)
-        .where(and(eq(invoices.tenantId, tenantId), gte(invoices.issueDate, sixMonthsAgo), sql`${invoices.status} not in ('draft', 'cancelled', 'credited')`))
+        .where(and(eq(invoices.tenantId, tenantId), gte(invoices.issueDate, sixMonthsAgo), invoicedInvoiceCondition(invoices.status)))
         .groupBy(sql`to_char(${invoices.issueDate}, 'YYYY-MM')`),
       db.select({
         month: sql<string>`to_char(${payments.paymentDate}, 'YYYY-MM')`,
-        total: sql<number>`coalesce(sum(${payments.amount}), 0)::float`,
+        total: netCollectedSumSql(payments),
       })
         .from(payments)
-        .where(and(eq(payments.tenantId, tenantId), gte(payments.paymentDate, sixMonthsAgo), eq(payments.status, 'posted')))
+        .where(and(eq(payments.tenantId, tenantId), gte(payments.paymentDate, sixMonthsAgo), collectedPaymentCondition(payments.status)))
         .groupBy(sql`to_char(${payments.paymentDate}, 'YYYY-MM')`),
       db.select({
         month: sql<string>`to_char(${expenses.expenseDate}, 'YYYY-MM')`,
@@ -241,13 +257,15 @@ export async function GET(request: Request) {
     const markedRows = attendance30Rows.filter(r => r.status !== 'excused');
     const totalMarked = markedRows.reduce((sum, r) => sum + r.count, 0);
     const presentMarked = markedRows.filter(r => r.status === 'present').reduce((sum, r) => sum + r.count, 0);
-    const attendanceRate30d = totalMarked > 0 ? Math.round((presentMarked / totalMarked) * 1000) / 10 : null;
+    const attendanceRate30d = totalMarked > 0 ? Math.min(100, Math.round((presentMarked / totalMarked) * 1000) / 10) : null;
 
-    const invoicedTotal = invoicedRows[0]?.total ?? 0;
-    const collectedTotal = collectedRows[0]?.total ?? 0;
+    // netCollectedSumSql returns numeric-as-text; coerce before the ratio.
+    const invoicedTotal = Number(invoicedRows[0]?.total ?? 0);
+    const collectedTotal = Number(collectedRows[0]?.total ?? 0);
     const outstandingTotal = Math.max(0, outstandingRows[0]?.total ?? 0);
     const discountsTotal = discountsRows[0]?.total ?? 0;
-    const collectionRate = invoicedTotal > 0 ? Math.round((collectedTotal / invoicedTotal) * 1000) / 10 : null;
+    // Clamped like the per-month variant below: a KPI over 100% is a bug, not a result.
+    const collectionRate = invoicedTotal > 0 ? Math.min(100, Math.round((collectedTotal / invoicedTotal) * 1000) / 10) : null;
 
     const averageGrade = (avgGradeRows[0]?.count ?? 0) > 0 ? Math.round((avgGradeRows[0]?.avg ?? 0) * 10) / 10 : null;
 
@@ -274,12 +292,14 @@ export async function GET(request: Request) {
       attendanceMonthlyMap.set(r.month, r.marked > 0 ? (r.present / r.marked) * 100 : null);
     }
     const academicMonthlyMap = new Map<string, number>();
-    for (const r of academicMonthlyRows) academicMonthlyMap.set(r.month, r.avg);
+    for (const r of academicMonthlyRows) {
+      academicMonthlyMap.set(r.month, r.avg);
+    }
 
     const igpTrend = months.map((m) => {
       const invoiced = invoicedTrendMap.get(m) ?? 0;
       const collected = collectedTrendMap.get(m) ?? 0;
-      const collectionRate = invoiced > 0 ? Math.min(100, (collected / invoiced) * 100) : null;
+      const collectionRate = invoiced > 0 ? Math.min(100, (Number(collected) / invoiced) * 100) : null;
       return {
         month: m,
         igp: computeIgp(attendanceMonthlyMap.get(m) ?? null, academicMonthlyMap.get(m) ?? null, collectionRate) ?? 0,
@@ -302,8 +322,12 @@ export async function GET(request: Request) {
     }
     const overdueCount = overdueRows[0]?.count ?? 0;
     const lockedCount = lockedRows[0]?.count ?? 0;
-    if (overdueCount > 0) risks.push({ level: overdueCount >= 5 ? 'Critique' : 'Importante', count: overdueCount, label: 'Factures en retard' });
-    if (lockedCount > 0) risks.push({ level: lockedCount >= 5 ? 'Importante' : 'Modérée', count: lockedCount, label: 'Comptes verrouillés' });
+    if (overdueCount > 0) {
+      risks.push({ level: overdueCount >= 5 ? 'Critique' : 'Importante', count: overdueCount, label: 'Factures en retard' });
+    }
+    if (lockedCount > 0) {
+      risks.push({ level: lockedCount >= 5 ? 'Importante' : 'Modérée', count: lockedCount, label: 'Comptes verrouillés' });
+    }
 
     const criticalCount = risks.filter(r => r.level === 'Critique').reduce((s, r) => s + r.count, 0);
     const importantCount = risks.filter(r => r.level === 'Importante').reduce((s, r) => s + r.count, 0);
@@ -311,15 +335,29 @@ export async function GET(request: Request) {
 
     const flagCount = flagsRows.reduce((s, r) => s + r.count, 0);
     const priorityActions: PriorityAction[] = [];
-    if (flagCount > 0) priorityActions.push({ task: `Traiter ${flagCount} signalement(s) d'absence ouverts`, priority: criticalCount > 0 ? 'Critique' : 'Haute' });
-    if (overdueCount > 0) priorityActions.push({ task: `Relancer ${overdueCount} facture(s) en retard`, priority: overdueCount >= 5 ? 'Haute' : 'Moyenne' });
-    if (lockedCount > 0) priorityActions.push({ task: `Déverrouiller ${lockedCount} compte(s)`, priority: 'Moyenne' });
+    if (flagCount > 0) {
+      priorityActions.push({ task: `Traiter ${flagCount} signalement(s) d'absence ouverts`, priority: criticalCount > 0 ? 'Critique' : 'Haute' });
+    }
+    if (overdueCount > 0) {
+      priorityActions.push({ task: `Relancer ${overdueCount} facture(s) en retard`, priority: overdueCount >= 5 ? 'Haute' : 'Moyenne' });
+    }
+    if (lockedCount > 0) {
+      priorityActions.push({ task: `Déverrouiller ${lockedCount} compte(s)`, priority: 'Moyenne' });
+    }
 
     const insights: Insight[] = [];
-    if (studentsThisMonth > 0) insights.push({ icon: 'green', title: 'Nouvelles inscriptions', desc: `${studentsThisMonth} élève(s) inscrit(s) ce mois-ci.` });
-    if (collectionRate != null && collectionRate < 60) insights.push({ icon: 'orange', title: 'Recouvrement à renforcer', desc: `Taux de recouvrement de ${collectionRate.toFixed(1)}% sur les frais facturés.` });
-    if (attendanceRate30d != null && attendanceRate30d < 80) insights.push({ icon: 'orange', title: 'Présence à surveiller', desc: `Taux de présence de ${attendanceRate30d.toFixed(1)}% sur 30 jours.` });
-    if (criticalCount + importantCount + moderateCount > 0) insights.push({ icon: 'orange', title: 'Alertes actives', desc: `${criticalCount + importantCount + moderateCount} alerte(s) non résolue(s) (présence, factures, comptes).` });
+    if (studentsThisMonth > 0) {
+      insights.push({ icon: 'green', title: 'Nouvelles inscriptions', desc: `${studentsThisMonth} élève(s) inscrit(s) ce mois-ci.` });
+    }
+    if (collectionRate != null && collectionRate < 60) {
+      insights.push({ icon: 'orange', title: 'Recouvrement à renforcer', desc: `Taux de recouvrement de ${collectionRate.toFixed(1)}% sur les frais facturés.` });
+    }
+    if (attendanceRate30d != null && attendanceRate30d < 80) {
+      insights.push({ icon: 'orange', title: 'Présence à surveiller', desc: `Taux de présence de ${attendanceRate30d.toFixed(1)}% sur 30 jours.` });
+    }
+    if (criticalCount + importantCount + moderateCount > 0) {
+      insights.push({ icon: 'orange', title: 'Alertes actives', desc: `${criticalCount + importantCount + moderateCount} alerte(s) non résolue(s) (présence, factures, comptes).` });
+    }
 
     const announcementList = announcementsRows.map(a => ({
       id: a.id,
