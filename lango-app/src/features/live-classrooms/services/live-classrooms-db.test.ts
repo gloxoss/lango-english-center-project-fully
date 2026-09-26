@@ -643,9 +643,20 @@ describe.skipIf(!hasDb)('live-classrooms DB lifecycle & tenant isolation', () =>
         id, tenantId: tenantA, name: id, email: `${id.toLowerCase()}@test.local`, role: 'parent' as const, userStatus: 'active' as const,
       })));
 
-      const [sy] = await db.insert(sessionYears).values({
-        tenantId: tenantA, name: `SY-G-${gsuffix}`, startDate: '2026-09-01', endDate: '2027-06-30',
-      }).returning();
+      // Reuse the tenant's existing session year instead of inserting a second
+      // one with the same range: migration 0166 enforces non-overlapping years
+      // per tenant (session_years_no_overlap), which is the production rule.
+      // Only when this block runs alone (no main fixture yet) do we create one.
+      let [sy] = await db
+        .select({ id: sessionYears.id })
+        .from(sessionYears)
+        .where(and(eq(sessionYears.tenantId, tenantA), eq(sessionYears.name, `SY-A-${suffix}`)))
+        .limit(1);
+      if (!sy) {
+        [sy] = await db.insert(sessionYears).values({
+          tenantId: tenantA, name: `SY-G-${gsuffix}`, startDate: '2026-09-01', endDate: '2027-06-30',
+        }).returning();
+      }
       // Place both students (sA, sA2) in the open session's section so
       // placement is never the reason a case is denied unless noted.
       await db.insert(studentPlacements).values([

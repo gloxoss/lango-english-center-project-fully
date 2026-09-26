@@ -54,7 +54,10 @@ export const SETTINGS_MODULES = [
     status: "configured" as const,
     statusLabel: "Configuré",
     iconName: "Globe",
-    href: "/dashboard/settings/providers",
+    // The Providers page and the Broadcast connections page edited the same
+    // connections from two places; Broadcast → Connexions is the one that
+    // actually sends (SCF-09-01). The old page stays reachable by URL.
+    href: "/dashboard/broadcast/connections",
     category: "Integrations",
     badgeColor: "emerald",
   },
@@ -70,28 +73,6 @@ export const SETTINGS_MODULES = [
     badgeColor: "emerald",
   },
   {
-    id: "translations",
-    title: "Traductions & Champs Sur Mesure",
-    desc: "Dictionnaire des libellés (FR/AR/EN) avec support RTL et attributs personnalisés.",
-    status: "configured" as const,
-    statusLabel: "Configuré",
-    iconName: "Languages",
-    href: "/dashboard/settings/translations",
-    category: "General",
-    badgeColor: "emerald",
-  },
-  {
-    id: "jobs",
-    title: "Tâches Planifiées & Audit",
-    desc: "Pings d'arrière-plan, santé de l'infrastructure, maintenance et journal d'audit.",
-    status: "configured" as const,
-    statusLabel: "Configuré",
-    iconName: "Clock",
-    href: "/dashboard/settings/jobs",
-    category: "System",
-    badgeColor: "emerald",
-  },
-  {
     id: "migration",
     title: "Centre de Migration Fichiers",
     desc: "Importation des élèves/tuteurs, cartographie des champs Excel et validation de cohérence.",
@@ -103,13 +84,24 @@ export const SETTINGS_MODULES = [
     badgeColor: "emerald",
   },
   {
+    id: "attendance",
+    title: "Présences & Absences",
+    desc: "Minutes de grâce, heure de référence du scan, seuils de signalement et alertes SMS aux tuteurs.",
+    status: "configured" as const,
+    statusLabel: "Configuré",
+    iconName: "UserCheck",
+    href: "/dashboard/settings/attendance",
+    category: "Academic",
+    badgeColor: "emerald",
+  },
+  {
     id: "policies",
-    title: "Politiques Académiques & Portails",
-    desc: "Règles d'évaluation, seuils de présence, portails parents/élèves et accès tuteurs.",
+    title: "Politiques Académiques",
+    desc: "Barème de notation, note de passage, note éliminatoire et table des mentions.",
     status: "configured" as const,
     statusLabel: "Configuré",
     iconName: "Sliders",
-    href: "/dashboard/settings/policies",
+    href: "/dashboard/academics/grading/policies",
     category: "Academic",
     badgeColor: "emerald",
   },
@@ -211,28 +203,4 @@ export const HUB_CATEGORIES = [
   { id: "Academic", label: "Académique & Politiques" },
   { id: "Integrations", label: "Intégrations & SMS" },
   { id: "System", label: "Système & Infrastructure" },
-] as const;
-
-export const DEFAULT_RECENT_AUDITS = [
-  {
-    id: "aud-1",
-    userName: "Salma Bennani",
-    userInitials: "SB",
-    action: "a mis à jour la cartographie des comptes PCG 2026",
-    timestamp: "Aujourd'hui, 11:34",
-  },
-  {
-    id: "aud-2",
-    userName: "Omar Tazi",
-    userInitials: "OT",
-    action: "a activé l'authentification 2FA obligatoire pour le staff",
-    timestamp: "Hier, 16:45",
-  },
-  {
-    id: "aud-3",
-    userName: "Youssef El Amrani",
-    userInitials: "YA",
-    action: "a ajouté un nouveau champ personnalisé 'Numéro CNDP'",
-    timestamp: "02/08/2026 14:20",
-  },
 ] as const;

@@ -157,6 +157,26 @@ export function SmsRemindersView({ locale }: { locale?: string } = {}) {
 
   const [balanceError, setBalanceError] = useState<string | null>(null);
 
+  // The school's own name, for the {ecole} placeholder in a preview. It used to
+  // be the literal "École Atlas", so every school previewed its messages
+  // addressed to a different school. Null until /api/portal/me answers, and the
+  // preview falls back to an em dash rather than inventing a name.
+  const [tenantName, setTenantName] = useState<string | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch('/api/portal/me');
+        const json = await res.json();
+        if (json?.success) {
+          setTenantName(json.data?.tenantName ?? null);
+        }
+      } catch {
+        setTenantName(null);
+      }
+    })();
+  }, []);
+
   const refreshBalance = async () => {
     setBalanceError(null);
     try {
@@ -341,7 +361,7 @@ export function SmsRemindersView({ locale }: { locale?: string } = {}) {
       const testMsg = (activeBody || 'Test Rappels SchoolOS')
         .replace(/\{nom_parent\}/g, 'Parent Test')
         .replace(/\{nom_eleve\}/g, 'Élève Test')
-        .replace(/\{ecole\}/g, 'École Atlas');
+        .replace(/\{ecole\}/g, tenantName || '—');
 
       const res = await fetch('/api/communication/messages', {
         method: 'POST',
@@ -428,7 +448,9 @@ export function SmsRemindersView({ locale }: { locale?: string } = {}) {
         .replace(/\{nom_parent\}/g, r.guardianName)
         .replace(/\{nom_eleve\}/g, r.studentName)
         .replace(/\{classe\}/g, r.className)
-        .replace(/\{ecole\}/g, '');
+        // Was replaced with an empty string, so every reminder reached the
+        // parent with the school's name missing from the sentence.
+        .replace(/\{ecole\}/g, tenantName || '—');
       try {
         const res = await fetch('/api/communication/reminder-audience', {
           method: 'POST',
@@ -1182,7 +1204,8 @@ export function SmsRemindersView({ locale }: { locale?: string } = {}) {
                 {(activeBody || 'Test Rappels SchoolOS')
                   .replace(/\{nom_parent\}/g, 'Parent Test')
                   .replace(/\{nom_eleve\}/g, 'Élève Test')
-                  .replace(/\{classe\}/g, '3ème Année Collège')}
+                  .replace(/\{classe\}/g, '3ème Année Collège')
+                  .replace(/\{ecole\}/g, tenantName || '—')}
               </div>
             </div>
 

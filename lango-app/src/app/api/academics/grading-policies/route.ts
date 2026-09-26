@@ -28,9 +28,17 @@ const evaluationRuleSchema = z.object({
 }).strict();
 
 const savePolicySchema = z.object({
-  passingScore: z.number().min(0).max(20),
-  eliminatoryScore: z.number().min(0).max(20),
-  rules: z.array(evaluationRuleSchema).max(20),
+  // The bound is the widest scale the page offers (100), not the Moroccan 20.
+  // The scale actually in force is re-checked below, so a /20 school still
+  // cannot store a pass mark of 80.
+  passingScore: z.number().min(0).max(100),
+  eliminatoryScore: z.number().min(0).max(100),
+  // OD4: the weighting table is hidden until an averaging rule is designed, so
+  // the page no longer sends `rules`. Optional and only written when present,
+  // so `academic.evaluationWeights` is left exactly as it was.
+  rules: z.array(evaluationRuleSchema).max(20).optional(),
+  // Hosted here because the pass mark is meaningless without it (SCF-05-01).
+  gradingScale: z.enum(['20', '100']).optional(),
   reason: z.string().max(255).optional(),
 }).strict();
 
@@ -74,8 +82,11 @@ export async function PUT(request: Request) {
     await requireCapability(context, 'settings.organization.manage');
     const body = await parseJson(request, savePolicySchema);
 
-    const totalWeight = body.rules.reduce((sum, r) => sum + r.weight, 0);
-    if (Math.round(totalWeight) !== 100) {
+    // Weight validation only applies to a caller that actually sends weights.
+    const totalWeight = body.rules
+      ? body.rules.reduce((sum, r) => sum + r.weight, 0)
+      : null;
+    if (totalWeight !== null && Math.round(totalWeight) !== 100) {
       return NextResponse.json({
         success: false,
         error: {
@@ -99,18 +110,37 @@ export async function PUT(request: Request) {
       getEffectiveValue(tenantId, null, 'academic.gradingScale'),
     ]);
 
+    // The scale in force after this write. A mark above it is not a threshold,
+    // it is a typo: "admitting from 60" means nothing on a /20 report card.
+    const effectiveScale = body.gradingScale ?? (scale.value === '100' ? '100' : '20');
+    const scaleMax = effectiveScale === '100' ? 100 : 20;
+    if (body.passingScore > scaleMax || body.eliminatoryScore > scaleMax) {
+      return NextResponse.json({
+        success: false,
+        error: {
+          code: 'INVALID_THRESHOLDS',
+          message: `Le barème est sur /${scaleMax} : les seuils doivent être compris entre 0 et ${scaleMax}.`,
+        },
+      }, { status: 422 });
+    }
+
     // Keep the existing CAS version of academic.passThreshold: the value row
     // is shared with the promotions engine, so its version history stays linear.
     await setSettingValue(tenantId, null, 'academic.passThreshold', body.passingScore, context, body.reason, passThreshold.version);
     await setSettingValue(tenantId, null, 'academic.eliminatoryScore', body.eliminatoryScore, context, body.reason);
-    await setSettingValue(tenantId, null, 'academic.evaluationWeights', body.rules, context, body.reason);
+    if (body.rules) {
+      await setSettingValue(tenantId, null, 'academic.evaluationWeights', body.rules, context, body.reason);
+    }
+    if (body.gradingScale) {
+      await setSettingValue(tenantId, null, 'academic.gradingScale', body.gradingScale, context, body.reason);
+    }
 
     recordAudit(context, 'settings_change', 'grading_policy', tenantId, {
       passingScore: body.passingScore,
       eliminatoryScore: body.eliminatoryScore,
-      ruleCount: body.rules.length,
+      ruleCount: body.rules?.length ?? null,
       totalWeight,
-      gradingScale: scale.value,
+      gradingScale: effectiveScale,
       reason: body.reason ?? null,
     });
 
@@ -119,7 +149,8 @@ export async function PUT(request: Request) {
       data: {
         passingScore: body.passingScore,
         eliminatoryScore: body.eliminatoryScore,
-        rules: body.rules,
+        rules: body.rules ?? null,
+        gradingScale: effectiveScale,
       },
       message: 'Barème et seuils enregistrés sur le serveur.',
     });

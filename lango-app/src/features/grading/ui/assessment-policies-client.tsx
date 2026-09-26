@@ -12,9 +12,6 @@ import {
 import {
   Plus, Save, Scale, Trash2, CheckCircle2, AlertCircle, Loader2, BookOpen, Layers,
 } from 'lucide-react';
-import {
-  EvaluationRule, DEFAULT_EVALUATION_RULES,
-} from '../data/assessment-policies-config';
 import { getMoroccanMention, MOROCCAN_MENTION_BANDS } from '@/libs/grading/moroccan-grade-engine';
 
 type StreamItem = {
@@ -45,18 +42,19 @@ export function AssessmentPoliciesClient({ locale: _locale }: { locale?: string 
 
   const [activeTab, setActiveTab] = useState<'weights' | 'coefficients'>('weights');
 
-  // Classes & Periods
-  const [classes, setClasses] = useState<{ id: string; name: string; periodType: 'semester' | 'trimester' | 'month' }[]>([]);
-  const [classId, setClassId] = useState('');
-  const [period, setPeriod] = useState('1');
-  const [cycle, setCycle] = useState('Secondaire Qualifiant (BAC)');
-
-  // Evaluation Rules & Thresholds — seeded with the national template, then
-  // replaced by the stored server policy once GET /api/academics/grading-policies
-  // answers. Nothing here is presented as saved before a 2xx round-trip.
-  const [rules, setRules] = useState<EvaluationRule[]>(DEFAULT_EVALUATION_RULES);
+  // Thresholds — replaced by the stored server policy once
+  // GET /api/academics/grading-policies answers. Nothing here is presented as
+  // saved before a 2xx round-trip.
+  //
+  // OD4 removed the evaluation-weighting table from this page: it was stored
+  // school-wide and never used in the average (assessments carry no CC/exam
+  // category to weight by), so editing it promised an effect it did not have.
+  // The stored key `academic.evaluationWeights` is left untouched, and the page
+  // no longer sends it. The cosmetic cycle / class / period selectors went with
+  // it: the policy is tenant-wide, so they scoped nothing.
   const [passingScore, setPassingScore] = useState<number>(10);
   const [eliminatoryScore, setEliminatoryScore] = useState<number>(5);
+  const [gradingScale, setGradingScale] = useState<'20' | '100'>('20');
   const [policyLoading, setPolicyLoading] = useState(true);
   const [policyError, setPolicyError] = useState<string | null>(null);
   const [referenceError, setReferenceError] = useState<string | null>(null);
@@ -75,17 +73,12 @@ export function AssessmentPoliciesClient({ locale: _locale }: { locale?: string 
   // Test Score for Moroccan grade simulator
   const [testScore, setTestScore] = useState<number>(14.5);
 
-  // Modal State for custom rule
-  const [isAddOpen, setIsAddOpen] = useState(false);
-  const [newRule, setNewRule] = useState({ name: '', weight: '10', description: '' });
-
   // Modal State for adding subject coefficient
   const [isAddSubjectOpen, setIsAddSubjectOpen] = useState(false);
   const [newCoeffSubjectId, setNewCoeffSubjectId] = useState('');
   const [newCoeffValue, setNewCoeffValue] = useState('2');
   const [newCoeffIsCore, setNewCoeffIsCore] = useState(false);
 
-  const totalWeight = rules.reduce((acc, curr) => acc + curr.weight, 0);
   const totalCoeffSum = useMemo(() => {
     return Math.round(coefficients.reduce((acc, c) => acc + Number(c.coefficient || 0), 0) * 100) / 100;
   }, [coefficients]);
@@ -96,24 +89,11 @@ export function AssessmentPoliciesClient({ locale: _locale }: { locale?: string 
   const loadReferenceData = useCallback(async () => {
     setReferenceError(null);
     const failures: string[] = [];
-    const [classesRes, streamsRes, subjectsRes, policyRes] = await Promise.allSettled([
-      fetch('/api/academics/classes?pageSize=200').then(r => r.json()),
+    const [streamsRes, subjectsRes, policyRes] = await Promise.allSettled([
       fetch('/api/academics/streams?pageSize=100').then(r => r.json()),
       fetch('/api/academics/subjects?pageSize=200').then(r => r.json()),
       fetch('/api/academics/grading-policies').then(r => r.json()),
     ]);
-
-    if (classesRes.status === 'fulfilled') {
-      const j = classesRes.value;
-      if (j?.success && Array.isArray(j.data)) {
-        setClasses(j.data);
-        setClassId(prev => prev || j.data[0]?.id || '');
-      } else {
-        failures.push('classes');
-      }
-    } else {
-      failures.push('classes');
-    }
 
     if (streamsRes.status === 'fulfilled') {
       const j = streamsRes.value;
@@ -141,16 +121,9 @@ export function AssessmentPoliciesClient({ locale: _locale }: { locale?: string 
 
     if (policyRes.status === 'fulfilled' && policyRes.value?.success && policyRes.value?.data) {
       const policy = policyRes.value.data;
-      if (Array.isArray(policy.rules) && policy.rules.length > 0) {
-        setRules(policy.rules.map((r: any, i: number) => ({
-          id: r.id ?? `srv-${i}`,
-          name: r.name,
-          weight: Number(r.weight) || 0,
-          description: r.description ?? '',
-        })));
-      }
       setPassingScore(Number(policy.passingScore) || 10);
       setEliminatoryScore(Number(policy.eliminatoryScore) || 5);
+      setGradingScale(policy.gradingScale === '100' ? '100' : '20');
       setPolicyError(null);
     } else {
       const message = policyRes.status === 'fulfilled'
@@ -192,38 +165,9 @@ export function AssessmentPoliciesClient({ locale: _locale }: { locale?: string 
     }
   }, [selectedStreamId, loadStreamCoefficients]);
 
-  const periodType = classes.find(c => c.id === classId)?.periodType ?? 'semester';
-  const periodCount = periodType === 'semester' ? 2 : periodType === 'trimester' ? 3 : 12;
-
-  const handleRuleWeightChange = (id: string, newWeight: number) => {
-    setRules(prev => prev.map(r => r.id === id ? { ...r, weight: Math.max(0, newWeight) } : r));
-  };
-
-  const handleAddRule = () => {
-    if (!newRule.name.trim()) return;
-    const created: EvaluationRule = {
-      id: `r-${Date.now()}`,
-      name: newRule.name.trim(),
-      weight: Number(newRule.weight) || 10,
-      description: newRule.description.trim() || t('ruleDescDefault'),
-    };
-    setRules(prev => [...prev, created]);
-    setIsAddOpen(false);
-    setNewRule({ name: '', weight: '10', description: '' });
-  };
-
-  const handleDeleteRule = (id: string) => {
-    setRules(prev => prev.filter(r => r.id !== id));
-  };
+  const scaleMax = gradingScale === '100' ? 100 : 20;
 
   const handleSavePolicy = async () => {
-    if (totalWeight !== 100) {
-      setFeedback({
-        type: 'error',
-        message: `La pondération totale doit être égale à 100% (actuellement ${totalWeight}%).`,
-      });
-      return;
-    }
     if (eliminatoryScore >= passingScore) {
       setFeedback({
         type: 'error',
@@ -245,11 +189,10 @@ export function AssessmentPoliciesClient({ locale: _locale }: { locale?: string 
         body: JSON.stringify({
           passingScore,
           eliminatoryScore,
-          rules: rules.map(r => ({
-            name: r.name,
-            weight: Number(r.weight) || 0,
-            ...(r.description ? { description: r.description } : {}),
-          })),
+          gradingScale,
+          // `rules` is deliberately absent: the weighting table is hidden (OD4)
+          // and the stored key must not be rewritten by a page that no longer
+          // shows it.
         }),
       });
 
@@ -350,8 +293,12 @@ export function AssessmentPoliciesClient({ locale: _locale }: { locale?: string 
     setIsAddSubjectOpen(false);
   };
 
+  // The simulator and the mention table are the Moroccan national /20 scale by
+  // definition, so the pass mark is converted onto it: comparing a /20 average
+  // straight against a /100 threshold would call every student admitted.
   const simulatedMention = getMoroccanMention(testScore);
-  const simulatedStatus = testScore >= passingScore ? 'Admis' : 'Ajourné';
+  const passingScoreOn20 = gradingScale === '100' ? passingScore / 5 : passingScore;
+  const simulatedStatus = testScore >= passingScoreOn20 ? 'Admis' : 'Ajourné';
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
@@ -441,7 +388,7 @@ export function AssessmentPoliciesClient({ locale: _locale }: { locale?: string 
               }`}
             >
               <Scale className="w-3.5 h-3.5 text-[#2487B8]" />
-              <span>Pondérations & Seuils /20</span>
+              <span>Seuils & Barème</span>
             </button>
             <button
               onClick={() => setActiveTab('coefficients')}
@@ -456,15 +403,9 @@ export function AssessmentPoliciesClient({ locale: _locale }: { locale?: string 
             </button>
           </div>
 
-          {/* Right Status Badge */}
-          {activeTab === 'weights' ? (
-            <div className={`px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 ${
-              totalWeight === 100 ? 'bg-[#DDF5EC] text-[#17A673]' : 'bg-[#FCE4E2] text-[#E5544B]'
-            }`}>
-              <Scale className="w-4 h-4" />
-              <span>{t('globalWeighting', { total: totalWeight })} {totalWeight === 100 ? t('weightValid') : t('weightInvalid')}</span>
-            </div>
-          ) : (
+          {/* Right Status Badge — the weighting total is gone with the table
+              (OD4); there is no longer anything to report as 100% or not. */}
+          {activeTab === 'coefficients' && (
             <div className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#DCEBF4] text-[#1B6C93] flex items-center gap-2">
               <Layers className="w-4 h-4" />
               <span>Total Coefficients = {totalCoeffSum}</span>
@@ -472,52 +413,18 @@ export function AssessmentPoliciesClient({ locale: _locale }: { locale?: string 
           )}
         </div>
 
-        {/* Honest scope notice: the pass mark and eliminatory mark drive report
-            cards; the weighting table is stored school-wide but not yet used in
-            the average (assessments carry no CC/exam category to weight by). */}
+        {/* Honest scope notice: what the report card actually averages by. */}
         {activeTab === 'weights' && (
           <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            Seuil d&apos;admission et note éliminatoire : appliqués aux bulletins. Pondérations : enregistrées pour l&apos;établissement, pas encore appliquées au calcul des moyennes.
+            Les moyennes utilisent les coefficients des matières.
           </p>
         )}
 
-        {/* Dynamic Selectors Bar */}
+        {/* Selectors Bar. The weights tab no longer has any: its cycle / class /
+            period pickers looked like they scoped the policy, but the policy is
+            tenant-wide, so changing them only changed what you were looking at. */}
         <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 text-xs">
-          {activeTab === 'weights' ? (
-            <>
-              <span className="font-bold text-slate-500">{t('cycleConcerned')}</span>
-              <select
-                value={cycle}
-                onChange={e => setCycle(e.target.value)}
-                className="h-9 px-3 rounded-xl border border-slate-200 font-extrabold bg-white text-[#16212B]"
-              >
-                <option value="Secondaire Qualifiant (BAC)">{t('cycleBac')}</option>
-                <option value="Collège">{t('cycleCollege')}</option>
-                <option value="Primaire">{t('cyclePrimary')}</option>
-              </select>
-
-              <select
-                value={classId}
-                onChange={e => { setClassId(e.target.value); setPeriod('1'); }}
-                className="h-9 px-3 rounded-xl border border-slate-200 font-extrabold bg-white text-[#16212B]"
-              >
-                <option value="">{t('selectClassOption')}</option>
-                {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-
-              <select
-                value={period}
-                onChange={e => setPeriod(e.target.value)}
-                className="h-9 px-3 rounded-xl border border-slate-200 font-extrabold bg-white text-[#16212B]"
-              >
-                {Array.from({ length: periodCount }, (_, i) => (
-                  <option key={i + 1} value={String(i + 1)}>
-                    {periodType === 'month' ? t('monthNumber', { num: i + 1 }) : periodType === 'trimester' ? t('trimesterNumber', { num: i + 1 }) : t('semesterNumber', { num: i + 1 })}
-                  </option>
-                ))}
-              </select>
-            </>
-          ) : (
+          {activeTab === 'coefficients' && (
             <>
               <span className="font-bold text-slate-500">Filière / Branche Marocaine :</span>
               <select
@@ -551,59 +458,36 @@ export function AssessmentPoliciesClient({ locale: _locale }: { locale?: string 
         <div className="lg:col-span-7 space-y-4">
           {activeTab === 'weights' ? (
             <>
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-extrabold text-[#16212B]">{t('weightDistributionTitle')}</h2>
-                <Button
-                  size="sm"
-                  onClick={() => setIsAddOpen(true)}
-                  variant="outline"
-                  className="h-8 text-xs font-bold rounded-xl border-slate-200 gap-1.5"
-                >
-                  <Plus className="w-3.5 h-3.5 text-[#2487B8]" />
-                  <span>{t('addRule')}</span>
-                </Button>
-              </div>
-
-              <div className="space-y-3">
-                {rules.map(rule => (
-                  <Card key={rule.id} className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <h3 className="text-sm font-extrabold text-[#16212B]">{rule.name}</h3>
-                      <p className="text-xs text-slate-400">{rule.description}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1">
-                        <Input
-                          type="number"
-                          value={rule.weight}
-                          onChange={e => handleRuleWeightChange(rule.id, Number(e.target.value))}
-                          className="w-16 h-9 text-xs font-extrabold text-center rounded-xl"
-                        />
-                        <span className="text-xs font-extrabold text-[#2487B8]">%</span>
-                      </div>
-                      <button onClick={() => handleDeleteRule(rule.id)} className="text-slate-400 hover:text-rose-600 transition cursor-pointer">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-
-              {/* Passing Thresholds Card */}
+              {/* Passing Thresholds + Grading Scale Card. The scale lives here
+                  because a pass mark is meaningless without it: "12" is a pass
+                  on /20 and a fail on /100. */}
               <Card className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
                 <h3 className="text-xs font-extrabold text-[#16212B] uppercase tracking-wider text-[10px]">{t('passingThresholdsTitle')}</h3>
-                <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="grid grid-cols-1 gap-4 text-xs sm:grid-cols-3">
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700 block">{t('gradingScaleLabel')}</label>
+                    <select
+                      value={gradingScale}
+                      onChange={e => setGradingScale(e.target.value === '100' ? '100' : '20')}
+                      className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 font-extrabold text-[#16212B]"
+                    >
+                      <option value="20">{t('gradingScaleOn20')}</option>
+                      <option value="100">{t('gradingScaleOn100')}</option>
+                    </select>
+                  </div>
                   <div className="space-y-1">
                     <label className="font-bold text-slate-700 block">{t('minPassingScore')}</label>
                     <div className="flex items-center gap-2">
                       <Input
                         type="number"
                         step="0.25"
+                        min="0"
+                        max={scaleMax}
                         value={passingScore}
                         onChange={e => setPassingScore(Number(e.target.value))}
                         className="h-9 text-xs rounded-xl font-bold text-[#17A673]"
                       />
-                      <span className="text-slate-500 font-bold">/20</span>
+                      <span className="text-slate-500 font-bold">/{scaleMax}</span>
                     </div>
                   </div>
                   <div className="space-y-1">
@@ -612,11 +496,13 @@ export function AssessmentPoliciesClient({ locale: _locale }: { locale?: string 
                       <Input
                         type="number"
                         step="0.25"
+                        min="0"
+                        max={scaleMax}
                         value={eliminatoryScore}
                         onChange={e => setEliminatoryScore(Number(e.target.value))}
                         className="h-9 text-xs rounded-xl font-bold text-rose-600"
                       />
-                      <span className="text-slate-500 font-bold">/20</span>
+                      <span className="text-slate-500 font-bold">/{scaleMax}</span>
                     </div>
                   </div>
                 </div>
@@ -770,67 +656,13 @@ export function AssessmentPoliciesClient({ locale: _locale }: { locale?: string 
                 <span className={`font-extrabold px-2 py-0.5 rounded-full ${
                   simulatedStatus === 'Admis' ? 'bg-[#DDF5EC] text-[#17A673]' : 'bg-rose-100 text-rose-700'
                 }`}>
-                  {simulatedStatus} (Seuil admis : {passingScore}/20)
+                  {simulatedStatus} (Seuil admis : {Math.round(passingScoreOn20 * 100) / 100}/20)
                 </span>
               </div>
             </div>
           </Card>
         </div>
       </div>
-
-      {/* Ajouter une Règle Modal Dialog */}
-      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogContent className="max-w-md bg-white rounded-2xl p-6">
-          <DialogHeader>
-            <DialogTitle className="text-base font-extrabold text-[#16212B] flex items-center gap-2">
-              <Scale className="w-5 h-5 text-[#2487B8]" />
-              {t('addWeightRuleTitle')}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-3 my-3 text-xs">
-            <div>
-              <label className="font-bold text-slate-700 block mb-1">{t('ruleNameLabel')}</label>
-              <Input
-                placeholder={t('ruleNamePlaceholder')}
-                value={newRule.name}
-                onChange={e => setNewRule({ ...newRule, name: e.target.value })}
-                className="h-9 text-xs rounded-xl"
-              />
-            </div>
-
-            <div>
-              <label className="font-bold text-slate-700 block mb-1">{t('ruleWeightLabel')}</label>
-              <Input
-                type="number"
-                placeholder="10"
-                value={newRule.weight}
-                onChange={e => setNewRule({ ...newRule, weight: e.target.value })}
-                className="h-9 text-xs rounded-xl"
-              />
-            </div>
-
-            <div>
-              <label className="font-bold text-slate-700 block mb-1">{t('ruleDescLabel')}</label>
-              <Input
-                placeholder={t('ruleDescPlaceholder')}
-                value={newRule.description}
-                onChange={e => setNewRule({ ...newRule, description: e.target.value })}
-                className="h-9 text-xs rounded-xl"
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIsAddOpen(false)} className="rounded-xl text-xs h-9">
-              {tCommon('cancel')}
-            </Button>
-            <Button onClick={handleAddRule} className="rounded-xl text-xs h-9 bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold">
-              {t('addRuleAction')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Ajouter une Matière au barème Modal Dialog */}
       <Dialog open={isAddSubjectOpen} onOpenChange={setIsAddSubjectOpen}>

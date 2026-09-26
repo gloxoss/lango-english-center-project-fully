@@ -33,11 +33,84 @@ export const customFieldInputSchema = z.object({
   defaultValue: z.unknown().optional().nullable(),
   sortOrder: z.number().int().min(0).default(0),
   isActive: z.boolean().default(true),
+  // Why the definition was changed. Optional — staff editing a catalogue do
+  // not always have a reason to give — but stored when supplied so the
+  // version history explains itself (SCF-10-01).
+  reason: z.string().trim().max(500).optional(),
 }).strict();
 
 export type CustomFieldInput = z.input<typeof customFieldInputSchema>;
 
+/**
+ * Columns the core `user` record already owns. A custom field may not reuse one
+ * of these keys: its values live in `custom_field_values`, a table no core
+ * reader consults, so a "matricule" custom field would silently hold a second,
+ * different matricule next to the real one (found on Atlas by the settings
+ * audit, DISC-SETTINGS-CORE-01).
+ */
+const RESERVED_CUSTOM_FIELD_KEYS = new Set([
+  'matricule',
+  'massar',
+  'massar_code',
+  'cin',
+  'name',
+  'first_name',
+  'last_name',
+  'email',
+  'phone',
+  'birth_date',
+  'gender',
+  'class',
+  'section',
+]);
+
+function assertKeyIsFree(key: string) {
+  if (RESERVED_CUSTOM_FIELD_KEYS.has(key.trim().toLowerCase())) {
+    throw new ApiError(
+      422,
+      'RESERVED_KEY',
+      `La clé "${key}" est réservée : elle désigne déjà un champ natif de l'élève. Choisissez une autre clé.`,
+    );
+  }
+}
+
+/**
+ * A stored value must match its definition's declared type. Without this the
+ * registry accepted anything, so a "date" field could hold "oui" and only the
+ * screen rendering it would notice.
+ */
+function assertValueMatchesType(fieldType: CustomFieldType, options: string[] | null, value: unknown) {
+  switch (fieldType) {
+    case 'number':
+      if (typeof value !== 'number' || !Number.isFinite(value)) {
+        throw new ApiError(422, 'VALIDATION_ERROR', 'Ce champ attend un nombre.');
+      }
+      break;
+    case 'boolean':
+      if (typeof value !== 'boolean') {
+        throw new ApiError(422, 'VALIDATION_ERROR', 'Ce champ attend vrai ou faux.');
+      }
+      break;
+    case 'date':
+      if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value) || Number.isNaN(Date.parse(value))) {
+        throw new ApiError(422, 'VALIDATION_ERROR', 'Ce champ attend une date au format AAAA-MM-JJ.');
+      }
+      break;
+    case 'select':
+      if (typeof value !== 'string' || !(options ?? []).includes(value)) {
+        throw new ApiError(422, 'VALIDATION_ERROR', 'Cette valeur ne fait pas partie des options de ce champ.');
+      }
+      break;
+    case 'text':
+      if (typeof value !== 'string') {
+        throw new ApiError(422, 'VALIDATION_ERROR', 'Ce champ attend du texte.');
+      }
+      break;
+  }
+}
+
 function validateInput(input: z.input<typeof customFieldInputSchema>) {
+  assertKeyIsFree(input.key);
   if (input.fieldType === 'select' && (!input.options || input.options.length === 0)) {
     throw new ApiError(422, 'VALIDATION_ERROR', 'Un champ de type "select" doit définir au moins une option.');
   }
@@ -81,10 +154,13 @@ export async function getCustomFieldDefinition(context: RequestContext, id: stri
 export async function createCustomFieldDefinition(context: RequestContext, input: CustomFieldInput) {
   const tenantId = requireTenant(context);
   validateInput(input);
+  // `reason` describes the change, not the field: it belongs to the version
+  // row, never to the definition itself.
+  const { reason, ...fields } = input;
   const created = await db.transaction(async (tx) => {
     const [row] = await tx.insert(customFieldDefinitions).values({
       tenantId,
-      ...input,
+      ...fields,
       options: input.options ?? null,
       defaultValue: input.defaultValue ?? null,
     }).returning();
@@ -101,7 +177,7 @@ export async function createCustomFieldDefinition(context: RequestContext, input
       defaultValue: row.defaultValue,
       sortOrder: row.sortOrder,
       actorId: context.userId,
-      reason: 'Création du champ',
+      reason: reason ?? 'Création du champ',
     });
     return row;
   });
@@ -116,10 +192,18 @@ export async function updateCustomFieldDefinition(
   const tenantId = requireTenant(context);
   await requireDefinition(tenantId, id);
 
+  // Renaming onto a core key is the same mistake as creating one — the audit
+  // found the shadowing `matricule` field already in place, so the guard has
+  // to hold on the update path too.
+  if (input.key !== undefined) {
+    assertKeyIsFree(input.key);
+  }
+  const { reason, ...fields } = input;
+
   const updated = await db.transaction(async (tx) => {
     const [row] = await tx.update(customFieldDefinitions)
       .set({
-        ...input,
+        ...fields,
         options: input.options ?? null,
         defaultValue: input.defaultValue ?? null,
         updatedAt: new Date().toISOString(),
@@ -147,7 +231,7 @@ export async function updateCustomFieldDefinition(
       defaultValue: row.defaultValue,
       sortOrder: row.sortOrder,
       actorId: context.userId,
-      reason: 'Mise à jour du champ',
+      reason: reason ?? 'Mise à jour du champ',
     });
     return row;
   });
@@ -198,6 +282,10 @@ export async function setCustomFieldValue(
   if (value === undefined || value === null) {
     throw new ApiError(422, 'VALIDATION_ERROR', 'Une valeur est requise.');
   }
+
+  // field_type is a varchar column, so the union is asserted rather than
+  // inferred. An unknown value falls through the switch and is accepted.
+  assertValueMatchesType(def.fieldType as CustomFieldType, def.options as string[] | null, value);
 
   const [row] = await db
     .insert(customFieldValues)

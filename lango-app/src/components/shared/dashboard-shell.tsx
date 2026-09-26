@@ -11,11 +11,18 @@ import { SidebarDrawerContext } from './sidebar-drawer-context';
 export function DashboardShell({
   sidebar,
   header,
+  banner,
   children,
   locale,
 }: {
   sidebar: ReactNode;
   header: ReactNode;
+  /**
+   * Optional full-width notice between the header and the content. Computed on
+   * the server (the layout decides whether the school year has ended), so the
+   * shell itself stays free of date logic.
+   */
+  banner?: ReactNode;
   children: ReactNode;
   locale: string;
 }) {
@@ -48,6 +55,7 @@ export function DashboardShell({
 
         <div className="flex-1 flex flex-col min-w-0">
           {header}
+          {banner}
           <main id="main-content" tabIndex={-1} className="flex-1 p-6 overflow-y-auto">
             {children}
           </main>

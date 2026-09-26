@@ -20,6 +20,30 @@ function toApiSessionYear(row: typeof sessionYears.$inferSelect) {
   };
 }
 
+/**
+ * SCF-10-01: audit metadata names the fields that actually moved. The audit
+ * trail used to say "a year was updated" without saying what changed, which is
+ * useless for a date that shifts a school year or a flag that moves the whole
+ * app to another year. Unchanged fields are omitted so the row stays readable.
+ */
+function changedFields(
+  before: Record<string, unknown>,
+  after: Record<string, unknown>,
+  fields: readonly string[],
+): Record<string, { before: unknown; after: unknown }> {
+  const changed: Record<string, { before: unknown; after: unknown }> = {};
+  for (const field of fields) {
+    const previous = before[field] ?? null;
+    const next = after[field] ?? null;
+    if (previous !== next) {
+      changed[field] = { before: previous, after: next };
+    }
+  }
+  return changed;
+}
+
+const AUDITED_YEAR_FIELDS = ['name', 'startDate', 'endDate', 'isDefault'] as const;
+
 // Only one session year can be the tenant's default at a time - setting a new
 // one unsets the rest in the same transaction (see POST/PUT below), rather than
 // leaving two "default" rows for the UI to disagree about.
@@ -89,7 +113,16 @@ export async function PUT(request: Request) {
     await requireCapability(context, 'academics.manage');
     const body = await parseJson(request, sessionYearUpdateSchema);
 
-    const updated = await db.transaction(async (tx) => {
+    // Read inside the transaction so the "before" is the row the update
+    // actually replaced, not a stale read racing another writer.
+    const result = await db.transaction(async (tx) => {
+      const [previous] = await tx
+        .select()
+        .from(sessionYears)
+        .where(and(eq(sessionYears.id, body.id), eq(sessionYears.tenantId, tenantId)))
+        .for('update')
+        .limit(1);
+
       if (body.isDefault) {
         await tx.update(sessionYears).set({ isDefault: false }).where(eq(sessionYears.tenantId, tenantId));
       }
@@ -103,14 +136,23 @@ export async function PUT(request: Request) {
         })
         .where(and(eq(sessionYears.id, body.id), eq(sessionYears.tenantId, tenantId)))
         .returning();
-      return row;
+      return { previous, row };
     });
+
+    const { previous, row: updated } = result;
 
     if (!updated) {
       return NextResponse.json({ success: false, message: 'Introuvable' }, { status: 404 });
     }
 
-    recordAudit(context, 'update', 'session_year', body.id);
+    const changed = changedFields(previous ?? {}, updated, AUDITED_YEAR_FIELDS);
+    recordAudit(
+      context,
+      'update',
+      'session_year',
+      body.id,
+      Object.keys(changed).length > 0 ? { changed } : undefined,
+    );
 
     return NextResponse.json({ success: true, data: toApiSessionYear(updated) });
   } catch (error) {
@@ -130,8 +172,25 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ success: false, message: 'ID non fourni' }, { status: 400 });
     }
 
-    await db.delete(sessionYears).where(and(eq(sessionYears.id, id), eq(sessionYears.tenantId, tenantId)));
-    recordAudit(context, 'delete', 'session_year', id);
+    const deleted = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .select()
+        .from(sessionYears)
+        .where(and(eq(sessionYears.id, id), eq(sessionYears.tenantId, tenantId)))
+        .for('update')
+        .limit(1);
+      if (!row) return null;
+      await tx.delete(sessionYears).where(and(eq(sessionYears.id, id), eq(sessionYears.tenantId, tenantId)));
+      return row;
+    });
+
+    if (!deleted) {
+      return NextResponse.json({ success: false, message: 'Introuvable' }, { status: 404 });
+    }
+
+    recordAudit(context, 'delete', 'session_year', id, {
+      changed: changedFields(deleted, {}, AUDITED_YEAR_FIELDS),
+    });
 
     return NextResponse.json({ success: true, id });
   } catch (error) {

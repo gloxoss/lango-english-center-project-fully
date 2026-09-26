@@ -51,15 +51,22 @@ export async function GET(request: Request) {
         hasMultiBranchAddon: tenant?.hasMultiBranchAddon ?? false,
         branchCount: branchCount?.value ?? 0,
       },
-      data: addons.map(addon => ({
-        addonId: addon.id,
-        name: addon.name,
-        description: addon.description,
-        built: addon.enabled,
-        active: byId.get(addon.id)?.active ?? false,
-        expiresAt: byId.get(addon.id)?.expiresAt ?? null,
-        expiryLabel: expiryInfo(addon.id),
-      })),
+      // `addon_definitions.enabled = false` means the module is not built yet.
+      // Listing it to a school admin offers something that cannot be switched
+      // on, and on the VPS the retired `test` definition was showing up as a
+      // purchasable module. A tenant that already holds a grant keeps seeing it,
+      // so an entitlement is never silently hidden from the school paying for it.
+      data: addons
+        .filter(addon => addon.enabled || (byId.get(addon.id)?.active ?? false))
+        .map(addon => ({
+          addonId: addon.id,
+          name: addon.name,
+          description: addon.description,
+          built: addon.enabled,
+          active: byId.get(addon.id)?.active ?? false,
+          expiresAt: byId.get(addon.id)?.expiresAt ?? null,
+          expiryLabel: expiryInfo(addon.id),
+        })),
     });
   } catch (err) {
     return apiErrorResponse(err);

@@ -6,12 +6,15 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+  AlertTriangle,
   Calendar as CalendarIcon,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Loader2,
   Pencil,
   Plus,
+  Rocket,
   Star,
   Trash2,
   X,
@@ -26,13 +29,51 @@ type SessionYear = {
   schoolId: string;
 };
 
+/** Shape returned by GET /api/academics/session-years/open?sessionYearId=… */
+type OpenYearChecklist = {
+  target: { id: string; name: string; startDate: string; endDate: string; isDefault: boolean };
+  current: { id: string; name: string } | null;
+  checks: {
+    startsAfterCurrent: boolean;
+    studentsPlacedInTarget: number;
+    publishedTimetable: { exists: boolean; versionNumber: number | null; publishedAt: string | null };
+    activeFeeStructures: number;
+    activeFeeStructuresScope: 'tenant';
+  };
+};
+
 type ModalState =
   | { mode: 'closed' }
   | { mode: 'create' }
   | { mode: 'edit'; year: SessionYear }
-  | { mode: 'delete'; year: SessionYear };
+  | { mode: 'delete'; year: SessionYear }
+  | { mode: 'openYear'; year: SessionYear };
 
 const PAGE_SIZE = 20;
+
+function ChecklistRow({ ok, label, value, hint }: { ok: boolean; label: string; value: string; hint?: string }) {
+  return (
+    <li className="flex items-start gap-2 text-xs">
+      <CheckCircle2
+        className={`w-4 h-4 flex-shrink-0 mt-[1px] ${ok ? 'text-emerald-600' : 'text-slate-300'}`}
+      />
+      <div className="min-w-0">
+        <span className="font-bold text-slate-700">{label}</span>
+        <span className="text-slate-500"> · {value}</span>
+        {hint && <p className="text-[10px] text-slate-400 mt-0.5">{hint}</p>}
+      </div>
+    </li>
+  );
+}
+
+function Warning({ text }: { text: string }) {
+  return (
+    <div className="flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2">
+      <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-[1px]" />
+      <p className="text-[11px] text-amber-800 font-medium">{text}</p>
+    </div>
+  );
+}
 
 export function AcademicCalendarView({ locale: _locale }: { locale: string }) {
   const t = useTranslations('Academics');
@@ -51,6 +92,8 @@ export function AcademicCalendarView({ locale: _locale }: { locale: string }) {
   const [formEndDate, setFormEndDate] = useState('');
   const [formIsDefault, setFormIsDefault] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [checklist, setChecklist] = useState<OpenYearChecklist | null>(null);
+  const [checklistError, setChecklistError] = useState<string | null>(null);
 
   const fetchSessionYears = useCallback(async (pg: number) => {
     setLoading(true);
@@ -91,7 +134,46 @@ export function AcademicCalendarView({ locale: _locale }: { locale: string }) {
   };
 
   const openDelete = (y: SessionYear) => { setModal({ mode: 'delete', year: y }); };
-  const closeModal = () => setModal({ mode: 'closed' });
+  const closeModal = () => { setModal({ mode: 'closed' }); setChecklist(null); setChecklistError(null); };
+
+  // The checklist is read-only and only tells the director what is ready. It is
+  // fetched when the dialog opens so the decision rests on the current state.
+  const openOpenYear = async (y: SessionYear) => {
+    setModal({ mode: 'openYear', year: y });
+    setChecklist(null);
+    setChecklistError(null);
+    try {
+      const res = await fetch(`/api/academics/session-years/open?sessionYearId=${encodeURIComponent(y.id)}`);
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error?.message ?? `HTTP ${res.status}`);
+      setChecklist(json.data as OpenYearChecklist);
+    } catch (e) {
+      setChecklistError(e instanceof Error ? e.message : t('openYearLoadError'));
+    }
+  };
+
+  const handleOpenYear = async () => {
+    if (modal.mode !== 'openYear') return;
+    const target = modal.year;
+    setSaving(true);
+    setFormError(null);
+    setChecklistError(null);
+    try {
+      const res = await fetch('/api/academics/session-years/open', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionYearId: target.id }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error?.message ?? `HTTP ${res.status}`);
+      closeModal();
+      fetchSessionYears(page);
+    } catch (e) {
+      setChecklistError(e instanceof Error ? e.message : t('openYearFailed'));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!formName.trim()) { setFormError(t('yearNameRequired')); return; }
@@ -243,6 +325,15 @@ export function AcademicCalendarView({ locale: _locale }: { locale: string }) {
                       </td>
                       <td className="py-3 px-3 whitespace-nowrap">
                         <div className="flex items-center gap-1">
+                          {!y.isDefault && (
+                            <button
+                              onClick={() => { void openOpenYear(y); }}
+                              className="p-1.5 rounded-lg hover:bg-[#DCEBF4] transition-colors"
+                              title={t('openYearAction')}
+                            >
+                              <Rocket className="w-3.5 h-3.5 text-[#2487B8]" />
+                            </button>
+                          )}
                           <button
                             onClick={() => openEdit(y)}
                             className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
@@ -375,6 +466,99 @@ export function AcademicCalendarView({ locale: _locale }: { locale: string }) {
                   {modal.mode === 'create' ? tc('add') : tc('save')}
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Open school year Modal (OD1) */}
+      {modal.mode === 'openYear' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 mx-4">
+            <div className="flex items-start justify-between mb-4 gap-3">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#DCEBF4] flex items-center justify-center flex-shrink-0">
+                  <Rocket className="w-5 h-5 text-[#2487B8]" />
+                </div>
+                <div>
+                  <h2 className="text-base font-extrabold text-[#0F172A]">
+                    {t('openYearTitle', { name: modal.year.name })}
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1">{t('openYearIntro')}</p>
+                </div>
+              </div>
+              <button onClick={closeModal} className="p-1.5 rounded-lg hover:bg-slate-100">
+                <X className="w-4 h-4 text-slate-400" />
+              </button>
+            </div>
+
+            {!checklist && !checklistError && (
+              <div className="flex items-center justify-center py-8 gap-2 text-slate-400">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-xs">{tc('loading')}</span>
+              </div>
+            )}
+
+            {checklist && (
+              <div className="space-y-3">
+                <ul className="space-y-2">
+                  <ChecklistRow
+                    ok={checklist.checks.startsAfterCurrent}
+                    label={t('openYearCheckOrder')}
+                    value={checklist.checks.startsAfterCurrent
+                      ? t('openYearCheckOrderOk', { name: checklist.current?.name ?? '—' })
+                      : t('openYearCheckOrderBackwards')}
+                  />
+                  <ChecklistRow
+                    ok={checklist.checks.studentsPlacedInTarget > 0}
+                    label={t('openYearCheckStudents')}
+                    value={String(checklist.checks.studentsPlacedInTarget)}
+                  />
+                  <ChecklistRow
+                    ok={checklist.checks.publishedTimetable.exists}
+                    label={t('openYearCheckTimetable')}
+                    value={checklist.checks.publishedTimetable.exists
+                      ? t('openYearCheckTimetableVersion', { version: checklist.checks.publishedTimetable.versionNumber ?? 0 })
+                      : t('openYearNo')}
+                  />
+                  <ChecklistRow
+                    ok={checklist.checks.activeFeeStructures > 0}
+                    label={t('openYearCheckFees')}
+                    value={String(checklist.checks.activeFeeStructures)}
+                    hint={t('openYearCheckFeesScope')}
+                  />
+                </ul>
+
+                {/* Warnings never block: a director may open the year before the
+                    timetable is published. They exist so the choice is informed. */}
+                {!checklist.checks.startsAfterCurrent && (
+                  <Warning text={t('openYearWarnBackwards')} />
+                )}
+                {!checklist.checks.publishedTimetable.exists && (
+                  <Warning text={t('openYearWarnNoTimetable')} />
+                )}
+                {checklist.checks.studentsPlacedInTarget === 0 && (
+                  <Warning text={t('openYearWarnNoStudents')} />
+                )}
+              </div>
+            )}
+
+            {checklistError && (
+              <p className="text-[11px] text-red-600 font-medium py-2">{checklistError}</p>
+            )}
+
+            <div className="flex gap-2 justify-end pt-4">
+              <Button variant="outline" onClick={closeModal} className="text-xs h-9 rounded-xl" disabled={saving}>
+                {tc('cancel')}
+              </Button>
+              <Button
+                onClick={() => { void handleOpenYear(); }}
+                disabled={saving || !checklist}
+                className="bg-[#2487B8] hover:bg-[#1B6C93] text-white text-xs h-9 rounded-xl gap-2"
+              >
+                {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                {t('openYearConfirm')}
+              </Button>
             </div>
           </div>
         </div>

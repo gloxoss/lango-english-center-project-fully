@@ -1,79 +1,14 @@
-import { describe, expect, it, vi } from 'vitest';
-import { GET } from '@/app/api/dashboard/summary/route';
+import { describe, expect, it } from 'vitest';
 
-vi.mock('@/libs/env/server', () => ({
-  serverEnv: {
-    DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
-    BETTER_AUTH_SECRET: 'test_secret_32_characters_minimum_length_required',
-    BETTER_AUTH_URL: 'http://localhost:3000',
-  },
-}));
-
-vi.mock('@/libs/api/context', () => ({
-  requireRequestContext: vi.fn(),
-  requireTenant: vi.fn((ctx: { tenantId?: string | null }) => ctx.tenantId),
-}));
-
-vi.mock('@/libs/DB', () => {
-  return {
-    db: {
-      select: vi.fn(),
-    },
-  };
-});
-
-describe('Dashboard Summary — P0 Security & Branch Isolation Invariants', () => {
-  it('rejects a branch-limited user requesting another unauthorized branch with 403', async () => {
-    const { requireRequestContext } = await import('@/libs/api/context');
-    vi.mocked(requireRequestContext).mockResolvedValueOnce({
-      userId: 'user-admin-branch1',
-      tenantId: 'tenant-alpha',
-      branchId: '00000000-0000-0000-0000-000000000001',
-      role: 'school_admin',
-      baseRole: 'school_admin',
-      name: 'Branch Admin',
-      email: 'admin@branch1.local',
-    } as any);
-
-    const request = new Request('http://localhost:3000/api/dashboard/summary?branchId=00000000-0000-0000-0000-000000000002');
-    const response = await GET(request);
-    expect(response.status).toBe(403);
-    const json = await response.json();
-    expect(json.error?.code).toBe('FORBIDDEN');
-    expect(json.error?.message).toContain('Accès interdit à cette succursale');
-  });
-
-  it('rejects whole-school admin requesting a non-existent or foreign branch with 403', async () => {
-    const { requireRequestContext } = await import('@/libs/api/context');
-    const { db } = await import('@/libs/DB');
-
-    vi.mocked(requireRequestContext).mockResolvedValueOnce({
-      userId: 'user-admin-global',
-      tenantId: 'tenant-alpha',
-      branchId: null, // Whole-school admin
-      role: 'school_admin',
-      baseRole: 'school_admin',
-      name: 'Global Director',
-      email: 'director@school.local',
-    } as any);
-
-    // Mock branches table query returning empty (branch not found in this tenant)
-    vi.mocked(db.select).mockReturnValueOnce({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([]),
-        }),
-      }),
-    } as any);
-
-    const request = new Request('http://localhost:3000/api/dashboard/summary?branchId=ffffffff-ffff-ffff-ffff-ffffffffffff');
-    const response = await GET(request);
-    expect(response.status).toBe(403);
-    const json = await response.json();
-    expect(json.error?.code).toBe('FORBIDDEN');
-    expect(json.error?.message).toContain('Succursale introuvable ou non autorisée');
-  });
-});
+// P0 branch-isolation note (BRANCH-SCOPE-01 B1): the former ?branchId 403
+// tests pinned client-supplied branch plumbing that B1 removed. The summary
+// now scopes ONLY from the server context (ctx.branchId — the session's
+// stored choice or the hard lock); a ?branchId parameter is ignored, never
+// trusted. That contract is enforced and tested where it lives now:
+//   - src/libs/api/__tests__/branch-context.test.ts (locked vs chosen,
+//     foreign/inactive branch dropped, patrons never filtered)
+//   - src/app/api/__tests__/portal-branch.test.ts (the only write path that
+//     sets the session branch)
 
 describe('Dashboard Summary — P1 Reconciliation Invariants', () => {
   it('verifies student distribution bucket sum equals active student count invariant', () => {

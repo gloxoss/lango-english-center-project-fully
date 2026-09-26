@@ -11,7 +11,6 @@ import {
   assessmentCriteria,
   assessmentPlanCriteria,
   assessmentPlans,
-  assessmentResults,
   assessments,
   assessmentDefinitions,
   assignmentSubmissions,
@@ -147,7 +146,7 @@ import { employeePayrollProfiles, payrollAdjustments, payrollResultLines, salary
 import { certificateDefinitions, certificateDefinitionVersions, certificateTemplates, certificateTemplateVersions, certificateRequests, issuedCertificates, certificateJobs, certificateJobItems, certificateEvents, certificateSignatories, certificateEventRosters } from '@/features/certificates/models/certificates-schema';
 import { documentTemplates, documentTemplateVersions, issuedDocuments, documentGenerationJobs, documentGenerationItems } from '@/features/cards/models/cards-schema';
 import { communicationConnections, communicationConsents, communicationSuppressions, communicationSegments, communicationTemplates, communicationTemplateVersions, communicationCampaigns, communicationCampaignRecipients, communicationDeliveries, communicationDeliveryEvents, communicationAutomations, communicationAutomationRuns, communicationAutomationRecipients } from '@/features/broadcast/models/broadcast-schema';
-import { marksheetTemplates, examSeats } from '@/features/assessment/models/assessment-schema';
+import { assessmentAudiences, assessmentOutcomes, marksheetTemplates, examSeats } from '@/features/assessment/models/assessment-schema';
 import { customFieldDefinitions, customFieldValues } from '@/features/settings/models/settings-schema';
 import { guardGates, guardShifts, guardAssignments, guardVisitorInvitations, guardVisits, guardPickupAuthorizations, guardReleaseEvents, guardGateScanEvents, guardIncidents, guardIncidentActions, guardEmergencyProcedures, guardEmergencyContacts, guardEmergencyActivations } from '@/features/guard/models/guard-schema';
 import { scannerDevices, scannerSessions, attendanceScanEvents, workforcePunchEvents } from '@/features/attendance/models/attendance-qr-schema';
@@ -163,7 +162,6 @@ import { transportVehicleDocuments, transportCrewAssignments, transportTripRoste
 // Additional imports for the remaining module tables (assessment outcomes, live
 // classrooms, accounting, reporting, portal, attachments, leadership, payroll
 // versioning, guard/hostel/library extras, security/settings/audit).
-import { assessmentOutcomes } from '@/features/assessment/models/assessment-schema';
 import { identityBadgeCredentials } from '@/features/attendance/models/attendance-qr-schema';
 import { accountingJournals, accountingVoucherTypes, accountingNumberingSeries, accountingPostingRequests, accountingJournalLinks, accountingDocuments, accountingDocumentLines, accountingClosingRuns, accountingClosingBalances, accountingPeriodReopenRequests, accountingStatementImports, accountingStatementLines, accountingSourceMappings } from '@/features/accounting/models/accounting-schema';
 import { reportDefinitions, reportSavedViews, reportFavorites, reportRuns, reportSchedules, reportSnapshots, reportProjectionWatermarks } from '@/addons/advanced-reporting/models/reporting-schema';
@@ -393,6 +391,10 @@ async function run() {
     const sessionYearId = defaultSession!.id;
     await tx.insert(sessionYears).values({ tenantId, name: `${sy(2026)}-${sy(2027)}`, startDate: `${sy(2026)}-09-01`, endDate: `${sy(2027)}-06-30`, isDefault: false });
 
+    const [ay25] = await tx.insert(academicYears).values({ tenantId, name: `${sy(2025)}-${sy(2026)}`, startDate: `${sy(2025)}-09-01T00:00:00.000Z`, endDate: `${sy(2026)}-06-30T23:59:59.000Z`, isActive: true }).returning();
+    const [ayTerm1] = await tx.insert(academicTerms).values({ tenantId, academicYearId: ay25!.id, name: 'Semestre 1', startDate: `${sy(2025)}-11-03T00:00:00.000Z`, endDate: `${sy(2026)}-01-30T23:59:59.000Z`, isCurrent: true }).returning();
+    const [ayTerm2] = await tx.insert(academicTerms).values({ tenantId, academicYearId: ay25!.id, name: 'Semestre 2', startDate: `${sy(2026)}-03-02T00:00:00.000Z`, endDate: `${sy(2026)}-06-26T23:59:59.000Z`, isCurrent: false }).returning();
+
     // Classes (3ème = college, others = lycee) + class-sections (A/B/C each).
     const CLASSES = ['3ème', '2nde', '1ère', 'Terminale'];
     // Branch split mirrors the audit data fix: the 3rd class in name order
@@ -609,7 +611,7 @@ async function run() {
           status = r2 < 0.4 ? 'absent' : r2 < 0.7 ? 'late' : 'excused';
           if (status === 'late') lateMinutes = int(5, 40);
         }
-        attRows.push({ tenantId, studentId: sid, date, period: 1, status, lateMinutes, markedById: teacherIdsForMark[(attCount++) % 20] });
+        attRows.push({ tenantId, studentId: sid, academicYearId: sessionYearId, date, period: 1, status, lateMinutes, markedById: teacherIdsForMark[(attCount++) % 20] });
       }
     }
     for (let i = 0; i < attRows.length; i += 400) await tx.insert(attendance).values(attRows.slice(i, i + 400));
@@ -670,39 +672,115 @@ async function run() {
         { assessmentPlanId: pl!.id, criteriaId: critB!.id, maxScore: 7, weightPercentage: 35 },
         { assessmentPlanId: pl!.id, criteriaId: critC!.id, maxScore: 5, weightPercentage: 25 },
       ]);
-      const [asmt] = await tx
+      await tx
         .insert(assessments)
-        .values({ tenantId, assessmentPlanId: pl!.id, title: `${plan.subject} – CC${planN}`, assessmentDate: isoTs(-int(10, 25)) })
-        .returning();
-      const results = (classStudents[plan.className] ?? []).map((sid) => {
-        const pct = int(30, 98);
-        return { tenantId, assessmentId: asmt!.id, studentId: sid, finalPercentage: pct, gradeCode: gradeFor(pct) };
-      });
-      for (let i = 0; i < results.length; i += 100) await tx.insert(assessmentResults).values(results.slice(i, i + 100));
+        .values({ tenantId, assessmentPlanId: pl!.id, title: `${plan.subject} – CC${planN}`, assessmentDate: isoTs(-int(10, 25)) });
       planN++;
     }
-    console.log(`  · seeded assessment plans + ${6 * 50} results`);
+    console.log(`  · seeded assessment plans`);
 
-    // Exams: definitions, terms, halls, schedules.
-    const examDefRows = plans.slice(0, 4).map((p) => ({
-      tenantId,
-      classSubjectId: classSubjectIds[`${p.className}:${p.subject}`],
-      sessionYearId,
-      type: 'paper_exam' as const,
-      title: `Examen – ${p.subject} (${p.className})`,
-      maximumScore: '20.00',
-      coefficient: '2.00',
-      passMark: '10.00',
-      status: 'published' as const,
-      createdBy: 'USR-001',
-    }));
-    const examDefIds: string[] = [];
-    for (const def of examDefRows) {
-      const [r] = await tx.insert(assessmentDefinitions).values(def).returning();
-      examDefIds.push(r!.id);
-    }
+    // Exam terms
     const [term1] = await tx.insert(examTerms).values({ tenantId, sessionYearId, name: 'Semestre 1', code: 'S1', startDate: `${sy(2025)}-11-03`, endDate: `${sy(2026)}-01-30`, status: 'active', isPublished: true }).returning();
     const [term2] = await tx.insert(examTerms).values({ tenantId, sessionYearId, name: 'Semestre 2', code: 'S2', startDate: `${sy(2026)}-03-02`, endDate: `${sy(2026)}-06-26`, status: 'setup', isPublished: true }).returning();
+
+    // Canonical assessment definitions covering every class level and both terms (GD1).
+    type SeededDefMeta = {
+      id: string;
+      className: string;
+      classSubjectId: string;
+      termId: string;
+      date: string;
+      moderationState: 'published' | 'draft';
+    };
+    const seededDefs: SeededDefMeta[] = [];
+    const audienceRows: Array<{ assessmentDefinitionId: string; sectionId: string }> = [];
+    const examDefIds: string[] = [];
+
+    for (const className of CLASSES) {
+      // Pick 5 core subjects for each class level
+      const targetSubjects = CLASS_SUBJECT_MAP[className].slice(0, 5);
+      for (const subjName of targetSubjects) {
+        const csKey = `${className}:${subjName}`;
+        const csId = classSubjectIds[csKey];
+        if (!csId) continue;
+
+        const defConfigs = [
+          {
+            title: `Contrôle Continu 1 – ${subjName} (${className})`,
+            termId: term1!.id,
+            date: `${sy(2025)}-11-20 09:00:00`,
+            status: 'published' as const,
+            moderationState: 'published' as const,
+            coefficient: '1.00',
+          },
+          {
+            title: `Examen Semestre 1 – ${subjName} (${className})`,
+            termId: term1!.id,
+            date: `${sy(2026)}-01-15 09:00:00`,
+            status: 'published' as const,
+            moderationState: 'published' as const,
+            coefficient: '2.00',
+          },
+          {
+            title: `Contrôle Continu 1 (S2) – ${subjName} (${className})`,
+            termId: term2!.id,
+            date: `${sy(2026)}-03-25 09:00:00`,
+            status: 'published' as const,
+            moderationState: 'published' as const,
+            coefficient: '1.00',
+          },
+          {
+            title: `Contrôle Continu 2 (S2) – ${subjName} (${className})`,
+            termId: term2!.id,
+            date: `${sy(2026)}-05-10 09:00:00`,
+            status: 'draft' as const,
+            moderationState: 'draft' as const,
+            coefficient: '1.00',
+          },
+        ];
+
+        for (const cfg of defConfigs) {
+          const [def] = await tx
+            .insert(assessmentDefinitions)
+            .values({
+              tenantId,
+              classSubjectId: csId,
+              sessionYearId,
+              termId: cfg.termId,
+              type: 'paper_exam',
+              title: cfg.title,
+              maximumScore: '20.00',
+              coefficient: cfg.coefficient,
+              passMark: '10.00',
+              status: cfg.status,
+              createdBy: 'USR-001',
+              createdAt: cfg.date,
+              updatedAt: cfg.date,
+            })
+            .returning();
+
+          examDefIds.push(def!.id);
+          seededDefs.push({
+            id: def!.id,
+            className,
+            classSubjectId: csId,
+            termId: cfg.termId,
+            date: cfg.date,
+            moderationState: cfg.moderationState,
+          });
+
+          // Audience: targets every section of this class level (A, B, C)
+          for (const sId of classInfo[className].sections) {
+            audienceRows.push({ assessmentDefinitionId: def!.id, sectionId: sId });
+          }
+        }
+      }
+    }
+
+    for (let i = 0; i < audienceRows.length; i += 100) {
+      await tx.insert(assessmentAudiences).values(audienceRows.slice(i, i + 100));
+    }
+
     const hallIds: string[] = [];
     for (const h of [['Salle 1', 'H1'], ['Salle 2', 'H2'], ['Salle 3', 'H3']]) {
       const [r] = await tx.insert(examHalls).values({ tenantId, branchId, name: h[0], code: h[1], capacity: 30, isAccessible: true, isActive: true }).returning();
@@ -714,7 +792,7 @@ async function run() {
       { tenantId, examTermId: term2!.id, assessmentDefinitionId: examDefIds[2], examHallId: hallIds[2], startTime: isoTs(30), endTime: isoTs(30), status: 'draft' },
     ];
     await tx.insert(examSchedules).values(schedRows);
-    console.log(`  · seeded exam terms/halls/schedules`);
+    console.log(`  · seeded exam terms/halls/schedules + ${seededDefs.length} assessment definitions`);
 
     // -----------------------------------------------------------------------
     // Calendar events
@@ -1101,9 +1179,6 @@ async function run() {
       { tenantId, name: 'Salle informatique', capacity: 28, roomType: 'informatique', isActive: true },
       { tenantId, name: 'Salle des professeurs', capacity: 40, roomType: 'réunion', isActive: true },
     ]);
-    const [ay25] = await tx.insert(academicYears).values({ tenantId, name: `${sy(2025)}-${sy(2026)}`, startDate: `${sy(2025)}-09-01T00:00:00.000Z`, endDate: `${sy(2026)}-06-30T23:59:59.000Z`, isActive: true }).returning();
-    const [ayTerm1] = await tx.insert(academicTerms).values({ tenantId, academicYearId: ay25!.id, name: 'Semestre 1', startDate: `${sy(2025)}-11-03T00:00:00.000Z`, endDate: `${sy(2026)}-01-30T23:59:59.000Z`, isCurrent: true }).returning();
-    const [ayTerm2] = await tx.insert(academicTerms).values({ tenantId, academicYearId: ay25!.id, name: 'Semestre 2', startDate: `${sy(2026)}-03-02T00:00:00.000Z`, endDate: `${sy(2026)}-06-26T23:59:59.000Z`, isCurrent: false }).returning();
     await tx.insert(semesters).values([
       { tenantId, name: 'Semestre 1', startMonth: 9, endMonth: 1 },
       { tenantId, name: 'Semestre 2', startMonth: 2, endMonth: 6 },
@@ -1739,7 +1814,7 @@ async function run() {
     // Attendance extras: excuses, flags, summaries, QR scanners + punch events.
     // -----------------------------------------------------------------------
     const excuseRows = studentIds.slice(0, 14).map((sid, i) => ({
-      tenantId, studentId: sid, date: lastWeekdays(4)[i % 4], reason: pick(['Maladie', 'Rendez-vous médical', 'Raison familiale']),
+      tenantId, studentId: sid, sessionYearId, date: lastWeekdays(4)[i % 4], reason: pick(['Maladie', 'Rendez-vous médical', 'Raison familiale']),
       documentUrl: null, documentFileExt: null, status: pick(['pending', 'approved', 'rejected'] as const),
       reviewedById: pick(['USR-001', 'USR-ACC-001', null]), reviewedAt: i % 2 === 0 ? isoTs(-3) : null,
       rejectionReason: null, createdAt: isoTs(-8), updatedAt: isoTs(-8),
@@ -1996,7 +2071,7 @@ async function run() {
     const handHistRows = handIds.map((hid, i) => ({ tenantId, handoffId: hid, fromStatus: null, toStatus: 'open', changedById: 'USR-RECEPT-001', reason: null, createdAt: isoTs(-3) }));
     await tx.insert(receptionHandoffStatusHistory).values(handHistRows);
     await tx.insert(tenantDomains).values([{ tenantId, domain: 'atlas.schoolos.app', domainType: 'subdomain' as const, status: 'approved' as const, verificationToken: 'vt-1', requestedAt: isoTs(-60), requestedById: 'USR-001', approvedAt: isoTs(-60), approvedById: 'USR-001', createdAt: isoTs(-60), updatedAt: isoTs(-60) }, { tenantId, domain: 'groupe-atlas.ma', domainType: 'custom' as const, status: 'pending' as const, verificationToken: 'vt-2', requestedAt: isoTs(-5), requestedById: 'USR-001', approvedAt: null, approvedById: null, createdAt: isoTs(-5), updatedAt: isoTs(-5) }]);
-    await tx.insert(schoolSettings).values({ tenantId, establishmentName: 'Groupe Scolaire Atlas', city: 'Casablanca', address: '12, Avenue Mohammed V', phone: '+212522000000', email: 'contact@atlas.ma', academicYear: `${sy(2025)}-${sy(2026)}`, startDate: `${sy(2025)}-09-01`, endDate: `${sy(2026)}-06-30`, allowOperations: true, presenceModes: ['morning', 'afternoon'], languages: ['fr', 'ar'], security: { twoFactor: true }, createdAt: isoTs(-180), updatedAt: isoTs(-1), ice: 'ICE-001234567', legalStatus: 'Privé', directorName: 'Youssef El Amrani', shortName: 'Atlas', website: 'https://atlas.ma', country: 'Maroc', rc: 'RC-12345', taxId: 'IF-123456', directorEmail: 'y.elamrani@atlas.ma', directorPhone: '+212522000001', financialContactName: 'Fatima Zahra', financialContactEmail: 'finance@atlas.ma', financialContactPhone: '+212522000002', admissionsContactName: 'Samira', admissionsContactEmail: 'admissions@atlas.ma', admissionsContactPhone: '+212522000003', localeTimezone: 'Africa/Casablanca', dateFormat: 'DD/MM/YYYY', documentHeaderStyle: 'classic', loginAccessMethod: 'username', attendanceLateGraceMinutes: 15, attendancePeriodStartTime: '08:00' });
+    await tx.insert(schoolSettings).values({ tenantId, establishmentName: 'Groupe Scolaire Atlas', city: 'Casablanca', address: '12, Avenue Mohammed V', phone: '+212522000000', email: 'contact@atlas.ma', academicYear: `${sy(2025)}-${sy(2026)}`, startDate: `${sy(2025)}-09-01`, endDate: `${sy(2026)}-06-30`, allowOperations: true, presenceModes: { presence: true, absenceJustifiee: true, absenceNonJustifiee: true, retard: true, sortieAnticipee: true, morning: true, afternoon: true }, languages: { francais: true, arabe: true, anglais: false }, security: { twoFactor: true }, createdAt: isoTs(-180), updatedAt: isoTs(-1), ice: 'ICE-001234567', legalStatus: 'Privé', directorName: 'Youssef El Amrani', shortName: 'Atlas', website: 'https://atlas.ma', country: 'Maroc', rc: 'RC-12345', taxId: 'IF-123456', directorEmail: 'y.elamrani@atlas.ma', directorPhone: '+212522000001', financialContactName: 'Fatima Zahra', financialContactEmail: 'finance@atlas.ma', financialContactPhone: '+212522000002', admissionsContactName: 'Samira', admissionsContactEmail: 'admissions@atlas.ma', admissionsContactPhone: '+212522000003', localeTimezone: 'Africa/Casablanca', dateFormat: 'DD/MM/YYYY', documentHeaderStyle: 'classique', loginAccessMethod: 'username', attendanceLateGraceMinutes: 15, attendancePeriodStartTime: '08:00' });
     const cfRows = ([['matricule', 'N° matricule', 'student', 'text'], ['sport', 'Sport pratiqué', 'student', 'select']] as const).map((c, i) => ({ tenantId, key: c[0], label: c[1], entityType: c[2], fieldType: c[3], options: c[3] === 'select' ? ['football', 'basket', 'natation'] : null, required: false, defaultValue: null, sortOrder: i + 1, isActive: true, createdAt: isoTs(-70), updatedAt: isoTs(-70) }));
     const cfIds: string[] = [];
     for (const c of cfRows) { const [r] = await tx.insert(customFieldDefinitions).values(c).returning(); cfIds.push(r!.id); }
@@ -2014,21 +2089,62 @@ async function run() {
     // -----------------------------------------------------------------------
     // Assessment outcomes + identity badges
     // -----------------------------------------------------------------------
-    const outcomeRows: Array<{ tenantId: string; assessmentDefinitionId: string; studentId: string; rawScore: string; maximumScoreSnapshot: string; normalizedScore: string; grade: string; status: string; sourceType: string; markerId: string; moderationState: string }> = [];
-    for (let d = 0; d < examDefIds.length; d++) {
-      const defId = examDefIds[d]!;
-      const cls = ['2nde', '1ère', 'Terminale', '3ème'][d]!;
-      for (const sid of classStudents[cls] ?? []) {
-        const pct = int(45, 96);
-        outcomeRows.push({ tenantId, assessmentDefinitionId: defId, studentId: sid, rawScore: ((pct / 100) * 20).toFixed(2), maximumScoreSnapshot: '20.00', normalizedScore: ((pct / 100) * 20).toFixed(2), grade: gradeFor(pct), status: 'graded', sourceType: 'paper_exam', markerId: teacherIds[d % 20]!, moderationState: 'published' });
+    const outcomeRows: Array<{
+      tenantId: string;
+      assessmentDefinitionId: string;
+      studentId: string;
+      rawScore: string;
+      maximumScoreSnapshot: string;
+      normalizedScore: string;
+      grade: string;
+      status: string;
+      sourceType: string;
+      markerId: string;
+      moderationState: string;
+      createdAt: string;
+      updatedAt: string;
+    }> = [];
+
+    for (let d = 0; d < seededDefs.length; d++) {
+      const def = seededDefs[d]!;
+      const students = classStudents[def.className] ?? [];
+      for (let sIdx = 0; sIdx < students.length; sIdx++) {
+        const sid = students[sIdx]!;
+        const studentNum = parseInt(sid.replace(/\D/g, ''), 10) || (sIdx + 1);
+        // Realistic Moroccan grade distribution: between 6.00 and 18.50
+        const base = 8 + ((studentNum * 7 + d * 3) % 9); // 8 to 16
+        const jitter = ((studentNum * 13 + d * 5) % 5) - 2; // -2 to +2
+        const rawNum = Math.min(19.25, Math.max(5.5, base + jitter + 0.25 * ((studentNum + d) % 5)));
+        const rawScore = rawNum.toFixed(2);
+        const pct = Math.round((rawNum / 20) * 100);
+
+        outcomeRows.push({
+          tenantId,
+          assessmentDefinitionId: def.id,
+          studentId: sid,
+          rawScore,
+          maximumScoreSnapshot: '20.00',
+          normalizedScore: rawScore,
+          grade: gradeFor(pct),
+          status: 'graded',
+          sourceType: 'paper_exam',
+          markerId: teacherIds[(studentNum + d) % 20]!,
+          moderationState: def.moderationState,
+          createdAt: def.date,
+          updatedAt: def.date,
+        });
       }
     }
-    for (let i = 0; i < outcomeRows.length; i += 100) await tx.insert(assessmentOutcomes).values(outcomeRows.slice(i, i + 100));
+
+    for (let i = 0; i < outcomeRows.length; i += 200) {
+      await tx.insert(assessmentOutcomes).values(outcomeRows.slice(i, i + 200));
+    }
+
     const badgeRows = studentIds.map((sid, i) => ({ tenantId, userId: sid, subjectType: 'student' as const, tokenHash: `hash-stu-${sid.toLowerCase()}`, displayPrefix: `ATL-STU-${pad4(i + 1)}`, status: (i % 12 === 0 ? 'revoked' : 'active') as const, issuedAt: isoTs(-200), expiresAt: isoTs(200), revokedAt: i % 12 === 0 ? isoTs(-30) : null, issuerId: 'USR-001' })).concat(
       teacherIds.map((tid, i) => ({ tenantId, userId: tid, subjectType: 'staff' as const, tokenHash: `hash-tch-${tid.toLowerCase()}`, displayPrefix: `ATL-STAFF-${pad2(i + 1)}`, status: 'active' as const, issuedAt: isoTs(-200), expiresAt: isoTs(300), revokedAt: null, issuerId: 'USR-001' }))
     );
     for (let i = 0; i < badgeRows.length; i += 100) await tx.insert(identityBadgeCredentials).values(badgeRows.slice(i, i + 100));
-    console.log(`  · seeded assessment outcomes (${outcomeRows.length}) + ${badgeRows.length} identity badges`);
+    console.log(`  · seeded assessment outcomes (${outcomeRows.length} across ${seededDefs.length} definitions) + ${badgeRows.length} identity badges`);
 
     // -----------------------------------------------------------------------
     // Live classrooms

@@ -24,6 +24,7 @@ import { reserveEmployeeId } from '@/features/hr/services/employee-id';
 import { ApiError } from '@/libs/api/errors';
 import { hasCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
+import { getCurrentSessionYearId } from '@/libs/services/school-year';
 import { generateSetupToken, hashSetupToken, SETUP_TOKEN_TTL_MS } from '@/libs/setup-token';
 import { normalizeMoroccanPhone } from '@/libs/sms/moroccan-sms-adapter';
 import {
@@ -298,13 +299,9 @@ function isCurrentOffering(offeringSessionYearId: string | null, defaultSessionY
   return defaultSessionYearId !== null && offeringSessionYearId === defaultSessionYearId;
 }
 
+/** Delegates to the canonical resolver (libs/services/school-year). */
 export async function getDefaultSessionYearId(tenantId: string): Promise<string | null> {
-  const [row] = await db
-    .select({ id: sessionYears.id })
-    .from(sessionYears)
-    .where(and(eq(sessionYears.tenantId, tenantId), eq(sessionYears.isDefault, true)))
-    .limit(1);
-  return row?.id ?? null;
+  return getCurrentSessionYearId(tenantId);
 }
 
 export async function getPublishedVersionId(tenantId: string): Promise<string | null> {

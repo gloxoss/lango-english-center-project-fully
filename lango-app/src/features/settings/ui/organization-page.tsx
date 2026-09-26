@@ -6,6 +6,7 @@ import { eq } from 'drizzle-orm';
 import { brandingFileKey, uploadedFileExists } from '@/libs/api/uploads';
 import { getServerUserContext } from '@/libs/auth/server-context';
 import { db } from '@/libs/DB';
+import { getCurrentSessionYear } from '@/libs/services/school-year';
 import { getEffectiveValueWithLegacyFallback } from '@/libs/settings/registry';
 import { schoolSettings, tenants } from '@/models/Schema';
 import { OrganisationFormClient } from './organization-form-client';
@@ -15,9 +16,6 @@ const DEFAULT_FORM_DATA: OrganisationFormData = {
   shortName: '',
   city: '',
   address: '',
-  academicYear: '',
-  startDate: '',
-  endDate: '',
   phone: '',
   email: '',
   website: '',
@@ -81,6 +79,9 @@ export async function OrganizationPage() {
   let initialData = { ...DEFAULT_FORM_DATA };
   let hasLogo = false;
   let hasFavicon = false;
+  // Read-only display of the current school year. The canonical store is
+  // `session_years` (OD1); this page no longer carries or writes a copy.
+  let currentSessionYear: { name: string; startDate: string; endDate: string } | null = null;
 
   const ctx = await getServerUserContext();
   const tenantId = ctx?.tenantId ?? null;
@@ -102,9 +103,6 @@ export async function OrganizationPage() {
         shortName: settingRow.shortName ?? '',
         city: settingRow.city ?? '',
         address: settingRow.address ?? '',
-        academicYear: settingRow.academicYear ?? '',
-        startDate: settingRow.startDate ?? '',
-        endDate: settingRow.endDate ?? '',
         phone: settingRow.phone ?? '',
         email: settingRow.email ?? '',
         website: settingRow.website ?? '',
@@ -155,6 +153,9 @@ export async function OrganizationPage() {
       initialData.localeTimezone = (tzEff.value as string) ?? initialData.localeTimezone;
     }
 
+    const year = await getCurrentSessionYear(tenantId);
+    currentSessionYear = year ? { name: year.name, startDate: year.startDate, endDate: year.endDate } : null;
+
     // hasLogo must mean "there is an image to show", not "the column is set".
     // A non-empty logoUrl with no file behind it made this page render an <img>
     // pointing at /api/settings/logo, which can only answer 404 - the failing
@@ -180,6 +181,7 @@ export async function OrganizationPage() {
       initialData={initialData}
       hasLogo={hasLogo}
       hasFavicon={hasFavicon}
+      currentSessionYear={currentSessionYear}
     />
   );
 }

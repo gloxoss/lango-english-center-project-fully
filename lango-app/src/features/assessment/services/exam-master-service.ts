@@ -1,5 +1,6 @@
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/libs/DB';
+import { consumeDocumentNumber } from '@/libs/finance/document-number';
 import {
   assessmentOutcomes,
   examHalls,
@@ -120,33 +121,47 @@ export class ExamMasterService {
       .where(and(eq(examSeats.tenantId, tenantId), eq(examSeats.examTermId, examTermId)));
 
     const plan = planSeatAllocations(halls, studentIds);
-    const createdSeats = [];
 
-    for (const item of plan.allocations) {
-      const candidateNumber = `CAND-${new Date().getFullYear()}-${String(item.studentIndex + 1).padStart(4, '0')}`;
-      const deskLabel = `Bureau ${item.seatNumber} (${item.hallCode})`;
+    // One transaction for the whole plan: the CAND- counter is reserved with
+    // the same advisory lock every other numbering consumer uses, so two
+    // allocation runs in the same year cannot hand out the same candidate
+    // number, and a failure mid-loop cannot leave half a plan behind.
+    return db.transaction(async (tx) => {
+      await tx
+        .delete(examSeats)
+        .where(and(eq(examSeats.tenantId, tenantId), eq(examSeats.examTermId, examTermId)));
 
-      const [seat] = await db
-        .insert(examSeats)
-        .values({
+      const createdSeats: (typeof examSeats.$inferSelect)[] = [];
+
+      for (const item of plan.allocations) {
+        const candidateNumber = await consumeDocumentNumber(tx, {
           tenantId,
-          examTermId,
-          examHallId: item.hallId,
-          studentId: item.studentId,
-          seatNumber: item.seatNumber,
-          deskLabel,
-          candidateNumber,
-        })
-        .returning();
+          prefix: `CAND-${new Date().getFullYear()}-`,
+        });
+        const deskLabel = `Bureau ${item.seatNumber} (${item.hallCode})`;
 
-      createdSeats.push(seat);
-    }
+        const [seat] = await tx
+          .insert(examSeats)
+          .values({
+            tenantId,
+            examTermId,
+            examHallId: item.hallId,
+            studentId: item.studentId,
+            seatNumber: item.seatNumber,
+            deskLabel,
+            candidateNumber,
+          })
+          .returning();
 
-    return {
-      allocatedCount: createdSeats.length,
-      unallocatedCount: plan.unallocatedCount,
-      seats: createdSeats,
-    };
+        createdSeats.push(seat!);
+      }
+
+      return {
+        allocatedCount: createdSeats.length,
+        unallocatedCount: plan.unallocatedCount,
+        seats: createdSeats,
+      };
+    });
   }
 
   /**

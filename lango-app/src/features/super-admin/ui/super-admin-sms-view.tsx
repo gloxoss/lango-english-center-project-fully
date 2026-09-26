@@ -305,7 +305,9 @@ export function SuperAdminSmsView() {
                 logs.map((log) => (
                   <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="py-3 px-4">
-                      <div className="font-bold text-[#16212B]">{log.schoolName || 'Atlas International'}</div>
+                      {/* '—' rather than a school name: a log row with no school
+                          was rendering one specific demo school's name. */}
+                      <div className="font-bold text-[#16212B]">{log.schoolName || '—'}</div>
                       <div className="text-[10px] text-slate-400 font-mono">{log.tenantId.slice(0, 8)}...</div>
                     </td>
                     <td className="py-3 px-4 font-mono font-bold text-slate-800">

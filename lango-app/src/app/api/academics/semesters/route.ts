@@ -19,6 +19,25 @@ function toApiSemester(row: typeof semesters.$inferSelect) {
   };
 }
 
+/** SCF-10-01: audit metadata names the fields that actually moved. */
+function changedFields(
+  before: Record<string, unknown>,
+  after: Record<string, unknown>,
+  fields: readonly string[],
+): Record<string, { before: unknown; after: unknown }> {
+  const changed: Record<string, { before: unknown; after: unknown }> = {};
+  for (const field of fields) {
+    const previous = before[field] ?? null;
+    const next = after[field] ?? null;
+    if (previous !== next) {
+      changed[field] = { before: previous, after: next };
+    }
+  }
+  return changed;
+}
+
+const AUDITED_SEMESTER_FIELDS = ['name', 'startMonth', 'endMonth'] as const;
+
 export async function GET(request: Request) {
   try {
     // Listing terms is a read and belongs to academics.read; academics.manage
@@ -81,17 +100,37 @@ export async function PUT(request: Request) {
     await requireCapability(context, 'academics.manage');
     const body = await parseJson(request, semesterUpdateSchema);
 
-    const [updated] = await db
-      .update(semesters)
-      .set({ name: body.name, startMonth: body.startMonth, endMonth: body.endMonth })
-      .where(and(eq(semesters.id, body.id), eq(semesters.tenantId, tenantId)))
-      .returning();
+    // Read the previous row in the same transaction as the update so the
+    // audit's "before" is what was actually replaced.
+    const result = await db.transaction(async (tx) => {
+      const [previous] = await tx
+        .select()
+        .from(semesters)
+        .where(and(eq(semesters.id, body.id), eq(semesters.tenantId, tenantId)))
+        .for('update')
+        .limit(1);
+      const [row] = await tx
+        .update(semesters)
+        .set({ name: body.name, startMonth: body.startMonth, endMonth: body.endMonth })
+        .where(and(eq(semesters.id, body.id), eq(semesters.tenantId, tenantId)))
+        .returning();
+      return { previous, row };
+    });
+
+    const { previous, row: updated } = result;
 
     if (!updated) {
       return NextResponse.json({ success: false, message: 'Introuvable' }, { status: 404 });
     }
 
-    recordAudit(context, 'update', 'semester', body.id);
+    const changed = changedFields(previous ?? {}, updated, AUDITED_SEMESTER_FIELDS);
+    recordAudit(
+      context,
+      'update',
+      'semester',
+      body.id,
+      Object.keys(changed).length > 0 ? { changed } : undefined,
+    );
 
     return NextResponse.json({ success: true, data: toApiSemester(updated) });
   } catch (error) {
@@ -127,7 +166,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ success: false, message: 'ID non fourni' }, { status: 400 });
     }
 
-    const [existing] = await db.select({ id: semesters.id }).from(semesters).where(and(eq(semesters.id, id), eq(semesters.tenantId, tenantId))).limit(1);
+    const [existing] = await db.select().from(semesters).where(and(eq(semesters.id, id), eq(semesters.tenantId, tenantId))).limit(1);
     if (!existing) {
       return NextResponse.json({ success: false, message: 'Introuvable' }, { status: 404 });
     }
@@ -148,7 +187,9 @@ export async function DELETE(request: Request) {
     }
 
     await db.delete(semesters).where(and(eq(semesters.id, id), eq(semesters.tenantId, tenantId)));
-    recordAudit(context, 'delete', 'semester', id);
+    recordAudit(context, 'delete', 'semester', id, {
+      changed: changedFields(existing, {}, AUDITED_SEMESTER_FIELDS),
+    });
 
     return NextResponse.json({ success: true, id });
   } catch (error) {

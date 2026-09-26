@@ -17,7 +17,7 @@ import { createTranslator } from 'next-intl';
 import { NextResponse } from 'next/server';
 import { eventOccurrences, events, eventSchedules } from '@/features/events/models/events-schema';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { apiErrorResponse } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
 import {
   collectedPaymentCondition,
@@ -25,6 +25,7 @@ import {
   netCollectedSumSql,
   overdueInvoiceCondition,
 } from '@/libs/finance/definitions';
+import { getCurrentSessionYear } from '@/libs/services/school-year';
 import {
   admissionInterviews,
   applicants,
@@ -37,7 +38,6 @@ import {
   invoices,
   payments,
   sections,
-  sessionYears,
   tenants,
   user,
 } from '@/models/Schema';
@@ -68,7 +68,6 @@ export async function GET(request: Request) {
     const context = await requireRequestContext(request, ['school_admin']);
     const tenantId = requireTenant(context);
     const { searchParams } = new URL(request.url);
-    const requestedBranchId = searchParams.get('branchId');
     const requestedLocale = searchParams.get('locale');
     const locale: keyof typeof SUMMARY_MESSAGES = requestedLocale === 'ar' || requestedLocale === 'en' ? requestedLocale : 'fr';
     const tr = createTranslator({ locale, messages: SUMMARY_MESSAGES[locale], namespace: 'DashboardHome' });
@@ -82,29 +81,12 @@ export async function GET(request: Request) {
     // =========================================================================
     // 1. Authoritative Branch Scoping (P0 Security Invariant)
     // =========================================================================
-    // If the principal is assigned to a specific branch (context.branchId),
-    // they are strictly confined to that branch. Any client attempt to query
-    // another branch or bypass branch scoping is rejected with 403.
-    // If the principal is a whole-school admin (context.branchId === null),
-    // they may query all branches or select a specific branch validated
-    // against the tenant's active branches.
-    let effectiveBranchId: string | null = null;
-    if (context.branchId) {
-      if (requestedBranchId && requestedBranchId !== 'all' && requestedBranchId !== context.branchId) {
-        throw new ApiError(403, 'FORBIDDEN', 'Accès interdit à cette succursale.');
-      }
-      effectiveBranchId = context.branchId;
-    } else if (requestedBranchId && requestedBranchId !== 'all') {
-      const [branchRow] = await db
-        .select({ id: branches.id })
-        .from(branches)
-        .where(and(eq(branches.id, requestedBranchId), eq(branches.tenantId, tenantId), eq(branches.isActive, true)))
-        .limit(1);
-      if (!branchRow) {
-        throw new ApiError(403, 'FORBIDDEN', 'Succursale introuvable ou non autorisée.');
-      }
-      effectiveBranchId = branchRow.id;
-    }
+    // The ONLY branch source is the server context: locked staff are confined
+    // to their assigned campus, whole-school staff see their session's chosen
+    // campus (persisted through POST /api/portal/branch) or all campuses. No
+    // client-supplied branch parameter exists here — one that arrives is
+    // ignored, never trusted.
+    const effectiveBranchId: string | null = context.branchId;
 
     // Branch filter conditions for Drizzle queries
     // Finance branch-scope rule (documented decision): money follows the
@@ -131,27 +113,7 @@ export async function GET(request: Request) {
         code: branches.code,
         isDefault: branches.isDefault,
       }).from(branches).where(and(eq(branches.tenantId, tenantId), eq(branches.isActive, true))),
-      db.select({
-        id: sessionYears.id,
-        name: sessionYears.name,
-        startDate: sessionYears.startDate,
-        endDate: sessionYears.endDate,
-        isDefault: sessionYears.isDefault,
-      })
-        .from(sessionYears)
-        .where(and(
-          eq(sessionYears.tenantId, tenantId),
-          or(
-            eq(sessionYears.isDefault, true),
-            and(lte(sessionYears.startDate, today), gte(sessionYears.endDate, today)),
-          ),
-        ))
-        .orderBy(
-          desc(sql`CASE WHEN ${sessionYears.startDate} <= ${today} AND ${sessionYears.endDate} >= ${today} THEN 1 ELSE 0 END`),
-          desc(sessionYears.isDefault),
-          desc(sessionYears.startDate),
-        )
-        .limit(1),
+      getCurrentSessionYear(tenantId),
     ]);
 
     const schoolName = tenantRows[0]?.name ?? 'SchoolOS';
@@ -161,7 +123,10 @@ export async function GET(request: Request) {
         ? tr('allBranches')
         : availableBranches[0]?.name ?? tr('mainCampus');
 
-    const activeAcademicYear = activeSessionYearRows[0];
+    // OD1: the current year is the flagged `is_default` row, never the one that
+    // happens to contain today. Resolving it from the date made the dashboard
+    // disagree with the other 26 consumers of `is_default` every September.
+    const activeAcademicYear = activeSessionYearRows;
     const periodStart = activeAcademicYear?.startDate ?? `${currentYear}-01-01`;
     const periodEnd = activeAcademicYear?.endDate ?? `${currentYear}-12-31`;
     const periodLabel = activeAcademicYear?.name ?? `${currentYear}`;
@@ -1141,7 +1106,7 @@ export async function GET(request: Request) {
           month: 'long',
           day: 'numeric',
         }),
-        branchScope: context.branchId ? 'pinned' : 'all',
+        branchScope: context.branchLocked ? 'pinned' : 'all',
       },
       actionCenter,
       dailyPulse,

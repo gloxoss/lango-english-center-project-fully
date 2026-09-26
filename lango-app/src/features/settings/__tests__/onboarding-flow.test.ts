@@ -1,7 +1,7 @@
 import { eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { db } from '@/libs/DB';
-import { schoolSettings, tenants } from '@/models/Schema';
+import { schoolSettings, sessionYears, tenants } from '@/models/Schema';
 import { isSchoolOnboardingComplete } from '../services/onboarding-completeness';
 
 vi.mock('@/libs/env/server', () => ({
@@ -44,11 +44,12 @@ describe.skipIf(!dbReachable)('onboarding completeness verification', () => {
   });
 
   afterAll(async () => {
+    await db.delete(sessionYears).where(eq(sessionYears.tenantId, tenantId));
     await db.delete(schoolSettings).where(eq(schoolSettings.tenantId, tenantId));
     await db.delete(tenants).where(eq(tenants.id, tenantId));
   });
 
-  it('reports incomplete when logo, address, and academicYear are missing', async () => {
+  it('reports incomplete when logo, address, and the current school year are missing', async () => {
     const complete = await isSchoolOnboardingComplete(tenantId);
     expect(complete).toBe(false);
   });
@@ -59,14 +60,22 @@ describe.skipIf(!dbReachable)('onboarding completeness verification', () => {
     expect(complete).toBe(false);
   });
 
-  it('reports incomplete when logo and address are present but academicYear is missing', async () => {
+  it('reports incomplete when logo and address are present but no current session year exists', async () => {
     await db.update(schoolSettings).set({ address: '123 Main St, Casablanca' }).where(eq(schoolSettings.tenantId, tenantId));
     const complete = await isSchoolOnboardingComplete(tenantId);
     expect(complete).toBe(false);
   });
 
-  it('reports complete once all three required fields are filled', async () => {
-    await db.update(schoolSettings).set({ academicYear: '2026-2027' }).where(eq(schoolSettings.tenantId, tenantId));
+  it('reports complete once logo, address, and a current session year are filled', async () => {
+    // SCF-03-01: the year now lives in session_years (is_default), not in
+    // school_settings.academic_year — writing the old column proves nothing.
+    await db.insert(sessionYears).values({
+      tenantId,
+      name: '2026-2027',
+      startDate: '2026-09-01',
+      endDate: '2027-06-30',
+      isDefault: true,
+    });
     const complete = await isSchoolOnboardingComplete(tenantId);
     expect(complete).toBe(true);
   });

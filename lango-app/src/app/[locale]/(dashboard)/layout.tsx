@@ -12,6 +12,10 @@ import { db } from '@/libs/DB';
 import { requiresTwoFactor } from '@/libs/auth/two-factor-policy';
 import { isSubscriptionBlocked } from '@/libs/subscriptions/subscription-gate-logic';
 import { isSchoolOnboardingComplete } from '@/features/settings/services/onboarding-completeness';
+import { casablancaTodayIso } from '@/libs/finance/today';
+import { getCurrentSessionYear } from '@/libs/services/school-year';
+import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { tenants, user as userTable } from '@/models/Schema';
 
 export default async function DashboardLayout({
@@ -68,6 +72,20 @@ export default async function DashboardLayout({
     onboardingIncomplete = !await isSchoolOnboardingComplete(tenantId);
   }
 
+  // Expired school-year notice (SCF-02-04). The current year is the flagged
+  // `session_years` row (OD1), so "the year has ended" is a fact about that
+  // row, not about today's date matching some other row. Shown to the director
+  // only: they are the one who can open the next year.
+  let expiredYear: { name: string; endDate: string } | null = null;
+  if (principal?.role === 'school_admin' && tenantId) {
+    const currentYear = await getCurrentSessionYear(tenantId);
+    if (currentYear && currentYear.endDate < casablancaTodayIso()) {
+      expiredYear = { name: currentYear.name, endDate: currentYear.endDate };
+    }
+  }
+
+  const t = await getTranslations({ locale, namespace: 'Settings' });
+
   return (
     <SubscriptionGate locale={locale} suspended={subscriptionSuspended}>
       <OnboardingGate locale={locale} incomplete={onboardingIncomplete}>
@@ -75,6 +93,22 @@ export default async function DashboardLayout({
         locale={locale}
         sidebar={<Sidebar locale={locale} />}
         header={<Header locale={locale} />}
+        banner={expiredYear ? (
+          <div
+            role="status"
+            className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900"
+          >
+            <span>
+              {t('year_expired_notice', { year: expiredYear.name, date: expiredYear.endDate })}
+            </span>
+            <Link
+              href={`/${locale}/dashboard/academics/calendar`}
+              className="font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-950"
+            >
+              {t('year_expired_action')}
+            </Link>
+          </div>
+        ) : undefined}
       >
         {children}
       </DashboardShell>

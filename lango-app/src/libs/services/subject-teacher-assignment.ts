@@ -2,7 +2,8 @@ import { and, count, desc, eq, gte, isNull, or } from 'drizzle-orm';
 import { assessmentDefinitions, assessmentOutcomes } from '@/features/assessment/models/assessment-schema';
 import { ApiError } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
-import { classScheduleSlots, sessionYears, subjectTeachers } from '@/models/Schema';
+import { getCurrentSessionYearId } from '@/libs/services/school-year';
+import { classScheduleSlots, subjectTeachers } from '@/models/Schema';
 
 /**
  * TEACHER SUBJECT ASSIGNMENT HISTORY (migration 0146).
@@ -20,13 +21,9 @@ export function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** Delegates to the canonical resolver (libs/services/school-year). */
 export async function getDefaultSessionYearId(tenantId: string): Promise<string | null> {
-  const [row] = await db
-    .select({ id: sessionYears.id })
-    .from(sessionYears)
-    .where(and(eq(sessionYears.tenantId, tenantId), eq(sessionYears.isDefault, true)))
-    .limit(1);
-  return row?.id ?? null;
+  return getCurrentSessionYearId(tenantId);
 }
 
 /** Current-assignment SQL predicate (null endsOn = open-ended). */

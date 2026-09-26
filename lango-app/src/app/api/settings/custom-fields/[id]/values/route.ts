@@ -14,12 +14,16 @@ import {
 type RouteParams = { params: Promise<{ id: string }> };
 
 // GET /api/settings/custom-fields/[id]/values?entityId=xyz
+//
+// Readable by anyone who can see a student (students.read): the student detail
+// page renders the values read-only for non-admins (SCF-08-02). Writing stays
+// school_admin + settings.custom_field.manage (PUT/DELETE below).
 export async function GET(request: Request, { params }: RouteParams) {
   try {
     const { id } = await params;
-    const context = await requireRequestContext(request, ['school_admin']);
+    const context = await requireRequestContext(request);
     requireTenant(context);
-    await requireCapability(context, 'settings.custom_field.manage');
+    await requireCapability(context, 'students.read');
     const entityId = new URL(request.url).searchParams.get('entityId');
     if (!entityId) {
       return NextResponse.json({ success: true, data: null });

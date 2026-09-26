@@ -5,7 +5,10 @@ import type { AuditItem } from './settings-hub-client';
 import { and, count, desc, eq, inArray } from 'drizzle-orm';
 import { hasAddon } from '@/libs/api/entitlements';
 import { SETTINGS_MODULES } from '@/features/settings/data/settings-hub-config';
+import { computeSettingsModuleStatus } from '@/features/settings/services/settings-hub-status';
 import { getServerUserContext } from '@/libs/auth/server-context';
+import { getCurrentSessionYear } from '@/libs/services/school-year';
+import { casablancaTodayIso } from '@/libs/finance/today';
 import { db } from '@/libs/DB';
 import {
   addonEntitlements,
@@ -14,6 +17,7 @@ import {
   chartOfAccounts,
   cndpFilings,
   files,
+  namingSeries,
   schoolSettings,
   settingValues,
   tenants,
@@ -23,6 +27,33 @@ import { SettingsHubClient } from './settings-hub-client';
 
 const STAFF_ROLES = ['school_admin', 'teacher', 'accountant', 'receptionist', 'guard'] as const;
 const CNDP_DONE_STATUSES = ['submitted', 'approved'] as const;
+
+// "Modifications récentes" is a settings feed: only audit rows written by the
+// settings surfaces, never a payment or an attendance mark (SCF-09-01). The
+// list is the entityType of every recordAudit call under app/api/settings.
+const SETTINGS_ENTITY_TYPES = [
+  'school_settings',
+  'settings',
+  'setting',
+  'setting_rollback',
+  'setting_numbering',
+  'setting_custom_field',
+  'setting_job',
+  'branch',
+  'integration',
+  'addon_entitlement',
+  'role_permission',
+  'invitation',
+  'tenant_domain',
+  'tenant_logo',
+  'tenant_favicon',
+  'cndp_filing',
+  'migration_state',
+  'migration_validation',
+  'migration_task',
+  'access_reset_request',
+  'job_run',
+] as const;
 
 function relativeTime(iso: string | null, locale = 'fr'): string {
   if (!iso) {
@@ -95,7 +126,10 @@ export async function SettingsHubPage({ locale }: { locale?: string } = {}) {
       })
       .from(auditLogs)
       .leftJoin(user, eq(auditLogs.actorId, user.id))
-      .where(tenantId ? eq(auditLogs.tenantId, tenantId) : undefined)
+      .where(and(
+        tenantId ? eq(auditLogs.tenantId, tenantId) : undefined,
+        inArray(auditLogs.entityType, [...SETTINGS_ENTITY_TYPES]),
+      ))
       .orderBy(desc(auditLogs.createdAt))
       .limit(5);
 
@@ -148,7 +182,7 @@ export async function SettingsHubPage({ locale }: { locale?: string } = {}) {
         .limit(1),
     ]);
 
-    const [branchCount, settingRows, schoolRow, tenantRow] = await Promise.all([
+    const [branchCount, settingRows, schoolRow, tenantRow, numberingRow, currentYear] = await Promise.all([
       db
         .select({ value: count() })
         .from(branches)
@@ -163,6 +197,8 @@ export async function SettingsHubPage({ locale }: { locale?: string } = {}) {
       tenantId
         ? db.select().from(tenants).where(eq(tenants.id, tenantId)).limit(1)
         : db.select().from(tenants).limit(1),
+      db.select({ value: count() }).from(namingSeries).where(tenantId ? eq(namingSeries.tenantId, tenantId) : undefined),
+      getCurrentSessionYear(tenantId),
     ]);
 
     const hasKey = (k: string) => settingRows.some(s => s.key === k);
@@ -171,33 +207,41 @@ export async function SettingsHubPage({ locale }: { locale?: string } = {}) {
     pcgDone = chartRow.length > 0 || hasKey('accounting.defaults');
     cndpDone = cndpRow.length > 0;
 
-    modulesStatus = {
-      'onboarding': Boolean(schoolRow[0]?.establishmentName),
-      'users': staffRow.length > 0,
-      'security': hasAnyKey('security.policies', 'security.sessionTimeoutMinutes', 'security.dismissedAlerts'),
-      'providers': hasKey('integrations.providers'),
-      'accounting-defaults': pcgDone,
-      'translations': hasKey('i18n.translations'),
-      'jobs': hasKey('jobs.definitions'),
-      'migration': fileRow.length > 0 || hasKey('migration.state'),
-      'policies': hasAnyKey(
+    modulesStatus = computeSettingsModuleStatus({
+      organisation: {
+        name: tenantRow[0]?.name ?? null,
+        ice: schoolRow[0]?.ice ?? null,
+        address: schoolRow[0]?.address ?? null,
+      },
+      currentYear: currentYear ? { startDate: currentYear.startDate, endDate: currentYear.endDate } : null,
+      today: casablancaTodayIso(),
+      staffCount: staffRow.length,
+      securityTwoFactorSet: hasKey('security.requireTwoFactorForAdmins'),
+      providersKeySet: hasKey('integrations.providers'),
+      accountingDone: pcgDone,
+      migrationDone: fileRow.length > 0 || hasKey('migration.state'),
+      policiesKeysSet: hasAnyKey(
         'academic.autoPromotion',
         'academic.passThreshold',
         'academic.gradingScale',
         'portal.guardianEnabled',
         'portal.studentEnabled',
-        'attendance.presenceModes',
-        'attendance.smsAlerts',
+      ),
+      // The attendance page owns the attendance keys (SCF-04-01).
+      attendanceKeySet: hasAnyKey(
         'attendance.lateGraceMinutes',
         'attendance.periodStartTime',
+        'attendance.consecutiveAbsenceThreshold',
+        'attendance.repeatedLateThreshold',
+        'attendance.smsAlerts',
+        'attendance.presenceModes',
       ),
-      entitlements: addonRow.length > 0,
-      // Several campuses only count as configured when the multi-branch add-on
-      // is actually on; otherwise the card claimed 'Configuré' for a module
-      // the school cannot use (audit S-26).
-      branches: (branchCount[0]?.value ?? 0) > 1 && Boolean(tenantId) && await hasAddon(tenantId!, 'multi-branch'),
-      cndp: cndpDone,
-    };
+      entitlementsCount: addonRow.length,
+      numberingSeriesCount: numberingRow[0]?.value ?? 0,
+      branchCount: branchCount[0]?.value ?? 0,
+      multiBranchAddon: Boolean(tenantId) && await hasAddon(tenantId!, 'multi-branch'),
+      cndpDone,
+    });
 
     tenantName = tenantRow[0]?.name ?? '';
     city = schoolRow[0]?.city ?? '';

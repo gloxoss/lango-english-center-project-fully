@@ -21,6 +21,23 @@ const DEFAULT_PRESENCE_MODES = {
 const DEFAULT_LANGUAGES = { francais: true, arabe: true, anglais: false };
 const DEFAULT_SECURITY = { twoFa: true, strongPassword: true, auditLog: true, autoBackup: true };
 
+/**
+ * Fields whose value ends up printed on official documents. A change to any of
+ * them is recorded with its before/after, because "the ICE on the certificate
+ * changed and nobody knows when or to what" is unanswerable otherwise
+ * (DISC-SETTINGS-CORE-01, auditability).
+ */
+const LEGAL_IDENTITY_FIELDS = [
+  'ice',
+  'rc',
+  'taxId',
+  'menAuthorizationNumber',
+  'officialStampUrl',
+  'directorSignatureUrl',
+  'establishmentName',
+  'legalStatus',
+] as const;
+
 export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
@@ -117,9 +134,11 @@ export async function POST(request: Request) {
       shortName: body.shortName,
       city: body.city,
       address: body.address,
-      academicYear: body.academicYear,
-      startDate: body.startDate,
-      endDate: body.endDate,
+      // academicYear / startDate / endDate are deliberately NOT written: the
+      // school year lives in `session_years` and is read through
+      // libs/services/school-year.ts (OD1). This page used to keep a second
+      // copy that only the hub badge ever read. The columns stay in the table
+      // and the schema stays permissive so older clients keep working.
       phone: body.phone,
       email: body.email,
       website: body.website,
@@ -143,16 +162,33 @@ export async function POST(request: Request) {
       admissionsContactEmail: body.admissionsContactEmail,
       admissionsContactPhone: body.admissionsContactPhone,
       allowOperations: body.allowOperations,
-      presenceModes: body.presenceModes ?? DEFAULT_PRESENCE_MODES,
+      // presenceModes is NOT written here any more: the toggles moved to
+      // /dashboard/settings/attendance (SCF-04) and that page writes the
+      // registry key `attendance.presenceModes`, which is what every reader
+      // consults. Leaving this write in place made the Organisation form a
+      // second writer, so a stale tab could silently undo a change made on the
+      // Attendance page. The body field is still accepted (schema permissive)
+      // so an un-refreshed client does not 422.
       languages: body.languages ?? DEFAULT_LANGUAGES,
       security: body.security ?? DEFAULT_SECURITY,
       localeTimezone: body.localeTimezone,
       dateFormat: body.dateFormat,
       documentHeaderStyle: body.documentHeaderStyle,
-      attendanceLateGraceMinutes: body.attendanceLateGraceMinutes ?? 15,
-      attendancePeriodStartTime: body.attendancePeriodStartTime ?? '08:00',
+      // attendanceLateGraceMinutes / attendancePeriodStartTime moved to the
+      // Attendance settings page (SCF-04) and are no longer written here. The
+      // schema still accepts them so an un-refreshed client does not 422.
       updatedAt: new Date().toISOString(),
     };
+
+    // Read the row BEFORE the upsert so the audit can say what actually
+    // changed. Legal-identity fields (ICE, RC, IF, MEN, stamp, signature)
+    // decide what is printed on official documents; until now a change to any
+    // of them left no trace at all.
+    const [before] = await db
+      .select()
+      .from(schoolSettings)
+      .where(eq(schoolSettings.tenantId, tenantId))
+      .limit(1);
 
     const [saved] = await db
       .insert(schoolSettings)
@@ -163,7 +199,26 @@ export async function POST(request: Request) {
       })
       .returning();
 
-    recordAudit(context, 'update', 'school_settings', saved!.id);
+    if (saved) {
+      const changed: Record<string, { before: unknown; after: unknown }> = {};
+      for (const field of LEGAL_IDENTITY_FIELDS) {
+        const previous = before ? (before as Record<string, unknown>)[field] : null;
+        const next = (saved as Record<string, unknown>)[field];
+        // Unchanged fields are omitted entirely rather than recorded as
+        // before === after: an audit row should show the edits, not the form.
+        if (previous !== next) {
+          changed[field] = { before: previous ?? null, after: next ?? null };
+        }
+      }
+
+      recordAudit(
+        context,
+        'update',
+        'school_settings',
+        saved.id,
+        Object.keys(changed).length > 0 ? { changed } : undefined,
+      );
+    }
 
     // Dual-write: sync to new settingValues table. Fire-and-forget so a
     // failure in the new system never breaks the existing settings save.

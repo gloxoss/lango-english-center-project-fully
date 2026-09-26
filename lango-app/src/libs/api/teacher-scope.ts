@@ -1,6 +1,7 @@
 import { and, eq, gte, isNull, or } from 'drizzle-orm';
 import { db } from '@/libs/DB';
-import { classTeachers, sessionYears, subjectTeachers } from '@/models/Schema';
+import { getCurrentSessionYearId } from '@/libs/services/school-year';
+import { classTeachers, subjectTeachers } from '@/models/Schema';
 
 /**
  * Teacher operational scope — CURRENT assignments only.
@@ -17,12 +18,7 @@ function todayIso(): string {
 }
 
 async function getDefaultSessionYearId(tenantId: string): Promise<string | null> {
-  const [row] = await db
-    .select({ id: sessionYears.id })
-    .from(sessionYears)
-    .where(and(eq(sessionYears.tenantId, tenantId), eq(sessionYears.isDefault, true)))
-    .limit(1);
-  return row?.id ?? null;
+  return getCurrentSessionYearId(tenantId);
 }
 
 export async function getTeacherClassSectionIds(tenantId: string, teacherUserId: string): Promise<string[]> {

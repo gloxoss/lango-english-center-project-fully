@@ -26,7 +26,7 @@ export async function currentTenantPrefix(
       .where(and(eq(user.tenantId, tenantId), sql`${user.matricule} is not null and ${user.matricule} <> ''`))
       .orderBy(sql`${user.createdAt} desc`)
       .limit(1);
-    const match = typeof latest?.matricule === 'string' ? /^(.*D)(d{3,})$/.exec(latest.matricule) : null;
+    const match = typeof latest?.matricule === 'string' ? /^(.*\D)(\d{3,})$/.exec(latest.matricule) : null;
     return match ? match[1]! : fallback;
   } catch {
     return fallback;
@@ -106,19 +106,16 @@ export async function reserveMatricule(
       .where(and(eq(namingSeries.prefix, prefix), eq(namingSeries.tenantId, tenantId)));
   } else {
     try {
-      if (typeof db.insert(namingSeries).values().onConflictDoUpdate === 'function') {
-        await db
-          .insert(namingSeries)
-          .values({ prefix, tenantId, currentVal })
-          .onConflictDoUpdate({
-            target: [namingSeries.tenantId, namingSeries.prefix],
-            set: { currentVal },
-          });
-      } else {
-        await db.insert(namingSeries).values({ prefix, tenantId, currentVal });
-      }
+      await db
+        .insert(namingSeries)
+        .values({ prefix, tenantId, currentVal })
+        .onConflictDoUpdate({
+          target: [namingSeries.tenantId, namingSeries.prefix],
+          set: { currentVal },
+        });
     } catch {
-      // If concurrent insert occurred, update instead
+      // Drivers without onConflictDoUpdate (test mocks), or a concurrent insert
+      // that won the race: fall back to updating the row that now exists.
       await db
         .update(namingSeries)
         .set({ currentVal })

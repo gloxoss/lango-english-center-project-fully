@@ -144,6 +144,17 @@ type DocumentStatus = {
   url?: string | null;
 };
 
+// SCF-08-02: tenant-defined extra student attributes.
+type CustomFieldDefinition = {
+  id: string;
+  key: string;
+  label: string;
+  fieldType: 'text' | 'number' | 'date' | 'select' | 'boolean';
+  options: string[] | null;
+  required: boolean;
+  isActive: boolean;
+};
+
 const DOC_KEY_MAP: Record<string, string> = {
   photo: 'docPhoto',
   birth_certificate: 'docBirthCert',
@@ -179,6 +190,7 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
   const methodLabel = (value: string) => (tHome.has(`method_${value}`) ? tHome(`method_${value}` as 'method_cash') : value);
   const lifecycleLabel = (value: string) => (sd.has(`lifecycle.${value}`) ? sd(`lifecycle.${value}` as 'lifecycle.active') : value);
   const { can } = usePermissions();
+  const cfCanEdit = can('settings.custom_field.manage');
 
   const tabs: { id: TabId; label: string }[] = [
     { id: 'profil', label: t('tabProfile') },
@@ -192,6 +204,15 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('profil');
+
+  // SCF-08-02: custom fields card. Values load through the custom-fields API;
+  // editing is offered only to holders of settings.custom_field.manage.
+  const [customFieldDefs, setCustomFieldDefs] = useState<CustomFieldDefinition[]>([]);
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, unknown>>({});
+  const [customFieldsLoading, setCustomFieldsLoading] = useState(true);
+  const [cfEditingId, setCfEditingId] = useState<string | null>(null);
+  const [cfDraft, setCfDraft] = useState('');
+  const [cfSaving, setCfSaving] = useState(false);
 
   // Unified Lifecycle Dialog state
   const [showStatusDialog, setShowStatusDialog] = useState(false);
@@ -259,6 +280,72 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
       }
     } catch (e) {
       console.error('Failed to reload documents', e);
+    }
+  };
+
+  const startEditingCustomField = (def: CustomFieldDefinition) => {
+    const current = customFieldValues[def.id];
+    setCfEditingId(def.id);
+    setCfDraft(current === undefined || current === null ? '' : String(current));
+  };
+
+  const saveCustomField = async (def: CustomFieldDefinition) => {
+    const empty = cfDraft.trim() === '';
+
+    // A non-required empty value clears the field through DELETE; a required
+    // one would be refused by the API, so it is refused here with the same
+    // message rather than sending a request that can only fail.
+    if (empty && def.fieldType !== 'boolean') {
+      if (def.required) {
+        toast.error(sd('customFieldsRequired'));
+        return;
+      }
+      setCfSaving(true);
+      try {
+        const res = await fetch(`/api/settings/custom-fields/${def.id}/values`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ entityId: id }),
+        });
+        const json = await res.json();
+        if (json.success) {
+          setCustomFieldValues(prev => { const next = { ...prev }; delete next[def.id]; return next; });
+          setCfEditingId(null);
+          toast.success(sd('customFieldsSaved'));
+        } else {
+          toast.error(json.message || sd('customFieldsSaveError'));
+        }
+      } catch {
+        toast.error(sd('networkError'));
+      } finally {
+        setCfSaving(false);
+      }
+      return;
+    }
+
+    const value = def.fieldType === 'boolean' ? cfDraft === 'true'
+      : def.fieldType === 'number' ? Number(cfDraft)
+      : cfDraft;
+
+    setCfSaving(true);
+    try {
+      const res = await fetch(`/api/settings/custom-fields/${def.id}/values`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entityId: id, value }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setCustomFieldValues(prev => ({ ...prev, [def.id]: value }));
+        setCfEditingId(null);
+        toast.success(sd('customFieldsSaved'));
+      } else {
+        toast.error(json.message || sd('customFieldsSaveError'));
+      }
+    } catch {
+      toast.error(sd('networkError'));
+    } finally {
+      setCfSaving(false);
     }
   };
 
@@ -493,8 +580,20 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
     Promise.all([
       fetch(`/api/students?id=${id}`).then(r => r.json()),
       fetch(`/api/students/documents?studentId=${id}`).then(r => (r.ok ? r.json() : { success: false })),
+      fetch('/api/settings/custom-fields?entityType=student')
+        .then(r => (r.ok ? r.json() : { success: false }))
+        .then(async (defsJson) => {
+          if (!defsJson.success || !Array.isArray(defsJson.data)) return null;
+          const defs = (defsJson.data as CustomFieldDefinition[]).filter(d => d.isActive);
+          return Promise.all(defs.map(async def => {
+            const valueRes = await fetch(`/api/settings/custom-fields/${def.id}/values?entityId=${encodeURIComponent(id)}`);
+            const valueJson = valueRes.ok ? await valueRes.json() : { success: false };
+            return { def, value: valueJson.success ? (valueJson.data?.value as unknown) : undefined };
+          }));
+        })
+        .catch(() => null),
     ])
-      .then(([studentJson, docsJson]) => {
+      .then(([studentJson, docsJson, cfPairs]) => {
         if (studentJson.success) {
           setStudent(studentJson.data);
         } else {
@@ -503,9 +602,18 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
         if (docsJson.success) {
           setDocuments(docsJson.data);
         }
+        if (cfPairs) {
+          setCustomFieldDefs(cfPairs.map(p => p.def));
+          setCustomFieldValues(Object.fromEntries(
+            cfPairs.filter(p => p.value !== undefined && p.value !== null).map(p => [p.def.id, p.value]),
+          ));
+        }
       })
       .catch(() => setError(tCommon('error')))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setCustomFieldsLoading(false);
+      });
   }, [id, academicYearsRetry, t, tCommon]);
 
   if (loading) {
@@ -829,6 +937,115 @@ export function StudentDetailView({ id, locale }: { id: string; locale: string }
               </div>
             )}
           </Card>
+
+          {/* Champs personnalisés (SCF-08-02) : éditables par les détenteurs de
+              settings.custom_field.manage, lisibles en lecture seule par les
+              autres détenteurs de students.read. */}
+          {(customFieldsLoading || customFieldDefs.length > 0) && (
+            <Card className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h2 className="text-sm font-extrabold text-[#16212B] flex items-center gap-2">
+                  <IdCard className="w-4 h-4 text-[#2487B8]" />
+                  {sd('customFieldsTitle')}
+                </h2>
+              </div>
+
+              {customFieldsLoading ? (
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  {tCommon('loading')}
+                </div>
+              ) : (
+                <>
+                  <p className="text-[11px] text-slate-500">{sd('customFieldsSubtitle')}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {customFieldDefs.map((def) => {
+                      const raw = customFieldValues[def.id];
+                      const hasValue = raw !== undefined && raw !== null && raw !== '';
+                      const display = !hasValue ? null
+                        : def.fieldType === 'boolean' ? (raw ? sd('customFieldsYes') : sd('customFieldsNo'))
+                        : String(raw);
+                      const editing = cfEditingId === def.id;
+                      return (
+                        <div key={def.id}>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">{def.label}</label>
+                          {editing ? (
+                            <div className="mt-1 space-y-1.5">
+                              {def.fieldType === 'select' ? (
+                                <select
+                                  value={cfDraft}
+                                  onChange={e => setCfDraft(e.target.value)}
+                                  aria-label={def.label}
+                                  className="h-9 w-full rounded-xl border border-slate-200 bg-white px-2 text-xs text-[#16212B]"
+                                >
+                                  <option value="">—</option>
+                                  {(def.options ?? []).map(option => <option key={option} value={option}>{option}</option>)}
+                                </select>
+                              ) : def.fieldType === 'boolean' ? (
+                                <select
+                                  value={cfDraft}
+                                  onChange={e => setCfDraft(e.target.value)}
+                                  aria-label={def.label}
+                                  className="h-9 w-full rounded-xl border border-slate-200 bg-white px-2 text-xs text-[#16212B]"
+                                >
+                                  <option value="true">{sd('customFieldsYes')}</option>
+                                  <option value="false">{sd('customFieldsNo')}</option>
+                                </select>
+                              ) : (
+                                <input
+                                  type={def.fieldType === 'number' ? 'number' : def.fieldType === 'date' ? 'date' : 'text'}
+                                  value={cfDraft}
+                                  onChange={e => setCfDraft(e.target.value)}
+                                  aria-label={def.label}
+                                  className="h-9 w-full rounded-xl border border-slate-200 px-3 text-xs text-[#16212B]"
+                                />
+                              )}
+                              <div className="flex items-center gap-1.5">
+                                <Button
+                                  size="sm"
+                                  onClick={() => saveCustomField(def)}
+                                  disabled={cfSaving}
+                                  className="h-8 rounded-full px-3 text-xs font-bold bg-[#2487B8] hover:bg-[#1B6C93] text-white gap-1.5"
+                                >
+                                  {cfSaving && <RefreshCw className="w-3 h-3 animate-spin" />}
+                                  {sd('customFieldsSave')}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setCfEditingId(null)}
+                                  className="h-8 rounded-full px-3 text-xs font-semibold border-slate-200 text-[#16212B]"
+                                >
+                                  {sd('customFieldsCancel')}
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 mt-1">
+                              <p className={`text-sm font-semibold ${display ? 'text-[#16212B]' : 'text-slate-400 font-normal italic'}`}>
+                                {display ?? `— ${sd('notProvided')}`}
+                              </p>
+                              {cfCanEdit && (
+                                <button
+                                  type="button"
+                                  onClick={() => startEditingCustomField(def)}
+                                  title={display ? sd('customFieldsEdit') : sd('customFieldsAdd')}
+                                  aria-label={display ? sd('customFieldsEdit') : sd('customFieldsAdd')}
+                                  className="text-slate-400 hover:text-[#2487B8] shrink-0"
+                                >
+                                  {display ? <Pencil className="w-3 h-3" /> : <Plus className="w-3.5 h-3.5" />}
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </Card>
+          )}
 
           {/* CNDP Moroccan Law 09-08 Informational Treatment (Truthful: removed false "✓ Conforme CNDP" verdict) */}
           <Card className="p-4 bg-slate-50/80 border border-slate-200/80 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs shadow-2xs">

@@ -31,9 +31,11 @@ export type OrganisationFormData = {
   shortName: string;
   city: string;
   address: string;
-  academicYear: string;
-  startDate: string;
-  endDate: string;
+  // Kept optional: the school year lives in `session_years` and is no longer
+  // read from or written to this form (OD1).
+  academicYear?: string;
+  startDate?: string;
+  endDate?: string;
   phone: string;
   email: string;
   website: string;
@@ -69,6 +71,7 @@ type Props = {
   initialData: OrganisationFormData;
   hasLogo: boolean;
   hasFavicon: boolean;
+  currentSessionYear: { name: string; startDate: string; endDate: string } | null;
 };
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -334,7 +337,7 @@ const DOC_STYLES: Array<'classique' | 'minimal' | 'moderne'> = ['classique', 'mi
 
 // ─── MAIN CLIENT FORM ─────────────────────────────────────────────────────────
 
-export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Props) {
+export function OrganisationFormClient({ initialData, hasLogo, hasFavicon, currentSessionYear }: Props) {
   const t = useTranslations('OrganizationSettings');
   const locale = useLocale();
   // Stored toggle keys (presence, francais, ...) have labels when known.
@@ -410,8 +413,6 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
           directorEmail: form.directorEmail.trim() || null,
           financialContactEmail: form.financialContactEmail.trim() || null,
           admissionsContactEmail: form.admissionsContactEmail.trim() || null,
-          startDate: form.startDate.trim() || null,
-          endDate: form.endDate.trim() || null,
         };
 
         const res = await fetch('/api/settings', {
@@ -563,22 +564,45 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
         </div>
       </SectionCard>
 
-      {/* ── Section 3: Année scolaire ── */}
+      {/* ── Section 3: Année scolaire (lecture seule, OD1) ── */}
       <SectionCard icon={GraduationCap} title={t('sectionYear')}>
-        <div className="
-          grid grid-cols-1 gap-4
-          sm:grid-cols-3
-        "
-        >
-          <Field label={t('schoolYear')} required hint={t('schoolYearHint')} error={fieldErrors.academicYear}>
-            <Input value={form.academicYear} onChange={field('academicYear')} placeholder="2026-2027" error={!!fieldErrors.academicYear} />
-          </Field>
-          <Field label={t('startDate')} error={fieldErrors.startDate}>
-            <Input value={form.startDate} onChange={field('startDate')} type="date" error={!!fieldErrors.startDate} />
-          </Field>
-          <Field label={t('endDate')} error={fieldErrors.endDate}>
-            <Input value={form.endDate} onChange={field('endDate')} type="date" error={!!fieldErrors.endDate} />
-          </Field>
+        <div className="flex flex-col gap-3">
+          {currentSessionYear
+            ? (
+                <div className="
+                  grid grid-cols-1 gap-4
+                  sm:grid-cols-3
+                "
+                >
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-medium text-[#374151]">{t('currentYearLabel')}</span>
+                    <span className="text-sm font-semibold text-[#111827]">{currentSessionYear.name}</span>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-medium text-[#374151]">{t('startDate')}</span>
+                    <span className="text-sm text-[#111827]">{currentSessionYear.startDate}</span>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-medium text-[#374151]">{t('endDate')}</span>
+                    <span className="text-sm text-[#111827]">{currentSessionYear.endDate}</span>
+                  </div>
+                </div>
+              )
+            : (
+                <p className="text-sm text-[#6B7280]">{t('currentYearNone')}</p>
+              )}
+          <p className="text-xs text-[#6B7280]">{t('currentYearManagedElsewhere')}</p>
+          <Link
+            href={`/${locale}/dashboard/academics/calendar`}
+            className="
+              flex w-fit items-center gap-1 text-sm font-medium text-[#4B6BFB]
+              transition-colors
+              hover:text-[#3B5BDB]
+            "
+          >
+            {t('manageSchoolYears')}
+            <ChevronRight className="size-4" />
+          </Link>
         </div>
       </SectionCard>
 
@@ -876,48 +900,26 @@ export function OrganisationFormClient({ initialData, hasLogo, hasFavicon }: Pro
         </div>
       </SectionCard>
 
-      {/* ── Section 7: Opérations & Présences ── */}
+      {/* ── Section 7: Opérations ──
+          The presence-mode toggles moved to /dashboard/settings/attendance
+          (SCF-04): a setting editable in two places drifts. `presenceModes` is
+          still part of this form's payload, unchanged, so a stale tab that
+          saves here cannot silently reset the toggles the Attendance page owns. */}
       <SectionCard icon={Shield} title={t('sectionOperations')}>
         <div className="
-          grid grid-cols-1 gap-6
-          sm:grid-cols-2
+          flex items-center justify-between rounded-xl bg-[#F9FAFB] px-4
+          py-3
         "
         >
           <div>
-            <div className="
-              flex items-center justify-between rounded-xl bg-[#F9FAFB] px-4
-              py-3
-            "
-            >
-              <div>
-                <p className="text-sm font-medium text-[#111827]">{t('operationsActive')}</p>
-                <p className="mt-0.5 text-xs text-[#6B7280]">{t('operationsActiveHint')}</p>
-              </div>
-              <Toggle
-                checked={form.allowOperations}
-                onChange={v => setForm(prev => ({ ...prev, allowOperations: v }))}
-                label={t('operationsActive')}
-              />
-            </div>
+            <p className="text-sm font-medium text-[#111827]">{t('operationsActive')}</p>
+            <p className="mt-0.5 text-xs text-[#6B7280]">{t('operationsActiveHint')}</p>
           </div>
-          <div>
-            <p className="mb-3 text-xs font-medium text-[#374151]">{t('presenceModesTitle')}</p>
-            <div className="flex flex-col gap-2">
-              {Object.entries(form.presenceModes).map(([key, enabled]) => (
-                <label
-                  key={key}
-                  className="
-                    flex cursor-pointer items-center justify-between rounded-lg
-                    px-3 py-2
-                    hover:bg-[#F9FAFB]
-                  "
-                >
-                  <span className="text-sm text-[#374151]">{toggleLabel('presenceModes', key)}</span>
-                  <Toggle checked={enabled} onChange={_v => toggleJsonb('presenceModes', key)} label={toggleLabel('presenceModes', key)} />
-                </label>
-              ))}
-            </div>
-          </div>
+          <Toggle
+            checked={form.allowOperations}
+            onChange={v => setForm(prev => ({ ...prev, allowOperations: v }))}
+            label={t('operationsActive')}
+          />
         </div>
       </SectionCard>
 

@@ -6,6 +6,7 @@ import { assertStudentCapacity } from '@/features/subscriptions/services/plan-li
 import { recordAudit } from '@/libs/api/audit';
 import { requireTenant } from '@/libs/api/context';
 import { ApiError } from '@/libs/api/errors';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { requireCapability } from '@/libs/api/permissions';
 import { copyUploadedFile } from '@/libs/api/uploads';
 import { db } from '@/libs/DB';
@@ -288,9 +289,7 @@ export class AdmissionService {
     }
 
     // Branch isolation check
-    if (context.branchId && applicant.branchId && applicant.branchId !== context.branchId) {
-      throw new ApiError(403, 'BRANCH_ACCESS_DENIED', 'Accès interdit à cette succursale.');
-    }
+    assertBranchScope(context, applicant.branchId);
 
     // Load branch and session year labels
     let branchName: string | null = null;
@@ -790,9 +789,7 @@ export class AdmissionService {
       throw new ApiError(404, 'ADMISSION_NOT_FOUND', 'Demande d\'admission introuvable.');
     }
 
-    if (context.branchId && existing.branchId && existing.branchId !== context.branchId) {
-      throw new ApiError(403, 'BRANCH_ACCESS_DENIED', 'Accès interdit à cette succursale.');
-    }
+    assertBranchScope(context, existing.branchId);
 
     // Decision Lock: approved, rejected, and enrolled applications cannot be mutated
     if (existing.status !== 'applied' && existing.status !== 'in_review') {
@@ -894,9 +891,7 @@ export class AdmissionService {
       throw new ApiError(404, 'ADMISSION_NOT_FOUND', 'Demande d\'admission introuvable.');
     }
 
-    if (context.branchId && applicant.branchId && applicant.branchId !== context.branchId) {
-      throw new ApiError(403, 'BRANCH_ACCESS_DENIED', 'Accès interdit à cette succursale.');
-    }
+    assertBranchScope(context, applicant.branchId);
 
     if (applicant.status !== 'applied') {
       throw new ApiError(409, 'INVALID_TRANSITION', `Seule une demande au statut "reçue" peut être mise en revue (statut actuel: ${applicant.status}).`);
@@ -931,9 +926,7 @@ export class AdmissionService {
       throw new ApiError(404, 'ADMISSION_NOT_FOUND', 'Demande d\'admission introuvable.');
     }
 
-    if (context.branchId && applicant.branchId && applicant.branchId !== context.branchId) {
-      throw new ApiError(403, 'BRANCH_ACCESS_DENIED', 'Accès interdit à cette succursale.');
-    }
+    assertBranchScope(context, applicant.branchId);
 
     if (applicant.status !== 'applied' && applicant.status !== 'in_review') {
       throw new ApiError(409, 'ALREADY_DECIDED', `Cette demande est déjà traitée (statut actuel: ${applicant.status}).`);
@@ -976,9 +969,7 @@ export class AdmissionService {
       throw new ApiError(404, 'ADMISSION_NOT_FOUND', 'Demande d\'admission introuvable.');
     }
 
-    if (context.branchId && applicant.branchId && applicant.branchId !== context.branchId) {
-      throw new ApiError(403, 'BRANCH_ACCESS_DENIED', 'Accès interdit à cette succursale.');
-    }
+    assertBranchScope(context, applicant.branchId);
 
     if (applicant.status === 'enrolled') {
       throw new ApiError(409, 'ALREADY_ENROLLED', 'Impossible de rejeter un élève déjà inscrit.');
@@ -1032,9 +1023,7 @@ export class AdmissionService {
       }
 
       // Branch authorization check
-      if (context.branchId && applicant.branchId && applicant.branchId !== context.branchId) {
-        throw new ApiError(403, 'BRANCH_ACCESS_DENIED', 'Accès interdit à cette succursale.');
-      }
+      assertBranchScope(context, applicant.branchId);
 
       // 2. Idempotency: already enrolled candidate
       if (applicant.status === 'enrolled' && applicant.convertedUserId) {

@@ -1,47 +1,45 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { CheckCircle2, AlertCircle, Plus, Pencil, Eye, Zap, Loader2, Save, X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, X, Zap } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 
+/**
+ * SCF-06-01 (OD3): this page lists `naming_series`, the counters the document
+ * and matricule generators actually increment. The old definitions store was a
+ * second source nothing consumed, so a director could "renumber" here and the
+ * next invoice ignored it. The API is now the real thing; the only edit this
+ * page can make is to RAISE a counter (lowering would re-issue printed
+ * numbers, and the API refuses it with 409).
+ */
+
+type NamingSeriesKind =
+  | 'invoice'
+  | 'receipt'
+  | 'credit_note'
+  | 'candidate'
+  | 'employee'
+  | 'student_matricule'
+  | 'other';
+
 type Series = {
-  id: string;
-  key: string;
-  name: string;
-  prefix: string | null;
-  suffix: string | null;
-  padding: number;
-  start: number;
-  current: number;
-  step: number;
-  isActive: boolean;
-  nextValue?: string;
-};
-
-type SeriesForm = {
-  key: string;
-  name: string;
   prefix: string;
-  suffix: string;
-  padding: string;
-  start: string;
-  step: string;
+  currentVal: number;
+  kind: NamingSeriesKind;
+  nextNumber: string;
 };
-
-const EMPTY_FORM: SeriesForm = { key: '', name: '', prefix: '', suffix: '', padding: '0', start: '1', step: '1' };
 
 export default function NumberingPage() {
   const t = useTranslations('NumberingSettings');
   const [rows, setRows] = useState<Series[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<Series | null>(null);
-  const [form, setForm] = useState<SeriesForm>(EMPTY_FORM);
+  const [raisingPrefix, setRaisingPrefix] = useState<string | null>(null);
+  const [raiseValue, setRaiseValue] = useState('');
   const [busy, setBusy] = useState(false);
-  const [busyNextId, setBusyNextId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: 'ok' | 'err'; msg: string } | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -64,60 +62,42 @@ export default function NumberingPage() {
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, t]);
 
   useEffect(() => { load(); }, [load]);
 
-  const handleCreate = async () => {
-    setBusy(true);
-    try {
-      const res = await fetch('/api/settings/numbering', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: form.key.trim(),
-          name: form.name.trim(),
-          prefix: form.prefix.trim() || null,
-          suffix: form.suffix.trim() || null,
-          padding: Number(form.padding) || 0,
-          start: Number(form.start) || 1,
-          step: Number(form.step) || 1,
-        }),
-      });
-      const json = await res.json();
-      if (json.success) {
-        setForm(EMPTY_FORM);
-        showToast('ok', t('created'));
-        load();
-      } else {
-        showToast('err', json.error?.message ?? t('createError'));
-      }
-    } catch {
-      showToast('err', t('networkError'));
-    } finally {
-      setBusy(false);
+  const kindLabel = (kind: NamingSeriesKind): string => {
+    switch (kind) {
+      case 'invoice': return t('kind_invoice');
+      case 'receipt': return t('kind_receipt');
+      case 'credit_note': return t('kind_credit_note');
+      case 'candidate': return t('kind_candidate');
+      case 'employee': return t('kind_employee');
+      case 'student_matricule': return t('kind_student_matricule');
+      default: return t('kind_other');
     }
   };
 
-  const handleUpdate = async () => {
-    if (!editing) return;
+  const startRaise = (s: Series) => {
+    setRaisingPrefix(s.prefix);
+    setRaiseValue(String(s.currentVal + 1));
+  };
+
+  const submitRaise = async (s: Series) => {
+    const value = Number(raiseValue);
+    if (!Number.isInteger(value) || value <= s.currentVal) return;
+    if (!window.confirm(t('confirmRaise', { label: kindLabel(s.kind), value }))) return;
     setBusy(true);
     try {
-      const res = await fetch(`/api/settings/numbering/${editing.id}`, {
+      const res = await fetch(`/api/settings/numbering/${encodeURIComponent(s.prefix)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.name.trim(),
-          prefix: form.prefix.trim() || null,
-          suffix: form.suffix.trim() || null,
-          padding: Number(form.padding) || 0,
-          step: Number(form.step) || 1,
-        }),
+        body: JSON.stringify({ currentVal: value }),
       });
       const json = await res.json();
       if (json.success) {
-        setEditing(null);
-        setForm(EMPTY_FORM);
+        setRaisingPrefix(null);
+        setRaiseValue('');
         showToast('ok', t('updated'));
         load();
       } else {
@@ -130,61 +110,16 @@ export default function NumberingPage() {
     }
   };
 
-  const startEdit = (s: Series) => {
-    setEditing(s);
-    setForm({
-      key: s.key,
-      name: s.name,
-      prefix: s.prefix ?? '',
-      suffix: s.suffix ?? '',
-      padding: String(s.padding),
-      start: String(s.start),
-      step: String(s.step),
-    });
+  const raiseInvalid = (s: Series) => {
+    const value = Number(raiseValue);
+    return !Number.isInteger(value) || value <= s.currentVal;
   };
-
-  const handlePreview = async (s: Series) => {
-    try {
-      const res = await fetch(`/api/settings/numbering/${s.id}/preview`, { method: 'POST' });
-      const json = await res.json();
-      if (json.success) {
-        showToast('ok', t('nextNumber', { value: json.data.nextValue }));
-      } else {
-        showToast('err', json.error?.message ?? t('previewError'));
-      }
-    } catch {
-      showToast('err', t('networkError'));
-    }
-  };
-
-  const handleNext = async (s: Series) => {
-    // Handing out a number is irreversible: it leaves a gap in the series.
-    if (!window.confirm(t('confirmAssign', { name: s.name }))) return;
-    setBusyNextId(s.id);
-    try {
-      const res = await fetch(`/api/settings/numbering/${s.id}/next`, { method: 'POST' });
-      const json = await res.json();
-      if (json.success) {
-        showToast('ok', t('assigned', { value: json.data.nextValue }));
-        load();
-      } else {
-        showToast('err', json.error?.message ?? t('assignError'));
-      }
-    } catch {
-      showToast('err', t('networkError'));
-    } finally {
-      setBusyNextId(null);
-    }
-  };
-
-  const set = (k: keyof SeriesForm) => (e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, [k]: e.target.value }));
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div>
         <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">{t('title')}</h1>
         <p className="text-xs text-slate-500 mt-1">{t('subtitle')}</p>
-        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mt-2">{t('notWiredNote')}</p>
       </div>
 
       {toast && (
@@ -195,34 +130,6 @@ export default function NumberingPage() {
           {toast.msg}
         </div>
       )}
-
-      <Card className="border border-slate-200 rounded-2xl shadow-xs p-5">
-        <div className="text-sm font-bold text-slate-800 mb-3">{editing ? t('editTitle', { name: editing.name }) : t('newSeries')}</div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Input className="h-9 text-xs rounded-xl" placeholder={t('keyPlaceholder')} aria-label={t('keyPlaceholder')} value={form.key} onChange={set('key')} disabled={!!editing} />
-          <Input className="h-9 text-xs rounded-xl" placeholder={t('namePlaceholder')} aria-label={t('namePlaceholder')} value={form.name} onChange={set('name')} />
-          <Input className="h-9 text-xs rounded-xl" placeholder={t('prefixPlaceholder')} aria-label={t('prefixPlaceholder')} value={form.prefix} onChange={set('prefix')} />
-          <Input className="h-9 text-xs rounded-xl" placeholder={t('suffixPlaceholder')} aria-label={t('suffixPlaceholder')} value={form.suffix} onChange={set('suffix')} />
-          <Input className="h-9 text-xs rounded-xl" placeholder={t('paddingPlaceholder')} aria-label={t('paddingPlaceholder')} value={form.padding} onChange={set('padding')} />
-          <Input className="h-9 text-xs rounded-xl" placeholder={t('startPlaceholder')} aria-label={t('startPlaceholder')} value={form.start} onChange={set('start')} disabled={!!editing} />
-          <Input className="h-9 text-xs rounded-xl" placeholder={t('stepPlaceholder')} aria-label={t('stepPlaceholder')} value={form.step} onChange={set('step')} />
-        </div>
-        <div className="flex gap-2 mt-4">
-          <Button
-            onClick={editing ? handleUpdate : handleCreate}
-            disabled={busy || !form.name.trim() || !form.key.trim()}
-            className="gap-2 h-9 rounded-full px-5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {editing ? t('save') : t('create')}
-          </Button>
-          {editing && (
-            <Button onClick={() => { setEditing(null); setForm(EMPTY_FORM); }} className="h-9 rounded-full px-4 text-xs" variant="outline">
-              <X className="w-3.5 h-3.5" /> {t('cancel')}
-            </Button>
-          )}
-        </div>
-      </Card>
 
       {loading ? (
         <div className="flex items-center justify-center h-48">
@@ -235,40 +142,64 @@ export default function NumberingPage() {
       ) : (
         <div className="space-y-3">
           {rows.map(s => (
-            <Card key={s.id} className="border border-slate-200 rounded-2xl shadow-xs p-4 flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-slate-800 truncate">{s.name}</span>
-                  <Badge variant={s.isActive ? 'success' : 'neutral'} className="text-[10px] px-2">{s.isActive ? t('active') : t('inactive')}</Badge>
+            <Card key={s.prefix} className="border border-slate-200 rounded-2xl shadow-xs p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-bold text-slate-800">{kindLabel(s.kind)}</span>
+                    <Badge variant="neutral" className="text-[10px] px-2 font-mono">{s.prefix}</Badge>
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-1">
+                    {t('currentLabel')} <span className="font-mono text-slate-700">{s.currentVal}</span>
+                    <span className="mx-2 text-slate-300">·</span>
+                    <span className="font-mono text-slate-700">{t('nextNumber', { value: s.nextNumber })}</span>
+                  </div>
                 </div>
-                <div className="text-[11px] text-slate-500 font-mono mt-0.5 truncate">
-                  {s.prefix ?? ''}{String(s.current + s.step).padStart(s.padding, '0')}{s.suffix ?? ''}
-                  <span className="text-slate-400"> · {s.key} · {t('meta', { start: s.start, step: s.step, padding: s.padding })}</span>
-                </div>
+                {raisingPrefix === s.prefix ? (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Input
+                      type="number"
+                      min={s.currentVal + 1}
+                      value={raiseValue}
+                      onChange={e => setRaiseValue(e.target.value)}
+                      aria-label={t('newValueLabel')}
+                      className="h-8 w-28 text-xs rounded-xl"
+                    />
+                    <Button
+                      onClick={() => submitRaise(s)}
+                      disabled={busy || raiseInvalid(s)}
+                      className="gap-1.5 h-8 rounded-full px-3 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
+                      {t('raise')}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => { setRaisingPrefix(null); setRaiseValue(''); }}
+                      title={t('cancel')}
+                      aria-label={t('cancel')}
+                      className="h-8 w-8 p-0"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={() => startRaise(s)}
+                    className="gap-1.5 h-8 rounded-full px-3 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shrink-0"
+                  >
+                    <Zap className="w-3.5 h-3.5" />
+                    {t('raise')}
+                  </Button>
+                )}
               </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <Button size="sm" variant="ghost" onClick={() => handlePreview(s)} title={t('previewTitle')} aria-label={t('previewTitle')} className="h-8 w-8 p-0 text-slate-500">
-                  <Eye className="w-4 h-4" />
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => startEdit(s)} title={t('edit')} aria-label={t('edit')} className="h-8 w-8 p-0 text-slate-500">
-                  <Pencil className="w-4 h-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => handleNext(s)}
-                  disabled={busyNextId === s.id || !s.isActive}
-                  className="gap-1.5 h-8 rounded-full px-3 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  {busyNextId === s.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
-                  {t('assign')}
-                </Button>
-              </div>
+              {raisingPrefix === s.prefix && (
+                <p className="text-[10px] text-slate-500 mt-2">{t('newValueHint')}</p>
+              )}
             </Card>
           ))}
         </div>
       )}
-
-      <div className="flex items-center gap-1.5 text-[10px] text-slate-500"><Plus className="w-3 h-3" /> {t('lockedNote')}</div>
     </div>
   );
 }
