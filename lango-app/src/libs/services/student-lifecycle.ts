@@ -3,7 +3,6 @@ import { recordAudit } from '@/libs/api/audit';
 import { ApiError } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
 import {
-  assessmentResults,
   attendance,
   certificates,
   guardianStudents,
@@ -13,7 +12,7 @@ import {
   studentPlacements,
   user,
 } from '@/models/Schema';
-import { homeworkAttempts, examSeats } from '@/features/assessment/models/assessment-schema';
+import { homeworkAttempts, examSeats, assessmentOutcomes } from '@/features/assessment/models/assessment-schema';
 import { studentCredits } from '@/features/finance/models/student-accounting-schema';
 
 export type StudentLifecycleStatus = 'active' | 'withdrawn' | 'transferred' | 'graduated' | 'archived';
@@ -54,7 +53,7 @@ export async function checkStudentDependencies(tenantId: string, studentId: stri
     db.select({ c: count() }).from(invoices).where(and(eq(invoices.tenantId, tenantId), eq(invoices.studentId, studentId))),
     db.select({ c: count() }).from(payments).where(and(eq(payments.tenantId, tenantId), eq(payments.studentId, studentId))),
     db.select({ c: count() }).from(attendance).where(and(eq(attendance.tenantId, tenantId), eq(attendance.studentId, studentId))),
-    db.select({ c: count() }).from(assessmentResults).where(and(eq(assessmentResults.tenantId, tenantId), eq(assessmentResults.studentId, studentId))),
+    db.select({ c: count() }).from(assessmentOutcomes).where(and(eq(assessmentOutcomes.tenantId, tenantId), eq(assessmentOutcomes.studentId, studentId))),
     db.select({ c: count() }).from(studentPlacements).where(and(eq(studentPlacements.tenantId, tenantId), eq(studentPlacements.studentId, studentId))),
     db.select({ c: count() }).from(studentDocuments).where(and(eq(studentDocuments.tenantId, tenantId), eq(studentDocuments.studentId, studentId))),
     db.select({ c: count() }).from(certificates).where(and(eq(certificates.tenantId, tenantId), eq(certificates.studentId, studentId))),
@@ -67,7 +66,7 @@ export async function checkStudentDependencies(tenantId: string, studentId: stri
     invoices: invCount[0]?.c ?? 0,
     payments: payCount[0]?.c ?? 0,
     attendance: attCount[0]?.c ?? 0,
-    assessmentResults: gradeCount[0]?.c ?? 0,
+    assessmentOutcomes: gradeCount[0]?.c ?? 0,
     studentPlacements: placementCount[0]?.c ?? 0,
     studentDocuments: docCount[0]?.c ?? 0,
     certificates: certCount[0]?.c ?? 0,
@@ -80,7 +79,7 @@ export async function checkStudentDependencies(tenantId: string, studentId: stri
   if (counts.invoices > 0) reasons.push(`${counts.invoices} facture(s)`);
   if (counts.payments > 0) reasons.push(`${counts.payments} règlement(s)`);
   if (counts.attendance > 0) reasons.push(`${counts.attendance} pointage(s) de présence`);
-  if (counts.assessmentResults > 0) reasons.push(`${counts.assessmentResults} note(s)/évaluation(s)`);
+  if (counts.assessmentOutcomes > 0) reasons.push(`${counts.assessmentOutcomes} note(s)/évaluation(s)`);
   if (counts.studentPlacements > 0) reasons.push(`${counts.studentPlacements} affectation(s) de classe`);
   if (counts.studentDocuments > 0) reasons.push(`${counts.studentDocuments} document(s) déposé(s)`);
   if (counts.certificates > 0) reasons.push(`${counts.certificates} certificat(s)`);

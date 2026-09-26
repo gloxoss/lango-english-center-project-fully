@@ -1,8 +1,39 @@
 import type { OutcomeStatus } from '../types/assessment-types';
-import { and, eq } from 'drizzle-orm';
+import type { RequestContext } from '@/libs/api/context';
+import { and, eq, inArray, ne } from 'drizzle-orm';
 import { ApiError } from '@/libs/api/errors';
+import { recordAudit } from '@/libs/api/audit';
 import { db } from '@/libs/DB';
-import { assessmentDefinitions, assessmentOutcomeRevisions, assessmentOutcomes } from '../models/assessment-schema';
+import {
+  assessmentDefinitions,
+  assessmentOutcomeRevisions,
+  assessmentOutcomes,
+  examSchedules,
+} from '../models/assessment-schema';
+
+type DbExecutor = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+export type OutcomePublishParams = {
+  assessmentDefinitionId?: string;
+  examTermId?: string;
+  reason?: string;
+  tx?: DbExecutor;
+};
+
+export type OutcomeUnpublishParams = {
+  assessmentDefinitionId: string;
+  reason: string;
+  tx?: DbExecutor;
+};
+
+export type ContextLike =
+  | RequestContext
+  | {
+      tenantId: string;
+      userId?: string;
+      role?: string;
+      impersonated?: boolean;
+    };
 
 /**
  * The "no mark above the maximum" rule used to live only in the marksheet UI
@@ -201,4 +232,168 @@ export class OutcomeService {
       )
       .returning();
   }
+
+  /**
+   * Publishes assessment outcomes by setting moderation_state to 'published'.
+   * Targets outcomes with status in ['graded', 'exempted', 'absent'] that are not already published.
+   */
+  static async publishOutcomes(
+    ctx: ContextLike,
+    params: OutcomePublishParams,
+  ): Promise<{ count: number }> {
+    const tenantId = 'tenantId' in ctx && ctx.tenantId ? ctx.tenantId : null;
+    if (!tenantId) {
+      throw new ApiError(403, 'TENANT_REQUIRED', 'Tenant ID is required.');
+    }
+
+    if (!params.assessmentDefinitionId && !params.examTermId) {
+      throw new ApiError(400, 'BAD_REQUEST', 'assessmentDefinitionId or examTermId is required.');
+    }
+
+    const client = params.tx ?? db;
+    const defIdSet = new Set<string>();
+
+    if (params.assessmentDefinitionId) {
+      defIdSet.add(params.assessmentDefinitionId);
+    }
+
+    if (params.examTermId) {
+      const defsFromTerm = await client
+        .select({ id: assessmentDefinitions.id })
+        .from(assessmentDefinitions)
+        .where(and(
+          eq(assessmentDefinitions.tenantId, tenantId),
+          eq(assessmentDefinitions.termId, params.examTermId),
+        ));
+
+      const defsFromSchedules = await client
+        .select({ id: examSchedules.assessmentDefinitionId })
+        .from(examSchedules)
+        .where(and(
+          eq(examSchedules.tenantId, tenantId),
+          eq(examSchedules.examTermId, params.examTermId),
+        ));
+
+      for (const d of defsFromTerm) defIdSet.add(d.id);
+      for (const s of defsFromSchedules) defIdSet.add(s.id);
+    }
+
+    const definitionIds = Array.from(defIdSet);
+    if (definitionIds.length === 0) {
+      return { count: 0 };
+    }
+
+    const updated = await client
+      .update(assessmentOutcomes)
+      .set({
+        moderationState: 'published',
+        updatedAt: new Date().toISOString(),
+      })
+      .where(and(
+        eq(assessmentOutcomes.tenantId, tenantId),
+        inArray(assessmentOutcomes.assessmentDefinitionId, definitionIds),
+        inArray(assessmentOutcomes.status, ['graded', 'exempted', 'absent']),
+        ne(assessmentOutcomes.moderationState, 'published'),
+      ))
+      .returning({ id: assessmentOutcomes.id });
+
+    const auditContext: RequestContext = ('role' in ctx && ctx.role)
+      ? (ctx as RequestContext)
+      : {
+          userId: ctx.userId || 'system',
+          tenantId,
+          branchId: null,
+          role: 'school_admin' as const,
+          baseRole: 'school_admin' as const,
+          name: 'System',
+          email: '',
+          impersonated: ctx.impersonated ?? false,
+        };
+
+    recordAudit(
+      auditContext,
+      'update',
+      'assessment_outcomes',
+      params.assessmentDefinitionId ?? params.examTermId ?? 'batch',
+      {
+        action: 'publish',
+        count: updated.length,
+        assessmentDefinitionId: params.assessmentDefinitionId,
+        examTermId: params.examTermId,
+        reason: params.reason || (params.examTermId ? 'Exam term closed' : 'Outcomes published'),
+      },
+    );
+
+    return { count: updated.length };
+  }
+
+  /**
+   * Reverts published assessment outcomes back to 'locked' moderation state.
+   * Requires a non-empty reason string.
+   */
+  static async unpublishOutcomes(
+    ctx: ContextLike,
+    params: OutcomeUnpublishParams,
+  ): Promise<{ count: number }> {
+    const tenantId = 'tenantId' in ctx && ctx.tenantId ? ctx.tenantId : null;
+    if (!tenantId) {
+      throw new ApiError(403, 'TENANT_REQUIRED', 'Tenant ID is required.');
+    }
+
+    if (!params.assessmentDefinitionId) {
+      throw new ApiError(400, 'BAD_REQUEST', 'assessmentDefinitionId is required.');
+    }
+
+    const trimmedReason = params.reason ? params.reason.trim() : '';
+    if (!trimmedReason) {
+      throw new ApiError(400, 'REASON_REQUIRED', 'Un motif est requis pour retirer la publication des notes.');
+    }
+
+    const client = params.tx ?? db;
+
+    const updated = await client
+      .update(assessmentOutcomes)
+      .set({
+        moderationState: 'locked',
+        updatedAt: new Date().toISOString(),
+      })
+      .where(and(
+        eq(assessmentOutcomes.tenantId, tenantId),
+        eq(assessmentOutcomes.assessmentDefinitionId, params.assessmentDefinitionId),
+        eq(assessmentOutcomes.moderationState, 'published'),
+      ))
+      .returning({ id: assessmentOutcomes.id });
+
+    const auditContext: RequestContext = ('role' in ctx && ctx.role)
+      ? (ctx as RequestContext)
+      : {
+          userId: ctx.userId || 'system',
+          tenantId,
+          branchId: null,
+          role: 'school_admin' as const,
+          baseRole: 'school_admin' as const,
+          name: 'System',
+          email: '',
+          impersonated: ctx.impersonated ?? false,
+        };
+
+    recordAudit(
+      auditContext,
+      'update',
+      'assessment_outcomes',
+      params.assessmentDefinitionId,
+      {
+        action: 'unpublish',
+        count: updated.length,
+        assessmentDefinitionId: params.assessmentDefinitionId,
+        reason: trimmedReason,
+      },
+    );
+
+    return { count: updated.length };
+  }
 }
+
+export const publishOutcomes = OutcomeService.publishOutcomes;
+export const unpublishOutcomes = OutcomeService.unpublishOutcomes;
+

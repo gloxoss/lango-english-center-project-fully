@@ -1,4 +1,4 @@
-import { and, count, eq } from 'drizzle-orm';
+import { and, desc, eq, ne, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
@@ -6,56 +6,58 @@ import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { assessmentCreateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { assessmentPlans, assessmentResults, assessments, classes, classSubjects, subjects } from '@/models/Schema';
+import { assessmentDefinitions, assessmentOutcomes } from '@/features/assessment/models/assessment-schema';
+import { assessmentPlans, assessments, classes, classSubjects, subjects } from '@/models/Schema';
 
-// ponytail: named "assessment-sessions" - this route creates/lists rows in the
-// `assessments` table itself, i.e. "define a test/exam instance under a plan".
+// GET lists the canonical assessments (assessment_definitions, GRADES-CANONICAL-01
+// GD1) with real counts from assessment_outcomes. It used to list the legacy
+// `assessments` table, which nothing writes any more, with gradedCount hard-coded
+// to 0. Homework has its own page, so it is excluded here.
+// ponytail: POST below still creates legacy `assessments` rows; no screen calls it.
 
 export async function GET(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin', 'teacher']);
     const tenantId = requireTenant(context);
     const { searchParams } = new URL(request.url);
-    const assessmentPlanId = searchParams.get('assessmentPlanId');
     const classSubjectId = searchParams.get('classSubjectId');
 
-    const filters = [eq(assessments.tenantId, tenantId)];
-    if (assessmentPlanId) {
-      filters.push(eq(assessments.assessmentPlanId, assessmentPlanId));
-    }
+    const filters = [eq(assessmentDefinitions.tenantId, tenantId), ne(assessmentDefinitions.type, 'homework')];
     if (classSubjectId) {
-      filters.push(eq(assessmentPlans.classSubjectId, classSubjectId));
+      filters.push(eq(assessmentDefinitions.classSubjectId, classSubjectId));
     }
+
+    const counts = db
+      .select({
+        definitionId: assessmentOutcomes.assessmentDefinitionId,
+        graded: sql<number>`count(*) filter (where ${assessmentOutcomes.status} in ('graded', 'exempted', 'absent'))`.as('graded'),
+        published: sql<number>`count(*) filter (where ${assessmentOutcomes.moderationState} = 'published')`.as('published'),
+      })
+      .from(assessmentOutcomes)
+      .where(eq(assessmentOutcomes.tenantId, tenantId))
+      .groupBy(assessmentOutcomes.assessmentDefinitionId)
+      .as('counts');
 
     const rows = await db
       .select({
-        id: assessments.id,
-        assessmentPlanId: assessments.assessmentPlanId,
-        title: assessments.title,
-        assessmentDate: assessments.assessmentDate,
-        planName: assessmentPlans.name,
+        id: assessmentDefinitions.id,
+        title: assessmentDefinitions.title,
+        type: assessmentDefinitions.type,
+        assessmentDate: assessmentDefinitions.createdAt,
         className: classes.name,
         subjectName: subjects.name,
+        gradedCount: sql<number>`coalesce(${counts.graded}, 0)::int`,
+        publishedCount: sql<number>`coalesce(${counts.published}, 0)::int`,
       })
-      .from(assessments)
-      .innerJoin(assessmentPlans, eq(assessments.assessmentPlanId, assessmentPlans.id))
-      .innerJoin(classSubjects, eq(assessmentPlans.classSubjectId, classSubjects.id))
-      .innerJoin(classes, eq(classSubjects.classId, classes.id))
-      .innerJoin(subjects, eq(classSubjects.subjectId, subjects.id))
-      .where(and(...filters));
+      .from(assessmentDefinitions)
+      .leftJoin(classSubjects, and(eq(assessmentDefinitions.classSubjectId, classSubjects.id), eq(classSubjects.tenantId, tenantId)))
+      .leftJoin(classes, and(eq(classSubjects.classId, classes.id), eq(classes.tenantId, tenantId)))
+      .leftJoin(subjects, and(eq(classSubjects.subjectId, subjects.id), eq(subjects.tenantId, tenantId)))
+      .leftJoin(counts, eq(counts.definitionId, assessmentDefinitions.id))
+      .where(and(...filters))
+      .orderBy(desc(assessmentDefinitions.createdAt));
 
-    const gradeCounts = rows.length > 0
-      ? await db
-          .select({ assessmentId: assessmentResults.assessmentId, gradedCount: count() })
-          .from(assessmentResults)
-          .where(eq(assessmentResults.tenantId, tenantId))
-          .groupBy(assessmentResults.assessmentId)
-      : [];
-    const gradedById = new Map(gradeCounts.map(g => [g.assessmentId, g.gradedCount]));
-
-    const data = rows.map(r => ({ ...r, gradedCount: gradedById.get(r.id) ?? 0 }));
-
-    return NextResponse.json({ success: true, data, total: data.length });
+    return NextResponse.json({ success: true, data: rows, total: rows.length });
   } catch (error) {
     return apiErrorResponse(error);
   }

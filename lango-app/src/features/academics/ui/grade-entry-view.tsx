@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertCircle, ArrowLeft, ArrowRight, ClipboardList, Loader2, Search } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, ClipboardList, Loader2, Search } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -14,6 +14,11 @@ type AssessmentDefinition = {
   id: string;
   title: string;
   type: string;
+  status?: string;
+  isPublished?: boolean;
+  publishedCount?: number;
+  draftCount?: number;
+  totalMarks?: number;
 };
 
 export function GradeEntryView() {
@@ -25,6 +30,8 @@ export function GradeEntryView() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const typeLabels: Record<string, string> = {
     paper_exam: t('typePaperExam'),
@@ -68,24 +75,127 @@ export function GradeEntryView() {
     return definitions.filter(d => d.title.toLowerCase().includes(needle));
   }, [definitions, search]);
 
+  const handlePublish = useCallback(async (defId: string, count?: number) => {
+    const confirmMsg = t('confirmPublishMarks', { count: count ?? 0 });
+    if (!window.confirm(confirmMsg)) {
+      return;
+    }
+    setPublishingId(defId);
+    setFeedback(null);
+    try {
+      const res = await fetch(`/api/academics/assessment-definitions/${defId}/publish`, {
+        method: 'POST',
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json?.error?.message ?? t('errPublish'));
+      }
+      setFeedback({ type: 'success', message: t('publishSuccess', { count: json.data?.count ?? count ?? 0 }) });
+      void load();
+    } catch (err) {
+      setFeedback({ type: 'error', message: err instanceof Error ? err.message : t('errPublish') });
+    } finally {
+      setPublishingId(null);
+    }
+  }, [load, t]);
+
+  const handleUnpublish = useCallback(async (defId: string) => {
+    const reason = window.prompt(t('unpublishReasonPrompt'));
+    if (!reason || !reason.trim()) {
+      return;
+    }
+    setPublishingId(defId);
+    setFeedback(null);
+    try {
+      const res = await fetch(`/api/academics/assessment-definitions/${defId}/publish`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json?.error?.message ?? t('errUnpublish'));
+      }
+      setFeedback({ type: 'success', message: t('unpublishSuccess', { count: json.data?.count ?? 0 }) });
+      void load();
+    } catch (err) {
+      setFeedback({ type: 'error', message: err instanceof Error ? err.message : t('errUnpublish') });
+    } finally {
+      setPublishingId(null);
+    }
+  }, [load, t]);
+
   const selected = definitions.find(d => d.id === selectedId) ?? null;
 
   if (selected) {
     return (
       <div className="mx-auto max-w-[1200px] space-y-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setSelectedId(null)}
-          className="h-8 gap-1.5 text-xs font-bold text-[#2487B8]"
-        >
-          <ArrowLeft className="
-            size-3.5
-            rtl:rotate-180
-          "
-          />
-          <span>{t('changeAssessment')}</span>
-        </Button>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSelectedId(null);
+              setFeedback(null);
+              void load();
+            }}
+            className="h-8 gap-1.5 text-xs font-bold text-[#2487B8]"
+          >
+            <ArrowLeft className="size-3.5 rtl:rotate-180" />
+            <span>{t('changeAssessment')}</span>
+          </Button>
+
+          <div className="flex items-center gap-2">
+            <Badge
+              className={
+                selected.isPublished
+                  ? 'border border-emerald-200 bg-emerald-50 text-[11px] font-bold text-emerald-700'
+                  : 'border border-amber-200 bg-amber-50 text-[11px] font-bold text-amber-700'
+              }
+            >
+              {selected.isPublished ? t('badgePublished') : t('badgeDraft')}
+            </Badge>
+
+            <Button
+              size="sm"
+              onClick={() => void handlePublish(selected.id, selected.draftCount)}
+              disabled={publishingId === selected.id}
+              className="h-8 bg-[#2487B8] text-xs font-bold text-white hover:bg-[#1B6C93]"
+            >
+              {publishingId === selected.id && <Loader2 className="me-1.5 size-3.5 animate-spin" />}
+              {t('publishMarksAction')}
+            </Button>
+
+            {selected.isPublished && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void handleUnpublish(selected.id)}
+                disabled={publishingId === selected.id}
+                className="h-8 border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100"
+              >
+                {t('unpublishMarksAction')}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {feedback && (
+          <div
+            className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold ${
+              feedback.type === 'success'
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                : 'border-red-200 bg-red-50 text-red-800'
+            }`}
+          >
+            {feedback.type === 'success' ? (
+              <CheckCircle2 className="size-4 shrink-0" />
+            ) : (
+              <AlertCircle className="size-4 shrink-0" />
+            )}
+            <span>{feedback.message}</span>
+          </div>
+        )}
 
         <MarksheetGridView
           assessmentDefinitionId={selected.id}
@@ -179,47 +289,88 @@ export function GradeEntryView() {
         </p>
       )}
 
+      {feedback && (
+        <div
+          className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold ${
+            feedback.type === 'success'
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+              : 'border-red-200 bg-red-50 text-red-800'
+          }`}
+        >
+          {feedback.type === 'success' ? (
+            <CheckCircle2 className="size-4 shrink-0" />
+          ) : (
+            <AlertCircle className="size-4 shrink-0" />
+          )}
+          <span>{feedback.message}</span>
+        </div>
+      )}
+
       <div className="space-y-2">
         {filtered.map(definition => (
-          <button
+          <div
             key={definition.id}
-            type="button"
+            role="button"
+            tabIndex={0}
             onClick={() => setSelectedId(definition.id)}
-            className="
-              flex w-full cursor-pointer items-center justify-between gap-3
-              rounded-2xl border border-slate-200/80 bg-white p-4 text-start
-              shadow-2xs transition
-              hover:border-[#2487B8]/40 hover:bg-slate-50
-            "
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                setSelectedId(definition.id);
+              }
+            }}
+            className="flex w-full cursor-pointer flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 text-start shadow-2xs transition hover:border-[#2487B8]/40 hover:bg-slate-50"
           >
             <div className="flex items-center gap-3">
-              <div className="
-                flex size-9 shrink-0 items-center justify-center rounded-xl
-                bg-[#DCEBF4] text-[#1B6C93]
-              "
-              >
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#DCEBF4] text-[#1B6C93]">
                 <ClipboardList className="size-4" />
               </div>
               <div>
                 <p className="text-sm font-extrabold text-[#16212B]">{definition.title}</p>
-                <p className="text-[11px] text-slate-400">
-                  {typeLabels[definition.type] ?? definition.type}
-                </p>
+                <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                  <span>{typeLabels[definition.type] ?? definition.type}</span>
+                  {typeof definition.totalMarks === 'number' && definition.totalMarks > 0 && (
+                    <>
+                      <span>·</span>
+                      <span>{definition.totalMarks} note(s)</span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
-            <Badge className="
-              flex items-center gap-1 border-none bg-slate-100 text-[10px]
-              font-bold text-slate-600
-            "
-            >
-              <span>{t('enterGradesAction')}</span>
-              <ArrowRight className="
-                size-3
-                rtl:rotate-180
-              "
-              />
-            </Badge>
-          </button>
+
+            <div className="flex items-center gap-2">
+              <Badge
+                className={
+                  definition.isPublished
+                    ? 'border border-emerald-200 bg-emerald-50 text-[10px] font-bold text-emerald-700'
+                    : 'border border-amber-200 bg-amber-50 text-[10px] font-bold text-amber-700'
+                }
+              >
+                {definition.isPublished ? t('badgePublished') : t('badgeDraft')}
+              </Badge>
+
+              {Boolean(definition.draftCount && definition.draftCount > 0) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={e => {
+                    e.stopPropagation();
+                    void handlePublish(definition.id, definition.draftCount);
+                  }}
+                  disabled={publishingId === definition.id}
+                  className="h-7 border-[#2487B8]/40 bg-[#2487B8]/10 text-[11px] font-bold text-[#2487B8] hover:bg-[#2487B8] hover:text-white"
+                >
+                  {publishingId === definition.id && <Loader2 className="me-1 size-3 animate-spin" />}
+                  {t('publishMarksAction')}
+                </Button>
+              )}
+
+              <Badge className="flex items-center gap-1 border-none bg-slate-100 text-[10px] font-bold text-slate-600">
+                <span>{t('enterGradesAction')}</span>
+                <ArrowRight className="size-3 rtl:rotate-180" />
+              </Badge>
+            </div>
+          </div>
         ))}
       </div>
     </div>

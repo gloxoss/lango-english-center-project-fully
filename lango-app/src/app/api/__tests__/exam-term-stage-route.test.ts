@@ -353,6 +353,12 @@ describe.skipIf(!dbReachable)('exam-term workflow — stage transitions and step
     expect(data.status).toBe('closed');
     // Closing is what publishes results — not a second flag to forget.
     expect(data.isPublished).toBe(true);
+
+    const [outcome] = await db
+      .select({ moderationState: assessmentOutcomes.moderationState })
+      .from(assessmentOutcomes)
+      .where(eq(assessmentOutcomes.assessmentDefinitionId, definitionId));
+    expect(outcome?.moderationState).toBe('published');
   });
 
   it('refuses to reopen a closed term', async () => {

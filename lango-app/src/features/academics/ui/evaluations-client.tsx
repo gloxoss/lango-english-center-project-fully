@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Plus } from 'lucide-react';
-import { ApiAssessmentSession } from '../data/evaluations-config';
+import { ApiAssessmentSession, ASSESSMENT_TYPE_LABELS } from '../data/evaluations-config';
 
 export function EvaluationsClient({ locale }: { locale: string }) {
   const [sessions, setSessions] = useState<ApiAssessmentSession[]>([]);
@@ -43,7 +43,7 @@ export function EvaluationsClient({ locale }: { locale: string }) {
             <thead className="bg-[#F6F9FC] text-slate-500 font-semibold border-b border-slate-200/80">
               <tr>
                 <th className="py-3.5 px-4">Évaluation</th>
-                <th className="py-3.5 px-4">Plan</th>
+                <th className="py-3.5 px-4">Type</th>
                 <th className="py-3.5 px-4">Classe</th>
                 <th className="py-3.5 px-4">Matière</th>
                 <th className="py-3.5 px-4">Date</th>
@@ -60,9 +60,9 @@ export function EvaluationsClient({ locale }: { locale: string }) {
                       {s.title}
                     </div>
                   </td>
-                  <td className="py-3.5 px-4 text-slate-600 whitespace-nowrap">{s.planName}</td>
-                  <td className="py-3.5 px-4 text-slate-600 whitespace-nowrap">{s.className}</td>
-                  <td className="py-3.5 px-4 text-slate-600 whitespace-nowrap">{s.subjectName}</td>
+                  <td className="py-3.5 px-4 text-slate-600 whitespace-nowrap">{ASSESSMENT_TYPE_LABELS[s.type] ?? s.type}</td>
+                  <td className="py-3.5 px-4 text-slate-600 whitespace-nowrap">{s.className ?? '—'}</td>
+                  <td className="py-3.5 px-4 text-slate-600 whitespace-nowrap">{s.subjectName ?? '—'}</td>
                   <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">{new Date(s.assessmentDate).toLocaleDateString('fr-FR')}</td>
                   <td className="py-3.5 px-4 whitespace-nowrap">
                     <Badge className={s.gradedCount > 0 ? 'bg-[#DDF5EC] text-[#17A673]' : 'bg-[#FCF0DC] text-[#E8A33D]'}>
@@ -70,6 +70,11 @@ export function EvaluationsClient({ locale }: { locale: string }) {
                       {' '}
                       élève(s)
                     </Badge>
+                    {s.gradedCount > 0 && (
+                      <span className="ms-2 text-[11px] text-slate-500">
+                        {s.publishedCount === s.gradedCount ? 'Publié' : `${s.publishedCount} publiée(s)`}
+                      </span>
+                    )}
                   </td>
                   <td className="py-3.5 px-4 text-center whitespace-nowrap">
                     <Link href={`/${locale}/dashboard/academics/grades/entry`} className="text-[#2487B8] hover:underline text-[11px] font-bold">

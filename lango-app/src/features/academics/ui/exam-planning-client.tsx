@@ -20,6 +20,21 @@ import { openDocumentPreview } from '@/features/documents/ui/pdf-preview';
 type ExamTerm = { id: string; name: string; code: string; startDate: string; endDate: string };
 type ExamHall = { id: string; name: string; code: string; capacity: number };
 type AssessmentDefinition = { id: string; title: string; type: string };
+type ClassSubjectOption = { id: string; className: string | null; subjectName: string | null };
+
+// ponytail: class subjects are paginated (100 max); 10 pages cover any school.
+async function loadAllClassSubjects(): Promise<ClassSubjectOption[]> {
+  const all: ClassSubjectOption[] = [];
+  for (let page = 1; page <= 10; page++) {
+    const json = await fetch(`/api/academics/class-subjects?pageSize=100&page=${page}`).then(r => r.json()).catch(() => null);
+    const rows: ClassSubjectOption[] = json?.success && Array.isArray(json.data) ? json.data : [];
+    all.push(...rows);
+    if (rows.length < 100) {
+      break;
+    }
+  }
+  return all;
+}
 type StaffMember = { id: string; name: string; role: string };
 
 type ApiSupervisor = { staffId: string; name: string | null; role: string; attendanceStatus: string };
@@ -81,6 +96,8 @@ export function ExamPlanningClient({ locale = 'fr', embedded = false }: { locale
   const [selectedDefId, setSelectedDefId] = useState<string>('');
   const [selectedHallId, setSelectedHallId] = useState<string>('');
   const [customSubject, setCustomSubject] = useState('');
+  const [classSubjects, setClassSubjects] = useState<ClassSubjectOption[]>([]);
+  const [selectedClassSubjectId, setSelectedClassSubjectId] = useState('');
   const [examDate, setExamDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
@@ -135,13 +152,15 @@ export function ExamPlanningClient({ locale = 'fr', embedded = false }: { locale
     setLoading(true);
     setLoadError(null);
     try {
-      const [schedRes, termRes, hallRes, defRes, staffRes] = await Promise.all([
+      const [schedRes, termRes, hallRes, defRes, staffRes, loadedClassSubjects] = await Promise.all([
         fetch('/api/academics/exam-schedules').then(r => r.json()),
         fetch('/api/academics/exam-terms').then(r => r.json()),
         fetch('/api/academics/exam-halls').then(r => r.json()),
         fetch('/api/academics/assessment-definitions').then(r => r.json()),
         fetch('/api/academics/exam-schedules/staff').then(r => r.json()),
+        loadAllClassSubjects(),
       ]);
+      setClassSubjects(loadedClassSubjects);
 
       if (!schedRes?.success) {
         throw new Error(schedRes?.error?.message ?? 'Chargement des épreuves impossible.');
@@ -217,6 +236,11 @@ export function ExamPlanningClient({ locale = 'fr', embedded = false }: { locale
       setActionError('Choisissez une épreuve officielle ou saisissez un intitulé.');
       return;
     }
+    // A new épreuve needs its class subject, otherwise nobody can grade it.
+    if (customSubject.trim() && !selectedClassSubjectId) {
+      setActionError('Choisissez la classe et la matière de la nouvelle épreuve.');
+      return;
+    }
 
     setSubmitting(true);
 
@@ -253,6 +277,7 @@ export function ExamPlanningClient({ locale = 'fr', embedded = false }: { locale
             title: titleToUse,
             type: 'paper_exam',
             description: 'Épreuve créée via le planificateur',
+            ...(selectedClassSubjectId ? { classSubjectId: selectedClassSubjectId } : {}),
           }),
         });
         const defJson = await createDefRes.json();
@@ -675,6 +700,22 @@ export function ExamPlanningClient({ locale = 'fr', embedded = false }: { locale
                   onChange={e => setCustomSubject(e.target.value)}
                   className="h-9 text-xs rounded-xl"
                 />
+              )}
+              {customSubject.trim() && (
+                <div className="mt-1.5">
+                  <Select value={selectedClassSubjectId} onValueChange={setSelectedClassSubjectId}>
+                    <SelectTrigger className="h-9 text-xs rounded-xl" aria-label="Classe et matière">
+                      <SelectValue placeholder="Classe · Matière (obligatoire)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {classSubjects.map(cs => (
+                        <SelectItem key={cs.id} value={cs.id}>
+                          {`${cs.className ?? '—'} · ${cs.subjectName ?? '—'}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
             </div>
 

@@ -3,14 +3,15 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { db } from '@/libs/DB';
 import { getClassReportCards } from '@/features/academics/services/report-card-service';
 import { issueReportCardPdf } from '@/features/academics/services/report-card-document-service';
+import { OutcomeService } from '@/features/assessment/services/outcome-service';
 import {
-  assessmentPlans,
-  assessmentResults,
-  assessments,
+  assessmentDefinitions,
+  assessmentOutcomes,
+} from '@/features/assessment/models/assessment-schema';
+import {
   classSections,
   classSubjects,
   classes,
-  gradingScales,
   mediums,
   sections,
   subjects,
@@ -34,21 +35,18 @@ const sectionId = crypto.randomUUID();
 const classSectionId = crypto.randomUUID();
 const subjectId = crypto.randomUUID();
 const classSubjectId = crypto.randomUUID();
-const gradingScaleId = crypto.randomUUID();
-const assessmentPlanId = crypto.randomUUID();
-const term1AssessmentId = crypto.randomUUID();
-const term2AssessmentId = crypto.randomUUID();
-// A mark attached to ANOTHER class's plan (last year) — must never reach a
+const term1DefId = crypto.randomUUID();
+const term2DefId = crypto.randomUUID();
+// An assessment attached to ANOTHER class's plan (last year) — must never reach a
 // current-class bulletin.
 const oldClassId = crypto.randomUUID();
 const oldClassSubjectId = crypto.randomUUID();
-const oldPlanId = crypto.randomUUID();
-const oldAssessmentId = crypto.randomUUID();
+const oldDefId = crypto.randomUUID();
 
 const TERM1 = { start: '2026-09-01', end: '2026-11-30' };
 const TERM2 = { start: '2026-12-01', end: '2027-02-28' };
 
-describe.skipIf(!dbReachable)('getClassReportCards — term scoping (audit 3 P0-F)', () => {
+describe.skipIf(!dbReachable)('getClassReportCards — term scoping (canonical store)', () => {
   beforeAll(async () => {
     await db.insert(tenants).values({ id: tenantId, name: 'Term Scope Test', slug: `ts-${tenantId}` });
     await db.insert(mediums).values({ id: mediumId, tenantId, name: 'Arabe' });
@@ -82,26 +80,50 @@ describe.skipIf(!dbReachable)('getClassReportCards — term scoping (audit 3 P0-
       type: 'compulsory',
       coefficient: '2.00',
     });
-    await db.insert(gradingScales).values({ id: gradingScaleId, tenantId, name: 'Barème /20' });
-    await db.insert(assessmentPlans).values([
-      { id: assessmentPlanId, tenantId, name: 'CC 1BAC', classSubjectId, gradingScaleId },
-      { id: oldPlanId, tenantId, name: 'CC TC (an dernier)', classSubjectId: oldClassSubjectId, gradingScaleId },
+
+    await db.insert(assessmentDefinitions).values([
+      { id: term1DefId, tenantId, classSubjectId, title: 'Maths T1', maximumScore: '20.00', coefficient: '1.00', status: 'draft' },
+      { id: term2DefId, tenantId, classSubjectId, title: 'Maths T2', maximumScore: '20.00', coefficient: '1.00', status: 'draft' },
+      { id: oldDefId, tenantId, classSubjectId: oldClassSubjectId, title: 'Maths TC (last year)', maximumScore: '20.00', coefficient: '1.00', status: 'draft' },
     ]);
-    await db.insert(assessments).values([
-      { id: term1AssessmentId, tenantId, assessmentPlanId, title: 'Maths T1', assessmentDate: '2026-10-15T08:00:00Z' },
-      { id: term2AssessmentId, tenantId, assessmentPlanId, title: 'Maths T2', assessmentDate: '2027-01-15T08:00:00Z' },
-      // last year's mark (old class plan)
-      { id: oldAssessmentId, tenantId, assessmentPlanId: oldPlanId, title: 'Maths TC', assessmentDate: '2025-10-15T08:00:00Z' },
-    ]);
-    await db.insert(assessmentResults).values([
-      { tenantId, assessmentId: term1AssessmentId, studentId, finalPercentage: '60' }, // 12/20
-      { tenantId, assessmentId: term2AssessmentId, studentId, finalPercentage: '90' }, // 18/20
-      { tenantId, assessmentId: oldAssessmentId, studentId, finalPercentage: '100' }, // 20/20 (last year!)
-    ]);
+
+    const o1 = await OutcomeService.recordOutcome({
+      tenantId,
+      assessmentDefinitionId: term1DefId,
+      studentId,
+      rawScore: 12,
+      status: 'graded',
+      sourceType: 'paper_exam',
+      markerId: 'marker-1',
+    });
+    await db.update(assessmentOutcomes).set({ createdAt: '2026-10-15 08:00:00' }).where(eq(assessmentOutcomes.id, o1!.id));
+
+    const o2 = await OutcomeService.recordOutcome({
+      tenantId,
+      assessmentDefinitionId: term2DefId,
+      studentId,
+      rawScore: 18,
+      status: 'graded',
+      sourceType: 'paper_exam',
+      markerId: 'marker-1',
+    });
+    await db.update(assessmentOutcomes).set({ createdAt: '2027-01-15 08:00:00' }).where(eq(assessmentOutcomes.id, o2!.id));
+
+    const oOld = await OutcomeService.recordOutcome({
+      tenantId,
+      assessmentDefinitionId: oldDefId,
+      studentId,
+      rawScore: 20,
+      status: 'graded',
+      sourceType: 'paper_exam',
+      markerId: 'marker-1',
+    });
+    await db.update(assessmentOutcomes).set({ createdAt: '2025-10-15 08:00:00' }).where(eq(assessmentOutcomes.id, oOld!.id));
   });
 
   afterAll(async () => {
-    await db.delete(assessmentResults).where(eq(assessmentResults.tenantId, tenantId));
+    await db.delete(assessmentOutcomes).where(eq(assessmentOutcomes.tenantId, tenantId));
+    await db.delete(assessmentDefinitions).where(eq(assessmentDefinitions.tenantId, tenantId));
     await db.delete(tenants).where(eq(tenants.id, tenantId));
   });
 
@@ -135,6 +157,38 @@ describe.skipIf(!dbReachable)('getClassReportCards — term scoping (audit 3 P0-
     });
     const card = cards.find(c => c.student.id === studentId);
     expect(card!.subjects[0]!.coefficient).toBe(4);
+  });
+
+  it('a grade entered through recordOutcome changes the bulletin', async () => {
+    const term1Def2Id = crypto.randomUUID();
+    await db.insert(assessmentDefinitions).values({
+      id: term1Def2Id,
+      tenantId,
+      classSubjectId,
+      title: 'Maths T1 - Devoir 2',
+      maximumScore: '20.00',
+      coefficient: '1.00',
+      status: 'draft',
+    });
+    const oExtra = await OutcomeService.recordOutcome({
+      tenantId,
+      assessmentDefinitionId: term1Def2Id,
+      studentId,
+      rawScore: 16, // (12 + 16) / 2 = 14
+      status: 'graded',
+      sourceType: 'paper_exam',
+      markerId: 'marker-1',
+    });
+    await db.update(assessmentOutcomes).set({ createdAt: '2026-10-20 08:00:00' }).where(eq(assessmentOutcomes.id, oExtra!.id));
+
+    const { cards } = await getClassReportCards(tenantId, classSectionId, {
+      termStart: TERM1.start,
+      termEnd: TERM1.end,
+    });
+    const card = cards.find(c => c.student.id === studentId);
+    expect(card!.subjects[0]!.average).toBe(14);
+    expect(card!.subjects[0]!.assessmentCount).toBe(2);
+    expect(card!.generalAverage).toBe(14);
   });
 
   it('refuses to issue a report card for a term without graded subjects', async () => {

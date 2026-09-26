@@ -1,18 +1,16 @@
-// Audit 3 follow-up: the promotion preview decides from the same result as the
-// bulletin (coefficient-weighted, current class, eliminatory mark applied), not
-// from a flat all-time average of every mark.
 import { eq } from 'drizzle-orm';
 import { NextRequest } from 'next/server';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { db } from '@/libs/DB';
+import { OutcomeService } from '@/features/assessment/services/outcome-service';
 import {
-  assessmentPlans,
-  assessmentResults,
-  assessments,
+  assessmentDefinitions,
+  assessmentOutcomes,
+} from '@/features/assessment/models/assessment-schema';
+import {
   classSections,
   classSubjects,
   classes,
-  gradingScales,
   mediums,
   sections,
   subjects,
@@ -36,13 +34,12 @@ const mediumId = crypto.randomUUID();
 const classId = crypto.randomUUID();
 const sectionId = crypto.randomUUID();
 const classSectionId = crypto.randomUUID();
-const gradingScaleId = crypto.randomUUID();
 const eliminated = `STU-EL-${crypto.randomUUID()}`;
 const balanced = `STU-OK-${crypto.randomUUID()}`;
-const math = { subjectId: crypto.randomUUID(), classSubjectId: crypto.randomUUID(), planId: crypto.randomUUID(), assessmentId: crypto.randomUUID() };
-const fr = { subjectId: crypto.randomUUID(), classSubjectId: crypto.randomUUID(), planId: crypto.randomUUID(), assessmentId: crypto.randomUUID() };
+const math = { subjectId: crypto.randomUUID(), classSubjectId: crypto.randomUUID(), defId: crypto.randomUUID() };
+const fr = { subjectId: crypto.randomUUID(), classSubjectId: crypto.randomUUID(), defId: crypto.randomUUID() };
 
-describe.skipIf(!dbReachable)('promotion preview uses the bulletin decision', () => {
+describe.skipIf(!dbReachable)('promotion preview uses the bulletin decision (canonical store)', () => {
   beforeAll(async () => {
     const { requireRequestContext } = await import('@/libs/api/context');
     vi.mocked(requireRequestContext).mockResolvedValue({
@@ -58,26 +55,65 @@ describe.skipIf(!dbReachable)('promotion preview uses the bulletin decision', ()
       { id: eliminated, tenantId, name: 'Eliminé Test', email: `e-${tenantId}@t.local`, role: 'student', classSectionId },
       { id: balanced, tenantId, name: 'Equilibre Test', email: `b-${tenantId}@t.local`, role: 'student', classSectionId },
     ]);
-    await db.insert(gradingScales).values({ id: gradingScaleId, tenantId, name: 'Barème /20' });
     for (const [s, name, coef] of [[math, 'Maths', '4.00'], [fr, 'Français', '1.00']] as const) {
       await db.insert(subjects).values({ id: s.subjectId, tenantId, name, mediumId, type: 'theory' });
       await db.insert(classSubjects).values({ id: s.classSubjectId, tenantId, classId, subjectId: s.subjectId, type: 'compulsory', coefficient: coef });
-      await db.insert(assessmentPlans).values({ id: s.planId, tenantId, name: `CC ${name}`, classSubjectId: s.classSubjectId, gradingScaleId });
-      await db.insert(assessments).values({ id: s.assessmentId, tenantId, assessmentPlanId: s.planId, title: `${name} CC1`, assessmentDate: new Date().toISOString() });
+      await db.insert(assessmentDefinitions).values({
+        id: s.defId,
+        tenantId,
+        classSubjectId: s.classSubjectId,
+        title: `${name} CC1`,
+        maximumScore: '20.00',
+        coefficient: '1.00',
+        status: 'draft',
+      });
     }
-    await db.insert(assessmentResults).values([
-      // Weighted (18*4 + 4*1)/5 = 15.2/20 — above the pass mark, but Français
-      // 4/20 is under the default eliminatory mark (5): must be retained.
-      { tenantId, assessmentId: math.assessmentId, studentId: eliminated, finalPercentage: '90', gradeCode: 'TB' },
-      { tenantId, assessmentId: fr.assessmentId, studentId: eliminated, finalPercentage: '20', gradeCode: 'I' },
-      // 12/20 and 12/20: promoted.
-      { tenantId, assessmentId: math.assessmentId, studentId: balanced, finalPercentage: '60', gradeCode: 'AB' },
-      { tenantId, assessmentId: fr.assessmentId, studentId: balanced, finalPercentage: '60', gradeCode: 'AB' },
-    ]);
+
+    // Weighted (18*4 + 4*1)/5 = 15.2/20 — above the pass mark, but Français
+    // 4/20 is under the default eliminatory mark (5): must be retained.
+    await OutcomeService.recordOutcome({
+      tenantId,
+      assessmentDefinitionId: math.defId,
+      studentId: eliminated,
+      rawScore: 18,
+      status: 'graded',
+      sourceType: 'paper_exam',
+      markerId: 'marker-1',
+    });
+    await OutcomeService.recordOutcome({
+      tenantId,
+      assessmentDefinitionId: fr.defId,
+      studentId: eliminated,
+      rawScore: 4,
+      status: 'graded',
+      sourceType: 'paper_exam',
+      markerId: 'marker-1',
+    });
+
+    // 12/20 and 12/20: promoted.
+    await OutcomeService.recordOutcome({
+      tenantId,
+      assessmentDefinitionId: math.defId,
+      studentId: balanced,
+      rawScore: 12,
+      status: 'graded',
+      sourceType: 'paper_exam',
+      markerId: 'marker-1',
+    });
+    await OutcomeService.recordOutcome({
+      tenantId,
+      assessmentDefinitionId: fr.defId,
+      studentId: balanced,
+      rawScore: 12,
+      status: 'graded',
+      sourceType: 'paper_exam',
+      markerId: 'marker-1',
+    });
   }, 30_000);
 
   afterAll(async () => {
-    await db.delete(assessmentResults).where(eq(assessmentResults.tenantId, tenantId));
+    await db.delete(assessmentOutcomes).where(eq(assessmentOutcomes.tenantId, tenantId));
+    await db.delete(assessmentDefinitions).where(eq(assessmentDefinitions.tenantId, tenantId));
     await db.delete(tenants).where(eq(tenants.id, tenantId));
   }, 30_000);
 

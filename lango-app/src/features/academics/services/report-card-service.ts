@@ -1,9 +1,10 @@
-import { and, eq, gte, inArray, isNotNull, lte } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '@/libs/DB';
-import { calculateClassRanks, calculateMoroccanAverage, getMoroccanMention, percentageToTwenty } from '@/libs/grading/moroccan-grade-engine';
+import { calculateClassRanks, calculateMoroccanAverage, getMoroccanMention } from '@/libs/grading/moroccan-grade-engine';
 import { passingScoreOnTwenty, type GradingScale } from '@/libs/grading/pass-threshold';
 import { getEffectiveValue } from '@/libs/settings/registry';
-import { assessmentPlans, assessmentResults, assessments, classes, classSections, classSubjects, sections, subjects, user } from '@/models/Schema';
+import { getSectionOutcomes } from '@/features/assessment/services/staff-results';
+import { classes, classSections, classSubjects, sections, user } from '@/models/Schema';
 
 export type ReportCardSubject = {
   subjectId: string;
@@ -93,52 +94,34 @@ export async function getClassReportCards(
     return { classLabel, cards: [] };
   }
 
-  const resultConditions = [
-    eq(assessmentResults.tenantId, tenantId),
-    inArray(assessmentResults.studentId, rosterIds),
-  ];
-  if (opts?.termStart) resultConditions.push(gte(assessments.assessmentDate, `${opts.termStart}T00:00:00`));
-  if (opts?.termEnd) resultConditions.push(lte(assessments.assessmentDate, `${opts.termEnd}T23:59:59`));
-
-  const resultRows = await db
-    .select({
-      studentId: assessmentResults.studentId,
-      subjectId: classSubjects.subjectId,
-      subjectName: subjects.name,
-      title: assessments.title,
-      assessmentDate: assessments.assessmentDate,
-      finalPercentage: assessmentResults.finalPercentage,
-    })
-    .from(assessmentResults)
-    .innerJoin(assessments, eq(assessmentResults.assessmentId, assessments.id))
-    .innerJoin(assessmentPlans, eq(assessments.assessmentPlanId, assessmentPlans.id))
-    .innerJoin(classSubjects, eq(assessmentPlans.classSubjectId, classSubjects.id))
-    .innerJoin(subjects, eq(classSubjects.subjectId, subjects.id))
-    .where(and(...resultConditions));
+  const outcomeRows = await getSectionOutcomes(tenantId, classSectionId, {
+    termStart: opts?.termStart,
+    termEnd: opts?.termEnd,
+  });
 
   // Coefficients ALWAYS come from the current class's class_subjects, keyed by
   // subject — never from whatever historical row the mark was attached to.
   const coefficientBySubject = new Map<string, number>();
-  const subjectNameBySubject = new Map<string, string>();
   for (const cs of currentClassSubjects) {
     coefficientBySubject.set(cs.subjectId, Number(cs.coefficient) || 1);
   }
 
   const bySubjectByStudent = new Map<string, Map<string, { subjectName: string; coefficient: number; scores: number[] }>>();
-  for (const row of resultRows) {
-    if (row.finalPercentage === null) continue;
+  for (const row of outcomeRows) {
+    // GD2 / GD4: Only include graded outcomes that have a normalized score.
+    // Exempted and absent (without explicit zero) are excluded from the subject average calculation.
+    if (row.status !== 'graded' || row.score20 === null) continue;
     // A mark attached to another class's plan (old year, old section) is not
     // part of this bulletin.
     if (!currentSubjectIds.has(row.subjectId)) continue;
     const studentMap = bySubjectByStudent.get(row.studentId) ?? new Map();
     const entry = studentMap.get(row.subjectId) ?? {
       subjectName: row.subjectName,
-      coefficient: coefficientBySubject.get(row.subjectId) ?? 1,
+      coefficient: coefficientBySubject.get(row.subjectId) ?? row.coefficient ?? 1,
       scores: [],
     };
-    // final_percentage is stored 0-100; every average and mention below is on
-    // the /20 Moroccan scale, so rescale once here rather than at each use.
-    entry.scores.push(percentageToTwenty(Number(row.finalPercentage)));
+    // score20 is already on the /20 Moroccan scale.
+    entry.scores.push(row.score20);
     studentMap.set(row.subjectId, entry);
     bySubjectByStudent.set(row.studentId, studentMap);
   }
