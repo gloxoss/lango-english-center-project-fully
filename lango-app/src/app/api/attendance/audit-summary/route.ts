@@ -5,12 +5,13 @@ import { sendSmsMessage } from '@/features/broadcast/services/sms-delivery';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { weekdayNameFor } from '@/libs/api/school-day';
 import { parseJson } from '@/libs/api/validation';
 import { listSessionOccurrences, loadRegisterIndex, missingOccurrences } from '@/libs/attendance/session-occurrence';
 import { db } from '@/libs/DB';
 import { casablancaTodayIso } from '@/libs/finance/today';
-import { attendance, attendanceFlags, attendanceSummary, classScheduleSlots, sessionYears, user } from '@/models/Schema';
+import { attendance, attendanceFlags, attendanceSummary, classScheduleSlots, classSections, classes, sessionYears, user } from '@/models/Schema';
 
 const reminderSchema = z.object({
   classScheduleSlotId: z.string().uuid(),
@@ -119,15 +120,27 @@ export async function POST(request: Request) {
     const body = await parseJson(request, reminderSchema);
 
     const [slot] = await db
-      .select({ teacherId: classScheduleSlots.teacherId, teacherPhone: user.phone, teacherName: user.name })
+      .select({
+        teacherId: classScheduleSlots.teacherId,
+        teacherPhone: user.phone,
+        teacherName: user.name,
+        branchId: classes.branchId,
+      })
       .from(classScheduleSlots)
       .innerJoin(user, eq(classScheduleSlots.teacherId, user.id))
+      .innerJoin(classSections, eq(classSections.id, classScheduleSlots.classSectionId))
+      .innerJoin(classes, eq(classes.id, classSections.classId))
       .where(and(eq(classScheduleSlots.id, body.classScheduleSlotId), eq(classScheduleSlots.tenantId, tenantId)))
       .limit(1);
 
     if (!slot) {
       return NextResponse.json({ success: false, error: { code: 'NOT_FOUND', message: 'Créneau introuvable' } }, { status: 404 });
     }
+
+    // BRANCH SCOPE: the reminder reaches a real phone, so a campus-limited
+    // admin may only ring their own campus's teacher — same rule as GET.
+    assertBranchScope(context, slot.branchId);
+
     if (!slot.teacherPhone) {
       return NextResponse.json({ success: false, error: { code: 'NO_PHONE', message: 'Aucun numéro de téléphone enregistré pour cet enseignant' } }, { status: 400 });
     }

@@ -4,9 +4,11 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
+import { assertBranchScope } from '@/libs/api/portal-scope';
+import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { listSessionOccurrences } from '@/libs/attendance/session-occurrence';
 import { db } from '@/libs/DB';
-import { attendance, attendanceScanEvents, scannerSessions } from '@/models/Schema';
+import { attendance, attendanceScanEvents, classSections, classes, scannerSessions } from '@/models/Schema';
 
 // CLOSING A SESSION IS WHAT CONSUMES ITS SCANS.
 //
@@ -42,6 +44,40 @@ export async function POST(
 
     if (!session) {
       throw new ApiError(404, 'SESSION_NOT_FOUND', 'Session de scan introuvable.');
+    }
+
+    // SCOPE: closing consumes the session's scans, so it stays with the people
+    // the session belongs to — admins on their own campus, and otherwise the
+    // operator, the lesson's own teacher (a session exception included), or a
+    // teacher currently assigned to the section (ASSIGNMENTS WIN, any campus).
+    if (context.role === 'school_admin' || context.role === 'super_admin') {
+      if (session.classSectionId) {
+        const [scope] = await db
+          .select({ branchId: classes.branchId })
+          .from(classSections)
+          .innerJoin(classes, eq(classSections.classId, classes.id))
+          .where(and(eq(classSections.tenantId, tenantId), eq(classSections.id, session.classSectionId)))
+          .limit(1);
+        assertBranchScope(context, scope?.branchId ?? null);
+      }
+    } else {
+      const isOperator = session.operatorId === context.userId;
+      let isLessonTeacher = false;
+      if (!isOperator && session.classScheduleSlotId && session.classSectionId && session.date) {
+        const occurrences = await listSessionOccurrences({
+          tenantId,
+          date: session.date,
+          classSectionId: session.classSectionId,
+        });
+        isLessonTeacher = occurrences.some(o => o.slotId === session.classScheduleSlotId && o.teacherId === context.userId);
+      }
+      // An entrance session has no lesson and no section: its operator (the
+      // gate agent) is the only non-admin who may close it.
+      const isAssigned = Boolean(session.classSectionId)
+        && (await getTeacherClassSectionIds(tenantId, context.userId)).includes(session.classSectionId!);
+      if (!isOperator && !isLessonTeacher && !isAssigned) {
+        throw new ApiError(403, 'NOT_YOUR_SESSION', 'Cette session de scan ne vous appartient pas.');
+      }
     }
 
     const [updated] = await db

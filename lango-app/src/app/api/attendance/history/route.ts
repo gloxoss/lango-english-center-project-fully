@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { db } from '@/libs/DB';
 import { casablancaTodayIso } from '@/libs/finance/today';
@@ -84,7 +85,7 @@ export async function GET(request: Request) {
         db.select({ id: classSections.id })
           .from(classSections)
           .innerJoin(classes, eq(classSections.classId, classes.id))
-          .where(and(eq(classSections.tenantId, tenantId), eq(classes.branchId, context.branchId))),
+          .where(and(eq(classSections.tenantId, tenantId), branchWhere(context, classes.branchId))),
       ));
     }
 

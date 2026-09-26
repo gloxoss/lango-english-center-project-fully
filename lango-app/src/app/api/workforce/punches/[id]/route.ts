@@ -5,6 +5,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { user, workforcePunchEvents } from '@/models/Schema';
@@ -52,6 +53,15 @@ export async function PATCH(
     if (!existing) {
       throw new ApiError(404, 'NOT_FOUND', 'Pointage introuvable.');
     }
+
+    // BRANCH SCOPE: the punch belongs to an employee, so a campus-limited admin
+    // corrects only their own campus's staff — same rule as the payroll run.
+    const [employeeBranch] = await db
+      .select({ branchId: user.branchId })
+      .from(user)
+      .where(and(eq(user.id, existing.employeeId), eq(user.tenantId, tenantId)))
+      .limit(1);
+    assertBranchScope(context, employeeBranch?.branchId ?? null);
 
     const before = {
       punchType: existing.punchType,

@@ -145,8 +145,6 @@
     "/api/addons/library/editions/[id]",
     "/api/admissions/inquiries",
     "/api/admissions/inquiries/convert",
-    "/api/attendance/audit-summary",
-    "/api/attendance/day",
     "/api/attendance/flags",
     "/api/attendance/heatmap",
     "/api/attendance/onsite",

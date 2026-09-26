@@ -366,6 +366,8 @@ export const BRANCH_SCOPE_REGISTRY: Record<string, BranchRouteEntry> = {
   '/api/attendance/flags/detail': { mode: 'student', column: 'user.branchId via studentId' },
   '/api/attendance/flags/notes': { mode: 'student', column: 'user.branchId via studentId' },
   '/api/attendance/heatmap': { mode: 'student', column: 'user.branchId via studentId' },
+  '/api/attendance/history': { mode: 'student', column: 'classes.branchId (via attendance.classSectionId)' },
+  '/api/attendance/kiosk/current-session': { mode: 'personal' },
   '/api/attendance/onsite': { mode: 'student', column: 'user.branchId via studentId' },
   '/api/attendance/qr/events': { mode: 'student', column: 'user.branchId via studentId' },
   '/api/attendance/qr/events/export': { mode: 'student', column: 'user.branchId via studentId' },
@@ -374,6 +376,7 @@ export const BRANCH_SCOPE_REGISTRY: Record<string, BranchRouteEntry> = {
   '/api/attendance/qr/scanner-sessions/[id]/events': { mode: 'personal' },
   '/api/attendance/qr/verify-and-stage': { mode: 'student', column: 'user.branchId via studentId' },
   '/api/attendance/registers': { mode: 'student', column: 'user.branchId via studentId' },
+  '/api/attendance/registers/late-complete': { mode: 'own', column: 'classes.branchId (via session occurrence)' },
   '/api/attendance/registers/reopen': { mode: 'student', column: 'user.branchId via studentId' },
   '/api/attendance/session-exceptions': { mode: 'own', column: 'classes.branchId (via class_schedule_slots)' },
   '/api/attendance/summary': { mode: 'student', column: 'user.branchId via studentId' },
@@ -887,4 +890,5 @@ export const BRANCH_SCOPE_REGISTRY: Record<string, BranchRouteEntry> = {
   '/api/workforce/payroll/runs/[id]': { mode: 'shared' },
   '/api/workforce/payroll/runs/[id]/action': { mode: 'shared' },
   '/api/workforce/punches': { mode: 'employee', column: 'employee_profiles.branchId' },
+  '/api/workforce/punches/[id]': { mode: 'employee', column: 'user.branchId (employee)' },
 };

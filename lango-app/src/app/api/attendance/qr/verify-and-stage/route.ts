@@ -153,7 +153,7 @@ export async function POST(request: Request) {
     });
 
     let badge: typeof identityBadgeCredentials.$inferSelect | null = null;
-    let scannedUser: { id: string; name: string; email: string | null; image: string | null; classSectionId: string | null };
+    let scannedUser: { id: string; name: string; email: string | null; image: string | null; classSectionId: string | null; branchId: string | null };
 
     if (body.matricule) {
       const [foundUser] = await db
@@ -243,6 +243,7 @@ export async function POST(request: Request) {
           email: user.email,
           image: user.image,
           classSectionId: user.classSectionId,
+          branchId: user.branchId,
         })
         .from(user)
         .where(and(eq(user.id, badge.userId), eq(user.tenantId, tenantId)))
@@ -250,6 +251,17 @@ export async function POST(request: Request) {
 
       if (!foundUser) {
         throw new ApiError(404, 'USER_NOT_FOUND', 'Élève / Utilisateur introuvable.');
+      }
+
+      // BRANCH SCOPE: the same gate the matricule path applies in its WHERE —
+      // a campus-bound terminal (or caller) cannot accept another campus's
+      // badge, entrance scans included.
+      if (effectiveBranchId && foundUser.branchId !== effectiveBranchId) {
+        await recordRejected('WRONG_BRANCH', {
+          credentialId: foundBadge.id,
+          studentId: foundUser.id,
+        });
+        throw new ApiError(403, 'FORBIDDEN', 'Ce badge appartient à un autre campus.');
       }
 
       scannedUser = foundUser;

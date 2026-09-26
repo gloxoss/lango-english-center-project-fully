@@ -1,8 +1,10 @@
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { hasCapability, requireCapability } from '@/libs/api/permissions';
+import { branchWhere } from '@/libs/api/portal-scope';
+import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import {
   listSessionOccurrences,
   loadRegisterIndex,
@@ -11,7 +13,7 @@ import {
 } from '@/libs/attendance/session-occurrence';
 import { casablancaTimeHm, casablancaTodayIso } from '@/libs/finance/today';
 import { db } from '@/libs/DB';
-import { attendance, attendanceRegisters, classes } from '@/models/Schema';
+import { attendance, attendanceRegisters, classes, classSections } from '@/models/Schema';
 
 /**
  * APPEL DU JOUR — the day's real lessons, from the timetable.
@@ -93,6 +95,22 @@ export async function GET(request: Request) {
     }[] = [];
 
     if (mode === 'past') {
+      // SCOPE: legacy registers answer through the same rules as the
+      // occurrence list above — a campus-limited caller sees their campus, a
+      // teacher only classes of their current assignments (empty = nothing).
+      const legacyScope = [branchWhere(context, classes.branchId)];
+      if (isTeacher) {
+        const assignedSections = await getTeacherClassSectionIds(tenantId, context.userId);
+        legacyScope.push(assignedSections.length
+          ? inArray(
+              attendanceRegisters.classId,
+              db.select({ id: classSections.classId }).from(classSections).where(and(
+                eq(classSections.tenantId, tenantId),
+                inArray(classSections.id, assignedSections),
+              )),
+            )
+          : sql`false`);
+      }
       const legacyRegs = await db
         .select({
           id: attendanceRegisters.id,
@@ -105,6 +123,7 @@ export async function GET(request: Request) {
           eq(attendanceRegisters.tenantId, tenantId),
           eq(attendanceRegisters.date, date),
           isNull(attendanceRegisters.classScheduleSlotId),
+          ...legacyScope,
         ));
 
       for (const reg of legacyRegs) {

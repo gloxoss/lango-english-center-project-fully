@@ -5,6 +5,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { parseJson } from '@/libs/api/validation';
 import { isCancelled, listSessionOccurrences } from '@/libs/attendance/session-occurrence';
 import { db } from '@/libs/DB';
@@ -52,10 +53,9 @@ export async function POST(request: Request) {
       throw new ApiError(404, 'LESSON_NOT_FOUND', 'Séance introuvable pour cette date.');
     }
 
-    // Branch scope check for campus-limited admins
-    if (context.branchId && occurrence.branchId && occurrence.branchId !== context.branchId) {
-      throw new ApiError(403, 'FORBIDDEN', 'Cette séance appartient à un autre campus.');
-    }
+    // Branch scope check for campus-limited admins (a NULL-branch occurrence
+    // stays branch-agnostic, the helper's own rule).
+    assertBranchScope(context, occurrence.branchId);
 
     if (isCancelled(occurrence)) {
       throw new ApiError(422, 'LESSON_CANCELLED', 'Ce cours a été annulé, aucun registre ne peut être créé.');

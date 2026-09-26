@@ -5,11 +5,13 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
+import { assertBranchScope } from '@/libs/api/portal-scope';
+import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { parseJson } from '@/libs/api/validation';
 import { isCancelled, listSessionOccurrences } from '@/libs/attendance/session-occurrence';
 import { db } from '@/libs/DB';
 import { casablancaTodayIso } from '@/libs/finance/today';
-import { classScheduleSlots, scannerDevices, scannerSessions } from '@/models/Schema';
+import { classScheduleSlots, classSections, classes, scannerDevices, scannerSessions } from '@/models/Schema';
 
 // A SCANNER SESSION NAMES A LESSON, OR THE WHOLE SCHOOL (fix-plan-02).
 //
@@ -100,6 +102,27 @@ export async function GET(request: Request) {
 
     const session = await findOpenSession(tenantId, slotId, date);
 
+    // SCOPE: an open session is as visible as it is manageable — staff only
+    // their campus, a teacher only a session that is theirs (operator or the
+    // lesson's own teacher / a current assignment of the section).
+    if (session?.classSectionId) {
+      if (context.role === 'teacher') {
+        const mine = session.operatorId === context.userId
+          || (await getTeacherClassSectionIds(tenantId, context.userId)).includes(session.classSectionId);
+        if (!mine) {
+          throw new ApiError(403, 'NOT_YOUR_LESSON', 'Vous n\'enseignez pas ce cours.');
+        }
+      } else {
+        const [scope] = await db
+          .select({ branchId: classes.branchId })
+          .from(classSections)
+          .innerJoin(classes, eq(classSections.classId, classes.id))
+          .where(and(eq(classSections.tenantId, tenantId), eq(classSections.id, session.classSectionId)))
+          .limit(1);
+        assertBranchScope(context, scope?.branchId ?? null);
+      }
+    }
+
     return NextResponse.json({ success: true, data: session, mode: session ? 'classroom' : null });
   } catch (error) {
     return apiErrorResponse(error);
@@ -152,6 +175,13 @@ async function openClassroomSession(
   const isPlatformAdmin = context.role === 'school_admin' || context.role === 'super_admin';
   if (!isPlatformAdmin && occurrence.teacherId !== context.userId) {
     throw new ApiError(403, 'NOT_YOUR_LESSON', 'Vous n\'enseignez pas ce cours.');
+  }
+
+  // CAMPUS RULE: an admin is locked to their active campus; a teacher is
+  // authorized by the assignment behind the check above and may follow their
+  // lesson to any campus (ASSIGNMENTS WIN).
+  if (isPlatformAdmin) {
+    assertBranchScope(context, occurrence.branchId);
   }
 
   const existing = await findOpenSession(tenantId, slotId, date);

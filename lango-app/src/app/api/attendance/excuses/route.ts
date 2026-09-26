@@ -10,12 +10,13 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { getGuardianChildIds } from '@/libs/api/guardian-scope';
 import { requireCapability } from '@/libs/api/permissions';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { assertStudentAccess } from '@/libs/api/student-access';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { parseJson } from '@/libs/api/validation';
 import { isCancelled, listSessionOccurrences } from '@/libs/attendance/session-occurrence';
 import { db } from '@/libs/DB';
-import { attendance, attendanceExcuses, attendanceRegisters, classSections, guardians, guardianStudents, sessionYears, user } from '@/models/Schema';
+import { attendance, attendanceExcuses, attendanceRegisters, classSections, classes, guardians, guardianStudents, sessionYears, user } from '@/models/Schema';
 
 const createExcuseSchema = z.object({
   studentId: z.string().min(1),
@@ -340,6 +341,35 @@ export async function PATCH(request: Request) {
         { success: false, error: { code: 'NOT_FOUND', message: 'Justification non trouvée' } },
         { status: 404 },
       );
+    }
+
+    // BRANCH SCOPE: reviewing an excuse rewrites attendance marks, so a
+    // campus-limited admin may only review their own campus's excuses — the
+    // same rule GET already applies to listing them.
+    const [studentBranch] = await db
+      .select({ branchId: user.branchId })
+      .from(user)
+      .where(and(eq(user.tenantId, tenantId), eq(user.id, existingExcuse.studentId)))
+      .limit(1);
+    assertBranchScope(context, studentBranch?.branchId ?? null);
+
+    // Lessons named by the request become mark rewrites: they must be sections
+    // of this tenant AND, for a campus-limited admin, of their own campus.
+    if (body.lessons?.length) {
+      const lessonRows = await db
+        .select({ id: classSections.id, branchId: classes.branchId })
+        .from(classSections)
+        .innerJoin(classes, eq(classSections.classId, classes.id))
+        .where(and(
+          eq(classSections.tenantId, tenantId),
+          inArray(classSections.id, body.lessons.map(l => l.classSectionId)),
+        ));
+      if (lessonRows.length !== new Set(body.lessons.map(l => l.classSectionId)).size) {
+        throw new ApiError(422, 'INVALID_LESSONS', 'Un des cours indiqués n\'existe pas pour cet établissement.');
+      }
+      for (const lessonRow of lessonRows) {
+        assertBranchScope(context, lessonRow.branchId);
+      }
     }
 
     // LIFECYCLE (P0): pending -> approved/rejected only. Re-reviewing an
