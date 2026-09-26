@@ -484,8 +484,7 @@ export function Sidebar({ locale }: { locale: string }) {
         { label: tAttendance('suiviTitle'), href: `/${locale}/dashboard/attendance/suivi`, permission: 'attendance.read' },
         { label: tNav('attendance-flags'), href: `/${locale}/dashboard/attendance/flags`, permission: 'attendance.read' },
         { label: tNav('attendance-audit'), href: `/${locale}/dashboard/attendance/audit`, permission: 'attendance.read' },
-        { label: tNav('attendance-suivi'), href: `/${locale}/dashboard/attendance/suivi`, permission: 'attendance.read' },
-        { label: tAttendance('qrKiosk'), href: `/${locale}/dashboard/attendance/scanner`, permission: 'attendance.manage' },
+        { label: tAttendance('qrKiosk'), href: `/${locale}/dashboard/attendance/scanner`, permission: 'attendance.scan' },
         // Kept on purpose. This is the only surface that shows SCANS, rejected
         // ones included; Registres & historique reads marks, so a badge refused
         // at the door never appears there. Removing it would lose that, so it

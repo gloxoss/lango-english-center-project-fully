@@ -68,6 +68,8 @@ type Provisioned = {
   studentA: string;
   studentB: string;
   studentBName: string;
+  /** "M1-xxxx B-xxxx" — the class + section label the refusal must name. */
+  studentBSectionLabel: string;
   tokenA: string;
   tokenB: string;
   classroomSessionId: string;
@@ -170,6 +172,7 @@ async function provision(name: string): Promise<Provisioned> {
     studentA,
     studentB,
     studentBName,
+    studentBSectionLabel: `M1-${suffix} B-${suffix}`,
     tokenA,
     tokenB,
     classroomSessionId: sessionRows[0]!.id,
@@ -310,8 +313,13 @@ describe.skipIf(!dbReachable)('QR scan modes — DB-backed', () => {
     const json = await res.json() as any;
 
     expect(json.error.code).toBe('WRONG_CLASS');
-    // The operator has to see WHO is holding the wrong badge.
+    // The operator has to see WHO is holding the wrong badge...
     expect(json.error.message).toContain(wrongClass.studentBName);
+    // ...AND which section that student does belong to, so the teacher can send
+    // them to the right room instead of just knowing they are in the wrong one.
+    // "Rania Sefrioui — 2nde A", not "Rania Sefrioui".
+    expect(json.error.message).toContain(wrongClass.studentBSectionLabel);
+    expect(json.error.details?.studentSection).toBe(wrongClass.studentBSectionLabel);
 
     expect(await acceptedEvents(wrongClass, wrongClass.classroomSessionId)).toHaveLength(0);
     expect(await attendanceRows(wrongClass)).toHaveLength(0);

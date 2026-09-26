@@ -25,6 +25,7 @@ import {
   classSections,
   identityBadgeCredentials,
   scannerSessions,
+  sections,
   user,
 } from '@/models/Schema';
 
@@ -47,6 +48,27 @@ function nowInTimezone(timeZone: string): Date {
   }).formatToParts(new Date());
   const get = (type: string): number => Number(parts.find(p => p.type === type)?.value ?? '0');
   return new Date(Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second')));
+}
+
+// "2nde A" — the label a teacher says out loud. The section half alone ("A") is
+// ambiguous across classes, so both halves are kept. Null when the student is in
+// no section at all, which is a placement gap, not a refusal reason.
+async function sectionLabel(tenantId: string, classSectionId: string | null): Promise<string | null> {
+  if (!classSectionId) {
+    return null;
+  }
+  const [row] = await db
+    .select({ className: classes.name, sectionName: sections.name })
+    .from(classSections)
+    .innerJoin(classes, eq(classSections.classId, classes.id))
+    .innerJoin(sections, eq(classSections.sectionId, sections.id))
+    .where(and(eq(classSections.id, classSectionId), eq(classSections.tenantId, tenantId)))
+    .limit(1);
+  if (!row) {
+    return null;
+  }
+  const joined = [row.className, row.sectionName].filter(Boolean).join(' ').trim();
+  return joined.length > 0 ? joined : null;
 }
 
 // Before (period start + grace): present. After: late.
@@ -256,12 +278,24 @@ export async function POST(request: Request) {
     // accepted whatever their section — and an unplaced student is not refused
     // over a placement gap.
     if (mode === 'classroom' && scannedUser.classSectionId !== resolvedClassSectionId) {
+      // Name the student AND the section they actually belong to: "Rania
+      // Sefrioui — 2nde A". A name alone tells the teacher someone is in the
+      // wrong room but not which room to send them to; the section is the part
+      // they act on. The structured fields ride along in `details` so a screen
+      // can render them without parsing the message.
+      const ownSection = await sectionLabel(tenantId, scannedUser.classSectionId);
+      const who = ownSection ? `${scannedUser.name} — ${ownSection}` : scannedUser.name;
       await recordRejected('WRONG_CLASS', {
         credentialId: badge.id,
         studentId: scannedUser.id,
         classSectionId: resolvedClassSectionId,
       });
-      throw new ApiError(422, 'WRONG_CLASS', `Ce badge (${scannedUser.name}) n'appartient pas à cette classe/section.`);
+      throw new ApiError(
+        422,
+        'WRONG_CLASS',
+        `${who} n'appartient pas à ce cours.`,
+        { studentName: scannedUser.name, studentSection: ownSection },
+      );
     }
 
     const [tzEff, graceEff] = await Promise.all([

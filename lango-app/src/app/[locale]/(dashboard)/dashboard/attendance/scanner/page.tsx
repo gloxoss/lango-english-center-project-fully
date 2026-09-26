@@ -12,7 +12,7 @@ export default async function Page({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireServerPage(locale, { requiredCapability: 'attendance.manage' });
+  await requireServerPage(locale, { requiredCapability: 'attendance.scan' });
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <AttendanceScannerPlayground locale={locale} />
