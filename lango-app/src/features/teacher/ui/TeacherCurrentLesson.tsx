@@ -132,16 +132,9 @@ export function TeacherCurrentLesson() {
               </Button>
             </>
           ) : (
-            <>
-              <Button size="sm" className="h-9 gap-1.5 rounded-lg" disabled>
-                <QrCode className="h-4 w-4" aria-hidden />
-                {t('scanBadgesButton')}
-              </Button>
-              <Button size="sm" variant="outline" className="h-9 gap-1.5 rounded-lg border-slate-200 text-slate-400" disabled>
-                <CheckSquare className="h-4 w-4" aria-hidden />
-                {t('manualRollCallButton')}
-              </Button>
-            </>
+            <Button size="sm" className="h-9 w-full rounded-lg sm:w-auto" disabled>
+              {t('takeRegister')}
+            </Button>
           )}
         </div>
       </Card>
